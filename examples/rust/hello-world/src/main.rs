@@ -20,7 +20,9 @@
 
 use aldrin::{broker, client, conn};
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport, SendError};
+use futures::stream::StreamExt;
 use tokio::task::JoinError;
+use uuid::Uuid;
 
 const FIFO_SIZE: usize = 16;
 
@@ -39,7 +41,22 @@ async fn broker(t: ConnectionTransport) -> Result<(), Error> {
 }
 
 async fn client(t: ClientTransport) -> Result<(), Error> {
-    client::Client::builder(t).connect::<Error>().await?;
+    let client = client::Client::builder(t).connect::<Error>().await?;
+    let mut handle = client.handle().clone();
+    let join_handle = tokio::spawn(client.run::<Error>());
+
+    let mut evs = handle.objects_created(true).await?;
+    let evs_join_handle = tokio::spawn(async move {
+        while let Some(id) = evs.next().await {
+            println!("New object {}", id);
+        }
+    });
+
+    handle.create_object(Uuid::new_v4()).await?;
+
+    handle.shutdown().await?;
+    evs_join_handle.await?;
+    join_handle.await??;
 
     Ok(())
 }
@@ -61,6 +78,7 @@ async fn main() -> Result<(), Error> {
 enum Error {
     SendError(SendError),
     BrokerError(broker::Error),
+    ClientError(client::Error),
     ConnectionEstablishError(conn::EstablishError),
     ConnectionRunError(conn::RunError),
     ClientConnectError(client::ConnectError),
@@ -77,6 +95,12 @@ impl From<SendError> for Error {
 impl From<broker::Error> for Error {
     fn from(e: broker::Error) -> Self {
         Error::BrokerError(e)
+    }
+}
+
+impl From<client::Error> for Error {
+    fn from(e: client::Error) -> Self {
+        Error::ClientError(e)
     }
 }
 

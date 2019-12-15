@@ -9,5 +9,6 @@ publish = false
 [dependencies]
 aldrin = { path = "../../../rust/aldrin" }
 aldrin-util = { path = "../../../rust/util" }
+futures = { version = "0.3.1", default-features = false }
 tokio = { version = "0.2.4", features = [ "rt-core", "macros" ] }
 uuid = { version = "0.8.1", features = [ "v4" ] }
