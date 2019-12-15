@@ -19,63 +19,11 @@
 // SOFTWARE.
 
 use aldrin::{broker, client, conn};
-use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport, SendError};
-use futures::stream::StreamExt;
+use aldrin_util::channel::SendError;
 use tokio::task::JoinError;
-use uuid::Uuid;
-
-const FIFO_SIZE: usize = 16;
-
-async fn broker(t: ConnectionTransport) -> Result<(), Error> {
-    let broker = broker::Broker::builder().build();
-    let mut handle = broker.handle().clone();
-    let join_handle = tokio::spawn(broker.run());
-
-    let conn = handle.add_connection(t).establish::<Error>().await?;
-    conn.run::<Error>().await?;
-
-    handle.shutdown().await?;
-    join_handle.await?;
-
-    Ok(())
-}
-
-async fn client(t: ClientTransport) -> Result<(), Error> {
-    let client = client::Client::builder(t).connect::<Error>().await?;
-    let mut handle = client.handle().clone();
-    let join_handle = tokio::spawn(client.run::<Error>());
-
-    let mut evs = handle.objects_created(true).await?;
-    let evs_join_handle = tokio::spawn(async move {
-        while let Some(id) = evs.next().await {
-            println!("New object {}", id);
-        }
-    });
-
-    handle.create_object(Uuid::new_v4()).await?;
-
-    handle.shutdown().await?;
-    evs_join_handle.await?;
-    join_handle.await??;
-
-    Ok(())
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Error> {
-    let (conn_transport, client_transport) = channel(FIFO_SIZE);
-
-    let broker = tokio::spawn(broker(conn_transport));
-    let client = tokio::spawn(client(client_transport));
-
-    broker.await??;
-    client.await??;
-
-    Ok(())
-}
 
 #[derive(Debug)]
-enum Error {
+pub enum Error {
     Send(SendError),
     Broker(broker::Error),
     Client(client::Error),

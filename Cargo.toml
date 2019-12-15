@@ -3,5 +3,5 @@ members = [
     "rust/aldrin",
     "rust/util",
     "gen",
-    "examples/rust/hello-world",
+    "examples/rust",
 ]
