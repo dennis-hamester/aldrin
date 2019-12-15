@@ -1,0 +1,10 @@
+[package]
+name = "aldrin-gen"
+version = "0.1.0"
+authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+pest = "2.1.2"
+pest_derive = "2.1.0"

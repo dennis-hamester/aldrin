@@ -1,0 +1,13 @@
+[package]
+name = "hello-world"
+version = "0.0.0"
+authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
+license = "MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+aldrin = { path = "../../../rust/aldrin" }
+aldrin-util = { path = "../../../rust/util" }
+tokio = { version = "0.2.4", features = [ "rt-core", "macros" ] }
+uuid = { version = "0.8.1", features = [ "v4" ] }

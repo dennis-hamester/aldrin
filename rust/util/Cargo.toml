@@ -1,0 +1,12 @@
+[package]
+name = "aldrin-util"
+version = "0.1.0"
+authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+aldrin = { version = "0.1.0", path = "../aldrin" }
+futures-channel = { version = "0.3.1", default-features = false }
+futures-core = { version = "0.3.1", default-features = false }
+futures-sink = { version = "0.3.1", default-features = false }
