@@ -64,6 +64,11 @@ impl Handle {
         }
     }
 
+    pub(crate) fn destroy_object_now(&mut self, id: Uuid) {
+        let (res_send, _) = oneshot::channel();
+        self.send.try_send(Event::DestroyObject(id, res_send)).ok();
+    }
+
     pub async fn objects_created(&mut self, with_current: bool) -> Result<ObjectsCreated, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send

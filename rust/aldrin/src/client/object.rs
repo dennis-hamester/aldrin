@@ -25,14 +25,30 @@ use uuid::Uuid;
 pub struct Object {
     id: Uuid,
     client: Handle,
+    destroyed: bool,
 }
 
 impl Object {
     pub(crate) fn new(id: Uuid, client: Handle) -> Self {
-        Object { id, client }
+        Object {
+            id,
+            client,
+            destroyed: false,
+        }
     }
 
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.client.destroy_object(self.id).await
+        let res = self.client.destroy_object(self.id).await;
+        self.destroyed = true;
+        res
+    }
+}
+
+impl Drop for Object {
+    fn drop(&mut self) {
+        if !self.destroyed {
+            self.client.destroy_object_now(self.id);
+            self.destroyed = true;
+        }
     }
 }
