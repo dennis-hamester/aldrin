@@ -127,6 +127,10 @@ where
 
             BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             BrokerMessage::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
+            BrokerMessage::CreateServiceReply(_) => unimplemented!(),
+            BrokerMessage::DestroyServiceReply(_) => unimplemented!(),
+            BrokerMessage::ServiceCreatedEvent(_) => unimplemented!(),
+            BrokerMessage::ServiceDestroyedEvent(_) => unimplemented!(),
             BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
         }
     }

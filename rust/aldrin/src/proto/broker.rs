@@ -27,6 +27,10 @@ pub enum BrokerMessage {
     DestroyObjectReply(DestroyObjectReply),
     ObjectCreatedEvent(ObjectCreatedEvent),
     ObjectDestroyedEvent(ObjectDestroyedEvent),
+    CreateServiceReply(CreateServiceReply),
+    DestroyServiceReply(DestroyServiceReply),
+    ServiceCreatedEvent(ServiceCreatedEvent),
+    ServiceDestroyedEvent(ServiceDestroyedEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -68,5 +72,46 @@ pub struct ObjectCreatedEvent {
 
 #[derive(Debug, Clone)]
 pub struct ObjectDestroyedEvent {
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub enum CreateServiceResult {
+    Ok,
+    DuplicateId,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateServiceReply {
+    pub serial: u32,
+    pub result: CreateServiceResult,
+}
+
+#[derive(Debug, Clone)]
+pub enum DestroyServiceResult {
+    Ok,
+    InvalidService,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyServiceReply {
+    pub serial: u32,
+    pub result: DestroyServiceResult,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceCreatedEvent {
+    pub object_id: Uuid,
+    pub id: Uuid,
+    pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceDestroyedEvent {
+    pub object_id: Uuid,
     pub id: Uuid,
 }

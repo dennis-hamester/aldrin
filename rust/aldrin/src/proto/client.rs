@@ -29,6 +29,12 @@ pub enum ClientMessage {
     UnsubscribeObjectsCreated,
     SubscribeObjectsDestroyed,
     UnsubscribeObjectsDestroyed,
+    CreateService(CreateService),
+    DestroyService(DestroyService),
+    SubscribeServicesCreated(SubscribeServicesCreated),
+    UnsubscribeServicesCreated,
+    SubscribeServicesDestroyed,
+    UnsubscribeServicesDestroyed,
 }
 
 #[derive(Debug, Clone)]
@@ -50,5 +56,24 @@ pub struct DestroyObject {
 
 #[derive(Debug, Clone)]
 pub struct SubscribeObjectsCreated {
+    pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateService {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyService {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeServicesCreated {
     pub serial: Option<u32>,
 }
