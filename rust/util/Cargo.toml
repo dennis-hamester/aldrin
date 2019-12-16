@@ -1,5 +1,6 @@
 [package]
 name = "aldrin-util"
+description = "Additional utilities for working with Aldrin."
 version = "0.1.0"
 authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
 license = "MIT"
