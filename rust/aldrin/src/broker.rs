@@ -186,7 +186,7 @@ impl Broker {
 
             ClientMessage::SubscribeObjectsDestroyed => unimplemented!(),
 
-            ClientMessage::HelloBroker(_) => Err(()),
+            ClientMessage::Connect(_) => Err(()),
         }
     }
 

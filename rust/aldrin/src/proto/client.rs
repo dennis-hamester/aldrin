@@ -22,7 +22,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum ClientMessage {
-    HelloBroker(HelloBroker),
+    Connect(Connect),
     CreateObject(CreateObject),
     DestroyObject(DestroyObject),
     SubscribeObjectsCreated(SubscribeObjectsCreated),
@@ -31,7 +31,7 @@ pub enum ClientMessage {
 }
 
 #[derive(Debug, Clone)]
-pub struct HelloBroker {
+pub struct Connect {
     pub version: u32,
 }
 

@@ -20,7 +20,8 @@
 
 use super::{Connection, ConnectionEvent, EstablishError, Transport};
 use crate::conn_id::ConnectionIdManager;
-use crate::proto::{BrokerMessage, ClientMessage};
+use crate::proto::broker::*;
+use crate::proto::{self, BrokerMessage, ClientMessage};
 use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
@@ -61,14 +62,24 @@ where
             .await
             .ok_or(EstablishError::UnexpectedClientShutdown)??
         {
-            ClientMessage::HelloBroker(msg) if msg.version == crate::proto::VERSION => Ok(()),
-            ClientMessage::HelloBroker(msg) => {
-                Err(EstablishError::InvalidClientVersion(msg.version))
+            ClientMessage::Connect(msg) if msg.version == proto::VERSION => {
+                self.t
+                    .send(BrokerMessage::ConnectReply(ConnectReply::Ok))
+                    .await?;
+                Ok(())
             }
+
+            ClientMessage::Connect(msg) => {
+                self.t
+                    .send(BrokerMessage::ConnectReply(ConnectReply::VersionMismatch(
+                        proto::VERSION,
+                    )))
+                    .await?;
+                Err(EstablishError::VersionMismatch(msg.version))
+            }
+
             msg => Err(EstablishError::UnexpectedMessageReceived(msg)),
         }?;
-
-        self.t.send(BrokerMessage::HelloClient).await?;
 
         let id = self.ids.acquire();
         let (send, recv) = channel(self.fifo_size);

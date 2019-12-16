@@ -22,11 +22,17 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum BrokerMessage {
-    HelloClient,
+    ConnectReply(ConnectReply),
     CreateObjectReply(CreateObjectReply),
     DestroyObjectReply(DestroyObjectReply),
     ObjectCreatedEvent(ObjectCreatedEvent),
     ObjectDestroyedEvent(ObjectDestroyedEvent),
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectReply {
+    Ok,
+    VersionMismatch(u32),
 }
 
 #[derive(Debug, Clone)]

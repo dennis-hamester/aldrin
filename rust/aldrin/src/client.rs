@@ -122,7 +122,7 @@ where
 
             BrokerMessage::ObjectDestroyedEvent(_) => unimplemented!(),
 
-            BrokerMessage::HelloClient => Err(RunError::UnexpectedMessageReceived(msg).into()),
+            BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
         }
     }
 

@@ -27,6 +27,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub enum ConnectError {
     UnexpectedEof,
+    VersionMismatch(u32),
     UnexpectedMessageReceived(BrokerMessage),
 }
 
@@ -34,6 +35,9 @@ impl fmt::Display for ConnectError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectError::UnexpectedEof => f.write_str("unexpected end of file"),
+            ConnectError::VersionMismatch(v) => {
+                f.write_fmt(format_args!("broker version {} mismatch", v))
+            }
             ConnectError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")
             }

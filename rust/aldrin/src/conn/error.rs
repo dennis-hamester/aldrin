@@ -45,7 +45,7 @@ pub enum EstablishError {
     BrokerFifoOverflow,
     UnexpectedClientShutdown,
     UnexpectedMessageReceived(ClientMessage),
-    InvalidClientVersion(u32),
+    VersionMismatch(u32),
     BrokerShutdown,
 }
 
@@ -58,8 +58,8 @@ impl fmt::Display for EstablishError {
             EstablishError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")
             }
-            EstablishError::InvalidClientVersion(v) => {
-                f.write_fmt(format_args!("invalid client version {}", v))
+            EstablishError::VersionMismatch(v) => {
+                f.write_fmt(format_args!("client version {} mismatch", v))
             }
             EstablishError::BrokerShutdown => f.write_str("broker shutdown"),
         }
