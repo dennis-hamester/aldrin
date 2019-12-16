@@ -18,15 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::{Error, Handle};
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Object {
     id: Uuid,
+    client: Handle,
 }
 
 impl Object {
-    pub(crate) fn new(id: Uuid) -> Self {
-        Object { id }
+    pub(crate) fn new(id: Uuid, client: Handle) -> Self {
+        Object { id, client }
+    }
+
+    pub async fn destroy(&mut self) -> Result<(), Error> {
+        self.client.destroy_object(self.id).await
     }
 }

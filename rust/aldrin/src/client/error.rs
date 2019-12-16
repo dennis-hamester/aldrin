@@ -72,6 +72,7 @@ pub enum Error {
     ClientFifoOverflow,
     ClientShutdown,
     DuplicateObject(Uuid),
+    InvalidObject(Uuid),
 }
 
 impl From<SendError> for Error {
@@ -93,6 +94,7 @@ impl fmt::Display for Error {
             Error::ClientFifoOverflow => f.write_str("client fifo overflow"),
             Error::ClientShutdown => f.write_str("client shutdown"),
             Error::DuplicateObject(id) => f.write_fmt(format_args!("duplicate object {}", id)),
+            Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id)),
         }
     }
 }

@@ -45,6 +45,11 @@ impl ConnectionState {
         debug_assert!(unique);
     }
 
+    pub fn remove_object(&mut self, id: Uuid) {
+        let contained = self.objects.remove(&id);
+        debug_assert!(contained);
+    }
+
     pub fn objects<'a>(&'a self) -> impl Iterator<Item = Uuid> + 'a {
         self.objects.iter().cloned()
     }

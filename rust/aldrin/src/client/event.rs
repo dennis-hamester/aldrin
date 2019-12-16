@@ -26,5 +26,6 @@ use uuid::Uuid;
 pub(crate) enum Event {
     Shutdown,
     CreateObject(Uuid, oneshot::Sender<CreateObjectResult>),
+    DestroyObject(Uuid, oneshot::Sender<DestroyObjectResult>),
     SubscribeObjectsCreated(mpsc::Sender<Uuid>, bool),
 }

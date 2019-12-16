@@ -31,4 +31,8 @@ impl Object {
     pub fn new(id: Uuid, conn_id: ConnectionId) -> Self {
         Object { id, conn_id }
     }
+
+    pub fn conn_id(&self) -> &ConnectionId {
+        &self.conn_id
+    }
 }

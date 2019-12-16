@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use super::{Error, Event, Object, ObjectsCreated};
-use crate::proto::broker::CreateObjectResult;
+use crate::proto::broker::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
@@ -48,8 +48,19 @@ impl Handle {
         self.send.send(Event::CreateObject(id, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::InternalError)?;
         match reply {
-            CreateObjectResult::Ok => Ok(Object::new(id)),
+            CreateObjectResult::Ok => Ok(Object::new(id, self.clone())),
             CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(id)),
+        }
+    }
+
+    pub(crate) async fn destroy_object(&mut self, id: Uuid) -> Result<(), Error> {
+        let (res_send, res_reply) = oneshot::channel();
+        self.send.send(Event::DestroyObject(id, res_send)).await?;
+        let reply = res_reply.await.map_err(|_| Error::InternalError)?;
+        match reply {
+            DestroyObjectResult::Ok => Ok(()),
+            DestroyObjectResult::InvalidObject => Err(Error::InvalidObject(id)),
+            DestroyObjectResult::ForeignObject => Err(Error::InternalError),
         }
     }
 

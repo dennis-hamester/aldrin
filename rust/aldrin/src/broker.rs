@@ -132,7 +132,7 @@ impl Broker {
             }
 
             if let Some(_) = state.pop_remove_obj() {
-                unimplemented!()
+                continue;
             }
 
             if let Some(id) = state.pop_add_obj() {
@@ -176,7 +176,7 @@ impl Broker {
         match msg {
             ClientMessage::CreateObject(req) => self.create_object(state, id, req).await,
 
-            ClientMessage::DestroyObject(_) => unimplemented!(),
+            ClientMessage::DestroyObject(req) => self.destroy_object(state, id, req).await,
 
             ClientMessage::SubscribeObjectsCreated(req) => {
                 self.subscribe_objects_created(id, req).await
@@ -225,6 +225,50 @@ impl Broker {
                 state.push_add_obj(req.id);
                 Ok(())
             }
+        }
+    }
+
+    async fn destroy_object(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: DestroyObject,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        if let Entry::Occupied(entry) = self.objs.entry(req.id) {
+            if entry.get().conn_id() == id {
+                conn.send(BrokerEvent::BrokerMessage(
+                    BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+                        serial: req.serial,
+                        result: DestroyObjectResult::Ok,
+                    }),
+                ))
+                .await?;
+                entry.remove();
+                conn.remove_object(req.id);
+                state.push_remove_obj(req.id);
+                Ok(())
+            } else {
+                conn.send(BrokerEvent::BrokerMessage(
+                    BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+                        serial: req.serial,
+                        result: DestroyObjectResult::ForeignObject,
+                    }),
+                ))
+                .await
+            }
+        } else {
+            conn.send(BrokerEvent::BrokerMessage(
+                BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+                    serial: req.serial,
+                    result: DestroyObjectResult::InvalidObject,
+                }),
+            ))
+            .await
         }
     }
 

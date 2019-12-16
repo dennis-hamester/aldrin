@@ -54,6 +54,7 @@ where
     recv: mpsc::Receiver<Event>,
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
+    destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     objects_created: SerialMap<mpsc::Sender<Uuid>>,
 }
 
@@ -72,6 +73,7 @@ where
             recv,
             handle: Some(Handle::new(send, event_fifo_size)),
             create_object: SerialMap::new(),
+            destroy_object: SerialMap::new(),
             objects_created: SerialMap::new(),
         }
     }
@@ -116,7 +118,13 @@ where
                 Ok(())
             }
 
-            BrokerMessage::DestroyObjectReply(_) => unimplemented!(),
+            BrokerMessage::DestroyObjectReply(re) => {
+                if let Some(send) = self.destroy_object.remove(re.serial) {
+                    send.send(re.result).ok();
+                }
+
+                Ok(())
+            }
 
             BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
 
@@ -180,6 +188,7 @@ where
     {
         match ev {
             Event::CreateObject(id, reply) => self.create_object(id, reply).await,
+            Event::DestroyObject(id, reply) => self.destroy_object(id, reply).await,
             Event::SubscribeObjectsCreated(sender, with_current) => {
                 self.subscribe_objects_created(sender, with_current).await
             }
@@ -200,6 +209,21 @@ where
         let serial = self.create_object.insert(reply);
         self.t
             .send(ClientMessage::CreateObject(CreateObject { serial, id }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn destroy_object<E>(
+        &mut self,
+        id: Uuid,
+        reply: oneshot::Sender<DestroyObjectResult>,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let serial = self.destroy_object.insert(reply);
+        self.t
+            .send(ClientMessage::DestroyObject(DestroyObject { serial, id }))
             .await
             .map_err(Into::into)
     }
