@@ -46,7 +46,7 @@ impl Handle {
     pub async fn create_object(&mut self, id: Uuid) -> Result<Object, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send.send(Event::CreateObject(id, res_send)).await?;
-        let reply = res_reply.await.map_err(|_| Error::InternalError)?;
+        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CreateObjectResult::Ok => Ok(Object::new(id, self.clone())),
             CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(id)),
@@ -56,7 +56,7 @@ impl Handle {
     pub(crate) async fn destroy_object(&mut self, id: Uuid) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send.send(Event::DestroyObject(id, res_send)).await?;
-        let reply = res_reply.await.map_err(|_| Error::InternalError)?;
+        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
             DestroyObjectResult::InvalidObject => Err(Error::InvalidObject(id)),
