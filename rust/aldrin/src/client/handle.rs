@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Event, Object, ObjectsCreated, ObjectsDestroyed};
+use super::{Error, Event, Object, ObjectsCreated, ObjectsDestroyed, Service};
 use crate::proto::broker::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
@@ -83,5 +83,44 @@ impl Handle {
             .send(Event::SubscribeObjectsDestroyed(ev_send))
             .await?;
         Ok(ObjectsDestroyed::new(ev_recv))
+    }
+
+    pub(crate) async fn create_service(
+        &mut self,
+        object_id: Uuid,
+        id: Uuid,
+    ) -> Result<Service, Error> {
+        let (res_send, res_reply) = oneshot::channel();
+        self.send
+            .send(Event::CreateService(object_id, id, res_send))
+            .await?;
+        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            CreateServiceResult::Ok => Ok(Service::new(object_id, id, self.clone())),
+            CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, id)),
+            CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
+            CreateServiceResult::ForeignObject => Err(Error::InternalError),
+        }
+    }
+
+    pub(crate) async fn destroy_service(&mut self, object_id: Uuid, id: Uuid) -> Result<(), Error> {
+        let (res_send, res_reply) = oneshot::channel();
+        self.send
+            .send(Event::DestroyService(object_id, id, res_send))
+            .await?;
+        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            DestroyServiceResult::Ok => Ok(()),
+            DestroyServiceResult::InvalidService => Err(Error::InvalidService(object_id, id)),
+            DestroyServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
+            DestroyServiceResult::ForeignObject => Err(Error::InternalError),
+        }
+    }
+
+    pub(crate) fn destroy_service_now(&mut self, object_id: Uuid, id: Uuid) {
+        let (res_send, _) = oneshot::channel();
+        self.send
+            .try_send(Event::DestroyService(object_id, id, res_send))
+            .ok();
     }
 }

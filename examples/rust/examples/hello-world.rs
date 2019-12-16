@@ -60,6 +60,9 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     });
 
     let mut obj = handle.create_object(Uuid::new_v4()).await?;
+    let mut svc = obj.create_service(Uuid::new_v4()).await?;
+
+    svc.destroy().await?;
     obj.destroy().await?;
 
     handle.shutdown().await?;

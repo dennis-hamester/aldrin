@@ -73,6 +73,8 @@ pub enum Error {
     ClientShutdown,
     DuplicateObject(Uuid),
     InvalidObject(Uuid),
+    DuplicateService(Uuid, Uuid),
+    InvalidService(Uuid, Uuid),
 }
 
 impl From<SendError> for Error {
@@ -95,6 +97,13 @@ impl fmt::Display for Error {
             Error::ClientShutdown => f.write_str("client shutdown"),
             Error::DuplicateObject(id) => f.write_fmt(format_args!("duplicate object {}", id)),
             Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id)),
+            Error::DuplicateService(obj_id, id) => f.write_fmt(format_args!(
+                "duplicate service {} for object {}",
+                id, obj_id
+            )),
+            Error::InvalidService(obj_id, id) => {
+                f.write_fmt(format_args!("invalid service {} for object {}", id, obj_id))
+            }
         }
     }
 }

@@ -26,6 +26,7 @@ mod object;
 mod objects_created;
 mod objects_destroyed;
 mod serial_map;
+mod service;
 mod transport;
 
 use crate::proto::broker::*;
@@ -45,6 +46,7 @@ pub use handle::Handle;
 pub use object::Object;
 pub use objects_created::ObjectsCreated;
 pub use objects_destroyed::ObjectsDestroyed;
+pub use service::Service;
 pub use transport::Transport;
 
 #[derive(Debug)]
@@ -59,6 +61,8 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     objects_created: SerialMap<mpsc::Sender<Uuid>>,
     objects_destroyed: SerialMap<mpsc::Sender<Uuid>>,
+    create_service: SerialMap<oneshot::Sender<CreateServiceResult>>,
+    destroy_service: SerialMap<oneshot::Sender<DestroyServiceResult>>,
 }
 
 impl<T> Client<T>
@@ -79,6 +83,8 @@ where
             destroy_object: SerialMap::new(),
             objects_created: SerialMap::new(),
             objects_destroyed: SerialMap::new(),
+            create_service: SerialMap::new(),
+            destroy_service: SerialMap::new(),
         }
     }
 
@@ -127,8 +133,23 @@ where
 
             BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             BrokerMessage::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
-            BrokerMessage::CreateServiceReply(_) => unimplemented!(),
-            BrokerMessage::DestroyServiceReply(_) => unimplemented!(),
+
+            BrokerMessage::CreateServiceReply(re) => {
+                if let Some(send) = self.create_service.remove(re.serial) {
+                    send.send(re.result).ok();
+                }
+
+                Ok(())
+            }
+
+            BrokerMessage::DestroyServiceReply(re) => {
+                if let Some(send) = self.destroy_service.remove(re.serial) {
+                    send.send(re.result).ok();
+                }
+
+                Ok(())
+            }
+
             BrokerMessage::ServiceCreatedEvent(_) => unimplemented!(),
             BrokerMessage::ServiceDestroyedEvent(_) => unimplemented!(),
             BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
@@ -230,6 +251,12 @@ where
             Event::SubscribeObjectsDestroyed(sender) => {
                 self.subscribe_objects_destroyed(sender).await
             }
+            Event::CreateService(object_id, id, reply) => {
+                self.create_service(object_id, id, reply).await
+            }
+            Event::DestroyService(object_id, id, reply) => {
+                self.destroy_service(object_id, id, reply).await
+            }
 
             // Handled in Client::run()
             Event::Shutdown => unreachable!(),
@@ -303,5 +330,45 @@ where
         } else {
             Ok(())
         }
+    }
+
+    async fn create_service<E>(
+        &mut self,
+        object_id: Uuid,
+        id: Uuid,
+        reply: oneshot::Sender<CreateServiceResult>,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let serial = self.create_service.insert(reply);
+        self.t
+            .send(ClientMessage::CreateService(CreateService {
+                serial,
+                object_id,
+                id,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn destroy_service<E>(
+        &mut self,
+        object_id: Uuid,
+        id: Uuid,
+        reply: oneshot::Sender<DestroyServiceResult>,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let serial = self.destroy_service.insert(reply);
+        self.t
+            .send(ClientMessage::DestroyService(DestroyService {
+                serial,
+                object_id,
+                id,
+            }))
+            .await
+            .map_err(Into::into)
     }
 }
