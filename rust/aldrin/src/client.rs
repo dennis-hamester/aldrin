@@ -91,15 +91,10 @@ where
         loop {
             match select(self.t.next(), self.recv.next()).await {
                 Either::Left((Some(Ok(msg)), _)) => self.handle_message::<E>(msg).await?,
-
                 Either::Left((Some(Err(e)), _)) => return Err(e.into()),
-
                 Either::Left((None, _)) => return Ok(()),
-
                 Either::Right((Some(Event::Shutdown), _)) => return Ok(()),
-
                 Either::Right((Some(ev), _)) => self.handle_event::<E>(ev).await?,
-
                 Either::Right((None, _)) => return Ok(()),
             }
         }
@@ -127,9 +122,7 @@ where
             }
 
             BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
-
             BrokerMessage::ObjectDestroyedEvent(_) => unimplemented!(),
-
             BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
         }
     }

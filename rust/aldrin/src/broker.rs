@@ -175,17 +175,12 @@ impl Broker {
     ) -> Result<(), ()> {
         match msg {
             ClientMessage::CreateObject(req) => self.create_object(state, id, req).await,
-
             ClientMessage::DestroyObject(req) => self.destroy_object(state, id, req).await,
-
             ClientMessage::SubscribeObjectsCreated(req) => {
                 self.subscribe_objects_created(id, req).await
             }
-
             ClientMessage::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
-
             ClientMessage::SubscribeObjectsDestroyed => unimplemented!(),
-
             ClientMessage::Connect(_) => Err(()),
         }
     }
