@@ -165,7 +165,11 @@ where
             }
         }
 
-        // // TODO: Check if objects_created is empty.
+        if self.objects_created.is_empty() {
+            self.t
+                .send(ClientMessage::UnsubscribeObjectsCreated)
+                .await?;
+        }
 
         Ok(())
     }

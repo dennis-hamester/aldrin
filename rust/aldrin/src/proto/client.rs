@@ -26,7 +26,7 @@ pub enum ClientMessage {
     CreateObject(CreateObject),
     DestroyObject(DestroyObject),
     SubscribeObjectsCreated(SubscribeObjectsCreated),
-    // UnsubscribeObjectsCreated,
+    UnsubscribeObjectsCreated,
     SubscribeObjectsDestroyed,
 }
 

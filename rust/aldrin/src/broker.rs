@@ -182,6 +182,8 @@ impl Broker {
                 self.subscribe_objects_created(id, req).await
             }
 
+            ClientMessage::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
+
             ClientMessage::SubscribeObjectsDestroyed => unimplemented!(),
 
             ClientMessage::HelloBroker(_) => Err(()),
@@ -250,6 +252,16 @@ impl Broker {
             }
         }
 
+        Ok(())
+    }
+
+    async fn unsubscribe_objects_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_objects_created_subscribed(false);
         Ok(())
     }
 }
