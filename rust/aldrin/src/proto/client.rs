@@ -28,6 +28,7 @@ pub enum ClientMessage {
     SubscribeObjectsCreated(SubscribeObjectsCreated),
     UnsubscribeObjectsCreated,
     SubscribeObjectsDestroyed,
+    UnsubscribeObjectsDestroyed,
 }
 
 #[derive(Debug, Clone)]

@@ -181,6 +181,7 @@ impl Broker {
             }
             ClientMessage::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
             ClientMessage::SubscribeObjectsDestroyed => unimplemented!(),
+            ClientMessage::UnsubscribeObjectsDestroyed => unimplemented!(),
             ClientMessage::Connect(_) => Err(()),
         }
     }
