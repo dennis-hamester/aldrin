@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Event, Object, ObjectsCreated};
+use super::{Error, Event, Object, ObjectsCreated, ObjectsDestroyed};
 use crate::proto::broker::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
@@ -75,5 +75,13 @@ impl Handle {
             .send(Event::SubscribeObjectsCreated(ev_send, with_current))
             .await?;
         Ok(ObjectsCreated::new(ev_recv))
+    }
+
+    pub async fn objects_destroyed(&mut self) -> Result<ObjectsDestroyed, Error> {
+        let (ev_send, ev_recv) = channel(self.event_fifo_size);
+        self.send
+            .send(Event::SubscribeObjectsDestroyed(ev_send))
+            .await?;
+        Ok(ObjectsDestroyed::new(ev_recv))
     }
 }

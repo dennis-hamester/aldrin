@@ -45,10 +45,17 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 
-    let mut evs = handle.objects_created(true).await?;
-    let evs_join_handle = tokio::spawn(async move {
-        while let Some(id) = evs.next().await {
-            println!("New object {}", id);
+    let mut oc = handle.objects_created(true).await?;
+    let oc_join_handle = tokio::spawn(async move {
+        while let Some(id) = oc.next().await {
+            println!("Object created: {}", id);
+        }
+    });
+
+    let mut od = handle.objects_destroyed().await?;
+    let od_join_handle = tokio::spawn(async move {
+        while let Some(id) = od.next().await {
+            println!("Object destroyed: {}", id);
         }
     });
 
@@ -56,7 +63,8 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     obj.destroy().await?;
 
     handle.shutdown().await?;
-    evs_join_handle.await?;
+    oc_join_handle.await?;
+    od_join_handle.await?;
     join_handle.await??;
 
     Ok(())

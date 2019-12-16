@@ -29,6 +29,7 @@ pub(super) struct ConnectionState {
     send: Sender<BrokerEvent>,
     objects: HashSet<Uuid>,
     objects_created_subscribed: bool,
+    objects_destroyed_subscribed: bool,
 }
 
 impl ConnectionState {
@@ -37,6 +38,7 @@ impl ConnectionState {
             send,
             objects: HashSet::new(),
             objects_created_subscribed: false,
+            objects_destroyed_subscribed: false,
         }
     }
 
@@ -64,5 +66,13 @@ impl ConnectionState {
 
     pub fn objects_created_subscribed(&self) -> bool {
         self.objects_created_subscribed
+    }
+
+    pub fn set_objects_destroyed_subscribed(&mut self, subscribed: bool) {
+        self.objects_destroyed_subscribed = subscribed;
+    }
+
+    pub fn objects_destroyed_subscribed(&self) -> bool {
+        self.objects_destroyed_subscribed
     }
 }

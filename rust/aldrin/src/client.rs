@@ -24,6 +24,7 @@ mod event;
 mod handle;
 mod object;
 mod objects_created;
+mod objects_destroyed;
 mod serial_map;
 mod transport;
 
@@ -43,6 +44,7 @@ pub use error::{ConnectError, Error, RunError};
 pub use handle::Handle;
 pub use object::Object;
 pub use objects_created::ObjectsCreated;
+pub use objects_destroyed::ObjectsDestroyed;
 pub use transport::Transport;
 
 #[derive(Debug)]
@@ -56,6 +58,7 @@ where
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     objects_created: SerialMap<mpsc::Sender<Uuid>>,
+    objects_destroyed: SerialMap<mpsc::Sender<Uuid>>,
 }
 
 impl<T> Client<T>
@@ -75,6 +78,7 @@ where
             create_object: SerialMap::new(),
             destroy_object: SerialMap::new(),
             objects_created: SerialMap::new(),
+            objects_destroyed: SerialMap::new(),
         }
     }
 
@@ -122,7 +126,7 @@ where
             }
 
             BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
-            BrokerMessage::ObjectDestroyedEvent(_) => unimplemented!(),
+            BrokerMessage::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
             BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
         }
     }
@@ -175,6 +179,40 @@ where
         Ok(())
     }
 
+    async fn object_destroyed_event<E>(
+        &mut self,
+        object_destroyed_event: ObjectDestroyedEvent,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let mut remove = Vec::new();
+
+        for (serial, send) in self.objects_destroyed.iter_mut() {
+            if let Err(e) = send.send(object_destroyed_event.id).await {
+                if e.is_disconnected() {
+                    remove.push(serial);
+                } else if e.is_full() {
+                    return Err(RunError::EventFifoOverflow.into());
+                } else {
+                    return Err(RunError::InternalError.into());
+                }
+            }
+        }
+
+        for serial in remove {
+            self.objects_destroyed.remove(serial);
+        }
+
+        if self.objects_destroyed.is_empty() {
+            self.t
+                .send(ClientMessage::UnsubscribeObjectsDestroyed)
+                .await?;
+        }
+
+        Ok(())
+    }
+
     async fn handle_event<E>(&mut self, ev: Event) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -184,6 +222,9 @@ where
             Event::DestroyObject(id, reply) => self.destroy_object(id, reply).await,
             Event::SubscribeObjectsCreated(sender, with_current) => {
                 self.subscribe_objects_created(sender, with_current).await
+            }
+            Event::SubscribeObjectsDestroyed(sender) => {
+                self.subscribe_objects_destroyed(sender).await
             }
 
             // Handled in Client::run()
@@ -237,6 +278,22 @@ where
                 .send(ClientMessage::SubscribeObjectsCreated(
                     SubscribeObjectsCreated { serial },
                 ))
+                .await
+                .map_err(Into::into)
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn subscribe_objects_destroyed<E>(&mut self, sender: mpsc::Sender<Uuid>) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let send = self.objects_destroyed.is_empty();
+        self.objects_destroyed.insert(sender);
+        if send {
+            self.t
+                .send(ClientMessage::SubscribeObjectsDestroyed)
                 .await
                 .map_err(Into::into)
         } else {

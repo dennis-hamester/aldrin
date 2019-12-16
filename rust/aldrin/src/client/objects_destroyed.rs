@@ -18,15 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::broker::*;
-use futures_channel::{mpsc, oneshot};
+use futures_channel::mpsc;
+use futures_core::stream::Stream;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub(crate) enum Event {
-    Shutdown,
-    CreateObject(Uuid, oneshot::Sender<CreateObjectResult>),
-    DestroyObject(Uuid, oneshot::Sender<DestroyObjectResult>),
-    SubscribeObjectsCreated(mpsc::Sender<Uuid>, bool),
-    SubscribeObjectsDestroyed(mpsc::Sender<Uuid>),
+pub struct ObjectsDestroyed(mpsc::Receiver<Uuid>);
+
+impl ObjectsDestroyed {
+    pub(crate) fn new(events: mpsc::Receiver<Uuid>) -> Self {
+        ObjectsDestroyed(events)
+    }
+}
+
+impl Stream for ObjectsDestroyed {
+    type Item = Uuid;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Uuid>> {
+        let events = Pin::new(&mut Pin::into_inner(self).0);
+        events.poll_next(cx)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }

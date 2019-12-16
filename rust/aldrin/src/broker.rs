@@ -131,7 +131,17 @@ impl Broker {
                 continue;
             }
 
-            if let Some(_) = state.pop_remove_obj() {
+            if let Some(id) = state.pop_remove_obj() {
+                broadcast(
+                    self.conns
+                        .iter_mut()
+                        .filter(|(_, c)| c.objects_destroyed_subscribed()),
+                    state,
+                    BrokerEvent::BrokerMessage(BrokerMessage::ObjectDestroyedEvent(
+                        ObjectDestroyedEvent { id },
+                    )),
+                )
+                .await;
                 continue;
             }
 
@@ -180,8 +190,10 @@ impl Broker {
                 self.subscribe_objects_created(id, req).await
             }
             ClientMessage::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
-            ClientMessage::SubscribeObjectsDestroyed => unimplemented!(),
-            ClientMessage::UnsubscribeObjectsDestroyed => unimplemented!(),
+            ClientMessage::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id).await,
+            ClientMessage::UnsubscribeObjectsDestroyed => {
+                self.unsubscribe_objects_destroyed(id).await
+            }
             ClientMessage::Connect(_) => Err(()),
         }
     }
@@ -302,6 +314,26 @@ impl Broker {
         };
 
         conn.set_objects_created_subscribed(false);
+        Ok(())
+    }
+
+    async fn subscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_objects_destroyed_subscribed(true);
+        Ok(())
+    }
+
+    async fn unsubscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_objects_destroyed_subscribed(false);
         Ok(())
     }
 }
