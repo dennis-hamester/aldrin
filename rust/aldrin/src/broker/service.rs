@@ -18,41 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::conn_id::ConnectionId;
-use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub(crate) struct Object {
+pub(crate) struct Service {
+    object_id: Uuid,
     id: Uuid,
-    conn_id: ConnectionId,
-    svcs: HashSet<Uuid>,
 }
 
-impl Object {
-    pub fn new(id: Uuid, conn_id: ConnectionId) -> Self {
-        Object {
-            id,
-            conn_id,
-            svcs: HashSet::new(),
-        }
-    }
-
-    pub fn conn_id(&self) -> &ConnectionId {
-        &self.conn_id
-    }
-
-    pub fn add_service(&mut self, id: Uuid) {
-        let unique = self.svcs.insert(id);
-        debug_assert!(unique);
-    }
-
-    pub fn remove_service(&mut self, id: Uuid) {
-        let contained = self.svcs.remove(&id);
-        debug_assert!(contained);
-    }
-
-    pub fn services<'a>(&'a self) -> impl Iterator<Item = Uuid> + 'a {
-        self.svcs.iter().cloned()
+impl Service {
+    pub fn new(object_id: Uuid, id: Uuid) -> Self {
+        Service { object_id, id }
     }
 }

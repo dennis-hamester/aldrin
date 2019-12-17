@@ -24,6 +24,7 @@ mod error;
 mod event;
 mod handle;
 mod object;
+mod service;
 mod state;
 
 use crate::conn::ConnectionEvent;
@@ -34,6 +35,7 @@ use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
 use object::Object;
+use service::Service;
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 use uuid::Uuid;
@@ -50,6 +52,7 @@ pub struct Broker {
     handle: Option<Handle>,
     conns: HashMap<ConnectionId, ConnectionState>,
     objs: HashMap<Uuid, Object>,
+    svcs: HashMap<(Uuid, Uuid), Service>,
 }
 
 impl Broker {
@@ -65,6 +68,7 @@ impl Broker {
             handle: Some(Handle::new(send)),
             conns: HashMap::new(),
             objs: HashMap::new(),
+            svcs: HashMap::new(),
         }
     }
 
@@ -151,6 +155,14 @@ impl Broker {
                 continue;
             }
 
+            if let Some((object_id, id)) = state.pop_add_svc() {
+                continue;
+            }
+
+            if let Some((object_id, id)) = state.pop_remove_svc() {
+                continue;
+            }
+
             if let Some(id) = state.pop_remove_obj() {
                 broadcast(
                     self.conns
@@ -179,10 +191,17 @@ impl Broker {
         // Ignore errors here
         conn.send(BrokerEvent::Shutdown).await.ok();
 
-        // Remove all objects and queue up events
-        for id in conn.objects() {
-            self.objs.remove(&id);
-            state.push_remove_obj(id);
+        // Remove all objects and services and queue up events.
+        for obj_id in conn.objects() {
+            state.push_remove_obj(obj_id);
+            let obj = self.objs.remove(&obj_id).expect("inconsistent state");
+
+            for svc_id in obj.services() {
+                state.push_remove_svc(obj_id, svc_id);
+                self.svcs
+                    .remove(&(obj_id, svc_id))
+                    .expect("inconsistent state");
+            }
         }
     }
 
@@ -203,8 +222,8 @@ impl Broker {
             ClientMessage::UnsubscribeObjectsDestroyed => {
                 self.unsubscribe_objects_destroyed(id).await
             }
-            ClientMessage::CreateService(_) => unimplemented!(),
-            ClientMessage::DestroyService(_) => unimplemented!(),
+            ClientMessage::CreateService(req) => self.create_service(state, id, req).await,
+            ClientMessage::DestroyService(req) => self.destroy_service(state, id, req).await,
             ClientMessage::SubscribeServicesCreated(_) => unimplemented!(),
             ClientMessage::UnsubscribeServicesCreated => unimplemented!(),
             ClientMessage::SubscribeServicesDestroyed => unimplemented!(),
@@ -271,9 +290,17 @@ impl Broker {
                     }),
                 ))
                 .await?;
-                entry.remove();
-                conn.remove_object(req.id);
+
                 state.push_remove_obj(req.id);
+                for svc_id in entry.get().services() {
+                    state.push_remove_svc(req.id, svc_id);
+                    self.svcs
+                        .remove(&(req.id, svc_id))
+                        .expect("inconsistent state");
+                }
+
+                conn.remove_object(req.id);
+                entry.remove();
                 Ok(())
             } else {
                 conn.send(BrokerEvent::BrokerMessage(
@@ -350,6 +377,119 @@ impl Broker {
 
         conn.set_objects_destroyed_subscribed(false);
         Ok(())
+    }
+
+    async fn create_service(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CreateService,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        match self.svcs.entry((req.object_id, req.id)) {
+            Entry::Occupied(_) => {
+                conn.send(BrokerEvent::BrokerMessage(
+                    BrokerMessage::CreateServiceReply(CreateServiceReply {
+                        serial: req.serial,
+                        result: CreateServiceResult::DuplicateId,
+                    }),
+                ))
+                .await
+            }
+
+            Entry::Vacant(entry) => {
+                if let Some(obj) = self.objs.get_mut(&req.object_id) {
+                    if obj.conn_id() == id {
+                        conn.send(BrokerEvent::BrokerMessage(
+                            BrokerMessage::CreateServiceReply(CreateServiceReply {
+                                serial: req.serial,
+                                result: CreateServiceResult::Ok,
+                            }),
+                        ))
+                        .await?;
+                        entry.insert(Service::new(req.object_id, req.id));
+                        obj.add_service(req.id);
+                        state.push_add_svc(req.object_id, req.id);
+                        Ok(())
+                    } else {
+                        conn.send(BrokerEvent::BrokerMessage(
+                            BrokerMessage::CreateServiceReply(CreateServiceReply {
+                                serial: req.serial,
+                                result: CreateServiceResult::ForeignObject,
+                            }),
+                        ))
+                        .await
+                    }
+                } else {
+                    conn.send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::CreateServiceReply(CreateServiceReply {
+                            serial: req.serial,
+                            result: CreateServiceResult::InvalidObject,
+                        }),
+                    ))
+                    .await
+                }
+            }
+        }
+    }
+
+    async fn destroy_service(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: DestroyService,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        if let Some(obj) = self.objs.get_mut(&req.object_id) {
+            if obj.conn_id() == id {
+                if let Entry::Occupied(entry) = self.svcs.entry((req.object_id, req.id)) {
+                    conn.send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                            serial: req.serial,
+                            result: DestroyServiceResult::Ok,
+                        }),
+                    ))
+                    .await?;
+
+                    state.push_remove_svc(req.object_id, req.id);
+                    obj.remove_service(req.id);
+                    entry.remove();
+                    Ok(())
+                } else {
+                    conn.send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                            serial: req.serial,
+                            result: DestroyServiceResult::InvalidService,
+                        }),
+                    ))
+                    .await
+                }
+            } else {
+                conn.send(BrokerEvent::BrokerMessage(
+                    BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                        serial: req.serial,
+                        result: DestroyServiceResult::ForeignObject,
+                    }),
+                ))
+                .await
+            }
+        } else {
+            conn.send(BrokerEvent::BrokerMessage(
+                BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                    serial: req.serial,
+                    result: DestroyServiceResult::InvalidObject,
+                }),
+            ))
+            .await
+        }
     }
 }
 

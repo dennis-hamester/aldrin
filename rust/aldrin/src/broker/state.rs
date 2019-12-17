@@ -28,6 +28,8 @@ pub(super) struct State {
     add_objs: Vec<Uuid>,
     remove_conns: Vec<ConnectionId>,
     remove_objs: Vec<Uuid>,
+    add_svcs: Vec<(Uuid, Uuid)>,
+    remove_svcs: Vec<(Uuid, Uuid)>,
 }
 
 impl State {
@@ -38,6 +40,8 @@ impl State {
             add_objs: Vec::new(),
             remove_conns: Vec::new(),
             remove_objs: Vec::new(),
+            add_svcs: Vec::new(),
+            remove_svcs: Vec::new(),
         }
     }
 
@@ -58,7 +62,11 @@ impl State {
     }
 
     pub fn has_work_left(&self) -> bool {
-        !self.add_objs.is_empty() || !self.remove_conns.is_empty() || !self.remove_objs.is_empty()
+        !self.add_objs.is_empty()
+            || !self.remove_conns.is_empty()
+            || !self.remove_objs.is_empty()
+            || !self.add_svcs.is_empty()
+            || !self.remove_svcs.is_empty()
     }
 
     pub fn push_add_obj(&mut self, id: Uuid) {
@@ -90,5 +98,21 @@ impl State {
 
     pub fn pop_remove_obj(&mut self) -> Option<Uuid> {
         self.remove_objs.pop()
+    }
+
+    pub fn push_add_svc(&mut self, object_id: Uuid, id: Uuid) {
+        self.add_svcs.push((object_id, id));
+    }
+
+    pub fn pop_add_svc(&mut self) -> Option<(Uuid, Uuid)> {
+        self.add_svcs.pop()
+    }
+
+    pub fn push_remove_svc(&mut self, object_id: Uuid, id: Uuid) {
+        self.remove_svcs.push((object_id, id));
+    }
+
+    pub fn pop_remove_svc(&mut self) -> Option<(Uuid, Uuid)> {
+        self.remove_svcs.pop()
     }
 }
