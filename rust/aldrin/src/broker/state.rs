@@ -88,13 +88,6 @@ impl State {
         self.remove_objs.push(id);
     }
 
-    pub fn push_remove_objs<I>(&mut self, ids: I)
-    where
-        I: IntoIterator<Item = Uuid>,
-    {
-        self.remove_objs.extend(ids);
-    }
-
     pub fn pop_remove_obj(&mut self) -> Option<Uuid> {
         self.remove_objs.pop()
     }

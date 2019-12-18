@@ -179,8 +179,11 @@ impl Broker {
         // Ignore errors here
         conn.send(BrokerEvent::Shutdown).await.ok();
 
-        // Mark all owned objects as destroyed
-        state.push_remove_objs(conn.objects());
+        // Remove all objects and queue up events
+        for id in conn.objects() {
+            self.objs.remove(&id);
+            state.push_remove_obj(id);
+        }
     }
 
     async fn handle_message(
