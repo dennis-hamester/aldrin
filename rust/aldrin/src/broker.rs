@@ -126,22 +126,14 @@ impl Broker {
 
     async fn process_loop_result(&mut self, state: &mut State) {
         loop {
+            // The order in which events are processed and sent to clients matters here.
+            // Always remove connections first. That way we never actually try to send events to
+            // clients, which are known to be shut down.
+            // Then, handle all "add" events before "remove" events. Otherwise we might announce new
+            // objects and services, which have previously been declared destroyed.
+
             if let Some(conn) = state.pop_remove_conn() {
                 self.shutdown_connection(state, &conn).await;
-                continue;
-            }
-
-            if let Some(id) = state.pop_remove_obj() {
-                broadcast(
-                    self.conns
-                        .iter_mut()
-                        .filter(|(_, c)| c.objects_destroyed_subscribed()),
-                    state,
-                    BrokerEvent::BrokerMessage(BrokerMessage::ObjectDestroyedEvent(
-                        ObjectDestroyedEvent { id },
-                    )),
-                )
-                .await;
                 continue;
             }
 
@@ -153,6 +145,20 @@ impl Broker {
                     state,
                     BrokerEvent::BrokerMessage(BrokerMessage::ObjectCreatedEvent(
                         ObjectCreatedEvent { id, serial: None },
+                    )),
+                )
+                .await;
+                continue;
+            }
+
+            if let Some(id) = state.pop_remove_obj() {
+                broadcast(
+                    self.conns
+                        .iter_mut()
+                        .filter(|(_, c)| c.objects_destroyed_subscribed()),
+                    state,
+                    BrokerEvent::BrokerMessage(BrokerMessage::ObjectDestroyedEvent(
+                        ObjectDestroyedEvent { id },
                     )),
                 )
                 .await;
