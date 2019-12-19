@@ -156,10 +156,34 @@ impl Broker {
             }
 
             if let Some((object_id, id)) = state.pop_add_svc() {
+                broadcast(
+                    self.conns
+                        .iter_mut()
+                        .filter(|(_, c)| c.services_created_subscribed()),
+                    state,
+                    BrokerEvent::BrokerMessage(BrokerMessage::ServiceCreatedEvent(
+                        ServiceCreatedEvent {
+                            object_id,
+                            id,
+                            serial: None,
+                        },
+                    )),
+                )
+                .await;
                 continue;
             }
 
             if let Some((object_id, id)) = state.pop_remove_svc() {
+                broadcast(
+                    self.conns
+                        .iter_mut()
+                        .filter(|(_, c)| c.services_destroyed_subscribed()),
+                    state,
+                    BrokerEvent::BrokerMessage(BrokerMessage::ServiceDestroyedEvent(
+                        ServiceDestroyedEvent { object_id, id },
+                    )),
+                )
+                .await;
                 continue;
             }
 
@@ -224,10 +248,18 @@ impl Broker {
             }
             ClientMessage::CreateService(req) => self.create_service(state, id, req).await,
             ClientMessage::DestroyService(req) => self.destroy_service(state, id, req).await,
-            ClientMessage::SubscribeServicesCreated(_) => unimplemented!(),
-            ClientMessage::UnsubscribeServicesCreated => unimplemented!(),
-            ClientMessage::SubscribeServicesDestroyed => unimplemented!(),
-            ClientMessage::UnsubscribeServicesDestroyed => unimplemented!(),
+            ClientMessage::SubscribeServicesCreated(req) => {
+                self.subscribe_services_created(id, req).await
+            }
+            ClientMessage::UnsubscribeServicesCreated => {
+                self.unsubscribe_services_created(id).await
+            }
+            ClientMessage::SubscribeServicesDestroyed => {
+                self.subscribe_services_destroyed(id).await
+            }
+            ClientMessage::UnsubscribeServicesDestroyed => {
+                self.unsubscribe_services_destroyed(id).await
+            }
             ClientMessage::Connect(_) => Err(()),
         }
     }
@@ -490,6 +522,64 @@ impl Broker {
             ))
             .await
         }
+    }
+
+    async fn subscribe_services_created(
+        &mut self,
+        id: &ConnectionId,
+        req: SubscribeServicesCreated,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_services_created_subscribed(true);
+
+        if let Some(serial) = req.serial {
+            for &(object_id, id) in self.svcs.keys() {
+                conn.send(BrokerEvent::BrokerMessage(
+                    BrokerMessage::ServiceCreatedEvent(ServiceCreatedEvent {
+                        object_id,
+                        id,
+                        serial: Some(serial),
+                    }),
+                ))
+                .await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn unsubscribe_services_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_services_created_subscribed(false);
+        Ok(())
+    }
+
+    async fn subscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_services_destroyed_subscribed(true);
+        Ok(())
+    }
+
+    async fn unsubscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        conn.set_services_destroyed_subscribed(false);
+        Ok(())
     }
 }
 

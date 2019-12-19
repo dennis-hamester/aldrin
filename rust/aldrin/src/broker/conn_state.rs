@@ -30,6 +30,8 @@ pub(super) struct ConnectionState {
     objects: HashSet<Uuid>,
     objects_created_subscribed: bool,
     objects_destroyed_subscribed: bool,
+    services_created_subscribed: bool,
+    services_destroyed_subscribed: bool,
 }
 
 impl ConnectionState {
@@ -39,6 +41,8 @@ impl ConnectionState {
             objects: HashSet::new(),
             objects_created_subscribed: false,
             objects_destroyed_subscribed: false,
+            services_created_subscribed: false,
+            services_destroyed_subscribed: false,
         }
     }
 
@@ -74,5 +78,21 @@ impl ConnectionState {
 
     pub fn objects_destroyed_subscribed(&self) -> bool {
         self.objects_destroyed_subscribed
+    }
+
+    pub fn set_services_created_subscribed(&mut self, subscribed: bool) {
+        self.services_created_subscribed = subscribed;
+    }
+
+    pub fn services_created_subscribed(&self) -> bool {
+        self.services_created_subscribed
+    }
+
+    pub fn set_services_destroyed_subscribed(&mut self, subscribed: bool) {
+        self.services_destroyed_subscribed = subscribed;
+    }
+
+    pub fn services_destroyed_subscribed(&self) -> bool {
+        self.services_destroyed_subscribed
     }
 }
