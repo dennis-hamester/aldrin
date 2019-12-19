@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 use super::{
-    Error, Event, Object, ObjectsCreated, ObjectsDestroyed, Service, ServicesCreated,
-    ServicesDestroyed,
+    Error, Event, Object, ObjectProxy, ObjectsCreated, ObjectsDestroyed, Service, ServiceProxy,
+    ServicesCreated, ServicesDestroyed,
 };
 use crate::proto::broker::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -141,5 +141,13 @@ impl Handle {
             .send(Event::SubscribeServicesDestroyed(ev_send))
             .await?;
         Ok(ServicesDestroyed::new(ev_recv))
+    }
+
+    pub fn bind_object_proxy(&self, id: Uuid) -> ObjectProxy {
+        ObjectProxy::new(id, self.clone())
+    }
+
+    pub fn bind_service_proxy(&self, object_id: Uuid, service_id: Uuid) -> ServiceProxy {
+        ServiceProxy::new(object_id, service_id, self.clone())
     }
 }
