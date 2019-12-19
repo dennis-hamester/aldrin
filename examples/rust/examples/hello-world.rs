@@ -45,33 +45,33 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 
-    let mut oc = handle.objects_created(true).await?;
-    let oc_join_handle = tokio::spawn(async move {
-        while let Some(id) = oc.next().await {
-            println!("Object created: {}", id);
+    let oc = handle.objects_created(true).await?;
+    tokio::spawn(oc.for_each(|id| {
+        async move {
+            println!("Object {} created.", id);
         }
-    });
+    }));
 
-    let mut od = handle.objects_destroyed().await?;
-    let od_join_handle = tokio::spawn(async move {
-        while let Some(id) = od.next().await {
-            println!("Object destroyed: {}", id);
+    let od = handle.objects_destroyed().await?;
+    tokio::spawn(od.for_each(|id| {
+        async move {
+            println!("Object {} destroyed.", id);
         }
-    });
+    }));
 
-    let mut sc = handle.services_created(true).await?;
-    let sc_join_handle = tokio::spawn(async move {
-        while let Some((obj_id, svc_id)) = sc.next().await {
-            println!("Service created: {}/{}", obj_id, svc_id);
+    let sc = handle.services_created(true).await?;
+    tokio::spawn(sc.for_each(|(obj_id, svc_id)| {
+        async move {
+            println!("Object {} created service {}.", obj_id, svc_id);
         }
-    });
+    }));
 
-    let mut sd = handle.services_destroyed().await?;
-    let sd_join_handle = tokio::spawn(async move {
-        while let Some((obj_id, svc_id)) = sd.next().await {
-            println!("Service destroyed: {}/{}", obj_id, svc_id);
+    let sd = handle.services_destroyed().await?;
+    tokio::spawn(sd.for_each(|(obj_id, svc_id)| {
+        async move {
+            println!("Object {} destroyed service {}.", obj_id, svc_id);
         }
-    });
+    }));
 
     let mut obj = handle.create_object(Uuid::new_v4()).await?;
     let mut svc = obj.create_service(Uuid::new_v4()).await?;
@@ -80,10 +80,6 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     obj.destroy().await?;
 
     handle.shutdown().await?;
-    oc_join_handle.await?;
-    od_join_handle.await?;
-    sc_join_handle.await?;
-    sd_join_handle.await?;
     join_handle.await??;
 
     Ok(())
