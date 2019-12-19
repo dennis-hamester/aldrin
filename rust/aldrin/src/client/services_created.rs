@@ -18,19 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::broker::*;
-use futures_channel::{mpsc, oneshot};
+use futures_channel::mpsc;
+use futures_core::stream::Stream;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub(crate) enum Event {
-    Shutdown,
-    CreateObject(Uuid, oneshot::Sender<CreateObjectResult>),
-    DestroyObject(Uuid, oneshot::Sender<DestroyObjectResult>),
-    SubscribeObjectsCreated(mpsc::Sender<Uuid>, bool),
-    SubscribeObjectsDestroyed(mpsc::Sender<Uuid>),
-    CreateService(Uuid, Uuid, oneshot::Sender<CreateServiceResult>),
-    DestroyService(Uuid, Uuid, oneshot::Sender<DestroyServiceResult>),
-    SubscribeServicesCreated(mpsc::Sender<(Uuid, Uuid)>, bool),
-    SubscribeServicesDestroyed(mpsc::Sender<(Uuid, Uuid)>),
+pub struct ServicesCreated(mpsc::Receiver<(Uuid, Uuid)>);
+
+impl ServicesCreated {
+    pub(crate) fn new(events: mpsc::Receiver<(Uuid, Uuid)>) -> Self {
+        ServicesCreated(events)
+    }
+}
+
+impl Stream for ServicesCreated {
+    type Item = (Uuid, Uuid);
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<(Uuid, Uuid)>> {
+        let events = Pin::new(&mut Pin::into_inner(self).0);
+        events.poll_next(cx)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }
