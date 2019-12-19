@@ -8,3 +8,8 @@ edition = "2018"
 [dependencies]
 pest = "2.1.2"
 pest_derive = "2.1.0"
+structopt = "0.3.8"
+
+[[bin]]
+doc = false
+name = "aldrin-gen"
