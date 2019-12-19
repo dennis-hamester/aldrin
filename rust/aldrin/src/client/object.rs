@@ -37,6 +37,10 @@ impl Object {
         }
     }
 
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
     pub async fn destroy(&mut self) -> Result<(), Error> {
         let res = self.client.destroy_object(self.id).await;
         self.destroyed = true;

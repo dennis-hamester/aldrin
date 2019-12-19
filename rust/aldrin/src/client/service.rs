@@ -39,6 +39,14 @@ impl Service {
         }
     }
 
+    pub fn object_id(&self) -> Uuid {
+        self.object_id
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
     pub async fn destroy(&mut self) -> Result<(), Error> {
         let res = self.client.destroy_service(self.object_id, self.id).await;
         self.destroyed = true;
