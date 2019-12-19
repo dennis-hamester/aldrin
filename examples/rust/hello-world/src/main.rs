@@ -76,60 +76,60 @@ async fn main() -> Result<(), Error> {
 
 #[derive(Debug)]
 enum Error {
-    SendError(SendError),
-    BrokerError(broker::Error),
-    ClientError(client::Error),
-    ConnectionEstablishError(conn::EstablishError),
-    ConnectionRunError(conn::RunError),
-    ClientConnectError(client::ConnectError),
-    ClientRunError(client::RunError),
-    JoinError(JoinError),
+    Send(SendError),
+    Broker(broker::Error),
+    Client(client::Error),
+    ConnectionEstablish(conn::EstablishError),
+    ConnectionRun(conn::RunError),
+    ClientConnect(client::ConnectError),
+    ClientRun(client::RunError),
+    Join(JoinError),
 }
 
 impl From<SendError> for Error {
     fn from(e: SendError) -> Self {
-        Error::SendError(e)
+        Error::Send(e)
     }
 }
 
 impl From<broker::Error> for Error {
     fn from(e: broker::Error) -> Self {
-        Error::BrokerError(e)
+        Error::Broker(e)
     }
 }
 
 impl From<client::Error> for Error {
     fn from(e: client::Error) -> Self {
-        Error::ClientError(e)
+        Error::Client(e)
     }
 }
 
 impl From<conn::EstablishError> for Error {
     fn from(e: conn::EstablishError) -> Self {
-        Error::ConnectionEstablishError(e)
+        Error::ConnectionEstablish(e)
     }
 }
 
 impl From<conn::RunError> for Error {
     fn from(e: conn::RunError) -> Self {
-        Error::ConnectionRunError(e)
+        Error::ConnectionRun(e)
     }
 }
 
 impl From<client::ConnectError> for Error {
     fn from(e: client::ConnectError) -> Self {
-        Error::ClientConnectError(e)
+        Error::ClientConnect(e)
     }
 }
 
 impl From<client::RunError> for Error {
     fn from(e: client::RunError) -> Self {
-        Error::ClientRunError(e)
+        Error::ClientRun(e)
     }
 }
 
 impl From<JoinError> for Error {
     fn from(e: JoinError) -> Self {
-        Error::JoinError(e)
+        Error::Join(e)
     }
 }
