@@ -56,3 +56,26 @@ pub enum KeyValue {
     String(String),
     Uuid(Uuid),
 }
+
+#[derive(Debug, Clone)]
+pub struct CallFunction {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub service_id: Uuid,
+    pub function: u32,
+    pub args: Value,
+}
+
+#[derive(Debug, Clone)]
+pub enum CallFunctionResult {
+    Ok(Value),
+    Err(Value),
+    InvalidObject,
+    InvalidService,
+}
+
+#[derive(Debug, Clone)]
+pub struct CallFunctionReply {
+    pub serial: u32,
+    pub result: CallFunctionResult,
+}

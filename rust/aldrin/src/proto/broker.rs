@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::Value;
+use super::common::*;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -116,18 +116,4 @@ pub struct ServiceCreatedEvent {
 pub struct ServiceDestroyedEvent {
     pub object_id: Uuid,
     pub id: Uuid,
-}
-
-#[derive(Debug, Clone)]
-pub enum CallFunctionResult {
-    Ok(Value),
-    Err(Value),
-    InvalidObject,
-    InvalidService,
-}
-
-#[derive(Debug, Clone)]
-pub struct CallFunctionReply {
-    pub serial: u32,
-    pub result: CallFunctionResult,
 }

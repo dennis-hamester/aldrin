@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::Value;
+use super::common::*;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -78,13 +78,4 @@ pub struct DestroyService {
 #[derive(Debug, Clone)]
 pub struct SubscribeServicesCreated {
     pub serial: Option<u32>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CallFunction {
-    pub serial: u32,
-    pub object_id: Uuid,
-    pub service_id: Uuid,
-    pub function: u32,
-    pub args: Value,
 }

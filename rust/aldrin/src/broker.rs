@@ -31,6 +31,7 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::proto::broker::*;
 use crate::proto::client::*;
+use crate::proto::common::*;
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;

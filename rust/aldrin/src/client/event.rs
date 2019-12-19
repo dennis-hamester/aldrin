@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use crate::proto::broker::*;
-use crate::proto::Value;
+use crate::proto::common::{CallFunctionResult, Value};
 use futures_channel::{mpsc, oneshot};
 use uuid::Uuid;
 

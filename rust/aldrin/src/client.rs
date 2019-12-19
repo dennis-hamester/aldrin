@@ -34,7 +34,7 @@ mod transport;
 
 use crate::proto::broker::*;
 use crate::proto::client::*;
-use crate::proto::{BrokerMessage, ClientMessage, Value};
+use crate::proto::common::*;
 use crate::serial_map::SerialMap;
 use event::Event;
 use futures_channel::{mpsc, oneshot};

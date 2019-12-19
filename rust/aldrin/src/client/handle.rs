@@ -23,7 +23,7 @@ use super::{
     ServicesCreated, ServicesDestroyed,
 };
 use crate::proto::broker::*;
-use crate::proto::Value;
+use crate::proto::common::{CallFunctionResult, Value};
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
