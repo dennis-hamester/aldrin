@@ -32,6 +32,7 @@ use crate::conn_id::ConnectionId;
 use crate::proto::broker::*;
 use crate::proto::client::*;
 use crate::proto::common::*;
+use crate::serial_map::SerialMap;
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
@@ -54,6 +55,7 @@ pub struct Broker {
     conns: HashMap<ConnectionId, ConnectionState>,
     objs: HashMap<Uuid, Object>,
     svcs: HashMap<(Uuid, Uuid), Service>,
+    function_calls: SerialMap<(u32, ConnectionId)>,
 }
 
 impl Broker {
@@ -70,6 +72,7 @@ impl Broker {
             conns: HashMap::new(),
             objs: HashMap::new(),
             svcs: HashMap::new(),
+            function_calls: SerialMap::new(),
         }
     }
 
@@ -226,6 +229,7 @@ impl Broker {
                 self.svcs
                     .remove(&(obj_id, svc_id))
                     .expect("inconsistent state");
+                // TODO: Handle pending function calls
             }
         }
     }
@@ -261,7 +265,7 @@ impl Broker {
             ClientMessage::UnsubscribeServicesDestroyed => {
                 self.unsubscribe_services_destroyed(id).await
             }
-            ClientMessage::CallFunction(_) => unimplemented!(),
+            ClientMessage::CallFunction(req) => self.call_function(state, id, req).await,
             ClientMessage::CallFunctionReply(_) => unimplemented!(),
             ClientMessage::Connect(_) => Err(()),
         }
@@ -497,6 +501,7 @@ impl Broker {
                     state.push_remove_svc(req.object_id, req.id);
                     obj.remove_service(req.id);
                     entry.remove();
+                    // TODO: Handle pending function calls
                     Ok(())
                 } else {
                     conn.send(BrokerEvent::BrokerMessage(
@@ -582,6 +587,79 @@ impl Broker {
         };
 
         conn.set_services_destroyed_subscribed(false);
+        Ok(())
+    }
+
+    async fn call_function(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CallFunction,
+    ) -> Result<(), ()> {
+        let obj = match self.objs.get(&req.object_id) {
+            Some(obj) => obj,
+            None => {
+                let conn = match self.conns.get_mut(id) {
+                    Some(conn) => conn,
+                    None => return Ok(()),
+                };
+
+                return conn
+                    .send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::CallFunctionReply(CallFunctionReply {
+                            serial: req.serial,
+                            result: CallFunctionResult::InvalidObject,
+                        }),
+                    ))
+                    .await;
+            }
+        };
+
+        let svc = match self.svcs.get_mut(&(req.object_id, req.service_id)) {
+            Some(svc) => svc,
+            None => {
+                let conn = match self.conns.get_mut(id) {
+                    Some(conn) => conn,
+                    None => return Ok(()),
+                };
+
+                return conn
+                    .send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::CallFunctionReply(CallFunctionReply {
+                            serial: req.serial,
+                            result: CallFunctionResult::InvalidService,
+                        }),
+                    ))
+                    .await;
+            }
+        };
+
+        let serial = self.function_calls.insert((req.serial, id.clone()));
+        let callee_id = obj.conn_id();
+        let callee_conn = self
+            .conns
+            .get_mut(callee_id)
+            .expect("invalid connection id");
+
+        let res = callee_conn
+            .send(BrokerEvent::BrokerMessage(BrokerMessage::CallFunction(
+                CallFunction {
+                    serial,
+                    object_id: req.object_id,
+                    service_id: req.service_id,
+                    function: req.function,
+                    args: req.args,
+                },
+            )))
+            .await;
+
+        if res.is_ok() {
+            svc.add_function_call(serial);
+        } else {
+            self.function_calls.remove(serial);
+            state.push_remove_conn(callee_id.clone());
+        }
+
         Ok(())
     }
 }

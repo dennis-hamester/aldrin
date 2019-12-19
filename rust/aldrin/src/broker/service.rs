@@ -18,16 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Service {
     object_id: Uuid,
     id: Uuid,
+    function_calls: HashSet<u32>,
 }
 
 impl Service {
     pub fn new(object_id: Uuid, id: Uuid) -> Self {
-        Service { object_id, id }
+        Service {
+            object_id,
+            id,
+            function_calls: HashSet::new(),
+        }
+    }
+
+    pub fn add_function_call(&mut self, serial: u32) {
+        let unique = self.function_calls.insert(serial);
+        debug_assert!(unique);
     }
 }
