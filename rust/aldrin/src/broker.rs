@@ -260,6 +260,7 @@ impl Broker {
             ClientMessage::UnsubscribeServicesDestroyed => {
                 self.unsubscribe_services_destroyed(id).await
             }
+            ClientMessage::CallFunction(_) => unimplemented!(),
             ClientMessage::Connect(_) => Err(()),
         }
     }

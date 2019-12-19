@@ -18,12 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub mod broker;
-pub mod client;
-pub mod common;
+use std::collections::{HashMap, HashSet};
+use uuid::Uuid;
 
-pub const VERSION: u32 = 1;
+#[derive(Debug, Clone)]
+pub enum Value {
+    None,
+    U8(u8),
+    I8(i8),
+    U16(u16),
+    I16(i16),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    F32(f32),
+    F64(f64),
+    String(String),
+    Uuid(Uuid),
+    Vec(Vec<Value>),
+    Map(HashMap<KeyValue, Value>),
+    Set(HashSet<KeyValue>),
+    Struct(HashMap<u32, Value>),
+    Enum(u32, Box<Value>),
+}
 
-pub use broker::BrokerMessage;
-pub use client::ClientMessage;
-pub use common::Value;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum KeyValue {
+    U8(u8),
+    I8(i8),
+    U16(u16),
+    I16(i16),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    String(String),
+    Uuid(Uuid),
+}
