@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use aldrin::proto::Value;
 use aldrin::{broker, client};
 use aldrin_examples::Error;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
@@ -75,6 +76,9 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
 
     let mut obj = handle.create_object(Uuid::new_v4()).await?;
     let mut svc = obj.create_service(Uuid::new_v4()).await?;
+
+    let mut svc_proxy = handle.bind_service_proxy(svc.object_id(), svc.id());
+    println!("{:#?}", svc_proxy.call(0, Value::None).await);
 
     svc.destroy().await?;
     obj.destroy().await?;
