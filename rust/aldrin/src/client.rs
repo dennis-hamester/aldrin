@@ -35,7 +35,7 @@ mod transport;
 
 use crate::proto::broker::*;
 use crate::proto::client::*;
-use crate::proto::{BrokerMessage, ClientMessage};
+use crate::proto::{BrokerMessage, ClientMessage, Value};
 use event::Event;
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -73,6 +73,7 @@ where
     destroy_service: SerialMap<oneshot::Sender<DestroyServiceResult>>,
     services_created: SerialMap<mpsc::Sender<(Uuid, Uuid)>>,
     services_destroyed: SerialMap<mpsc::Sender<(Uuid, Uuid)>>,
+    function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
 }
 
 impl<T> Client<T>
@@ -97,6 +98,7 @@ where
             destroy_service: SerialMap::new(),
             services_created: SerialMap::new(),
             services_destroyed: SerialMap::new(),
+            function_calls: SerialMap::new(),
         }
     }
 
@@ -372,6 +374,10 @@ where
             Event::SubscribeServicesDestroyed(sender) => {
                 self.subscribe_services_destroyed(sender).await
             }
+            Event::CallFunction(object_id, service_id, function, args, reply) => {
+                self.call_function(object_id, service_id, function, args, reply)
+                    .await
+            }
 
             // Handled in Client::run()
             Event::Shutdown => unreachable!(),
@@ -527,5 +533,29 @@ where
         } else {
             Ok(())
         }
+    }
+
+    async fn call_function<E>(
+        &mut self,
+        object_id: Uuid,
+        service_id: Uuid,
+        function: u32,
+        args: Value,
+        reply: oneshot::Sender<CallFunctionResult>,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let serial = self.function_calls.insert(reply);
+        self.t
+            .send(ClientMessage::CallFunction(CallFunction {
+                serial,
+                object_id,
+                service_id,
+                function,
+                args,
+            }))
+            .await
+            .map_err(Into::into)
     }
 }

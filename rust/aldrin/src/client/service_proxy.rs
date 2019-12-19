@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::Handle;
+use super::{Error, Handle};
+use crate::proto::Value;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -43,5 +44,15 @@ impl ServiceProxy {
 
     pub fn id(&self) -> Uuid {
         self.id
+    }
+
+    pub async fn call(
+        &mut self,
+        function: u32,
+        args: Value,
+    ) -> Result<Result<Value, Value>, Error> {
+        self.client
+            .call_function(self.object_id, self.id, function, args)
+            .await
     }
 }

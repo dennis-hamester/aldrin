@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use crate::proto::broker::*;
+use crate::proto::Value;
 use futures_channel::{mpsc, oneshot};
 use uuid::Uuid;
 
@@ -33,4 +34,5 @@ pub(crate) enum Event {
     DestroyService(Uuid, Uuid, oneshot::Sender<DestroyServiceResult>),
     SubscribeServicesCreated(mpsc::Sender<(Uuid, Uuid)>, bool),
     SubscribeServicesDestroyed(mpsc::Sender<(Uuid, Uuid)>),
+    CallFunction(Uuid, Uuid, u32, Value, oneshot::Sender<CallFunctionResult>),
 }

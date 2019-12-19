@@ -23,6 +23,7 @@ use super::{
     ServicesCreated, ServicesDestroyed,
 };
 use crate::proto::broker::*;
+use crate::proto::Value;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
@@ -149,5 +150,27 @@ impl Handle {
 
     pub fn bind_service_proxy(&self, object_id: Uuid, service_id: Uuid) -> ServiceProxy {
         ServiceProxy::new(object_id, service_id, self.clone())
+    }
+
+    pub(crate) async fn call_function(
+        &mut self,
+        object_id: Uuid,
+        service_id: Uuid,
+        function: u32,
+        args: Value,
+    ) -> Result<Result<Value, Value>, Error> {
+        let (res_send, res_reply) = oneshot::channel();
+        self.send
+            .send(Event::CallFunction(
+                object_id, service_id, function, args, res_send,
+            ))
+            .await?;
+        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            CallFunctionResult::Ok(v) => Ok(Ok(v)),
+            CallFunctionResult::Err(v) => Ok(Err(v)),
+            CallFunctionResult::InvalidObject => Err(Error::InvalidObject(object_id)),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService(object_id, service_id)),
+        }
     }
 }
