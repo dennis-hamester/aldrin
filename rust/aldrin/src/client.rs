@@ -166,6 +166,7 @@ where
             BrokerMessage::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             BrokerMessage::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
 
+            BrokerMessage::CallFunction(_) => unimplemented!(),
             BrokerMessage::CallFunctionReply(_) => unimplemented!(),
 
             BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),

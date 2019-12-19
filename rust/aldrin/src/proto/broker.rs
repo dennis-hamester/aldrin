@@ -32,6 +32,7 @@ pub enum BrokerMessage {
     DestroyServiceReply(DestroyServiceReply),
     ServiceCreatedEvent(ServiceCreatedEvent),
     ServiceDestroyedEvent(ServiceDestroyedEvent),
+    CallFunction(CallFunction),
     CallFunctionReply(CallFunctionReply),
 }
 

@@ -37,6 +37,7 @@ pub enum ClientMessage {
     SubscribeServicesDestroyed,
     UnsubscribeServicesDestroyed,
     CallFunction(CallFunction),
+    CallFunctionReply(CallFunctionReply),
 }
 
 #[derive(Debug, Clone)]
