@@ -41,4 +41,8 @@ impl Service {
         let unique = self.function_calls.insert(serial);
         debug_assert!(unique);
     }
+
+    pub fn function_calls<'a>(&'a self) -> impl Iterator<Item = u32> + 'a {
+        self.function_calls.iter().cloned()
+    }
 }

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use crate::conn_id::ConnectionId;
+use crate::proto::common::CallFunctionResult;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -30,6 +31,7 @@ pub(super) struct State {
     remove_objs: Vec<Uuid>,
     add_svcs: Vec<(Uuid, Uuid)>,
     remove_svcs: Vec<(Uuid, Uuid)>,
+    remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
 }
 
 impl State {
@@ -42,6 +44,7 @@ impl State {
             remove_objs: Vec::new(),
             add_svcs: Vec::new(),
             remove_svcs: Vec::new(),
+            remove_function_calls: Vec::new(),
         }
     }
 
@@ -67,6 +70,7 @@ impl State {
             || !self.remove_objs.is_empty()
             || !self.add_svcs.is_empty()
             || !self.remove_svcs.is_empty()
+            || !self.remove_function_calls.is_empty()
     }
 
     pub fn push_add_obj(&mut self, id: Uuid) {
@@ -114,5 +118,18 @@ impl State {
 
     pub fn pop_remove_svc(&mut self) -> Option<(Uuid, Uuid)> {
         self.remove_svcs.pop()
+    }
+
+    pub fn push_remove_function_call(
+        &mut self,
+        serial: u32,
+        conn_id: ConnectionId,
+        res: CallFunctionResult,
+    ) {
+        self.remove_function_calls.push((serial, conn_id, res));
+    }
+
+    pub fn pop_remove_function_call(&mut self) -> Option<(u32, ConnectionId, CallFunctionResult)> {
+        self.remove_function_calls.pop()
     }
 }

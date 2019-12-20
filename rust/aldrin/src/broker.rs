@@ -205,6 +205,24 @@ impl Broker {
                 continue;
             }
 
+            if let Some((serial, conn_id, result)) = state.pop_remove_function_call() {
+                let conn = match self.conns.get_mut(&conn_id) {
+                    Some(conn) => conn,
+                    None => continue,
+                };
+
+                let res = conn
+                    .send(BrokerEvent::BrokerMessage(
+                        BrokerMessage::CallFunctionReply(CallFunctionReply { serial, result }),
+                    ))
+                    .await;
+
+                if res.is_err() {
+                    state.push_remove_conn(conn_id);
+                }
+                continue;
+            }
+
             debug_assert!(!state.has_work_left());
             break;
         }
@@ -226,10 +244,22 @@ impl Broker {
 
             for svc_id in obj.services() {
                 state.push_remove_svc(obj_id, svc_id);
-                self.svcs
+                let svc = self
+                    .svcs
                     .remove(&(obj_id, svc_id))
                     .expect("inconsistent state");
-                // TODO: Handle pending function calls
+
+                for serial in svc.function_calls() {
+                    let (serial, conn_id) = self
+                        .function_calls
+                        .remove(serial)
+                        .expect("inconsistent state");
+                    state.push_remove_function_call(
+                        serial,
+                        conn_id,
+                        CallFunctionResult::InvalidObject,
+                    );
+                }
             }
         }
     }
@@ -333,9 +363,22 @@ impl Broker {
                 state.push_remove_obj(req.id);
                 for svc_id in entry.get().services() {
                     state.push_remove_svc(req.id, svc_id);
-                    self.svcs
+                    let svc = self
+                        .svcs
                         .remove(&(req.id, svc_id))
                         .expect("inconsistent state");
+
+                    for serial in svc.function_calls() {
+                        let (serial, conn_id) = self
+                            .function_calls
+                            .remove(serial)
+                            .expect("inconsistent state");
+                        state.push_remove_function_call(
+                            serial,
+                            conn_id,
+                            CallFunctionResult::InvalidObject,
+                        );
+                    }
                 }
 
                 conn.remove_object(req.id);
@@ -500,8 +543,18 @@ impl Broker {
 
                     state.push_remove_svc(req.object_id, req.id);
                     obj.remove_service(req.id);
+                    for serial in entry.get().function_calls() {
+                        let (serial, conn_id) = self
+                            .function_calls
+                            .remove(serial)
+                            .expect("inconsistent state");
+                        state.push_remove_function_call(
+                            serial,
+                            conn_id,
+                            CallFunctionResult::InvalidService,
+                        );
+                    }
                     entry.remove();
-                    // TODO: Handle pending function calls
                     Ok(())
                 } else {
                     conn.send(BrokerEvent::BrokerMessage(
