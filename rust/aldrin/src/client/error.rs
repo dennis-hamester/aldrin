@@ -75,6 +75,8 @@ pub enum Error {
     InvalidObject(Uuid),
     DuplicateService(Uuid, Uuid),
     InvalidService(Uuid, Uuid),
+    InvalidFunction(Uuid, Uuid, u32),
+    InvalidArgs(Uuid, Uuid, u32),
 }
 
 impl From<SendError> for Error {
@@ -104,6 +106,14 @@ impl fmt::Display for Error {
             Error::InvalidService(obj_id, id) => {
                 f.write_fmt(format_args!("invalid service {} for object {}", id, obj_id))
             }
+            Error::InvalidFunction(obj_id, svc_id, id) => f.write_fmt(format_args!(
+                "invalid function {} of service {} and object {}",
+                id, svc_id, obj_id
+            )),
+            Error::InvalidArgs(obj_id, svc_id, func_id) => f.write_fmt(format_args!(
+                "invalid args for function {} of service {} and object {}",
+                func_id, svc_id, obj_id
+            )),
         }
     }
 }

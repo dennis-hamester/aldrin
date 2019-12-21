@@ -72,6 +72,8 @@ pub enum CallFunctionResult {
     Err(Value),
     InvalidObject,
     InvalidService,
+    InvalidFunction,
+    InvalidArgs,
 }
 
 #[derive(Debug, Clone)]

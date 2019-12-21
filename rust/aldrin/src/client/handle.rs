@@ -171,6 +171,12 @@ impl Handle {
             CallFunctionResult::Err(v) => Ok(Err(v)),
             CallFunctionResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CallFunctionResult::InvalidService => Err(Error::InvalidService(object_id, service_id)),
+            CallFunctionResult::InvalidFunction => {
+                Err(Error::InvalidFunction(object_id, service_id, function))
+            }
+            CallFunctionResult::InvalidArgs => {
+                Err(Error::InvalidArgs(object_id, service_id, function))
+            }
         }
     }
 }
