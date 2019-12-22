@@ -22,8 +22,7 @@ use super::{
     Error, Event, Object, ObjectProxy, ObjectsCreated, ObjectsDestroyed, Service, ServiceProxy,
     ServicesCreated, ServicesDestroyed,
 };
-use aldrin_proto::broker::*;
-use aldrin_proto::common::{CallFunctionResult, Value};
+use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;

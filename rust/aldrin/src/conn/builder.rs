@@ -20,8 +20,7 @@
 
 use super::{Connection, ConnectionEvent, EstablishError, Transport};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::broker::*;
-use aldrin_proto::{BrokerMessage, ClientMessage, VERSION};
+use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;

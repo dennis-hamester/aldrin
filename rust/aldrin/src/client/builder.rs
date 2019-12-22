@@ -19,9 +19,7 @@
 // SOFTWARE.
 
 use super::{Client, ConnectError, Transport};
-use aldrin_proto::broker::*;
-use aldrin_proto::client::*;
-use aldrin_proto::{BrokerMessage, ClientMessage, VERSION};
+use aldrin_proto::*;
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 

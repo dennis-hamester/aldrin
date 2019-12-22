@@ -18,12 +18,226 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub mod broker;
-pub mod client;
-pub mod common;
+use std::collections::{HashMap, HashSet};
+use uuid::Uuid;
 
 pub const VERSION: u32 = 1;
 
-pub use broker::BrokerMessage;
-pub use client::ClientMessage;
-pub use common::Value;
+#[derive(Debug, Clone)]
+pub enum Value {
+    None,
+    U8(u8),
+    I8(i8),
+    U16(u16),
+    I16(i16),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    F32(f32),
+    F64(f64),
+    String(String),
+    Uuid(Uuid),
+    Vec(Vec<Value>),
+    Map(HashMap<KeyValue, Value>),
+    Set(HashSet<KeyValue>),
+    Struct(HashMap<u32, Value>),
+    Enum(u32, Box<Value>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum KeyValue {
+    U8(u8),
+    I8(i8),
+    U16(u16),
+    I16(i16),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    String(String),
+    Uuid(Uuid),
+}
+
+#[derive(Debug, Clone)]
+pub struct CallFunction {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub service_id: Uuid,
+    pub function: u32,
+    pub args: Value,
+}
+
+#[derive(Debug, Clone)]
+pub enum CallFunctionResult {
+    Ok(Value),
+    Err(Value),
+    InvalidObject,
+    InvalidService,
+    InvalidFunction,
+    InvalidArgs,
+}
+
+#[derive(Debug, Clone)]
+pub struct CallFunctionReply {
+    pub serial: u32,
+    pub result: CallFunctionResult,
+}
+
+#[derive(Debug, Clone)]
+pub enum BrokerMessage {
+    ConnectReply(ConnectReply),
+    CreateObjectReply(CreateObjectReply),
+    DestroyObjectReply(DestroyObjectReply),
+    ObjectCreatedEvent(ObjectCreatedEvent),
+    ObjectDestroyedEvent(ObjectDestroyedEvent),
+    CreateServiceReply(CreateServiceReply),
+    DestroyServiceReply(DestroyServiceReply),
+    ServiceCreatedEvent(ServiceCreatedEvent),
+    ServiceDestroyedEvent(ServiceDestroyedEvent),
+    CallFunction(CallFunction),
+    CallFunctionReply(CallFunctionReply),
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectReply {
+    Ok,
+    VersionMismatch(u32),
+}
+
+#[derive(Debug, Clone)]
+pub enum CreateObjectResult {
+    Ok,
+    DuplicateId,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateObjectReply {
+    pub serial: u32,
+    pub result: CreateObjectResult,
+}
+
+#[derive(Debug, Clone)]
+pub enum DestroyObjectResult {
+    Ok,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyObjectReply {
+    pub serial: u32,
+    pub result: DestroyObjectResult,
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectCreatedEvent {
+    pub id: Uuid,
+    pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectDestroyedEvent {
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub enum CreateServiceResult {
+    Ok,
+    DuplicateId,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateServiceReply {
+    pub serial: u32,
+    pub result: CreateServiceResult,
+}
+
+#[derive(Debug, Clone)]
+pub enum DestroyServiceResult {
+    Ok,
+    InvalidService,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyServiceReply {
+    pub serial: u32,
+    pub result: DestroyServiceResult,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceCreatedEvent {
+    pub object_id: Uuid,
+    pub id: Uuid,
+    pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceDestroyedEvent {
+    pub object_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub enum ClientMessage {
+    Connect(Connect),
+    CreateObject(CreateObject),
+    DestroyObject(DestroyObject),
+    SubscribeObjectsCreated(SubscribeObjectsCreated),
+    UnsubscribeObjectsCreated,
+    SubscribeObjectsDestroyed,
+    UnsubscribeObjectsDestroyed,
+    CreateService(CreateService),
+    DestroyService(DestroyService),
+    SubscribeServicesCreated(SubscribeServicesCreated),
+    UnsubscribeServicesCreated,
+    SubscribeServicesDestroyed,
+    UnsubscribeServicesDestroyed,
+    CallFunction(CallFunction),
+    CallFunctionReply(CallFunctionReply),
+}
+
+#[derive(Debug, Clone)]
+pub struct Connect {
+    pub version: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateObject {
+    pub serial: u32,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyObject {
+    pub serial: u32,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeObjectsCreated {
+    pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateService {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct DestroyService {
+    pub serial: u32,
+    pub object_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeServicesCreated {
+    pub serial: Option<u32>,
+}
