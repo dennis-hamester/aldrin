@@ -53,12 +53,12 @@ where
         E: From<ConnectError> + From<T::Error>,
     {
         self.t
-            .send(ClientMessage::Connect(Connect { version: VERSION }))
+            .send(Message::Connect(Connect { version: VERSION }))
             .await?;
 
         match self.t.next().await.ok_or(ConnectError::UnexpectedEof)?? {
-            BrokerMessage::ConnectReply(ConnectReply::Ok) => {}
-            BrokerMessage::ConnectReply(ConnectReply::VersionMismatch(v)) => {
+            Message::ConnectReply(ConnectReply::Ok) => {}
+            Message::ConnectReply(ConnectReply::VersionMismatch(v)) => {
                 return Err(ConnectError::VersionMismatch(v).into())
             }
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg).into()),

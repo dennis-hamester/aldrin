@@ -61,16 +61,14 @@ where
             .await
             .ok_or(EstablishError::UnexpectedClientShutdown)??
         {
-            ClientMessage::Connect(msg) if msg.version == VERSION => {
-                self.t
-                    .send(BrokerMessage::ConnectReply(ConnectReply::Ok))
-                    .await?;
+            Message::Connect(msg) if msg.version == VERSION => {
+                self.t.send(Message::ConnectReply(ConnectReply::Ok)).await?;
                 Ok(())
             }
 
-            ClientMessage::Connect(msg) => {
+            Message::Connect(msg) => {
                 self.t
-                    .send(BrokerMessage::ConnectReply(ConnectReply::VersionMismatch(
+                    .send(Message::ConnectReply(ConnectReply::VersionMismatch(
                         VERSION,
                     )))
                     .await?;

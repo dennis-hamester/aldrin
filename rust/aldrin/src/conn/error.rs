@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_proto::ClientMessage;
+use aldrin_proto::Message;
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -44,7 +44,7 @@ pub enum EstablishError {
     InternalError,
     BrokerFifoOverflow,
     UnexpectedClientShutdown,
-    UnexpectedMessageReceived(ClientMessage),
+    UnexpectedMessageReceived(Message),
     VersionMismatch(u32),
     BrokerShutdown,
 }

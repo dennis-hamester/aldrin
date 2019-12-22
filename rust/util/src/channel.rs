@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use aldrin::{client, conn};
-use aldrin_proto::{BrokerMessage, ClientMessage};
+use aldrin_proto::Message;
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use futures_sink::Sink;
@@ -51,27 +51,27 @@ pub fn channel_with_name(buffer: usize, name: String) -> (ConnectionTransport, C
 #[derive(Debug)]
 pub struct ConnectionTransport {
     name: Option<String>,
-    stream: mpsc::Receiver<ClientMessage>,
-    sink: mpsc::Sender<BrokerMessage>,
+    stream: mpsc::Receiver<Message>,
+    sink: mpsc::Sender<Message>,
 }
 
 impl ConnectionTransport {
     fn new(
         name: Option<String>,
-        stream: mpsc::Receiver<ClientMessage>,
-        sink: mpsc::Sender<BrokerMessage>,
+        stream: mpsc::Receiver<Message>,
+        sink: mpsc::Sender<Message>,
     ) -> Self {
         ConnectionTransport { name, stream, sink }
     }
 }
 
 impl Stream for ConnectionTransport {
-    type Item = Result<ClientMessage, SendError>;
+    type Item = Result<Message, SendError>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Option<Result<ClientMessage, SendError>>> {
+    ) -> Poll<Option<Result<Message, SendError>>> {
         Pin::new(&mut self.stream)
             .poll_next(cx)
             .map(|msg| msg.map(Ok))
@@ -82,14 +82,14 @@ impl Stream for ConnectionTransport {
     }
 }
 
-impl Sink<BrokerMessage> for ConnectionTransport {
+impl Sink<Message> for ConnectionTransport {
     type Error = SendError;
 
     fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
         Pin::new(&mut self.sink).poll_ready(cx)
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: BrokerMessage) -> Result<(), SendError> {
+    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), SendError> {
         Pin::new(&mut self.sink).start_send(item)
     }
 
@@ -111,27 +111,27 @@ impl conn::Transport for ConnectionTransport {
 #[derive(Debug)]
 pub struct ClientTransport {
     name: Option<String>,
-    stream: mpsc::Receiver<BrokerMessage>,
-    sink: mpsc::Sender<ClientMessage>,
+    stream: mpsc::Receiver<Message>,
+    sink: mpsc::Sender<Message>,
 }
 
 impl ClientTransport {
     fn new(
         name: Option<String>,
-        stream: mpsc::Receiver<BrokerMessage>,
-        sink: mpsc::Sender<ClientMessage>,
+        stream: mpsc::Receiver<Message>,
+        sink: mpsc::Sender<Message>,
     ) -> Self {
         ClientTransport { name, stream, sink }
     }
 }
 
 impl Stream for ClientTransport {
-    type Item = Result<BrokerMessage, SendError>;
+    type Item = Result<Message, SendError>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Option<Result<BrokerMessage, SendError>>> {
+    ) -> Poll<Option<Result<Message, SendError>>> {
         Pin::new(&mut self.stream)
             .poll_next(cx)
             .map(|msg| msg.map(Ok))
@@ -142,14 +142,14 @@ impl Stream for ClientTransport {
     }
 }
 
-impl Sink<ClientMessage> for ClientTransport {
+impl Sink<Message> for ClientTransport {
     type Error = SendError;
 
     fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
         Pin::new(&mut self.sink).poll_ready(cx)
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: ClientMessage) -> Result<(), SendError> {
+    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), SendError> {
         Pin::new(&mut self.sink).start_send(item)
     }
 

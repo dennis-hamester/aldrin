@@ -79,7 +79,7 @@ where
 
         loop {
             match select(self.recv.next(), self.t.next()).await {
-                Either::Left((Some(BrokerEvent::BrokerMessage(msg)), _)) => {
+                Either::Left((Some(BrokerEvent::Message(msg)), _)) => {
                     if let Err(e) = self.t.send(msg).await {
                         return self.shutdown(id, Err(e)).await;
                     }
@@ -88,7 +88,7 @@ where
                 Either::Right((Some(Ok(msg)), _)) => {
                     if let Err(e) = self
                         .send
-                        .send(ConnectionEvent::ClientMessage(id.clone(), msg))
+                        .send(ConnectionEvent::Message(id.clone(), msg))
                         .await
                     {
                         if e.is_disconnected() {

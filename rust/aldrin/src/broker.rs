@@ -109,7 +109,7 @@ impl Broker {
                 state.push_remove_conn(id);
             }
 
-            ConnectionEvent::ClientMessage(id, msg) => {
+            ConnectionEvent::Message(id, msg) => {
                 if let Err(()) = self.handle_message(state, &id, msg).await {
                     state.push_remove_conn(id);
                 }
@@ -149,9 +149,10 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.objects_created_subscribed()),
                     state,
-                    BrokerEvent::BrokerMessage(BrokerMessage::ObjectCreatedEvent(
-                        ObjectCreatedEvent { id, serial: None },
-                    )),
+                    BrokerEvent::Message(Message::ObjectCreatedEvent(ObjectCreatedEvent {
+                        id,
+                        serial: None,
+                    })),
                 )
                 .await;
                 continue;
@@ -163,13 +164,11 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.services_created_subscribed()),
                     state,
-                    BrokerEvent::BrokerMessage(BrokerMessage::ServiceCreatedEvent(
-                        ServiceCreatedEvent {
-                            object_id,
-                            id,
-                            serial: None,
-                        },
-                    )),
+                    BrokerEvent::Message(Message::ServiceCreatedEvent(ServiceCreatedEvent {
+                        object_id,
+                        id,
+                        serial: None,
+                    })),
                 )
                 .await;
                 continue;
@@ -181,9 +180,10 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.services_destroyed_subscribed()),
                     state,
-                    BrokerEvent::BrokerMessage(BrokerMessage::ServiceDestroyedEvent(
-                        ServiceDestroyedEvent { object_id, id },
-                    )),
+                    BrokerEvent::Message(Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
+                        object_id,
+                        id,
+                    })),
                 )
                 .await;
                 continue;
@@ -195,9 +195,9 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.objects_destroyed_subscribed()),
                     state,
-                    BrokerEvent::BrokerMessage(BrokerMessage::ObjectDestroyedEvent(
-                        ObjectDestroyedEvent { id },
-                    )),
+                    BrokerEvent::Message(Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
+                        id,
+                    })),
                 )
                 .await;
                 continue;
@@ -210,9 +210,9 @@ impl Broker {
                 };
 
                 let res = conn
-                    .send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::CallFunctionReply(CallFunctionReply { serial, result }),
-                    ))
+                    .send(BrokerEvent::Message(Message::CallFunctionReply(
+                        CallFunctionReply { serial, result },
+                    )))
                     .await;
 
                 if res.is_err() {
@@ -266,36 +266,36 @@ impl Broker {
         &mut self,
         state: &mut State,
         id: &ConnectionId,
-        msg: ClientMessage,
+        msg: Message,
     ) -> Result<(), ()> {
         match msg {
-            ClientMessage::CreateObject(req) => self.create_object(state, id, req).await,
-            ClientMessage::DestroyObject(req) => self.destroy_object(state, id, req).await,
-            ClientMessage::SubscribeObjectsCreated(req) => {
-                self.subscribe_objects_created(id, req).await
-            }
-            ClientMessage::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
-            ClientMessage::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id).await,
-            ClientMessage::UnsubscribeObjectsDestroyed => {
-                self.unsubscribe_objects_destroyed(id).await
-            }
-            ClientMessage::CreateService(req) => self.create_service(state, id, req).await,
-            ClientMessage::DestroyService(req) => self.destroy_service(state, id, req).await,
-            ClientMessage::SubscribeServicesCreated(req) => {
+            Message::CreateObject(req) => self.create_object(state, id, req).await,
+            Message::DestroyObject(req) => self.destroy_object(state, id, req).await,
+            Message::SubscribeObjectsCreated(req) => self.subscribe_objects_created(id, req).await,
+            Message::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
+            Message::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id).await,
+            Message::UnsubscribeObjectsDestroyed => self.unsubscribe_objects_destroyed(id).await,
+            Message::CreateService(req) => self.create_service(state, id, req).await,
+            Message::DestroyService(req) => self.destroy_service(state, id, req).await,
+            Message::SubscribeServicesCreated(req) => {
                 self.subscribe_services_created(id, req).await
             }
-            ClientMessage::UnsubscribeServicesCreated => {
-                self.unsubscribe_services_created(id).await
-            }
-            ClientMessage::SubscribeServicesDestroyed => {
-                self.subscribe_services_destroyed(id).await
-            }
-            ClientMessage::UnsubscribeServicesDestroyed => {
-                self.unsubscribe_services_destroyed(id).await
-            }
-            ClientMessage::CallFunction(req) => self.call_function(state, id, req).await,
-            ClientMessage::CallFunctionReply(_) => unimplemented!(),
-            ClientMessage::Connect(_) => Err(()),
+            Message::UnsubscribeServicesCreated => self.unsubscribe_services_created(id).await,
+            Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id).await,
+            Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id).await,
+            Message::CallFunction(req) => self.call_function(state, id, req).await,
+            Message::CallFunctionReply(_) => unimplemented!(),
+
+            Message::Connect(_)
+            | Message::ConnectReply(_)
+            | Message::CreateObjectReply(_)
+            | Message::ObjectCreatedEvent(_)
+            | Message::DestroyObjectReply(_)
+            | Message::ObjectDestroyedEvent(_)
+            | Message::CreateServiceReply(_)
+            | Message::ServiceCreatedEvent(_)
+            | Message::DestroyServiceReply(_)
+            | Message::ServiceDestroyedEvent(_) => Err(()),
         }
     }
 
@@ -312,22 +312,22 @@ impl Broker {
 
         match self.objs.entry(req.id) {
             Entry::Occupied(_) => {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::CreateObjectReply(CreateObjectReply {
+                conn.send(BrokerEvent::Message(Message::CreateObjectReply(
+                    CreateObjectReply {
                         serial: req.serial,
                         result: CreateObjectResult::DuplicateId,
-                    }),
-                ))
+                    },
+                )))
                 .await
             }
 
             Entry::Vacant(entry) => {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::CreateObjectReply(CreateObjectReply {
+                conn.send(BrokerEvent::Message(Message::CreateObjectReply(
+                    CreateObjectReply {
                         serial: req.serial,
                         result: CreateObjectResult::Ok,
-                    }),
-                ))
+                    },
+                )))
                 .await?;
                 entry.insert(Object::new(req.id, id.clone()));
                 conn.add_object(req.id);
@@ -350,12 +350,12 @@ impl Broker {
 
         if let Entry::Occupied(entry) = self.objs.entry(req.id) {
             if entry.get().conn_id() == id {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+                conn.send(BrokerEvent::Message(Message::DestroyObjectReply(
+                    DestroyObjectReply {
                         serial: req.serial,
                         result: DestroyObjectResult::Ok,
-                    }),
-                ))
+                    },
+                )))
                 .await?;
 
                 state.push_remove_obj(req.id);
@@ -383,21 +383,21 @@ impl Broker {
                 entry.remove();
                 Ok(())
             } else {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+                conn.send(BrokerEvent::Message(Message::DestroyObjectReply(
+                    DestroyObjectReply {
                         serial: req.serial,
                         result: DestroyObjectResult::ForeignObject,
-                    }),
-                ))
+                    },
+                )))
                 .await
             }
         } else {
-            conn.send(BrokerEvent::BrokerMessage(
-                BrokerMessage::DestroyObjectReply(DestroyObjectReply {
+            conn.send(BrokerEvent::Message(Message::DestroyObjectReply(
+                DestroyObjectReply {
                     serial: req.serial,
                     result: DestroyObjectResult::InvalidObject,
-                }),
-            ))
+                },
+            )))
             .await
         }
     }
@@ -416,12 +416,12 @@ impl Broker {
 
         if let Some(serial) = req.serial {
             for &id in self.objs.keys() {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::ObjectCreatedEvent(ObjectCreatedEvent {
+                conn.send(BrokerEvent::Message(Message::ObjectCreatedEvent(
+                    ObjectCreatedEvent {
                         id,
                         serial: Some(serial),
-                    }),
-                ))
+                    },
+                )))
                 .await?;
             }
         }
@@ -472,45 +472,45 @@ impl Broker {
 
         match self.svcs.entry((req.object_id, req.id)) {
             Entry::Occupied(_) => {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::CreateServiceReply(CreateServiceReply {
+                conn.send(BrokerEvent::Message(Message::CreateServiceReply(
+                    CreateServiceReply {
                         serial: req.serial,
                         result: CreateServiceResult::DuplicateId,
-                    }),
-                ))
+                    },
+                )))
                 .await
             }
 
             Entry::Vacant(entry) => {
                 if let Some(obj) = self.objs.get_mut(&req.object_id) {
                     if obj.conn_id() == id {
-                        conn.send(BrokerEvent::BrokerMessage(
-                            BrokerMessage::CreateServiceReply(CreateServiceReply {
+                        conn.send(BrokerEvent::Message(Message::CreateServiceReply(
+                            CreateServiceReply {
                                 serial: req.serial,
                                 result: CreateServiceResult::Ok,
-                            }),
-                        ))
+                            },
+                        )))
                         .await?;
                         entry.insert(Service::new(req.object_id, req.id));
                         obj.add_service(req.id);
                         state.push_add_svc(req.object_id, req.id);
                         Ok(())
                     } else {
-                        conn.send(BrokerEvent::BrokerMessage(
-                            BrokerMessage::CreateServiceReply(CreateServiceReply {
+                        conn.send(BrokerEvent::Message(Message::CreateServiceReply(
+                            CreateServiceReply {
                                 serial: req.serial,
                                 result: CreateServiceResult::ForeignObject,
-                            }),
-                        ))
+                            },
+                        )))
                         .await
                     }
                 } else {
-                    conn.send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::CreateServiceReply(CreateServiceReply {
+                    conn.send(BrokerEvent::Message(Message::CreateServiceReply(
+                        CreateServiceReply {
                             serial: req.serial,
                             result: CreateServiceResult::InvalidObject,
-                        }),
-                    ))
+                        },
+                    )))
                     .await
                 }
             }
@@ -531,12 +531,12 @@ impl Broker {
         if let Some(obj) = self.objs.get_mut(&req.object_id) {
             if obj.conn_id() == id {
                 if let Entry::Occupied(entry) = self.svcs.entry((req.object_id, req.id)) {
-                    conn.send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                    conn.send(BrokerEvent::Message(Message::DestroyServiceReply(
+                        DestroyServiceReply {
                             serial: req.serial,
                             result: DestroyServiceResult::Ok,
-                        }),
-                    ))
+                        },
+                    )))
                     .await?;
 
                     state.push_remove_svc(req.object_id, req.id);
@@ -555,30 +555,30 @@ impl Broker {
                     entry.remove();
                     Ok(())
                 } else {
-                    conn.send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                    conn.send(BrokerEvent::Message(Message::DestroyServiceReply(
+                        DestroyServiceReply {
                             serial: req.serial,
                             result: DestroyServiceResult::InvalidService,
-                        }),
-                    ))
+                        },
+                    )))
                     .await
                 }
             } else {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+                conn.send(BrokerEvent::Message(Message::DestroyServiceReply(
+                    DestroyServiceReply {
                         serial: req.serial,
                         result: DestroyServiceResult::ForeignObject,
-                    }),
-                ))
+                    },
+                )))
                 .await
             }
         } else {
-            conn.send(BrokerEvent::BrokerMessage(
-                BrokerMessage::DestroyServiceReply(DestroyServiceReply {
+            conn.send(BrokerEvent::Message(Message::DestroyServiceReply(
+                DestroyServiceReply {
                     serial: req.serial,
                     result: DestroyServiceResult::InvalidObject,
-                }),
-            ))
+                },
+            )))
             .await
         }
     }
@@ -597,13 +597,13 @@ impl Broker {
 
         if let Some(serial) = req.serial {
             for &(object_id, id) in self.svcs.keys() {
-                conn.send(BrokerEvent::BrokerMessage(
-                    BrokerMessage::ServiceCreatedEvent(ServiceCreatedEvent {
+                conn.send(BrokerEvent::Message(Message::ServiceCreatedEvent(
+                    ServiceCreatedEvent {
                         object_id,
                         id,
                         serial: Some(serial),
-                    }),
-                ))
+                    },
+                )))
                 .await?;
             }
         }
@@ -656,12 +656,12 @@ impl Broker {
                 };
 
                 return conn
-                    .send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::CallFunctionReply(CallFunctionReply {
+                    .send(BrokerEvent::Message(Message::CallFunctionReply(
+                        CallFunctionReply {
                             serial: req.serial,
                             result: CallFunctionResult::InvalidObject,
-                        }),
-                    ))
+                        },
+                    )))
                     .await;
             }
         };
@@ -675,12 +675,12 @@ impl Broker {
                 };
 
                 return conn
-                    .send(BrokerEvent::BrokerMessage(
-                        BrokerMessage::CallFunctionReply(CallFunctionReply {
+                    .send(BrokerEvent::Message(Message::CallFunctionReply(
+                        CallFunctionReply {
                             serial: req.serial,
                             result: CallFunctionResult::InvalidService,
-                        }),
-                    ))
+                        },
+                    )))
                     .await;
             }
         };
@@ -693,15 +693,13 @@ impl Broker {
             .expect("invalid connection id");
 
         let res = callee_conn
-            .send(BrokerEvent::BrokerMessage(BrokerMessage::CallFunction(
-                CallFunction {
-                    serial,
-                    object_id: req.object_id,
-                    service_id: req.service_id,
-                    function: req.function,
-                    args: req.args,
-                },
-            )))
+            .send(BrokerEvent::Message(Message::CallFunction(CallFunction {
+                serial,
+                object_id: req.object_id,
+                service_id: req.service_id,
+                function: req.function,
+                args: req.args,
+            })))
             .await;
 
         if res.is_ok() {

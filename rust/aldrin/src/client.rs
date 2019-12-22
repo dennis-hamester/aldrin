@@ -121,12 +121,12 @@ where
         }
     }
 
-    async fn handle_message<E>(&mut self, msg: BrokerMessage) -> Result<(), E>
+    async fn handle_message<E>(&mut self, msg: Message) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
         match msg {
-            BrokerMessage::CreateObjectReply(re) => {
+            Message::CreateObjectReply(re) => {
                 if let Some(send) = self.create_object.remove(re.serial) {
                     send.send(re.result).ok();
                 }
@@ -134,7 +134,7 @@ where
                 Ok(())
             }
 
-            BrokerMessage::DestroyObjectReply(re) => {
+            Message::DestroyObjectReply(re) => {
                 if let Some(send) = self.destroy_object.remove(re.serial) {
                     send.send(re.result).ok();
                 }
@@ -142,10 +142,10 @@ where
                 Ok(())
             }
 
-            BrokerMessage::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
-            BrokerMessage::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
+            Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
+            Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
 
-            BrokerMessage::CreateServiceReply(re) => {
+            Message::CreateServiceReply(re) => {
                 if let Some(send) = self.create_service.remove(re.serial) {
                     send.send(re.result).ok();
                 }
@@ -153,7 +153,7 @@ where
                 Ok(())
             }
 
-            BrokerMessage::DestroyServiceReply(re) => {
+            Message::DestroyServiceReply(re) => {
                 if let Some(send) = self.destroy_service.remove(re.serial) {
                     send.send(re.result).ok();
                 }
@@ -161,13 +161,28 @@ where
                 Ok(())
             }
 
-            BrokerMessage::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
-            BrokerMessage::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
+            Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
+            Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
 
-            BrokerMessage::CallFunction(_) => unimplemented!(),
-            BrokerMessage::CallFunctionReply(_) => unimplemented!(),
+            Message::CallFunction(_) => unimplemented!(),
+            Message::CallFunctionReply(_) => unimplemented!(),
 
-            BrokerMessage::ConnectReply(_) => Err(RunError::UnexpectedMessageReceived(msg).into()),
+            Message::Connect(_)
+            | Message::ConnectReply(_)
+            | Message::CreateObject(_)
+            | Message::SubscribeObjectsCreated(_)
+            | Message::UnsubscribeObjectsCreated
+            | Message::DestroyObject(_)
+            | Message::SubscribeObjectsDestroyed
+            | Message::UnsubscribeObjectsDestroyed
+            | Message::CreateService(_)
+            | Message::SubscribeServicesCreated(_)
+            | Message::UnsubscribeServicesCreated
+            | Message::DestroyService(_)
+            | Message::SubscribeServicesDestroyed
+            | Message::UnsubscribeServicesDestroyed => {
+                Err(RunError::UnexpectedMessageReceived(msg).into())
+            }
         }
     }
 
@@ -211,9 +226,7 @@ where
         }
 
         if self.objects_created.is_empty() {
-            self.t
-                .send(ClientMessage::UnsubscribeObjectsCreated)
-                .await?;
+            self.t.send(Message::UnsubscribeObjectsCreated).await?;
         }
 
         Ok(())
@@ -245,9 +258,7 @@ where
         }
 
         if self.objects_destroyed.is_empty() {
-            self.t
-                .send(ClientMessage::UnsubscribeObjectsDestroyed)
-                .await?;
+            self.t.send(Message::UnsubscribeObjectsDestroyed).await?;
         }
 
         Ok(())
@@ -299,9 +310,7 @@ where
         }
 
         if self.services_created.is_empty() {
-            self.t
-                .send(ClientMessage::UnsubscribeServicesCreated)
-                .await?;
+            self.t.send(Message::UnsubscribeServicesCreated).await?;
         }
 
         Ok(())
@@ -339,9 +348,7 @@ where
         }
 
         if self.services_destroyed.is_empty() {
-            self.t
-                .send(ClientMessage::UnsubscribeServicesDestroyed)
-                .await?;
+            self.t.send(Message::UnsubscribeServicesDestroyed).await?;
         }
 
         Ok(())
@@ -392,7 +399,7 @@ where
     {
         let serial = self.create_object.insert(reply);
         self.t
-            .send(ClientMessage::CreateObject(CreateObject { serial, id }))
+            .send(Message::CreateObject(CreateObject { serial, id }))
             .await
             .map_err(Into::into)
     }
@@ -407,7 +414,7 @@ where
     {
         let serial = self.destroy_object.insert(reply);
         self.t
-            .send(ClientMessage::DestroyObject(DestroyObject { serial, id }))
+            .send(Message::DestroyObject(DestroyObject { serial, id }))
             .await
             .map_err(Into::into)
     }
@@ -425,9 +432,9 @@ where
         if send {
             let serial = if with_current { Some(serial) } else { None };
             self.t
-                .send(ClientMessage::SubscribeObjectsCreated(
-                    SubscribeObjectsCreated { serial },
-                ))
+                .send(Message::SubscribeObjectsCreated(SubscribeObjectsCreated {
+                    serial,
+                }))
                 .await
                 .map_err(Into::into)
         } else {
@@ -443,7 +450,7 @@ where
         self.objects_destroyed.insert(sender);
         if send {
             self.t
-                .send(ClientMessage::SubscribeObjectsDestroyed)
+                .send(Message::SubscribeObjectsDestroyed)
                 .await
                 .map_err(Into::into)
         } else {
@@ -462,7 +469,7 @@ where
     {
         let serial = self.create_service.insert(reply);
         self.t
-            .send(ClientMessage::CreateService(CreateService {
+            .send(Message::CreateService(CreateService {
                 serial,
                 object_id,
                 id,
@@ -482,7 +489,7 @@ where
     {
         let serial = self.destroy_service.insert(reply);
         self.t
-            .send(ClientMessage::DestroyService(DestroyService {
+            .send(Message::DestroyService(DestroyService {
                 serial,
                 object_id,
                 id,
@@ -504,7 +511,7 @@ where
         if send {
             let serial = if with_current { Some(serial) } else { None };
             self.t
-                .send(ClientMessage::SubscribeServicesCreated(
+                .send(Message::SubscribeServicesCreated(
                     SubscribeServicesCreated { serial },
                 ))
                 .await
@@ -525,7 +532,7 @@ where
         self.services_destroyed.insert(sender);
         if send {
             self.t
-                .send(ClientMessage::SubscribeServicesDestroyed)
+                .send(Message::SubscribeServicesDestroyed)
                 .await
                 .map_err(Into::into)
         } else {
@@ -546,7 +553,7 @@ where
     {
         let serial = self.function_calls.insert(reply);
         self.t
-            .send(ClientMessage::CallFunction(CallFunction {
+            .send(Message::CallFunction(CallFunction {
                 serial,
                 object_id,
                 service_id,

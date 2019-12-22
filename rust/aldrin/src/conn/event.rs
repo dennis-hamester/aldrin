@@ -20,7 +20,7 @@
 
 use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
-use aldrin_proto::ClientMessage;
+use aldrin_proto::Message;
 use futures_channel::mpsc::Sender;
 
 #[derive(Debug)]
@@ -28,7 +28,7 @@ pub(crate) enum ConnectionEvent {
     // Sent by connections
     NewConnection(ConnectionId, Sender<BrokerEvent>),
     ConnectionShutdown(ConnectionId),
-    ClientMessage(ConnectionId, ClientMessage),
+    Message(ConnectionId, Message),
 
     // Sent by broker handles
     ShutdownBroker,

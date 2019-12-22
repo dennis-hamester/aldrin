@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_proto::BrokerMessage;
+use aldrin_proto::Message;
 
 #[derive(Debug, Clone)]
 pub(crate) enum BrokerEvent {
     Shutdown,
-    BrokerMessage(BrokerMessage),
+    Message(Message),
 }

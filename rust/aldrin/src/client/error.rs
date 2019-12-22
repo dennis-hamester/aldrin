@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_proto::BrokerMessage;
+use aldrin_proto::Message;
 use futures_channel::mpsc::SendError;
 use std::error::Error as StdError;
 use std::fmt;
@@ -28,7 +28,7 @@ use uuid::Uuid;
 pub enum ConnectError {
     UnexpectedEof,
     VersionMismatch(u32),
-    UnexpectedMessageReceived(BrokerMessage),
+    UnexpectedMessageReceived(Message),
 }
 
 impl fmt::Display for ConnectError {
@@ -51,7 +51,7 @@ impl StdError for ConnectError {}
 pub enum RunError {
     InternalError,
     EventFifoOverflow,
-    UnexpectedMessageReceived(BrokerMessage),
+    UnexpectedMessageReceived(Message),
 }
 
 impl fmt::Display for RunError {

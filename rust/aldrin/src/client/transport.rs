@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_proto::{BrokerMessage, ClientMessage};
+use aldrin_proto::Message;
 use futures_core::stream::Stream;
 use futures_sink::Sink;
 
 pub trait Transport:
-    Stream<Item = Result<BrokerMessage, <Self as Sink<ClientMessage>>::Error>> + Sink<ClientMessage>
+    Stream<Item = Result<Message, <Self as Sink<Message>>::Error>> + Sink<Message>
 {
     fn name(&self) -> Option<&str> {
         None
