@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use super::{Error, Handle};
-use crate::proto::Value;
+use aldrin_proto::Value;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]

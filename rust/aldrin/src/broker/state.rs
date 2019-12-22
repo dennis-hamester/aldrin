@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use crate::conn_id::ConnectionId;
-use crate::proto::common::CallFunctionResult;
+use aldrin_proto::common::CallFunctionResult;
 use uuid::Uuid;
 
 #[derive(Debug)]

@@ -24,4 +24,3 @@ mod serial_map;
 pub mod broker;
 pub mod client;
 pub mod conn;
-pub mod proto;

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::ClientMessage;
+use aldrin_proto::ClientMessage;
 use std::error::Error as StdError;
 use std::fmt;
 

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::BrokerMessage;
+use aldrin_proto::BrokerMessage;
 
 #[derive(Debug, Clone)]
 pub(crate) enum BrokerEvent {

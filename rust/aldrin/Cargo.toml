@@ -7,6 +7,7 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
+aldrin-proto = { version = "0.1.0", path = "../proto" }
 futures-channel = { version = "0.3.1", default-features = false, features = [ "std", "sink" ] }
 futures-core = { version = "0.3.1", default-features = false }
 futures-sink = { version = "0.3.1", default-features = false }

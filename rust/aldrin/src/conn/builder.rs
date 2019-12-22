@@ -20,8 +20,8 @@
 
 use super::{Connection, ConnectionEvent, EstablishError, Transport};
 use crate::conn_id::ConnectionIdManager;
-use crate::proto::broker::*;
-use crate::proto::{self, BrokerMessage, ClientMessage};
+use aldrin_proto::broker::*;
+use aldrin_proto::{BrokerMessage, ClientMessage, VERSION};
 use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
@@ -62,7 +62,7 @@ where
             .await
             .ok_or(EstablishError::UnexpectedClientShutdown)??
         {
-            ClientMessage::Connect(msg) if msg.version == proto::VERSION => {
+            ClientMessage::Connect(msg) if msg.version == VERSION => {
                 self.t
                     .send(BrokerMessage::ConnectReply(ConnectReply::Ok))
                     .await?;
@@ -72,7 +72,7 @@ where
             ClientMessage::Connect(msg) => {
                 self.t
                     .send(BrokerMessage::ConnectReply(ConnectReply::VersionMismatch(
-                        proto::VERSION,
+                        VERSION,
                     )))
                     .await?;
                 Err(EstablishError::VersionMismatch(msg.version))

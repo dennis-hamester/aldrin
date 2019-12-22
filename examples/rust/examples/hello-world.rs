@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin::proto::Value;
 use aldrin::{broker, client};
 use aldrin_examples::Error;
+use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
 use futures::stream::StreamExt;
 use uuid::Uuid;

@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 use super::{Client, ConnectError, Transport};
-use crate::proto::broker::*;
-use crate::proto::client::*;
-use crate::proto::{BrokerMessage, ClientMessage};
+use aldrin_proto::broker::*;
+use aldrin_proto::client::*;
+use aldrin_proto::{BrokerMessage, ClientMessage, VERSION};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 
@@ -55,9 +55,7 @@ where
         E: From<ConnectError> + From<T::Error>,
     {
         self.t
-            .send(ClientMessage::Connect(Connect {
-                version: crate::proto::VERSION,
-            }))
+            .send(ClientMessage::Connect(Connect { version: VERSION }))
             .await?;
 
         match self.t.next().await.ok_or(ConnectError::UnexpectedEof)?? {

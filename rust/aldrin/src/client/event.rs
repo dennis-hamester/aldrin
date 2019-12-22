@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::broker::*;
-use crate::proto::common::{CallFunctionResult, Value};
+use aldrin_proto::broker::*;
+use aldrin_proto::common::{CallFunctionResult, Value};
 use futures_channel::{mpsc, oneshot};
 use uuid::Uuid;
 

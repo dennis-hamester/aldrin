@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::proto::BrokerMessage;
+use aldrin_proto::BrokerMessage;
 use futures_channel::mpsc::SendError;
 use std::error::Error as StdError;
 use std::fmt;

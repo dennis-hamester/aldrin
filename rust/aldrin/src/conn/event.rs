@@ -20,7 +20,7 @@
 
 use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
-use crate::proto::ClientMessage;
+use aldrin_proto::ClientMessage;
 use futures_channel::mpsc::Sender;
 
 #[derive(Debug)]

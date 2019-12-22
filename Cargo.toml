@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "rust/proto",
     "rust/aldrin",
     "rust/util",
     "gen",
