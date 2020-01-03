@@ -30,10 +30,10 @@ mod service;
 mod service_proxy;
 mod services_created;
 mod services_destroyed;
-mod transport;
 
 use crate::serial_map::SerialMap;
 use aldrin_proto::*;
+use aldrin_transport::Transport;
 use event::Event;
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -52,7 +52,6 @@ pub use service::Service;
 pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
-pub use transport::Transport;
 
 #[derive(Debug)]
 pub struct Client<T>

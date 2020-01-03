@@ -1,6 +1,6 @@
 [package]
-name = "aldrin-util"
-description = "Additional utilities for working with Aldrin."
+name = "aldrin-transport"
+description = "Transport trait definition of Aldrin, a lightweight and composable RPC framework."
 version = "0.1.0"
 authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
 license = "MIT"
@@ -8,7 +8,5 @@ edition = "2018"
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-aldrin-transport = { version = "0.1.0", path = "../transport" }
-futures-channel = { version = "0.3.1", default-features = false }
 futures-core = { version = "0.3.1", default-features = false }
 futures-sink = { version = "0.3.1", default-features = false }

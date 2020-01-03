@@ -4,5 +4,6 @@ members = [
     "gen",
     "rust/aldrin",
     "rust/proto",
+    "rust/transport",
     "rust/util",
 ]

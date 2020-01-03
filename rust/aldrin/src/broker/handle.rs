@@ -19,8 +19,9 @@
 // SOFTWARE.
 
 use super::Error;
-use crate::conn::{self, ConnectionEvent, Transport};
+use crate::conn::{self, ConnectionEvent};
 use crate::conn_id::ConnectionIdManager;
+use aldrin_transport::Transport;
 use futures_channel::mpsc::Sender;
 use futures_util::sink::SinkExt;
 use std::future::Future;

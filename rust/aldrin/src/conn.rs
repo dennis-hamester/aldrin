@@ -22,10 +22,10 @@ mod builder;
 mod error;
 mod event;
 mod handle;
-mod transport;
 
 use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
+use aldrin_transport::Transport;
 use futures_channel::mpsc::{Receiver, Sender};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
@@ -34,7 +34,6 @@ use futures_util::stream::StreamExt;
 pub use builder::Builder;
 pub use error::{EstablishError, RunError};
 pub use handle::Handle;
-pub use transport::Transport;
 
 pub(crate) use event::ConnectionEvent;
 

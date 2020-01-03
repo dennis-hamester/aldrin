@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin::{client, conn};
 use aldrin_proto::Message;
+use aldrin_transport::Transport;
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use futures_sink::Sink;
@@ -102,7 +102,7 @@ impl Sink<Message> for ConnectionTransport {
     }
 }
 
-impl conn::Transport for ConnectionTransport {
+impl Transport for ConnectionTransport {
     fn name(&self) -> Option<&str> {
         self.name.as_ref().map(String::as_str)
     }
@@ -162,7 +162,7 @@ impl Sink<Message> for ClientTransport {
     }
 }
 
-impl client::Transport for ClientTransport {
+impl Transport for ClientTransport {
     fn name(&self) -> Option<&str> {
         self.name.as_ref().map(String::as_str)
     }
