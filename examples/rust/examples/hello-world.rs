@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin::{broker, client};
+use aldrin::broker;
 use aldrin_examples::Error;
 use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
@@ -42,7 +42,7 @@ async fn broker(t: ConnectionTransport) -> Result<(), Error> {
 }
 
 async fn client(t: ClientTransport) -> Result<(), Error> {
-    let client = client::Client::builder(t).connect::<Error>().await?;
+    let client = aldrin_client::Client::builder(t).connect::<Error>().await?;
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 

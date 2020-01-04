@@ -26,12 +26,12 @@ mod object;
 mod object_proxy;
 mod objects_created;
 mod objects_destroyed;
+mod serial_map;
 mod service;
 mod service_proxy;
 mod services_created;
 mod services_destroyed;
 
-use crate::serial_map::SerialMap;
 use aldrin_proto::*;
 use aldrin_transport::Transport;
 use event::Event;
@@ -39,6 +39,7 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
+use serial_map::SerialMap;
 use uuid::Uuid;
 
 pub use builder::Builder;

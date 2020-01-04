@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 aldrin = { path = "../../rust/aldrin" }
+aldrin-client = { path = "../../rust/client" }
 aldrin-util = { path = "../../rust/util" }
 tokio = { version = "0.2.4", default-features = false }
 

@@ -3,6 +3,7 @@ members = [
     "examples/rust",
     "gen",
     "rust/aldrin",
+    "rust/client",
     "rust/proto",
     "rust/transport",
     "rust/util",

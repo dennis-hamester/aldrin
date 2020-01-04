@@ -22,5 +22,4 @@ mod conn_id;
 mod serial_map;
 
 pub mod broker;
-pub mod client;
 pub mod conn;
