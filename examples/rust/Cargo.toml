@@ -7,7 +7,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
-aldrin = { path = "../../rust/aldrin" }
+aldrin-broker = { path = "../../rust/broker" }
 aldrin-client = { path = "../../rust/client" }
 aldrin-util = { path = "../../rust/util" }
 tokio = { version = "0.2.4", default-features = false }

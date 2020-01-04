@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin::{broker, conn};
+use aldrin_broker::{broker, conn};
 use aldrin_util::channel::SendError;
 use tokio::task::JoinError;
 

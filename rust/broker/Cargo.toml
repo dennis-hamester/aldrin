@@ -1,6 +1,6 @@
 [package]
-name = "aldrin"
-description = "Lightweight and composable RPC framework."
+name = "aldrin-broker"
+description = "Broker library of Aldrin, a lightweight and composable RPC framework."
 version = "0.1.0"
 authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
 license = "MIT"

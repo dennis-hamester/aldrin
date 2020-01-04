@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin::broker;
+use aldrin_broker::broker;
 use aldrin_examples::Error;
 use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
