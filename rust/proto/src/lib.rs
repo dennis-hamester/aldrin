@@ -106,7 +106,7 @@ pub struct CreateObject {
 
 #[derive(Debug, Clone)]
 pub enum CreateObjectResult {
-    Ok,
+    Ok(Uuid),
     DuplicateId,
 }
 
@@ -124,6 +124,7 @@ pub struct SubscribeObjectsCreated {
 #[derive(Debug, Clone)]
 pub struct ObjectCreatedEvent {
     pub id: Uuid,
+    pub cookie: Uuid,
     pub serial: Option<u32>,
 }
 
@@ -131,6 +132,7 @@ pub struct ObjectCreatedEvent {
 pub struct DestroyObject {
     pub serial: u32,
     pub id: Uuid,
+    pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -149,18 +151,20 @@ pub struct DestroyObjectReply {
 #[derive(Debug, Clone)]
 pub struct ObjectDestroyedEvent {
     pub id: Uuid,
+    pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateService {
     pub serial: u32,
     pub object_id: Uuid,
+    pub object_cookie: Uuid,
     pub id: Uuid,
 }
 
 #[derive(Debug, Clone)]
 pub enum CreateServiceResult {
-    Ok,
+    Ok(Uuid),
     DuplicateId,
     InvalidObject,
     ForeignObject,
@@ -180,7 +184,9 @@ pub struct SubscribeServicesCreated {
 #[derive(Debug, Clone)]
 pub struct ServiceCreatedEvent {
     pub object_id: Uuid,
+    pub object_cookie: Uuid,
     pub id: Uuid,
+    pub cookie: Uuid,
     pub serial: Option<u32>,
 }
 
@@ -189,6 +195,7 @@ pub struct DestroyService {
     pub serial: u32,
     pub object_id: Uuid,
     pub id: Uuid,
+    pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -208,7 +215,9 @@ pub struct DestroyServiceReply {
 #[derive(Debug, Clone)]
 pub struct ServiceDestroyedEvent {
     pub object_id: Uuid,
+    pub object_cookie: Uuid,
     pub id: Uuid,
+    pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -216,6 +225,7 @@ pub struct CallFunction {
     pub serial: u32,
     pub object_id: Uuid,
     pub service_id: Uuid,
+    pub service_cookie: Uuid,
     pub function: u32,
     pub args: Value,
 }

@@ -23,10 +23,11 @@ use uuid::Uuid;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectId {
     pub uuid: Uuid,
+    pub cookie: Uuid,
 }
 
 impl ObjectId {
-    pub fn new(uuid: Uuid) -> Self {
-        ObjectId { uuid }
+    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
+        ObjectId { uuid, cookie }
     }
 }

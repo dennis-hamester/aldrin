@@ -24,17 +24,29 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub(crate) struct Service {
     object_id: Uuid,
+    object_cookie: Uuid,
     id: Uuid,
+    cookie: Uuid,
     function_calls: HashSet<u32>,
 }
 
 impl Service {
-    pub fn new(object_id: Uuid, id: Uuid) -> Self {
+    pub fn new(object_id: Uuid, object_cookie: Uuid, id: Uuid, cookie: Uuid) -> Self {
         Service {
             object_id,
+            object_cookie,
             id,
+            cookie,
             function_calls: HashSet::new(),
         }
+    }
+
+    pub fn object_cookie(&self) -> Uuid {
+        self.object_cookie
+    }
+
+    pub fn cookie(&self) -> Uuid {
+        self.cookie
     }
 
     pub fn add_function_call(&mut self, serial: u32) {

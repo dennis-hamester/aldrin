@@ -51,7 +51,9 @@ impl Handle {
         self.send.send(Event::CreateObject(uuid, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
-            CreateObjectResult::Ok => Ok(Object::new(ObjectId::new(uuid), self.clone())),
+            CreateObjectResult::Ok(cookie) => {
+                Ok(Object::new(ObjectId::new(uuid, cookie), self.clone()))
+            }
             CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(uuid)),
         }
     }
@@ -99,9 +101,11 @@ impl Handle {
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
-            CreateServiceResult::Ok => {
-                Ok(Service::new(object_id, ServiceId::new(uuid), self.clone()))
-            }
+            CreateServiceResult::Ok(cookie) => Ok(Service::new(
+                object_id,
+                ServiceId::new(uuid, cookie),
+                self.clone(),
+            )),
             CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, uuid)),
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CreateServiceResult::ForeignObject => Err(Error::InternalError),
