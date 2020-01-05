@@ -23,11 +23,13 @@ mod error;
 mod event;
 mod handle;
 mod object;
+mod object_id;
 mod object_proxy;
 mod objects_created;
 mod objects_destroyed;
 mod serial_map;
 mod service;
+mod service_id;
 mod service_proxy;
 mod services_created;
 mod services_destroyed;
@@ -46,10 +48,12 @@ pub use builder::Builder;
 pub use error::{ConnectError, Error, RunError};
 pub use handle::Handle;
 pub use object::Object;
+pub use object_id::ObjectId;
 pub use object_proxy::ObjectProxy;
 pub use objects_created::ObjectsCreated;
 pub use objects_destroyed::ObjectsDestroyed;
 pub use service::Service;
+pub use service_id::ServiceId;
 pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
@@ -64,12 +68,12 @@ where
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    objects_created: SerialMap<mpsc::Sender<Uuid>>,
-    objects_destroyed: SerialMap<mpsc::Sender<Uuid>>,
+    objects_created: SerialMap<mpsc::Sender<ObjectId>>,
+    objects_destroyed: SerialMap<mpsc::Sender<ObjectId>>,
     create_service: SerialMap<oneshot::Sender<CreateServiceResult>>,
     destroy_service: SerialMap<oneshot::Sender<DestroyServiceResult>>,
-    services_created: SerialMap<mpsc::Sender<(Uuid, Uuid)>>,
-    services_destroyed: SerialMap<mpsc::Sender<(Uuid, Uuid)>>,
+    services_created: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
+    services_destroyed: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
 }
 
@@ -195,7 +199,7 @@ where
     {
         if let Some(serial) = object_created_event.serial {
             if let Some(send) = self.objects_created.get_mut(serial) {
-                if let Err(e) = send.send(object_created_event.id).await {
+                if let Err(e) = send.send(ObjectId::new(object_created_event.id)).await {
                     if e.is_disconnected() {
                         self.objects_created.remove(serial);
                     } else if e.is_full() {
@@ -209,7 +213,7 @@ where
             let mut remove = Vec::new();
 
             for (serial, send) in self.objects_created.iter_mut() {
-                if let Err(e) = send.send(object_created_event.id).await {
+                if let Err(e) = send.send(ObjectId::new(object_created_event.id)).await {
                     if e.is_disconnected() {
                         remove.push(serial);
                     } else if e.is_full() {
@@ -242,7 +246,7 @@ where
         let mut remove = Vec::new();
 
         for (serial, send) in self.objects_destroyed.iter_mut() {
-            if let Err(e) = send.send(object_destroyed_event.id).await {
+            if let Err(e) = send.send(ObjectId::new(object_destroyed_event.id)).await {
                 if e.is_disconnected() {
                     remove.push(serial);
                 } else if e.is_full() {
@@ -274,7 +278,10 @@ where
         if let Some(serial) = service_created_event.serial {
             if let Some(send) = self.services_created.get_mut(serial) {
                 if let Err(e) = send
-                    .send((service_created_event.object_id, service_created_event.id))
+                    .send((
+                        ObjectId::new(service_created_event.object_id),
+                        ServiceId::new(service_created_event.id),
+                    ))
                     .await
                 {
                     if e.is_disconnected() {
@@ -291,7 +298,10 @@ where
 
             for (serial, send) in self.services_created.iter_mut() {
                 if let Err(e) = send
-                    .send((service_created_event.object_id, service_created_event.id))
+                    .send((
+                        ObjectId::new(service_created_event.object_id),
+                        ServiceId::new(service_created_event.id),
+                    ))
                     .await
                 {
                     if e.is_disconnected() {
@@ -328,8 +338,8 @@ where
         for (serial, send) in self.services_destroyed.iter_mut() {
             if let Err(e) = send
                 .send((
-                    service_destroyed_event.object_id,
-                    service_destroyed_event.id,
+                    ObjectId::new(service_destroyed_event.object_id),
+                    ServiceId::new(service_destroyed_event.id),
                 ))
                 .await
             {
@@ -406,7 +416,7 @@ where
 
     async fn destroy_object<E>(
         &mut self,
-        id: Uuid,
+        id: ObjectId,
         reply: oneshot::Sender<DestroyObjectResult>,
     ) -> Result<(), E>
     where
@@ -414,14 +424,17 @@ where
     {
         let serial = self.destroy_object.insert(reply);
         self.t
-            .send(Message::DestroyObject(DestroyObject { serial, id }))
+            .send(Message::DestroyObject(DestroyObject {
+                serial,
+                id: id.uuid,
+            }))
             .await
             .map_err(Into::into)
     }
 
     async fn subscribe_objects_created<E>(
         &mut self,
-        sender: mpsc::Sender<Uuid>,
+        sender: mpsc::Sender<ObjectId>,
         with_current: bool,
     ) -> Result<(), E>
     where
@@ -442,7 +455,10 @@ where
         }
     }
 
-    async fn subscribe_objects_destroyed<E>(&mut self, sender: mpsc::Sender<Uuid>) -> Result<(), E>
+    async fn subscribe_objects_destroyed<E>(
+        &mut self,
+        sender: mpsc::Sender<ObjectId>,
+    ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
@@ -460,7 +476,7 @@ where
 
     async fn create_service<E>(
         &mut self,
-        object_id: Uuid,
+        object_id: ObjectId,
         id: Uuid,
         reply: oneshot::Sender<CreateServiceResult>,
     ) -> Result<(), E>
@@ -471,7 +487,7 @@ where
         self.t
             .send(Message::CreateService(CreateService {
                 serial,
-                object_id,
+                object_id: object_id.uuid,
                 id,
             }))
             .await
@@ -480,8 +496,8 @@ where
 
     async fn destroy_service<E>(
         &mut self,
-        object_id: Uuid,
-        id: Uuid,
+        object_id: ObjectId,
+        id: ServiceId,
         reply: oneshot::Sender<DestroyServiceResult>,
     ) -> Result<(), E>
     where
@@ -491,8 +507,8 @@ where
         self.t
             .send(Message::DestroyService(DestroyService {
                 serial,
-                object_id,
-                id,
+                object_id: object_id.uuid,
+                id: id.uuid,
             }))
             .await
             .map_err(Into::into)
@@ -500,7 +516,7 @@ where
 
     async fn subscribe_services_created<E>(
         &mut self,
-        sender: mpsc::Sender<(Uuid, Uuid)>,
+        sender: mpsc::Sender<(ObjectId, ServiceId)>,
         with_current: bool,
     ) -> Result<(), E>
     where
@@ -523,7 +539,7 @@ where
 
     async fn subscribe_services_destroyed<E>(
         &mut self,
-        sender: mpsc::Sender<(Uuid, Uuid)>,
+        sender: mpsc::Sender<(ObjectId, ServiceId)>,
     ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -542,8 +558,8 @@ where
 
     async fn call_function<E>(
         &mut self,
-        object_id: Uuid,
-        service_id: Uuid,
+        object_id: ObjectId,
+        service_id: ServiceId,
         function: u32,
         args: Value,
         reply: oneshot::Sender<CallFunctionResult>,
@@ -555,8 +571,8 @@ where
         self.t
             .send(Message::CallFunction(CallFunction {
                 serial,
-                object_id,
-                service_id,
+                object_id: object_id.uuid,
+                service_id: service_id.uuid,
                 function,
                 args,
             }))

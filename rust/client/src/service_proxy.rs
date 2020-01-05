@@ -18,19 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Handle};
+use super::{Error, Handle, ObjectId, ServiceId};
 use aldrin_proto::Value;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct ServiceProxy {
-    object_id: Uuid,
-    id: Uuid,
+    object_id: ObjectId,
+    id: ServiceId,
     client: Handle,
 }
 
 impl ServiceProxy {
-    pub(crate) fn new(object_id: Uuid, id: Uuid, client: Handle) -> Self {
+    pub(crate) fn new(object_id: ObjectId, id: ServiceId, client: Handle) -> Self {
         ServiceProxy {
             object_id,
             id,
@@ -38,11 +37,11 @@ impl ServiceProxy {
         }
     }
 
-    pub fn object_id(&self) -> Uuid {
+    pub fn object_id(&self) -> ObjectId {
         self.object_id
     }
 
-    pub fn id(&self) -> Uuid {
+    pub fn id(&self) -> ServiceId {
         self.id
     }
 

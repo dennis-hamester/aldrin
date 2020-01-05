@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 use super::{
-    Error, Event, Object, ObjectProxy, ObjectsCreated, ObjectsDestroyed, Service, ServiceProxy,
-    ServicesCreated, ServicesDestroyed,
+    Error, Event, Object, ObjectId, ObjectProxy, ObjectsCreated, ObjectsDestroyed, Service,
+    ServiceId, ServiceProxy, ServicesCreated, ServicesDestroyed,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -46,17 +46,17 @@ impl Handle {
         self.send.send(Event::Shutdown).await.map_err(Into::into)
     }
 
-    pub async fn create_object(&mut self, id: Uuid) -> Result<Object, Error> {
+    pub async fn create_object(&mut self, uuid: Uuid) -> Result<Object, Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send.send(Event::CreateObject(id, res_send)).await?;
+        self.send.send(Event::CreateObject(uuid, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
-            CreateObjectResult::Ok => Ok(Object::new(id, self.clone())),
-            CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(id)),
+            CreateObjectResult::Ok => Ok(Object::new(ObjectId::new(uuid), self.clone())),
+            CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(uuid)),
         }
     }
 
-    pub(crate) async fn destroy_object(&mut self, id: Uuid) -> Result<(), Error> {
+    pub(crate) async fn destroy_object(&mut self, id: ObjectId) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send.send(Event::DestroyObject(id, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
@@ -67,7 +67,7 @@ impl Handle {
         }
     }
 
-    pub(crate) fn destroy_object_now(&mut self, id: Uuid) {
+    pub(crate) fn destroy_object_now(&mut self, id: ObjectId) {
         let (res_send, _) = oneshot::channel();
         self.send.try_send(Event::DestroyObject(id, res_send)).ok();
     }
@@ -90,23 +90,29 @@ impl Handle {
 
     pub(crate) async fn create_service(
         &mut self,
-        object_id: Uuid,
-        id: Uuid,
+        object_id: ObjectId,
+        uuid: Uuid,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Event::CreateService(object_id, id, res_send))
+            .send(Event::CreateService(object_id, uuid, res_send))
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
-            CreateServiceResult::Ok => Ok(Service::new(object_id, id, self.clone())),
-            CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, id)),
+            CreateServiceResult::Ok => {
+                Ok(Service::new(object_id, ServiceId::new(uuid), self.clone()))
+            }
+            CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, uuid)),
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CreateServiceResult::ForeignObject => Err(Error::InternalError),
         }
     }
 
-    pub(crate) async fn destroy_service(&mut self, object_id: Uuid, id: Uuid) -> Result<(), Error> {
+    pub(crate) async fn destroy_service(
+        &mut self,
+        object_id: ObjectId,
+        id: ServiceId,
+    ) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
             .send(Event::DestroyService(object_id, id, res_send))
@@ -120,7 +126,7 @@ impl Handle {
         }
     }
 
-    pub(crate) fn destroy_service_now(&mut self, object_id: Uuid, id: Uuid) {
+    pub(crate) fn destroy_service_now(&mut self, object_id: ObjectId, id: ServiceId) {
         let (res_send, _) = oneshot::channel();
         self.send
             .try_send(Event::DestroyService(object_id, id, res_send))
@@ -143,18 +149,18 @@ impl Handle {
         Ok(ServicesDestroyed::new(ev_recv))
     }
 
-    pub fn bind_object_proxy(&self, id: Uuid) -> ObjectProxy {
+    pub fn bind_object_proxy(&self, id: ObjectId) -> ObjectProxy {
         ObjectProxy::new(id, self.clone())
     }
 
-    pub fn bind_service_proxy(&self, object_id: Uuid, service_id: Uuid) -> ServiceProxy {
+    pub fn bind_service_proxy(&self, object_id: ObjectId, service_id: ServiceId) -> ServiceProxy {
         ServiceProxy::new(object_id, service_id, self.clone())
     }
 
     pub(crate) async fn call_function(
         &mut self,
-        object_id: Uuid,
-        service_id: Uuid,
+        object_id: ObjectId,
+        service_id: ServiceId,
         function: u32,
         args: Value,
     ) -> Result<Result<Value, Value>, Error> {

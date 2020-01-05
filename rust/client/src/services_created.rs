@@ -18,25 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::{ObjectId, ServiceId};
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct ServicesCreated(mpsc::Receiver<(Uuid, Uuid)>);
+pub struct ServicesCreated(mpsc::Receiver<(ObjectId, ServiceId)>);
 
 impl ServicesCreated {
-    pub(crate) fn new(events: mpsc::Receiver<(Uuid, Uuid)>) -> Self {
+    pub(crate) fn new(events: mpsc::Receiver<(ObjectId, ServiceId)>) -> Self {
         ServicesCreated(events)
     }
 }
 
 impl Stream for ServicesCreated {
-    type Item = (Uuid, Uuid);
+    type Item = (ObjectId, ServiceId);
 
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<(Uuid, Uuid)>> {
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<(ObjectId, ServiceId)>> {
         let events = Pin::new(&mut Pin::into_inner(self).0);
         events.poll_next(cx)
     }

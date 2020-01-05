@@ -18,25 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Handle, ServiceProxy};
-use uuid::Uuid;
+use super::{Handle, ObjectId, ServiceId, ServiceProxy};
 
 #[derive(Debug, Clone)]
 pub struct ObjectProxy {
-    id: Uuid,
+    id: ObjectId,
     client: Handle,
 }
 
 impl ObjectProxy {
-    pub(crate) fn new(id: Uuid, client: Handle) -> Self {
+    pub(crate) fn new(id: ObjectId, client: Handle) -> Self {
         ObjectProxy { id, client }
     }
 
-    pub fn id(&self) -> Uuid {
+    pub fn id(&self) -> ObjectId {
         self.id
     }
 
-    pub fn bind_service_proxy(&self, id: Uuid) -> ServiceProxy {
+    pub fn bind_service_proxy(&self, id: ServiceId) -> ServiceProxy {
         ServiceProxy::new(self.id, id, self.client.clone())
     }
 }

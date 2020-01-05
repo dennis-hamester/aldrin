@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::{ObjectId, ServiceId};
 use aldrin_proto::Message;
 use futures_channel::mpsc::SendError;
 use std::error::Error as StdError;
@@ -72,11 +73,11 @@ pub enum Error {
     ClientFifoOverflow,
     ClientShutdown,
     DuplicateObject(Uuid),
-    InvalidObject(Uuid),
-    DuplicateService(Uuid, Uuid),
-    InvalidService(Uuid, Uuid),
-    InvalidFunction(Uuid, Uuid, u32),
-    InvalidArgs(Uuid, Uuid, u32),
+    InvalidObject(ObjectId),
+    DuplicateService(ObjectId, Uuid),
+    InvalidService(ObjectId, ServiceId),
+    InvalidFunction(ObjectId, ServiceId, u32),
+    InvalidArgs(ObjectId, ServiceId, u32),
 }
 
 impl From<SendError> for Error {
@@ -97,22 +98,23 @@ impl fmt::Display for Error {
             Error::InternalError => f.write_str("internal error"),
             Error::ClientFifoOverflow => f.write_str("client fifo overflow"),
             Error::ClientShutdown => f.write_str("client shutdown"),
-            Error::DuplicateObject(id) => f.write_fmt(format_args!("duplicate object {}", id)),
-            Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id)),
-            Error::DuplicateService(obj_id, id) => f.write_fmt(format_args!(
+            Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {}", uuid)),
+            Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id.uuid)),
+            Error::DuplicateService(obj_id, uuid) => f.write_fmt(format_args!(
                 "duplicate service {} for object {}",
-                id, obj_id
+                uuid, obj_id.uuid,
             )),
-            Error::InvalidService(obj_id, id) => {
-                f.write_fmt(format_args!("invalid service {} for object {}", id, obj_id))
-            }
+            Error::InvalidService(obj_id, id) => f.write_fmt(format_args!(
+                "invalid service {} for object {}",
+                id.uuid, obj_id.uuid
+            )),
             Error::InvalidFunction(obj_id, svc_id, id) => f.write_fmt(format_args!(
                 "invalid function {} of service {} and object {}",
-                id, svc_id, obj_id
+                id, svc_id.uuid, obj_id.uuid
             )),
             Error::InvalidArgs(obj_id, svc_id, func_id) => f.write_fmt(format_args!(
                 "invalid args for function {} of service {} and object {}",
-                func_id, svc_id, obj_id
+                func_id, svc_id.uuid, obj_id.uuid
             )),
         }
     }

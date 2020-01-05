@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Dennis Hamester <dennis.hamester@gmail.com>
+// Copyright (c) 2020 Dennis Hamester <dennis.hamester@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,46 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Handle, ObjectId, ServiceId};
+use uuid::Uuid;
 
-#[derive(Debug)]
-pub struct Service {
-    object_id: ObjectId,
-    id: ServiceId,
-    client: Handle,
-    destroyed: bool,
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ObjectId {
+    pub uuid: Uuid,
 }
 
-impl Service {
-    pub(crate) fn new(object_id: ObjectId, id: ServiceId, client: Handle) -> Self {
-        Service {
-            object_id,
-            id,
-            client,
-            destroyed: false,
-        }
-    }
-
-    pub fn object_id(&self) -> ObjectId {
-        self.object_id
-    }
-
-    pub fn id(&self) -> ServiceId {
-        self.id
-    }
-
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        let res = self.client.destroy_service(self.object_id, self.id).await;
-        self.destroyed = true;
-        res
-    }
-}
-
-impl Drop for Service {
-    fn drop(&mut self) {
-        if !self.destroyed {
-            self.client.destroy_service_now(self.object_id, self.id);
-            self.destroyed = true;
-        }
+impl ObjectId {
+    pub fn new(uuid: Uuid) -> Self {
+        ObjectId { uuid }
     }
 }

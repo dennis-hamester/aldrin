@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Handle, Service};
+use super::{Error, Handle, ObjectId, Service};
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Object {
-    id: Uuid,
+    id: ObjectId,
     client: Handle,
     destroyed: bool,
 }
 
 impl Object {
-    pub(crate) fn new(id: Uuid, client: Handle) -> Self {
+    pub(crate) fn new(id: ObjectId, client: Handle) -> Self {
         Object {
             id,
             client,
@@ -37,7 +37,7 @@ impl Object {
         }
     }
 
-    pub fn id(&self) -> Uuid {
+    pub fn id(&self) -> ObjectId {
         self.id
     }
 
@@ -47,8 +47,8 @@ impl Object {
         res
     }
 
-    pub async fn create_service(&mut self, id: Uuid) -> Result<Service, Error> {
-        self.client.create_service(self.id, id).await
+    pub async fn create_service(&mut self, uuid: Uuid) -> Result<Service, Error> {
+        self.client.create_service(self.id, uuid).await
     }
 }
 
