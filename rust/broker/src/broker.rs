@@ -40,16 +40,16 @@ use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 use uuid::Uuid;
 
-pub use builder::Builder;
-pub use error::Error;
-pub use handle::Handle;
+pub use builder::BrokerBuilder;
+pub use error::BrokerError;
+pub use handle::BrokerHandle;
 
 pub(crate) use event::BrokerEvent;
 
 #[derive(Debug)]
 pub struct Broker {
     recv: Receiver<ConnectionEvent>,
-    handle: Option<Handle>,
+    handle: Option<BrokerHandle>,
     conns: HashMap<ConnectionId, ConnectionState>,
     objs: HashMap<Uuid, Object>,
     svcs: HashMap<(Uuid, Uuid), Service>,
@@ -57,8 +57,8 @@ pub struct Broker {
 }
 
 impl Broker {
-    pub fn builder() -> Builder {
-        Builder::new()
+    pub fn builder() -> BrokerBuilder {
+        BrokerBuilder::new()
     }
 
     pub(crate) fn new(fifo_size: usize) -> Self {
@@ -66,7 +66,7 @@ impl Broker {
 
         Broker {
             recv,
-            handle: Some(Handle::new(send)),
+            handle: Some(BrokerHandle::new(send)),
             conns: HashMap::new(),
             objs: HashMap::new(),
             svcs: HashMap::new(),
@@ -74,7 +74,7 @@ impl Broker {
         }
     }
 
-    pub fn handle(&self) -> &Handle {
+    pub fn handle(&self) -> &BrokerHandle {
         self.handle.as_ref().unwrap()
     }
 

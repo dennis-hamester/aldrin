@@ -19,25 +19,25 @@
 // SOFTWARE.
 
 use aldrin_proto::Message;
-use std::error::Error as StdError;
+use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum RunError {
+pub enum ConnectionError {
     InternalError,
     BrokerFifoOverflow,
 }
 
-impl fmt::Display for RunError {
+impl fmt::Display for ConnectionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RunError::InternalError => f.write_str("internal error"),
-            RunError::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
+            ConnectionError::InternalError => f.write_str("internal error"),
+            ConnectionError::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
         }
     }
 }
 
-impl StdError for RunError {}
+impl Error for ConnectionError {}
 
 #[derive(Debug, Clone)]
 pub enum EstablishError {
@@ -66,4 +66,4 @@ impl fmt::Display for EstablishError {
     }
 }
 
-impl StdError for EstablishError {}
+impl Error for EstablishError {}

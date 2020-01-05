@@ -18,17 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_broker::{broker, conn};
+use aldrin_broker::*;
 use aldrin_util::channel::SendError;
 use tokio::task::JoinError;
 
 #[derive(Debug)]
 pub enum Error {
     Send(SendError),
-    Broker(broker::Error),
+    Broker(BrokerError),
     Client(aldrin_client::Error),
-    ConnectionEstablish(conn::EstablishError),
-    ConnectionRun(conn::RunError),
+    ConnectionEstablish(EstablishError),
+    ConnectionRun(ConnectionError),
     ClientConnect(aldrin_client::ConnectError),
     ClientRun(aldrin_client::RunError),
     Join(JoinError),
@@ -40,8 +40,8 @@ impl From<SendError> for Error {
     }
 }
 
-impl From<broker::Error> for Error {
-    fn from(e: broker::Error) -> Self {
+impl From<BrokerError> for Error {
+    fn from(e: BrokerError) -> Self {
         Error::Broker(e)
     }
 }
@@ -52,14 +52,14 @@ impl From<aldrin_client::Error> for Error {
     }
 }
 
-impl From<conn::EstablishError> for Error {
-    fn from(e: conn::EstablishError) -> Self {
+impl From<EstablishError> for Error {
+    fn from(e: EstablishError) -> Self {
         Error::ConnectionEstablish(e)
     }
 }
 
-impl From<conn::RunError> for Error {
-    fn from(e: conn::RunError) -> Self {
+impl From<ConnectionError> for Error {
+    fn from(e: ConnectionError) -> Self {
         Error::ConnectionRun(e)
     }
 }

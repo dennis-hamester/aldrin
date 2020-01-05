@@ -19,36 +19,36 @@
 // SOFTWARE.
 
 use futures_channel::mpsc::SendError;
-use std::error::Error as StdError;
+use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Error {
+pub enum BrokerError {
     InternalError,
     BrokerFifoOverflow,
     BrokerShutdown,
 }
 
-impl From<SendError> for Error {
+impl From<SendError> for BrokerError {
     fn from(e: SendError) -> Self {
         if e.is_disconnected() {
-            Error::BrokerShutdown
+            BrokerError::BrokerShutdown
         } else if e.is_full() {
-            Error::BrokerFifoOverflow
+            BrokerError::BrokerFifoOverflow
         } else {
-            Error::InternalError
+            BrokerError::InternalError
         }
     }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for BrokerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::InternalError => f.write_str("internal error"),
-            Error::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
-            Error::BrokerShutdown => f.write_str("broker shutdown"),
+            BrokerError::InternalError => f.write_str("internal error"),
+            BrokerError::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
+            BrokerError::BrokerShutdown => f.write_str("broker shutdown"),
         }
     }
 }
 
-impl StdError for Error {}
+impl Error for BrokerError {}

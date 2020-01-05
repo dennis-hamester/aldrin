@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+mod broker;
+mod conn;
 mod conn_id;
 mod serial_map;
 
-pub mod broker;
-pub mod conn;
+pub use broker::{Broker, BrokerBuilder, BrokerError, BrokerHandle};
+pub use conn::{Connection, ConnectionBuilder, ConnectionError, ConnectionHandle, EstablishError};

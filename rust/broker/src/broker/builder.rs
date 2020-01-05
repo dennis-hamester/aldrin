@@ -23,11 +23,11 @@ use super::Broker;
 const DEFAULT_FIFO_SIZE: usize = 16;
 
 #[derive(Debug, Clone)]
-pub struct Builder {
+pub struct BrokerBuilder {
     fifo_size: usize,
 }
 
-impl Builder {
+impl BrokerBuilder {
     pub fn new() -> Self {
         Default::default()
     }
@@ -42,9 +42,9 @@ impl Builder {
     }
 }
 
-impl Default for Builder {
+impl Default for BrokerBuilder {
     fn default() -> Self {
-        Builder {
+        BrokerBuilder {
             fifo_size: DEFAULT_FIFO_SIZE,
         }
     }

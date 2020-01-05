@@ -21,13 +21,13 @@
 use crate::conn_id::ConnectionId;
 
 #[derive(Debug, Clone)]
-pub struct Handle {
+pub struct ConnectionHandle {
     id: ConnectionId,
 }
 
-impl Handle {
+impl ConnectionHandle {
     pub(super) fn new(id: ConnectionId) -> Self {
-        Handle { id }
+        ConnectionHandle { id }
     }
 
     pub(crate) fn id(&self) -> &ConnectionId {

@@ -31,9 +31,9 @@ use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 
-pub use builder::Builder;
-pub use error::{EstablishError, RunError};
-pub use handle::Handle;
+pub use builder::ConnectionBuilder;
+pub use error::{ConnectionError, EstablishError};
+pub use handle::ConnectionHandle;
 
 pub(crate) use event::ConnectionEvent;
 
@@ -45,7 +45,7 @@ where
     t: T,
     send: Sender<ConnectionEvent>,
     recv: Receiver<BrokerEvent>,
-    handle: Option<Handle>,
+    handle: Option<ConnectionHandle>,
 }
 
 impl<T> Connection<T>
@@ -62,17 +62,17 @@ where
             t,
             send,
             recv,
-            handle: Some(Handle::new(id)),
+            handle: Some(ConnectionHandle::new(id)),
         }
     }
 
-    pub fn handle(&self) -> &Handle {
+    pub fn handle(&self) -> &ConnectionHandle {
         self.handle.as_ref().unwrap()
     }
 
     pub async fn run<E>(mut self) -> Result<(), E>
     where
-        E: From<RunError> + From<T::Error>,
+        E: From<ConnectionError> + From<T::Error>,
     {
         let id = self.handle.take().unwrap().into_id();
 
@@ -93,9 +93,11 @@ where
                         if e.is_disconnected() {
                             return Ok(());
                         } else if e.is_full() {
-                            return self.shutdown(id, Err(RunError::BrokerFifoOverflow)).await;
+                            return self
+                                .shutdown(id, Err(ConnectionError::BrokerFifoOverflow))
+                                .await;
                         } else {
-                            return self.shutdown(id, Err(RunError::InternalError)).await;
+                            return self.shutdown(id, Err(ConnectionError::InternalError)).await;
                         }
                     }
                 }
@@ -105,7 +107,9 @@ where
                 }
 
                 Either::Right((Some(Err(e)), _)) => return self.shutdown(id, Err(e)).await,
-                Either::Right((None, _)) => return self.shutdown::<RunError, _>(id, Ok(())).await,
+                Either::Right((None, _)) => {
+                    return self.shutdown::<ConnectionError, _>(id, Ok(())).await
+                }
             }
         }
     }

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::Error;
-use crate::conn::{self, ConnectionEvent};
+use super::BrokerError;
+use crate::conn::{ConnectionBuilder, ConnectionEvent, ConnectionHandle};
 use crate::conn_id::ConnectionIdManager;
 use aldrin_transport::Transport;
 use futures_channel::mpsc::Sender;
@@ -27,34 +27,34 @@ use futures_util::sink::SinkExt;
 use std::future::Future;
 
 #[derive(Debug, Clone)]
-pub struct Handle {
+pub struct BrokerHandle {
     send: Sender<ConnectionEvent>,
     ids: ConnectionIdManager,
 }
 
-impl Handle {
-    pub(crate) fn new(send: Sender<ConnectionEvent>) -> Handle {
-        Handle {
+impl BrokerHandle {
+    pub(crate) fn new(send: Sender<ConnectionEvent>) -> BrokerHandle {
+        BrokerHandle {
             send,
             ids: ConnectionIdManager::new(),
         }
     }
 
-    pub fn add_connection<T>(&self, t: T) -> conn::Builder<T>
+    pub fn add_connection<T>(&self, t: T) -> ConnectionBuilder<T>
     where
         T: Transport + Unpin,
     {
-        conn::Builder::new(t, self.ids.clone(), self.send.clone())
+        ConnectionBuilder::new(t, self.ids.clone(), self.send.clone())
     }
 
-    pub async fn shutdown(&mut self) -> Result<(), Error> {
+    pub async fn shutdown(&mut self) -> Result<(), BrokerError> {
         self.send
             .send(ConnectionEvent::ShutdownBroker)
             .await
             .map_err(Into::into)
     }
 
-    pub async fn shutdown_idle(&mut self) -> Result<(), Error> {
+    pub async fn shutdown_idle(&mut self) -> Result<(), BrokerError> {
         self.send
             .send(ConnectionEvent::ShutdownIdleBroker)
             .await
@@ -63,8 +63,8 @@ impl Handle {
 
     pub fn shutdown_connection<'a>(
         &'a mut self,
-        conn: &'_ conn::Handle,
-    ) -> impl Future<Output = Result<(), Error>> + 'a {
+        conn: &'_ ConnectionHandle,
+    ) -> impl Future<Output = Result<(), BrokerError>> + 'a {
         let id = conn.id().clone();
         async move {
             self.send

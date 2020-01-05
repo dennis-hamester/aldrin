@@ -28,7 +28,7 @@ use futures_util::stream::StreamExt;
 const DEFAULT_FIFO_SIZE: usize = 16;
 
 #[derive(Debug)]
-pub struct Builder<T>
+pub struct ConnectionBuilder<T>
 where
     T: Transport + Unpin,
 {
@@ -38,12 +38,12 @@ where
     fifo_size: usize,
 }
 
-impl<T> Builder<T>
+impl<T> ConnectionBuilder<T>
 where
     T: Transport + Unpin,
 {
     pub(crate) fn new(t: T, ids: ConnectionIdManager, send: Sender<ConnectionEvent>) -> Self {
-        Builder {
+        ConnectionBuilder {
             t,
             ids,
             send,

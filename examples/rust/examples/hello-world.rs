@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_broker::broker;
+use aldrin_broker::Broker;
 use aldrin_examples::Error;
 use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
@@ -28,7 +28,7 @@ use uuid::Uuid;
 const FIFO_SIZE: usize = 16;
 
 async fn broker(t: ConnectionTransport) -> Result<(), Error> {
-    let broker = broker::Broker::builder().build();
+    let broker = Broker::builder().build();
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
