@@ -85,19 +85,4 @@ impl<T> SerialMap<T> {
             None => None,
         }
     }
-
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
-    }
-
-    pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
-        self.objs[serial as usize].as_mut()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (u32, &mut T)> {
-        self.objs
-            .iter_mut()
-            .enumerate()
-            .filter_map(|(serial, obj)| obj.as_mut().map(|obj| (serial as u32, obj)))
-    }
 }
