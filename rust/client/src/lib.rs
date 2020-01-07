@@ -130,44 +130,14 @@ where
         E: From<RunError> + From<T::Error>,
     {
         match msg {
-            Message::CreateObjectReply(re) => {
-                if let Some(send) = self.create_object.remove(re.serial) {
-                    send.send(re.result).ok();
-                }
-
-                Ok(())
-            }
-
-            Message::DestroyObjectReply(re) => {
-                if let Some(send) = self.destroy_object.remove(re.serial) {
-                    send.send(re.result).ok();
-                }
-
-                Ok(())
-            }
-
+            Message::CreateObjectReply(re) => self.create_object_reply(re).await,
+            Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
-
-            Message::CreateServiceReply(re) => {
-                if let Some(send) = self.create_service.remove(re.serial) {
-                    send.send(re.result).ok();
-                }
-
-                Ok(())
-            }
-
-            Message::DestroyServiceReply(re) => {
-                if let Some(send) = self.destroy_service.remove(re.serial) {
-                    send.send(re.result).ok();
-                }
-
-                Ok(())
-            }
-
+            Message::CreateServiceReply(re) => self.create_service_reply(re).await,
+            Message::DestroyServiceReply(re) => self.destroy_service_reply(re).await,
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
-
             Message::CallFunction(_) => unimplemented!(),
             Message::CallFunctionReply(_) => unimplemented!(),
 
@@ -188,6 +158,28 @@ where
                 Err(RunError::UnexpectedMessageReceived(msg).into())
             }
         }
+    }
+
+    async fn create_object_reply<E>(&mut self, reply: CreateObjectReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some(send) = self.create_object.remove(reply.serial) {
+            send.send(reply.result).ok();
+        }
+
+        Ok(())
+    }
+
+    async fn destroy_object_reply<E>(&mut self, reply: DestroyObjectReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some(send) = self.destroy_object.remove(reply.serial) {
+            send.send(reply.result).ok();
+        }
+
+        Ok(())
     }
 
     async fn object_created_event<E>(
@@ -281,6 +273,28 @@ where
 
         if self.objects_destroyed.is_empty() {
             self.t.send(Message::UnsubscribeObjectsDestroyed).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn create_service_reply<E>(&mut self, reply: CreateServiceReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some(send) = self.create_service.remove(reply.serial) {
+            send.send(reply.result).ok();
+        }
+
+        Ok(())
+    }
+
+    async fn destroy_service_reply<E>(&mut self, reply: DestroyServiceReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some(send) = self.destroy_service.remove(reply.serial) {
+            send.send(reply.result).ok();
         }
 
         Ok(())
