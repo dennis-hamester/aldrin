@@ -178,6 +178,7 @@ impl Handle {
         match reply {
             CallFunctionResult::Ok(v) => Ok(Ok(v)),
             CallFunctionResult::Err(v) => Ok(Err(v)),
+            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
             CallFunctionResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CallFunctionResult::InvalidService => Err(Error::InvalidService(object_id, service_id)),
             CallFunctionResult::InvalidFunction => {

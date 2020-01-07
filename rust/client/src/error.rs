@@ -78,6 +78,7 @@ pub enum Error {
     InvalidService(ObjectId, ServiceId),
     InvalidFunction(ObjectId, ServiceId, u32),
     InvalidArgs(ObjectId, ServiceId, u32),
+    FunctionCallAborted,
 }
 
 impl From<SendError> for Error {
@@ -116,6 +117,7 @@ impl fmt::Display for Error {
                 "invalid args for function {} of service {} and object {}",
                 func_id, svc_id.uuid, obj_id.uuid
             )),
+            Error::FunctionCallAborted => f.write_str("function call aborted"),
         }
     }
 }

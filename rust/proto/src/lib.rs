@@ -234,6 +234,7 @@ pub struct CallFunction {
 pub enum CallFunctionResult {
     Ok(Value),
     Err(Value),
+    Aborted,
     InvalidObject,
     InvalidService,
     InvalidFunction,
