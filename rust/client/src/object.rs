@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Handle, Service};
+use super::{Error, Handle, Service, ServiceUuid};
+use std::fmt;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -47,7 +48,7 @@ impl Object {
         res
     }
 
-    pub async fn create_service(&mut self, uuid: Uuid) -> Result<Service, Error> {
+    pub async fn create_service(&mut self, uuid: ServiceUuid) -> Result<Service, Error> {
         self.client.create_service(self.id, uuid).await
     }
 }
@@ -63,12 +64,30 @@ impl Drop for Object {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectId {
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub uuid: ObjectUuid,
+    pub cookie: ObjectCookie,
 }
 
 impl ObjectId {
-    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
+    pub fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
         ObjectId { uuid, cookie }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ObjectUuid(pub Uuid);
+
+impl fmt::Display for ObjectUuid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ObjectCookie(pub Uuid);
+
+impl fmt::Display for ObjectCookie {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
     }
 }

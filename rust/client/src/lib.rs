@@ -40,16 +40,15 @@ use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 use serial_map::SerialMap;
-use uuid::Uuid;
 
 pub use builder::Builder;
 pub use error::{ConnectError, Error, RunError};
 pub use handle::Handle;
-pub use object::{Object, ObjectId};
+pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use object_proxy::ObjectProxy;
 pub use objects_created::ObjectsCreated;
 pub use objects_destroyed::ObjectsDestroyed;
-pub use service::{Service, ServiceId};
+pub use service::{Service, ServiceCookie, ServiceId, ServiceUuid};
 pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
@@ -189,8 +188,8 @@ where
             if let Some(send) = self.objects_created.get_mut(serial) {
                 if let Err(e) = send
                     .send(ObjectId::new(
-                        object_created_event.id,
-                        object_created_event.cookie,
+                        ObjectUuid(object_created_event.id),
+                        ObjectCookie(object_created_event.cookie),
                     ))
                     .await
                 {
@@ -209,8 +208,8 @@ where
             for (serial, send) in self.objects_created.iter_mut() {
                 if let Err(e) = send
                     .send(ObjectId::new(
-                        object_created_event.id,
-                        object_created_event.cookie,
+                        ObjectUuid(object_created_event.id),
+                        ObjectCookie(object_created_event.cookie),
                     ))
                     .await
                 {
@@ -248,8 +247,8 @@ where
         for (serial, send) in self.objects_destroyed.iter_mut() {
             if let Err(e) = send
                 .send(ObjectId::new(
-                    object_destroyed_event.id,
-                    object_destroyed_event.cookie,
+                    ObjectUuid(object_destroyed_event.id),
+                    ObjectCookie(object_destroyed_event.cookie),
                 ))
                 .await
             {
@@ -308,10 +307,13 @@ where
                 if let Err(e) = send
                     .send((
                         ObjectId::new(
-                            service_created_event.object_id,
-                            service_created_event.object_cookie,
+                            ObjectUuid(service_created_event.object_id),
+                            ObjectCookie(service_created_event.object_cookie),
                         ),
-                        ServiceId::new(service_created_event.id, service_created_event.cookie),
+                        ServiceId::new(
+                            ServiceUuid(service_created_event.id),
+                            ServiceCookie(service_created_event.cookie),
+                        ),
                     ))
                     .await
                 {
@@ -331,10 +333,13 @@ where
                 if let Err(e) = send
                     .send((
                         ObjectId::new(
-                            service_created_event.object_id,
-                            service_created_event.object_cookie,
+                            ObjectUuid(service_created_event.object_id),
+                            ObjectCookie(service_created_event.object_cookie),
                         ),
-                        ServiceId::new(service_created_event.id, service_created_event.cookie),
+                        ServiceId::new(
+                            ServiceUuid(service_created_event.id),
+                            ServiceCookie(service_created_event.cookie),
+                        ),
                     ))
                     .await
                 {
@@ -373,10 +378,13 @@ where
             if let Err(e) = send
                 .send((
                     ObjectId::new(
-                        service_destroyed_event.object_id,
-                        service_destroyed_event.object_cookie,
+                        ObjectUuid(service_destroyed_event.object_id),
+                        ObjectCookie(service_destroyed_event.object_cookie),
                     ),
-                    ServiceId::new(service_destroyed_event.id, service_destroyed_event.cookie),
+                    ServiceId::new(
+                        ServiceUuid(service_destroyed_event.id),
+                        ServiceCookie(service_destroyed_event.cookie),
+                    ),
                 ))
                 .await
             {
@@ -438,7 +446,7 @@ where
 
     async fn create_object<E>(
         &mut self,
-        id: Uuid,
+        uuid: ObjectUuid,
         reply: oneshot::Sender<CreateObjectResult>,
     ) -> Result<(), E>
     where
@@ -446,7 +454,7 @@ where
     {
         let serial = self.create_object.insert(reply);
         self.t
-            .send(Message::CreateObject(CreateObject { serial, id }))
+            .send(Message::CreateObject(CreateObject { serial, id: uuid.0 }))
             .await
             .map_err(Into::into)
     }
@@ -463,8 +471,8 @@ where
         self.t
             .send(Message::DestroyObject(DestroyObject {
                 serial,
-                id: id.uuid,
-                cookie: id.cookie,
+                id: id.uuid.0,
+                cookie: id.cookie.0,
             }))
             .await
             .map_err(Into::into)
@@ -515,7 +523,7 @@ where
     async fn create_service<E>(
         &mut self,
         object_id: ObjectId,
-        id: Uuid,
+        uuid: ServiceUuid,
         reply: oneshot::Sender<CreateServiceResult>,
     ) -> Result<(), E>
     where
@@ -525,9 +533,9 @@ where
         self.t
             .send(Message::CreateService(CreateService {
                 serial,
-                object_id: object_id.uuid,
-                object_cookie: object_id.cookie,
-                id,
+                object_id: object_id.uuid.0,
+                object_cookie: object_id.cookie.0,
+                id: uuid.0,
             }))
             .await
             .map_err(Into::into)
@@ -546,9 +554,9 @@ where
         self.t
             .send(Message::DestroyService(DestroyService {
                 serial,
-                object_id: object_id.uuid,
-                id: id.uuid,
-                cookie: id.cookie,
+                object_id: object_id.uuid.0,
+                id: id.uuid.0,
+                cookie: id.cookie.0,
             }))
             .await
             .map_err(Into::into)
@@ -611,9 +619,9 @@ where
         self.t
             .send(Message::CallFunction(CallFunction {
                 serial,
-                object_id: object_id.uuid,
-                service_id: service_id.uuid,
-                service_cookie: service_id.cookie,
+                object_id: object_id.uuid.0,
+                service_id: service_id.uuid.0,
+                service_cookie: service_id.cookie.0,
                 function,
                 args,
             }))

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use aldrin_broker::Broker;
+use aldrin_client::{Client, ObjectUuid, ServiceUuid};
 use aldrin_examples::Error;
 use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
@@ -42,7 +43,7 @@ async fn broker(t: ConnectionTransport) -> Result<(), Error> {
 }
 
 async fn client(t: ClientTransport) -> Result<(), Error> {
-    let client = aldrin_client::Client::builder(t).connect::<Error>().await?;
+    let client = Client::builder(t).connect::<Error>().await?;
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 
@@ -74,8 +75,8 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
         }
     }));
 
-    let mut obj = handle.create_object(Uuid::new_v4()).await?;
-    let mut svc = obj.create_service(Uuid::new_v4()).await?;
+    let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+    let mut svc = obj.create_service(ServiceUuid(Uuid::new_v4())).await?;
 
     let mut svc_proxy = handle.bind_service_proxy(svc.object_id(), svc.id());
     println!("{:#?}", svc_proxy.call(0, Value::None).await);

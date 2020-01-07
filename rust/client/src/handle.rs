@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 use super::{
-    Error, Event, Object, ObjectId, ObjectProxy, ObjectsCreated, ObjectsDestroyed, Service,
-    ServiceId, ServiceProxy, ServicesCreated, ServicesDestroyed,
+    Error, Event, Object, ObjectCookie, ObjectId, ObjectProxy, ObjectUuid, ObjectsCreated,
+    ObjectsDestroyed, Service, ServiceCookie, ServiceId, ServiceProxy, ServiceUuid,
+    ServicesCreated, ServicesDestroyed,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct Handle {
@@ -46,14 +46,15 @@ impl Handle {
         self.send.send(Event::Shutdown).await.map_err(Into::into)
     }
 
-    pub async fn create_object(&mut self, uuid: Uuid) -> Result<Object, Error> {
+    pub async fn create_object(&mut self, uuid: ObjectUuid) -> Result<Object, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send.send(Event::CreateObject(uuid, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
-            CreateObjectResult::Ok(cookie) => {
-                Ok(Object::new(ObjectId::new(uuid, cookie), self.clone()))
-            }
+            CreateObjectResult::Ok(cookie) => Ok(Object::new(
+                ObjectId::new(uuid, ObjectCookie(cookie)),
+                self.clone(),
+            )),
             CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(uuid)),
         }
     }
@@ -93,7 +94,7 @@ impl Handle {
     pub(crate) async fn create_service(
         &mut self,
         object_id: ObjectId,
-        uuid: Uuid,
+        uuid: ServiceUuid,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
@@ -103,7 +104,7 @@ impl Handle {
         match reply {
             CreateServiceResult::Ok(cookie) => Ok(Service::new(
                 object_id,
-                ServiceId::new(uuid, cookie),
+                ServiceId::new(uuid, ServiceCookie(cookie)),
                 self.clone(),
             )),
             CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, uuid)),

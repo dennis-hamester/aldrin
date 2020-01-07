@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{ObjectId, ServiceId};
+use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use aldrin_proto::Message;
 use futures_channel::mpsc::SendError;
 use std::error::Error as StdError;
 use std::fmt;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum ConnectError {
@@ -72,9 +71,9 @@ pub enum Error {
     InternalError,
     ClientFifoOverflow,
     ClientShutdown,
-    DuplicateObject(Uuid),
+    DuplicateObject(ObjectUuid),
     InvalidObject(ObjectId),
-    DuplicateService(ObjectId, Uuid),
+    DuplicateService(ObjectId, ServiceUuid),
     InvalidService(ObjectId, ServiceId),
     InvalidFunction(ObjectId, ServiceId, u32),
     InvalidArgs(ObjectId, ServiceId, u32),

@@ -18,19 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{ObjectId, ServiceId};
+use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use aldrin_proto::*;
 use futures_channel::{mpsc, oneshot};
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) enum Event {
     Shutdown,
-    CreateObject(Uuid, oneshot::Sender<CreateObjectResult>),
+    CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
     DestroyObject(ObjectId, oneshot::Sender<DestroyObjectResult>),
     SubscribeObjectsCreated(mpsc::Sender<ObjectId>, bool),
     SubscribeObjectsDestroyed(mpsc::Sender<ObjectId>),
-    CreateService(ObjectId, Uuid, oneshot::Sender<CreateServiceResult>),
+    CreateService(ObjectId, ServiceUuid, oneshot::Sender<CreateServiceResult>),
     DestroyService(ObjectId, ServiceId, oneshot::Sender<DestroyServiceResult>),
     SubscribeServicesCreated(mpsc::Sender<(ObjectId, ServiceId)>, bool),
     SubscribeServicesDestroyed(mpsc::Sender<(ObjectId, ServiceId)>),

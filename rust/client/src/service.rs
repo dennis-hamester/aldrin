@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use super::{Error, Handle, ObjectId};
+use std::fmt;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -65,12 +66,30 @@ impl Drop for Service {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ServiceId {
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub uuid: ServiceUuid,
+    pub cookie: ServiceCookie,
 }
 
 impl ServiceId {
-    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
+    pub fn new(uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
         ServiceId { uuid, cookie }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ServiceUuid(pub Uuid);
+
+impl fmt::Display for ServiceUuid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ServiceCookie(pub Uuid);
+
+impl fmt::Display for ServiceCookie {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
     }
 }
