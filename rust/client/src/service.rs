@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{Error, Handle, ObjectId, ServiceId};
+use super::{Error, Handle, ObjectId};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Service {
@@ -59,5 +60,17 @@ impl Drop for Service {
             self.client.destroy_service_now(self.object_id, self.id);
             self.destroyed = true;
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ServiceId {
+    pub uuid: Uuid,
+    pub cookie: Uuid,
+}
+
+impl ServiceId {
+    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
+        ServiceId { uuid, cookie }
     }
 }
