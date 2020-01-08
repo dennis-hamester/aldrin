@@ -19,15 +19,15 @@
 // SOFTWARE.
 
 use super::BrokerEvent;
+use super::ObjectUuid;
 use futures_channel::mpsc::Sender;
 use futures_util::sink::SinkExt;
 use std::collections::HashSet;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
     send: Sender<BrokerEvent>,
-    objects: HashSet<Uuid>,
+    objects: HashSet<ObjectUuid>,
     objects_created_subscribed: bool,
     objects_destroyed_subscribed: bool,
     services_created_subscribed: bool,
@@ -46,18 +46,18 @@ impl ConnectionState {
         }
     }
 
-    pub fn add_object(&mut self, id: Uuid) {
-        let unique = self.objects.insert(id);
+    pub fn add_object(&mut self, uuid: ObjectUuid) {
+        let unique = self.objects.insert(uuid);
         debug_assert!(unique);
     }
 
-    pub fn remove_object(&mut self, id: Uuid) {
-        let contained = self.objects.remove(&id);
+    pub fn remove_object(&mut self, uuid: ObjectUuid) {
+        let contained = self.objects.remove(&uuid);
         debug_assert!(contained);
     }
 
-    pub fn objects<'a>(&'a self) -> impl Iterator<Item = Uuid> + 'a {
-        self.objects.iter().cloned()
+    pub fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectUuid> + 'a {
+        self.objects.iter().copied()
     }
 
     pub async fn send(&mut self, ev: BrokerEvent) -> Result<(), ()> {

@@ -34,8 +34,8 @@ use aldrin_proto::*;
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
-use object::Object;
-use service::Service;
+use object::{Object, ObjectCookie, ObjectUuid};
+use service::{Service, ServiceCookie, ServiceUuid};
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 use uuid::Uuid;
@@ -51,8 +51,8 @@ pub struct Broker {
     recv: Receiver<ConnectionEvent>,
     handle: Option<BrokerHandle>,
     conns: HashMap<ConnectionId, ConnectionState>,
-    objs: HashMap<Uuid, Object>,
-    svcs: HashMap<(Uuid, Uuid), Service>,
+    objs: HashMap<ObjectUuid, Object>,
+    svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
     function_calls: SerialMap<(u32, ConnectionId)>,
 }
 
@@ -143,15 +143,15 @@ impl Broker {
                 continue;
             }
 
-            if let Some((id, cookie)) = state.pop_add_obj() {
+            if let Some((uuid, cookie)) = state.pop_add_obj() {
                 broadcast(
                     self.conns
                         .iter_mut()
                         .filter(|(_, c)| c.objects_created_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ObjectCreatedEvent(ObjectCreatedEvent {
-                        id,
-                        cookie,
+                        id: uuid.0,
+                        cookie: cookie.0,
                         serial: None,
                     })),
                 )
@@ -159,17 +159,17 @@ impl Broker {
                 continue;
             }
 
-            if let Some((object_id, object_cookie, id, cookie)) = state.pop_add_svc() {
+            if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_add_svc() {
                 broadcast(
                     self.conns
                         .iter_mut()
                         .filter(|(_, c)| c.services_created_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ServiceCreatedEvent(ServiceCreatedEvent {
-                        object_id,
-                        object_cookie,
-                        id,
-                        cookie,
+                        object_id: obj_uuid.0,
+                        object_cookie: obj_cookie.0,
+                        id: uuid.0,
+                        cookie: cookie.0,
                         serial: None,
                     })),
                 )
@@ -177,32 +177,32 @@ impl Broker {
                 continue;
             }
 
-            if let Some((object_id, object_cookie, id, cookie)) = state.pop_remove_svc() {
+            if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_remove_svc() {
                 broadcast(
                     self.conns
                         .iter_mut()
                         .filter(|(_, c)| c.services_destroyed_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
-                        object_id,
-                        object_cookie,
-                        id,
-                        cookie,
+                        object_id: obj_uuid.0,
+                        object_cookie: obj_cookie.0,
+                        id: uuid.0,
+                        cookie: cookie.0,
                     })),
                 )
                 .await;
                 continue;
             }
 
-            if let Some((id, cookie)) = state.pop_remove_obj() {
+            if let Some((uuid, cookie)) = state.pop_remove_obj() {
                 broadcast(
                     self.conns
                         .iter_mut()
                         .filter(|(_, c)| c.objects_destroyed_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
-                        id,
-                        cookie,
+                        id: uuid.0,
+                        cookie: cookie.0,
                     })),
                 )
                 .await;
@@ -242,16 +242,16 @@ impl Broker {
         conn.send(BrokerEvent::Shutdown).await.ok();
 
         // Remove all objects and services and queue up events.
-        for obj_id in conn.objects() {
-            let obj = self.objs.remove(&obj_id).expect("inconsistent state");
-            state.push_remove_obj(obj_id, obj.cookie());
+        for obj_uuid in conn.objects() {
+            let obj = self.objs.remove(&obj_uuid).expect("inconsistent state");
+            state.push_remove_obj(obj_uuid, obj.cookie());
 
-            for svc_id in obj.services() {
+            for svc_uuid in obj.services() {
                 let svc = self
                     .svcs
-                    .remove(&(obj_id, svc_id))
+                    .remove(&(obj_uuid, svc_uuid))
                     .expect("inconsistent state");
-                state.push_remove_svc(obj_id, obj.cookie(), svc_id, svc.cookie());
+                state.push_remove_svc(obj_uuid, obj.cookie(), svc_uuid, svc.cookie());
 
                 for serial in svc.function_calls() {
                     let (serial, conn_id) = self
@@ -316,7 +316,8 @@ impl Broker {
             None => return Ok(()),
         };
 
-        match self.objs.entry(req.id) {
+        let uuid = ObjectUuid(req.id);
+        match self.objs.entry(uuid) {
             Entry::Occupied(_) => {
                 conn.send(BrokerEvent::Message(Message::CreateObjectReply(
                     CreateObjectReply {
@@ -328,17 +329,17 @@ impl Broker {
             }
 
             Entry::Vacant(entry) => {
-                let cookie = Uuid::new_v4();
+                let cookie = ObjectCookie(Uuid::new_v4());
                 conn.send(BrokerEvent::Message(Message::CreateObjectReply(
                     CreateObjectReply {
                         serial: req.serial,
-                        result: CreateObjectResult::Ok(cookie),
+                        result: CreateObjectResult::Ok(cookie.0),
                     },
                 )))
                 .await?;
-                entry.insert(Object::new(req.id, cookie, id.clone()));
-                conn.add_object(req.id);
-                state.push_add_obj(req.id, cookie);
+                entry.insert(Object::new(uuid, cookie, id.clone()));
+                conn.add_object(uuid);
+                state.push_add_obj(uuid, cookie);
                 Ok(())
             }
         }
@@ -355,8 +356,10 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let entry = match self.objs.entry(req.id) {
-            Entry::Occupied(entry) if entry.get().cookie() == req.cookie => entry,
+        let obj_uuid = ObjectUuid(req.id);
+        let obj_cookie = ObjectCookie(req.cookie);
+        let entry = match self.objs.entry(obj_uuid) {
+            Entry::Occupied(entry) if entry.get().cookie() == obj_cookie => entry,
             _ => {
                 return conn
                     .send(BrokerEvent::Message(Message::DestroyObjectReply(
@@ -388,14 +391,13 @@ impl Broker {
         )))
         .await?;
 
-        let obj_cookie = entry.get().cookie();
-        state.push_remove_obj(req.id, obj_cookie);
-        for svc_id in entry.get().services() {
+        state.push_remove_obj(obj_uuid, obj_cookie);
+        for svc_uuid in entry.get().services() {
             let svc = self
                 .svcs
-                .remove(&(req.id, svc_id))
+                .remove(&(obj_uuid, svc_uuid))
                 .expect("inconsistent state");
-            state.push_remove_svc(req.id, obj_cookie, svc_id, svc.cookie());
+            state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc.cookie());
 
             for serial in svc.function_calls() {
                 let (serial, conn_id) = self
@@ -406,7 +408,7 @@ impl Broker {
             }
         }
 
-        conn.remove_object(req.id);
+        conn.remove_object(obj_uuid);
         entry.remove();
 
         Ok(())
@@ -425,11 +427,11 @@ impl Broker {
         conn.set_objects_created_subscribed(true);
 
         if let Some(serial) = req.serial {
-            for (&id, obj) in &self.objs {
+            for (uuid, obj) in &self.objs {
                 conn.send(BrokerEvent::Message(Message::ObjectCreatedEvent(
                     ObjectCreatedEvent {
-                        id,
-                        cookie: obj.cookie(),
+                        id: uuid.0,
+                        cookie: obj.cookie().0,
                         serial: Some(serial),
                     },
                 )))
@@ -481,7 +483,9 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let entry = match self.svcs.entry((req.object_id, req.id)) {
+        let obj_uuid = ObjectUuid(req.object_id);
+        let svc_uuid = ServiceUuid(req.id);
+        let entry = match self.svcs.entry((obj_uuid, svc_uuid)) {
             Entry::Vacant(entry) => entry,
             Entry::Occupied(_) => {
                 return conn
@@ -495,8 +499,9 @@ impl Broker {
             }
         };
 
-        let obj = match self.objs.get_mut(&req.object_id) {
-            Some(obj) if obj.cookie() == req.object_cookie => obj,
+        let obj_cookie = ObjectCookie(req.object_cookie);
+        let obj = match self.objs.get_mut(&obj_uuid) {
+            Some(obj) if obj.cookie() == obj_cookie => obj,
             _ => {
                 return conn
                     .send(BrokerEvent::Message(Message::CreateServiceReply(
@@ -520,23 +525,18 @@ impl Broker {
                 .await;
         }
 
-        let cookie = Uuid::new_v4();
+        let svc_cookie = ServiceCookie(Uuid::new_v4());
         conn.send(BrokerEvent::Message(Message::CreateServiceReply(
             CreateServiceReply {
                 serial: req.serial,
-                result: CreateServiceResult::Ok(cookie),
+                result: CreateServiceResult::Ok(svc_cookie.0),
             },
         )))
         .await?;
 
-        entry.insert(Service::new(
-            req.object_id,
-            req.object_cookie,
-            req.id,
-            cookie,
-        ));
-        obj.add_service(req.id);
-        state.push_add_svc(req.object_id, obj.cookie(), req.id, cookie);
+        entry.insert(Service::new(obj_uuid, obj_cookie, svc_uuid, svc_cookie));
+        obj.add_service(svc_uuid);
+        state.push_add_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
 
         Ok(())
     }
@@ -552,7 +552,8 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let obj = match self.objs.get_mut(&req.object_id) {
+        let obj_uuid = ObjectUuid(req.object_id);
+        let obj = match self.objs.get_mut(&obj_uuid) {
             Some(obj) => obj,
             None => {
                 return conn
@@ -577,8 +578,10 @@ impl Broker {
                 .await;
         }
 
-        let entry = match self.svcs.entry((req.object_id, req.id)) {
-            Entry::Occupied(entry) if entry.get().cookie() == req.cookie => entry,
+        let svc_uuid = ServiceUuid(req.id);
+        let svc_cookie = ServiceCookie(req.cookie);
+        let entry = match self.svcs.entry((obj_uuid, svc_uuid)) {
+            Entry::Occupied(entry) if entry.get().cookie() == svc_cookie => entry,
             _ => {
                 return conn
                     .send(BrokerEvent::Message(Message::DestroyServiceReply(
@@ -599,8 +602,8 @@ impl Broker {
         )))
         .await?;
 
-        state.push_remove_svc(req.object_id, obj.cookie(), req.id, req.cookie);
-        obj.remove_service(req.id);
+        state.push_remove_svc(obj_uuid, obj.cookie(), svc_uuid, svc_cookie);
+        obj.remove_service(svc_uuid);
 
         for serial in entry.get().function_calls() {
             let (serial, conn_id) = self
@@ -627,13 +630,13 @@ impl Broker {
         conn.set_services_created_subscribed(true);
 
         if let Some(serial) = req.serial {
-            for (&(object_id, id), svc) in &self.svcs {
+            for (&(obj_uuid, svc_uuid), svc) in &self.svcs {
                 conn.send(BrokerEvent::Message(Message::ServiceCreatedEvent(
                     ServiceCreatedEvent {
-                        object_id,
-                        object_cookie: svc.object_cookie(),
-                        id,
-                        cookie: svc.cookie(),
+                        object_id: obj_uuid.0,
+                        object_cookie: svc.object_cookie().0,
+                        id: svc_uuid.0,
+                        cookie: svc.cookie().0,
                         serial: Some(serial),
                     },
                 )))
@@ -680,7 +683,8 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
-        let obj = match self.objs.get(&req.object_id) {
+        let obj_uuid = ObjectUuid(req.object_id);
+        let obj = match self.objs.get(&obj_uuid) {
             Some(obj) => obj,
             None => {
                 let conn = match self.conns.get_mut(id) {
@@ -699,8 +703,10 @@ impl Broker {
             }
         };
 
-        let svc = match self.svcs.get_mut(&(req.object_id, req.service_id)) {
-            Some(svc) if svc.cookie() == req.service_cookie => svc,
+        let svc_uuid = ServiceUuid(req.service_id);
+        let svc_cookie = ServiceCookie(req.service_cookie);
+        let svc = match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
+            Some(svc) if svc.cookie() == svc_cookie => svc,
             _ => {
                 let conn = match self.conns.get_mut(id) {
                     Some(conn) => conn,
@@ -728,9 +734,9 @@ impl Broker {
         let res = callee_conn
             .send(BrokerEvent::Message(Message::CallFunction(CallFunction {
                 serial,
-                object_id: req.object_id,
-                service_id: req.service_id,
-                service_cookie: req.service_cookie,
+                object_id: obj_uuid.0,
+                service_id: svc_uuid.0,
+                service_cookie: svc_cookie.0,
                 function: req.function,
                 args: req.args,
             })))

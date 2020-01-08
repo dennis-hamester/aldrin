@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::{ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
 use crate::conn_id::ConnectionId;
 use aldrin_proto::CallFunctionResult;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub(super) struct State {
     shutdown_now: bool,
     shutdown_idle: bool,
-    add_objs: Vec<(Uuid, Uuid)>,
+    add_objs: Vec<(ObjectUuid, ObjectCookie)>,
     remove_conns: Vec<ConnectionId>,
-    remove_objs: Vec<(Uuid, Uuid)>,
-    add_svcs: Vec<(Uuid, Uuid, Uuid, Uuid)>,
-    remove_svcs: Vec<(Uuid, Uuid, Uuid, Uuid)>,
+    remove_objs: Vec<(ObjectUuid, ObjectCookie)>,
+    add_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
+    remove_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
 }
 
@@ -73,11 +73,11 @@ impl State {
             || !self.remove_function_calls.is_empty()
     }
 
-    pub fn push_add_obj(&mut self, id: Uuid, cookie: Uuid) {
-        self.add_objs.push((id, cookie));
+    pub fn push_add_obj(&mut self, uuid: ObjectUuid, cookie: ObjectCookie) {
+        self.add_objs.push((uuid, cookie));
     }
 
-    pub fn pop_add_obj(&mut self) -> Option<(Uuid, Uuid)> {
+    pub fn pop_add_obj(&mut self) -> Option<(ObjectUuid, ObjectCookie)> {
         self.add_objs.pop()
     }
 
@@ -96,34 +96,45 @@ impl State {
         self.remove_conns.pop()
     }
 
-    pub fn push_remove_obj(&mut self, id: Uuid, cookie: Uuid) {
-        self.remove_objs.push((id, cookie));
+    pub fn push_remove_obj(&mut self, uuid: ObjectUuid, cookie: ObjectCookie) {
+        self.remove_objs.push((uuid, cookie));
     }
 
-    pub fn pop_remove_obj(&mut self) -> Option<(Uuid, Uuid)> {
+    pub fn pop_remove_obj(&mut self) -> Option<(ObjectUuid, ObjectCookie)> {
         self.remove_objs.pop()
     }
 
-    pub fn push_add_svc(&mut self, object_id: Uuid, object_cookie: Uuid, id: Uuid, cookie: Uuid) {
-        self.add_svcs.push((object_id, object_cookie, id, cookie));
+    pub fn push_add_svc(
+        &mut self,
+        object_uuid: ObjectUuid,
+        object_cookie: ObjectCookie,
+        uuid: ServiceUuid,
+        cookie: ServiceCookie,
+    ) {
+        self.add_svcs
+            .push((object_uuid, object_cookie, uuid, cookie));
     }
 
-    pub fn pop_add_svc(&mut self) -> Option<(Uuid, Uuid, Uuid, Uuid)> {
+    pub fn pop_add_svc(
+        &mut self,
+    ) -> Option<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)> {
         self.add_svcs.pop()
     }
 
     pub fn push_remove_svc(
         &mut self,
-        object_id: Uuid,
-        object_cookie: Uuid,
-        id: Uuid,
-        cookie: Uuid,
+        object_uuid: ObjectUuid,
+        object_cookie: ObjectCookie,
+        uuid: ServiceUuid,
+        cookie: ServiceCookie,
     ) {
         self.remove_svcs
-            .push((object_id, object_cookie, id, cookie));
+            .push((object_uuid, object_cookie, uuid, cookie));
     }
 
-    pub fn pop_remove_svc(&mut self) -> Option<(Uuid, Uuid, Uuid, Uuid)> {
+    pub fn pop_remove_svc(
+        &mut self,
+    ) -> Option<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)> {
         self.remove_svcs.pop()
     }
 

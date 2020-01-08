@@ -18,34 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::{ObjectCookie, ObjectUuid};
 use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Service {
-    object_id: Uuid,
-    object_cookie: Uuid,
-    id: Uuid,
-    cookie: Uuid,
+    object_uuid: ObjectUuid,
+    object_cookie: ObjectCookie,
+    uuid: ServiceUuid,
+    cookie: ServiceCookie,
     function_calls: HashSet<u32>,
 }
 
 impl Service {
-    pub fn new(object_id: Uuid, object_cookie: Uuid, id: Uuid, cookie: Uuid) -> Self {
+    pub fn new(
+        object_uuid: ObjectUuid,
+        object_cookie: ObjectCookie,
+        uuid: ServiceUuid,
+        cookie: ServiceCookie,
+    ) -> Self {
         Service {
-            object_id,
+            object_uuid,
             object_cookie,
-            id,
+            uuid,
             cookie,
             function_calls: HashSet::new(),
         }
     }
 
-    pub fn object_cookie(&self) -> Uuid {
+    pub fn object_cookie(&self) -> ObjectCookie {
         self.object_cookie
     }
 
-    pub fn cookie(&self) -> Uuid {
+    pub fn cookie(&self) -> ServiceCookie {
         self.cookie
     }
 
@@ -58,3 +64,9 @@ impl Service {
         self.function_calls.iter().cloned()
     }
 }
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct ServiceUuid(pub Uuid);
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) struct ServiceCookie(pub Uuid);
