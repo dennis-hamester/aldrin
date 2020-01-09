@@ -55,7 +55,7 @@ pub struct Broker {
     objs: HashMap<ObjectUuid, Object>,
     svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
-    function_calls: SerialMap<(u32, ConnectionId)>,
+    function_calls: SerialMap<(u32, ConnectionId, ObjectUuid, ServiceUuid)>,
 }
 
 impl Broker {
@@ -266,7 +266,7 @@ impl Broker {
                 state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
 
                 for serial in svc.function_calls() {
-                    let (serial, conn_id) = self
+                    let (serial, conn_id, _, _) = self
                         .function_calls
                         .remove(serial)
                         .expect("inconsistent state");
@@ -302,7 +302,7 @@ impl Broker {
             Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id).await,
             Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id).await,
             Message::CallFunction(req) => self.call_function(state, id, req).await,
-            Message::CallFunctionReply(_) => unimplemented!(),
+            Message::CallFunctionReply(req) => self.call_function_reply(req).await,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -424,7 +424,7 @@ impl Broker {
             state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
 
             for serial in svc.function_calls() {
-                let (serial, conn_id) = self
+                let (serial, conn_id, _, _) = self
                     .function_calls
                     .remove(serial)
                     .expect("inconsistent state");
@@ -630,7 +630,7 @@ impl Broker {
         obj.remove_service(svc_cookie);
 
         for serial in entry.get().function_calls() {
-            let (serial, conn_id) = self
+            let (serial, conn_id, _, _) = self
                 .function_calls
                 .remove(serial)
                 .expect("inconsistent state");
@@ -734,7 +734,9 @@ impl Broker {
         };
         let callee_conn = self.conns.get_mut(callee_id).expect("inconsistent state");
 
-        let serial = self.function_calls.insert((req.serial, id.clone()));
+        let serial = self
+            .function_calls
+            .insert((req.serial, id.clone(), obj_uuid, svc_uuid));
         let res = callee_conn
             .send(BrokerEvent::Message(Message::CallFunction(CallFunction {
                 serial,
@@ -757,6 +759,29 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    async fn call_function_reply(&mut self, req: CallFunctionReply) -> Result<(), ()> {
+        let (serial, conn_id, obj_uuid, svc_uuid) = match self.function_calls.remove(req.serial) {
+            Some(caller) => caller,
+            None => return Ok(()),
+        };
+
+        let svc = self
+            .svcs
+            .get_mut(&(obj_uuid, svc_uuid))
+            .expect("inconsistent state");
+        svc.remove_function_call(serial);
+
+        let conn = self.conns.get_mut(&conn_id).expect("inconsistent state");
+        return conn
+            .send(BrokerEvent::Message(Message::CallFunctionReply(
+                CallFunctionReply {
+                    serial,
+                    result: req.result,
+                },
+            )))
+            .await;
     }
 }
 

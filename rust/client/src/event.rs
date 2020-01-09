@@ -29,9 +29,18 @@ pub(crate) enum Event {
     DestroyObject(ObjectId, oneshot::Sender<DestroyObjectResult>),
     SubscribeObjectsCreated(mpsc::Sender<ObjectId>, bool),
     SubscribeObjectsDestroyed(mpsc::Sender<ObjectId>),
-    CreateService(ObjectId, ServiceUuid, oneshot::Sender<CreateServiceResult>),
+    CreateService(
+        ObjectId,
+        ServiceUuid,
+        usize,
+        oneshot::Sender<(
+            CreateServiceResult,
+            Option<mpsc::Receiver<(u32, Value, u32)>>,
+        )>,
+    ),
     DestroyService(ServiceId, oneshot::Sender<DestroyServiceResult>),
     SubscribeServicesCreated(mpsc::Sender<(ObjectId, ServiceId)>, bool),
     SubscribeServicesDestroyed(mpsc::Sender<(ObjectId, ServiceId)>),
     CallFunction(ServiceId, u32, Value, oneshot::Sender<CallFunctionResult>),
+    FunctionCallReply(u32, CallFunctionResult),
 }

@@ -95,17 +95,19 @@ impl Handle {
         &mut self,
         object_id: ObjectId,
         uuid: ServiceUuid,
+        fifo_size: usize,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Event::CreateService(object_id, uuid, res_send))
+            .send(Event::CreateService(object_id, uuid, fifo_size, res_send))
             .await?;
-        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
-        match reply {
+        let (res, recv) = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+        match res {
             CreateServiceResult::Ok(cookie) => Ok(Service::new(
                 object_id,
                 ServiceId::new(uuid, ServiceCookie(cookie)),
                 self.clone(),
+                recv.unwrap(),
             )),
             CreateServiceResult::DuplicateService => Err(Error::DuplicateService(object_id, uuid)),
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
@@ -181,5 +183,25 @@ impl Handle {
                 Err(Error::InvalidArgs(object_id, service_id, function))
             }
         }
+    }
+
+    pub(crate) async fn function_call_reply(
+        &mut self,
+        serial: u32,
+        result: CallFunctionResult,
+    ) -> Result<(), Error> {
+        self.send
+            .send(Event::FunctionCallReply(serial, result))
+            .await
+            .map_err(Into::into)
+    }
+
+    pub(crate) fn abort_function_call_now(&mut self, serial: u32) {
+        self.send
+            .try_send(Event::FunctionCallReply(
+                serial,
+                CallFunctionResult::Aborted,
+            ))
+            .ok();
     }
 }

@@ -21,7 +21,6 @@
 use aldrin_broker::Broker;
 use aldrin_client::{Client, ObjectUuid, ServiceUuid};
 use aldrin_examples::Error;
-use aldrin_proto::Value;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
 use futures::stream::StreamExt;
 use uuid::Uuid;
@@ -76,10 +75,9 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     }));
 
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
-    let mut svc = obj.create_service(ServiceUuid(Uuid::new_v4())).await?;
-
-    let mut svc_proxy = handle.bind_service_proxy(svc.object_id(), svc.id());
-    println!("{:#?}", svc_proxy.call(0, Value::None).await);
+    let mut svc = obj
+        .create_service(ServiceUuid(Uuid::new_v4()), FIFO_SIZE)
+        .await?;
 
     svc.destroy().await?;
     obj.destroy().await?;

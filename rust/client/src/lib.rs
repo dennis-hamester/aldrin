@@ -40,6 +40,7 @@ use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 use serial_map::SerialMap;
+use std::collections::HashMap;
 
 pub use builder::Builder;
 pub use error::{ConnectError, Error, RunError};
@@ -48,7 +49,9 @@ pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use object_proxy::ObjectProxy;
 pub use objects_created::ObjectsCreated;
 pub use objects_destroyed::ObjectsDestroyed;
-pub use service::{Service, ServiceCookie, ServiceId, ServiceUuid};
+pub use service::{
+    FunctionCall, FunctionCallReply, Service, ServiceCookie, ServiceId, ServiceUuid,
+};
 pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
@@ -65,11 +68,18 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     objects_created: SerialMap<mpsc::Sender<ObjectId>>,
     objects_destroyed: SerialMap<mpsc::Sender<ObjectId>>,
-    create_service: SerialMap<oneshot::Sender<CreateServiceResult>>,
-    destroy_service: SerialMap<oneshot::Sender<DestroyServiceResult>>,
+    create_service: SerialMap<(
+        usize,
+        oneshot::Sender<(
+            CreateServiceResult,
+            Option<mpsc::Receiver<(u32, Value, u32)>>,
+        )>,
+    )>,
+    destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     services_created: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
     services_destroyed: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
+    services: HashMap<ServiceCookie, mpsc::Sender<(u32, Value, u32)>>,
 }
 
 impl<T> Client<T>
@@ -95,6 +105,7 @@ where
             services_created: SerialMap::new(),
             services_destroyed: SerialMap::new(),
             function_calls: SerialMap::new(),
+            services: HashMap::new(),
         }
     }
 
@@ -133,8 +144,8 @@ where
             Message::DestroyServiceReply(re) => self.destroy_service_reply(re).await,
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
-            Message::CallFunction(_) => unimplemented!(),
-            Message::CallFunctionReply(_) => unimplemented!(),
+            Message::CallFunction(ev) => self.function_call(ev).await,
+            Message::CallFunctionReply(ev) => self.call_function_reply(ev).await,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -277,8 +288,17 @@ where
     where
         E: From<RunError> + From<T::Error>,
     {
-        if let Some(send) = self.create_service.remove(reply.serial) {
-            send.send(reply.result).ok();
+        if let Some((fifo_size, rep_send)) = self.create_service.remove(reply.serial) {
+            let recv = if let CreateServiceResult::Ok(cookie) = reply.result {
+                let (send, recv) = mpsc::channel(fifo_size);
+                let dup = self.services.insert(ServiceCookie(cookie), send);
+                debug_assert!(dup.is_none());
+                Some(recv)
+            } else {
+                None
+            };
+
+            rep_send.send((reply.result, recv)).ok();
         }
 
         Ok(())
@@ -288,7 +308,12 @@ where
     where
         E: From<RunError> + From<T::Error>,
     {
-        if let Some(send) = self.destroy_service.remove(reply.serial) {
+        if let Some((cookie, send)) = self.destroy_service.remove(reply.serial) {
+            if let DestroyServiceResult::Ok = reply.result {
+                let contained = self.services.remove(&cookie);
+                debug_assert!(contained.is_some());
+            }
+
             send.send(reply.result).ok();
         }
 
@@ -409,6 +434,49 @@ where
         Ok(())
     }
 
+    async fn function_call<E>(&mut self, call_function: CallFunction) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let cookie = ServiceCookie(call_function.service_cookie);
+        let send = self.services.get_mut(&cookie).expect("inconsistent state");
+
+        if let Err(e) = send
+            .send((
+                call_function.function,
+                call_function.args,
+                call_function.serial,
+            ))
+            .await
+        {
+            if e.is_disconnected() {
+                self.t
+                    .send(Message::CallFunctionReply(CallFunctionReply {
+                        serial: call_function.serial,
+                        result: CallFunctionResult::InvalidService,
+                    }))
+                    .await
+                    .map_err(Into::into)
+            } else {
+                Err(RunError::InternalError.into())
+            }
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn call_function_reply<E>(&mut self, ev: CallFunctionReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let send = self
+            .function_calls
+            .remove(ev.serial)
+            .expect("inconsistent state");
+        send.send(ev.result).ok();
+        Ok(())
+    }
+
     async fn handle_event<E>(&mut self, ev: Event) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -422,8 +490,8 @@ where
             Event::SubscribeObjectsDestroyed(sender) => {
                 self.subscribe_objects_destroyed(sender).await
             }
-            Event::CreateService(object_id, id, reply) => {
-                self.create_service(object_id, id, reply).await
+            Event::CreateService(object_id, id, fifo_size, reply) => {
+                self.create_service(object_id, id, fifo_size, reply).await
             }
             Event::DestroyService(id, reply) => self.destroy_service(id, reply).await,
             Event::SubscribeServicesCreated(sender, with_current) => {
@@ -434,6 +502,9 @@ where
             }
             Event::CallFunction(service_id, function, args, reply) => {
                 self.call_function(service_id, function, args, reply).await
+            }
+            Event::FunctionCallReply(serial, result) => {
+                self.function_call_reply(serial, result).await
             }
 
             // Handled in Client::run()
@@ -523,12 +594,16 @@ where
         &mut self,
         object_id: ObjectId,
         uuid: ServiceUuid,
-        reply: oneshot::Sender<CreateServiceResult>,
+        fifo_size: usize,
+        reply: oneshot::Sender<(
+            CreateServiceResult,
+            Option<mpsc::Receiver<(u32, Value, u32)>>,
+        )>,
     ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
-        let serial = self.create_service.insert(reply);
+        let serial = self.create_service.insert((fifo_size, reply));
         self.t
             .send(Message::CreateService(CreateService {
                 serial,
@@ -547,7 +622,7 @@ where
     where
         E: From<RunError> + From<T::Error>,
     {
-        let serial = self.destroy_service.insert(reply);
+        let serial = self.destroy_service.insert((id.cookie, reply));
         self.t
             .send(Message::DestroyService(DestroyService {
                 serial,
@@ -616,6 +691,23 @@ where
                 service_cookie: service_id.cookie.0,
                 function,
                 args,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn function_call_reply<E>(
+        &mut self,
+        serial: u32,
+        result: CallFunctionResult,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        self.t
+            .send(Message::CallFunctionReply(CallFunctionReply {
+                serial,
+                result,
             }))
             .await
             .map_err(Into::into)

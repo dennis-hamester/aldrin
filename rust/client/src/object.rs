@@ -48,8 +48,12 @@ impl Object {
         res
     }
 
-    pub async fn create_service(&mut self, uuid: ServiceUuid) -> Result<Service, Error> {
-        self.client.create_service(self.id, uuid).await
+    pub async fn create_service(
+        &mut self,
+        uuid: ServiceUuid,
+        fifo_size: usize,
+    ) -> Result<Service, Error> {
+        self.client.create_service(self.id, uuid, fifo_size).await
     }
 }
 

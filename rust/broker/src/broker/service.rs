@@ -38,6 +38,11 @@ impl Service {
         debug_assert!(unique);
     }
 
+    pub fn remove_function_call(&mut self, serial: u32) {
+        let contained = self.function_calls.remove(&serial);
+        debug_assert!(contained);
+    }
+
     pub fn function_calls<'a>(&'a self) -> impl Iterator<Item = u32> + 'a {
         self.function_calls.iter().cloned()
     }
