@@ -150,7 +150,7 @@ impl Broker {
                         .filter(|(_, c)| c.objects_created_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ObjectCreatedEvent(ObjectCreatedEvent {
-                        id: uuid.0,
+                        uuid: uuid.0,
                         cookie: cookie.0,
                         serial: None,
                     })),
@@ -166,9 +166,9 @@ impl Broker {
                         .filter(|(_, c)| c.services_created_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ServiceCreatedEvent(ServiceCreatedEvent {
-                        object_id: obj_uuid.0,
+                        object_uuid: obj_uuid.0,
                         object_cookie: obj_cookie.0,
-                        id: uuid.0,
+                        uuid: uuid.0,
                         cookie: cookie.0,
                         serial: None,
                     })),
@@ -184,9 +184,9 @@ impl Broker {
                         .filter(|(_, c)| c.services_destroyed_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
-                        object_id: obj_uuid.0,
+                        object_uuid: obj_uuid.0,
                         object_cookie: obj_cookie.0,
-                        id: uuid.0,
+                        uuid: uuid.0,
                         cookie: cookie.0,
                     })),
                 )
@@ -201,7 +201,7 @@ impl Broker {
                         .filter(|(_, c)| c.objects_destroyed_subscribed()),
                     state,
                     BrokerEvent::Message(Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
-                        id: uuid.0,
+                        uuid: uuid.0,
                         cookie: cookie.0,
                     })),
                 )
@@ -316,7 +316,7 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let uuid = ObjectUuid(req.id);
+        let uuid = ObjectUuid(req.uuid);
         match self.objs.entry(uuid) {
             Entry::Occupied(_) => {
                 conn.send(BrokerEvent::Message(Message::CreateObjectReply(
@@ -356,7 +356,7 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let obj_uuid = ObjectUuid(req.id);
+        let obj_uuid = ObjectUuid(req.uuid);
         let obj_cookie = ObjectCookie(req.cookie);
         let entry = match self.objs.entry(obj_uuid) {
             Entry::Occupied(entry) if entry.get().cookie() == obj_cookie => entry,
@@ -430,7 +430,7 @@ impl Broker {
             for (uuid, obj) in &self.objs {
                 conn.send(BrokerEvent::Message(Message::ObjectCreatedEvent(
                     ObjectCreatedEvent {
-                        id: uuid.0,
+                        uuid: uuid.0,
                         cookie: obj.cookie().0,
                         serial: Some(serial),
                     },
@@ -483,8 +483,8 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let obj_uuid = ObjectUuid(req.object_id);
-        let svc_uuid = ServiceUuid(req.id);
+        let obj_uuid = ObjectUuid(req.object_uuid);
+        let svc_uuid = ServiceUuid(req.uuid);
         let entry = match self.svcs.entry((obj_uuid, svc_uuid)) {
             Entry::Vacant(entry) => entry,
             Entry::Occupied(_) => {
@@ -552,7 +552,7 @@ impl Broker {
             None => return Ok(()),
         };
 
-        let obj_uuid = ObjectUuid(req.object_id);
+        let obj_uuid = ObjectUuid(req.object_uuid);
         let obj = match self.objs.get_mut(&obj_uuid) {
             Some(obj) => obj,
             None => {
@@ -578,7 +578,7 @@ impl Broker {
                 .await;
         }
 
-        let svc_uuid = ServiceUuid(req.id);
+        let svc_uuid = ServiceUuid(req.uuid);
         let svc_cookie = ServiceCookie(req.cookie);
         let entry = match self.svcs.entry((obj_uuid, svc_uuid)) {
             Entry::Occupied(entry) if entry.get().cookie() == svc_cookie => entry,
@@ -633,9 +633,9 @@ impl Broker {
             for (&(obj_uuid, svc_uuid), svc) in &self.svcs {
                 conn.send(BrokerEvent::Message(Message::ServiceCreatedEvent(
                     ServiceCreatedEvent {
-                        object_id: obj_uuid.0,
+                        object_uuid: obj_uuid.0,
                         object_cookie: svc.object_cookie().0,
-                        id: svc_uuid.0,
+                        uuid: svc_uuid.0,
                         cookie: svc.cookie().0,
                         serial: Some(serial),
                     },
@@ -683,7 +683,7 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
-        let obj_uuid = ObjectUuid(req.object_id);
+        let obj_uuid = ObjectUuid(req.object_uuid);
         let obj = match self.objs.get(&obj_uuid) {
             Some(obj) => obj,
             None => {
@@ -703,7 +703,7 @@ impl Broker {
             }
         };
 
-        let svc_uuid = ServiceUuid(req.service_id);
+        let svc_uuid = ServiceUuid(req.service_uuid);
         let svc_cookie = ServiceCookie(req.service_cookie);
         let svc = match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
             Some(svc) if svc.cookie() == svc_cookie => svc,
@@ -734,8 +734,8 @@ impl Broker {
         let res = callee_conn
             .send(BrokerEvent::Message(Message::CallFunction(CallFunction {
                 serial,
-                object_id: obj_uuid.0,
-                service_id: svc_uuid.0,
+                object_uuid: obj_uuid.0,
+                service_uuid: svc_uuid.0,
                 service_cookie: svc_cookie.0,
                 function: req.function,
                 args: req.args,

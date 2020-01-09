@@ -101,7 +101,7 @@ pub enum ConnectReply {
 #[derive(Debug, Clone)]
 pub struct CreateObject {
     pub serial: u32,
-    pub id: Uuid,
+    pub uuid: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -123,7 +123,7 @@ pub struct SubscribeObjectsCreated {
 
 #[derive(Debug, Clone)]
 pub struct ObjectCreatedEvent {
-    pub id: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
     pub serial: Option<u32>,
 }
@@ -131,7 +131,7 @@ pub struct ObjectCreatedEvent {
 #[derive(Debug, Clone)]
 pub struct DestroyObject {
     pub serial: u32,
-    pub id: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
@@ -150,16 +150,16 @@ pub struct DestroyObjectReply {
 
 #[derive(Debug, Clone)]
 pub struct ObjectDestroyedEvent {
-    pub id: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateService {
     pub serial: u32,
-    pub object_id: Uuid,
+    pub object_uuid: Uuid,
     pub object_cookie: Uuid,
-    pub id: Uuid,
+    pub uuid: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -183,9 +183,9 @@ pub struct SubscribeServicesCreated {
 
 #[derive(Debug, Clone)]
 pub struct ServiceCreatedEvent {
-    pub object_id: Uuid,
+    pub object_uuid: Uuid,
     pub object_cookie: Uuid,
-    pub id: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
     pub serial: Option<u32>,
 }
@@ -193,8 +193,8 @@ pub struct ServiceCreatedEvent {
 #[derive(Debug, Clone)]
 pub struct DestroyService {
     pub serial: u32,
-    pub object_id: Uuid,
-    pub id: Uuid,
+    pub object_uuid: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
@@ -214,17 +214,17 @@ pub struct DestroyServiceReply {
 
 #[derive(Debug, Clone)]
 pub struct ServiceDestroyedEvent {
-    pub object_id: Uuid,
+    pub object_uuid: Uuid,
     pub object_cookie: Uuid,
-    pub id: Uuid,
+    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
 #[derive(Debug, Clone)]
 pub struct CallFunction {
     pub serial: u32,
-    pub object_id: Uuid,
-    pub service_id: Uuid,
+    pub object_uuid: Uuid,
+    pub service_uuid: Uuid,
     pub service_cookie: Uuid,
     pub function: u32,
     pub args: Value,
