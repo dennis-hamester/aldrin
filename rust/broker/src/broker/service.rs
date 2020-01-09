@@ -47,14 +47,6 @@ impl Service {
         }
     }
 
-    pub fn object_cookie(&self) -> ObjectCookie {
-        self.object_cookie
-    }
-
-    pub fn cookie(&self) -> ServiceCookie {
-        self.cookie
-    }
-
     pub fn add_function_call(&mut self, serial: u32) {
         let unique = self.function_calls.insert(serial);
         debug_assert!(unique);
@@ -68,5 +60,5 @@ impl Service {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ServiceUuid(pub Uuid);
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ServiceCookie(pub Uuid);

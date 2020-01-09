@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use super::BrokerEvent;
-use super::ObjectUuid;
+use super::ObjectCookie;
 use futures_channel::mpsc::Sender;
 use futures_util::sink::SinkExt;
 use std::collections::HashSet;
@@ -27,7 +27,7 @@ use std::collections::HashSet;
 #[derive(Debug)]
 pub(super) struct ConnectionState {
     send: Sender<BrokerEvent>,
-    objects: HashSet<ObjectUuid>,
+    objects: HashSet<ObjectCookie>,
     objects_created_subscribed: bool,
     objects_destroyed_subscribed: bool,
     services_created_subscribed: bool,
@@ -46,17 +46,17 @@ impl ConnectionState {
         }
     }
 
-    pub fn add_object(&mut self, uuid: ObjectUuid) {
-        let unique = self.objects.insert(uuid);
+    pub fn add_object(&mut self, cookie: ObjectCookie) {
+        let unique = self.objects.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_object(&mut self, uuid: ObjectUuid) {
-        let contained = self.objects.remove(&uuid);
+    pub fn remove_object(&mut self, cookie: ObjectCookie) {
+        let contained = self.objects.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectUuid> + 'a {
+    pub fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectCookie> + 'a {
         self.objects.iter().copied()
     }
 

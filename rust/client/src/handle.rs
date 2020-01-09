@@ -119,23 +119,18 @@ impl Handle {
         id: ServiceId,
     ) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send
-            .send(Event::DestroyService(object_id, id, res_send))
-            .await?;
+        self.send.send(Event::DestroyService(id, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyServiceResult::Ok => Ok(()),
             DestroyServiceResult::InvalidService => Err(Error::InvalidService(object_id, id)),
-            DestroyServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             DestroyServiceResult::ForeignObject => Err(Error::InternalError),
         }
     }
 
-    pub(crate) fn destroy_service_now(&mut self, object_id: ObjectId, id: ServiceId) {
+    pub(crate) fn destroy_service_now(&mut self, id: ServiceId) {
         let (res_send, _) = oneshot::channel();
-        self.send
-            .try_send(Event::DestroyService(object_id, id, res_send))
-            .ok();
+        self.send.try_send(Event::DestroyService(id, res_send)).ok();
     }
 
     pub async fn services_created(&mut self, with_current: bool) -> Result<ServicesCreated, Error> {
@@ -171,16 +166,13 @@ impl Handle {
     ) -> Result<Result<Value, Value>, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Event::CallFunction(
-                object_id, service_id, function, args, res_send,
-            ))
+            .send(Event::CallFunction(service_id, function, args, res_send))
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CallFunctionResult::Ok(v) => Ok(Ok(v)),
             CallFunctionResult::Err(v) => Ok(Err(v)),
             CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
-            CallFunctionResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CallFunctionResult::InvalidService => Err(Error::InvalidService(object_id, service_id)),
             CallFunctionResult::InvalidFunction => {
                 Err(Error::InvalidFunction(object_id, service_id, function))

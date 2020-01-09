@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::ServiceUuid;
+use super::ServiceCookie;
 use crate::conn_id::ConnectionId;
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -28,7 +28,7 @@ pub(crate) struct Object {
     uuid: ObjectUuid,
     cookie: ObjectCookie,
     conn_id: ConnectionId,
-    svcs: HashSet<ServiceUuid>,
+    svcs: HashSet<ServiceCookie>,
 }
 
 impl Object {
@@ -41,25 +41,21 @@ impl Object {
         }
     }
 
-    pub fn cookie(&self) -> ObjectCookie {
-        self.cookie
-    }
-
     pub fn conn_id(&self) -> &ConnectionId {
         &self.conn_id
     }
 
-    pub fn add_service(&mut self, uuid: ServiceUuid) {
-        let unique = self.svcs.insert(uuid);
+    pub fn add_service(&mut self, cookie: ServiceCookie) {
+        let unique = self.svcs.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_service(&mut self, uuid: ServiceUuid) {
-        let contained = self.svcs.remove(&uuid);
+    pub fn remove_service(&mut self, cookie: ServiceCookie) {
+        let contained = self.svcs.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn services<'a>(&'a self) -> impl Iterator<Item = ServiceUuid> + 'a {
+    pub fn services<'a>(&'a self) -> impl Iterator<Item = ServiceCookie> + 'a {
         self.svcs.iter().copied()
     }
 }
@@ -67,5 +63,5 @@ impl Object {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ObjectUuid(pub Uuid);
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ObjectCookie(pub Uuid);

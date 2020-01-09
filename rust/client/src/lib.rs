@@ -425,18 +425,15 @@ where
             Event::CreateService(object_id, id, reply) => {
                 self.create_service(object_id, id, reply).await
             }
-            Event::DestroyService(object_id, id, reply) => {
-                self.destroy_service(object_id, id, reply).await
-            }
+            Event::DestroyService(id, reply) => self.destroy_service(id, reply).await,
             Event::SubscribeServicesCreated(sender, with_current) => {
                 self.subscribe_services_created(sender, with_current).await
             }
             Event::SubscribeServicesDestroyed(sender) => {
                 self.subscribe_services_destroyed(sender).await
             }
-            Event::CallFunction(object_id, service_id, function, args, reply) => {
-                self.call_function(object_id, service_id, function, args, reply)
-                    .await
+            Event::CallFunction(service_id, function, args, reply) => {
+                self.call_function(service_id, function, args, reply).await
             }
 
             // Handled in Client::run()
@@ -474,7 +471,6 @@ where
         self.t
             .send(Message::DestroyObject(DestroyObject {
                 serial,
-                uuid: id.uuid.0,
                 cookie: id.cookie.0,
             }))
             .await
@@ -536,7 +532,6 @@ where
         self.t
             .send(Message::CreateService(CreateService {
                 serial,
-                object_uuid: object_id.uuid.0,
                 object_cookie: object_id.cookie.0,
                 uuid: uuid.0,
             }))
@@ -546,7 +541,6 @@ where
 
     async fn destroy_service<E>(
         &mut self,
-        object_id: ObjectId,
         id: ServiceId,
         reply: oneshot::Sender<DestroyServiceResult>,
     ) -> Result<(), E>
@@ -557,8 +551,6 @@ where
         self.t
             .send(Message::DestroyService(DestroyService {
                 serial,
-                object_uuid: object_id.uuid.0,
-                uuid: id.uuid.0,
                 cookie: id.cookie.0,
             }))
             .await
@@ -609,7 +601,6 @@ where
 
     async fn call_function<E>(
         &mut self,
-        object_id: ObjectId,
         service_id: ServiceId,
         function: u32,
         args: Value,
@@ -622,8 +613,6 @@ where
         self.t
             .send(Message::CallFunction(CallFunction {
                 serial,
-                object_uuid: object_id.uuid.0,
-                service_uuid: service_id.uuid.0,
                 service_cookie: service_id.cookie.0,
                 function,
                 args,

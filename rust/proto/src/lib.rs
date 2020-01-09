@@ -131,7 +131,6 @@ pub struct ObjectCreatedEvent {
 #[derive(Debug, Clone)]
 pub struct DestroyObject {
     pub serial: u32,
-    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
@@ -157,7 +156,6 @@ pub struct ObjectDestroyedEvent {
 #[derive(Debug, Clone)]
 pub struct CreateService {
     pub serial: u32,
-    pub object_uuid: Uuid,
     pub object_cookie: Uuid,
     pub uuid: Uuid,
 }
@@ -193,8 +191,6 @@ pub struct ServiceCreatedEvent {
 #[derive(Debug, Clone)]
 pub struct DestroyService {
     pub serial: u32,
-    pub object_uuid: Uuid,
-    pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
@@ -202,7 +198,6 @@ pub struct DestroyService {
 pub enum DestroyServiceResult {
     Ok,
     InvalidService,
-    InvalidObject,
     ForeignObject,
 }
 
@@ -223,8 +218,6 @@ pub struct ServiceDestroyedEvent {
 #[derive(Debug, Clone)]
 pub struct CallFunction {
     pub serial: u32,
-    pub object_uuid: Uuid,
-    pub service_uuid: Uuid,
     pub service_cookie: Uuid,
     pub function: u32,
     pub args: Value,
@@ -235,7 +228,6 @@ pub enum CallFunctionResult {
     Ok(Value),
     Err(Value),
     Aborted,
-    InvalidObject,
     InvalidService,
     InvalidFunction,
     InvalidArgs,

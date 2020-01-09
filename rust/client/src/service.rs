@@ -58,7 +58,7 @@ impl Service {
 impl Drop for Service {
     fn drop(&mut self) {
         if !self.destroyed {
-            self.client.destroy_service_now(self.object_id, self.id);
+            self.client.destroy_service_now(self.id);
             self.destroyed = true;
         }
     }
