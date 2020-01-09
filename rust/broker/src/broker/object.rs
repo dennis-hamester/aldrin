@@ -25,17 +25,13 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Object {
-    uuid: ObjectUuid,
-    cookie: ObjectCookie,
     conn_id: ConnectionId,
     svcs: HashSet<ServiceCookie>,
 }
 
 impl Object {
-    pub fn new(uuid: ObjectUuid, cookie: ObjectCookie, conn_id: ConnectionId) -> Self {
+    pub fn new(conn_id: ConnectionId) -> Self {
         Object {
-            uuid,
-            cookie,
             conn_id,
             svcs: HashSet::new(),
         }

@@ -351,7 +351,7 @@ impl Broker {
                 .await?;
                 let dup = self.obj_uuids.insert(cookie, uuid);
                 debug_assert!(dup.is_none());
-                entry.insert(Object::new(uuid, cookie, id.clone()));
+                entry.insert(Object::new(id.clone()));
                 conn.add_object(cookie);
                 state.push_add_obj(uuid, cookie);
                 Ok(())
@@ -567,7 +567,7 @@ impl Broker {
             .svc_uuids
             .insert(svc_cookie, (obj_uuid, obj_cookie, svc_uuid));
         debug_assert!(dup.is_none());
-        entry.insert(Service::new(obj_uuid, obj_cookie, svc_uuid, svc_cookie));
+        entry.insert(Service::new());
         obj.add_service(svc_cookie);
         state.push_add_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
 

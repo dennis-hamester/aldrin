@@ -18,31 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{ObjectCookie, ObjectUuid};
 use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Service {
-    object_uuid: ObjectUuid,
-    object_cookie: ObjectCookie,
-    uuid: ServiceUuid,
-    cookie: ServiceCookie,
     function_calls: HashSet<u32>,
 }
 
 impl Service {
-    pub fn new(
-        object_uuid: ObjectUuid,
-        object_cookie: ObjectCookie,
-        uuid: ServiceUuid,
-        cookie: ServiceCookie,
-    ) -> Self {
+    pub fn new() -> Self {
         Service {
-            object_uuid,
-            object_cookie,
-            uuid,
-            cookie,
             function_calls: HashSet::new(),
         }
     }
