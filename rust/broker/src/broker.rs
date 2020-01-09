@@ -334,7 +334,7 @@ impl Broker {
                 conn.send(BrokerEvent::Message(Message::CreateObjectReply(
                     CreateObjectReply {
                         serial: req.serial,
-                        result: CreateObjectResult::DuplicateId,
+                        result: CreateObjectResult::DuplicateObject,
                     },
                 )))
                 .await
@@ -535,7 +535,7 @@ impl Broker {
                     .send(BrokerEvent::Message(Message::CreateServiceReply(
                         CreateServiceReply {
                             serial: req.serial,
-                            result: CreateServiceResult::DuplicateId,
+                            result: CreateServiceResult::DuplicateService,
                         },
                     )))
                     .await;

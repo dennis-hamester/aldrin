@@ -55,7 +55,7 @@ impl Handle {
                 ObjectId::new(uuid, ObjectCookie(cookie)),
                 self.clone(),
             )),
-            CreateObjectResult::DuplicateId => Err(Error::DuplicateObject(uuid)),
+            CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject(uuid)),
         }
     }
 
@@ -107,7 +107,7 @@ impl Handle {
                 ServiceId::new(uuid, ServiceCookie(cookie)),
                 self.clone(),
             )),
-            CreateServiceResult::DuplicateId => Err(Error::DuplicateService(object_id, uuid)),
+            CreateServiceResult::DuplicateService => Err(Error::DuplicateService(object_id, uuid)),
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CreateServiceResult::ForeignObject => Err(Error::InternalError),
         }

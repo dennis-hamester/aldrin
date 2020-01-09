@@ -107,7 +107,7 @@ pub struct CreateObject {
 #[derive(Debug, Clone)]
 pub enum CreateObjectResult {
     Ok(Uuid),
-    DuplicateId,
+    DuplicateObject,
 }
 
 #[derive(Debug, Clone)]
@@ -163,7 +163,7 @@ pub struct CreateService {
 #[derive(Debug, Clone)]
 pub enum CreateServiceResult {
     Ok(Uuid),
-    DuplicateId,
+    DuplicateService,
     InvalidObject,
     ForeignObject,
 }
