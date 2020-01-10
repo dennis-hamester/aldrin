@@ -31,9 +31,7 @@ use uuid::Uuid;
 pub struct Service {
     object_id: ObjectId,
     id: ServiceId,
-    client: Handle,
-    destroyed: bool,
-    function_calls: Receiver<(u32, Value, u32)>,
+    inner: Option<Inner>,
 }
 
 impl Service {
@@ -46,9 +44,10 @@ impl Service {
         Service {
             object_id,
             id,
-            client,
-            destroyed: false,
-            function_calls,
+            inner: Some(Inner {
+                client,
+                function_calls,
+            }),
         }
     }
 
@@ -61,17 +60,22 @@ impl Service {
     }
 
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        let res = self.client.destroy_service(self.object_id, self.id).await;
-        self.destroyed = true;
+        let inner = self
+            .inner
+            .as_mut()
+            .ok_or(Error::InvalidService(self.object_id, self.id))?;
+        let res = inner.client.destroy_service(self.object_id, self.id).await;
+        if res.is_ok() {
+            self.inner.take();
+        }
         res
     }
 }
 
 impl Drop for Service {
     fn drop(&mut self) {
-        if !self.destroyed {
-            self.client.destroy_service_now(self.id);
-            self.destroyed = true;
+        if let Some(mut inner) = self.inner.take() {
+            inner.client.destroy_service_now(self.id);
         }
     }
 }
@@ -80,13 +84,24 @@ impl Stream for Service {
     type Item = FunctionCall;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
-        let res = Pin::new(&mut self.function_calls).poll_next(cx);
-        res.map(|r| {
+        let inner = match self.inner.as_mut() {
+            Some(inner) => inner,
+            None => return Poll::Ready(None),
+        };
+
+        let function_calls = Pin::new(&mut inner.function_calls);
+        function_calls.poll_next(cx).map(|r| {
             r.map(|(function, args, serial)| {
-                FunctionCall::new(function, args, self.client.clone(), serial)
+                FunctionCall::new(function, args, inner.client.clone(), serial)
             })
         })
     }
+}
+
+#[derive(Debug)]
+struct Inner {
+    client: Handle,
+    function_calls: Receiver<(u32, Value, u32)>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
