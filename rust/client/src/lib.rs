@@ -68,11 +68,11 @@ where
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    objects_created: SerialMap<mpsc::Sender<ObjectId>>,
+    objects_created: SerialMap<(mpsc::Sender<ObjectId>, SubscribeMode)>,
     objects_destroyed: SerialMap<mpsc::Sender<ObjectId>>,
     create_service: SerialMap<(usize, CreateServiceReplySender)>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
-    services_created: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
+    services_created: SerialMap<(mpsc::Sender<(ObjectId, ServiceId)>, SubscribeMode)>,
     services_destroyed: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::Sender<(u32, Value, u32)>>,
@@ -146,12 +146,16 @@ where
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
-            Message::SubscribeObjectsCreatedReply(_) => Ok(()),
+            Message::SubscribeObjectsCreatedReply(re) => {
+                self.subscribe_objects_created_reply(re).await
+            }
             Message::CreateServiceReply(re) => self.create_service_reply(re).await,
             Message::DestroyServiceReply(re) => self.destroy_service_reply(re).await,
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
-            Message::SubscribeServicesCreatedReply(_) => Ok(()),
+            Message::SubscribeServicesCreatedReply(re) => {
+                self.subscribe_services_created_reply(re).await
+            }
             Message::CallFunction(ev) => self.function_call(ev).await,
             Message::CallFunctionReply(ev) => self.call_function_reply(ev).await,
 
@@ -204,7 +208,7 @@ where
         E: From<RunError> + From<T::Error>,
     {
         if let Some(serial) = object_created_event.serial {
-            if let Some(send) = self.objects_created.get_mut(serial) {
+            if let Some((send, _)) = self.objects_created.get_mut(serial) {
                 if let Err(e) = send
                     .send(ObjectId::new(
                         ObjectUuid(object_created_event.uuid),
@@ -222,7 +226,7 @@ where
         } else {
             let mut remove = Vec::new();
 
-            for (serial, send) in self.objects_created.iter_mut() {
+            for (serial, (send, _)) in self.objects_created.iter_mut() {
                 if let Err(e) = send
                     .send(ObjectId::new(
                         ObjectUuid(object_created_event.uuid),
@@ -286,6 +290,20 @@ where
         Ok(())
     }
 
+    async fn subscribe_objects_created_reply<E>(
+        &mut self,
+        reply: SubscribeObjectsCreatedReply,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some((_, SubscribeMode::CurrentOnly)) = self.objects_created.get_mut(reply.serial) {
+            self.objects_created.remove(reply.serial);
+        }
+
+        Ok(())
+    }
+
     async fn create_service_reply<E>(&mut self, reply: CreateServiceReply) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -330,7 +348,7 @@ where
         E: From<RunError> + From<T::Error>,
     {
         if let Some(serial) = service_created_event.serial {
-            if let Some(send) = self.services_created.get_mut(serial) {
+            if let Some((send, _)) = self.services_created.get_mut(serial) {
                 if let Err(e) = send
                     .send((
                         ObjectId::new(
@@ -354,7 +372,7 @@ where
         } else {
             let mut remove = Vec::new();
 
-            for (serial, send) in self.services_created.iter_mut() {
+            for (serial, (send, _)) in self.services_created.iter_mut() {
                 if let Err(e) = send
                     .send((
                         ObjectId::new(
@@ -430,6 +448,20 @@ where
         Ok(())
     }
 
+    async fn subscribe_services_created_reply<E>(
+        &mut self,
+        reply: SubscribeServicesCreatedReply,
+    ) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        if let Some((_, SubscribeMode::CurrentOnly)) = self.services_created.get_mut(reply.serial) {
+            self.services_created.remove(reply.serial);
+        }
+
+        Ok(())
+    }
+
     async fn function_call<E>(&mut self, call_function: CallFunction) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -480,8 +512,8 @@ where
         match ev {
             Event::CreateObject(id, reply) => self.create_object(id, reply).await,
             Event::DestroyObject(id, reply) => self.destroy_object(id, reply).await,
-            Event::SubscribeObjectsCreated(sender, with_current) => {
-                self.subscribe_objects_created(sender, with_current).await
+            Event::SubscribeObjectsCreated(sender, mode) => {
+                self.subscribe_objects_created(sender, mode).await
             }
             Event::SubscribeObjectsDestroyed(sender) => {
                 self.subscribe_objects_destroyed(sender).await
@@ -490,8 +522,8 @@ where
                 self.create_service(object_id, id, fifo_size, reply).await
             }
             Event::DestroyService(id, reply) => self.destroy_service(id, reply).await,
-            Event::SubscribeServicesCreated(sender, with_current) => {
-                self.subscribe_services_created(sender, with_current).await
+            Event::SubscribeServicesCreated(sender, mode) => {
+                self.subscribe_services_created(sender, mode).await
             }
             Event::SubscribeServicesDestroyed(sender) => {
                 self.subscribe_services_destroyed(sender).await
@@ -547,15 +579,19 @@ where
     async fn subscribe_objects_created<E>(
         &mut self,
         sender: mpsc::Sender<ObjectId>,
-        with_current: bool,
+        mode: SubscribeMode,
     ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
-        let send = with_current || self.objects_created.is_empty();
-        let serial = self.objects_created.insert(sender);
+        let is_empty = self.objects_created.is_empty();
+        let serial = self.objects_created.insert((sender, mode));
+        let (send, serial) = match mode {
+            SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
+            SubscribeMode::NewOnly => (is_empty, None),
+        };
+
         if send {
-            let serial = if with_current { Some(serial) } else { None };
             self.t
                 .send(Message::SubscribeObjectsCreated(SubscribeObjectsCreated {
                     serial,
@@ -628,15 +664,19 @@ where
     async fn subscribe_services_created<E>(
         &mut self,
         sender: mpsc::Sender<(ObjectId, ServiceId)>,
-        with_current: bool,
+        mode: SubscribeMode,
     ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
-        let send = with_current || self.services_created.is_empty();
-        let serial = self.services_created.insert(sender);
+        let is_empty = self.services_created.is_empty();
+        let serial = self.services_created.insert((sender, mode));
+        let (send, serial) = match mode {
+            SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
+            SubscribeMode::NewOnly => (is_empty, None),
+        };
+
         if send {
-            let serial = if with_current { Some(serial) } else { None };
             self.t
                 .send(Message::SubscribeServicesCreated(
                     SubscribeServicesCreated { serial },
@@ -705,4 +745,11 @@ where
             .await
             .map_err(Into::into)
     }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum SubscribeMode {
+    All,
+    CurrentOnly,
+    NewOnly,
 }

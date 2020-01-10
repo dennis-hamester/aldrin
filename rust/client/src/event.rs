@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{FunctionCallReceiver, ObjectId, ObjectUuid, ServiceId, ServiceUuid};
+use super::{FunctionCallReceiver, ObjectId, ObjectUuid, ServiceId, ServiceUuid, SubscribeMode};
 use aldrin_proto::*;
 use futures_channel::{mpsc, oneshot};
 
@@ -27,7 +27,7 @@ pub(crate) enum Event {
     Shutdown,
     CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
     DestroyObject(ObjectId, oneshot::Sender<DestroyObjectResult>),
-    SubscribeObjectsCreated(mpsc::Sender<ObjectId>, bool),
+    SubscribeObjectsCreated(mpsc::Sender<ObjectId>, SubscribeMode),
     SubscribeObjectsDestroyed(mpsc::Sender<ObjectId>),
     CreateService(
         ObjectId,
@@ -36,7 +36,7 @@ pub(crate) enum Event {
         oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ),
     DestroyService(ServiceId, oneshot::Sender<DestroyServiceResult>),
-    SubscribeServicesCreated(mpsc::Sender<(ObjectId, ServiceId)>, bool),
+    SubscribeServicesCreated(mpsc::Sender<(ObjectId, ServiceId)>, SubscribeMode),
     SubscribeServicesDestroyed(mpsc::Sender<(ObjectId, ServiceId)>),
     CallFunction(ServiceId, u32, Value, oneshot::Sender<CallFunctionResult>),
     FunctionCallReply(u32, CallFunctionResult),

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use aldrin_broker::Broker;
-use aldrin_client::{Client, ObjectUuid, ServiceUuid};
+use aldrin_client::{Client, ObjectUuid, ServiceUuid, SubscribeMode};
 use aldrin_examples::Error;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
 use futures::stream::StreamExt;
@@ -46,7 +46,7 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 
-    let oc = handle.objects_created(true).await?;
+    let oc = handle.objects_created(SubscribeMode::All).await?;
     tokio::spawn(oc.for_each(|id| {
         async move {
             println!("Object {} created.", id.uuid);
@@ -60,7 +60,7 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
         }
     }));
 
-    let sc = handle.services_created(true).await?;
+    let sc = handle.services_created(SubscribeMode::All).await?;
     tokio::spawn(sc.for_each(|(obj_id, svc_id)| {
         async move {
             println!("Object {} created service {}.", obj_id.uuid, svc_id.uuid);

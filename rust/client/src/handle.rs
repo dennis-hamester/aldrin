@@ -21,7 +21,7 @@
 use super::{
     Error, Event, Object, ObjectCookie, ObjectId, ObjectProxy, ObjectUuid, ObjectsCreated,
     ObjectsDestroyed, Service, ServiceCookie, ServiceId, ServiceProxy, ServiceUuid,
-    ServicesCreated, ServicesDestroyed,
+    ServicesCreated, ServicesDestroyed, SubscribeMode,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -75,10 +75,10 @@ impl Handle {
         self.send.try_send(Event::DestroyObject(id, res_send)).ok();
     }
 
-    pub async fn objects_created(&mut self, with_current: bool) -> Result<ObjectsCreated, Error> {
+    pub async fn objects_created(&mut self, mode: SubscribeMode) -> Result<ObjectsCreated, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeObjectsCreated(ev_send, with_current))
+            .send(Event::SubscribeObjectsCreated(ev_send, mode))
             .await?;
         Ok(ObjectsCreated::new(ev_recv))
     }
@@ -135,10 +135,13 @@ impl Handle {
         self.send.try_send(Event::DestroyService(id, res_send)).ok();
     }
 
-    pub async fn services_created(&mut self, with_current: bool) -> Result<ServicesCreated, Error> {
+    pub async fn services_created(
+        &mut self,
+        mode: SubscribeMode,
+    ) -> Result<ServicesCreated, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeServicesCreated(ev_send, with_current))
+            .send(Event::SubscribeServicesCreated(ev_send, mode))
             .await?;
         Ok(ServicesCreated::new(ev_recv))
     }
