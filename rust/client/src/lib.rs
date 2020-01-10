@@ -146,10 +146,12 @@ where
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
+            Message::SubscribeObjectsCreatedReply(_) => Ok(()),
             Message::CreateServiceReply(re) => self.create_service_reply(re).await,
             Message::DestroyServiceReply(re) => self.destroy_service_reply(re).await,
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
+            Message::SubscribeServicesCreatedReply(_) => Ok(()),
             Message::CallFunction(ev) => self.function_call(ev).await,
             Message::CallFunctionReply(ev) => self.call_function_reply(ev).await,
 

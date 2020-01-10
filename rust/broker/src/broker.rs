@@ -301,10 +301,12 @@ impl Broker {
             Message::Connect(_)
             | Message::ConnectReply(_)
             | Message::CreateObjectReply(_)
+            | Message::SubscribeObjectsCreatedReply(_)
             | Message::ObjectCreatedEvent(_)
             | Message::DestroyObjectReply(_)
             | Message::ObjectDestroyedEvent(_)
             | Message::CreateServiceReply(_)
+            | Message::SubscribeServicesCreatedReply(_)
             | Message::ServiceCreatedEvent(_)
             | Message::DestroyServiceReply(_)
             | Message::ServiceDestroyedEvent(_) => Err(()),
@@ -460,6 +462,11 @@ impl Broker {
                 )))
                 .await?;
             }
+
+            conn.send(BrokerEvent::Message(Message::SubscribeObjectsCreatedReply(
+                SubscribeObjectsCreatedReply { serial },
+            )))
+            .await?;
         }
 
         Ok(())
@@ -661,6 +668,11 @@ impl Broker {
                 )))
                 .await?;
             }
+
+            conn.send(BrokerEvent::Message(
+                Message::SubscribeServicesCreatedReply(SubscribeServicesCreatedReply { serial }),
+            ))
+            .await?;
         }
 
         Ok(())

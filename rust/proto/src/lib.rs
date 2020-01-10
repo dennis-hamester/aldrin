@@ -66,6 +66,7 @@ pub enum Message {
     CreateObject(CreateObject),
     CreateObjectReply(CreateObjectReply),
     SubscribeObjectsCreated(SubscribeObjectsCreated),
+    SubscribeObjectsCreatedReply(SubscribeObjectsCreatedReply),
     UnsubscribeObjectsCreated,
     ObjectCreatedEvent(ObjectCreatedEvent),
     DestroyObject(DestroyObject),
@@ -76,6 +77,7 @@ pub enum Message {
     CreateService(CreateService),
     CreateServiceReply(CreateServiceReply),
     SubscribeServicesCreated(SubscribeServicesCreated),
+    SubscribeServicesCreatedReply(SubscribeServicesCreatedReply),
     UnsubscribeServicesCreated,
     ServiceCreatedEvent(ServiceCreatedEvent),
     DestroyService(DestroyService),
@@ -119,6 +121,11 @@ pub struct CreateObjectReply {
 #[derive(Debug, Clone)]
 pub struct SubscribeObjectsCreated {
     pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeObjectsCreatedReply {
+    pub serial: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -177,6 +184,11 @@ pub struct CreateServiceReply {
 #[derive(Debug, Clone)]
 pub struct SubscribeServicesCreated {
     pub serial: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeServicesCreatedReply {
+    pub serial: u32,
 }
 
 #[derive(Debug, Clone)]
