@@ -18,86 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::convert::TryFrom;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub(crate) struct SerialMap<T> {
+    elems: HashMap<u32, T>,
     next: u32,
-    free: Vec<u32>,
-    len: usize,
-    objs: Vec<Option<T>>,
 }
 
 impl<T> SerialMap<T> {
     pub fn new() -> Self {
         SerialMap {
             next: 0,
-            free: Vec::new(),
-            len: 0,
-            objs: Vec::new(),
-        }
-    }
-
-    pub fn insert(&mut self, obj: T) -> u32 {
-        match self.free.pop() {
-            Some(serial) => {
-                debug_assert!(self.objs[serial as usize].is_none());
-                self.objs[serial as usize] = Some(obj);
-                self.len += 1;
-                serial
-            }
-
-            None => {
-                let serial = self.next;
-                let serial_usize = usize::try_from(serial).expect("too many serials");
-                self.next = self.next.checked_add(1).expect("too many serials");
-                self.objs.push(Some(obj));
-                self.len += 1;
-                debug_assert_eq!(self.objs.len() - 1, serial_usize);
-                serial
-            }
-        }
-    }
-
-    pub fn remove(&mut self, serial: u32) -> Option<T> {
-        debug_assert!(self.objs.len() > serial as usize);
-
-        match self.objs[serial as usize].take() {
-            Some(obj) => {
-                debug_assert!(self.next > serial);
-                debug_assert!(self.len > 0);
-
-                self.len -= 1;
-                if self.len == 0 {
-                    self.next = 0;
-                    self.objs.clear();
-                } else if serial == (self.next - 1) {
-                    self.next -= 1;
-                    self.objs.pop();
-                } else {
-                    debug_assert!(!self.free.contains(&serial));
-                    self.free.push(serial);
-                }
-
-                Some(obj)
-            }
-
-            None => None,
+            elems: HashMap::new(),
         }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len == 0
+        self.elems.is_empty()
+    }
+
+    pub fn insert(&mut self, obj: T) -> u32 {
+        let serial = self.next;
+        self.next = self.next.wrapping_add(1);
+        let dup = self.elems.insert(serial, obj);
+        assert!(dup.is_none());
+        serial
+    }
+
+    pub fn remove(&mut self, serial: u32) -> Option<T> {
+        self.elems.remove(&serial)
     }
 
     pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
-        self.objs[serial as usize].as_mut()
+        self.elems.get_mut(&serial)
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (u32, &mut T)> {
-        self.objs
-            .iter_mut()
-            .enumerate()
-            .filter_map(|(serial, obj)| obj.as_mut().map(|obj| (serial as u32, obj)))
+        self.elems.iter_mut().map(|(&s, e)| (s, e))
     }
 }
