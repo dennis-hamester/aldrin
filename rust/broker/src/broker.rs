@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod builder;
 mod conn_state;
 mod error;
 mod event;
@@ -40,7 +39,6 @@ use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 use uuid::Uuid;
 
-pub use builder::BrokerBuilder;
 pub use error::BrokerError;
 pub use handle::BrokerHandle;
 
@@ -59,11 +57,7 @@ pub struct Broker {
 }
 
 impl Broker {
-    pub fn builder() -> BrokerBuilder {
-        BrokerBuilder::new()
-    }
-
-    pub(crate) fn new(fifo_size: usize) -> Self {
+    pub fn new(fifo_size: usize) -> Self {
         let (send, recv) = channel(fifo_size);
 
         Broker {

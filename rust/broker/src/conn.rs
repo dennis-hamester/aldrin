@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod builder;
 mod error;
 mod event;
 mod handle;
@@ -31,11 +30,10 @@ use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 
-pub use builder::ConnectionBuilder;
+pub(crate) use event::ConnectionEvent;
+
 pub use error::{ConnectionError, EstablishError};
 pub use handle::ConnectionHandle;
-
-pub(crate) use event::ConnectionEvent;
 
 #[derive(Debug)]
 pub struct Connection<T>
@@ -52,7 +50,7 @@ impl<T> Connection<T>
 where
     T: Transport + Unpin,
 {
-    fn new(
+    pub(crate) fn new(
         t: T,
         id: ConnectionId,
         send: Sender<ConnectionEvent>,

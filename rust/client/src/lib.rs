@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod builder;
 mod error;
 mod event;
 mod handle;
@@ -42,7 +41,6 @@ use futures_util::stream::StreamExt;
 use serial_map::SerialMap;
 use std::collections::HashMap;
 
-pub use builder::Builder;
 pub use error::{ConnectError, Error, RunError};
 pub use handle::Handle;
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
@@ -86,13 +84,23 @@ impl<T> Client<T>
 where
     T: Transport + Unpin,
 {
-    pub fn builder(t: T) -> Builder<T> {
-        Builder::new(t)
-    }
+    pub async fn connect<E>(mut t: T, fifo_size: usize, event_fifo_size: usize) -> Result<Self, E>
+    where
+        E: From<ConnectError> + From<T::Error>,
+    {
+        t.send(Message::Connect(Connect { version: VERSION }))
+            .await?;
 
-    pub(crate) fn new(t: T, fifo_size: usize, event_fifo_size: usize) -> Self {
+        match t.next().await.ok_or(ConnectError::UnexpectedEof)?? {
+            Message::ConnectReply(ConnectReply::Ok) => {}
+            Message::ConnectReply(ConnectReply::VersionMismatch(v)) => {
+                return Err(ConnectError::VersionMismatch(v).into())
+            }
+            msg => return Err(ConnectError::UnexpectedMessageReceived(msg).into()),
+        }
+
         let (send, recv) = mpsc::channel(fifo_size);
-        Client {
+        Ok(Client {
             t,
             recv,
             handle: Some(Handle::new(send, event_fifo_size)),
@@ -106,7 +114,7 @@ where
             services_destroyed: SerialMap::new(),
             function_calls: SerialMap::new(),
             services: HashMap::new(),
-        }
+        })
     }
 
     pub fn handle(&self) -> &Handle {

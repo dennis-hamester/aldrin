@@ -28,11 +28,11 @@ use uuid::Uuid;
 const FIFO_SIZE: usize = 16;
 
 async fn broker(t: ConnectionTransport) -> Result<(), Error> {
-    let broker = Broker::builder().build();
+    let broker = Broker::new(FIFO_SIZE);
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
-    let conn = handle.add_connection(t).establish::<Error>().await?;
+    let conn = handle.add_connection::<_, Error>(t, FIFO_SIZE).await?;
     conn.run::<Error>().await?;
 
     handle.shutdown().await?;
@@ -42,7 +42,7 @@ async fn broker(t: ConnectionTransport) -> Result<(), Error> {
 }
 
 async fn client(t: ClientTransport) -> Result<(), Error> {
-    let client = Client::builder(t).connect::<Error>().await?;
+    let client = Client::connect::<Error>(t, FIFO_SIZE, FIFO_SIZE).await?;
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(client.run::<Error>());
 

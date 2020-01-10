@@ -19,11 +19,13 @@
 // SOFTWARE.
 
 use super::BrokerError;
-use crate::conn::{ConnectionBuilder, ConnectionEvent, ConnectionHandle};
+use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
+use aldrin_proto::*;
 use aldrin_transport::Transport;
-use futures_channel::mpsc::Sender;
+use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
+use futures_util::stream::StreamExt;
 use std::future::Future;
 
 #[derive(Debug, Clone)]
@@ -40,11 +42,53 @@ impl BrokerHandle {
         }
     }
 
-    pub fn add_connection<T>(&self, t: T) -> ConnectionBuilder<T>
+    pub async fn add_connection<T, E>(
+        &mut self,
+        mut t: T,
+        fifo_size: usize,
+    ) -> Result<Connection<T>, E>
     where
         T: Transport + Unpin,
+        E: From<EstablishError> + From<T::Error>,
     {
-        ConnectionBuilder::new(t, self.ids.clone(), self.send.clone())
+        match t
+            .next()
+            .await
+            .ok_or(EstablishError::UnexpectedClientShutdown)??
+        {
+            Message::Connect(msg) if msg.version == VERSION => {
+                t.send(Message::ConnectReply(ConnectReply::Ok)).await?;
+                Ok(())
+            }
+
+            Message::Connect(msg) => {
+                t.send(Message::ConnectReply(ConnectReply::VersionMismatch(
+                    VERSION,
+                )))
+                .await?;
+                Err(EstablishError::VersionMismatch(msg.version))
+            }
+
+            msg => Err(EstablishError::UnexpectedMessageReceived(msg)),
+        }?;
+
+        let id = self.ids.acquire();
+        let (send, recv) = channel(fifo_size);
+
+        self.send
+            .send(ConnectionEvent::NewConnection(id.clone(), send))
+            .await
+            .map_err(|e| {
+                if e.is_disconnected() {
+                    EstablishError::BrokerShutdown
+                } else if e.is_full() {
+                    EstablishError::BrokerFifoOverflow
+                } else {
+                    EstablishError::InternalError
+                }
+            })?;
+
+        Ok(Connection::new(t, id, self.send.clone(), recv))
     }
 
     pub async fn shutdown(&mut self) -> Result<(), BrokerError> {
