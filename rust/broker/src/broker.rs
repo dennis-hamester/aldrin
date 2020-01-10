@@ -767,15 +767,16 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(serial);
 
-        let conn = self.conns.get_mut(&conn_id).expect("inconsistent state");
-        return conn
+        self.conns
+            .get_mut(&conn_id)
+            .expect("inconsistent state")
             .send(BrokerEvent::Message(Message::CallFunctionReply(
                 CallFunctionReply {
                     serial,
                     result: req.result,
                 },
             )))
-            .await;
+            .await
     }
 }
 

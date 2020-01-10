@@ -54,6 +54,10 @@ pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
 
+type FunctionCallReceiver = mpsc::Receiver<(u32, Value, u32)>;
+type CreateServiceReplySender =
+    oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>;
+
 #[derive(Debug)]
 pub struct Client<T>
 where
@@ -66,13 +70,7 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     objects_created: SerialMap<mpsc::Sender<ObjectId>>,
     objects_destroyed: SerialMap<mpsc::Sender<ObjectId>>,
-    create_service: SerialMap<(
-        usize,
-        oneshot::Sender<(
-            CreateServiceResult,
-            Option<mpsc::Receiver<(u32, Value, u32)>>,
-        )>,
-    )>,
+    create_service: SerialMap<(usize, CreateServiceReplySender)>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     services_created: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
     services_destroyed: SerialMap<mpsc::Sender<(ObjectId, ServiceId)>>,
@@ -591,10 +589,7 @@ where
         object_id: ObjectId,
         uuid: ServiceUuid,
         fifo_size: usize,
-        reply: oneshot::Sender<(
-            CreateServiceResult,
-            Option<mpsc::Receiver<(u32, Value, u32)>>,
-        )>,
+        reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
