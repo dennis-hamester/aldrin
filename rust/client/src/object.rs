@@ -25,16 +25,14 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Object {
     id: ObjectId,
-    client: Handle,
-    destroyed: bool,
+    client: Option<Handle>,
 }
 
 impl Object {
     pub(crate) fn new(id: ObjectId, client: Handle) -> Self {
         Object {
             id,
-            client,
-            destroyed: false,
+            client: Some(client),
         }
     }
 
@@ -43,8 +41,11 @@ impl Object {
     }
 
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        let res = self.client.destroy_object(self.id).await;
-        self.destroyed = true;
+        let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
+        let res = client.destroy_object(self.id).await;
+        if res.is_ok() {
+            self.client.take();
+        }
         res
     }
 
@@ -53,15 +54,15 @@ impl Object {
         uuid: ServiceUuid,
         fifo_size: usize,
     ) -> Result<Service, Error> {
-        self.client.create_service(self.id, uuid, fifo_size).await
+        let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
+        client.create_service(self.id, uuid, fifo_size).await
     }
 }
 
 impl Drop for Object {
     fn drop(&mut self) {
-        if !self.destroyed {
-            self.client.destroy_object_now(self.id);
-            self.destroyed = true;
+        if let Some(mut client) = self.client.take() {
+            client.destroy_object_now(self.id);
         }
     }
 }
