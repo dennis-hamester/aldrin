@@ -50,7 +50,6 @@ impl StdError for ConnectError {}
 #[derive(Debug, Clone)]
 pub enum RunError {
     InternalError,
-    EventFifoOverflow,
     UnexpectedMessageReceived(Message),
 }
 
@@ -58,7 +57,6 @@ impl fmt::Display for RunError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RunError::InternalError => f.write_str("internal error"),
-            RunError::EventFifoOverflow => f.write_str("event fifo overflow"),
             RunError::UnexpectedMessageReceived(_) => f.write_str("unexpected message received"),
         }
     }
@@ -69,7 +67,6 @@ impl StdError for RunError {}
 #[derive(Debug, Clone)]
 pub enum Error {
     InternalError,
-    ClientFifoOverflow,
     ClientShutdown,
     DuplicateObject(ObjectUuid),
     InvalidObject(ObjectId),
@@ -84,8 +81,6 @@ impl From<SendError> for Error {
     fn from(e: SendError) -> Self {
         if e.is_disconnected() {
             Error::ClientShutdown
-        } else if e.is_full() {
-            Error::ClientFifoOverflow
         } else {
             Error::InternalError
         }
@@ -96,7 +91,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::InternalError => f.write_str("internal error"),
-            Error::ClientFifoOverflow => f.write_str("client fifo overflow"),
             Error::ClientShutdown => f.write_str("client shutdown"),
             Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {}", uuid)),
             Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id.uuid)),

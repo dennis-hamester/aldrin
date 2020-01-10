@@ -90,10 +90,6 @@ where
                     {
                         if e.is_disconnected() {
                             return Ok(());
-                        } else if e.is_full() {
-                            return self
-                                .shutdown(id, Err(ConnectionError::BrokerFifoOverflow))
-                                .await;
                         } else {
                             return self.shutdown(id, Err(ConnectionError::InternalError)).await;
                         }

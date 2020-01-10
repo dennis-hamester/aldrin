@@ -214,8 +214,6 @@ where
                 {
                     if e.is_disconnected() {
                         self.objects_created.remove(serial);
-                    } else if e.is_full() {
-                        return Err(RunError::EventFifoOverflow.into());
                     } else {
                         return Err(RunError::InternalError.into());
                     }
@@ -234,8 +232,6 @@ where
                 {
                     if e.is_disconnected() {
                         remove.push(serial);
-                    } else if e.is_full() {
-                        return Err(RunError::EventFifoOverflow.into());
                     } else {
                         return Err(RunError::InternalError.into());
                     }
@@ -273,8 +269,6 @@ where
             {
                 if e.is_disconnected() {
                     remove.push(serial);
-                } else if e.is_full() {
-                    return Err(RunError::EventFifoOverflow.into());
                 } else {
                     return Err(RunError::InternalError.into());
                 }
@@ -352,8 +346,6 @@ where
                 {
                     if e.is_disconnected() {
                         self.services_created.remove(serial);
-                    } else if e.is_full() {
-                        return Err(RunError::EventFifoOverflow.into());
                     } else {
                         return Err(RunError::InternalError.into());
                     }
@@ -378,8 +370,6 @@ where
                 {
                     if e.is_disconnected() {
                         remove.push(serial);
-                    } else if e.is_full() {
-                        return Err(RunError::EventFifoOverflow.into());
                     } else {
                         return Err(RunError::InternalError.into());
                     }
@@ -423,8 +413,6 @@ where
             {
                 if e.is_disconnected() {
                     remove.push(serial);
-                } else if e.is_full() {
-                    return Err(RunError::EventFifoOverflow.into());
                 } else {
                     return Err(RunError::InternalError.into());
                 }

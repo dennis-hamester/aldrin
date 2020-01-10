@@ -25,14 +25,12 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum ConnectionError {
     InternalError,
-    BrokerFifoOverflow,
 }
 
 impl fmt::Display for ConnectionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectionError::InternalError => f.write_str("internal error"),
-            ConnectionError::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
         }
     }
 }
@@ -42,7 +40,6 @@ impl Error for ConnectionError {}
 #[derive(Debug, Clone)]
 pub enum EstablishError {
     InternalError,
-    BrokerFifoOverflow,
     UnexpectedClientShutdown,
     UnexpectedMessageReceived(Message),
     VersionMismatch(u32),
@@ -53,7 +50,6 @@ impl fmt::Display for EstablishError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             EstablishError::InternalError => f.write_str("internal error"),
-            EstablishError::BrokerFifoOverflow => f.write_str("broker fifo overflow"),
             EstablishError::UnexpectedClientShutdown => f.write_str("unexpected client shutdown"),
             EstablishError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")

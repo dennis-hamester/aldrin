@@ -81,8 +81,6 @@ impl BrokerHandle {
             .map_err(|e| {
                 if e.is_disconnected() {
                     EstablishError::BrokerShutdown
-                } else if e.is_full() {
-                    EstablishError::BrokerFifoOverflow
                 } else {
                     EstablishError::InternalError
                 }
