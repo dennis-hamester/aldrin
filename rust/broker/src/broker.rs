@@ -278,6 +278,9 @@ impl Broker {
             Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id).await,
             Message::CallFunction(req) => self.call_function(state, id, req).await,
             Message::CallFunctionReply(req) => self.call_function_reply(state, req).await,
+            Message::SubscribeEvent(_) => unimplemented!(),
+            Message::UnsubscribeEvent(_) => unimplemented!(),
+            Message::EmitEvent(_) => unimplemented!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -290,7 +293,8 @@ impl Broker {
             | Message::SubscribeServicesCreatedReply(_)
             | Message::ServiceCreatedEvent(_)
             | Message::DestroyServiceReply(_)
-            | Message::ServiceDestroyedEvent(_) => Err(()),
+            | Message::ServiceDestroyedEvent(_)
+            | Message::SubscribeEventReply(_) => Err(()),
         }
     }
 

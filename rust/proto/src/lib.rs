@@ -87,6 +87,10 @@ pub enum Message {
     ServiceDestroyedEvent(ServiceDestroyedEvent),
     CallFunction(CallFunction),
     CallFunctionReply(CallFunctionReply),
+    SubscribeEvent(SubscribeEvent),
+    SubscribeEventReply(SubscribeEventReply),
+    UnsubscribeEvent(UnsubscribeEvent),
+    EmitEvent(EmitEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -320,4 +324,49 @@ impl CallFunctionResult {
 pub struct CallFunctionReply {
     pub serial: u32,
     pub result: CallFunctionResult,
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeEvent {
+    pub serial: Option<u32>,
+    pub service_cookie: Uuid,
+    pub event: u32,
+}
+
+#[derive(Debug, Clone)]
+pub enum SubscribeEventResult {
+    Ok,
+    InvalidService,
+}
+
+impl SubscribeEventResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            SubscribeEventResult::Ok => true,
+            SubscribeEventResult::InvalidService => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SubscribeEventReply {
+    pub serial: u32,
+    pub result: SubscribeEventResult,
+}
+
+#[derive(Debug, Clone)]
+pub struct UnsubscribeEvent {
+    pub service_cookie: Uuid,
+    pub event: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct EmitEvent {
+    pub service_cookie: Uuid,
+    pub event: u32,
+    pub args: Value,
 }

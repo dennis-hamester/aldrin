@@ -154,6 +154,10 @@ where
             }
             Message::CallFunction(ev) => self.function_call(ev).await,
             Message::CallFunctionReply(ev) => self.call_function_reply(ev).await,
+            Message::SubscribeEvent(_) => unimplemented!(),
+            Message::SubscribeEventReply(_) => unimplemented!(),
+            Message::UnsubscribeEvent(_) => unimplemented!(),
+            Message::EmitEvent(_) => unimplemented!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
