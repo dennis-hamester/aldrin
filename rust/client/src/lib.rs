@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 mod error;
-mod event;
 mod handle;
 mod object;
 mod objects_created;
 mod objects_destroyed;
+mod request;
 mod serial_map;
 mod service;
 mod services_created;
@@ -31,11 +31,11 @@ mod services_destroyed;
 
 use aldrin_proto::*;
 use aldrin_transport::Transport;
-use event::Event;
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
+use request::Request;
 use serial_map::SerialMap;
 use std::collections::HashMap;
 
@@ -60,7 +60,7 @@ where
     T: Transport + Unpin,
 {
     t: T,
-    recv: mpsc::Receiver<Event>,
+    recv: mpsc::Receiver<Request>,
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
@@ -126,8 +126,8 @@ where
                 Either::Left((Some(Ok(msg)), _)) => self.handle_message::<E>(msg).await?,
                 Either::Left((Some(Err(e)), _)) => return Err(e.into()),
                 Either::Left((None, _)) => return Ok(()),
-                Either::Right((Some(Event::Shutdown), _)) => return Ok(()),
-                Either::Right((Some(ev), _)) => self.handle_event::<E>(ev).await?,
+                Either::Right((Some(Request::Shutdown), _)) => return Ok(()),
+                Either::Right((Some(req), _)) => self.handle_request::<E>(req).await?,
                 Either::Right((None, _)) => return Ok(()),
             }
         }
@@ -498,38 +498,38 @@ where
         Ok(())
     }
 
-    async fn handle_event<E>(&mut self, ev: Event) -> Result<(), E>
+    async fn handle_request<E>(&mut self, req: Request) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
     {
-        match ev {
-            Event::CreateObject(id, reply) => self.create_object(id, reply).await,
-            Event::DestroyObject(id, reply) => self.destroy_object(id, reply).await,
-            Event::SubscribeObjectsCreated(sender, mode) => {
+        match req {
+            Request::CreateObject(id, reply) => self.create_object(id, reply).await,
+            Request::DestroyObject(id, reply) => self.destroy_object(id, reply).await,
+            Request::SubscribeObjectsCreated(sender, mode) => {
                 self.subscribe_objects_created(sender, mode).await
             }
-            Event::SubscribeObjectsDestroyed(sender) => {
+            Request::SubscribeObjectsDestroyed(sender) => {
                 self.subscribe_objects_destroyed(sender).await
             }
-            Event::CreateService(object_id, id, fifo_size, reply) => {
+            Request::CreateService(object_id, id, fifo_size, reply) => {
                 self.create_service(object_id, id, fifo_size, reply).await
             }
-            Event::DestroyService(id, reply) => self.destroy_service(id, reply).await,
-            Event::SubscribeServicesCreated(sender, mode) => {
+            Request::DestroyService(id, reply) => self.destroy_service(id, reply).await,
+            Request::SubscribeServicesCreated(sender, mode) => {
                 self.subscribe_services_created(sender, mode).await
             }
-            Event::SubscribeServicesDestroyed(sender) => {
+            Request::SubscribeServicesDestroyed(sender) => {
                 self.subscribe_services_destroyed(sender).await
             }
-            Event::CallFunction(service_id, function, args, reply) => {
+            Request::CallFunction(service_id, function, args, reply) => {
                 self.call_function(service_id, function, args, reply).await
             }
-            Event::FunctionCallReply(serial, result) => {
+            Request::FunctionCallReply(serial, result) => {
                 self.function_call_reply(serial, result).await
             }
 
             // Handled in Client::run()
-            Event::Shutdown => unreachable!(),
+            Request::Shutdown => unreachable!(),
         }
     }
 

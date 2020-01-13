@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use super::{
-    Error, Event, Object, ObjectCookie, ObjectId, ObjectUuid, ObjectsCreated, ObjectsDestroyed,
+    Error, Object, ObjectCookie, ObjectId, ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request,
     Service, ServiceCookie, ServiceId, ServiceUuid, ServicesCreated, ServicesDestroyed,
     SubscribeMode,
 };
@@ -30,12 +30,12 @@ use futures_util::sink::SinkExt;
 
 #[derive(Debug, Clone)]
 pub struct Handle {
-    send: Sender<Event>,
+    send: Sender<Request>,
     event_fifo_size: usize,
 }
 
 impl Handle {
-    pub(crate) fn new(send: Sender<Event>, event_fifo_size: usize) -> Self {
+    pub(crate) fn new(send: Sender<Request>, event_fifo_size: usize) -> Self {
         Handle {
             send,
             event_fifo_size,
@@ -43,12 +43,14 @@ impl Handle {
     }
 
     pub async fn shutdown(&mut self) -> Result<(), Error> {
-        self.send.send(Event::Shutdown).await.map_err(Into::into)
+        self.send.send(Request::Shutdown).await.map_err(Into::into)
     }
 
     pub async fn create_object(&mut self, uuid: ObjectUuid) -> Result<Object, Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send.send(Event::CreateObject(uuid, res_send)).await?;
+        self.send
+            .send(Request::CreateObject(uuid, res_send))
+            .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CreateObjectResult::Ok(cookie) => Ok(Object::new(
@@ -61,7 +63,7 @@ impl Handle {
 
     pub(crate) async fn destroy_object(&mut self, id: ObjectId) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send.send(Event::DestroyObject(id, res_send)).await?;
+        self.send.send(Request::DestroyObject(id, res_send)).await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
@@ -72,13 +74,15 @@ impl Handle {
 
     pub(crate) fn destroy_object_now(&mut self, id: ObjectId) {
         let (res_send, _) = oneshot::channel();
-        self.send.try_send(Event::DestroyObject(id, res_send)).ok();
+        self.send
+            .try_send(Request::DestroyObject(id, res_send))
+            .ok();
     }
 
     pub async fn objects_created(&mut self, mode: SubscribeMode) -> Result<ObjectsCreated, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeObjectsCreated(ev_send, mode))
+            .send(Request::SubscribeObjectsCreated(ev_send, mode))
             .await?;
         Ok(ObjectsCreated::new(ev_recv))
     }
@@ -86,7 +90,7 @@ impl Handle {
     pub async fn objects_destroyed(&mut self) -> Result<ObjectsDestroyed, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeObjectsDestroyed(ev_send))
+            .send(Request::SubscribeObjectsDestroyed(ev_send))
             .await?;
         Ok(ObjectsDestroyed::new(ev_recv))
     }
@@ -99,7 +103,7 @@ impl Handle {
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Event::CreateService(object_id, uuid, fifo_size, res_send))
+            .send(Request::CreateService(object_id, uuid, fifo_size, res_send))
             .await?;
         let (res, recv) = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match res {
@@ -121,7 +125,9 @@ impl Handle {
         id: ServiceId,
     ) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send.send(Event::DestroyService(id, res_send)).await?;
+        self.send
+            .send(Request::DestroyService(id, res_send))
+            .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyServiceResult::Ok => Ok(()),
@@ -132,7 +138,9 @@ impl Handle {
 
     pub(crate) fn destroy_service_now(&mut self, id: ServiceId) {
         let (res_send, _) = oneshot::channel();
-        self.send.try_send(Event::DestroyService(id, res_send)).ok();
+        self.send
+            .try_send(Request::DestroyService(id, res_send))
+            .ok();
     }
 
     pub async fn services_created(
@@ -141,7 +149,7 @@ impl Handle {
     ) -> Result<ServicesCreated, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeServicesCreated(ev_send, mode))
+            .send(Request::SubscribeServicesCreated(ev_send, mode))
             .await?;
         Ok(ServicesCreated::new(ev_recv))
     }
@@ -149,7 +157,7 @@ impl Handle {
     pub async fn services_destroyed(&mut self) -> Result<ServicesDestroyed, Error> {
         let (ev_send, ev_recv) = channel(self.event_fifo_size);
         self.send
-            .send(Event::SubscribeServicesDestroyed(ev_send))
+            .send(Request::SubscribeServicesDestroyed(ev_send))
             .await?;
         Ok(ServicesDestroyed::new(ev_recv))
     }
@@ -163,7 +171,7 @@ impl Handle {
     ) -> Result<Result<Value, Value>, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Event::CallFunction(service_id, function, args, res_send))
+            .send(Request::CallFunction(service_id, function, args, res_send))
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
@@ -186,14 +194,14 @@ impl Handle {
         result: CallFunctionResult,
     ) -> Result<(), Error> {
         self.send
-            .send(Event::FunctionCallReply(serial, result))
+            .send(Request::FunctionCallReply(serial, result))
             .await
             .map_err(Into::into)
     }
 
     pub(crate) fn abort_function_call_now(&mut self, serial: u32) {
         self.send
-            .try_send(Event::FunctionCallReply(
+            .try_send(Request::FunctionCallReply(
                 serial,
                 CallFunctionResult::Aborted,
             ))

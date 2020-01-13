@@ -23,7 +23,7 @@ use aldrin_proto::*;
 use futures_channel::{mpsc, oneshot};
 
 #[derive(Debug)]
-pub(crate) enum Event {
+pub(crate) enum Request {
     Shutdown,
     CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
     DestroyObject(ObjectId, oneshot::Sender<DestroyObjectResult>),
