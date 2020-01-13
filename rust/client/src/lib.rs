@@ -22,12 +22,10 @@ mod error;
 mod event;
 mod handle;
 mod object;
-mod object_proxy;
 mod objects_created;
 mod objects_destroyed;
 mod serial_map;
 mod service;
-mod service_proxy;
 mod services_created;
 mod services_destroyed;
 
@@ -44,13 +42,11 @@ use std::collections::HashMap;
 pub use error::{ConnectError, Error, RunError};
 pub use handle::Handle;
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
-pub use object_proxy::ObjectProxy;
 pub use objects_created::ObjectsCreated;
 pub use objects_destroyed::ObjectsDestroyed;
 pub use service::{
     FunctionCall, FunctionCallReply, Service, ServiceCookie, ServiceId, ServiceUuid,
 };
-pub use service_proxy::ServiceProxy;
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
 

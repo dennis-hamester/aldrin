@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 use super::{
-    Error, Event, Object, ObjectCookie, ObjectId, ObjectProxy, ObjectUuid, ObjectsCreated,
-    ObjectsDestroyed, Service, ServiceCookie, ServiceId, ServiceProxy, ServiceUuid,
-    ServicesCreated, ServicesDestroyed, SubscribeMode,
+    Error, Event, Object, ObjectCookie, ObjectId, ObjectUuid, ObjectsCreated, ObjectsDestroyed,
+    Service, ServiceCookie, ServiceId, ServiceUuid, ServicesCreated, ServicesDestroyed,
+    SubscribeMode,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -154,15 +154,7 @@ impl Handle {
         Ok(ServicesDestroyed::new(ev_recv))
     }
 
-    pub fn bind_object_proxy(&self, id: ObjectId) -> ObjectProxy {
-        ObjectProxy::new(id, self.clone())
-    }
-
-    pub fn bind_service_proxy(&self, object_id: ObjectId, service_id: ServiceId) -> ServiceProxy {
-        ServiceProxy::new(object_id, service_id, self.clone())
-    }
-
-    pub(crate) async fn call_function(
+    pub async fn call_function(
         &mut self,
         object_id: ObjectId,
         service_id: ServiceId,
