@@ -415,20 +415,17 @@ where
     {
         let mut remove = Vec::new();
 
+        let object_id = ObjectId::new(
+            ObjectUuid(service_destroyed_event.object_uuid),
+            ObjectCookie(service_destroyed_event.object_cookie),
+        );
+        let service_id = ServiceId::new(
+            ServiceUuid(service_destroyed_event.uuid),
+            ServiceCookie(service_destroyed_event.cookie),
+        );
+
         for (serial, send) in self.services_destroyed.iter_mut() {
-            if let Err(e) = send
-                .send((
-                    ObjectId::new(
-                        ObjectUuid(service_destroyed_event.object_uuid),
-                        ObjectCookie(service_destroyed_event.object_cookie),
-                    ),
-                    ServiceId::new(
-                        ServiceUuid(service_destroyed_event.uuid),
-                        ServiceCookie(service_destroyed_event.cookie),
-                    ),
-                ))
-                .await
-            {
+            if let Err(e) = send.send((object_id, service_id)).await {
                 if e.is_disconnected() {
                     remove.push(serial);
                 } else {
