@@ -112,6 +112,19 @@ pub enum CreateObjectResult {
     DuplicateObject,
 }
 
+impl CreateObjectResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            CreateObjectResult::Ok(_) => true,
+            CreateObjectResult::DuplicateObject => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CreateObjectReply {
     pub serial: u32,
@@ -148,6 +161,19 @@ pub enum DestroyObjectResult {
     ForeignObject,
 }
 
+impl DestroyObjectResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            DestroyObjectResult::Ok => true,
+            DestroyObjectResult::InvalidObject | DestroyObjectResult::ForeignObject => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DestroyObjectReply {
     pub serial: u32,
@@ -173,6 +199,21 @@ pub enum CreateServiceResult {
     DuplicateService,
     InvalidObject,
     ForeignObject,
+}
+
+impl CreateServiceResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            CreateServiceResult::Ok(_) => true,
+            CreateServiceResult::DuplicateService
+            | CreateServiceResult::InvalidObject
+            | CreateServiceResult::ForeignObject => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -213,6 +254,19 @@ pub enum DestroyServiceResult {
     ForeignObject,
 }
 
+impl DestroyServiceResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            DestroyServiceResult::Ok => true,
+            DestroyServiceResult::InvalidService | DestroyServiceResult::ForeignObject => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DestroyServiceReply {
     pub serial: u32,
@@ -243,6 +297,23 @@ pub enum CallFunctionResult {
     InvalidService,
     InvalidFunction,
     InvalidArgs,
+}
+
+impl CallFunctionResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            CallFunctionResult::Ok(_) => true,
+            CallFunctionResult::Err(_)
+            | CallFunctionResult::Aborted
+            | CallFunctionResult::InvalidService
+            | CallFunctionResult::InvalidFunction
+            | CallFunctionResult::InvalidArgs => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
 }
 
 #[derive(Debug, Clone)]
