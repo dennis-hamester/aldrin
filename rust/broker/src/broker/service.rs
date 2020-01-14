@@ -44,7 +44,7 @@ impl Service {
     }
 
     pub fn function_calls<'a>(&'a self) -> impl Iterator<Item = u32> + 'a {
-        self.function_calls.iter().cloned()
+        self.function_calls.iter().copied()
     }
 }
 
