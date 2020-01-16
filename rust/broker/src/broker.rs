@@ -296,7 +296,7 @@ impl Broker {
             Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id).await,
             Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id).await,
             Message::CallFunction(req) => self.call_function(state, id, req).await,
-            Message::CallFunctionReply(req) => self.call_function_reply(req).await,
+            Message::CallFunctionReply(req) => self.call_function_reply(state, req).await,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -767,7 +767,11 @@ impl Broker {
         Ok(())
     }
 
-    async fn call_function_reply(&mut self, req: CallFunctionReply) -> Result<(), ()> {
+    async fn call_function_reply(
+        &mut self,
+        state: &mut State,
+        req: CallFunctionReply,
+    ) -> Result<(), ()> {
         let (serial, conn_id, obj_uuid, svc_uuid) = match self.function_calls.remove(req.serial) {
             Some(caller) => caller,
             None => return Ok(()),
@@ -779,7 +783,8 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(serial);
 
-        self.conns
+        let res = self
+            .conns
             .get_mut(&conn_id)
             .expect("inconsistent state")
             .send(BrokerEvent::Message(Message::CallFunctionReply(
@@ -788,7 +793,12 @@ impl Broker {
                     result: req.result,
                 },
             )))
-            .await
+            .await;
+        if res.is_err() {
+            state.push_remove_conn(conn_id);
+        }
+
+        Ok(())
     }
 }
 
