@@ -53,6 +53,17 @@ pub struct Broker {
     objs: HashMap<ObjectUuid, Object>,
     svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
+
+    /// Map of pending function calls.
+    ///
+    /// The serial of an entry refers to the callee and will be referenced in
+    /// [`CallFunctionReply`] message.
+    ///
+    /// The elements of the tuple are:
+    /// 1. Serial used by the caller in the [`CallFunction`] message.
+    /// 2. [`ConnectionId`] of the caller.
+    /// 3. [`ObjectUuid`] which owns the called service.
+    /// 4. [`ServiceUuid`] on which the function has been called.
     function_calls: SerialMap<(u32, ConnectionId, ObjectUuid, ServiceUuid)>,
 }
 
@@ -239,38 +250,8 @@ impl Broker {
         // Ignore errors here
         conn.send(BrokerEvent::Shutdown).await.ok();
 
-        // Remove all objects and services and queue up events.
         for obj_cookie in conn.objects() {
-            let obj_uuid = self
-                .obj_uuids
-                .remove(&obj_cookie)
-                .expect("inconsistent state");
-            let obj = self.objs.remove(&obj_uuid).expect("inconsistent state");
-            state.push_remove_obj(obj_uuid, obj_cookie);
-
-            for svc_cookie in obj.services() {
-                let (_, _, svc_uuid) = self
-                    .svc_uuids
-                    .remove(&svc_cookie)
-                    .expect("inconsistent state");
-                let svc = self
-                    .svcs
-                    .remove(&(obj_uuid, svc_uuid))
-                    .expect("inconsistent state");
-                state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
-
-                for serial in svc.function_calls() {
-                    let (serial, conn_id, _, _) = self
-                        .function_calls
-                        .remove(serial)
-                        .expect("inconsistent state");
-                    state.push_remove_function_call(
-                        serial,
-                        conn_id,
-                        CallFunctionResult::InvalidService,
-                    );
-                }
-            }
+            self.remove_object(state, obj_cookie);
         }
     }
 
@@ -367,10 +348,9 @@ impl Broker {
         };
 
         let obj_cookie = ObjectCookie(req.cookie);
-
-        let obj_uuid_entry = match self.obj_uuids.entry(obj_cookie) {
-            Entry::Occupied(obj_uuid_entry) => obj_uuid_entry,
-            Entry::Vacant(_) => {
+        let obj_uuid = match self.obj_uuids.get(&obj_cookie) {
+            Some(obj_uuid) => *obj_uuid,
+            None => {
                 return conn
                     .send(BrokerEvent::Message(Message::DestroyObjectReply(
                         DestroyObjectReply {
@@ -381,14 +361,9 @@ impl Broker {
                     .await
             }
         };
-        let obj_uuid = *obj_uuid_entry.get();
 
-        let entry = match self.objs.entry(obj_uuid) {
-            Entry::Occupied(entry) => entry,
-            Entry::Vacant(_) => panic!("inconsistent state"),
-        };
-
-        if entry.get().conn_id() != id {
+        let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+        if obj.conn_id() != id {
             return conn
                 .send(BrokerEvent::Message(Message::DestroyObjectReply(
                     DestroyObjectReply {
@@ -407,35 +382,7 @@ impl Broker {
         )))
         .await?;
 
-        state.push_remove_obj(obj_uuid, obj_cookie);
-        for svc_cookie in entry.get().services() {
-            let (_, _, svc_uuid) = self
-                .svc_uuids
-                .remove(&svc_cookie)
-                .expect("inconsistent state");
-            let svc = self
-                .svcs
-                .remove(&(obj_uuid, svc_uuid))
-                .expect("inconsistent state");
-            state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
-
-            for serial in svc.function_calls() {
-                let (serial, conn_id, _, _) = self
-                    .function_calls
-                    .remove(serial)
-                    .expect("inconsistent state");
-                state.push_remove_function_call(
-                    serial,
-                    conn_id,
-                    CallFunctionResult::InvalidService,
-                );
-            }
-        }
-
-        conn.remove_object(obj_cookie);
-        obj_uuid_entry.remove();
-        entry.remove();
-
+        self.remove_object(state, obj_cookie);
         Ok(())
     }
 
@@ -587,9 +534,9 @@ impl Broker {
         };
 
         let svc_cookie = ServiceCookie(req.cookie);
-        let svc_uuid_entry = match self.svc_uuids.entry(svc_cookie) {
-            Entry::Occupied(svc_uuid_entry) => svc_uuid_entry,
-            Entry::Vacant(_) => {
+        let (obj_uuid, _, _) = match self.svc_uuids.get(&svc_cookie) {
+            Some(ids) => *ids,
+            None => {
                 return conn
                     .send(BrokerEvent::Message(Message::DestroyServiceReply(
                         DestroyServiceReply {
@@ -600,9 +547,8 @@ impl Broker {
                     .await;
             }
         };
-        let (obj_uuid, obj_cookie, svc_uuid) = *svc_uuid_entry.get();
 
-        let obj = self.objs.get_mut(&obj_uuid).expect("inconsistent state");
+        let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
         if obj.conn_id() != id {
             return conn
                 .send(BrokerEvent::Message(Message::DestroyServiceReply(
@@ -622,24 +568,7 @@ impl Broker {
         )))
         .await?;
 
-        let entry = match self.svcs.entry((obj_uuid, svc_uuid)) {
-            Entry::Occupied(entry) => entry,
-            Entry::Vacant(_) => panic!("inconsistent state"),
-        };
-
-        state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
-        obj.remove_service(svc_cookie);
-
-        for serial in entry.get().function_calls() {
-            let (serial, conn_id, _, _) = self
-                .function_calls
-                .remove(serial)
-                .expect("inconsistent state");
-            state.push_remove_function_call(serial, conn_id, CallFunctionResult::InvalidService);
-        }
-
-        svc_uuid_entry.remove();
-        entry.remove();
+        self.remove_service(state, svc_cookie);
         Ok(())
     }
 
@@ -799,6 +728,60 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    /// Removes the object `obj_cookie` and queues up events in `state`.
+    ///
+    /// This function will also remove all services owned by that object as well as everything
+    /// related (e.g. pending function calls). It is safe to call with an invalid `obj_cookie`.
+    fn remove_object(&mut self, state: &mut State, obj_cookie: ObjectCookie) {
+        let obj_uuid = match self.obj_uuids.remove(&obj_cookie) {
+            Some(obj_uuid) => obj_uuid,
+            None => return,
+        };
+
+        let obj = self.objs.remove(&obj_uuid).expect("inconsistent state");
+        state.push_remove_obj(obj_uuid, obj_cookie);
+
+        // The connection might already have been removed. E.g. when this function is called by
+        // `shutdown_connection`.
+        if let Some(conn) = self.conns.get_mut(obj.conn_id()) {
+            conn.remove_object(obj_cookie);
+        }
+
+        for svc_cookie in obj.services() {
+            self.remove_service(state, svc_cookie);
+        }
+    }
+
+    /// Removes the service `svc_cookie` and queues up events in `state`.
+    ///
+    /// This function will also remove everything related to `svc_cookie`, e.g. pending function
+    /// calls. It is safe to call with an invalid `svc_cookie`.
+    fn remove_service(&mut self, state: &mut State, svc_cookie: ServiceCookie) {
+        let (obj_uuid, obj_cookie, svc_uuid) = match self.svc_uuids.remove(&svc_cookie) {
+            Some(ids) => ids,
+            None => return,
+        };
+
+        let svc = self
+            .svcs
+            .remove(&(obj_uuid, svc_uuid))
+            .expect("inconsistent state");
+        state.push_remove_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
+
+        // The object might already have been removed.
+        if let Some(obj) = self.objs.get_mut(&obj_uuid) {
+            obj.remove_service(svc_cookie);
+        }
+
+        for serial in svc.function_calls() {
+            let (serial, conn_id, _, _) = self
+                .function_calls
+                .remove(serial)
+                .expect("inconsistent state");
+            state.push_remove_function_call(serial, conn_id, CallFunctionResult::InvalidService);
+        }
     }
 }
 
