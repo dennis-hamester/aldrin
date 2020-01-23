@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 mod error;
+mod events;
 mod handle;
 mod object;
 mod objects_created;
@@ -31,15 +32,18 @@ mod services_destroyed;
 
 use aldrin_proto::*;
 use aldrin_transport::Transport;
+use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
-use request::Request;
+use request::{EmitEventRequest, Request, SubscribeEventRequest, UnsubscribeEventRequest};
 use serial_map::SerialMap;
-use std::collections::HashMap;
+use std::collections::hash_map::{Entry, HashMap};
+use std::collections::HashSet;
 
 pub use error::{ConnectError, Error, RunError};
+pub use events::{Event, Events};
 pub use handle::Handle;
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use objects_created::ObjectsCreated;
@@ -53,6 +57,7 @@ pub use services_destroyed::ServicesDestroyed;
 type FunctionCallReceiver = mpsc::Receiver<(u32, Value, u32)>;
 type CreateServiceReplySender =
     oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>;
+type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>>;
 
 #[derive(Debug)]
 pub struct Client<T>
@@ -72,6 +77,14 @@ where
     services_destroyed: SerialMap<mpsc::Sender<ServiceId>>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::Sender<(u32, Value, u32)>>,
+    subscribe_event: SerialMap<(
+        EventsId,
+        ServiceCookie,
+        u32,
+        oneshot::Sender<SubscribeEventResult>,
+    )>,
+    subscriptions: HashMap<ServiceCookie, Subscriptions>,
+    broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
 }
 
 impl<T> Client<T>
@@ -108,6 +121,9 @@ where
             services_destroyed: SerialMap::new(),
             function_calls: SerialMap::new(),
             services: HashMap::new(),
+            subscribe_event: SerialMap::new(),
+            subscriptions: HashMap::new(),
+            broker_subscriptions: HashMap::new(),
         })
     }
 
@@ -154,10 +170,10 @@ where
             }
             Message::CallFunction(ev) => self.function_call(ev).await,
             Message::CallFunctionReply(ev) => self.call_function_reply(ev).await,
-            Message::SubscribeEvent(_) => unimplemented!(),
-            Message::SubscribeEventReply(_) => unimplemented!(),
-            Message::UnsubscribeEvent(_) => unimplemented!(),
-            Message::EmitEvent(_) => unimplemented!(),
+            Message::SubscribeEvent(ev) => self.event_subscribed(ev).await,
+            Message::SubscribeEventReply(re) => self.subscribe_event_reply(re).await,
+            Message::UnsubscribeEvent(ev) => self.event_unsubscribed(ev).await,
+            Message::EmitEvent(ev) => self.event_emitted(ev).await,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -328,15 +344,18 @@ where
     where
         E: From<RunError> + From<T::Error>,
     {
-        if let Some((cookie, send)) = self.destroy_service.remove(reply.serial) {
-            if let DestroyServiceResult::Ok = reply.result {
-                let contained = self.services.remove(&cookie);
-                debug_assert!(contained.is_some());
-            }
+        let (cookie, send) = match self.destroy_service.remove(reply.serial) {
+            Some(data) => data,
+            None => return Ok(()),
+        };
 
-            send.send(reply.result).ok();
+        if let DestroyServiceResult::Ok = reply.result {
+            let contained = self.services.remove(&cookie);
+            debug_assert!(contained.is_some());
+            self.broker_subscriptions.remove(&cookie);
         }
 
+        send.send(reply.result).ok();
         Ok(())
     }
 
@@ -390,28 +409,51 @@ where
         E: From<RunError> + From<T::Error>,
     {
         let mut remove = Vec::new();
+        let service_cookie = ServiceCookie(ev.cookie);
         let service_id = ServiceId::new(
             ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
             ServiceUuid(ev.uuid),
-            ServiceCookie(ev.cookie),
+            service_cookie,
         );
 
-        for (serial, send) in self.services_destroyed.iter_mut() {
-            if let Err(e) = send.send(service_id).await {
-                if e.is_disconnected() {
-                    remove.push(serial);
-                } else {
-                    return Err(RunError::InternalError.into());
+        // A ServiceDestroyedEvent can also be sent, when we have active subscriptions on a
+        // service. If that is the sole reason for this event, then make sure not to send
+        // UnsubscribeServicesDestroyed below.
+        if !self.services_destroyed.is_empty() {
+            for (serial, send) in self.services_destroyed.iter_mut() {
+                if let Err(e) = send.send(service_id).await {
+                    if e.is_disconnected() {
+                        remove.push(serial);
+                    } else {
+                        return Err(RunError::InternalError.into());
+                    }
                 }
+            }
+
+            for serial in remove {
+                self.services_destroyed.remove(serial);
+            }
+
+            if self.services_destroyed.is_empty() {
+                self.t.send(Message::UnsubscribeServicesDestroyed).await?;
             }
         }
 
-        for serial in remove {
-            self.services_destroyed.remove(serial);
-        }
+        self.broker_subscriptions.remove(&service_cookie);
 
-        if self.services_destroyed.is_empty() {
-            self.t.send(Message::UnsubscribeServicesDestroyed).await?;
+        if let Some(ids) = self.subscriptions.remove(&service_cookie) {
+            let mut dups = HashSet::new();
+            for (_, events_ids) in ids {
+                for (events_id, mut sender) in events_ids {
+                    if dups.insert(events_id) {
+                        // Should we close the channel in case of send errors?
+                        sender
+                            .send(EventsRequest::ServiceDestroyed(service_cookie))
+                            .await
+                            .ok();
+                    }
+                }
+            }
         }
 
         Ok(())
@@ -474,6 +516,88 @@ where
         Ok(())
     }
 
+    async fn event_subscribed<E>(&mut self, ev: SubscribeEvent) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        self.broker_subscriptions
+            .entry(ServiceCookie(ev.service_cookie))
+            .or_default()
+            .insert(ev.event);
+        Ok(())
+    }
+
+    async fn subscribe_event_reply<E>(&mut self, reply: SubscribeEventReply) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let (events_id, service_cookie, id, rep_send) =
+            match self.subscribe_event.remove(reply.serial) {
+                Some(req) => req,
+                None => return Ok(()),
+            };
+
+        // || would short-circuit and changing the order would move reply.result out.
+        let mut err = reply.result.is_err();
+        err |= rep_send.send(reply.result).is_err();
+        if err {
+            self.subscriptions
+                .entry(service_cookie)
+                .or_default()
+                .entry(id)
+                .or_default()
+                .remove(&events_id);
+        }
+
+        Ok(())
+    }
+
+    async fn event_unsubscribed<E>(&mut self, ev: UnsubscribeEvent) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let service_cookie = ServiceCookie(ev.service_cookie);
+        let mut subs = match self.broker_subscriptions.entry(service_cookie) {
+            Entry::Occupied(subs) => subs,
+            Entry::Vacant(_) => return Ok(()),
+        };
+
+        subs.get_mut().remove(&ev.event);
+        if subs.get().is_empty() {
+            subs.remove();
+        }
+        Ok(())
+    }
+
+    async fn event_emitted<E>(&mut self, ev: EmitEvent) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let service_cookie = ServiceCookie(ev.service_cookie);
+        let senders = match self
+            .subscriptions
+            .get_mut(&service_cookie)
+            .and_then(|s| s.get_mut(&ev.event))
+        {
+            Some(senders) => senders,
+            None => return Ok(()),
+        };
+
+        for sender in senders.values_mut() {
+            // Should we close the channel in case of send errors?
+            sender
+                .send(EventsRequest::EmitEvent(
+                    service_cookie,
+                    ev.event,
+                    ev.args.clone(),
+                ))
+                .await
+                .ok();
+        }
+
+        Ok(())
+    }
+
     async fn handle_request<E>(&mut self, req: Request) -> Result<(), E>
     where
         E: From<RunError> + From<T::Error>,
@@ -505,6 +629,9 @@ where
             Request::FunctionCallReply(serial, result) => {
                 self.function_call_reply(serial, result).await
             }
+            Request::SubscribeEvent(req) => self.subscribe_event(req).await,
+            Request::UnsubscribeEvent(req) => self.unsubscribe_event(req).await,
+            Request::EmitEvent(req) => self.emit_event(req).await,
 
             // Handled in Client::run()
             Request::Shutdown => unreachable!(),
@@ -712,6 +839,94 @@ where
             .send(Message::CallFunctionReply(CallFunctionReply {
                 serial,
                 result,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn subscribe_event<E>(&mut self, req: SubscribeEventRequest) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let subs = self
+            .subscriptions
+            .entry(req.service_cookie)
+            .or_default()
+            .entry(req.id)
+            .or_default();
+        let send_req = subs.is_empty();
+        let duplicate = subs.insert(req.events_id, req.sender).is_some();
+
+        if send_req {
+            let serial = Some(self.subscribe_event.insert((
+                req.events_id,
+                req.service_cookie,
+                req.id,
+                req.reply,
+            )));
+
+            self.t
+                .send(Message::SubscribeEvent(SubscribeEvent {
+                    serial,
+                    service_cookie: req.service_cookie.0,
+                    event: req.id,
+                }))
+                .await
+                .map_err(Into::into)
+        } else {
+            if req.reply.send(SubscribeEventResult::Ok).is_err() && !duplicate {
+                subs.remove(&req.events_id);
+            }
+
+            Ok(())
+        }
+    }
+
+    async fn unsubscribe_event<E>(&mut self, req: UnsubscribeEventRequest) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        let mut subs = match self.subscriptions.entry(req.service_cookie) {
+            Entry::Occupied(subs) => subs,
+            Entry::Vacant(_) => return Ok(()),
+        };
+
+        let mut ids = match subs.get_mut().entry(req.id) {
+            Entry::Occupied(ids) => ids,
+            Entry::Vacant(_) => return Ok(()),
+        };
+
+        if ids.get_mut().remove(&req.events_id).is_none() {
+            return Ok(());
+        }
+
+        if !ids.get().is_empty() {
+            return Ok(());
+        }
+
+        ids.remove();
+        if subs.get().is_empty() {
+            subs.remove();
+        }
+
+        self.t
+            .send(Message::UnsubscribeEvent(UnsubscribeEvent {
+                service_cookie: req.service_cookie.0,
+                event: req.id,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn emit_event<E>(&mut self, req: EmitEventRequest) -> Result<(), E>
+    where
+        E: From<RunError> + From<T::Error>,
+    {
+        self.t
+            .send(Message::EmitEvent(EmitEvent {
+                service_cookie: req.service_cookie.0,
+                event: req.event,
+                args: req.args,
             }))
             .await
             .map_err(Into::into)

@@ -19,9 +19,10 @@
 // SOFTWARE.
 
 use super::{
-    Error, Object, ObjectCookie, ObjectId, ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request,
-    Service, ServiceCookie, ServiceId, ServiceUuid, ServicesCreated, ServicesDestroyed,
-    SubscribeMode,
+    EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectId,
+    ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request, Service, ServiceCookie, ServiceId,
+    ServiceUuid, ServicesCreated, ServicesDestroyed, SubscribeEventRequest, SubscribeMode,
+    UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -212,5 +213,65 @@ impl Handle {
                 CallFunctionResult::Aborted,
             ))
             .ok();
+    }
+
+    pub fn events(&self, fifo_size: usize) -> Events {
+        Events::new(self.clone(), fifo_size)
+    }
+
+    pub(crate) async fn subscribe_event(
+        &mut self,
+        events_id: EventsId,
+        service_id: ServiceId,
+        id: u32,
+        sender: Sender<EventsRequest>,
+    ) -> Result<(), Error> {
+        let (rep_send, rep_recv) = oneshot::channel();
+        self.send
+            .send(Request::SubscribeEvent(SubscribeEventRequest {
+                events_id,
+                service_cookie: service_id.cookie,
+                id,
+                sender,
+                reply: rep_send,
+            }))
+            .await?;
+        let reply = rep_recv.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            SubscribeEventResult::Ok => Ok(()),
+            SubscribeEventResult::InvalidService => Err(Error::InvalidService(service_id)),
+        }
+    }
+
+    pub(crate) async fn unsubscribe_event(
+        &mut self,
+        events_id: EventsId,
+        service_id: ServiceId,
+        id: u32,
+    ) -> Result<(), Error> {
+        self.send
+            .send(Request::UnsubscribeEvent(UnsubscribeEventRequest {
+                events_id,
+                service_cookie: service_id.cookie,
+                id,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    pub async fn emit_event(
+        &mut self,
+        service_id: ServiceId,
+        event: u32,
+        args: Value,
+    ) -> Result<(), Error> {
+        self.send
+            .send(Request::EmitEvent(EmitEventRequest {
+                service_cookie: service_id.cookie,
+                event,
+                args,
+            }))
+            .await
+            .map_err(Into::into)
     }
 }
