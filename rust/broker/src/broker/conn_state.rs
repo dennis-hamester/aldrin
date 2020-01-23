@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::BrokerEvent;
-use super::ObjectCookie;
+use super::{BrokerEvent, ObjectCookie, ServiceCookie};
 use futures_channel::mpsc::Sender;
 use futures_util::sink::SinkExt;
+use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -32,6 +32,9 @@ pub(super) struct ConnectionState {
     objects_destroyed_subscribed: bool,
     services_created_subscribed: bool,
     services_destroyed_subscribed: bool,
+
+    /// Map of active subscriptions made by this connection.
+    subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
 }
 
 impl ConnectionState {
@@ -43,6 +46,7 @@ impl ConnectionState {
             objects_destroyed_subscribed: false,
             services_created_subscribed: false,
             services_destroyed_subscribed: false,
+            subscriptions: HashMap::new(),
         }
     }
 
@@ -94,5 +98,35 @@ impl ConnectionState {
 
     pub fn services_destroyed_subscribed(&self) -> bool {
         self.services_destroyed_subscribed
+    }
+
+    pub fn add_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {
+        self.subscriptions.entry(svc_cookie).or_default().insert(id);
+    }
+
+    pub fn remove_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {
+        if let Entry::Occupied(mut subs) = self.subscriptions.entry(svc_cookie) {
+            subs.get_mut().remove(&id);
+            if subs.get().is_empty() {
+                subs.remove();
+            }
+        }
+    }
+
+    pub fn remove_all_subscriptions(&mut self, svc_cookie: ServiceCookie) {
+        self.subscriptions.remove(&svc_cookie);
+    }
+
+    pub fn subscriptions<'a>(&'a self) -> impl Iterator<Item = (ServiceCookie, u32)> + 'a {
+        self.subscriptions
+            .iter()
+            .flat_map(|(&c, ids)| ids.iter().map(move |&id| (c, id)))
+    }
+
+    pub fn is_subscribed_to(&self, svc_cookie: ServiceCookie, id: u32) -> bool {
+        self.subscriptions
+            .get(&svc_cookie)
+            .map(|s| s.contains(&id))
+            .unwrap_or(false)
     }
 }

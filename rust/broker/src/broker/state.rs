@@ -32,6 +32,14 @@ pub(super) struct State {
     add_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
     remove_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
+    remove_subscriptions: Vec<(
+        ConnectionId,
+        ObjectUuid,
+        ObjectCookie,
+        ServiceUuid,
+        ServiceCookie,
+    )>,
+    unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
 }
 
 impl State {
@@ -45,6 +53,8 @@ impl State {
             add_svcs: Vec::new(),
             remove_svcs: Vec::new(),
             remove_function_calls: Vec::new(),
+            remove_subscriptions: Vec::new(),
+            unsubscribe: Vec::new(),
         }
     }
 
@@ -71,6 +81,8 @@ impl State {
             || !self.add_svcs.is_empty()
             || !self.remove_svcs.is_empty()
             || !self.remove_function_calls.is_empty()
+            || !self.remove_subscriptions.is_empty()
+            || !self.unsubscribe.is_empty()
     }
 
     pub fn push_add_obj(&mut self, uuid: ObjectUuid, cookie: ObjectCookie) {
@@ -149,5 +161,42 @@ impl State {
 
     pub fn pop_remove_function_call(&mut self) -> Option<(u32, ConnectionId, CallFunctionResult)> {
         self.remove_function_calls.pop()
+    }
+
+    pub fn push_remove_subscriptions(
+        &mut self,
+        conn_id: ConnectionId,
+        obj_uuid: ObjectUuid,
+        obj_cookie: ObjectCookie,
+        svc_uuid: ServiceUuid,
+        svc_cookie: ServiceCookie,
+    ) {
+        self.remove_subscriptions
+            .push((conn_id, obj_uuid, obj_cookie, svc_uuid, svc_cookie));
+    }
+
+    pub fn pop_remove_subscriptions(
+        &mut self,
+    ) -> Option<(
+        ConnectionId,
+        ObjectUuid,
+        ObjectCookie,
+        ServiceUuid,
+        ServiceCookie,
+    )> {
+        self.remove_subscriptions.pop()
+    }
+
+    pub fn push_unsubscribe(
+        &mut self,
+        conn_id: ConnectionId,
+        svc_cookie: ServiceCookie,
+        event: u32,
+    ) {
+        self.unsubscribe.push((conn_id, svc_cookie, event));
+    }
+
+    pub fn pop_unsubscribe(&mut self) -> Option<(ConnectionId, ServiceCookie, u32)> {
+        self.unsubscribe.pop()
     }
 }
