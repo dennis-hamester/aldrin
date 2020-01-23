@@ -63,7 +63,9 @@ impl Handle {
 
     pub(crate) async fn destroy_object(&mut self, id: ObjectId) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
-        self.send.send(Request::DestroyObject(id, res_send)).await?;
+        self.send
+            .send(Request::DestroyObject(id.cookie, res_send))
+            .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
@@ -72,10 +74,10 @@ impl Handle {
         }
     }
 
-    pub(crate) fn destroy_object_now(&mut self, id: ObjectId) {
+    pub(crate) fn destroy_object_now(&mut self, cookie: ObjectCookie) {
         let (res_send, _) = oneshot::channel();
         self.send
-            .try_send(Request::DestroyObject(id, res_send))
+            .try_send(Request::DestroyObject(cookie, res_send))
             .ok();
     }
 
@@ -98,48 +100,50 @@ impl Handle {
     pub(crate) async fn create_service(
         &mut self,
         object_id: ObjectId,
-        uuid: ServiceUuid,
+        service_uuid: ServiceUuid,
         fifo_size: usize,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Request::CreateService(object_id, uuid, fifo_size, res_send))
+            .send(Request::CreateService(
+                object_id.cookie,
+                service_uuid,
+                fifo_size,
+                res_send,
+            ))
             .await?;
         let (res, recv) = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match res {
             CreateServiceResult::Ok(cookie) => Ok(Service::new(
-                object_id,
-                ServiceId::new(uuid, ServiceCookie(cookie)),
+                ServiceId::new(object_id, service_uuid, ServiceCookie(cookie)),
                 self.clone(),
                 recv.unwrap(),
             )),
-            CreateServiceResult::DuplicateService => Err(Error::DuplicateService(object_id, uuid)),
+            CreateServiceResult::DuplicateService => {
+                Err(Error::DuplicateService(object_id, service_uuid))
+            }
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
             CreateServiceResult::ForeignObject => Err(Error::InternalError),
         }
     }
 
-    pub(crate) async fn destroy_service(
-        &mut self,
-        object_id: ObjectId,
-        id: ServiceId,
-    ) -> Result<(), Error> {
+    pub(crate) async fn destroy_service(&mut self, id: ServiceId) -> Result<(), Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Request::DestroyService(id, res_send))
+            .send(Request::DestroyService(id.cookie, res_send))
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyServiceResult::Ok => Ok(()),
-            DestroyServiceResult::InvalidService => Err(Error::InvalidService(object_id, id)),
+            DestroyServiceResult::InvalidService => Err(Error::InvalidService(id)),
             DestroyServiceResult::ForeignObject => Err(Error::InternalError),
         }
     }
 
-    pub(crate) fn destroy_service_now(&mut self, id: ServiceId) {
+    pub(crate) fn destroy_service_now(&mut self, cookie: ServiceCookie) {
         let (res_send, _) = oneshot::channel();
         self.send
-            .try_send(Request::DestroyService(id, res_send))
+            .try_send(Request::DestroyService(cookie, res_send))
             .ok();
     }
 
@@ -164,27 +168,29 @@ impl Handle {
 
     pub async fn call_function(
         &mut self,
-        object_id: ObjectId,
         service_id: ServiceId,
         function: u32,
         args: Value,
     ) -> Result<Result<Value, Value>, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
-            .send(Request::CallFunction(service_id, function, args, res_send))
+            .send(Request::CallFunction(
+                service_id.cookie,
+                function,
+                args,
+                res_send,
+            ))
             .await?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CallFunctionResult::Ok(v) => Ok(Ok(v)),
             CallFunctionResult::Err(v) => Ok(Err(v)),
             CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
-            CallFunctionResult::InvalidService => Err(Error::InvalidService(object_id, service_id)),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService(service_id)),
             CallFunctionResult::InvalidFunction => {
-                Err(Error::InvalidFunction(object_id, service_id, function))
+                Err(Error::InvalidFunction(service_id, function))
             }
-            CallFunctionResult::InvalidArgs => {
-                Err(Error::InvalidArgs(object_id, service_id, function))
-            }
+            CallFunctionResult::InvalidArgs => Err(Error::InvalidArgs(service_id, function)),
         }
     }
 

@@ -29,20 +29,17 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Service {
-    object_id: ObjectId,
     id: ServiceId,
     inner: Option<Inner>,
 }
 
 impl Service {
     pub(crate) fn new(
-        object_id: ObjectId,
         id: ServiceId,
         client: Handle,
         function_calls: Receiver<(u32, Value, u32)>,
     ) -> Self {
         Service {
-            object_id,
             id,
             inner: Some(Inner {
                 client,
@@ -51,20 +48,13 @@ impl Service {
         }
     }
 
-    pub fn object_id(&self) -> ObjectId {
-        self.object_id
-    }
-
     pub fn id(&self) -> ServiceId {
         self.id
     }
 
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        let inner = self
-            .inner
-            .as_mut()
-            .ok_or(Error::InvalidService(self.object_id, self.id))?;
-        let res = inner.client.destroy_service(self.object_id, self.id).await;
+        let inner = self.inner.as_mut().ok_or(Error::InvalidService(self.id))?;
+        let res = inner.client.destroy_service(self.id).await;
         if res.is_ok() {
             self.inner.take();
         }
@@ -75,7 +65,7 @@ impl Service {
 impl Drop for Service {
     fn drop(&mut self) {
         if let Some(mut inner) = self.inner.take() {
-            inner.client.destroy_service_now(self.id);
+            inner.client.destroy_service_now(self.id.cookie);
         }
     }
 }
@@ -105,14 +95,20 @@ struct Inner {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub struct ServiceId {
+    pub object_id: ObjectId,
     pub uuid: ServiceUuid,
     pub cookie: ServiceCookie,
 }
 
 impl ServiceId {
-    pub fn new(uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
-        ServiceId { uuid, cookie }
+    pub(crate) fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
+        ServiceId {
+            object_id,
+            uuid,
+            cookie,
+        }
     }
 }
 
@@ -126,6 +122,7 @@ impl fmt::Display for ServiceUuid {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub struct ServiceCookie(pub Uuid);
 
 impl fmt::Display for ServiceCookie {

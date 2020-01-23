@@ -62,19 +62,20 @@ impl Object {
 impl Drop for Object {
     fn drop(&mut self) {
         if let Some(mut client) = self.client.take() {
-            client.destroy_object_now(self.id);
+            client.destroy_object_now(self.id.cookie);
         }
     }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub struct ObjectId {
     pub uuid: ObjectUuid,
     pub cookie: ObjectCookie,
 }
 
 impl ObjectId {
-    pub fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
+    pub(crate) fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
         ObjectId { uuid, cookie }
     }
 }
@@ -89,6 +90,7 @@ impl fmt::Display for ObjectUuid {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub struct ObjectCookie(pub Uuid);
 
 impl fmt::Display for ObjectCookie {

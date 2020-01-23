@@ -71,9 +71,9 @@ pub enum Error {
     DuplicateObject(ObjectUuid),
     InvalidObject(ObjectId),
     DuplicateService(ObjectId, ServiceUuid),
-    InvalidService(ObjectId, ServiceId),
-    InvalidFunction(ObjectId, ServiceId, u32),
-    InvalidArgs(ObjectId, ServiceId, u32),
+    InvalidService(ServiceId),
+    InvalidFunction(ServiceId, u32),
+    InvalidArgs(ServiceId, u32),
     FunctionCallAborted,
 }
 
@@ -98,17 +98,17 @@ impl fmt::Display for Error {
                 "duplicate service {} for object {}",
                 uuid, obj_id.uuid,
             )),
-            Error::InvalidService(obj_id, id) => f.write_fmt(format_args!(
+            Error::InvalidService(id) => f.write_fmt(format_args!(
                 "invalid service {} for object {}",
-                id.uuid, obj_id.uuid
+                id.uuid, id.object_id.uuid,
             )),
-            Error::InvalidFunction(obj_id, svc_id, id) => f.write_fmt(format_args!(
+            Error::InvalidFunction(id, func) => f.write_fmt(format_args!(
                 "invalid function {} of service {} and object {}",
-                id, svc_id.uuid, obj_id.uuid
+                func, id.uuid, id.object_id.uuid,
             )),
-            Error::InvalidArgs(obj_id, svc_id, func_id) => f.write_fmt(format_args!(
+            Error::InvalidArgs(id, func) => f.write_fmt(format_args!(
                 "invalid args for function {} of service {} and object {}",
-                func_id, svc_id.uuid, obj_id.uuid
+                func, id.uuid, id.object_id.uuid,
             )),
             Error::FunctionCallAborted => f.write_str("function call aborted"),
         }

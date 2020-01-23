@@ -61,16 +61,19 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     }));
 
     let sc = handle.services_created(SubscribeMode::All).await?;
-    tokio::spawn(sc.for_each(|(obj_id, svc_id)| {
+    tokio::spawn(sc.for_each(|id| {
         async move {
-            println!("Object {} created service {}.", obj_id.uuid, svc_id.uuid);
+            println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
         }
     }));
 
     let sd = handle.services_destroyed().await?;
-    tokio::spawn(sd.for_each(|(obj_id, svc_id)| {
+    tokio::spawn(sd.for_each(|id| {
         async move {
-            println!("Object {} destroyed service {}.", obj_id.uuid, svc_id.uuid);
+            println!(
+                "Object {} destroyed service {}.",
+                id.object_id.uuid, id.uuid
+            );
         }
     }));
 

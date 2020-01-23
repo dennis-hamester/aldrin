@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::{FunctionCallReceiver, ObjectId, ObjectUuid, ServiceId, ServiceUuid, SubscribeMode};
+use super::{
+    FunctionCallReceiver, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
+    ServiceUuid, SubscribeMode,
+};
 use aldrin_proto::*;
 use futures_channel::{mpsc, oneshot};
 
@@ -26,18 +29,23 @@ use futures_channel::{mpsc, oneshot};
 pub(crate) enum Request {
     Shutdown,
     CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
-    DestroyObject(ObjectId, oneshot::Sender<DestroyObjectResult>),
+    DestroyObject(ObjectCookie, oneshot::Sender<DestroyObjectResult>),
     SubscribeObjectsCreated(mpsc::Sender<ObjectId>, SubscribeMode),
     SubscribeObjectsDestroyed(mpsc::Sender<ObjectId>),
     CreateService(
-        ObjectId,
+        ObjectCookie,
         ServiceUuid,
         usize,
         oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ),
-    DestroyService(ServiceId, oneshot::Sender<DestroyServiceResult>),
-    SubscribeServicesCreated(mpsc::Sender<(ObjectId, ServiceId)>, SubscribeMode),
-    SubscribeServicesDestroyed(mpsc::Sender<(ObjectId, ServiceId)>),
-    CallFunction(ServiceId, u32, Value, oneshot::Sender<CallFunctionResult>),
+    DestroyService(ServiceCookie, oneshot::Sender<DestroyServiceResult>),
+    SubscribeServicesCreated(mpsc::Sender<ServiceId>, SubscribeMode),
+    SubscribeServicesDestroyed(mpsc::Sender<ServiceId>),
+    CallFunction(
+        ServiceCookie,
+        u32,
+        Value,
+        oneshot::Sender<CallFunctionResult>,
+    ),
     FunctionCallReply(u32, CallFunctionResult),
 }
