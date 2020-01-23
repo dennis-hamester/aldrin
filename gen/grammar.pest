@@ -42,7 +42,7 @@ vec_type = { "vec" ~ "<" ~ type_name ~ ">" }
 map_key_type = _{ int_type | string_type | uuid_type }
 map_type = { "map" ~ "<" ~ map_key_type ~ "->" ~ type_name ~ ">" }
 set_type = { "set" ~ "<" ~ map_key_type ~ ">" }
-extern_type_name = { module ~ "::" ~ ident }
+extern_type_name = ${ module ~ "::" ~ ident }
 
 type_name = _{
     int_type
@@ -78,7 +78,7 @@ struct_field = { ident ~ "@" ~ number ~ "=" ~ type_name ~ ";"? }
 
 enum_def = { "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
 enum_inline = { "enum" ~ "{" ~ enum_body ~ "}" }
-enum_body = _{ enum_variant+ }
+enum_body = { enum_variant+ }
 enum_variant = { ident ~ "@" ~ number ~ ("=" ~ type_name_or_inline)? ~ ";"? }
 
 service_def = { "service" ~ ident ~ "{" ~ service_uuid ~ service_version ~ service_body ~ "}" ~ ";"? }

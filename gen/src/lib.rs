@@ -21,4 +21,5 @@
 mod error;
 mod schema;
 
-pub use error::Error;
+pub use error::{Error, ErrorKind};
+pub use schema::Schema;

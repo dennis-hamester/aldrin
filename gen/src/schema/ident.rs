@@ -18,52 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod error;
-mod schema;
+use crate::error::Error;
 
-use std::path::PathBuf;
-use std::process;
-use structopt::StructOpt;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Ident(pub String);
 
-#[derive(StructOpt, Debug)]
-#[structopt(author, about)]
-enum Args {
-    /// Checks an Aldrin schema for errors
-    Check(check::CheckArgs),
+impl Ident {
+    pub fn from_string<S>(s: S) -> Result<Self, Error>
+    where
+        S: Into<String>,
+    {
+        Ok(Ident(s.into()))
+    }
 }
 
-#[derive(StructOpt, Debug)]
-struct CommonGenArgs {
-    /// Additional include directores
-    #[structopt(short = "I", long)]
-    include: Vec<PathBuf>,
-}
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct ModuleName(pub String);
 
-#[derive(StructOpt, Debug)]
-struct CheckArgs {
-    #[structopt(flatten)]
-    common_gen_args: CommonGenArgs,
-
-    /// Path to a Aldrin schema file
-    #[structopt(name = "FILE")]
-    file: PathBuf,
-}
-
-fn check(args: CheckArgs) -> Result<(), ()> {
-    let res = schema::Schema::parse_file(&args.file);
-    println!("{:#?}", res);
-    Ok(())
-}
-
-fn main() {
-    let res = match Args::from_args() {
-        Args::Check(args) => check(args),
-    };
-
-    let exit_code = match res {
-        Ok(()) => 0,
-        Err(()) => 1,
-    };
-
-    process::exit(exit_code);
+impl ModuleName {
+    pub fn from_string<S>(s: S) -> Result<Self, Error>
+    where
+        S: Into<String>,
+    {
+        Ok(ModuleName(s.into()))
+    }
 }
