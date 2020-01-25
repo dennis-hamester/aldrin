@@ -31,7 +31,6 @@ mod services_created;
 mod services_destroyed;
 
 use aldrin_proto::*;
-use aldrin_transport::Transport;
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};

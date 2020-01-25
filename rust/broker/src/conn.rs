@@ -24,7 +24,7 @@ mod handle;
 
 use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
-use aldrin_transport::Transport;
+use aldrin_proto::Transport;
 use futures_channel::mpsc::{Receiver, Sender};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;

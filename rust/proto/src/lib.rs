@@ -20,6 +20,7 @@
 
 mod key_value;
 mod message;
+mod transport;
 mod value;
 
 use std::error::Error;
@@ -27,6 +28,7 @@ use std::fmt;
 
 pub use key_value::{FromKeyValue, IntoKeyValue, KeyValue};
 pub use message::*;
+pub use transport::Transport;
 pub use value::{FromValue, IntoValue, Value};
 
 pub const VERSION: u32 = 1;

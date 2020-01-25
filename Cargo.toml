@@ -5,6 +5,5 @@ members = [
     "rust/broker",
     "rust/client",
     "rust/proto",
-    "rust/transport",
     "rust/util",
 ]

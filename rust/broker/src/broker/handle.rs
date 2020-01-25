@@ -22,7 +22,6 @@ use super::BrokerError;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::*;
-use aldrin_transport::Transport;
 use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;

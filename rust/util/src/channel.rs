@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use aldrin_proto::Message;
-use aldrin_transport::Transport;
+use aldrin_proto::{Message, Transport};
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use futures_sink::Sink;
