@@ -19,6 +19,9 @@
 // SOFTWARE.
 
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
+use std::fmt;
+use std::hash::{BuildHasher, Hash};
 use uuid::Uuid;
 
 pub const VERSION: u32 = 1;
@@ -45,6 +48,340 @@ pub enum Value {
     Enum(u32, Box<Value>),
 }
 
+impl From<KeyValue> for Value {
+    fn from(v: KeyValue) -> Value {
+        match v {
+            KeyValue::U8(v) => Value::U8(v),
+            KeyValue::I8(v) => Value::I8(v),
+            KeyValue::U16(v) => Value::U16(v),
+            KeyValue::I16(v) => Value::I16(v),
+            KeyValue::U32(v) => Value::U32(v),
+            KeyValue::I32(v) => Value::I32(v),
+            KeyValue::U64(v) => Value::U64(v),
+            KeyValue::I64(v) => Value::I64(v),
+            KeyValue::String(v) => Value::String(v),
+            KeyValue::Uuid(v) => Value::Uuid(v),
+        }
+    }
+}
+
+pub trait FromValue: Sized {
+    fn from_value(v: Value) -> Result<Self, ConversionError>;
+}
+
+pub trait IntoValue {
+    fn into_value(self) -> Result<Value, ConversionError>;
+}
+
+impl FromValue for Value {
+    fn from_value(v: Value) -> Result<Value, ConversionError> {
+        Ok(v)
+    }
+}
+
+impl IntoValue for Value {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(self)
+    }
+}
+
+impl<T> FromValue for Option<T>
+where
+    T: FromValue,
+{
+    fn from_value(v: Value) -> Result<Option<T>, ConversionError> {
+        match v {
+            Value::None => Ok(None),
+            v => T::from_value(v).map(Some),
+        }
+    }
+}
+
+impl<T> IntoValue for Option<T>
+where
+    T: IntoValue,
+{
+    fn into_value(self) -> Result<Value, ConversionError> {
+        match self {
+            Some(v) => v.into_value(),
+            None => Ok(Value::None),
+        }
+    }
+}
+
+impl FromValue for u8 {
+    fn from_value(v: Value) -> Result<u8, ConversionError> {
+        match v {
+            Value::U8(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for u8 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::U8(self))
+    }
+}
+
+impl FromValue for i8 {
+    fn from_value(v: Value) -> Result<i8, ConversionError> {
+        match v {
+            Value::I8(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for i8 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::I8(self))
+    }
+}
+
+impl FromValue for u16 {
+    fn from_value(v: Value) -> Result<u16, ConversionError> {
+        match v {
+            Value::U16(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for u16 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::U16(self))
+    }
+}
+
+impl FromValue for i16 {
+    fn from_value(v: Value) -> Result<i16, ConversionError> {
+        match v {
+            Value::I16(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for i16 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::I16(self))
+    }
+}
+
+impl FromValue for u32 {
+    fn from_value(v: Value) -> Result<u32, ConversionError> {
+        match v {
+            Value::U32(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for u32 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::U32(self))
+    }
+}
+
+impl FromValue for i32 {
+    fn from_value(v: Value) -> Result<i32, ConversionError> {
+        match v {
+            Value::I32(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for i32 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::I32(self))
+    }
+}
+
+impl FromValue for u64 {
+    fn from_value(v: Value) -> Result<u64, ConversionError> {
+        match v {
+            Value::U64(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for u64 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::U64(self))
+    }
+}
+
+impl FromValue for i64 {
+    fn from_value(v: Value) -> Result<i64, ConversionError> {
+        match v {
+            Value::I64(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for i64 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::I64(self))
+    }
+}
+
+impl FromValue for f32 {
+    fn from_value(v: Value) -> Result<f32, ConversionError> {
+        match v {
+            Value::F32(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for f32 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::F32(self))
+    }
+}
+
+impl FromValue for f64 {
+    fn from_value(v: Value) -> Result<f64, ConversionError> {
+        match v {
+            Value::F64(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for f64 {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::F64(self))
+    }
+}
+
+impl FromValue for String {
+    fn from_value(v: Value) -> Result<String, ConversionError> {
+        match v {
+            Value::String(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for String {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::String(self))
+    }
+}
+
+impl IntoValue for &str {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::String(self.to_owned()))
+    }
+}
+
+impl FromValue for Uuid {
+    fn from_value(v: Value) -> Result<Uuid, ConversionError> {
+        match v {
+            Value::Uuid(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for Uuid {
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::Uuid(self))
+    }
+}
+
+impl<T> FromValue for Vec<T>
+where
+    T: FromValue,
+{
+    fn from_value(v: Value) -> Result<Vec<T>, ConversionError> {
+        match v {
+            Value::Vec(v) => v.into_iter().map(T::from_value).collect(),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl<T> IntoValue for Vec<T>
+where
+    T: IntoValue,
+{
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::Vec(
+            self.into_iter()
+                .map(T::into_value)
+                .collect::<Result<_, _>>()?,
+        ))
+    }
+}
+
+#[allow(clippy::implicit_hasher)]
+impl<K, V> FromValue for HashMap<K, V>
+where
+    K: FromKeyValue + Eq + Hash,
+    V: FromValue,
+{
+    fn from_value(v: Value) -> Result<HashMap<K, V>, ConversionError> {
+        match v {
+            Value::Map(v) => v
+                .into_iter()
+                .map(|(k, v)| K::from_key_value(k).and_then(|k| V::from_value(v).map(|v| (k, v))))
+                .collect(),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl<K, V, S> IntoValue for HashMap<K, V, S>
+where
+    K: IntoKeyValue,
+    V: IntoValue,
+    S: BuildHasher,
+{
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::Map(
+            self.into_iter()
+                .map(|(k, v)| {
+                    k.into_key_value()
+                        .and_then(|k| v.into_value().map(|v| (k, v)))
+                })
+                .collect::<Result<_, _>>()?,
+        ))
+    }
+}
+
+#[allow(clippy::implicit_hasher)]
+impl<T> FromValue for HashSet<T>
+where
+    T: FromKeyValue + Eq + Hash,
+{
+    fn from_value(v: Value) -> Result<HashSet<T>, ConversionError> {
+        match v {
+            Value::Set(v) => v.into_iter().map(T::from_key_value).collect(),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl<T, S> IntoValue for HashSet<T, S>
+where
+    T: IntoKeyValue,
+    S: BuildHasher,
+{
+    fn into_value(self) -> Result<Value, ConversionError> {
+        Ok(Value::Set(
+            self.into_iter()
+                .map(T::into_key_value)
+                .collect::<Result<_, _>>()?,
+        ))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum KeyValue {
     U8(u8),
@@ -58,6 +395,193 @@ pub enum KeyValue {
     String(String),
     Uuid(Uuid),
 }
+
+pub trait FromKeyValue: Sized {
+    fn from_key_value(v: KeyValue) -> Result<Self, ConversionError>;
+}
+
+pub trait IntoKeyValue {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError>;
+}
+
+impl FromKeyValue for KeyValue {
+    fn from_key_value(v: KeyValue) -> Result<KeyValue, ConversionError> {
+        Ok(v)
+    }
+}
+
+impl IntoKeyValue for KeyValue {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(self)
+    }
+}
+
+impl FromKeyValue for u8 {
+    fn from_key_value(v: KeyValue) -> Result<u8, ConversionError> {
+        match v {
+            KeyValue::U8(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for u8 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::U8(self))
+    }
+}
+
+impl FromKeyValue for i8 {
+    fn from_key_value(v: KeyValue) -> Result<i8, ConversionError> {
+        match v {
+            KeyValue::I8(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for i8 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::I8(self))
+    }
+}
+
+impl FromKeyValue for u16 {
+    fn from_key_value(v: KeyValue) -> Result<u16, ConversionError> {
+        match v {
+            KeyValue::U16(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for u16 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::U16(self))
+    }
+}
+
+impl FromKeyValue for i16 {
+    fn from_key_value(v: KeyValue) -> Result<i16, ConversionError> {
+        match v {
+            KeyValue::I16(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for i16 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::I16(self))
+    }
+}
+
+impl FromKeyValue for u32 {
+    fn from_key_value(v: KeyValue) -> Result<u32, ConversionError> {
+        match v {
+            KeyValue::U32(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for u32 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::U32(self))
+    }
+}
+
+impl FromKeyValue for i32 {
+    fn from_key_value(v: KeyValue) -> Result<i32, ConversionError> {
+        match v {
+            KeyValue::I32(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for i32 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::I32(self))
+    }
+}
+
+impl FromKeyValue for u64 {
+    fn from_key_value(v: KeyValue) -> Result<u64, ConversionError> {
+        match v {
+            KeyValue::U64(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for u64 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::U64(self))
+    }
+}
+
+impl FromKeyValue for i64 {
+    fn from_key_value(v: KeyValue) -> Result<i64, ConversionError> {
+        match v {
+            KeyValue::I64(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for i64 {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::I64(self))
+    }
+}
+
+impl FromKeyValue for String {
+    fn from_key_value(v: KeyValue) -> Result<String, ConversionError> {
+        match v {
+            KeyValue::String(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for String {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::String(self))
+    }
+}
+
+impl IntoKeyValue for &str {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::String(self.to_owned()))
+    }
+}
+
+impl FromKeyValue for Uuid {
+    fn from_key_value(v: KeyValue) -> Result<Uuid, ConversionError> {
+        match v {
+            KeyValue::Uuid(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for Uuid {
+    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
+        Ok(KeyValue::Uuid(self))
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ConversionError;
+
+impl fmt::Display for ConversionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid conversion to/from aldrin_proto::Value")
+    }
+}
+
+impl Error for ConversionError {}
 
 #[derive(Debug, Clone)]
 pub enum Message {
