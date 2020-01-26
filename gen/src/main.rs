@@ -21,6 +21,7 @@
 use aldrin_codegen::{Generator, Options};
 use std::path::PathBuf;
 use std::process;
+use structopt::clap::ArgGroup;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -31,10 +32,25 @@ enum Args {
 }
 
 #[derive(StructOpt, Debug)]
+#[structopt(group = ArgGroup::with_name("client_or_server"))]
 struct CommonGenArgs {
-    /// Additional include directores
+    /// Additional include directories
     #[structopt(short = "I", long, name = "include_dir")]
     include: Vec<PathBuf>,
+
+    /// Generates only client-side code
+    ///
+    /// The default is to generate code for both the client and server. This flag and --server-only
+    /// are mutually exclusive.
+    #[structopt(long, group = "client_or_server")]
+    client_only: bool,
+
+    /// Generates only server-side code
+    ///
+    /// The default is to generate code for both the client and server. This flag and --client-only
+    /// are mutually exclusive.
+    #[structopt(long, group = "client_or_server")]
+    server_only: bool,
 }
 
 #[derive(StructOpt, Debug)]
