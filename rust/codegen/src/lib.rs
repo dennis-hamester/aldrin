@@ -21,5 +21,54 @@
 mod error;
 mod schema;
 
+use schema::{ModuleName, Schema};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
 pub use error::{Error, ErrorKind};
-pub use schema::Schema;
+
+#[derive(Debug)]
+pub struct Generator {
+    schema: Schema,
+    options: Options,
+    imported: HashMap<ModuleName, Schema>,
+}
+
+impl Generator {
+    pub fn from_path<P>(path: P, options: Options) -> Result<Self, Error>
+    where
+        P: AsRef<Path>,
+    {
+        Ok(Generator {
+            schema: Schema::parse_file(path)?,
+            options,
+            imported: HashMap::new(),
+        })
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Options {
+    include_dirs: Vec<PathBuf>,
+}
+
+impl Options {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn set_include_dirs<I>(&mut self, dirs: I)
+    where
+        I: IntoIterator,
+        I::Item: Into<PathBuf>,
+    {
+        self.include_dirs = dirs.into_iter().map(Into::into).collect();
+    }
+
+    pub fn add_include_dir<P>(&mut self, path: P)
+    where
+        P: Into<PathBuf>,
+    {
+        self.include_dirs.push(path.into());
+    }
+}

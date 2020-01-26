@@ -26,7 +26,7 @@ use pest::iterators::Pair;
 #[derive(Debug)]
 pub(crate) struct Struct {
     pub name: Ident,
-    pub fields: Vec<Field>,
+    pub fields: Vec<StructField>,
 }
 
 impl Struct {
@@ -41,7 +41,7 @@ impl Struct {
 
 #[derive(Debug)]
 pub(crate) struct InlineStruct {
-    pub fields: Vec<Field>,
+    pub fields: Vec<StructField>,
 }
 
 impl InlineStruct {
@@ -54,14 +54,14 @@ impl InlineStruct {
 }
 
 #[derive(Debug)]
-pub(crate) struct Field {
+pub(crate) struct StructField {
     pub name: Ident,
     pub id: u32,
     pub field_type: Type,
     pub required: bool,
 }
 
-fn struct_body(pair: Pair<Rule>) -> Result<Vec<Field>, Error> {
+fn struct_body(pair: Pair<Rule>) -> Result<Vec<StructField>, Error> {
     assert_eq!(pair.as_rule(), Rule::struct_body);
     let pairs = pair.into_inner();
     let mut res = Vec::new();
@@ -80,7 +80,7 @@ fn struct_body(pair: Pair<Rule>) -> Result<Vec<Field>, Error> {
 
         let id = pairs.next().unwrap().as_str().parse().unwrap();
         let field_type = Type::from_type_name(pairs.next().unwrap())?;
-        res.push(Field {
+        res.push(StructField {
             name,
             id,
             field_type,

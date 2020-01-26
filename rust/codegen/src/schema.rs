@@ -28,25 +28,25 @@ mod types;
 use crate::error::{Error, ErrorKind};
 use pest::iterators::Pair;
 use pest::Parser;
-use service::Service;
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-pub(crate) use enum_def::{Enum, InlineEnum};
+pub(crate) use enum_def::{Enum, EnumVariant, InlineEnum};
 pub(crate) use grammar::{Grammar, Rule};
 pub(crate) use ident::{Ident, ModuleName};
-pub(crate) use struct_def::{InlineStruct, Struct};
-pub(crate) use types::{Type, TypeOrInline};
+pub(crate) use service::{Event, Function, Service, ServiceElement};
+pub(crate) use struct_def::{InlineStruct, Struct, StructField};
+pub(crate) use types::{MapKeyType, Type, TypeOrInline};
 
 #[derive(Debug)]
-pub struct Schema {
-    path: Option<PathBuf>,
-    module: ModuleName,
-    imported_modules: HashSet<ModuleName>,
-    definitions: Vec<Definition>,
+pub(crate) struct Schema {
+    pub path: Option<PathBuf>,
+    pub module: ModuleName,
+    pub imported_modules: HashSet<ModuleName>,
+    pub definitions: Vec<Definition>,
 }
 
 impl Schema {

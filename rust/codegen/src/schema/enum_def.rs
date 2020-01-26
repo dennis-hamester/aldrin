@@ -26,7 +26,7 @@ use pest::iterators::Pair;
 #[derive(Debug)]
 pub(crate) struct Enum {
     pub name: Ident,
-    pub variants: Vec<Variant>,
+    pub variants: Vec<EnumVariant>,
 }
 
 impl Enum {
@@ -41,7 +41,7 @@ impl Enum {
 
 #[derive(Debug)]
 pub(crate) struct InlineEnum {
-    pub variants: Vec<Variant>,
+    pub variants: Vec<EnumVariant>,
 }
 
 impl InlineEnum {
@@ -54,13 +54,13 @@ impl InlineEnum {
 }
 
 #[derive(Debug)]
-pub(crate) struct Variant {
+pub(crate) struct EnumVariant {
     pub name: Ident,
     pub id: u32,
     pub variant_type: Option<TypeOrInline>,
 }
 
-fn enum_body(pair: Pair<Rule>) -> Result<Vec<Variant>, Error> {
+fn enum_body(pair: Pair<Rule>) -> Result<Vec<EnumVariant>, Error> {
     assert_eq!(pair.as_rule(), Rule::enum_body);
     let pairs = pair.into_inner();
     let mut res = Vec::new();
@@ -73,7 +73,7 @@ fn enum_body(pair: Pair<Rule>) -> Result<Vec<Variant>, Error> {
             .next()
             .map(TypeOrInline::from_type_name_or_inline)
             .transpose()?;
-        res.push(Variant {
+        res.push(EnumVariant {
             name,
             id,
             variant_type,

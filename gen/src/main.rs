@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use aldrin_codegen::{Generator, Options};
 use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
@@ -47,6 +48,10 @@ struct CheckArgs {
 }
 
 fn check(args: CheckArgs) -> Result<(), ()> {
+    let mut options = Options::new();
+    options.set_include_dirs(args.common_gen_args.include);
+    let gen = Generator::from_path(args.file, options);
+    println!("{:#?}", gen);
     Ok(())
 }
 
