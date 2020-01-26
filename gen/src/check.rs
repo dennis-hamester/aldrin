@@ -18,54 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod check;
-
+use super::CommonReadArgs;
+use aldrin_codegen::{Generator, Options};
 use std::path::PathBuf;
-use std::process;
-use structopt::clap::ArgGroup;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(author, about)]
-enum Args {
-    /// Checks an Aldrin schema for errors
-    Check(check::CheckArgs),
+pub struct CheckArgs {
+    #[structopt(flatten)]
+    common_read_args: CommonReadArgs,
+
+    /// Path to an Aldrin schema file
+    #[structopt(name = "schema")]
+    file: PathBuf,
 }
 
-#[derive(StructOpt, Debug)]
-pub struct CommonReadArgs {
-    /// Additional include directories
-    #[structopt(short = "I", long, name = "include_dir")]
-    include: Vec<PathBuf>,
-}
+pub fn run(args: CheckArgs) -> Result<(), ()> {
+    let mut options = Options::new();
+    options.set_include_dirs(args.common_read_args.include);
 
-#[derive(StructOpt, Debug)]
-#[structopt(group = ArgGroup::with_name("client_or_server"))]
-pub struct CommonGenArgs {
-    /// Generates only client-side code
-    ///
-    /// The default is to generate code for both the client and server. This flag and --server-only
-    /// are mutually exclusive.
-    #[structopt(long, group = "client_or_server")]
-    client_only: bool,
+    if let Err(e) = Generator::from_path(args.file, options) {
+        eprintln!("{}", e);
+    }
 
-    /// Generates only server-side code
-    ///
-    /// The default is to generate code for both the client and server. This flag and --client-only
-    /// are mutually exclusive.
-    #[structopt(long, group = "client_or_server")]
-    server_only: bool,
-}
-
-fn main() {
-    let res = match Args::from_args() {
-        Args::Check(args) => check::run(args),
-    };
-
-    let exit_code = match res {
-        Ok(()) => 0,
-        Err(()) => 1,
-    };
-
-    process::exit(exit_code);
+    Ok(())
 }
