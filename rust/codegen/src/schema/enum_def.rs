@@ -24,7 +24,7 @@ use crate::error::Error;
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct Enum {
+pub(crate) struct Enum {
     pub name: Ident,
     pub variants: Vec<Variant>,
 }
@@ -40,7 +40,7 @@ impl Enum {
 }
 
 #[derive(Debug)]
-pub struct InlineEnum {
+pub(crate) struct InlineEnum {
     pub variants: Vec<Variant>,
 }
 
@@ -54,7 +54,7 @@ impl InlineEnum {
 }
 
 #[derive(Debug)]
-pub struct Variant {
+pub(crate) struct Variant {
     pub name: Ident,
     pub id: u32,
     pub variant_type: Option<TypeOrInline>,

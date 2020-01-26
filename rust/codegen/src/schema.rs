@@ -26,9 +26,6 @@ mod struct_def;
 mod types;
 
 use crate::error::{Error, ErrorKind};
-use enum_def::{Enum, InlineEnum};
-use grammar::{Grammar, Rule};
-use ident::{Ident, ModuleName};
 use pest::iterators::Pair;
 use pest::Parser;
 use service::Service;
@@ -37,8 +34,12 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use struct_def::{InlineStruct, Struct};
-use types::{Type, TypeOrInline};
+
+pub(crate) use enum_def::{Enum, InlineEnum};
+pub(crate) use grammar::{Grammar, Rule};
+pub(crate) use ident::{Ident, ModuleName};
+pub(crate) use struct_def::{InlineStruct, Struct};
+pub(crate) use types::{Type, TypeOrInline};
 
 #[derive(Debug)]
 pub struct Schema {
@@ -136,7 +137,7 @@ impl Schema {
 }
 
 #[derive(Debug)]
-pub enum Definition {
+pub(crate) enum Definition {
     Struct(Struct),
     Enum(Enum),
     Service(Service),

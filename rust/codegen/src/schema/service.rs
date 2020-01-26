@@ -26,7 +26,7 @@ use semver::Version;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct Service {
+pub(crate) struct Service {
     pub name: Ident,
     pub uuid: Uuid,
     pub ver: Version,
@@ -75,13 +75,13 @@ impl Service {
 }
 
 #[derive(Debug)]
-pub enum ServiceElement {
+pub(crate) enum ServiceElement {
     Function(Function),
     Event(Event),
 }
 
 #[derive(Debug)]
-pub struct FunctionDeprecation {
+pub(crate) struct FunctionDeprecation {
     pub since: Version,
     pub reason: String,
 }
@@ -97,7 +97,7 @@ impl FunctionDeprecation {
 }
 
 #[derive(Debug)]
-pub struct Function {
+pub(crate) struct Function {
     pub name: Ident,
     pub id: u32,
     pub deprecation: Option<FunctionDeprecation>,
@@ -161,7 +161,7 @@ impl Function {
 }
 
 #[derive(Debug)]
-pub struct Event {
+pub(crate) struct Event {
     pub name: Ident,
     pub id: u32,
     pub event_type: Option<TypeOrInline>,

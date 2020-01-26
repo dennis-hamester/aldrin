@@ -24,7 +24,7 @@ use crate::error::Error;
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub enum Type {
+pub(crate) enum Type {
     U8,
     U16,
     U32,
@@ -103,7 +103,7 @@ impl Type {
 }
 
 #[derive(Debug)]
-pub enum MapKeyType {
+pub(crate) enum MapKeyType {
     U8,
     U16,
     U32,
@@ -140,7 +140,7 @@ impl MapKeyType {
 }
 
 #[derive(Debug)]
-pub enum TypeOrInline {
+pub(crate) enum TypeOrInline {
     Type(Type),
     Struct(InlineStruct),
     Enum(InlineEnum),

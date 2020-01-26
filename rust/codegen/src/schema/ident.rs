@@ -21,7 +21,7 @@
 use crate::error::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Ident(pub String);
+pub(crate) struct Ident(pub String);
 
 impl Ident {
     pub fn from_string<S>(s: S) -> Result<Self, Error>
@@ -33,7 +33,7 @@ impl Ident {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub struct ModuleName(pub String);
+pub(crate) struct ModuleName(pub String);
 
 impl ModuleName {
     pub fn from_string<S>(s: S) -> Result<Self, Error>

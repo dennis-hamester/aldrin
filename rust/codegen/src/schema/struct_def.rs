@@ -24,7 +24,7 @@ use crate::error::Error;
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct Struct {
+pub(crate) struct Struct {
     pub name: Ident,
     pub fields: Vec<Field>,
 }
@@ -40,7 +40,7 @@ impl Struct {
 }
 
 #[derive(Debug)]
-pub struct InlineStruct {
+pub(crate) struct InlineStruct {
     pub fields: Vec<Field>,
 }
 
@@ -54,7 +54,7 @@ impl InlineStruct {
 }
 
 #[derive(Debug)]
-pub struct Field {
+pub(crate) struct Field {
     pub name: Ident,
     pub id: u32,
     pub field_type: Type,
