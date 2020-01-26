@@ -33,7 +33,7 @@ enum Args {
 #[derive(StructOpt, Debug)]
 struct CommonGenArgs {
     /// Additional include directores
-    #[structopt(short = "I", long)]
+    #[structopt(short = "I", long, name = "include_dir")]
     include: Vec<PathBuf>,
 }
 
@@ -43,7 +43,7 @@ struct CheckArgs {
     common_gen_args: CommonGenArgs,
 
     /// Path to a Aldrin schema file
-    #[structopt(name = "FILE")]
+    #[structopt(name = "schema")]
     file: PathBuf,
 }
 
