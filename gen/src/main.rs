@@ -22,11 +22,15 @@ mod check;
 
 use std::path::PathBuf;
 use std::process;
-use structopt::clap::ArgGroup;
+use structopt::clap::{AppSettings, ArgGroup};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(author, about)]
+#[structopt(
+    author,
+    about,
+    global_settings = &[AppSettings::VersionlessSubcommands, AppSettings::ColoredHelp]
+)]
 enum Args {
     /// Checks an Aldrin schema for errors
     Check(check::CheckArgs),
