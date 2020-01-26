@@ -141,13 +141,3 @@ pub enum Definition {
     Enum(Enum),
     Service(Service),
 }
-
-impl Definition {
-    pub fn name(&self) -> &Ident {
-        match self {
-            Definition::Struct(s) => &s.name,
-            Definition::Enum(e) => &e.name,
-            Definition::Service(s) => &s.name,
-        }
-    }
-}

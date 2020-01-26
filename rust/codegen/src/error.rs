@@ -39,7 +39,6 @@ pub enum ErrorKind {
     InvalidModuleName,
     Parser(String),
     DuplicateImport(String),
-    DuplicateDefinition(String),
     InvalidVersion(String),
 }
 
@@ -78,13 +77,6 @@ impl Error {
         S: Into<String>,
     {
         Self::new(ErrorKind::DuplicateImport(module.into()))
-    }
-
-    pub(crate) fn duplicate_definition<S>(name: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Self::new(ErrorKind::DuplicateDefinition(name.into()))
     }
 }
 
