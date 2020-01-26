@@ -4,6 +4,7 @@ members = [
     "gen",
     "rust/broker",
     "rust/client",
+    "rust/codegen",
     "rust/proto",
     "rust/util",
 ]

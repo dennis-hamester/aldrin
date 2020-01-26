@@ -18,9 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-mod error;
-mod schema;
-
 use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
@@ -50,8 +47,6 @@ struct CheckArgs {
 }
 
 fn check(args: CheckArgs) -> Result<(), ()> {
-    let res = schema::Schema::parse_file(&args.file);
-    println!("{:#?}", res);
     Ok(())
 }
 
