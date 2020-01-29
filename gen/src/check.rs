@@ -35,7 +35,7 @@ pub struct CheckArgs {
 
 pub fn run(args: CheckArgs) -> Result<(), ()> {
     let mut options = Options::new();
-    options.set_include_dirs(args.common_read_args.include);
+    options.include_dirs = args.common_read_args.include;
 
     if let Err(e) = Generator::from_path(args.file, options) {
         eprintln!("{}", e);

@@ -45,30 +45,20 @@ impl Generator {
             imported: HashMap::new(),
         })
     }
+
+    pub fn options(&self) -> &Options {
+        &self.options
+    }
 }
 
 #[derive(Debug, Default)]
+#[non_exhaustive]
 pub struct Options {
-    include_dirs: Vec<PathBuf>,
+    pub include_dirs: Vec<PathBuf>,
 }
 
 impl Options {
     pub fn new() -> Self {
         Default::default()
-    }
-
-    pub fn set_include_dirs<I>(&mut self, dirs: I)
-    where
-        I: IntoIterator,
-        I::Item: Into<PathBuf>,
-    {
-        self.include_dirs = dirs.into_iter().map(Into::into).collect();
-    }
-
-    pub fn add_include_dir<P>(&mut self, path: P)
-    where
-        P: Into<PathBuf>,
-    {
-        self.include_dirs.push(path.into());
     }
 }
