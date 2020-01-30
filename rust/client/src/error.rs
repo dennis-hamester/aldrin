@@ -75,6 +75,7 @@ pub enum Error {
     InvalidFunction(ServiceId, u32),
     InvalidArgs(ServiceId, u32),
     FunctionCallAborted,
+    MissingRequiredField,
 }
 
 impl From<SendError> for Error {
@@ -111,6 +112,7 @@ impl fmt::Display for Error {
                 func, id.uuid, id.object_id.uuid,
             )),
             Error::FunctionCallAborted => f.write_str("function call aborted"),
+            Error::MissingRequiredField => f.write_str("required field missing"),
         }
     }
 }
