@@ -76,6 +76,7 @@ pub enum Error {
     InvalidArgs(ServiceId, u32),
     FunctionCallAborted,
     MissingRequiredField,
+    UnexpectedFunctionReply,
 }
 
 impl From<SendError> for Error {
@@ -113,6 +114,7 @@ impl fmt::Display for Error {
             )),
             Error::FunctionCallAborted => f.write_str("function call aborted"),
             Error::MissingRequiredField => f.write_str("required field missing"),
+            Error::UnexpectedFunctionReply => f.write_str("unexpected function reply"),
         }
     }
 }
