@@ -74,6 +74,7 @@ impl Service {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub(crate) enum ServiceElement {
     Function(Function),
