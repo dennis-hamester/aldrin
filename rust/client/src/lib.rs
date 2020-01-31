@@ -30,6 +30,13 @@ mod service;
 mod services_created;
 mod services_destroyed;
 
+#[doc(hidden)]
+pub mod codegen {
+    pub use aldrin_proto;
+    pub use futures_core;
+    pub use uuid;
+}
+
 use aldrin_proto::*;
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
