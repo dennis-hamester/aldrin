@@ -40,6 +40,10 @@ impl Object {
         self.id
     }
 
+    pub fn handle(&self) -> Option<&Handle> {
+        self.client.as_ref()
+    }
+
     pub async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
         let res = client.destroy_object(self.id).await;

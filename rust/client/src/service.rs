@@ -52,6 +52,10 @@ impl Service {
         self.id
     }
 
+    pub fn handle(&self) -> Option<&Handle> {
+        self.inner.as_ref().map(|i| &i.client)
+    }
+
     pub async fn destroy(&mut self) -> Result<(), Error> {
         let inner = self.inner.as_mut().ok_or(Error::InvalidService(self.id))?;
         let res = inner.client.destroy_service(self.id).await;
