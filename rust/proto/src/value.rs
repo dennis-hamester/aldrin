@@ -67,7 +67,7 @@ pub trait FromValue: Sized {
 }
 
 pub trait IntoValue {
-    fn into_value(self) -> Result<Value, ConversionError>;
+    fn into_value(self) -> Value;
 }
 
 impl FromValue for Value {
@@ -77,8 +77,8 @@ impl FromValue for Value {
 }
 
 impl IntoValue for Value {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(self)
+    fn into_value(self) -> Value {
+        self
     }
 }
 
@@ -98,10 +98,10 @@ impl<T> IntoValue for Option<T>
 where
     T: IntoValue,
 {
-    fn into_value(self) -> Result<Value, ConversionError> {
+    fn into_value(self) -> Value {
         match self {
             Some(v) => v.into_value(),
-            None => Ok(Value::None),
+            None => Value::None,
         }
     }
 }
@@ -116,8 +116,8 @@ impl FromValue for u8 {
 }
 
 impl IntoValue for u8 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::U8(self))
+    fn into_value(self) -> Value {
+        Value::U8(self)
     }
 }
 
@@ -131,8 +131,8 @@ impl FromValue for i8 {
 }
 
 impl IntoValue for i8 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::I8(self))
+    fn into_value(self) -> Value {
+        Value::I8(self)
     }
 }
 
@@ -146,8 +146,8 @@ impl FromValue for u16 {
 }
 
 impl IntoValue for u16 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::U16(self))
+    fn into_value(self) -> Value {
+        Value::U16(self)
     }
 }
 
@@ -161,8 +161,8 @@ impl FromValue for i16 {
 }
 
 impl IntoValue for i16 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::I16(self))
+    fn into_value(self) -> Value {
+        Value::I16(self)
     }
 }
 
@@ -176,8 +176,8 @@ impl FromValue for u32 {
 }
 
 impl IntoValue for u32 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::U32(self))
+    fn into_value(self) -> Value {
+        Value::U32(self)
     }
 }
 
@@ -191,8 +191,8 @@ impl FromValue for i32 {
 }
 
 impl IntoValue for i32 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::I32(self))
+    fn into_value(self) -> Value {
+        Value::I32(self)
     }
 }
 
@@ -206,8 +206,8 @@ impl FromValue for u64 {
 }
 
 impl IntoValue for u64 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::U64(self))
+    fn into_value(self) -> Value {
+        Value::U64(self)
     }
 }
 
@@ -221,8 +221,8 @@ impl FromValue for i64 {
 }
 
 impl IntoValue for i64 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::I64(self))
+    fn into_value(self) -> Value {
+        Value::I64(self)
     }
 }
 
@@ -236,8 +236,8 @@ impl FromValue for f32 {
 }
 
 impl IntoValue for f32 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::F32(self))
+    fn into_value(self) -> Value {
+        Value::F32(self)
     }
 }
 
@@ -251,8 +251,8 @@ impl FromValue for f64 {
 }
 
 impl IntoValue for f64 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::F64(self))
+    fn into_value(self) -> Value {
+        Value::F64(self)
     }
 }
 
@@ -266,14 +266,14 @@ impl FromValue for String {
 }
 
 impl IntoValue for String {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::String(self))
+    fn into_value(self) -> Value {
+        Value::String(self)
     }
 }
 
 impl IntoValue for &str {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::String(self.to_owned()))
+    fn into_value(self) -> Value {
+        Value::String(self.to_owned())
     }
 }
 
@@ -287,8 +287,8 @@ impl FromValue for Uuid {
 }
 
 impl IntoValue for Uuid {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::Uuid(self))
+    fn into_value(self) -> Value {
+        Value::Uuid(self)
     }
 }
 
@@ -308,12 +308,8 @@ impl<T> IntoValue for Vec<T>
 where
     T: IntoValue,
 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::Vec(
-            self.into_iter()
-                .map(T::into_value)
-                .collect::<Result<_, _>>()?,
-        ))
+    fn into_value(self) -> Value {
+        Value::Vec(self.into_iter().map(T::into_value).collect())
     }
 }
 
@@ -340,15 +336,12 @@ where
     V: IntoValue,
     S: BuildHasher,
 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::Map(
+    fn into_value(self) -> Value {
+        Value::Map(
             self.into_iter()
-                .map(|(k, v)| {
-                    k.into_key_value()
-                        .and_then(|k| v.into_value().map(|v| (k, v)))
-                })
-                .collect::<Result<_, _>>()?,
-        ))
+                .map(|(k, v)| (k.into_key_value(), v.into_value()))
+                .collect(),
+        )
     }
 }
 
@@ -370,11 +363,7 @@ where
     T: IntoKeyValue,
     S: BuildHasher,
 {
-    fn into_value(self) -> Result<Value, ConversionError> {
-        Ok(Value::Set(
-            self.into_iter()
-                .map(T::into_key_value)
-                .collect::<Result<_, _>>()?,
-        ))
+    fn into_value(self) -> Value {
+        Value::Set(self.into_iter().map(T::into_key_value).collect())
     }
 }

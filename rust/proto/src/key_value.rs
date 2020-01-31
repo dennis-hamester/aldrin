@@ -40,7 +40,7 @@ pub trait FromKeyValue: Sized {
 }
 
 pub trait IntoKeyValue {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError>;
+    fn into_key_value(self) -> KeyValue;
 }
 
 impl FromKeyValue for KeyValue {
@@ -50,8 +50,8 @@ impl FromKeyValue for KeyValue {
 }
 
 impl IntoKeyValue for KeyValue {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(self)
+    fn into_key_value(self) -> KeyValue {
+        self
     }
 }
 
@@ -65,8 +65,8 @@ impl FromKeyValue for u8 {
 }
 
 impl IntoKeyValue for u8 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::U8(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::U8(self)
     }
 }
 
@@ -80,8 +80,8 @@ impl FromKeyValue for i8 {
 }
 
 impl IntoKeyValue for i8 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::I8(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::I8(self)
     }
 }
 
@@ -95,8 +95,8 @@ impl FromKeyValue for u16 {
 }
 
 impl IntoKeyValue for u16 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::U16(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::U16(self)
     }
 }
 
@@ -110,8 +110,8 @@ impl FromKeyValue for i16 {
 }
 
 impl IntoKeyValue for i16 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::I16(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::I16(self)
     }
 }
 
@@ -125,8 +125,8 @@ impl FromKeyValue for u32 {
 }
 
 impl IntoKeyValue for u32 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::U32(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::U32(self)
     }
 }
 
@@ -140,8 +140,8 @@ impl FromKeyValue for i32 {
 }
 
 impl IntoKeyValue for i32 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::I32(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::I32(self)
     }
 }
 
@@ -155,8 +155,8 @@ impl FromKeyValue for u64 {
 }
 
 impl IntoKeyValue for u64 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::U64(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::U64(self)
     }
 }
 
@@ -170,8 +170,8 @@ impl FromKeyValue for i64 {
 }
 
 impl IntoKeyValue for i64 {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::I64(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::I64(self)
     }
 }
 
@@ -185,14 +185,14 @@ impl FromKeyValue for String {
 }
 
 impl IntoKeyValue for String {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::String(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::String(self)
     }
 }
 
 impl IntoKeyValue for &str {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::String(self.to_owned()))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::String(self.to_owned())
     }
 }
 
@@ -206,7 +206,7 @@ impl FromKeyValue for Uuid {
 }
 
 impl IntoKeyValue for Uuid {
-    fn into_key_value(self) -> Result<KeyValue, ConversionError> {
-        Ok(KeyValue::Uuid(self))
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::Uuid(self)
     }
 }
