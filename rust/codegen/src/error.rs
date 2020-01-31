@@ -81,8 +81,16 @@ impl Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.kind {
+            ErrorKind::Io(e) => f.write_fmt(format_args!("io error ({})", e)),
+            ErrorKind::InvalidModuleName => f.write_str("invalid module name"),
+            ErrorKind::Parser(e) => e.fmt(f),
+            ErrorKind::DuplicateImport(m) => {
+                f.write_fmt(format_args!("duplicate import \"{}\"", m))
+            }
+            ErrorKind::InvalidVersion(e) => f.write_fmt(format_args!("invalid version ({})", e)),
+        }
     }
 }
 
