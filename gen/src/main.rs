@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 mod check;
+mod rust;
 
 use std::path::PathBuf;
 use std::process;
@@ -34,6 +35,9 @@ use structopt::StructOpt;
 enum Args {
     /// Checks an Aldrin schema for errors
     Check(check::CheckArgs),
+
+    /// Generates code for Rust
+    Rust(rust::RustArgs),
 }
 
 #[derive(StructOpt, Debug)]
@@ -64,6 +68,7 @@ pub struct CommonGenArgs {
 fn main() {
     let res = match Args::from_args() {
         Args::Check(args) => check::run(args),
+        Args::Rust(args) => rust::run(args),
     };
 
     let exit_code = match res {

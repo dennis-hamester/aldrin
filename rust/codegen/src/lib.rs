@@ -21,6 +21,8 @@
 mod error;
 mod schema;
 
+pub mod rust;
+
 use schema::{ModuleName, Schema};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -48,6 +50,13 @@ impl Generator {
 
     pub fn options(&self) -> &Options {
         &self.options
+    }
+
+    pub fn generate_rust(
+        &self,
+        rust_options: rust::RustOptions,
+    ) -> Result<rust::RustOutput, Error> {
+        rust::generate(&self.schema, rust_options)
     }
 }
 
