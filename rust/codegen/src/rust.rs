@@ -626,8 +626,19 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     );
     genln!(o, "        self.service.destroy().await");
     genln!(o, "    }}");
-    genln!(o, "}}");
     genln!(o);
+    genln!(
+        o,
+        "    pub fn event_emitter(&self) -> Option<{}EventEmitter> {{",
+        s.name.0
+    );
+    genln!(o, "        let client = self.service.handle().cloned()?;");
+    genln!(o, "        Some({}EventEmitter {{", s.name.0);
+    genln!(o, "            client,");
+    genln!(o, "            id: self.service.id(),");
+    genln!(o, "        }})");
+    genln!(o, "    }}");
+    genln!(o, "}}");
 
     genln!(o, "impl Stream for {} {{", s.name.0);
     genln!(o, "    type Item = {}Functions;", s.name.0);
@@ -748,6 +759,50 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         genln!(o, "}}");
         genln!(o);
     }
+
+    genln!(o, "#[derive(Debug, Clone)]");
+    genln!(o, "pub struct {}EventEmitter {{", s.name.0);
+    genln!(o, "    client: Handle,");
+    genln!(o, "    id: ServiceId,");
+    genln!(o, "}}");
+    genln!(o);
+
+    genln!(o, "impl {}EventEmitter {{", s.name.0);
+    for e in &s.elems {
+        let e = match e {
+            ServiceElement::Event(e) => e,
+            _ => continue,
+        };
+
+        if e.event_type.is_some() {
+            genln!(
+                o,
+                "    pub async fn {}(&mut self, arg: {}) -> Result<(), Error> {{",
+                e.name.0,
+                event_variant_type(s, e)
+            );
+            genln!(
+                o,
+                "        self.client.emit_event(self.id, {}, arg.into_value()).await",
+                e.id
+            );
+            genln!(o, "    }}");
+        } else {
+            genln!(
+                o,
+                "    pub async fn {}(&mut self) -> Result<(), Error> {{",
+                e.name.0
+            );
+            genln!(
+                o,
+                "        self.client.emit_event(self.id, {}, Value::None).await",
+                e.id
+            );
+            genln!(o, "    }}");
+        }
+        genln!(o);
+    }
+    genln!(o, "}}");
 
     Ok(())
 }
