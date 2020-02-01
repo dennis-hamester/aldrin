@@ -37,9 +37,11 @@ pub fn run(args: CheckArgs) -> Result<(), ()> {
     let mut options = Options::new();
     options.include_dirs = args.common_read_args.include;
 
-    if let Err(e) = Generator::from_path(args.file, options) {
-        eprintln!("{}", e);
+    match Generator::from_path(args.file, options) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            eprintln!("{}", e);
+            Err(())
+        }
     }
-
-    Ok(())
 }
