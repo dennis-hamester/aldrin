@@ -23,6 +23,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{BuildHasher, Hash};
 use uuid::Uuid;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum Value {
     None,
