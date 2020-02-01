@@ -21,6 +21,8 @@
 use super::{CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::rust::RustOptions;
 use aldrin_codegen::{Generator, Options};
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -60,6 +62,35 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
         }
     };
 
-    println!("{}", output.module_content);
-    Ok(())
+    let module_path = args
+        .common_gen_args
+        .output_dir
+        .join(format!("{}.rs", output.module_name));
+    let file = if args.common_gen_args.overwrite {
+        OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(module_path)
+    } else {
+        OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(module_path)
+    };
+    let mut file = match file {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("{}", e);
+            return Err(());
+        }
+    };
+
+    match file.write_all(output.module_content.as_bytes()) {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            eprintln!("{}", e);
+            Err(())
+        }
+    }
 }

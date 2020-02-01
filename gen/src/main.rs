@@ -49,6 +49,16 @@ pub struct CommonReadArgs {
 
 #[derive(StructOpt, Debug)]
 pub struct CommonGenArgs {
+    /// Output directory
+    ///
+    /// Files in the output directory will not be overwritten unless --overwrite is specified.
+    #[structopt(short, long = "output", name = "output_dir")]
+    output_dir: PathBuf,
+
+    /// Overwrite output file
+    #[structopt(short = "f", long)]
+    overwrite: bool,
+
     /// Skip generating client-side code for services
     #[structopt(long = "no-client", parse(from_flag = std::ops::Not::not))]
     client: bool,
