@@ -47,34 +47,26 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     let join_handle = tokio::spawn(client.run::<Error>());
 
     let oc = handle.objects_created(SubscribeMode::All).await?;
-    tokio::spawn(oc.for_each(|id| {
-        async move {
-            println!("Object {} created.", id.uuid);
-        }
+    tokio::spawn(oc.for_each(|id| async move {
+        println!("Object {} created.", id.uuid);
     }));
 
     let od = handle.objects_destroyed().await?;
-    tokio::spawn(od.for_each(|id| {
-        async move {
-            println!("Object {} destroyed.", id.uuid);
-        }
+    tokio::spawn(od.for_each(|id| async move {
+        println!("Object {} destroyed.", id.uuid);
     }));
 
     let sc = handle.services_created(SubscribeMode::All).await?;
-    tokio::spawn(sc.for_each(|id| {
-        async move {
-            println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
-        }
+    tokio::spawn(sc.for_each(|id| async move {
+        println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
     }));
 
     let sd = handle.services_destroyed().await?;
-    tokio::spawn(sd.for_each(|id| {
-        async move {
-            println!(
-                "Object {} destroyed service {}.",
-                id.object_id.uuid, id.uuid
-            );
-        }
+    tokio::spawn(sd.for_each(|id| async move {
+        println!(
+            "Object {} destroyed service {}.",
+            id.object_id.uuid, id.uuid
+        );
     }));
 
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
