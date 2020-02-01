@@ -1,0 +1,14 @@
+[package]
+name = "aldrin-codegen-macros"
+description = "Aldrin code generator macros"
+version = "0.1.0"
+authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
+license = "MIT"
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+aldrin-codegen = { version = "0.1.0", path = "../codegen" }
+syn = "1.0.14"
