@@ -348,6 +348,13 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         }
     }
 
+    gen_service_client(o, s)?;
+    gen_service_server(o, s)?;
+
+    Ok(())
+}
+
+fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "pub struct {}Proxy {{", s.name.0);
     genln!(o, "    client: Handle,");
@@ -573,6 +580,10 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "}}");
     genln!(o);
 
+    Ok(())
+}
+
+fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug)]");
     genln!(o, "pub struct {} {{", s.name.0);
     genln!(o, "    service: Service,");
