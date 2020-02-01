@@ -40,6 +40,8 @@ pub struct RustArgs {
 pub fn run(args: RustArgs) -> Result<(), ()> {
     let mut options = Options::new();
     options.include_dirs = args.common_read_args.include;
+    options.client = args.common_gen_args.client;
+    options.server = args.common_gen_args.server;
 
     let gen = match Generator::from_path(args.file, options) {
         Ok(gen) => gen,

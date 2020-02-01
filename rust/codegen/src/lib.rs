@@ -56,18 +56,30 @@ impl Generator {
         &self,
         rust_options: rust::RustOptions,
     ) -> Result<rust::RustOutput, Error> {
-        rust::generate(&self.schema, rust_options)
+        rust::generate(&self.schema, &self.options, rust_options)
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct Options {
     pub include_dirs: Vec<PathBuf>,
+    pub client: bool,
+    pub server: bool,
 }
 
 impl Options {
     pub fn new() -> Self {
-        Default::default()
+        Options {
+            include_dirs: Vec::new(),
+            client: true,
+            server: true,
+        }
+    }
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options::new()
     }
 }

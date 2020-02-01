@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::error::Error;
 use crate::schema::{
     Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service, ServiceElement,
     StructField, Type, TypeOrInline,
 };
+use crate::{Error, Options};
 use heck::{CamelCase, ShoutySnakeCase};
 use std::fmt::Write;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct RustOptions {}
 
@@ -39,7 +39,8 @@ impl RustOptions {
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct RustOutput {
-    pub options: RustOptions,
+    pub options: Options,
+    pub rust_options: RustOptions,
     pub module_name: String,
     pub module_content: String,
 }
@@ -49,9 +50,14 @@ macro_rules! genln {
     ($dst:expr, $($arg:tt)*) => { writeln!(&mut $dst.module_content, $($arg)*).unwrap(); };
 }
 
-pub(crate) fn generate(schema: &Schema, options: RustOptions) -> Result<RustOutput, Error> {
+pub(crate) fn generate(
+    schema: &Schema,
+    options: &Options,
+    rust_options: RustOptions,
+) -> Result<RustOutput, Error> {
     let mut o = RustOutput {
-        options,
+        options: options.clone(),
+        rust_options,
         module_name: schema.module.0.clone(),
         module_content: String::new(),
     };
@@ -306,6 +312,10 @@ fn enum_variant_name(e: &str, v: &EnumVariant) -> String {
 }
 
 fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
+    if !o.options.client && !o.options.server {
+        return Ok(());
+    }
+
     genln!(
         o,
         "pub const {}_UUID: ServiceUuid = ServiceUuid(Uuid::from_u128({:#034x}));",
@@ -348,8 +358,13 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         }
     }
 
-    gen_service_client(o, s)?;
-    gen_service_server(o, s)?;
+    if o.options.client {
+        gen_service_client(o, s)?;
+    }
+
+    if o.options.server {
+        gen_service_server(o, s)?;
+    }
 
     Ok(())
 }
