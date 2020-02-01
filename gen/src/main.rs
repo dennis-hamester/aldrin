@@ -23,7 +23,7 @@ mod rust;
 
 use std::path::PathBuf;
 use std::process;
-use structopt::clap::{AppSettings, ArgGroup};
+use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -48,21 +48,14 @@ pub struct CommonReadArgs {
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(group = ArgGroup::with_name("client_or_server"))]
 pub struct CommonGenArgs {
-    /// Generates only client-side code
-    ///
-    /// The default is to generate code for both the client and server. This flag and --server-only
-    /// are mutually exclusive.
-    #[structopt(long, group = "client_or_server")]
-    client_only: bool,
+    /// Skip generating client-side code for services
+    #[structopt(long = "no-client", parse(from_flag = std::ops::Not::not))]
+    client: bool,
 
-    /// Generates only server-side code
-    ///
-    /// The default is to generate code for both the client and server. This flag and --client-only
-    /// are mutually exclusive.
-    #[structopt(long, group = "client_or_server")]
-    server_only: bool,
+    /// Skip generating server-side code for services
+    #[structopt(long = "no-server", parse(from_flag = std::ops::Not::not))]
+    server: bool,
 }
 
 fn main() {
