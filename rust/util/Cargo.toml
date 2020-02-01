@@ -6,8 +6,12 @@ authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
 license = "MIT"
 edition = "2018"
 
+[features]
+channel = [ "futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink" ]
+
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-channel = { version = "0.3.1", default-features = false, features = [ "std", "sink" ] }
-futures-core = { version = "0.3.1", default-features = false }
-futures-sink = { version = "0.3.1", default-features = false }
+
+futures-channel = { optional = true, version = "0.3.1", default-features = false }
+futures-core = { optional = true, version = "0.3.1", default-features = false }
+futures-sink = { optional = true, version = "0.3.1", default-features = false }
