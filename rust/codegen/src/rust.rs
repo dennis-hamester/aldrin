@@ -468,7 +468,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     );
     genln!(o, "        {}Events {{", s.name.0);
     genln!(o, "            events: self.client.events(fifo_size),");
-    genln!(o, "            id: self.id");
+    genln!(o, "            id: self.id,");
     genln!(o, "        }}");
     genln!(o, "    }}");
     genln!(o, "}}");
@@ -615,9 +615,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         "        let service = object.create_service({}_UUID, fifo_size).await?;",
         s.name.0.to_shouty_snake_case()
     );
-    genln!(o, "        Ok({} {{", s.name.0);
-    genln!(o, "            service,");
-    genln!(o, "        }})");
+    genln!(o, "        Ok({} {{ service }})", s.name.0);
     genln!(o, "    }}");
     genln!(o);
     genln!(
