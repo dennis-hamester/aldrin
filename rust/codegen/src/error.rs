@@ -40,6 +40,7 @@ pub enum ErrorKind {
     Parser(String),
     DuplicateImport(String),
     InvalidVersion(String),
+    Subprocess(String, Option<String>),
 }
 
 impl Error {
@@ -63,6 +64,10 @@ impl Error {
     {
         self.file = Some(file.into());
         self
+    }
+
+    pub(crate) fn io(e: IoError) -> Self {
+        Self::new(ErrorKind::Io(e))
     }
 
     pub(crate) fn parser<R>(e: PestError<R>) -> Self
@@ -90,6 +95,12 @@ impl fmt::Display for Error {
                 f.write_fmt(format_args!("duplicate import \"{}\"", m))
             }
             ErrorKind::InvalidVersion(e) => f.write_fmt(format_args!("invalid version ({})", e)),
+            ErrorKind::Subprocess(n, Some(o)) => {
+                f.write_fmt(format_args!("subprocess \"{}\" failed:\n{}", n, o))
+            }
+            ErrorKind::Subprocess(n, None) => {
+                f.write_fmt(format_args!("subprocess \"{}\" failed", n))
+            }
         }
     }
 }

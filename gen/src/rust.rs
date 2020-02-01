@@ -34,6 +34,12 @@ pub struct RustArgs {
     #[structopt(flatten)]
     common_gen_args: CommonGenArgs,
 
+    /// Format output with rustfmt
+    ///
+    /// A path to a rustfmt.toml configuration file can be specified optionally.
+    #[structopt(long, name = "rustfmt_config")]
+    format: Option<Option<PathBuf>>,
+
     /// Path to an Aldrin schema file
     #[structopt(name = "schema")]
     file: PathBuf,
@@ -53,7 +59,14 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
         }
     };
 
-    let rust_options = RustOptions::new();
+    let mut rust_options = RustOptions::new();
+    if let Some(format) = args.format {
+        rust_options.rustfmt = true;
+        if let Some(format) = format {
+            rust_options.rustfmt_toml = Some(format);
+        }
+    }
+
     let output = match gen.generate_rust(rust_options) {
         Ok(output) => output,
         Err(e) => {

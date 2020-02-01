@@ -22,17 +22,31 @@ use crate::schema::{
     Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service, ServiceElement,
     StructField, Type, TypeOrInline,
 };
-use crate::{Error, Options};
+use crate::{Error, ErrorKind, Options};
 use heck::{CamelCase, ShoutySnakeCase};
 use std::fmt::Write;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct RustOptions {}
+pub struct RustOptions {
+    pub rustfmt: bool,
+    pub rustfmt_toml: Option<PathBuf>,
+}
 
 impl RustOptions {
     pub fn new() -> Self {
-        Default::default()
+        RustOptions {
+            rustfmt: false,
+            rustfmt_toml: None,
+        }
+    }
+}
+
+impl Default for RustOptions {
+    fn default() -> Self {
+        RustOptions::new()
     }
 }
 
@@ -87,7 +101,46 @@ pub(crate) fn generate(
         }
     }
 
+    if o.rust_options.rustfmt {
+        format(&mut o)?;
+    }
+
     Ok(o)
+}
+
+fn format(o: &mut RustOutput) -> Result<(), Error> {
+    use std::io::Write;
+
+    let mut cmd = Command::new("rustfmt");
+    cmd.arg("--edition").arg("2018");
+    if let Some(rustfmt_toml) = &o.rust_options.rustfmt_toml {
+        cmd.arg("--config-path").arg(rustfmt_toml);
+    }
+
+    let mut rustfmt = cmd
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(Error::io)?;
+
+    rustfmt
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(o.module_content.as_bytes())
+        .map_err(Error::io)?;
+
+    let rustfmt = rustfmt.wait_with_output().map_err(Error::io)?;
+    if rustfmt.status.success() {
+        o.module_content = String::from_utf8(rustfmt.stdout).unwrap();
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::Subprocess(
+            "rustfmt".to_owned(),
+            String::from_utf8(rustfmt.stderr).ok(),
+        )))
+    }
 }
 
 fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Error> {
