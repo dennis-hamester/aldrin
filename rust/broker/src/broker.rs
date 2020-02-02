@@ -751,7 +751,7 @@ impl Broker {
             .svcs
             .get_mut(&(obj_uuid, svc_uuid))
             .expect("inconsistent state");
-        svc.remove_function_call(serial);
+        svc.remove_function_call(req.serial);
 
         let res = self
             .conns
