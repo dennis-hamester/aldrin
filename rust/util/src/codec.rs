@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#[cfg(feature = "tokio-io")]
+mod tokio_io;
+
 #[cfg(feature = "json")]
 mod json;
 
@@ -25,6 +28,9 @@ use aldrin_proto::Message;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::error::Error as StdError;
 use std::fmt;
+
+#[cfg(feature = "tokio-io")]
+pub use tokio_io::{TokioCodec, TokioCodecError};
 
 #[cfg(feature = "json")]
 pub use json::JsonSerializer;
