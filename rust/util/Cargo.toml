@@ -9,6 +9,7 @@ edition = "2018"
 [features]
 channel = ["futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink"]
 codec = ["bytes"]
+json = [ "codec", "serde_json", "aldrin-proto/serde_derive" ]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
@@ -17,3 +18,4 @@ bytes = { optional = true, version = "0.5.4", default-features = false }
 futures-channel = { optional = true, version = "0.3.1", default-features = false }
 futures-core = { optional = true, version = "0.3.1", default-features = false }
 futures-sink = { optional = true, version = "0.3.1", default-features = false }
+serde_json = { optional = true, version = "1.0.45" }

@@ -18,10 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#[cfg(feature = "json")]
+mod json;
+
 use aldrin_proto::Message;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::error::Error as StdError;
 use std::fmt;
+
+#[cfg(feature = "json")]
+pub use json::JsonSerializer;
 
 pub trait Packetizer {
     type Error;
