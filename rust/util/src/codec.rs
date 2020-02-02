@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Dennis Hamester <dennis.hamester@gmail.com>
+// Copyright (c) 2020 Dennis Hamester <dennis.hamester@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[cfg(feature = "channel")]
-pub mod channel;
+use aldrin_proto::Message;
+use bytes::{Bytes, BytesMut};
 
-#[cfg(feature = "codec")]
-pub mod codec;
+pub trait Packetizer {
+    type Error;
+
+    fn encode(&mut self, data: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error>;
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error>;
+}
+
+pub trait Serializer {
+    type Error;
+
+    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error>;
+    fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error>;
+}

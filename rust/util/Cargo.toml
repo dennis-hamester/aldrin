@@ -7,11 +7,13 @@ license = "MIT"
 edition = "2018"
 
 [features]
-channel = [ "futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink" ]
+channel = ["futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink"]
+codec = ["bytes"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 
+bytes = { optional = true, version = "0.5.4", default-features = false }
 futures-channel = { optional = true, version = "0.3.1", default-features = false }
 futures-core = { optional = true, version = "0.3.1", default-features = false }
 futures-sink = { optional = true, version = "0.3.1", default-features = false }
