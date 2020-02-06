@@ -198,6 +198,7 @@ impl Broker {
                 if let Err(()) = conn.send(ev).await {
                     state.push_remove_conn(conn_id);
                 }
+                continue;
             }
 
             if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_remove_svc() {
@@ -234,6 +235,7 @@ impl Broker {
                 if let Err(()) = conn.send(ev).await {
                     state.push_remove_conn(conn_id);
                 }
+                continue;
             }
 
             if let Some((uuid, cookie)) = state.pop_remove_obj() {
