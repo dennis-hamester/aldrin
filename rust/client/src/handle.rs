@@ -43,8 +43,21 @@ impl Handle {
         }
     }
 
+    /// Shuts down the client.
+    ///
+    /// Client shutdown happens asynchronously, in the sense that when this function returns, the
+    /// client has only been requested to shut down and not yet necessarily done so. As soon as
+    /// [`Client::run`](super::Client::run) returns, it has fully shut down.
+    ///
+    /// If the client has already shut down (due to any reason), this function will not treat that
+    /// as an error. This is different than most other functions, which would return
+    /// [`Error::ClientShutdown`] instead.
     pub async fn shutdown(&mut self) -> Result<(), Error> {
-        self.send.send(Request::Shutdown).await.map_err(Into::into)
+        match self.send.send(Request::Shutdown).await {
+            Ok(()) => Ok(()),
+            Err(e) if e.is_disconnected() => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 
     pub async fn create_object(&mut self, uuid: ObjectUuid) -> Result<Object, Error> {
