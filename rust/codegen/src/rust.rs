@@ -253,7 +253,7 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     for f in fs {
         genln!(
             o,
-            "    pub fn set_{0}(&mut self, {0}: {1}) -> &mut Self {{",
+            "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{",
             f.name.0,
             gen_type(&f.field_type)
         );
@@ -553,7 +553,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             (false, true) => {
                 genln!(
                     o,
-                    "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(()),"
+                    "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(Ok(())),"
                 );
                 genln!(o, "            Err(v) => Ok(Err(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
                 genln!(
