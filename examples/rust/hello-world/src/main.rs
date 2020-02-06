@@ -20,20 +20,22 @@
 
 use aldrin_broker::Broker;
 use aldrin_client::{Client, ObjectUuid, ServiceUuid, SubscribeMode};
-use aldrin_examples::Error;
 use aldrin_util::channel::{channel, ClientTransport, ConnectionTransport};
 use futures::stream::StreamExt;
+use std::error::Error;
 use uuid::Uuid;
 
 const FIFO_SIZE: usize = 16;
 
-async fn broker(t: ConnectionTransport) -> Result<(), Error> {
+async fn broker(t: ConnectionTransport) -> Result<(), Box<dyn Error>> {
     let broker = Broker::new(FIFO_SIZE);
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
-    let conn = handle.add_connection::<_, Error>(t, FIFO_SIZE).await?;
-    conn.run::<Error>().await?;
+    let conn = handle
+        .add_connection::<_, Box<dyn Error>>(t, FIFO_SIZE)
+        .await?;
+    conn.run::<Box<dyn Error>>().await?;
 
     handle.shutdown().await?;
     join_handle.await?;
@@ -41,10 +43,10 @@ async fn broker(t: ConnectionTransport) -> Result<(), Error> {
     Ok(())
 }
 
-async fn client(t: ClientTransport) -> Result<(), Error> {
-    let client = Client::connect::<Error>(t, FIFO_SIZE, FIFO_SIZE).await?;
+async fn client(t: ClientTransport) -> Result<(), Box<dyn Error>> {
+    let client = Client::connect::<Box<dyn Error>>(t, FIFO_SIZE, FIFO_SIZE).await?;
     let mut handle = client.handle().clone();
-    let join_handle = tokio::spawn(client.run::<Error>());
+    let join_handle = tokio::spawn(async { client.run::<Box<dyn Error>>().await.unwrap() });
 
     let oc = handle.objects_created(SubscribeMode::All).await?;
     tokio::spawn(oc.for_each(|id| async move {
@@ -78,20 +80,20 @@ async fn client(t: ClientTransport) -> Result<(), Error> {
     obj.destroy().await?;
 
     handle.shutdown().await?;
-    join_handle.await??;
+    join_handle.await?;
 
     Ok(())
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
     let (conn_transport, client_transport) = channel(FIFO_SIZE);
 
-    let broker = tokio::spawn(broker(conn_transport));
-    let client = tokio::spawn(client(client_transport));
+    let broker = tokio::spawn(async { broker(conn_transport).await.unwrap() });
+    let client = tokio::spawn(async { client(client_transport).await.unwrap() });
 
-    broker.await??;
-    client.await??;
+    broker.await?;
+    client.await?;
 
     Ok(())
 }

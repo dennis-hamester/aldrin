@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "examples/rust",
     "gen",
     "rust/broker",
     "rust/client",
