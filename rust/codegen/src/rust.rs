@@ -976,7 +976,7 @@ fn event_variant_type(s: &Service, e: &Event) -> String {
     match e.event_type.as_ref().unwrap() {
         TypeOrInline::Type(t) => gen_type(t),
         TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
-            format!("{}{}", s.name.0, e.name.0.to_camel_case())
+            format!("{}{}Event", s.name.0, e.name.0.to_camel_case())
         }
     }
 }
