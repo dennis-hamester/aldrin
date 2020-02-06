@@ -150,6 +150,13 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "}}");
     genln!(o);
 
+    genln!(o, "impl {} {{", s);
+    genln!(o, "    pub fn builder() -> {}Builder {{", s);
+    genln!(o, "        {}Builder::new()", s);
+    genln!(o, "    }}");
+    genln!(o, "}}");
+    genln!(o);
+
     genln!(
         o,
         "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{",
