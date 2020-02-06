@@ -10,8 +10,8 @@ edition = "2018"
 serde_derive = ["serde/std", "serde/derive", "uuid/serde"]
 
 [dependencies]
-futures-core = { version = "0.3.1", default-features = false }
-futures-sink = { version = "0.3.1", default-features = false }
+futures-core = { version = "0.3.3", default-features = false }
+futures-sink = { version = "0.3.3", default-features = false }
 uuid = { version = "0.8.1", default-features = false }
 
 serde = { optional = true, version = "1.0.104", default-features = false }

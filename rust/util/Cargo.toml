@@ -16,8 +16,8 @@ json = [ "codec", "serde_json", "aldrin-proto/serde_derive" ]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 
 bytes = { optional = true, version = "0.5.4", default-features = false }
-futures-channel = { optional = true, version = "0.3.1", default-features = false }
-futures-core = { optional = true, version = "0.3.1", default-features = false }
-futures-sink = { optional = true, version = "0.3.1", default-features = false }
-serde_json = { optional = true, version = "1.0.45" }
-tokio = { optional = true, version = "0.2.4", default-features = false }
+futures-channel = { optional = true, version = "0.3.3", default-features = false }
+futures-core = { optional = true, version = "0.3.3", default-features = false }
+futures-sink = { optional = true, version = "0.3.3", default-features = false }
+serde_json = { optional = true, version = "1.0.46" }
+tokio = { optional = true, version = "0.2.11", default-features = false }

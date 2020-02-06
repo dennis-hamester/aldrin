@@ -10,10 +10,10 @@ publish = false
 aldrin-broker = { path = "../../rust/broker" }
 aldrin-client = { path = "../../rust/client" }
 aldrin-util = { path = "../../rust/util", features = [ "channel" ] }
-tokio = { version = "0.2.4", default-features = false }
+tokio = { version = "0.2.11", default-features = false }
 
 [dev-dependencies]
 aldrin-proto = { path = "../../rust/proto" }
-futures = { version = "0.3.1", default-features = false }
-tokio = { version = "0.2.4", default-features = false, features = [ "rt-core", "macros" ] }
+futures = { version = "0.3.3", default-features = false }
+tokio = { version = "0.2.11", default-features = false, features = [ "rt-core", "macros" ] }
 uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }
