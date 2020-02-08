@@ -12,9 +12,7 @@ async fn broker(t: ConnectionTransport) -> Result<(), Box<dyn Error>> {
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
-    let conn = handle
-        .add_connection::<_, Box<dyn Error>>(t, FIFO_SIZE)
-        .await?;
+    let conn = handle.add_connection(t, FIFO_SIZE).await?;
     conn.run().await?;
 
     handle.shutdown().await?;

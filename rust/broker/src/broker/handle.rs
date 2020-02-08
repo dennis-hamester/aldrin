@@ -21,14 +21,13 @@ impl BrokerHandle {
         }
     }
 
-    pub async fn add_connection<T, E>(
+    pub async fn add_connection<T>(
         &mut self,
         mut t: T,
         fifo_size: usize,
-    ) -> Result<Connection<T>, E>
+    ) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: Transport + Unpin,
-        E: From<EstablishError> + From<T::Error>,
     {
         match t
             .next()

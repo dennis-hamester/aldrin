@@ -13,9 +13,7 @@ async fn add_connection(
     println!("Incoming connection from {}.", addr);
 
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let conn = handle
-        .add_connection::<_, Box<dyn Error>>(t, FIFO_SIZE)
-        .await?;
+    let conn = handle.add_connection(t, FIFO_SIZE).await?;
     println!("Connection from {} established.", addr);
 
     conn.run().await?;

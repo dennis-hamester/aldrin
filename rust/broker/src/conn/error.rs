@@ -29,15 +29,25 @@ where
 impl<T> Error for ConnectionError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
-pub enum EstablishError {
+pub enum EstablishError<T> {
     InternalError,
     UnexpectedClientShutdown,
     UnexpectedMessageReceived(Message),
     VersionMismatch(u32),
     BrokerShutdown,
+    Transport(T),
 }
 
-impl fmt::Display for EstablishError {
+impl<T> From<T> for EstablishError<T> {
+    fn from(e: T) -> Self {
+        EstablishError::Transport(e)
+    }
+}
+
+impl<T> fmt::Display for EstablishError<T>
+where
+    T: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             EstablishError::InternalError => f.write_str("internal error"),
@@ -49,8 +59,9 @@ impl fmt::Display for EstablishError {
                 f.write_fmt(format_args!("client version {} mismatch", v))
             }
             EstablishError::BrokerShutdown => f.write_str("broker shutdown"),
+            EstablishError::Transport(e) => e.fmt(f),
         }
     }
 }
 
-impl Error for EstablishError {}
+impl<T> Error for EstablishError<T> where T: fmt::Debug + fmt::Display {}
