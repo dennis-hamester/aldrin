@@ -43,7 +43,8 @@ impl BrokerHandle {
                 t.send(Message::ConnectReply(ConnectReply::VersionMismatch(
                     VERSION,
                 )))
-                .await?;
+                .await
+                .ok();
                 Err(EstablishError::VersionMismatch(msg.version))
             }
 
