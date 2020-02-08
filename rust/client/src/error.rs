@@ -1,6 +1,5 @@
 use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use aldrin_proto::Message;
-use futures_channel::mpsc::SendError;
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -57,16 +56,6 @@ pub enum Error {
     FunctionCallAborted,
     MissingRequiredField,
     UnexpectedFunctionReply,
-}
-
-impl From<SendError> for Error {
-    fn from(e: SendError) -> Self {
-        if e.is_disconnected() {
-            Error::ClientShutdown
-        } else {
-            Error::InternalError
-        }
-    }
 }
 
 impl fmt::Display for Error {

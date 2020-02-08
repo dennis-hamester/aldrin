@@ -19,6 +19,7 @@ pub mod codegen {
 
 use aldrin_proto::*;
 use events::{EventsId, EventsRequest};
+use futures_channel::mpsc::SendError;
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
@@ -924,4 +925,12 @@ pub enum SubscribeMode {
     All,
     CurrentOnly,
     NewOnly,
+}
+
+fn from_send_error(e: SendError) -> Error {
+    if e.is_disconnected() {
+        Error::ClientShutdown
+    } else {
+        Error::InternalError
+    }
 }
