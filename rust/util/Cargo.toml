@@ -2,14 +2,14 @@
 name = "aldrin-util"
 description = "Additional utilities for working with Aldrin."
 version = "0.1.0"
-authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
-license = "MIT"
+authors = [ "Aldrin Contributors" ]
+license = "Apache-2.0"
 edition = "2018"
 
 [features]
-channel = ["futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink"]
-codec = ["bytes", "futures-core", "futures-sink"]
-tokio-io = ["codec", "tokio"]
+channel = [ "futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink" ]
+codec = [ "bytes", "futures-core", "futures-sink" ]
+tokio-io = [ "codec", "tokio" ]
 json = [ "codec", "serde_json", "aldrin-proto/serde_derive" ]
 
 [dependencies]

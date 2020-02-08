@@ -2,12 +2,12 @@
 name = "aldrin-proto"
 description = "Protocol definitions of Aldrin, a lightweight and composable RPC framework."
 version = "0.1.0"
-authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
-license = "MIT"
+authors = [ "Aldrin Contributors" ]
+license = "Apache-2.0"
 edition = "2018"
 
 [features]
-serde_derive = ["serde/std", "serde/derive", "uuid/serde"]
+serde_derive = [ "serde/std", "serde/derive", "uuid/serde" ]
 
 [dependencies]
 futures-core = { version = "0.3.3", default-features = false }

@@ -1,8 +1,8 @@
 [package]
 name = "chat"
 version = "0.0.0"
-authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
-license = "MIT"
+authors = [ "Aldrin Contributors" ]
+license = "Apache-2.0"
 edition = "2018"
 publish = false
 
@@ -12,10 +12,10 @@ publish = false
 aldrin-broker = { path = "../../../rust/broker" }
 aldrin-client = { path = "../../../rust/client" }
 aldrin-codegen-macros = { path = "../../../rust/codegen-macros" }
-aldrin-util = { path = "../../../rust/util", features = ["channel", "codec", "json", "tokio-io"] }
+aldrin-util = { path = "../../../rust/util", features = [ "channel", "codec", "json", "tokio-io" ] }
 crossterm = "0.15.0"
-futures = { version = "0.3.3", default-features = false, features = ["std"] }
+futures = { version = "0.3.3", default-features = false, features = [ "std" ] }
 linefeed = "0.6.0"
-structopt = { version = "0.3.9", features = ["wrap_help"] }
-tokio = { version = "0.2.11", default-features = false, features = ["rt-threaded", "macros", "tcp"] }
-uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
+structopt = { version = "0.3.9", features = [ "wrap_help" ] }
+tokio = { version = "0.2.11", default-features = false, features = [ "rt-threaded", "macros", "tcp" ] }
+uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }

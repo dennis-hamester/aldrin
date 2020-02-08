@@ -2,8 +2,8 @@
 name = "aldrin-gen"
 description = "Aldrin code generator"
 version = "0.1.0"
-authors = ["Dennis Hamester <dennis.hamester@gmail.com>"]
-license = "MIT"
+authors = [ "Aldrin Contributors" ]
+license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
