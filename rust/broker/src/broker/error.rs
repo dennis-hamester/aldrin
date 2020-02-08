@@ -1,4 +1,3 @@
-use futures_channel::mpsc::SendError;
 use std::error::Error;
 use std::fmt;
 
@@ -6,16 +5,6 @@ use std::fmt;
 pub enum BrokerError {
     InternalError,
     BrokerShutdown,
-}
-
-impl From<SendError> for BrokerError {
-    fn from(e: SendError) -> Self {
-        if e.is_disconnected() {
-            BrokerError::BrokerShutdown
-        } else {
-            BrokerError::InternalError
-        }
-    }
 }
 
 impl fmt::Display for BrokerError {
