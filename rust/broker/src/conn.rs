@@ -48,17 +48,14 @@ where
         self.handle.as_ref().unwrap()
     }
 
-    pub async fn run<E>(mut self) -> Result<(), E>
-    where
-        E: From<ConnectionError> + From<T::Error>,
-    {
+    pub async fn run(mut self) -> Result<(), ConnectionError<T::Error>> {
         let id = self.handle.take().unwrap().into_id();
 
         loop {
             match select(self.recv.next(), self.t.next()).await {
                 Either::Left((Some(BrokerEvent::Message(msg)), _)) => {
                     if let Err(e) = self.t.send(msg).await {
-                        return self.shutdown(id, Err(e)).await;
+                        return self.shutdown(id, Err(e.into())).await;
                     }
                 }
 
@@ -80,23 +77,22 @@ where
                     return Ok(())
                 }
 
-                Either::Right((Some(Err(e)), _)) => return self.shutdown(id, Err(e)).await,
-                Either::Right((None, _)) => {
-                    return self.shutdown::<ConnectionError, _>(id, Ok(())).await
-                }
+                Either::Right((Some(Err(e)), _)) => return self.shutdown(id, Err(e.into())).await,
+                Either::Right((None, _)) => return self.shutdown(id, Ok(())).await,
             }
         }
     }
 
-    async fn shutdown<E1, E2>(mut self, id: ConnectionId, res: Result<(), E1>) -> Result<(), E2>
-    where
-        E2: From<E1>,
-    {
+    async fn shutdown(
+        mut self,
+        id: ConnectionId,
+        res: Result<(), ConnectionError<T::Error>>,
+    ) -> Result<(), ConnectionError<T::Error>> {
         self.send
             .send(ConnectionEvent::ConnectionShutdown(id))
             .await
             .ok();
 
-        res.map_err(Into::into)
+        res
     }
 }

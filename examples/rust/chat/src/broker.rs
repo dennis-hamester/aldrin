@@ -18,7 +18,7 @@ async fn add_connection(
         .await?;
     println!("Connection from {} established.", addr);
 
-    conn.run::<Box<dyn Error>>().await?;
+    conn.run().await?;
     println!("Connection from {} closed.", addr);
 
     Ok(())
