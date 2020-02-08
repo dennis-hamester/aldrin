@@ -20,7 +20,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
     let mut handle = client.handle().clone();
     let join = {
         tokio::spawn(async move {
-            if let Err(e) = client.run::<Box<dyn Error>>().await {
+            if let Err(e) = client.run().await {
                 println!("Error on connection to broker at {}: {}.", addr, e);
             }
         })

@@ -119,28 +119,22 @@ where
         self.handle.as_ref().unwrap()
     }
 
-    pub async fn run<E>(mut self) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         self.handle.take().unwrap();
 
         loop {
             match select(self.t.next(), self.recv.next()).await {
-                Either::Left((Some(Ok(msg)), _)) => self.handle_message::<E>(msg).await?,
+                Either::Left((Some(Ok(msg)), _)) => self.handle_message(msg).await?,
                 Either::Left((Some(Err(e)), _)) => return Err(e.into()),
                 Either::Left((None, _)) => return Ok(()),
                 Either::Right((Some(Request::Shutdown), _)) => return Ok(()),
-                Either::Right((Some(req), _)) => self.handle_request::<E>(req).await?,
+                Either::Right((Some(req), _)) => self.handle_request(req).await?,
                 Either::Right((None, _)) => return Ok(()),
             }
         }
     }
 
-    async fn handle_message<E>(&mut self, msg: Message) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn handle_message(&mut self, msg: Message) -> Result<(), RunError<T::Error>> {
         match msg {
             Message::CreateObjectReply(re) => self.create_object_reply(re).await,
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
@@ -182,10 +176,10 @@ where
         }
     }
 
-    async fn create_object_reply<E>(&mut self, reply: CreateObjectReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn create_object_reply(
+        &mut self,
+        reply: CreateObjectReply,
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(send) = self.create_object.remove(reply.serial) {
             send.send(reply.result).ok();
         }
@@ -193,10 +187,10 @@ where
         Ok(())
     }
 
-    async fn destroy_object_reply<E>(&mut self, reply: DestroyObjectReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn destroy_object_reply(
+        &mut self,
+        reply: DestroyObjectReply,
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(send) = self.destroy_object.remove(reply.serial) {
             send.send(reply.result).ok();
         }
@@ -204,13 +198,10 @@ where
         Ok(())
     }
 
-    async fn object_created_event<E>(
+    async fn object_created_event(
         &mut self,
         object_created_event: ObjectCreatedEvent,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(serial) = object_created_event.serial {
             if let Some((send, _)) = self.objects_created.get_mut(serial) {
                 if let Err(e) = send
@@ -258,13 +249,10 @@ where
         Ok(())
     }
 
-    async fn object_destroyed_event<E>(
+    async fn object_destroyed_event(
         &mut self,
         object_destroyed_event: ObjectDestroyedEvent,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
 
         for (serial, send) in self.objects_destroyed.iter_mut() {
@@ -294,13 +282,10 @@ where
         Ok(())
     }
 
-    async fn subscribe_objects_created_reply<E>(
+    async fn subscribe_objects_created_reply(
         &mut self,
         reply: SubscribeObjectsCreatedReply,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((_, SubscribeMode::CurrentOnly)) = self.objects_created.get_mut(reply.serial) {
             self.objects_created.remove(reply.serial);
         }
@@ -308,10 +293,10 @@ where
         Ok(())
     }
 
-    async fn create_service_reply<E>(&mut self, reply: CreateServiceReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn create_service_reply(
+        &mut self,
+        reply: CreateServiceReply,
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((fifo_size, rep_send)) = self.create_service.remove(reply.serial) {
             let recv = if let CreateServiceResult::Ok(cookie) = reply.result {
                 let (send, recv) = mpsc::channel(fifo_size);
@@ -328,10 +313,10 @@ where
         Ok(())
     }
 
-    async fn destroy_service_reply<E>(&mut self, reply: DestroyServiceReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn destroy_service_reply(
+        &mut self,
+        reply: DestroyServiceReply,
+    ) -> Result<(), RunError<T::Error>> {
         let (cookie, send) = match self.destroy_service.remove(reply.serial) {
             Some(data) => data,
             None => return Ok(()),
@@ -347,10 +332,10 @@ where
         Ok(())
     }
 
-    async fn service_created_event<E>(&mut self, ev: ServiceCreatedEvent) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn service_created_event(
+        &mut self,
+        ev: ServiceCreatedEvent,
+    ) -> Result<(), RunError<T::Error>> {
         let service_id = ServiceId::new(
             ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
             ServiceUuid(ev.uuid),
@@ -392,10 +377,10 @@ where
         Ok(())
     }
 
-    async fn service_destroyed_event<E>(&mut self, ev: ServiceDestroyedEvent) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn service_destroyed_event(
+        &mut self,
+        ev: ServiceDestroyedEvent,
+    ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
         let service_cookie = ServiceCookie(ev.cookie);
         let service_id = ServiceId::new(
@@ -447,13 +432,10 @@ where
         Ok(())
     }
 
-    async fn subscribe_services_created_reply<E>(
+    async fn subscribe_services_created_reply(
         &mut self,
         reply: SubscribeServicesCreatedReply,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((_, SubscribeMode::CurrentOnly)) = self.services_created.get_mut(reply.serial) {
             self.services_created.remove(reply.serial);
         }
@@ -461,10 +443,10 @@ where
         Ok(())
     }
 
-    async fn function_call<E>(&mut self, call_function: CallFunction) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn function_call(
+        &mut self,
+        call_function: CallFunction,
+    ) -> Result<(), RunError<T::Error>> {
         let cookie = ServiceCookie(call_function.service_cookie);
         let send = self.services.get_mut(&cookie).expect("inconsistent state");
 
@@ -492,10 +474,10 @@ where
         }
     }
 
-    async fn call_function_reply<E>(&mut self, ev: CallFunctionReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn call_function_reply(
+        &mut self,
+        ev: CallFunctionReply,
+    ) -> Result<(), RunError<T::Error>> {
         let send = self
             .function_calls
             .remove(ev.serial)
@@ -504,10 +486,7 @@ where
         Ok(())
     }
 
-    async fn event_subscribed<E>(&mut self, ev: SubscribeEvent) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn event_subscribed(&mut self, ev: SubscribeEvent) -> Result<(), RunError<T::Error>> {
         self.broker_subscriptions
             .entry(ServiceCookie(ev.service_cookie))
             .or_default()
@@ -515,10 +494,10 @@ where
         Ok(())
     }
 
-    async fn subscribe_event_reply<E>(&mut self, reply: SubscribeEventReply) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn subscribe_event_reply(
+        &mut self,
+        reply: SubscribeEventReply,
+    ) -> Result<(), RunError<T::Error>> {
         let (events_id, service_cookie, id, rep_send) =
             match self.subscribe_event.remove(reply.serial) {
                 Some(req) => req,
@@ -540,10 +519,7 @@ where
         Ok(())
     }
 
-    async fn event_unsubscribed<E>(&mut self, ev: UnsubscribeEvent) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn event_unsubscribed(&mut self, ev: UnsubscribeEvent) -> Result<(), RunError<T::Error>> {
         let service_cookie = ServiceCookie(ev.service_cookie);
         let mut subs = match self.broker_subscriptions.entry(service_cookie) {
             Entry::Occupied(subs) => subs,
@@ -557,10 +533,7 @@ where
         Ok(())
     }
 
-    async fn event_emitted<E>(&mut self, ev: EmitEvent) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn event_emitted(&mut self, ev: EmitEvent) -> Result<(), RunError<T::Error>> {
         let service_cookie = ServiceCookie(ev.service_cookie);
         let senders = match self
             .subscriptions
@@ -586,10 +559,7 @@ where
         Ok(())
     }
 
-    async fn handle_request<E>(&mut self, req: Request) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
             Request::DestroyObject(cookie, reply) => self.destroy_object(cookie, reply).await,
@@ -626,14 +596,11 @@ where
         }
     }
 
-    async fn create_object<E>(
+    async fn create_object(
         &mut self,
         uuid: ObjectUuid,
         reply: oneshot::Sender<CreateObjectResult>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_object.insert(reply);
         self.t
             .send(Message::CreateObject(CreateObject {
@@ -644,14 +611,11 @@ where
             .map_err(Into::into)
     }
 
-    async fn destroy_object<E>(
+    async fn destroy_object(
         &mut self,
         cookie: ObjectCookie,
         reply: oneshot::Sender<DestroyObjectResult>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_object.insert(reply);
         self.t
             .send(Message::DestroyObject(DestroyObject {
@@ -662,14 +626,11 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_objects_created<E>(
+    async fn subscribe_objects_created(
         &mut self,
         sender: mpsc::Sender<ObjectId>,
         mode: SubscribeMode,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.objects_created.is_empty();
         let serial = self.objects_created.insert((sender, mode));
         let (send, serial) = match mode {
@@ -689,13 +650,10 @@ where
         }
     }
 
-    async fn subscribe_objects_destroyed<E>(
+    async fn subscribe_objects_destroyed(
         &mut self,
         sender: mpsc::Sender<ObjectId>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let send = self.objects_destroyed.is_empty();
         self.objects_destroyed.insert(sender);
         if send {
@@ -708,16 +666,13 @@ where
         }
     }
 
-    async fn create_service<E>(
+    async fn create_service(
         &mut self,
         object_cookie: ObjectCookie,
         service_uuid: ServiceUuid,
         fifo_size: usize,
         reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_service.insert((fifo_size, reply));
         self.t
             .send(Message::CreateService(CreateService {
@@ -729,14 +684,11 @@ where
             .map_err(Into::into)
     }
 
-    async fn destroy_service<E>(
+    async fn destroy_service(
         &mut self,
         cookie: ServiceCookie,
         reply: oneshot::Sender<DestroyServiceResult>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_service.insert((cookie, reply));
         self.t
             .send(Message::DestroyService(DestroyService {
@@ -747,14 +699,11 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_services_created<E>(
+    async fn subscribe_services_created(
         &mut self,
         sender: mpsc::Sender<ServiceId>,
         mode: SubscribeMode,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.services_created.is_empty();
         let serial = self.services_created.insert((sender, mode));
         let (send, serial) = match mode {
@@ -774,13 +723,10 @@ where
         }
     }
 
-    async fn subscribe_services_destroyed<E>(
+    async fn subscribe_services_destroyed(
         &mut self,
         sender: mpsc::Sender<ServiceId>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let send = self.services_destroyed.is_empty();
         self.services_destroyed.insert(sender);
         if send {
@@ -793,16 +739,13 @@ where
         }
     }
 
-    async fn call_function<E>(
+    async fn call_function(
         &mut self,
         service_cookie: ServiceCookie,
         function: u32,
         args: Value,
         reply: oneshot::Sender<CallFunctionResult>,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(reply);
         self.t
             .send(Message::CallFunction(CallFunction {
@@ -815,14 +758,11 @@ where
             .map_err(Into::into)
     }
 
-    async fn function_call_reply<E>(
+    async fn function_call_reply(
         &mut self,
         serial: u32,
         result: CallFunctionResult,
-    ) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    ) -> Result<(), RunError<T::Error>> {
         self.t
             .send(Message::CallFunctionReply(CallFunctionReply {
                 serial,
@@ -832,10 +772,10 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_event<E>(&mut self, req: SubscribeEventRequest) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn subscribe_event(
+        &mut self,
+        req: SubscribeEventRequest,
+    ) -> Result<(), RunError<T::Error>> {
         let subs = self
             .subscriptions
             .entry(req.service_cookie)
@@ -870,10 +810,10 @@ where
         }
     }
 
-    async fn unsubscribe_event<E>(&mut self, req: UnsubscribeEventRequest) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn unsubscribe_event(
+        &mut self,
+        req: UnsubscribeEventRequest,
+    ) -> Result<(), RunError<T::Error>> {
         let mut subs = match self.subscriptions.entry(req.service_cookie) {
             Entry::Occupied(subs) => subs,
             Entry::Vacant(_) => return Ok(()),
@@ -906,10 +846,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn emit_event<E>(&mut self, req: EmitEventRequest) -> Result<(), E>
-    where
-        E: From<RunError> + From<T::Error>,
-    {
+    async fn emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
         self.t
             .send(Message::EmitEvent(EmitEvent {
                 service_cookie: req.service_cookie.0,

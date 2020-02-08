@@ -24,7 +24,7 @@ async fn broker(t: ConnectionTransport) -> Result<(), Box<dyn Error>> {
 async fn client(t: ClientTransport) -> Result<(), Box<dyn Error>> {
     let client = Client::connect(t, FIFO_SIZE, FIFO_SIZE).await?;
     let mut handle = client.handle().clone();
-    let join_handle = tokio::spawn(async { client.run::<Box<dyn Error>>().await.unwrap() });
+    let join_handle = tokio::spawn(async { client.run().await.unwrap() });
 
     let oc = handle.objects_created(SubscribeMode::All).await?;
     tokio::spawn(oc.for_each(|id| async move {

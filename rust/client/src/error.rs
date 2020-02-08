@@ -38,21 +38,32 @@ where
 impl<T> StdError for ConnectError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
-pub enum RunError {
+pub enum RunError<T> {
     InternalError,
     UnexpectedMessageReceived(Message),
+    Transport(T),
 }
 
-impl fmt::Display for RunError {
+impl<T> From<T> for RunError<T> {
+    fn from(e: T) -> Self {
+        RunError::Transport(e)
+    }
+}
+
+impl<T> fmt::Display for RunError<T>
+where
+    T: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RunError::InternalError => f.write_str("internal error"),
             RunError::UnexpectedMessageReceived(_) => f.write_str("unexpected message received"),
+            RunError::Transport(e) => e.fmt(f),
         }
     }
 }
 
-impl StdError for RunError {}
+impl<T> StdError for RunError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
 pub enum Error {
