@@ -78,10 +78,11 @@ impl<T> Client<T>
 where
     T: Transport + Unpin,
 {
-    pub async fn connect<E>(mut t: T, fifo_size: usize, event_fifo_size: usize) -> Result<Self, E>
-    where
-        E: From<ConnectError> + From<T::Error>,
-    {
+    pub async fn connect(
+        mut t: T,
+        fifo_size: usize,
+        event_fifo_size: usize,
+    ) -> Result<Self, ConnectError<T::Error>> {
         t.send(Message::Connect(Connect { version: VERSION }))
             .await?;
 

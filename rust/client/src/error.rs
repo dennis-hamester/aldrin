@@ -4,13 +4,23 @@ use std::error::Error as StdError;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum ConnectError {
+pub enum ConnectError<T> {
     UnexpectedEof,
     VersionMismatch(u32),
     UnexpectedMessageReceived(Message),
+    Transport(T),
 }
 
-impl fmt::Display for ConnectError {
+impl<T> From<T> for ConnectError<T> {
+    fn from(e: T) -> Self {
+        ConnectError::Transport(e)
+    }
+}
+
+impl<T> fmt::Display for ConnectError<T>
+where
+    T: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectError::UnexpectedEof => f.write_str("unexpected end of file"),
@@ -20,11 +30,12 @@ impl fmt::Display for ConnectError {
             ConnectError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")
             }
+            ConnectError::Transport(e) => e.fmt(f),
         }
     }
 }
 
-impl StdError for ConnectError {}
+impl<T> StdError for ConnectError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
 pub enum RunError {

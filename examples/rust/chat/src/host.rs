@@ -14,7 +14,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect::<Box<dyn Error>>(t, FIFO_SIZE, FIFO_SIZE).await?;
+    let client = Client::connect(t, FIFO_SIZE, FIFO_SIZE).await?;
     println!("Connection to broker at {} established.", addr);
 
     let mut handle = client.handle().clone();
