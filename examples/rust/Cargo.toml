@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "chat",
+    "hello-world",
+    "ping",
+]
