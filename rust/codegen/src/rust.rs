@@ -884,6 +884,21 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             genln!(o, "    }}");
             genln!(o);
         }
+        if f.args.is_some() {
+            genln!(
+                o,
+                "    pub async fn invalid_args(self) -> Result<(), aldrin_client::Error> {{"
+            );
+            genln!(o, "        self.0.invalid_args().await");
+            genln!(o, "    }}");
+            genln!(o);
+        }
+        genln!(
+            o,
+            "    pub async fn abort(self) -> Result<(), aldrin_client::Error> {{"
+        );
+        genln!(o, "        self.0.abort().await");
+        genln!(o, "    }}");
         genln!(o, "}}");
         genln!(o);
     }
