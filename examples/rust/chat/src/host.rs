@@ -50,11 +50,11 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
 
             Some(call) = room.next() => {
                 match call {
-                    chat::ChatFunctions::GetName(reply) => {
+                    chat::ChatFunction::GetName(reply) => {
                         reply.ok(args.name.clone()).await?;
                     }
 
-                    chat::ChatFunctions::Join(args, reply) => {
+                    chat::ChatFunction::Join(args, reply) => {
                         if !objects.iter().any(|cookie| cookie.0 == args.object_cookie) {
                             reply.err(chat::ChatJoinError::InvalidObject).await?;
                             continue;
@@ -71,7 +71,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
                         emitter.joined(args.name).await?;
                     }
 
-                    chat::ChatFunctions::Send(args, reply) => {
+                    chat::ChatFunction::Send(args, reply) => {
                         match members.get(&args.cookie) {
                             Some((name, _)) => {
                                 reply.ok().await?;

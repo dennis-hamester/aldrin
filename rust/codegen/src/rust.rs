@@ -220,7 +220,9 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "#[derive(Debug, Clone, Default)]");
     genln!(o, "pub struct {}Builder {{", s);
     for f in fs {
+        genln!(o, "    #[doc(hidden)]");
         genln!(o, "    {}: Option<{}>,", f.name.0, gen_type(&f.field_type));
+        genln!(o);
     }
     genln!(o, "}}");
     genln!(o);
@@ -444,7 +446,10 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "pub struct {}Proxy {{", s.name.0);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    client: aldrin_client::Handle,");
+    genln!(o);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    id: aldrin_client::ServiceId,");
     genln!(o, "}}");
     genln!(o);
@@ -566,7 +571,10 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
     genln!(o, "#[derive(Debug)]");
     genln!(o, "pub struct {}Events {{", s.name.0);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    events: aldrin_client::Events,");
+    genln!(o);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    id: aldrin_client::ServiceId,");
     genln!(o, "}}");
     genln!(o);
@@ -701,6 +709,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug)]");
     genln!(o, "pub struct {} {{", s.name.0);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    service: aldrin_client::Service,");
     genln!(o, "}}");
     genln!(o);
@@ -743,9 +752,9 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{",
         s.name.0
     );
-    genln!(o, "    type Item = {}Functions;", s.name.0);
+    genln!(o, "    type Item = {}Function;", s.name.0);
     genln!(o);
-    genln!(o, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}Functions>> {{", s.name.0);
+    genln!(o, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}Function>> {{", s.name.0);
     genln!(o, "        loop {{");
     genln!(
         o,
@@ -778,7 +787,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
                 o,
                 "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(arg) {{"
             );
-            genln!(o, "                        return std::task::Poll::Ready(Some({0}Functions::{1}(arg, {0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
+            genln!(o, "                        return std::task::Poll::Ready(Some({0}Function::{1}(arg, {0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
             genln!(o, "                    }}");
             genln!(o, "                }}");
         } else {
@@ -787,7 +796,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
                 "                ({}, aldrin_client::codegen::aldrin_proto::Value::None) => {{",
                 f.id
             );
-            genln!(o, "                    return std::task::Poll::Ready(Some({0}Functions::{1}({0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
+            genln!(o, "                    return std::task::Poll::Ready(Some({0}Function::{1}({0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
             genln!(o, "                }}");
         }
         genln!(o);
@@ -800,7 +809,8 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "#[derive(Debug)]");
-    genln!(o, "pub enum {}Functions {{", s.name.0);
+    genln!(o, "#[non_exhaustive]");
+    genln!(o, "pub enum {}Function {{", s.name.0);
     for f in &s.elems {
         let f = match f {
             ServiceElement::Function(f) => f,
@@ -836,7 +846,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         genln!(o, "#[derive(Debug)]");
         genln!(
             o,
-            "pub struct {}{}Reply(aldrin_client::FunctionCallReply);",
+            "pub struct {}{}Reply(#[doc(hidden)] aldrin_client::FunctionCallReply);",
             s.name.0,
             f.name.0.to_camel_case()
         );
@@ -880,7 +890,10 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "pub struct {}EventEmitter {{", s.name.0);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    client: aldrin_client::Handle,");
+    genln!(o);
+    genln!(o, "    #[doc(hidden)]");
     genln!(o, "    id: aldrin_client::ServiceId,");
     genln!(o, "}}");
     genln!(o);
