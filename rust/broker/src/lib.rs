@@ -1,3 +1,5 @@
+#![deny(missing_debug_implementations)]
+
 mod broker;
 mod conn;
 mod conn_id;

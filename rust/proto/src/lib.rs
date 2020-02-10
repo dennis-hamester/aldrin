@@ -1,3 +1,5 @@
+#![deny(missing_debug_implementations)]
+
 mod key_value;
 mod message;
 mod transport;
