@@ -171,7 +171,7 @@ where
             | Message::DestroyService(_)
             | Message::SubscribeServicesDestroyed
             | Message::UnsubscribeServicesDestroyed => {
-                Err(RunError::UnexpectedMessageReceived(msg).into())
+                Err(RunError::UnexpectedMessageReceived(msg))
             }
         }
     }
@@ -214,7 +214,7 @@ where
                     if e.is_disconnected() {
                         self.objects_created.remove(serial);
                     } else {
-                        return Err(RunError::InternalError.into());
+                        return Err(RunError::InternalError);
                     }
                 }
             }
@@ -232,7 +232,7 @@ where
                     if e.is_disconnected() {
                         remove.push(serial);
                     } else {
-                        return Err(RunError::InternalError.into());
+                        return Err(RunError::InternalError);
                     }
                 }
             }
@@ -266,7 +266,7 @@ where
                 if e.is_disconnected() {
                     remove.push(serial);
                 } else {
-                    return Err(RunError::InternalError.into());
+                    return Err(RunError::InternalError);
                 }
             }
         }
@@ -348,7 +348,7 @@ where
                     if e.is_disconnected() {
                         self.services_created.remove(serial);
                     } else {
-                        return Err(RunError::InternalError.into());
+                        return Err(RunError::InternalError);
                     }
                 }
             }
@@ -360,7 +360,7 @@ where
                     if e.is_disconnected() {
                         remove.push(serial);
                     } else {
-                        return Err(RunError::InternalError.into());
+                        return Err(RunError::InternalError);
                     }
                 }
             }
@@ -398,7 +398,7 @@ where
                     if e.is_disconnected() {
                         remove.push(serial);
                     } else {
-                        return Err(RunError::InternalError.into());
+                        return Err(RunError::InternalError);
                     }
                 }
             }
@@ -467,7 +467,7 @@ where
                     .await
                     .map_err(Into::into)
             } else {
-                Err(RunError::InternalError.into())
+                Err(RunError::InternalError)
             }
         } else {
             Ok(())
