@@ -10,6 +10,41 @@ use uuid::Uuid;
 
 type Subscriptions = (ServiceId, HashSet<u32>);
 
+/// Manages subscriptions to service events.
+///
+/// This struct is created by [`Handle::events`]. Events can be [`subscribe`d](Events::subscribe)
+/// and [`unsubscribe`d](Events::unsubscribe).
+///
+/// After subscribing to events, this struct should be polled through its implementation of
+/// [`Stream`].
+///
+/// Subscriptions can removed implicitly, e.g. when a service has been destroyed of which events
+/// were subscribed. When there are no subscriptions left (or when none have been made in the first
+/// place) [`Stream::poll_next`] will return [`None`].
+///
+/// When the client shuts down, [`Stream::poll_next`] will return [`None`] as well.
+///
+/// # Examples
+///
+/// ```no_run
+/// // For StreamExt::next()
+/// use futures::stream::StreamExt;
+///
+/// let mut events = handle.events();
+///
+/// // Subscribe to a few events.
+/// events.subscribe(svc_id, 1).await?;
+/// events.subscribe(svc_id, 2).await?;
+///
+/// // Handle next event.
+/// if let Some(ev) = events.next().await {
+///     match ev.id {
+///         1 => { ... }
+///         2 => { ... }
+///         _ => unreachable!(),
+///     }
+/// }
+/// ```
 #[derive(Debug)]
 pub struct Events {
     id: EventsId,
@@ -31,6 +66,10 @@ impl Events {
         }
     }
 
+    /// Subscribe to an event.
+    ///
+    /// This function returns `true`, if the event `id` of service `service_id` was not already
+    /// subscribed to. Otherwise `false` is returned.
     pub async fn subscribe(&mut self, service_id: ServiceId, id: u32) -> Result<bool, Error> {
         match self.subscriptions.entry(service_id.cookie) {
             Entry::Vacant(entry) => self
@@ -59,6 +98,11 @@ impl Events {
         }
     }
 
+    /// Unsubscribe from an event.
+    ///
+    /// This function return `true`, if the event `id` of service `service_id` was subscribed to
+    /// before the call to this function and is now unsubscribed from. Otherwise `false` is
+    /// returned.
     pub async fn unsubscribe(&mut self, service_id: ServiceId, id: u32) -> Result<bool, Error> {
         match self.subscriptions.entry(service_id.cookie) {
             Entry::Occupied(mut entry) => {
@@ -124,10 +168,16 @@ impl EventsId {
     }
 }
 
+/// Event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct Event {
+    /// Id of the service which emitted the event.
     pub service_id: ServiceId,
+
+    /// Id of the event.
     pub id: u32,
+
+    /// Arguments of the event.
     pub args: Value,
 }
 
