@@ -1,6 +1,6 @@
 service Chat {
     uuid = 986282d1-94a1-45df-8e1e-05e538b37086;
-    version = 0.0.0;
+    version = 1;
 
     fn get_name @ 1 {
         ok = string;

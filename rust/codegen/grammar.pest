@@ -11,7 +11,6 @@ uuid = @{
     ~ "-" ~ ASCII_HEX_DIGIT{4}
     ~ "-" ~ ASCII_HEX_DIGIT{12}
 }
-version = @{ (ASCII_ALPHANUMERIC | "." | "-")+ }
 quoted_string = @{ "\"" ~ (!("\"" | NEWLINE) ~ ANY)* ~ "\"" }
 
 int_type = { "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
@@ -64,10 +63,10 @@ enum_variant = { ident ~ "@" ~ number ~ ("=" ~ type_name_or_inline)? ~ ";"? }
 
 service_def = { "service" ~ ident ~ "{" ~ service_uuid ~ service_version ~ service_body ~ "}" ~ ";"? }
 service_uuid = _{ "uuid" ~ "=" ~ uuid ~ ";"? }
-service_version = _{ "version" ~ "=" ~ version ~ ";"? }
+service_version = _{ "version" ~ "=" ~ number ~ ";"? }
 service_body = _{ (fn_def | event_def)* }
 
-attr_depr = { "#[" ~ "deprecated" ~ "(" ~ version ~ "," ~ quoted_string ~ ")" ~ "]" }
+attr_depr = { "#[" ~ "deprecated" ~ "(" ~ number ~ "," ~ quoted_string ~ ")" ~ "]" }
 
 fn_def = { attr_depr? ~ "fn" ~ ident ~ "@" ~ number ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }

@@ -1,6 +1,6 @@
 service Ping {
     uuid = eca038a0-39ae-41f2-b995-f59884f805dc;
-    version = 0.0.0;
+    version = 1;
 
     event ping @ 1;
 }

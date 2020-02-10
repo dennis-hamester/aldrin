@@ -1,5 +1,4 @@
 use pest::error::Error as PestError;
-use semver::SemVerError;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
@@ -19,7 +18,6 @@ pub enum ErrorKind {
     InvalidModuleName,
     Parser(String),
     DuplicateImport(String),
-    InvalidVersion(String),
     Subprocess(String, Option<String>),
 }
 
@@ -74,7 +72,6 @@ impl fmt::Display for Error {
             ErrorKind::DuplicateImport(m) => {
                 f.write_fmt(format_args!("duplicate import \"{}\"", m))
             }
-            ErrorKind::InvalidVersion(e) => f.write_fmt(format_args!("invalid version ({})", e)),
             ErrorKind::Subprocess(n, Some(o)) => {
                 f.write_fmt(format_args!("subprocess \"{}\" failed:\n{}", n, o))
             }
@@ -82,12 +79,6 @@ impl fmt::Display for Error {
                 f.write_fmt(format_args!("subprocess \"{}\" failed", n))
             }
         }
-    }
-}
-
-impl From<SemVerError> for Error {
-    fn from(e: SemVerError) -> Self {
-        Self::new(ErrorKind::InvalidVersion(e.to_string()))
     }
 }
 

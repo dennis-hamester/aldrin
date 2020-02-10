@@ -2,14 +2,13 @@ use super::grammar::Rule;
 use super::{Ident, TypeOrInline};
 use crate::error::Error;
 use pest::iterators::Pair;
-use semver::Version;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Service {
     pub name: Ident,
     pub uuid: Uuid,
-    pub ver: Version,
+    pub ver: u32,
     pub elems: Vec<ServiceElement>,
 }
 
@@ -19,7 +18,7 @@ impl Service {
         let mut pairs = pair.into_inner();
         let name = Ident::from_string(pairs.next().unwrap().as_str())?;
         let uuid = pairs.next().unwrap().as_str().parse().unwrap();
-        let ver = pairs.next().unwrap().as_str().parse()?;
+        let ver = pairs.next().unwrap().as_str().parse().unwrap();
 
         let mut this = Service {
             name,
@@ -63,7 +62,7 @@ pub(crate) enum ServiceElement {
 
 #[derive(Debug)]
 pub(crate) struct FunctionDeprecation {
-    pub since: Version,
+    pub since: u32,
     pub reason: String,
 }
 
@@ -71,7 +70,7 @@ impl FunctionDeprecation {
     fn from_attr_depr(pair: Pair<Rule>) -> Result<Self, Error> {
         assert_eq!(pair.as_rule(), Rule::attr_depr);
         let mut pairs = pair.into_inner();
-        let since = pairs.next().unwrap().as_str().parse()?;
+        let since = pairs.next().unwrap().as_str().parse().unwrap();
         let reason = pairs.next().unwrap().as_str().to_owned();
         Ok(FunctionDeprecation { since, reason })
     }
