@@ -17,6 +17,7 @@ pub(crate) enum Type {
     F64,
     String,
     Uuid,
+    Value,
     Vec(Box<Type>),
     Map(MapKeyType, Box<Type>),
     Set(MapKeyType),
@@ -47,6 +48,7 @@ impl Type {
 
             Rule::string_type => Ok(Type::String),
             Rule::uuid_type => Ok(Type::Uuid),
+            Rule::value_type => Ok(Type::Value),
 
             Rule::vec_type => {
                 let elem_type = Self::from_type_name(pair.into_inner().next().unwrap())?;
