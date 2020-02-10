@@ -16,9 +16,15 @@ pub struct RustArgs {
 
     /// Format output with rustfmt
     ///
-    /// A path to a rustfmt.toml configuration file can be specified optionally.
-    #[structopt(long, name = "rustfmt_config")]
-    format: Option<Option<PathBuf>>,
+    /// The formatting style can be customized with --rustfmt-toml.
+    #[structopt(long)]
+    format: bool,
+
+    /// Path to rustfmt.toml
+    ///
+    /// If this argument is not specified, standard rustfmt rules apply regarding its configuration.
+    #[structopt(long)]
+    rustfmt_toml: Option<PathBuf>,
 
     /// Path to an Aldrin schema file
     #[structopt(name = "schema")]
@@ -40,12 +46,8 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
     };
 
     let mut rust_options = RustOptions::new();
-    if let Some(format) = args.format {
-        rust_options.rustfmt = true;
-        if let Some(format) = format {
-            rust_options.rustfmt_toml = Some(format);
-        }
-    }
+    rust_options.rustfmt = args.format;
+    rust_options.rustfmt_toml = args.rustfmt_toml;
 
     let output = match gen.generate_rust(rust_options) {
         Ok(output) => output,
