@@ -860,10 +860,16 @@ where
     }
 }
 
+/// Mode of subscription for object and service creation events.
 #[derive(Debug, Copy, Clone)]
 pub enum SubscribeMode {
+    /// Receive events for all current and future objects or services.
     All,
+
+    /// Receive events only for current objects or services.
     CurrentOnly,
+
+    /// Receive events only for future objects or services.
     NewOnly,
 }
 
