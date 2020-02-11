@@ -48,6 +48,32 @@ type CreateServiceReplySender =
     oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>;
 type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>>;
 
+/// Aldrin client used to connect to a broker.
+///
+/// This is the first entry point to `aldrin-client`. A [`Client`] is used to establish a connection
+/// to an Aldrin broker. Afterwards, it should be turned into a [`Future`](std::future::Future) with
+/// the [`run`](Client::run) method, which must then be continuously polled and run to completion.
+///
+/// All interaction with a [`Client`] happens asynchronously through [`Handle`s](Handle).
+///
+/// # Examples
+///
+/// ```no_run
+/// // Connect to a broker.
+/// let client = Client::connect(transport, FIFO_SIZE, FIFO_SIZE).await?;
+///
+/// // Make sure to get a handle before calling run().
+/// let mut handle = client.handle().clone();
+///
+/// // Spawn the client on a dedicated task.
+/// let join = tokio::spawn(client.run());
+///
+/// // ...
+///
+/// // Shut down the client again and then wait for join to resolve.
+/// handle.shutdown().await?;
+/// join.await??;
+/// ```
 #[derive(Debug)]
 pub struct Client<T>
 where
@@ -80,6 +106,17 @@ impl<T> Client<T>
 where
     T: Transport + Unpin,
 {
+    /// Creates a client and connects to an Aldrin broker.
+    ///
+    /// `fifo_size` controls the size of an internal fifo, used for communication between the
+    /// [`Client`] and all [`Handle`s](Handle).
+    ///
+    /// `event_fifo_size` does the same, but for object and service creation and destruction events
+    /// (see [`Handle::objects_created`], [`Handle::objects_destroyed`],
+    /// [`Handle::services_created`], and [`Handle::services_destroyed`]).
+    ///
+    /// After creating a client, it must be continuously polled and run to completion with the
+    /// [`run`](Client::run) method.
     pub async fn connect(
         mut t: T,
         fifo_size: usize,
@@ -117,10 +154,32 @@ where
         })
     }
 
+    /// Returns a handle to the client.
+    ///
+    /// After creating the [`Client`], [`Handle`s](Handle) are the primary entry point for
+    /// interacting with a running client.
+    ///
+    /// When the last [`Handle`] is dropped, the [`Client`] will automatically shut down.
     pub fn handle(&self) -> &Handle {
         self.handle.as_ref().unwrap()
     }
 
+    /// Runs the client until it shuts down.
+    ///
+    /// After creating a [`Client`] it is important to run it before calling any method on a
+    /// [`Handle`].
+    ///
+    /// This is a long running method, that will only complete once the [`Client`] has shut down. It
+    /// should ideally be spawned on a dedicated task (not for performance or technical reasons, but
+    /// for ergonomics).
+    ///
+    /// A running [`Client`] can be shut down manually with [`Handle::shutdown`]. It will also
+    /// automatically shut down when the last [`Handle`] has been dropped. Be aware, that some
+    /// structs (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
+    /// [`Client`] running.
+    ///
+    /// A [`Client`] will also automatically shut down when it encounters an [error](RunError), or
+    /// when the [`Transport`] signals that the connection has been closed.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         self.handle.take().unwrap();
 
