@@ -111,7 +111,6 @@ impl fmt::Display for ObjectUuid {
 
 /// Cookie of an object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[non_exhaustive]
 pub struct ObjectCookie(pub Uuid);
 
 impl fmt::Display for ObjectCookie {

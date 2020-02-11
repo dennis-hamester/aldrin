@@ -163,7 +163,6 @@ impl fmt::Display for ServiceUuid {
 
 /// Cookie of a service.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[non_exhaustive]
 pub struct ServiceCookie(pub Uuid);
 
 impl fmt::Display for ServiceCookie {
