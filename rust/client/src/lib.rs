@@ -60,7 +60,7 @@ type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>
 ///
 /// ```no_run
 /// // Connect to a broker.
-/// let client = Client::connect(transport, FIFO_SIZE, FIFO_SIZE).await?;
+/// let client = Client::connect(transport, FIFO_SIZE).await?;
 ///
 /// // Make sure to get a handle before calling run().
 /// let mut handle = client.handle().clone();
@@ -109,19 +109,13 @@ where
     /// Creates a client and connects to an Aldrin broker.
     ///
     /// `fifo_size` controls the size of an internal fifo, used for communication between the
-    /// [`Client`] and all [`Handle`s](Handle).
-    ///
-    /// `event_fifo_size` does the same, but for object and service creation and destruction events
-    /// (see [`Handle::objects_created`], [`Handle::objects_destroyed`],
-    /// [`Handle::services_created`], and [`Handle::services_destroyed`]).
+    /// [`Client`] and all [`Handle`s](Handle). As long as the [`Client`] is running, it will drain
+    /// the fifo. If for some reason the fifo runs full, it will cause backpressure to all
+    /// [`Handle`s](Handle).
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
-    pub async fn connect(
-        mut t: T,
-        fifo_size: usize,
-        event_fifo_size: usize,
-    ) -> Result<Self, ConnectError<T::Error>> {
+    pub async fn connect(mut t: T, fifo_size: usize) -> Result<Self, ConnectError<T::Error>> {
         t.send(Message::Connect(Connect { version: VERSION }))
             .await?;
 
@@ -137,7 +131,7 @@ where
         Ok(Client {
             t,
             recv,
-            handle: Some(Handle::new(send, event_fifo_size)),
+            handle: Some(Handle::new(send)),
             create_object: SerialMap::new(),
             destroy_object: SerialMap::new(),
             objects_created: SerialMap::new(),

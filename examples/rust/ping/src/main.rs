@@ -88,7 +88,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect(t, args.fifo_size, args.fifo_size).await?;
+    let client = Client::connect(t, args.fifo_size).await?;
     let mut handle = client.handle().clone();
     tokio::spawn(client.run());
     println!("Connection to broker at {} established.", addr);
@@ -96,7 +96,9 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
     let ping = ping::Ping::create(&mut obj, args.fifo_size).await?;
     let mut emitter = ping.event_emitter().unwrap();
-    let mut sc = handle.services_created(SubscribeMode::All).await?;
+    let mut sc = handle
+        .services_created(SubscribeMode::All, args.fifo_size)
+        .await?;
     let mut others = Vec::new();
     let mut delay = delay_for(Duration::from_millis(args.delay as u64));
     let mut measure = delay_for(Duration::from_millis(MEASURE_UPDATE_MS));

@@ -12,15 +12,11 @@ use futures_util::sink::SinkExt;
 #[derive(Debug, Clone)]
 pub struct Handle {
     send: Sender<Request>,
-    event_fifo_size: usize,
 }
 
 impl Handle {
-    pub(crate) fn new(send: Sender<Request>, event_fifo_size: usize) -> Self {
-        Handle {
-            send,
-            event_fifo_size,
-        }
+    pub(crate) fn new(send: Sender<Request>) -> Self {
+        Handle { send }
     }
 
     /// Shuts down the client.
@@ -77,8 +73,12 @@ impl Handle {
             .ok();
     }
 
-    pub async fn objects_created(&mut self, mode: SubscribeMode) -> Result<ObjectsCreated, Error> {
-        let (ev_send, ev_recv) = channel(self.event_fifo_size);
+    pub async fn objects_created(
+        &mut self,
+        mode: SubscribeMode,
+        fifo_size: usize,
+    ) -> Result<ObjectsCreated, Error> {
+        let (ev_send, ev_recv) = channel(fifo_size);
         self.send
             .send(Request::SubscribeObjectsCreated(ev_send, mode))
             .await
@@ -86,8 +86,8 @@ impl Handle {
         Ok(ObjectsCreated::new(ev_recv))
     }
 
-    pub async fn objects_destroyed(&mut self) -> Result<ObjectsDestroyed, Error> {
-        let (ev_send, ev_recv) = channel(self.event_fifo_size);
+    pub async fn objects_destroyed(&mut self, fifo_size: usize) -> Result<ObjectsDestroyed, Error> {
+        let (ev_send, ev_recv) = channel(fifo_size);
         self.send
             .send(Request::SubscribeObjectsDestroyed(ev_send))
             .await
@@ -150,8 +150,9 @@ impl Handle {
     pub async fn services_created(
         &mut self,
         mode: SubscribeMode,
+        fifo_size: usize,
     ) -> Result<ServicesCreated, Error> {
-        let (ev_send, ev_recv) = channel(self.event_fifo_size);
+        let (ev_send, ev_recv) = channel(fifo_size);
         self.send
             .send(Request::SubscribeServicesCreated(ev_send, mode))
             .await
@@ -159,8 +160,11 @@ impl Handle {
         Ok(ServicesCreated::new(ev_recv))
     }
 
-    pub async fn services_destroyed(&mut self) -> Result<ServicesDestroyed, Error> {
-        let (ev_send, ev_recv) = channel(self.event_fifo_size);
+    pub async fn services_destroyed(
+        &mut self,
+        fifo_size: usize,
+    ) -> Result<ServicesDestroyed, Error> {
+        let (ev_send, ev_recv) = channel(fifo_size);
         self.send
             .send(Request::SubscribeServicesDestroyed(ev_send))
             .await

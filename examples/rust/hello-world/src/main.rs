@@ -22,26 +22,30 @@ async fn broker(t: ConnectionTransport) -> Result<(), Box<dyn Error>> {
 }
 
 async fn client(t: ClientTransport) -> Result<(), Box<dyn Error>> {
-    let client = Client::connect(t, FIFO_SIZE, FIFO_SIZE).await?;
+    let client = Client::connect(t, FIFO_SIZE).await?;
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(async { client.run().await.unwrap() });
 
-    let oc = handle.objects_created(SubscribeMode::All).await?;
+    let oc = handle
+        .objects_created(SubscribeMode::All, FIFO_SIZE)
+        .await?;
     tokio::spawn(oc.for_each(|id| async move {
         println!("Object {} created.", id.uuid);
     }));
 
-    let od = handle.objects_destroyed().await?;
+    let od = handle.objects_destroyed(FIFO_SIZE).await?;
     tokio::spawn(od.for_each(|id| async move {
         println!("Object {} destroyed.", id.uuid);
     }));
 
-    let sc = handle.services_created(SubscribeMode::All).await?;
+    let sc = handle
+        .services_created(SubscribeMode::All, FIFO_SIZE)
+        .await?;
     tokio::spawn(sc.for_each(|id| async move {
         println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
     }));
 
-    let sd = handle.services_destroyed().await?;
+    let sd = handle.services_destroyed(FIFO_SIZE).await?;
     tokio::spawn(sd.for_each(|id| async move {
         println!(
             "Object {} destroyed service {}.",
