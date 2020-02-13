@@ -3,6 +3,7 @@ use aldrin_proto::{Message, Transport};
 use bytes::BytesMut;
 use futures_core::stream::Stream;
 use futures_sink::Sink;
+use pin_project::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
@@ -13,6 +14,7 @@ use tokio::io::{AsyncRead, AsyncWrite};
 const INITIAL_CAPACITY: usize = 8 * 1024;
 const BACKPRESSURE_BOUNDARY: usize = INITIAL_CAPACITY;
 
+#[pin_project]
 #[derive(Debug)]
 pub struct TokioCodec<T, P, S>
 where
@@ -20,6 +22,7 @@ where
     P: Packetizer,
     S: Serializer,
 {
+    #[pin]
     io: T,
     packetizer: P,
     serializer: S,
@@ -69,10 +72,10 @@ where
     type Item = Result<Message, TokioCodecError<P::Error, S::Error>>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        let this = unsafe { Pin::into_inner_unchecked(self) };
+        let mut this = self.project();
 
         loop {
-            match this.packetizer.decode(&mut this.read_buf) {
+            match this.packetizer.decode(this.read_buf) {
                 Ok(Some(pkt)) => match this.serializer.deserialize(pkt) {
                     Ok(msg) => return Poll::Ready(Some(Ok(msg))),
                     Err(e) => return Poll::Ready(Some(Err(TokioCodecError::Serializer(e)))),
@@ -81,8 +84,7 @@ where
                 Err(e) => return Poll::Ready(Some(Err(TokioCodecError::Packetizer(e)))),
             }
 
-            let io = unsafe { Pin::new_unchecked(&mut this.io) };
-            match io.poll_read_buf(cx, &mut this.read_buf) {
+            match this.io.as_mut().poll_read_buf(cx, this.read_buf) {
                 Poll::Ready(Ok(0)) => return Poll::Ready(None),
                 Poll::Ready(Ok(_)) => {}
                 Poll::Ready(Err(e)) => return Poll::Ready(Some(Err(TokioCodecError::Io(e)))),
@@ -100,10 +102,8 @@ where
 {
     type Error = TokioCodecError<P::Error, S::Error>;
 
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let this = unsafe { Pin::into_inner_unchecked(self.as_mut()) };
-
-        if this.write_buf.len() >= BACKPRESSURE_BOUNDARY {
+    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        if self.write_buf.len() >= BACKPRESSURE_BOUNDARY {
             self.poll_flush(cx)
         } else {
             Poll::Ready(Ok(()))
@@ -111,7 +111,7 @@ where
     }
 
     fn start_send(self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        let this = unsafe { Pin::into_inner_unchecked(self) };
+        let mut this = self.project();
 
         let mut pkt = BytesMut::new();
         if let Err(e) = this.serializer.serialize(item, &mut pkt) {
@@ -126,19 +126,17 @@ where
     }
 
     fn poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let this = unsafe { Pin::into_inner_unchecked(self) };
+        let mut this = self.project();
 
         while !this.write_buf.is_empty() {
-            let io = unsafe { Pin::new_unchecked(&mut this.io) };
-            match io.poll_write_buf(cx, &mut this.write_buf) {
+            match this.io.as_mut().poll_write_buf(cx, &mut this.write_buf) {
                 Poll::Ready(Ok(_)) => {}
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
                 Poll::Pending => return Poll::Pending,
             }
         }
 
-        let io = unsafe { Pin::new_unchecked(&mut this.io) };
-        io.poll_flush(cx).map_err(TokioCodecError::Io)
+        this.io.poll_flush(cx).map_err(TokioCodecError::Io)
     }
 
     fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
@@ -147,9 +145,10 @@ where
             p => return p,
         }
 
-        let this: &mut Self = unsafe { Pin::into_inner_unchecked(self) };
-        let io = unsafe { Pin::new_unchecked(&mut this.io) };
-        io.poll_shutdown(cx).map_err(TokioCodecError::Io)
+        self.project()
+            .io
+            .poll_shutdown(cx)
+            .map_err(TokioCodecError::Io)
     }
 }
 
