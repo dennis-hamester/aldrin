@@ -233,16 +233,29 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "    }}");
     genln!(o);
     for f in fs {
-        genln!(
-            o,
-            "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{",
-            f.name.0,
-            gen_type(&f.field_type)
-        );
-        genln!(o, "        self.{0} = Some({0});", f.name.0);
-        genln!(o, "        self");
-        genln!(o, "    }}");
-        genln!(o);
+        if f.required {
+            genln!(
+                o,
+                "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{",
+                f.name.0,
+                gen_type(&f.field_type)
+            );
+            genln!(o, "        self.{0} = Some({0});", f.name.0);
+            genln!(o, "        self");
+            genln!(o, "    }}");
+            genln!(o);
+        } else {
+            genln!(
+                o,
+                "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{",
+                f.name.0,
+                gen_type(&f.field_type)
+            );
+            genln!(o, "        self.{0} = {0};", f.name.0);
+            genln!(o, "        self");
+            genln!(o, "    }}");
+            genln!(o);
+        }
     }
     genln!(
         o,
