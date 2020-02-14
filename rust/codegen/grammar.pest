@@ -5,15 +5,16 @@ lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
 lit_pos_int = @{ "0" | lit_pos_nonzero_int }
 lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
 
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-module = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
-uuid = @{
+lit_uuid = @{
     ASCII_HEX_DIGIT{8}
     ~ "-" ~ ASCII_HEX_DIGIT{4}
     ~ "-" ~ ASCII_HEX_DIGIT{4}
     ~ "-" ~ ASCII_HEX_DIGIT{4}
     ~ "-" ~ ASCII_HEX_DIGIT{12}
 }
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+module = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 
 int_type = { "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
 float_type = { "f32" | "f64" }
@@ -66,7 +67,7 @@ enum_body = { enum_variant+ }
 enum_variant = { ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
 
 service_def = { "service" ~ ident ~ "{" ~ service_uuid ~ service_version ~ service_body ~ "}" ~ ";"? }
-service_uuid = _{ "uuid" ~ "=" ~ uuid ~ ";"? }
+service_uuid = _{ "uuid" ~ "=" ~ lit_uuid ~ ";"? }
 service_version = _{ "version" ~ "=" ~ lit_pos_int ~ ";"? }
 service_body = _{ (fn_def | event_def)* }
 
