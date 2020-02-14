@@ -473,6 +473,10 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "        }}");
     genln!(o, "    }}");
     genln!(o);
+    genln!(o, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+    genln!(o, "        self.id");
+    genln!(o, "    }}");
+    genln!(o);
 
     for f in &s.elems {
         let f = match f {
@@ -580,6 +584,10 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {}Events {{", s.name.0);
+    genln!(o, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+    genln!(o, "        self.id");
+    genln!(o, "    }}");
+    genln!(o);
     for e in &s.elems {
         let e = match e {
             ServiceElement::Event(e) => e,
@@ -725,6 +733,10 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         s.name.0.to_shouty_snake_case()
     );
     genln!(o, "        Ok({} {{ service }})", s.name.0);
+    genln!(o, "    }}");
+    genln!(o);
+    genln!(o, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+    genln!(o, "        self.service.id()");
     genln!(o, "    }}");
     genln!(o);
     genln!(
@@ -914,6 +926,10 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {}EventEmitter {{", s.name.0);
+    genln!(o, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+    genln!(o, "        self.id");
+    genln!(o, "    }}");
+    genln!(o);
     for e in &s.elems {
         let e = match e {
             ServiceElement::Event(e) => e,
