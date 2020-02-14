@@ -44,6 +44,7 @@ impl Error {
         self
     }
 
+    #[allow(dead_code)]
     pub(crate) fn io(e: IoError) -> Self {
         Self::new(ErrorKind::Io(e))
     }

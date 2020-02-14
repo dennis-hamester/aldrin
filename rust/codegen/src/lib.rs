@@ -3,6 +3,7 @@
 mod error;
 mod schema;
 
+#[cfg(feature = "rust")]
 pub mod rust;
 
 use schema::{ModuleName, Schema};
@@ -34,6 +35,7 @@ impl Generator {
         &self.options
     }
 
+    #[cfg(feature = "rust")]
     pub fn generate_rust(
         &self,
         rust_options: rust::RustOptions,

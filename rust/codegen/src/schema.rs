@@ -14,12 +14,12 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-pub(crate) use enum_def::{Enum, EnumVariant, InlineEnum};
-pub(crate) use grammar::{Grammar, Rule};
-pub(crate) use ident::{Ident, ModuleName};
-pub(crate) use service::{Event, Function, Service, ServiceElement};
-pub(crate) use struct_def::{InlineStruct, Struct, StructField};
-pub(crate) use types::{MapKeyType, Type, TypeOrInline};
+pub(crate) use enum_def::*;
+pub(crate) use grammar::*;
+pub(crate) use ident::*;
+pub(crate) use service::*;
+pub(crate) use struct_def::*;
+pub(crate) use types::*;
 
 #[derive(Debug)]
 pub(crate) struct Schema {
