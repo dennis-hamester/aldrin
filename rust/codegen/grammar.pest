@@ -11,7 +11,6 @@ uuid = @{
     ~ "-" ~ ASCII_HEX_DIGIT{4}
     ~ "-" ~ ASCII_HEX_DIGIT{12}
 }
-quoted_string = @{ "\"" ~ (!("\"" | NEWLINE) ~ ANY)* ~ "\"" }
 
 int_type = { "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
 float_type = { "f32" | "f64" }
@@ -68,9 +67,7 @@ service_uuid = _{ "uuid" ~ "=" ~ uuid ~ ";"? }
 service_version = _{ "version" ~ "=" ~ number ~ ";"? }
 service_body = _{ (fn_def | event_def)* }
 
-attr_depr = { "#[" ~ "deprecated" ~ "(" ~ number ~ "," ~ quoted_string ~ ")" ~ "]" }
-
-fn_def = { attr_depr? ~ "fn" ~ ident ~ "@" ~ number ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
+fn_def = { "fn" ~ ident ~ "@" ~ number ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
 fn_args = { "args" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_ok = { "ok" ~ "=" ~ type_name_or_inline ~ ";"? }

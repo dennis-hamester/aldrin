@@ -61,26 +61,9 @@ pub(crate) enum ServiceElement {
 }
 
 #[derive(Debug)]
-pub(crate) struct FunctionDeprecation {
-    pub since: u32,
-    pub reason: String,
-}
-
-impl FunctionDeprecation {
-    fn from_attr_depr(pair: Pair<Rule>) -> Result<Self, Error> {
-        assert_eq!(pair.as_rule(), Rule::attr_depr);
-        let mut pairs = pair.into_inner();
-        let since = pairs.next().unwrap().as_str().parse().unwrap();
-        let reason = pairs.next().unwrap().as_str().to_owned();
-        Ok(FunctionDeprecation { since, reason })
-    }
-}
-
-#[derive(Debug)]
 pub(crate) struct Function {
     pub name: Ident,
     pub id: u32,
-    pub deprecation: Option<FunctionDeprecation>,
     pub args: Option<TypeOrInline>,
     pub ok: Option<TypeOrInline>,
     pub err: Option<TypeOrInline>,
@@ -91,15 +74,7 @@ impl Function {
         assert_eq!(pair.as_rule(), Rule::fn_def);
         let mut pairs = pair.into_inner();
 
-        let mut pair = pairs.next().unwrap();
-        let deprecation = if pair.as_rule() == Rule::attr_depr {
-            let depr = FunctionDeprecation::from_attr_depr(pair)?;
-            pair = pairs.next().unwrap();
-            Some(depr)
-        } else {
-            None
-        };
-
+        let pair = pairs.next().unwrap();
         let name = Ident::from_string(pair.as_str())?;
         let id = pairs.next().unwrap().as_str().parse().unwrap();
 
@@ -132,7 +107,6 @@ impl Function {
         Ok(Function {
             name,
             id,
-            deprecation,
             args,
             ok,
             err,
