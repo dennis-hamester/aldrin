@@ -5,6 +5,9 @@ lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
 lit_pos_int = @{ "0" | lit_pos_nonzero_int }
 lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
 
+lit_string_char = @{ "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
+lit_string = @{ "\"" ~ lit_string_char* ~ "\"" }
+
 lit_uuid = @{
     ASCII_HEX_DIGIT{8}
     ~ "-" ~ ASCII_HEX_DIGIT{4}
@@ -49,6 +52,7 @@ file = _{
         service_def
         | struct_def
         | enum_def
+        | const_def
     )*
     ~ EOI
 }
@@ -78,3 +82,27 @@ fn_ok = { "ok" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_err = { "err" ~ "=" ~ type_name_or_inline ~ ";"? }
 
 event_def = { "event" ~ ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
+
+const_def = { "const" ~ ident ~ "=" ~ const_value ~ ";"? }
+const_value = _{
+    const_u8
+    | const_i8
+    | const_u16
+    | const_i16
+    | const_u32
+    | const_i32
+    | const_u64
+    | const_i64
+    | const_string
+    | const_uuid
+}
+const_u8 = { "u8" ~ "(" ~ lit_pos_int ~ ")" }
+const_i8 = { "i8" ~ "(" ~ lit_int ~ ")" }
+const_u16 = { "u16" ~ "(" ~ lit_pos_int ~ ")" }
+const_i16 = { "i16" ~ "(" ~ lit_int ~ ")" }
+const_u32 = { "u32" ~ "(" ~ lit_pos_int ~ ")" }
+const_i32 = { "i32" ~ "(" ~ lit_int ~ ")" }
+const_u64 = { "u64" ~ "(" ~ lit_pos_int ~ ")" }
+const_i64 = { "i64" ~ "(" ~ lit_int ~ ")" }
+const_string = { "string" ~ "(" ~ lit_string ~ ")" }
+const_uuid = { "uuid" ~ "(" ~ lit_uuid ~ ")" }

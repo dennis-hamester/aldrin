@@ -1,3 +1,4 @@
+mod consts;
 mod enum_def;
 mod grammar;
 mod ident;
@@ -14,6 +15,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+pub(crate) use consts::*;
 pub(crate) use enum_def::*;
 pub(crate) use grammar::*;
 pub(crate) use ident::*;
@@ -73,6 +75,7 @@ impl Schema {
                 Rule::struct_def => schema.struct_def(pair)?,
                 Rule::enum_def => schema.enum_def(pair)?,
                 Rule::service_def => schema.service_def(pair)?,
+                Rule::const_def => schema.const_def(pair)?,
                 _ => unreachable!(),
             }
         }
@@ -114,6 +117,13 @@ impl Schema {
             .push(Definition::Service(Service::from_service_def(pair)?));
         Ok(())
     }
+
+    fn const_def(&mut self, pair: Pair<Rule>) -> Result<(), Error> {
+        assert_eq!(pair.as_rule(), Rule::const_def);
+        self.definitions
+            .push(Definition::Const(Const::from_const_def(pair)?));
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -121,4 +131,5 @@ pub(crate) enum Definition {
     Struct(Struct),
     Enum(Enum),
     Service(Service),
+    Const(Const),
 }

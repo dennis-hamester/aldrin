@@ -1,5 +1,5 @@
 use crate::schema::{
-    Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service, ServiceElement,
+    Const, Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service, ServiceElement,
     StructField, Type, TypeOrInline,
 };
 use crate::{Error, ErrorKind, Options};
@@ -66,6 +66,7 @@ pub(crate) fn generate(
             Definition::Struct(s) => gen_struct(&mut o, &s.name.0, &s.fields)?,
             Definition::Enum(e) => gen_enum(&mut o, &e.name.0, &e.variants)?,
             Definition::Service(s) => gen_service(&mut o, s)?,
+            Definition::Const(c) => gen_const(&mut o, c)?,
         }
     }
 
@@ -979,6 +980,24 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     }
     genln!(o, "}}");
 
+    Ok(())
+}
+
+fn gen_const(o: &mut RustOutput, c: &Const) -> Result<(), Error> {
+    match c {
+        Const::U8(n, v) => genln!(o, "pub const {}: u8 = {};", n.0, v),
+        Const::I8(n, v) => genln!(o, "pub const {}: i8 = {};", n.0, v),
+        Const::U16(n, v) => genln!(o, "pub const {}: u16 = {};", n.0, v),
+        Const::I16(n, v) => genln!(o, "pub const {}: i16 = {};", n.0, v),
+        Const::U32(n, v) => genln!(o, "pub const {}: u32 = {};", n.0, v),
+        Const::I32(n, v) => genln!(o, "pub const {}: i32 = {};", n.0, v),
+        Const::U64(n, v) => genln!(o, "pub const {}: u64 = {};", n.0, v),
+        Const::I64(n, v) => genln!(o, "pub const {}: i64 = {};", n.0, v),
+        Const::String(n, v) => genln!(o, "pub const {}: &str = \"{}\";", n.0, v),
+        Const::Uuid(n, v) => genln!(o, "pub const {}: aldrin_client::codegen::uuid::Uuid = aldrin_client::codegen::uuid::Uuid::from_u128({:#034x});", n.0, v.as_u128()),
+    };
+
+    genln!(o);
     Ok(())
 }
 

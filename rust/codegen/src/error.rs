@@ -2,6 +2,7 @@ use pest::error::Error as PestError;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
+use std::num::ParseIntError;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -19,6 +20,7 @@ pub enum ErrorKind {
     Parser(String),
     DuplicateImport(String),
     Subprocess(String, Option<String>),
+    InvalidConst(String),
 }
 
 impl Error {
@@ -64,6 +66,12 @@ impl Error {
     }
 }
 
+impl From<ParseIntError> for Error {
+    fn from(e: ParseIntError) -> Self {
+        Error::new(ErrorKind::InvalidConst(e.to_string()))
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.kind {
@@ -79,6 +87,7 @@ impl fmt::Display for Error {
             ErrorKind::Subprocess(n, None) => {
                 f.write_fmt(format_args!("subprocess \"{}\" failed", n))
             }
+            ErrorKind::InvalidConst(e) => f.write_fmt(format_args!("invalid constant: {}", e)),
         }
     }
 }
