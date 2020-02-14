@@ -3,7 +3,7 @@ COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 number = @{ ASCII_DIGIT+ }
-module = @{ ident }
+module = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 uuid = @{
     ASCII_HEX_DIGIT{8}
     ~ "-" ~ ASCII_HEX_DIGIT{4}

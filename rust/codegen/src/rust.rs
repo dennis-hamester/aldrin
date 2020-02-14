@@ -52,7 +52,7 @@ pub(crate) fn generate(
     let mut o = RustOutput {
         options: options.clone(),
         rust_options,
-        module_name: schema.module.0.clone(),
+        module_name: schema.module.0.replace("-", "_"),
         module_content: String::new(),
     };
 
@@ -1011,7 +1011,7 @@ fn gen_type(t: &Type) -> String {
             gen_type(v)
         ),
         Type::Set(t) => format!("std::collections::HashSet<{}>", gen_map_key_type(t)),
-        Type::External(m, t) => format!("super::{}::{}", m, t),
+        Type::External(m, t) => format!("super::{}::{}", m.replace("-", "_"), t),
         Type::Internal(t) => t.clone(),
     }
 }
