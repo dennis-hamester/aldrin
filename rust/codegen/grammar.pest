@@ -1,8 +1,11 @@
 WHITESPACE = _{ WHITE_SPACE }
 COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 
+lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
+lit_pos_int = @{ "0" | lit_pos_nonzero_int }
+lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
+
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-number = @{ ASCII_DIGIT+ }
 module = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 uuid = @{
     ASCII_HEX_DIGIT{8}
@@ -55,22 +58,22 @@ struct_def = { "struct" ~ ident ~ "{" ~ struct_body ~ "}" ~ ";"? }
 struct_inline = { "struct" ~ "{" ~ struct_body ~ "}" }
 struct_body = { struct_field* }
 struct_field_req = { "required" }
-struct_field = { struct_field_req? ~ ident ~ "@" ~ number ~ "=" ~ type_name ~ ";"? }
+struct_field = { struct_field_req? ~ ident ~ "@" ~ lit_pos_int ~ "=" ~ type_name ~ ";"? }
 
 enum_def = { "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
 enum_inline = { "enum" ~ "{" ~ enum_body ~ "}" }
 enum_body = { enum_variant+ }
-enum_variant = { ident ~ "@" ~ number ~ ("=" ~ type_name_or_inline)? ~ ";"? }
+enum_variant = { ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
 
 service_def = { "service" ~ ident ~ "{" ~ service_uuid ~ service_version ~ service_body ~ "}" ~ ";"? }
 service_uuid = _{ "uuid" ~ "=" ~ uuid ~ ";"? }
-service_version = _{ "version" ~ "=" ~ number ~ ";"? }
+service_version = _{ "version" ~ "=" ~ lit_pos_int ~ ";"? }
 service_body = _{ (fn_def | event_def)* }
 
-fn_def = { "fn" ~ ident ~ "@" ~ number ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
+fn_def = { "fn" ~ ident ~ "@" ~ lit_pos_int ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
 fn_args = { "args" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_ok = { "ok" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_err = { "err" ~ "=" ~ type_name_or_inline ~ ";"? }
 
-event_def = { "event" ~ ident ~ "@" ~ number ~ ("=" ~ type_name_or_inline)? ~ ";"? }
+event_def = { "event" ~ ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
