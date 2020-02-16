@@ -122,9 +122,9 @@ where
         match t.next().await.ok_or(ConnectError::UnexpectedEof)?? {
             Message::ConnectReply(ConnectReply::Ok) => {}
             Message::ConnectReply(ConnectReply::VersionMismatch(v)) => {
-                return Err(ConnectError::VersionMismatch(v).into())
+                return Err(ConnectError::VersionMismatch(v))
             }
-            msg => return Err(ConnectError::UnexpectedMessageReceived(msg).into()),
+            msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         }
 
         let (send, recv) = mpsc::channel(fifo_size);
