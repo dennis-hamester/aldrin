@@ -1,0 +1,54 @@
+name: Rust
+
+on:
+  push:
+    paths:
+    - 'rust/**'
+    - 'gen/**'
+
+jobs:
+
+  ci:
+    name: Continuous integration
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          components: clippy
+          default: true
+      - name: Rust version
+        run: rustc --version --verbose
+      - name: Cargo version
+        run: cargo --version --verbose
+      - name: Cargo check
+        run: cargo check --all-features
+      - name: Cargo test
+        run: cargo test --all-features
+      - name: Cargo clippy
+        run: |
+          cargo clean
+          cargo clippy --all-features
+
+  style:
+    name: Code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          default: true
+      - name: Cargo fmt
+        run: cargo fmt -- --check

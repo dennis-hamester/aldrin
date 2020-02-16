@@ -1,0 +1,46 @@
+name: Rust Examples
+
+on:
+  push:
+    paths:
+    - 'rust/**'
+    - 'examples/schemas/**'
+    - 'examples/rust/**'
+
+jobs:
+
+  ci:
+    name: Continuous integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: clippy
+          default: true
+      - name: Rust version
+        run: rustc --version --verbose
+      - name: Cargo version
+        run: cargo --version --verbose
+      - name: Cargo clippy
+        working-directory: examples/rust
+        run: cargo clippy --all-features
+
+  style:
+    name: Code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          default: true
+      - name: Cargo fmt
+        working-directory: examples/rust
+        run: cargo fmt -- --check
