@@ -23,7 +23,7 @@ use uuid::Uuid;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// // For StreamExt::next()
 /// use futures::stream::StreamExt;
 ///

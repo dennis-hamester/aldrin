@@ -9,7 +9,7 @@ use uuid::Uuid;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// // Create a new object with a random UUID.
 /// let mut object = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
 ///

@@ -58,7 +58,7 @@ type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// // Connect to a broker.
 /// let client = Client::connect(transport, FIFO_SIZE).await?;
 ///

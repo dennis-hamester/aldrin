@@ -26,7 +26,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// // For StreamExt::next()
 /// use futures::stream::StreamExt;
 ///
