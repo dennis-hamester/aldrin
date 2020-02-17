@@ -83,7 +83,7 @@ impl Sink<Message> for ConnectionTransport {
 
 impl Transport for ConnectionTransport {
     fn name(&self) -> Option<&str> {
-        self.name.as_ref().map(String::as_str)
+        self.name.as_deref()
     }
 }
 
@@ -143,6 +143,6 @@ impl Sink<Message> for ClientTransport {
 
 impl Transport for ClientTransport {
     fn name(&self) -> Option<&str> {
-        self.name.as_ref().map(String::as_str)
+        self.name.as_deref()
     }
 }
