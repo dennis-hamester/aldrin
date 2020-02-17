@@ -2,23 +2,23 @@
 name = "aldrin-util"
 description = "Additional utilities for working with Aldrin."
 version = "0.1.0"
-authors = [ "Aldrin Contributors" ]
+authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 
 [features]
-channel = [ "futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink" ]
-codec = [ "bytes", "futures-core", "futures-sink" ]
-tokio-io = [ "codec", "tokio", "pin-project" ]
-json = [ "codec", "bytes/std", "serde_json", "aldrin-proto/serde_derive" ]
+channel = ["futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink"]
+codec = ["bytes", "futures-core", "futures-sink"]
+tokio-io = ["codec", "tokio", "pin-project"]
+json = ["codec", "bytes/std", "serde_json", "aldrin-proto/serde_derive"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 
 bytes = { optional = true, version = "0.5.4", default-features = false }
-futures-channel = { optional = true, version = "0.3.3", default-features = false }
-futures-core = { optional = true, version = "0.3.3", default-features = false }
-futures-sink = { optional = true, version = "0.3.3", default-features = false }
+futures-channel = { optional = true, version = "0.3.4", default-features = false }
+futures-core = { optional = true, version = "0.3.4", default-features = false }
+futures-sink = { optional = true, version = "0.3.4", default-features = false }
 pin-project = { optional = true, version = "0.4.8" }
-serde_json = { optional = true, version = "1.0.46" }
+serde_json = { optional = true, version = "1.0.48" }
 tokio = { optional = true, version = "0.2.11", default-features = false }

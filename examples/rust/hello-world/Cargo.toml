@@ -1,7 +1,7 @@
 [package]
 name = "hello-world"
 version = "0.0.0"
-authors = [ "Aldrin Contributors" ]
+authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 publish = false
@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 aldrin-broker = { path = "../../../rust/broker" }
 aldrin-client = { path = "../../../rust/client" }
-aldrin-util = { path = "../../../rust/util", features = [ "channel" ] }
-futures = { version = "0.3.3", default-features = false }
-tokio = { version = "0.2.11", default-features = false, features = [ "rt-core", "macros" ] }
-uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }
+aldrin-util = { path = "../../../rust/util", features = ["channel"] }
+futures = { version = "0.3.4", default-features = false }
+tokio = { version = "0.2.11", default-features = false, features = ["rt-core", "macros"] }
+uuid = { version = "0.8.1", default-features = false, features = ["v4"] }

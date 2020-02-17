@@ -2,7 +2,7 @@
 name = "aldrin-codegen"
 description = "Aldrin code generator library"
 version = "0.1.0"
-authors = [ "Aldrin Contributors" ]
+authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 

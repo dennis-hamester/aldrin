@@ -2,13 +2,13 @@
 name = "aldrin-broker"
 description = "Broker library of Aldrin, a lightweight and composable RPC framework."
 version = "0.1.0"
-authors = [ "Aldrin Contributors" ]
+authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-channel = { version = "0.3.3", default-features = false, features = [ "std", "sink" ] }
-futures-core = { version = "0.3.3", default-features = false }
-futures-util = { version = "0.3.3", default-features = false, features = [ "sink" ] }
-uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }
+futures-channel = { version = "0.3.4", default-features = false, features = ["std", "sink"] }
+futures-core = { version = "0.3.4", default-features = false }
+futures-util = { version = "0.3.4", default-features = false, features = ["sink"] }
+uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
