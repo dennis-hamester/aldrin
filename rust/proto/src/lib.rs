@@ -20,7 +20,7 @@ pub struct ConversionError;
 
 impl fmt::Display for ConversionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("invalid conversion to/from aldrin_proto::Value")
+        f.write_str("invalid conversion from Value or KeyValue")
     }
 }
 
