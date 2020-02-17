@@ -11,7 +11,7 @@ use std::fmt;
 
 pub use key_value::{FromKeyValue, IntoKeyValue, KeyValue};
 pub use message::*;
-pub use transport::Transport;
+pub use transport::AsyncTransport;
 pub use value::{FromValue, IntoValue, Value};
 
 pub const VERSION: u32 = 1;

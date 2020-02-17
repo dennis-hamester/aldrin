@@ -52,8 +52,6 @@ dependencies = [
 name = "aldrin-proto"
 version = "0.1.0"
 dependencies = [
- "futures-core",
- "futures-sink",
  "serde",
  "uuid",
 ]
