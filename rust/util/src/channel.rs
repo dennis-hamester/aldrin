@@ -1,9 +1,8 @@
 //! Transports for connecting brokers and clients in the same process.
 
-use aldrin_proto::{Message, Transport};
-use futures_channel::mpsc::{self, SendError};
+use aldrin_proto::{AsyncTransport, Message};
+use futures_channel::mpsc;
 use futures_core::stream::Stream;
-use futures_sink::Sink;
 use std::error::Error;
 use std::fmt;
 use std::pin::Pin;
@@ -66,52 +65,55 @@ impl Channel {
     }
 }
 
-impl Stream for Channel {
-    type Item = Result<Message, Closed>;
+/// Error type when using channels as a transport.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Disconnected;
 
-    fn poll_next(
+impl fmt::Display for Disconnected {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("disconnected")
+    }
+}
+
+impl Error for Disconnected {}
+
+impl AsyncTransport for Channel {
+    type Error = Disconnected;
+
+    fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Option<Result<Message, Closed>>> {
-        Pin::new(&mut self.receiver)
-            .poll_next(cx)
-            .map(|msg| msg.map(Ok))
+    ) -> Poll<Result<Option<Message>, Disconnected>> {
+        Pin::new(&mut self.receiver).poll_next(cx).map(Ok)
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.receiver.size_hint()
-    }
-}
-
-impl Sink<Message> for Channel {
-    type Error = Closed;
-
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_ready(cx)
-            .map(map_poll_send_error)
+    fn send_poll_ready(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<bool, Disconnected>> {
+        match self.sender.poll_ready(cx) {
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(true)),
+            Poll::Ready(Err(_)) => Poll::Ready(Ok(false)),
+            Poll::Pending => Poll::Pending,
+        }
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), Closed> {
-        Pin::new(&mut self.sender)
-            .start_send(item)
-            .map_err(map_send_error)
+    fn send_start(mut self: Pin<&mut Self>, msg: Message) -> Result<(), Disconnected> {
+        self.sender.start_send(msg).map_err(|_| Disconnected)
     }
 
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_flush(cx)
-            .map(map_poll_send_error)
+    fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+        Poll::Ready(Ok(()))
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_close(cx)
-            .map(map_poll_send_error)
+    fn poll_shutdown(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context,
+    ) -> Poll<Result<(), Disconnected>> {
+        self.sender.close_channel();
+        Poll::Ready(Ok(()))
     }
-}
 
-impl Transport for Channel {
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
@@ -165,79 +167,38 @@ impl Unbounded {
     }
 }
 
-impl Stream for Unbounded {
-    type Item = Result<Message, Closed>;
+impl AsyncTransport for Unbounded {
+    type Error = Disconnected;
 
-    fn poll_next(
+    fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Option<Result<Message, Closed>>> {
-        Pin::new(&mut self.receiver)
-            .poll_next(cx)
-            .map(|msg| msg.map(Ok))
+    ) -> Poll<Result<Option<Message>, Disconnected>> {
+        Pin::new(&mut self.receiver).poll_next(cx).map(Ok)
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.receiver.size_hint()
-    }
-}
-
-impl Sink<Message> for Unbounded {
-    type Error = Closed;
-
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_ready(cx)
-            .map(map_poll_send_error)
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Disconnected>> {
+        match self.sender.poll_ready(cx) {
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(true)),
+            Poll::Ready(Err(_)) => Poll::Ready(Ok(false)),
+            Poll::Pending => Poll::Pending,
+        }
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), Closed> {
-        Pin::new(&mut self.sender)
-            .start_send(item)
-            .map_err(map_send_error)
+    fn send_start(mut self: Pin<&mut Self>, msg: Message) -> Result<(), Disconnected> {
+        self.sender.start_send(msg).map_err(|_| Disconnected)
     }
 
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_flush(cx)
-            .map(map_poll_send_error)
+    fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+        Poll::Ready(Ok(()))
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
-        Pin::new(&mut self.sender)
-            .poll_close(cx)
-            .map(map_poll_send_error)
+    fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+        self.sender.close_channel();
+        Poll::Ready(Ok(()))
     }
-}
 
-impl Transport for Unbounded {
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
-}
-
-/// Error type for channel transports.
-///
-/// Channel transports fail only when either end has been closed or dropped.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Closed;
-
-impl fmt::Display for Closed {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("channel closed")
-    }
-}
-
-impl Error for Closed {}
-
-fn map_send_error(e: SendError) -> Closed {
-    if e.is_disconnected() {
-        Closed
-    } else {
-        unreachable!();
-    }
-}
-
-fn map_poll_send_error<T>(r: Result<T, SendError>) -> Result<T, Closed> {
-    r.map_err(map_send_error)
 }

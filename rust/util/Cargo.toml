@@ -7,7 +7,7 @@ license = "Apache-2.0"
 edition = "2018"
 
 [features]
-channel = ["futures-channel/std", "futures-channel/sink", "futures-core", "futures-sink"]
+channel = ["futures-channel/std", "futures-core"]
 codec = ["bytes", "futures-core", "futures-sink"]
 tokio-io = ["codec", "tokio", "pin-project"]
 json = ["codec", "bytes/std", "serde_json", "aldrin-proto/serde_derive"]
