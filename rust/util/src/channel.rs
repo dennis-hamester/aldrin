@@ -1,148 +1,126 @@
 use aldrin_proto::{Message, Transport};
-use futures_channel::mpsc;
+use futures_channel::mpsc::{self, SendError};
 use futures_core::stream::Stream;
 use futures_sink::Sink;
+use std::error::Error;
+use std::fmt;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-pub use futures_channel::mpsc::SendError;
-
-pub fn channel(buffer: usize) -> (ConnectionTransport, ClientTransport) {
-    let (conn_sink, client_stream) = mpsc::channel(buffer);
-    let (client_sink, conn_stream) = mpsc::channel(buffer);
+pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
+    let (sender1, receiver1) = mpsc::channel(fifo_size);
+    let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        ConnectionTransport::new(None, conn_stream, conn_sink),
-        ClientTransport::new(None, client_stream, client_sink),
+        ChannelTransport::new(None, receiver1, sender2),
+        ChannelTransport::new(None, receiver2, sender1),
     )
 }
 
-pub fn channel_with_name(buffer: usize, name: String) -> (ConnectionTransport, ClientTransport) {
-    let (conn_sink, client_stream) = mpsc::channel(buffer);
-    let (client_sink, conn_stream) = mpsc::channel(buffer);
+pub fn channel_with_name(fifo_size: usize, name: String) -> (ChannelTransport, ChannelTransport) {
+    let (sender1, receiver1) = mpsc::channel(fifo_size);
+    let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        ConnectionTransport::new(Some(name.clone()), conn_stream, conn_sink),
-        ClientTransport::new(Some(name), client_stream, client_sink),
+        ChannelTransport::new(Some(name.clone()), receiver1, sender2),
+        ChannelTransport::new(Some(name), receiver2, sender1),
     )
 }
 
 #[derive(Debug)]
-pub struct ConnectionTransport {
+pub struct ChannelTransport {
     name: Option<String>,
-    stream: mpsc::Receiver<Message>,
-    sink: mpsc::Sender<Message>,
+    receiver: mpsc::Receiver<Message>,
+    sender: mpsc::Sender<Message>,
 }
 
-impl ConnectionTransport {
+impl ChannelTransport {
     fn new(
         name: Option<String>,
-        stream: mpsc::Receiver<Message>,
-        sink: mpsc::Sender<Message>,
+        receiver: mpsc::Receiver<Message>,
+        sender: mpsc::Sender<Message>,
     ) -> Self {
-        ConnectionTransport { name, stream, sink }
+        ChannelTransport {
+            name,
+            receiver,
+            sender,
+        }
     }
 }
 
-impl Stream for ConnectionTransport {
-    type Item = Result<Message, SendError>;
+impl Stream for ChannelTransport {
+    type Item = Result<Message, Closed>;
 
     fn poll_next(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Option<Result<Message, SendError>>> {
-        Pin::new(&mut self.stream)
+    ) -> Poll<Option<Result<Message, Closed>>> {
+        Pin::new(&mut self.receiver)
             .poll_next(cx)
             .map(|msg| msg.map(Ok))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.stream.size_hint()
+        self.receiver.size_hint()
     }
 }
 
-impl Sink<Message> for ConnectionTransport {
-    type Error = SendError;
+impl Sink<Message> for ChannelTransport {
+    type Error = Closed;
 
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_ready(cx)
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
+        Pin::new(&mut self.sender)
+            .poll_ready(cx)
+            .map(map_poll_send_error)
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), SendError> {
-        Pin::new(&mut self.sink).start_send(item)
+    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), Closed> {
+        Pin::new(&mut self.sender)
+            .start_send(item)
+            .map_err(map_send_error)
     }
 
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_flush(cx)
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
+        Pin::new(&mut self.sender)
+            .poll_flush(cx)
+            .map(map_poll_send_error)
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_close(cx)
+    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
+        Pin::new(&mut self.sender)
+            .poll_close(cx)
+            .map(map_poll_send_error)
     }
 }
 
-impl Transport for ConnectionTransport {
+impl Transport for ChannelTransport {
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
 }
 
-#[derive(Debug)]
-pub struct ClientTransport {
-    name: Option<String>,
-    stream: mpsc::Receiver<Message>,
-    sink: mpsc::Sender<Message>,
-}
+/// Error type for channel transports.
+///
+/// Channel transports fail only when either end has been closed or dropped.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Closed;
 
-impl ClientTransport {
-    fn new(
-        name: Option<String>,
-        stream: mpsc::Receiver<Message>,
-        sink: mpsc::Sender<Message>,
-    ) -> Self {
-        ClientTransport { name, stream, sink }
+impl fmt::Display for Closed {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("channel closed")
     }
 }
 
-impl Stream for ClientTransport {
-    type Item = Result<Message, SendError>;
+impl Error for Closed {}
 
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Option<Result<Message, SendError>>> {
-        Pin::new(&mut self.stream)
-            .poll_next(cx)
-            .map(|msg| msg.map(Ok))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.stream.size_hint()
+fn map_send_error(e: SendError) -> Closed {
+    if e.is_disconnected() {
+        Closed
+    } else {
+        unreachable!();
     }
 }
 
-impl Sink<Message> for ClientTransport {
-    type Error = SendError;
-
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_ready(cx)
-    }
-
-    fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), SendError> {
-        Pin::new(&mut self.sink).start_send(item)
-    }
-
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_flush(cx)
-    }
-
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), SendError>> {
-        Pin::new(&mut self.sink).poll_close(cx)
-    }
-}
-
-impl Transport for ClientTransport {
-    fn name(&self) -> Option<&str> {
-        self.name.as_deref()
-    }
+fn map_poll_send_error<T>(r: Result<T, SendError>) -> Result<T, Closed> {
+    r.map_err(map_send_error)
 }
