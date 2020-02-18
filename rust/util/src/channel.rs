@@ -17,7 +17,11 @@ pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
     )
 }
 
-pub fn channel_with_name(fifo_size: usize, name: String) -> (ChannelTransport, ChannelTransport) {
+pub fn channel_with_name<N>(fifo_size: usize, name: N) -> (ChannelTransport, ChannelTransport)
+where
+    N: Into<String>,
+{
+    let name = name.into();
     let (sender1, receiver1) = mpsc::channel(fifo_size);
     let (sender2, receiver2) = mpsc::channel(fifo_size);
 
@@ -109,7 +113,11 @@ pub fn unbounded() -> (UnboundedTransport, UnboundedTransport) {
     )
 }
 
-pub fn unbounded_with_name(name: String) -> (UnboundedTransport, UnboundedTransport) {
+pub fn unbounded_with_name<N>(name: N) -> (UnboundedTransport, UnboundedTransport)
+where
+    N: Into<String>,
+{
+    let name = name.into();
     let (sender1, receiver1) = mpsc::unbounded();
     let (sender2, receiver2) = mpsc::unbounded();
 
