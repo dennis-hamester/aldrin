@@ -1,3 +1,5 @@
+//! Transports for connecting brokers and clients in the same process.
+
 use aldrin_proto::{Message, Transport};
 use futures_channel::mpsc::{self, SendError};
 use futures_core::stream::Stream;
@@ -7,6 +9,10 @@ use std::fmt;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+/// Creates a pair of bounded channel transports.
+///
+/// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo is
+/// full, this will cause backpressure to the sender.
 pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
     let (sender1, receiver1) = mpsc::channel(fifo_size);
     let (sender2, receiver2) = mpsc::channel(fifo_size);
@@ -17,6 +23,10 @@ pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
     )
 }
 
+/// Creates a pair of bounded channel transports with a name.
+///
+/// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo runs
+/// full, backpressure will be applied to the sender.
 pub fn channel_with_name<N>(fifo_size: usize, name: N) -> (ChannelTransport, ChannelTransport)
 where
     N: Into<String>,
@@ -31,6 +41,10 @@ where
     )
 }
 
+/// A bounded channels-based transport for connecting a broker and a client in the same process.
+///
+/// Bounded transports have an internal fifo for receiving [`Message`s](Message). If this runs full,
+/// backpressure will be applied to the sender.
 #[derive(Debug)]
 pub struct ChannelTransport {
     name: Option<String>,
@@ -103,6 +117,7 @@ impl Transport for ChannelTransport {
     }
 }
 
+/// Creates a pair of unbounded channel transports.
 pub fn unbounded() -> (UnboundedTransport, UnboundedTransport) {
     let (sender1, receiver1) = mpsc::unbounded();
     let (sender2, receiver2) = mpsc::unbounded();
@@ -113,6 +128,7 @@ pub fn unbounded() -> (UnboundedTransport, UnboundedTransport) {
     )
 }
 
+/// Creates a pair of unbounded channel transports with a name.
 pub fn unbounded_with_name<N>(name: N) -> (UnboundedTransport, UnboundedTransport)
 where
     N: Into<String>,
@@ -127,6 +143,7 @@ where
     )
 }
 
+/// An unbounded channels-based transport for connecting a broker and a client in the same process.
 #[derive(Debug)]
 pub struct UnboundedTransport {
     name: Option<String>,
