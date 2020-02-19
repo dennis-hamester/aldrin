@@ -40,6 +40,25 @@ jobs:
           cargo clean
           cargo clippy --all-features
 
+  doc:
+    name: Check docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          default: true
+      - name: Rust version
+        run: rustc --version --verbose
+      - name: Cargo version
+        run: cargo --version --verbose
+      - name: Cargo doc
+        run: cargo doc --all-features
+
   style:
     name: Code style
     runs-on: ubuntu-latest
