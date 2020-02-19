@@ -1,13 +1,13 @@
 use aldrin_broker::Broker;
 use aldrin_client::{Client, ObjectUuid, ServiceUuid, SubscribeMode};
-use aldrin_util::channel::{channel, ChannelTransport};
+use aldrin_util::channel::{channel, Channel};
 use futures::stream::StreamExt;
 use std::error::Error;
 use uuid::Uuid;
 
 const FIFO_SIZE: usize = 16;
 
-async fn broker(t: ChannelTransport) -> Result<(), Box<dyn Error>> {
+async fn broker(t: Channel) -> Result<(), Box<dyn Error>> {
     let broker = Broker::new(FIFO_SIZE);
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
@@ -21,7 +21,7 @@ async fn broker(t: ChannelTransport) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn client(t: ChannelTransport) -> Result<(), Box<dyn Error>> {
+async fn client(t: Channel) -> Result<(), Box<dyn Error>> {
     let client = Client::connect(t, FIFO_SIZE).await?;
     let mut handle = client.handle().clone();
     let join_handle = tokio::spawn(async { client.run().await.unwrap() });

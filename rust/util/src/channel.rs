@@ -13,13 +13,13 @@ use std::task::{Context, Poll};
 ///
 /// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo is
 /// full, this will cause backpressure to the sender.
-pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
+pub fn channel(fifo_size: usize) -> (Channel, Channel) {
     let (sender1, receiver1) = mpsc::channel(fifo_size);
     let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        ChannelTransport::new(None, receiver1, sender2),
-        ChannelTransport::new(None, receiver2, sender1),
+        Channel::new(None, receiver1, sender2),
+        Channel::new(None, receiver2, sender1),
     )
 }
 
@@ -27,7 +27,7 @@ pub fn channel(fifo_size: usize) -> (ChannelTransport, ChannelTransport) {
 ///
 /// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo runs
 /// full, backpressure will be applied to the sender.
-pub fn channel_with_name<N>(fifo_size: usize, name: N) -> (ChannelTransport, ChannelTransport)
+pub fn channel_with_name<N>(fifo_size: usize, name: N) -> (Channel, Channel)
 where
     N: Into<String>,
 {
@@ -36,8 +36,8 @@ where
     let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        ChannelTransport::new(Some(name.clone()), receiver1, sender2),
-        ChannelTransport::new(Some(name), receiver2, sender1),
+        Channel::new(Some(name.clone()), receiver1, sender2),
+        Channel::new(Some(name), receiver2, sender1),
     )
 }
 
@@ -46,19 +46,19 @@ where
 /// Bounded transports have an internal fifo for receiving [`Message`s](Message). If this runs full,
 /// backpressure will be applied to the sender.
 #[derive(Debug)]
-pub struct ChannelTransport {
+pub struct Channel {
     name: Option<String>,
     receiver: mpsc::Receiver<Message>,
     sender: mpsc::Sender<Message>,
 }
 
-impl ChannelTransport {
+impl Channel {
     fn new(
         name: Option<String>,
         receiver: mpsc::Receiver<Message>,
         sender: mpsc::Sender<Message>,
     ) -> Self {
-        ChannelTransport {
+        Channel {
             name,
             receiver,
             sender,
@@ -66,7 +66,7 @@ impl ChannelTransport {
     }
 }
 
-impl Stream for ChannelTransport {
+impl Stream for Channel {
     type Item = Result<Message, Closed>;
 
     fn poll_next(
@@ -83,7 +83,7 @@ impl Stream for ChannelTransport {
     }
 }
 
-impl Sink<Message> for ChannelTransport {
+impl Sink<Message> for Channel {
     type Error = Closed;
 
     fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
@@ -111,25 +111,25 @@ impl Sink<Message> for ChannelTransport {
     }
 }
 
-impl Transport for ChannelTransport {
+impl Transport for Channel {
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
 }
 
 /// Creates a pair of unbounded channel transports.
-pub fn unbounded() -> (UnboundedTransport, UnboundedTransport) {
+pub fn unbounded() -> (Unbounded, Unbounded) {
     let (sender1, receiver1) = mpsc::unbounded();
     let (sender2, receiver2) = mpsc::unbounded();
 
     (
-        UnboundedTransport::new(None, receiver1, sender2),
-        UnboundedTransport::new(None, receiver2, sender1),
+        Unbounded::new(None, receiver1, sender2),
+        Unbounded::new(None, receiver2, sender1),
     )
 }
 
 /// Creates a pair of unbounded channel transports with a name.
-pub fn unbounded_with_name<N>(name: N) -> (UnboundedTransport, UnboundedTransport)
+pub fn unbounded_with_name<N>(name: N) -> (Unbounded, Unbounded)
 where
     N: Into<String>,
 {
@@ -138,26 +138,26 @@ where
     let (sender2, receiver2) = mpsc::unbounded();
 
     (
-        UnboundedTransport::new(Some(name.clone()), receiver1, sender2),
-        UnboundedTransport::new(Some(name), receiver2, sender1),
+        Unbounded::new(Some(name.clone()), receiver1, sender2),
+        Unbounded::new(Some(name), receiver2, sender1),
     )
 }
 
 /// An unbounded channels-based transport for connecting a broker and a client in the same process.
 #[derive(Debug)]
-pub struct UnboundedTransport {
+pub struct Unbounded {
     name: Option<String>,
     receiver: mpsc::UnboundedReceiver<Message>,
     sender: mpsc::UnboundedSender<Message>,
 }
 
-impl UnboundedTransport {
+impl Unbounded {
     fn new(
         name: Option<String>,
         receiver: mpsc::UnboundedReceiver<Message>,
         sender: mpsc::UnboundedSender<Message>,
     ) -> Self {
-        UnboundedTransport {
+        Unbounded {
             name,
             receiver,
             sender,
@@ -165,7 +165,7 @@ impl UnboundedTransport {
     }
 }
 
-impl Stream for UnboundedTransport {
+impl Stream for Unbounded {
     type Item = Result<Message, Closed>;
 
     fn poll_next(
@@ -182,7 +182,7 @@ impl Stream for UnboundedTransport {
     }
 }
 
-impl Sink<Message> for UnboundedTransport {
+impl Sink<Message> for Unbounded {
     type Error = Closed;
 
     fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Closed>> {
@@ -210,7 +210,7 @@ impl Sink<Message> for UnboundedTransport {
     }
 }
 
-impl Transport for UnboundedTransport {
+impl Transport for Unbounded {
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
