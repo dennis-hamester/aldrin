@@ -1,12 +1,11 @@
 use super::{Packetizer, Serializer};
-use aldrin_proto::{Message, Transport};
+use aldrin_proto::{AsyncTransport, Message};
 use bytes::BytesMut;
-use futures_core::stream::Stream;
-use futures_sink::Sink;
 use pin_project::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
+use std::io::ErrorKind as IoErrorKind;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -27,7 +26,7 @@ where
     packetizer: P,
     serializer: S,
     read_buf: BytesMut,
-    write_buf: BytesMut,
+    write_buf: Option<BytesMut>,
     name: Option<String>,
 }
 
@@ -43,7 +42,7 @@ where
             packetizer,
             serializer,
             read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
-            write_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
+            write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
             name: None,
         }
     }
@@ -57,44 +56,13 @@ where
             packetizer,
             serializer,
             read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
-            write_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
+            write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
             name: Some(name.into()),
         }
     }
 }
 
-impl<T, P, S> Stream for TokioCodec<T, P, S>
-where
-    T: AsyncRead + AsyncWrite,
-    P: Packetizer,
-    S: Serializer,
-{
-    type Item = Result<Message, TokioCodecError<P::Error, S::Error>>;
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        let mut this = self.project();
-
-        loop {
-            match this.packetizer.decode(this.read_buf) {
-                Ok(Some(pkt)) => match this.serializer.deserialize(pkt) {
-                    Ok(msg) => return Poll::Ready(Some(Ok(msg))),
-                    Err(e) => return Poll::Ready(Some(Err(TokioCodecError::Serializer(e)))),
-                },
-                Ok(None) => {}
-                Err(e) => return Poll::Ready(Some(Err(TokioCodecError::Packetizer(e)))),
-            }
-
-            match this.io.as_mut().poll_read_buf(cx, this.read_buf) {
-                Poll::Ready(Ok(0)) => return Poll::Ready(None),
-                Poll::Ready(Ok(_)) => {}
-                Poll::Ready(Err(e)) => return Poll::Ready(Some(Err(TokioCodecError::Io(e)))),
-                Poll::Pending => return Poll::Pending,
-            }
-        }
-    }
-}
-
-impl<T, P, S> Sink<Message> for TokioCodec<T, P, S>
+impl<T, P, S> AsyncTransport for TokioCodec<T, P, S>
 where
     T: AsyncRead + AsyncWrite,
     P: Packetizer,
@@ -102,34 +70,67 @@ where
 {
     type Error = TokioCodecError<P::Error, S::Error>;
 
-    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        if self.write_buf.len() >= BACKPRESSURE_BOUNDARY {
-            self.poll_flush(cx)
-        } else {
-            Poll::Ready(Ok(()))
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<Message>, Self::Error>> {
+        let mut this = self.project();
+
+        loop {
+            match this.packetizer.decode(this.read_buf) {
+                Ok(Some(pkt)) => match this.serializer.deserialize(pkt) {
+                    Ok(msg) => return Poll::Ready(Ok(Some(msg))),
+                    Err(e) => return Poll::Ready(Err(TokioCodecError::Serializer(e))),
+                },
+                Ok(None) => {}
+                Err(e) => return Poll::Ready(Err(TokioCodecError::Packetizer(e))),
+            }
+
+            match this.io.as_mut().poll_read_buf(cx, this.read_buf) {
+                Poll::Ready(Ok(0)) => return Poll::Ready(Ok(None)),
+                Poll::Ready(Ok(_)) => {}
+                Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
+                Poll::Pending => return Poll::Pending,
+            }
         }
     }
 
-    fn start_send(self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        let mut this = self.project();
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Self::Error>> {
+        let write_buf = self.write_buf.as_ref().unwrap();
+
+        if write_buf.len() >= BACKPRESSURE_BOUNDARY {
+            self.send_poll_flush(cx).map_ok(|_| true)
+        } else {
+            Poll::Ready(Ok(true))
+        }
+    }
+
+    fn send_start(self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
+        let this = self.project();
+        let write_buf = this.write_buf.as_mut().unwrap();
 
         let mut pkt = BytesMut::new();
-        if let Err(e) = this.serializer.serialize(item, &mut pkt) {
+        if let Err(e) = this.serializer.serialize(msg, &mut pkt) {
             return Err(TokioCodecError::Serializer(e));
         }
 
-        if let Err(e) = this.packetizer.encode(pkt.freeze(), &mut this.write_buf) {
+        if let Err(e) = this.packetizer.encode(pkt.freeze(), write_buf) {
             return Err(TokioCodecError::Packetizer(e));
         }
 
         Ok(())
     }
 
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         let mut this = self.project();
+        let write_buf = this.write_buf.as_mut().unwrap();
 
-        while !this.write_buf.is_empty() {
-            match this.io.as_mut().poll_write_buf(cx, &mut this.write_buf) {
+        while !write_buf.is_empty() {
+            match this.io.as_mut().poll_write_buf(cx, write_buf) {
+                Poll::Ready(Ok(0)) => {
+                    this.write_buf.take();
+                    return Poll::Ready(Err(TokioCodecError::Io(IoErrorKind::WriteZero.into())));
+                }
                 Poll::Ready(Ok(_)) => {}
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
                 Poll::Pending => return Poll::Pending,
@@ -139,25 +140,19 @@ where
         this.io.poll_flush(cx).map_err(TokioCodecError::Io)
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        match self.as_mut().poll_flush(cx) {
-            Poll::Ready(Ok(())) => {}
-            p => return p,
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        if self.write_buf.is_some() {
+            match self.as_mut().send_poll_flush(cx) {
+                Poll::Ready(Ok(())) => {}
+                p => return p,
+            }
         }
 
-        self.project()
-            .io
-            .poll_shutdown(cx)
-            .map_err(TokioCodecError::Io)
+        let this = self.project();
+        this.write_buf.take();
+        this.io.poll_shutdown(cx).map_err(TokioCodecError::Io)
     }
-}
 
-impl<T, P, S> Transport for TokioCodec<T, P, S>
-where
-    T: AsyncRead + AsyncWrite,
-    P: Packetizer,
-    S: Serializer,
-{
     fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
