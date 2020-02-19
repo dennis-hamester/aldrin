@@ -3,8 +3,9 @@
 
 mod key_value;
 mod message;
-mod transport;
 mod value;
+
+pub mod transport;
 
 use std::error::Error;
 use std::fmt;

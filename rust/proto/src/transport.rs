@@ -1,4 +1,5 @@
 use super::Message;
+use std::future::Future;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -265,5 +266,163 @@ where
 
     fn name(&self) -> Option<&str> {
         T::name(*self)
+    }
+}
+
+pub trait AsyncTransportExt: AsyncTransport {
+    fn receive(&mut self) -> Receive<'_, Self>
+    where
+        Self: Unpin,
+    {
+        Receive(self)
+    }
+
+    fn send(&mut self, msg: Message) -> Send<'_, Self>
+    where
+        Self: Unpin,
+    {
+        Send {
+            t: self,
+            msg: Some(msg),
+        }
+    }
+
+    fn flush(&mut self) -> Flush<'_, Self>
+    where
+        Self: Unpin,
+    {
+        Flush(self)
+    }
+
+    fn shutdown(&mut self) -> Shutdown<'_, Self>
+    where
+        Self: Unpin,
+    {
+        Shutdown(self)
+    }
+
+    fn receive_poll_unpin(&mut self, cx: &mut Context) -> Poll<Result<Option<Message>, Self::Error>>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).receive_poll(cx)
+    }
+
+    fn send_poll_ready_unpin(&mut self, cx: &mut Context) -> Poll<Result<bool, Self::Error>>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).send_poll_ready(cx)
+    }
+
+    fn send_start_unpin(&mut self, msg: Message) -> Result<(), Self::Error>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).send_start(msg)
+    }
+
+    fn send_poll_flush_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).send_poll_flush(cx)
+    }
+
+    fn poll_shutdown_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
+    where
+        Self: Unpin,
+    {
+        Pin::new(self).poll_shutdown(cx)
+    }
+}
+
+impl<T> AsyncTransportExt for T where T: AsyncTransport {}
+
+#[derive(Debug)]
+pub struct Receive<'a, T>(&'a mut T)
+where
+    T: AsyncTransport + Unpin + ?Sized;
+
+impl<'a, T> Future for Receive<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Output = Result<Option<Message>, T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        self.0.receive_poll_unpin(cx)
+    }
+}
+
+#[derive(Debug)]
+pub struct Send<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    t: &'a mut T,
+    msg: Option<Message>,
+}
+
+impl<'a, T> Future for Send<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Output = Result<bool, T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        match self.t.send_poll_ready_unpin(cx) {
+            Poll::Ready(Ok(true)) => {
+                let msg = self.msg.take().unwrap();
+                if let Err(e) = self.t.send_start_unpin(msg) {
+                    return Poll::Ready(Err(e));
+                }
+                Poll::Ready(Ok(true))
+            }
+
+            Poll::Ready(Ok(false)) => {
+                self.msg.take();
+                Poll::Ready(Ok(false))
+            }
+
+            Poll::Ready(Err(e)) => {
+                self.msg.take();
+                Poll::Ready(Err(e))
+            }
+
+            Poll::Pending => Poll::Pending,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Flush<'a, T>(&'a mut T)
+where
+    T: AsyncTransport + Unpin + ?Sized;
+
+impl<'a, T> Future for Flush<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Output = Result<(), T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        self.0.send_poll_flush_unpin(cx)
+    }
+}
+
+#[derive(Debug)]
+pub struct Shutdown<'a, T>(&'a mut T)
+where
+    T: AsyncTransport + Unpin + ?Sized;
+
+impl<'a, T> Future for Shutdown<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Output = Result<(), T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        self.0.poll_shutdown_unpin(cx)
     }
 }
