@@ -1,4 +1,5 @@
 use super::Message;
+use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -149,5 +150,120 @@ pub trait AsyncTransport {
     /// This method may be called at any time, regardless of the shutdown or error state.
     fn name(&self) -> Option<&str> {
         None
+    }
+}
+
+impl<T> AsyncTransport for Pin<T>
+where
+    T: DerefMut + Unpin,
+    T::Target: AsyncTransport,
+{
+    type Error = <T::Target as AsyncTransport>::Error;
+
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<Message>, Self::Error>> {
+        self.get_mut().as_mut().receive_poll(cx)
+    }
+
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Self::Error>> {
+        self.get_mut().as_mut().send_poll_ready(cx)
+    }
+
+    fn send_start(self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
+        self.get_mut().as_mut().send_start(msg)
+    }
+
+    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.get_mut().as_mut().send_poll_flush(cx)
+    }
+
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.get_mut().as_mut().poll_shutdown(cx)
+    }
+
+    fn name(&self) -> Option<&str> {
+        (**self).name()
+    }
+}
+
+impl<T> AsyncTransport for Box<T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Error = T::Error;
+
+    fn receive_poll(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<Message>, Self::Error>> {
+        Pin::new(&mut **self).receive_poll(cx)
+    }
+
+    fn send_poll_ready(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<bool, Self::Error>> {
+        Pin::new(&mut **self).send_poll_ready(cx)
+    }
+
+    fn send_start(mut self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
+        Pin::new(&mut **self).send_start(msg)
+    }
+
+    fn send_poll_flush(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<(), Self::Error>> {
+        Pin::new(&mut **self).send_poll_flush(cx)
+    }
+
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        Pin::new(&mut **self).poll_shutdown(cx)
+    }
+
+    fn name(&self) -> Option<&str> {
+        (**self).name()
+    }
+}
+
+impl<T> AsyncTransport for &mut T
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Error = T::Error;
+
+    fn receive_poll(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<Message>, Self::Error>> {
+        T::receive_poll(Pin::new(&mut **self), cx)
+    }
+
+    fn send_poll_ready(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<bool, Self::Error>> {
+        T::send_poll_ready(Pin::new(&mut **self), cx)
+    }
+
+    fn send_start(mut self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
+        T::send_start(Pin::new(&mut **self), msg)
+    }
+
+    fn send_poll_flush(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<(), Self::Error>> {
+        T::send_poll_flush(Pin::new(&mut **self), cx)
+    }
+
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        T::poll_shutdown(Pin::new(&mut **self), cx)
+    }
+
+    fn name(&self) -> Option<&str> {
+        T::name(*self)
     }
 }
