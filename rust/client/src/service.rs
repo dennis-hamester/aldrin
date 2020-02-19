@@ -129,7 +129,6 @@ struct Inner {
 /// A [`ServiceId`] consists of an arbitrary UUID, and a cookie chosen by the server. The
 /// combination of both is unique at all times across the whole Aldrin bus.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[non_exhaustive]
 pub struct ServiceId {
     /// Object id to which the service belongs.
     pub object_id: ObjectId,
