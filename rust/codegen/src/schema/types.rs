@@ -5,6 +5,7 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub(crate) enum Type {
+    Bool,
     U8,
     U16,
     U32,
@@ -28,6 +29,8 @@ pub(crate) enum Type {
 impl Type {
     pub fn from_type_name(pair: Pair<Rule>) -> Result<Self, Error> {
         match pair.as_rule() {
+            Rule::bool_type => Ok(Type::Bool),
+
             Rule::int_type => match pair.as_str() {
                 "u8" => Ok(Type::U8),
                 "u16" => Ok(Type::U16),

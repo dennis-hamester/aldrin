@@ -1039,6 +1039,7 @@ fn event_variant_type(s: &Service, e: &Event) -> String {
 
 fn gen_type(t: &Type) -> String {
     match t {
+        Type::Bool => "bool".to_owned(),
         Type::U8 => "u8".to_owned(),
         Type::I8 => "i8".to_owned(),
         Type::U16 => "u16".to_owned(),

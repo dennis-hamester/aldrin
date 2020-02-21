@@ -32,7 +32,8 @@ set_type = { "set" ~ "<" ~ map_key_type ~ ">" }
 extern_type_name = ${ module ~ "::" ~ ident }
 
 type_name = _{
-    int_type
+    bool_type
+    | int_type
     | float_type
     | string_type
     | uuid_type
