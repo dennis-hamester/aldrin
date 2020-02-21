@@ -4,6 +4,7 @@ use uuid::Uuid;
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum KeyValue {
+    Bool(bool),
     U8(u8),
     I8(i8),
     U16(u16),
@@ -33,6 +34,21 @@ impl FromKeyValue for KeyValue {
 impl IntoKeyValue for KeyValue {
     fn into_key_value(self) -> KeyValue {
         self
+    }
+}
+
+impl FromKeyValue for bool {
+    fn from_key_value(v: KeyValue) -> Result<bool, ConversionError> {
+        match v {
+            KeyValue::Bool(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoKeyValue for bool {
+    fn into_key_value(self) -> KeyValue {
+        KeyValue::Bool(self)
     }
 }
 

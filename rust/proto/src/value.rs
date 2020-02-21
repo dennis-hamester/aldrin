@@ -7,6 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub enum Value {
     None,
+    Bool(bool),
     U8(u8),
     I8(i8),
     U16(u16),
@@ -29,6 +30,7 @@ pub enum Value {
 impl From<KeyValue> for Value {
     fn from(v: KeyValue) -> Value {
         match v {
+            KeyValue::Bool(v) => Value::Bool(v),
             KeyValue::U8(v) => Value::U8(v),
             KeyValue::I8(v) => Value::I8(v),
             KeyValue::U16(v) => Value::U16(v),
@@ -84,6 +86,21 @@ where
             Some(v) => v.into_value(),
             None => Value::None,
         }
+    }
+}
+
+impl FromValue for bool {
+    fn from_value(v: Value) -> Result<bool, ConversionError> {
+        match v {
+            Value::Bool(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for bool {
+    fn into_value(self) -> Value {
+        Value::Bool(self)
     }
 }
 
