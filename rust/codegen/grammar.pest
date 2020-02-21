@@ -19,13 +19,14 @@ lit_uuid = @{
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 module = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 
+bool_type = { "bool" }
 int_type = { "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
 float_type = { "f32" | "f64" }
 string_type = { "string" }
 uuid_type = { "uuid" }
 value_type = { "value" }
 vec_type = { "vec" ~ "<" ~ type_name ~ ">" }
-map_key_type = _{ int_type | string_type | uuid_type }
+map_key_type = _{ bool_type | int_type | string_type | uuid_type }
 map_type = { "map" ~ "<" ~ map_key_type ~ "->" ~ type_name ~ ">" }
 set_type = { "set" ~ "<" ~ map_key_type ~ ">" }
 extern_type_name = ${ module ~ "::" ~ ident }
