@@ -1,5 +1,6 @@
 use super::Message;
 use std::future::Future;
+use std::mem;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -294,6 +295,13 @@ pub trait AsyncTransportExt: AsyncTransport {
         Flush(self)
     }
 
+    fn send_and_flush(&mut self, msg: Message) -> SendFlush<'_, Self>
+    where
+        Self: Unpin,
+    {
+        SendFlush(SendFlushInner::Send(self.send(msg)))
+    }
+
     fn shutdown(&mut self) -> Shutdown<'_, Self>
     where
         Self: Unpin,
@@ -408,6 +416,50 @@ where
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         self.0.send_poll_flush_unpin(cx)
+    }
+}
+
+#[derive(Debug)]
+pub struct SendFlush<'a, T>(SendFlushInner<'a, T>)
+where
+    T: AsyncTransport + Unpin + ?Sized;
+
+#[derive(Debug)]
+enum SendFlushInner<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    Send(Send<'a, T>),
+    Flush(Flush<'a, T>),
+    None,
+}
+
+impl<'a, T> Future for SendFlush<'a, T>
+where
+    T: AsyncTransport + Unpin + ?Sized,
+{
+    type Output = Result<bool, T::Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        if let SendFlushInner::Send(ref mut send) = self.0 {
+            match Pin::new(send).poll(cx) {
+                Poll::Ready(Ok(true)) => {}
+                p => return p,
+            }
+
+            let mut tmp = SendFlushInner::None;
+            mem::swap(&mut tmp, &mut self.0);
+            let t = match tmp {
+                SendFlushInner::Send(s) => s.t,
+                _ => unreachable!(),
+            };
+            self.0 = SendFlushInner::Flush(Flush(t));
+        }
+
+        match self.0 {
+            SendFlushInner::Flush(ref mut flush) => Pin::new(flush).poll(cx).map_ok(|_| true),
+            _ => unreachable!(),
+        }
     }
 }
 
