@@ -20,7 +20,8 @@ pub enum ConnectError<T> {
 
     /// The transport returned an error.
     ///
-    /// This should usually be the error type defined by the [`Transport`](aldrin_proto::Transport).
+    /// This should usually be the error type defined by the
+    /// [`AsyncTransport`](aldrin_proto::AsyncTransport).
     Transport(T),
 }
 
@@ -66,7 +67,8 @@ pub enum RunError<T> {
 
     /// The transport returned an error.
     ///
-    /// This should usually be the error type defined by the [`Transport`](aldrin_proto::Transport).
+    /// This should usually be the error type defined by the
+    /// [`AsyncTransport`](aldrin_proto::AsyncTransport).
     Transport(T),
 }
 
