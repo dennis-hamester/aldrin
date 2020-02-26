@@ -1,10 +1,10 @@
 use super::BrokerError;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
+use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, SendError, Sender};
 use futures_util::sink::SinkExt;
-use futures_util::stream::StreamExt;
 use std::future::Future;
 
 #[derive(Debug, Clone)]
@@ -27,20 +27,21 @@ impl BrokerHandle {
         fifo_size: usize,
     ) -> Result<Connection<T>, EstablishError<T::Error>>
     where
-        T: Transport + Unpin,
+        T: AsyncTransport + Unpin,
     {
         match t
-            .next()
-            .await
-            .ok_or(EstablishError::UnexpectedClientShutdown)??
+            .receive()
+            .await?
+            .ok_or(EstablishError::UnexpectedClientShutdown)?
         {
             Message::Connect(msg) if msg.version == VERSION => {
-                t.send(Message::ConnectReply(ConnectReply::Ok)).await?;
+                t.send_and_flush(Message::ConnectReply(ConnectReply::Ok))
+                    .await?;
                 Ok(())
             }
 
             Message::Connect(msg) => {
-                t.send(Message::ConnectReply(ConnectReply::VersionMismatch(
+                t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
                     VERSION,
                 )))
                 .await

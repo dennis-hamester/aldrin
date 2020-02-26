@@ -4,7 +4,7 @@ mod handle;
 
 use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
-use aldrin_proto::Transport;
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use futures_channel::mpsc::{Receiver, Sender};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
@@ -18,7 +18,7 @@ pub use handle::ConnectionHandle;
 #[derive(Debug)]
 pub struct Connection<T>
 where
-    T: Transport + Unpin,
+    T: AsyncTransport + Unpin,
 {
     t: T,
     send: Sender<ConnectionEvent>,
@@ -28,7 +28,7 @@ where
 
 impl<T> Connection<T>
 where
-    T: Transport + Unpin,
+    T: AsyncTransport + Unpin,
 {
     pub(crate) fn new(
         t: T,
@@ -52,14 +52,14 @@ where
         let id = self.handle.take().unwrap().into_id();
 
         loop {
-            match select(self.recv.next(), self.t.next()).await {
+            match select(self.recv.next(), self.t.receive()).await {
                 Either::Left((Some(BrokerEvent::Message(msg)), _)) => {
-                    if let Err(e) = self.t.send(msg).await {
+                    if let Err(e) = self.t.send_and_flush(msg).await {
                         return self.shutdown(id, Err(e.into())).await;
                     }
                 }
 
-                Either::Right((Some(Ok(msg)), _)) => {
+                Either::Right((Ok(Some(msg)), _)) => {
                     if let Err(e) = self
                         .send
                         .send(ConnectionEvent::Message(id.clone(), msg))
@@ -77,8 +77,8 @@ where
                     return Ok(())
                 }
 
-                Either::Right((Some(Err(e)), _)) => return self.shutdown(id, Err(e.into())).await,
-                Either::Right((None, _)) => return self.shutdown(id, Ok(())).await,
+                Either::Right((Err(e), _)) => return self.shutdown(id, Err(e.into())).await,
+                Either::Right((Ok(None), _)) => return self.shutdown(id, Ok(())).await,
             }
         }
     }
