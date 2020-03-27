@@ -1,6 +1,6 @@
-use super::{ConversionError, FromKeyValue, IntoKeyValue, KeyValue};
 use std::collections::{HashMap, HashSet};
-use std::hash::{BuildHasher, Hash};
+use std::error::Error;
+use std::fmt;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
@@ -21,28 +21,30 @@ pub enum Value {
     String(String),
     Uuid(Uuid),
     Vec(Vec<Value>),
-    Map(HashMap<KeyValue, Value>),
-    Set(HashSet<KeyValue>),
+    BoolMap(HashMap<bool, Value>),
+    U8Map(HashMap<u8, Value>),
+    I8Map(HashMap<i8, Value>),
+    U16Map(HashMap<u16, Value>),
+    I16Map(HashMap<i16, Value>),
+    U32Map(HashMap<u32, Value>),
+    I32Map(HashMap<i32, Value>),
+    U64Map(HashMap<u64, Value>),
+    I64Map(HashMap<i64, Value>),
+    StringMap(HashMap<String, Value>),
+    UuidMap(HashMap<Uuid, Value>),
+    BoolSet(HashSet<bool>),
+    U8Set(HashSet<u8>),
+    I8Set(HashSet<i8>),
+    U16Set(HashSet<u16>),
+    I16Set(HashSet<i16>),
+    U32Set(HashSet<u32>),
+    I32Set(HashSet<i32>),
+    U64Set(HashSet<u64>),
+    I64Set(HashSet<i64>),
+    StringSet(HashSet<String>),
+    UuidSet(HashSet<Uuid>),
     Struct(HashMap<u32, Value>),
     Enum(u32, Box<Value>),
-}
-
-impl From<KeyValue> for Value {
-    fn from(v: KeyValue) -> Value {
-        match v {
-            KeyValue::Bool(v) => Value::Bool(v),
-            KeyValue::U8(v) => Value::U8(v),
-            KeyValue::I8(v) => Value::I8(v),
-            KeyValue::U16(v) => Value::U16(v),
-            KeyValue::I16(v) => Value::I16(v),
-            KeyValue::U32(v) => Value::U32(v),
-            KeyValue::I32(v) => Value::I32(v),
-            KeyValue::U64(v) => Value::U64(v),
-            KeyValue::I64(v) => Value::I64(v),
-            KeyValue::String(v) => Value::String(v),
-            KeyValue::Uuid(v) => Value::Uuid(v),
-        }
-    }
 }
 
 pub trait FromValue: Sized {
@@ -311,57 +313,87 @@ where
     }
 }
 
-#[allow(clippy::implicit_hasher)]
-impl<K, V> FromValue for HashMap<K, V>
-where
-    K: FromKeyValue + Eq + Hash,
-    V: FromValue,
-{
-    fn from_value(v: Value) -> Result<HashMap<K, V>, ConversionError> {
-        match v {
-            Value::Map(v) => v
-                .into_iter()
-                .map(|(k, v)| K::from_key_value(k).and_then(|k| V::from_value(v).map(|v| (k, v))))
-                .collect(),
-            _ => Err(ConversionError),
+macro_rules! impl_map {
+    ($key:ty, $var:ident) => {
+        #[allow(clippy::implicit_hasher)]
+        impl<V> FromValue for HashMap<$key, V>
+        where
+            V: FromValue,
+        {
+            fn from_value(v: Value) -> Result<HashMap<$key, V>, ConversionError> {
+                match v {
+                    Value::$var(v) => v
+                        .into_iter()
+                        .map(|(k, v)| V::from_value(v).map(|v| (k, v)))
+                        .collect(),
+                    _ => Err(ConversionError),
+                }
+            }
         }
-    }
-}
 
-impl<K, V, S> IntoValue for HashMap<K, V, S>
-where
-    K: IntoKeyValue,
-    V: IntoValue,
-    S: BuildHasher,
-{
-    fn into_value(self) -> Value {
-        Value::Map(
-            self.into_iter()
-                .map(|(k, v)| (k.into_key_value(), v.into_value()))
-                .collect(),
-        )
-    }
-}
-
-#[allow(clippy::implicit_hasher)]
-impl<T> FromValue for HashSet<T>
-where
-    T: FromKeyValue + Eq + Hash,
-{
-    fn from_value(v: Value) -> Result<HashSet<T>, ConversionError> {
-        match v {
-            Value::Set(v) => v.into_iter().map(T::from_key_value).collect(),
-            _ => Err(ConversionError),
+        impl<V, S> IntoValue for HashMap<$key, V, S>
+        where
+            V: IntoValue,
+        {
+            fn into_value(self) -> Value {
+                Value::$var(self.into_iter().map(|(k, v)| (k, v.into_value())).collect())
+            }
         }
+    };
+}
+
+impl_map!(bool, BoolMap);
+impl_map!(u8, U8Map);
+impl_map!(i8, I8Map);
+impl_map!(u16, U16Map);
+impl_map!(i16, I16Map);
+impl_map!(u32, U32Map);
+impl_map!(i32, I32Map);
+impl_map!(u64, U64Map);
+impl_map!(i64, I64Map);
+impl_map!(String, StringMap);
+impl_map!(Uuid, UuidMap);
+
+macro_rules! impl_set {
+    ($key:ty, $var:ident) => {
+        #[allow(clippy::implicit_hasher)]
+        impl FromValue for HashSet<$key> {
+            fn from_value(v: Value) -> Result<HashSet<$key>, ConversionError> {
+                match v {
+                    Value::$var(v) => Ok(v),
+                    _ => Err(ConversionError),
+                }
+            }
+        }
+
+        #[allow(clippy::implicit_hasher)]
+        impl IntoValue for HashSet<$key> {
+            fn into_value(self) -> Value {
+                Value::$var(self)
+            }
+        }
+    };
+}
+
+impl_set!(bool, BoolSet);
+impl_set!(u8, U8Set);
+impl_set!(i8, I8Set);
+impl_set!(u16, U16Set);
+impl_set!(i16, I16Set);
+impl_set!(u32, U32Set);
+impl_set!(i32, I32Set);
+impl_set!(u64, U64Set);
+impl_set!(i64, I64Set);
+impl_set!(String, StringSet);
+impl_set!(Uuid, UuidSet);
+
+#[derive(Debug, Clone, Copy)]
+pub struct ConversionError;
+
+impl fmt::Display for ConversionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid conversion")
     }
 }
 
-impl<T, S> IntoValue for HashSet<T, S>
-where
-    T: IntoKeyValue,
-    S: BuildHasher,
-{
-    fn into_value(self) -> Value {
-        Value::Set(self.into_iter().map(T::into_key_value).collect())
-    }
-}
+impl Error for ConversionError {}
