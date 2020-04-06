@@ -112,6 +112,7 @@ fn format(o: &mut RustOutput) -> Result<(), Error> {
     }
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "#[non_exhaustive]");
@@ -120,12 +121,7 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
         if f.required {
             genln!(o, "    pub {}: {},", f.name.0, gen_type(&f.field_type));
         } else {
-            genln!(
-                o,
-                "    pub {}: Option<{}>,",
-                f.name.0,
-                gen_type(&f.field_type)
-            );
+            genln!(o, "    pub {}: Option<{}>,", f.name.0, gen_type(&f.field_type));
         }
     }
     genln!(o, "}}");
@@ -138,42 +134,19 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{",
-        s
-    );
-    genln!(
-        o,
-        "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{"
-    );
+    genln!(o, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", s);
+    genln!(o, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
     genln!(o, "        let mut v = match v {{");
-    genln!(
-        o,
-        "            aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,"
-    );
-    genln!(
-        o,
-        "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),"
-    );
+    genln!(o, "            aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,");
+    genln!(o, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
     genln!(o, "        }};");
     genln!(o);
     genln!(o, "        Ok({} {{", s);
     for f in fs {
         if f.required {
-            genln!(
-                o,
-                "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).ok_or(aldrin_client::codegen::aldrin_proto::ConversionError)?)?,",
-                f.name.0,
-                f.id
-            );
+            genln!(o, "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).ok_or(aldrin_client::codegen::aldrin_proto::ConversionError)?)?,", f.name.0, f.id);
         } else {
-            genln!(
-                o,
-                "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,",
-                f.name.0,
-                f.id
-            );
+            genln!(o, "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,", f.name.0, f.id);
         }
     }
     genln!(o, "        }})");
@@ -181,39 +154,19 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{",
-        s
-    );
-    genln!(
-        o,
-        "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{"
-    );
+    genln!(o, "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{", s);
+    genln!(o, "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{");
     genln!(o, "        let mut v = std::collections::HashMap::new();");
     for f in fs {
         if f.required {
-            genln!(
-                o,
-                "        v.insert({}, self.{}.into_value());",
-                f.id,
-                f.name.0
-            );
+            genln!(o, "        v.insert({}, self.{}.into_value());", f.id, f.name.0);
         } else {
             genln!(o, "        if let Some({0}) = self.{0} {{", f.name.0);
-            genln!(
-                o,
-                "            v.insert({}, {}.into_value());",
-                f.id,
-                f.name.0
-            );
+            genln!(o, "            v.insert({}, {}.into_value());", f.id, f.name.0);
             genln!(o, "        }}");
         }
     }
-    genln!(
-        o,
-        "        aldrin_client::codegen::aldrin_proto::Value::Struct(v)"
-    );
+    genln!(o, "        aldrin_client::codegen::aldrin_proto::Value::Struct(v)");
     genln!(o, "    }}");
     genln!(o, "}}");
     genln!(o);
@@ -235,42 +188,24 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o);
     for f in fs {
         if f.required {
-            genln!(
-                o,
-                "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{",
-                f.name.0,
-                gen_type(&f.field_type)
-            );
+            genln!(o, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", f.name.0, gen_type(&f.field_type));
             genln!(o, "        self.{0} = Some({0});", f.name.0);
             genln!(o, "        self");
             genln!(o, "    }}");
             genln!(o);
         } else {
-            genln!(
-                o,
-                "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{",
-                f.name.0,
-                gen_type(&f.field_type)
-            );
+            genln!(o, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", f.name.0, gen_type(&f.field_type));
             genln!(o, "        self.{0} = {0};", f.name.0);
             genln!(o, "        self");
             genln!(o, "    }}");
             genln!(o);
         }
     }
-    genln!(
-        o,
-        "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{",
-        s
-    );
+    genln!(o, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", s);
     genln!(o, "        Ok({} {{", s);
     for f in fs {
         if f.required {
-            genln!(
-                o,
-                "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,",
-                f.name.0
-            );
+            genln!(o, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", f.name.0);
         } else {
             genln!(o, "            {0}: self.{0},", f.name.0);
         }
@@ -283,6 +218,7 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     Ok(())
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error> {
     for v in vs {
         if let Some(TypeOrInline::Struct(s)) = &v.variant_type {
@@ -306,82 +242,35 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{",
-        e
-    );
-    genln!(
-        o,
-        "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{"
-    );
+    genln!(o, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", e);
+    genln!(o, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
     genln!(o, "        let (d, v) = match v {{");
-    genln!(
-        o,
-        "            aldrin_client::codegen::aldrin_proto::Value::Enum(d, v) => (d, *v),"
-    );
-    genln!(
-        o,
-        "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),"
-    );
+    genln!(o, "            aldrin_client::codegen::aldrin_proto::Value::Enum(d, v) => (d, *v),");
+    genln!(o, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
     genln!(o, "        }};");
     genln!(o);
     genln!(o, "        match (d, v) {{");
     for v in vs {
         if v.variant_type.is_some() {
-            genln!(
-                o,
-                "            ({}, v) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v)?)),",
-                v.id,
-                e,
-                v.name.0
-            );
+            genln!(o, "            ({}, v) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v)?)),", v.id, e, v.name.0);
         } else {
-            genln!(
-                o,
-                "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),",
-                v.id,
-                e,
-                v.name.0
-            );
+            genln!(o, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", v.id, e, v.name.0);
         }
     }
-    genln!(
-        o,
-        "            _ => Err(aldrin_client::codegen::aldrin_proto::ConversionError),"
-    );
+    genln!(o, "            _ => Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
     genln!(o, "        }}");
     genln!(o, "    }}");
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{",
-        e
-    );
-    genln!(
-        o,
-        "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{"
-    );
+    genln!(o, "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{", e);
+    genln!(o, "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{");
     genln!(o, "        match self {{");
     for v in vs {
         if v.variant_type.is_some() {
-            genln!(
-                o,
-                "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(v.into_value())),",
-                e,
-                v.name.0,
-                v.id
-            );
+            genln!(o, "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(v.into_value())),", e, v.name.0, v.id);
         } else {
-            genln!(
-                o,
-                "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(aldrin_client::codegen::aldrin_proto::Value::None)),",
-                e,
-                v.name.0,
-                v.id
-            );
+            genln!(o, "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(aldrin_client::codegen::aldrin_proto::Value::None)),", e, v.name.0, v.id);
         }
     }
     genln!(o, "        }}");
@@ -399,17 +288,13 @@ fn enum_variant_name(e: &str, v: &EnumVariant) -> String {
     }
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     if !o.options.client && !o.options.server {
         return Ok(());
     }
 
-    genln!(
-        o,
-        "pub const {}_UUID: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid(aldrin_client::codegen::uuid::Uuid::from_u128({:#034x}));",
-        s.name.0.to_shouty_snake_case(),
-        s.uuid.as_u128()
-    );
+    genln!(o, "pub const {}_UUID: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid(aldrin_client::codegen::uuid::Uuid::from_u128({:#034x}));", s.name.0.to_shouty_snake_case(), s.uuid.as_u128());
     genln!(o);
 
     for e in &s.elems {
@@ -457,6 +342,7 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     Ok(())
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "pub struct {}Proxy {{", s.name.0);
@@ -469,21 +355,11 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {}Proxy {{", s.name.0);
-    genln!(
-        o,
-        "    pub fn bind(client: aldrin_client::Handle, id: aldrin_client::ServiceId) -> Result<Self, aldrin_client::Error> {{"
-    );
-    genln!(
-        o,
-        "        if id.uuid == {}_UUID {{",
-        s.name.0.to_shouty_snake_case()
-    );
+    genln!(o, "    pub fn bind(client: aldrin_client::Handle, id: aldrin_client::ServiceId) -> Result<Self, aldrin_client::Error> {{");
+    genln!(o, "        if id.uuid == {}_UUID {{", s.name.0.to_shouty_snake_case());
     genln!(o, "            Ok({}Proxy {{ client, id }})", s.name.0);
     genln!(o, "        }} else {{");
-    genln!(
-        o,
-        "            Err(aldrin_client::Error::InvalidService(id))"
-    );
+    genln!(o, "            Err(aldrin_client::Error::InvalidService(id))");
     genln!(o, "        }}");
     genln!(o, "    }}");
     genln!(o);
@@ -515,54 +391,25 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             ),
         };
 
-        genln!(
-            o,
-            "    pub async fn {}(&mut self{}) -> Result<{}, aldrin_client::Error> {{",
-            f.name.0,
-            arg,
-            res
-        );
+        genln!(o, "    pub async fn {}(&mut self{}) -> Result<{}, aldrin_client::Error> {{", f.name.0, arg, res);
         if f.args.is_some() {
-            genln!(
-                o,
-                "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await? {{",
-                f.id
-            );
+            genln!(o, "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await? {{", f.id);
         } else {
-            genln!(
-                o,
-                "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await? {{",
-                f.id
-            );
+            genln!(o, "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await? {{", f.id);
         }
         match (f.ok.is_some(), f.err.is_some()) {
             (false, false) => {
-                genln!(
-                    o,
-                    "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(()),"
-                );
-                genln!(
-                    o,
-                    "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),"
-                );
+                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(()),");
+                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
             }
             (true, false) => {
                 genln!(o, "            Ok(v) => Ok(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?),");
-                genln!(
-                    o,
-                    "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),"
-                );
+                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
             }
             (false, true) => {
-                genln!(
-                    o,
-                    "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(Ok(())),"
-                );
+                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(Ok(())),");
                 genln!(o, "            Err(v) => Ok(Err(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
-                genln!(
-                    o,
-                    "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),"
-                );
+                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
             }
             (true, true) => {
                 genln!(o, "            Ok(v) => Ok(Ok(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
@@ -574,11 +421,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         genln!(o);
     }
 
-    genln!(
-        o,
-        "    pub fn events(&self, fifo_size: usize) -> {}Events {{",
-        s.name.0
-    );
+    genln!(o, "    pub fn events(&self, fifo_size: usize) -> {}Events {{", s.name.0);
     genln!(o, "        {}Events {{", s.name.0);
     genln!(o, "            events: self.client.events(fifo_size),");
     genln!(o, "            id: self.id,");
@@ -608,51 +451,25 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             _ => continue,
         };
 
-        genln!(
-            o,
-            "    pub async fn subscribe_{}(&mut self) -> Result<bool, aldrin_client::Error> {{",
-            e.name.0
-        );
+        genln!(o, "    pub async fn subscribe_{}(&mut self) -> Result<bool, aldrin_client::Error> {{", e.name.0);
         genln!(o, "        self.events.subscribe(self.id, {}).await", e.id);
         genln!(o, "    }}");
         genln!(o);
-        genln!(
-            o,
-            "    pub async fn unsubscribe_{}(&mut self) -> Result<bool, aldrin_client::Error> {{",
-            e.name.0
-        );
-        genln!(
-            o,
-            "        self.events.unsubscribe(self.id, {}).await",
-            e.id
-        );
+        genln!(o, "    pub async fn unsubscribe_{}(&mut self) -> Result<bool, aldrin_client::Error> {{", e.name.0);
+        genln!(o, "        self.events.unsubscribe(self.id, {}).await", e.id);
         genln!(o, "    }}");
         genln!(o);
     }
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::futures_core::stream::Stream for {}Events {{",
-        s.name.0
-    );
+    genln!(o, "impl aldrin_client::codegen::futures_core::stream::Stream for {}Events {{", s.name.0);
     genln!(o, "    type Item = {}Event;", s.name.0);
     genln!(o);
-    genln!(
-        o,
-        "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}Event>> {{",
-        s.name.0
-    );
+    genln!(o, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}Event>> {{", s.name.0);
     genln!(o, "        loop {{");
-    genln!(
-        o,
-        "            match std::pin::Pin::new(&mut self.events).poll_next(cx) {{"
-    );
-    genln!(
-        o,
-        "                std::task::Poll::Ready(Some(ev)) => match ev.id {{"
-    );
+    genln!(o, "            match std::pin::Pin::new(&mut self.events).poll_next(cx) {{");
+    genln!(o, "                std::task::Poll::Ready(Some(ev)) => match ev.id {{");
     for e in &s.elems {
         let e = match e {
             ServiceElement::Event(e) => e,
@@ -661,25 +478,12 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
         genln!(o, "                    {} => {{", e.id);
         if e.event_type.is_some() {
-            genln!(
-                o,
-                "                        if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(ev.args) {{"
-            );
-            genln!(
-                o,
-                "                            return std::task::Poll::Ready(Some({}Event::{}(arg)));",
-                s.name.0,
-                e.name.0.to_camel_case()
-            );
+            genln!(o, "                        if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(ev.args) {{");
+            genln!(o, "                            return std::task::Poll::Ready(Some({}Event::{}(arg)));", s.name.0, e.name.0.to_camel_case());
             genln!(o, "                        }}");
         } else {
             genln!(o, "                        if let aldrin_client::codegen::aldrin_proto::Value::None = ev.args {{");
-            genln!(
-                o,
-                "                            return std::task::Poll::Ready(Some({}Event::{}));",
-                s.name.0,
-                e.name.0.to_camel_case()
-            );
+            genln!(o, "                            return std::task::Poll::Ready(Some({}Event::{}));", s.name.0, e.name.0.to_camel_case());
             genln!(o, "                        }}");
         }
         genln!(o, "                    }}");
@@ -688,14 +492,8 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "                    _ => {{}}");
     genln!(o, "                }},");
     genln!(o);
-    genln!(
-        o,
-        "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),"
-    );
-    genln!(
-        o,
-        "                std::task::Poll::Pending => return std::task::Poll::Pending,"
-    );
+    genln!(o, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
+    genln!(o, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
     genln!(o, "            }}");
     genln!(o, "        }}");
     genln!(o, "    }}");
@@ -712,12 +510,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         };
 
         if e.event_type.is_some() {
-            genln!(
-                o,
-                "    {}({}),",
-                e.name.0.to_camel_case(),
-                event_variant_type(s, e)
-            );
+            genln!(o, "    {}({}),", e.name.0.to_camel_case(), event_variant_type(s, e));
         } else {
             genln!(o, "    {},", e.name.0.to_camel_case());
         }
@@ -728,6 +521,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     Ok(())
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "#[derive(Debug)]");
     genln!(o, "pub struct {} {{", s.name.0);
@@ -737,15 +531,8 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {} {{", s.name.0);
-    genln!(
-        o,
-        "    pub async fn create(object: &mut aldrin_client::Object, fifo_size: usize) -> Result<Self, aldrin_client::Error> {{"
-    );
-    genln!(
-        o,
-        "        let service = object.create_service({}_UUID, fifo_size).await?;",
-        s.name.0.to_shouty_snake_case()
-    );
+    genln!(o, "    pub async fn create(object: &mut aldrin_client::Object, fifo_size: usize) -> Result<Self, aldrin_client::Error> {{");
+    genln!(o, "        let service = object.create_service({}_UUID, fifo_size).await?;", s.name.0.to_shouty_snake_case());
     genln!(o, "        Ok({} {{ service }})", s.name.0);
     genln!(o, "    }}");
     genln!(o);
@@ -753,18 +540,11 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "        self.service.id()");
     genln!(o, "    }}");
     genln!(o);
-    genln!(
-        o,
-        "    pub async fn destroy(&mut self) -> Result<(), aldrin_client::Error> {{"
-    );
+    genln!(o, "    pub async fn destroy(&mut self) -> Result<(), aldrin_client::Error> {{");
     genln!(o, "        self.service.destroy().await");
     genln!(o, "    }}");
     genln!(o);
-    genln!(
-        o,
-        "    pub fn event_emitter(&self) -> Option<{}EventEmitter> {{",
-        s.name.0
-    );
+    genln!(o, "    pub fn event_emitter(&self) -> Option<{}EventEmitter> {{", s.name.0);
     genln!(o, "        let client = self.service.handle().cloned()?;");
     genln!(o, "        Some({}EventEmitter {{", s.name.0);
     genln!(o, "            client,");
@@ -774,31 +554,15 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "}}");
     genln!(o);
 
-    genln!(
-        o,
-        "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{",
-        s.name.0
-    );
+    genln!(o, "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{", s.name.0);
     genln!(o, "    type Item = {}Function;", s.name.0);
     genln!(o);
     genln!(o, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}Function>> {{", s.name.0);
     genln!(o, "        loop {{");
-    genln!(
-        o,
-        "            let call = match std::pin::Pin::new(&mut self.service).poll_next(cx) {{"
-    );
-    genln!(
-        o,
-        "                std::task::Poll::Ready(Some(call)) => call,"
-    );
-    genln!(
-        o,
-        "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),"
-    );
-    genln!(
-        o,
-        "                std::task::Poll::Pending => return std::task::Poll::Pending,"
-    );
+    genln!(o, "            let call = match std::pin::Pin::new(&mut self.service).poll_next(cx) {{");
+    genln!(o, "                std::task::Poll::Ready(Some(call)) => call,");
+    genln!(o, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
+    genln!(o, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
     genln!(o, "            }};");
     genln!(o);
     genln!(o, "            match (call.id, call.args) {{");
@@ -810,19 +574,12 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
         if f.args.is_some() {
             genln!(o, "                ({}, arg) => {{", f.id);
-            genln!(
-                o,
-                "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(arg) {{"
-            );
+            genln!(o, "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(arg) {{");
             genln!(o, "                        return std::task::Poll::Ready(Some({0}Function::{1}(arg, {0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
             genln!(o, "                    }}");
             genln!(o, "                }}");
         } else {
-            genln!(
-                o,
-                "                ({}, aldrin_client::codegen::aldrin_proto::Value::None) => {{",
-                f.id
-            );
+            genln!(o, "                ({}, aldrin_client::codegen::aldrin_proto::Value::None) => {{", f.id);
             genln!(o, "                    return std::task::Poll::Ready(Some({0}Function::{1}({0}{1}Reply(call.reply))));", s.name.0, f.name.0.to_camel_case());
             genln!(o, "                }}");
         }
@@ -845,20 +602,9 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         };
 
         if f.args.is_some() {
-            genln!(
-                o,
-                "    {0}({1}, {2}{0}Reply),",
-                f.name.0.to_camel_case(),
-                function_arg_type(s, f),
-                s.name.0
-            );
+            genln!(o, "    {0}({1}, {2}{0}Reply),", f.name.0.to_camel_case(), function_arg_type(s, f), s.name.0);
         } else {
-            genln!(
-                o,
-                "    {0}({1}{0}Reply),",
-                f.name.0.to_camel_case(),
-                s.name.0
-            );
+            genln!(o, "    {0}({1}{0}Reply),", f.name.0.to_camel_case(), s.name.0);
         }
     }
     genln!(o, "}}");
@@ -871,59 +617,34 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         };
 
         genln!(o, "#[derive(Debug)]");
-        genln!(
-            o,
-            "pub struct {}{}Reply(#[doc(hidden)] aldrin_client::FunctionCallReply);",
-            s.name.0,
-            f.name.0.to_camel_case()
-        );
+        genln!(o, "pub struct {}{}Reply(#[doc(hidden)] aldrin_client::FunctionCallReply);", s.name.0, f.name.0.to_camel_case());
         genln!(o);
 
         genln!(o, "impl {}{}Reply {{", s.name.0, f.name.0.to_camel_case());
         if f.ok.is_some() {
-            genln!(
-                o,
-                "    pub async fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{",
-                function_ok_type(s, f)
-            );
+            genln!(o, "    pub async fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(s, f));
             genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await");
             genln!(o, "    }}");
             genln!(o);
         } else {
-            genln!(
-                o,
-                "    pub async fn ok(self) -> Result<(), aldrin_client::Error> {{"
-            );
-            genln!(
-                o,
-                "        self.0.ok(aldrin_client::codegen::aldrin_proto::Value::None).await"
-            );
+            genln!(o, "    pub async fn ok(self) -> Result<(), aldrin_client::Error> {{");
+            genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::Value::None).await");
             genln!(o, "    }}");
             genln!(o);
         }
         if f.err.is_some() {
-            genln!(
-                o,
-                "    pub async fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{",
-                function_err_type(s, f)
-            );
+            genln!(o, "    pub async fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_type(s, f));
             genln!(o, "        self.0.err(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await");
             genln!(o, "    }}");
             genln!(o);
         }
         if f.args.is_some() {
-            genln!(
-                o,
-                "    pub async fn invalid_args(self) -> Result<(), aldrin_client::Error> {{"
-            );
+            genln!(o, "    pub async fn invalid_args(self) -> Result<(), aldrin_client::Error> {{");
             genln!(o, "        self.0.invalid_args().await");
             genln!(o, "    }}");
             genln!(o);
         }
-        genln!(
-            o,
-            "    pub async fn abort(self) -> Result<(), aldrin_client::Error> {{"
-        );
+        genln!(o, "    pub async fn abort(self) -> Result<(), aldrin_client::Error> {{");
         genln!(o, "        self.0.abort().await");
         genln!(o, "    }}");
         genln!(o, "}}");
@@ -952,29 +673,12 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         };
 
         if e.event_type.is_some() {
-            genln!(
-                o,
-                "    pub async fn {}(&mut self, arg: {}) -> Result<(), aldrin_client::Error> {{",
-                e.name.0,
-                event_variant_type(s, e)
-            );
-            genln!(
-                o,
-                "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await",
-                e.id
-            );
+            genln!(o, "    pub async fn {}(&mut self, arg: {}) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
+            genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
             genln!(o, "    }}");
         } else {
-            genln!(
-                o,
-                "    pub async fn {}(&mut self) -> Result<(), aldrin_client::Error> {{",
-                e.name.0
-            );
-            genln!(
-                o,
-                "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await",
-                e.id
-            );
+            genln!(o, "    pub async fn {}(&mut self) -> Result<(), aldrin_client::Error> {{", e.name.0);
+            genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await", e.id);
             genln!(o, "    }}");
         }
         genln!(o);
@@ -984,6 +688,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     Ok(())
 }
 
+#[rustfmt::skip::macros(genln)]
 fn gen_const(o: &mut RustOutput, c: &Const) -> Result<(), Error> {
     match c {
         Const::U8(n, v) => genln!(o, "pub const {}: u8 = {};", n.0, v),
