@@ -772,6 +772,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "        }})");
     genln!(o, "    }}");
     genln!(o, "}}");
+    genln!(o);
 
     genln!(
         o,
