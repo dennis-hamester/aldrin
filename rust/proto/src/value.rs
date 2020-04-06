@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
+use std::hash::BuildHasher;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
@@ -315,12 +316,12 @@ where
 
 macro_rules! impl_map {
     ($key:ty, $var:ident) => {
-        #[allow(clippy::implicit_hasher)]
-        impl<V> FromValue for HashMap<$key, V>
+        impl<V, S> FromValue for HashMap<$key, V, S>
         where
             V: FromValue,
+            S: BuildHasher + Default,
         {
-            fn from_value(v: Value) -> Result<HashMap<$key, V>, ConversionError> {
+            fn from_value(v: Value) -> Result<HashMap<$key, V, S>, ConversionError> {
                 match v {
                     Value::$var(v) => v
                         .into_iter()
@@ -355,6 +356,8 @@ impl_map!(String, StringMap);
 impl_map!(Uuid, UuidMap);
 
 macro_rules! impl_set {
+    // Implement these only for the default BuildHasher, because then they are zero-copy. If you
+    // need implementations for other BuildHashers, then please open a ticket.
     ($key:ty, $var:ident) => {
         #[allow(clippy::implicit_hasher)]
         impl FromValue for HashSet<$key> {
