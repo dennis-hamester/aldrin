@@ -60,6 +60,7 @@ file = _{
 }
 
 required_mark = { "required" }
+optional_mark = { "optional" }
 
 import_stmt = { "import" ~ module ~ ";"? }
 
@@ -71,7 +72,7 @@ struct_field = { required_mark? ~ ident ~ "@" ~ lit_pos_int ~ "=" ~ type_name ~ 
 enum_def = { "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
 enum_inline = { "enum" ~ "{" ~ enum_body ~ "}" }
 enum_body = { enum_variant+ }
-enum_variant = { ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
+enum_variant = { ident ~ "@" ~ lit_pos_int ~ ("=" ~ optional_mark? ~ type_name_or_inline)? ~ ";"? }
 
 service_def = { "service" ~ ident ~ "{" ~ service_uuid ~ service_version ~ service_body ~ "}" ~ ";"? }
 service_uuid = _{ "uuid" ~ "=" ~ lit_uuid ~ ";"? }

@@ -38,6 +38,7 @@ pub(crate) struct EnumVariant {
     pub name: Ident,
     pub id: u32,
     pub variant_type: Option<TypeOrInline>,
+    pub required: bool,
 }
 
 fn enum_body(pair: Pair<Rule>) -> Result<Vec<EnumVariant>, Error> {
@@ -49,14 +50,25 @@ fn enum_body(pair: Pair<Rule>) -> Result<Vec<EnumVariant>, Error> {
         let mut pairs = pair.into_inner();
         let name = Ident::from_string(pairs.next().unwrap().as_str())?;
         let id = pairs.next().unwrap().as_str().parse().unwrap();
-        let variant_type = pairs
-            .next()
+
+        let mut pair = pairs.next();
+
+        let required = if pair.as_ref().map(Pair::as_rule) == Some(Rule::optional_mark) {
+            pair = pairs.next();
+            false
+        } else {
+            true
+        };
+
+        let variant_type = pair
             .map(TypeOrInline::from_type_name_or_inline)
             .transpose()?;
+
         res.push(EnumVariant {
             name,
             id,
             variant_type,
+            required,
         });
     }
     Ok(res)

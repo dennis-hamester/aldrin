@@ -233,10 +233,10 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub enum {} {{", e);
     for v in vs {
-        if v.variant_type.is_some() {
-            genln!(o, "    {}({}),", v.name.0, enum_variant_name(e, v));
-        } else {
-            genln!(o, "    {},", v.name.0);
+        match (v.variant_type.is_some(), v.required) {
+            (true, true) => genln!(o, "    {}({}),", v.name.0, enum_variant_name(e, v)),
+            (true, false) => genln!(o, "    {}(Option<{}>),", v.name.0, enum_variant_name(e, v)),
+            (false, _) => genln!(o, "    {},", v.name.0),
         }
     }
     genln!(o, "}}");
