@@ -119,6 +119,7 @@ pub(crate) struct Event {
     pub name: Ident,
     pub id: u32,
     pub event_type: Option<TypeOrInline>,
+    pub required: bool,
 }
 
 impl Event {
@@ -127,14 +128,25 @@ impl Event {
         let mut pairs = pair.into_inner();
         let name = Ident::from_string(pairs.next().unwrap().as_str())?;
         let id = pairs.next().unwrap().as_str().parse().unwrap();
-        let event_type = pairs
-            .next()
+
+        let mut pair = pairs.next();
+
+        let required = if pair.as_ref().map(Pair::as_rule) == Some(Rule::optional_mark) {
+            pair = pairs.next();
+            false
+        } else {
+            true
+        };
+
+        let event_type = pair
             .map(TypeOrInline::from_type_name_or_inline)
             .transpose()?;
+
         Ok(Event {
             name,
             id,
             event_type,
+            required,
         })
     }
 }

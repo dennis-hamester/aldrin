@@ -509,10 +509,14 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             _ => continue,
         };
 
-        if e.event_type.is_some() {
-            genln!(o, "    {}({}),", e.name.0.to_camel_case(), event_variant_type(s, e));
-        } else {
-            genln!(o, "    {},", e.name.0.to_camel_case());
+        match (e.event_type.is_some(), e.required) {
+            (true, true) => {
+                genln!(o, "    {}({}),", e.name.0.to_camel_case(), event_variant_type(s, e))
+            }
+            (true, false) => {
+                genln!(o, "    {}(Option<{}>),", e.name.0.to_camel_case(), event_variant_type(s, e))
+            }
+            (false, _) => genln!(o, "    {},", e.name.0.to_camel_case()),
         }
     }
     genln!(o, "}}");
@@ -672,15 +676,24 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             _ => continue,
         };
 
-        if e.event_type.is_some() {
-            genln!(o, "    pub async fn {}(&mut self, arg: {}) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
-            genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
-            genln!(o, "    }}");
-        } else {
-            genln!(o, "    pub async fn {}(&mut self) -> Result<(), aldrin_client::Error> {{", e.name.0);
-            genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await", e.id);
-            genln!(o, "    }}");
+        match (e.event_type.is_some(), e.required) {
+            (true, true) => {
+                genln!(o, "    pub async fn {}(&mut self, arg: {}) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
+                genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
+                genln!(o, "    }}");
+            }
+            (true, false) => {
+                genln!(o, "    pub async fn {}(&mut self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
+                genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
+                genln!(o, "    }}");
+            }
+            (false, _) => {
+                genln!(o, "    pub async fn {}(&mut self) -> Result<(), aldrin_client::Error> {{", e.name.0);
+                genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await", e.id);
+                genln!(o, "    }}");
+            }
         }
+
         genln!(o);
     }
     genln!(o, "}}");

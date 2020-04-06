@@ -85,7 +85,7 @@ fn_args = { "args" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_ok = { "ok" ~ "=" ~ type_name_or_inline ~ ";"? }
 fn_err = { "err" ~ "=" ~ type_name_or_inline ~ ";"? }
 
-event_def = { "event" ~ ident ~ "@" ~ lit_pos_int ~ ("=" ~ type_name_or_inline)? ~ ";"? }
+event_def = { "event" ~ ident ~ "@" ~ lit_pos_int ~ ("=" ~ optional_mark? ~ type_name_or_inline)? ~ ";"? }
 
 const_def = { "const" ~ ident ~ "=" ~ const_value ~ ";"? }
 const_value = _{
