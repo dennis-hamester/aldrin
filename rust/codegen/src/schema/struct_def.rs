@@ -50,7 +50,7 @@ fn struct_body(pair: Pair<Rule>) -> Result<Vec<StructField>, Error> {
         let mut pairs = pair.into_inner();
 
         let mut pair = pairs.next().unwrap();
-        let required = if pair.as_rule() == Rule::struct_field_req {
+        let required = if pair.as_rule() == Rule::required_mark {
             pair = pairs.next().unwrap();
             true
         } else {

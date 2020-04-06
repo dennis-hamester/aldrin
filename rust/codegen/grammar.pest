@@ -59,13 +59,14 @@ file = _{
     ~ EOI
 }
 
+required_mark = { "required" }
+
 import_stmt = { "import" ~ module ~ ";"? }
 
 struct_def = { "struct" ~ ident ~ "{" ~ struct_body ~ "}" ~ ";"? }
 struct_inline = { "struct" ~ "{" ~ struct_body ~ "}" }
 struct_body = { struct_field* }
-struct_field_req = { "required" }
-struct_field = { struct_field_req? ~ ident ~ "@" ~ lit_pos_int ~ "=" ~ type_name ~ ";"? }
+struct_field = { required_mark? ~ ident ~ "@" ~ lit_pos_int ~ "=" ~ type_name ~ ";"? }
 
 enum_def = { "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
 enum_inline = { "enum" ~ "{" ~ enum_body ~ "}" }
