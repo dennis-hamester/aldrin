@@ -237,15 +237,6 @@ fn struct_field_type(s: &str, f: &StructField) -> String {
 
 #[rustfmt::skip::macros(genln)]
 fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error> {
-    for v in vs {
-        if let Some(TypeOrInline::Struct(s)) = &v.variant_type {
-            gen_struct(o, &enum_variant_name(e, v), &s.fields)?;
-        }
-        if let Some(TypeOrInline::Enum(en)) = &v.variant_type {
-            gen_enum(o, &enum_variant_name(e, v), &en.variants)?;
-        }
-    }
-
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub enum {} {{", e);
@@ -295,6 +286,15 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
     genln!(o, "}}");
     genln!(o);
 
+    for v in vs {
+        if let Some(TypeOrInline::Struct(s)) = &v.variant_type {
+            gen_struct(o, &enum_variant_name(e, v), &s.fields)?;
+        }
+        if let Some(TypeOrInline::Enum(en)) = &v.variant_type {
+            gen_enum(o, &enum_variant_name(e, v), &en.variants)?;
+        }
+    }
+
     Ok(())
 }
 
@@ -313,6 +313,14 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
     genln!(o, "pub const {}_UUID: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid(aldrin_client::codegen::uuid::Uuid::from_u128({:#034x}));", s.name.0.to_shouty_snake_case(), s.uuid.as_u128());
     genln!(o);
+
+    if o.options.client {
+        gen_service_client(o, s)?;
+    }
+
+    if o.options.server {
+        gen_service_server(o, s)?;
+    }
 
     for e in &s.elems {
         match e {
@@ -346,14 +354,6 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
                 }
             }
         }
-    }
-
-    if o.options.client {
-        gen_service_client(o, s)?;
-    }
-
-    if o.options.server {
-        gen_service_server(o, s)?;
     }
 
     Ok(())
