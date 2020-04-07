@@ -87,38 +87,43 @@ impl Function {
         let mut ok_required = true;
         let mut err = None;
         let mut err_required = true;
-        for _ in 0..3 {
-            if let Some(pair) = pairs.next() {
-                match pair.as_rule() {
-                    Rule::fn_args => {
-                        let mut pairs = pair.into_inner();
-                        let mut pair = pairs.next().unwrap();
-                        if pair.as_rule() == Rule::optional_mark {
-                            args_required = false;
-                            pair = pairs.next().unwrap();
-                        }
-                        args = Some(TypeOrInline::from_type_name_or_inline(pair)?);
+
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::fn_args => {
+                    assert!(args.is_none());
+                    let mut pairs = pair.into_inner();
+                    let mut pair = pairs.next().unwrap();
+                    if pair.as_rule() == Rule::optional_mark {
+                        args_required = false;
+                        pair = pairs.next().unwrap();
                     }
-                    Rule::fn_ok => {
-                        let mut pairs = pair.into_inner();
-                        let mut pair = pairs.next().unwrap();
-                        if pair.as_rule() == Rule::optional_mark {
-                            ok_required = false;
-                            pair = pairs.next().unwrap();
-                        }
-                        ok = Some(TypeOrInline::from_type_name_or_inline(pair)?);
-                    }
-                    Rule::fn_err => {
-                        let mut pairs = pair.into_inner();
-                        let mut pair = pairs.next().unwrap();
-                        if pair.as_rule() == Rule::optional_mark {
-                            err_required = false;
-                            pair = pairs.next().unwrap();
-                        }
-                        err = Some(TypeOrInline::from_type_name_or_inline(pair)?);
-                    }
-                    _ => unreachable!(),
+                    args = Some(TypeOrInline::from_type_name_or_inline(pair)?);
                 }
+
+                Rule::fn_ok => {
+                    assert!(ok.is_none());
+                    let mut pairs = pair.into_inner();
+                    let mut pair = pairs.next().unwrap();
+                    if pair.as_rule() == Rule::optional_mark {
+                        ok_required = false;
+                        pair = pairs.next().unwrap();
+                    }
+                    ok = Some(TypeOrInline::from_type_name_or_inline(pair)?);
+                }
+
+                Rule::fn_err => {
+                    assert!(err.is_none());
+                    let mut pairs = pair.into_inner();
+                    let mut pair = pairs.next().unwrap();
+                    if pair.as_rule() == Rule::optional_mark {
+                        err_required = false;
+                        pair = pairs.next().unwrap();
+                    }
+                    err = Some(TypeOrInline::from_type_name_or_inline(pair)?);
+                }
+
+                _ => unreachable!(),
             }
         }
 
