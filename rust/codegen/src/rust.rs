@@ -301,22 +301,22 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         match e {
             ServiceElement::Function(f) => {
                 if let Some(TypeOrInline::Struct(st)) = &f.args {
-                    gen_struct(o, &function_arg_type(s, f), &st.fields)?;
+                    gen_struct(o, &function_arg_type_name(s, f), &st.fields)?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.args {
-                    gen_enum(o, &function_arg_type(s, f), &e.variants)?;
+                    gen_enum(o, &function_arg_type_name(s, f), &e.variants)?;
                 }
                 if let Some(TypeOrInline::Struct(st)) = &f.ok {
-                    gen_struct(o, &function_ok_type(s, f), &st.fields)?;
+                    gen_struct(o, &function_ok_type_name(s, f), &st.fields)?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.ok {
-                    gen_enum(o, &function_ok_type(s, f), &e.variants)?;
+                    gen_enum(o, &function_ok_type_name(s, f), &e.variants)?;
                 }
                 if let Some(TypeOrInline::Struct(st)) = &f.err {
-                    gen_struct(o, &function_err_type(s, f), &st.fields)?;
+                    gen_struct(o, &function_err_type_name(s, f), &st.fields)?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.err {
-                    gen_enum(o, &function_err_type(s, f), &e.variants)?;
+                    gen_enum(o, &function_err_type_name(s, f), &e.variants)?;
                 }
             }
 
@@ -720,7 +720,7 @@ fn gen_const(o: &mut RustOutput, c: &Const) -> Result<(), Error> {
     Ok(())
 }
 
-fn function_arg_type(s: &Service, f: &Function) -> String {
+fn function_arg_type_name(s: &Service, f: &Function) -> String {
     match f.args.as_ref().unwrap() {
         TypeOrInline::Type(t) => gen_type(t),
         TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
@@ -729,7 +729,22 @@ fn function_arg_type(s: &Service, f: &Function) -> String {
     }
 }
 
-fn function_ok_type(s: &Service, f: &Function) -> String {
+fn function_arg_type(s: &Service, f: &Function) -> String {
+    let name = match f.args.as_ref().unwrap() {
+        TypeOrInline::Type(t) => gen_type(t),
+        TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
+            format!("{}{}Args", s.name.0, f.name.0.to_camel_case())
+        }
+    };
+
+    if f.args_required {
+        name
+    } else {
+        format!("Option<{}>", name)
+    }
+}
+
+fn function_ok_type_name(s: &Service, f: &Function) -> String {
     match f.ok.as_ref().unwrap() {
         TypeOrInline::Type(t) => gen_type(t),
         TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
@@ -738,12 +753,42 @@ fn function_ok_type(s: &Service, f: &Function) -> String {
     }
 }
 
-fn function_err_type(s: &Service, f: &Function) -> String {
+fn function_ok_type(s: &Service, f: &Function) -> String {
+    let name = match f.ok.as_ref().unwrap() {
+        TypeOrInline::Type(t) => gen_type(t),
+        TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
+            format!("{}{}Ok", s.name.0, f.name.0.to_camel_case())
+        }
+    };
+
+    if f.ok_required {
+        name
+    } else {
+        format!("Option<{}>", name)
+    }
+}
+
+fn function_err_type_name(s: &Service, f: &Function) -> String {
     match f.err.as_ref().unwrap() {
         TypeOrInline::Type(t) => gen_type(t),
         TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
             format!("{}{}Error", s.name.0, f.name.0.to_camel_case())
         }
+    }
+}
+
+fn function_err_type(s: &Service, f: &Function) -> String {
+    let name = match f.err.as_ref().unwrap() {
+        TypeOrInline::Type(t) => gen_type(t),
+        TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
+            format!("{}{}Error", s.name.0, f.name.0.to_camel_case())
+        }
+    };
+
+    if f.err_required {
+        name
+    } else {
+        format!("Option<{}>", name)
     }
 }
 

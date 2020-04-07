@@ -81,9 +81,9 @@ service_body = _{ (fn_def | event_def)* }
 
 fn_def = { "fn" ~ ident ~ "@" ~ lit_pos_int ~ ("{" ~ fn_body ~ "}")? ~ ";"? }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
-fn_args = { "args" ~ "=" ~ type_name_or_inline ~ ";"? }
-fn_ok = { "ok" ~ "=" ~ type_name_or_inline ~ ";"? }
-fn_err = { "err" ~ "=" ~ type_name_or_inline ~ ";"? }
+fn_args = { "args" ~ "=" ~ optional_mark? ~ type_name_or_inline ~ ";"? }
+fn_ok = { "ok" ~ "=" ~ optional_mark? ~ type_name_or_inline ~ ";"? }
+fn_err = { "err" ~ "=" ~ optional_mark? ~ type_name_or_inline ~ ";"? }
 
 event_def = { "event" ~ ident ~ "@" ~ lit_pos_int ~ ("=" ~ optional_mark? ~ type_name_or_inline)? ~ ";"? }
 

@@ -65,8 +65,11 @@ pub(crate) struct Function {
     pub name: Ident,
     pub id: u32,
     pub args: Option<TypeOrInline>,
+    pub args_required: bool,
     pub ok: Option<TypeOrInline>,
+    pub ok_required: bool,
     pub err: Option<TypeOrInline>,
+    pub err_required: bool,
 }
 
 impl Function {
@@ -79,25 +82,40 @@ impl Function {
         let id = pairs.next().unwrap().as_str().parse().unwrap();
 
         let mut args = None;
+        let mut args_required = true;
         let mut ok = None;
+        let mut ok_required = true;
         let mut err = None;
+        let mut err_required = true;
         for _ in 0..3 {
             if let Some(pair) = pairs.next() {
                 match pair.as_rule() {
                     Rule::fn_args => {
-                        args = Some(TypeOrInline::from_type_name_or_inline(
-                            pair.into_inner().next().unwrap(),
-                        )?);
+                        let mut pairs = pair.into_inner();
+                        let mut pair = pairs.next().unwrap();
+                        if pair.as_rule() == Rule::optional_mark {
+                            args_required = false;
+                            pair = pairs.next().unwrap();
+                        }
+                        args = Some(TypeOrInline::from_type_name_or_inline(pair)?);
                     }
                     Rule::fn_ok => {
-                        ok = Some(TypeOrInline::from_type_name_or_inline(
-                            pair.into_inner().next().unwrap(),
-                        )?);
+                        let mut pairs = pair.into_inner();
+                        let mut pair = pairs.next().unwrap();
+                        if pair.as_rule() == Rule::optional_mark {
+                            ok_required = false;
+                            pair = pairs.next().unwrap();
+                        }
+                        ok = Some(TypeOrInline::from_type_name_or_inline(pair)?);
                     }
                     Rule::fn_err => {
-                        err = Some(TypeOrInline::from_type_name_or_inline(
-                            pair.into_inner().next().unwrap(),
-                        )?);
+                        let mut pairs = pair.into_inner();
+                        let mut pair = pairs.next().unwrap();
+                        if pair.as_rule() == Rule::optional_mark {
+                            err_required = false;
+                            pair = pairs.next().unwrap();
+                        }
+                        err = Some(TypeOrInline::from_type_name_or_inline(pair)?);
                     }
                     _ => unreachable!(),
                 }
@@ -108,8 +126,11 @@ impl Function {
             name,
             id,
             args,
+            args_required,
             ok,
+            ok_required,
             err,
+            err_required,
         })
     }
 }
