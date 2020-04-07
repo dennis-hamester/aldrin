@@ -1,5 +1,5 @@
 use super::grammar::Rule;
-use super::{Ident, Type};
+use super::{Ident, TypeOrInline};
 use crate::error::Error;
 use pest::iterators::Pair;
 
@@ -37,7 +37,7 @@ impl InlineStruct {
 pub(crate) struct StructField {
     pub name: Ident,
     pub id: u32,
-    pub field_type: Type,
+    pub field_type: TypeOrInline,
     pub required: bool,
 }
 
@@ -59,7 +59,7 @@ fn struct_body(pair: Pair<Rule>) -> Result<Vec<StructField>, Error> {
         let name = Ident::from_string(pair.as_str())?;
 
         let id = pairs.next().unwrap().as_str().parse().unwrap();
-        let field_type = Type::from_type_name(pairs.next().unwrap())?;
+        let field_type = TypeOrInline::from_type_name_or_inline(pairs.next().unwrap())?;
         res.push(StructField {
             name,
             id,

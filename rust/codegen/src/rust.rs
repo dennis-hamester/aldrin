@@ -119,9 +119,9 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "pub struct {} {{", s);
     for f in fs {
         if f.required {
-            genln!(o, "    pub {}: {},", f.name.0, gen_type(&f.field_type));
+            genln!(o, "    pub {}: {},", f.name.0, struct_field_type(s, f));
         } else {
-            genln!(o, "    pub {}: Option<{}>,", f.name.0, gen_type(&f.field_type));
+            genln!(o, "    pub {}: Option<{}>,", f.name.0, struct_field_type(s, f));
         }
     }
     genln!(o, "}}");
@@ -175,7 +175,7 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "pub struct {}Builder {{", s);
     for f in fs {
         genln!(o, "    #[doc(hidden)]");
-        genln!(o, "    {}: Option<{}>,", f.name.0, gen_type(&f.field_type));
+        genln!(o, "    {}: Option<{}>,", f.name.0, struct_field_type(s, f));
         genln!(o);
     }
     genln!(o, "}}");
@@ -188,13 +188,13 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o);
     for f in fs {
         if f.required {
-            genln!(o, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", f.name.0, gen_type(&f.field_type));
+            genln!(o, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", f.name.0, struct_field_type(s, f));
             genln!(o, "        self.{0} = Some({0});", f.name.0);
             genln!(o, "        self");
             genln!(o, "    }}");
             genln!(o);
         } else {
-            genln!(o, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", f.name.0, gen_type(&f.field_type));
+            genln!(o, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", f.name.0, struct_field_type(s, f));
             genln!(o, "        self.{0} = {0};", f.name.0);
             genln!(o, "        self");
             genln!(o, "    }}");
@@ -215,7 +215,24 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
     genln!(o, "}}");
     genln!(o);
 
+    for f in fs {
+        match &f.field_type {
+            TypeOrInline::Struct(i) => gen_struct(o, &struct_field_type(s, f), &i.fields)?,
+            TypeOrInline::Enum(i) => gen_enum(o, &struct_field_type(s, f), &i.variants)?,
+            TypeOrInline::Type(_) => {}
+        }
+    }
+
     Ok(())
+}
+
+fn struct_field_type(s: &str, f: &StructField) -> String {
+    match f.field_type {
+        TypeOrInline::Type(ref t) => gen_type(t),
+        TypeOrInline::Struct(_) | TypeOrInline::Enum(_) => {
+            format!("{}{}", s, f.name.0.to_camel_case())
+        }
+    }
 }
 
 #[rustfmt::skip::macros(genln)]
