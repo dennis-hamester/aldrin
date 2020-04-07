@@ -201,18 +201,31 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
             genln!(o);
         }
     }
-    genln!(o, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", s);
-    genln!(o, "        Ok({} {{", s);
-    for f in fs {
-        if f.required {
-            genln!(o, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", f.name.0);
-        } else {
+
+    let all_optional = fs.iter().all(|f| !f.required);
+    if all_optional {
+        genln!(o, "    pub fn build(self) -> {} {{", s);
+        genln!(o, "        {} {{", s);
+        for f in fs {
             genln!(o, "            {0}: self.{0},", f.name.0);
         }
+        genln!(o, "        }}");
+        genln!(o, "    }}");
+        genln!(o, "}}");
+    } else {
+        genln!(o, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", s);
+        genln!(o, "        Ok({} {{", s);
+        for f in fs {
+            if f.required {
+                genln!(o, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", f.name.0);
+            } else {
+                genln!(o, "            {0}: self.{0},", f.name.0);
+            }
+        }
+        genln!(o, "        }})");
+        genln!(o, "    }}");
+        genln!(o, "}}");
     }
-    genln!(o, "        }})");
-    genln!(o, "    }}");
-    genln!(o, "}}");
     genln!(o);
 
     for f in fs {
