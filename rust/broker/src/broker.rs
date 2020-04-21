@@ -314,6 +314,8 @@ impl Broker {
             | Message::DestroyServiceReply(_)
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_) => Err(()),
+
+            Message::Shutdown => unreachable!(), // Handled by connection.
         }
     }
 

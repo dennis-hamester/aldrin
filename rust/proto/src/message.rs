@@ -6,6 +6,7 @@ use uuid::Uuid;
 pub enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
+    Shutdown,
     CreateObject(CreateObject),
     CreateObjectReply(CreateObjectReply),
     SubscribeObjectsCreated(SubscribeObjectsCreated),

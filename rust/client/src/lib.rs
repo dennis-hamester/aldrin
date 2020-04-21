@@ -197,6 +197,7 @@ where
 
     async fn handle_message(&mut self, msg: Message) -> Result<bool, RunError<T::Error>> {
         match msg {
+            Message::Shutdown => Ok(false),
             Message::CreateObjectReply(re) => self.create_object_reply(re).await,
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
