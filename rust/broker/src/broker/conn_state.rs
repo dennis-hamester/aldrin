@@ -1,4 +1,5 @@
-use super::{BrokerEvent, ObjectCookie, ServiceCookie};
+use super::{ObjectCookie, ServiceCookie};
+use aldrin_proto::Message;
 use futures_channel::mpsc::Sender;
 use futures_util::sink::SinkExt;
 use std::collections::hash_map::{Entry, HashMap};
@@ -6,7 +7,7 @@ use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
-    send: Sender<BrokerEvent>,
+    send: Sender<Message>,
     objects: HashSet<ObjectCookie>,
     objects_created_subscribed: bool,
     objects_destroyed_subscribed: bool,
@@ -18,7 +19,7 @@ pub(super) struct ConnectionState {
 }
 
 impl ConnectionState {
-    pub fn new(send: Sender<BrokerEvent>) -> Self {
+    pub fn new(send: Sender<Message>) -> Self {
         ConnectionState {
             send,
             objects: HashSet::new(),
@@ -44,8 +45,8 @@ impl ConnectionState {
         self.objects.iter().copied()
     }
 
-    pub async fn send(&mut self, ev: BrokerEvent) -> Result<(), ()> {
-        self.send.send(ev).await.map_err(|_| ())
+    pub async fn send(&mut self, msg: Message) -> Result<(), ()> {
+        self.send.send(msg).await.map_err(|_| ())
     }
 
     pub fn set_objects_created_subscribed(&mut self, subscribed: bool) {

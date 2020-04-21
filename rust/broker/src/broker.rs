@@ -1,6 +1,5 @@
 mod conn_state;
 mod error;
-mod event;
 mod handle;
 mod object;
 mod service;
@@ -21,8 +20,6 @@ use uuid::Uuid;
 
 pub use error::BrokerError;
 pub use handle::BrokerHandle;
-
-pub(crate) use event::BrokerEvent;
 
 #[derive(Debug)]
 pub struct Broker {
@@ -138,11 +135,11 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.objects_created_subscribed()),
                     state,
-                    BrokerEvent::Message(Message::ObjectCreatedEvent(ObjectCreatedEvent {
+                    Message::ObjectCreatedEvent(ObjectCreatedEvent {
                         uuid: uuid.0,
                         cookie: cookie.0,
                         serial: None,
-                    })),
+                    }),
                 )
                 .await;
                 continue;
@@ -154,13 +151,13 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.services_created_subscribed()),
                     state,
-                    BrokerEvent::Message(Message::ServiceCreatedEvent(ServiceCreatedEvent {
+                    Message::ServiceCreatedEvent(ServiceCreatedEvent {
                         object_uuid: obj_uuid.0,
                         object_cookie: obj_cookie.0,
                         uuid: uuid.0,
                         cookie: cookie.0,
                         serial: None,
-                    })),
+                    }),
                 )
                 .await;
                 continue;
@@ -171,11 +168,11 @@ impl Broker {
                     Some(conn) => conn,
                     None => continue,
                 };
-                let ev = BrokerEvent::Message(Message::UnsubscribeEvent(UnsubscribeEvent {
+                let msg = Message::UnsubscribeEvent(UnsubscribeEvent {
                     service_cookie: svc_cookie.0,
                     event,
-                }));
-                if let Err(()) = conn.send(ev).await {
+                });
+                if let Err(()) = conn.send(msg).await {
                     state.push_remove_conn(conn_id);
                 }
                 continue;
@@ -187,12 +184,12 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.services_destroyed_subscribed()),
                     state,
-                    BrokerEvent::Message(Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
+                    Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
                         object_uuid: obj_uuid.0,
                         object_cookie: obj_cookie.0,
                         uuid: uuid.0,
                         cookie: cookie.0,
-                    })),
+                    }),
                 )
                 .await;
                 continue;
@@ -205,14 +202,13 @@ impl Broker {
                     Some(conn) => conn,
                     None => continue,
                 };
-                let ev =
-                    BrokerEvent::Message(Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
-                        object_uuid: obj_uuid.0,
-                        object_cookie: obj_cookie.0,
-                        uuid: svc_uuid.0,
-                        cookie: svc_cookie.0,
-                    }));
-                if let Err(()) = conn.send(ev).await {
+                let msg = Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
+                    object_uuid: obj_uuid.0,
+                    object_cookie: obj_cookie.0,
+                    uuid: svc_uuid.0,
+                    cookie: svc_cookie.0,
+                });
+                if let Err(()) = conn.send(msg).await {
                     state.push_remove_conn(conn_id);
                 }
                 continue;
@@ -224,10 +220,10 @@ impl Broker {
                         .iter_mut()
                         .filter(|(_, c)| c.objects_destroyed_subscribed()),
                     state,
-                    BrokerEvent::Message(Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
+                    Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
                         uuid: uuid.0,
                         cookie: cookie.0,
-                    })),
+                    }),
                 )
                 .await;
                 continue;
@@ -240,9 +236,10 @@ impl Broker {
                 };
 
                 let res = conn
-                    .send(BrokerEvent::Message(Message::CallFunctionReply(
-                        CallFunctionReply { serial, result },
-                    )))
+                    .send(Message::CallFunctionReply(CallFunctionReply {
+                        serial,
+                        result,
+                    }))
                     .await;
 
                 if res.is_err() {
@@ -263,7 +260,7 @@ impl Broker {
         };
 
         // Ignore errors here
-        conn.send(BrokerEvent::Shutdown).await.ok();
+        conn.send(Message::Shutdown).await.ok();
 
         for obj_cookie in conn.objects() {
             self.remove_object(state, obj_cookie);
@@ -333,23 +330,19 @@ impl Broker {
         let uuid = ObjectUuid(req.uuid);
         match self.objs.entry(uuid) {
             Entry::Occupied(_) => {
-                conn.send(BrokerEvent::Message(Message::CreateObjectReply(
-                    CreateObjectReply {
-                        serial: req.serial,
-                        result: CreateObjectResult::DuplicateObject,
-                    },
-                )))
+                conn.send(Message::CreateObjectReply(CreateObjectReply {
+                    serial: req.serial,
+                    result: CreateObjectResult::DuplicateObject,
+                }))
                 .await
             }
 
             Entry::Vacant(entry) => {
                 let cookie = ObjectCookie(Uuid::new_v4());
-                conn.send(BrokerEvent::Message(Message::CreateObjectReply(
-                    CreateObjectReply {
-                        serial: req.serial,
-                        result: CreateObjectResult::Ok(cookie.0),
-                    },
-                )))
+                conn.send(Message::CreateObjectReply(CreateObjectReply {
+                    serial: req.serial,
+                    result: CreateObjectResult::Ok(cookie.0),
+                }))
                 .await?;
                 let dup = self.obj_uuids.insert(cookie, uuid);
                 debug_assert!(dup.is_none());
@@ -377,12 +370,10 @@ impl Broker {
             Some(obj_uuid) => *obj_uuid,
             None => {
                 return conn
-                    .send(BrokerEvent::Message(Message::DestroyObjectReply(
-                        DestroyObjectReply {
-                            serial: req.serial,
-                            result: DestroyObjectResult::InvalidObject,
-                        },
-                    )))
+                    .send(Message::DestroyObjectReply(DestroyObjectReply {
+                        serial: req.serial,
+                        result: DestroyObjectResult::InvalidObject,
+                    }))
                     .await
             }
         };
@@ -390,21 +381,17 @@ impl Broker {
         let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
         if obj.conn_id() != id {
             return conn
-                .send(BrokerEvent::Message(Message::DestroyObjectReply(
-                    DestroyObjectReply {
-                        serial: req.serial,
-                        result: DestroyObjectResult::ForeignObject,
-                    },
-                )))
+                .send(Message::DestroyObjectReply(DestroyObjectReply {
+                    serial: req.serial,
+                    result: DestroyObjectResult::ForeignObject,
+                }))
                 .await;
         }
 
-        conn.send(BrokerEvent::Message(Message::DestroyObjectReply(
-            DestroyObjectReply {
-                serial: req.serial,
-                result: DestroyObjectResult::Ok,
-            },
-        )))
+        conn.send(Message::DestroyObjectReply(DestroyObjectReply {
+            serial: req.serial,
+            result: DestroyObjectResult::Ok,
+        }))
         .await?;
 
         self.remove_object(state, obj_cookie);
@@ -425,19 +412,17 @@ impl Broker {
 
         if let Some(serial) = req.serial {
             for (&cookie, &uuid) in &self.obj_uuids {
-                conn.send(BrokerEvent::Message(Message::ObjectCreatedEvent(
-                    ObjectCreatedEvent {
-                        uuid: uuid.0,
-                        cookie: cookie.0,
-                        serial: Some(serial),
-                    },
-                )))
+                conn.send(Message::ObjectCreatedEvent(ObjectCreatedEvent {
+                    uuid: uuid.0,
+                    cookie: cookie.0,
+                    serial: Some(serial),
+                }))
                 .await?;
             }
 
-            conn.send(BrokerEvent::Message(Message::SubscribeObjectsCreatedReply(
+            conn.send(Message::SubscribeObjectsCreatedReply(
                 SubscribeObjectsCreatedReply { serial },
-            )))
+            ))
             .await?;
         }
 
@@ -490,12 +475,10 @@ impl Broker {
             Some(&obj_uuid) => obj_uuid,
             None => {
                 return conn
-                    .send(BrokerEvent::Message(Message::CreateServiceReply(
-                        CreateServiceReply {
-                            serial: req.serial,
-                            result: CreateServiceResult::InvalidObject,
-                        },
-                    )))
+                    .send(Message::CreateServiceReply(CreateServiceReply {
+                        serial: req.serial,
+                        result: CreateServiceResult::InvalidObject,
+                    }))
                     .await;
             }
         };
@@ -505,12 +488,10 @@ impl Broker {
             Entry::Vacant(entry) => entry,
             Entry::Occupied(_) => {
                 return conn
-                    .send(BrokerEvent::Message(Message::CreateServiceReply(
-                        CreateServiceReply {
-                            serial: req.serial,
-                            result: CreateServiceResult::DuplicateService,
-                        },
-                    )))
+                    .send(Message::CreateServiceReply(CreateServiceReply {
+                        serial: req.serial,
+                        result: CreateServiceResult::DuplicateService,
+                    }))
                     .await;
             }
         };
@@ -518,22 +499,18 @@ impl Broker {
         let obj = self.objs.get_mut(&obj_uuid).expect("inconsistent state");
         if obj.conn_id() != id {
             return conn
-                .send(BrokerEvent::Message(Message::CreateServiceReply(
-                    CreateServiceReply {
-                        serial: req.serial,
-                        result: CreateServiceResult::ForeignObject,
-                    },
-                )))
+                .send(Message::CreateServiceReply(CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::ForeignObject,
+                }))
                 .await;
         }
 
         let svc_cookie = ServiceCookie(Uuid::new_v4());
-        conn.send(BrokerEvent::Message(Message::CreateServiceReply(
-            CreateServiceReply {
-                serial: req.serial,
-                result: CreateServiceResult::Ok(svc_cookie.0),
-            },
-        )))
+        conn.send(Message::CreateServiceReply(CreateServiceReply {
+            serial: req.serial,
+            result: CreateServiceResult::Ok(svc_cookie.0),
+        }))
         .await?;
 
         let dup = self
@@ -563,12 +540,10 @@ impl Broker {
             Some(ids) => *ids,
             None => {
                 return conn
-                    .send(BrokerEvent::Message(Message::DestroyServiceReply(
-                        DestroyServiceReply {
-                            serial: req.serial,
-                            result: DestroyServiceResult::InvalidService,
-                        },
-                    )))
+                    .send(Message::DestroyServiceReply(DestroyServiceReply {
+                        serial: req.serial,
+                        result: DestroyServiceResult::InvalidService,
+                    }))
                     .await;
             }
         };
@@ -576,21 +551,17 @@ impl Broker {
         let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
         if obj.conn_id() != id {
             return conn
-                .send(BrokerEvent::Message(Message::DestroyServiceReply(
-                    DestroyServiceReply {
-                        serial: req.serial,
-                        result: DestroyServiceResult::ForeignObject,
-                    },
-                )))
+                .send(Message::DestroyServiceReply(DestroyServiceReply {
+                    serial: req.serial,
+                    result: DestroyServiceResult::ForeignObject,
+                }))
                 .await;
         }
 
-        conn.send(BrokerEvent::Message(Message::DestroyServiceReply(
-            DestroyServiceReply {
-                serial: req.serial,
-                result: DestroyServiceResult::Ok,
-            },
-        )))
+        conn.send(Message::DestroyServiceReply(DestroyServiceReply {
+            serial: req.serial,
+            result: DestroyServiceResult::Ok,
+        }))
         .await?;
 
         self.remove_service(state, svc_cookie);
@@ -611,20 +582,18 @@ impl Broker {
 
         if let Some(serial) = req.serial {
             for (&svc_cookie, &(obj_uuid, obj_cookie, svc_uuid)) in &self.svc_uuids {
-                conn.send(BrokerEvent::Message(Message::ServiceCreatedEvent(
-                    ServiceCreatedEvent {
-                        object_uuid: obj_uuid.0,
-                        object_cookie: obj_cookie.0,
-                        uuid: svc_uuid.0,
-                        cookie: svc_cookie.0,
-                        serial: Some(serial),
-                    },
-                )))
+                conn.send(Message::ServiceCreatedEvent(ServiceCreatedEvent {
+                    object_uuid: obj_uuid.0,
+                    object_cookie: obj_cookie.0,
+                    uuid: svc_uuid.0,
+                    cookie: svc_cookie.0,
+                    serial: Some(serial),
+                }))
                 .await?;
             }
 
-            conn.send(BrokerEvent::Message(
-                Message::SubscribeServicesCreatedReply(SubscribeServicesCreatedReply { serial }),
+            conn.send(Message::SubscribeServicesCreatedReply(
+                SubscribeServicesCreatedReply { serial },
             ))
             .await?;
         }
@@ -678,12 +647,10 @@ impl Broker {
                 };
 
                 return conn
-                    .send(BrokerEvent::Message(Message::CallFunctionReply(
-                        CallFunctionReply {
-                            serial: req.serial,
-                            result: CallFunctionResult::InvalidService,
-                        },
-                    )))
+                    .send(Message::CallFunctionReply(CallFunctionReply {
+                        serial: req.serial,
+                        result: CallFunctionResult::InvalidService,
+                    }))
                     .await;
             }
         };
@@ -698,12 +665,12 @@ impl Broker {
             .function_calls
             .insert((req.serial, id.clone(), obj_uuid, svc_uuid));
         let res = callee_conn
-            .send(BrokerEvent::Message(Message::CallFunction(CallFunction {
+            .send(Message::CallFunction(CallFunction {
                 serial,
                 service_cookie: svc_cookie.0,
                 function: req.function,
                 args: req.args,
-            })))
+            }))
             .await;
 
         if res.is_ok() {
@@ -741,12 +708,10 @@ impl Broker {
             .conns
             .get_mut(&conn_id)
             .expect("inconsistent state")
-            .send(BrokerEvent::Message(Message::CallFunctionReply(
-                CallFunctionReply {
-                    serial,
-                    result: req.result,
-                },
-            )))
+            .send(Message::CallFunctionReply(CallFunctionReply {
+                serial,
+                result: req.result,
+            }))
             .await;
         if res.is_err() {
             state.push_remove_conn(conn_id);
@@ -771,22 +736,18 @@ impl Broker {
             Some(&ids) => ids,
             None => {
                 return conn
-                    .send(BrokerEvent::Message(Message::SubscribeEventReply(
-                        SubscribeEventReply {
-                            serial,
-                            result: SubscribeEventResult::InvalidService,
-                        },
-                    )))
+                    .send(Message::SubscribeEventReply(SubscribeEventReply {
+                        serial,
+                        result: SubscribeEventResult::InvalidService,
+                    }))
                     .await
             }
         };
 
-        conn.send(BrokerEvent::Message(Message::SubscribeEventReply(
-            SubscribeEventReply {
-                serial,
-                result: SubscribeEventResult::Ok,
-            },
-        )))
+        conn.send(Message::SubscribeEventReply(SubscribeEventReply {
+            serial,
+            result: SubscribeEventResult::Ok,
+        }))
         .await?;
 
         conn.add_subscription(svc_cookie, req.event);
@@ -804,13 +765,11 @@ impl Broker {
                 .conn_id();
             if let Some(target_conn) = self.conns.get_mut(target_conn_id) {
                 target_conn
-                    .send(BrokerEvent::Message(Message::SubscribeEvent(
-                        SubscribeEvent {
-                            serial: None,
-                            service_cookie: req.service_cookie,
-                            event: req.event,
-                        },
-                    )))
+                    .send(Message::SubscribeEvent(SubscribeEvent {
+                        serial: None,
+                        service_cookie: req.service_cookie,
+                        event: req.event,
+                    }))
                     .await
                     .ok();
             }
@@ -847,8 +806,8 @@ impl Broker {
             let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
             let conn_id = obj.conn_id();
             let conn = self.conns.get_mut(conn_id).expect("inconsistent state");
-            let ev = BrokerEvent::Message(Message::UnsubscribeEvent(req));
-            if let Err(()) = conn.send(ev).await {
+            let msg = Message::UnsubscribeEvent(req);
+            if let Err(()) = conn.send(msg).await {
                 state.push_remove_conn(conn_id.clone());
             }
         }
@@ -860,8 +819,8 @@ impl Broker {
         let svc_cookie = ServiceCookie(req.service_cookie);
         for (conn_id, conn) in self.conns.iter_mut() {
             if conn.is_subscribed_to(svc_cookie, req.event) {
-                let ev = BrokerEvent::Message(Message::EmitEvent(req.clone()));
-                if let Err(()) = conn.send(ev).await {
+                let msg = Message::EmitEvent(req.clone());
+                if let Err(()) = conn.send(msg).await {
                     state.push_remove_conn(conn_id.clone());
                 }
             }
@@ -971,7 +930,7 @@ impl Broker {
     }
 }
 
-async fn broadcast<'a, I>(conns: I, state: &mut State, ev: BrokerEvent)
+async fn broadcast<'a, I>(conns: I, state: &mut State, msg: Message)
 where
     // This should really be IntoIterator, but we're hitting a compiler bug:
     // https://github.com/tokio-rs/tokio/issues/1835
@@ -980,7 +939,7 @@ where
 {
     for (id, conn) in conns {
         // Shutdown connection on error, but don't abort loop.
-        if let Err(()) = conn.send(ev.clone()).await {
+        if let Err(()) = conn.send(msg.clone()).await {
             state.push_remove_conn(id.clone());
         }
     }

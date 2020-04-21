@@ -2,9 +2,9 @@ mod error;
 mod event;
 mod handle;
 
-use crate::broker::BrokerEvent;
 use crate::conn_id::ConnectionId;
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_proto::Message;
 use futures_channel::mpsc::{Receiver, Sender};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
@@ -22,7 +22,7 @@ where
 {
     t: T,
     send: Sender<ConnectionEvent>,
-    recv: Receiver<BrokerEvent>,
+    recv: Receiver<Message>,
     handle: Option<ConnectionHandle>,
 }
 
@@ -34,7 +34,7 @@ where
         t: T,
         id: ConnectionId,
         send: Sender<ConnectionEvent>,
-        recv: Receiver<BrokerEvent>,
+        recv: Receiver<Message>,
     ) -> Self {
         Connection {
             t,
@@ -53,7 +53,11 @@ where
 
         loop {
             match select(self.recv.next(), self.t.receive()).await {
-                Either::Left((Some(BrokerEvent::Message(msg)), _)) => {
+                Either::Left((Some(Message::Shutdown), _)) | Either::Left((None, _)) => {
+                    return Ok(())
+                }
+
+                Either::Left((Some(msg), _)) => {
                     if let Err(e) = self.t.send_and_flush(msg).await {
                         return self.shutdown(id, Err(e.into())).await;
                     }
@@ -71,10 +75,6 @@ where
                             return self.shutdown(id, Err(ConnectionError::InternalError)).await;
                         }
                     }
-                }
-
-                Either::Left((Some(BrokerEvent::Shutdown), _)) | Either::Left((None, _)) => {
-                    return Ok(())
                 }
 
                 Either::Right((Err(e), _)) => return self.shutdown(id, Err(e.into())).await,
