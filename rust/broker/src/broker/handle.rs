@@ -3,7 +3,7 @@ use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError}
 use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::*;
-use futures_channel::mpsc::{channel, SendError, Sender};
+use futures_channel::mpsc::{channel, Sender};
 use futures_util::sink::SinkExt;
 use std::future::Future;
 
@@ -54,29 +54,20 @@ impl BrokerHandle {
         self.send
             .send(ConnectionEvent::NewConnection(id.clone(), send))
             .await
-            .map_err(|e| {
-                if e.is_disconnected() {
-                    EstablishError::BrokerShutdown
-                } else {
-                    EstablishError::InternalError
-                }
-            })?;
+            .map_err(|_| EstablishError::BrokerShutdown)?;
 
         Ok(Connection::new(t, id, self.send.clone(), recv))
     }
 
-    pub async fn shutdown(&mut self) -> Result<(), BrokerError> {
-        self.send
-            .send(ConnectionEvent::ShutdownBroker)
-            .await
-            .map_err(from_send_error)
+    pub async fn shutdown(&mut self) {
+        self.send.send(ConnectionEvent::ShutdownBroker).await.ok();
     }
 
-    pub async fn shutdown_idle(&mut self) -> Result<(), BrokerError> {
+    pub async fn shutdown_idle(&mut self) {
         self.send
             .send(ConnectionEvent::ShutdownIdleBroker)
             .await
-            .map_err(from_send_error)
+            .ok();
     }
 
     pub fn shutdown_connection<'a>(
@@ -88,15 +79,7 @@ impl BrokerHandle {
             self.send
                 .send(ConnectionEvent::ShutdownConnection(id))
                 .await
-                .map_err(from_send_error)
+                .map_err(|_| BrokerError::BrokerShutdown)
         }
-    }
-}
-
-fn from_send_error(e: SendError) -> BrokerError {
-    if e.is_disconnected() {
-        BrokerError::BrokerShutdown
-    } else {
-        BrokerError::InternalError
     }
 }

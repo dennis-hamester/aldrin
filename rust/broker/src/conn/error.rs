@@ -4,9 +4,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum ConnectionError<T> {
-    InternalError,
     UnexpectedBrokerShutdown,
-    UnexpectedClientShutdown,
     Transport(T),
 }
 
@@ -22,9 +20,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ConnectionError::InternalError => f.write_str("internal error"),
             ConnectionError::UnexpectedBrokerShutdown => f.write_str("unexpected broker shutdown"),
-            ConnectionError::UnexpectedClientShutdown => f.write_str("unexpected client shutdown"),
             ConnectionError::Transport(e) => e.fmt(f),
         }
     }
@@ -34,8 +30,6 @@ impl<T> Error for ConnectionError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
 pub enum EstablishError<T> {
-    InternalError,
-    UnexpectedClientShutdown,
     UnexpectedMessageReceived(Message),
     VersionMismatch(u32),
     BrokerShutdown,
@@ -54,8 +48,6 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            EstablishError::InternalError => f.write_str("internal error"),
-            EstablishError::UnexpectedClientShutdown => f.write_str("unexpected client shutdown"),
             EstablishError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")
             }

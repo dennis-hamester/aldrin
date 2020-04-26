@@ -15,7 +15,7 @@ async fn broker(t: Channel) -> Result<(), Box<dyn Error>> {
     let conn = handle.add_connection(t, FIFO_SIZE).await?;
     conn.run().await?;
 
-    handle.shutdown().await?;
+    handle.shutdown().await;
     join_handle.await?;
 
     Ok(())
