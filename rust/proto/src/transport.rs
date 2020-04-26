@@ -23,16 +23,10 @@ use std::task::{Context, Poll};
 ///
 /// # Shutdown
 ///
-/// The transport can be shut down locally or by the remote end. It is expected that a shutdown by
-/// either side can be observed by the other.
-///
-/// Local shutdown is initiated by [`poll_shutdown`].
-///
-/// A remote shutdown can be observed by one of the following:
-///
-/// - [`receive_poll`] returns `Poll::Ready(Ok(None))` (this may also happen after shutting down
-///   locally).
-/// - [`send_poll_ready`] returns `Poll::Ready(Ok(false))`.
+/// Transports shut down only implicitly when dropped or in the case of errors. There is no
+/// explicit shutdown method, because the Aldrin protocol defines the [`Shutdown`] message, after
+/// which users of this trait are expected to drop the transport. Any unexpected shutdown must be
+/// signaled with an [`Error`] by the implementation.
 ///
 /// # Errors
 ///
@@ -44,112 +38,45 @@ use std::task::{Context, Poll};
 /// [`Message`s]: Message
 /// [`Sink`]: https://docs.rs/futures/latest/futures/stream/trait.Stream.html
 /// [`Stream`]: https://docs.rs/futures/latest/futures/stream/trait.Stream.html
-/// [`poll_shutdown`]: AsyncTransport::poll_shutdown
-/// [`receive_poll`]: AsyncTransport::receive_poll
-/// [`send_poll_ready`]: AsyncTransport::send_poll_ready
+/// [`Shutdown`]: Message::Shutdown
 pub trait AsyncTransport {
     /// Error type when sending or receiving messages.
     type Error;
 
     /// Attempts to receive the next message.
-    ///
-    /// If this method returns `Poll::Ready(Ok(None))`, then the last message has been
-    /// received and the transport has shut down.
-    ///
-    /// # Panics
-    ///
-    /// This method may panic in the following situations:
-    ///
-    /// - After it has returned `Poll::Ready(Ok(None))`.
-    /// - After this or any other method indicated an [`Error`](AsyncTransport::Error).
-    fn receive_poll(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Self::Error>>;
+    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>>;
 
     /// Prepares the transport for sending a message.
     ///
     /// This method must be called before sending a [`Message`] with
-    /// [`send_start`](AsyncTransport::send_start). Only when it returns `Poll::Ready(Ok(true))` is
+    /// [`send_start`](AsyncTransport::send_start). Only when it returns `Poll::Ready(Ok(()))` is
     /// the transport ready to start sending a single [`Message`].
     ///
-    /// If the remote end of the transport has shut down, `Poll::Ready(Ok(false))` will be returned.
-    ///
     /// The transport may be implicitly flushed, fully or partially, when this method is called.
-    ///
-    /// # Panics
-    ///
-    /// This method may panic in the following situations:
-    ///
-    /// - After explicit shutdown with [`poll_shutdown`](AsyncTransport::poll_shutdown).
-    /// - After returning `Poll::Ready(Ok(false))`.
-    /// - After [`receive_poll`](AsyncTransport::receive_poll) returned `Poll::Ready(Ok(None))`.
-    /// - After this or any other method indicated an [`Error`](AsyncTransport::Error).
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Self::Error>>;
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
 
     /// Begins sending a message.
     ///
     /// Every call to this method must be preceded by a successful call to
     /// [`send_poll_ready`](AsyncTransport::send_poll_ready).
     ///
-    /// When sending has been successfully initiated, `Ok(())` is returned. It is an error, if the
-    /// transport becomes unable to send the whole [`Message`] (due e.g. a shutdown).
-    ///
     /// Sending a [`Message`] may flush the transport, but does not necessarily do so. Thus, even
     /// when `Ok(())` is returned, the [`Message`] may not yet be delivered to the remote end of
     /// the transport. Use [`send_poll_flush`](AsyncTransport::send_poll_flush) to explicitly flush
     /// the transport.
-    ///
-    /// # Panics
-    ///
-    /// This method may panic in the following situations:
-    ///
-    /// - If called without preparing the transport beforehand with
-    ///   [`send_poll_ready`](AsyncTransport::send_poll_ready).
-    /// - After explicit shutdown with [`poll_shutdown`](AsyncTransport::poll_shutdown).
-    /// - After [`receive_poll`](AsyncTransport::receive_poll) returned `Poll::Ready(Ok(None))`.
-    /// - After this or any other method indicated an [`Error`](AsyncTransport::Error).
     fn send_start(self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error>;
 
     /// Attempts to flush the transport.
     ///
-    /// Flushing will cause _all_ prior [`Message`s](Message) to be delivered to the remote end of
-    /// the transport.
-    ///
-    /// When flushing has been successful, `Poll::Ready(Ok())` is returned. It is an error if the
-    /// transport shuts down before it has been fully flushed.
-    ///
-    /// # Panics
-    ///
-    /// This method may panic in the following situations:
-    ///
-    /// - After explicit shutdown with [`poll_shutdown`](AsyncTransport::poll_shutdown).
-    /// - After [`receive_poll`](AsyncTransport::receive_poll) returned `Poll::Ready(Ok(None))`.
-    /// - After this or any other method indicated an [`Error`](AsyncTransport::Error).
+    /// Flushing must deliver _all_ prior [`Message`s](Message) to the remote end of the transport.
     fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
-
-    /// Attempts to shut down the transport.
-    ///
-    /// `Poll::Ready(Ok())` indicates that the transport has been successfully shut
-    /// down. Afterwards, the transport may still be drained of received [`Message`s](Message)
-    /// until [`receive_poll`](AsyncTransport::receive_poll) returns
-    /// `Poll::Ready(Ok(None))`. However, no more [`Message`s](Message) may be sent.
-    ///
-    /// # Panics
-    ///
-    /// This method may panic in the following situations:
-    ///
-    /// - After a successful shutdown.
-    /// - After [`receive_poll`](AsyncTransport::receive_poll) returned `Poll::Ready(Ok(None))`.
-    /// - After this or any other method indicated an [`Error`](AsyncTransport::Error).
-    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
 
     /// Returns an optional transport name.
     ///
-    /// The name does not need to be unique for a specific broker. The default implementation return
-    /// `None`.
+    /// The name does not need to be unique for a specific broker. The default implementation
+    /// returns `None`.
     ///
-    /// This method may be called at any time, regardless of the shutdown or error state.
+    /// This method may be called at any time, regardless of the error state.
     fn name(&self) -> Option<&str> {
         None
     }
@@ -162,14 +89,11 @@ where
 {
     type Error = <T::Target as AsyncTransport>::Error;
 
-    fn receive_poll(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Self::Error>> {
+    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
         self.get_mut().as_mut().receive_poll(cx)
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Self::Error>> {
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         self.get_mut().as_mut().send_poll_ready(cx)
     }
 
@@ -179,10 +103,6 @@ where
 
     fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         self.get_mut().as_mut().send_poll_flush(cx)
-    }
-
-    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        self.get_mut().as_mut().poll_shutdown(cx)
     }
 
     fn name(&self) -> Option<&str> {
@@ -199,14 +119,14 @@ where
     fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Self::Error>> {
+    ) -> Poll<Result<Message, Self::Error>> {
         Pin::new(&mut **self).receive_poll(cx)
     }
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<bool, Self::Error>> {
+    ) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut **self).send_poll_ready(cx)
     }
 
@@ -219,10 +139,6 @@ where
         cx: &mut Context,
     ) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut **self).send_poll_flush(cx)
-    }
-
-    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        Pin::new(&mut **self).poll_shutdown(cx)
     }
 
     fn name(&self) -> Option<&str> {
@@ -239,14 +155,14 @@ where
     fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Self::Error>> {
+    ) -> Poll<Result<Message, Self::Error>> {
         T::receive_poll(Pin::new(&mut **self), cx)
     }
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<bool, Self::Error>> {
+    ) -> Poll<Result<(), Self::Error>> {
         T::send_poll_ready(Pin::new(&mut **self), cx)
     }
 
@@ -259,10 +175,6 @@ where
         cx: &mut Context,
     ) -> Poll<Result<(), Self::Error>> {
         T::send_poll_flush(Pin::new(&mut **self), cx)
-    }
-
-    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        T::poll_shutdown(Pin::new(&mut **self), cx)
     }
 
     fn name(&self) -> Option<&str> {
@@ -302,21 +214,14 @@ pub trait AsyncTransportExt: AsyncTransport {
         SendFlush(SendFlushInner::Send(self.send(msg)))
     }
 
-    fn shutdown(&mut self) -> Shutdown<'_, Self>
-    where
-        Self: Unpin,
-    {
-        Shutdown(self)
-    }
-
-    fn receive_poll_unpin(&mut self, cx: &mut Context) -> Poll<Result<Option<Message>, Self::Error>>
+    fn receive_poll_unpin(&mut self, cx: &mut Context) -> Poll<Result<Message, Self::Error>>
     where
         Self: Unpin,
     {
         Pin::new(self).receive_poll(cx)
     }
 
-    fn send_poll_ready_unpin(&mut self, cx: &mut Context) -> Poll<Result<bool, Self::Error>>
+    fn send_poll_ready_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
     where
         Self: Unpin,
     {
@@ -336,13 +241,6 @@ pub trait AsyncTransportExt: AsyncTransport {
     {
         Pin::new(self).send_poll_flush(cx)
     }
-
-    fn poll_shutdown_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
-    where
-        Self: Unpin,
-    {
-        Pin::new(self).poll_shutdown(cx)
-    }
 }
 
 impl<T> AsyncTransportExt for T where T: AsyncTransport {}
@@ -356,7 +254,7 @@ impl<'a, T> Future for Receive<'a, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
-    type Output = Result<Option<Message>, T::Error>;
+    type Output = Result<Message, T::Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         self.0.receive_poll_unpin(cx)
@@ -376,21 +274,16 @@ impl<'a, T> Future for Send<'a, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
-    type Output = Result<bool, T::Error>;
+    type Output = Result<(), T::Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match self.t.send_poll_ready_unpin(cx) {
-            Poll::Ready(Ok(true)) => {
+            Poll::Ready(Ok(())) => {
                 let msg = self.msg.take().unwrap();
                 if let Err(e) = self.t.send_start_unpin(msg) {
                     return Poll::Ready(Err(e));
                 }
-                Poll::Ready(Ok(true))
-            }
-
-            Poll::Ready(Ok(false)) => {
-                self.msg.take();
-                Poll::Ready(Ok(false))
+                Poll::Ready(Ok(()))
             }
 
             Poll::Ready(Err(e)) => {
@@ -438,12 +331,12 @@ impl<'a, T> Future for SendFlush<'a, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
-    type Output = Result<bool, T::Error>;
+    type Output = Result<(), T::Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         if let SendFlushInner::Send(ref mut send) = self.0 {
             match Pin::new(send).poll(cx) {
-                Poll::Ready(Ok(true)) => {}
+                Poll::Ready(Ok(())) => {}
                 p => return p,
             }
 
@@ -457,24 +350,8 @@ where
         }
 
         match self.0 {
-            SendFlushInner::Flush(ref mut flush) => Pin::new(flush).poll(cx).map_ok(|_| true),
+            SendFlushInner::Flush(ref mut flush) => Pin::new(flush).poll(cx),
             _ => unreachable!(),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct Shutdown<'a, T>(&'a mut T)
-where
-    T: AsyncTransport + Unpin + ?Sized;
-
-impl<'a, T> Future for Shutdown<'a, T>
-where
-    T: AsyncTransport + Unpin + ?Sized,
-{
-    type Output = Result<(), T::Error>;
-
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        self.0.poll_shutdown_unpin(cx)
     }
 }
