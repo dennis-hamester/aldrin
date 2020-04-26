@@ -55,7 +55,6 @@ where
             match select(self.recv.next(), self.t.receive()).await {
                 Either::Left((Some(Message::Shutdown), _)) => {
                     self.t.send_and_flush(Message::Shutdown).await?;
-                    self.t.shutdown().await?;
                     self.drain_client_recv().await?;
                     return Ok(());
                 }
@@ -68,39 +67,15 @@ where
                     }
                 }
 
-                Either::Left((None, _)) => {
-                    self.t.shutdown().await?;
-                    self.drain_client_recv().await?;
-                    return Err(ConnectionError::UnexpectedBrokerShutdown);
-                }
+                Either::Left((None, _)) => return Err(ConnectionError::UnexpectedBrokerShutdown),
 
-                Either::Right((Ok(Some(Message::Shutdown)), _)) => {
-                    if let Err(e) = self.send_broker_shutdown(id).await {
-                        self.t.shutdown().await?;
-                        return Err(e);
-                    }
-
-                    if let Err(e) = self.t.shutdown().await {
-                        self.drain_broker_recv().await;
-                        return Err(e.into());
-                    }
-
+                Either::Right((Ok(Message::Shutdown), _)) => {
+                    self.send_broker_shutdown(id).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }
 
-                Either::Right((Ok(Some(msg)), _)) => {
-                    if let Err(e) = self.send_broker_msg(id.clone(), msg).await {
-                        self.t.shutdown().await?;
-                        return Err(e);
-                    }
-                }
-
-                Either::Right((Ok(None), _)) => {
-                    self.send_broker_shutdown(id).await?;
-                    self.drain_broker_recv().await;
-                    return Err(ConnectionError::UnexpectedClientShutdown);
-                }
+                Either::Right((Ok(msg), _)) => self.send_broker_msg(id.clone(), msg).await?,
 
                 Either::Right((Err(e), _)) => {
                     self.send_broker_shutdown(id).await?;
@@ -137,7 +112,10 @@ where
     }
 
     async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
-        while let Some(_) = self.t.receive().await? {}
-        Ok(())
+        loop {
+            if let Message::Shutdown = self.t.receive().await? {
+                return Ok(());
+            }
+        }
     }
 }

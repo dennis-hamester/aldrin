@@ -29,11 +29,7 @@ impl BrokerHandle {
     where
         T: AsyncTransport + Unpin,
     {
-        match t
-            .receive()
-            .await?
-            .ok_or(EstablishError::UnexpectedClientShutdown)?
-        {
+        match t.receive().await? {
             Message::Connect(msg) if msg.version == VERSION => {
                 t.send_and_flush(Message::ConnectReply(ConnectReply::Ok))
                     .await?;
