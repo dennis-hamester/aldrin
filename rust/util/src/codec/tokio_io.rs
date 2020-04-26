@@ -70,16 +70,13 @@ where
 {
     type Error = TokioCodecError<P::Error, S::Error>;
 
-    fn receive_poll(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Self::Error>> {
+    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
         let mut this = self.project();
 
         loop {
             match this.packetizer.decode(this.read_buf) {
                 Ok(Some(pkt)) => match this.serializer.deserialize(pkt) {
-                    Ok(msg) => return Poll::Ready(Ok(Some(msg))),
+                    Ok(msg) => return Poll::Ready(Ok(msg)),
                     Err(e) => return Poll::Ready(Err(TokioCodecError::Serializer(e))),
                 },
                 Ok(None) => {}
@@ -87,7 +84,9 @@ where
             }
 
             match this.io.as_mut().poll_read_buf(cx, this.read_buf) {
-                Poll::Ready(Ok(0)) => return Poll::Ready(Ok(None)),
+                Poll::Ready(Ok(0)) => {
+                    return Poll::Ready(Err(TokioCodecError::Io(IoErrorKind::UnexpectedEof.into())))
+                }
                 Poll::Ready(Ok(_)) => {}
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
                 Poll::Pending => return Poll::Pending,
@@ -95,13 +94,13 @@ where
         }
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Self::Error>> {
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         let write_buf = self.write_buf.as_ref().unwrap();
 
         if write_buf.len() >= BACKPRESSURE_BOUNDARY {
-            self.send_poll_flush(cx).map_ok(|_| true)
+            self.send_poll_flush(cx)
         } else {
-            Poll::Ready(Ok(true))
+            Poll::Ready(Ok(()))
         }
     }
 
@@ -138,19 +137,6 @@ where
         }
 
         this.io.poll_flush(cx).map_err(TokioCodecError::Io)
-    }
-
-    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        if self.write_buf.is_some() {
-            match self.as_mut().send_poll_flush(cx) {
-                Poll::Ready(Ok(())) => {}
-                p => return p,
-            }
-        }
-
-        let this = self.project();
-        this.write_buf.take();
-        this.io.poll_shutdown(cx).map_err(TokioCodecError::Io)
     }
 
     fn name(&self) -> Option<&str> {

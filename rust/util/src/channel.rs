@@ -83,17 +83,21 @@ impl AsyncTransport for Channel {
     fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Disconnected>> {
-        Pin::new(&mut self.receiver).poll_next(cx).map(Ok)
+    ) -> Poll<Result<Message, Disconnected>> {
+        match Pin::new(&mut self.receiver).poll_next(cx) {
+            Poll::Ready(Some(msg)) => Poll::Ready(Ok(msg)),
+            Poll::Ready(None) => Poll::Ready(Err(Disconnected)),
+            Poll::Pending => Poll::Pending,
+        }
     }
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<bool, Disconnected>> {
+    ) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
-            Poll::Ready(Ok(())) => Poll::Ready(Ok(true)),
-            Poll::Ready(Err(_)) => Poll::Ready(Ok(false)),
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
+            Poll::Ready(Err(_)) => Poll::Ready(Err(Disconnected)),
             Poll::Pending => Poll::Pending,
         }
     }
@@ -103,14 +107,6 @@ impl AsyncTransport for Channel {
     }
 
     fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn poll_shutdown(
-        mut self: Pin<&mut Self>,
-        _cx: &mut Context,
-    ) -> Poll<Result<(), Disconnected>> {
-        self.sender.close_channel();
         Poll::Ready(Ok(()))
     }
 
@@ -173,14 +169,18 @@ impl AsyncTransport for Unbounded {
     fn receive_poll(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-    ) -> Poll<Result<Option<Message>, Disconnected>> {
-        Pin::new(&mut self.receiver).poll_next(cx).map(Ok)
+    ) -> Poll<Result<Message, Disconnected>> {
+        match Pin::new(&mut self.receiver).poll_next(cx) {
+            Poll::Ready(Some(msg)) => Poll::Ready(Ok(msg)),
+            Poll::Ready(None) => Poll::Ready(Err(Disconnected)),
+            Poll::Pending => Poll::Pending,
+        }
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<bool, Disconnected>> {
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
-            Poll::Ready(Ok(())) => Poll::Ready(Ok(true)),
-            Poll::Ready(Err(_)) => Poll::Ready(Ok(false)),
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
+            Poll::Ready(Err(_)) => Poll::Ready(Err(Disconnected)),
             Poll::Pending => Poll::Pending,
         }
     }
@@ -190,11 +190,6 @@ impl AsyncTransport for Unbounded {
     }
 
     fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
-        self.sender.close_channel();
         Poll::Ready(Ok(()))
     }
 
