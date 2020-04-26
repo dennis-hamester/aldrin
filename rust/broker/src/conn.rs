@@ -53,46 +53,91 @@ where
 
         loop {
             match select(self.recv.next(), self.t.receive()).await {
-                Either::Left((Some(Message::Shutdown), _)) | Either::Left((None, _)) => {
-                    return Ok(())
+                Either::Left((Some(Message::Shutdown), _)) => {
+                    self.t.send_and_flush(Message::Shutdown).await?;
+                    self.t.shutdown().await?;
+                    self.drain_client_recv().await?;
+                    return Ok(());
                 }
 
                 Either::Left((Some(msg), _)) => {
                     if let Err(e) = self.t.send_and_flush(msg).await {
-                        return self.shutdown(id, Err(e.into())).await;
+                        self.send_broker_shutdown(id).await?;
+                        self.drain_broker_recv().await;
+                        return Err(e.into());
                     }
+                }
+
+                Either::Left((None, _)) => {
+                    self.t.shutdown().await?;
+                    self.drain_client_recv().await?;
+                    return Err(ConnectionError::UnexpectedBrokerShutdown);
+                }
+
+                Either::Right((Ok(Some(Message::Shutdown)), _)) => {
+                    if let Err(e) = self.send_broker_shutdown(id).await {
+                        self.t.shutdown().await?;
+                        return Err(e);
+                    }
+
+                    if let Err(e) = self.t.shutdown().await {
+                        self.drain_broker_recv().await;
+                        return Err(e.into());
+                    }
+
+                    self.drain_broker_recv().await;
+                    return Ok(());
                 }
 
                 Either::Right((Ok(Some(msg)), _)) => {
-                    if let Err(e) = self
-                        .send
-                        .send(ConnectionEvent::Message(id.clone(), msg))
-                        .await
-                    {
-                        if e.is_disconnected() {
-                            return Ok(());
-                        } else {
-                            return self.shutdown(id, Err(ConnectionError::InternalError)).await;
-                        }
+                    if let Err(e) = self.send_broker_msg(id.clone(), msg).await {
+                        self.t.shutdown().await?;
+                        return Err(e);
                     }
                 }
 
-                Either::Right((Err(e), _)) => return self.shutdown(id, Err(e.into())).await,
-                Either::Right((Ok(None), _)) => return self.shutdown(id, Ok(())).await,
+                Either::Right((Ok(None), _)) => {
+                    self.send_broker_shutdown(id).await?;
+                    self.drain_broker_recv().await;
+                    return Err(ConnectionError::UnexpectedClientShutdown);
+                }
+
+                Either::Right((Err(e), _)) => {
+                    self.send_broker_shutdown(id).await?;
+                    self.drain_broker_recv().await;
+                    return Err(e.into());
+                }
             }
         }
     }
 
-    async fn shutdown(
-        mut self,
+    async fn send_broker_msg(
+        &mut self,
         id: ConnectionId,
-        res: Result<(), ConnectionError<T::Error>>,
+        msg: Message,
+    ) -> Result<(), ConnectionError<T::Error>> {
+        self.send
+            .send(ConnectionEvent::Message(id, msg))
+            .await
+            .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
+    }
+
+    async fn send_broker_shutdown(
+        &mut self,
+        id: ConnectionId,
     ) -> Result<(), ConnectionError<T::Error>> {
         self.send
             .send(ConnectionEvent::ConnectionShutdown(id))
             .await
-            .ok();
+            .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
+    }
 
-        res
+    async fn drain_broker_recv(&mut self) {
+        while let Some(_) = self.recv.next().await {}
+    }
+
+    async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
+        while let Some(_) = self.t.receive().await? {}
+        Ok(())
     }
 }

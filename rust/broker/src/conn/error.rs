@@ -5,6 +5,8 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum ConnectionError<T> {
     InternalError,
+    UnexpectedBrokerShutdown,
+    UnexpectedClientShutdown,
     Transport(T),
 }
 
@@ -21,6 +23,8 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectionError::InternalError => f.write_str("internal error"),
+            ConnectionError::UnexpectedBrokerShutdown => f.write_str("unexpected broker shutdown"),
+            ConnectionError::UnexpectedClientShutdown => f.write_str("unexpected client shutdown"),
             ConnectionError::Transport(e) => e.fmt(f),
         }
     }
