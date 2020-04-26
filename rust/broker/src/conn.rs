@@ -71,6 +71,7 @@ where
 
                 Either::Right((Ok(Message::Shutdown), _)) => {
                     self.send_broker_shutdown(id).await?;
+                    self.t.send_and_flush(Message::Shutdown).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }
