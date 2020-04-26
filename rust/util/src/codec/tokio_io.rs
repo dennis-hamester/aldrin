@@ -167,7 +167,14 @@ where
 
 impl<P, S> StdError for TokioCodecError<P, S>
 where
-    P: fmt::Display + fmt::Debug,
-    S: fmt::Display + fmt::Debug,
+    P: StdError + 'static,
+    S: StdError + 'static,
 {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            TokioCodecError::Io(e) => Some(e),
+            TokioCodecError::Packetizer(e) => Some(e),
+            TokioCodecError::Serializer(e) => Some(e),
+        }
+    }
 }
