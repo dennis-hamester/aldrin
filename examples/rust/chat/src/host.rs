@@ -96,7 +96,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    handle.shutdown().await?;
+    handle.shutdown().await;
     join.await?;
 
     Ok(())

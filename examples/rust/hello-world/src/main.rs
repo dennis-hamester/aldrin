@@ -61,7 +61,7 @@ async fn client(t: Channel) -> Result<(), Box<dyn Error>> {
     svc.destroy().await?;
     obj.destroy().await?;
 
-    handle.shutdown().await?;
+    handle.shutdown().await;
     join_handle.await?;
 
     Ok(())

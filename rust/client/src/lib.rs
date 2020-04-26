@@ -23,7 +23,6 @@ pub mod codegen {
 use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::*;
 use events::{EventsId, EventsRequest};
-use futures_channel::mpsc::SendError;
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
@@ -280,36 +279,30 @@ where
     ) -> Result<(), RunError<T::Error>> {
         if let Some(serial) = object_created_event.serial {
             if let Some((send, _)) = self.objects_created.get_mut(serial) {
-                if let Err(e) = send
+                if send
                     .send(ObjectId::new(
                         ObjectUuid(object_created_event.uuid),
                         ObjectCookie(object_created_event.cookie),
                     ))
                     .await
+                    .is_err()
                 {
-                    if e.is_disconnected() {
-                        self.objects_created.remove(serial);
-                    } else {
-                        return Err(RunError::InternalError);
-                    }
+                    self.objects_created.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
             for (serial, (send, _)) in self.objects_created.iter_mut() {
-                if let Err(e) = send
+                if send
                     .send(ObjectId::new(
                         ObjectUuid(object_created_event.uuid),
                         ObjectCookie(object_created_event.cookie),
                     ))
                     .await
+                    .is_err()
                 {
-                    if e.is_disconnected() {
-                        remove.push(serial);
-                    } else {
-                        return Err(RunError::InternalError);
-                    }
+                    remove.push(serial);
                 }
             }
 
@@ -332,18 +325,15 @@ where
         let mut remove = Vec::new();
 
         for (serial, send) in self.objects_destroyed.iter_mut() {
-            if let Err(e) = send
+            if send
                 .send(ObjectId::new(
                     ObjectUuid(object_destroyed_event.uuid),
                     ObjectCookie(object_destroyed_event.cookie),
                 ))
                 .await
+                .is_err()
             {
-                if e.is_disconnected() {
-                    remove.push(serial);
-                } else {
-                    return Err(RunError::InternalError);
-                }
+                remove.push(serial);
             }
         }
 
@@ -420,24 +410,16 @@ where
 
         if let Some(serial) = ev.serial {
             if let Some((send, _)) = self.services_created.get_mut(serial) {
-                if let Err(e) = send.send(service_id).await {
-                    if e.is_disconnected() {
-                        self.services_created.remove(serial);
-                    } else {
-                        return Err(RunError::InternalError);
-                    }
+                if send.send(service_id).await.is_err() {
+                    self.services_created.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
             for (serial, (send, _)) in self.services_created.iter_mut() {
-                if let Err(e) = send.send(service_id).await {
-                    if e.is_disconnected() {
-                        remove.push(serial);
-                    } else {
-                        return Err(RunError::InternalError);
-                    }
+                if send.send(service_id).await.is_err() {
+                    remove.push(serial);
                 }
             }
 
@@ -470,12 +452,8 @@ where
         // UnsubscribeServicesDestroyed below.
         if !self.services_destroyed.is_empty() {
             for (serial, send) in self.services_destroyed.iter_mut() {
-                if let Err(e) = send.send(service_id).await {
-                    if e.is_disconnected() {
-                        remove.push(serial);
-                    } else {
-                        return Err(RunError::InternalError);
-                    }
+                if send.send(service_id).await.is_err() {
+                    remove.push(serial);
                 }
             }
 
@@ -526,25 +504,22 @@ where
         let cookie = ServiceCookie(call_function.service_cookie);
         let send = self.services.get_mut(&cookie).expect("inconsistent state");
 
-        if let Err(e) = send
+        if send
             .send((
                 call_function.function,
                 call_function.args,
                 call_function.serial,
             ))
             .await
+            .is_err()
         {
-            if e.is_disconnected() {
-                self.t
-                    .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
-                        serial: call_function.serial,
-                        result: CallFunctionResult::InvalidService,
-                    }))
-                    .await
-                    .map_err(Into::into)
-            } else {
-                Err(RunError::InternalError)
-            }
+            self.t
+                .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
+                    serial: call_function.serial,
+                    result: CallFunctionResult::InvalidService,
+                }))
+                .await
+                .map_err(Into::into)
         } else {
             Ok(())
         }
@@ -945,12 +920,4 @@ pub enum SubscribeMode {
 
     /// Receive events only for future objects or services.
     NewOnly,
-}
-
-fn from_send_error(e: SendError) -> Error {
-    if e.is_disconnected() {
-        Error::ClientShutdown
-    } else {
-        Error::InternalError
-    }
 }

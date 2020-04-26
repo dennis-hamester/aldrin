@@ -6,9 +6,6 @@ use std::fmt;
 /// Error while connecting to a broker.
 #[derive(Debug, Clone)]
 pub enum ConnectError<T> {
-    /// The connection was closed unexpectedly.
-    UnexpectedEof,
-
     /// The Aldrin protocol version differs between client and broker.
     ///
     /// The contained version is that of the broker. The version of the client is
@@ -37,7 +34,6 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ConnectError::UnexpectedEof => f.write_str("unexpected end of file"),
             ConnectError::VersionMismatch(v) => {
                 f.write_fmt(format_args!("broker version {} mismatch", v))
             }
@@ -54,14 +50,6 @@ impl<T> StdError for ConnectError<T> where T: fmt::Debug + fmt::Display {}
 /// Error while running a client.
 #[derive(Debug, Clone)]
 pub enum RunError<T> {
-    /// Internal error.
-    ///
-    /// This indicates an internal error that is otherwise not expected nor handled. This should
-    /// never happen and probably indicates a bug if it does. Please open a ticket.
-    ///
-    /// We might remove this variant in the future.
-    InternalError,
-
     /// An unexpected message was received.
     UnexpectedMessageReceived(Message),
 
@@ -84,7 +72,6 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RunError::InternalError => f.write_str("internal error"),
             RunError::UnexpectedMessageReceived(_) => f.write_str("unexpected message received"),
             RunError::Transport(e) => e.fmt(f),
         }
@@ -96,14 +83,6 @@ impl<T> StdError for RunError<T> where T: fmt::Debug + fmt::Display {}
 /// Standard error type used for most functions.
 #[derive(Debug, Clone)]
 pub enum Error {
-    /// Internal error.
-    ///
-    /// This indicates an internal error that is otherwise not expected nor handled. This should
-    /// never happen and probably indicates a bug if it does. Please open a ticket.
-    ///
-    /// We might remove this variant in the future.
-    InternalError,
-
     /// The client has shut down.
     ///
     /// The client can shut down for various reasons, e.g. by explicitly calling
@@ -159,7 +138,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::InternalError => f.write_str("internal error"),
             Error::ClientShutdown => f.write_str("client shutdown"),
             Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {}", uuid)),
             Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id.uuid)),

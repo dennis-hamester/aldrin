@@ -195,7 +195,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     receiver.close();
     interface.cancel_read_line()?;
     linefeed_join.join().ok();
-    handle.shutdown().await?;
+    handle.shutdown().await;
     client_join.await?;
 
     Ok(())

@@ -1,8 +1,8 @@
 use super::{
-    from_send_error, EmitEventRequest, Error, Events, EventsId, EventsRequest, Object,
-    ObjectCookie, ObjectId, ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request, Service,
-    ServiceCookie, ServiceId, ServiceUuid, ServicesCreated, ServicesDestroyed,
-    SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
+    EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectId,
+    ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request, Service, ServiceCookie, ServiceId,
+    ServiceUuid, ServicesCreated, ServicesDestroyed, SubscribeEventRequest, SubscribeMode,
+    UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{channel, Sender};
@@ -28,12 +28,8 @@ impl Handle {
     /// If the client has already shut down (due to any reason), this function will not treat that
     /// as an error. This is different than most other functions, which would return
     /// [`Error::ClientShutdown`] instead.
-    pub async fn shutdown(&mut self) -> Result<(), Error> {
-        match self.send.send(Request::Shutdown).await {
-            Ok(()) => Ok(()),
-            Err(e) if e.is_disconnected() => Ok(()),
-            Err(e) => Err(from_send_error(e)),
-        }
+    pub async fn shutdown(&mut self) {
+        self.send.send(Request::Shutdown).await.ok();
     }
 
     pub async fn create_object(&mut self, uuid: ObjectUuid) -> Result<Object, Error> {
@@ -41,7 +37,7 @@ impl Handle {
         self.send
             .send(Request::CreateObject(uuid, res_send))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CreateObjectResult::Ok(cookie) => Ok(Object::new(
@@ -57,12 +53,12 @@ impl Handle {
         self.send
             .send(Request::DestroyObject(id.cookie, res_send))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
             DestroyObjectResult::InvalidObject => Err(Error::InvalidObject(id)),
-            DestroyObjectResult::ForeignObject => Err(Error::InternalError),
+            DestroyObjectResult::ForeignObject => unreachable!(),
         }
     }
 
@@ -82,7 +78,7 @@ impl Handle {
         self.send
             .send(Request::SubscribeObjectsCreated(ev_send, mode))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         Ok(ObjectsCreated::new(ev_recv))
     }
 
@@ -91,7 +87,7 @@ impl Handle {
         self.send
             .send(Request::SubscribeObjectsDestroyed(ev_send))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         Ok(ObjectsDestroyed::new(ev_recv))
     }
 
@@ -110,7 +106,7 @@ impl Handle {
                 res_send,
             ))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let (res, recv) = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match res {
             CreateServiceResult::Ok(cookie) => Ok(Service::new(
@@ -122,7 +118,7 @@ impl Handle {
                 Err(Error::DuplicateService(object_id, service_uuid))
             }
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
-            CreateServiceResult::ForeignObject => Err(Error::InternalError),
+            CreateServiceResult::ForeignObject => unreachable!(),
         }
     }
 
@@ -131,12 +127,12 @@ impl Handle {
         self.send
             .send(Request::DestroyService(id.cookie, res_send))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyServiceResult::Ok => Ok(()),
             DestroyServiceResult::InvalidService => Err(Error::InvalidService(id)),
-            DestroyServiceResult::ForeignObject => Err(Error::InternalError),
+            DestroyServiceResult::ForeignObject => unreachable!(),
         }
     }
 
@@ -156,7 +152,7 @@ impl Handle {
         self.send
             .send(Request::SubscribeServicesCreated(ev_send, mode))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         Ok(ServicesCreated::new(ev_recv))
     }
 
@@ -168,7 +164,7 @@ impl Handle {
         self.send
             .send(Request::SubscribeServicesDestroyed(ev_send))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         Ok(ServicesDestroyed::new(ev_recv))
     }
 
@@ -187,7 +183,7 @@ impl Handle {
                 res_send,
             ))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CallFunctionResult::Ok(v) => Ok(Ok(v)),
@@ -209,7 +205,7 @@ impl Handle {
         self.send
             .send(Request::FunctionCallReply(serial, result))
             .await
-            .map_err(from_send_error)
+            .map_err(|_| Error::ClientShutdown)
     }
 
     pub(crate) fn abort_function_call_now(&mut self, serial: u32) {
@@ -242,7 +238,7 @@ impl Handle {
                 reply: rep_send,
             }))
             .await
-            .map_err(from_send_error)?;
+            .map_err(|_| Error::ClientShutdown)?;
         let reply = rep_recv.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             SubscribeEventResult::Ok => Ok(()),
@@ -263,7 +259,7 @@ impl Handle {
                 id,
             }))
             .await
-            .map_err(from_send_error)
+            .map_err(|_| Error::ClientShutdown)
     }
 
     pub async fn emit_event(
@@ -279,6 +275,6 @@ impl Handle {
                 args,
             }))
             .await
-            .map_err(from_send_error)
+            .map_err(|_| Error::ClientShutdown)
     }
 }
