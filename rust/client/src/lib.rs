@@ -121,7 +121,7 @@ where
         t.send_and_flush(Message::Connect(Connect { version: VERSION }))
             .await?;
 
-        match t.receive().await?.ok_or(ConnectError::UnexpectedEof)? {
+        match t.receive().await? {
             Message::ConnectReply(ConnectReply::Ok) => {}
             Message::ConnectReply(ConnectReply::VersionMismatch(v)) => {
                 return Err(ConnectError::VersionMismatch(v))
@@ -180,24 +180,36 @@ where
         self.handle.take().unwrap();
 
         loop {
-            let shutdown = match select(self.t.receive(), self.recv.next()).await {
-                Either::Left((Ok(Some(msg)), _)) => !self.handle_message(msg).await?,
-                Either::Left((Err(e), _)) => return Err(e.into()),
-                Either::Left((Ok(None), _)) => return Ok(()),
-                Either::Right((Some(Request::Shutdown), _)) => return Ok(()),
-                Either::Right((Some(req), _)) => !self.handle_request(req).await?,
-                Either::Right((None, _)) => return Ok(()),
-            };
+            match select(self.t.receive(), self.recv.next()).await {
+                Either::Left((Ok(Message::Shutdown), _)) => {
+                    self.t.send_and_flush(Message::Shutdown).await?;
+                    return Ok(());
+                }
 
-            if shutdown {
+                Either::Left((Ok(msg), _)) => self.handle_message(msg).await?,
+                Either::Left((Err(e), _)) => return Err(e.into()),
+
+                Either::Right((Some(Request::Shutdown), _)) | Either::Right((None, _)) => {
+                    self.t.send_and_flush(Message::Shutdown).await?;
+                    self.drain_transport().await?;
+                    return Ok(());
+                }
+
+                Either::Right((Some(req), _)) => self.handle_request(req).await?,
+            }
+        }
+    }
+
+    async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
+        loop {
+            if let Message::Shutdown = self.t.receive().await? {
                 return Ok(());
             }
         }
     }
 
-    async fn handle_message(&mut self, msg: Message) -> Result<bool, RunError<T::Error>> {
+    async fn handle_message(&mut self, msg: Message) -> Result<(), RunError<T::Error>> {
         match msg {
-            Message::Shutdown => Ok(false),
             Message::CreateObjectReply(re) => self.create_object_reply(re).await,
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re).await,
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
@@ -235,35 +247,37 @@ where
             | Message::UnsubscribeServicesDestroyed => {
                 Err(RunError::UnexpectedMessageReceived(msg))
             }
+
+            Message::Shutdown => unreachable!(), // Handled in run.
         }
     }
 
     async fn create_object_reply(
         &mut self,
         reply: CreateObjectReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(send) = self.create_object.remove(reply.serial) {
             send.send(reply.result).ok();
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn destroy_object_reply(
         &mut self,
         reply: DestroyObjectReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(send) = self.destroy_object.remove(reply.serial) {
             send.send(reply.result).ok();
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn object_created_event(
         &mut self,
         object_created_event: ObjectCreatedEvent,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(serial) = object_created_event.serial {
             if let Some((send, _)) = self.objects_created.get_mut(serial) {
                 if let Err(e) = send
@@ -308,13 +322,13 @@ where
             self.t.send(Message::UnsubscribeObjectsCreated).await?;
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn object_destroyed_event(
         &mut self,
         object_destroyed_event: ObjectDestroyedEvent,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
 
         for (serial, send) in self.objects_destroyed.iter_mut() {
@@ -341,24 +355,24 @@ where
             self.t.send(Message::UnsubscribeObjectsDestroyed).await?;
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn subscribe_objects_created_reply(
         &mut self,
         reply: SubscribeObjectsCreatedReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((_, SubscribeMode::CurrentOnly)) = self.objects_created.get_mut(reply.serial) {
             self.objects_created.remove(reply.serial);
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn create_service_reply(
         &mut self,
         reply: CreateServiceReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((fifo_size, rep_send)) = self.create_service.remove(reply.serial) {
             let recv = if let CreateServiceResult::Ok(cookie) = reply.result {
                 let (send, recv) = mpsc::channel(fifo_size);
@@ -372,16 +386,16 @@ where
             rep_send.send((reply.result, recv)).ok();
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn destroy_service_reply(
         &mut self,
         reply: DestroyServiceReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let (cookie, send) = match self.destroy_service.remove(reply.serial) {
             Some(data) => data,
-            None => return Ok(true),
+            None => return Ok(()),
         };
 
         if let DestroyServiceResult::Ok = reply.result {
@@ -391,13 +405,13 @@ where
         }
 
         send.send(reply.result).ok();
-        Ok(true)
+        Ok(())
     }
 
     async fn service_created_event(
         &mut self,
         ev: ServiceCreatedEvent,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let service_id = ServiceId::new(
             ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
             ServiceUuid(ev.uuid),
@@ -436,13 +450,13 @@ where
             self.t.send(Message::UnsubscribeServicesCreated).await?;
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn service_destroyed_event(
         &mut self,
         ev: ServiceDestroyedEvent,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
         let service_cookie = ServiceCookie(ev.cookie);
         let service_id = ServiceId::new(
@@ -491,24 +505,24 @@ where
             }
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn subscribe_services_created_reply(
         &mut self,
         reply: SubscribeServicesCreatedReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         if let Some((_, SubscribeMode::CurrentOnly)) = self.services_created.get_mut(reply.serial) {
             self.services_created.remove(reply.serial);
         }
 
-        Ok(true)
+        Ok(())
     }
 
     async fn function_call(
         &mut self,
         call_function: CallFunction,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let cookie = ServiceCookie(call_function.service_cookie);
         let send = self.services.get_mut(&cookie).expect("inconsistent state");
 
@@ -532,38 +546,38 @@ where
                 Err(RunError::InternalError)
             }
         } else {
-            Ok(true)
+            Ok(())
         }
     }
 
     async fn call_function_reply(
         &mut self,
         ev: CallFunctionReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let send = self
             .function_calls
             .remove(ev.serial)
             .expect("inconsistent state");
         send.send(ev.result).ok();
-        Ok(true)
+        Ok(())
     }
 
-    async fn event_subscribed(&mut self, ev: SubscribeEvent) -> Result<bool, RunError<T::Error>> {
+    async fn event_subscribed(&mut self, ev: SubscribeEvent) -> Result<(), RunError<T::Error>> {
         self.broker_subscriptions
             .entry(ServiceCookie(ev.service_cookie))
             .or_default()
             .insert(ev.event);
-        Ok(true)
+        Ok(())
     }
 
     async fn subscribe_event_reply(
         &mut self,
         reply: SubscribeEventReply,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let (events_id, service_cookie, id, rep_send) =
             match self.subscribe_event.remove(reply.serial) {
                 Some(req) => req,
-                None => return Ok(true),
+                None => return Ok(()),
             };
 
         // || would short-circuit and changing the order would move reply.result out.
@@ -578,27 +592,24 @@ where
                 .remove(&events_id);
         }
 
-        Ok(true)
+        Ok(())
     }
 
-    async fn event_unsubscribed(
-        &mut self,
-        ev: UnsubscribeEvent,
-    ) -> Result<bool, RunError<T::Error>> {
+    async fn event_unsubscribed(&mut self, ev: UnsubscribeEvent) -> Result<(), RunError<T::Error>> {
         let service_cookie = ServiceCookie(ev.service_cookie);
         let mut subs = match self.broker_subscriptions.entry(service_cookie) {
             Entry::Occupied(subs) => subs,
-            Entry::Vacant(_) => return Ok(true),
+            Entry::Vacant(_) => return Ok(()),
         };
 
         subs.get_mut().remove(&ev.event);
         if subs.get().is_empty() {
             subs.remove();
         }
-        Ok(true)
+        Ok(())
     }
 
-    async fn event_emitted(&mut self, ev: EmitEvent) -> Result<bool, RunError<T::Error>> {
+    async fn event_emitted(&mut self, ev: EmitEvent) -> Result<(), RunError<T::Error>> {
         let service_cookie = ServiceCookie(ev.service_cookie);
         let senders = match self
             .subscriptions
@@ -606,7 +617,7 @@ where
             .and_then(|s| s.get_mut(&ev.event))
         {
             Some(senders) => senders,
-            None => return Ok(true),
+            None => return Ok(()),
         };
 
         for sender in senders.values_mut() {
@@ -621,10 +632,10 @@ where
                 .ok();
         }
 
-        Ok(true)
+        Ok(())
     }
 
-    async fn handle_request(&mut self, req: Request) -> Result<bool, RunError<T::Error>> {
+    async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
             Request::DestroyObject(cookie, reply) => self.destroy_object(cookie, reply).await,
@@ -665,7 +676,7 @@ where
         &mut self,
         uuid: ObjectUuid,
         reply: oneshot::Sender<CreateObjectResult>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_object.insert(reply);
         self.t
             .send_and_flush(Message::CreateObject(CreateObject {
@@ -680,7 +691,7 @@ where
         &mut self,
         cookie: ObjectCookie,
         reply: oneshot::Sender<DestroyObjectResult>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_object.insert(reply);
         self.t
             .send_and_flush(Message::DestroyObject(DestroyObject {
@@ -695,7 +706,7 @@ where
         &mut self,
         sender: mpsc::Sender<ObjectId>,
         mode: SubscribeMode,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.objects_created.is_empty();
         let serial = self.objects_created.insert((sender, mode));
         let (send, serial) = match mode {
@@ -711,14 +722,14 @@ where
                 .await
                 .map_err(Into::into)
         } else {
-            Ok(true)
+            Ok(())
         }
     }
 
     async fn subscribe_objects_destroyed(
         &mut self,
         sender: mpsc::Sender<ObjectId>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let send = self.objects_destroyed.is_empty();
         self.objects_destroyed.insert(sender);
         if send {
@@ -727,7 +738,7 @@ where
                 .await
                 .map_err(Into::into)
         } else {
-            Ok(true)
+            Ok(())
         }
     }
 
@@ -737,7 +748,7 @@ where
         service_uuid: ServiceUuid,
         fifo_size: usize,
         reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_service.insert((fifo_size, reply));
         self.t
             .send_and_flush(Message::CreateService(CreateService {
@@ -753,7 +764,7 @@ where
         &mut self,
         cookie: ServiceCookie,
         reply: oneshot::Sender<DestroyServiceResult>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_service.insert((cookie, reply));
         self.t
             .send_and_flush(Message::DestroyService(DestroyService {
@@ -768,7 +779,7 @@ where
         &mut self,
         sender: mpsc::Sender<ServiceId>,
         mode: SubscribeMode,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.services_created.is_empty();
         let serial = self.services_created.insert((sender, mode));
         let (send, serial) = match mode {
@@ -784,14 +795,14 @@ where
                 .await
                 .map_err(Into::into)
         } else {
-            Ok(true)
+            Ok(())
         }
     }
 
     async fn subscribe_services_destroyed(
         &mut self,
         sender: mpsc::Sender<ServiceId>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let send = self.services_destroyed.is_empty();
         self.services_destroyed.insert(sender);
         if send {
@@ -800,7 +811,7 @@ where
                 .await
                 .map_err(Into::into)
         } else {
-            Ok(true)
+            Ok(())
         }
     }
 
@@ -810,7 +821,7 @@ where
         function: u32,
         args: Value,
         reply: oneshot::Sender<CallFunctionResult>,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(reply);
         self.t
             .send_and_flush(Message::CallFunction(CallFunction {
@@ -827,7 +838,7 @@ where
         &mut self,
         serial: u32,
         result: CallFunctionResult,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         self.t
             .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
                 serial,
@@ -840,7 +851,7 @@ where
     async fn subscribe_event(
         &mut self,
         req: SubscribeEventRequest,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let subs = self
             .subscriptions
             .entry(req.service_cookie)
@@ -871,30 +882,30 @@ where
                 subs.remove(&req.events_id);
             }
 
-            Ok(true)
+            Ok(())
         }
     }
 
     async fn unsubscribe_event(
         &mut self,
         req: UnsubscribeEventRequest,
-    ) -> Result<bool, RunError<T::Error>> {
+    ) -> Result<(), RunError<T::Error>> {
         let mut subs = match self.subscriptions.entry(req.service_cookie) {
             Entry::Occupied(subs) => subs,
-            Entry::Vacant(_) => return Ok(true),
+            Entry::Vacant(_) => return Ok(()),
         };
 
         let mut ids = match subs.get_mut().entry(req.id) {
             Entry::Occupied(ids) => ids,
-            Entry::Vacant(_) => return Ok(true),
+            Entry::Vacant(_) => return Ok(()),
         };
 
         if ids.get_mut().remove(&req.events_id).is_none() {
-            return Ok(true);
+            return Ok(());
         }
 
         if !ids.get().is_empty() {
-            return Ok(true);
+            return Ok(());
         }
 
         ids.remove();
@@ -911,7 +922,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn emit_event(&mut self, req: EmitEventRequest) -> Result<bool, RunError<T::Error>> {
+    async fn emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
         self.t
             .send_and_flush(Message::EmitEvent(EmitEvent {
                 service_cookie: req.service_cookie.0,
