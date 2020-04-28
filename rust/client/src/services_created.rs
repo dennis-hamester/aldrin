@@ -5,10 +5,10 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 #[derive(Debug)]
-pub struct ServicesCreated(mpsc::Receiver<ServiceId>);
+pub struct ServicesCreated(mpsc::UnboundedReceiver<ServiceId>);
 
 impl ServicesCreated {
-    pub(crate) fn new(events: mpsc::Receiver<ServiceId>) -> Self {
+    pub(crate) fn new(events: mpsc::UnboundedReceiver<ServiceId>) -> Self {
         ServicesCreated(events)
     }
 }

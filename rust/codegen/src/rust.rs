@@ -451,9 +451,9 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         genln!(o);
     }
 
-    genln!(o, "    pub fn events(&self, fifo_size: usize) -> {}Events {{", s.name.0);
+    genln!(o, "    pub fn events(&self) -> {}Events {{", s.name.0);
     genln!(o, "        {}Events {{", s.name.0);
-    genln!(o, "            events: self.client.events(fifo_size),");
+    genln!(o, "            events: self.client.events(),");
     genln!(o, "            id: self.id,");
     genln!(o, "        }}");
     genln!(o, "    }}");
@@ -565,8 +565,8 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {} {{", s.name.0);
-    genln!(o, "    pub async fn create(object: &mut aldrin_client::Object, fifo_size: usize) -> Result<Self, aldrin_client::Error> {{");
-    genln!(o, "        let service = object.create_service({}_UUID, fifo_size).await?;", s.name.0.to_shouty_snake_case());
+    genln!(o, "    pub async fn create(object: &mut aldrin_client::Object) -> Result<Self, aldrin_client::Error> {{");
+    genln!(o, "        let service = object.create_service({}_UUID).await?;", s.name.0.to_shouty_snake_case());
     genln!(o, "        Ok({} {{ service }})", s.name.0);
     genln!(o, "    }}");
     genln!(o);

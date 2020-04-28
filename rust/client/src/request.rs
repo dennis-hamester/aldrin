@@ -10,17 +10,16 @@ pub(crate) enum Request {
     Shutdown,
     CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
     DestroyObject(ObjectCookie, oneshot::Sender<DestroyObjectResult>),
-    SubscribeObjectsCreated(mpsc::Sender<ObjectId>, SubscribeMode),
-    SubscribeObjectsDestroyed(mpsc::Sender<ObjectId>),
+    SubscribeObjectsCreated(mpsc::UnboundedSender<ObjectId>, SubscribeMode),
+    SubscribeObjectsDestroyed(mpsc::UnboundedSender<ObjectId>),
     CreateService(
         ObjectCookie,
         ServiceUuid,
-        usize,
         oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ),
     DestroyService(ServiceCookie, oneshot::Sender<DestroyServiceResult>),
-    SubscribeServicesCreated(mpsc::Sender<ServiceId>, SubscribeMode),
-    SubscribeServicesDestroyed(mpsc::Sender<ServiceId>),
+    SubscribeServicesCreated(mpsc::UnboundedSender<ServiceId>, SubscribeMode),
+    SubscribeServicesDestroyed(mpsc::UnboundedSender<ServiceId>),
     CallFunction(
         ServiceCookie,
         u32,
@@ -38,7 +37,7 @@ pub(crate) struct SubscribeEventRequest {
     pub events_id: EventsId,
     pub service_cookie: ServiceCookie,
     pub id: u32,
-    pub sender: mpsc::Sender<EventsRequest>,
+    pub sender: mpsc::UnboundedSender<EventsRequest>,
     pub reply: oneshot::Sender<SubscribeEventResult>,
 }
 

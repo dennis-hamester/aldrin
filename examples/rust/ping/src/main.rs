@@ -92,10 +92,6 @@ struct RunArgs {
     #[structopt(short, long, default_value = "127.0.0.1:5000")]
     broker: SocketAddr,
 
-    /// Internal client fifo size
-    #[structopt(short, long, default_value = "16")]
-    fifo_size: usize,
-
     /// Delay in milliseconds between pings
     #[structopt(short, long, default_value = "1000")]
     delay: u32,
@@ -107,17 +103,15 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect(t, args.fifo_size).await?;
+    let client = Client::connect(t).await?;
     let mut handle = client.handle().clone();
     tokio::spawn(client.run());
     println!("Connection to broker at {} established.", addr);
 
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
-    let ping = ping::Ping::create(&mut obj, args.fifo_size).await?;
+    let ping = ping::Ping::create(&mut obj).await?;
     let mut emitter = ping.event_emitter().unwrap();
-    let mut sc = handle
-        .services_created(SubscribeMode::All, args.fifo_size)
-        .await?;
+    let mut sc = handle.services_created(SubscribeMode::All).await?;
     let mut others = Vec::new();
     let mut delay = delay_for(Duration::from_millis(args.delay as u64));
     let mut measure = delay_for(Duration::from_millis(MEASURE_UPDATE_MS));
@@ -132,7 +126,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
             Some(id) = sc.next() => {
                 if id.uuid == ping::PING_UUID {
                     let other = ping::PingProxy::bind(handle.clone(), id)?;
-                    let mut events = other.events(args.fifo_size);
+                    let mut events = other.events();
                     events.subscribe_ping().await?;
                     others.push(events);
                 }

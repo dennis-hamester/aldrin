@@ -5,17 +5,17 @@ use super::{
     UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
-use futures_channel::mpsc::{channel, Sender};
+use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
 
 #[derive(Debug, Clone)]
 pub struct Handle {
-    send: Sender<Request>,
+    send: UnboundedSender<Request>,
 }
 
 impl Handle {
-    pub(crate) fn new(send: Sender<Request>) -> Self {
+    pub(crate) fn new(send: UnboundedSender<Request>) -> Self {
         Handle { send }
     }
 
@@ -65,16 +65,12 @@ impl Handle {
     pub(crate) fn destroy_object_now(&mut self, cookie: ObjectCookie) {
         let (res_send, _) = oneshot::channel();
         self.send
-            .try_send(Request::DestroyObject(cookie, res_send))
+            .unbounded_send(Request::DestroyObject(cookie, res_send))
             .ok();
     }
 
-    pub async fn objects_created(
-        &mut self,
-        mode: SubscribeMode,
-        fifo_size: usize,
-    ) -> Result<ObjectsCreated, Error> {
-        let (ev_send, ev_recv) = channel(fifo_size);
+    pub async fn objects_created(&mut self, mode: SubscribeMode) -> Result<ObjectsCreated, Error> {
+        let (ev_send, ev_recv) = unbounded();
         self.send
             .send(Request::SubscribeObjectsCreated(ev_send, mode))
             .await
@@ -82,8 +78,8 @@ impl Handle {
         Ok(ObjectsCreated::new(ev_recv))
     }
 
-    pub async fn objects_destroyed(&mut self, fifo_size: usize) -> Result<ObjectsDestroyed, Error> {
-        let (ev_send, ev_recv) = channel(fifo_size);
+    pub async fn objects_destroyed(&mut self) -> Result<ObjectsDestroyed, Error> {
+        let (ev_send, ev_recv) = unbounded();
         self.send
             .send(Request::SubscribeObjectsDestroyed(ev_send))
             .await
@@ -95,14 +91,12 @@ impl Handle {
         &mut self,
         object_id: ObjectId,
         service_uuid: ServiceUuid,
-        fifo_size: usize,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
             .send(Request::CreateService(
                 object_id.cookie,
                 service_uuid,
-                fifo_size,
                 res_send,
             ))
             .await
@@ -139,16 +133,15 @@ impl Handle {
     pub(crate) fn destroy_service_now(&mut self, cookie: ServiceCookie) {
         let (res_send, _) = oneshot::channel();
         self.send
-            .try_send(Request::DestroyService(cookie, res_send))
+            .unbounded_send(Request::DestroyService(cookie, res_send))
             .ok();
     }
 
     pub async fn services_created(
         &mut self,
         mode: SubscribeMode,
-        fifo_size: usize,
     ) -> Result<ServicesCreated, Error> {
-        let (ev_send, ev_recv) = channel(fifo_size);
+        let (ev_send, ev_recv) = unbounded();
         self.send
             .send(Request::SubscribeServicesCreated(ev_send, mode))
             .await
@@ -156,11 +149,8 @@ impl Handle {
         Ok(ServicesCreated::new(ev_recv))
     }
 
-    pub async fn services_destroyed(
-        &mut self,
-        fifo_size: usize,
-    ) -> Result<ServicesDestroyed, Error> {
-        let (ev_send, ev_recv) = channel(fifo_size);
+    pub async fn services_destroyed(&mut self) -> Result<ServicesDestroyed, Error> {
+        let (ev_send, ev_recv) = unbounded();
         self.send
             .send(Request::SubscribeServicesDestroyed(ev_send))
             .await
@@ -210,15 +200,15 @@ impl Handle {
 
     pub(crate) fn abort_function_call_now(&mut self, serial: u32) {
         self.send
-            .try_send(Request::FunctionCallReply(
+            .unbounded_send(Request::FunctionCallReply(
                 serial,
                 CallFunctionResult::Aborted,
             ))
             .ok();
     }
 
-    pub fn events(&self, fifo_size: usize) -> Events {
-        Events::new(self.clone(), fifo_size)
+    pub fn events(&self) -> Events {
+        Events::new(self.clone())
     }
 
     pub(crate) async fn subscribe_event(
@@ -226,7 +216,7 @@ impl Handle {
         events_id: EventsId,
         service_id: ServiceId,
         id: u32,
-        sender: Sender<EventsRequest>,
+        sender: UnboundedSender<EventsRequest>,
     ) -> Result<(), Error> {
         let (rep_send, rep_recv) = oneshot::channel();
         self.send

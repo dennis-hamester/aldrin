@@ -57,17 +57,9 @@ impl Object {
     }
 
     /// Creates a service on the object.
-    ///
-    /// `fifo_size` controls the size of internal fifo, used to pass incoming service function calls
-    /// to the [`Service`]. If this fifo fills up because the service function calls are not handled
-    /// fast enough or not at all, backpressure can cause the [`Client`](super::Client) to stall.
-    pub async fn create_service(
-        &mut self,
-        uuid: ServiceUuid,
-        fifo_size: usize,
-    ) -> Result<Service, Error> {
+    pub async fn create_service(&mut self, uuid: ServiceUuid) -> Result<Service, Error> {
         let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
-        client.create_service(self.id, uuid, fifo_size).await
+        client.create_service(self.id, uuid).await
     }
 }
 

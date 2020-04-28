@@ -1,9 +1,9 @@
 use super::list::query_rooms;
-use super::{chat, JoinArgs, FIFO_SIZE};
+use super::{chat, JoinArgs};
 use aldrin_client::{Client, ObjectUuid};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use crossterm::{cursor, style, terminal};
-use futures::channel::mpsc::{channel, Sender};
+use futures::channel::mpsc::{unbounded, UnboundedSender};
 use futures::stream::StreamExt;
 use linefeed::{DefaultTerminal, Interface, ReadResult};
 use std::cmp::Ordering;
@@ -21,7 +21,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect(t, FIFO_SIZE).await?;
+    let client = Client::connect(t).await?;
     let mut handle = client.handle().clone();
     println!("Connection to broker at {} established.", addr);
 
@@ -62,7 +62,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
 
     let ident_obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
     let mut room = chat::ChatProxy::bind(handle.clone(), id)?;
-    let mut room_events = room.events(FIFO_SIZE);
+    let mut room_events = room.events();
     room_events.subscribe_joined().await?;
     room_events.subscribe_left().await?;
     room_events.subscribe_message().await?;
@@ -102,7 +102,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
         )?;
     }
 
-    let (sender, mut receiver) = channel(FIFO_SIZE);
+    let (sender, mut receiver) = unbounded();
     let linefeed_join = {
         let interface = interface.clone();
         thread::spawn(|| run_linefeed(interface, sender).map_err(|_| ()))
@@ -203,7 +203,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
 
 fn run_linefeed(
     interface: Arc<Interface<DefaultTerminal>>,
-    mut sender: Sender<String>,
+    sender: UnboundedSender<String>,
 ) -> Result<(), Box<dyn Error>> {
     loop {
         if sender.is_closed() {
@@ -211,7 +211,7 @@ fn run_linefeed(
         }
 
         match interface.read_line_step(Some(Duration::from_secs(1)))? {
-            Some(ReadResult::Input(msg)) => sender.try_send(msg)?,
+            Some(ReadResult::Input(msg)) => sender.unbounded_send(msg)?,
             Some(ReadResult::Eof) => return Ok(()),
             Some(ReadResult::Signal(_)) => {}
             None => {}

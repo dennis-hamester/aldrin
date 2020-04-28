@@ -5,10 +5,10 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 #[derive(Debug)]
-pub struct ObjectsCreated(mpsc::Receiver<ObjectId>);
+pub struct ObjectsCreated(mpsc::UnboundedReceiver<ObjectId>);
 
 impl ObjectsCreated {
-    pub(crate) fn new(events: mpsc::Receiver<ObjectId>) -> Self {
+    pub(crate) fn new(events: mpsc::UnboundedReceiver<ObjectId>) -> Self {
         ObjectsCreated(events)
     }
 }

@@ -1,6 +1,6 @@
 use super::{Error, Handle, ServiceCookie, ServiceId};
 use aldrin_proto::Value;
-use futures_channel::mpsc::{channel, Receiver, Sender};
+use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::Stream;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
@@ -49,14 +49,14 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 pub struct Events {
     id: EventsId,
     client: Handle,
-    recv: Receiver<EventsRequest>,
-    send: Sender<EventsRequest>,
+    recv: UnboundedReceiver<EventsRequest>,
+    send: UnboundedSender<EventsRequest>,
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
 }
 
 impl Events {
-    pub(crate) fn new(client: Handle, fifo_size: usize) -> Self {
-        let (send, recv) = channel(fifo_size);
+    pub(crate) fn new(client: Handle) -> Self {
+        let (send, recv) = unbounded();
         Events {
             id: EventsId::new(),
             client,

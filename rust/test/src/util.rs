@@ -20,7 +20,6 @@ pub fn create_broker(fifo_size: Option<usize>) -> (BrokerHandle, JoinHandle<Resu
 pub async fn create_client(
     mut broker_handle: BrokerHandle,
     channel_fifo_size: usize,
-    client_fifo_size: usize,
     conn_fifo_size: Option<usize>,
 ) -> Result<(
     ClientHandle,
@@ -40,7 +39,7 @@ pub async fn create_client(
         tokio::spawn(async move { broker_handle.add_connection(t1).await })
     };
 
-    let client = Client::connect(t2, client_fifo_size).await?;
+    let client = Client::connect(t2).await?;
     let client_handle = client.handle().clone();
     let client_run_join = tokio::spawn(async move { client.run().await.map_err(Into::into) });
 

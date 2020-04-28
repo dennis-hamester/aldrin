@@ -1,4 +1,4 @@
-use super::{chat, HostArgs, FIFO_SIZE};
+use super::{chat, HostArgs};
 use aldrin_client::{Client, ObjectUuid, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use futures::stream::StreamExt;
@@ -14,7 +14,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect(t, FIFO_SIZE).await?;
+    let client = Client::connect(t).await?;
     println!("Connection to broker at {} established.", addr);
 
     let mut handle = client.handle().clone();
@@ -27,13 +27,11 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
-    let mut room = chat::Chat::create(&mut obj, FIFO_SIZE).await?;
+    let mut room = chat::Chat::create(&mut obj).await?;
     let mut emitter = room.event_emitter().unwrap();
     let mut objects = HashSet::new();
-    let mut oc = handle
-        .objects_created(SubscribeMode::All, FIFO_SIZE)
-        .await?;
-    let mut od = handle.objects_destroyed(FIFO_SIZE).await?;
+    let mut oc = handle.objects_created(SubscribeMode::All).await?;
+    let mut od = handle.objects_destroyed().await?;
     let mut members = HashMap::new();
 
     loop {

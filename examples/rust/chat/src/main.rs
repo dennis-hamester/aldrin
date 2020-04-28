@@ -11,8 +11,6 @@ use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use uuid::Uuid;
 
-const FIFO_SIZE: usize = 16;
-
 #[derive(StructOpt)]
 #[structopt(no_version)]
 struct BrokerArgs {

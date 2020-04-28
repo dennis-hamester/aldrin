@@ -44,10 +44,10 @@ pub use service::{
 pub use services_created::ServicesCreated;
 pub use services_destroyed::ServicesDestroyed;
 
-type FunctionCallReceiver = mpsc::Receiver<(u32, Value, u32)>;
+type FunctionCallReceiver = mpsc::UnboundedReceiver<(u32, Value, u32)>;
 type CreateServiceReplySender =
     oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>;
-type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>>;
+type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<EventsRequest>>>;
 
 /// Aldrin client used to connect to a broker.
 ///
@@ -61,7 +61,7 @@ type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::Sender<EventsRequest>>
 ///
 /// ```ignore
 /// // Connect to a broker.
-/// let client = Client::connect(transport, FIFO_SIZE).await?;
+/// let client = Client::connect(transport).await?;
 ///
 /// // Make sure to get a handle before calling run().
 /// let mut handle = client.handle().clone();
@@ -81,18 +81,18 @@ where
     T: AsyncTransport + Unpin,
 {
     t: T,
-    recv: mpsc::Receiver<Request>,
+    recv: mpsc::UnboundedReceiver<Request>,
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    objects_created: SerialMap<(mpsc::Sender<ObjectId>, SubscribeMode)>,
-    objects_destroyed: SerialMap<mpsc::Sender<ObjectId>>,
-    create_service: SerialMap<(usize, CreateServiceReplySender)>,
+    objects_created: SerialMap<(mpsc::UnboundedSender<ObjectId>, SubscribeMode)>,
+    objects_destroyed: SerialMap<mpsc::UnboundedSender<ObjectId>>,
+    create_service: SerialMap<CreateServiceReplySender>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
-    services_created: SerialMap<(mpsc::Sender<ServiceId>, SubscribeMode)>,
-    services_destroyed: SerialMap<mpsc::Sender<ServiceId>>,
+    services_created: SerialMap<(mpsc::UnboundedSender<ServiceId>, SubscribeMode)>,
+    services_destroyed: SerialMap<mpsc::UnboundedSender<ServiceId>>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
-    services: HashMap<ServiceCookie, mpsc::Sender<(u32, Value, u32)>>,
+    services: HashMap<ServiceCookie, mpsc::UnboundedSender<(u32, Value, u32)>>,
     subscribe_event: SerialMap<(
         EventsId,
         ServiceCookie,
@@ -109,14 +109,9 @@ where
 {
     /// Creates a client and connects to an Aldrin broker.
     ///
-    /// `fifo_size` controls the size of an internal fifo, used for communication between the
-    /// [`Client`] and all [`Handle`s](Handle). As long as the [`Client`] is running, it will drain
-    /// the fifo. If for some reason the fifo runs full, it will cause backpressure to all
-    /// [`Handle`s](Handle).
-    ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
-    pub async fn connect(mut t: T, fifo_size: usize) -> Result<Self, ConnectError<T::Error>> {
+    pub async fn connect(mut t: T) -> Result<Self, ConnectError<T::Error>> {
         t.send_and_flush(Message::Connect(Connect { version: VERSION }))
             .await?;
 
@@ -128,7 +123,7 @@ where
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         }
 
-        let (send, recv) = mpsc::channel(fifo_size);
+        let (send, recv) = mpsc::unbounded();
         Ok(Client {
             t,
             recv,
@@ -360,9 +355,9 @@ where
         &mut self,
         reply: CreateServiceReply,
     ) -> Result<(), RunError<T::Error>> {
-        if let Some((fifo_size, rep_send)) = self.create_service.remove(reply.serial) {
+        if let Some(rep_send) = self.create_service.remove(reply.serial) {
             let recv = if let CreateServiceResult::Ok(cookie) = reply.result {
-                let (send, recv) = mpsc::channel(fifo_size);
+                let (send, recv) = mpsc::unbounded();
                 let dup = self.services.insert(ServiceCookie(cookie), send);
                 debug_assert!(dup.is_none());
                 Some(recv)
@@ -617,8 +612,8 @@ where
             Request::SubscribeObjectsDestroyed(sender) => {
                 self.subscribe_objects_destroyed(sender).await
             }
-            Request::CreateService(object_cookie, service_uuid, fifo_size, reply) => {
-                self.create_service(object_cookie, service_uuid, fifo_size, reply)
+            Request::CreateService(object_cookie, service_uuid, reply) => {
+                self.create_service(object_cookie, service_uuid, reply)
                     .await
             }
             Request::DestroyService(cookie, reply) => self.destroy_service(cookie, reply).await,
@@ -676,7 +671,7 @@ where
 
     async fn subscribe_objects_created(
         &mut self,
-        sender: mpsc::Sender<ObjectId>,
+        sender: mpsc::UnboundedSender<ObjectId>,
         mode: SubscribeMode,
     ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.objects_created.is_empty();
@@ -700,7 +695,7 @@ where
 
     async fn subscribe_objects_destroyed(
         &mut self,
-        sender: mpsc::Sender<ObjectId>,
+        sender: mpsc::UnboundedSender<ObjectId>,
     ) -> Result<(), RunError<T::Error>> {
         let send = self.objects_destroyed.is_empty();
         self.objects_destroyed.insert(sender);
@@ -718,10 +713,9 @@ where
         &mut self,
         object_cookie: ObjectCookie,
         service_uuid: ServiceUuid,
-        fifo_size: usize,
         reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_service.insert((fifo_size, reply));
+        let serial = self.create_service.insert(reply);
         self.t
             .send_and_flush(Message::CreateService(CreateService {
                 serial,
@@ -749,7 +743,7 @@ where
 
     async fn subscribe_services_created(
         &mut self,
-        sender: mpsc::Sender<ServiceId>,
+        sender: mpsc::UnboundedSender<ServiceId>,
         mode: SubscribeMode,
     ) -> Result<(), RunError<T::Error>> {
         let is_empty = self.services_created.is_empty();
@@ -773,7 +767,7 @@ where
 
     async fn subscribe_services_destroyed(
         &mut self,
-        sender: mpsc::Sender<ServiceId>,
+        sender: mpsc::UnboundedSender<ServiceId>,
     ) -> Result<(), RunError<T::Error>> {
         let send = self.services_destroyed.is_empty();
         self.services_destroyed.insert(sender);

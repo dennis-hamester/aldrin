@@ -1,6 +1,6 @@
 use super::{Error, Handle, ObjectId};
 use aldrin_proto::{CallFunctionResult, Value};
-use futures_channel::mpsc::Receiver;
+use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::Stream;
 use std::fmt;
 use std::pin::Pin;
@@ -56,7 +56,7 @@ impl Service {
     pub(crate) fn new(
         id: ServiceId,
         client: Handle,
-        function_calls: Receiver<(u32, Value, u32)>,
+        function_calls: UnboundedReceiver<(u32, Value, u32)>,
     ) -> Self {
         Service {
             id,
@@ -121,7 +121,7 @@ impl Stream for Service {
 #[derive(Debug)]
 struct Inner {
     client: Handle,
-    function_calls: Receiver<(u32, Value, u32)>,
+    function_calls: UnboundedReceiver<(u32, Value, u32)>,
 }
 
 /// Id of a service.

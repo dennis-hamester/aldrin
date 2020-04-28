@@ -1,4 +1,4 @@
-use super::{chat, ListArgs, FIFO_SIZE};
+use super::{chat, ListArgs};
 use aldrin_client::{Client, Handle, ServiceId, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use futures::stream::StreamExt;
@@ -12,7 +12,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
 
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let client = Client::connect(t, FIFO_SIZE).await?;
+    let client = Client::connect(t).await?;
     println!("Connection to broker at {} established.", addr);
 
     let mut handle = client.handle().clone();
@@ -43,9 +43,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
 pub(crate) async fn query_rooms(
     handle: &mut Handle,
 ) -> Result<HashMap<ServiceId, String>, Box<dyn Error>> {
-    let mut ids = handle
-        .services_created(SubscribeMode::CurrentOnly, FIFO_SIZE)
-        .await?;
+    let mut ids = handle.services_created(SubscribeMode::CurrentOnly).await?;
     let mut res = HashMap::new();
 
     while let Some(id) = ids.next().await {
