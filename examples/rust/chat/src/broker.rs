@@ -1,4 +1,4 @@
-use super::{BrokerArgs, FIFO_SIZE};
+use super::BrokerArgs;
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use std::error::Error;
@@ -13,7 +13,7 @@ async fn add_connection(
     println!("Incoming connection from {}.", addr);
 
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let conn = handle.add_connection(t, FIFO_SIZE).await?;
+    let conn = handle.add_connection(t).await?;
     println!("Connection from {} established.", addr);
 
     conn.run().await?;
@@ -23,7 +23,7 @@ async fn add_connection(
 }
 
 pub(crate) async fn run(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
-    let broker = Broker::new(FIFO_SIZE);
+    let broker = Broker::new();
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
 

@@ -5,6 +5,7 @@ use futures::future::select_all;
 use futures::stream::StreamExt;
 use std::error::Error;
 use std::net::SocketAddr;
+use std::num::NonZeroUsize;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tokio::net::{TcpListener, TcpStream};
@@ -24,20 +25,34 @@ struct BrokerArgs {
     listen: SocketAddr,
 
     /// Internal broker fifo size
-    #[structopt(short, long, default_value = "16")]
-    fifo_size: usize,
+    ///
+    /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
+    #[structopt(short, long)]
+    broker_fifo_size: Option<usize>,
+
+    /// Internal connection fifo size
+    ///
+    /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
+    #[structopt(short, long)]
+    conn_fifo_size: Option<usize>,
 }
 
 async fn add_connection(
     socket: TcpStream,
     addr: SocketAddr,
     mut handle: BrokerHandle,
-    fifo_size: usize,
+    fifo_size: Option<usize>,
 ) -> Result<(), Box<dyn Error>> {
     println!("Incoming connection from {}.", addr);
 
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
-    let conn = handle.add_connection(t, fifo_size).await?;
+    let conn = if let Some(fifo_size) = fifo_size {
+        handle
+            .add_connection_with_fifo_size(t, NonZeroUsize::new(fifo_size))
+            .await?
+    } else {
+        handle.add_connection(t).await?
+    };
     println!("Connection from {} established.", addr);
 
     conn.run().await?;
@@ -47,8 +62,11 @@ async fn add_connection(
 }
 
 async fn broker(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
-    let fifo_size = args.fifo_size;
-    let broker = Broker::new(fifo_size);
+    let broker = if let Some(fifo_size) = args.broker_fifo_size {
+        Broker::with_fifo_size(NonZeroUsize::new(fifo_size))
+    } else {
+        Broker::new()
+    };
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
 
@@ -58,8 +76,9 @@ async fn broker(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
     loop {
         let (socket, addr) = listener.accept().await?;
         let handle = handle.clone();
+        let conn_fifo_size = args.conn_fifo_size;
         tokio::spawn(async move {
-            if let Err(e) = add_connection(socket, addr, handle, fifo_size).await {
+            if let Err(e) = add_connection(socket, addr, handle, conn_fifo_size).await {
                 println!("Error on connection from {}: {}.", addr, e);
             }
         });

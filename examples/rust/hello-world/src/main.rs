@@ -8,15 +8,15 @@ use uuid::Uuid;
 const FIFO_SIZE: usize = 16;
 
 async fn broker(t: Channel) -> Result<(), Box<dyn Error>> {
-    let broker = Broker::new(FIFO_SIZE);
+    let broker = Broker::new();
     let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
-    let conn = handle.add_connection(t, FIFO_SIZE).await?;
+    let conn = handle.add_connection(t).await?;
     conn.run().await?;
 
     handle.shutdown().await;
-    join_handle.await?;
+    join_handle.await??;
 
     Ok(())
 }

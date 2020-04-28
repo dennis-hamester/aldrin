@@ -5,10 +5,12 @@ mod handle;
 use crate::conn_id::ConnectionId;
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::Message;
-use futures_channel::mpsc::{Receiver, Sender};
+use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
+use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};
 use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
+use std::num::NonZeroUsize;
 
 pub(crate) use event::ConnectionEvent;
 
@@ -21,9 +23,10 @@ where
     T: AsyncTransport + Unpin,
 {
     t: T,
-    send: Sender<ConnectionEvent>,
-    recv: Receiver<Message>,
+    send: UnboundedSender<ConnectionEvent>,
+    recv: UnboundedReceiver<Message>,
     handle: Option<ConnectionHandle>,
+    fifo_size: Option<NonZeroUsize>,
 }
 
 impl<T> Connection<T>
@@ -33,14 +36,16 @@ where
     pub(crate) fn new(
         t: T,
         id: ConnectionId,
-        send: Sender<ConnectionEvent>,
-        recv: Receiver<Message>,
+        send: UnboundedSender<ConnectionEvent>,
+        recv: UnboundedReceiver<Message>,
+        fifo_size: Option<NonZeroUsize>,
     ) -> Self {
         Connection {
             t,
             send,
             recv,
             handle: Some(ConnectionHandle::new(id)),
+            fifo_size,
         }
     }
 
@@ -50,20 +55,37 @@ where
 
     pub async fn run(mut self) -> Result<(), ConnectionError<T::Error>> {
         let id = self.handle.take().unwrap().into_id();
+        let mut outgoing = Vec::with_capacity(self.fifo_size.map(NonZeroUsize::get).unwrap_or(1));
 
         loop {
             match select(self.recv.next(), self.t.receive()).await {
-                Either::Left((Some(Message::Shutdown), _)) => {
-                    self.t.send_and_flush(Message::Shutdown).await?;
-                    self.drain_client_recv().await?;
-                    return Ok(());
-                }
-
                 Either::Left((Some(msg), _)) => {
-                    if let Err(e) = self.t.send_and_flush(msg).await {
-                        self.send_broker_shutdown(id).await?;
-                        self.drain_broker_recv().await;
-                        return Err(e.into());
+                    outgoing.push(msg);
+
+                    if let Some(fifo_size) = self.fifo_size {
+                        while let Ok(Some(msg)) = self.recv.try_next() {
+                            if outgoing.len() >= fifo_size.get() {
+                                return Err(ConnectionError::FifoOverflow);
+                            } else {
+                                outgoing.push(msg);
+                            }
+                        }
+                    }
+
+                    for msg in outgoing.drain(..) {
+                        if let Message::Shutdown = msg {
+                            self.t.send_and_flush(Message::Shutdown).await?;
+                            self.drain_client_recv().await?;
+                            return Ok(());
+                        } else if let Err(e) = self.t.send_and_flush(msg).await {
+                            self.send_broker_shutdown(id).await?;
+                            self.drain_broker_recv().await;
+                            return Err(e.into());
+                        }
+                    }
+
+                    if self.recv.is_terminated() {
+                        return Err(ConnectionError::UnexpectedBrokerShutdown);
                     }
                 }
 

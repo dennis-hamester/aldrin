@@ -1,11 +1,11 @@
 use crate::conn_id::ConnectionId;
 use aldrin_proto::Message;
-use futures_channel::mpsc::Sender;
+use futures_channel::mpsc::UnboundedSender;
 
 #[derive(Debug)]
 pub(crate) enum ConnectionEvent {
     // Sent by connections
-    NewConnection(ConnectionId, Sender<Message>),
+    NewConnection(ConnectionId, UnboundedSender<Message>),
     ConnectionShutdown(ConnectionId),
     Message(ConnectionId, Message),
 

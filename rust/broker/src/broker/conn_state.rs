@@ -1,13 +1,12 @@
 use super::{ObjectCookie, ServiceCookie};
 use aldrin_proto::Message;
-use futures_channel::mpsc::Sender;
-use futures_util::sink::SinkExt;
+use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
-    send: Sender<Message>,
+    send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
     objects_created_subscribed: bool,
     objects_destroyed_subscribed: bool,
@@ -19,7 +18,7 @@ pub(super) struct ConnectionState {
 }
 
 impl ConnectionState {
-    pub fn new(send: Sender<Message>) -> Self {
+    pub fn new(send: UnboundedSender<Message>) -> Self {
         ConnectionState {
             send,
             objects: HashSet::new(),
@@ -45,8 +44,8 @@ impl ConnectionState {
         self.objects.iter().copied()
     }
 
-    pub async fn send(&mut self, msg: Message) -> Result<(), ()> {
-        self.send.send(msg).await.map_err(|_| ())
+    pub fn send(&mut self, msg: Message) -> Result<(), ()> {
+        self.send.unbounded_send(msg).map_err(|_| ())
     }
 
     pub fn set_objects_created_subscribed(&mut self, subscribed: bool) {
