@@ -171,10 +171,7 @@ where
     /// A running [`Client`] can be shut down manually with [`Handle::shutdown`]. It will also
     /// automatically shut down when the last [`Handle`] has been dropped. Be aware, that some
     /// structs (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
-    /// [`Client`] running.
-    ///
-    /// A [`Client`] will also automatically shut down when it encounters an [error](RunError), or
-    /// when the [`AsyncTransport`] signals that the connection has been closed.
+    /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         self.handle.take().unwrap();
 
