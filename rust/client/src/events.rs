@@ -103,14 +103,13 @@ impl Events {
     /// This function return `true`, if the event `id` of service `service_id` was subscribed to
     /// before the call to this function and is now unsubscribed from. Otherwise `false` is
     /// returned.
-    pub async fn unsubscribe(&mut self, service_id: ServiceId, id: u32) -> Result<bool, Error> {
+    pub fn unsubscribe(&mut self, service_id: ServiceId, id: u32) -> Result<bool, Error> {
         match self.subscriptions.entry(service_id.cookie) {
             Entry::Occupied(mut entry) => {
                 debug_assert_eq!(entry.get().0, service_id);
                 if entry.get().1.contains(&id) {
                     self.client
                         .unsubscribe_event(self.id, service_id, id)
-                        .await
                         .map(move |()| {
                             entry.get_mut().1.remove(&id);
                             if entry.get().1.is_empty() {

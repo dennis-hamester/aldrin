@@ -94,7 +94,7 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        if let Some(mut inner) = self.inner.take() {
+        if let Some(inner) = self.inner.take() {
             inner.client.destroy_service_now(self.id.cookie);
         }
     }
@@ -214,59 +214,54 @@ impl FunctionCallReply {
     }
 
     /// Signal that the function call was successful.
-    pub async fn ok(mut self, res: Value) -> Result<(), Error> {
+    pub fn ok(mut self, res: Value) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::Ok(res))
-            .await
     }
 
     /// Signal that the function call failed.
-    pub async fn err(mut self, res: Value) -> Result<(), Error> {
+    pub fn err(mut self, res: Value) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::Err(res))
-            .await
     }
 
     /// Abort the function call.
     ///
     /// The caller will be still be notified that the call was aborted.
-    pub async fn abort(mut self) -> Result<(), Error> {
+    pub fn abort(mut self) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::Aborted)
-            .await
     }
 
     /// Signal that an invalid function has been called.
     ///
     /// The function itself is identified by [`FunctionCall::id`], which might be invalid or
     /// unexpected by the service.
-    pub async fn invalid_function(mut self) -> Result<(), Error> {
+    pub fn invalid_function(mut self) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::InvalidFunction)
-            .await
     }
 
     /// Signal that a invalid arguments were passed to the function.
-    pub async fn invalid_args(mut self) -> Result<(), Error> {
+    pub fn invalid_args(mut self) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::InvalidArgs)
-            .await
     }
 }
 
 impl Drop for FunctionCallReply {
     fn drop(&mut self) {
-        if let Some(mut client) = self.client.take() {
+        if let Some(client) = self.client.take() {
             client.abort_function_call_now(self.serial);
         }
     }

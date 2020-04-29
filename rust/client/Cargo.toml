@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-channel = { version = "0.3.4", default-features = false, features = ["std", "sink"] }
+futures-channel = { version = "0.3.4", default-features = false, features = ["std"] }
 futures-core = { version = "0.3.4", default-features = false }
-futures-util = { version = "0.3.4", default-features = false, features = ["sink"] }
+futures-util = { version = "0.3.4", default-features = false }
 uuid = { version = "0.8.1", default-features = false, features = ["v4"] }

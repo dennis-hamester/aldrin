@@ -22,7 +22,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     let socket = TcpStream::connect(&addr).await?;
     let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
     let client = Client::connect(t).await?;
-    let mut handle = client.handle().clone();
+    let handle = client.handle().clone();
     println!("Connection to broker at {} established.", addr);
 
     let client_join = {
@@ -33,7 +33,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
         })
     };
 
-    let rooms = query_rooms(&mut handle).await?;
+    let rooms = query_rooms(&handle).await?;
     let id = match args.room {
         Some(service_uuid) => rooms
             .keys()
@@ -61,7 +61,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     };
 
     let ident_obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
-    let mut room = chat::ChatProxy::bind(handle.clone(), id)?;
+    let room = chat::ChatProxy::bind(handle.clone(), id)?;
     let mut room_events = room.events();
     room_events.subscribe_joined().await?;
     room_events.subscribe_left().await?;
@@ -195,7 +195,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     receiver.close();
     interface.cancel_read_line()?;
     linefeed_join.join().ok();
-    handle.shutdown().await;
+    handle.shutdown();
     client_join.await?;
 
     Ok(())

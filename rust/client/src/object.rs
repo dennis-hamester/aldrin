@@ -57,15 +57,15 @@ impl Object {
     }
 
     /// Creates a service on the object.
-    pub async fn create_service(&mut self, uuid: ServiceUuid) -> Result<Service, Error> {
-        let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
+    pub async fn create_service(&self, uuid: ServiceUuid) -> Result<Service, Error> {
+        let client = self.client.as_ref().ok_or(Error::InvalidObject(self.id))?;
         client.create_service(self.id, uuid).await
     }
 }
 
 impl Drop for Object {
     fn drop(&mut self) {
-        if let Some(mut client) = self.client.take() {
+        if let Some(client) = self.client.take() {
             client.destroy_object_now(self.id.cookie);
         }
     }

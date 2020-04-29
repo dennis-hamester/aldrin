@@ -421,7 +421,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             ),
         };
 
-        genln!(o, "    pub async fn {}(&mut self{}) -> Result<{}, aldrin_client::Error> {{", f.name.0, arg, res);
+        genln!(o, "    pub async fn {}(&self{}) -> Result<{}, aldrin_client::Error> {{", f.name.0, arg, res);
         if f.args.is_some() {
             genln!(o, "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await? {{", f.id);
         } else {
@@ -486,7 +486,7 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         genln!(o, "    }}");
         genln!(o);
         genln!(o, "    pub async fn unsubscribe_{}(&mut self) -> Result<bool, aldrin_client::Error> {{", e.name.0);
-        genln!(o, "        self.events.unsubscribe(self.id, {}).await", e.id);
+        genln!(o, "        self.events.unsubscribe(self.id, {})", e.id);
         genln!(o, "    }}");
         genln!(o);
     }
@@ -565,7 +565,7 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o);
 
     genln!(o, "impl {} {{", s.name.0);
-    genln!(o, "    pub async fn create(object: &mut aldrin_client::Object) -> Result<Self, aldrin_client::Error> {{");
+    genln!(o, "    pub async fn create(object: &aldrin_client::Object) -> Result<Self, aldrin_client::Error> {{");
     genln!(o, "        let service = object.create_service({}_UUID).await?;", s.name.0.to_shouty_snake_case());
     genln!(o, "        Ok({} {{ service }})", s.name.0);
     genln!(o, "    }}");
@@ -656,30 +656,30 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
         genln!(o, "impl {}{}Reply {{", s.name.0, f.name.0.to_camel_case());
         if f.ok.is_some() {
-            genln!(o, "    pub async fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(s, f));
-            genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await");
+            genln!(o, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(s, f));
+            genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))");
             genln!(o, "    }}");
             genln!(o);
         } else {
-            genln!(o, "    pub async fn ok(self) -> Result<(), aldrin_client::Error> {{");
-            genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::Value::None).await");
+            genln!(o, "    pub fn ok(self) -> Result<(), aldrin_client::Error> {{");
+            genln!(o, "        self.0.ok(aldrin_client::codegen::aldrin_proto::Value::None)");
             genln!(o, "    }}");
             genln!(o);
         }
         if f.err.is_some() {
-            genln!(o, "    pub async fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_type(s, f));
-            genln!(o, "        self.0.err(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await");
+            genln!(o, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_type(s, f));
+            genln!(o, "        self.0.err(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))");
             genln!(o, "    }}");
             genln!(o);
         }
         if f.args.is_some() {
-            genln!(o, "    pub async fn invalid_args(self) -> Result<(), aldrin_client::Error> {{");
-            genln!(o, "        self.0.invalid_args().await");
+            genln!(o, "    pub fn invalid_args(self) -> Result<(), aldrin_client::Error> {{");
+            genln!(o, "        self.0.invalid_args()");
             genln!(o, "    }}");
             genln!(o);
         }
-        genln!(o, "    pub async fn abort(self) -> Result<(), aldrin_client::Error> {{");
-        genln!(o, "        self.0.abort().await");
+        genln!(o, "    pub fn abort(self) -> Result<(), aldrin_client::Error> {{");
+        genln!(o, "        self.0.abort()");
         genln!(o, "    }}");
         genln!(o, "}}");
         genln!(o);
@@ -708,17 +708,17 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
 
         match (e.event_type.is_some(), e.required) {
             (true, true) => {
-                genln!(o, "    pub async fn {}(&mut self, arg: {}) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
+                genln!(o, "    pub async fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
                 genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
                 genln!(o, "    }}");
             }
             (true, false) => {
-                genln!(o, "    pub async fn {}(&mut self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
+                genln!(o, "    pub async fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", e.name.0, event_variant_type(s, e));
                 genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", e.id);
                 genln!(o, "    }}");
             }
             (false, _) => {
-                genln!(o, "    pub async fn {}(&mut self) -> Result<(), aldrin_client::Error> {{", e.name.0);
+                genln!(o, "    pub async fn {}(&self) -> Result<(), aldrin_client::Error> {{", e.name.0);
                 genln!(o, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await", e.id);
                 genln!(o, "    }}");
             }

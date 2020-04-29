@@ -18,7 +18,7 @@ pub fn create_broker(fifo_size: Option<usize>) -> (BrokerHandle, JoinHandle<Resu
 }
 
 pub async fn create_client(
-    mut broker_handle: BrokerHandle,
+    broker_handle: BrokerHandle,
     channel_fifo_size: usize,
     conn_fifo_size: Option<usize>,
 ) -> Result<(

@@ -21,25 +21,25 @@ async fn broker(t: Unbounded) -> Result<(), Box<dyn Error>> {
 
 async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
     let client = Client::connect(t).await?;
-    let mut handle = client.handle().clone();
+    let handle = client.handle().clone();
     let join_handle = tokio::spawn(async { client.run().await.unwrap() });
 
-    let oc = handle.objects_created(SubscribeMode::All).await?;
+    let oc = handle.objects_created(SubscribeMode::All)?;
     tokio::spawn(oc.for_each(|id| async move {
         println!("Object {} created.", id.uuid);
     }));
 
-    let od = handle.objects_destroyed().await?;
+    let od = handle.objects_destroyed()?;
     tokio::spawn(od.for_each(|id| async move {
         println!("Object {} destroyed.", id.uuid);
     }));
 
-    let sc = handle.services_created(SubscribeMode::All).await?;
+    let sc = handle.services_created(SubscribeMode::All)?;
     tokio::spawn(sc.for_each(|id| async move {
         println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
     }));
 
-    let sd = handle.services_destroyed().await?;
+    let sd = handle.services_destroyed()?;
     tokio::spawn(sd.for_each(|id| async move {
         println!(
             "Object {} destroyed service {}.",
@@ -53,7 +53,7 @@ async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
     svc.destroy().await?;
     obj.destroy().await?;
 
-    handle.shutdown().await;
+    handle.shutdown();
     join_handle.await?;
 
     Ok(())

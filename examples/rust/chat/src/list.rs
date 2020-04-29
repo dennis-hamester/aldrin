@@ -15,7 +15,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
     let client = Client::connect(t).await?;
     println!("Connection to broker at {} established.", addr);
 
-    let mut handle = client.handle().clone();
+    let handle = client.handle().clone();
     let join = {
         tokio::spawn(async move {
             if let Err(e) = client.run().await {
@@ -24,7 +24,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
         })
     };
 
-    let rooms = query_rooms(&mut handle).await?;
+    let rooms = query_rooms(&handle).await?;
     println!();
     if rooms.is_empty() {
         println!("No chat rooms available.");
@@ -35,15 +35,15 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    handle.shutdown().await;
+    handle.shutdown();
     join.await?;
     Ok(())
 }
 
 pub(crate) async fn query_rooms(
-    handle: &mut Handle,
+    handle: &Handle,
 ) -> Result<HashMap<ServiceId, String>, Box<dyn Error>> {
-    let mut ids = handle.services_created(SubscribeMode::CurrentOnly).await?;
+    let mut ids = handle.services_created(SubscribeMode::CurrentOnly)?;
     let mut res = HashMap::new();
 
     while let Some(id) = ids.next().await {
@@ -51,7 +51,7 @@ pub(crate) async fn query_rooms(
             continue;
         }
 
-        let mut room = chat::ChatProxy::bind(handle.clone(), id)?;
+        let room = chat::ChatProxy::bind(handle.clone(), id)?;
         let name = room.get_name().await?;
         res.insert(id, name);
     }

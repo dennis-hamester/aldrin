@@ -26,10 +26,7 @@ impl BrokerHandle {
     ///
     /// The default fifo size is 32. Use [`BrokerHandle::add_connection_with_fifo_size`] to add a
     /// connection with a custom fifo size.
-    pub async fn add_connection<T>(
-        &self,
-        t: T,
-    ) -> Result<Connection<T>, EstablishError<T::Error>>
+    pub async fn add_connection<T>(&self, t: T) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
