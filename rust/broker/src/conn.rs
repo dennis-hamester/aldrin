@@ -8,7 +8,6 @@ use aldrin_proto::Message;
 use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};
-use futures_util::sink::SinkExt;
 use futures_util::stream::StreamExt;
 use std::num::NonZeroUsize;
 
@@ -78,7 +77,7 @@ where
                             self.drain_client_recv().await?;
                             return Ok(());
                         } else if let Err(e) = self.t.send_and_flush(msg).await {
-                            self.send_broker_shutdown(id).await?;
+                            self.send_broker_shutdown(id)?;
                             self.drain_broker_recv().await;
                             return Err(e.into());
                         }
@@ -92,16 +91,16 @@ where
                 Either::Left((None, _)) => return Err(ConnectionError::UnexpectedBrokerShutdown),
 
                 Either::Right((Ok(Message::Shutdown), _)) => {
-                    self.send_broker_shutdown(id).await?;
+                    self.send_broker_shutdown(id)?;
                     self.t.send_and_flush(Message::Shutdown).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }
 
-                Either::Right((Ok(msg), _)) => self.send_broker_msg(id.clone(), msg).await?,
+                Either::Right((Ok(msg), _)) => self.send_broker_msg(id.clone(), msg)?,
 
                 Either::Right((Err(e), _)) => {
-                    self.send_broker_shutdown(id).await?;
+                    self.send_broker_shutdown(id)?;
                     self.drain_broker_recv().await;
                     return Err(e.into());
                 }
@@ -109,24 +108,19 @@ where
         }
     }
 
-    async fn send_broker_msg(
+    fn send_broker_msg(
         &mut self,
         id: ConnectionId,
         msg: Message,
     ) -> Result<(), ConnectionError<T::Error>> {
         self.send
-            .send(ConnectionEvent::Message(id, msg))
-            .await
+            .unbounded_send(ConnectionEvent::Message(id, msg))
             .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
     }
 
-    async fn send_broker_shutdown(
-        &mut self,
-        id: ConnectionId,
-    ) -> Result<(), ConnectionError<T::Error>> {
+    fn send_broker_shutdown(&mut self, id: ConnectionId) -> Result<(), ConnectionError<T::Error>> {
         self.send
-            .send(ConnectionEvent::ConnectionShutdown(id))
-            .await
+            .unbounded_send(ConnectionEvent::ConnectionShutdown(id))
             .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
     }
 

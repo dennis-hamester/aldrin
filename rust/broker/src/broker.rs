@@ -112,13 +112,13 @@ impl Broker {
             }
 
             for ev in queue.drain(..) {
-                self.handle_event(&mut state, ev).await;
-                self.process_loop_result(&mut state).await;
+                self.handle_event(&mut state, ev);
+                self.process_loop_result(&mut state);
             }
         }
     }
 
-    async fn handle_event(&mut self, state: &mut State, ev: ConnectionEvent) {
+    fn handle_event(&mut self, state: &mut State, ev: ConnectionEvent) {
         match ev {
             ConnectionEvent::NewConnection(id, sender) => {
                 let dup = self.conns.insert(id, ConnectionState::new(sender));
@@ -130,7 +130,7 @@ impl Broker {
             }
 
             ConnectionEvent::Message(id, msg) => {
-                if let Err(()) = self.handle_message(state, &id, msg).await {
+                if let Err(()) = self.handle_message(state, &id, msg) {
                     state.push_remove_conn(id);
                 }
             }
@@ -150,7 +150,7 @@ impl Broker {
         }
     }
 
-    async fn process_loop_result(&mut self, state: &mut State) {
+    fn process_loop_result(&mut self, state: &mut State) {
         loop {
             // The order in which events are processed and sent to clients matters here.
             // Always remove connections first. That way we never actually try to send events to
@@ -159,7 +159,7 @@ impl Broker {
             // objects and services, which have previously been declared destroyed.
 
             if let Some(conn) = state.pop_remove_conn() {
-                self.shutdown_connection(state, &conn).await;
+                self.shutdown_connection(state, &conn);
                 continue;
             }
 
@@ -281,7 +281,7 @@ impl Broker {
         }
     }
 
-    async fn shutdown_connection(&mut self, state: &mut State, id: &ConnectionId) {
+    fn shutdown_connection(&mut self, state: &mut State, id: &ConnectionId) {
         let mut conn = match self.conns.remove(id) {
             Some(conn) => conn,
             None => return,
@@ -299,32 +299,30 @@ impl Broker {
         }
     }
 
-    async fn handle_message(
+    fn handle_message(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
         msg: Message,
     ) -> Result<(), ()> {
         match msg {
-            Message::CreateObject(req) => self.create_object(state, id, req).await,
-            Message::DestroyObject(req) => self.destroy_object(state, id, req).await,
-            Message::SubscribeObjectsCreated(req) => self.subscribe_objects_created(id, req).await,
-            Message::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id).await,
-            Message::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id).await,
-            Message::UnsubscribeObjectsDestroyed => self.unsubscribe_objects_destroyed(id).await,
-            Message::CreateService(req) => self.create_service(state, id, req).await,
-            Message::DestroyService(req) => self.destroy_service(state, id, req).await,
-            Message::SubscribeServicesCreated(req) => {
-                self.subscribe_services_created(id, req).await
-            }
-            Message::UnsubscribeServicesCreated => self.unsubscribe_services_created(id).await,
-            Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id).await,
-            Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id).await,
-            Message::CallFunction(req) => self.call_function(state, id, req).await,
-            Message::CallFunctionReply(req) => self.call_function_reply(state, req).await,
-            Message::SubscribeEvent(req) => self.subscribe_event(id, req).await,
-            Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req).await,
-            Message::EmitEvent(req) => self.emit_event(state, req).await,
+            Message::CreateObject(req) => self.create_object(state, id, req),
+            Message::DestroyObject(req) => self.destroy_object(state, id, req),
+            Message::SubscribeObjectsCreated(req) => self.subscribe_objects_created(id, req),
+            Message::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id),
+            Message::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id),
+            Message::UnsubscribeObjectsDestroyed => self.unsubscribe_objects_destroyed(id),
+            Message::CreateService(req) => self.create_service(state, id, req),
+            Message::DestroyService(req) => self.destroy_service(state, id, req),
+            Message::SubscribeServicesCreated(req) => self.subscribe_services_created(id, req),
+            Message::UnsubscribeServicesCreated => self.unsubscribe_services_created(id),
+            Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id),
+            Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id),
+            Message::CallFunction(req) => self.call_function(state, id, req),
+            Message::CallFunctionReply(req) => self.call_function_reply(state, req),
+            Message::SubscribeEvent(req) => self.subscribe_event(id, req),
+            Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
+            Message::EmitEvent(req) => self.emit_event(state, req),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -344,7 +342,7 @@ impl Broker {
         }
     }
 
-    async fn create_object(
+    fn create_object(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -378,7 +376,7 @@ impl Broker {
         }
     }
 
-    async fn destroy_object(
+    fn destroy_object(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -417,7 +415,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn subscribe_objects_created(
+    fn subscribe_objects_created(
         &mut self,
         id: &ConnectionId,
         req: SubscribeObjectsCreated,
@@ -446,7 +444,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn unsubscribe_objects_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_objects_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -456,7 +454,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn subscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn subscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -466,7 +464,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn unsubscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -476,7 +474,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn create_service(
+    fn create_service(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -534,7 +532,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn destroy_service(
+    fn destroy_service(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -573,7 +571,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn subscribe_services_created(
+    fn subscribe_services_created(
         &mut self,
         id: &ConnectionId,
         req: SubscribeServicesCreated,
@@ -604,7 +602,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn unsubscribe_services_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_services_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -614,7 +612,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn subscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn subscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -624,7 +622,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn unsubscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -634,7 +632,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn call_function(
+    fn call_function(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -687,11 +685,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn call_function_reply(
-        &mut self,
-        state: &mut State,
-        req: CallFunctionReply,
-    ) -> Result<(), ()> {
+    fn call_function_reply(&mut self, state: &mut State, req: CallFunctionReply) -> Result<(), ()> {
         let (serial, conn_id, obj_uuid, svc_uuid) = match self.function_calls.remove(req.serial) {
             Some(caller) => caller,
             None => return Ok(()),
@@ -718,7 +712,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn subscribe_event(&mut self, id: &ConnectionId, req: SubscribeEvent) -> Result<(), ()> {
+    fn subscribe_event(&mut self, id: &ConnectionId, req: SubscribeEvent) -> Result<(), ()> {
         let serial = match req.serial {
             Some(serial) => serial,
             None => return Err(()),
@@ -772,7 +766,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn unsubscribe_event(
+    fn unsubscribe_event(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
@@ -809,7 +803,7 @@ impl Broker {
         Ok(())
     }
 
-    async fn emit_event(&mut self, state: &mut State, req: EmitEvent) -> Result<(), ()> {
+    fn emit_event(&mut self, state: &mut State, req: EmitEvent) -> Result<(), ()> {
         let svc_cookie = ServiceCookie(req.service_cookie);
         for (conn_id, conn) in self.conns.iter_mut() {
             if conn.is_subscribed_to(svc_cookie, req.event) {

@@ -8,7 +8,7 @@ use tokio::net::{TcpListener, TcpStream};
 async fn add_connection(
     socket: TcpStream,
     addr: SocketAddr,
-    mut handle: BrokerHandle,
+    handle: BrokerHandle,
 ) -> Result<(), Box<dyn Error>> {
     println!("Incoming connection from {}.", addr);
 

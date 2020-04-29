@@ -11,7 +11,7 @@ const FIFO_SIZE: usize = 4;
 // way to the broker, effectively deadlocking the whole bus.
 #[tokio::test]
 async fn channel_deadlock() -> Result<()> {
-    let (mut broker, broker_join) = util::create_broker(Some(FIFO_SIZE));
+    let (broker, broker_join) = util::create_broker(Some(FIFO_SIZE));
     let (mut client, client_join, _, conn_join) =
         util::create_client(broker.clone(), FIFO_SIZE, Some(FIFO_SIZE)).await?;
 
@@ -23,7 +23,7 @@ async fn channel_deadlock() -> Result<()> {
             client.create_object(ObjectUuid(Uuid::new_v4())).await?;
         }
 
-        broker.shutdown().await;
+        broker.shutdown();
         broker_join.await??;
         client_join.await??;
         conn_join.await??;

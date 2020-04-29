@@ -7,13 +7,13 @@ use uuid::Uuid;
 
 async fn broker(t: Unbounded) -> Result<(), Box<dyn Error>> {
     let broker = Broker::new();
-    let mut handle = broker.handle().clone();
+    let handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
     let conn = handle.add_connection(t).await?;
     conn.run().await?;
 
-    handle.shutdown().await;
+    handle.shutdown();
     join_handle.await??;
 
     Ok(())
