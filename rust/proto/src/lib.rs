@@ -10,4 +10,4 @@ pub use message::*;
 pub use transport::AsyncTransport;
 pub use value::{ConversionError, FromValue, IntoValue, Value};
 
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
