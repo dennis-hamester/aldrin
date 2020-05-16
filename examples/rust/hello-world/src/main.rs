@@ -1,5 +1,5 @@
 use aldrin_broker::Broker;
-use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceUuid, SubscribeMode};
+use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceEvent, ServiceUuid, SubscribeMode};
 use aldrin_util::channel::{unbounded, Unbounded};
 use futures::stream::StreamExt;
 use std::error::Error;
@@ -32,17 +32,17 @@ async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
         }
     }));
 
-    let sc = handle.services_created(SubscribeMode::All)?;
-    tokio::spawn(sc.for_each(|id| async move {
-        println!("Object {} created service {}.", id.object_id.uuid, id.uuid);
-    }));
-
-    let sd = handle.services_destroyed()?;
-    tokio::spawn(sd.for_each(|id| async move {
-        println!(
-            "Object {} destroyed service {}.",
-            id.object_id.uuid, id.uuid
-        );
+    let svcs = handle.services(SubscribeMode::All)?;
+    tokio::spawn(svcs.for_each(|ev| async move {
+        match ev {
+            ServiceEvent::Created(id) => {
+                println!("Object {} created service {}.", id.object_id.uuid, id.uuid)
+            }
+            ServiceEvent::Destroyed(id) => println!(
+                "Object {} destroyed service {}.",
+                id.object_id.uuid, id.uuid
+            ),
+        }
     }));
 
     let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;

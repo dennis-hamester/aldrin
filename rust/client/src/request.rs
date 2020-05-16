@@ -1,6 +1,6 @@
 use super::{
     EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
-    ServiceCookie, ServiceId, ServiceUuid, SubscribeMode,
+    ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::*;
 use futures_channel::{mpsc, oneshot};
@@ -17,8 +17,7 @@ pub(crate) enum Request {
         oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ),
     DestroyService(ServiceCookie, oneshot::Sender<DestroyServiceResult>),
-    SubscribeServicesCreated(mpsc::UnboundedSender<ServiceId>, SubscribeMode),
-    SubscribeServicesDestroyed(mpsc::UnboundedSender<ServiceId>),
+    SubscribeServices(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode),
     CallFunction(
         ServiceCookie,
         u32,

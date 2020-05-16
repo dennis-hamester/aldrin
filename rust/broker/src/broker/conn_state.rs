@@ -9,8 +9,7 @@ pub(super) struct ConnectionState {
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
     objects_subscribed: bool,
-    services_created_subscribed: bool,
-    services_destroyed_subscribed: bool,
+    services_subscribed: bool,
 
     /// Map of active subscriptions made by this connection.
     subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
@@ -22,8 +21,7 @@ impl ConnectionState {
             send,
             objects: HashSet::new(),
             objects_subscribed: false,
-            services_created_subscribed: false,
-            services_destroyed_subscribed: false,
+            services_subscribed: false,
             subscriptions: HashMap::new(),
         }
     }
@@ -54,20 +52,12 @@ impl ConnectionState {
         self.objects_subscribed
     }
 
-    pub fn set_services_created_subscribed(&mut self, subscribed: bool) {
-        self.services_created_subscribed = subscribed;
+    pub fn set_services_subscribed(&mut self, subscribed: bool) {
+        self.services_subscribed = subscribed;
     }
 
-    pub fn services_created_subscribed(&self) -> bool {
-        self.services_created_subscribed
-    }
-
-    pub fn set_services_destroyed_subscribed(&mut self, subscribed: bool) {
-        self.services_destroyed_subscribed = subscribed;
-    }
-
-    pub fn services_destroyed_subscribed(&self) -> bool {
-        self.services_destroyed_subscribed
+    pub fn services_subscribed(&self) -> bool {
+        self.services_subscribed
     }
 
     pub fn add_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {

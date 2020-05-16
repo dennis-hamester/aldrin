@@ -1,5 +1,5 @@
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_client::{Client, ObjectUuid, SubscribeMode};
+use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use futures::future::select_all;
 use futures::stream::StreamExt;
@@ -111,7 +111,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
     let obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
     let ping = ping::Ping::create(&obj).await?;
     let emitter = ping.event_emitter().unwrap();
-    let mut sc = handle.services_created(SubscribeMode::All)?;
+    let mut svcs = handle.services(SubscribeMode::All)?;
     let mut others = Vec::new();
     let mut delay = delay_for(Duration::from_millis(args.delay as u64));
     let mut measure = delay_for(Duration::from_millis(MEASURE_UPDATE_MS));
@@ -123,7 +123,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
         let events = async { select_all(others.iter_mut().map(StreamExt::next)).await };
 
         select! {
-            Some(id) = sc.next() => {
+            Some(ServiceEvent::Created(id)) = svcs.next() => {
                 if id.uuid == ping::PING_UUID {
                     let other = ping::PingProxy::bind(handle.clone(), id)?;
                     let mut events = other.events();

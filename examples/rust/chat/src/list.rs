@@ -1,5 +1,5 @@
 use super::{chat, ListArgs};
-use aldrin_client::{Client, Handle, ServiceId, SubscribeMode};
+use aldrin_client::{Client, Handle, ServiceEvent, ServiceId, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use futures::stream::StreamExt;
 use std::collections::HashMap;
@@ -43,10 +43,15 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
 pub(crate) async fn query_rooms(
     handle: &Handle,
 ) -> Result<HashMap<ServiceId, String>, Box<dyn Error>> {
-    let mut ids = handle.services_created(SubscribeMode::CurrentOnly)?;
+    let mut svcs = handle.services(SubscribeMode::CurrentOnly)?;
     let mut res = HashMap::new();
 
-    while let Some(id) = ids.next().await {
+    while let Some(ev) = svcs.next().await {
+        let id = match ev {
+            ServiceEvent::Created(id) => id,
+            ServiceEvent::Destroyed(_) => continue,
+        };
+
         if id.uuid != chat::CHAT_UUID {
             continue;
         }

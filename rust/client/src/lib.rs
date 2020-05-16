@@ -9,8 +9,7 @@ mod objects;
 mod request;
 mod serial_map;
 mod service;
-mod services_created;
-mod services_destroyed;
+mod services;
 
 #[doc(hidden)]
 pub mod codegen {
@@ -38,8 +37,7 @@ pub use objects::{ObjectEvent, Objects};
 pub use service::{
     FunctionCall, FunctionCallReply, Service, ServiceCookie, ServiceId, ServiceUuid,
 };
-pub use services_created::ServicesCreated;
-pub use services_destroyed::ServicesDestroyed;
+pub use services::{ServiceEvent, Services};
 
 type FunctionCallReceiver = mpsc::UnboundedReceiver<(u32, Value, u32)>;
 type CreateServiceReplySender =
@@ -85,8 +83,7 @@ where
     object_events: SerialMap<(mpsc::UnboundedSender<ObjectEvent>, SubscribeMode)>,
     create_service: SerialMap<CreateServiceReplySender>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
-    services_created: SerialMap<(mpsc::UnboundedSender<ServiceId>, SubscribeMode)>,
-    services_destroyed: SerialMap<mpsc::UnboundedSender<ServiceId>>,
+    service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<(u32, Value, u32)>>,
     subscribe_event: SerialMap<(
@@ -129,8 +126,7 @@ where
             object_events: SerialMap::new(),
             create_service: SerialMap::new(),
             destroy_service: SerialMap::new(),
-            services_created: SerialMap::new(),
-            services_destroyed: SerialMap::new(),
+            service_events: SerialMap::new(),
             function_calls: SerialMap::new(),
             services: HashMap::new(),
             subscribe_event: SerialMap::new(),
@@ -203,9 +199,9 @@ where
             Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
             Message::CreateServiceReply(re) => self.create_service_reply(re),
             Message::DestroyServiceReply(re) => self.destroy_service_reply(re),
+            Message::SubscribeServicesReply(re) => self.subscribe_services_reply(re),
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
             Message::ServiceDestroyedEvent(ev) => self.service_destroyed_event(ev).await,
-            Message::SubscribeServicesCreatedReply(re) => self.subscribe_services_created_reply(re),
             Message::CallFunction(ev) => self.function_call(ev).await,
             Message::CallFunctionReply(ev) => self.call_function_reply(ev),
             Message::SubscribeEvent(ev) => self.event_subscribed(ev),
@@ -220,13 +216,9 @@ where
             | Message::SubscribeObjects(_)
             | Message::UnsubscribeObjects
             | Message::CreateService(_)
-            | Message::SubscribeServicesCreated(_)
-            | Message::UnsubscribeServicesCreated
             | Message::DestroyService(_)
-            | Message::SubscribeServicesDestroyed
-            | Message::UnsubscribeServicesDestroyed => {
-                Err(RunError::UnexpectedMessageReceived(msg))
-            }
+            | Message::SubscribeServices(_)
+            | Message::UnsubscribeServices => Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown => unreachable!(), // Handled in run.
         }
@@ -366,38 +358,49 @@ where
         Ok(())
     }
 
+    fn subscribe_services_reply(
+        &mut self,
+        reply: SubscribeServicesReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if let Some((_, SubscribeMode::CurrentOnly)) = self.service_events.get_mut(reply.serial) {
+            self.service_events.remove(reply.serial);
+        }
+
+        Ok(())
+    }
+
     async fn service_created_event(
         &mut self,
         ev: ServiceCreatedEvent,
     ) -> Result<(), RunError<T::Error>> {
-        let service_id = ServiceId::new(
+        let svc_ev = ServiceEvent::Created(ServiceId::new(
             ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
             ServiceUuid(ev.uuid),
             ServiceCookie(ev.cookie),
-        );
+        ));
 
         if let Some(serial) = ev.serial {
-            if let Some((send, _)) = self.services_created.get_mut(serial) {
-                if send.unbounded_send(service_id).is_err() {
-                    self.services_created.remove(serial);
+            if let Some((send, _)) = self.service_events.get_mut(serial) {
+                if send.unbounded_send(svc_ev).is_err() {
+                    self.service_events.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
-            for (serial, (send, _)) in self.services_created.iter_mut() {
-                if send.unbounded_send(service_id).is_err() {
+            for (serial, (send, _)) in self.service_events.iter_mut() {
+                if send.unbounded_send(svc_ev).is_err() {
                     remove.push(serial);
                 }
             }
 
             for serial in remove {
-                self.services_created.remove(serial);
+                self.service_events.remove(serial);
             }
         }
 
-        if self.services_created.is_empty() {
-            self.t.send(Message::UnsubscribeServicesCreated).await?;
+        if self.service_events.is_empty() {
+            self.t.send(Message::UnsubscribeServices).await?;
         }
 
         Ok(())
@@ -409,28 +412,30 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
         let service_cookie = ServiceCookie(ev.cookie);
-        let service_id = ServiceId::new(
-            ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
-            ServiceUuid(ev.uuid),
-            service_cookie,
-        );
 
         // A ServiceDestroyedEvent can also be sent, when we have active subscriptions on a
         // service. If that is the sole reason for this event, then make sure not to send
         // UnsubscribeServicesDestroyed below.
-        if !self.services_destroyed.is_empty() {
-            for (serial, send) in self.services_destroyed.iter_mut() {
-                if send.unbounded_send(service_id).is_err() {
+        if !self.service_events.is_empty() {
+            for (serial, (send, _)) in self.service_events.iter_mut() {
+                if send
+                    .unbounded_send(ServiceEvent::Destroyed(ServiceId::new(
+                        ObjectId::new(ObjectUuid(ev.object_uuid), ObjectCookie(ev.object_cookie)),
+                        ServiceUuid(ev.uuid),
+                        service_cookie,
+                    )))
+                    .is_err()
+                {
                     remove.push(serial);
                 }
             }
 
             for serial in remove {
-                self.services_destroyed.remove(serial);
+                self.service_events.remove(serial);
             }
 
-            if self.services_destroyed.is_empty() {
-                self.t.send(Message::UnsubscribeServicesDestroyed).await?;
+            if self.service_events.is_empty() {
+                self.t.send(Message::UnsubscribeServices).await?;
             }
         }
 
@@ -448,17 +453,6 @@ where
                     }
                 }
             }
-        }
-
-        Ok(())
-    }
-
-    fn subscribe_services_created_reply(
-        &mut self,
-        reply: SubscribeServicesCreatedReply,
-    ) -> Result<(), RunError<T::Error>> {
-        if let Some((_, SubscribeMode::CurrentOnly)) = self.services_created.get_mut(reply.serial) {
-            self.services_created.remove(reply.serial);
         }
 
         Ok(())
@@ -582,12 +576,7 @@ where
                     .await
             }
             Request::DestroyService(cookie, reply) => self.destroy_service(cookie, reply).await,
-            Request::SubscribeServicesCreated(sender, mode) => {
-                self.subscribe_services_created(sender, mode).await
-            }
-            Request::SubscribeServicesDestroyed(sender) => {
-                self.subscribe_services_destroyed(sender).await
-            }
+            Request::SubscribeServices(sender, mode) => self.subscribe_services(sender, mode).await,
             Request::CallFunction(service_cookie, function, args, reply) => {
                 self.call_function(service_cookie, function, args, reply)
                     .await
@@ -688,13 +677,13 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_services_created(
+    async fn subscribe_services(
         &mut self,
-        sender: mpsc::UnboundedSender<ServiceId>,
+        sender: mpsc::UnboundedSender<ServiceEvent>,
         mode: SubscribeMode,
     ) -> Result<(), RunError<T::Error>> {
-        let is_empty = self.services_created.is_empty();
-        let serial = self.services_created.insert((sender, mode));
+        let is_empty = self.service_events.is_empty();
+        let serial = self.service_events.insert((sender, mode));
         let (send, serial) = match mode {
             SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
             SubscribeMode::NewOnly => (is_empty, None),
@@ -702,25 +691,7 @@ where
 
         if send {
             self.t
-                .send_and_flush(Message::SubscribeServicesCreated(
-                    SubscribeServicesCreated { serial },
-                ))
-                .await
-                .map_err(Into::into)
-        } else {
-            Ok(())
-        }
-    }
-
-    async fn subscribe_services_destroyed(
-        &mut self,
-        sender: mpsc::UnboundedSender<ServiceId>,
-    ) -> Result<(), RunError<T::Error>> {
-        let send = self.services_destroyed.is_empty();
-        self.services_destroyed.insert(sender);
-        if send {
-            self.t
-                .send_and_flush(Message::SubscribeServicesDestroyed)
+                .send_and_flush(Message::SubscribeServices(SubscribeServices { serial }))
                 .await
                 .map_err(Into::into)
         } else {

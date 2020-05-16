@@ -182,7 +182,7 @@ impl Broker {
                 broadcast(
                     self.conns
                         .iter_mut()
-                        .filter(|(_, c)| c.services_created_subscribed()),
+                        .filter(|(_, c)| c.services_subscribed()),
                     state,
                     Message::ServiceCreatedEvent(ServiceCreatedEvent {
                         object_uuid: obj_uuid.0,
@@ -214,7 +214,7 @@ impl Broker {
                 broadcast(
                     self.conns
                         .iter_mut()
-                        .filter(|(_, c)| c.services_destroyed_subscribed()),
+                        .filter(|(_, c)| c.services_subscribed()),
                     state,
                     Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
                         object_uuid: obj_uuid.0,
@@ -312,10 +312,8 @@ impl Broker {
             Message::UnsubscribeObjects => self.unsubscribe_objects(id),
             Message::CreateService(req) => self.create_service(state, id, req),
             Message::DestroyService(req) => self.destroy_service(state, id, req),
-            Message::SubscribeServicesCreated(req) => self.subscribe_services_created(id, req),
-            Message::UnsubscribeServicesCreated => self.unsubscribe_services_created(id),
-            Message::SubscribeServicesDestroyed => self.subscribe_services_destroyed(id),
-            Message::UnsubscribeServicesDestroyed => self.unsubscribe_services_destroyed(id),
+            Message::SubscribeServices(req) => self.subscribe_services(id, req),
+            Message::UnsubscribeServices => self.unsubscribe_services(id),
             Message::CallFunction(req) => self.call_function(state, id, req),
             Message::CallFunctionReply(req) => self.call_function_reply(state, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req),
@@ -330,9 +328,9 @@ impl Broker {
             | Message::ObjectCreatedEvent(_)
             | Message::ObjectDestroyedEvent(_)
             | Message::CreateServiceReply(_)
-            | Message::SubscribeServicesCreatedReply(_)
-            | Message::ServiceCreatedEvent(_)
             | Message::DestroyServiceReply(_)
+            | Message::SubscribeServicesReply(_)
+            | Message::ServiceCreatedEvent(_)
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_) => Err(()),
 
@@ -545,17 +543,13 @@ impl Broker {
         Ok(())
     }
 
-    fn subscribe_services_created(
-        &mut self,
-        id: &ConnectionId,
-        req: SubscribeServicesCreated,
-    ) -> Result<(), ()> {
+    fn subscribe_services(&mut self, id: &ConnectionId, req: SubscribeServices) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
 
-        conn.set_services_created_subscribed(true);
+        conn.set_services_subscribed(true);
 
         if let Some(serial) = req.serial {
             for (&svc_cookie, &(obj_uuid, obj_cookie, svc_uuid)) in &self.svc_uuids {
@@ -568,41 +562,21 @@ impl Broker {
                 }))?;
             }
 
-            conn.send(Message::SubscribeServicesCreatedReply(
-                SubscribeServicesCreatedReply { serial },
-            ))?;
+            conn.send(Message::SubscribeServicesReply(SubscribeServicesReply {
+                serial,
+            }))?;
         }
 
         Ok(())
     }
 
-    fn unsubscribe_services_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_services(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
 
-        conn.set_services_created_subscribed(false);
-        Ok(())
-    }
-
-    fn subscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_services_destroyed_subscribed(true);
-        Ok(())
-    }
-
-    fn unsubscribe_services_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_services_destroyed_subscribed(false);
+        conn.set_services_subscribed(false);
         Ok(())
     }
 
@@ -847,7 +821,7 @@ impl Broker {
         for conn_id in svc.subscribed_conn_ids() {
             if let Some(conn) = self.conns.get_mut(conn_id) {
                 conn.remove_all_subscriptions(svc_cookie);
-                if !conn.services_destroyed_subscribed() {
+                if !conn.services_subscribed() {
                     state.push_remove_subscriptions(
                         conn_id.clone(),
                         obj_uuid,
