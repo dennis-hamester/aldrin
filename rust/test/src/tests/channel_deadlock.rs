@@ -15,8 +15,8 @@ async fn channel_deadlock() -> Result<()> {
     let (client, client_join, _, conn_join) =
         util::create_client(broker.clone(), FIFO_SIZE, Some(FIFO_SIZE)).await?;
 
-    // // This is never drained.
-    let _oc = client.objects_created(SubscribeMode::All)?;
+    // This is never drained.
+    let _objs = client.objects(SubscribeMode::All)?;
 
     timeout(Duration::from_secs(1), async move {
         for _ in 0..32 {

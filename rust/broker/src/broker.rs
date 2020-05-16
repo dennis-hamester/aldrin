@@ -167,7 +167,7 @@ impl Broker {
                 broadcast(
                     self.conns
                         .iter_mut()
-                        .filter(|(_, c)| c.objects_created_subscribed()),
+                        .filter(|(_, c)| c.objects_subscribed()),
                     state,
                     Message::ObjectCreatedEvent(ObjectCreatedEvent {
                         uuid: uuid.0,
@@ -249,7 +249,7 @@ impl Broker {
                 broadcast(
                     self.conns
                         .iter_mut()
-                        .filter(|(_, c)| c.objects_destroyed_subscribed()),
+                        .filter(|(_, c)| c.objects_subscribed()),
                     state,
                     Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
                         uuid: uuid.0,
@@ -308,10 +308,8 @@ impl Broker {
         match msg {
             Message::CreateObject(req) => self.create_object(state, id, req),
             Message::DestroyObject(req) => self.destroy_object(state, id, req),
-            Message::SubscribeObjectsCreated(req) => self.subscribe_objects_created(id, req),
-            Message::UnsubscribeObjectsCreated => self.unsubscribe_objects_created(id),
-            Message::SubscribeObjectsDestroyed => self.subscribe_objects_destroyed(id),
-            Message::UnsubscribeObjectsDestroyed => self.unsubscribe_objects_destroyed(id),
+            Message::SubscribeObjects(req) => self.subscribe_objects(id, req),
+            Message::UnsubscribeObjects => self.unsubscribe_objects(id),
             Message::CreateService(req) => self.create_service(state, id, req),
             Message::DestroyService(req) => self.destroy_service(state, id, req),
             Message::SubscribeServicesCreated(req) => self.subscribe_services_created(id, req),
@@ -327,9 +325,9 @@ impl Broker {
             Message::Connect(_)
             | Message::ConnectReply(_)
             | Message::CreateObjectReply(_)
-            | Message::SubscribeObjectsCreatedReply(_)
-            | Message::ObjectCreatedEvent(_)
             | Message::DestroyObjectReply(_)
+            | Message::SubscribeObjectsReply(_)
+            | Message::ObjectCreatedEvent(_)
             | Message::ObjectDestroyedEvent(_)
             | Message::CreateServiceReply(_)
             | Message::SubscribeServicesCreatedReply(_)
@@ -415,17 +413,13 @@ impl Broker {
         Ok(())
     }
 
-    fn subscribe_objects_created(
-        &mut self,
-        id: &ConnectionId,
-        req: SubscribeObjectsCreated,
-    ) -> Result<(), ()> {
+    fn subscribe_objects(&mut self, id: &ConnectionId, req: SubscribeObjects) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
 
-        conn.set_objects_created_subscribed(true);
+        conn.set_objects_subscribed(true);
 
         if let Some(serial) = req.serial {
             for (&cookie, &uuid) in &self.obj_uuids {
@@ -436,41 +430,21 @@ impl Broker {
                 }))?;
             }
 
-            conn.send(Message::SubscribeObjectsCreatedReply(
-                SubscribeObjectsCreatedReply { serial },
-            ))?;
+            conn.send(Message::SubscribeObjectsReply(SubscribeObjectsReply {
+                serial,
+            }))?;
         }
 
         Ok(())
     }
 
-    fn unsubscribe_objects_created(&mut self, id: &ConnectionId) -> Result<(), ()> {
+    fn unsubscribe_objects(&mut self, id: &ConnectionId) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
 
-        conn.set_objects_created_subscribed(false);
-        Ok(())
-    }
-
-    fn subscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_objects_destroyed_subscribed(true);
-        Ok(())
-    }
-
-    fn unsubscribe_objects_destroyed(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_objects_destroyed_subscribed(false);
+        conn.set_objects_subscribed(false);
         Ok(())
     }
 

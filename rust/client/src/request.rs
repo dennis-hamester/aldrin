@@ -1,5 +1,5 @@
 use super::{
-    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectId, ObjectUuid,
+    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::*;
@@ -10,8 +10,7 @@ pub(crate) enum Request {
     Shutdown,
     CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
     DestroyObject(ObjectCookie, oneshot::Sender<DestroyObjectResult>),
-    SubscribeObjectsCreated(mpsc::UnboundedSender<ObjectId>, SubscribeMode),
-    SubscribeObjectsDestroyed(mpsc::UnboundedSender<ObjectId>),
+    SubscribeObjects(mpsc::UnboundedSender<ObjectEvent>, SubscribeMode),
     CreateService(
         ObjectCookie,
         ServiceUuid,

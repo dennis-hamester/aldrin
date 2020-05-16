@@ -1,5 +1,5 @@
 use aldrin_broker::Broker;
-use aldrin_client::{Client, ObjectUuid, ServiceUuid, SubscribeMode};
+use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceUuid, SubscribeMode};
 use aldrin_util::channel::{unbounded, Unbounded};
 use futures::stream::StreamExt;
 use std::error::Error;
@@ -24,14 +24,12 @@ async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
     let handle = client.handle().clone();
     let join_handle = tokio::spawn(async { client.run().await.unwrap() });
 
-    let oc = handle.objects_created(SubscribeMode::All)?;
-    tokio::spawn(oc.for_each(|id| async move {
-        println!("Object {} created.", id.uuid);
-    }));
-
-    let od = handle.objects_destroyed()?;
-    tokio::spawn(od.for_each(|id| async move {
-        println!("Object {} destroyed.", id.uuid);
+    let objs = handle.objects(SubscribeMode::All)?;
+    tokio::spawn(objs.for_each(|ev| async move {
+        match ev {
+            ObjectEvent::Created(id) => println!("Object {} created.", id.uuid),
+            ObjectEvent::Destroyed(id) => println!("Object {} destroyed.", id.uuid),
+        }
     }));
 
     let sc = handle.services_created(SubscribeMode::All)?;

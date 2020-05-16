@@ -5,8 +5,7 @@ mod error;
 mod events;
 mod handle;
 mod object;
-mod objects_created;
-mod objects_destroyed;
+mod objects;
 mod request;
 mod serial_map;
 mod service;
@@ -35,8 +34,7 @@ pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
 pub use handle::Handle;
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
-pub use objects_created::ObjectsCreated;
-pub use objects_destroyed::ObjectsDestroyed;
+pub use objects::{ObjectEvent, Objects};
 pub use service::{
     FunctionCall, FunctionCallReply, Service, ServiceCookie, ServiceId, ServiceUuid,
 };
@@ -84,8 +82,7 @@ where
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    objects_created: SerialMap<(mpsc::UnboundedSender<ObjectId>, SubscribeMode)>,
-    objects_destroyed: SerialMap<mpsc::UnboundedSender<ObjectId>>,
+    object_events: SerialMap<(mpsc::UnboundedSender<ObjectEvent>, SubscribeMode)>,
     create_service: SerialMap<CreateServiceReplySender>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     services_created: SerialMap<(mpsc::UnboundedSender<ServiceId>, SubscribeMode)>,
@@ -129,8 +126,7 @@ where
             handle: Some(Handle::new(send)),
             create_object: SerialMap::new(),
             destroy_object: SerialMap::new(),
-            objects_created: SerialMap::new(),
-            objects_destroyed: SerialMap::new(),
+            object_events: SerialMap::new(),
             create_service: SerialMap::new(),
             destroy_service: SerialMap::new(),
             services_created: SerialMap::new(),
@@ -202,9 +198,9 @@ where
         match msg {
             Message::CreateObjectReply(re) => self.create_object_reply(re),
             Message::DestroyObjectReply(re) => self.destroy_object_reply(re),
+            Message::SubscribeObjectsReply(re) => self.subscribe_objects_reply(re),
             Message::ObjectCreatedEvent(ev) => self.object_created_event(ev).await,
             Message::ObjectDestroyedEvent(ev) => self.object_destroyed_event(ev).await,
-            Message::SubscribeObjectsCreatedReply(re) => self.subscribe_objects_created_reply(re),
             Message::CreateServiceReply(re) => self.create_service_reply(re),
             Message::DestroyServiceReply(re) => self.destroy_service_reply(re),
             Message::ServiceCreatedEvent(ev) => self.service_created_event(ev).await,
@@ -220,11 +216,9 @@ where
             Message::Connect(_)
             | Message::ConnectReply(_)
             | Message::CreateObject(_)
-            | Message::SubscribeObjectsCreated(_)
-            | Message::UnsubscribeObjectsCreated
             | Message::DestroyObject(_)
-            | Message::SubscribeObjectsDestroyed
-            | Message::UnsubscribeObjectsDestroyed
+            | Message::SubscribeObjects(_)
+            | Message::UnsubscribeObjects
             | Message::CreateService(_)
             | Message::SubscribeServicesCreated(_)
             | Message::UnsubscribeServicesCreated
@@ -257,44 +251,48 @@ where
         Ok(())
     }
 
+    fn subscribe_objects_reply(
+        &mut self,
+        reply: SubscribeObjectsReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if let Some((_, SubscribeMode::CurrentOnly)) = self.object_events.get_mut(reply.serial) {
+            self.object_events.remove(reply.serial);
+        }
+
+        Ok(())
+    }
+
     async fn object_created_event(
         &mut self,
         object_created_event: ObjectCreatedEvent,
     ) -> Result<(), RunError<T::Error>> {
+        let obj_ev = ObjectEvent::Created(ObjectId::new(
+            ObjectUuid(object_created_event.uuid),
+            ObjectCookie(object_created_event.cookie),
+        ));
+
         if let Some(serial) = object_created_event.serial {
-            if let Some((send, _)) = self.objects_created.get_mut(serial) {
-                if send
-                    .unbounded_send(ObjectId::new(
-                        ObjectUuid(object_created_event.uuid),
-                        ObjectCookie(object_created_event.cookie),
-                    ))
-                    .is_err()
-                {
-                    self.objects_created.remove(serial);
+            if let Some((send, _)) = self.object_events.get_mut(serial) {
+                if send.unbounded_send(obj_ev).is_err() {
+                    self.object_events.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
-            for (serial, (send, _)) in self.objects_created.iter_mut() {
-                if send
-                    .unbounded_send(ObjectId::new(
-                        ObjectUuid(object_created_event.uuid),
-                        ObjectCookie(object_created_event.cookie),
-                    ))
-                    .is_err()
-                {
+            for (serial, (send, _)) in self.object_events.iter_mut() {
+                if send.unbounded_send(obj_ev).is_err() {
                     remove.push(serial);
                 }
             }
 
             for serial in remove {
-                self.objects_created.remove(serial);
+                self.object_events.remove(serial);
             }
         }
 
-        if self.objects_created.is_empty() {
-            self.t.send(Message::UnsubscribeObjectsCreated).await?;
+        if self.object_events.is_empty() {
+            self.t.send(Message::UnsubscribeObjects).await?;
         }
 
         Ok(())
@@ -306,12 +304,12 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
 
-        for (serial, send) in self.objects_destroyed.iter_mut() {
+        for (serial, (send, _)) in self.object_events.iter_mut() {
             if send
-                .unbounded_send(ObjectId::new(
+                .unbounded_send(ObjectEvent::Destroyed(ObjectId::new(
                     ObjectUuid(object_destroyed_event.uuid),
                     ObjectCookie(object_destroyed_event.cookie),
-                ))
+                )))
                 .is_err()
             {
                 remove.push(serial);
@@ -319,22 +317,11 @@ where
         }
 
         for serial in remove {
-            self.objects_destroyed.remove(serial);
+            self.object_events.remove(serial);
         }
 
-        if self.objects_destroyed.is_empty() {
-            self.t.send(Message::UnsubscribeObjectsDestroyed).await?;
-        }
-
-        Ok(())
-    }
-
-    fn subscribe_objects_created_reply(
-        &mut self,
-        reply: SubscribeObjectsCreatedReply,
-    ) -> Result<(), RunError<T::Error>> {
-        if let Some((_, SubscribeMode::CurrentOnly)) = self.objects_created.get_mut(reply.serial) {
-            self.objects_created.remove(reply.serial);
+        if self.object_events.is_empty() {
+            self.t.send(Message::UnsubscribeObjects).await?;
         }
 
         Ok(())
@@ -589,12 +576,7 @@ where
         match req {
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
             Request::DestroyObject(cookie, reply) => self.destroy_object(cookie, reply).await,
-            Request::SubscribeObjectsCreated(sender, mode) => {
-                self.subscribe_objects_created(sender, mode).await
-            }
-            Request::SubscribeObjectsDestroyed(sender) => {
-                self.subscribe_objects_destroyed(sender).await
-            }
+            Request::SubscribeObjects(sender, mode) => self.subscribe_objects(sender, mode).await,
             Request::CreateService(object_cookie, service_uuid, reply) => {
                 self.create_service(object_cookie, service_uuid, reply)
                     .await
@@ -652,13 +634,13 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_objects_created(
+    async fn subscribe_objects(
         &mut self,
-        sender: mpsc::UnboundedSender<ObjectId>,
+        sender: mpsc::UnboundedSender<ObjectEvent>,
         mode: SubscribeMode,
     ) -> Result<(), RunError<T::Error>> {
-        let is_empty = self.objects_created.is_empty();
-        let serial = self.objects_created.insert((sender, mode));
+        let is_empty = self.object_events.is_empty();
+        let serial = self.object_events.insert((sender, mode));
         let (send, serial) = match mode {
             SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
             SubscribeMode::NewOnly => (is_empty, None),
@@ -666,25 +648,7 @@ where
 
         if send {
             self.t
-                .send_and_flush(Message::SubscribeObjectsCreated(SubscribeObjectsCreated {
-                    serial,
-                }))
-                .await
-                .map_err(Into::into)
-        } else {
-            Ok(())
-        }
-    }
-
-    async fn subscribe_objects_destroyed(
-        &mut self,
-        sender: mpsc::UnboundedSender<ObjectId>,
-    ) -> Result<(), RunError<T::Error>> {
-        let send = self.objects_destroyed.is_empty();
-        self.objects_destroyed.insert(sender);
-        if send {
-            self.t
-                .send_and_flush(Message::SubscribeObjectsDestroyed)
+                .send_and_flush(Message::SubscribeObjects(SubscribeObjects { serial }))
                 .await
                 .map_err(Into::into)
         } else {

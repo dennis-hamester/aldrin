@@ -1,8 +1,7 @@
 use super::{
     EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectId,
-    ObjectUuid, ObjectsCreated, ObjectsDestroyed, Request, Service, ServiceCookie, ServiceId,
-    ServiceUuid, ServicesCreated, ServicesDestroyed, SubscribeEventRequest, SubscribeMode,
-    UnsubscribeEventRequest,
+    ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceId, ServiceUuid, ServicesCreated,
+    ServicesDestroyed, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, UnboundedSender};
@@ -66,20 +65,12 @@ impl Handle {
             .ok();
     }
 
-    pub fn objects_created(&self, mode: SubscribeMode) -> Result<ObjectsCreated, Error> {
+    pub fn objects(&self, mode: SubscribeMode) -> Result<Objects, Error> {
         let (ev_send, ev_recv) = unbounded();
         self.send
-            .unbounded_send(Request::SubscribeObjectsCreated(ev_send, mode))
+            .unbounded_send(Request::SubscribeObjects(ev_send, mode))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(ObjectsCreated::new(ev_recv))
-    }
-
-    pub fn objects_destroyed(&self) -> Result<ObjectsDestroyed, Error> {
-        let (ev_send, ev_recv) = unbounded();
-        self.send
-            .unbounded_send(Request::SubscribeObjectsDestroyed(ev_send))
-            .map_err(|_| Error::ClientShutdown)?;
-        Ok(ObjectsDestroyed::new(ev_recv))
+        Ok(Objects::new(ev_recv))
     }
 
     pub(crate) async fn create_service(

@@ -1,5 +1,5 @@
 use super::{chat, HostArgs};
-use aldrin_client::{Client, ObjectUuid, SubscribeMode};
+use aldrin_client::{Client, ObjectEvent, ObjectUuid, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use futures::stream::StreamExt;
 use std::collections::{HashMap, HashSet};
@@ -30,22 +30,26 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
     let mut room = chat::Chat::create(&obj).await?;
     let emitter = room.event_emitter().unwrap();
     let mut objects = HashSet::new();
-    let mut oc = handle.objects_created(SubscribeMode::All)?;
-    let mut od = handle.objects_destroyed()?;
+    let mut objs = handle.objects(SubscribeMode::All)?;
     let mut members = HashMap::new();
 
     loop {
         select! {
-            Some(object_id) = od.next() => {
-                objects.remove(&object_id.cookie);
-                if let Some((&cookie, _)) = members.iter().find(|(_, &(_, cookie))| cookie == object_id.cookie.0) {
-                    let (name, _) = members.remove(&cookie).unwrap();
-                    emitter.left(name).await?;
-                }
-            }
+            Some(ev) = objs.next() => {
+                match ev {
+                    ObjectEvent::Created(id) => {
+                        objects.insert(id.cookie);
+                    }
 
-            Some(object_id) = oc.next() => {
-                objects.insert(object_id.cookie);
+                    ObjectEvent::Destroyed(id) => {
+                        objects.remove(&id.cookie);
+                        if let Some((&cookie, _)) =
+                                members.iter().find(|(_, &(_, cookie))| cookie == id.cookie.0) {
+                            let (name, _) = members.remove(&cookie).unwrap();
+                            emitter.left(name).await?;
+                        }
+                    }
+                }
             }
 
             Some(call) = room.next() => {

@@ -9,14 +9,12 @@ pub enum Message {
     Shutdown,
     CreateObject(CreateObject),
     CreateObjectReply(CreateObjectReply),
-    SubscribeObjectsCreated(SubscribeObjectsCreated),
-    SubscribeObjectsCreatedReply(SubscribeObjectsCreatedReply),
-    UnsubscribeObjectsCreated,
-    ObjectCreatedEvent(ObjectCreatedEvent),
     DestroyObject(DestroyObject),
     DestroyObjectReply(DestroyObjectReply),
-    SubscribeObjectsDestroyed,
-    UnsubscribeObjectsDestroyed,
+    SubscribeObjects(SubscribeObjects),
+    SubscribeObjectsReply(SubscribeObjectsReply),
+    UnsubscribeObjects,
+    ObjectCreatedEvent(ObjectCreatedEvent),
     ObjectDestroyedEvent(ObjectDestroyedEvent),
     CreateService(CreateService),
     CreateServiceReply(CreateServiceReply),
@@ -86,26 +84,6 @@ pub struct CreateObjectReply {
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
-pub struct SubscribeObjectsCreated {
-    pub serial: Option<u32>,
-}
-
-#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
-pub struct SubscribeObjectsCreatedReply {
-    pub serial: u32,
-}
-
-#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
-pub struct ObjectCreatedEvent {
-    pub uuid: Uuid,
-    pub cookie: Uuid,
-    pub serial: Option<u32>,
-}
-
-#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
 pub struct DestroyObject {
     pub serial: u32,
     pub cookie: Uuid,
@@ -137,6 +115,26 @@ impl DestroyObjectResult {
 pub struct DestroyObjectReply {
     pub serial: u32,
     pub result: DestroyObjectResult,
+}
+
+#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone)]
+pub struct SubscribeObjects {
+    pub serial: Option<u32>,
+}
+
+#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone)]
+pub struct SubscribeObjectsReply {
+    pub serial: u32,
+}
+
+#[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone)]
+pub struct ObjectCreatedEvent {
+    pub uuid: Uuid,
+    pub cookie: Uuid,
+    pub serial: Option<u32>,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]

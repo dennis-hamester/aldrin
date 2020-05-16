@@ -8,8 +8,7 @@ use std::collections::HashSet;
 pub(super) struct ConnectionState {
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
-    objects_created_subscribed: bool,
-    objects_destroyed_subscribed: bool,
+    objects_subscribed: bool,
     services_created_subscribed: bool,
     services_destroyed_subscribed: bool,
 
@@ -22,8 +21,7 @@ impl ConnectionState {
         ConnectionState {
             send,
             objects: HashSet::new(),
-            objects_created_subscribed: false,
-            objects_destroyed_subscribed: false,
+            objects_subscribed: false,
             services_created_subscribed: false,
             services_destroyed_subscribed: false,
             subscriptions: HashMap::new(),
@@ -48,20 +46,12 @@ impl ConnectionState {
         self.send.unbounded_send(msg).map_err(|_| ())
     }
 
-    pub fn set_objects_created_subscribed(&mut self, subscribed: bool) {
-        self.objects_created_subscribed = subscribed;
+    pub fn set_objects_subscribed(&mut self, subscribed: bool) {
+        self.objects_subscribed = subscribed;
     }
 
-    pub fn objects_created_subscribed(&self) -> bool {
-        self.objects_created_subscribed
-    }
-
-    pub fn set_objects_destroyed_subscribed(&mut self, subscribed: bool) {
-        self.objects_destroyed_subscribed = subscribed;
-    }
-
-    pub fn objects_destroyed_subscribed(&self) -> bool {
-        self.objects_destroyed_subscribed
+    pub fn objects_subscribed(&self) -> bool {
+        self.objects_subscribed
     }
 
     pub fn set_services_created_subscribed(&mut self, subscribed: bool) {
