@@ -26,6 +26,7 @@ pub use handle::BrokerHandle;
 const DEFAULT_FIFO_SIZE: usize = 32;
 
 #[derive(Debug)]
+#[must_use = "brokers do nothing unless you `.await` or poll `Broker::run()`"]
 pub struct Broker {
     fifo_size: Option<NonZeroUsize>,
     recv: UnboundedReceiver<ConnectionEvent>,

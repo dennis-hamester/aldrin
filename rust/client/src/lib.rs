@@ -71,6 +71,7 @@ type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<Events
 /// join.await??;
 /// ```
 #[derive(Debug)]
+#[must_use = "clients do nothing unless you `.await` or poll `Client::run()`"]
 pub struct Client<T>
 where
     T: AsyncTransport + Unpin,

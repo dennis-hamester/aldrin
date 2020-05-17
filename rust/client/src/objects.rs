@@ -5,6 +5,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 #[derive(Debug)]
+#[must_use = "streams do nothing unless you poll them"]
 pub struct Objects(mpsc::UnboundedReceiver<ObjectEvent>);
 
 impl Objects {

@@ -17,6 +17,7 @@ pub use error::{ConnectionError, EstablishError};
 pub use handle::ConnectionHandle;
 
 #[derive(Debug)]
+#[must_use = "connections do nothing unless you `.await` or poll `Connection::run()`"]
 pub struct Connection<T>
 where
     T: AsyncTransport + Unpin,

@@ -246,6 +246,7 @@ pub trait AsyncTransportExt: AsyncTransport {
 impl<T> AsyncTransportExt for T where T: AsyncTransport {}
 
 #[derive(Debug)]
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct Receive<'a, T>(&'a mut T)
 where
     T: AsyncTransport + Unpin + ?Sized;
@@ -262,6 +263,7 @@ where
 }
 
 #[derive(Debug)]
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct Send<'a, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
@@ -297,6 +299,7 @@ where
 }
 
 #[derive(Debug)]
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct Flush<'a, T>(&'a mut T)
 where
     T: AsyncTransport + Unpin + ?Sized;
@@ -313,6 +316,7 @@ where
 }
 
 #[derive(Debug)]
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct SendFlush<'a, T>(SendFlushInner<'a, T>)
 where
     T: AsyncTransport + Unpin + ?Sized;

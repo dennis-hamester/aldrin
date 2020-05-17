@@ -46,6 +46,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// }
 /// ```
 #[derive(Debug)]
+#[must_use = "streams do nothing unless you poll them"]
 pub struct Events {
     id: EventsId,
     client: Handle,
