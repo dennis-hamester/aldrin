@@ -1,7 +1,7 @@
 use super::{Error, Handle, ServiceCookie, ServiceId};
 use aldrin_proto::Value;
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
-use futures_core::stream::Stream;
+use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::pin::Pin;
@@ -155,6 +155,12 @@ impl Stream for Events {
                 Poll::Pending => return Poll::Pending,
             }
         }
+    }
+}
+
+impl FusedStream for Events {
+    fn is_terminated(&self) -> bool {
+        false
     }
 }
 

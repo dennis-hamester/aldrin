@@ -1,6 +1,6 @@
 use super::ObjectId;
 use futures_channel::mpsc;
-use futures_core::stream::Stream;
+use futures_core::stream::{FusedStream, Stream};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -22,6 +22,12 @@ impl Stream for Objects {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.0.size_hint()
+    }
+}
+
+impl FusedStream for Objects {
+    fn is_terminated(&self) -> bool {
+        self.0.is_terminated()
     }
 }
 

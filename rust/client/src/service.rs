@@ -1,7 +1,7 @@
 use super::{Error, Handle, ObjectId};
 use aldrin_proto::{CallFunctionResult, Value};
 use futures_channel::mpsc::UnboundedReceiver;
-use futures_core::stream::Stream;
+use futures_core::stream::{FusedStream, Stream};
 use std::fmt;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -115,6 +115,15 @@ impl Stream for Service {
                 FunctionCall::new(function, args, inner.client.clone(), serial)
             })
         })
+    }
+}
+
+impl FusedStream for Service {
+    fn is_terminated(&self) -> bool {
+        self.inner
+            .as_ref()
+            .map(|i| i.function_calls.is_terminated())
+            .unwrap_or(false)
     }
 }
 
