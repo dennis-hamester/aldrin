@@ -530,6 +530,13 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "}}");
     genln!(o);
 
+    genln!(o, "impl aldrin_client::codegen::futures_core::stream::FusedStream for {}Events {{", s.name.0);
+    genln!(o, "    fn is_terminated(&self) -> bool {{");
+    genln!(o, "        self.events.is_terminated()");
+    genln!(o, "    }}");
+    genln!(o, "}}");
+    genln!(o);
+
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub enum {}Event {{", s.name.0);
@@ -622,6 +629,13 @@ fn gen_service_server(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "                _ => {{}}");
     genln!(o, "            }}");
     genln!(o, "        }}");
+    genln!(o, "    }}");
+    genln!(o, "}}");
+    genln!(o);
+
+    genln!(o, "impl aldrin_client::codegen::futures_core::stream::FusedStream for {} {{", s.name.0);
+    genln!(o, "    fn is_terminated(&self) -> bool {{");
+    genln!(o, "        self.service.is_terminated()");
     genln!(o, "    }}");
     genln!(o, "}}");
     genln!(o);
