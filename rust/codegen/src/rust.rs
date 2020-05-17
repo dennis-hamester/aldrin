@@ -410,43 +410,13 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
             String::new()
         };
 
-        let res = match (f.ok.is_some(), f.err.is_some()) {
-            (false, false) => "()".to_owned(),
-            (true, false) => function_ok_type(s, f),
-            (false, true) => format!("Result<(), {}>", function_err_type(s, f)),
-            (true, true) => format!(
-                "Result<{}, {}>",
-                function_ok_type(s, f),
-                function_err_type(s, f)
-            ),
-        };
-
-        genln!(o, "    pub async fn {}(&self{}) -> Result<{}, aldrin_client::Error> {{", f.name.0, arg, res);
+        genln!(o, "    pub fn {}(&self{}) -> Result<{}{}Future, aldrin_client::Error> {{", f.name.0, arg, s.name.0, f.name.0.to_camel_case());
         if f.args.is_some() {
-            genln!(o, "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await? {{", f.id);
+            genln!(o, "        let reply = self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))?;", f.id);
         } else {
-            genln!(o, "        match self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await? {{", f.id);
+            genln!(o, "        let reply = self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None)?;", f.id);
         }
-        match (f.ok.is_some(), f.err.is_some()) {
-            (false, false) => {
-                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(()),");
-                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
-            }
-            (true, false) => {
-                genln!(o, "            Ok(v) => Ok(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?),");
-                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
-            }
-            (false, true) => {
-                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => Ok(Ok(())),");
-                genln!(o, "            Err(v) => Ok(Err(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
-                genln!(o, "            _ => Err(aldrin_client::Error::UnexpectedFunctionReply),");
-            }
-            (true, true) => {
-                genln!(o, "            Ok(v) => Ok(Ok(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
-                genln!(o, "            Err(v) => Ok(Err(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)?)),");
-            }
-        }
-        genln!(o, "        }}");
+        genln!(o, "        Ok({}{}Future(reply))", s.name.0, f.name.0.to_camel_case());
         genln!(o, "    }}");
         genln!(o);
     }
@@ -459,6 +429,63 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "    }}");
     genln!(o, "}}");
     genln!(o);
+
+    for f in &s.elems {
+        let f = match f {
+            ServiceElement::Function(f) => f,
+            _ => continue,
+        };
+
+        let res = match (f.ok.is_some(), f.err.is_some()) {
+            (false, false) => "()".to_owned(),
+            (true, false) => function_ok_type(s, f),
+            (false, true) => format!("Result<(), {}>", function_err_type(s, f)),
+            (true, true) => format!(
+                "Result<{}, {}>",
+                function_ok_type(s, f),
+                function_err_type(s, f)
+            ),
+        };
+
+        genln!(o, "#[derive(Debug)]");
+        genln!(o, "#[must_use = \"futures do nothing unless you `.await` or poll them\"]");
+        genln!(o, "pub struct {}{}Future(#[doc(hidden)] aldrin_client::CallFunctionFuture);", s.name.0, f.name.0.to_camel_case());
+        genln!(o);
+        genln!(o, "impl std::future::Future for {}{}Future {{", s.name.0, f.name.0.to_camel_case());
+        genln!(o, "    type Output = Result<{}, aldrin_client::Error>;", res);
+        genln!(o);
+        genln!(o, "    fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Self::Output> {{");
+        genln!(o, "        let res = match std::pin::Pin::new(&mut self.0).poll(cx) {{");
+        genln!(o, "            std::task::Poll::Ready(Ok(res)) => res,");
+        genln!(o, "            std::task::Poll::Ready(Err(e)) => return std::task::Poll::Ready(Err(e)),");
+        genln!(o, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
+        genln!(o, "        }};");
+        genln!(o);
+        genln!(o, "        match res {{");
+        match (f.ok.is_some(), f.err.is_some()) {
+            (false, false) => {
+                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(())),");
+                genln!(o, "            Ok(_) | Err(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
+            }
+            (true, false) => {
+                genln!(o, "            Ok(v) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                genln!(o, "            Err(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
+            }
+            (false, true) => {
+                genln!(o, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(Ok(()))),");
+                genln!(o, "            Ok(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
+                genln!(o, "            Err(e) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(e).map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+            }
+            (true, true) => {
+                genln!(o, "            Ok(v) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map(Ok).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                genln!(o, "            Err(e) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(e).map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+            }
+        }
+        genln!(o, "        }}");
+        genln!(o, "    }}");
+        genln!(o, "}}");
+        genln!(o);
+    }
 
     genln!(o, "#[derive(Debug)]");
     genln!(o, "pub struct {}Events {{", s.name.0);

@@ -57,7 +57,7 @@ pub(crate) async fn query_rooms(
         }
 
         let room = chat::ChatProxy::bind(handle.clone(), id)?;
-        let name = room.get_name().await?;
+        let name = room.get_name()?.await?;
         res.insert(id, name);
     }
 

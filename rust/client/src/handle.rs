@@ -6,6 +6,9 @@ use super::{
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_channel::oneshot;
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 #[derive(Debug, Clone)]
 pub struct Handle {
@@ -129,32 +132,26 @@ impl Handle {
         Ok(Services::new(ev_recv))
     }
 
-    pub async fn call_function(
+    pub fn call_function(
         &self,
         service_id: ServiceId,
         function: u32,
         args: Value,
-    ) -> Result<Result<Value, Value>, Error> {
-        let (res_send, res_reply) = oneshot::channel();
+    ) -> Result<CallFunctionFuture, Error> {
+        let (send, recv) = oneshot::channel();
         self.send
             .unbounded_send(Request::CallFunction(
                 service_id.cookie,
                 function,
                 args,
-                res_send,
+                send,
             ))
             .map_err(|_| Error::ClientShutdown)?;
-        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
-        match reply {
-            CallFunctionResult::Ok(v) => Ok(Ok(v)),
-            CallFunctionResult::Err(v) => Ok(Err(v)),
-            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
-            CallFunctionResult::InvalidService => Err(Error::InvalidService(service_id)),
-            CallFunctionResult::InvalidFunction => {
-                Err(Error::InvalidFunction(service_id, function))
-            }
-            CallFunctionResult::InvalidArgs => Err(Error::InvalidArgs(service_id, function)),
-        }
+        Ok(CallFunctionFuture {
+            recv,
+            service_id,
+            function,
+        })
     }
 
     pub(crate) fn function_call_reply(
@@ -232,5 +229,39 @@ impl Handle {
                 args,
             }))
             .map_err(|_| Error::ClientShutdown)
+    }
+}
+
+/// Future to `await` the result of a function call.
+#[derive(Debug)]
+#[must_use = "futures do nothing unless you `.await` or poll them"]
+pub struct CallFunctionFuture {
+    recv: oneshot::Receiver<CallFunctionResult>,
+    service_id: ServiceId,
+    function: u32,
+}
+
+impl Future for CallFunctionFuture {
+    type Output = Result<Result<Value, Value>, Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        let res = match Pin::new(&mut self.recv).poll(cx) {
+            Poll::Ready(Ok(res)) => res,
+            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Pending => return Poll::Pending,
+        };
+
+        Poll::Ready(match res {
+            CallFunctionResult::Ok(v) => Ok(Ok(v)),
+            CallFunctionResult::Err(v) => Ok(Err(v)),
+            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService(self.service_id)),
+            CallFunctionResult::InvalidFunction => {
+                Err(Error::InvalidFunction(self.service_id, self.function))
+            }
+            CallFunctionResult::InvalidArgs => {
+                Err(Error::InvalidArgs(self.service_id, self.function))
+            }
+        })
     }
 }

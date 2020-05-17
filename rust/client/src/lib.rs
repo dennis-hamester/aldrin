@@ -31,7 +31,7 @@ use std::collections::HashSet;
 
 pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
-pub use handle::Handle;
+pub use handle::{CallFunctionFuture, Handle};
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use objects::{ObjectEvent, Objects};
 pub use service::{

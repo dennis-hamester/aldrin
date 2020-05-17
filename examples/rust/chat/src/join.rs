@@ -73,7 +73,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
                 .set_object_cookie(ident_obj.id().cookie.0)
                 .set_name(args.name.clone())
                 .build()?,
-        )
+        )?
         .await?
     {
         Ok(cookie) => cookie,
@@ -83,7 +83,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    println!("Joined chat room {}.", room.get_name().await?);
+    println!("Joined chat room {}.", room.get_name()?.await?);
 
     let interface = Arc::new(linefeed::Interface::new("chat")?);
     interface.set_prompt(&format!(
@@ -122,7 +122,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
                             .set_cookie(cookie)
                             .set_message(msg)
                             .build()?,
-                    )
+                    )?
                     .await?
                     .unwrap();
                 }
