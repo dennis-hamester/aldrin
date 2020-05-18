@@ -63,9 +63,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     let ident_obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
     let room = chat::ChatProxy::bind(handle.clone(), id)?;
     let mut room_events = room.events();
-    room_events.subscribe_joined().await?;
-    room_events.subscribe_left().await?;
-    room_events.subscribe_message().await?;
+    room_events.subscribe_all().await?;
 
     let cookie = match room
         .join(

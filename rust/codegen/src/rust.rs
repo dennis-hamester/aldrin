@@ -502,6 +502,28 @@ fn gen_service_client(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
     genln!(o, "        self.id");
     genln!(o, "    }}");
     genln!(o);
+    genln!(o, "    pub async fn subscribe_all(&mut self) -> Result<(), aldrin_client::Error> {{");
+    for e in &s.elems {
+        let e = match e {
+            ServiceElement::Event(e) => e,
+            _ => continue,
+        };
+        genln!(o, "        self.subscribe_{}().await?;", e.name.0);
+    }
+    genln!(o, "        Ok(())");
+    genln!(o, "    }}");
+    genln!(o);
+    genln!(o, "    pub async fn unsubscribe_all(&mut self) -> Result<(), aldrin_client::Error> {{");
+    for e in &s.elems {
+        let e = match e {
+            ServiceElement::Event(e) => e,
+            _ => continue,
+        };
+        genln!(o, "        self.unsubscribe_{}().await?;", e.name.0);
+    }
+    genln!(o, "        Ok(())");
+    genln!(o, "    }}");
+    genln!(o);
     for e in &s.elems {
         let e = match e {
             ServiceElement::Event(e) => e,
