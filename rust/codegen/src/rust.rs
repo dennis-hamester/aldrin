@@ -265,15 +265,15 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
 
     genln!(o, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", e);
     genln!(o, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
-    genln!(o, "        let (d, v) = match v {{");
-    genln!(o, "            aldrin_client::codegen::aldrin_proto::Value::Enum(d, v) => (d, *v),");
+    genln!(o, "        let (var, val) = match v {{");
+    genln!(o, "            aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant, value }} => (variant, *value),");
     genln!(o, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
     genln!(o, "        }};");
     genln!(o);
-    genln!(o, "        match (d, v) {{");
+    genln!(o, "        match (var, val) {{");
     for v in vs {
         if v.variant_type.is_some() {
-            genln!(o, "            ({}, v) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v)?)),", v.id, e, v.name.0);
+            genln!(o, "            ({}, val) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(val)?)),", v.id, e, v.name.0);
         } else {
             genln!(o, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", v.id, e, v.name.0);
         }
@@ -289,9 +289,9 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
     genln!(o, "        match self {{");
     for v in vs {
         if v.variant_type.is_some() {
-            genln!(o, "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(v.into_value())),", e, v.name.0, v.id);
+            genln!(o, "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(v.into_value()) }},", e, v.name.0, v.id);
         } else {
-            genln!(o, "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum({}, Box::new(aldrin_client::codegen::aldrin_proto::Value::None)),", e, v.name.0, v.id);
+            genln!(o, "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(aldrin_client::codegen::aldrin_proto::Value::None) }},", e, v.name.0, v.id);
         }
     }
     genln!(o, "        }}");

@@ -43,7 +43,7 @@ pub enum Value {
     StringSet(HashSet<String>),
     UuidSet(HashSet<Uuid>),
     Struct(HashMap<u32, Value>),
-    Enum(u32, Box<Value>),
+    Enum { variant: u32, value: Box<Value> },
 }
 
 pub trait FromValue: Sized {
