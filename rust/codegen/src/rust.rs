@@ -924,7 +924,6 @@ fn gen_type(t: &Type) -> String {
 
 fn gen_map_key_type(t: &MapKeyType) -> &'static str {
     match t {
-        MapKeyType::Bool => "bool",
         MapKeyType::U8 => "u8",
         MapKeyType::I8 => "i8",
         MapKeyType::U16 => "u16",

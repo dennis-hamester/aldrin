@@ -22,7 +22,6 @@ pub enum Value {
     String(String),
     Uuid(Uuid),
     Vec(Vec<Value>),
-    BoolMap(HashMap<bool, Value>),
     U8Map(HashMap<u8, Value>),
     I8Map(HashMap<i8, Value>),
     U16Map(HashMap<u16, Value>),
@@ -33,7 +32,6 @@ pub enum Value {
     I64Map(HashMap<i64, Value>),
     StringMap(HashMap<String, Value>),
     UuidMap(HashMap<Uuid, Value>),
-    BoolSet(HashSet<bool>),
     U8Set(HashSet<u8>),
     I8Set(HashSet<i8>),
     U16Set(HashSet<u16>),
@@ -343,7 +341,6 @@ macro_rules! impl_map {
     };
 }
 
-impl_map!(bool, BoolMap);
 impl_map!(u8, U8Map);
 impl_map!(i8, I8Map);
 impl_map!(u16, U16Map);
@@ -378,7 +375,6 @@ macro_rules! impl_set {
     };
 }
 
-impl_set!(bool, BoolSet);
 impl_set!(u8, U8Set);
 impl_set!(i8, I8Set);
 impl_set!(u16, U16Set);

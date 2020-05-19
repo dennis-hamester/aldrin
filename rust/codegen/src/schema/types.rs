@@ -89,7 +89,6 @@ impl Type {
 
 #[derive(Debug)]
 pub(crate) enum MapKeyType {
-    Bool,
     U8,
     U16,
     U32,
@@ -105,8 +104,6 @@ pub(crate) enum MapKeyType {
 impl MapKeyType {
     pub fn from_map_key_type(pair: Pair<Rule>) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::bool_type => Ok(MapKeyType::Bool),
-
             Rule::int_type => match pair.as_str() {
                 "u8" => Ok(MapKeyType::U8),
                 "u16" => Ok(MapKeyType::U16),
