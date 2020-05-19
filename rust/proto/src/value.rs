@@ -5,7 +5,7 @@ use std::hash::BuildHasher;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     None,
     Bool(bool),
