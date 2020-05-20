@@ -2,7 +2,7 @@ use super::Value;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
@@ -34,27 +34,27 @@ pub enum Message {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Connect {
     pub version: u32,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConnectReply {
     Ok,
     VersionMismatch(u32),
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateObject {
     pub serial: u32,
     pub uuid: Uuid,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateObjectResult {
     Ok(Uuid),
     DuplicateObject,
@@ -74,21 +74,21 @@ impl CreateObjectResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateObjectReply {
     pub serial: u32,
     pub result: CreateObjectResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyObject {
     pub serial: u32,
     pub cookie: Uuid,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DestroyObjectResult {
     Ok,
     InvalidObject,
@@ -109,26 +109,26 @@ impl DestroyObjectResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyObjectReply {
     pub serial: u32,
     pub result: DestroyObjectResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeObjects {
     pub serial: Option<u32>,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeObjectsReply {
     pub serial: u32,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectCreatedEvent {
     pub uuid: Uuid,
     pub cookie: Uuid,
@@ -136,14 +136,14 @@ pub struct ObjectCreatedEvent {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectDestroyedEvent {
     pub uuid: Uuid,
     pub cookie: Uuid,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateService {
     pub serial: u32,
     pub object_cookie: Uuid,
@@ -151,7 +151,7 @@ pub struct CreateService {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateServiceResult {
     Ok(Uuid),
     DuplicateService,
@@ -175,21 +175,21 @@ impl CreateServiceResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateServiceReply {
     pub serial: u32,
     pub result: CreateServiceResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyService {
     pub serial: u32,
     pub cookie: Uuid,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DestroyServiceResult {
     Ok,
     InvalidService,
@@ -210,26 +210,26 @@ impl DestroyServiceResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyServiceReply {
     pub serial: u32,
     pub result: DestroyServiceResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeServices {
     pub serial: Option<u32>,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeServicesReply {
     pub serial: u32,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServiceCreatedEvent {
     pub object_uuid: Uuid,
     pub object_cookie: Uuid,
@@ -239,7 +239,7 @@ pub struct ServiceCreatedEvent {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServiceDestroyedEvent {
     pub object_uuid: Uuid,
     pub object_cookie: Uuid,
@@ -248,7 +248,7 @@ pub struct ServiceDestroyedEvent {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CallFunction {
     pub serial: u32,
     pub service_cookie: Uuid,
@@ -257,7 +257,7 @@ pub struct CallFunction {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CallFunctionResult {
     Ok(Value),
     Err(Value),
@@ -285,14 +285,14 @@ impl CallFunctionResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CallFunctionReply {
     pub serial: u32,
     pub result: CallFunctionResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeEvent {
     pub serial: Option<u32>,
     pub service_cookie: Uuid,
@@ -300,7 +300,7 @@ pub struct SubscribeEvent {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SubscribeEventResult {
     Ok,
     InvalidService,
@@ -320,21 +320,21 @@ impl SubscribeEventResult {
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeEventReply {
     pub serial: u32,
     pub result: SubscribeEventResult,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnsubscribeEvent {
     pub service_cookie: Uuid,
     pub event: u32,
 }
 
 #[cfg_attr(feature = "serde_derive", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EmitEvent {
     pub service_cookie: Uuid,
     pub event: u32,
