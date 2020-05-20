@@ -2,6 +2,10 @@ use super::Value;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Message {
     Connect(Connect),
@@ -34,12 +38,20 @@ pub enum Message {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Connect {
     pub version: u32,
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConnectReply {
     Ok,
@@ -47,6 +59,10 @@ pub enum ConnectReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateObject {
     pub serial: u32,
@@ -54,6 +70,10 @@ pub struct CreateObject {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateObjectResult {
     Ok(Uuid),
@@ -74,6 +94,10 @@ impl CreateObjectResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateObjectReply {
     pub serial: u32,
@@ -81,6 +105,10 @@ pub struct CreateObjectReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyObject {
     pub serial: u32,
@@ -88,6 +116,10 @@ pub struct DestroyObject {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DestroyObjectResult {
     Ok,
@@ -109,6 +141,10 @@ impl DestroyObjectResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyObjectReply {
     pub serial: u32,
@@ -116,18 +152,30 @@ pub struct DestroyObjectReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeObjects {
     pub serial: Option<u32>,
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeObjectsReply {
     pub serial: u32,
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectCreatedEvent {
     pub uuid: Uuid,
@@ -136,6 +184,10 @@ pub struct ObjectCreatedEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectDestroyedEvent {
     pub uuid: Uuid,
@@ -143,6 +195,10 @@ pub struct ObjectDestroyedEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateService {
     pub serial: u32,
@@ -151,6 +207,10 @@ pub struct CreateService {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateServiceResult {
     Ok(Uuid),
@@ -175,6 +235,10 @@ impl CreateServiceResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreateServiceReply {
     pub serial: u32,
@@ -182,6 +246,10 @@ pub struct CreateServiceReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyService {
     pub serial: u32,
@@ -189,6 +257,10 @@ pub struct DestroyService {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DestroyServiceResult {
     Ok,
@@ -210,6 +282,10 @@ impl DestroyServiceResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DestroyServiceReply {
     pub serial: u32,
@@ -217,18 +293,30 @@ pub struct DestroyServiceReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeServices {
     pub serial: Option<u32>,
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeServicesReply {
     pub serial: u32,
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServiceCreatedEvent {
     pub object_uuid: Uuid,
@@ -239,6 +327,10 @@ pub struct ServiceCreatedEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServiceDestroyedEvent {
     pub object_uuid: Uuid,
@@ -248,6 +340,10 @@ pub struct ServiceDestroyedEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct CallFunction {
     pub serial: u32,
@@ -257,6 +353,10 @@ pub struct CallFunction {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum CallFunctionResult {
     Ok(Value),
@@ -285,6 +385,10 @@ impl CallFunctionResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct CallFunctionReply {
     pub serial: u32,
@@ -292,6 +396,10 @@ pub struct CallFunctionReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeEvent {
     pub serial: Option<u32>,
@@ -300,6 +408,10 @@ pub struct SubscribeEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SubscribeEventResult {
     Ok,
@@ -320,6 +432,10 @@ impl SubscribeEventResult {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubscribeEventReply {
     pub serial: u32,
@@ -327,6 +443,10 @@ pub struct SubscribeEventReply {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnsubscribeEvent {
     pub service_cookie: Uuid,
@@ -334,6 +454,10 @@ pub struct UnsubscribeEvent {
 }
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct EmitEvent {
     pub service_cookie: Uuid,

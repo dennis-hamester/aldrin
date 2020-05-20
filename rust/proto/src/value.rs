@@ -5,6 +5,10 @@ use std::hash::BuildHasher;
 use uuid::Uuid;
 
 #[cfg_attr(feature = "serde-derive", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde-derive",
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     None,
