@@ -7,9 +7,9 @@ license = "Apache-2.0"
 edition = "2018"
 
 [features]
-serde_derive = ["serde/std", "serde/derive", "uuid/serde"]
+serde-derive = ["serde", "uuid/serde"]
 
 [dependencies]
 uuid = { version = "0.8.1", default-features = false }
 
-serde = { optional = true, version = "1.0.104", default-features = false }
+serde = { optional = true, version = "1.0.104", features = ["derive"] }
