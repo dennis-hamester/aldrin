@@ -26,6 +26,7 @@ pub enum Value {
     String(String),
     Uuid(Uuid),
     Vec(Vec<Value>),
+    Bytes(Vec<u8>),
     U8Map(HashMap<u8, Value>),
     I8Map(HashMap<i8, Value>),
     U16Map(HashMap<u16, Value>),
@@ -49,6 +50,13 @@ pub enum Value {
     Struct(HashMap<u32, Value>),
     Enum { variant: u32, value: Box<Value> },
 }
+
+/// Wrapper for `Vec<u8>`.
+///
+/// This wrapper exists only allow different implementations of [`FromValue`] and [`IntoValue`] than
+/// those for `Vec<u8>`, which convert between `u8` and [`Value`].
+#[derive(Debug, Clone)]
+pub struct Bytes(pub Vec<u8>);
 
 pub trait FromValue: Sized {
     fn from_value(v: Value) -> Result<Self, ConversionError>;
@@ -313,6 +321,21 @@ where
 {
     fn into_value(self) -> Value {
         Value::Vec(self.into_iter().map(T::into_value).collect())
+    }
+}
+
+impl FromValue for Bytes {
+    fn from_value(v: Value) -> Result<Self, ConversionError> {
+        match v {
+            Value::Bytes(v) => Ok(Bytes(v)),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for Bytes {
+    fn into_value(self) -> Value {
+        Value::Bytes(self.0)
     }
 }
 

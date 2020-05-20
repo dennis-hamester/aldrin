@@ -8,6 +8,6 @@ pub mod transport;
 
 pub use message::*;
 pub use transport::AsyncTransport;
-pub use value::{ConversionError, FromValue, IntoValue, Value};
+pub use value::{Bytes, ConversionError, FromValue, IntoValue, Value};
 
 pub const VERSION: u32 = 3;

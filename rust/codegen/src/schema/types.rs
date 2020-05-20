@@ -20,6 +20,7 @@ pub(crate) enum Type {
     Uuid,
     Value,
     Vec(Box<Type>),
+    Bytes,
     Map(MapKeyType, Box<Type>),
     Set(MapKeyType),
     External(String, String),
@@ -57,6 +58,8 @@ impl Type {
                 let elem_type = Self::from_type_name(pair.into_inner().next().unwrap())?;
                 Ok(Type::Vec(Box::new(elem_type)))
             }
+
+            Rule::bytes_type => Ok(Type::Bytes),
 
             Rule::map_type => {
                 let mut pairs = pair.into_inner();

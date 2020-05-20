@@ -910,7 +910,11 @@ fn gen_type(t: &Type) -> String {
         Type::String => "String".to_owned(),
         Type::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
         Type::Value => "aldrin_client::codegen::aldrin_proto::Value".to_owned(),
-        Type::Vec(t) => format!("Vec<{}>", gen_type(t)),
+        Type::Vec(t) => match &**t {
+            Type::U8 => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
+            t => format!("Vec<{}>", gen_type(t)),
+        },
+        Type::Bytes => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
         Type::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             gen_map_key_type(k),
