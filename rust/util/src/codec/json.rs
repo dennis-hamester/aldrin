@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use super::Serializer;
 use aldrin_proto::Message;
 use bytes::buf::BufMutExt;

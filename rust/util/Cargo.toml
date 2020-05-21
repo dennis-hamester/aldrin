@@ -21,3 +21,7 @@ futures-core = { optional = true, version = "0.3.4", default-features = false }
 pin-project = { optional = true, version = "0.4.8" }
 serde_json = { optional = true, version = "1.0.48" }
 tokio = { optional = true, version = "0.2.11", default-features = false }
+
+[dev-dependencies]
+maplit = "1.0.2"
+uuid = "0.8.1"
