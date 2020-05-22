@@ -5,7 +5,8 @@ use super::Serializer;
 use aldrin_proto::Message;
 use bytes::buf::BufMutExt;
 use bytes::{Bytes, BytesMut};
-use serde_json::Error;
+
+pub use serde_json::Error as JsonError;
 
 #[derive(Debug)]
 pub struct JsonSerializer {
@@ -23,9 +24,9 @@ impl JsonSerializer {
 }
 
 impl Serializer for JsonSerializer {
-    type Error = Error;
+    type Error = JsonError;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), JsonError> {
         if self.pretty {
             serde_json::to_writer_pretty(dst.writer(), &msg)
         } else {
@@ -33,7 +34,7 @@ impl Serializer for JsonSerializer {
         }
     }
 
-    fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error> {
+    fn deserialize(&mut self, src: Bytes) -> Result<Message, JsonError> {
         serde_json::from_slice(&src)
     }
 }

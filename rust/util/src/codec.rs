@@ -13,7 +13,7 @@ use std::fmt;
 pub use tokio_io::{TokioCodec, TokioCodecError};
 
 #[cfg(feature = "json")]
-pub use json::JsonSerializer;
+pub use json::{JsonError, JsonSerializer};
 
 pub trait Packetizer {
     type Error;
