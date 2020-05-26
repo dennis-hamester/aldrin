@@ -1,6 +1,6 @@
 use crate::schema::{
-    Const, Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service, ServiceElement,
-    StructField, Type, TypeOrInline,
+    Attributes, Const, Definition, EnumVariant, Event, Function, MapKeyType, Schema, Service,
+    ServiceElement, StructField, Type, TypeOrInline,
 };
 use crate::{Error, ErrorKind, Options};
 use heck::{CamelCase, ShoutySnakeCase};
@@ -63,8 +63,8 @@ pub(crate) fn generate(
 
     for def in &schema.definitions {
         match def {
-            Definition::Struct(s) => gen_struct(&mut o, &s.name.0, &s.fields)?,
-            Definition::Enum(e) => gen_enum(&mut o, &e.name.0, &e.variants)?,
+            Definition::Struct(s) => gen_struct(&mut o, &s.attributes, &s.name.0, &s.fields)?,
+            Definition::Enum(e) => gen_enum(&mut o, &e.attributes, &e.name.0, &e.variants)?,
             Definition::Service(s) => gen_service(&mut o, s)?,
             Definition::Const(c) => gen_const(&mut o, c)?,
         }
@@ -113,7 +113,12 @@ fn format(o: &mut RustOutput) -> Result<(), Error> {
 }
 
 #[rustfmt::skip::macros(genln)]
-fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Error> {
+fn gen_struct(
+    o: &mut RustOutput,
+    _atts: &Attributes,
+    s: &str,
+    fs: &[StructField],
+) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub struct {} {{", s);
@@ -230,8 +235,12 @@ fn gen_struct(o: &mut RustOutput, s: &str, fs: &[StructField]) -> Result<(), Err
 
     for f in fs {
         match &f.field_type {
-            TypeOrInline::Struct(i) => gen_struct(o, &struct_field_type(s, f), &i.fields)?,
-            TypeOrInline::Enum(i) => gen_enum(o, &struct_field_type(s, f), &i.variants)?,
+            TypeOrInline::Struct(i) => {
+                gen_struct(o, &Attributes::new(), &struct_field_type(s, f), &i.fields)?
+            }
+            TypeOrInline::Enum(i) => {
+                gen_enum(o, &Attributes::new(), &struct_field_type(s, f), &i.variants)?
+            }
             TypeOrInline::Type(_) => {}
         }
     }
@@ -249,7 +258,12 @@ fn struct_field_type(s: &str, f: &StructField) -> String {
 }
 
 #[rustfmt::skip::macros(genln)]
-fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error> {
+fn gen_enum(
+    o: &mut RustOutput,
+    _atts: &Attributes,
+    e: &str,
+    vs: &[EnumVariant],
+) -> Result<(), Error> {
     genln!(o, "#[derive(Debug, Clone)]");
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub enum {} {{", e);
@@ -301,10 +315,15 @@ fn gen_enum(o: &mut RustOutput, e: &str, vs: &[EnumVariant]) -> Result<(), Error
 
     for v in vs {
         if let Some(TypeOrInline::Struct(s)) = &v.variant_type {
-            gen_struct(o, &enum_variant_name(e, v), &s.fields)?;
+            gen_struct(o, &Attributes::new(), &enum_variant_name(e, v), &s.fields)?;
         }
         if let Some(TypeOrInline::Enum(en)) = &v.variant_type {
-            gen_enum(o, &enum_variant_name(e, v), &en.variants)?;
+            gen_enum(
+                o,
+                &Attributes::new(),
+                &enum_variant_name(e, v),
+                &en.variants,
+            )?;
         }
     }
 
@@ -339,31 +358,66 @@ fn gen_service(o: &mut RustOutput, s: &Service) -> Result<(), Error> {
         match e {
             ServiceElement::Function(f) => {
                 if let Some(TypeOrInline::Struct(st)) = &f.args {
-                    gen_struct(o, &function_arg_type_name(s, f), &st.fields)?;
+                    gen_struct(
+                        o,
+                        &Attributes::new(),
+                        &function_arg_type_name(s, f),
+                        &st.fields,
+                    )?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.args {
-                    gen_enum(o, &function_arg_type_name(s, f), &e.variants)?;
+                    gen_enum(
+                        o,
+                        &Attributes::new(),
+                        &function_arg_type_name(s, f),
+                        &e.variants,
+                    )?;
                 }
                 if let Some(TypeOrInline::Struct(st)) = &f.ok {
-                    gen_struct(o, &function_ok_type_name(s, f), &st.fields)?;
+                    gen_struct(
+                        o,
+                        &Attributes::new(),
+                        &function_ok_type_name(s, f),
+                        &st.fields,
+                    )?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.ok {
-                    gen_enum(o, &function_ok_type_name(s, f), &e.variants)?;
+                    gen_enum(
+                        o,
+                        &Attributes::new(),
+                        &function_ok_type_name(s, f),
+                        &e.variants,
+                    )?;
                 }
                 if let Some(TypeOrInline::Struct(st)) = &f.err {
-                    gen_struct(o, &function_err_type_name(s, f), &st.fields)?;
+                    gen_struct(
+                        o,
+                        &Attributes::new(),
+                        &function_err_type_name(s, f),
+                        &st.fields,
+                    )?;
                 }
                 if let Some(TypeOrInline::Enum(e)) = &f.err {
-                    gen_enum(o, &function_err_type_name(s, f), &e.variants)?;
+                    gen_enum(
+                        o,
+                        &Attributes::new(),
+                        &function_err_type_name(s, f),
+                        &e.variants,
+                    )?;
                 }
             }
 
             ServiceElement::Event(e) => {
                 if let Some(TypeOrInline::Struct(st)) = &e.event_type {
-                    gen_struct(o, &event_variant_type(s, e), &st.fields)?;
+                    gen_struct(o, &Attributes::new(), &event_variant_type(s, e), &st.fields)?;
                 }
                 if let Some(TypeOrInline::Enum(en)) = &e.event_type {
-                    gen_enum(o, &event_variant_type(s, e), &en.variants)?;
+                    gen_enum(
+                        o,
+                        &Attributes::new(),
+                        &event_variant_type(s, e),
+                        &en.variants,
+                    )?;
                 }
             }
         }
