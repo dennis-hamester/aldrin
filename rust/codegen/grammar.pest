@@ -64,6 +64,9 @@ file = _{
 required_mark = { "required" }
 optional_mark = { "optional" }
 
+attribute = { "#[" ~ ident ~ ("(" ~ att_option ~ ("," ~ att_option)* ~ ","? ~ ")")? ~ "]" }
+att_option = { ident }
+
 import_stmt = { "import" ~ module ~ ";"? }
 
 struct_def = { "struct" ~ ident ~ "{" ~ struct_body ~ "}" ~ ";"? }

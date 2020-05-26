@@ -1,3 +1,4 @@
+mod attributes;
 mod consts;
 mod enum_def;
 mod grammar;
@@ -15,6 +16,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+pub(crate) use attributes::*;
 pub(crate) use consts::*;
 pub(crate) use enum_def::*;
 pub(crate) use grammar::*;
