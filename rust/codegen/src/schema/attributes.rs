@@ -4,11 +4,15 @@ use crate::error::Error;
 use pest::iterators::{Pair, Pairs};
 
 #[derive(Debug)]
-pub(crate) struct Attributes {}
+pub(crate) struct Attributes {
+    pub rust: RustAttributes,
+}
 
 impl Attributes {
     pub fn new() -> Self {
-        Attributes {}
+        Attributes {
+            rust: RustAttributes::new(),
+        }
     }
 
     pub fn from_pairs(pairs: &mut Pairs<Rule>) -> Result<Self, Error> {
@@ -27,7 +31,9 @@ impl Attributes {
         assert_eq!(pair.as_rule(), Rule::attribute);
         let mut pairs = pair.into_inner();
         let att = Ident::from_string(pairs.next().unwrap().as_str())?;
+        #[allow(clippy::single_match)] // Remove this when adding a second attribute
         match att.0.as_str() {
+            "rust" => self.rust.extend(pairs)?,
             // Ignore unknown attributes
             _ => {}
         }
@@ -45,5 +51,25 @@ impl AttOption {
         let mut pairs = pair.into_inner();
         let opt = Ident::from_string(pairs.next().unwrap().as_str())?;
         Ok(AttOption { opt })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct RustAttributes {}
+
+impl RustAttributes {
+    fn new() -> Self {
+        RustAttributes {}
+    }
+
+    fn extend(&mut self, pairs: Pairs<Rule>) -> Result<(), Error> {
+        for pair in pairs {
+            let opt = AttOption::from_att_option(pair)?;
+            match opt.opt.0.as_str() {
+                // Ignore unknown options
+                _ => {}
+            }
+        }
+        Ok(())
     }
 }
