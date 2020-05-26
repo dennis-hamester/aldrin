@@ -115,11 +115,11 @@ fn format(o: &mut RustOutput) -> Result<(), Error> {
 #[rustfmt::skip::macros(genln)]
 fn gen_struct(
     o: &mut RustOutput,
-    _atts: &Attributes,
+    atts: &Attributes,
     s: &str,
     fs: &[StructField],
 ) -> Result<(), Error> {
-    genln!(o, "#[derive(Debug, Clone)]");
+    genln!(o, "#[derive(Debug, Clone{})]", additional_derives(atts));
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub struct {} {{", s);
     for f in fs {
@@ -260,11 +260,11 @@ fn struct_field_type(s: &str, f: &StructField) -> String {
 #[rustfmt::skip::macros(genln)]
 fn gen_enum(
     o: &mut RustOutput,
-    _atts: &Attributes,
+    atts: &Attributes,
     e: &str,
     vs: &[EnumVariant],
 ) -> Result<(), Error> {
-    genln!(o, "#[derive(Debug, Clone)]");
+    genln!(o, "#[derive(Debug, Clone{})]", additional_derives(atts));
     genln!(o, "#[non_exhaustive]");
     genln!(o, "pub enum {} {{", e);
     for v in vs {
@@ -993,4 +993,12 @@ fn gen_map_key_type(t: &MapKeyType) -> &'static str {
         MapKeyType::String => "String",
         MapKeyType::Uuid => "aldrin_client::codegen::uuid::Uuid",
     }
+}
+
+fn additional_derives(atts: &Attributes) -> String {
+    let mut derives = String::new();
+    if atts.rust.impl_copy {
+        derives.push_str(", Copy");
+    }
+    derives
 }

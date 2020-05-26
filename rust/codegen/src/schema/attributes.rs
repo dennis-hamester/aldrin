@@ -55,17 +55,20 @@ impl AttOption {
 }
 
 #[derive(Debug)]
-pub(crate) struct RustAttributes {}
+pub(crate) struct RustAttributes {
+    pub impl_copy: bool,
+}
 
 impl RustAttributes {
     fn new() -> Self {
-        RustAttributes {}
+        RustAttributes { impl_copy: false }
     }
 
     fn extend(&mut self, pairs: Pairs<Rule>) -> Result<(), Error> {
         for pair in pairs {
             let opt = AttOption::from_att_option(pair)?;
             match opt.opt.0.as_str() {
+                "impl_copy" => self.impl_copy = true,
                 // Ignore unknown options
                 _ => {}
             }
