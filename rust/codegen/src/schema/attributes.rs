@@ -61,6 +61,7 @@ pub(crate) struct RustAttributes {
     pub impl_eq: bool,
     pub impl_partial_ord: bool,
     pub impl_ord: bool,
+    pub impl_hash: bool,
 }
 
 impl RustAttributes {
@@ -71,6 +72,7 @@ impl RustAttributes {
             impl_eq: false,
             impl_partial_ord: false,
             impl_ord: false,
+            impl_hash: false,
         }
     }
 
@@ -83,6 +85,7 @@ impl RustAttributes {
                 "impl_eq" => self.impl_eq = true,
                 "impl_partial_ord" => self.impl_partial_ord = true,
                 "impl_ord" => self.impl_ord = true,
+                "impl_hash" => self.impl_hash = true,
                 // Ignore unknown options
                 _ => {}
             }

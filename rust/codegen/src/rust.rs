@@ -1012,5 +1012,8 @@ fn additional_derives(atts: &Attributes) -> String {
     if atts.rust.impl_ord {
         derives.push_str(", Ord");
     }
+    if atts.rust.impl_hash {
+        derives.push_str(", Hash");
+    }
     derives
 }
