@@ -57,11 +57,17 @@ impl AttOption {
 #[derive(Debug)]
 pub(crate) struct RustAttributes {
     pub impl_copy: bool,
+    pub impl_partial_eq: bool,
+    pub impl_eq: bool,
 }
 
 impl RustAttributes {
     fn new() -> Self {
-        RustAttributes { impl_copy: false }
+        RustAttributes {
+            impl_copy: false,
+            impl_partial_eq: false,
+            impl_eq: false,
+        }
     }
 
     fn extend(&mut self, pairs: Pairs<Rule>) -> Result<(), Error> {
@@ -69,6 +75,8 @@ impl RustAttributes {
             let opt = AttOption::from_att_option(pair)?;
             match opt.opt.0.as_str() {
                 "impl_copy" => self.impl_copy = true,
+                "impl_partial_eq" => self.impl_partial_eq = true,
+                "impl_eq" => self.impl_eq = true,
                 // Ignore unknown options
                 _ => {}
             }

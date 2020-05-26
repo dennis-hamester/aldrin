@@ -1000,5 +1000,11 @@ fn additional_derives(atts: &Attributes) -> String {
     if atts.rust.impl_copy {
         derives.push_str(", Copy");
     }
+    if atts.rust.impl_partial_eq {
+        derives.push_str(", PartialEq");
+    }
+    if atts.rust.impl_eq {
+        derives.push_str(", Eq");
+    }
     derives
 }
