@@ -1006,5 +1006,11 @@ fn additional_derives(atts: &Attributes) -> String {
     if atts.rust.impl_eq {
         derives.push_str(", Eq");
     }
+    if atts.rust.impl_partial_ord {
+        derives.push_str(", PartialOrd");
+    }
+    if atts.rust.impl_ord {
+        derives.push_str(", Ord");
+    }
     derives
 }

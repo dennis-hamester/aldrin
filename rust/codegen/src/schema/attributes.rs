@@ -59,6 +59,8 @@ pub(crate) struct RustAttributes {
     pub impl_copy: bool,
     pub impl_partial_eq: bool,
     pub impl_eq: bool,
+    pub impl_partial_ord: bool,
+    pub impl_ord: bool,
 }
 
 impl RustAttributes {
@@ -67,6 +69,8 @@ impl RustAttributes {
             impl_copy: false,
             impl_partial_eq: false,
             impl_eq: false,
+            impl_partial_ord: false,
+            impl_ord: false,
         }
     }
 
@@ -77,6 +81,8 @@ impl RustAttributes {
                 "impl_copy" => self.impl_copy = true,
                 "impl_partial_eq" => self.impl_partial_eq = true,
                 "impl_eq" => self.impl_eq = true,
+                "impl_partial_ord" => self.impl_partial_ord = true,
+                "impl_ord" => self.impl_ord = true,
                 // Ignore unknown options
                 _ => {}
             }
