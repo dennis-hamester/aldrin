@@ -69,12 +69,12 @@ att_option = { ident }
 
 import_stmt = { "import" ~ module ~ ";"? }
 
-struct_def = { "struct" ~ ident ~ "{" ~ struct_body ~ "}" ~ ";"? }
+struct_def = { attribute* ~ "struct" ~ ident ~ "{" ~ struct_body ~ "}" ~ ";"? }
 struct_inline = { "struct" ~ "{" ~ struct_body ~ "}" }
 struct_body = { struct_field* }
 struct_field = { required_mark? ~ ident ~ "@" ~ lit_pos_int ~ "=" ~ type_name_or_inline ~ ";"? }
 
-enum_def = { "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
+enum_def = { attribute* ~ "enum" ~ ident ~ "{" ~ enum_body ~ "}" ~ ";"? }
 enum_inline = { "enum" ~ "{" ~ enum_body ~ "}" }
 enum_body = { enum_variant+ }
 enum_variant = { ident ~ "@" ~ lit_pos_int ~ ("=" ~ optional_mark? ~ type_name_or_inline)? ~ ";"? }

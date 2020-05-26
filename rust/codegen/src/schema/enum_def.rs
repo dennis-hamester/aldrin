@@ -1,10 +1,11 @@
 use super::grammar::Rule;
-use super::{Ident, TypeOrInline};
+use super::{Attributes, Ident, TypeOrInline};
 use crate::error::Error;
 use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub(crate) struct Enum {
+    pub attributes: Attributes,
     pub name: Ident,
     pub variants: Vec<EnumVariant>,
 }
@@ -13,9 +14,14 @@ impl Enum {
     pub fn from_enum_def(pair: Pair<Rule>) -> Result<Self, Error> {
         assert_eq!(pair.as_rule(), Rule::enum_def);
         let mut pairs = pair.into_inner();
+        let attributes = Attributes::from_pairs(&mut pairs)?;
         let name = Ident::from_string(pairs.next().unwrap().as_str())?;
         let variants = enum_body(pairs.next().unwrap())?;
-        Ok(Enum { name, variants })
+        Ok(Enum {
+            attributes,
+            name,
+            variants,
+        })
     }
 }
 

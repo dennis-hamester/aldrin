@@ -1,10 +1,11 @@
 use super::grammar::Rule;
-use super::{Ident, TypeOrInline};
+use super::{Attributes, Ident, TypeOrInline};
 use crate::error::Error;
 use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub(crate) struct Struct {
+    pub attributes: Attributes,
     pub name: Ident,
     pub fields: Vec<StructField>,
 }
@@ -13,9 +14,14 @@ impl Struct {
     pub fn from_struct_def(pair: Pair<Rule>) -> Result<Self, Error> {
         assert_eq!(pair.as_rule(), Rule::struct_def);
         let mut pairs = pair.into_inner();
+        let attributes = Attributes::from_pairs(&mut pairs)?;
         let name = Ident::from_string(pairs.next().unwrap().as_str())?;
         let fields = struct_body(pairs.next().unwrap())?;
-        Ok(Struct { name, fields })
+        Ok(Struct {
+            attributes,
+            name,
+            fields,
+        })
     }
 }
 
