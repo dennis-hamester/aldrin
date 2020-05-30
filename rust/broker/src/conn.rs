@@ -73,8 +73,8 @@ where
                     }
 
                     for msg in outgoing.drain(..) {
-                        if let Message::Shutdown = msg {
-                            self.t.send_and_flush(Message::Shutdown).await?;
+                        if let Message::Shutdown(()) = msg {
+                            self.t.send_and_flush(Message::Shutdown(())).await?;
                             self.drain_client_recv().await?;
                             return Ok(());
                         } else if let Err(e) = self.t.send_and_flush(msg).await {
@@ -91,9 +91,9 @@ where
 
                 Either::Left((None, _)) => return Err(ConnectionError::UnexpectedBrokerShutdown),
 
-                Either::Right((Ok(Message::Shutdown), _)) => {
+                Either::Right((Ok(Message::Shutdown(())), _)) => {
                     self.send_broker_shutdown(id)?;
-                    self.t.send_and_flush(Message::Shutdown).await?;
+                    self.t.send_and_flush(Message::Shutdown(())).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }
@@ -131,7 +131,7 @@ where
 
     async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
         loop {
-            if let Message::Shutdown = self.t.receive().await? {
+            if let Message::Shutdown(()) = self.t.receive().await? {
                 return Ok(());
             }
         }

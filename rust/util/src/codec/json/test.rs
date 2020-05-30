@@ -343,7 +343,7 @@ fn message_connect_reply() {
 
 #[test]
 fn message_shutdown() {
-    test_message(Message::Shutdown, "\"shutdown\"");
+    test_message(Message::Shutdown(()), "{\"shutdown\":null}");
 }
 
 #[test]
@@ -461,7 +461,10 @@ fn message_subscribe_objects_reply() {
 
 #[test]
 fn message_unsubscribe_objects() {
-    test_message(Message::UnsubscribeObjects, "\"unsubscribe-objects\"");
+    test_message(
+        Message::UnsubscribeObjects(()),
+        "{\"unsubscribe-objects\":null}",
+    );
 }
 
 #[test]
@@ -643,7 +646,10 @@ fn message_subscribe_services_reply() {
 
 #[test]
 fn message_unsubscribe_services() {
-    test_message(Message::UnsubscribeServices, "\"unsubscribe-services\"");
+    test_message(
+        Message::UnsubscribeServices(()),
+        "{\"unsubscribe-services\":null}",
+    );
 }
 
 #[test]

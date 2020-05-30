@@ -289,7 +289,7 @@ impl Broker {
         };
 
         // Ignore errors here
-        conn.send(Message::Shutdown).ok();
+        conn.send(Message::Shutdown(())).ok();
 
         for obj_cookie in conn.objects() {
             self.remove_object(state, obj_cookie);
@@ -310,11 +310,11 @@ impl Broker {
             Message::CreateObject(req) => self.create_object(state, id, req),
             Message::DestroyObject(req) => self.destroy_object(state, id, req),
             Message::SubscribeObjects(req) => self.subscribe_objects(id, req),
-            Message::UnsubscribeObjects => self.unsubscribe_objects(id),
+            Message::UnsubscribeObjects(()) => self.unsubscribe_objects(id),
             Message::CreateService(req) => self.create_service(state, id, req),
             Message::DestroyService(req) => self.destroy_service(state, id, req),
             Message::SubscribeServices(req) => self.subscribe_services(id, req),
-            Message::UnsubscribeServices => self.unsubscribe_services(id),
+            Message::UnsubscribeServices(()) => self.unsubscribe_services(id),
             Message::CallFunction(req) => self.call_function(state, id, req),
             Message::CallFunctionReply(req) => self.call_function_reply(state, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req),
@@ -335,7 +335,7 @@ impl Broker {
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_) => Err(()),
 
-            Message::Shutdown => unreachable!(), // Handled by connection.
+            Message::Shutdown(()) => unreachable!(), // Handled by connection.
         }
     }
 

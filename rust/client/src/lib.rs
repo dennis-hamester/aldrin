@@ -164,8 +164,8 @@ where
 
         loop {
             match select(self.t.receive(), self.recv.next()).await {
-                Either::Left((Ok(Message::Shutdown), _)) => {
-                    self.t.send_and_flush(Message::Shutdown).await?;
+                Either::Left((Ok(Message::Shutdown(())), _)) => {
+                    self.t.send_and_flush(Message::Shutdown(())).await?;
                     return Ok(());
                 }
 
@@ -173,7 +173,7 @@ where
                 Either::Left((Err(e), _)) => return Err(e.into()),
 
                 Either::Right((Some(Request::Shutdown), _)) | Either::Right((None, _)) => {
-                    self.t.send_and_flush(Message::Shutdown).await?;
+                    self.t.send_and_flush(Message::Shutdown(())).await?;
                     self.drain_transport().await?;
                     return Ok(());
                 }
@@ -185,7 +185,7 @@ where
 
     async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
         loop {
-            if let Message::Shutdown = self.t.receive().await? {
+            if let Message::Shutdown(()) = self.t.receive().await? {
                 return Ok(());
             }
         }
@@ -215,13 +215,13 @@ where
             | Message::CreateObject(_)
             | Message::DestroyObject(_)
             | Message::SubscribeObjects(_)
-            | Message::UnsubscribeObjects
+            | Message::UnsubscribeObjects(())
             | Message::CreateService(_)
             | Message::DestroyService(_)
             | Message::SubscribeServices(_)
-            | Message::UnsubscribeServices => Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::UnsubscribeServices(()) => Err(RunError::UnexpectedMessageReceived(msg)),
 
-            Message::Shutdown => unreachable!(), // Handled in run.
+            Message::Shutdown(()) => unreachable!(), // Handled in run.
         }
     }
 
@@ -285,7 +285,7 @@ where
         }
 
         if self.object_events.is_empty() {
-            self.t.send(Message::UnsubscribeObjects).await?;
+            self.t.send(Message::UnsubscribeObjects(())).await?;
         }
 
         Ok(())
@@ -314,7 +314,7 @@ where
         }
 
         if self.object_events.is_empty() {
-            self.t.send(Message::UnsubscribeObjects).await?;
+            self.t.send(Message::UnsubscribeObjects(())).await?;
         }
 
         Ok(())
@@ -401,7 +401,7 @@ where
         }
 
         if self.service_events.is_empty() {
-            self.t.send(Message::UnsubscribeServices).await?;
+            self.t.send(Message::UnsubscribeServices(())).await?;
         }
 
         Ok(())
@@ -436,7 +436,7 @@ where
             }
 
             if self.service_events.is_empty() {
-                self.t.send(Message::UnsubscribeServices).await?;
+                self.t.send(Message::UnsubscribeServices(())).await?;
             }
         }
 
