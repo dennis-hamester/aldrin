@@ -7,14 +7,16 @@ license = "Apache-2.0"
 edition = "2018"
 
 [features]
+bincode-serializer = ["aldrin-proto/serde-derive", "bincode", "codec"]
 channel = ["futures-channel", "futures-core"]
 codec = ["bytes"]
-tokio-io = ["codec", "tokio", "pin-project"]
-json = ["codec", "serde_json", "aldrin-proto/serde-derive"]
+json = ["aldrin-proto/serde-derive", "codec", "serde_json"]
+tokio-io = ["codec", "pin-project", "tokio"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 
+bincode = { optional = true, version = "1.2.1" }
 bytes = { optional = true, version = "0.5.4" }
 futures-channel = { optional = true, version = "0.3.4" }
 futures-core = { optional = true, version = "0.3.4" }

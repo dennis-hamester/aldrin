@@ -75,6 +75,7 @@ name = "aldrin-util"
 version = "0.1.0"
 dependencies = [
  "aldrin-proto",
+ "bincode",
  "bytes",
  "futures-channel",
  "futures-core",
@@ -109,6 +110,16 @@ dependencies = [
  "hermit-abi",
  "libc",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "bincode"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5753e2a71534719bf3f4e57006c3a4f0d2c672a4b676eec84161f763eca87dbf"
+dependencies = [
+ "byteorder",
+ "serde",
 ]
 
 [[package]]

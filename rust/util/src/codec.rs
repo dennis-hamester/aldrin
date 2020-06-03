@@ -1,19 +1,21 @@
-#[cfg(feature = "tokio-io")]
-mod tokio_io;
-
+#[cfg(feature = "bincode-serializer")]
+mod bincode;
 #[cfg(feature = "json")]
 mod json;
+#[cfg(feature = "tokio-io")]
+mod tokio_io;
 
 use aldrin_proto::Message;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::error::Error as StdError;
 use std::fmt;
 
-#[cfg(feature = "tokio-io")]
-pub use tokio_io::{TokioCodec, TokioCodecError};
-
+#[cfg(feature = "bincode-serializer")]
+pub use self::bincode::{BincodeError, BincodeSerializer};
 #[cfg(feature = "json")]
 pub use json::{JsonError, JsonSerializer};
+#[cfg(feature = "tokio-io")]
+pub use tokio_io::{TokioCodec, TokioCodecError};
 
 pub trait Packetizer {
     type Error;
