@@ -1,0 +1,12 @@
+WHITESPACE = _{ WHITE_SPACE }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
+file = _{
+    SOI
+    ~ import_stmt*
+    ~ EOI
+}
+
+import_stmt = { "import" ~ schema_name ~ ";"? }

@@ -1,0 +1,12 @@
+[package]
+name = "aldrin-parser"
+description = "Aldrin schema parser library"
+version = "0.1.0"
+authors = ["Aldrin Contributors"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+pest = "2.1.3"
+pest_derive = "2.1.0"
+uuid = "0.8.1"

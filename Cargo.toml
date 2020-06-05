@@ -5,6 +5,7 @@ members = [
     "rust/client",
     "rust/codegen",
     "rust/codegen-macros",
+    "rust/parser",
     "rust/proto",
     "rust/test",
     "rust/util",
