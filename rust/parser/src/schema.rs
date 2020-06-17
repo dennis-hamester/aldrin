@@ -121,6 +121,10 @@ impl Schema {
             DuplicateImport::validate(self, validate);
         }
 
+        for import in &self.imports {
+            import.validate(validate);
+        }
+
         for def in &self.defs {
             def.validate(validate);
         }

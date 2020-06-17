@@ -1,6 +1,8 @@
 use super::SchemaName;
+use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::issues::Issues;
+use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -22,6 +24,10 @@ impl ImportStmt {
         let schema_name = SchemaName::parse(pairs.next().unwrap(), issues, false);
 
         ImportStmt { span, schema_name }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        ImportNotFound::validate(self, validate);
     }
 
     pub fn span(&self) -> Span {
