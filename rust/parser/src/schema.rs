@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Schema {
     name: String,
     path: PathBuf,
@@ -132,7 +132,7 @@ impl Schema {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Definition {
     Const(ConstDef),
 }

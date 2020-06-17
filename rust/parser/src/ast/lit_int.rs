@@ -2,7 +2,7 @@ use crate::grammar::Rule;
 use crate::Span;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LitInt {
     span: Span,
     value: String,

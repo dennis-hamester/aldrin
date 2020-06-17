@@ -5,7 +5,7 @@ use crate::warning::NonShoutySnakeCaseConst;
 use crate::Span;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConstDef {
     span: Span,
     name: Ident,
@@ -61,7 +61,7 @@ impl ConstDef {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ConstValue {
     U8(LitInt),
     I8(LitInt),

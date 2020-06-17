@@ -4,7 +4,7 @@ use crate::issues::Issues;
 use crate::Span;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ImportStmt {
     span: Span,
     schema_name: SchemaName,

@@ -3,7 +3,7 @@ use crate::Span;
 use pest::iterators::Pair;
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LitUuid {
     span: Span,
     value: Uuid,

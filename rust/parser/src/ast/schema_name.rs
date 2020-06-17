@@ -5,7 +5,7 @@ use crate::Span;
 use heck::SnakeCase;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SchemaName {
     span: Span,
     value: String,
