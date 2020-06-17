@@ -1,25 +1,24 @@
 use super::Error;
-use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct IoError {
-    path: PathBuf,
+    schema_name: String,
     err: std::io::Error,
 }
 
 impl IoError {
-    pub(crate) fn new<P>(path: P, err: std::io::Error) -> Self
+    pub(crate) fn new<S>(schema_name: S, err: std::io::Error) -> Self
     where
-        P: Into<PathBuf>,
+        S: Into<String>,
     {
         IoError {
-            path: path.into(),
+            schema_name: schema_name.into(),
             err,
         }
     }
 
-    pub fn path(&self) -> &Path {
-        &self.path
+    pub fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 
     pub fn io_error(&self) -> &std::io::Error {

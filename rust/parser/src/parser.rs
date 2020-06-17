@@ -26,21 +26,17 @@ impl Parser {
     where
         P: AsRef<Path>,
     {
+        let mut issues = Issues::default();
+        let main_schema = Schema::parse(schema_path, &mut issues);
+
         let mut parsed = Parsed {
-            main_schema: None,
+            main_schema: main_schema.name().to_owned(),
             schemas: HashMap::new(),
-            issues: Issues::default(),
+            issues,
         };
-
-        match Schema::parse(schema_path, &mut parsed.issues) {
-            Some(schema) => {
-                let main_schema = schema.name().to_owned();
-                parsed.main_schema = Some(main_schema.clone());
-                parsed.schemas.insert(main_schema, schema);
-            }
-
-            None => return parsed,
-        }
+        parsed
+            .schemas
+            .insert(main_schema.name().to_owned(), main_schema);
 
         parsed
     }
@@ -54,14 +50,14 @@ impl Default for Parser {
 
 #[derive(Debug)]
 pub struct Parsed {
-    main_schema: Option<String>,
+    main_schema: String,
     schemas: HashMap<String, Schema>,
     issues: Issues,
 }
 
 impl Parsed {
-    pub fn main_schema(&self) -> Option<&str> {
-        self.main_schema.as_deref()
+    pub fn main_schema(&self) -> &Schema {
+        self.get_schema(&self.main_schema).unwrap()
     }
 
     pub fn get_schema(&self, schema_name: &str) -> Option<&Schema> {

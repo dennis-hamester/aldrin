@@ -12,44 +12,50 @@ use std::path::{Path, PathBuf};
 pub struct Schema {
     name: String,
     path: PathBuf,
-    source: String,
+    source: Option<String>,
     imports: Vec<ImportStmt>,
     defs: Vec<Definition>,
 }
 
 impl Schema {
-    pub(crate) fn parse<P>(schema_path: P, issues: &mut Issues) -> Option<Self>
+    pub(crate) fn parse<P>(schema_path: P, issues: &mut Issues) -> Self
     where
         P: AsRef<Path>,
     {
         let schema_path = schema_path.as_ref();
-        let mut file = match File::open(schema_path) {
-            Ok(file) => file,
-            Err(e) => {
-                issues.add_error(IoError::new(schema_path, e));
-                return None;
-            }
-        };
-
-        let mut source = String::new();
-        if let Err(e) = file.read_to_string(&mut source) {
-            issues.add_error(IoError::new(schema_path, e));
-            return None;
-        }
 
         let mut schema = Schema {
             name: Schema::parse_file_name(schema_path, issues),
             path: schema_path.to_owned(),
-            source,
+            source: None,
             imports: Vec::new(),
             defs: Vec::new(),
         };
 
-        let pairs = match Grammar::parse(Rule::file, &schema.source) {
+        let source = {
+            let mut file = match File::open(schema_path) {
+                Ok(file) => file,
+                Err(e) => {
+                    issues.add_error(IoError::new(&schema.name, e));
+                    return schema;
+                }
+            };
+
+            let mut source = String::new();
+            if let Err(e) = file.read_to_string(&mut source) {
+                issues.add_error(IoError::new(&schema.name, e));
+                return schema;
+            }
+
+            source
+        };
+
+        let pairs = match Grammar::parse(Rule::file, &source) {
             Ok(pairs) => pairs,
             Err(e) => {
+                schema.source = Some(source);
                 issues.add_error(ParserError::new(&schema.name, e));
-                return Some(schema);
+                return schema;
             }
         };
 
@@ -62,7 +68,8 @@ impl Schema {
             }
         }
 
-        Some(schema)
+        schema.source = Some(source);
+        schema
     }
 
     fn parse_file_name<P>(path: P, issues: &mut Issues) -> String
@@ -113,8 +120,8 @@ impl Schema {
         &self.path
     }
 
-    pub fn source(&self) -> &str {
-        &self.source
+    pub fn source(&self) -> Option<&str> {
+        self.source.as_deref()
     }
 }
 
