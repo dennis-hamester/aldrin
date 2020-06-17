@@ -1,3 +1,4 @@
+use crate::ast::SchemaName;
 use crate::error::{InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -74,7 +75,7 @@ impl Schema {
             }
         };
 
-        let schema_name_pairs = match Grammar::parse(Rule::schema_name, &file_stem_str) {
+        let mut schema_name_pairs = match Grammar::parse(Rule::schema_name, &file_stem_str) {
             Ok(schema_name_pairs) => schema_name_pairs,
             Err(_) => {
                 issues.add_error(InvalidSchemaName::new(file_stem_str));
@@ -82,11 +83,12 @@ impl Schema {
             }
         };
 
-        if schema_name_pairs.as_str().len() != file_stem_str.len() {
+        let schema_name = SchemaName::parse(schema_name_pairs.next().unwrap(), issues, true);
+        if schema_name.span().to.index != file_stem_str.len() {
             issues.add_error(InvalidSchemaName::new(file_stem_str));
         }
 
-        file_stem_str.to_owned()
+        schema_name.value().to_owned()
     }
 
     pub fn name(&self) -> &str {

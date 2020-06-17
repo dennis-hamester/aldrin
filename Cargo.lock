@@ -52,6 +52,7 @@ dependencies = [
 name = "aldrin-parser"
 version = "0.1.0"
 dependencies = [
+ "heck",
  "pest",
  "pest_derive",
  "uuid",

@@ -7,6 +7,7 @@ mod parser;
 mod schema;
 mod span;
 
+pub mod ast;
 pub mod error;
 pub mod warning;
 

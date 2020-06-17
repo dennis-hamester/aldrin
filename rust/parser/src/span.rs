@@ -1,3 +1,6 @@
+use crate::grammar::Rule;
+use pest::iterators::Pair;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LineCol {
     pub line: usize,
@@ -49,7 +52,8 @@ pub struct Span {
 }
 
 impl Span {
-    pub(crate) fn from_pest(span: &pest::Span) -> Self {
+    pub(crate) fn from_pair(pair: &Pair<Rule>) -> Self {
+        let span = pair.as_span();
         Span {
             from: Position::from_pest(&span.start_pos()),
             to: Position::from_pest(&span.end_pos()),
