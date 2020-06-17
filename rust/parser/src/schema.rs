@@ -3,6 +3,7 @@ use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError}
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
+use crate::warning::DuplicateImport;
 use crate::Span;
 use pest::Parser;
 use std::fs::File;
@@ -115,6 +116,10 @@ impl Schema {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateDefinition::validate(self, validate);
+
+        if validate.is_main_schema() {
+            DuplicateImport::validate(self, validate);
+        }
 
         for def in &self.defs {
             def.validate(validate);
