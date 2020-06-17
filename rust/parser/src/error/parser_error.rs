@@ -54,6 +54,7 @@ impl From<ParserError> for Error {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expected {
     Eof,
+    Ident,
     ImportStmt,
     LitInt,
     LitString,
@@ -66,6 +67,7 @@ impl Expected {
     pub(crate) fn from_pest(rule: Rule) -> Self {
         match rule {
             Rule::EOI => Expected::Eof,
+            Rule::ident => Expected::Ident,
             Rule::kw_import => Expected::ImportStmt,
             Rule::lit_int => Expected::LitInt,
             Rule::lit_string => Expected::LitString,

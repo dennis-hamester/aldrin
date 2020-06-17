@@ -1,9 +1,11 @@
+mod ident;
 mod import_stmt;
 mod lit_int;
 mod lit_string;
 mod lit_uuid;
 mod schema_name;
 
+pub use ident::Ident;
 pub use import_stmt::ImportStmt;
 pub use lit_int::LitInt;
 pub use lit_string::LitString;

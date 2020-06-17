@@ -19,6 +19,7 @@ lit_uuid = @{
 
 kw_import = @{ "import" ~ ws }
 
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 
 file = _{
