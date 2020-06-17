@@ -1,4 +1,5 @@
 use crate::issues::Issues;
+use crate::validate::Validate;
 use crate::{Error, Schema, Warning};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -38,6 +39,7 @@ impl Parser {
             .schemas
             .insert(main_schema.name().to_owned(), main_schema);
 
+        parsed.validate();
         parsed
     }
 }
@@ -56,6 +58,15 @@ pub struct Parsed {
 }
 
 impl Parsed {
+    fn validate(&mut self) {
+        for (schema_name, schema) in &self.schemas {
+            let is_main_schema = *schema_name == self.main_schema;
+            let mut validate =
+                Validate::new(schema_name, &mut self.issues, &self.schemas, is_main_schema);
+            schema.validate(&mut validate);
+        }
+    }
+
     pub fn main_schema(&self) -> &Schema {
         self.get_schema(&self.main_schema).unwrap()
     }

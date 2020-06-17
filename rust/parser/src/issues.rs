@@ -7,24 +7,22 @@ pub(crate) struct Issues {
 }
 
 impl Issues {
-    pub fn add_error<E>(&mut self, e: E) -> &mut Self
+    pub fn add_error<E>(&mut self, e: E)
     where
         E: Into<Error>,
     {
         self.errors.push(e.into());
-        self
     }
 
     pub fn errors(&self) -> &[Error] {
         &self.errors
     }
 
-    pub fn add_warning<E>(&mut self, e: E) -> &mut Self
+    pub fn add_warning<W>(&mut self, w: W)
     where
-        E: Into<Warning>,
+        W: Into<Warning>,
     {
-        self.warnings.push(e.into());
-        self
+        self.warnings.push(w.into());
     }
 
     pub fn warnings(&self) -> &[Warning] {

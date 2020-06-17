@@ -2,6 +2,7 @@ use crate::ast::{ConstDef, ImportStmt, SchemaName};
 use crate::error::{InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
+use crate::validate::Validate;
 use crate::Span;
 use pest::Parser;
 use std::fs::File;
@@ -112,6 +113,12 @@ impl Schema {
         schema_name.value().to_owned()
     }
 
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        for def in &self.defs {
+            def.validate(validate);
+        }
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -134,6 +141,12 @@ impl Definition {
     pub fn span(&self) -> Span {
         match self {
             Definition::Const(d) => d.span(),
+        }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        match self {
+            Definition::Const(d) => d.validate(validate),
         }
     }
 }

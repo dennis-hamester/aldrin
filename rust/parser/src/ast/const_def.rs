@@ -1,5 +1,7 @@
 use super::{Ident, LitInt, LitString, LitUuid};
 use crate::grammar::Rule;
+use crate::validate::Validate;
+use crate::warning::NonShoutySnakeCaseConst;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -33,6 +35,12 @@ impl ConstDef {
             name,
             value_span,
             value,
+        }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        if validate.is_main_schema() {
+            NonShoutySnakeCaseConst::validate(self, validate);
         }
     }
 
