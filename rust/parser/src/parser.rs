@@ -1,7 +1,7 @@
 use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::{Error, Schema, Warning};
-use std::collections::HashMap;
+use std::collections::hash_map::{Entry, HashMap};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -39,8 +39,48 @@ impl Parser {
             .schemas
             .insert(main_schema.name().to_owned(), main_schema);
 
+        let mut imports = parsed
+            .main_schema()
+            .imports()
+            .into_iter()
+            .map(|i| i.schema_name().value().to_owned())
+            .collect::<Vec<_>>();
+        while let Some(import) = imports.pop() {
+            let entry = match parsed.schemas.entry(import) {
+                Entry::Occupied(_) => continue,
+                Entry::Vacant(entry) => entry,
+            };
+
+            let schema_path = match self.find_schema(entry.key()) {
+                Some(schema_path) => schema_path,
+                None => continue,
+            };
+
+            let schema = Schema::parse(schema_path, &mut parsed.issues);
+            imports.extend(
+                schema
+                    .imports()
+                    .into_iter()
+                    .map(|i| i.schema_name().value().to_owned()),
+            );
+            entry.insert(schema);
+        }
+
         parsed.validate();
         parsed
+    }
+
+    fn find_schema(&self, schema_name: &str) -> Option<PathBuf> {
+        for mut path in self.schema_paths.iter().rev().cloned() {
+            path.push(schema_name);
+            path.set_extension("aldrin");
+
+            if path.is_file() {
+                return Some(path);
+            }
+        }
+
+        None
     }
 }
 
