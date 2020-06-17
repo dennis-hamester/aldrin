@@ -1,5 +1,5 @@
 use crate::ast::{ConstDef, ImportStmt, SchemaName};
-use crate::error::{InvalidSchemaName, IoError, ParserError};
+use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
@@ -114,6 +114,8 @@ impl Schema {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        DuplicateDefinition::validate(self, validate);
+
         for def in &self.defs {
             def.validate(validate);
         }
@@ -129,6 +131,14 @@ impl Schema {
 
     pub fn source(&self) -> Option<&str> {
         self.source.as_deref()
+    }
+
+    pub fn imports(&self) -> &[ImportStmt] {
+        &self.imports
+    }
+
+    pub fn definitions(&self) -> &[Definition] {
+        &self.defs
     }
 }
 
