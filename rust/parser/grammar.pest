@@ -1,7 +1,6 @@
 WHITESPACE = _{ WHITE_SPACE }
 COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 ws = _{ WHITESPACE | COMMENT }
-term = @{ ";" }
 
 lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
 lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
@@ -17,7 +16,23 @@ lit_uuid = @{
     ~ "-" ~ ASCII_HEX_DIGIT{12}
 }
 
+tok_term = @{ ";" }
+tok_eq = @{ "=" }
+tok_par_open = @{ "(" }
+tok_par_close = @{ ")" }
+
 kw_import = @{ "import" ~ ws }
+kw_const = @{ "const" ~ ws }
+kw_u8 = @{ "u8" }
+kw_i8 = @{ "i8" }
+kw_u16 = @{ "u16" }
+kw_i16 = @{ "i16" }
+kw_u32 = @{ "u32" }
+kw_i32 = @{ "i32" }
+kw_u64 = @{ "u64" }
+kw_i64 = @{ "i64" }
+kw_string = @{ "string" }
+kw_uuid = @{ "uuid" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
@@ -25,7 +40,32 @@ schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 file = _{
     SOI
     ~ import_stmt*
+    ~ const_def*
     ~ EOI
 }
 
-import_stmt = { kw_import ~ schema_name ~ term }
+import_stmt = { kw_import ~ schema_name ~ tok_term }
+
+const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
+const_value = {
+    const_u8
+    | const_i8
+    | const_u16
+    | const_i16
+    | const_u32
+    | const_i32
+    | const_u64
+    | const_i64
+    | const_string
+    | const_uuid
+}
+const_u8 = { kw_u8 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_i8 = { kw_i8 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_u16 = { kw_u16 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_i16 = { kw_i16 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_u32 = { kw_u32 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_i32 = { kw_i32 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_u64 = { kw_u64 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_i64 = { kw_i64 ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_string = { kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
+const_uuid = { kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }

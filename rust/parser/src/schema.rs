@@ -1,7 +1,8 @@
-use crate::ast::{ImportStmt, SchemaName};
+use crate::ast::{ConstDef, ImportStmt, SchemaName};
 use crate::error::{InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
+use crate::Span;
 use pest::Parser;
 use std::fs::File;
 use std::io::Read;
@@ -13,6 +14,7 @@ pub struct Schema {
     path: PathBuf,
     source: String,
     imports: Vec<ImportStmt>,
+    defs: Vec<Definition>,
 }
 
 impl Schema {
@@ -40,6 +42,7 @@ impl Schema {
             path: schema_path.to_owned(),
             source,
             imports: Vec::new(),
+            defs: Vec::new(),
         };
 
         let pairs = match Grammar::parse(Rule::file, &schema.source) {
@@ -54,6 +57,7 @@ impl Schema {
             match pair.as_rule() {
                 Rule::EOI => break,
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair, issues)),
+                Rule::const_def => schema.defs.push(Definition::Const(ConstDef::parse(pair))),
                 _ => unreachable!(),
             }
         }
@@ -111,5 +115,18 @@ impl Schema {
 
     pub fn source(&self) -> &str {
         &self.source
+    }
+}
+
+#[derive(Debug)]
+pub enum Definition {
+    Const(ConstDef),
+}
+
+impl Definition {
+    pub fn span(&self) -> Span {
+        match self {
+            Definition::Const(d) => d.span(),
+        }
     }
 }

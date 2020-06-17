@@ -53,6 +53,8 @@ impl From<ParserError> for Error {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expected {
+    ConstDef,
+    ConstValue,
     Eof,
     Ident,
     ImportStmt,
@@ -60,25 +62,54 @@ pub enum Expected {
     LitString,
     LitUuid,
     SchemaName,
-    Terminator,
+    TokenEquals,
+    TokenParClose,
+    TokenParOpen,
+    TokenTerm,
 }
 
 impl Expected {
     pub(crate) fn from_pest(rule: Rule) -> Self {
         match rule {
             Rule::EOI => Expected::Eof,
+            Rule::const_value => Expected::ConstValue,
             Rule::ident => Expected::Ident,
+            Rule::kw_const => Expected::ConstDef,
             Rule::kw_import => Expected::ImportStmt,
             Rule::lit_int => Expected::LitInt,
             Rule::lit_string => Expected::LitString,
             Rule::lit_uuid => Expected::LitUuid,
             Rule::schema_name => Expected::SchemaName,
-            Rule::term => Expected::Terminator,
+            Rule::tok_eq => Expected::TokenEquals,
+            Rule::tok_par_close => Expected::TokenParClose,
+            Rule::tok_par_open => Expected::TokenParOpen,
+            Rule::tok_term => Expected::TokenTerm,
 
             Rule::COMMENT
             | Rule::WHITESPACE
+            | Rule::const_def
+            | Rule::const_i16
+            | Rule::const_i32
+            | Rule::const_i64
+            | Rule::const_i8
+            | Rule::const_string
+            | Rule::const_u16
+            | Rule::const_u32
+            | Rule::const_u64
+            | Rule::const_u8
+            | Rule::const_uuid
             | Rule::file
             | Rule::import_stmt
+            | Rule::kw_i16
+            | Rule::kw_i32
+            | Rule::kw_i64
+            | Rule::kw_i8
+            | Rule::kw_string
+            | Rule::kw_u16
+            | Rule::kw_u32
+            | Rule::kw_u64
+            | Rule::kw_u8
+            | Rule::kw_uuid
             | Rule::lit_pos_nonzero_int
             | Rule::lit_string_char
             | Rule::ws => unreachable!(),

@@ -13,6 +13,6 @@ pub mod warning;
 
 pub use error::Error;
 pub use parser::{Parsed, Parser};
-pub use schema::Schema;
+pub use schema::{Definition, Schema};
 pub use span::{LineCol, Position, Span};
 pub use warning::Warning;
