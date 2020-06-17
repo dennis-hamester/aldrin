@@ -1,4 +1,5 @@
 use super::{Ident, LitInt, LitString, LitUuid};
+use crate::error::InvalidConstValue;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::NonShoutySnakeCaseConst;
@@ -42,6 +43,8 @@ impl ConstDef {
         if validate.is_main_schema() {
             NonShoutySnakeCaseConst::validate(self, validate);
         }
+
+        self.value.validate(validate);
     }
 
     pub fn span(&self) -> Span {
@@ -100,5 +103,9 @@ impl ConstValue {
             Rule::const_uuid => ConstValue::Uuid(LitUuid::parse(pair)),
             _ => unreachable!(),
         }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        InvalidConstValue::validate(self, validate);
     }
 }
