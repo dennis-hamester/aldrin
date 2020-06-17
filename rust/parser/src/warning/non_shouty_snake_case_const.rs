@@ -1,14 +1,13 @@
 use super::Warning;
-use crate::ast::ConstDef;
+use crate::ast::{ConstDef, Ident};
 use crate::validate::Validate;
-use crate::Span;
 use heck::ShoutySnakeCase;
 
 #[derive(Debug)]
 pub struct NonShoutySnakeCaseConst {
     schema_name: String,
     shouty_snake_case: String,
-    ident_span: Span,
+    ident: Ident,
 }
 
 impl NonShoutySnakeCaseConst {
@@ -18,7 +17,7 @@ impl NonShoutySnakeCaseConst {
             validate.add_warning(NonShoutySnakeCaseConst {
                 schema_name: validate.schema_name().to_owned(),
                 shouty_snake_case,
-                ident_span: const_def.name().span(),
+                ident: const_def.name().clone(),
             });
         }
     }
@@ -31,8 +30,8 @@ impl NonShoutySnakeCaseConst {
         &self.shouty_snake_case
     }
 
-    pub fn ident_span(&self) -> Span {
-        self.ident_span
+    pub fn ident(&self) -> &Ident {
+        &self.ident
     }
 }
 
