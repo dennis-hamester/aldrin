@@ -3,6 +3,20 @@ COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 ws = _{ WHITESPACE | COMMENT }
 term = @{ ";" }
 
+lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
+lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
+
+lit_string_char = @{ "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
+lit_string = @{ "\"" ~ lit_string_char* ~ "\"" }
+
+lit_uuid = @{
+    ASCII_HEX_DIGIT{8}
+    ~ "-" ~ ASCII_HEX_DIGIT{4}
+    ~ "-" ~ ASCII_HEX_DIGIT{4}
+    ~ "-" ~ ASCII_HEX_DIGIT{4}
+    ~ "-" ~ ASCII_HEX_DIGIT{12}
+}
+
 kw_import = @{ "import" ~ ws }
 
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }

@@ -55,6 +55,9 @@ impl From<ParserError> for Error {
 pub enum Expected {
     Eof,
     ImportStmt,
+    LitInt,
+    LitString,
+    LitUuid,
     SchemaName,
     Terminator,
 }
@@ -64,12 +67,19 @@ impl Expected {
         match rule {
             Rule::EOI => Expected::Eof,
             Rule::kw_import => Expected::ImportStmt,
+            Rule::lit_int => Expected::LitInt,
+            Rule::lit_string => Expected::LitString,
+            Rule::lit_uuid => Expected::LitUuid,
             Rule::schema_name => Expected::SchemaName,
             Rule::term => Expected::Terminator,
 
-            Rule::COMMENT | Rule::WHITESPACE | Rule::file | Rule::import_stmt | Rule::ws => {
-                unreachable!()
-            }
+            Rule::COMMENT
+            | Rule::WHITESPACE
+            | Rule::file
+            | Rule::import_stmt
+            | Rule::lit_pos_nonzero_int
+            | Rule::lit_string_char
+            | Rule::ws => unreachable!(),
         }
     }
 }
