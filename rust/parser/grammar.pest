@@ -1,5 +1,9 @@
 WHITESPACE = _{ WHITE_SPACE }
 COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+ws = _{ WHITESPACE | COMMENT }
+term = @{ ";" }
+
+kw_import = @{ "import" ~ ws }
 
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 
@@ -9,4 +13,4 @@ file = _{
     ~ EOI
 }
 
-import_stmt = { "import" ~ schema_name ~ ";"? }
+import_stmt = { kw_import ~ schema_name ~ term }

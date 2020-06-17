@@ -56,15 +56,20 @@ pub enum Expected {
     Eof,
     ImportStmt,
     SchemaName,
+    Terminator,
 }
 
 impl Expected {
     pub(crate) fn from_pest(rule: Rule) -> Self {
         match rule {
             Rule::EOI => Expected::Eof,
-            Rule::import_stmt => Expected::ImportStmt,
+            Rule::kw_import => Expected::ImportStmt,
             Rule::schema_name => Expected::SchemaName,
-            Rule::COMMENT | Rule::WHITESPACE | Rule::file => unreachable!(),
+            Rule::term => Expected::Terminator,
+
+            Rule::COMMENT | Rule::WHITESPACE | Rule::file | Rule::import_stmt | Rule::ws => {
+                unreachable!()
+            }
         }
     }
 }

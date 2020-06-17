@@ -1,4 +1,4 @@
-use crate::ast::SchemaName;
+use crate::ast::{ImportStmt, SchemaName};
 use crate::error::{InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -12,6 +12,7 @@ pub struct Schema {
     name: String,
     path: PathBuf,
     source: String,
+    imports: Vec<ImportStmt>,
 }
 
 impl Schema {
@@ -38,6 +39,7 @@ impl Schema {
             name: Schema::parse_file_name(schema_path, issues),
             path: schema_path.to_owned(),
             source,
+            imports: Vec::new(),
         };
 
         let pairs = match Grammar::parse(Rule::file, &schema.source) {
@@ -47,6 +49,14 @@ impl Schema {
                 return Some(schema);
             }
         };
+
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::EOI => break,
+                Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair, issues)),
+                _ => unreachable!(),
+            }
+        }
 
         Some(schema)
     }
