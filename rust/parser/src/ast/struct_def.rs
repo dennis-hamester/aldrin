@@ -141,6 +141,8 @@ impl StructField {
         if validate.is_main_schema() {
             NonSnakeCaseStructField::validate(self, validate);
         }
+
+        self.field_type.validate(validate);
     }
 
     pub fn span(&self) -> Span {

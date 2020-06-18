@@ -46,6 +46,10 @@ impl<'a> Validate<'a> {
         self.schemas.get(schema_name)
     }
 
+    pub fn get_current_schema(&self) -> &'a Schema {
+        self.get_schema(self.schema_name).unwrap()
+    }
+
     pub fn is_main_schema(&self) -> bool {
         self.is_main_schema
     }

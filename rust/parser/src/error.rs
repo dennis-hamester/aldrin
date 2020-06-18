@@ -7,6 +7,7 @@ mod invalid_schema_name;
 mod invalid_struct_field_id;
 mod io_error;
 mod parser_error;
+mod type_not_found;
 
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_struct_field::DuplicateStructField;
@@ -17,6 +18,7 @@ pub use invalid_schema_name::InvalidSchemaName;
 pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use io_error::IoError;
 pub use parser_error::{Expected, ParserError};
+pub use type_not_found::TypeNotFound;
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -30,6 +32,7 @@ pub enum Error {
     InvalidStructFieldId(InvalidStructFieldId),
     Io(IoError),
     Parser(ParserError),
+    TypeNotFound(TypeNotFound),
 }
 
 impl Error {
@@ -44,6 +47,7 @@ impl Error {
             Error::InvalidStructFieldId(e) => e.schema_name(),
             Error::Io(e) => e.schema_name(),
             Error::Parser(e) => e.schema_name(),
+            Error::TypeNotFound(e) => e.schema_name(),
         }
     }
 }

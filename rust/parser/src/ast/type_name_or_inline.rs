@@ -1,5 +1,6 @@
 use super::TypeName;
 use crate::grammar::Rule;
+use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -17,6 +18,12 @@ impl TypeNameOrInline {
         match pair.as_rule() {
             Rule::type_name => TypeNameOrInline::TypeName(TypeName::parse(pair)),
             _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        match self {
+            TypeNameOrInline::TypeName(ty) => ty.validate(validate),
         }
     }
 

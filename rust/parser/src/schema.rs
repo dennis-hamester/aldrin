@@ -1,4 +1,4 @@
-use crate::ast::{ConstDef, ImportStmt, SchemaName, StructDef};
+use crate::ast::{ConstDef, Ident, ImportStmt, SchemaName, StructDef};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -159,6 +159,13 @@ pub enum Definition {
 }
 
 impl Definition {
+    fn validate(&self, validate: &mut Validate) {
+        match self {
+            Definition::Const(d) => d.validate(validate),
+            Definition::Struct(d) => d.validate(validate),
+        }
+    }
+
     pub fn span(&self) -> Span {
         match self {
             Definition::Const(d) => d.span(),
@@ -166,10 +173,10 @@ impl Definition {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    pub fn name(&self) -> &Ident {
         match self {
-            Definition::Const(d) => d.validate(validate),
-            Definition::Struct(d) => d.validate(validate),
+            Definition::Const(d) => d.name(),
+            Definition::Struct(d) => d.name(),
         }
     }
 }

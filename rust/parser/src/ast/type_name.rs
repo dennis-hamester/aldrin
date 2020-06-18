@@ -1,6 +1,8 @@
 use super::{Ident, KeyTypeName, SchemaName};
+use crate::error::TypeNotFound;
 use crate::grammar::Rule;
 use crate::issues::Issues;
+use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -21,6 +23,10 @@ impl TypeName {
         let kind = TypeNameKind::parse(pair);
 
         TypeName { span, kind }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        self.kind.validate(validate);
     }
 
     pub fn span(&self) -> Span {
@@ -110,6 +116,17 @@ impl TypeNameKind {
             }
             Rule::ident => TypeNameKind::Intern(Ident::parse(pair)),
             _ => unreachable!(),
+        }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        match self {
+            TypeNameKind::Vec(ty) => ty.validate(validate),
+            TypeNameKind::Map(_, ty) => ty.validate(validate),
+            TypeNameKind::Intern(ty) => {
+                TypeNotFound::validate(ty, validate);
+            }
+            _ => {}
         }
     }
 }
