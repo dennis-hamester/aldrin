@@ -103,6 +103,12 @@ impl Expected {
             Rule::attribute | Rule::tok_hash => set.insert(Expected::Attribute),
             Rule::const_def | Rule::kw_const => set.insert(Expected::ConstDef),
             Rule::const_value => set.insert(Expected::ConstValue),
+            Rule::def => {
+                set.insert(Expected::StructDef);
+                set.insert(Expected::EnumDef);
+                set.insert(Expected::ServiceDef);
+                set.insert(Expected::ConstDef)
+            }
             Rule::enum_inline => set.insert(Expected::InlineEnum),
             Rule::enum_variant => set.insert(Expected::EnumVariant),
             Rule::enum_variant_type => set.insert(Expected::EnumVariantType),

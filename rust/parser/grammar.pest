@@ -105,12 +105,7 @@ type_name = {
 
 type_name_or_inline = { (type_name ~ tok_term) | struct_inline | enum_inline }
 
-file = _{
-    SOI
-    ~ import_stmt*
-    ~ (struct_def | enum_def | service_def | const_def)*
-    ~ EOI
-}
+file = _{ SOI ~ import_stmt* ~ def* ~ EOI }
 
 attribute = {
     tok_hash ~ tok_squ_open ~ ident
@@ -119,6 +114,8 @@ attribute = {
 }
 
 import_stmt = { kw_import ~ schema_name ~ tok_term }
+
+def = { struct_def | enum_def | service_def | const_def }
 
 struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
 struct_inline = { kw_struct ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
