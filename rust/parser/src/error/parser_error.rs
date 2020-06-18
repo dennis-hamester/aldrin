@@ -110,6 +110,7 @@ impl Expected {
             Rule::tok_squ_open => set.insert(Expected::TokenSquareOpen),
             Rule::tok_term => set.insert(Expected::TokenTerm),
             Rule::type_name => set.insert(Expected::TypeName),
+            Rule::type_name_or_inline => set.insert(Expected::TypeName),
 
             Rule::COMMENT
             | Rule::WHITESPACE

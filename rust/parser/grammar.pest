@@ -94,6 +94,8 @@ type_name = {
     | ident
 }
 
+type_name_or_inline = { type_name ~ tok_term }
+
 file = _{
     SOI
     ~ import_stmt*

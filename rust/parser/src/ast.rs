@@ -8,6 +8,7 @@ mod lit_string;
 mod lit_uuid;
 mod schema_name;
 mod type_name;
+mod type_name_or_inline;
 
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
@@ -19,3 +20,4 @@ pub use lit_string::LitString;
 pub use lit_uuid::LitUuid;
 pub use schema_name::SchemaName;
 pub use type_name::{TypeName, TypeNameKind};
+pub use type_name_or_inline::TypeNameOrInline;
