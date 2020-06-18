@@ -69,10 +69,15 @@ pub enum Expected {
     LitString,
     LitUuid,
     SchemaName,
+    StructDef,
+    StructField,
     TokenAngClose,
     TokenAngOpen,
     TokenArrow,
+    TokenAt,
     TokenComma,
+    TokenCurlyClose,
+    TokenCurlyOpen,
     TokenEquals,
     TokenParClose,
     TokenParOpen,
@@ -93,15 +98,20 @@ impl Expected {
             Rule::ident => set.insert(Expected::Ident),
             Rule::import_stmt | Rule::kw_import => set.insert(Expected::ImportStmt),
             Rule::key_type_name => set.insert(Expected::KeyTypeName),
+            Rule::kw_struct | Rule::struct_def => set.insert(Expected::StructDef),
             Rule::lit_int => set.insert(Expected::LitInt),
             Rule::lit_pos_int => set.insert(Expected::LitPosInt),
             Rule::lit_string => set.insert(Expected::LitString),
             Rule::lit_uuid => set.insert(Expected::LitUuid),
             Rule::schema_name => set.insert(Expected::SchemaName),
+            Rule::struct_field => set.insert(Expected::StructField),
             Rule::tok_ang_close => set.insert(Expected::TokenAngClose),
             Rule::tok_ang_open => set.insert(Expected::TokenAngOpen),
             Rule::tok_arrow => set.insert(Expected::TokenArrow),
+            Rule::tok_at => set.insert(Expected::TokenAt),
             Rule::tok_comma => set.insert(Expected::TokenComma),
+            Rule::tok_cur_close => set.insert(Expected::TokenCurlyClose),
+            Rule::tok_cur_open => set.insert(Expected::TokenCurlyOpen),
             Rule::tok_eq => set.insert(Expected::TokenEquals),
             Rule::tok_par_close => set.insert(Expected::TokenParClose),
             Rule::tok_par_open => set.insert(Expected::TokenParOpen),
@@ -135,6 +145,7 @@ impl Expected {
             | Rule::kw_i64
             | Rule::kw_i8
             | Rule::kw_map
+            | Rule::kw_required
             | Rule::kw_set
             | Rule::kw_string
             | Rule::kw_u16

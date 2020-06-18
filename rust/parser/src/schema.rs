@@ -1,4 +1,4 @@
-use crate::ast::{ConstDef, ImportStmt, SchemaName};
+use crate::ast::{ConstDef, ImportStmt, SchemaName, StructDef};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -65,6 +65,7 @@ impl Schema {
             match pair.as_rule() {
                 Rule::EOI => break,
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair, issues)),
+                Rule::struct_def => schema.defs.push(Definition::Struct(StructDef::parse(pair))),
                 Rule::const_def => schema.defs.push(Definition::Const(ConstDef::parse(pair))),
                 _ => unreachable!(),
             }
@@ -154,18 +155,21 @@ impl Schema {
 #[derive(Debug, Clone)]
 pub enum Definition {
     Const(ConstDef),
+    Struct(StructDef),
 }
 
 impl Definition {
     pub fn span(&self) -> Span {
         match self {
             Definition::Const(d) => d.span(),
+            Definition::Struct(d) => d.span(),
         }
     }
 
     fn validate(&self, validate: &mut Validate) {
         match self {
             Definition::Const(d) => d.validate(validate),
+            Definition::Struct(d) => d.validate(validate),
         }
     }
 }

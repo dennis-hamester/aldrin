@@ -29,8 +29,12 @@ tok_hash = @{ "#" }
 tok_squ_open = @{ "[" }
 tok_squ_close = @{ "]" }
 tok_comma = @{ "," }
+tok_cur_open = @{ "{" }
+tok_cur_close = @{ "}" }
+tok_at = @{ "@" }
 
 kw_import = @{ "import" ~ ws }
+kw_struct = @{ "struct" ~ ws }
 kw_const = @{ "const" ~ ws }
 kw_u8 = @{ "u8" }
 kw_i8 = @{ "i8" }
@@ -50,6 +54,7 @@ kw_vec = @{ "vec" }
 kw_bytes = @{ "bytes" }
 kw_map = @{ "map" }
 kw_set = @{ "set" }
+kw_required = @{ "required" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
@@ -99,7 +104,7 @@ type_name_or_inline = { type_name ~ tok_term }
 file = _{
     SOI
     ~ import_stmt*
-    ~ const_def*
+    ~ (struct_def | const_def)*
     ~ EOI
 }
 
@@ -110,6 +115,9 @@ attribute = {
 }
 
 import_stmt = { kw_import ~ schema_name ~ tok_term }
+
+struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
+struct_field = { kw_required? ~ ident ~ tok_at ~ lit_pos_int ~ tok_eq ~ type_name_or_inline }
 
 const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
 const_value = {

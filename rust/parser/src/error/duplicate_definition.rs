@@ -18,6 +18,7 @@ impl DuplicateDefinition {
         for def in schema.definitions() {
             let ident = match def {
                 Definition::Const(d) => d.name(),
+                Definition::Struct(d) => d.name(),
             };
 
             match idents.entry(ident.value()) {
