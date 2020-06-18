@@ -1,6 +1,8 @@
 use super::{Attribute, Ident, LitPosInt, TypeNameOrInline};
+use crate::error::{DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId};
 use crate::grammar::Rule;
 use crate::validate::Validate;
+use crate::warning::{NonCamelCaseStruct, NonSnakeCaseStructField};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -51,7 +53,18 @@ impl StructDef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {}
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        DuplicateStructField::validate(&self.fields, validate);
+        DuplicateStructFieldId::validate(&self.fields, validate);
+
+        if validate.is_main_schema() {
+            NonCamelCaseStruct::validate(self, validate);
+        }
+
+        for field in &self.fields {
+            field.validate(validate);
+        }
+    }
 
     pub fn span(&self) -> Span {
         self.span
@@ -119,6 +132,14 @@ impl StructField {
             name,
             id,
             field_type,
+        }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        InvalidStructFieldId::validate(&self, validate);
+
+        if validate.is_main_schema() {
+            NonSnakeCaseStructField::validate(self, validate);
         }
     }
 

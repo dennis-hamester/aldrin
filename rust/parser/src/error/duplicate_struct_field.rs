@@ -1,35 +1,30 @@
 use super::Error;
-use crate::ast::Ident;
+use crate::ast::{Ident, StructField};
 use crate::validate::Validate;
-use crate::{Definition, Schema, Span};
+use crate::Span;
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
-pub struct DuplicateDefinition {
+pub struct DuplicateStructField {
     schema_name: String,
     duplicate: Ident,
     original_span: Span,
 }
 
-impl DuplicateDefinition {
-    pub(crate) fn validate(schema: &Schema, validate: &mut Validate) {
+impl DuplicateStructField {
+    pub(crate) fn validate(fields: &[StructField], validate: &mut Validate) {
         let mut idents = HashMap::new();
 
-        for def in schema.definitions() {
-            let ident = match def {
-                Definition::Const(d) => d.name(),
-                Definition::Struct(d) => d.name(),
-            };
-
-            match idents.entry(ident.value()) {
+        for field in fields {
+            match idents.entry(field.name().value()) {
                 Entry::Vacant(e) => {
-                    e.insert(ident);
+                    e.insert(field.name());
                 }
 
                 Entry::Occupied(e) => {
-                    validate.add_error(DuplicateDefinition {
+                    validate.add_error(DuplicateStructField {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: ident.clone(),
+                        duplicate: field.name().clone(),
                         original_span: e.get().span(),
                     });
                 }
@@ -50,8 +45,8 @@ impl DuplicateDefinition {
     }
 }
 
-impl From<DuplicateDefinition> for Error {
-    fn from(e: DuplicateDefinition) -> Self {
-        Error::DuplicateDefinition(e)
+impl From<DuplicateStructField> for Error {
+    fn from(e: DuplicateStructField) -> Self {
+        Error::DuplicateStructField(e)
     }
 }
