@@ -24,6 +24,10 @@ tok_ang_open = @{ "<" }
 tok_ang_close = @{ ">" }
 tok_arrow = @{ "->" }
 tok_scope = @{ "::" }
+tok_hash = @{ "#" }
+tok_squ_open = @{ "[" }
+tok_squ_close = @{ "]" }
+tok_comma = @{ "," }
 
 kw_import = @{ "import" ~ ws }
 kw_const = @{ "const" ~ ws }
@@ -94,6 +98,12 @@ file = _{
     ~ import_stmt*
     ~ const_def*
     ~ EOI
+}
+
+attribute = {
+    tok_hash ~ tok_squ_open ~ ident
+    ~ (tok_par_open ~ ident ~ (tok_comma ~ ident)* ~ tok_comma? ~ tok_par_close)?
+    ~ tok_squ_close
 }
 
 import_stmt = { kw_import ~ schema_name ~ tok_term }

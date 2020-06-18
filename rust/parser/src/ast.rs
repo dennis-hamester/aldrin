@@ -1,3 +1,4 @@
+mod attribute;
 mod const_def;
 mod ident;
 mod import_stmt;
@@ -8,6 +9,7 @@ mod lit_uuid;
 mod schema_name;
 mod type_name;
 
+pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;
