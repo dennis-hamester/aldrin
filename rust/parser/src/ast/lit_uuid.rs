@@ -17,4 +17,12 @@ impl LitUuid {
             value: pair.as_str().parse().unwrap(),
         }
     }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn value(&self) -> Uuid {
+        self.value
+    }
 }

@@ -18,4 +18,12 @@ impl LitString {
             value,
         }
     }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn value(&self) -> &str {
+        &self.value
+    }
 }

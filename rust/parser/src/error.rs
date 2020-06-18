@@ -8,6 +8,8 @@ mod import_not_found;
 mod invalid_const_value;
 mod invalid_enum_variant_id;
 mod invalid_schema_name;
+mod invalid_service_uuid;
+mod invalid_service_version;
 mod invalid_struct_field_id;
 mod invalid_syntax;
 mod io_error;
@@ -24,6 +26,8 @@ pub use import_not_found::ImportNotFound;
 pub use invalid_const_value::InvalidConstValue;
 pub use invalid_enum_variant_id::InvalidEnumVariantId;
 pub use invalid_schema_name::InvalidSchemaName;
+pub use invalid_service_uuid::InvalidServiceUuid;
+pub use invalid_service_version::InvalidServiceVersion;
 pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use invalid_syntax::{Expected, InvalidSyntax};
 pub use io_error::IoError;
@@ -43,6 +47,8 @@ pub enum Error {
     InvalidConstValue(InvalidConstValue),
     InvalidEnumVariantId(InvalidEnumVariantId),
     InvalidSchemaName(InvalidSchemaName),
+    InvalidServiceUuid(InvalidServiceUuid),
+    InvalidServiceVersion(InvalidServiceVersion),
     InvalidStructFieldId(InvalidStructFieldId),
     InvalidSyntax(InvalidSyntax),
     IoError(IoError),
@@ -63,6 +69,8 @@ impl Error {
             Error::InvalidConstValue(e) => e.schema_name(),
             Error::InvalidEnumVariantId(e) => e.schema_name(),
             Error::InvalidSchemaName(e) => e.schema_name(),
+            Error::InvalidServiceUuid(e) => e.schema_name(),
+            Error::InvalidServiceVersion(e) => e.schema_name(),
             Error::InvalidStructFieldId(e) => e.schema_name(),
             Error::InvalidSyntax(e) => e.schema_name(),
             Error::IoError(e) => e.schema_name(),

@@ -1,8 +1,8 @@
 use super::Warning;
 use crate::ast::ImportStmt;
 use crate::ast::{
-    EnumDef, EnumVariant, EnumVariantType, InlineEnum, InlineStruct, SchemaName, StructDef,
-    StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    EnumDef, EnumVariant, EnumVariantType, InlineEnum, InlineStruct, SchemaName, ServiceDef,
+    StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::validate::Validate;
 use crate::{Definition, Schema};
@@ -39,6 +39,7 @@ impl UnusedImport {
         match def {
             Definition::Struct(d) => Self::visit_struct(d, schema_name),
             Definition::Enum(d) => Self::visit_enum(d, schema_name),
+            Definition::Service(d) => Self::visit_service(d, schema_name),
             Definition::Const(_) => false,
         }
     }
@@ -92,6 +93,10 @@ impl UnusedImport {
 
     fn visit_enum_variant_type(var_type: &EnumVariantType, schema_name: &SchemaName) -> bool {
         Self::visit_type_name_or_inline(var_type.variant_type(), schema_name)
+    }
+
+    fn visit_service(service_def: &ServiceDef, schema_name: &SchemaName) -> bool {
+        false
     }
 
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {

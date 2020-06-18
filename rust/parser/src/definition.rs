@@ -1,4 +1,4 @@
-use crate::ast::{ConstDef, EnumDef, Ident, StructDef};
+use crate::ast::{ConstDef, EnumDef, Ident, ServiceDef, StructDef};
 use crate::validate::Validate;
 use crate::Span;
 
@@ -6,6 +6,7 @@ use crate::Span;
 pub enum Definition {
     Struct(StructDef),
     Enum(EnumDef),
+    Service(ServiceDef),
     Const(ConstDef),
 }
 
@@ -14,6 +15,7 @@ impl Definition {
         match self {
             Definition::Struct(d) => d.validate(validate),
             Definition::Enum(d) => d.validate(validate),
+            Definition::Service(d) => d.validate(validate),
             Definition::Const(d) => d.validate(validate),
         }
     }
@@ -22,6 +24,7 @@ impl Definition {
         match self {
             Definition::Struct(d) => d.span(),
             Definition::Enum(d) => d.span(),
+            Definition::Service(d) => d.span(),
             Definition::Const(d) => d.span(),
         }
     }
@@ -30,6 +33,7 @@ impl Definition {
         match self {
             Definition::Struct(d) => d.name(),
             Definition::Enum(d) => d.name(),
+            Definition::Service(d) => d.name(),
             Definition::Const(d) => d.name(),
         }
     }
