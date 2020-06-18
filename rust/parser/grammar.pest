@@ -20,6 +20,10 @@ tok_term = @{ ";" }
 tok_eq = @{ "=" }
 tok_par_open = @{ "(" }
 tok_par_close = @{ ")" }
+tok_ang_open = @{ "<" }
+tok_ang_close = @{ ">" }
+tok_arrow = @{ "->" }
+tok_scope = @{ "::" }
 
 kw_import = @{ "import" ~ ws }
 kw_const = @{ "const" ~ ws }
@@ -33,9 +37,57 @@ kw_u64 = @{ "u64" }
 kw_i64 = @{ "i64" }
 kw_string = @{ "string" }
 kw_uuid = @{ "uuid" }
+kw_bool = @{ "bool" }
+kw_f32 = @{ "f32" }
+kw_f64 = @{ "f64" }
+kw_value = @{ "value" }
+kw_vec = @{ "vec" }
+kw_bytes = @{ "bytes" }
+kw_map = @{ "map" }
+kw_set = @{ "set" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
+vec_type = { kw_vec ~ tok_ang_open ~ type_name ~ tok_ang_close }
+map_type = { kw_map ~ tok_ang_open ~ key_type_name ~ tok_arrow ~ type_name ~ tok_ang_close }
+set_type = { kw_set ~ tok_ang_open ~ key_type_name ~ tok_ang_close }
+external_type_name = { schema_name ~ tok_scope ~ ident }
+
+key_type_name = {
+    kw_u8
+    | kw_i8
+    | kw_u16
+    | kw_i16
+    | kw_u32
+    | kw_i32
+    | kw_u64
+    | kw_i64
+    | kw_string
+    | kw_uuid
+}
+type_name = {
+    kw_bool
+    | kw_u8
+    | kw_i8
+    | kw_u16
+    | kw_i16
+    | kw_u32
+    | kw_i32
+    | kw_u64
+    | kw_i64
+    | kw_f32
+    | kw_f64
+    | kw_string
+    | kw_uuid
+    | kw_value
+    | vec_type
+    | kw_bytes
+    | map_type
+    | set_type
+    | external_type_name
+    | ident
+}
 
 file = _{
     SOI
