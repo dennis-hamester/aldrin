@@ -28,6 +28,6 @@ impl IoError {
 
 impl From<IoError> for Error {
     fn from(e: IoError) -> Self {
-        Error::Io(e)
+        Error::IoError(e)
     }
 }
