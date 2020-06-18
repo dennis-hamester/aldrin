@@ -1,5 +1,5 @@
 use super::{Ident, KeyTypeName, SchemaName};
-use crate::error::TypeNotFound;
+use crate::error::{ExternTypeNotFound, TypeNotFound};
 use crate::grammar::Rule;
 use crate::issues::Issues;
 use crate::validate::Validate;
@@ -125,6 +125,9 @@ impl TypeNameKind {
             TypeNameKind::Map(_, ty) => ty.validate(validate),
             TypeNameKind::Intern(ty) => {
                 TypeNotFound::validate(ty, validate);
+            }
+            TypeNameKind::Extern(schema, ty) => {
+                ExternTypeNotFound::validate(schema, ty, validate);
             }
             _ => {}
         }

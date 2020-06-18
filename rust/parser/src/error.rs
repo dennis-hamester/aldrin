@@ -1,6 +1,7 @@
 mod duplicate_definition;
 mod duplicate_struct_field;
 mod duplicate_struct_field_id;
+mod extern_type_not_found;
 mod import_not_found;
 mod invalid_const_value;
 mod invalid_schema_name;
@@ -12,6 +13,7 @@ mod type_not_found;
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
+pub use extern_type_not_found::ExternTypeNotFound;
 pub use import_not_found::ImportNotFound;
 pub use invalid_const_value::InvalidConstValue;
 pub use invalid_schema_name::InvalidSchemaName;
@@ -26,6 +28,7 @@ pub enum Error {
     DuplicateDefinition(DuplicateDefinition),
     DuplicateStructField(DuplicateStructField),
     DuplicateStructFieldId(DuplicateStructFieldId),
+    ExternTypeNotFound(ExternTypeNotFound),
     ImportNotFound(ImportNotFound),
     InvalidConstValue(InvalidConstValue),
     InvalidSchemaName(InvalidSchemaName),
@@ -41,6 +44,7 @@ impl Error {
             Error::DuplicateDefinition(e) => e.schema_name(),
             Error::DuplicateStructField(e) => e.schema_name(),
             Error::DuplicateStructFieldId(e) => e.schema_name(),
+            Error::ExternTypeNotFound(e) => e.schema_name(),
             Error::ImportNotFound(e) => e.schema_name(),
             Error::InvalidConstValue(e) => e.schema_name(),
             Error::InvalidSchemaName(e) => e.schema_name(),
