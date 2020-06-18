@@ -3,6 +3,7 @@ use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::issues::Issues;
 use crate::validate::Validate;
+use crate::warning::UnusedImport;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -28,6 +29,10 @@ impl ImportStmt {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         ImportNotFound::validate(self, validate);
+
+        if validate.is_main_schema() {
+            UnusedImport::validate(self, validate);
+        }
     }
 
     pub fn span(&self) -> Span {
