@@ -1,4 +1,4 @@
-use crate::ast::{ConstDef, ImportStmt, SchemaName, StructDef};
+use crate::ast::{ConstDef, EnumDef, ImportStmt, SchemaName, StructDef};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -66,6 +66,7 @@ impl Schema {
                 Rule::EOI => break,
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair, issues)),
                 Rule::struct_def => schema.defs.push(Definition::Struct(StructDef::parse(pair))),
+                Rule::enum_def => schema.defs.push(Definition::Enum(EnumDef::parse(pair))),
                 Rule::const_def => schema.defs.push(Definition::Const(ConstDef::parse(pair))),
                 _ => unreachable!(),
             }

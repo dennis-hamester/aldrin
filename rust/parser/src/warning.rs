@@ -1,4 +1,6 @@
 mod duplicate_import;
+mod non_camel_case_enum;
+mod non_camel_case_enum_variant;
 mod non_camel_case_struct;
 mod non_shouty_snake_case_const;
 mod non_snake_case_schema_name;
@@ -6,6 +8,8 @@ mod non_snake_case_struct_field;
 mod unused_import;
 
 pub use duplicate_import::DuplicateImport;
+pub use non_camel_case_enum::NonCamelCaseEnum;
+pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
 pub use non_camel_case_struct::NonCamelCaseStruct;
 pub use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
 pub use non_snake_case_schema_name::NonSnakeCaseSchemaName;
@@ -16,6 +20,8 @@ pub use unused_import::UnusedImport;
 #[non_exhaustive]
 pub enum Warning {
     DuplicateImport(DuplicateImport),
+    NonCamelCaseEnum(NonCamelCaseEnum),
+    NonCamelCaseEnumVariant(NonCamelCaseEnumVariant),
     NonCamelCaseStruct(NonCamelCaseStruct),
     NonShoutySnakeCaseConst(NonShoutySnakeCaseConst),
     NonSnakeCaseSchemaName(NonSnakeCaseSchemaName),
@@ -27,6 +33,8 @@ impl Warning {
     pub fn schema_name(&self) -> &str {
         match self {
             Warning::DuplicateImport(w) => w.schema_name(),
+            Warning::NonCamelCaseEnum(w) => w.schema_name(),
+            Warning::NonCamelCaseEnumVariant(w) => w.schema_name(),
             Warning::NonCamelCaseStruct(w) => w.schema_name(),
             Warning::NonShoutySnakeCaseConst(w) => w.schema_name(),
             Warning::NonSnakeCaseSchemaName(w) => w.schema_name(),

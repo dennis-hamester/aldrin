@@ -1,7 +1,8 @@
 use super::Warning;
 use crate::ast::ImportStmt;
 use crate::ast::{
-    InlineStruct, SchemaName, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    EnumDef, EnumVariant, EnumVariantType, InlineEnum, InlineStruct, SchemaName, StructDef,
+    StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::validate::Validate;
 use crate::{Definition, Schema};
@@ -36,8 +37,9 @@ impl UnusedImport {
 
     fn visit_def(def: &Definition, schema_name: &SchemaName) -> bool {
         match def {
+            Definition::Struct(d) => Self::visit_struct(d, schema_name),
+            Definition::Enum(d) => Self::visit_enum(d, schema_name),
             Definition::Const(_) => false,
-            Definition::Struct(s) => Self::visit_struct(s, schema_name),
         }
     }
 
@@ -63,10 +65,40 @@ impl UnusedImport {
         Self::visit_type_name_or_inline(field.field_type(), schema_name)
     }
 
+    fn visit_enum(enum_def: &EnumDef, schema_name: &SchemaName) -> bool {
+        Self::visit_enum_variants(enum_def.variants(), schema_name)
+    }
+
+    fn visit_inline_enum(inline_enum: &InlineEnum, schema_name: &SchemaName) -> bool {
+        Self::visit_enum_variants(inline_enum.variants(), schema_name)
+    }
+
+    fn visit_enum_variants(vars: &[EnumVariant], schema_name: &SchemaName) -> bool {
+        for var in vars {
+            if Self::visit_enum_variant(var, schema_name) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn visit_enum_variant(var: &EnumVariant, schema_name: &SchemaName) -> bool {
+        match var.variant_type() {
+            Some(var_type) => Self::visit_enum_variant_type(var_type, schema_name),
+            None => false,
+        }
+    }
+
+    fn visit_enum_variant_type(var_type: &EnumVariantType, schema_name: &SchemaName) -> bool {
+        Self::visit_type_name_or_inline(var_type.variant_type(), schema_name)
+    }
+
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {
         match ty {
             TypeNameOrInline::TypeName(ty) => Self::visit_type_name(ty, schema_name),
             TypeNameOrInline::Struct(s) => Self::visit_inline_struct(s, schema_name),
+            TypeNameOrInline::Enum(e) => Self::visit_inline_enum(e, schema_name),
         }
     }
 

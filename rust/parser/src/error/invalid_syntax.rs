@@ -60,9 +60,13 @@ pub enum Expected {
     Attribute,
     ConstDef,
     ConstValue,
+    EnumDef,
+    EnumVariant,
+    EnumVariantType,
     Eof,
     Ident,
     ImportStmt,
+    InlineEnum,
     InlineStruct,
     KeyTypeName,
     LitInt,
@@ -96,9 +100,13 @@ impl Expected {
             Rule::attribute | Rule::tok_hash => set.insert(Expected::Attribute),
             Rule::const_def | Rule::kw_const => set.insert(Expected::ConstDef),
             Rule::const_value => set.insert(Expected::ConstValue),
+            Rule::enum_inline => set.insert(Expected::InlineEnum),
+            Rule::enum_variant => set.insert(Expected::EnumVariant),
+            Rule::enum_variant_type => set.insert(Expected::EnumVariantType),
             Rule::ident => set.insert(Expected::Ident),
             Rule::import_stmt | Rule::kw_import => set.insert(Expected::ImportStmt),
             Rule::key_type_name => set.insert(Expected::KeyTypeName),
+            Rule::kw_enum | Rule::enum_def => set.insert(Expected::EnumDef),
             Rule::kw_struct | Rule::struct_def => set.insert(Expected::StructDef),
             Rule::lit_int => set.insert(Expected::LitInt),
             Rule::lit_pos_int => set.insert(Expected::LitPosInt),
@@ -124,7 +132,8 @@ impl Expected {
             Rule::type_name => set.insert(Expected::TypeName),
             Rule::type_name_or_inline => {
                 set.insert(Expected::TypeName);
-                set.insert(Expected::InlineStruct)
+                set.insert(Expected::InlineStruct);
+                set.insert(Expected::InlineEnum)
             }
 
             Rule::COMMENT
@@ -150,6 +159,7 @@ impl Expected {
             | Rule::kw_i64
             | Rule::kw_i8
             | Rule::kw_map
+            | Rule::kw_optional
             | Rule::kw_required
             | Rule::kw_set
             | Rule::kw_string

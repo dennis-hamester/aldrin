@@ -35,6 +35,7 @@ tok_at = @{ "@" }
 
 kw_import = @{ "import" ~ ws }
 kw_struct = @{ "struct" ~ ws }
+kw_enum = @{ "enum" ~ ws }
 kw_const = @{ "const" ~ ws }
 kw_u8 = @{ "u8" }
 kw_i8 = @{ "i8" }
@@ -55,6 +56,7 @@ kw_bytes = @{ "bytes" }
 kw_map = @{ "map" }
 kw_set = @{ "set" }
 kw_required = @{ "required" }
+kw_optional = @{ "optional" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
@@ -99,12 +101,12 @@ type_name = {
     | ident
 }
 
-type_name_or_inline = { (type_name ~ tok_term) | struct_inline }
+type_name_or_inline = { (type_name ~ tok_term) | struct_inline | enum_inline }
 
 file = _{
     SOI
     ~ import_stmt*
-    ~ (struct_def | const_def)*
+    ~ (struct_def | enum_def | const_def)*
     ~ EOI
 }
 
@@ -119,6 +121,11 @@ import_stmt = { kw_import ~ schema_name ~ tok_term }
 struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
 struct_inline = { kw_struct ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
 struct_field = { kw_required? ~ ident ~ tok_at ~ lit_pos_int ~ tok_eq ~ type_name_or_inline }
+
+enum_def = { attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant+ ~ tok_cur_close }
+enum_inline = { kw_enum ~ tok_cur_open ~ enum_variant+ ~ tok_cur_close }
+enum_variant = { ident ~ tok_at ~ lit_pos_int ~ ((tok_eq ~ enum_variant_type) | tok_term) }
+enum_variant_type = { kw_optional? ~ type_name_or_inline }
 
 const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
 const_value = {

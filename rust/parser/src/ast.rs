@@ -1,5 +1,6 @@
 mod attribute;
 mod const_def;
+mod enum_def;
 mod ident;
 mod import_stmt;
 mod key_type_name;
@@ -13,6 +14,7 @@ mod type_name_or_inline;
 
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
+pub use enum_def::{EnumDef, EnumVariant, EnumVariantType, InlineEnum};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;
 pub use key_type_name::{KeyTypeName, KeyTypeNameKind};

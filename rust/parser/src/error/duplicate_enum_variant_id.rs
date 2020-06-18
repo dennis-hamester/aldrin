@@ -1,30 +1,30 @@
 use super::Error;
-use crate::ast::Ident;
+use crate::ast::{EnumVariant, LitPosInt};
 use crate::validate::Validate;
-use crate::{Schema, Span};
+use crate::Span;
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
-pub struct DuplicateDefinition {
+pub struct DuplicateEnumVariantId {
     schema_name: String,
-    duplicate: Ident,
+    duplicate: LitPosInt,
     original_span: Span,
 }
 
-impl DuplicateDefinition {
-    pub(crate) fn validate(schema: &Schema, validate: &mut Validate) {
+impl DuplicateEnumVariantId {
+    pub(crate) fn validate(vars: &[EnumVariant], validate: &mut Validate) {
         let mut idents = HashMap::new();
 
-        for def in schema.definitions() {
-            match idents.entry(def.name().value()) {
+        for var in vars {
+            match idents.entry(var.id().value()) {
                 Entry::Vacant(e) => {
-                    e.insert(def.name());
+                    e.insert(var.id());
                 }
 
                 Entry::Occupied(e) => {
-                    validate.add_error(DuplicateDefinition {
+                    validate.add_error(DuplicateEnumVariantId {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: def.name().clone(),
+                        duplicate: var.id().clone(),
                         original_span: e.get().span(),
                     });
                 }
@@ -36,7 +36,7 @@ impl DuplicateDefinition {
         &self.schema_name
     }
 
-    pub fn duplicate(&self) -> &Ident {
+    pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
@@ -45,8 +45,8 @@ impl DuplicateDefinition {
     }
 }
 
-impl From<DuplicateDefinition> for Error {
-    fn from(e: DuplicateDefinition) -> Self {
-        Error::DuplicateDefinition(e)
+impl From<DuplicateEnumVariantId> for Error {
+    fn from(e: DuplicateEnumVariantId) -> Self {
+        Error::DuplicateEnumVariantId(e)
     }
 }
