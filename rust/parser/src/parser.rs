@@ -42,7 +42,7 @@ impl Parser {
         let mut imports = parsed
             .main_schema()
             .imports()
-            .into_iter()
+            .iter()
             .map(|i| i.schema_name().value().to_owned())
             .collect::<Vec<_>>();
         while let Some(import) = imports.pop() {
@@ -60,7 +60,7 @@ impl Parser {
             imports.extend(
                 schema
                     .imports()
-                    .into_iter()
+                    .iter()
                     .map(|i| i.schema_name().value().to_owned()),
             );
             entry.insert(schema);
