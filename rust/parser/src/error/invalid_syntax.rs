@@ -4,13 +4,13 @@ use crate::Position;
 use std::collections::HashSet;
 
 #[derive(Debug)]
-pub struct ParserError {
+pub struct InvalidSyntax {
     schema_name: String,
     pos: Position,
     expected: HashSet<Expected>,
 }
 
-impl ParserError {
+impl InvalidSyntax {
     pub(crate) fn new<S>(schema_name: S, err: pest::error::Error<Rule>) -> Self
     where
         S: Into<String>,
@@ -29,7 +29,7 @@ impl ParserError {
             Expected::add(rule, &mut expected);
         }
 
-        ParserError {
+        InvalidSyntax {
             schema_name: schema_name.into(),
             pos,
             expected,
@@ -49,9 +49,9 @@ impl ParserError {
     }
 }
 
-impl From<ParserError> for Error {
-    fn from(e: ParserError) -> Self {
-        Error::Parser(e)
+impl From<InvalidSyntax> for Error {
+    fn from(e: InvalidSyntax) -> Self {
+        Error::InvalidSyntax(e)
     }
 }
 

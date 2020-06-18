@@ -1,5 +1,5 @@
 use crate::ast::{ConstDef, ImportStmt, SchemaName, StructDef};
-use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError};
+use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
@@ -56,7 +56,7 @@ impl Schema {
             Ok(pairs) => pairs,
             Err(e) => {
                 schema.source = Some(source);
-                issues.add_error(ParserError::new(&schema.name, e));
+                issues.add_error(InvalidSyntax::new(&schema.name, e));
                 return schema;
             }
         };
