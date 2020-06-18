@@ -1,10 +1,10 @@
-use crate::ast::{ConstDef, Ident, ImportStmt, SchemaName, StructDef};
+use crate::ast::{ConstDef, ImportStmt, SchemaName, StructDef};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, IoError, ParserError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::warning::DuplicateImport;
-use crate::Span;
+use crate::Definition;
 use pest::Parser;
 use std::fs::File;
 use std::io::Read;
@@ -149,34 +149,5 @@ impl Schema {
 
     pub fn definitions(&self) -> &[Definition] {
         &self.defs
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Definition {
-    Const(ConstDef),
-    Struct(StructDef),
-}
-
-impl Definition {
-    fn validate(&self, validate: &mut Validate) {
-        match self {
-            Definition::Const(d) => d.validate(validate),
-            Definition::Struct(d) => d.validate(validate),
-        }
-    }
-
-    pub fn span(&self) -> Span {
-        match self {
-            Definition::Const(d) => d.span(),
-            Definition::Struct(d) => d.span(),
-        }
-    }
-
-    pub fn name(&self) -> &Ident {
-        match self {
-            Definition::Const(d) => d.name(),
-            Definition::Struct(d) => d.name(),
-        }
     }
 }
