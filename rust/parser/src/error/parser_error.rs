@@ -23,7 +23,11 @@ impl ParserError {
             ErrorVariant::ParsingError { positives, .. } => positives,
             ErrorVariant::CustomError { .. } => unreachable!(),
         };
-        let expected = positives.into_iter().map(Expected::from_pest).collect();
+
+        let mut expected = HashSet::with_capacity(positives.len());
+        for rule in positives {
+            Expected::add(rule, &mut expected);
+        }
 
         ParserError {
             schema_name: schema_name.into(),
@@ -80,32 +84,32 @@ pub enum Expected {
 }
 
 impl Expected {
-    pub(crate) fn from_pest(rule: Rule) -> Self {
+    fn add(rule: Rule, set: &mut HashSet<Self>) {
         match rule {
-            Rule::EOI => Expected::Eof,
-            Rule::attribute | Rule::tok_hash => Expected::Attribute,
-            Rule::const_def | Rule::kw_const => Expected::ConstDef,
-            Rule::const_value => Expected::ConstValue,
-            Rule::ident => Expected::Ident,
-            Rule::import_stmt | Rule::kw_import => Expected::ImportStmt,
-            Rule::key_type_name => Expected::KeyTypeName,
-            Rule::lit_int => Expected::LitInt,
-            Rule::lit_pos_int => Expected::LitPosInt,
-            Rule::lit_string => Expected::LitString,
-            Rule::lit_uuid => Expected::LitUuid,
-            Rule::schema_name => Expected::SchemaName,
-            Rule::tok_ang_close => Expected::TokenAngClose,
-            Rule::tok_ang_open => Expected::TokenAngOpen,
-            Rule::tok_arrow => Expected::TokenArrow,
-            Rule::tok_comma => Expected::TokenComma,
-            Rule::tok_eq => Expected::TokenEquals,
-            Rule::tok_par_close => Expected::TokenParClose,
-            Rule::tok_par_open => Expected::TokenParOpen,
-            Rule::tok_scope => Expected::TokenScope,
-            Rule::tok_squ_close => Expected::TokenSquareClose,
-            Rule::tok_squ_open => Expected::TokenSquareOpen,
-            Rule::tok_term => Expected::TokenTerm,
-            Rule::type_name => Expected::TypeName,
+            Rule::EOI => set.insert(Expected::Eof),
+            Rule::attribute | Rule::tok_hash => set.insert(Expected::Attribute),
+            Rule::const_def | Rule::kw_const => set.insert(Expected::ConstDef),
+            Rule::const_value => set.insert(Expected::ConstValue),
+            Rule::ident => set.insert(Expected::Ident),
+            Rule::import_stmt | Rule::kw_import => set.insert(Expected::ImportStmt),
+            Rule::key_type_name => set.insert(Expected::KeyTypeName),
+            Rule::lit_int => set.insert(Expected::LitInt),
+            Rule::lit_pos_int => set.insert(Expected::LitPosInt),
+            Rule::lit_string => set.insert(Expected::LitString),
+            Rule::lit_uuid => set.insert(Expected::LitUuid),
+            Rule::schema_name => set.insert(Expected::SchemaName),
+            Rule::tok_ang_close => set.insert(Expected::TokenAngClose),
+            Rule::tok_ang_open => set.insert(Expected::TokenAngOpen),
+            Rule::tok_arrow => set.insert(Expected::TokenArrow),
+            Rule::tok_comma => set.insert(Expected::TokenComma),
+            Rule::tok_eq => set.insert(Expected::TokenEquals),
+            Rule::tok_par_close => set.insert(Expected::TokenParClose),
+            Rule::tok_par_open => set.insert(Expected::TokenParOpen),
+            Rule::tok_scope => set.insert(Expected::TokenScope),
+            Rule::tok_squ_close => set.insert(Expected::TokenSquareClose),
+            Rule::tok_squ_open => set.insert(Expected::TokenSquareOpen),
+            Rule::tok_term => set.insert(Expected::TokenTerm),
+            Rule::type_name => set.insert(Expected::TypeName),
 
             Rule::COMMENT
             | Rule::WHITESPACE
@@ -144,7 +148,7 @@ impl Expected {
             | Rule::map_type
             | Rule::set_type
             | Rule::vec_type
-            | Rule::ws => unreachable!(),
-        }
+            | Rule::ws => false,
+        };
     }
 }
