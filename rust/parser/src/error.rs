@@ -7,6 +7,7 @@ mod invalid_const_value;
 mod invalid_schema_name;
 mod invalid_struct_field_id;
 mod io_error;
+mod missing_import;
 mod parser_error;
 mod type_not_found;
 
@@ -19,6 +20,7 @@ pub use invalid_const_value::InvalidConstValue;
 pub use invalid_schema_name::InvalidSchemaName;
 pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use io_error::IoError;
+pub use missing_import::MissingImport;
 pub use parser_error::{Expected, ParserError};
 pub use type_not_found::TypeNotFound;
 
@@ -34,6 +36,7 @@ pub enum Error {
     InvalidSchemaName(InvalidSchemaName),
     InvalidStructFieldId(InvalidStructFieldId),
     Io(IoError),
+    MissingImport(MissingImport),
     Parser(ParserError),
     TypeNotFound(TypeNotFound),
 }
@@ -50,6 +53,7 @@ impl Error {
             Error::InvalidSchemaName(e) => e.schema_name(),
             Error::InvalidStructFieldId(e) => e.schema_name(),
             Error::Io(e) => e.schema_name(),
+            Error::MissingImport(e) => e.schema_name(),
             Error::Parser(e) => e.schema_name(),
             Error::TypeNotFound(e) => e.schema_name(),
         }

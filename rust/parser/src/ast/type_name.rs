@@ -1,5 +1,5 @@
 use super::{Ident, KeyTypeName, SchemaName};
-use crate::error::{ExternTypeNotFound, TypeNotFound};
+use crate::error::{ExternTypeNotFound, MissingImport, TypeNotFound};
 use crate::grammar::Rule;
 use crate::issues::Issues;
 use crate::validate::Validate;
@@ -127,6 +127,7 @@ impl TypeNameKind {
                 TypeNotFound::validate(ty, validate);
             }
             TypeNameKind::Extern(schema, ty) => {
+                MissingImport::validate(schema, validate);
                 ExternTypeNotFound::validate(schema, ty, validate);
             }
             _ => {}
