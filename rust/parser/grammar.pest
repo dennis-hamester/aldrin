@@ -3,6 +3,7 @@ COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 ws = _{ WHITESPACE | COMMENT }
 
 lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
+lit_pos_int = @{ "0" | lit_pos_nonzero_int }
 lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
 
 lit_string_char = @{ "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
