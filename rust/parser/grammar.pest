@@ -99,7 +99,7 @@ type_name = {
     | ident
 }
 
-type_name_or_inline = { type_name ~ tok_term }
+type_name_or_inline = { (type_name ~ tok_term) | struct_inline }
 
 file = _{
     SOI
@@ -117,6 +117,7 @@ attribute = {
 import_stmt = { kw_import ~ schema_name ~ tok_term }
 
 struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
+struct_inline = { kw_struct ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
 struct_field = { kw_required? ~ ident ~ tok_at ~ lit_pos_int ~ tok_eq ~ type_name_or_inline }
 
 const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }

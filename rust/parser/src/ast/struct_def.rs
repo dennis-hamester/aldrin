@@ -84,6 +84,52 @@ impl StructDef {
 }
 
 #[derive(Debug, Clone)]
+pub struct InlineStruct {
+    span: Span,
+    fields: Vec<StructField>,
+}
+
+impl InlineStruct {
+    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::struct_inline);
+
+        let span = Span::from_pair(&pair);
+
+        let mut pairs = pair.into_inner();
+        pairs.next().unwrap(); // Skip keyword.
+        pairs.next().unwrap(); // Skip {.
+
+        let mut fields = Vec::new();
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::struct_field => fields.push(StructField::parse(pair)),
+                Rule::tok_cur_close => break,
+                _ => unreachable!(),
+            }
+        }
+
+        InlineStruct { span, fields }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        DuplicateStructField::validate(&self.fields, validate);
+        DuplicateStructFieldId::validate(&self.fields, validate);
+
+        for field in &self.fields {
+            field.validate(validate);
+        }
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn fields(&self) -> &[StructField] {
+        &self.fields
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct StructField {
     span: Span,
     req: bool,

@@ -63,6 +63,7 @@ pub enum Expected {
     Eof,
     Ident,
     ImportStmt,
+    InlineStruct,
     KeyTypeName,
     LitInt,
     LitPosInt,
@@ -105,6 +106,7 @@ impl Expected {
             Rule::lit_uuid => set.insert(Expected::LitUuid),
             Rule::schema_name => set.insert(Expected::SchemaName),
             Rule::struct_field => set.insert(Expected::StructField),
+            Rule::struct_inline => set.insert(Expected::InlineStruct),
             Rule::tok_ang_close => set.insert(Expected::TokenAngClose),
             Rule::tok_ang_open => set.insert(Expected::TokenAngOpen),
             Rule::tok_arrow => set.insert(Expected::TokenArrow),
@@ -120,7 +122,10 @@ impl Expected {
             Rule::tok_squ_open => set.insert(Expected::TokenSquareOpen),
             Rule::tok_term => set.insert(Expected::TokenTerm),
             Rule::type_name => set.insert(Expected::TypeName),
-            Rule::type_name_or_inline => set.insert(Expected::TypeName),
+            Rule::type_name_or_inline => {
+                set.insert(Expected::TypeName);
+                set.insert(Expected::InlineStruct)
+            }
 
             Rule::COMMENT
             | Rule::WHITESPACE

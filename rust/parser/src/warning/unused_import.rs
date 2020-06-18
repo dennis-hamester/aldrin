@@ -1,6 +1,8 @@
 use super::Warning;
 use crate::ast::ImportStmt;
-use crate::ast::{SchemaName, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline};
+use crate::ast::{
+    InlineStruct, SchemaName, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+};
 use crate::validate::Validate;
 use crate::{Definition, Schema};
 
@@ -40,7 +42,15 @@ impl UnusedImport {
     }
 
     fn visit_struct(struct_def: &StructDef, schema_name: &SchemaName) -> bool {
-        for field in struct_def.fields() {
+        Self::visit_struct_fields(struct_def.fields(), schema_name)
+    }
+
+    fn visit_inline_struct(inline_struct: &InlineStruct, schema_name: &SchemaName) -> bool {
+        Self::visit_struct_fields(inline_struct.fields(), schema_name)
+    }
+
+    fn visit_struct_fields(fields: &[StructField], schema_name: &SchemaName) -> bool {
+        for field in fields {
             if Self::visit_struct_field(field, schema_name) {
                 return true;
             }
@@ -56,6 +66,7 @@ impl UnusedImport {
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {
         match ty {
             TypeNameOrInline::TypeName(ty) => Self::visit_type_name(ty, schema_name),
+            TypeNameOrInline::Struct(s) => Self::visit_inline_struct(s, schema_name),
         }
     }
 
