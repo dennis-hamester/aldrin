@@ -1,5 +1,5 @@
 use super::CommonReadArgs;
-use aldrin_codegen::{Generator, Options};
+use aldrin_parser::Parser;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -14,14 +14,16 @@ pub struct CheckArgs {
 }
 
 pub fn run(args: CheckArgs) -> Result<(), ()> {
-    let mut options = Options::new();
-    options.include_dirs = args.common_read_args.include;
+    let mut parser = Parser::new();
 
-    match Generator::from_path(args.file, options) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            eprintln!("{}", e);
-            Err(())
-        }
+    for include in args.common_read_args.include {
+        parser.add_schema_path(include);
+    }
+
+    let parsed = parser.parse(args.file);
+    if parsed.errors().is_empty() {
+        Ok(())
+    } else {
+        Err(())
     }
 }
