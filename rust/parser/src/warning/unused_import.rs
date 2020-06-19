@@ -1,8 +1,9 @@
 use super::Warning;
 use crate::ast::ImportStmt;
 use crate::ast::{
-    EnumDef, EnumVariant, EnumVariantType, InlineEnum, InlineStruct, SchemaName, ServiceDef,
-    StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    EnumDef, EnumVariant, EnumVariantType, FunctionDef, FunctionPart, InlineEnum, InlineStruct,
+    SchemaName, ServiceDef, ServiceItem, StructDef, StructField, TypeName, TypeNameKind,
+    TypeNameOrInline,
 };
 use crate::validate::Validate;
 use crate::{Definition, Schema};
@@ -96,7 +97,45 @@ impl UnusedImport {
     }
 
     fn visit_service(service_def: &ServiceDef, schema_name: &SchemaName) -> bool {
+        for item in service_def.items() {
+            if Self::visit_service_item(item, schema_name) {
+                return true;
+            }
+        }
+
         false
+    }
+
+    fn visit_service_item(item: &ServiceItem, schema_name: &SchemaName) -> bool {
+        match item {
+            ServiceItem::Function(func) => Self::visit_function(func, schema_name),
+        }
+    }
+
+    fn visit_function(func: &FunctionDef, schema_name: &SchemaName) -> bool {
+        if let Some(args) = func.args() {
+            if Self::visit_function_part(args, schema_name) {
+                return true;
+            }
+        }
+
+        if let Some(ok) = func.ok() {
+            if Self::visit_function_part(ok, schema_name) {
+                return true;
+            }
+        }
+
+        if let Some(err) = func.err() {
+            if Self::visit_function_part(err, schema_name) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn visit_function_part(part: &FunctionPart, schema_name: &SchemaName) -> bool {
+        Self::visit_type_name_or_inline(part.part_type(), schema_name)
     }
 
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {

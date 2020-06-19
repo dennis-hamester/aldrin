@@ -162,15 +162,24 @@ impl Expected {
             | Rule::const_uuid
             | Rule::external_type_name
             | Rule::file
+            | Rule::fn_args
+            | Rule::fn_body
+            | Rule::fn_def
+            | Rule::fn_err
+            | Rule::fn_ok
+            | Rule::kw_args
             | Rule::kw_bool
             | Rule::kw_bytes
+            | Rule::kw_err
             | Rule::kw_f32
             | Rule::kw_f64
+            | Rule::kw_fn
             | Rule::kw_i16
             | Rule::kw_i32
             | Rule::kw_i64
             | Rule::kw_i8
             | Rule::kw_map
+            | Rule::kw_ok
             | Rule::kw_optional
             | Rule::kw_required
             | Rule::kw_set
@@ -185,6 +194,7 @@ impl Expected {
             | Rule::lit_pos_nonzero_int
             | Rule::lit_string_char
             | Rule::map_type
+            | Rule::service_item
             | Rule::set_type
             | Rule::vec_type
             | Rule::ws => false,

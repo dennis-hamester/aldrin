@@ -23,7 +23,7 @@ pub use lit_int::{LitInt, LitPosInt};
 pub use lit_string::LitString;
 pub use lit_uuid::LitUuid;
 pub use schema_name::SchemaName;
-pub use service_def::ServiceDef;
+pub use service_def::{FunctionDef, FunctionPart, ServiceDef, ServiceItem};
 pub use struct_def::{InlineStruct, StructDef, StructField};
 pub use type_name::{TypeName, TypeNameKind};
 pub use type_name_or_inline::TypeNameOrInline;

@@ -1,30 +1,35 @@
 use super::Error;
-use crate::ast::{EnumVariant, LitPosInt};
+use crate::ast::{LitPosInt, ServiceDef, ServiceItem};
 use crate::validate::Validate;
 use crate::Span;
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
-pub struct DuplicateEnumVariantId {
+pub struct DuplicateFunctionId {
     schema_name: String,
     duplicate: LitPosInt,
     original_span: Span,
 }
 
-impl DuplicateEnumVariantId {
-    pub(crate) fn validate(vars: &[EnumVariant], validate: &mut Validate) {
+impl DuplicateFunctionId {
+    pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
         let mut ids = HashMap::new();
 
-        for var in vars {
-            match ids.entry(var.id().value()) {
+        for item in service.items() {
+            let func = match item {
+                ServiceItem::Function(func) => func,
+                _ => continue,
+            };
+
+            match ids.entry(func.id().value()) {
                 Entry::Vacant(e) => {
-                    e.insert(var.id());
+                    e.insert(func.id());
                 }
 
                 Entry::Occupied(e) => {
-                    validate.add_error(DuplicateEnumVariantId {
+                    validate.add_error(DuplicateFunctionId {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: var.id().clone(),
+                        duplicate: func.id().clone(),
                         original_span: e.get().span(),
                     });
                 }
@@ -45,8 +50,8 @@ impl DuplicateEnumVariantId {
     }
 }
 
-impl From<DuplicateEnumVariantId> for Error {
-    fn from(e: DuplicateEnumVariantId) -> Self {
-        Error::DuplicateEnumVariantId(e)
+impl From<DuplicateFunctionId> for Error {
+    fn from(e: DuplicateFunctionId) -> Self {
+        Error::DuplicateFunctionId(e)
     }
 }

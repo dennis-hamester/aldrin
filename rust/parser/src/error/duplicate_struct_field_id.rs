@@ -13,10 +13,10 @@ pub struct DuplicateStructFieldId {
 
 impl DuplicateStructFieldId {
     pub(crate) fn validate(fields: &[StructField], validate: &mut Validate) {
-        let mut idents = HashMap::new();
+        let mut ids = HashMap::new();
 
         for field in fields {
-            match idents.entry(field.id().value()) {
+            match ids.entry(field.id().value()) {
                 Entry::Vacant(e) => {
                     e.insert(field.id());
                 }

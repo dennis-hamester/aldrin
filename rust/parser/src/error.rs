@@ -1,6 +1,8 @@
 mod duplicate_definition;
 mod duplicate_enum_variant;
 mod duplicate_enum_variant_id;
+mod duplicate_function;
+mod duplicate_function_id;
 mod duplicate_struct_field;
 mod duplicate_struct_field_id;
 mod extern_type_not_found;
@@ -19,6 +21,8 @@ mod type_not_found;
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_enum_variant::DuplicateEnumVariant;
 pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
+pub use duplicate_function::DuplicateFunction;
+pub use duplicate_function_id::DuplicateFunctionId;
 pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
 pub use extern_type_not_found::ExternTypeNotFound;
@@ -40,6 +44,8 @@ pub enum Error {
     DuplicateDefinition(DuplicateDefinition),
     DuplicateEnumVariant(DuplicateEnumVariant),
     DuplicateEnumVariantId(DuplicateEnumVariantId),
+    DuplicateFunction(DuplicateFunction),
+    DuplicateFunctionId(DuplicateFunctionId),
     DuplicateStructField(DuplicateStructField),
     DuplicateStructFieldId(DuplicateStructFieldId),
     ExternTypeNotFound(ExternTypeNotFound),
@@ -62,6 +68,8 @@ impl Error {
             Error::DuplicateDefinition(e) => e.schema_name(),
             Error::DuplicateEnumVariant(e) => e.schema_name(),
             Error::DuplicateEnumVariantId(e) => e.schema_name(),
+            Error::DuplicateFunction(e) => e.schema_name(),
+            Error::DuplicateFunctionId(e) => e.schema_name(),
             Error::DuplicateStructField(e) => e.schema_name(),
             Error::DuplicateStructFieldId(e) => e.schema_name(),
             Error::ExternTypeNotFound(e) => e.schema_name(),
