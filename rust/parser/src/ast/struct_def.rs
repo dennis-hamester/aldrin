@@ -61,6 +61,7 @@ impl StructDef {
             NonCamelCaseStruct::validate(self, validate);
         }
 
+        self.name.validate(validate);
         for field in &self.fields {
             field.validate(validate);
         }
@@ -188,6 +189,7 @@ impl StructField {
             NonSnakeCaseStructField::validate(self, validate);
         }
 
+        self.name.validate(validate);
         self.field_type.validate(validate);
     }
 

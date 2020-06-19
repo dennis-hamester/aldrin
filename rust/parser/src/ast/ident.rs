@@ -1,4 +1,6 @@
+use crate::error::KeywordAsIdent;
 use crate::grammar::Rule;
+use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -15,6 +17,10 @@ impl Ident {
             span: Span::from_pair(&pair),
             value: pair.as_str().to_owned(),
         }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        KeywordAsIdent::validate(self, validate);
     }
 
     pub fn span(&self) -> Span {

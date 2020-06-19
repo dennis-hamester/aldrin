@@ -61,6 +61,7 @@ impl EnumDef {
             NonCamelCaseEnum::validate(self, validate);
         }
 
+        self.name.validate(validate);
         for var in &self.vars {
             var.validate(validate);
         }
@@ -179,6 +180,7 @@ impl EnumVariant {
             NonCamelCaseEnumVariant::validate(self, validate);
         }
 
+        self.name.validate(validate);
         if let Some(ref var_type) = self.var_type {
             var_type.validate(validate);
         }

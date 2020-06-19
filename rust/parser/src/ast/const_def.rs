@@ -44,6 +44,7 @@ impl ConstDef {
             NonShoutySnakeCaseConst::validate(self, validate);
         }
 
+        self.name.validate(validate);
         self.value.validate(validate);
     }
 

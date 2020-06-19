@@ -16,6 +16,7 @@ mod invalid_service_version;
 mod invalid_struct_field_id;
 mod invalid_syntax;
 mod io_error;
+mod keyword_as_ident;
 mod missing_import;
 mod type_not_found;
 
@@ -37,6 +38,7 @@ pub use invalid_service_version::InvalidServiceVersion;
 pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use invalid_syntax::{Expected, InvalidSyntax};
 pub use io_error::IoError;
+pub use keyword_as_ident::KeywordAsIdent;
 pub use missing_import::MissingImport;
 pub use type_not_found::TypeNotFound;
 
@@ -61,6 +63,7 @@ pub enum Error {
     InvalidStructFieldId(InvalidStructFieldId),
     InvalidSyntax(InvalidSyntax),
     IoError(IoError),
+    KeywordAsIdent(KeywordAsIdent),
     MissingImport(MissingImport),
     TypeNotFound(TypeNotFound),
 }
@@ -71,9 +74,9 @@ impl Error {
             Error::DuplicateDefinition(e) => e.schema_name(),
             Error::DuplicateEnumVariant(e) => e.schema_name(),
             Error::DuplicateEnumVariantId(e) => e.schema_name(),
-            Error::DuplicateServiceItem(e) => e.schema_name(),
             Error::DuplicateEventId(e) => e.schema_name(),
             Error::DuplicateFunctionId(e) => e.schema_name(),
+            Error::DuplicateServiceItem(e) => e.schema_name(),
             Error::DuplicateStructField(e) => e.schema_name(),
             Error::DuplicateStructFieldId(e) => e.schema_name(),
             Error::ExternTypeNotFound(e) => e.schema_name(),
@@ -86,6 +89,7 @@ impl Error {
             Error::InvalidStructFieldId(e) => e.schema_name(),
             Error::InvalidSyntax(e) => e.schema_name(),
             Error::IoError(e) => e.schema_name(),
+            Error::KeywordAsIdent(e) => e.schema_name(),
             Error::MissingImport(e) => e.schema_name(),
             Error::TypeNotFound(e) => e.schema_name(),
         }

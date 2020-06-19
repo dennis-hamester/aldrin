@@ -85,6 +85,7 @@ impl ServiceDef {
             NonCamelCaseService::validate(self, validate);
         }
 
+        self.name.validate(validate);
         for item in &self.items {
             item.validate(validate);
         }
@@ -207,6 +208,8 @@ impl FunctionDef {
         if validate.is_main_schema() {
             NonSnakeCaseFunction::validate(self, validate);
         }
+
+        self.name.validate(validate);
 
         if let Some(ref args) = self.args {
             args.validate(validate);
@@ -353,6 +356,7 @@ impl EventDef {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        self.name.validate(validate);
         if let Some(ref event_type) = self.event_type {
             event_type.validate(validate);
         }
