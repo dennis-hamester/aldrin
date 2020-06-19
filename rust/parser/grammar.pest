@@ -38,6 +38,7 @@ kw_struct = @{ "struct" ~ ws }
 kw_enum = @{ "enum" ~ ws }
 kw_service = @{ "service" ~ ws }
 kw_fn = @{ "fn" ~ ws }
+kw_event = @{ "event" ~ ws }
 kw_const = @{ "const" ~ ws }
 kw_u8 = @{ "u8" }
 kw_i8 = @{ "i8" }
@@ -139,13 +140,16 @@ service_def = {
 }
 service_uuid = { kw_uuid ~ tok_eq ~ lit_uuid ~ tok_term }
 service_version = { kw_version ~ tok_eq ~ lit_pos_int ~ tok_term }
-service_item = { fn_def }
+service_item = { fn_def | event_def }
 
 fn_def = { kw_fn ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_cur_open ~ fn_body ~ tok_cur_close) | tok_term) }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
 fn_args = { kw_args ~ tok_eq ~ kw_optional? ~ type_name_or_inline }
 fn_ok = { kw_ok ~ tok_eq ~ kw_optional? ~ type_name_or_inline }
 fn_err = { kw_err ~ tok_eq ~ kw_optional? ~ type_name_or_inline }
+
+event_def = { kw_event ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_eq ~ event_type) | tok_term) }
+event_type = { kw_optional? ~ type_name_or_inline }
 
 const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
 const_value = {

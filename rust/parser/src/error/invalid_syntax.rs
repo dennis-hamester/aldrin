@@ -160,6 +160,8 @@ impl Expected {
             | Rule::const_u64
             | Rule::const_u8
             | Rule::const_uuid
+            | Rule::event_def
+            | Rule::event_type
             | Rule::external_type_name
             | Rule::file
             | Rule::fn_args
@@ -171,6 +173,7 @@ impl Expected {
             | Rule::kw_bool
             | Rule::kw_bytes
             | Rule::kw_err
+            | Rule::kw_event
             | Rule::kw_f32
             | Rule::kw_f64
             | Rule::kw_fn

@@ -1,9 +1,9 @@
 use super::Warning;
 use crate::ast::ImportStmt;
 use crate::ast::{
-    EnumDef, EnumVariant, EnumVariantType, FunctionDef, FunctionPart, InlineEnum, InlineStruct,
-    SchemaName, ServiceDef, ServiceItem, StructDef, StructField, TypeName, TypeNameKind,
-    TypeNameOrInline,
+    EnumDef, EnumVariant, EnumVariantType, EventDef, EventType, FunctionDef, FunctionPart,
+    InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef, StructField,
+    TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::validate::Validate;
 use crate::{Definition, Schema};
@@ -109,6 +109,7 @@ impl UnusedImport {
     fn visit_service_item(item: &ServiceItem, schema_name: &SchemaName) -> bool {
         match item {
             ServiceItem::Function(func) => Self::visit_function(func, schema_name),
+            ServiceItem::Event(ev) => Self::visit_event(ev, schema_name),
         }
     }
 
@@ -136,6 +137,17 @@ impl UnusedImport {
 
     fn visit_function_part(part: &FunctionPart, schema_name: &SchemaName) -> bool {
         Self::visit_type_name_or_inline(part.part_type(), schema_name)
+    }
+
+    fn visit_event(ev: &EventDef, schema_name: &SchemaName) -> bool {
+        match ev.event_type() {
+            Some(event_type) => Self::visit_event_type(event_type, schema_name),
+            None => false,
+        }
+    }
+
+    fn visit_event_type(event_type: &EventType, schema_name: &SchemaName) -> bool {
+        Self::visit_type_name_or_inline(event_type.event_type(), schema_name)
     }
 
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {

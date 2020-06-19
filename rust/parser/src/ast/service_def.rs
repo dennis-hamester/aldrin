@@ -1,6 +1,7 @@
 use super::{Ident, LitPosInt, LitUuid, TypeNameOrInline};
 use crate::error::{
-    DuplicateFunction, DuplicateFunctionId, InvalidServiceUuid, InvalidServiceVersion,
+    DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidServiceUuid,
+    InvalidServiceVersion,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -76,8 +77,9 @@ impl ServiceDef {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         InvalidServiceUuid::validate(self, validate);
         InvalidServiceVersion::validate(self, validate);
-        DuplicateFunction::validate(self, validate);
+        DuplicateServiceItem::validate(self, validate);
         DuplicateFunctionId::validate(self, validate);
+        DuplicateEventId::validate(self, validate);
 
         if validate.is_main_schema() {
             NonCamelCaseService::validate(self, validate);
@@ -112,6 +114,7 @@ impl ServiceDef {
 #[derive(Debug, Clone)]
 pub enum ServiceItem {
     Function(FunctionDef),
+    Event(EventDef),
 }
 
 impl ServiceItem {
@@ -121,6 +124,7 @@ impl ServiceItem {
         let pair = pairs.next().unwrap();
         match pair.as_rule() {
             Rule::fn_def => ServiceItem::Function(FunctionDef::parse(pair)),
+            Rule::event_def => ServiceItem::Event(EventDef::parse(pair)),
             _ => unreachable!(),
         }
     }
@@ -128,18 +132,21 @@ impl ServiceItem {
     fn validate(&self, validate: &mut Validate) {
         match self {
             ServiceItem::Function(i) => i.validate(validate),
+            ServiceItem::Event(i) => i.validate(validate),
         }
     }
 
     pub fn span(&self) -> Span {
         match self {
             ServiceItem::Function(i) => i.span(),
+            ServiceItem::Event(i) => i.span(),
         }
     }
 
     pub fn name(&self) -> &Ident {
         match self {
             ServiceItem::Function(i) => i.name(),
+            ServiceItem::Event(i) => i.name(),
         }
     }
 }
@@ -298,5 +305,127 @@ impl FunctionPart {
 
     pub fn part_type(&self) -> &TypeNameOrInline {
         &self.part_type
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EventDef {
+    span: Span,
+    name: Ident,
+    id: LitPosInt,
+    event_type: Option<EventType>,
+}
+
+impl EventDef {
+    fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::event_def);
+
+        let span = Span::from_pair(&pair);
+
+        let mut pairs = pair.into_inner();
+
+        pairs.next().unwrap(); // Skip keyword.
+
+        let pair = pairs.next().unwrap();
+        let name = Ident::parse(pair);
+
+        pairs.next().unwrap(); // Skip @.
+
+        let pair = pairs.next().unwrap();
+        let id = LitPosInt::parse(pair);
+
+        let pair = pairs.next().unwrap();
+        let event_type = match pair.as_rule() {
+            Rule::tok_eq => {
+                let pair = pairs.next().unwrap();
+                Some(EventType::parse(pair))
+            }
+            Rule::tok_term => None,
+            _ => unreachable!(),
+        };
+
+        EventDef {
+            span,
+            name,
+            id,
+            event_type,
+        }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        if let Some(ref event_type) = self.event_type {
+            event_type.validate(validate);
+        }
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
+    }
+
+    pub fn id(&self) -> &LitPosInt {
+        &self.id
+    }
+
+    pub fn event_type(&self) -> Option<&EventType> {
+        self.event_type.as_ref()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EventType {
+    span: Span,
+    opt: bool,
+    event_type: TypeNameOrInline,
+}
+
+impl EventType {
+    fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::event_type);
+
+        let span = Span::from_pair(&pair);
+
+        let mut pairs = pair.into_inner();
+
+        let opt;
+        let event_type;
+        let pair = pairs.next().unwrap();
+        match pair.as_rule() {
+            Rule::kw_optional => {
+                opt = true;
+                let pair = pairs.next().unwrap();
+                event_type = TypeNameOrInline::parse(pair);
+            }
+            Rule::type_name_or_inline => {
+                opt = false;
+                event_type = TypeNameOrInline::parse(pair);
+            }
+            _ => unreachable!(),
+        }
+
+        EventType {
+            span,
+            opt,
+            event_type,
+        }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        self.event_type.validate(validate);
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn optional(&self) -> bool {
+        self.opt
+    }
+
+    pub fn event_type(&self) -> &TypeNameOrInline {
+        &self.event_type
     }
 }

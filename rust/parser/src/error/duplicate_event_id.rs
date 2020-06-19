@@ -1,35 +1,35 @@
 use super::Error;
-use crate::ast::{Ident, ServiceDef, ServiceItem};
+use crate::ast::{LitPosInt, ServiceDef, ServiceItem};
 use crate::validate::Validate;
 use crate::Span;
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
-pub struct DuplicateFunction {
+pub struct DuplicateEventId {
     schema_name: String,
-    duplicate: Ident,
+    duplicate: LitPosInt,
     original_span: Span,
 }
 
-impl DuplicateFunction {
+impl DuplicateEventId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
-        let mut idents = HashMap::new();
+        let mut ids = HashMap::new();
 
         for item in service.items() {
-            let func = match item {
-                ServiceItem::Function(func) => func,
+            let ev = match item {
+                ServiceItem::Event(ev) => ev,
                 _ => continue,
             };
 
-            match idents.entry(func.name().value()) {
+            match ids.entry(ev.id().value()) {
                 Entry::Vacant(e) => {
-                    e.insert(func.name());
+                    e.insert(ev.id());
                 }
 
                 Entry::Occupied(e) => {
-                    validate.add_error(DuplicateFunction {
+                    validate.add_error(DuplicateEventId {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: func.name().clone(),
+                        duplicate: ev.id().clone(),
                         original_span: e.get().span(),
                     });
                 }
@@ -41,7 +41,7 @@ impl DuplicateFunction {
         &self.schema_name
     }
 
-    pub fn duplicate(&self) -> &Ident {
+    pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
@@ -50,8 +50,8 @@ impl DuplicateFunction {
     }
 }
 
-impl From<DuplicateFunction> for Error {
-    fn from(e: DuplicateFunction) -> Self {
-        Error::DuplicateFunction(e)
+impl From<DuplicateEventId> for Error {
+    fn from(e: DuplicateEventId) -> Self {
+        Error::DuplicateEventId(e)
     }
 }
