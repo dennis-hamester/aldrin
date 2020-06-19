@@ -57,150 +57,124 @@ impl From<InvalidSyntax> for Error {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expected {
-    Attribute,
-    ConstDef,
-    ConstValue,
-    EnumDef,
-    EnumVariant,
-    EnumVariantType,
     Eof,
     Ident,
-    ImportStmt,
-    InlineEnum,
-    InlineStruct,
-    KeyTypeName,
+    Keyword(&'static str),
     LitInt,
     LitPosInt,
     LitString,
     LitUuid,
     SchemaName,
-    ServiceDef,
-    ServiceUuid,
-    ServiceVersion,
-    StructDef,
-    StructField,
-    TokenAngClose,
-    TokenAngOpen,
-    TokenArrow,
-    TokenAt,
-    TokenComma,
-    TokenCurlyClose,
-    TokenCurlyOpen,
-    TokenEquals,
-    TokenParClose,
-    TokenParOpen,
-    TokenScope,
-    TokenSquareClose,
-    TokenSquareOpen,
-    TokenTerm,
-    TypeName,
+    Token(&'static str),
 }
 
 impl Expected {
     fn add(rule: Rule, set: &mut HashSet<Self>) {
-        match rule {
-            Rule::EOI => set.insert(Expected::Eof),
-            Rule::attribute | Rule::tok_hash => set.insert(Expected::Attribute),
-            Rule::const_def | Rule::kw_const => set.insert(Expected::ConstDef),
-            Rule::const_value => set.insert(Expected::ConstValue),
-            Rule::def => {
-                set.insert(Expected::StructDef);
-                set.insert(Expected::EnumDef);
-                set.insert(Expected::ServiceDef);
-                set.insert(Expected::ConstDef)
-            }
-            Rule::enum_inline => set.insert(Expected::InlineEnum),
-            Rule::enum_variant => set.insert(Expected::EnumVariant),
-            Rule::enum_variant_type => set.insert(Expected::EnumVariantType),
-            Rule::ident => set.insert(Expected::Ident),
-            Rule::import_stmt | Rule::kw_import => set.insert(Expected::ImportStmt),
-            Rule::key_type_name => set.insert(Expected::KeyTypeName),
-            Rule::kw_enum | Rule::enum_def => set.insert(Expected::EnumDef),
-            Rule::kw_service | Rule::service_def => set.insert(Expected::ServiceDef),
-            Rule::kw_struct | Rule::struct_def => set.insert(Expected::StructDef),
-            Rule::kw_version | Rule::service_version => set.insert(Expected::ServiceVersion),
-            Rule::lit_int => set.insert(Expected::LitInt),
-            Rule::lit_pos_int => set.insert(Expected::LitPosInt),
-            Rule::lit_string => set.insert(Expected::LitString),
-            Rule::lit_uuid => set.insert(Expected::LitUuid),
-            Rule::schema_name => set.insert(Expected::SchemaName),
-            Rule::service_uuid => set.insert(Expected::ServiceUuid),
-            Rule::struct_field => set.insert(Expected::StructField),
-            Rule::struct_inline => set.insert(Expected::InlineStruct),
-            Rule::tok_ang_close => set.insert(Expected::TokenAngClose),
-            Rule::tok_ang_open => set.insert(Expected::TokenAngOpen),
-            Rule::tok_arrow => set.insert(Expected::TokenArrow),
-            Rule::tok_at => set.insert(Expected::TokenAt),
-            Rule::tok_comma => set.insert(Expected::TokenComma),
-            Rule::tok_cur_close => set.insert(Expected::TokenCurlyClose),
-            Rule::tok_cur_open => set.insert(Expected::TokenCurlyOpen),
-            Rule::tok_eq => set.insert(Expected::TokenEquals),
-            Rule::tok_par_close => set.insert(Expected::TokenParClose),
-            Rule::tok_par_open => set.insert(Expected::TokenParOpen),
-            Rule::tok_scope => set.insert(Expected::TokenScope),
-            Rule::tok_squ_close => set.insert(Expected::TokenSquareClose),
-            Rule::tok_squ_open => set.insert(Expected::TokenSquareOpen),
-            Rule::tok_term => set.insert(Expected::TokenTerm),
-            Rule::type_name => set.insert(Expected::TypeName),
-            Rule::type_name_or_inline => {
-                set.insert(Expected::TypeName);
-                set.insert(Expected::InlineStruct);
-                set.insert(Expected::InlineEnum)
-            }
+        const CONST_VALUE: &[Expected] = &[
+            Expected::Keyword("i16"),
+            Expected::Keyword("i32"),
+            Expected::Keyword("i64"),
+            Expected::Keyword("i8"),
+            Expected::Keyword("string"),
+            Expected::Keyword("u16"),
+            Expected::Keyword("u32"),
+            Expected::Keyword("u64"),
+            Expected::Keyword("u8"),
+            Expected::Keyword("uuid"),
+        ];
 
-            Rule::COMMENT
-            | Rule::WHITESPACE
-            | Rule::const_i16
-            | Rule::const_i32
-            | Rule::const_i64
-            | Rule::const_i8
-            | Rule::const_string
-            | Rule::const_u16
-            | Rule::const_u32
-            | Rule::const_u64
-            | Rule::const_u8
-            | Rule::const_uuid
-            | Rule::event_def
-            | Rule::event_type
-            | Rule::external_type_name
-            | Rule::file
-            | Rule::fn_args
-            | Rule::fn_body
-            | Rule::fn_def
-            | Rule::fn_err
-            | Rule::fn_ok
-            | Rule::kw_args
-            | Rule::kw_bool
-            | Rule::kw_bytes
-            | Rule::kw_err
-            | Rule::kw_event
-            | Rule::kw_f32
-            | Rule::kw_f64
-            | Rule::kw_fn
-            | Rule::kw_i16
-            | Rule::kw_i32
-            | Rule::kw_i64
-            | Rule::kw_i8
-            | Rule::kw_map
-            | Rule::kw_ok
-            | Rule::kw_optional
-            | Rule::kw_required
-            | Rule::kw_set
-            | Rule::kw_string
-            | Rule::kw_u16
-            | Rule::kw_u32
-            | Rule::kw_u64
-            | Rule::kw_u8
-            | Rule::kw_uuid
-            | Rule::kw_value
-            | Rule::kw_vec
-            | Rule::lit_pos_nonzero_int
-            | Rule::lit_string_char
-            | Rule::map_type
-            | Rule::service_item
-            | Rule::set_type
-            | Rule::vec_type
-            | Rule::ws => false,
+        const DEF: &[Expected] = &[
+            Expected::Keyword("const"),
+            Expected::Keyword("enum"),
+            Expected::Keyword("service"),
+            Expected::Keyword("struct"),
+            Expected::Token("#"),
+        ];
+
+        const TYPE_NAME: &[Expected] = &[
+            Expected::Ident,
+            Expected::Keyword("bool"),
+            Expected::Keyword("bytes"),
+            Expected::Keyword("f32"),
+            Expected::Keyword("f64"),
+            Expected::Keyword("i16"),
+            Expected::Keyword("i32"),
+            Expected::Keyword("i64"),
+            Expected::Keyword("i8"),
+            Expected::Keyword("map"),
+            Expected::Keyword("set"),
+            Expected::Keyword("string"),
+            Expected::Keyword("u16"),
+            Expected::Keyword("u32"),
+            Expected::Keyword("u64"),
+            Expected::Keyword("u8"),
+            Expected::Keyword("uuid"),
+            Expected::Keyword("value"),
+            Expected::Keyword("vec"),
+            Expected::SchemaName,
+        ];
+
+        const INLINE: &[Expected] = &[Expected::Keyword("enum"), Expected::Keyword("struct")];
+
+        const KEY_TYPE_NAME: &[Expected] = &[
+            Expected::Keyword("i16"),
+            Expected::Keyword("i32"),
+            Expected::Keyword("i64"),
+            Expected::Keyword("i8"),
+            Expected::Keyword("string"),
+            Expected::Keyword("u16"),
+            Expected::Keyword("u32"),
+            Expected::Keyword("u64"),
+            Expected::Keyword("u8"),
+            Expected::Keyword("uuid"),
+        ];
+
+        let add: &[&[Expected]] = match rule {
+            Rule::EOI => &[&[Expected::Eof]],
+            Rule::const_value => &[CONST_VALUE],
+            Rule::def => &[DEF],
+            Rule::enum_variant_type => &[TYPE_NAME, INLINE, &[Expected::Keyword("optional")]],
+            Rule::event_type => &[TYPE_NAME, INLINE, &[Expected::Keyword("optional")]],
+            Rule::ident => &[&[Expected::Ident]],
+            Rule::key_type_name => &[KEY_TYPE_NAME],
+            Rule::kw_args => &[&[Expected::Keyword("args")]],
+            Rule::kw_enum => &[&[Expected::Keyword("enum")]],
+            Rule::kw_err => &[&[Expected::Keyword("err")]],
+            Rule::kw_import => &[&[Expected::Keyword("import")]],
+            Rule::kw_ok => &[&[Expected::Keyword("ok")]],
+            Rule::kw_optional => &[&[Expected::Keyword("optional")]],
+            Rule::kw_struct => &[&[Expected::Keyword("struct")]],
+            Rule::kw_uuid => &[&[Expected::Keyword("uuid")]],
+            Rule::kw_version => &[&[Expected::Keyword("version")]],
+            Rule::lit_int => &[&[Expected::LitInt]],
+            Rule::lit_pos_int => &[&[Expected::LitPosInt]],
+            Rule::lit_string => &[&[Expected::LitString]],
+            Rule::lit_uuid => &[&[Expected::LitUuid]],
+            Rule::schema_name => &[&[Expected::SchemaName]],
+            Rule::service_item => &[&[Expected::Keyword("fn"), Expected::Keyword("event")]],
+            Rule::struct_field => &[&[Expected::Keyword("required"), Expected::Ident]],
+            Rule::tok_ang_close => &[&[Expected::Token(">")]],
+            Rule::tok_ang_open => &[&[Expected::Token("<")]],
+            Rule::tok_arrow => &[&[Expected::Token("->")]],
+            Rule::tok_at => &[&[Expected::Token("@")]],
+            Rule::tok_comma => &[&[Expected::Token(",")]],
+            Rule::tok_cur_close => &[&[Expected::Token("}")]],
+            Rule::tok_cur_open => &[&[Expected::Token("{")]],
+            Rule::tok_eq => &[&[Expected::Token("=")]],
+            Rule::tok_hash => &[&[Expected::Token("#")]],
+            Rule::tok_par_close => &[&[Expected::Token(")")]],
+            Rule::tok_par_open => &[&[Expected::Token("(")]],
+            Rule::tok_scope => &[&[Expected::Token("::")]],
+            Rule::tok_squ_close => &[&[Expected::Token("]")]],
+            Rule::tok_squ_open => &[&[Expected::Token("[")]],
+            Rule::tok_term => &[&[Expected::Token(";")]],
+            Rule::type_name => &[TYPE_NAME],
+            Rule::type_name_or_inline => &[TYPE_NAME, INLINE],
+            _ => return,
         };
+
+        for &slice in add {
+            set.extend(slice);
+        }
     }
 }
