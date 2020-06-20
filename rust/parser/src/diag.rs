@@ -274,6 +274,8 @@ impl<'a> Formatter<'a> {
         let mut lines = indicator.lines(source).peekable();
 
         while let Some((line, span)) = lines.next() {
+            let line = line.trim_end();
+
             if line.trim().is_empty() {
                 if state == State::Skip {
                     continue;
@@ -293,21 +295,27 @@ impl<'a> Formatter<'a> {
 
             state = State::Normal;
 
+            let trimmed = line.trim_start();
+            let diff = line.len() - trimmed.len();
+            let (line, from, to) = if diff >= 8 {
+                (
+                    Cow::Owned(format!("... {}", trimmed)),
+                    span.from.line_col.column + 3 - diff,
+                    span.to.line_col.column + 3 - diff,
+                )
+            } else {
+                (
+                    Cow::Borrowed(line),
+                    span.from.line_col.column - 1,
+                    span.to.line_col.column - 1,
+                )
+            };
+
             self.context(span.from.line_col.line, line);
             if lines.peek().is_some() {
-                self.indicator(
-                    span.from.line_col.column - 1,
-                    span.to.line_col.column - 1,
-                    "",
-                    is_main_block,
-                );
+                self.indicator(from, to, "", is_main_block);
             } else {
-                self.indicator(
-                    span.from.line_col.column - 1,
-                    span.to.line_col.column - 1,
-                    text,
-                    is_main_block,
-                );
+                self.indicator(from, to, text, is_main_block);
                 self.empty_context();
                 break;
             }
