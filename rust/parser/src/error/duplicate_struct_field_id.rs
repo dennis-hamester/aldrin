@@ -84,7 +84,52 @@ impl Diagnostic for DuplicateStructFieldId {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = if let Some(ref ident) = self.struct_ident {
+            Formatter::error(format!(
+                "duplicate id `{}` in struct `{}`",
+                self.duplicate.value(),
+                ident.value()
+            ))
+        } else {
+            Formatter::error(format!(
+                "duplicate id `{}` in inline struct",
+                self.duplicate.value()
+            ))
+        };
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.duplicate.span().from,
+                self.duplicate.span(),
+                "duplicate defined here",
+            )
+            .info_block(
+                schema,
+                self.original_span.from,
+                self.original_span,
+                "first defined here",
+            );
+
+            if let Some(ref ident) = self.struct_ident {
+                fmt.info_block(
+                    schema,
+                    ident.span().from,
+                    ident.span(),
+                    format!("struct `{}` defined here", ident.value()),
+                );
+            } else {
+                fmt.info_block(
+                    schema,
+                    self.struct_span.from,
+                    self.struct_span,
+                    "inline struct defined here",
+                );
+            }
+        }
+
+        fmt.help(format!("use a free id like {}", self.free_id));
+        fmt.format()
     }
 }
 

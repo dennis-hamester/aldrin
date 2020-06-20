@@ -52,7 +52,25 @@ impl Diagnostic for DuplicateDefinition {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt =
+            Formatter::error(format!("duplicate definition `{}`", self.duplicate.value()));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.duplicate.span().from,
+                self.duplicate.span(),
+                "duplicate defined here",
+            )
+            .info_block(
+                schema,
+                self.original_span.from,
+                self.original_span,
+                "first defined here",
+            );
+        }
+
+        fmt.format()
     }
 }
 
