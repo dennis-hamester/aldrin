@@ -1,5 +1,6 @@
 use super::Warning;
 use crate::ast::{ConstDef, Ident};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use heck::ShoutySnakeCase;
 
@@ -22,16 +23,22 @@ impl NonShoutySnakeCaseConst {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn shouty_snake_case(&self) -> &str {
         &self.shouty_snake_case
     }
 
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+}
+
+impl Diagnostic for NonShoutySnakeCaseConst {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

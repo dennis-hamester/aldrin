@@ -10,10 +10,12 @@ mod span;
 mod validate;
 
 pub mod ast;
+pub mod diag;
 pub mod error;
 pub mod warning;
 
 pub use definition::Definition;
+pub use diag::Diagnostic;
 pub use error::Error;
 pub use parser::{Parsed, Parser};
 pub use schema::Schema;

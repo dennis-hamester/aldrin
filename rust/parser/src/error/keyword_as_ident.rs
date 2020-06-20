@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::Ident;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 const KEYWORDS: &[&str] = &[
@@ -24,12 +25,18 @@ impl KeywordAsIdent {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+}
+
+impl Diagnostic for KeywordAsIdent {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

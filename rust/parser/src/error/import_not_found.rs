@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::ImportStmt;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -23,12 +24,18 @@ impl ImportNotFound {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn import(&self) -> &ImportStmt {
         &self.import
+    }
+}
+
+impl Diagnostic for ImportNotFound {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

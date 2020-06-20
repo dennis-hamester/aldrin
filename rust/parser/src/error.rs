@@ -20,6 +20,8 @@ mod keyword_as_ident;
 mod missing_import;
 mod type_not_found;
 
+use crate::diag::{Diagnostic, DiagnosticKind};
+
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_enum_variant::DuplicateEnumVariant;
 pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
@@ -68,8 +70,12 @@ pub enum Error {
     TypeNotFound(TypeNotFound),
 }
 
-impl Error {
-    pub fn schema_name(&self) -> &str {
+impl Diagnostic for Error {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
         match self {
             Error::DuplicateDefinition(e) => e.schema_name(),
             Error::DuplicateEnumVariant(e) => e.schema_name(),

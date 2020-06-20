@@ -1,4 +1,5 @@
 use super::Error;
+use crate::diag::{Diagnostic, DiagnosticKind};
 
 #[derive(Debug)]
 pub struct InvalidSchemaName {
@@ -14,8 +15,14 @@ impl InvalidSchemaName {
             schema_name: schema_name.into(),
         }
     }
+}
 
-    pub fn schema_name(&self) -> &str {
+impl Diagnostic for InvalidSchemaName {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
         &self.schema_name
     }
 }

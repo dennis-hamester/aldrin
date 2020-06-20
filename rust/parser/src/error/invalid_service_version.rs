@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::{LitPosInt, ServiceDef};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -20,12 +21,18 @@ impl InvalidServiceVersion {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn version(&self) -> &LitPosInt {
         &self.ver
+    }
+}
+
+impl Diagnostic for InvalidServiceVersion {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

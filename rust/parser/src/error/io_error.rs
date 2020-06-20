@@ -1,4 +1,5 @@
 use super::Error;
+use crate::diag::{Diagnostic, DiagnosticKind};
 
 #[derive(Debug)]
 pub struct IoError {
@@ -17,12 +18,18 @@ impl IoError {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn io_error(&self) -> &std::io::Error {
         &self.err
+    }
+}
+
+impl Diagnostic for IoError {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

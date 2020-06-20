@@ -1,4 +1,5 @@
 use super::Error;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::grammar::Rule;
 use crate::Position;
 use std::collections::HashSet;
@@ -36,16 +37,22 @@ impl InvalidSyntax {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn position(&self) -> Position {
         self.pos
     }
 
     pub fn expected(&self) -> &HashSet<Expected> {
         &self.expected
+    }
+}
+
+impl Diagnostic for InvalidSyntax {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

@@ -1,5 +1,6 @@
 use super::Warning;
 use crate::ast::ImportStmt;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use crate::{Schema, Span};
 use std::collections::hash_map::{Entry, HashMap};
@@ -30,16 +31,22 @@ impl DuplicateImport {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn duplicate(&self) -> &ImportStmt {
         &self.duplicate
     }
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+}
+
+impl Diagnostic for DuplicateImport {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

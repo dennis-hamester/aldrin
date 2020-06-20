@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::ConstValue;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -30,12 +31,18 @@ impl InvalidConstValue {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn const_value(&self) -> &ConstValue {
         &self.const_value
+    }
+}
+
+impl Diagnostic for InvalidConstValue {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

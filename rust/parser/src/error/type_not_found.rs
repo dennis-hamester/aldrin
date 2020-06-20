@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::Ident;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -23,12 +24,18 @@ impl TypeNotFound {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+}
+
+impl Diagnostic for TypeNotFound {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

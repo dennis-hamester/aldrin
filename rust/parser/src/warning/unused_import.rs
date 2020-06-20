@@ -5,6 +5,7 @@ use crate::ast::{
     InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef, StructField,
     TypeName, TypeNameKind, TypeNameOrInline,
 };
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use crate::{Definition, Schema};
 
@@ -167,12 +168,18 @@ impl UnusedImport {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn import(&self) -> &ImportStmt {
         &self.import
+    }
+}
+
+impl Diagnostic for UnusedImport {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, SchemaName};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -29,16 +30,22 @@ impl ExternTypeNotFound {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn extern_schema(&self) -> &SchemaName {
         &self.extern_schema
     }
 
     pub fn extern_ident(&self) -> &Ident {
         &self.extern_ident
+    }
+}
+
+impl Diagnostic for ExternTypeNotFound {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::{LitPosInt, StructField};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -20,12 +21,18 @@ impl InvalidStructFieldId {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn id(&self) -> &LitPosInt {
         &self.id
+    }
+}
+
+impl Diagnostic for InvalidStructFieldId {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

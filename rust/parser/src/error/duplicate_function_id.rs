@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::{LitPosInt, ServiceDef, ServiceItem};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use crate::Span;
 use std::collections::hash_map::{Entry, HashMap};
@@ -37,16 +38,22 @@ impl DuplicateFunctionId {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+}
+
+impl Diagnostic for DuplicateFunctionId {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

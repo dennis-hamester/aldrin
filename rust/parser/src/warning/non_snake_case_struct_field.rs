@@ -1,5 +1,6 @@
 use super::Warning;
 use crate::ast::{Ident, StructField};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use heck::SnakeCase;
 
@@ -22,16 +23,22 @@ impl NonSnakeCaseStructField {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn snake_case(&self) -> &str {
         &self.snake_case
     }
 
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+}
+
+impl Diagnostic for NonSnakeCaseStructField {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

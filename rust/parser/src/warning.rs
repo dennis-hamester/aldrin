@@ -9,6 +9,8 @@ mod non_snake_case_schema_name;
 mod non_snake_case_struct_field;
 mod unused_import;
 
+use crate::diag::{Diagnostic, DiagnosticKind};
+
 pub use duplicate_import::DuplicateImport;
 pub use non_camel_case_enum::NonCamelCaseEnum;
 pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
@@ -35,8 +37,12 @@ pub enum Warning {
     UnusedImport(UnusedImport),
 }
 
-impl Warning {
-    pub fn schema_name(&self) -> &str {
+impl Diagnostic for Warning {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
         match self {
             Warning::DuplicateImport(w) => w.schema_name(),
             Warning::NonCamelCaseEnum(w) => w.schema_name(),

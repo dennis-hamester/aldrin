@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::SchemaName;
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -22,12 +23,18 @@ impl MissingImport {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn extern_schema(&self) -> &SchemaName {
         &self.extern_schema
+    }
+}
+
+impl Diagnostic for MissingImport {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

@@ -1,5 +1,6 @@
 use super::Error;
 use crate::ast::{EnumVariant, LitPosInt};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 
 #[derive(Debug)]
@@ -20,12 +21,18 @@ impl InvalidEnumVariantId {
         });
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn id(&self) -> &LitPosInt {
         &self.id
+    }
+}
+
+impl Diagnostic for InvalidEnumVariantId {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

@@ -1,5 +1,6 @@
 use super::Warning;
 use crate::ast::{Ident, ServiceDef};
+use crate::diag::{Diagnostic, DiagnosticKind};
 use crate::validate::Validate;
 use heck::CamelCase;
 
@@ -22,16 +23,22 @@ impl NonCamelCaseService {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn camel_case(&self) -> &str {
         &self.camel_case
     }
 
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+}
+
+impl Diagnostic for NonCamelCaseService {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 

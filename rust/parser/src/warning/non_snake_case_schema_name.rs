@@ -1,4 +1,5 @@
 use super::Warning;
+use crate::diag::{Diagnostic, DiagnosticKind};
 
 #[derive(Debug)]
 pub struct NonSnakeCaseSchemaName {
@@ -18,12 +19,18 @@ impl NonSnakeCaseSchemaName {
         }
     }
 
-    pub fn schema_name(&self) -> &str {
-        &self.schema_name
-    }
-
     pub fn snake_case(&self) -> &str {
         &self.snake_case
+    }
+}
+
+impl Diagnostic for NonSnakeCaseSchemaName {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
     }
 }
 
