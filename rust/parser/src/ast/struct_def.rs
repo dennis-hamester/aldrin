@@ -87,6 +87,7 @@ impl StructDef {
 #[derive(Debug, Clone)]
 pub struct InlineStruct {
     span: Span,
+    kw_span: Span,
     fields: Vec<StructField>,
 }
 
@@ -97,7 +98,10 @@ impl InlineStruct {
         let span = Span::from_pair(&pair);
 
         let mut pairs = pair.into_inner();
-        pairs.next().unwrap(); // Skip keyword.
+
+        let pair = pairs.next().unwrap();
+        let kw_span = Span::from_pair(&pair);
+
         pairs.next().unwrap(); // Skip {.
 
         let mut fields = Vec::new();
@@ -109,7 +113,11 @@ impl InlineStruct {
             }
         }
 
-        InlineStruct { span, fields }
+        InlineStruct {
+            span,
+            kw_span,
+            fields,
+        }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -123,6 +131,10 @@ impl InlineStruct {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn keyword_span(&self) -> Span {
+        self.kw_span
     }
 
     pub fn fields(&self) -> &[StructField] {

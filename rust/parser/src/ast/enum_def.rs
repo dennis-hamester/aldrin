@@ -87,6 +87,7 @@ impl EnumDef {
 #[derive(Debug, Clone)]
 pub struct InlineEnum {
     span: Span,
+    kw_span: Span,
     vars: Vec<EnumVariant>,
 }
 
@@ -98,7 +99,9 @@ impl InlineEnum {
 
         let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
+        let pair = pairs.next().unwrap();
+        let kw_span = Span::from_pair(&pair);
+
         pairs.next().unwrap(); // Skip {.
 
         let mut vars = Vec::new();
@@ -110,7 +113,11 @@ impl InlineEnum {
             }
         }
 
-        InlineEnum { span, vars }
+        InlineEnum {
+            span,
+            kw_span,
+            vars,
+        }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -124,6 +131,10 @@ impl InlineEnum {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn keyword_span(&self) -> Span {
+        self.kw_span
     }
 
     pub fn variants(&self) -> &[EnumVariant] {
