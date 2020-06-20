@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{LitPosInt, ServiceDef, ServiceItem};
+use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::{Parsed, Span};
@@ -10,6 +10,7 @@ pub struct DuplicateFunctionId {
     schema_name: String,
     duplicate: LitPosInt,
     original_span: Span,
+    service_ident: Ident,
     free_id: u32,
 }
 
@@ -45,6 +46,7 @@ impl DuplicateFunctionId {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: func.id().clone(),
                         original_span: e.get().span(),
+                        service_ident: service.name().clone(),
                         free_id,
                     });
 
@@ -60,6 +62,10 @@ impl DuplicateFunctionId {
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+
+    pub fn service_ident(&self) -> &Ident {
+        &self.service_ident
     }
 
     pub fn free_id(&self) -> u32 {
