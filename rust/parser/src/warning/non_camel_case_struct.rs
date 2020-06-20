@@ -1,7 +1,8 @@
 use super::Warning;
 use crate::ast::{Ident, StructDef};
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
+use crate::Parsed;
 use heck::CamelCase;
 
 #[derive(Debug)]
@@ -39,6 +40,10 @@ impl Diagnostic for NonCamelCaseStruct {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

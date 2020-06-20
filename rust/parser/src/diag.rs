@@ -1,4 +1,4 @@
-use crate::{Position, Schema, Span};
+use crate::{Parsed, Position, Schema, Span};
 use std::borrow::Cow;
 use std::fmt;
 use std::path::Path;
@@ -6,6 +6,7 @@ use std::path::Path;
 pub trait Diagnostic {
     fn kind(&self) -> DiagnosticKind;
     fn schema_name(&self) -> &str;
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

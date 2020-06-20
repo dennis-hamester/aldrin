@@ -1,7 +1,8 @@
 use super::Error;
 use crate::ast::Ident;
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
+use crate::Parsed;
 
 const KEYWORDS: &[&str] = &[
     "import", "struct", "enum", "service", "fn", "event", "const",
@@ -37,6 +38,10 @@ impl Diagnostic for KeywordAsIdent {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

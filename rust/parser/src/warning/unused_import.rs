@@ -1,13 +1,12 @@
 use super::Warning;
-use crate::ast::ImportStmt;
 use crate::ast::{
     EnumDef, EnumVariant, EnumVariantType, EventDef, EventType, FunctionDef, FunctionPart,
-    InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef, StructField,
-    TypeName, TypeNameKind, TypeNameOrInline,
+    ImportStmt, InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef,
+    StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Definition, Schema};
+use crate::{Definition, Parsed, Schema};
 
 #[derive(Debug)]
 pub struct UnusedImport {
@@ -180,6 +179,10 @@ impl Diagnostic for UnusedImport {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

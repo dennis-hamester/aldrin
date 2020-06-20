@@ -20,7 +20,8 @@ mod keyword_as_ident;
 mod missing_import;
 mod type_not_found;
 
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
+use crate::Parsed;
 
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_enum_variant::DuplicateEnumVariant;
@@ -98,6 +99,32 @@ impl Diagnostic for Error {
             Error::KeywordAsIdent(e) => e.schema_name(),
             Error::MissingImport(e) => e.schema_name(),
             Error::TypeNotFound(e) => e.schema_name(),
+        }
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        match self {
+            Error::DuplicateDefinition(e) => e.format(parsed),
+            Error::DuplicateEnumVariant(e) => e.format(parsed),
+            Error::DuplicateEnumVariantId(e) => e.format(parsed),
+            Error::DuplicateEventId(e) => e.format(parsed),
+            Error::DuplicateFunctionId(e) => e.format(parsed),
+            Error::DuplicateServiceItem(e) => e.format(parsed),
+            Error::DuplicateStructField(e) => e.format(parsed),
+            Error::DuplicateStructFieldId(e) => e.format(parsed),
+            Error::ExternTypeNotFound(e) => e.format(parsed),
+            Error::ImportNotFound(e) => e.format(parsed),
+            Error::InvalidConstValue(e) => e.format(parsed),
+            Error::InvalidEnumVariantId(e) => e.format(parsed),
+            Error::InvalidSchemaName(e) => e.format(parsed),
+            Error::InvalidServiceUuid(e) => e.format(parsed),
+            Error::InvalidServiceVersion(e) => e.format(parsed),
+            Error::InvalidStructFieldId(e) => e.format(parsed),
+            Error::InvalidSyntax(e) => e.format(parsed),
+            Error::IoError(e) => e.format(parsed),
+            Error::KeywordAsIdent(e) => e.format(parsed),
+            Error::MissingImport(e) => e.format(parsed),
+            Error::TypeNotFound(e) => e.format(parsed),
         }
     }
 }

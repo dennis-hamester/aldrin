@@ -9,7 +9,8 @@ mod non_snake_case_schema_name;
 mod non_snake_case_struct_field;
 mod unused_import;
 
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
+use crate::Parsed;
 
 pub use duplicate_import::DuplicateImport;
 pub use non_camel_case_enum::NonCamelCaseEnum;
@@ -54,6 +55,21 @@ impl Diagnostic for Warning {
             Warning::NonSnakeCaseSchemaName(w) => w.schema_name(),
             Warning::NonSnakeCaseStructField(w) => w.schema_name(),
             Warning::UnusedImport(w) => w.schema_name(),
+        }
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        match self {
+            Warning::DuplicateImport(w) => w.format(parsed),
+            Warning::NonCamelCaseEnum(w) => w.format(parsed),
+            Warning::NonCamelCaseEnumVariant(w) => w.format(parsed),
+            Warning::NonCamelCaseService(w) => w.format(parsed),
+            Warning::NonCamelCaseStruct(w) => w.format(parsed),
+            Warning::NonShoutySnakeCaseConst(w) => w.format(parsed),
+            Warning::NonSnakeCaseFunction(w) => w.format(parsed),
+            Warning::NonSnakeCaseSchemaName(w) => w.format(parsed),
+            Warning::NonSnakeCaseStructField(w) => w.format(parsed),
+            Warning::UnusedImport(w) => w.format(parsed),
         }
     }
 }

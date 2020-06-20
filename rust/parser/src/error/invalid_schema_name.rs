@@ -1,5 +1,6 @@
 use super::Error;
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::Parsed;
 
 #[derive(Debug)]
 pub struct InvalidSchemaName {
@@ -24,6 +25,10 @@ impl Diagnostic for InvalidSchemaName {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

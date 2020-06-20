@@ -1,8 +1,8 @@
 use super::Error;
 use crate::ast::Ident;
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Schema, Span};
+use crate::{Parsed, Schema, Span};
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
@@ -49,6 +49,10 @@ impl Diagnostic for DuplicateDefinition {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

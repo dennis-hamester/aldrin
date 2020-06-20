@@ -1,7 +1,8 @@
 use super::Error;
 use crate::ast::{LitUuid, ServiceDef};
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
+use crate::Parsed;
 
 #[derive(Debug)]
 pub struct InvalidServiceUuid {
@@ -33,6 +34,10 @@ impl Diagnostic for InvalidServiceUuid {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

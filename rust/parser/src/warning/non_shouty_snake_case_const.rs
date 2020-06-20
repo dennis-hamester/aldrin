@@ -1,7 +1,8 @@
 use super::Warning;
 use crate::ast::{ConstDef, Ident};
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
+use crate::Parsed;
 use heck::ShoutySnakeCase;
 
 #[derive(Debug)]
@@ -39,6 +40,10 @@ impl Diagnostic for NonShoutySnakeCaseConst {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

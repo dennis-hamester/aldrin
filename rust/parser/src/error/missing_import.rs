@@ -1,7 +1,8 @@
 use super::Error;
 use crate::ast::SchemaName;
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
+use crate::Parsed;
 
 #[derive(Debug)]
 pub struct MissingImport {
@@ -35,6 +36,10 @@ impl Diagnostic for MissingImport {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 

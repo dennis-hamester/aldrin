@@ -1,8 +1,8 @@
 use super::Error;
 use crate::ast::{LitPosInt, ServiceDef, ServiceItem};
-use crate::diag::{Diagnostic, DiagnosticKind};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::Span;
+use crate::{Parsed, Span};
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
@@ -54,6 +54,10 @@ impl Diagnostic for DuplicateEventId {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        todo!()
     }
 }
 
