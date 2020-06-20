@@ -7,6 +7,7 @@ mod issues;
 mod parser;
 mod schema;
 mod span;
+mod util;
 mod validate;
 
 pub mod ast;
