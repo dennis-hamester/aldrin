@@ -2,30 +2,40 @@ use super::Error;
 use crate::ast::SchemaName;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::{util, Parsed};
 
 #[derive(Debug)]
 pub struct MissingImport {
     schema_name: String,
     extern_schema: SchemaName,
+    candidate: Option<String>,
 }
 
 impl MissingImport {
     pub(crate) fn validate(schema_name: &SchemaName, validate: &mut Validate) {
-        for import in validate.get_current_schema().imports() {
+        let schema = validate.get_current_schema();
+        for import in schema.imports() {
             if import.schema_name().value() == schema_name.value() {
                 return;
             }
         }
 
+        let candidates = schema.imports().iter().map(|i| i.schema_name().value());
+        let candidate = util::did_you_mean(candidates, schema_name.value()).map(ToOwned::to_owned);
+
         validate.add_error(MissingImport {
             schema_name: validate.schema_name().to_owned(),
             extern_schema: schema_name.clone(),
+            candidate,
         });
     }
 
     pub fn extern_schema(&self) -> &SchemaName {
         &self.extern_schema
+    }
+
+    pub fn candidate(&self) -> Option<&str> {
+        self.candidate.as_deref()
     }
 }
 

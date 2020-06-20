@@ -2,13 +2,14 @@ use super::Error;
 use crate::ast::{Ident, SchemaName};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::{util, Parsed};
 
 #[derive(Debug)]
 pub struct ExternTypeNotFound {
     schema_name: String,
     extern_schema: SchemaName,
     extern_ident: Ident,
+    candidate: Option<String>,
 }
 
 impl ExternTypeNotFound {
@@ -24,10 +25,16 @@ impl ExternTypeNotFound {
             }
         }
 
+        let candidate = validate
+            .get_schema(schema_name.value())
+            .and_then(|s| util::did_you_mean_type(s, ident.value()))
+            .map(ToOwned::to_owned);
+
         validate.add_error(ExternTypeNotFound {
             schema_name: validate.schema_name().to_owned(),
             extern_schema: schema_name.clone(),
             extern_ident: ident.clone(),
+            candidate,
         });
     }
 
@@ -37,6 +44,10 @@ impl ExternTypeNotFound {
 
     pub fn extern_ident(&self) -> &Ident {
         &self.extern_ident
+    }
+
+    pub fn candidate(&self) -> Option<&str> {
+        self.candidate.as_deref()
     }
 }
 

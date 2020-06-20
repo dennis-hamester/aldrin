@@ -2,12 +2,13 @@ use super::Error;
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::{util, Parsed};
 
 #[derive(Debug)]
 pub struct TypeNotFound {
     schema_name: String,
     ident: Ident,
+    candidate: Option<String>,
 }
 
 impl TypeNotFound {
@@ -19,14 +20,21 @@ impl TypeNotFound {
             }
         }
 
+        let candidate = util::did_you_mean_type(schema, ident.value()).map(ToOwned::to_owned);
+
         validate.add_error(TypeNotFound {
             schema_name: validate.schema_name().to_owned(),
             ident: ident.clone(),
+            candidate,
         });
     }
 
     pub fn ident(&self) -> &Ident {
         &self.ident
+    }
+
+    pub fn candidate(&self) -> Option<&str> {
+        self.candidate.as_deref()
     }
 }
 
