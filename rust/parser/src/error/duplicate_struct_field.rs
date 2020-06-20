@@ -10,10 +10,17 @@ pub struct DuplicateStructField {
     schema_name: String,
     duplicate: Ident,
     original_span: Span,
+    struct_span: Span,
+    struct_ident: Option<Ident>,
 }
 
 impl DuplicateStructField {
-    pub(crate) fn validate(fields: &[StructField], validate: &mut Validate) {
+    pub(crate) fn validate(
+        fields: &[StructField],
+        struct_span: Span,
+        ident: Option<&Ident>,
+        validate: &mut Validate,
+    ) {
         let mut idents = HashMap::new();
 
         for field in fields {
@@ -27,6 +34,8 @@ impl DuplicateStructField {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: field.name().clone(),
                         original_span: e.get().span(),
+                        struct_span,
+                        struct_ident: ident.cloned(),
                     });
                 }
             }
@@ -39,6 +48,14 @@ impl DuplicateStructField {
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+
+    pub fn struct_span(&self) -> Span {
+        self.struct_span
+    }
+
+    pub fn struct_ident(&self) -> Option<&Ident> {
+        self.struct_ident.as_ref()
     }
 }
 

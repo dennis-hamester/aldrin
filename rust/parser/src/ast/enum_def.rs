@@ -54,8 +54,8 @@ impl EnumDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateEnumVariant::validate(&self.vars, validate);
-        DuplicateEnumVariantId::validate(&self.vars, validate);
+        DuplicateEnumVariant::validate(&self.vars, self.name.span(), Some(&self.name), validate);
+        DuplicateEnumVariantId::validate(&self.vars, self.name.span(), Some(&self.name), validate);
 
         if validate.is_main_schema() {
             NonCamelCaseEnum::validate(self, validate);
@@ -121,8 +121,8 @@ impl InlineEnum {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateEnumVariant::validate(&self.vars, validate);
-        DuplicateEnumVariantId::validate(&self.vars, validate);
+        DuplicateEnumVariant::validate(&self.vars, self.kw_span, None, validate);
+        DuplicateEnumVariantId::validate(&self.vars, self.kw_span, None, validate);
 
         for var in &self.vars {
             var.validate(validate);

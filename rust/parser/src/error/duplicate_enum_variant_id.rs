@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{EnumVariant, LitPosInt};
+use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::{Parsed, Span};
@@ -10,10 +10,17 @@ pub struct DuplicateEnumVariantId {
     schema_name: String,
     duplicate: LitPosInt,
     original_span: Span,
+    enum_span: Span,
+    enum_ident: Option<Ident>,
 }
 
 impl DuplicateEnumVariantId {
-    pub(crate) fn validate(vars: &[EnumVariant], validate: &mut Validate) {
+    pub(crate) fn validate(
+        vars: &[EnumVariant],
+        enum_span: Span,
+        ident: Option<&Ident>,
+        validate: &mut Validate,
+    ) {
         let mut ids = HashMap::new();
 
         for var in vars {
@@ -27,6 +34,8 @@ impl DuplicateEnumVariantId {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: var.id().clone(),
                         original_span: e.get().span(),
+                        enum_span,
+                        enum_ident: ident.cloned(),
                     });
                 }
             }
@@ -39,6 +48,14 @@ impl DuplicateEnumVariantId {
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+
+    pub fn enum_span(&self) -> Span {
+        self.enum_span
+    }
+
+    pub fn enum_ident(&self) -> Option<&Ident> {
+        self.enum_ident.as_ref()
     }
 }
 

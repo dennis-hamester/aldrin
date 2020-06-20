@@ -54,8 +54,13 @@ impl StructDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateStructField::validate(&self.fields, validate);
-        DuplicateStructFieldId::validate(&self.fields, validate);
+        DuplicateStructField::validate(&self.fields, self.name.span(), Some(&self.name), validate);
+        DuplicateStructFieldId::validate(
+            &self.fields,
+            self.name.span(),
+            Some(&self.name),
+            validate,
+        );
 
         if validate.is_main_schema() {
             NonCamelCaseStruct::validate(self, validate);
@@ -121,8 +126,8 @@ impl InlineStruct {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateStructField::validate(&self.fields, validate);
-        DuplicateStructFieldId::validate(&self.fields, validate);
+        DuplicateStructField::validate(&self.fields, self.kw_span, None, validate);
+        DuplicateStructFieldId::validate(&self.fields, self.kw_span, None, validate);
 
         for field in &self.fields {
             field.validate(validate);
