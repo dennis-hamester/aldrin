@@ -19,5 +19,5 @@ pub use diag::Diagnostic;
 pub use error::Error;
 pub use parser::{Parsed, Parser};
 pub use schema::Schema;
-pub use span::{LineCol, Position, Span};
+pub use span::{LineCol, Position, Span, SpanLines};
 pub use warning::Warning;
