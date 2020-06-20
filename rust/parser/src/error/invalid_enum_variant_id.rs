@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{EnumVariant, LitPosInt};
+use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -8,6 +8,7 @@ use crate::Parsed;
 pub struct InvalidEnumVariantId {
     schema_name: String,
     id: LitPosInt,
+    var_ident: Ident,
 }
 
 impl InvalidEnumVariantId {
@@ -19,11 +20,16 @@ impl InvalidEnumVariantId {
         validate.add_error(InvalidEnumVariantId {
             schema_name: validate.schema_name().to_owned(),
             id: var.id().clone(),
+            var_ident: var.name().clone(),
         });
     }
 
     pub fn id(&self) -> &LitPosInt {
         &self.id
+    }
+
+    pub fn variant_ident(&self) -> &Ident {
+        &self.var_ident
     }
 }
 
