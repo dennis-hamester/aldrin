@@ -111,7 +111,7 @@ impl Diagnostic for InvalidSyntax {
                 },
             };
 
-            fmt.main_block(schema, self.pos, span);
+            fmt.main_block(schema, self.pos, span, "");
         }
 
         fmt.format()

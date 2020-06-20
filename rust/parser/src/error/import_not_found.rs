@@ -46,7 +46,7 @@ impl Diagnostic for ImportNotFound {
         ));
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.import.span().from, self.import.span())
+            fmt.main_block(schema, self.import.span().from, self.import.span(), "")
                 .help("an include directory may be missing");
         }
 

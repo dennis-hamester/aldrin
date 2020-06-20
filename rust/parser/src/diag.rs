@@ -39,8 +39,8 @@ pub enum Line<'a> {
     EmptyContext(EmptyContext),
     Context(Context<'a>),
     SkippedContext(SkippedContext),
-    MainIndicator(Indicator),
-    InfoIndicator(Indicator),
+    MainIndicator(Indicator<'a>),
+    InfoIndicator(Indicator<'a>),
     Info(Info<'a>),
 }
 
@@ -140,19 +140,21 @@ impl fmt::Display for SkippedContext {
 }
 
 #[derive(Debug)]
-pub struct Indicator {
+pub struct Indicator<'a> {
     pub pad1: Cow<'static, str>,
     pub sep: &'static str,
     pub pad2: Cow<'static, str>,
     pub indicator: Cow<'static, str>,
+    pub pad3: &'static str,
+    pub text: Cow<'a, str>,
 }
 
-impl fmt::Display for Indicator {
+impl<'a> fmt::Display for Indicator<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(
             f,
-            "{}{}{}{}",
-            self.pad1, self.sep, self.pad2, self.indicator
+            "{}{}{}{}{}{}",
+            self.pad1, self.sep, self.pad2, self.indicator, self.pad3, self.text
         )
     }
 }
@@ -243,13 +245,17 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    pub fn block(
+    pub fn block<S>(
         &mut self,
         schema: &'a Schema,
         location: Position,
-        span: Span,
+        indicator: Span,
+        text: S,
         is_main_block: bool,
-    ) -> &mut Self {
+    ) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
         self.location(schema.path(), location, is_main_block);
 
         let source = match schema.source() {
@@ -265,7 +271,7 @@ impl<'a> Formatter<'a> {
 
         self.empty_context();
         let mut state = State::Normal;
-        let mut lines = span.lines(source).peekable();
+        let mut lines = indicator.lines(source).peekable();
 
         while let Some((line, span)) = lines.next() {
             if line.trim().is_empty() {
@@ -288,22 +294,52 @@ impl<'a> Formatter<'a> {
             state = State::Normal;
 
             self.context(span.from.line_col.line, line);
-            self.indicator(
-                span.from.line_col.column - 1,
-                span.to.line_col.column - 1,
-                is_main_block,
-            );
+            if lines.peek().is_some() {
+                self.indicator(
+                    span.from.line_col.column - 1,
+                    span.to.line_col.column - 1,
+                    "",
+                    is_main_block,
+                );
+            } else {
+                self.indicator(
+                    span.from.line_col.column - 1,
+                    span.to.line_col.column - 1,
+                    text,
+                    is_main_block,
+                );
+                self.empty_context();
+                break;
+            }
         }
 
         self
     }
 
-    pub fn main_block(&mut self, schema: &'a Schema, location: Position, span: Span) -> &mut Self {
-        self.block(schema, location, span, true)
+    pub fn main_block<S>(
+        &mut self,
+        schema: &'a Schema,
+        location: Position,
+        span: Span,
+        text: S,
+    ) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        self.block(schema, location, span, text, true)
     }
 
-    pub fn info_block(&mut self, schema: &'a Schema, location: Position, span: Span) -> &mut Self {
-        self.block(schema, location, span, false)
+    pub fn info_block<S>(
+        &mut self,
+        schema: &'a Schema,
+        location: Position,
+        span: Span,
+        text: S,
+    ) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        self.block(schema, location, span, text, false)
     }
 
     pub fn location<P>(&mut self, path: P, location: Position, is_main_location: bool) -> &mut Self
@@ -390,31 +426,58 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn indicator(&mut self, from: usize, to: usize, is_main_indicator: bool) -> &mut Self {
+    pub fn indicator<S>(
+        &mut self,
+        from: usize,
+        to: usize,
+        text: S,
+        is_main_indicator: bool,
+    ) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
         if is_main_indicator {
-            self.main_indicator(from, to)
+            self.main_indicator(from, to, text)
         } else {
-            self.info_indicator(from, to)
+            self.info_indicator(from, to, text)
         }
     }
 
-    pub fn main_indicator(&mut self, from: usize, to: usize) -> &mut Self {
+    pub fn main_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        let text = text.into();
+        let pad3 = if text.is_empty() { "" } else { " " };
+
         self.lines.push(Line::MainIndicator(Indicator {
             pad1: "".into(),
             sep: "|",
             pad2: gen_padding(from + 1),
             indicator: gen_main_indicator(to - from),
+            pad3,
+            text,
         }));
+
         self
     }
 
-    pub fn info_indicator(&mut self, from: usize, to: usize) -> &mut Self {
+    pub fn info_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        let text = text.into();
+        let pad3 = if text.is_empty() { "" } else { " " };
+
         self.lines.push(Line::InfoIndicator(Indicator {
             pad1: "".into(),
             sep: "|",
             pad2: gen_padding(from + 1),
             indicator: gen_info_indicator(to - from),
+            pad3,
+            text,
         }));
+
         self
     }
 
