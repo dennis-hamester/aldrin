@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{LitPosInt, StructField};
+use crate::ast::{Ident, LitPosInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -8,6 +8,7 @@ use crate::Parsed;
 pub struct InvalidStructFieldId {
     schema_name: String,
     id: LitPosInt,
+    field_ident: Ident,
 }
 
 impl InvalidStructFieldId {
@@ -19,11 +20,16 @@ impl InvalidStructFieldId {
         validate.add_error(InvalidStructFieldId {
             schema_name: validate.schema_name().to_owned(),
             id: field.id().clone(),
+            field_ident: field.name().clone(),
         });
     }
 
     pub fn id(&self) -> &LitPosInt {
         &self.id
+    }
+
+    pub fn field_ident(&self) -> &Ident {
+        &self.field_ident
     }
 }
 
