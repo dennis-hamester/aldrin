@@ -40,7 +40,17 @@ impl Diagnostic for ImportNotFound {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!(
+            "file not found for schema `{}`",
+            self.import.schema_name().value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.import.span().from, self.import.span())
+                .help("an include directory may be missing");
+        }
+
+        fmt.format()
     }
 }
 
