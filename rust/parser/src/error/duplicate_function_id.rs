@@ -10,11 +10,24 @@ pub struct DuplicateFunctionId {
     schema_name: String,
     duplicate: LitPosInt,
     original_span: Span,
+    free_id: u32,
 }
 
 impl DuplicateFunctionId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
         let mut ids = HashMap::new();
+
+        let mut free_id = 1 + service
+            .items()
+            .iter()
+            .filter_map(|i| match i {
+                ServiceItem::Function(f) => Some(f),
+                _ => None,
+            })
+            .fold(0, |cur, f| match f.id().value().parse() {
+                Ok(id) if id > cur => id,
+                _ => cur,
+            });
 
         for item in service.items() {
             let func = match item {
@@ -32,7 +45,10 @@ impl DuplicateFunctionId {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: func.id().clone(),
                         original_span: e.get().span(),
+                        free_id,
                     });
+
+                    free_id += 1;
                 }
             }
         }
@@ -44,6 +60,10 @@ impl DuplicateFunctionId {
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+
+    pub fn free_id(&self) -> u32 {
+        self.free_id
     }
 }
 

@@ -12,6 +12,7 @@ pub struct DuplicateStructFieldId {
     original_span: Span,
     struct_span: Span,
     struct_ident: Option<Ident>,
+    free_id: u32,
 }
 
 impl DuplicateStructFieldId {
@@ -22,6 +23,13 @@ impl DuplicateStructFieldId {
         validate: &mut Validate,
     ) {
         let mut ids = HashMap::new();
+
+        let mut free_id = 1 + fields
+            .iter()
+            .fold(0, |cur, f| match f.id().value().parse() {
+                Ok(id) if id > cur => id,
+                _ => cur,
+            });
 
         for field in fields {
             match ids.entry(field.id().value()) {
@@ -36,7 +44,10 @@ impl DuplicateStructFieldId {
                         original_span: e.get().span(),
                         struct_span,
                         struct_ident: ident.cloned(),
+                        free_id,
                     });
+
+                    free_id += 1;
                 }
             }
         }
@@ -56,6 +67,10 @@ impl DuplicateStructFieldId {
 
     pub fn struct_ident(&self) -> Option<&Ident> {
         self.struct_ident.as_ref()
+    }
+
+    pub fn free_id(&self) -> u32 {
+        self.free_id
     }
 }
 

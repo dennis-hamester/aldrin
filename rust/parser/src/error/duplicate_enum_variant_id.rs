@@ -12,6 +12,7 @@ pub struct DuplicateEnumVariantId {
     original_span: Span,
     enum_span: Span,
     enum_ident: Option<Ident>,
+    free_id: u32,
 }
 
 impl DuplicateEnumVariantId {
@@ -22,6 +23,11 @@ impl DuplicateEnumVariantId {
         validate: &mut Validate,
     ) {
         let mut ids = HashMap::new();
+
+        let mut free_id = 1 + vars.iter().fold(0, |cur, v| match v.id().value().parse() {
+            Ok(id) if id > cur => id,
+            _ => cur,
+        });
 
         for var in vars {
             match ids.entry(var.id().value()) {
@@ -36,7 +42,10 @@ impl DuplicateEnumVariantId {
                         original_span: e.get().span(),
                         enum_span,
                         enum_ident: ident.cloned(),
+                        free_id,
                     });
+
+                    free_id += 1;
                 }
             }
         }
@@ -56,6 +65,10 @@ impl DuplicateEnumVariantId {
 
     pub fn enum_ident(&self) -> Option<&Ident> {
         self.enum_ident.as_ref()
+    }
+
+    pub fn free_id(&self) -> u32 {
+        self.free_id
     }
 }
 

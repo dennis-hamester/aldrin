@@ -10,11 +10,24 @@ pub struct DuplicateEventId {
     schema_name: String,
     duplicate: LitPosInt,
     original_span: Span,
+    free_id: u32,
 }
 
 impl DuplicateEventId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
         let mut ids = HashMap::new();
+
+        let mut free_id = 1 + service
+            .items()
+            .iter()
+            .filter_map(|i| match i {
+                ServiceItem::Event(e) => Some(e),
+                _ => None,
+            })
+            .fold(0, |cur, e| match e.id().value().parse() {
+                Ok(id) if id > cur => id,
+                _ => cur,
+            });
 
         for item in service.items() {
             let ev = match item {
@@ -32,7 +45,10 @@ impl DuplicateEventId {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: ev.id().clone(),
                         original_span: e.get().span(),
+                        free_id,
                     });
+
+                    free_id += 1;
                 }
             }
         }
@@ -44,6 +60,10 @@ impl DuplicateEventId {
 
     pub fn original_span(&self) -> Span {
         self.original_span
+    }
+
+    pub fn free_id(&self) -> u32 {
+        self.free_id
     }
 }
 
