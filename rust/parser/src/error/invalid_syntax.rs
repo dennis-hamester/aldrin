@@ -1,7 +1,8 @@
 use super::Error;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::grammar::Rule;
-use crate::{Parsed, Position};
+use crate::{LineCol, Parsed, Position, Span};
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -56,7 +57,64 @@ impl Diagnostic for InvalidSyntax {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut reason = "expected ".to_owned();
+
+        let mut iter = self.expected.iter().peekable();
+        let mut first = true;
+        let mut eof = false;
+        while let Some(expected) = iter.next() {
+            let expected: Cow<'static, str> = match expected {
+                Expected::Eof => {
+                    eof = true;
+                    continue;
+                }
+                Expected::Ident => "an identifier".into(),
+                Expected::Keyword(kw) => format!("`{}`", kw).into(),
+                Expected::LitInt => "a integer literal".into(),
+                Expected::LitPosInt => "a positive integer literal".into(),
+                Expected::LitString => "a string literal".into(),
+                Expected::LitUuid => "an uuid literal".into(),
+                Expected::SchemaName => "a schema name".into(),
+                Expected::Token(tok) => format!("`{}`", tok).into(),
+            };
+
+            if first {
+                first = false;
+            } else if iter.peek().is_some() || eof {
+                reason.push_str(", ");
+            } else {
+                reason.push_str(" or ");
+            }
+
+            reason.push_str(&expected);
+        }
+
+        if eof {
+            if first {
+                reason.push_str("end of file");
+            } else {
+                reason.push_str(" or end of file");
+            }
+        }
+
+        let mut fmt = Formatter::error(reason);
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            let span = Span {
+                from: self.pos,
+                to: Position {
+                    index: self.pos.index + 1,
+                    line_col: LineCol {
+                        line: self.pos.line_col.line,
+                        column: self.pos.line_col.column + 1,
+                    },
+                },
+            };
+
+            fmt.main_block(schema, self.pos, span);
+        }
+
+        fmt.format()
     }
 }
 
