@@ -20,7 +20,7 @@ impl TypeNotFound {
             }
         }
 
-        let candidate = util::did_you_mean_type(schema, ident.value()).map(ToOwned::to_owned);
+        let candidate = util::did_you_mean_type(schema, ident.value(), true).map(ToOwned::to_owned);
 
         validate.add_error(TypeNotFound {
             schema_name: validate.schema_name().to_owned(),

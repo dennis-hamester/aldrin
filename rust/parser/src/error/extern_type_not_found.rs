@@ -27,7 +27,7 @@ impl ExternTypeNotFound {
 
         let candidate = validate
             .get_schema(schema_name.value())
-            .and_then(|s| util::did_you_mean_type(s, ident.value()))
+            .and_then(|s| util::did_you_mean_type(s, ident.value(), false))
             .map(ToOwned::to_owned);
 
         validate.add_error(ExternTypeNotFound {
