@@ -1,5 +1,5 @@
 use super::CommonReadArgs;
-use aldrin_parser::Parser;
+use aldrin_parser::{Diagnostic, Parser};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -21,9 +21,19 @@ pub fn run(args: CheckArgs) -> Result<(), ()> {
     }
 
     let parsed = parser.parse(args.file);
-    if parsed.errors().is_empty() {
+    let res = if parsed.errors().is_empty() {
         Ok(())
     } else {
+        for err in parsed.errors() {
+            println!("{}", err.format(&parsed));
+        }
+
         Err(())
+    };
+
+    for warn in parsed.warnings() {
+        println!("{}", warn.format(&parsed));
     }
+
+    res
 }
