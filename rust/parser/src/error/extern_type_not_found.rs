@@ -61,7 +61,26 @@ impl Diagnostic for ExternTypeNotFound {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!(
+            "extern type `{}` not found in schema `{}`",
+            self.extern_ident.value(),
+            self.extern_schema.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.extern_ident.span().from,
+                self.extern_ident.span(),
+                "extern type used here",
+            );
+        }
+
+        if let Some(ref candidate) = self.candidate {
+            fmt.help(format!("did you mean `{}`?", candidate));
+        }
+
+        fmt.format()
     }
 }
 

@@ -49,7 +49,27 @@ impl Diagnostic for MissingImport {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!("missing import `{}`", self.extern_schema.value()));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.extern_schema.span().from,
+                self.extern_schema.span(),
+                format!("schema `{}` used here", self.extern_schema.value()),
+            );
+        }
+
+        if let Some(ref candidate) = self.candidate {
+            fmt.help(format!("did you mean `{}`?", candidate));
+        } else {
+            fmt.help(format!(
+                "add `import {};` at the top",
+                self.extern_schema.value()
+            ));
+        };
+
+        fmt.format()
     }
 }
 

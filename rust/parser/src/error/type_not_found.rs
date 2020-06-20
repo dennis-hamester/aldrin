@@ -48,7 +48,22 @@ impl Diagnostic for TypeNotFound {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!("type `{}` not found", self.ident.value()));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.ident.span().from,
+                self.ident.span(),
+                "type used here",
+            );
+        }
+
+        if let Some(ref candidate) = self.candidate {
+            fmt.help(format!("did you mean `{}`?", candidate));
+        }
+
+        fmt.format()
     }
 }
 
