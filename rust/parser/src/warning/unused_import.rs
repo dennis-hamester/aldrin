@@ -182,7 +182,17 @@ impl Diagnostic for UnusedImport {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::warning(format!(
+            "unused import `{}`",
+            self.import.schema_name().value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.import.span().from, self.import.span())
+                .help("remove the import statement");
+        }
+
+        fmt.format()
     }
 }
 
