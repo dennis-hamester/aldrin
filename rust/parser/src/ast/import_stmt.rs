@@ -29,10 +29,7 @@ impl ImportStmt {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         ImportNotFound::validate(self, validate);
-
-        if validate.is_main_schema() {
-            UnusedImport::validate(self, validate);
-        }
+        UnusedImport::validate(self, validate);
     }
 
     pub fn span(&self) -> Span {

@@ -112,11 +112,8 @@ impl Schema {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateDefinition::validate(self, validate);
-
-        if validate.is_main_schema() {
-            NonSnakeCaseSchemaName::validate(&self.name, validate);
-            DuplicateImport::validate(self, validate);
-        }
+        NonSnakeCaseSchemaName::validate(&self.name, validate);
+        DuplicateImport::validate(self, validate);
 
         for import in &self.imports {
             import.validate(validate);

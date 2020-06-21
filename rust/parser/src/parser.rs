@@ -122,4 +122,8 @@ impl Parsed {
     pub fn warnings(&self) -> &[Warning] {
         self.issues.warnings()
     }
+
+    pub fn other_warnings(&self) -> &[Warning] {
+        self.issues.other_warnings()
+    }
 }

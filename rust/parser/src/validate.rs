@@ -39,7 +39,11 @@ impl<'a> Validate<'a> {
     where
         W: Into<Warning>,
     {
-        self.issues.add_warning(w)
+        if self.is_main_schema {
+            self.issues.add_warning(w);
+        } else {
+            self.issues.add_other_warning(w);
+        }
     }
 
     pub fn get_schema(&self, schema_name: &str) -> Option<&'a Schema> {
@@ -48,9 +52,5 @@ impl<'a> Validate<'a> {
 
     pub fn get_current_schema(&self) -> &'a Schema {
         self.get_schema(self.schema_name).unwrap()
-    }
-
-    pub fn is_main_schema(&self) -> bool {
-        self.is_main_schema
     }
 }

@@ -69,12 +69,7 @@ pub fn print_diagnostics(parsed: &Parsed, color: Color) -> Result<()> {
         writeln!(stream)?;
     }
 
-    let main_schema_name = parsed.main_schema().name();
     for warning in parsed.warnings() {
-        if warning.schema_name() != main_schema_name {
-            continue;
-        }
-
         let formatted = warning.format(parsed);
         print_formatted(&mut stream, &formatted)?;
         writeln!(stream)?;

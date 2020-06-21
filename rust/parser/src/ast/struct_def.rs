@@ -61,10 +61,7 @@ impl StructDef {
             Some(&self.name),
             validate,
         );
-
-        if validate.is_main_schema() {
-            NonCamelCaseStruct::validate(self, validate);
-        }
+        NonCamelCaseStruct::validate(self, validate);
 
         self.name.validate(validate);
         for field in &self.fields {
@@ -201,10 +198,7 @@ impl StructField {
 
     fn validate(&self, validate: &mut Validate) {
         InvalidStructFieldId::validate(&self, validate);
-
-        if validate.is_main_schema() {
-            NonSnakeCaseStructField::validate(self, validate);
-        }
+        NonSnakeCaseStructField::validate(self, validate);
 
         self.name.validate(validate);
         self.field_type.validate(validate);

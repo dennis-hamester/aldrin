@@ -4,6 +4,7 @@ use crate::{Error, Warning};
 pub(crate) struct Issues {
     errors: Vec<Error>,
     warnings: Vec<Warning>,
+    other_warnings: Vec<Warning>,
 }
 
 impl Issues {
@@ -27,5 +28,16 @@ impl Issues {
 
     pub fn warnings(&self) -> &[Warning] {
         &self.warnings
+    }
+
+    pub fn add_other_warning<W>(&mut self, w: W)
+    where
+        W: Into<Warning>,
+    {
+        self.other_warnings.push(w.into());
+    }
+
+    pub fn other_warnings(&self) -> &[Warning] {
+        &self.other_warnings
     }
 }

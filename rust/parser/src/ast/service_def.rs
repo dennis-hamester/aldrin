@@ -80,10 +80,7 @@ impl ServiceDef {
         DuplicateServiceItem::validate(self, validate);
         DuplicateFunctionId::validate(self, validate);
         DuplicateEventId::validate(self, validate);
-
-        if validate.is_main_schema() {
-            NonCamelCaseService::validate(self, validate);
-        }
+        NonCamelCaseService::validate(self, validate);
 
         self.name.validate(validate);
         for item in &self.items {
@@ -205,9 +202,7 @@ impl FunctionDef {
     }
 
     fn validate(&self, validate: &mut Validate) {
-        if validate.is_main_schema() {
-            NonSnakeCaseFunction::validate(self, validate);
-        }
+        NonSnakeCaseFunction::validate(self, validate);
 
         self.name.validate(validate);
 

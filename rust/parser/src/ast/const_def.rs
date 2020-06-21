@@ -40,9 +40,7 @@ impl ConstDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        if validate.is_main_schema() {
-            NonShoutySnakeCaseConst::validate(self, validate);
-        }
+        NonShoutySnakeCaseConst::validate(self, validate);
 
         self.name.validate(validate);
         self.value.validate(validate);

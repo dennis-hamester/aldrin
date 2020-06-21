@@ -56,10 +56,7 @@ impl EnumDef {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateEnumVariant::validate(&self.vars, self.name.span(), Some(&self.name), validate);
         DuplicateEnumVariantId::validate(&self.vars, self.name.span(), Some(&self.name), validate);
-
-        if validate.is_main_schema() {
-            NonCamelCaseEnum::validate(self, validate);
-        }
+        NonCamelCaseEnum::validate(self, validate);
 
         self.name.validate(validate);
         for var in &self.vars {
@@ -186,10 +183,7 @@ impl EnumVariant {
 
     fn validate(&self, validate: &mut Validate) {
         InvalidEnumVariantId::validate(&self, validate);
-
-        if validate.is_main_schema() {
-            NonCamelCaseEnumVariant::validate(self, validate);
-        }
+        NonCamelCaseEnumVariant::validate(self, validate);
 
         self.name.validate(validate);
         if let Some(ref var_type) = self.var_type {

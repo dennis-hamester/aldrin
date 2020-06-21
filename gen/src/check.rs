@@ -27,8 +27,15 @@ pub fn run(args: CheckArgs) -> Result<(), ()> {
     diag::print_diagnostics(&parsed, args.common_args.color).ok();
 
     if parsed.errors().is_empty() {
+        if parsed.warnings().is_empty() {
+            println!("No issues found.");
+        } else {
+            println!("Some warning(s) found.");
+        }
+
         Ok(())
     } else {
+        println!("Some error(s) found.");
         Err(())
     }
 }
