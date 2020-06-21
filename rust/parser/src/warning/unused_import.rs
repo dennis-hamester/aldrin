@@ -1,12 +1,12 @@
 use super::Warning;
 use crate::ast::{
-    EnumDef, EnumVariant, EnumVariantType, EventDef, EventType, FunctionDef, FunctionPart,
-    ImportStmt, InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef,
-    StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    Definition, EnumDef, EnumVariant, EnumVariantType, EventDef, EventType, FunctionDef,
+    FunctionPart, ImportStmt, InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem,
+    StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Definition, Parsed, Schema};
+use crate::{Parsed, Schema};
 
 #[derive(Debug)]
 pub struct UnusedImport {

@@ -1,10 +1,9 @@
-use crate::ast::{ImportStmt, SchemaName};
+use crate::ast::{Definition, ImportStmt, SchemaName};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::warning::{DuplicateImport, NonSnakeCaseSchemaName};
-use crate::Definition;
 use pest::Parser;
 use std::fs::File;
 use std::io::Read;

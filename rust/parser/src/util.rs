@@ -1,4 +1,5 @@
-use crate::{Definition, Schema};
+use crate::ast::Definition;
+use crate::Schema;
 use std::cmp::Ordering;
 
 const BUILTIN_TYPES: &[&str] = &[

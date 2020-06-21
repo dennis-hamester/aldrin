@@ -1,5 +1,6 @@
 mod attribute;
 mod const_def;
+mod definition;
 mod enum_def;
 mod ident;
 mod import_stmt;
@@ -15,6 +16,7 @@ mod type_name_or_inline;
 
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
+pub use definition::Definition;
 pub use enum_def::{EnumDef, EnumVariant, EnumVariantType, InlineEnum};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;

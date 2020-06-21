@@ -1,7 +1,6 @@
 #![deny(intra_doc_link_resolution_failure)]
 #![deny(missing_debug_implementations)]
 
-mod definition;
 mod grammar;
 mod issues;
 mod parser;
@@ -15,7 +14,6 @@ pub mod diag;
 pub mod error;
 pub mod warning;
 
-pub use definition::Definition;
 pub use diag::Diagnostic;
 pub use error::Error;
 pub use parser::{Parsed, Parser};
