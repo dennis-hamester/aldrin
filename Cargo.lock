@@ -26,10 +26,7 @@ dependencies = [
 name = "aldrin-codegen"
 version = "0.1.0"
 dependencies = [
- "heck",
- "pest",
- "pest_derive",
- "uuid",
+ "aldrin-parser",
 ]
 
 [[package]]

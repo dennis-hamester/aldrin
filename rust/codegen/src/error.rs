@@ -1,95 +1,74 @@
-use pest::error::Error as PestError;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
-use std::num::ParseIntError;
-use std::path::PathBuf;
 
 #[derive(Debug)]
 #[non_exhaustive]
-pub struct Error {
-    pub kind: ErrorKind,
-    pub file: Option<PathBuf>,
-}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum ErrorKind {
+pub enum Error {
     Io(IoError),
-    InvalidModuleName,
-    Parser(String),
-    DuplicateImport(String),
-    Subprocess(String, Option<String>),
-    InvalidConst(String),
+    Subprocess(SubprocessError),
 }
 
-impl Error {
-    pub(crate) fn new(kind: ErrorKind) -> Self {
-        Error { kind, file: None }
-    }
-
-    pub(crate) fn with_file<P>(kind: ErrorKind, file: P) -> Self
-    where
-        P: Into<PathBuf>,
-    {
-        Error {
-            kind,
-            file: Some(file.into()),
-        }
-    }
-
-    pub(crate) fn set_file<P>(mut self, file: P) -> Self
-    where
-        P: Into<PathBuf>,
-    {
-        self.file = Some(file.into());
-        self
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn io(e: IoError) -> Self {
-        Self::new(ErrorKind::Io(e))
-    }
-
-    pub(crate) fn parser<R>(e: PestError<R>) -> Self
-    where
-        R: pest::RuleType,
-    {
-        Self::new(ErrorKind::Parser(e.to_string()))
-    }
-
-    pub(crate) fn duplicate_import<S>(module: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Self::new(ErrorKind::DuplicateImport(module.into()))
-    }
-}
-
-impl From<ParseIntError> for Error {
-    fn from(e: ParseIntError) -> Self {
-        Error::new(ErrorKind::InvalidConst(e.to_string()))
+impl From<IoError> for Error {
+    fn from(e: IoError) -> Self {
+        Error::Io(e)
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self.kind {
-            ErrorKind::Io(e) => f.write_fmt(format_args!("io error ({})", e)),
-            ErrorKind::InvalidModuleName => f.write_str("invalid module name"),
-            ErrorKind::Parser(e) => e.fmt(f),
-            ErrorKind::DuplicateImport(m) => {
-                f.write_fmt(format_args!("duplicate import \"{}\"", m))
-            }
-            ErrorKind::Subprocess(n, Some(o)) => {
-                f.write_fmt(format_args!("subprocess \"{}\" failed:\n{}", n, o))
-            }
-            ErrorKind::Subprocess(n, None) => {
-                f.write_fmt(format_args!("subprocess \"{}\" failed", n))
-            }
-            ErrorKind::InvalidConst(e) => f.write_fmt(format_args!("invalid constant: {}", e)),
+        match self {
+            Error::Io(e) => e.fmt(f),
+            Error::Subprocess(e) => e.fmt(f),
         }
     }
 }
 
 impl StdError for Error {}
+
+#[derive(Debug)]
+pub struct SubprocessError {
+    pub(crate) command: String,
+    pub(crate) code: Option<i32>,
+    pub(crate) stderr: Option<String>,
+}
+
+impl SubprocessError {
+    pub fn command(&self) -> &str {
+        &self.command
+    }
+
+    pub fn code(&self) -> Option<i32> {
+        self.code
+    }
+
+    pub fn stderr(&self) -> Option<&str> {
+        self.stderr.as_deref()
+    }
+}
+
+impl From<SubprocessError> for Error {
+    fn from(e: SubprocessError) -> Self {
+        Error::Subprocess(e)
+    }
+}
+
+impl fmt::Display for SubprocessError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "subprocess `{}` failed", self.command)?;
+
+        if let Some(code) = self.code {
+            write!(f, " with code {}", code)?;
+        }
+
+        if f.alternate() {
+            if let Some(ref stderr) = self.stderr {
+                writeln!(f, ":\n{}", stderr)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl StdError for SubprocessError {}

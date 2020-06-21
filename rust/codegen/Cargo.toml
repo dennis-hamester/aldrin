@@ -11,7 +11,4 @@ default = ["rust"]
 rust = []
 
 [dependencies]
-heck = "0.3.1"
-pest = "2.1.2"
-pest_derive = "2.1.0"
-uuid = "0.8.1"
+aldrin-parser = { version = "0.1.0", path = "../parser" }

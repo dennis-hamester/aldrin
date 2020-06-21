@@ -1,54 +1,46 @@
 #![deny(intra_doc_link_resolution_failure)]
 #![deny(missing_debug_implementations)]
 
-mod error;
-mod schema;
-
 #[cfg(feature = "rust")]
-pub mod rust;
+mod rust;
 
-use schema::{ModuleName, Schema};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+pub mod error;
 
-pub use error::{Error, ErrorKind};
+use aldrin_parser::Parsed;
+
+pub use error::Error;
+#[cfg(feature = "rust")]
+pub use rust::{RustOptions, RustOutput};
 
 #[derive(Debug)]
-pub struct Generator {
-    schema: Schema,
-    options: Options,
-    imported: HashMap<ModuleName, Schema>,
+pub struct Generator<'a> {
+    options: &'a Options,
+    parsed: &'a Parsed,
 }
 
-impl Generator {
-    pub fn from_path<P>(path: P, options: Options) -> Result<Self, Error>
-    where
-        P: AsRef<Path>,
-    {
-        Ok(Generator {
-            schema: Schema::parse_file(path)?,
-            options,
-            imported: HashMap::new(),
-        })
+impl<'a> Generator<'a> {
+    pub fn new(options: &'a Options, parsed: &'a Parsed) -> Self {
+        assert!(parsed.errors().is_empty());
+        Generator { options, parsed }
     }
 
-    pub fn options(&self) -> &Options {
-        &self.options
+    pub fn options(&self) -> &'a Options {
+        self.options
+    }
+
+    pub fn parsed(&self) -> &'a Parsed {
+        self.parsed
     }
 
     #[cfg(feature = "rust")]
-    pub fn generate_rust(
-        &self,
-        rust_options: rust::RustOptions,
-    ) -> Result<rust::RustOutput, Error> {
-        rust::generate(&self.schema, &self.options, rust_options)
+    pub fn generate_rust(&self, rust_options: &RustOptions) -> Result<RustOutput, Error> {
+        rust::generate(self.parsed, self.options, rust_options)
     }
 }
 
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct Options {
-    pub include_dirs: Vec<PathBuf>,
     pub client: bool,
     pub server: bool,
 }
@@ -56,7 +48,6 @@ pub struct Options {
 impl Options {
     pub fn new() -> Self {
         Options {
-            include_dirs: Vec::new(),
             client: true,
             server: true,
         }
