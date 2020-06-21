@@ -1,7 +1,6 @@
 use super::{Ident, KeyTypeName, SchemaName};
 use crate::error::{ExternTypeNotFound, MissingImport, TypeNotFound};
 use crate::grammar::Rule;
-use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
@@ -108,8 +107,8 @@ impl TypeNameKind {
             }
             Rule::external_type_name => {
                 let mut pairs = pair.into_inner();
-                let mut issues = Issues::default();
-                let schema_name = SchemaName::parse(pairs.next().unwrap(), &mut issues, false);
+                let pair = pairs.next().unwrap();
+                let schema_name = SchemaName::parse(pair);
                 pairs.next().unwrap(); // Skip ::.
                 let ident = Ident::parse(pairs.next().unwrap());
                 TypeNameKind::Extern(schema_name, ident)

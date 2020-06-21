@@ -1,6 +1,8 @@
 use super::Warning;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::validate::Validate;
 use crate::Parsed;
+use heck::SnakeCase;
 
 #[derive(Debug)]
 pub struct NonSnakeCaseSchemaName {
@@ -9,15 +11,16 @@ pub struct NonSnakeCaseSchemaName {
 }
 
 impl NonSnakeCaseSchemaName {
-    pub(crate) fn new<S1, S2>(schema_name: S1, snake_case: S2) -> Self
-    where
-        S1: Into<String>,
-        S2: Into<String>,
-    {
-        NonSnakeCaseSchemaName {
-            schema_name: schema_name.into(),
-            snake_case: snake_case.into(),
+    pub(crate) fn validate(schema_name: &str, validate: &mut Validate) {
+        let snake_case = schema_name.to_snake_case();
+        if schema_name == snake_case {
+            return;
         }
+
+        validate.add_warning(NonSnakeCaseSchemaName {
+            schema_name: schema_name.to_owned(),
+            snake_case,
+        });
     }
 
     pub fn snake_case(&self) -> &str {

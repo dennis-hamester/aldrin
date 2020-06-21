@@ -3,7 +3,7 @@ use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoErro
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
-use crate::warning::DuplicateImport;
+use crate::warning::{DuplicateImport, NonSnakeCaseSchemaName};
 use crate::Definition;
 use pest::Parser;
 use std::fs::File;
@@ -63,7 +63,7 @@ impl Schema {
 
         for pair in pairs {
             match pair.as_rule() {
-                Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair, issues)),
+                Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair)),
                 Rule::def => schema.defs.push(Definition::parse(pair)),
                 Rule::EOI => break,
                 _ => unreachable!(),
@@ -106,11 +106,7 @@ impl Schema {
             }
         };
 
-        let schema_name = SchemaName::parse(schema_name_pairs.next().unwrap(), issues, true);
-        if schema_name.span().to.index != file_stem_str.len() {
-            issues.add_error(InvalidSchemaName::new(file_stem_str));
-        }
-
+        let schema_name = SchemaName::parse(schema_name_pairs.next().unwrap());
         schema_name.value().to_owned()
     }
 
@@ -118,6 +114,7 @@ impl Schema {
         DuplicateDefinition::validate(self, validate);
 
         if validate.is_main_schema() {
+            NonSnakeCaseSchemaName::validate(&self.name, validate);
             DuplicateImport::validate(self, validate);
         }
 

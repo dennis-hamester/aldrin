@@ -1,7 +1,6 @@
 use super::SchemaName;
 use crate::error::ImportNotFound;
 use crate::grammar::Rule;
-use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::warning::UnusedImport;
 use crate::Span;
@@ -14,7 +13,7 @@ pub struct ImportStmt {
 }
 
 impl ImportStmt {
-    pub(crate) fn parse(pair: Pair<Rule>, issues: &mut Issues) -> Self {
+    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::import_stmt);
 
         let span = Span::from_pair(&pair);
@@ -22,7 +21,8 @@ impl ImportStmt {
         let mut pairs = pair.into_inner();
         pairs.next().unwrap(); // Skip keyword
 
-        let schema_name = SchemaName::parse(pairs.next().unwrap(), issues, false);
+        let pair = pairs.next().unwrap();
+        let schema_name = SchemaName::parse(pair);
 
         ImportStmt { span, schema_name }
     }
