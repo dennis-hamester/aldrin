@@ -1,12 +1,14 @@
 mod check;
 mod rust;
 
+use std::convert::Infallible;
 use std::path::PathBuf;
 use std::process;
+use std::str::FromStr;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 #[structopt(
     about,
     global_settings = &[AppSettings::VersionlessSubcommands, AppSettings::ColoredHelp]
@@ -19,7 +21,35 @@ enum Args {
     Rust(rust::RustArgs),
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
+pub struct CommonArgs {
+    /// When to color output
+    #[structopt(long, default_value = "auto")]
+    #[structopt(possible_values = &["auto", "always", "never"])]
+    color: Color,
+}
+
+#[derive(Copy, Clone)]
+pub enum Color {
+    Auto,
+    Always,
+    Never,
+}
+
+impl FromStr for Color {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Infallible> {
+        match s {
+            "auto" => Ok(Color::Auto),
+            "always" => Ok(Color::Always),
+            "never" => Ok(Color::Never),
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(StructOpt)]
 pub struct CommonReadArgs {
     /// Additional include directories
     #[structopt(short = "I", long, name = "include_dir")]
@@ -27,7 +57,7 @@ pub struct CommonReadArgs {
     include: Vec<PathBuf>,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 pub struct CommonGenArgs {
     /// Output directory
     ///
@@ -35,17 +65,17 @@ pub struct CommonGenArgs {
     #[structopt(short, long = "output", name = "output_dir")]
     output_dir: PathBuf,
 
-    /// Overwrite output file
+    /// Overwrite output files
     #[structopt(short = "f", long)]
     overwrite: bool,
 
     /// Skip generating client-side code for services
-    #[structopt(long = "no-client", parse(from_flag = std::ops::Not::not))]
-    client: bool,
+    #[structopt(long)]
+    no_client: bool,
 
     /// Skip generating server-side code for services
-    #[structopt(long = "no-server", parse(from_flag = std::ops::Not::not))]
-    server: bool,
+    #[structopt(long)]
+    no_server: bool,
 }
 
 fn main() {

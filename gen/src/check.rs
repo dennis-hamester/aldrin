@@ -1,10 +1,13 @@
-use super::CommonReadArgs;
+use crate::{CommonArgs, CommonReadArgs};
 use aldrin_parser::{Diagnostic, Parser};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 pub struct CheckArgs {
+    #[structopt(flatten)]
+    common_args: CommonArgs,
+
     #[structopt(flatten)]
     common_read_args: CommonReadArgs,
 
