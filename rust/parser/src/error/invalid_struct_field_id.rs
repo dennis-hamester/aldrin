@@ -43,7 +43,23 @@ impl Diagnostic for InvalidStructFieldId {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!(
+            "invalid id `{}` for struct field `{}`",
+            self.id.value(),
+            self.field_ident.value(),
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(
+                schema,
+                self.id.span().from,
+                self.id.span(),
+                "id defined here",
+            );
+        }
+
+        fmt.help("ids must be u32 values in the range from 0 to 4294967295");
+        fmt.format()
     }
 }
 
