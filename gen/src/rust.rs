@@ -1,13 +1,16 @@
-use super::{CommonGenArgs, CommonReadArgs};
-use aldrin_codegen::rust::RustOptions;
-use aldrin_codegen::{Generator, Options};
+use crate::{diag, CommonArgs, CommonGenArgs, CommonReadArgs};
+use aldrin_codegen::{Generator, Options, RustOptions};
+use aldrin_parser::Parser;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 pub struct RustArgs {
+    #[structopt(flatten)]
+    common_args: CommonArgs,
+
     #[structopt(flatten)]
     common_read_args: CommonReadArgs,
 
@@ -32,24 +35,34 @@ pub struct RustArgs {
 }
 
 pub fn run(args: RustArgs) -> Result<(), ()> {
-    let mut options = Options::new();
-    options.include_dirs = args.common_read_args.include;
-    options.client = args.common_gen_args.client;
-    options.server = args.common_gen_args.server;
+    let mut parser = Parser::new();
 
-    let gen = match Generator::from_path(args.file, options) {
-        Ok(gen) => gen,
-        Err(e) => {
-            eprintln!("{}", e);
-            return Err(());
+    for include in args.common_read_args.include {
+        parser.add_schema_path(include);
+    }
+
+    let parsed = parser.parse(args.file);
+    diag::print_diagnostics(&parsed, args.common_args.color).ok();
+
+    if parsed.errors().is_empty() {
+        if !parsed.warnings().is_empty() {
+            println!("Some warning(s) found.");
         }
-    };
+    } else {
+        println!("Some error(s) found.");
+        return Err(());
+    }
+
+    let mut options = Options::new();
+    options.client = !args.common_gen_args.no_client;
+    options.server = !args.common_gen_args.no_server;
 
     let mut rust_options = RustOptions::new();
     rust_options.rustfmt = args.format;
-    rust_options.rustfmt_toml = args.rustfmt_toml;
+    rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
 
-    let output = match gen.generate_rust(rust_options) {
+    let gen = Generator::new(&options, &parsed);
+    let output = match gen.generate_rust(&rust_options) {
         Ok(output) => output,
         Err(e) => {
             eprintln!("{}", e);
@@ -66,12 +79,12 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
             .create(true)
             .truncate(true)
             .write(true)
-            .open(module_path)
+            .open(&module_path)
     } else {
         OpenOptions::new()
             .create_new(true)
             .write(true)
-            .open(module_path)
+            .open(&module_path)
     };
     let mut file = match file {
         Ok(file) => file,
@@ -82,7 +95,10 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
     };
 
     match file.write_all(output.module_content.as_bytes()) {
-        Ok(()) => Ok(()),
+        Ok(()) => {
+            println!("File `{}` written.", module_path.display());
+            Ok(())
+        }
         Err(e) => {
             eprintln!("{}", e);
             Err(())

@@ -1,5 +1,6 @@
 mod check;
 mod diag;
+mod rust;
 
 use std::convert::Infallible;
 use std::path::PathBuf;
