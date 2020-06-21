@@ -23,6 +23,7 @@ enum Args {
 pub struct CommonReadArgs {
     /// Additional include directories
     #[structopt(short = "I", long, name = "include_dir")]
+    #[structopt(number_of_values(1))]
     include: Vec<PathBuf>,
 }
 
