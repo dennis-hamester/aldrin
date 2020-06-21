@@ -12,3 +12,4 @@ rust = []
 
 [dependencies]
 aldrin-parser = { version = "0.1.0", path = "../parser" }
+heck = "0.3.1"
