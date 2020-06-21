@@ -2,8 +2,8 @@
 
 extern crate proc_macro;
 
-use aldrin_codegen::rust::RustOptions;
-use aldrin_codegen::{Generator, Options};
+use aldrin_codegen::{Generator, Options, RustOptions};
+use aldrin_parser::{Diagnostic, Parser};
 use proc_macro::TokenStream;
 use std::env;
 use std::path::PathBuf;
@@ -35,16 +35,35 @@ impl Parse for Args {
 pub fn generate(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as Args);
 
+    let parser = Parser::new();
+    let parsed = parser.parse(&args.schema);
+
+    if !parsed.errors().is_empty() {
+        let mut panic_msg = String::new();
+
+        for error in parsed.errors() {
+            let formatted = error.format(&parsed);
+            panic_msg.push_str(&formatted.to_string());
+            panic_msg.push('\n');
+        }
+
+        for warning in parsed.warnings() {
+            let formatted = warning.format(&parsed);
+            panic_msg.push_str(&formatted.to_string());
+            panic_msg.push('\n');
+        }
+
+        panic!(panic_msg);
+    }
+
     let mut options = Options::new();
     options.client = true;
     options.server = true;
 
-    let gen = match Generator::from_path(&args.schema, options) {
-        Ok(gen) => gen,
-        Err(e) => panic!("{}", e),
-    };
+    let rust_options = RustOptions::new();
 
-    let output = match gen.generate_rust(RustOptions::new()) {
+    let gen = Generator::new(&options, &parsed);
+    let output = match gen.generate_rust(&rust_options) {
         Ok(output) => output,
         Err(e) => panic!("{}", e),
     };

@@ -11,4 +11,5 @@ proc-macro = true
 
 [dependencies]
 aldrin-codegen = { version = "0.1.0", path = "../codegen", features = ["rust"] }
+aldrin-parser = { version = "0.1.0", path = "../parser" }
 syn = "1.0.14"
