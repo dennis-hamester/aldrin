@@ -1,5 +1,5 @@
-use crate::{CommonArgs, CommonReadArgs};
-use aldrin_parser::{Diagnostic, Parser};
+use crate::{diag, CommonArgs, CommonReadArgs};
+use aldrin_parser::Parser;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -24,19 +24,11 @@ pub fn run(args: CheckArgs) -> Result<(), ()> {
     }
 
     let parsed = parser.parse(args.file);
-    let res = if parsed.errors().is_empty() {
+    diag::print_diagnostics(&parsed, args.common_args.color).ok();
+
+    if parsed.errors().is_empty() {
         Ok(())
     } else {
-        for err in parsed.errors() {
-            println!("{}", err.format(&parsed));
-        }
-
         Err(())
-    };
-
-    for warn in parsed.warnings() {
-        println!("{}", warn.format(&parsed));
     }
-
-    res
 }
