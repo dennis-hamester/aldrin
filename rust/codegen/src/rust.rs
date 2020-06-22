@@ -290,6 +290,88 @@ impl<'a> RustGenerator<'a> {
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
     ) {
+        let attrs = attrs
+            .map(RustAttributes::parse)
+            .unwrap_or_else(RustAttributes::new);
+
+        genln!(self, "#[derive(Debug, Clone{})]", attrs.additional_derives());
+        genln!(self, "#[non_exhaustive]");
+        genln!(self, "pub enum {} {{", name);
+        for var in vars {
+            let var_name = var.name().value();
+            if let Some(var_type) = var.variant_type() {
+                let ty = var_type.variant_type();
+                if var_type.optional() {
+                    genln!(self, "    {}(Option<{}>),", var_name, enum_variant_name(name, var_name, ty));
+                } else {
+                    genln!(self, "    {}({}),", var_name, enum_variant_name(name, var_name, ty));
+                }
+            } else {
+                genln!(self, "    {},", var_name);
+            }
+        }
+        genln!(self, "}}");
+        genln!(self);
+
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", name);
+        genln!(self, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
+        genln!(self, "        let (var, val) = match v {{");
+        genln!(self, "            aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant, value }} => (variant, *value),");
+        genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
+        genln!(self, "        }};");
+        genln!(self);
+        genln!(self, "        match (var, val) {{");
+        for var in vars {
+            let var_name = var.name().value();
+            let id = var.id().value();
+            if var.variant_type().is_some() {
+                genln!(self, "            ({}, val) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(val)?)),", id, name, var_name);
+            } else {
+                genln!(self, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", id, name, var_name);
+            }
+        }
+        genln!(self, "            _ => Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
+        genln!(self, "        }}");
+        genln!(self, "    }}");
+        genln!(self, "}}");
+        genln!(self);
+
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{", name);
+        genln!(self, "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{");
+        genln!(self, "        match self {{");
+        for var in vars {
+            let var_name = var.name().value();
+            let id = var.id().value();
+            if var.variant_type().is_some() {
+                genln!(self, "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(v.into_value()) }},", name, var_name, id);
+            } else {
+                genln!(self, "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(aldrin_client::codegen::aldrin_proto::Value::None) }},", name, var_name, id);
+            }
+        }
+        genln!(self, "        }}");
+        genln!(self, "    }}");
+        genln!(self, "}}");
+        genln!(self);
+
+        for var in vars {
+            let var_type = match var.variant_type() {
+                Some(var_type) => var_type,
+                None => continue,
+            };
+
+            let var_name = var.name().value();
+            match var_type.variant_type() {
+                ast::TypeNameOrInline::Struct(s) => {
+                    self.struct_def(&enum_inline_variant_type(name, var_name), None, s.fields())
+                }
+                ast::TypeNameOrInline::Enum(e) => self.enum_def(
+                    &enum_inline_variant_type(name, var_name),
+                    None,
+                    e.variants(),
+                ),
+                ast::TypeNameOrInline::TypeName(_) => {}
+            }
+        }
     }
 }
 
@@ -355,6 +437,19 @@ fn struct_inline_field_type(struct_name: &str, field_name: &str) -> String {
 
 fn struct_builder_name(base: &str) -> String {
     format!("{}Builder", base)
+}
+
+fn enum_variant_name(enum_name: &str, var_name: &str, var_type: &ast::TypeNameOrInline) -> String {
+    match var_type {
+        ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+            enum_inline_variant_type(enum_name, var_name)
+        }
+    }
+}
+
+fn enum_inline_variant_type(enum_name: &str, var_name: &str) -> String {
+    format!("{}{}", enum_name, var_name)
 }
 
 struct RustAttributes {
