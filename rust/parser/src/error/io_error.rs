@@ -34,7 +34,13 @@ impl Diagnostic for IoError {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(self.err.to_string());
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.note(format!("tried to read `{}`", schema.path().display()));
+        }
+
+        fmt.format()
     }
 }
 
