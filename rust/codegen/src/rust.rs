@@ -131,7 +131,7 @@ impl<'a> RustGenerator<'a> {
                 self.enum_def(e.name().value(), Some(e.attributes()), e.variants())
             }
             ast::Definition::Service(s) => self.service_def(s),
-            ast::Definition::Const(_) => {}
+            ast::Definition::Const(c) => self.const_def(c),
         }
     }
 
@@ -931,6 +931,24 @@ impl<'a> RustGenerator<'a> {
         }
 
         genln!(self, "}}");
+        genln!(self);
+    }
+
+    fn const_def(&mut self, const_def: &ast::ConstDef) {
+        let name = const_def.name().value();
+        match const_def.value() {
+            ast::ConstValue::U8(v) => genln!(self, "pub const {}: u8 = {};", name, v.value()),
+            ast::ConstValue::I8(v) => genln!(self, "pub const {}: i8 = {};", name, v.value()),
+            ast::ConstValue::U16(v) => genln!(self, "pub const {}: u16 = {};", name, v.value()),
+            ast::ConstValue::I16(v) => genln!(self, "pub const {}: i16 = {};", name, v.value()),
+            ast::ConstValue::U32(v) => genln!(self, "pub const {}: u32 = {};", name, v.value()),
+            ast::ConstValue::I32(v) => genln!(self, "pub const {}: i32 = {};", name, v.value()),
+            ast::ConstValue::U64(v) => genln!(self, "pub const {}: u64 = {};", name, v.value()),
+            ast::ConstValue::I64(v) => genln!(self, "pub const {}: i64 = {};", name, v.value()),
+            ast::ConstValue::String(v) => genln!(self, "pub const {}: &str = \"{}\";", name, v.value()),
+            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin_client::codegen::uuid::Uuid = aldrin_client::codegen::uuid::Uuid::from_u128({:#034x});", name, v.value().as_u128()),
+        };
+
         genln!(self);
     }
 }
