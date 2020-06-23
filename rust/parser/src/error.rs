@@ -4,6 +4,7 @@ mod duplicate_enum_variant_id;
 mod duplicate_event_id;
 mod duplicate_function_id;
 mod duplicate_service_item;
+mod duplicate_service_uuid;
 mod duplicate_struct_field;
 mod duplicate_struct_field_id;
 mod extern_type_not_found;
@@ -29,6 +30,7 @@ pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
 pub use duplicate_event_id::DuplicateEventId;
 pub use duplicate_function_id::DuplicateFunctionId;
 pub use duplicate_service_item::DuplicateServiceItem;
+pub use duplicate_service_uuid::DuplicateServiceUuid;
 pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
 pub use extern_type_not_found::ExternTypeNotFound;
@@ -54,6 +56,7 @@ pub enum Error {
     DuplicateEventId(DuplicateEventId),
     DuplicateFunctionId(DuplicateFunctionId),
     DuplicateServiceItem(DuplicateServiceItem),
+    DuplicateServiceUuid(DuplicateServiceUuid),
     DuplicateStructField(DuplicateStructField),
     DuplicateStructFieldId(DuplicateStructFieldId),
     ExternTypeNotFound(ExternTypeNotFound),
@@ -84,6 +87,7 @@ impl Diagnostic for Error {
             Error::DuplicateEventId(e) => e.schema_name(),
             Error::DuplicateFunctionId(e) => e.schema_name(),
             Error::DuplicateServiceItem(e) => e.schema_name(),
+            Error::DuplicateServiceUuid(e) => e.schema_name(),
             Error::DuplicateStructField(e) => e.schema_name(),
             Error::DuplicateStructFieldId(e) => e.schema_name(),
             Error::ExternTypeNotFound(e) => e.schema_name(),
@@ -110,6 +114,7 @@ impl Diagnostic for Error {
             Error::DuplicateEventId(e) => e.format(parsed),
             Error::DuplicateFunctionId(e) => e.format(parsed),
             Error::DuplicateServiceItem(e) => e.format(parsed),
+            Error::DuplicateServiceUuid(e) => e.format(parsed),
             Error::DuplicateStructField(e) => e.format(parsed),
             Error::DuplicateStructFieldId(e) => e.format(parsed),
             Error::ExternTypeNotFound(e) => e.format(parsed),

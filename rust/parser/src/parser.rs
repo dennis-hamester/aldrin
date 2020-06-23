@@ -1,3 +1,4 @@
+use crate::error::DuplicateServiceUuid;
 use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::{Error, Schema, Warning};
@@ -99,6 +100,8 @@ pub struct Parsed {
 
 impl Parsed {
     fn validate(&mut self) {
+        DuplicateServiceUuid::validate(self.schemas.values(), &mut self.issues);
+
         for (schema_name, schema) in &self.schemas {
             let is_main_schema = *schema_name == self.main_schema;
             let mut validate =
