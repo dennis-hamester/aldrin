@@ -66,7 +66,7 @@ kw_ok = @{ "ok" }
 kw_err = @{ "err" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 vec_type = { kw_vec ~ tok_ang_open ~ type_name ~ tok_ang_close }
 map_type = { kw_map ~ tok_ang_open ~ key_type_name ~ tok_arrow ~ type_name ~ tok_ang_close }
