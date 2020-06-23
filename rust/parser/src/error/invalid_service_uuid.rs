@@ -1,13 +1,15 @@
 use super::Error;
-use crate::ast::{LitUuid, ServiceDef};
+use crate::ast::{Ident, LitUuid, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct InvalidServiceUuid {
     schema_name: String,
     uuid: LitUuid,
+    svc_ident: Ident,
 }
 
 impl InvalidServiceUuid {
@@ -19,11 +21,16 @@ impl InvalidServiceUuid {
         validate.add_error(InvalidServiceUuid {
             schema_name: validate.schema_name().to_owned(),
             uuid: service_def.uuid().clone(),
+            svc_ident: service_def.name().clone(),
         });
     }
 
     pub fn uuid(&self) -> &LitUuid {
         &self.uuid
+    }
+
+    pub fn service_ident(&self) -> &Ident {
+        &self.svc_ident
     }
 }
 
@@ -37,7 +44,20 @@ impl Diagnostic for InvalidServiceUuid {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::error(format!(
+            "invalid uuid `{}` for service `{}`",
+            Uuid::nil(),
+            self.svc_ident.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.uuid.span().from, self.uuid.span(), "nil uuid");
+        }
+
+        fmt.note("the nil uuid cannot be used for services");
+        fmt.help(format!("use e.g. `{}`", Uuid::new_v4()));
+
+        fmt.format()
     }
 }
 
