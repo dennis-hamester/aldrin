@@ -105,6 +105,11 @@ impl Schema {
             }
         };
 
+        if schema_name_pairs.as_str() != file_stem_str {
+            issues.add_error(InvalidSchemaName::new(file_stem_str));
+            return file_stem_str.to_owned();
+        }
+
         let schema_name = SchemaName::parse(schema_name_pairs.next().unwrap());
         schema_name.value().to_owned()
     }
