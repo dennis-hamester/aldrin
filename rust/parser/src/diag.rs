@@ -518,7 +518,7 @@ impl<'a> Formatter<'a> {
     where
         S: Into<Cow<'a, str>>,
     {
-        self.info("=", "info", text)
+        self.info("=", "note", text)
     }
 
     pub fn help<S>(&mut self, text: S) -> &mut Self
