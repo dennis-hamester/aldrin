@@ -37,8 +37,18 @@ impl Diagnostic for NonSnakeCaseSchemaName {
         &self.schema_name
     }
 
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+    fn format<'a>(&'a self, _parsed: &'a Parsed) -> Formatted<'a> {
+        let mut fmt = Formatter::warning(format!(
+            "schema `{}` should have a snake-case name",
+            self.schema_name
+        ));
+
+        fmt.help(format!(
+            "consider renaming schema `{}` to `{}`",
+            self.schema_name, self.snake_case
+        ));
+
+        fmt.format()
     }
 }
 

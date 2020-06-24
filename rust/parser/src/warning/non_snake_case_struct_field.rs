@@ -43,7 +43,21 @@ impl Diagnostic for NonSnakeCaseStructField {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::warning(format!(
+            "field `{}` should have a snake-case name",
+            self.ident.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.ident.span().from, self.ident.span(), "");
+        }
+
+        fmt.help(format!(
+            "consider renaming field `{}` to `{}`",
+            self.ident.value(),
+            self.snake_case
+        ));
+        fmt.format()
     }
 }
 

@@ -43,7 +43,21 @@ impl Diagnostic for NonShoutySnakeCaseConst {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        todo!()
+        let mut fmt = Formatter::warning(format!(
+            "constant `{}` should have an upper-case name",
+            self.ident.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.ident.span().from, self.ident.span(), "");
+        }
+
+        fmt.help(format!(
+            "consider renaming constant `{}` to `{}`",
+            self.ident.value(),
+            self.shouty_snake_case
+        ));
+        fmt.format()
     }
 }
 

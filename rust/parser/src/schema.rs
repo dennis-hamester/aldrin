@@ -115,6 +115,10 @@ impl Schema {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        if self.source.is_none() {
+            return;
+        }
+
         DuplicateDefinition::validate(self, validate);
         NonSnakeCaseSchemaName::validate(&self.name, validate);
         DuplicateImport::validate(self, validate);
