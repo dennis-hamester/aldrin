@@ -3,7 +3,7 @@ mod host;
 mod join;
 mod list;
 
-aldrin_codegen_macros::generate!("../../schemas/chat.aldrin");
+aldrin_codegen_macros::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
 
 use std::error::Error;
 use std::net::SocketAddr;

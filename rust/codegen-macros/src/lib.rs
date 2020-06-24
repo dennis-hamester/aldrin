@@ -16,6 +16,7 @@ struct Args {
     schema: PathBuf,
     includes: Vec<PathBuf>,
     options: Options,
+    warnings_as_errors: bool,
 }
 
 impl Parse for Args {
@@ -29,8 +30,12 @@ impl Parse for Args {
             schema = root;
         }
 
-        let mut includes = Vec::new();
-        let mut options = Options::default();
+        let mut args = Args {
+            schema,
+            includes: Vec::new(),
+            options: Options::default(),
+            warnings_as_errors: false,
+        };
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
             if input.is_empty() {
@@ -42,21 +47,19 @@ impl Parse for Args {
 
             if opt == "include" {
                 let path = PathBuf::from(input.parse::<LitStr>()?.value());
-                includes.push(path);
+                args.includes.push(path);
             } else if opt == "client" {
-                options.client = input.parse::<LitBool>()?.value;
+                args.options.client = input.parse::<LitBool>()?.value;
             } else if opt == "server" {
-                options.server = input.parse::<LitBool>()?.value;
+                args.options.server = input.parse::<LitBool>()?.value;
+            } else if opt == "warnings_as_errors" {
+                args.warnings_as_errors = input.parse::<LitBool>()?.value;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
         }
 
-        Ok(Args {
-            schema,
-            includes,
-            options,
-        })
+        Ok(args)
     }
 }
 
@@ -79,17 +82,21 @@ pub fn generate(input: TokenStream) -> TokenStream {
     for warning in parsed.warnings() {
         let msg = format_diagnostic(warning, &parsed);
 
-        // Work-around a bug in emit_call_site_warning!(..)
-        // https://gitlab.com/CreepySkeleton/proc-macro-error/-/merge_requests/31
-        proc_macro_error::diagnostic!(
-            proc_macro2::Span::call_site(),
-            proc_macro_error::Level::Warning,
-            msg
-        )
-        .emit();
+        if args.warnings_as_errors {
+            emit_call_site_error!(msg);
+        } else {
+            // Work-around a bug in emit_call_site_warning!(..)
+            // https://gitlab.com/CreepySkeleton/proc-macro-error/-/merge_requests/31
+            proc_macro_error::diagnostic!(
+                proc_macro2::Span::call_site(),
+                proc_macro_error::Level::Warning,
+                msg
+            )
+            .emit();
+        }
     }
 
-    if !parsed.errors().is_empty() {
+    if !parsed.errors().is_empty() || (args.warnings_as_errors && !parsed.warnings().is_empty()) {
         abort_call_site!("there were Aldrin schema errors");
     }
 

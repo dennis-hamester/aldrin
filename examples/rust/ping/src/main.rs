@@ -13,7 +13,7 @@ use tokio::select;
 use tokio::time::{delay_for, Duration};
 use uuid::Uuid;
 
-aldrin_codegen_macros::generate!("../../schemas/ping.aldrin");
+aldrin_codegen_macros::generate!("../../schemas/ping.aldrin", warnings_as_errors = true);
 
 const MEASURE_UPDATE_MS: u64 = 5000;
 
