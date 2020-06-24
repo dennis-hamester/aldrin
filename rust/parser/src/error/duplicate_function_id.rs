@@ -2,66 +2,54 @@ use super::Error;
 use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
 pub struct DuplicateFunctionId {
     schema_name: String,
     duplicate: LitPosInt,
-    original_span: Span,
+    first: Span,
     service_ident: Ident,
     free_id: u32,
 }
 
 impl DuplicateFunctionId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
-        let mut ids = HashMap::new();
+        let funcs = service.items().iter().filter_map(|item| match item {
+            ServiceItem::Function(ev) => Some(ev),
+            _ => None,
+        });
 
-        let mut free_id = 1 + service
-            .items()
-            .iter()
-            .filter_map(|i| match i {
-                ServiceItem::Function(f) => Some(f),
-                _ => None,
-            })
-            .fold(0, |cur, f| match f.id().value().parse() {
+        let mut max_id = funcs
+            .clone()
+            .fold(0, |cur, ev| match ev.id().value().parse() {
                 Ok(id) if id > cur => id,
                 _ => cur,
             });
 
-        for item in service.items() {
-            let func = match item {
-                ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-
-            match ids.entry(func.id().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(func.id());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateFunctionId {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: func.id().clone(),
-                        original_span: e.get().span(),
-                        service_ident: service.name().clone(),
-                        free_id,
-                    });
-
-                    free_id += 1;
-                }
-            }
-        }
+        util::find_duplicates(
+            funcs,
+            |ev| ev.id().value(),
+            |duplicate, first| {
+                max_id += 1;
+                let free_id = max_id;
+                validate.add_error(DuplicateFunctionId {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.id().clone(),
+                    first: first.id().span(),
+                    service_ident: service.name().clone(),
+                    free_id,
+                })
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 
     pub fn service_ident(&self) -> &Ident {
@@ -96,21 +84,10 @@ impl Diagnostic for DuplicateFunctionId {
                 self.duplicate.span(),
                 "duplicate defined here",
             )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
-            )
-            .info_block(
-                schema,
-                self.service_ident.span().from,
-                self.service_ident.span(),
-                format!("service `{}` defined here", self.service_ident.value()),
-            );
+            .info_block(schema, self.first.from, self.first, "first defined here");
         }
 
-        fmt.help(format!("use a free id like {}", self.free_id));
+        fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
     }
 }
