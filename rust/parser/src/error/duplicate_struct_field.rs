@@ -2,14 +2,13 @@ use super::Error;
 use crate::ast::{Ident, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
 pub struct DuplicateStructField {
     schema_name: String,
     duplicate: Ident,
-    original_span: Span,
+    first: Span,
     struct_span: Span,
     struct_ident: Option<Ident>,
 }
@@ -21,33 +20,27 @@ impl DuplicateStructField {
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
-        let mut idents = HashMap::new();
-
-        for field in fields {
-            match idents.entry(field.name().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(field.name());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateStructField {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: field.name().clone(),
-                        original_span: e.get().span(),
-                        struct_span,
-                        struct_ident: ident.cloned(),
-                    });
-                }
-            }
-        }
+        util::find_duplicates(
+            fields,
+            |field| field.name().value(),
+            |duplicate, first| {
+                validate.add_error(DuplicateStructField {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.name().clone(),
+                    first: first.name().span(),
+                    struct_span,
+                    struct_ident: ident.cloned(),
+                })
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &Ident {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 
     pub fn struct_span(&self) -> Span {
@@ -89,28 +82,7 @@ impl Diagnostic for DuplicateStructField {
                 self.duplicate.span(),
                 "duplicate defined here",
             )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
-            );
-
-            if let Some(ref ident) = self.struct_ident {
-                fmt.info_block(
-                    schema,
-                    ident.span().from,
-                    ident.span(),
-                    format!("struct `{}` defined here", ident.value()),
-                );
-            } else {
-                fmt.info_block(
-                    schema,
-                    self.struct_span.from,
-                    self.struct_span,
-                    "inline struct defined here",
-                );
-            }
+            .info_block(schema, self.first.from, self.first, "first defined here");
         }
 
         fmt.format()

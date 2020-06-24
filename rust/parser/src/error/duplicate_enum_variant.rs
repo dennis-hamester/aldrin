@@ -2,14 +2,13 @@ use super::Error;
 use crate::ast::{EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
 pub struct DuplicateEnumVariant {
     schema_name: String,
     duplicate: Ident,
-    original_span: Span,
+    first: Span,
     enum_span: Span,
     enum_ident: Option<Ident>,
 }
@@ -21,33 +20,27 @@ impl DuplicateEnumVariant {
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
-        let mut idents = HashMap::new();
-
-        for var in vars {
-            match idents.entry(var.name().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(var.name());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateEnumVariant {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: var.name().clone(),
-                        original_span: e.get().span(),
-                        enum_span,
-                        enum_ident: ident.cloned(),
-                    });
-                }
-            }
-        }
+        util::find_duplicates(
+            vars,
+            |var| var.name().value(),
+            |duplicate, first| {
+                validate.add_error(DuplicateEnumVariant {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.name().clone(),
+                    first: first.name().span(),
+                    enum_span,
+                    enum_ident: ident.cloned(),
+                })
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &Ident {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 
     pub fn enum_span(&self) -> Span {
@@ -89,28 +82,7 @@ impl Diagnostic for DuplicateEnumVariant {
                 self.duplicate.span(),
                 "duplicate defined here",
             )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
-            );
-
-            if let Some(ref ident) = self.enum_ident {
-                fmt.info_block(
-                    schema,
-                    ident.span().from,
-                    ident.span(),
-                    format!("enum `{}` defined here", ident.value()),
-                );
-            } else {
-                fmt.info_block(
-                    schema,
-                    self.enum_span.from,
-                    self.enum_span,
-                    "inline enum defined here",
-                );
-            }
+            .info_block(schema, self.first.from, self.first, "first defined here");
         }
 
         fmt.format()

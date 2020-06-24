@@ -2,14 +2,13 @@ use super::Error;
 use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
 pub struct DuplicateEnumVariantId {
     schema_name: String,
     duplicate: LitPosInt,
-    original_span: Span,
+    first: Span,
     enum_span: Span,
     enum_ident: Option<Ident>,
     free_id: u32,
@@ -22,41 +21,37 @@ impl DuplicateEnumVariantId {
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
-        let mut ids = HashMap::new();
+        let mut max_id = vars
+            .iter()
+            .fold(0, |cur, var| match var.id().value().parse() {
+                Ok(id) if id > cur => id,
+                _ => cur,
+            });
 
-        let mut free_id = 1 + vars.iter().fold(0, |cur, v| match v.id().value().parse() {
-            Ok(id) if id > cur => id,
-            _ => cur,
-        });
-
-        for var in vars {
-            match ids.entry(var.id().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(var.id());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateEnumVariantId {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: var.id().clone(),
-                        original_span: e.get().span(),
-                        enum_span,
-                        enum_ident: ident.cloned(),
-                        free_id,
-                    });
-
-                    free_id += 1;
-                }
-            }
-        }
+        util::find_duplicates(
+            vars,
+            |var| var.id().value(),
+            |duplicate, first| {
+                max_id += 1;
+                let free_id = max_id;
+                validate.add_error(DuplicateEnumVariantId {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.id().clone(),
+                    first: first.id().span(),
+                    enum_span,
+                    enum_ident: ident.cloned(),
+                    free_id,
+                })
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 
     pub fn enum_span(&self) -> Span {
@@ -102,31 +97,10 @@ impl Diagnostic for DuplicateEnumVariantId {
                 self.duplicate.span(),
                 "duplicate defined here",
             )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
-            );
-
-            if let Some(ref ident) = self.enum_ident {
-                fmt.info_block(
-                    schema,
-                    ident.span().from,
-                    ident.span(),
-                    format!("enum `{}` defined here", ident.value()),
-                );
-            } else {
-                fmt.info_block(
-                    schema,
-                    self.enum_span.from,
-                    self.enum_span,
-                    "inline enum defined here",
-                );
-            }
+            .info_block(schema, self.first.from, self.first, "first defined here");
         }
 
-        fmt.help(format!("use a free id like {}", self.free_id));
+        fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
     }
 }

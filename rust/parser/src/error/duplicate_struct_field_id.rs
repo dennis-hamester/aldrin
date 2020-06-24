@@ -2,14 +2,13 @@ use super::Error;
 use crate::ast::{Ident, LitPosInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
 pub struct DuplicateStructFieldId {
     schema_name: String,
     duplicate: LitPosInt,
-    original_span: Span,
+    first: Span,
     struct_span: Span,
     struct_ident: Option<Ident>,
     free_id: u32,
@@ -22,43 +21,37 @@ impl DuplicateStructFieldId {
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
-        let mut ids = HashMap::new();
-
-        let mut free_id = 1 + fields
+        let mut max_id = fields
             .iter()
-            .fold(0, |cur, f| match f.id().value().parse() {
+            .fold(0, |cur, field| match field.id().value().parse() {
                 Ok(id) if id > cur => id,
                 _ => cur,
             });
 
-        for field in fields {
-            match ids.entry(field.id().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(field.id());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateStructFieldId {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: field.id().clone(),
-                        original_span: e.get().span(),
-                        struct_span,
-                        struct_ident: ident.cloned(),
-                        free_id,
-                    });
-
-                    free_id += 1;
-                }
-            }
-        }
+        util::find_duplicates(
+            fields,
+            |field| field.id().value(),
+            |duplicate, first| {
+                max_id += 1;
+                let free_id = max_id;
+                validate.add_error(DuplicateStructFieldId {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.id().clone(),
+                    first: first.id().span(),
+                    struct_span,
+                    struct_ident: ident.cloned(),
+                    free_id,
+                })
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &LitPosInt {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 
     pub fn struct_span(&self) -> Span {
@@ -104,31 +97,10 @@ impl Diagnostic for DuplicateStructFieldId {
                 self.duplicate.span(),
                 "duplicate defined here",
             )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
-            );
-
-            if let Some(ref ident) = self.struct_ident {
-                fmt.info_block(
-                    schema,
-                    ident.span().from,
-                    ident.span(),
-                    format!("struct `{}` defined here", ident.value()),
-                );
-            } else {
-                fmt.info_block(
-                    schema,
-                    self.struct_span.from,
-                    self.struct_span,
-                    "inline struct defined here",
-                );
-            }
+            .info_block(schema, self.first.from, self.first, "first defined here");
         }
 
-        fmt.help(format!("use a free id like {}", self.free_id));
+        fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
     }
 }
