@@ -17,6 +17,7 @@ struct Args {
     includes: Vec<PathBuf>,
     options: Options,
     warnings_as_errors: bool,
+    suppress_warnings: bool,
 }
 
 impl Parse for Args {
@@ -35,6 +36,7 @@ impl Parse for Args {
             includes: Vec::new(),
             options: Options::default(),
             warnings_as_errors: false,
+            suppress_warnings: false,
         };
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
@@ -54,6 +56,8 @@ impl Parse for Args {
                 args.options.server = input.parse::<LitBool>()?.value;
             } else if opt == "warnings_as_errors" {
                 args.warnings_as_errors = input.parse::<LitBool>()?.value;
+            } else if opt == "suppress_warnings" {
+                args.suppress_warnings = input.parse::<LitBool>()?.value;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
@@ -79,20 +83,21 @@ pub fn generate(input: TokenStream) -> TokenStream {
         emit_call_site_error!(msg);
     }
 
-    for warning in parsed.warnings() {
-        let msg = format_diagnostic(warning, &parsed);
+    if !args.suppress_warnings || args.warnings_as_errors {
+        for warning in parsed.warnings() {
+            let msg = format_diagnostic(warning, &parsed);
 
-        if args.warnings_as_errors {
-            emit_call_site_error!(msg);
-        } else {
-            // Work-around a bug in emit_call_site_warning!(..)
-            // https://gitlab.com/CreepySkeleton/proc-macro-error/-/merge_requests/31
-            proc_macro_error::diagnostic!(
-                proc_macro2::Span::call_site(),
-                proc_macro_error::Level::Warning,
-                msg
-            )
-            .emit();
+            if args.warnings_as_errors {
+                emit_call_site_error!(msg);
+            } else {
+                // Work-around a bug in emit_call_site_warning!(..)
+                proc_macro_error::diagnostic!(
+                    proc_macro2::Span::call_site(),
+                    proc_macro_error::Level::Warning,
+                    msg
+                )
+                .emit();
+            }
         }
     }
 
