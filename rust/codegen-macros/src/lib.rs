@@ -3,8 +3,10 @@
 extern crate proc_macro;
 
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::{Diagnostic, Parser};
+use aldrin_parser::diag::Line;
+use aldrin_parser::{Diagnostic, Parsed, Parser};
 use proc_macro::TokenStream;
+use proc_macro_error::{abort_call_site, emit_call_site_error, proc_macro_error};
 use std::env;
 use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
@@ -58,6 +60,7 @@ impl Parse for Args {
     }
 }
 
+#[proc_macro_error]
 #[proc_macro]
 pub fn generate(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as Args);
@@ -68,22 +71,26 @@ pub fn generate(input: TokenStream) -> TokenStream {
     }
     let parsed = parser.parse(&args.schema);
 
+    for error in parsed.errors() {
+        let msg = format_diagnostic(error, &parsed);
+        emit_call_site_error!(msg);
+    }
+
+    for warning in parsed.warnings() {
+        let msg = format_diagnostic(warning, &parsed);
+
+        // Work-around a bug in emit_call_site_warning!(..)
+        // https://gitlab.com/CreepySkeleton/proc-macro-error/-/merge_requests/31
+        proc_macro_error::diagnostic!(
+            proc_macro2::Span::call_site(),
+            proc_macro_error::Level::Warning,
+            msg
+        )
+        .emit();
+    }
+
     if !parsed.errors().is_empty() {
-        let mut panic_msg = String::new();
-
-        for error in parsed.errors() {
-            let formatted = error.format(&parsed);
-            panic_msg.push_str(&formatted.to_string());
-            panic_msg.push('\n');
-        }
-
-        for warning in parsed.warnings() {
-            let formatted = warning.format(&parsed);
-            panic_msg.push_str(&formatted.to_string());
-            panic_msg.push('\n');
-        }
-
-        panic!(panic_msg);
+        abort_call_site!("there were Aldrin schema errors");
     }
 
     let gen = Generator::new(&args.options, &parsed);
@@ -100,4 +107,24 @@ pub fn generate(input: TokenStream) -> TokenStream {
         args.schema.display()
     );
     module.parse().unwrap()
+}
+
+fn format_diagnostic<D>(d: &D, parsed: &Parsed) -> String
+where
+    D: Diagnostic,
+{
+    let formatted = d.format(parsed);
+    let mut lines = formatted.lines.into_iter();
+
+    let intro = match lines.next().expect("diagnostic without lines") {
+        Line::Intro(intro) => intro,
+        _ => panic!("first line is not Line::Intro"),
+    };
+
+    let mut msg = format!("{}\n", intro.reason);
+    for line in lines {
+        msg.push_str(&line.to_string());
+    }
+
+    msg
 }
