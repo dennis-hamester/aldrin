@@ -2,43 +2,36 @@ use super::Error;
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::{Parsed, Schema, Span};
-use std::collections::hash_map::{Entry, HashMap};
+use crate::{util, Parsed, Schema, Span};
 
 #[derive(Debug)]
 pub struct DuplicateDefinition {
     schema_name: String,
     duplicate: Ident,
-    original_span: Span,
+    first: Span,
 }
 
 impl DuplicateDefinition {
     pub(crate) fn validate(schema: &Schema, validate: &mut Validate) {
-        let mut idents = HashMap::new();
-
-        for def in schema.definitions() {
-            match idents.entry(def.name().value()) {
-                Entry::Vacant(e) => {
-                    e.insert(def.name());
-                }
-
-                Entry::Occupied(e) => {
-                    validate.add_error(DuplicateDefinition {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate: def.name().clone(),
-                        original_span: e.get().span(),
-                    });
-                }
-            }
-        }
+        util::find_duplicates(
+            schema.definitions(),
+            |def| def.name().value(),
+            |duplicate, first| {
+                validate.add_error(DuplicateDefinition {
+                    schema_name: validate.schema_name().to_owned(),
+                    duplicate: duplicate.name().clone(),
+                    first: first.name().span(),
+                });
+            },
+        );
     }
 
     pub fn duplicate(&self) -> &Ident {
         &self.duplicate
     }
 
-    pub fn original_span(&self) -> Span {
-        self.original_span
+    pub fn first(&self) -> Span {
+        self.first
     }
 }
 
@@ -60,14 +53,9 @@ impl Diagnostic for DuplicateDefinition {
                 schema,
                 self.duplicate.span().from,
                 self.duplicate.span(),
-                "duplicate defined here",
-            )
-            .info_block(
-                schema,
-                self.original_span.from,
-                self.original_span,
-                "first defined here",
+                "duplicate definition",
             );
+            fmt.info_block(schema, self.first.from, self.first, "first defined here");
         }
 
         fmt.format()
