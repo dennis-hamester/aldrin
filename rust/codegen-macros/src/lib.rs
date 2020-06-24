@@ -8,10 +8,12 @@ use proc_macro::TokenStream;
 use std::env;
 use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, LitStr, Result};
+use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 
 struct Args {
     schema: PathBuf,
+    includes: Vec<PathBuf>,
+    options: Options,
 }
 
 impl Parse for Args {
@@ -25,9 +27,34 @@ impl Parse for Args {
             schema = root;
         }
 
-        let args = Args { schema };
+        let mut includes = Vec::new();
+        let mut options = Options::default();
+        while !input.is_empty() {
+            input.parse::<Token![,]>()?;
+            if input.is_empty() {
+                break;
+            }
 
-        Ok(args)
+            let opt: Ident = input.parse()?;
+            input.parse::<Token![=]>()?;
+
+            if opt == "include" {
+                let path = PathBuf::from(input.parse::<LitStr>()?.value());
+                includes.push(path);
+            } else if opt == "client" {
+                options.client = input.parse::<LitBool>()?.value;
+            } else if opt == "server" {
+                options.server = input.parse::<LitBool>()?.value;
+            } else {
+                return Err(Error::new_spanned(opt, "invalid option"));
+            }
+        }
+
+        Ok(Args {
+            schema,
+            includes,
+            options,
+        })
     }
 }
 
@@ -35,7 +62,10 @@ impl Parse for Args {
 pub fn generate(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as Args);
 
-    let parser = Parser::new();
+    let mut parser = Parser::new();
+    for include in args.includes {
+        parser.add_schema_path(include);
+    }
     let parsed = parser.parse(&args.schema);
 
     if !parsed.errors().is_empty() {
@@ -56,13 +86,8 @@ pub fn generate(input: TokenStream) -> TokenStream {
         panic!(panic_msg);
     }
 
-    let mut options = Options::new();
-    options.client = true;
-    options.server = true;
-
+    let gen = Generator::new(&args.options, &parsed);
     let rust_options = RustOptions::new();
-
-    let gen = Generator::new(&options, &parsed);
     let output = match gen.generate_rust(&rust_options) {
         Ok(output) => output,
         Err(e) => panic!("{}", e),
