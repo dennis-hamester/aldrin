@@ -48,7 +48,14 @@ impl Parse for Args {
             input.parse::<Token![=]>()?;
 
             if opt == "include" {
-                let path = PathBuf::from(input.parse::<LitStr>()?.value());
+                let mut path = PathBuf::from(input.parse::<LitStr>()?.value());
+                if !path.is_absolute() {
+                    let mut root = env::var("CARGO_MANIFEST_DIR")
+                        .map(PathBuf::from)
+                        .unwrap_or_default();
+                    root.push(path);
+                    path = root;
+                }
                 args.includes.push(path);
             } else if opt == "client" {
                 args.options.client = input.parse::<LitBool>()?.value;
