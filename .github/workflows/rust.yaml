@@ -17,6 +17,8 @@ jobs:
       matrix:
         rust:
           - stable
+          - nightly
+          - 1.43.0
     steps:
       - name: Checkout
         uses: actions/checkout@v2
