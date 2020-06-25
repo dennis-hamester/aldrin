@@ -67,7 +67,7 @@ impl Parser {
             entry.insert(schema);
         }
 
-        parsed.validate();
+        parsed.validate(&self.schema_paths);
         parsed
     }
 
@@ -99,13 +99,18 @@ pub struct Parsed {
 }
 
 impl Parsed {
-    fn validate(&mut self) {
+    fn validate(&mut self, schema_paths: &[PathBuf]) {
         DuplicateServiceUuid::validate(self.schemas.values(), &mut self.issues);
 
         for (schema_name, schema) in &self.schemas {
             let is_main_schema = *schema_name == self.main_schema;
-            let mut validate =
-                Validate::new(schema_name, &mut self.issues, &self.schemas, is_main_schema);
+            let mut validate = Validate::new(
+                schema_name,
+                &mut self.issues,
+                &self.schemas,
+                is_main_schema,
+                schema_paths,
+            );
             schema.validate(&mut validate);
         }
     }
