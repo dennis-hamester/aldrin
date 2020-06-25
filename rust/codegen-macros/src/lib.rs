@@ -7,8 +7,9 @@ use aldrin_parser::diag::Line;
 use aldrin_parser::{Diagnostic, Parsed, Parser};
 use proc_macro::TokenStream;
 use proc_macro_error::{abort_call_site, emit_call_site_error, proc_macro_error};
+use std::borrow::Cow;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 
@@ -22,17 +23,11 @@ struct Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> Result<Self> {
-        let mut schema = PathBuf::from(input.parse::<LitStr>()?.value());
-        if !schema.is_absolute() {
-            let mut root = env::var("CARGO_MANIFEST_DIR")
-                .map(PathBuf::from)
-                .unwrap_or_default();
-            root.push(schema);
-            schema = root;
-        }
+        let schema = PathBuf::from(input.parse::<LitStr>()?.value());
+        let schema = ensure_absolute_path(&schema);
 
         let mut args = Args {
-            schema,
+            schema: schema.into_owned(),
             includes: Vec::new(),
             options: Options::default(),
             warnings_as_errors: false,
@@ -48,15 +43,9 @@ impl Parse for Args {
             input.parse::<Token![=]>()?;
 
             if opt == "include" {
-                let mut path = PathBuf::from(input.parse::<LitStr>()?.value());
-                if !path.is_absolute() {
-                    let mut root = env::var("CARGO_MANIFEST_DIR")
-                        .map(PathBuf::from)
-                        .unwrap_or_default();
-                    root.push(path);
-                    path = root;
-                }
-                args.includes.push(path);
+                let path = PathBuf::from(input.parse::<LitStr>()?.value());
+                let path = ensure_absolute_path(&path);
+                args.includes.push(path.into_owned());
             } else if opt == "client" {
                 args.options.client = input.parse::<LitBool>()?.value;
             } else if opt == "server" {
@@ -146,4 +135,17 @@ where
     }
 
     msg
+}
+
+fn ensure_absolute_path(path: &Path) -> Cow<'_, Path> {
+    if path.is_absolute() {
+        path.into()
+    } else {
+        let mut absolute = PathBuf::from(
+            env::var("CARGO_MANIFEST_DIR")
+                .expect("relative paths require CARGO_MANIFEST_DIR environment variable"),
+        );
+        absolute.push(path);
+        absolute.into()
+    }
 }
