@@ -6,7 +6,9 @@ use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::diag::Line;
 use aldrin_parser::{Diagnostic, Parsed, Parser};
 use proc_macro::TokenStream;
-use proc_macro_error::{abort_call_site, emit_call_site_error, proc_macro_error};
+use proc_macro_error::{
+    abort_call_site, emit_call_site_error, emit_call_site_warning, proc_macro_error,
+};
 use std::borrow::Cow;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -86,13 +88,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
             if args.warnings_as_errors {
                 emit_call_site_error!(msg);
             } else {
-                // Work-around a bug in emit_call_site_warning!(..)
-                proc_macro_error::diagnostic!(
-                    proc_macro2::Span::call_site(),
-                    proc_macro_error::Level::Warning,
-                    msg
-                )
-                .emit();
+                emit_call_site_warning!(msg);
             }
         }
     }
