@@ -3,31 +3,20 @@ mod test;
 
 use super::{Endian, Serializer};
 use aldrin_proto::Message;
-use bincode::Config;
+use bincode::Options;
 use bytes::buf::BufMutExt;
 use bytes::{Bytes, BytesMut};
-use std::fmt;
 
 pub use bincode::Error as BincodeError;
 
-pub struct BincodeSerializer(Config);
+#[derive(Debug)]
+pub struct BincodeSerializer {
+    endian: Endian,
+}
 
 impl BincodeSerializer {
     pub fn new(endian: Endian) -> Self {
-        let mut config = bincode::config();
-        match endian {
-            Endian::Big => config.big_endian(),
-            Endian::Little => config.little_endian(),
-        };
-        BincodeSerializer(config)
-    }
-}
-
-impl fmt::Debug for BincodeSerializer {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_tuple("BincodeSerializer")
-            .field(&format_args!("_"))
-            .finish()
+        BincodeSerializer { endian }
     }
 }
 
@@ -35,10 +24,28 @@ impl Serializer for BincodeSerializer {
     type Error = BincodeError;
 
     fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), BincodeError> {
-        self.0.serialize_into(dst.writer(), &msg)
+        match self.endian {
+            Endian::Big => bincode::options()
+                .with_fixint_encoding()
+                .with_big_endian()
+                .serialize_into(dst.writer(), &msg),
+            Endian::Little => bincode::options()
+                .with_fixint_encoding()
+                .with_little_endian()
+                .serialize_into(dst.writer(), &msg),
+        }
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, BincodeError> {
-        self.0.deserialize(&src)
+        match self.endian {
+            Endian::Big => bincode::options()
+                .with_fixint_encoding()
+                .with_big_endian()
+                .deserialize(&src),
+            Endian::Little => bincode::options()
+                .with_fixint_encoding()
+                .with_little_endian()
+                .deserialize(&src),
+        }
     }
 }
