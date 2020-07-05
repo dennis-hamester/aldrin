@@ -15,6 +15,54 @@ use std::path::{Path, PathBuf};
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 
+#[proc_macro_error]
+#[proc_macro]
+pub fn generate(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as Args);
+
+    let mut parser = Parser::new();
+    for include in args.includes {
+        parser.add_schema_path(include);
+    }
+    let parsed = parser.parse(&args.schema);
+
+    for error in parsed.errors() {
+        let msg = format_diagnostic(error, &parsed);
+        emit_call_site_error!(msg);
+    }
+
+    if !args.suppress_warnings || args.warnings_as_errors {
+        for warning in parsed.warnings() {
+            let msg = format_diagnostic(warning, &parsed);
+
+            if args.warnings_as_errors {
+                emit_call_site_error!(msg);
+            } else {
+                emit_call_site_warning!(msg);
+            }
+        }
+    }
+
+    if !parsed.errors().is_empty() || (args.warnings_as_errors && !parsed.warnings().is_empty()) {
+        abort_call_site!("there were Aldrin schema errors");
+    }
+
+    let gen = Generator::new(&args.options, &parsed);
+    let rust_options = RustOptions::new();
+    let output = match gen.generate_rust(&rust_options) {
+        Ok(output) => output,
+        Err(e) => panic!("{}", e),
+    };
+
+    let module = format!(
+        "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); }}",
+        output.module_name,
+        output.module_content,
+        args.schema.display()
+    );
+    module.parse().unwrap()
+}
+
 struct Args {
     schema: PathBuf,
     includes: Vec<PathBuf>,
@@ -63,54 +111,6 @@ impl Parse for Args {
 
         Ok(args)
     }
-}
-
-#[proc_macro_error]
-#[proc_macro]
-pub fn generate(input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(input as Args);
-
-    let mut parser = Parser::new();
-    for include in args.includes {
-        parser.add_schema_path(include);
-    }
-    let parsed = parser.parse(&args.schema);
-
-    for error in parsed.errors() {
-        let msg = format_diagnostic(error, &parsed);
-        emit_call_site_error!(msg);
-    }
-
-    if !args.suppress_warnings || args.warnings_as_errors {
-        for warning in parsed.warnings() {
-            let msg = format_diagnostic(warning, &parsed);
-
-            if args.warnings_as_errors {
-                emit_call_site_error!(msg);
-            } else {
-                emit_call_site_warning!(msg);
-            }
-        }
-    }
-
-    if !parsed.errors().is_empty() || (args.warnings_as_errors && !parsed.warnings().is_empty()) {
-        abort_call_site!("there were Aldrin schema errors");
-    }
-
-    let gen = Generator::new(&args.options, &parsed);
-    let rust_options = RustOptions::new();
-    let output = match gen.generate_rust(&rust_options) {
-        Ok(output) => output,
-        Err(e) => panic!("{}", e),
-    };
-
-    let module = format!(
-        "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); }}",
-        output.module_name,
-        output.module_content,
-        args.schema.display()
-    );
-    module.parse().unwrap()
 }
 
 fn format_diagnostic<D>(d: &D, parsed: &Parsed) -> String
