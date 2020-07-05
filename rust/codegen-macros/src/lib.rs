@@ -9,9 +9,8 @@ use proc_macro::TokenStream;
 use proc_macro_error::{
     abort_call_site, emit_call_site_error, emit_call_site_warning, proc_macro_error,
 };
-use std::borrow::Cow;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 
@@ -73,16 +72,14 @@ struct Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> Result<Self> {
-        let schema = PathBuf::from(input.parse::<LitStr>()?.value());
-        let schema = ensure_absolute_path(&schema);
-
         let mut args = Args {
-            schema: schema.into_owned(),
+            schema: lit_str_to_path(input.parse::<LitStr>()?),
             includes: Vec::new(),
             options: Options::default(),
             warnings_as_errors: false,
             suppress_warnings: false,
         };
+
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
             if input.is_empty() {
@@ -93,9 +90,8 @@ impl Parse for Args {
             input.parse::<Token![=]>()?;
 
             if opt == "include" {
-                let path = PathBuf::from(input.parse::<LitStr>()?.value());
-                let path = ensure_absolute_path(&path);
-                args.includes.push(path.into_owned());
+                let lit_str = input.parse::<LitStr>()?;
+                args.includes.push(lit_str_to_path(lit_str));
             } else if opt == "client" {
                 args.options.client = input.parse::<LitBool>()?.value;
             } else if opt == "server" {
@@ -133,15 +129,17 @@ where
     msg
 }
 
-fn ensure_absolute_path(path: &Path) -> Cow<'_, Path> {
+fn lit_str_to_path(lit_str: LitStr) -> PathBuf {
+    let path = PathBuf::from(lit_str.value());
+
     if path.is_absolute() {
-        path.into()
+        path
     } else {
         let mut absolute = PathBuf::from(
             env::var("CARGO_MANIFEST_DIR")
                 .expect("relative paths require CARGO_MANIFEST_DIR environment variable"),
         );
         absolute.push(path);
-        absolute.into()
+        absolute
     }
 }
