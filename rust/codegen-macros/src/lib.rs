@@ -10,6 +10,7 @@ use proc_macro_error::{
     abort_call_site, emit_call_site_error, emit_call_site_warning, proc_macro_error,
 };
 use std::env;
+use std::fmt::Write;
 use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
@@ -23,47 +24,61 @@ pub fn generate(input: TokenStream) -> TokenStream {
     for include in args.includes {
         parser.add_schema_path(include);
     }
-    let parsed = parser.parse(&args.schema);
 
-    for error in parsed.errors() {
-        let msg = format_diagnostic(error, &parsed);
-        emit_call_site_error!(msg);
-    }
+    let mut modules = String::new();
+    let mut abort = false;
 
-    if !args.suppress_warnings || args.warnings_as_errors {
-        for warning in parsed.warnings() {
-            let msg = format_diagnostic(warning, &parsed);
+    for schema in args.schemas {
+        let parsed = parser.parse(&schema);
 
-            if args.warnings_as_errors {
-                emit_call_site_error!(msg);
-            } else {
-                emit_call_site_warning!(msg);
+        for error in parsed.errors() {
+            let msg = format_diagnostic(error, &parsed);
+            emit_call_site_error!(msg);
+        }
+
+        if !args.suppress_warnings || args.warnings_as_errors {
+            for warning in parsed.warnings() {
+                let msg = format_diagnostic(warning, &parsed);
+
+                if args.warnings_as_errors {
+                    emit_call_site_error!(msg);
+                } else {
+                    emit_call_site_warning!(msg);
+                }
             }
         }
+
+        if !parsed.errors().is_empty() {
+            abort |= true;
+            continue;
+        }
+
+        let gen = Generator::new(&args.options, &parsed);
+        let rust_options = RustOptions::new();
+        let output = match gen.generate_rust(&rust_options) {
+            Ok(output) => output,
+            Err(e) => panic!("{}", e),
+        };
+
+        write!(
+            &mut modules,
+            "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); }}",
+            output.module_name,
+            output.module_content,
+            schema.display()
+        )
+        .unwrap();
     }
 
-    if !parsed.errors().is_empty() || (args.warnings_as_errors && !parsed.warnings().is_empty()) {
+    if abort {
         abort_call_site!("there were Aldrin schema errors");
     }
 
-    let gen = Generator::new(&args.options, &parsed);
-    let rust_options = RustOptions::new();
-    let output = match gen.generate_rust(&rust_options) {
-        Ok(output) => output,
-        Err(e) => panic!("{}", e),
-    };
-
-    let module = format!(
-        "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); }}",
-        output.module_name,
-        output.module_content,
-        args.schema.display()
-    );
-    module.parse().unwrap()
+    modules.parse().unwrap()
 }
 
 struct Args {
-    schema: PathBuf,
+    schemas: Vec<PathBuf>,
     includes: Vec<PathBuf>,
     options: Options,
     warnings_as_errors: bool,
@@ -72,20 +87,29 @@ struct Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> Result<Self> {
+        let first_schema = lit_str_to_path(input.parse::<LitStr>()?);
         let mut args = Args {
-            schema: lit_str_to_path(input.parse::<LitStr>()?),
+            schemas: vec![first_schema],
             includes: Vec::new(),
             options: Options::default(),
             warnings_as_errors: false,
             suppress_warnings: false,
         };
 
+        // Additional schemas
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
-            if input.is_empty() {
-                break;
-            }
 
+            let lit_str = match input.parse::<LitStr>() {
+                Ok(lit_str) => lit_str,
+                Err(_) => break,
+            };
+
+            args.schemas.push(lit_str_to_path(lit_str));
+        }
+
+        // Options
+        while !input.is_empty() {
             let opt: Ident = input.parse()?;
             input.parse::<Token![=]>()?;
 
@@ -103,6 +127,11 @@ impl Parse for Args {
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
+
+            if input.is_empty() {
+                break;
+            }
+            input.parse::<Token![,]>()?;
         }
 
         Ok(args)
