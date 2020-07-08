@@ -4,6 +4,7 @@ mod non_camel_case_enum_variant;
 mod non_camel_case_service;
 mod non_camel_case_struct;
 mod non_shouty_snake_case_const;
+mod non_snake_case_event;
 mod non_snake_case_function;
 mod non_snake_case_schema_name;
 mod non_snake_case_struct_field;
@@ -18,6 +19,7 @@ pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
 pub use non_camel_case_service::NonCamelCaseService;
 pub use non_camel_case_struct::NonCamelCaseStruct;
 pub use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
+pub use non_snake_case_event::NonSnakeCaseEvent;
 pub use non_snake_case_function::NonSnakeCaseFunction;
 pub use non_snake_case_schema_name::NonSnakeCaseSchemaName;
 pub use non_snake_case_struct_field::NonSnakeCaseStructField;
@@ -32,6 +34,7 @@ pub enum Warning {
     NonCamelCaseService(NonCamelCaseService),
     NonCamelCaseStruct(NonCamelCaseStruct),
     NonShoutySnakeCaseConst(NonShoutySnakeCaseConst),
+    NonSnakeCaseEvent(NonSnakeCaseEvent),
     NonSnakeCaseFunction(NonSnakeCaseFunction),
     NonSnakeCaseSchemaName(NonSnakeCaseSchemaName),
     NonSnakeCaseStructField(NonSnakeCaseStructField),
@@ -51,6 +54,7 @@ impl Diagnostic for Warning {
             Warning::NonCamelCaseService(w) => w.schema_name(),
             Warning::NonCamelCaseStruct(w) => w.schema_name(),
             Warning::NonShoutySnakeCaseConst(w) => w.schema_name(),
+            Warning::NonSnakeCaseEvent(w) => w.schema_name(),
             Warning::NonSnakeCaseFunction(w) => w.schema_name(),
             Warning::NonSnakeCaseSchemaName(w) => w.schema_name(),
             Warning::NonSnakeCaseStructField(w) => w.schema_name(),
@@ -66,6 +70,7 @@ impl Diagnostic for Warning {
             Warning::NonCamelCaseService(w) => w.format(parsed),
             Warning::NonCamelCaseStruct(w) => w.format(parsed),
             Warning::NonShoutySnakeCaseConst(w) => w.format(parsed),
+            Warning::NonSnakeCaseEvent(w) => w.format(parsed),
             Warning::NonSnakeCaseFunction(w) => w.format(parsed),
             Warning::NonSnakeCaseSchemaName(w) => w.format(parsed),
             Warning::NonSnakeCaseStructField(w) => w.format(parsed),

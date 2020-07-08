@@ -5,7 +5,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseService, NonSnakeCaseFunction};
+use crate::warning::{NonCamelCaseService, NonSnakeCaseEvent, NonSnakeCaseFunction};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -351,6 +351,8 @@ impl EventDef {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        NonSnakeCaseEvent::validate(self, validate);
+
         self.name.validate(validate);
         if let Some(ref event_type) = self.event_type {
             event_type.validate(validate);
