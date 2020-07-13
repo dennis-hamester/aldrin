@@ -14,3 +14,6 @@ aldrin-codegen = { version = "0.1.0", path = "../codegen", features = ["rust"] }
 aldrin-parser = { version = "0.1.0", path = "../parser" }
 proc-macro-error = "1.0.3"
 syn = "1.0.14"
+
+[dev-dependencies]
+aldrin-client = { version = "0.1.0", path = "../client" }

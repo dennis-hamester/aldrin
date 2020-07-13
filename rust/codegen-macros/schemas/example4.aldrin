@@ -1,0 +1,3 @@
+struct Bar {
+    baz @ 1 = u32;
+}

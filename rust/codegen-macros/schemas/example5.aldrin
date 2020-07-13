@@ -1,0 +1,5 @@
+import example6;
+
+struct Foo {
+    bar @ 1 = example6::bar;
+}
