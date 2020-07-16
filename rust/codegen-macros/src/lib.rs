@@ -121,6 +121,7 @@
 //! # fn main() {}
 //! ```
 
+#![allow(clippy::needless_doctest_main)]
 #![deny(intra_doc_link_resolution_failure)]
 #![deny(missing_docs)]
 
