@@ -43,10 +43,13 @@ impl Diagnostic for NonShoutySnakeCaseConst {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::warning(format!(
-            "constant `{}` should have an upper-case name",
-            self.ident.value()
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!(
+                "constant `{}` should have an upper-case name",
+                self.ident.value()
+            ),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(schema, self.ident.span().from, self.ident.span(), "");

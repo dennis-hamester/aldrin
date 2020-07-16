@@ -97,7 +97,7 @@ impl Diagnostic for InvalidSyntax {
             }
         }
 
-        let mut fmt = Formatter::error(reason);
+        let mut fmt = Formatter::new(self, reason);
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             let span = Span {

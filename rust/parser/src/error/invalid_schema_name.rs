@@ -28,7 +28,7 @@ impl Diagnostic for InvalidSchemaName {
     }
 
     fn format<'a>(&'a self, _parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::error(format!("invalid schema name `{}`", self.schema_name));
+        let mut fmt = Formatter::new(self, format!("invalid schema name `{}`", self.schema_name));
 
         fmt.note("schema names are parsed from the file name");
         if self.schema_name.contains('-') {

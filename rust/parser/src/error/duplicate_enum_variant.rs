@@ -63,16 +63,22 @@ impl Diagnostic for DuplicateEnumVariant {
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
         let mut fmt = if let Some(ref ident) = self.enum_ident {
-            Formatter::error(format!(
-                "duplicate variant `{}` in enum `{}`",
-                self.duplicate.value(),
-                ident.value()
-            ))
+            Formatter::new(
+                self,
+                format!(
+                    "duplicate variant `{}` in enum `{}`",
+                    self.duplicate.value(),
+                    ident.value()
+                ),
+            )
         } else {
-            Formatter::error(format!(
-                "duplicate variant `{}` in inline enum",
-                self.duplicate.value()
-            ))
+            Formatter::new(
+                self,
+                format!(
+                    "duplicate variant `{}` in inline enum",
+                    self.duplicate.value()
+                ),
+            )
         };
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {

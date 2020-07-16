@@ -71,11 +71,14 @@ impl Diagnostic for DuplicateFunctionId {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::error(format!(
-            "duplicate function id `{}` in service `{}`",
-            self.duplicate.value(),
-            self.service_ident.value()
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!(
+                "duplicate function id `{}` in service `{}`",
+                self.duplicate.value(),
+                self.service_ident.value()
+            ),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(

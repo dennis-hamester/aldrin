@@ -63,16 +63,22 @@ impl Diagnostic for DuplicateStructField {
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
         let mut fmt = if let Some(ref ident) = self.struct_ident {
-            Formatter::error(format!(
-                "duplicate field `{}` in struct `{}`",
-                self.duplicate.value(),
-                ident.value()
-            ))
+            Formatter::new(
+                self,
+                format!(
+                    "duplicate field `{}` in struct `{}`",
+                    self.duplicate.value(),
+                    ident.value()
+                ),
+            )
         } else {
-            Formatter::error(format!(
-                "duplicate field `{}` in inline struct",
-                self.duplicate.value()
-            ))
+            Formatter::new(
+                self,
+                format!(
+                    "duplicate field `{}` in inline struct",
+                    self.duplicate.value()
+                ),
+            )
         };
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {

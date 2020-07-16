@@ -43,11 +43,14 @@ impl Diagnostic for InvalidEnumVariantId {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::error(format!(
-            "invalid id `{}` for enum variant `{}`",
-            self.id.value(),
-            self.var_ident.value(),
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!(
+                "invalid id `{}` for enum variant `{}`",
+                self.id.value(),
+                self.var_ident.value(),
+            ),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(

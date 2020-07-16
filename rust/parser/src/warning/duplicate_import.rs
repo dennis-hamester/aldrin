@@ -45,10 +45,13 @@ impl Diagnostic for DuplicateImport {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::warning(format!(
-            "duplicate import of schema `{}`",
-            self.duplicate.schema_name().value()
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!(
+                "duplicate import of schema `{}`",
+                self.duplicate.schema_name().value()
+            ),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(

@@ -41,10 +41,13 @@ impl Diagnostic for KeywordAsIdent {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::error(format!(
-            "expected identifier, found keyword `{}`",
-            self.ident.value()
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!(
+                "expected identifier, found keyword `{}`",
+                self.ident.value()
+            ),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(schema, self.ident.span().from, self.ident.span(), "");

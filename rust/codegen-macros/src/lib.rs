@@ -136,7 +136,6 @@
 extern crate proc_macro;
 
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::diag::Line;
 use aldrin_parser::{Diagnostic, Parsed, Parser};
 use proc_macro::TokenStream;
 use proc_macro_error::{
@@ -279,15 +278,9 @@ where
     D: Diagnostic,
 {
     let formatted = d.format(parsed);
-    let mut lines = formatted.lines.into_iter();
 
-    let intro = match lines.next().expect("diagnostic without lines") {
-        Line::Intro(intro) => intro,
-        _ => panic!("first line is not Line::Intro"),
-    };
-
-    let mut msg = format!("{}\n", intro.reason);
-    for line in lines {
+    let mut msg = format!("{}\n", formatted.summary());
+    for line in formatted.lines().skip(1) {
         msg.push_str(&line.to_string());
     }
 

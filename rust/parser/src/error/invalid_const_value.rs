@@ -59,11 +59,10 @@ impl Diagnostic for InvalidConstValue {
             ConstValue::String(_) | ConstValue::Uuid(_) => unreachable!(),
         };
 
-        let mut fmt = Formatter::error(format!(
-            "invalid constant {} value `{}`",
-            kind,
-            value.value()
-        ));
+        let mut fmt = Formatter::new(
+            self,
+            format!("invalid constant {} value `{}`", kind, value.value()),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(

@@ -68,7 +68,10 @@ impl Diagnostic for DuplicateServiceUuid {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::error(format!("duplicate service uuid `{}`", self.uuid.value()));
+        let mut fmt = Formatter::new(
+            self,
+            format!("duplicate service uuid `{}`", self.uuid.value()),
+        );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(
