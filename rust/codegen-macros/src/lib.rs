@@ -89,6 +89,14 @@
 //!
 //! The `include` option can be repeated multiple times.
 //!
+//! ## Skipping server or client code
+//!
+//! You can skip generating server or client code for services by setting `server = false` or
+//! `client = false`. This will only affect services and types defined inside (inline structs and
+//! enums), but not other top-level definitions.
+//!
+//! Both settings default to `true`.
+//!
 //! ## Errors and warnings
 //!
 //! Any errors and warnings from the schemas will be shown as part of the regular compiler
