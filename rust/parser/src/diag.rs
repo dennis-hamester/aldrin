@@ -1,31 +1,101 @@
+//! Diagnostic information and formatting.
+//!
+//! This module primarily provides the [`Diagnostic`] trait, which is implemented by all
+//! [errors](crate::error) and [warnings](crate::warning).
+
 use crate::{Parsed, Position, Schema, Span};
 use std::borrow::Cow;
 use std::fmt;
 use std::path::Path;
 
+/// Diagnostic information about an error or a warning.
 pub trait Diagnostic {
+    /// Kind of the diagnostic; either an error or a warning.
     fn kind(&self) -> DiagnosticKind;
+
+    /// Name of the schema this diagnostic originated from.
+    ///
+    /// The schema name can be used to look up the [`Schema`] with [`Parsed::get_schema`].
     fn schema_name(&self) -> &str;
+
+    /// Formats the diagnostic for printing.
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a>;
 }
 
+/// Error or warning.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum DiagnosticKind {
+    /// Indicates an issue which prevents further processing.
     Error,
+
+    /// Indicates an issue which doesn't prevent further processing.
     Warning,
 }
 
+/// Style of chunk in a formatted diagnostic.
+///
+/// This describes broadly what particular chunk in [`Formatted`] contains and how it should be
+/// styled.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Style {
+    /// Regular / unstyled output.
     Regular,
+
+    /// Output e.g. as red and bold.
     Error,
+
+    /// Output e.g. as yellow and bold.
     Warning,
+
+    /// Output e.g. as blue and bold.
     Info,
+
+    /// Output e.g. as bold.
     Emphasized,
+
+    /// Output e.g. green.
     Separator,
+
+    /// Output e.g. green and bold.
     LineNumber,
 }
 
+/// A diagnostic formatted for printing.
+///
+/// A `Formatted` can be printing and converted to a string directly via it's
+/// [`Display`](fmt::Display) implementation.
+///
+/// Alternatively, you can iterate over the individual [`Line`s](Line) and from there over pairs of
+/// `&str` and [`Style`]. This allows you to apply custom styling (e.g. colors) to individual parts
+/// of the diagnostic.
+///
+/// `Formatted` also provides a short one-line [`summary`](Formatted::summary).
+///
+/// # Example
+///
+/// ```
+/// use aldrin_parser::{Diagnostic, Parser};
+///
+/// let parsed = Parser::new().parse("schemas/duplicate_id.aldrin");
+/// let err = &parsed.errors()[0];
+/// let formatted = err.format(&parsed);
+///
+/// // Print via Display:
+/// eprintln!("{}", formatted);
+///
+/// // Print a one-line summary:
+/// eprintln!("Error: {}.", formatted.summary());
+///
+/// // Print manually to apply styling to the output:
+/// for line in &formatted {
+///     for (chunk, style) in line {
+///         // Apply style to chunk, e.g. colorize the output.
+///         eprint!("{}", chunk);
+///     }
+///
+///     eprintln!();
+/// }
+/// ```
 #[derive(Debug)]
 pub struct Formatted<'a> {
     kind: DiagnosticKind,
@@ -35,18 +105,34 @@ pub struct Formatted<'a> {
 
 #[allow(clippy::len_without_is_empty)]
 impl<'a> Formatted<'a> {
+    /// Kind of the diagnostic; error or warning.
     pub fn kind(&self) -> DiagnosticKind {
         self.kind
     }
 
+    /// Short one-line summary.
+    ///
+    /// The summary begins with a lower-case letter and doesn't end with any punctuation.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use aldrin_parser::{Diagnostic, Parser};
+    /// # let parsed = Parser::new().parse("schemas/duplicate_id.aldrin");
+    /// # let err = &parsed.errors()[0];
+    /// # let formatted = err.format(&parsed);
+    /// eprintln!("An issue occurred: {}.", formatted.summary());
+    /// ```
     pub fn summary(&self) -> &str {
         &self.intro.chunks[2].0
     }
 
+    /// Returns number of lines.
     pub fn len(&self) -> usize {
         self.lines.len() + 1
     }
 
+    /// Returns an iterator over the lines.
     pub fn lines(&'a self) -> Lines<'a> {
         Lines {
             intro: &self.intro,
@@ -75,6 +161,7 @@ impl<'a> fmt::Display for Formatted<'a> {
     }
 }
 
+/// Iterator over the lines of a formatted diagnostic.
 #[derive(Debug)]
 pub struct Lines<'a> {
     intro: &'a Line<'a>,
@@ -99,6 +186,7 @@ impl<'a> Iterator for Lines<'a> {
     }
 }
 
+/// Line of a formatted diagnostic.
 #[derive(Debug, Clone)]
 pub struct Line<'a> {
     padding: Cow<'a, str>,
@@ -107,10 +195,12 @@ pub struct Line<'a> {
 
 #[allow(clippy::len_without_is_empty)]
 impl<'a> Line<'a> {
+    /// Returns number of chunks in this line.
     pub fn len(&self) -> usize {
         self.chunks.len() + 1
     }
 
+    /// Returns an iterator of chunks in this line.
     pub fn chunks(&'a self) -> Chunks<'a> {
         Chunks {
             line: self,
@@ -138,6 +228,7 @@ impl<'a> fmt::Display for Line<'a> {
     }
 }
 
+/// Iterator of chunks in a line.
 #[derive(Debug, Clone)]
 pub struct Chunks<'a> {
     line: &'a Line<'a>,

@@ -1,0 +1,4 @@
+struct MyStruct {
+    field_one @ 1 = u32;
+    field_two @ 1 = u32;
+}
