@@ -11,7 +11,7 @@ use uuid::Uuid;
 ///
 /// ```ignore
 /// // Create a new object with a random UUID.
-/// let mut object = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+/// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // ...
 ///
@@ -93,6 +93,12 @@ impl ObjectId {
 /// UUID of an object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectUuid(pub Uuid);
+
+impl ObjectUuid {
+    pub fn new_v4() -> Self {
+        ObjectUuid(Uuid::new_v4())
+    }
+}
 
 impl fmt::Display for ObjectUuid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

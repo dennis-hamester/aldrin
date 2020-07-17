@@ -26,7 +26,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
         })
     };
 
-    let obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+    let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let mut room = chat::Chat::create(&obj).await?;
     let emitter = room.event_emitter().unwrap();
     let mut objects = HashSet::new();

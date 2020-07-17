@@ -45,7 +45,7 @@ async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
         }
     }));
 
-    let mut obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+    let mut obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let mut svc = obj.create_service(ServiceUuid(Uuid::new_v4())).await?;
 
     svc.destroy().await?;

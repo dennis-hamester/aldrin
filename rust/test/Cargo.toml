@@ -15,4 +15,3 @@ aldrin-util = { path = "../util", features = ["channel"] }
 anyhow = "1.0.28"
 futures = { version = "0.3.3", default-features = false, features = ["std"] }
 tokio = { version = "0.2.11", default-features = false, features = ["macros", "rt-threaded", "time"] }
-uuid = { version = "0.8.1", default-features = false, features = ["v4"] }

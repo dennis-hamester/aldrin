@@ -18,7 +18,6 @@ use service::{Service, ServiceCookie, ServiceUuid};
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 use std::num::NonZeroUsize;
-use uuid::Uuid;
 
 pub use error::BrokerError;
 pub use handle::BrokerHandle;
@@ -358,7 +357,7 @@ impl Broker {
             })),
 
             Entry::Vacant(entry) => {
-                let cookie = ObjectCookie(Uuid::new_v4());
+                let cookie = ObjectCookie::new_v4();
                 conn.send(Message::CreateObjectReply(CreateObjectReply {
                     serial: req.serial,
                     result: CreateObjectResult::Ok(cookie.0),
@@ -488,7 +487,7 @@ impl Broker {
             }));
         }
 
-        let svc_cookie = ServiceCookie(Uuid::new_v4());
+        let svc_cookie = ServiceCookie::new_v4();
         conn.send(Message::CreateServiceReply(CreateServiceReply {
             serial: req.serial,
             result: CreateServiceResult::Ok(svc_cookie.0),

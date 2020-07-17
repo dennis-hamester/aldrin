@@ -3,7 +3,6 @@ use aldrin_client::{ObjectUuid, SubscribeMode};
 use anyhow::Result;
 use std::time::Duration;
 use tokio::time::timeout;
-use uuid::Uuid;
 
 const FIFO_SIZE: usize = 4;
 
@@ -20,7 +19,7 @@ async fn channel_deadlock() -> Result<()> {
 
     timeout(Duration::from_secs(1), async move {
         for _ in 0..32 {
-            client.create_object(ObjectUuid(Uuid::new_v4())).await?;
+            client.create_object(ObjectUuid::new_v4()).await?;
         }
 
         broker.shutdown();

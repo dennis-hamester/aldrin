@@ -11,7 +11,6 @@ use structopt::StructOpt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::select;
 use tokio::time::{delay_for, Duration};
-use uuid::Uuid;
 
 aldrin_codegen_macros::generate!("../../schemas/ping.aldrin", warnings_as_errors = true);
 
@@ -108,7 +107,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
     tokio::spawn(client.run());
     println!("Connection to broker at {} established.", addr);
 
-    let obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+    let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let ping = ping::Ping::create(&obj).await?;
     let emitter = ping.event_emitter().unwrap();
     let mut svcs = handle.services(SubscribeMode::All)?;

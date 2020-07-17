@@ -13,7 +13,6 @@ use std::thread;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::select;
-use uuid::Uuid;
 
 pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
     let addr = args.broker;
@@ -60,7 +59,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let ident_obj = handle.create_object(ObjectUuid(Uuid::new_v4())).await?;
+    let ident_obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let room = chat::ChatProxy::bind(handle.clone(), id)?;
     let mut room_events = room.events();
     room_events.subscribe_all().await?;

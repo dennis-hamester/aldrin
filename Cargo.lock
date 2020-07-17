@@ -83,7 +83,6 @@ dependencies = [
  "anyhow",
  "futures",
  "tokio",
- "uuid",
 ]
 
 [[package]]

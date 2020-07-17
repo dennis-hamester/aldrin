@@ -41,3 +41,9 @@ pub(crate) struct ObjectUuid(pub Uuid);
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ObjectCookie(pub Uuid);
+
+impl ObjectCookie {
+    pub fn new_v4() -> Self {
+        ObjectCookie(Uuid::new_v4())
+    }
+}
