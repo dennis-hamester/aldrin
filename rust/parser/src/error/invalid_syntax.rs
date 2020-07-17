@@ -70,10 +70,10 @@ impl Diagnostic for InvalidSyntax {
                 }
                 Expected::Ident => "an identifier".into(),
                 Expected::Keyword(kw) => format!("`{}`", kw).into(),
-                Expected::LitInt => "a integer literal".into(),
+                Expected::LitInt => "an integer literal".into(),
                 Expected::LitPosInt => "a positive integer literal".into(),
                 Expected::LitString => "a string literal".into(),
-                Expected::LitUuid => "an uuid literal".into(),
+                Expected::LitUuid => "a uuid literal".into(),
                 Expected::SchemaName => "a schema name".into(),
                 Expected::Token(tok) => format!("`{}`", tok).into(),
             };
