@@ -1,3 +1,61 @@
+//! Aldrin client library
+//!
+//! This library implements the client side of the Aldrin specification and can be used to connect
+//! to Aldrin brokers. It is fully asynchronous (async/await) and doesn't depend on any specific
+//! async runtime.
+//!
+//! Parts of this library should be considered low-level building blocks for the code that can be
+//! auto-generated from Aldrin schemas. As an example, performing a function call on a service
+//! requires knowing the function's id and uses a polymorphic type to encode the function's
+//! arguments. It is generally recommended to rely on the more ergonomic auto-generated code
+//! instead.
+//!
+//! The first entry point is the [`Client`] and it's [`connect`](Client::connect)
+//! method. [`Client`]s are parameterized over an [`AsyncTransport`], which abstracts the low-level
+//! details of a transport, like e.g. TCP/IP.
+//!
+//! After establishing a connection, the resulting [`Client`] must be continuously polled (through
+//! [`Client::run`]). One way to achieve this is to "spawn" it with an async runtime of your
+//! choice. Alternatively, it can also be polled manually.
+//!
+//! While the [`Client`] is being polled, all interaction with it happens through a [`Handle`],
+//! which can be acquired with [`Client::handle`]. The [`Client`] will automatically shut down (as
+//! in, the [`Client::run`] future will complete) when the last [`Handle`] has been dropped.
+//!
+//! # Examples
+//!
+//! ```
+//! use aldrin_client::Client;
+//! use std::error::Error;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn Error>> {
+//!     # let broker = aldrin_broker::Broker::new();
+//!     # let handle = broker.handle().clone();
+//!     # tokio::spawn(broker.run());
+//!     # let (async_transport, t2) = aldrin_util::channel::unbounded();
+//!     # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+//!     // Create an AsyncTransport for connecting to the broker.
+//!     // let async_transport = ...
+//!
+//!     // Connect to the broker:
+//!     let client = Client::connect(async_transport).await?;
+//!     # tokio::spawn(conn.await??.run());
+//!
+//!     // Acquire a handle and spawn the client:
+//!     let handle = client.handle().clone();
+//!     let join = tokio::spawn(client.run());
+//!
+//!     // The client is now fully connected and can be interacted with through the handle.
+//!
+//!     // Shut down client:
+//!     handle.shutdown();
+//!     join.await??;
+//!
+//!     Ok(())
+//! }
+//! ```
+
 #![deny(intra_doc_link_resolution_failure)]
 #![deny(missing_debug_implementations)]
 
@@ -11,6 +69,9 @@ mod serial_map;
 mod service;
 mod services;
 
+/// Re-exports for the code generator.
+///
+/// This module and its contents are not part of the public API.
 #[doc(hidden)]
 pub mod codegen {
     pub use aldrin_proto;
@@ -50,26 +111,15 @@ type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<Events
 /// to an Aldrin broker. Afterwards, it should be turned into a [`Future`](std::future::Future) with
 /// the [`run`](Client::run) method, which must then be continuously polled and run to completion.
 ///
-/// All interaction with a [`Client`] happens asynchronously through [`Handle`s](Handle).
+/// All interaction with a [`Client`] happens asynchronously through one or more
+/// [`Handle`s](Handle), which must be acquired with [`Client::handle`] before calling
+/// [`Client::run`].
 ///
-/// # Examples
+/// # Shutdown
 ///
-/// ```ignore
-/// // Connect to a broker.
-/// let client = Client::connect(transport).await?;
-///
-/// // Make sure to get a handle before calling run().
-/// let mut handle = client.handle().clone();
-///
-/// // Spawn the client on a dedicated task.
-/// let join = tokio::spawn(client.run());
-///
-/// // ...
-///
-/// // Shut down the client again and then wait for join to resolve.
-/// handle.shutdown().await?;
-/// join.await??;
-/// ```
+/// A [`Client`] will automatically shut down when the last [`Handle`] has been dropped. Keep in
+/// mind that several other types (such as e.g. [`Object`]) keep an internal [`Handle`]. Use
+/// [`Handle::shutdown`] to shut down the [`Client`] manually.
 #[derive(Debug)]
 #[must_use = "clients do nothing unless you `.await` or poll `Client::run()`"]
 pub struct Client<T>
@@ -105,6 +155,38 @@ where
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::Client;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// // Create an AsyncTransport for connecting to the broker.
+    /// // let async_transport = ...
+    ///
+    /// // Connect to the broker:
+    /// let client = Client::connect(async_transport).await?;
+    /// # tokio::spawn(conn.await??.run());
+    ///
+    /// // Acquire a handle and spawn the client:
+    /// let handle = client.handle().clone();
+    /// let join = tokio::spawn(client.run());
+    ///
+    /// // The client is now fully connected and can be interacted with through the handle.
+    ///
+    /// // Shut down client:
+    /// handle.shutdown();
+    /// join.await??;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn connect(mut t: T) -> Result<Self, ConnectError<T::Error>> {
         t.send_and_flush(Message::Connect(Connect { version: VERSION }))
             .await?;
@@ -139,7 +221,7 @@ where
     /// Returns a handle to the client.
     ///
     /// After creating the [`Client`], [`Handle`s](Handle) are the primary entry point for
-    /// interacting with a running client.
+    /// interacting with it.
     ///
     /// When the last [`Handle`] is dropped, the [`Client`] will automatically shut down.
     pub fn handle(&self) -> &Handle {
@@ -155,9 +237,11 @@ where
     /// should ideally be spawned on a dedicated task (not for performance or technical reasons, but
     /// for ergonomics).
     ///
+    /// # Shutdown
+    ///
     /// A running [`Client`] can be shut down manually with [`Handle::shutdown`]. It will also
     /// automatically shut down when the last [`Handle`] has been dropped. Be aware, that some
-    /// structs (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
+    /// types (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
     /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         self.handle.take().unwrap();

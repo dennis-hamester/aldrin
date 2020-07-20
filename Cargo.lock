@@ -18,10 +18,13 @@ dependencies = [
 name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
+ "aldrin-broker",
  "aldrin-proto",
+ "aldrin-util",
  "futures-channel",
  "futures-core",
  "futures-util",
+ "tokio",
  "uuid",
 ]
 
