@@ -46,17 +46,7 @@ where
     }
 }
 
-impl<T> StdError for ConnectError<T>
-where
-    T: StdError + 'static,
-{
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        match self {
-            ConnectError::Transport(e) => Some(e),
-            ConnectError::VersionMismatch(_) | ConnectError::UnexpectedMessageReceived(_) => None,
-        }
-    }
-}
+impl<T: fmt::Debug + fmt::Display> StdError for ConnectError<T> {}
 
 /// Error while running a client.
 #[derive(Debug, Clone)]
@@ -88,17 +78,7 @@ where
     }
 }
 
-impl<T> StdError for RunError<T>
-where
-    T: StdError + 'static,
-{
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        match self {
-            RunError::Transport(e) => Some(e),
-            RunError::UnexpectedMessageReceived(_) => None,
-        }
-    }
-}
+impl<T: fmt::Debug + fmt::Display> StdError for RunError<T> {}
 
 /// Standard error type used for most functions.
 #[derive(Debug, Clone, PartialEq, Eq)]
