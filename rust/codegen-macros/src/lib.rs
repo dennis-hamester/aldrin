@@ -217,7 +217,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
-            Err(e) => panic!("{}", e),
+            Err(e) => {
+                emit_call_site_error!("{}", e);
+                abort_call_site!("there were Aldrin schema errors");
+            }
         };
 
         write!(
