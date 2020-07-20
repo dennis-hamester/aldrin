@@ -1,8 +1,11 @@
 use crate::error::{Error, SubprocessError};
 use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
+use diffy::Patch;
 use heck::{CamelCase, ShoutySnakeCase};
 use std::fmt::Write;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -11,6 +14,7 @@ use std::process::{Command, Stdio};
 pub struct RustOptions<'a> {
     pub rustfmt: bool,
     pub rustfmt_toml: Option<&'a Path>,
+    pub patch: Option<&'a Path>,
 }
 
 impl<'a> RustOptions<'a> {
@@ -18,6 +22,7 @@ impl<'a> RustOptions<'a> {
         RustOptions {
             rustfmt: false,
             rustfmt_toml: None,
+            patch: None,
         }
     }
 }
@@ -79,6 +84,10 @@ impl<'a> RustGenerator<'a> {
             self.definition(def);
         }
 
+        if let Some(patch) = self.rust_options.patch {
+            self.patch(patch)?;
+        }
+
         if self.rust_options.rustfmt {
             self.format()?;
         }
@@ -120,6 +129,19 @@ impl<'a> RustGenerator<'a> {
             }
             .into())
         }
+    }
+
+    fn patch(&mut self, patch: &Path) -> Result<(), Error> {
+        let patch = {
+            let mut file = File::open(patch)?;
+            let mut cnt = String::new();
+            file.read_to_string(&mut cnt)?;
+            cnt
+        };
+
+        let patch = Patch::from_str(&patch)?;
+        self.output.module_content = diffy::apply(&self.output.module_content, &patch)?;
+        Ok(())
     }
 
     fn definition(&mut self, def: &ast::Definition) {

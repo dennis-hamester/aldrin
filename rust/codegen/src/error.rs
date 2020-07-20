@@ -1,3 +1,4 @@
+use diffy::{ApplyError, ParsePatchError};
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
@@ -7,6 +8,8 @@ use std::io::Error as IoError;
 pub enum Error {
     Io(IoError),
     Subprocess(SubprocessError),
+    ParsePatch(ParsePatchError),
+    ApplyPatch(ApplyError),
 }
 
 impl From<IoError> for Error {
@@ -15,11 +18,25 @@ impl From<IoError> for Error {
     }
 }
 
+impl From<ParsePatchError> for Error {
+    fn from(e: ParsePatchError) -> Self {
+        Error::ParsePatch(e)
+    }
+}
+
+impl From<ApplyError> for Error {
+    fn from(e: ApplyError) -> Self {
+        Error::ApplyPatch(e)
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Io(e) => e.fmt(f),
             Error::Subprocess(e) => e.fmt(f),
+            Error::ParsePatch(e) => e.fmt(f),
+            Error::ApplyPatch(e) => e.fmt(f),
         }
     }
 }
