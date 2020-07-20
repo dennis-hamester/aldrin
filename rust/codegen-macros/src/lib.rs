@@ -3,7 +3,7 @@
 //! This crate provides a single macro as an alternative frontend to the Aldrin code generator. It
 //! removes the need to generate code from a schema beforehand or as part of a `build.rs`.
 //!
-//! ## Basic usage
+//! # Basic usage
 //!
 //! The [`generate!`] macro takes one required argument, the path to the schema file. Paths can be
 //! relative to `Cargo.toml` file. This requires building with Cargo (or more specifically, the
@@ -53,7 +53,7 @@
 //! }
 //! ```
 //!
-//! ## Multiple schemas
+//! # Multiple schemas
 //!
 //! It is possible to pass additional paths to the macro. Code will then be generated for all of
 //! them:
@@ -69,7 +69,7 @@
 //! Any additional options (see below) will be applied to all schemas. If this is not desired, then
 //! the macro can be called multiple times instead.
 //!
-//! ## Include directories
+//! # Include directories
 //!
 //! You can specify include directories with `include = "path"`:
 //!
@@ -89,7 +89,7 @@
 //!
 //! The `include` option can be repeated multiple times.
 //!
-//! ## Skipping server or client code
+//! # Skipping server or client code
 //!
 //! You can skip generating server or client code for services by setting `server = false` or
 //! `client = false`. This will only affect services and types defined inside (inline structs and
@@ -97,7 +97,7 @@
 //!
 //! Both settings default to `true`.
 //!
-//! ## Patching the generated code
+//! # Patching the generated code
 //!
 //! You can specify an additional patch file, which will be applied to the generated code. This
 //! allows for arbitrary changes, such as for example custom additional derives.
@@ -118,7 +118,7 @@
 //! }
 //! ```
 //!
-//! ## Errors and warnings
+//! # Errors and warnings
 //!
 //! Any errors and warnings from the schemas will be shown as part of the regular compiler
 //! output. No code will be generated, if there are any errors in the schemas.
