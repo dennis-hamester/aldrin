@@ -29,6 +29,12 @@ pub struct RustArgs {
     #[structopt(long)]
     rustfmt_toml: Option<PathBuf>,
 
+    /// Path to a patch to apply to the generated code
+    ///
+    /// If --format is used as well, the patch is applied before formatting the code.
+    #[structopt(short, long)]
+    patch: Option<PathBuf>,
+
     /// Path to an Aldrin schema file
     #[structopt(name = "schema")]
     file: PathBuf,
@@ -60,6 +66,7 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
     let mut rust_options = RustOptions::new();
     rust_options.rustfmt = args.format;
     rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
+    rust_options.patch = args.patch.as_deref();
 
     let gen = Generator::new(&options, &parsed);
     let output = match gen.generate_rust(&rust_options) {
