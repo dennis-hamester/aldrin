@@ -1,0 +1,51 @@
+--- example1-orig.rs	2020-07-20 21:22:50.535151254 +0200
++++ example1-patched.rs	2020-07-20 21:23:27.512440687 +0200
+@@ -4,32 +4,32 @@
+ 
+ #[derive(Debug, Clone)]
+ #[non_exhaustive]
+-pub struct MyStruct {
++pub struct MyStructRenamed {
+     pub field1: Option<u32>,
+     pub field2: Option<u32>,
+ }
+ 
+-impl MyStruct {
++impl MyStructRenamed {
+     pub fn builder() -> MyStructBuilder {
+         MyStructBuilder::new()
+     }
+ }
+ 
+-impl aldrin_client::codegen::aldrin_proto::FromValue for MyStruct {
++impl aldrin_client::codegen::aldrin_proto::FromValue for MyStructRenamed {
+     fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {
+         let mut v = match v {
+             aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,
+             _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),
+         };
+ 
+-        Ok(MyStruct {
++        Ok(MyStructRenamed {
+             field1: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&1).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,
+             field2: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&2).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,
+         })
+     }
+ }
+ 
+-impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStruct {
++impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStructRenamed {
+     fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {
+         let mut v = std::collections::HashMap::new();
+         if let Some(field1) = self.field1 {
+@@ -67,8 +67,8 @@
+         self
+     }
+ 
+-    pub fn build(self) -> MyStruct {
+-        MyStruct {
++    pub fn build(self) -> MyStructRenamed {
++        MyStructRenamed {
+             field1: self.field1,
+             field2: self.field2,
+         }

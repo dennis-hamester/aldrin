@@ -97,6 +97,27 @@
 //!
 //! Both settings default to `true`.
 //!
+//! ## Patching the generated code
+//!
+//! You can specify an additional patch file, which will be applied to the generated code. This
+//! allows for arbitrary changes, such as for example custom additional derives.
+//!
+//! A patch can only be specified when generating code for a single schema.
+//!
+//! ```
+//! aldrin_codegen_macros::generate! {
+//!     "schemas/example1.aldrin",
+//!     patch = "schemas/example1-rename.patch",
+//! }
+//!
+//! fn main() {
+//!     example1::MyStructRenamed::builder()
+//!         .set_field1(Some(12))
+//!         .set_field2(Some(34))
+//!         .build();
+//! }
+//! ```
+//!
 //! ## Errors and warnings
 //!
 //! Any errors and warnings from the schemas will be shown as part of the regular compiler
@@ -138,6 +159,7 @@ extern crate proc_macro;
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{Diagnostic, Parsed, Parser};
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use proc_macro_error::{
     abort_call_site, emit_call_site_error, emit_call_site_warning, proc_macro_error,
 };
@@ -189,7 +211,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
         }
 
         let gen = Generator::new(&args.options, &parsed);
-        let rust_options = RustOptions::new();
+
+        let mut rust_options = RustOptions::new();
+        rust_options.patch = args.patch.as_deref();
+
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
             Err(e) => panic!("{}", e),
@@ -218,6 +243,7 @@ struct Args {
     options: Options,
     warnings_as_errors: bool,
     suppress_warnings: bool,
+    patch: Option<PathBuf>,
 }
 
 impl Parse for Args {
@@ -229,6 +255,7 @@ impl Parse for Args {
             options: Options::default(),
             warnings_as_errors: false,
             suppress_warnings: false,
+            patch: None,
         };
 
         // Additional schemas
@@ -259,6 +286,9 @@ impl Parse for Args {
                 args.warnings_as_errors = input.parse::<LitBool>()?.value;
             } else if opt == "suppress_warnings" {
                 args.suppress_warnings = input.parse::<LitBool>()?.value;
+            } else if opt == "patch" {
+                let lit_str = input.parse::<LitStr>()?;
+                args.patch = Some(lit_str_to_path(lit_str));
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
@@ -267,6 +297,13 @@ impl Parse for Args {
                 break;
             }
             input.parse::<Token![,]>()?;
+        }
+
+        if (args.schemas.len() > 1) && args.patch.is_some() {
+            return Err(Error::new(
+                Span::call_site(),
+                "patch cannot be applied to multiple schemas",
+            ));
         }
 
         Ok(args)

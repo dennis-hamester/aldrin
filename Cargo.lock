@@ -39,6 +39,7 @@ dependencies = [
  "aldrin-codegen",
  "aldrin-parser",
  "proc-macro-error 1.0.3",
+ "proc-macro2",
  "syn",
 ]
 
