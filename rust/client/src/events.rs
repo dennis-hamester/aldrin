@@ -23,6 +23,9 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// When the [`Client`](crate::Client) shuts down, all subscriptions are removed and
 /// [`Stream::poll_next`] will return `None` as well.
 ///
+/// [`Events`] holds an internal [`Handle`] and will thus prevent the [`Client`](crate::Client) from
+/// shutting down automatically. The [`Handle`] is only released when [`Events`] is dropped.
+///
 /// This is low-level type. You should generally use the auto-generated event streams instead, which
 /// do not require knowledge of event ids and provide better ergonomics for event arguments.
 ///
