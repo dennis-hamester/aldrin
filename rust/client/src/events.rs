@@ -12,38 +12,67 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 
 /// Manages subscriptions to service events.
 ///
-/// This struct is created by [`Handle::events`]. Events can be [`subscribe`d](Events::subscribe)
-/// and [`unsubscribe`d](Events::unsubscribe).
+/// This type is created by [`Handle::events`]. Events can be [`subscribe`d](Events::subscribe) and
+/// [`unsubscribe`d](Events::unsubscribe). After subscribing to events, this type should be polled
+/// through its implementation of [`Stream`].
 ///
-/// After subscribing to events, this struct should be polled through its implementation of
-/// [`Stream`].
+/// Subscriptions can removed implicitly, e.g. when a [`Service`](crate::Service) has been
+/// destroyed.  When there are no subscriptions left (or when none have been made in the first
+/// place) [`Stream::poll_next`] will return `None`.
 ///
-/// Subscriptions can removed implicitly, e.g. when a service has been destroyed of which events
-/// were subscribed. When there are no subscriptions left (or when none have been made in the first
-/// place) [`Stream::poll_next`] will return [`None`].
+/// When the [`Client`](crate::Client) shuts down, all subscriptions are removed and
+/// [`Stream::poll_next`] will return `None` as well.
 ///
-/// When the client shuts down, [`Stream::poll_next`] will return [`None`] as well.
+/// This is low-level type. You should generally use the auto-generated event streams instead, which
+/// do not require knowledge of event ids and provide better ergonomics for event arguments.
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // For StreamExt::next()
+/// ```
+/// use aldrin_client::{Event, SubscribeMode};
+/// use aldrin_proto::FromValue;
+/// # use aldrin_proto::IntoValue;
 /// use futures::stream::StreamExt;
 ///
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let broker = aldrin_broker::Broker::new();
+/// # let handle = broker.handle().clone();
+/// # tokio::spawn(broker.run());
+/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+/// # let client = aldrin_client::Client::connect(async_transport).await?;
+/// # let handle = client.handle().clone();
+/// # tokio::spawn(client.run());
+/// # tokio::spawn(conn.await??.run());
+/// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+/// # let service_id = svc.id();
 /// let mut events = handle.events();
 ///
-/// // Subscribe to a few events.
-/// events.subscribe(svc_id, 1).await?;
-/// events.subscribe(svc_id, 2).await?;
+/// events.subscribe(service_id, 1).await?;
+/// events.subscribe(service_id, 2).await?;
 ///
-/// // Handle next event.
-/// if let Some(ev) = events.next().await {
-///     match ev.id {
-///         1 => { ... }
-///         2 => { ... }
+/// # handle.emit_event(service_id, 1, 32u32.into_value()).await?;
+/// while let Some(event) = events.next().await {
+///     match event {
+///         Event { id: 1, args, .. } => {
+///             let arg = u32::from_value(args)?;
+///             println!("Event 1 with u32 arg {}.", arg);
+///             # handle.emit_event(service_id, 2, "Hello, world!".into_value()).await?;
+///         }
+///
+///         Event { id: 2, args, .. } => {
+///             let arg = String::from_value(args)?;
+///             println!("Event 2 with string arg {}.", arg);
+///             # svc.destroy().await?;
+///         }
+///
 ///         _ => unreachable!(),
 ///     }
 /// }
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 #[must_use = "streams do nothing unless you poll them"]
@@ -67,7 +96,7 @@ impl Events {
         }
     }
 
-    /// Subscribe to an event.
+    /// Subscribes to an event.
     ///
     /// This function returns `true`, if the event `id` of service `service_id` was not already
     /// subscribed to. Otherwise `false` is returned.
@@ -177,7 +206,7 @@ impl EventsId {
 /// Event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct Event {
-    /// Id of the service which emitted the event.
+    /// Id of the service, which emitted the event.
     pub service_id: ServiceId,
 
     /// Id of the event.
