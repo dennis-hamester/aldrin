@@ -10,6 +10,43 @@ use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+/// Handle to a client.
+///
+/// After connecting a [`Client`](crate::Client) to a broker, [`Handle`s](Handle) are used to
+/// interact with it. The first [`Handle`] can be acquired with
+/// [`Client::handle`](crate::Client::handle). After that, [`Handle`s](Handle) can be cloned
+/// cheaply.
+///
+/// The [`Client`](crate::Client) will automatically shut down when the last [`Handle`] has been
+/// dropped.
+///
+/// # Examples
+///
+/// ```
+/// use aldrin_client::Client;
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let broker = aldrin_broker::Broker::new();
+/// # let handle = broker.handle().clone();
+/// # tokio::spawn(broker.run());
+/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+/// // Connect to the broker:
+/// let client = Client::connect(async_transport).await?;
+///
+/// // Acquire the first handle:
+/// let handle = client.handle().clone();
+///
+/// // Run the client, which consumes it and leaves only the handle for interacting with it:
+/// tokio::spawn(client.run());
+/// # tokio::spawn(conn.await??.run());
+///
+/// // Handles are cheap to clone:
+/// let handle2 = handle.clone();
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct Handle {
     send: UnboundedSender<Request>,
@@ -22,17 +59,57 @@ impl Handle {
 
     /// Shuts down the client.
     ///
-    /// Client shutdown happens asynchronously, in the sense that when this function returns, the
-    /// client has only been requested to shut down and not yet necessarily done so. As soon as
-    /// [`Client::run`](super::Client::run) returns, it has fully shut down.
+    /// Shutdown happens asynchronously, in the sense that when this function returns, the
+    /// [`Client`](crate::Client) has only been requested to shut down and not yet necessarily done
+    /// so. As soon as [`Client::run`](crate::Client::run) returns, it has fully shut down.
     ///
-    /// If the client has already shut down (due to any reason), this function will not treat that
-    /// as an error. This is different than most other functions, which would return
-    /// [`Error::ClientShutdown`] instead.
+    /// If the [`Client`](crate::Client) has already shut down (due to any reason), this function
+    /// will not treat that as an error. This is different than most other functions, which would
+    /// return [`Error::ClientShutdown`] instead.
     pub fn shutdown(&self) {
         self.send.unbounded_send(Request::Shutdown).ok();
     }
 
+    /// Creates a new object on the bus.
+    ///
+    /// The `uuid` must not yet exists on the bus, or else [`Error::DuplicateObject`] will be
+    /// returned. Use [`ObjectUuid::new_v4`] to create a new random v4 UUID.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::{Error, ObjectUuid};
+    /// use uuid::Uuid;
+    ///
+    /// // 6173e119-8066-4776-989b-145a5f16ed4c
+    /// const OBJECT2_UUID: ObjectUuid =
+    ///     ObjectUuid(Uuid::from_u128(0x6173e11980664776989b145a5f16ed4c));
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// // Create an object with a random UUID:
+    /// let object1 = handle.create_object(ObjectUuid::new_v4()).await?;
+    ///
+    /// // Create an object with a fixed UUID:
+    /// let object2 = handle.create_object(OBJECT2_UUID).await?;
+    ///
+    /// // Using the same UUID again will cause an error:
+    /// assert_eq!(
+    ///     handle.create_object(OBJECT2_UUID).await.unwrap_err(),
+    ///     Error::DuplicateObject(OBJECT2_UUID)
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn create_object(&self, uuid: ObjectUuid) -> Result<Object, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
@@ -68,6 +145,13 @@ impl Handle {
             .ok();
     }
 
+    /// Subscribes to a stream of object creation and destruction events.
+    ///
+    /// An [`Objects`] stream can be used to discover and track [`Object`s](Object) on the bus. The
+    /// `mode` parameter decides whether the stream will include only current, only new or all
+    /// [`Object`s](Object).
+    ///
+    /// See [`Objects`] for more information and usage examples.
     pub fn objects(&self, mode: SubscribeMode) -> Result<Objects, Error> {
         let (ev_send, ev_recv) = unbounded();
         self.send
@@ -124,6 +208,13 @@ impl Handle {
             .ok();
     }
 
+    /// Subscribes to a stream of service creation and destruction events.
+    ///
+    /// A [`Services`] stream can be used to discover and track [`Service`s](Service) on the
+    /// bus. The `mode` parameter decides whether the stream will include only current, only new or
+    /// all [`Service`s](Service).
+    ///
+    /// See [`Services`] for more information and usage examples.
     pub fn services(&self, mode: SubscribeMode) -> Result<Services, Error> {
         let (ev_send, ev_recv) = unbounded();
         self.send
@@ -132,6 +223,51 @@ impl Handle {
         Ok(Services::new(ev_recv))
     }
 
+    /// Calls a function on a service.
+    ///
+    /// The function with id `function` will be called with the arguments `args` on the service
+    /// identified by `service_id`.
+    ///
+    /// The returned value of type [`CallFunctionFuture`] is a future which will resolve to the
+    /// result of the function call.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_proto::{FromValue, IntoValue};
+    /// # use futures::stream::StreamExt;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+    /// # let service_id = svc.id();
+    /// // Call function 1 with "1 + 2 = ?" as the argument.
+    /// let result = handle.call_function(service_id, 1, "1 + 2 = ?".into_value())?;
+    /// # svc.next().await.unwrap().reply.ok(3u32.into_value())?;
+    ///
+    /// // Await the result. The `?` here checks for errors on the protocol level, such as a
+    /// // intermediate shutdown, or whether the function call was aborted by the callee.
+    /// let result = result.await?;
+    ///
+    /// // Now, result is of type `Result<Value, Value>`, directly representing the return value of
+    /// // the function call.
+    /// match result {
+    ///     Ok(ok) => assert_eq!(u32::from_value(ok)?, 3),
+    ///     Err(err) => panic!("Function call failed: {:?}.", err),
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn call_function(
         &self,
         service_id: ServiceId,
@@ -173,6 +309,9 @@ impl Handle {
             .ok();
     }
 
+    /// Creates an Events object used to subscribe to service events.
+    ///
+    /// See [`Events`] for more information and usage examples.
     pub fn events(&self) -> Events {
         Events::new(self.clone())
     }
@@ -216,6 +355,36 @@ impl Handle {
             .map_err(|_| Error::ClientShutdown)
     }
 
+    /// Emits an events to subscribed clients.
+    ///
+    /// The event with the id `event` of the service identified by `service_id` will be emitted with
+    /// the arguments `args` to all subscribed clients.
+    ///
+    /// Use [`Handle::events`] to subscribe to events.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::IntoValue;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+    /// # let service_id = svc.id();
+    /// // Emit event 1 with argument "Hello, world!":
+    /// handle.emit_event(service_id, 1, "Hello, world!".into_value()).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn emit_event(
         &self,
         service_id: ServiceId,
@@ -232,7 +401,12 @@ impl Handle {
     }
 }
 
-/// Future to `await` the result of a function call.
+/// Future to await the result of a function call.
+///
+/// The future resolves to the type `Result<Result<`[`Value`]`, `[`Value`]`>, `[`Error`]`>`. The
+/// outer `Result<_, `[`Error`]`>` represents the success or failure on the protocol and client
+/// library level. The inner `Result<`[`Value`]`, `[`Value`]`>` represents the actual return value
+/// of the function.
 #[derive(Debug)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct CallFunctionFuture {
