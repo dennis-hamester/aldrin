@@ -101,7 +101,7 @@ where
 }
 
 /// Standard error type used for most functions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// The client has shut down.
     ///
