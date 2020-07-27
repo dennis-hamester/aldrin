@@ -1,4 +1,4 @@
-use super::{Error, Handle, ObjectId};
+use crate::{Error, Handle, ObjectId};
 use aldrin_proto::{CallFunctionResult, Value};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
@@ -7,15 +7,15 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use uuid::Uuid;
 
-/// Owned service.
+/// Owned service on the bus.
 ///
-/// Services are always associated with an [`Object`](super::Object) and created by
-/// [`Object::create_service`](super::Object::create_service). Services are destroyed again by
-/// calling [`destroy`](Service::destroy), by dropping them, or implicitly when the
-/// [`Object`](super::Object) is destroyed.
+/// [`Service`s](Service) are associated with an [`Object`](crate::Object) and created with
+/// [`Object::create_service`](crate::Object::create_service). [`Service`s](Service) can be
+/// destroyed again by calling [`destroy`](Service::destroy), by dropping them, or implicitly when
+/// the [`Object`](crate::Object) is destroyed.
 ///
-/// To handle incoming function calls, iterate asynchronously over a service with the [`Stream`]
-/// trait, which then yields [`FunctionCall`s](FunctionCall).
+/// [`Service`] exposes an asynchronous stream of incoming [`FunctionCall`s](FunctionCall) via its
+/// implementation of the [`Stream`] trait.
 ///
 /// Events can be emitted directly with [`Handle::emit_event`]. This is available on [`Handle`],
 /// because usually [`Service`] is borrowed mutably to wait for function calls. The [`ServiceId`]
@@ -23,28 +23,141 @@ use uuid::Uuid;
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // For StreamExt::next()
+/// Creating and destroying [`Service`s](Service):
+///
+/// ```
+/// use aldrin_client::{Error, ObjectUuid, ServiceUuid};
+/// use std::mem;
+/// use uuid::Uuid;
+///
+/// // f88f1706-9609-42a4-8796-4e7bb8c3ef24
+/// const SERVICE_UUID: ServiceUuid =
+///     ServiceUuid(Uuid::from_u128(0xf88f1706960942a487964e7bb8c3ef24));
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let broker = aldrin_broker::Broker::new();
+/// # let handle = broker.handle().clone();
+/// # tokio::spawn(broker.run());
+/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+/// # let client = aldrin_client::Client::connect(async_transport).await?;
+/// # let handle = client.handle().clone();
+/// # tokio::spawn(client.run());
+/// # tokio::spawn(conn.await??.run());
+/// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
+///
+/// // Create a service and destroy it again explicitly:
+/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// service.destroy().await?;
+/// assert!(service.handle().is_none());
+///
+/// // Destroy a service implicitly by dropping it:
+/// let service = object.create_service(SERVICE_UUID).await?;
+/// mem::drop(service);
+///
+/// // Destroy a service implicitly by dropping the object:
+/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let service_id = service.id();
+/// mem::drop(object);
+/// assert_eq!(service.destroy().await, Err(Error::InvalidService(service_id)));
+/// # Ok(())
+/// # }
+/// ```
+///
+/// The following is a small chat server example, which shows how to handle function call on a
+/// service and how to emit events.
+///
+/// ```
+/// use aldrin_client::{ObjectUuid, ServiceUuid};
+/// use aldrin_proto::{FromValue, IntoValue, Value};
 /// use futures::stream::StreamExt;
+/// use std::collections::HashSet;
+/// use uuid::Uuid;
 ///
-/// // Create a new service with a random UUID.
-/// let mut service = object.create_service(ServiceUuid(Uuid::new_v4()), FIFO_SIZE).await?;
+/// // 91334d42-7045-4292-99dc-9fd89c5f104f
+/// const CHAT_UUID: ServiceUuid =
+///     ServiceUuid(Uuid::from_u128(0x91334d427045429299dc9fd89c5f104f));
 ///
-/// // Handle next function call.
-/// if let Some(call) = service.next().await {
-///     match call.id {
-///         1 => {
-///             // ...
-///             handle.emit_event(service.id(), 1, Value::None).await?;
-///             call.reply.ok(res).await?
+/// // Functions
+/// const SHUTDOWN: u32 = 1;
+/// const JOIN_CHAT: u32 = 2;
+/// const LEAVE_CHAT: u32 = 3;
+/// const LIST_USERS: u32 = 4;
+/// const SEND_MESSAGE: u32 = 5;
+///
+/// // Events
+/// const JOINED_CHAT: u32 = 1;
+/// const LEFT_CHAT: u32 = 2;
+/// const MESSAGE_SENT: u32 = 3;
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let broker = aldrin_broker::Broker::new();
+/// # let handle = broker.handle().clone();
+/// # tokio::spawn(broker.run());
+/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+/// # let client = aldrin_client::Client::connect(async_transport).await?;
+/// # let handle = client.handle().clone();
+/// # tokio::spawn(client.run());
+/// # tokio::spawn(conn.await??.run());
+///
+/// // Create object and our chat service:
+/// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
+/// let mut service = object.create_service(CHAT_UUID).await?;
+/// let service_id = service.id();
+///
+/// // HashSet to keep track of users:
+/// let mut users = HashSet::new();
+///
+/// # handle.call_function(service.id(), SHUTDOWN, Value::None)?;
+/// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
+/// // which contains the function's id, the arguments, and a reply object.
+/// while let Some(func) = service.next().await {
+///     match func.id {
+///         SHUTDOWN => break,
+///
+///         JOIN_CHAT => {
+///             let name = String::from_value(func.args)?;
+///             if users.insert(name.clone()) {
+///                 // Emit an event that a new user with the given name joined:
+///                 handle.emit_event(service_id, JOINED_CHAT, name.into_value()).await?;
+///
+///                 func.reply.ok(Value::None)?;
+///             } else {
+///                 // Signal that the name is already taken.
+///                 func.reply.err(Value::None)?;
+///             }
 ///         }
 ///
-///         _ => call.reply.invalid_function().await?,
+///         LEAVE_CHAT => {
+///             let name = String::from_value(func.args)?;
+///             if users.remove(&name) {
+///                 // Emit an event that a user with the given name left:
+///                 handle.emit_event(service_id, LEFT_CHAT, name.into_value()).await?;
+///
+///                 func.reply.ok(Value::None)?;
+///             } else {
+///                 // Signal that the name is not known.
+///                 func.reply.err(Value::None)?;
+///             }
+///         }
+///
+///         LIST_USERS => func.reply.ok(users.clone().into_value())?,
+///
+///         SEND_MESSAGE => {
+///             // Broadcast the message:
+///             let message = String::from_value(func.args)?;
+///             handle.emit_event(service_id, MESSAGE_SENT, message.into_value()).await?;
+///             func.reply.ok(Value::None)?;
+///         }
+///
+///         _ => {}
 ///     }
 /// }
-///
-/// // Destroy the service again.
-/// service.destroy().await?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct Service {
@@ -81,7 +194,7 @@ impl Service {
 
     /// Destroys the service.
     ///
-    /// If the service has already been destroyed, [`Error::InvalidService`] is returned.
+    /// If the [`Service`] has already been destroyed, then [`Error::InvalidService`] is returned.
     pub async fn destroy(&mut self) -> Result<(), Error> {
         let inner = self.inner.as_mut().ok_or(Error::InvalidService(self.id))?;
         let res = inner.client.destroy_service(self.id).await;
@@ -135,11 +248,17 @@ struct Inner {
 
 /// Id of a service.
 ///
-/// A [`ServiceId`] consists of an arbitrary UUID, and a cookie chosen by the server. The
-/// combination of both is unique at all times across the whole Aldrin bus.
+/// An [`ServiceId`] consists of three parts:
+/// - An [`ObjectId`], identifying the associated [`Object`](crate::Object) on the bus
+/// - A [`ServiceUuid`], identifying the [`Service`] on the [`Object`](crate::Object)
+/// - A [`ServiceCookie`], a random UUID chosen by the broker
+///
+/// It is important to point out, that when a service is destroyed and later created again with the
+/// same [`ServiceUuid`], then the [`ServiceCookie`] and consequently the [`ServiceId`] will be
+/// different. See [`ServiceCookie`] for more information.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ServiceId {
-    /// Object id to which the service belongs.
+    /// Id of the associated object.
     pub object_id: ObjectId,
 
     /// UUID of the service.
@@ -160,6 +279,10 @@ impl ServiceId {
 }
 
 /// UUID of a service.
+///
+/// [`ServiceUuid`s](ServiceUuid) are chosen by the user when
+/// [creating](crate::Object::create_service) a service and must be unique among all services of an
+/// [`Object`](crate::Object).
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ServiceUuid(pub Uuid);
 
@@ -170,6 +293,57 @@ impl fmt::Display for ServiceUuid {
 }
 
 /// Cookie of a service.
+///
+/// [`ServiceCookie`s](ServiceCookie) are chosen by the broker when
+/// [creating](crate::Object::create_service) a [`Service`]. They help distinguish the [`Service`]
+/// across time.
+///
+/// ```
+/// use aldrin_client::ServiceUuid;
+/// use uuid::Uuid;
+///
+/// // 10e70a49-18ce-447c-949e-22fbd536a475
+/// const SERVICE_UUID: ServiceUuid =
+///     ServiceUuid(Uuid::from_u128(0x10e70a4918ce447c949e22fbd536a475));
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let broker = aldrin_broker::Broker::new();
+/// # let handle = broker.handle().clone();
+/// # tokio::spawn(broker.run());
+/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+/// # let client = aldrin_client::Client::connect(async_transport).await?;
+/// # let handle = client.handle().clone();
+/// # tokio::spawn(client.run());
+/// # tokio::spawn(conn.await??.run());
+/// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+///
+/// // Create a service:
+/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let service_id1 = service.id();
+/// service.destroy().await?;
+///
+/// // Create the same service again:
+/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let service_id2 = service.id();
+/// service.destroy().await?;
+///
+/// // The service UUIDs will be equal:
+/// assert_eq!(service_id1.uuid, SERVICE_UUID);
+/// assert_eq!(service_id2.uuid, SERVICE_UUID);
+///
+/// // But the cookies will be different:
+/// assert_ne!(service_id1.cookie, service_id2.cookie);
+///
+/// // Consequently, the ids will be different as well:
+/// assert_ne!(service_id1, service_id2);
+/// # Ok(())
+/// # }
+/// ```
+///
+/// In general, [`ServiceCookie`s](ServiceCookie) should be considered an implementation detail of
+/// the Aldrin protocol and there is rarely a reason to deal with them manually.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ServiceCookie(pub Uuid);
 
@@ -181,7 +355,10 @@ impl fmt::Display for ServiceCookie {
 
 /// Function call received by a service.
 ///
-/// Function calls can be received with the [`Stream`] implementation of [`Service`].
+/// [`FunctionCall`s](FunctionCall) can be received with the [`Stream`] implementation of
+/// [`Service`].
+///
+/// See [`Service`] for usage examples.
 #[derive(Debug)]
 pub struct FunctionCall {
     /// Id of the called function.
@@ -190,7 +367,7 @@ pub struct FunctionCall {
     /// Arguments passed to called function.
     pub args: Value,
 
-    /// Used to set the reply of a function call.
+    /// Reply object, used to set the return value of the function call.
     pub reply: FunctionCallReply,
 }
 
@@ -206,8 +383,11 @@ impl FunctionCall {
 
 /// Helper used to reply to a pending service function call.
 ///
-/// Every [`FunctionCall`] caries a reply object as well. It can be used once to set the reply of
-/// the function call.
+/// Every [`FunctionCall`] contains a [`FunctionCallReply`]. It can be used once to set the return
+/// value of the function call.
+///
+/// When [`FunctionCall`] is dropped (as opposed to consumed by one of its methods),
+/// [`abort`](FunctionCallReply::abort) will be called implicitly.
 #[derive(Debug)]
 pub struct FunctionCallReply {
     client: Option<Handle>,
@@ -222,7 +402,7 @@ impl FunctionCallReply {
         }
     }
 
-    /// Signal that the function call was successful.
+    /// Signals that the function call was successful.
     pub fn ok(mut self, res: Value) -> Result<(), Error> {
         self.client
             .take()
@@ -230,7 +410,7 @@ impl FunctionCallReply {
             .function_call_reply(self.serial, CallFunctionResult::Ok(res))
     }
 
-    /// Signal that the function call failed.
+    /// Signals that the function call has failed.
     pub fn err(mut self, res: Value) -> Result<(), Error> {
         self.client
             .take()
@@ -238,7 +418,7 @@ impl FunctionCallReply {
             .function_call_reply(self.serial, CallFunctionResult::Err(res))
     }
 
-    /// Abort the function call.
+    /// Aborts the function call.
     ///
     /// The caller will be still be notified that the call was aborted.
     pub fn abort(mut self) -> Result<(), Error> {
@@ -248,10 +428,10 @@ impl FunctionCallReply {
             .function_call_reply(self.serial, CallFunctionResult::Aborted)
     }
 
-    /// Signal that an invalid function has been called.
+    /// Signals that an invalid function has been called.
     ///
-    /// The function itself is identified by [`FunctionCall::id`], which might be invalid or
-    /// unexpected by the service.
+    /// The function, as identified by [`FunctionCall::id`], may be invalid or unexpected by the
+    /// service.
     pub fn invalid_function(mut self) -> Result<(), Error> {
         self.client
             .take()
@@ -259,7 +439,7 @@ impl FunctionCallReply {
             .function_call_reply(self.serial, CallFunctionResult::InvalidFunction)
     }
 
-    /// Signal that a invalid arguments were passed to the function.
+    /// Signals that invalid arguments were passed to the function.
     pub fn invalid_args(mut self) -> Result<(), Error> {
         self.client
             .take()
