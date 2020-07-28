@@ -78,19 +78,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aldrin-test"
-version = "0.1.0"
-dependencies = [
- "aldrin-broker",
- "aldrin-client",
- "aldrin-proto",
- "aldrin-util",
- "anyhow",
- "futures",
- "tokio",
-]
-
-[[package]]
 name = "aldrin-util"
 version = "0.1.0"
 dependencies = [
@@ -123,12 +110,6 @@ checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
 dependencies = [
  "winapi 0.3.8",
 ]
-
-[[package]]
-name = "anyhow"
-version = "1.0.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9a60d744a80c30fcb657dfe2c1b22bcb3e814c1a1e3674f32bf5820b570fbff"
 
 [[package]]
 name = "atty"
@@ -252,27 +233,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 
 [[package]]
-name = "futures"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c329ae8753502fb44ae4fc2b622fa2a94652c41e795143765ba0927f92ab780"
-dependencies = [
- "futures-channel",
- "futures-core",
- "futures-io",
- "futures-sink",
- "futures-task",
- "futures-util",
-]
-
-[[package]]
 name = "futures-channel"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0c77d04ce8edd9cb903932b608268b3fffec4163dc053b3b402bf47eac1f1a8"
 dependencies = [
  "futures-core",
- "futures-sink",
 ]
 
 [[package]]
@@ -280,18 +246,6 @@ name = "futures-core"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f25592f769825e89b92358db00d26f965761e094951ac44d3663ef25b7ac464a"
-
-[[package]]
-name = "futures-io"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a638959aa96152c7a4cddf50fcb1e3fede0583b27157c26e67d6f99904090dc6"
-
-[[package]]
-name = "futures-sink"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3466821b4bc114d95b087b850a724c6f83115e929bc88f1fa98a3304a944c8a6"
 
 [[package]]
 name = "futures-task"
@@ -305,14 +259,9 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22766cf25d64306bedf0384da004d05c9974ab104fcc4528f1236181c18004c5"
 dependencies = [
- "futures-channel",
  "futures-core",
- "futures-io",
- "futures-sink",
  "futures-task",
- "memchr",
  "pin-utils",
- "slab",
 ]
 
 [[package]]
@@ -386,22 +335,6 @@ name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
-
-[[package]]
-name = "memchr"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53445de381a1f436797497c61d851644d0e8e88e6140f22872ad33a704933978"
-
-[[package]]
-name = "num_cpus"
-version = "1.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46203554f085ff89c235cd12f7075f3233af9b11ed7c9e16dfe2560d03313ce6"
-dependencies = [
- "hermit-abi",
- "libc",
-]
 
 [[package]]
 name = "once_cell"
@@ -762,7 +695,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fdd17989496f49cdc57978c96f0c9fe5e4a58a8bddc6813c449a4624f6a030b"
 dependencies = [
  "bytes",
- "num_cpus",
  "pin-project-lite",
  "slab",
  "tokio-macros",
