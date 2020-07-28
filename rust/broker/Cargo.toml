@@ -12,3 +12,8 @@ futures-channel = { version = "0.3.4", default-features = false, features = ["st
 futures-core = { version = "0.3.4", default-features = false }
 futures-util = { version = "0.3.4", default-features = false }
 uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
+
+[dev-dependencies]
+aldrin-client = { version = "0.1.0", path = "../client" }
+aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
+tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }

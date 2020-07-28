@@ -4,6 +4,8 @@ mod handle;
 mod object;
 mod service;
 mod state;
+#[cfg(test)]
+mod test;
 
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
@@ -645,15 +647,18 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(req.serial);
 
-        let res = self
-            .conns
-            .get_mut(&conn_id)
-            .expect("inconsistent state")
+        let conn = match self.conns.get_mut(&conn_id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        if conn
             .send(Message::CallFunctionReply(CallFunctionReply {
                 serial,
                 result: req.result,
-            }));
-        if res.is_err() {
+            }))
+            .is_err()
+        {
             state.push_remove_conn(conn_id);
         }
 

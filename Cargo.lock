@@ -4,10 +4,13 @@
 name = "aldrin-broker"
 version = "0.1.0"
 dependencies = [
+ "aldrin-client",
  "aldrin-proto",
+ "aldrin-util",
  "futures-channel",
  "futures-core",
  "futures-util",
+ "tokio",
  "uuid",
 ]
 
