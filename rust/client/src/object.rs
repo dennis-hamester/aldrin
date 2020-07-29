@@ -16,11 +16,9 @@ use uuid::Uuid;
 ///
 /// ```
 /// use aldrin_client::ObjectUuid;
-/// use uuid::Uuid;
 ///
 /// // 6173e119-8066-4776-989b-145a5f16ed4c
-/// const OBJECT2_UUID: ObjectUuid =
-///     ObjectUuid(Uuid::from_u128(0x6173e11980664776989b145a5f16ed4c));
+/// const OBJECT2_UUID: ObjectUuid = ObjectUuid::from_u128(0x6173e11980664776989b145a5f16ed4c);
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -169,9 +167,9 @@ impl ObjectId {
 /// [`Object`] and must be unique among all [`Object`s](Object) on the bus.
 ///
 /// It depends on the use-case whether an [`ObjectUuid`] should be [random](ObjectUuid::new_v4) or
-/// fixed. As a general rule of thumb, when you're modeling a singleton [`Object`], then chose a
-/// fixed [`ObjectUuid`]. This will allow users to find it easily. In all other cases, a random
-/// [`ObjectUuid`] is usually the right choice.
+/// [fixed](ObjectUuid::from_u128). As a general rule of thumb, when you're modeling a singleton
+/// [`Object`], then chose a fixed [`ObjectUuid`]. This will allow users to find it easily. In all
+/// other cases, a random [`ObjectUuid`] is usually the right choice.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectUuid(pub Uuid);
 
@@ -179,6 +177,19 @@ impl ObjectUuid {
     /// Creates an ObjectUuid with a random v4 UUID.
     pub fn new_v4() -> Self {
         ObjectUuid(Uuid::new_v4())
+    }
+
+    /// Creates an ObjectUuid from an unsigned 128bit value in big-endian order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_client::ObjectUuid;
+    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
+    /// let object_uuid = ObjectUuid::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
+    /// ```
+    pub const fn from_u128(uuid: u128) -> Self {
+        ObjectUuid(Uuid::from_u128(uuid))
     }
 }
 

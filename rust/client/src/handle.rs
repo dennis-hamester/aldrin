@@ -79,11 +79,9 @@ impl Handle {
     ///
     /// ```
     /// use aldrin_client::{Error, ObjectUuid};
-    /// use uuid::Uuid;
     ///
     /// // 6173e119-8066-4776-989b-145a5f16ed4c
-    /// const OBJECT2_UUID: ObjectUuid =
-    ///     ObjectUuid(Uuid::from_u128(0x6173e11980664776989b145a5f16ed4c));
+    /// const OBJECT2_UUID: ObjectUuid = ObjectUuid::from_u128(0x6173e11980664776989b145a5f16ed4c);
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
