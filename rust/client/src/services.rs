@@ -60,11 +60,10 @@ use std::task::{Context, Poll};
 /// use aldrin_client::{ServiceEvent, ServiceUuid, SubscribeMode};
 /// use futures::future;
 /// use futures::stream::StreamExt;
-/// use uuid::Uuid;
 ///
 /// // 6d92452b-0cbc-493f-b16b-9f4ce2474a2e
 /// const INTERESTING_SERVICE_UUID: ServiceUuid =
-///     ServiceUuid(Uuid::from_u128(0x6d92452b0cbc493fb16b9f4ce2474a2e));
+///     ServiceUuid::from_u128(0x6d92452b0cbc493fb16b9f4ce2474a2e);
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

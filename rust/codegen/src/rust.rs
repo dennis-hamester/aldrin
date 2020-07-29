@@ -405,7 +405,7 @@ impl<'a> RustGenerator<'a> {
         let svc_uuid_const = service_uuid_const(svc);
         let svc_uuid = svc.uuid().value();
 
-        genln!(self, "pub const {}: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid(aldrin_client::codegen::uuid::Uuid::from_u128({:#034x}));", svc_uuid_const, svc_uuid.as_u128());
+        genln!(self, "pub const {}: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid::from_u128({:#034x});", svc_uuid_const, svc_uuid.as_u128());
         genln!(self);
 
         if self.options.client {

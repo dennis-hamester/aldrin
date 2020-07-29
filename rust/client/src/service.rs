@@ -28,11 +28,9 @@ use uuid::Uuid;
 /// ```
 /// use aldrin_client::{Error, ObjectUuid, ServiceUuid};
 /// use std::mem;
-/// use uuid::Uuid;
 ///
 /// // f88f1706-9609-42a4-8796-4e7bb8c3ef24
-/// const SERVICE_UUID: ServiceUuid =
-///     ServiceUuid(Uuid::from_u128(0xf88f1706960942a487964e7bb8c3ef24));
+/// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0xf88f1706960942a487964e7bb8c3ef24);
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -73,11 +71,9 @@ use uuid::Uuid;
 /// use aldrin_proto::{FromValue, IntoValue, Value};
 /// use futures::stream::StreamExt;
 /// use std::collections::HashSet;
-/// use uuid::Uuid;
 ///
 /// // 91334d42-7045-4292-99dc-9fd89c5f104f
-/// const CHAT_UUID: ServiceUuid =
-///     ServiceUuid(Uuid::from_u128(0x91334d427045429299dc9fd89c5f104f));
+/// const CHAT_UUID: ServiceUuid = ServiceUuid::from_u128(0x91334d427045429299dc9fd89c5f104f);
 ///
 /// // Functions
 /// const SHUTDOWN: u32 = 1;
@@ -286,6 +282,21 @@ impl ServiceId {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ServiceUuid(pub Uuid);
 
+impl ServiceUuid {
+    /// Creates an ServiceUuid from an unsigned 128bit value in big-endian order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_client::ServiceUuid;
+    /// // b94fb06d-791b-4aa9-afd1-9e2f69345eee
+    /// let service_uuid = ServiceUuid::from_u128(0xb94fb06d791b4aa9afd19e2f69345eee);
+    /// ```
+    pub const fn from_u128(uuid: u128) -> Self {
+        ServiceUuid(Uuid::from_u128(uuid))
+    }
+}
+
 impl fmt::Display for ServiceUuid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
@@ -300,11 +311,9 @@ impl fmt::Display for ServiceUuid {
 ///
 /// ```
 /// use aldrin_client::ServiceUuid;
-/// use uuid::Uuid;
 ///
 /// // 10e70a49-18ce-447c-949e-22fbd536a475
-/// const SERVICE_UUID: ServiceUuid =
-///     ServiceUuid(Uuid::from_u128(0x10e70a4918ce447c949e22fbd536a475));
+/// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x10e70a4918ce447c949e22fbd536a475);
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

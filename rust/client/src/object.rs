@@ -93,11 +93,9 @@ impl Object {
     ///
     /// ```
     /// use aldrin_client::{Error, ObjectUuid, ServiceUuid};
-    /// use uuid::Uuid;
     ///
     /// // 800b47a1-3882-4601-9155-e18c654476cc
-    /// const MY_SERVICE_UUID: ServiceUuid =
-    ///     ServiceUuid(Uuid::from_u128(0x800b47a1388246019155e18c654476cc));
+    /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x800b47a1388246019155e18c654476cc);
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
