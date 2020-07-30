@@ -2,6 +2,7 @@
 mod bincode;
 #[cfg(feature = "json")]
 mod json;
+mod packetizer;
 #[cfg(feature = "tokio-io")]
 mod tokio_io;
 
@@ -14,15 +15,9 @@ use std::fmt;
 pub use self::bincode::{BincodeError, BincodeSerializer};
 #[cfg(feature = "json")]
 pub use json::{JsonError, JsonSerializer};
+pub use packetizer::Packetizer;
 #[cfg(feature = "tokio-io")]
 pub use tokio_io::{TokioCodec, TokioCodecError};
-
-pub trait Packetizer {
-    type Error;
-
-    fn encode(&mut self, data: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error>;
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error>;
-}
 
 pub trait Serializer {
     type Error;
