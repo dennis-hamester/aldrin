@@ -1,4 +1,5 @@
 use super::Message;
+use pin_project::pin_project;
 use std::future::Future;
 use std::mem;
 use std::ops::DerefMut;
@@ -241,6 +242,17 @@ pub trait AsyncTransportExt: AsyncTransport {
     {
         Pin::new(self).send_poll_flush(cx)
     }
+
+    fn map_err<F, E>(self, f: F) -> MapError<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Error) -> E,
+    {
+        MapError {
+            transport: self,
+            map_err: f,
+        }
+    }
 }
 
 impl<T> AsyncTransportExt for T where T: AsyncTransport {}
@@ -357,5 +369,49 @@ where
             SendFlushInner::Flush(ref mut flush) => Pin::new(flush).poll(cx),
             _ => unreachable!(),
         }
+    }
+}
+
+#[pin_project]
+#[derive(Debug)]
+pub struct MapError<T, F> {
+    #[pin]
+    transport: T,
+    map_err: F,
+}
+
+impl<T, F, E> AsyncTransport for MapError<T, F>
+where
+    T: AsyncTransport,
+    F: FnMut(T::Error) -> E,
+{
+    type Error = E;
+
+    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
+        let mut this = self.project();
+        this.transport.receive_poll(cx).map_err(&mut this.map_err)
+    }
+
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        let mut this = self.project();
+        this.transport
+            .send_poll_ready(cx)
+            .map_err(&mut this.map_err)
+    }
+
+    fn send_start(self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
+        let mut this = self.project();
+        this.transport.send_start(msg).map_err(&mut this.map_err)
+    }
+
+    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        let mut this = self.project();
+        this.transport
+            .send_poll_flush(cx)
+            .map_err(&mut this.map_err)
+    }
+
+    fn name(&self) -> Option<&str> {
+        self.transport.name()
     }
 }
