@@ -3,10 +3,10 @@ mod bincode;
 #[cfg(feature = "json")]
 mod json;
 mod packetizer;
+mod serializer;
 #[cfg(feature = "tokio-io")]
 mod tokio_io;
 
-use aldrin_proto::Message;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::error::Error as StdError;
 use std::fmt;
@@ -16,15 +16,9 @@ pub use self::bincode::{BincodeError, BincodeSerializer};
 #[cfg(feature = "json")]
 pub use json::{JsonError, JsonSerializer};
 pub use packetizer::Packetizer;
+pub use serializer::Serializer;
 #[cfg(feature = "tokio-io")]
 pub use tokio_io::{TokioCodec, TokioCodecError};
-
-pub trait Serializer {
-    type Error;
-
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error>;
-    fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error>;
-}
 
 #[derive(Debug)]
 pub struct LengthPrefixed {
