@@ -1,7 +1,6 @@
 use super::BrokerError;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use std::num::NonZeroUsize;

@@ -7,7 +7,7 @@ mod value;
 pub mod transport;
 
 pub use message::*;
-pub use transport::AsyncTransport;
+pub use transport::{AsyncTransport, AsyncTransportExt};
 pub use value::{Bytes, ConversionError, FromValue, IntoValue, Value};
 
 pub const VERSION: u32 = 5;

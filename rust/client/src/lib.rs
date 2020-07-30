@@ -80,7 +80,6 @@ pub mod codegen {
     pub use uuid;
 }
 
-use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::*;
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};

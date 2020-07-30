@@ -3,8 +3,7 @@ mod event;
 mod handle;
 
 use crate::conn_id::ConnectionId;
-use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_proto::Message;
+use aldrin_proto::{AsyncTransport, AsyncTransportExt, Message};
 use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};
