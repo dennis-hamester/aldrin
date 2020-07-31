@@ -904,7 +904,7 @@ where
 }
 
 /// Mode of subscription for object and service creation events.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SubscribeMode {
     /// Receive events for all current and future objects or services.
     All,
