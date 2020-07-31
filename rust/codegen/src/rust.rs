@@ -34,7 +34,6 @@ impl<'a> Default for RustOptions<'a> {
 }
 
 #[derive(Debug)]
-#[non_exhaustive]
 pub struct RustOutput {
     pub module_name: String,
     pub module_content: String,
