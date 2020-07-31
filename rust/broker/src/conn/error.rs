@@ -28,17 +28,7 @@ where
     }
 }
 
-impl<T> Error for ConnectionError<T>
-where
-    T: Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            ConnectionError::Transport(e) => Some(e),
-            ConnectionError::UnexpectedBrokerShutdown | ConnectionError::FifoOverflow => None,
-        }
-    }
-}
+impl<T> Error for ConnectionError<T> where T: fmt::Debug + fmt::Display {}
 
 #[derive(Debug, Clone)]
 pub enum EstablishError<T> {
