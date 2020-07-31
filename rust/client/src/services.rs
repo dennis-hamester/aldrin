@@ -135,7 +135,7 @@ impl FusedStream for Services {
 ///
 /// This is the element type of the [`Services`] stream. See that type for more information and
 /// usage examples.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ServiceEvent {
     /// A service with the specified id was created.
     Created(ServiceId),
