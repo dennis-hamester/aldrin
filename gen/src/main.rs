@@ -2,17 +2,16 @@ mod check;
 mod diag;
 mod rust;
 
+use clap::{AppSettings, Clap};
 use std::convert::Infallible;
 use std::path::PathBuf;
 use std::process;
 use std::str::FromStr;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
-#[structopt(
-    about,
-    global_settings = &[AppSettings::VersionlessSubcommands, AppSettings::ColoredHelp]
+#[derive(Clap)]
+#[clap(version, author, about,
+    global_setting = AppSettings::ColoredHelp,
+    global_setting = AppSettings::VersionlessSubcommands,
 )]
 enum Args {
     /// Checks an Aldrin schema for errors
@@ -22,11 +21,11 @@ enum Args {
     Rust(rust::RustArgs),
 }
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 pub struct CommonArgs {
     /// When to color output
-    #[structopt(long, default_value = "auto")]
-    #[structopt(possible_values = &["auto", "always", "never"])]
+    #[clap(long, default_value = "auto")]
+    #[clap(possible_values = &["auto", "always", "never"])]
     color: Color,
 }
 
@@ -50,37 +49,37 @@ impl FromStr for Color {
     }
 }
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 pub struct CommonReadArgs {
     /// Additional include directories
-    #[structopt(short = "I", long, name = "include_dir")]
-    #[structopt(number_of_values(1))]
+    #[clap(short = "I", long, name = "include_dir")]
+    #[clap(number_of_values(1))]
     include: Vec<PathBuf>,
 }
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 pub struct CommonGenArgs {
     /// Output directory
     ///
     /// Files in the output directory will not be overwritten unless --overwrite is specified.
-    #[structopt(short, long = "output", name = "output_dir")]
+    #[clap(short, long = "output", name = "output_dir")]
     output_dir: PathBuf,
 
     /// Overwrite output files
-    #[structopt(short = "f", long)]
+    #[clap(short = "f", long)]
     overwrite: bool,
 
     /// Skip generating client-side code for services
-    #[structopt(long)]
+    #[clap(long)]
     no_client: bool,
 
     /// Skip generating server-side code for services
-    #[structopt(long)]
+    #[clap(long)]
     no_server: bool,
 }
 
 fn main() {
-    let res = match Args::from_args() {
+    let res = match Args::parse() {
         Args::Check(args) => check::run(args),
         Args::Rust(args) => rust::run(args),
     };

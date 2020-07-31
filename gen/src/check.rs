@@ -1,18 +1,18 @@
 use crate::{diag, CommonArgs, CommonReadArgs};
 use aldrin_parser::Parser;
+use clap::Clap;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 pub struct CheckArgs {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     common_args: CommonArgs,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
     /// Paths to one or more Aldrin schema files
-    #[structopt(name = "schema", required = true)]
+    #[clap(name = "schema", required = true)]
     files: Vec<PathBuf>,
 }
 

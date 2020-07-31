@@ -1,42 +1,42 @@
 use crate::{diag, CommonArgs, CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::Parser;
+use clap::Clap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 pub struct RustArgs {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     common_args: CommonArgs,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     common_gen_args: CommonGenArgs,
 
     /// Format output with rustfmt
     ///
     /// The formatting style can be customized with --rustfmt-toml.
-    #[structopt(long)]
+    #[clap(long)]
     format: bool,
 
     /// Path to rustfmt.toml
     ///
     /// If this argument is not specified, standard rustfmt rules apply regarding its configuration.
-    #[structopt(long)]
+    #[clap(long)]
     rustfmt_toml: Option<PathBuf>,
 
     /// Path to a patch to apply to the generated code
     ///
     /// If --format is used as well, the patch is applied before formatting the code.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     patch: Option<PathBuf>,
 
     /// Path to an Aldrin schema file
-    #[structopt(name = "schema")]
+    #[clap(name = "schema")]
     file: PathBuf,
 }
 
