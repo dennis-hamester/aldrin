@@ -1,13 +1,12 @@
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use clap::{AppSettings, Clap};
 use futures::future::select_all;
 use futures::stream::StreamExt;
 use std::error::Error;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::select;
 use tokio::time::{delay_for, Duration};
@@ -16,23 +15,22 @@ aldrin_codegen_macros::generate!("../../schemas/ping.aldrin", warnings_as_errors
 
 const MEASURE_UPDATE_MS: u64 = 5000;
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct BrokerArgs {
     /// IP address and port
-    #[structopt(short, long, default_value = "127.0.0.1:5000")]
+    #[clap(short, long, default_value = "127.0.0.1:5000")]
     listen: SocketAddr,
 
     /// Internal broker fifo size
     ///
     /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     broker_fifo_size: Option<usize>,
 
     /// Internal connection fifo size
     ///
     /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     conn_fifo_size: Option<usize>,
 }
 
@@ -84,15 +82,14 @@ async fn broker(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
     }
 }
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct RunArgs {
     /// IP address and port of the broker
-    #[structopt(short, long, default_value = "127.0.0.1:5000")]
+    #[clap(short, long, default_value = "127.0.0.1:5000")]
     broker: SocketAddr,
 
     /// Delay in milliseconds between pings
-    #[structopt(short, long, default_value = "1000")]
+    #[clap(short, long, default_value = "1000")]
     delay: u32,
 }
 
@@ -157,14 +154,11 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
     }
 }
 
-#[derive(StructOpt)]
-#[structopt(
-    global_settings = &[
-        AppSettings::VersionlessSubcommands,
-        AppSettings::ColoredHelp,
-        AppSettings::DisableVersion,
-    ],
-    no_version,
+#[derive(Clap)]
+#[clap(
+    global_setting = AppSettings::ColoredHelp,
+    global_setting = AppSettings::VersionlessSubcommands,
+    global_setting = AppSettings::DisableVersion,
 )]
 enum Args {
     /// Runs an Aldrin broker
@@ -176,7 +170,7 @@ enum Args {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    match Args::from_args() {
+    match Args::parse() {
         Args::Broker(args) => broker(args).await?,
         Args::Run(args) => run(args).await?,
     };
