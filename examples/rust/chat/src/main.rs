@@ -5,65 +5,57 @@ mod list;
 
 aldrin_codegen_macros::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
 
+use clap::{AppSettings, Clap};
 use std::error::Error;
 use std::net::SocketAddr;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
 use uuid::Uuid;
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct BrokerArgs {
     /// IP address and port
-    #[structopt(default_value = "127.0.0.1:5000", name = "endpoint")]
+    #[clap(default_value = "127.0.0.1:5000", name = "endpoint")]
     bind: SocketAddr,
 }
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct HostArgs {
     /// IP address and port of the broker
-    #[structopt(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
+    #[clap(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
     broker: SocketAddr,
 
     /// Name of the chat room
     name: String,
 }
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct ListArgs {
     /// IP address and port of the broker
-    #[structopt(default_value = "127.0.0.1:5000", name = "endpoint")]
+    #[clap(default_value = "127.0.0.1:5000", name = "endpoint")]
     broker: SocketAddr,
 }
 
-#[derive(StructOpt)]
-#[structopt(no_version)]
+#[derive(Clap)]
 struct JoinArgs {
     /// IP address and port of the broker
-    #[structopt(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
+    #[clap(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
     broker: SocketAddr,
 
     /// UUID of the chat room
     ///
     /// If the UUID is not specified and the broker hosts only a single chat room, then that one
     /// will be used.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     room: Option<Uuid>,
 
     /// The name under which you will appear
     name: String,
 }
 
-#[derive(StructOpt)]
-#[structopt(
-    global_settings = &[
-        AppSettings::VersionlessSubcommands,
-        AppSettings::ColoredHelp,
-        AppSettings::DisableVersion,
-    ],
-    no_version,
+#[derive(Clap)]
+#[clap(
+    global_setting = AppSettings::ColoredHelp,
+    global_setting = AppSettings::VersionlessSubcommands,
+    global_setting = AppSettings::DisableVersion,
 )]
 enum Args {
     /// Runs an Aldrin broker on which chat rooms can be hosted
@@ -81,7 +73,7 @@ enum Args {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    match Args::from_args() {
+    match Args::parse() {
         Args::Broker(args) => broker::run(args).await?,
         Args::Host(args) => host::run(args).await?,
         Args::List(args) => list::run(args).await?,
