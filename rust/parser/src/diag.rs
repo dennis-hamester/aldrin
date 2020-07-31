@@ -96,7 +96,7 @@ pub enum Style {
 ///     eprintln!();
 /// }
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Formatted<'a> {
     kind: DiagnosticKind,
     intro: Line<'a>,
