@@ -6,7 +6,7 @@ use std::str::from_utf8;
 use uuid::Uuid;
 
 fn test_message(m: Message, j: &str) {
-    let mut ser = JsonSerializer::new(false);
+    let mut ser = JsonSerializer::with_pretty(false);
     let mut buf = BytesMut::new();
 
     ser.serialize(m.clone(), &mut buf).unwrap();

@@ -13,7 +13,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
     println!("Connecting to broker at {}.", addr);
 
     let socket = TcpStream::connect(&addr).await?;
-    let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
     let client = Client::connect(t).await?;
     println!("Connection to broker at {} established.", addr);
 

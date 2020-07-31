@@ -44,7 +44,7 @@ async fn add_connection(
 ) -> Result<(), Box<dyn Error>> {
     println!("Incoming connection from {}.", addr);
 
-    let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
     let conn = if let Some(fifo_size) = fifo_size {
         handle
             .add_connection_with_fifo_size(t, NonZeroUsize::new(fifo_size))
@@ -101,7 +101,7 @@ async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
     println!("Connecting to broker at {}.", addr);
 
     let socket = TcpStream::connect(&addr).await?;
-    let t = TokioCodec::new(socket, LengthPrefixed::new(), JsonSerializer::new(true));
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
     let client = Client::connect(t).await?;
     let handle = client.handle().clone();
     tokio::spawn(client.run());

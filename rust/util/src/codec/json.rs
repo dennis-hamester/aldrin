@@ -14,12 +14,22 @@ pub struct JsonSerializer {
 }
 
 impl JsonSerializer {
-    pub fn new(pretty: bool) -> Self {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn with_pretty(pretty: bool) -> Self {
         JsonSerializer { pretty }
     }
 
     pub fn pretty(&self) -> bool {
         self.pretty
+    }
+}
+
+impl Default for JsonSerializer {
+    fn default() -> Self {
+        JsonSerializer { pretty: true }
     }
 }
 
