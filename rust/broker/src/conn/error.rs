@@ -62,16 +62,4 @@ where
     }
 }
 
-impl<T> Error for EstablishError<T>
-where
-    T: Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            EstablishError::Transport(e) => Some(e),
-            EstablishError::UnexpectedMessageReceived(_)
-            | EstablishError::VersionMismatch(_)
-            | EstablishError::BrokerShutdown => None,
-        }
-    }
-}
+impl<T> Error for EstablishError<T> where T: fmt::Debug + fmt::Display {}
