@@ -69,7 +69,7 @@ dependencies = [
  "heck",
  "pest",
  "pest_derive",
- "strsim 0.8.0",
+ "strsim",
  "uuid",
 ]
 
@@ -206,7 +206,7 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "os_str_bytes",
- "strsim 0.10.0",
+ "strsim",
  "term_size 1.0.0-beta1",
  "termcolor",
  "textwrap",
@@ -677,12 +677,6 @@ name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
-
-[[package]]
-name = "strsim"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "strsim"
