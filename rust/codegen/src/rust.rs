@@ -33,7 +33,7 @@ impl<'a> Default for RustOptions<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RustOutput {
     pub module_name: String,
     pub module_content: String,
