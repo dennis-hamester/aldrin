@@ -95,7 +95,7 @@ impl Packetizer for LengthPrefixed {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct LengthPrefixedBuilder {
     len_size: u8,
     max_len: usize,
@@ -111,7 +111,7 @@ impl LengthPrefixedBuilder {
         }
     }
 
-    pub fn build(&self) -> LengthPrefixed {
+    pub fn build(self) -> LengthPrefixed {
         assert!(self.len_size > 0);
         assert!(self.max_len >= self.len_size as usize);
         let bits_required = 64 - (self.max_len as u64).leading_zeros();
@@ -125,44 +125,32 @@ impl LengthPrefixedBuilder {
         }
     }
 
-    pub fn length_size(&self) -> u8 {
-        self.len_size
-    }
-
-    pub fn set_length_size(&mut self, length_size: u8) -> &mut Self {
+    pub fn length_size(mut self, length_size: u8) -> Self {
         self.len_size = length_size;
         self
     }
 
-    pub fn max_length(&self) -> usize {
-        self.max_len
-    }
-
-    pub fn set_max_length(&mut self, max_length: usize) -> &mut Self {
+    pub fn max_length(mut self, max_length: usize) -> Self {
         self.max_len = max_length;
         self
     }
 
-    pub fn endian(&self) -> Endian {
-        self.endian
-    }
-
-    pub fn set_endian(&mut self, endian: Endian) -> &mut Self {
+    pub fn endian(mut self, endian: Endian) -> Self {
         self.endian = endian;
         self
     }
 
-    pub fn big_endian(&mut self) -> &mut Self {
+    pub fn big_endian(mut self) -> Self {
         self.endian = Endian::Big;
         self
     }
 
-    pub fn little_endian(&mut self) -> &mut Self {
+    pub fn little_endian(mut self) -> Self {
         self.endian = Endian::Little;
         self
     }
 
-    pub fn native_endian(&mut self) -> &mut Self {
+    pub fn native_endian(self) -> Self {
         if cfg!(target_endian = "big") {
             self.big_endian()
         } else {
