@@ -413,7 +413,7 @@ impl_set!(i64, I64Set);
 impl_set!(String, StringSet);
 impl_set!(Uuid, UuidSet);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ConversionError;
 
 impl fmt::Display for ConversionError {
