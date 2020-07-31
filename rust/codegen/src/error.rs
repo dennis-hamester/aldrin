@@ -4,7 +4,6 @@ use std::fmt;
 use std::io::Error as IoError;
 
 #[derive(Debug)]
-#[non_exhaustive]
 pub enum Error {
     Io(IoError),
     Subprocess(SubprocessError),
