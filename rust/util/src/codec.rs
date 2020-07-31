@@ -19,7 +19,7 @@ pub use serializer::{Serializer, SerializerExt};
 #[cfg(feature = "tokio-io")]
 pub use tokio_io::{TokioCodec, TokioCodecError};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Endian {
     Big,
     Little,
