@@ -15,8 +15,20 @@ pub struct BincodeSerializer {
 }
 
 impl BincodeSerializer {
-    pub fn new(endian: Endian) -> Self {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn with_endian(endian: Endian) -> Self {
         BincodeSerializer { endian }
+    }
+}
+
+impl Default for BincodeSerializer {
+    fn default() -> Self {
+        BincodeSerializer {
+            endian: Endian::Big,
+        }
     }
 }
 

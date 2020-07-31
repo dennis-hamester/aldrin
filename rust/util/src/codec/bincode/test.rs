@@ -5,7 +5,7 @@ use maplit::{hashmap, hashset};
 use uuid::Uuid;
 
 fn test_message(m: &Message, b: &[u8], endian: Endian) {
-    let mut ser = BincodeSerializer::new(endian);
+    let mut ser = BincodeSerializer::with_endian(endian);
     let mut b2 = BytesMut::new();
 
     ser.serialize(m.clone(), &mut b2).unwrap();
