@@ -22,6 +22,10 @@ impl BincodeSerializer {
     pub fn with_endian(endian: Endian) -> Self {
         BincodeSerializer { endian }
     }
+
+    pub fn endian(&self) -> Endian {
+        self.endian
+    }
 }
 
 impl Default for BincodeSerializer {
