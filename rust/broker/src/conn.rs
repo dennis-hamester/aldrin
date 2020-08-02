@@ -125,7 +125,7 @@ where
     }
 
     async fn drain_broker_recv(&mut self) {
-        while self.recv.next().await.is_some() {}
+        while !self.recv.is_terminated() && self.recv.next().await.is_some() {}
     }
 
     async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
