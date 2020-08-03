@@ -74,6 +74,7 @@ macro_rules! genln {
 #[rustfmt::skip::macros(genln)]
 impl<'a> RustGenerator<'a> {
     fn generate(mut self) -> Result<RustOutput, Error> {
+        genln!(self, "#![allow(clippy::large_enum_variant)]");
         genln!(self, "#![allow(dead_code)]");
         genln!(self, "#![allow(unused_mut)]");
         genln!(self, "#![allow(unused_variables)]");
