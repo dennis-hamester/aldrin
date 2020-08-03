@@ -225,12 +225,23 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
         write!(
             &mut modules,
-            "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); }}",
+            "pub mod {} {{ {} const _: &[u8] = include_bytes!(\"{}\"); ",
             output.module_name,
             output.module_content,
             schema.display()
         )
         .unwrap();
+
+        if let Some(patch) = args.patch.as_deref() {
+            write!(
+                &mut modules,
+                "const _: &[u8] = include_bytes!(\"{}\"); }}",
+                patch.display()
+            )
+            .unwrap();
+        } else {
+            write!(&mut modules, "}}").unwrap();
+        }
     }
 
     if abort {
