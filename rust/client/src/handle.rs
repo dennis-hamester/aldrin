@@ -402,7 +402,9 @@ impl Handle {
     /// Finds an object on the bus.
     ///
     /// Finds an [`Object`] with the [`ObjectUuid`] `uuid` and returns its [`ObjectId`]. If the
-    /// [`Object`] does not currently exist on the bus, `None` will be returned.
+    /// [`Object`] does not currently exist on the bus, `None` will be returned. Use
+    /// [`wait_for_object`](Handle::wait_for_object) to wait indefinitely until an [`Object`]
+    /// appears.
     ///
     /// # Examples
     ///
@@ -445,6 +447,65 @@ impl Handle {
         }
 
         Ok(None)
+    }
+
+    /// Waits for an object on the bus.
+    ///
+    /// Waits for an [`Object`] with the [`ObjectUuid`] `uuid` and returns its [`ObjectId`]. This
+    /// function will wait indefinitely until the [`Object`] appears. Use
+    /// [`find_object`](Handle::find_object) search only the currently existing [`Object`s](Object).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::ObjectUuid;
+    /// use std::time::Duration;
+    /// use tokio::time;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// let object_uuid = ObjectUuid::new_v4();
+    ///
+    /// // Wait until an object the above UUID appears.
+    /// // Awaiting the future now would block indefinitely though.
+    /// let object_id = handle.wait_for_object(object_uuid);
+    ///
+    /// // Create the object:
+    /// let object = handle.create_object(object_uuid).await?;
+    ///
+    /// // Now the future will resolve:
+    /// let object_id = object_id.await?;
+    /// assert_eq!(object_id, object.id());
+    ///
+    /// let non_existent = time::timeout(
+    ///     Duration::from_millis(500),
+    ///     handle.wait_for_object(ObjectUuid::new_v4()),
+    /// )
+    /// .await;
+    /// assert!(non_existent.is_err());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn wait_for_object(&self, uuid: ObjectUuid) -> Result<ObjectId, Error> {
+        let mut objects = self.objects(SubscribeMode::All)?;
+
+        while let Some(ev) = objects.next().await {
+            match ev {
+                ObjectEvent::Created(id) if id.uuid == uuid => return Ok(id),
+                _ => {}
+            }
+        }
+
+        Err(Error::ClientShutdown)
     }
 }
 
