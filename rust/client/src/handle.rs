@@ -1,11 +1,12 @@
 use super::{
-    EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectId,
-    ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceId, ServiceUuid, Services,
-    SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
+    EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectEvent,
+    ObjectId, ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceId, ServiceUuid,
+    Services, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_channel::oneshot;
+use futures_util::stream::StreamExt;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -396,6 +397,54 @@ impl Handle {
                 args,
             }))
             .map_err(|_| Error::ClientShutdown)
+    }
+
+    /// Finds an object on the bus.
+    ///
+    /// Finds an [`Object`] with the [`ObjectUuid`] `uuid` and returns its [`ObjectId`]. If the
+    /// [`Object`] does not currently exist on the bus, `None` will be returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::ObjectUuid;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// // Create an object:
+    /// let object_uuid = ObjectUuid::new_v4();
+    /// let object = handle.create_object(object_uuid).await?;
+    ///
+    /// // Find the object:
+    /// let object_id = handle.find_object(object_uuid).await?.expect("not found");
+    /// assert_eq!(object_id, object.id());
+    ///
+    /// // Searching for a non-existent object will yield None:
+    /// let non_existent = handle.find_object(ObjectUuid::new_v4()).await?;
+    /// assert!(non_existent.is_none());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn find_object(&self, uuid: ObjectUuid) -> Result<Option<ObjectId>, Error> {
+        let mut objects = self.objects(SubscribeMode::CurrentOnly)?;
+
+        while let Some(ev) = objects.next().await {
+            match ev {
+                ObjectEvent::Created(id) if id.uuid == uuid => return Ok(Some(id)),
+                _ => {}
+            }
+        }
+
+        Ok(None)
     }
 }
 
