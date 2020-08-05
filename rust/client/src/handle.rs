@@ -591,6 +591,92 @@ impl Handle {
 
         Ok(None)
     }
+
+    /// Waits for an object with a specific service on the bus.
+    ///
+    /// Waits for an [`Object`], which has a [`Service`] with UUID `service_uuid`. The
+    /// [`ObjectUuid`] can be optionally specified as well with `object_uuid`. If it is not
+    /// specified, then it is unspecified which [`Object`] the returned [`ServiceId`] belongs
+    /// to. This function will wait indefinitely until a matching [`Service`] appears. Use
+    /// [`find_service`](Handle::find_service) to search only the current [`Service`s](Service) on
+    /// the bus.
+    ///
+    /// If you need more control or even a stream of all [`Object`s](Object) implementing a
+    /// particular [`Service`], then use [`services`](Handle::services) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use std::time::Duration;
+    /// use tokio::time;
+    /// use uuid::Uuid;
+    ///
+    /// // 4d090fab-8614-43d1-8473-f29ff84ffc6b
+    /// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x4d090fab861443d18473f29ff84ffc6b);
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// // Wait until a service with SERVICE_UUID appears.
+    /// // Awaiting the future now would block indefinitely though.
+    /// let service_id = handle.wait_for_service(SERVICE_UUID, None);
+    ///
+    /// // Create the object and service:
+    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
+    /// let service = object.create_service(SERVICE_UUID).await?;
+    ///
+    /// // Now the future will resolve:
+    /// let service_id = service_id.await?;
+    /// // It could be any object (and service cookie), but the service UUID will match:
+    /// assert_eq!(service_id.uuid, SERVICE_UUID);
+    ///
+    /// // Wait for the service on our specific object:
+    /// let service_id = handle.wait_for_service(SERVICE_UUID, Some(object.id().uuid)).await?;
+    /// assert_eq!(service_id, service.id());
+    ///
+    /// // Searching for a non-existent service yields None:
+    /// let non_existent = time::timeout(
+    ///     Duration::from_millis(500),
+    ///     handle.wait_for_service(ServiceUuid(Uuid::new_v4()), None),
+    /// )
+    /// .await;
+    /// assert!(non_existent.is_err());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn wait_for_service(
+        &self,
+        service_uuid: ServiceUuid,
+        object_uuid: Option<ObjectUuid>,
+    ) -> Result<ServiceId, Error> {
+        let mut services = self.services(SubscribeMode::All)?;
+
+        while let Some(ev) = services.next().await {
+            let id = match ev {
+                ServiceEvent::Created(id) if id.uuid == service_uuid => id,
+                _ => continue,
+            };
+
+            if let Some(object_uuid) = object_uuid {
+                if id.object_id.uuid != object_uuid {
+                    continue;
+                }
+            }
+
+            return Ok(id);
+        }
+
+        Err(Error::ClientShutdown)
+    }
 }
 
 /// Future to await the result of a function call.
