@@ -1,7 +1,7 @@
 use super::{
     EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectEvent,
-    ObjectId, ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceId, ServiceUuid,
-    Services, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
+    ObjectId, ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceEvent, ServiceId,
+    ServiceUuid, Services, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
 };
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, UnboundedSender};
@@ -506,6 +506,90 @@ impl Handle {
         }
 
         Err(Error::ClientShutdown)
+    }
+
+    /// Finds an object with a specific service on the bus.
+    ///
+    /// Finds an [`Object`], which has a [`Service`] with UUID `service_uuid`. The [`ObjectUuid`]
+    /// can be optionally specified as well with `object_uuid`. If it is not specified, then it is
+    /// unspecified which [`Object`] the returned [`ServiceId`] belongs to, if any. This function
+    /// considers only [`Service`s](Service), which currently exist on the bus. Use
+    /// [`wait_for_service`](Handle::wait_for_service) to wait indefinitely for a [`Service`]
+    /// matching the criteria.
+    ///
+    /// If you need more control or even a stream of all [`Object`s](Object) implementing a
+    /// particular [`Service`], then use [`services`](Handle::services) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use uuid::Uuid;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_broker::Broker::new();
+    /// # let handle = broker.handle().clone();
+    /// # tokio::spawn(broker.run());
+    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
+    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+    /// # let client = aldrin_client::Client::connect(async_transport).await?;
+    /// # let handle = client.handle().clone();
+    /// # tokio::spawn(client.run());
+    /// # tokio::spawn(conn.await??.run());
+    /// // Create an object and service:
+    /// let object_uuid = ObjectUuid::new_v4();
+    /// let object = handle.create_object(object_uuid).await?;
+    /// let service_uuid = ServiceUuid(Uuid::new_v4());
+    /// let service = object.create_service(service_uuid).await?;
+    ///
+    /// // Find a service without specifying an object UUID:
+    /// let service_id = handle
+    ///     .find_service(service_uuid, None)
+    ///     .await?
+    ///     .expect("service not found");
+    /// // It could be any object (and service cookie), but the service UUID will match:
+    /// assert_eq!(service_id.uuid, service.id().uuid);
+    ///
+    /// // Find a service on a specific object:
+    /// let service_id = handle
+    ///     .find_service(service_uuid, Some(object_uuid))
+    ///     .await?
+    ///     .expect("service not found");
+    /// // The service id will match:
+    /// assert_eq!(service_id, service.id());
+    ///
+    /// // Searching for a non-existent service yields None:
+    /// let non_existent = handle
+    ///     .find_service(ServiceUuid(Uuid::new_v4()), None)
+    ///     .await?;
+    /// assert!(non_existent.is_none());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn find_service(
+        &self,
+        service_uuid: ServiceUuid,
+        object_uuid: Option<ObjectUuid>,
+    ) -> Result<Option<ServiceId>, Error> {
+        let mut services = self.services(SubscribeMode::CurrentOnly)?;
+
+        while let Some(ev) = services.next().await {
+            let id = match ev {
+                ServiceEvent::Created(id) if id.uuid == service_uuid => id,
+                _ => continue,
+            };
+
+            if let Some(object_uuid) = object_uuid {
+                if id.object_id.uuid != object_uuid {
+                    continue;
+                }
+            }
+
+            return Ok(Some(id));
+        }
+
+        Ok(None)
     }
 }
 
