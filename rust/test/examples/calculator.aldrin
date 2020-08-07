@@ -1,0 +1,19 @@
+// Don't forget to update the crate documentation as well, which contains a copy of this schema.
+
+service Calculator {
+    uuid = 50e1ed0e-64a6-45ff-98d3-ce18a04c7292;
+    version = 1;
+
+    fn add @ 1 {
+        args = struct {
+            required lhs @ 1 = i32;
+            required rhs @ 2 = i32;
+        }
+
+        ok = i32;
+
+        err = enum {
+            Overflow @ 1;
+        }
+    }
+}

@@ -1,0 +1,20 @@
+[package]
+name = "aldrin-test"
+description = "Utilities for Aldrin server and client tests."
+version = "0.1.0"
+authors = ["Aldrin Contributors"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+aldrin-broker = { version = "0.1.0", path = "../broker" }
+aldrin-client = { version = "0.1.0", path = "../client" }
+aldrin-proto = { version = "0.1.0", path = "../proto" }
+aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
+futures-util = { version = "0.3.4", default-features = false }
+
+[dev-dependencies]
+aldrin-codegen-macros = { version = "0.1.0", path = "../codegen-macros" }
+anyhow = "1.0.32"
+futures = { version = "0.3.4", default-features = false }
+tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }
