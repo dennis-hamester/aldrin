@@ -13,6 +13,8 @@ aldrin-proto = { version = "0.1.0", path = "../proto" }
 aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
 futures-util = { version = "0.3.4", default-features = false }
 
+tokio = { optional = true, version = "0.2.11", features = ["rt-core"] }
+
 [dev-dependencies]
 aldrin-codegen-macros = { version = "0.1.0", path = "../codegen-macros" }
 anyhow = "1.0.32"

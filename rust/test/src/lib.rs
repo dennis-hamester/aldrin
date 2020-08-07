@@ -3,6 +3,9 @@
 //! This crate provides a simple way to quickly setup a complete Aldrin bus with a broker and
 //! multiple clients and is intended to be used in unit tests.
 //!
+//! If you are using Tokio, it is strongly recommended to enable this crate's `tokio` feature and
+//! use the type in the `tokio_based` module instead of the crate-level types.
+//!
 //! # Example
 //!
 //! In this example, we are writing tests for a calculator service, which can add 2 numbers. Highly
@@ -105,6 +108,9 @@
 #[cfg(test)]
 mod test;
 mod transport;
+
+#[cfg(feature = "tokio")]
+pub mod tokio_based;
 
 use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
 use aldrin_client::{Client, Handle};
