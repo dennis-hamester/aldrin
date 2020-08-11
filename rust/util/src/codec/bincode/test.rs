@@ -28,9 +28,9 @@ fn test_value_le(v: &Value, b: &[u8]) {
         result: CallFunctionResult::Ok(v.clone()),
     });
     let mut bm = vec![
-        22, 0, 0, 0, // CallFunctionReply
-        0x78, 0x56, 0x34, 0x12, // serial
-        0, 0, 0, 0, // Ok
+        22, // CallFunctionReply
+        252, 0x78, 0x56, 0x34, 0x12, // serial
+        0,    // Ok
     ];
     bm.extend_from_slice(b);
     test_message_le(&vm, &bm);
@@ -42,9 +42,9 @@ fn test_value_be(v: &Value, b: &[u8]) {
         result: CallFunctionResult::Ok(v.clone()),
     });
     let mut bm = vec![
-        0, 0, 0, 22, // CallFunctionReply
-        0x12, 0x34, 0x56, 0x78, // serial
-        0, 0, 0, 0, // Ok
+        22, // CallFunctionReply
+        252, 0x12, 0x34, 0x56, 0x78, // serial
+        0,    // Ok
     ];
     bm.extend_from_slice(b);
     test_message_be(&vm, &bm);
@@ -58,15 +58,15 @@ fn message_connect() {
     test_message_le(
         &m,
         &[
-            0, 0, 0, 0, // Connect
-            0x78, 0x56, 0x34, 0x12, // version
+            0, // Connect
+            252, 0x78, 0x56, 0x34, 0x12, // version
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 0, // Connect
-            0x12, 0x34, 0x56, 0x78, // version
+            0, // Connect
+            252, 0x12, 0x34, 0x56, 0x78, // version
         ],
     );
 }
@@ -77,32 +77,32 @@ fn message_connect_reply() {
     test_message_le(
         &m,
         &[
-            1, 0, 0, 0, // ConnectReply
-            0, 0, 0, 0, // Ok
+            1, // ConnectReply
+            0, // Ok
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 1, // ConnectReply
-            0, 0, 0, 0, // Ok
+            1, // ConnectReply
+            0, // Ok
         ],
     );
     let m = Message::ConnectReply(ConnectReply::VersionMismatch(0x12345678));
     test_message_le(
         &m,
         &[
-            1, 0, 0, 0, // ConnectReply
-            1, 0, 0, 0, // VersionMismatch
-            0x78, 0x56, 0x34, 0x12, // version
+            1, // ConnectReply
+            1, // VersionMismatch
+            252, 0x78, 0x56, 0x34, 0x12, // version
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 1, // ConnectReply
-            0, 0, 0, 1, // VersionMismatch
-            0x12, 0x34, 0x56, 0x78, // version
+            1, // ConnectReply
+            1, // VersionMismatch
+            252, 0x12, 0x34, 0x56, 0x78, // version
         ],
     );
 }
@@ -113,13 +113,13 @@ fn message_shutdown() {
     test_message_le(
         &m,
         &[
-            2, 0, 0, 0, // Shutdown
+            2, // Shutdown
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 2, // Shutdown
+            2, // Shutdown
         ],
     );
 }
@@ -133,9 +133,9 @@ fn message_create_object() {
     test_message_le(
         &m,
         &[
-            3, 0, 0, 0, // CreateObject
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            3, // CreateObject
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
         ],
@@ -143,9 +143,9 @@ fn message_create_object() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 3, // CreateObject
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            3, // CreateObject
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
         ],
@@ -161,10 +161,10 @@ fn message_create_object_reply() {
     test_message_le(
         &m,
         &[
-            4, 0, 0, 0, // CreateObjectReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            4, // CreateObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+            16,   // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
         ],
@@ -172,10 +172,10 @@ fn message_create_object_reply() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 4, // CreateObjectReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            4, // CreateObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+            16,   // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
         ],
@@ -187,17 +187,17 @@ fn message_create_object_reply() {
     test_message_le(
         &m,
         &[
-            4, 0, 0, 0, // CreateObjectReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // DuplicateObject
+            4, // CreateObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // DuplicateObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 4, // CreateObjectReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // DuplicateObject
+            4, // CreateObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // DuplicateObject
         ],
     );
 }
@@ -211,9 +211,9 @@ fn message_destroy_object() {
     test_message_le(
         &m,
         &[
-            5, 0, 0, 0, // DestroyObject
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            5, // DestroyObject
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -221,9 +221,9 @@ fn message_destroy_object() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 5, // DestroyObject
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            5, // DestroyObject
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -239,17 +239,17 @@ fn message_destroy_object_reply() {
     test_message_le(
         &m,
         &[
-            6, 0, 0, 0, // DestroyObjectReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
+            6, // DestroyObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 6, // DestroyObjectReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
+            6, // DestroyObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
         ],
     );
     let m = Message::DestroyObjectReply(DestroyObjectReply {
@@ -259,17 +259,17 @@ fn message_destroy_object_reply() {
     test_message_le(
         &m,
         &[
-            6, 0, 0, 0, // DestroyObjectReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // InvalidObject
+            6, // DestroyObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 6, // DestroyObjectReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // InvalidObject
+            6, // DestroyObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidObject
         ],
     );
     let m = Message::DestroyObjectReply(DestroyObjectReply {
@@ -279,17 +279,17 @@ fn message_destroy_object_reply() {
     test_message_le(
         &m,
         &[
-            6, 0, 0, 0, // DestroyObjectReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            2, 0, 0, 0, // ForeignObject
+            6, // DestroyObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // ForeignObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 6, // DestroyObjectReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 2, // ForeignObject
+            6, // DestroyObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // ForeignObject
         ],
     );
 }
@@ -300,14 +300,14 @@ fn message_subscribe_objects() {
     test_message_le(
         &m,
         &[
-            7, 0, 0, 0, // SubscribeObjects
+            7, // SubscribeObjects
             0, // None
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 7, // SubscribeObjects
+            7, // SubscribeObjects
             0, // None
         ],
     );
@@ -317,17 +317,17 @@ fn message_subscribe_objects() {
     test_message_le(
         &m,
         &[
-            7, 0, 0, 0, // SubscribeObjects
+            7, // SubscribeObjects
             1, // Some
-            0x78, 0x56, 0x34, 0x12, // serial
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 7, // SubscribeObjects
+            7, // SubscribeObjects
             1, // Some
-            0x12, 0x34, 0x56, 0x78, // serial
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -338,15 +338,15 @@ fn message_subscribe_objects_reply() {
     test_message_le(
         &m,
         &[
-            8, 0, 0, 0, // SubscribeObjectsReply
-            0x78, 0x56, 0x34, 0x12, // serial
+            8, // SubscribeObjectsReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 8, // SubscribeObjectsReply
-            0x12, 0x34, 0x56, 0x78, // serial
+            8, // SubscribeObjectsReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -357,13 +357,13 @@ fn message_unsubscribe_objects() {
     test_message_le(
         &m,
         &[
-            9, 0, 0, 0, // UnsubscribeObjects
+            9, // UnsubscribeObjects
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 9, // UnsubscribeObjects
+            9, // UnsubscribeObjects
         ],
     );
 }
@@ -378,11 +378,11 @@ fn message_object_created_event() {
     test_message_le(
         &m,
         &[
-            10, 0, 0, 0, // ObjectCreatedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            10, // ObjectCreatedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
             0,    // None
@@ -391,11 +391,11 @@ fn message_object_created_event() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 10, // ObjectCreatedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            10, // ObjectCreatedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
             0,    // None
@@ -409,29 +409,29 @@ fn message_object_created_event() {
     test_message_le(
         &m,
         &[
-            10, 0, 0, 0, // ObjectCreatedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            10, // ObjectCreatedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
             1,    // Some
-            0x78, 0x56, 0x34, 0x12, // serial
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 10, // ObjectCreatedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            10, // ObjectCreatedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
             1,    // Some
-            0x12, 0x34, 0x56, 0x78, // serial
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -445,11 +445,11 @@ fn message_object_destroyed_event() {
     test_message_le(
         &m,
         &[
-            11, 0, 0, 0, // ObjectDestroyedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            11, // ObjectDestroyedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
         ],
@@ -457,11 +457,11 @@ fn message_object_destroyed_event() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 11, // ObjectDestroyedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            11, // ObjectDestroyedEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
         ],
@@ -478,12 +478,12 @@ fn message_create_service() {
     test_message_le(
         &m,
         &[
-            12, 0, 0, 0, // CreateService
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // object_cookie length
+            12, // CreateService
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // object_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_cookie
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            16,   // uuid length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // uuid
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // uuid
         ],
@@ -491,12 +491,12 @@ fn message_create_service() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 12, // CreateService
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // object_cookie length
+            12, // CreateService
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // object_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_cookie
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            16,   // uuid length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // uuid
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // uuid
         ],
@@ -512,10 +512,10 @@ fn message_create_service_reply() {
     test_message_le(
         &m,
         &[
-            13, 0, 0, 0, // CreateServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            13, // CreateServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -523,10 +523,10 @@ fn message_create_service_reply() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 13, // CreateServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            13, // CreateServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -538,17 +538,17 @@ fn message_create_service_reply() {
     test_message_le(
         &m,
         &[
-            13, 0, 0, 0, // CreateServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // DuplicateService
+            13, // CreateServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // DuplicateService
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 13, // CreateServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // DuplicateService
+            13, // CreateServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // DuplicateService
         ],
     );
     let m = Message::CreateServiceReply(CreateServiceReply {
@@ -558,17 +558,17 @@ fn message_create_service_reply() {
     test_message_le(
         &m,
         &[
-            13, 0, 0, 0, // CreateServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            2, 0, 0, 0, // InvalidObject
+            13, // CreateServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // InvalidObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 13, // CreateServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 2, // InvalidObject
+            13, // CreateServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // InvalidObject
         ],
     );
     let m = Message::CreateServiceReply(CreateServiceReply {
@@ -578,17 +578,17 @@ fn message_create_service_reply() {
     test_message_le(
         &m,
         &[
-            13, 0, 0, 0, // CreateServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            3, 0, 0, 0, // ForeignObject
+            13, // CreateServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            3,    // ForeignObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 13, // CreateServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 3, // ForeignObject
+            13, // CreateServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            3,    // ForeignObject
         ],
     );
 }
@@ -602,9 +602,9 @@ fn message_destroy_service() {
     test_message_le(
         &m,
         &[
-            14, 0, 0, 0, // DestroyService
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            14, // DestroyService
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -612,9 +612,9 @@ fn message_destroy_service() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 14, // DestroyService
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            14, // DestroyService
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
@@ -630,17 +630,17 @@ fn message_destroy_service_reply() {
     test_message_le(
         &m,
         &[
-            15, 0, 0, 0, // DestroyServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
+            15, // DestroyServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 15, // DestroyServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
+            15, // DestroyServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
         ],
     );
     let m = Message::DestroyServiceReply(DestroyServiceReply {
@@ -650,17 +650,17 @@ fn message_destroy_service_reply() {
     test_message_le(
         &m,
         &[
-            15, 0, 0, 0, // DestroyServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // InvalidService
+            15, // DestroyServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidService
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 15, // DestroyServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // InvalidService
+            15, // DestroyServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidService
         ],
     );
     let m = Message::DestroyServiceReply(DestroyServiceReply {
@@ -670,17 +670,17 @@ fn message_destroy_service_reply() {
     test_message_le(
         &m,
         &[
-            15, 0, 0, 0, // DestroyServiceReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            2, 0, 0, 0, // ForeignObject
+            15, // DestroyServiceReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // ForeignObject
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 15, // DestroyServiceReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 2, // ForeignObject
+            15, // DestroyServiceReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // ForeignObject
         ],
     );
 }
@@ -691,14 +691,14 @@ fn message_subscribe_services() {
     test_message_le(
         &m,
         &[
-            16, 0, 0, 0, // SubscribeServices
-            0, // None
+            16, // SubscribeServices
+            0,  // None
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 16, // SubscribeServices
+            16, // SubscribeServices
             0,  // None
         ],
     );
@@ -708,17 +708,17 @@ fn message_subscribe_services() {
     test_message_le(
         &m,
         &[
-            16, 0, 0, 0, // SubscribeServices
-            1, // Some
-            0x78, 0x56, 0x34, 0x12, // serial
+            16, // SubscribeServices
+            1,  // Some
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 16, // SubscribeServices
+            16, // SubscribeServices
             1,  // Some
-            0x12, 0x34, 0x56, 0x78, // serial
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -729,15 +729,15 @@ fn message_subscribe_services_reply() {
     test_message_le(
         &m,
         &[
-            17, 0, 0, 0, // SubscribeServicesReply
-            0x78, 0x56, 0x34, 0x12, // serial
+            17, // SubscribeServicesReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 17, // SubscribeServicesReply
-            0x12, 0x34, 0x56, 0x78, // serial
+            17, // SubscribeServicesReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -748,13 +748,13 @@ fn message_unsubscribe_services() {
     test_message_le(
         &m,
         &[
-            18, 0, 0, 0, // UnsubscribeServices
+            18, // UnsubscribeServices
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 18, // UnsubscribeServices
+            18, // UnsubscribeServices
         ],
     );
 }
@@ -771,17 +771,17 @@ fn message_service_created_event() {
     test_message_le(
         &m,
         &[
-            19, 0, 0, 0, // ServiceCreatedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // object_uuid length
+            19, // ServiceCreatedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
             0,    // None
@@ -790,17 +790,17 @@ fn message_service_created_event() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 19, // ServiceCreatedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // object_uuid length
+            19, // ServiceCreatedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
             0,    // None
@@ -816,41 +816,41 @@ fn message_service_created_event() {
     test_message_le(
         &m,
         &[
-            19, 0, 0, 0, // ServiceCreatedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // object_uuid length
+            19, // ServiceCreatedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
             1,    // Some
-            0x78, 0x56, 0x34, 0x12, // serial
+            252, 0x78, 0x56, 0x34, 0x12, // serial
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 19, // ServiceCreatedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // object_uuid length
+            19, // ServiceCreatedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
             1,    // Some
-            0x12, 0x34, 0x56, 0x78, // serial
+            252, 0x12, 0x34, 0x56, 0x78, // serial
         ],
     );
 }
@@ -866,17 +866,17 @@ fn message_service_destroyed_event() {
     test_message_le(
         &m,
         &[
-            20, 0, 0, 0, // ServiceDestroyedEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // object_uuid length
+            20, // ServiceDestroyedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
         ],
@@ -884,17 +884,17 @@ fn message_service_destroyed_event() {
     test_message_be(
         &m,
         &[
-            0, 0, 0, 20, // ServiceDestroyedEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // object_uuid length
+            20, // ServiceDestroyedEvent
+            16, // object_uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // object_uuid
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // object_uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // object_cookie length
+            16,   // object_cookie length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // object_cookie
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // object_cookie
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            16,   // uuid length
             0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, // uuid
             0x8a, 0x9b, 0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, // uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // cookie length
+            16,   // cookie length
             0x03, 0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, // cookie
             0x8b, 0x9c, 0xad, 0xbe, 0xcf, 0xd0, 0xe1, 0xf2, // cookie
         ],
@@ -912,25 +912,25 @@ fn message_call_function() {
     test_message_le(
         &m,
         &[
-            21, 0, 0, 0, // CallFunction
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // service_cookie length
+            21, // CallFunction
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x21, 0x43, 0x65, 0x87, // function
-            0, 0, 0, 0, // args
+            252, 0x21, 0x43, 0x65, 0x87, // function
+            0,    // args
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 21, // CallFunction
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // service_cookie length
+            21, // CallFunction
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x87, 0x65, 0x43, 0x21, // function
-            0, 0, 0, 0, // args
+            252, 0x87, 0x65, 0x43, 0x21, // function
+            0,    // args
         ],
     );
 }
@@ -944,19 +944,19 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
-            0, 0, 0, 0, // value
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+            0,    // value
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
-            0, 0, 0, 0, // value
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+            0,    // value
         ],
     );
     let m = Message::CallFunctionReply(CallFunctionReply {
@@ -966,19 +966,19 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // Err
-            0, 0, 0, 0, // value
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // Err
+            0,    // value
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // Err
-            0, 0, 0, 0, // value
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // Err
+            0,    // value
         ],
     );
     let m = Message::CallFunctionReply(CallFunctionReply {
@@ -988,17 +988,17 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            2, 0, 0, 0, // Aborted
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // Aborted
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 2, // Aborted
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // Aborted
         ],
     );
     let m = Message::CallFunctionReply(CallFunctionReply {
@@ -1008,17 +1008,17 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            3, 0, 0, 0, // InvalidService
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            3,    // InvalidService
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 3, // InvalidService
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            3,    // InvalidService
         ],
     );
     let m = Message::CallFunctionReply(CallFunctionReply {
@@ -1028,17 +1028,17 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            4, 0, 0, 0, // InvalidFunction
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            4,    // InvalidFunction
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 4, // InvalidFunction
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            4,    // InvalidFunction
         ],
     );
     let m = Message::CallFunctionReply(CallFunctionReply {
@@ -1048,17 +1048,17 @@ fn message_call_function_reply() {
     test_message_le(
         &m,
         &[
-            22, 0, 0, 0, // CallFunctionReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            5, 0, 0, 0, // InvalidArgs
+            22, // CallFunctionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            5,    // InvalidArgs
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 22, // CallFunctionReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 5, // InvalidArgs
+            22, // CallFunctionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            5,    // InvalidArgs
         ],
     );
 }
@@ -1073,23 +1073,23 @@ fn message_subscribe_event() {
     test_message_le(
         &m,
         &[
-            23, 0, 0, 0, // SubscribeEvent
-            0, // None
-            16, 0, 0, 0, 0, 0, 0, 0, // service_cookie length
+            23, // SubscribeEvent
+            0,  // None
+            16, // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x21, 0x43, 0x65, 0x87, // event
+            252, 0x21, 0x43, 0x65, 0x87, // event
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 23, // SubscribeEvent
+            23, // SubscribeEvent
             0,  // None
-            0, 0, 0, 0, 0, 0, 0, 16, // service_cookie length
+            16, // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x87, 0x65, 0x43, 0x21, // event
+            252, 0x87, 0x65, 0x43, 0x21, // event
         ],
     );
     let m = Message::SubscribeEvent(SubscribeEvent {
@@ -1100,25 +1100,25 @@ fn message_subscribe_event() {
     test_message_le(
         &m,
         &[
-            23, 0, 0, 0, // SubscribeEvent
-            1, // Some
-            0x78, 0x56, 0x34, 0x12, // serial
-            16, 0, 0, 0, 0, 0, 0, 0, // service_cookie length
+            23, // SubscribeEvent
+            1,  // Some
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x21, 0x43, 0x65, 0x87, // event
+            252, 0x21, 0x43, 0x65, 0x87, // event
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 23, // SubscribeEvent
+            23, // SubscribeEvent
             1,  // Some
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, 0, 0, 0, 16, // service_cookie length
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x87, 0x65, 0x43, 0x21, // event
+            252, 0x87, 0x65, 0x43, 0x21, // event
         ],
     );
 }
@@ -1132,17 +1132,17 @@ fn message_subscribe_event_reply() {
     test_message_le(
         &m,
         &[
-            24, 0, 0, 0, // SubscribeEventReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            0, 0, 0, 0, // Ok
+            24, // SubscribeEventReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 24, // SubscribeEventReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 0, // Ok
+            24, // SubscribeEventReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
         ],
     );
     let m = Message::SubscribeEventReply(SubscribeEventReply {
@@ -1152,17 +1152,17 @@ fn message_subscribe_event_reply() {
     test_message_le(
         &m,
         &[
-            24, 0, 0, 0, // SubscribeEventReply
-            0x78, 0x56, 0x34, 0x12, // serial
-            1, 0, 0, 0, // InvalidService
+            24, // SubscribeEventReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidService
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 24, // SubscribeEventReply
-            0x12, 0x34, 0x56, 0x78, // serial
-            0, 0, 0, 1, // InvalidService
+            24, // SubscribeEventReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidService
         ],
     );
 }
@@ -1176,21 +1176,21 @@ fn message_unsubscribe_event() {
     test_message_le(
         &m,
         &[
-            25, 0, 0, 0, // UnsubscribeEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // service_cookie length
+            25, // UnsubscribeEvent
+            16, // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x21, 0x43, 0x65, 0x87, // event
+            252, 0x21, 0x43, 0x65, 0x87, // event
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 25, // UnsubscribeEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            25, // UnsubscribeEvent
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x87, 0x65, 0x43, 0x21, // event
+            252, 0x87, 0x65, 0x43, 0x21, // event
         ],
     );
 }
@@ -1205,23 +1205,23 @@ fn message_emit_event() {
     test_message_le(
         &m,
         &[
-            26, 0, 0, 0, // EmitEvent
-            16, 0, 0, 0, 0, 0, 0, 0, // service_cookie length
+            26, // EmitEvent
+            16, // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x21, 0x43, 0x65, 0x87, // event
-            0, 0, 0, 0, // args
+            252, 0x21, 0x43, 0x65, 0x87, // event
+            0,    // args
         ],
     );
     test_message_be(
         &m,
         &[
-            0, 0, 0, 26, // EmitEvent
-            0, 0, 0, 0, 0, 0, 0, 16, // service_cookie length
+            26, // EmitEvent
+            16, // service_cookie length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // service_cookie
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // service_cookie
-            0x87, 0x65, 0x43, 0x21, // event
-            0, 0, 0, 0, // args
+            252, 0x87, 0x65, 0x43, 0x21, // event
+            0,    // args
         ],
     );
 }
@@ -1232,13 +1232,13 @@ fn value_none() {
     test_value_le(
         &v,
         &[
-            0, 0, 0, 0, // None
+            0, // None
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 0, // None
+            0, // None
         ],
     );
 }
@@ -1249,14 +1249,14 @@ fn value_bool() {
     test_value_le(
         &v,
         &[
-            1, 0, 0, 0, // Bool
+            1, // Bool
             0, // false
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 1, // Bool
+            1, // Bool
             0, // false
         ],
     );
@@ -1264,14 +1264,14 @@ fn value_bool() {
     test_value_le(
         &v,
         &[
-            1, 0, 0, 0, // Bool
+            1, // Bool
             1, // true
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 1, // Bool
+            1, // Bool
             1, // true
         ],
     );
@@ -1283,14 +1283,14 @@ fn value_u8() {
     test_value_le(
         &v,
         &[
-            2, 0, 0, 0,    // U8
+            2,    // U8
             0x12, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 2,    // U8
+            2,    // U8
             0x12, // value
         ],
     );
@@ -1302,14 +1302,14 @@ fn value_i8() {
     test_value_le(
         &v,
         &[
-            3, 0, 0, 0,    // I8
+            3,    // I8
             0x12, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 3,    // I8
+            3,    // I8
             0x12, // value
         ],
     );
@@ -1321,15 +1321,15 @@ fn value_u16() {
     test_value_le(
         &v,
         &[
-            4, 0, 0, 0, // U16
-            0x34, 0x12, // value
+            4, // U16
+            251, 0x34, 0x12, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 4, // U16
-            0x12, 0x34, // value
+            4, // U16
+            251, 0x12, 0x34, // value
         ],
     );
 }
@@ -1340,15 +1340,15 @@ fn value_i16() {
     test_value_le(
         &v,
         &[
-            5, 0, 0, 0, // I16
-            0x34, 0x12, // value
+            5, // I16
+            251, 0x68, 0x24, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 5, // I16
-            0x12, 0x34, // value
+            5, // I16
+            251, 0x24, 0x68, // value
         ],
     );
 }
@@ -1359,15 +1359,15 @@ fn value_u32() {
     test_value_le(
         &v,
         &[
-            6, 0, 0, 0, // U32
-            0x78, 0x56, 0x34, 0x12, // value
+            6, // U32
+            252, 0x78, 0x56, 0x34, 0x12, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 6, // U32
-            0x12, 0x34, 0x56, 0x78, // value
+            6, // U32
+            252, 0x12, 0x34, 0x56, 0x78, // value
         ],
     );
 }
@@ -1378,15 +1378,15 @@ fn value_i32() {
     test_value_le(
         &v,
         &[
-            7, 0, 0, 0, // I32
-            0x78, 0x56, 0x34, 0x12, // value
+            7, // I32
+            252, 0xf0, 0xac, 0x68, 0x24, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 7, // I32
-            0x12, 0x34, 0x56, 0x78, // value
+            7, // I32
+            252, 0x24, 0x68, 0xac, 0xf0, // value
         ],
     );
 }
@@ -1397,15 +1397,15 @@ fn value_u64() {
     test_value_le(
         &v,
         &[
-            8, 0, 0, 0, // U64
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value
+            8, // U64
+            253, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 8, // U64
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value
+            8, // U64
+            253, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value
         ],
     );
 }
@@ -1416,15 +1416,15 @@ fn value_i64() {
     test_value_le(
         &v,
         &[
-            9, 0, 0, 0, // I64
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value
+            9, // I64
+            253, 0xe0, 0xbd, 0x79, 0x35, 0xf1, 0xac, 0x68, 0x24, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 9, // I64
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value
+            9, // I64
+            253, 0x24, 0x68, 0xac, 0xf1, 0x35, 0x79, 0xbd, 0xe0, // value
         ],
     );
 }
@@ -1435,14 +1435,14 @@ fn value_f32() {
     test_value_le(
         &v,
         &[
-            10, 0, 0, 0, // F32
+            10, // F32
             0x12, 0x34, 0x56, 0x78, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 10, // F32
+            10, // F32
             0x78, 0x56, 0x34, 0x12, // value
         ],
     );
@@ -1454,14 +1454,14 @@ fn value_f64() {
     test_value_le(
         &v,
         &[
-            11, 0, 0, 0, // F64
+            11, // F64
             0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 11, // F64
+            11, // F64
             0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value
         ],
     );
@@ -1473,31 +1473,31 @@ fn value_string() {
     test_value_le(
         &v,
         &[
-            12, 0, 0, 0, // String
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            12, // String
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 12, // String
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            12, // String
+            0,  // length
         ],
     );
     let v = Value::String("aldrin".to_owned());
     test_value_le(
         &v,
         &[
-            12, 0, 0, 0, // String
-            6, 0, 0, 0, 0, 0, 0, 0, // length
+            12, // String
+            6,  // length
             b'a', b'l', b'd', b'r', b'i', b'n', // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 12, // String
-            0, 0, 0, 0, 0, 0, 0, 6, // length
+            12, // String
+            6,  // length
             b'a', b'l', b'd', b'r', b'i', b'n', // value
         ],
     );
@@ -1509,8 +1509,8 @@ fn value_uuid() {
     test_value_le(
         &v,
         &[
-            13, 0, 0, 0, // Uuid
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            13, // Uuid
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // value
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // value
         ],
@@ -1518,8 +1518,8 @@ fn value_uuid() {
     test_value_be(
         &v,
         &[
-            0, 0, 0, 13, // Uuid
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            13, // Uuid
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // value
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // value
         ],
@@ -1532,32 +1532,32 @@ fn value_vec() {
     test_value_le(
         &v,
         &[
-            14, 0, 0, 0, // Vec
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            14, // Vec
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 14, // Vec
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            14, // Vec
+            0,  // length
         ],
     );
     let v = Value::Vec(vec![Value::None]);
     test_value_le(
         &v,
         &[
-            14, 0, 0, 0, // Vec
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0, 0, 0, 0, // value 0
+            14, // Vec
+            1,  // length
+            0,  // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 14, // Vec
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0, 0, 0, 0, // value 0
+            14, // Vec
+            1,  // length
+            0,  // value 0
         ],
     );
 }
@@ -1568,31 +1568,31 @@ fn value_bytes() {
     test_value_le(
         &v,
         &[
-            15, 0, 0, 0, // Bytes
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            15, // Bytes
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 15, // Bytes
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            15, // Bytes
+            0,  // length
         ],
     );
     let v = Value::Bytes(vec![0x12, 0x34, 0x56, 0x78]);
     test_value_le(
         &v,
         &[
-            15, 0, 0, 0, // Bytes
-            4, 0, 0, 0, 0, 0, 0, 0, // length
+            15, // Bytes
+            4,  // length
             0x12, 0x34, 0x56, 0x78, // bytes
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 15, // Bytes
-            0, 0, 0, 0, 0, 0, 0, 4, // length
+            15, // Bytes
+            4,  // length
             0x12, 0x34, 0x56, 0x78, // bytes
         ],
     );
@@ -1604,34 +1604,34 @@ fn value_u8_map() {
     test_value_le(
         &v,
         &[
-            16, 0, 0, 0, // U8Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            16, // U8Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 16, // U8Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            16, // U8Map
+            0,  // length
         ],
     );
     let v = Value::U8Map(hashmap! { 0x12 => Value::None });
     test_value_le(
         &v,
         &[
-            16, 0, 0, 0, // U8Map
-            1, 0, 0, 0, 0, 0, 0, 0,    // length
+            16,   // U8Map
+            1,    // length
             0x12, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 16, // U8Map
-            0, 0, 0, 0, 0, 0, 0, 1,    // length
+            16,   // U8Map
+            1,    // length
             0x12, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
 }
@@ -1642,34 +1642,34 @@ fn value_i8_map() {
     test_value_le(
         &v,
         &[
-            17, 0, 0, 0, // I8Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            17, // I8Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 17, // I8Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            17, // I8Map
+            0,  // length
         ],
     );
     let v = Value::I8Map(hashmap! { 0x12 => Value::None });
     test_value_le(
         &v,
         &[
-            17, 0, 0, 0, // I8Map
-            1, 0, 0, 0, 0, 0, 0, 0,    // length
+            17,   // I8Map
+            1,    // length
             0x12, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 17, // I8Map
-            0, 0, 0, 0, 0, 0, 0, 1,    // length
+            17,   // I8Map
+            1,    // length
             0x12, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
 }
@@ -1680,34 +1680,34 @@ fn value_u16_map() {
     test_value_le(
         &v,
         &[
-            18, 0, 0, 0, // U16Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            18, // U16Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 18, // U16Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            18, // U16Map
+            0,  // length
         ],
     );
     let v = Value::U16Map(hashmap! { 0x1234 => Value::None });
     test_value_le(
         &v,
         &[
-            18, 0, 0, 0, // U16Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            18, // U16Map
+            1,  // length
+            251, 0x34, 0x12, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 18, // U16Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, // key 0
-            0, 0, 0, 0, // value 0
+            18, // U16Map
+            1,  // length
+            251, 0x12, 0x34, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1718,34 +1718,34 @@ fn value_i16_map() {
     test_value_le(
         &v,
         &[
-            19, 0, 0, 0, // I16Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            19, // I16Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 19, // I16Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            19, // I16Map
+            0,  // length
         ],
     );
     let v = Value::I16Map(hashmap! { 0x1234 => Value::None });
     test_value_le(
         &v,
         &[
-            19, 0, 0, 0, // I16Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            19, // I16Map
+            1,  // length
+            251, 0x68, 0x24, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 19, // I16Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, // key 0
-            0, 0, 0, 0, // value 0
+            19, // I16Map
+            1,  // length
+            251, 0x24, 0x68, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1756,34 +1756,34 @@ fn value_u32_map() {
     test_value_le(
         &v,
         &[
-            20, 0, 0, 0, // U32Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            20, // U32Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 20, // U32Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            20, // U32Map
+            0,  // length
         ],
     );
     let v = Value::U32Map(hashmap! { 0x12345678 => Value::None });
     test_value_le(
         &v,
         &[
-            20, 0, 0, 0, // U32Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x78, 0x56, 0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            20, // U32Map
+            1,  // length
+            252, 0x78, 0x56, 0x34, 0x12, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 20, // U32Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, // key 0
-            0, 0, 0, 0, // value 0
+            20, // U32Map
+            1,  // length
+            252, 0x12, 0x34, 0x56, 0x78, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1794,34 +1794,34 @@ fn value_i32_map() {
     test_value_le(
         &v,
         &[
-            21, 0, 0, 0, // I32Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            21, // I32Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 21, // I32Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            21, // I32Map
+            0,  // length
         ],
     );
     let v = Value::I32Map(hashmap! { 0x12345678 => Value::None });
     test_value_le(
         &v,
         &[
-            21, 0, 0, 0, // I32Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x78, 0x56, 0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            21, // I32Map
+            1,  // length
+            252, 0xf0, 0xac, 0x68, 0x24, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 21, // I32Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, // key 0
-            0, 0, 0, 0, // value 0
+            21, // I32Map
+            1,  // length
+            252, 0x24, 0x68, 0xac, 0xf0, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1832,34 +1832,34 @@ fn value_u64_map() {
     test_value_le(
         &v,
         &[
-            22, 0, 0, 0, // U64Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            22, // U64Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 22, // U64Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            22, // U64Map
+            0,  // length
         ],
     );
     let v = Value::U64Map(hashmap! { 0x123456789abcdef0 => Value::None });
     test_value_le(
         &v,
         &[
-            22, 0, 0, 0, // U64Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            22, // U64Map
+            1,  // length
+            253, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 22, // U64Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // key 0
-            0, 0, 0, 0, // value 0
+            22, // U64Map
+            1,  // length
+            253, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1870,34 +1870,34 @@ fn value_i64_map() {
     test_value_le(
         &v,
         &[
-            23, 0, 0, 0, // I64Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            23, // I64Map
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 23, // I64Map
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            23, // I64Map
+            0,  // length
         ],
     );
     let v = Value::I64Map(hashmap! { 0x123456789abcdef0 => Value::None });
     test_value_le(
         &v,
         &[
-            23, 0, 0, 0, // I64Map
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            23, // I64Map
+            1,  // length
+            253, 0xe0, 0xbd, 0x79, 0x35, 0xf1, 0xac, 0x68, 0x24, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 23, // I64Map
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // key 0
-            0, 0, 0, 0, // value 0
+            23, // I64Map
+            1,  // length
+            253, 0x24, 0x68, 0xac, 0xf1, 0x35, 0x79, 0xbd, 0xe0, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -1908,36 +1908,36 @@ fn value_string_map() {
     test_value_le(
         &v,
         &[
-            24, 0, 0, 0, // StringMap
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            24, // StringMap
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 24, // StringMap
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            24, // StringMap
+            0,  // length
         ],
     );
     let v = Value::StringMap(hashmap! { "aldrin".to_owned() => Value::None });
     test_value_le(
         &v,
         &[
-            24, 0, 0, 0, // StringMap
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            6, 0, 0, 0, 0, 0, 0, 0, // length key 0
+            24, // StringMap
+            1,  // length
+            6,  // length key 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 24, // StringMap
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0, 0, 0, 0, 0, 0, 0, 6, // length key 0
+            24, // StringMap
+            1,  // length
+            6,  // length key 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
 }
@@ -1948,15 +1948,15 @@ fn value_uuid_map() {
     test_value_le(
         &v,
         &[
-            25, 0, 0, 0, // UuidMap
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            25, // UuidMap
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 25, // UuidMap
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            25, // UuidMap
+            0,  // length
         ],
     );
     let v = Value::UuidMap(
@@ -1965,23 +1965,23 @@ fn value_uuid_map() {
     test_value_le(
         &v,
         &[
-            25, 0, 0, 0, // UuidMap
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            25, // UuidMap
+            1,  // length
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 25, // UuidMap
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            25, // UuidMap
+            1,  // length
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // key 0
-            0, 0, 0, 0, // value 0
+            0,    // value 0
         ],
     );
 }
@@ -1992,31 +1992,31 @@ fn value_u8_set() {
     test_value_le(
         &v,
         &[
-            26, 0, 0, 0, // U8Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            26, // U8Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 26, // U8Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            26, // U8Set
+            0,  // length
         ],
     );
     let v = Value::U8Set(hashset! { 0x12 });
     test_value_le(
         &v,
         &[
-            26, 0, 0, 0, // U8Set
-            1, 0, 0, 0, 0, 0, 0, 0,    // length
+            26,   // U8Set
+            1,    // length
             0x12, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 26, // U8Set
-            0, 0, 0, 0, 0, 0, 0, 1,    // length
+            26,   // U8Set
+            1,    // length
             0x12, // value 0
         ],
     );
@@ -2028,31 +2028,31 @@ fn value_i8_set() {
     test_value_le(
         &v,
         &[
-            27, 0, 0, 0, // I8Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            27, // I8Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 27, // I8Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            27, // I8Set
+            0,  // length
         ],
     );
     let v = Value::I8Set(hashset! { 0x12 });
     test_value_le(
         &v,
         &[
-            27, 0, 0, 0, // I8Set
-            1, 0, 0, 0, 0, 0, 0, 0,    // length
+            27,   // I8Set
+            1,    // length
             0x12, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 27, // I8Set
-            0, 0, 0, 0, 0, 0, 0, 1,    // length
+            27,   // I8Set
+            1,    // length
             0x12, // value 0
         ],
     );
@@ -2064,32 +2064,32 @@ fn value_u16_set() {
     test_value_le(
         &v,
         &[
-            28, 0, 0, 0, // U16Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            28, // U16Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 28, // U16Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            28, // U16Set
+            0,  // length
         ],
     );
     let v = Value::U16Set(hashset! { 0x1234 });
     test_value_le(
         &v,
         &[
-            28, 0, 0, 0, // U16Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x34, 0x12, // value 0
+            28, // U16Set
+            1,  // length
+            251, 0x34, 0x12, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 28, // U16Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, // value 0
+            28, // U16Set
+            1,  // length
+            251, 0x12, 0x34, // value 0
         ],
     );
 }
@@ -2100,32 +2100,32 @@ fn value_i16_set() {
     test_value_le(
         &v,
         &[
-            29, 0, 0, 0, // I16Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            29, // I16Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 29, // I16Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            29, // I16Set
+            0,  // length
         ],
     );
     let v = Value::I16Set(hashset! { 0x1234 });
     test_value_le(
         &v,
         &[
-            29, 0, 0, 0, // I16Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x34, 0x12, // value 0
+            29, // I16Set
+            1,  // length
+            251, 0x68, 0x24, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 29, // I16Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, // value 0
+            29, // I16Set
+            1,  // length
+            251, 0x24, 0x68, // value 0
         ],
     );
 }
@@ -2136,32 +2136,32 @@ fn value_u32_set() {
     test_value_le(
         &v,
         &[
-            30, 0, 0, 0, // U32Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            30, // U32Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 30, // U32Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            30, // U32Set
+            0,  // length
         ],
     );
     let v = Value::U32Set(hashset! { 0x12345678 });
     test_value_le(
         &v,
         &[
-            30, 0, 0, 0, // U32Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x78, 0x56, 0x34, 0x12, // value 0
+            30, // U32Set
+            1,  // length
+            252, 0x78, 0x56, 0x34, 0x12, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 30, // U32Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, // value 0
+            30, // U32Set
+            1,  // length
+            252, 0x12, 0x34, 0x56, 0x78, // value 0
         ],
     );
 }
@@ -2172,32 +2172,32 @@ fn value_i32_set() {
     test_value_le(
         &v,
         &[
-            31, 0, 0, 0, // I32Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            31, // I32Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 31, // I32Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            31, // I32Set
+            0,  // length
         ],
     );
     let v = Value::I32Set(hashset! { 0x12345678 });
     test_value_le(
         &v,
         &[
-            31, 0, 0, 0, // I32Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x78, 0x56, 0x34, 0x12, // value 0
+            31, // I32Set
+            1,  // length
+            252, 0xf0, 0xac, 0x68, 0x24, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 31, // I32Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, // value 0
+            31, // I32Set
+            1,  // length
+            252, 0x24, 0x68, 0xac, 0xf0, // value 0
         ],
     );
 }
@@ -2208,32 +2208,32 @@ fn value_u64_set() {
     test_value_le(
         &v,
         &[
-            32, 0, 0, 0, // U64Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            32, // U64Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 32, // U64Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            32, // U64Set
+            0,  // length
         ],
     );
     let v = Value::U64Set(hashset! { 0x123456789abcdef0 });
     test_value_le(
         &v,
         &[
-            32, 0, 0, 0, // U64Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value 0
+            32, // U64Set
+            1,  // length
+            253, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 32, // U64Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value 0
+            32, // U64Set
+            1,  // length
+            253, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value 0
         ],
     );
 }
@@ -2244,32 +2244,32 @@ fn value_i64_set() {
     test_value_le(
         &v,
         &[
-            33, 0, 0, 0, // I64Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            33, // I64Set
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 33, // I64Set
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            33, // I64Set
+            0,  // length
         ],
     );
     let v = Value::I64Set(hashset! { 0x123456789abcdef0 });
     test_value_le(
         &v,
         &[
-            33, 0, 0, 0, // I64Set
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value 0
+            33, // I64Set
+            1,  // length
+            253, 0xe0, 0xbd, 0x79, 0x35, 0xf1, 0xac, 0x68, 0x24, // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 33, // I64Set
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value 0
+            33, // I64Set
+            1,  // length
+            253, 0x24, 0x68, 0xac, 0xf1, 0x35, 0x79, 0xbd, 0xe0, // value 0
         ],
     );
 }
@@ -2280,33 +2280,33 @@ fn value_string_set() {
     test_value_le(
         &v,
         &[
-            34, 0, 0, 0, // StringSet
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            34, // StringSet
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 34, // StringSet
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            34, // StringSet
+            0,  // length
         ],
     );
     let v = Value::StringSet(hashset! { "aldrin".to_owned() });
     test_value_le(
         &v,
         &[
-            34, 0, 0, 0, // StringSet
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            6, 0, 0, 0, 0, 0, 0, 0, // length value 0
+            34, // StringSet
+            1,  // length
+            6,  // length value 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 34, // StringSet
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0, 0, 0, 0, 0, 0, 0, 6, // length value 0
+            34, // StringSet
+            1,  // length
+            6,  // length value 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
         ],
     );
@@ -2318,24 +2318,24 @@ fn value_uuid_set() {
     test_value_le(
         &v,
         &[
-            35, 0, 0, 0, // UuidSet
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            35, // UuidSet
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 35, // UuidSet
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            35, // UuidSet
+            0,  // length
         ],
     );
     let v = Value::UuidSet(hashset! { Uuid::from_u128(0x00112233445566778899aabbccddeeff) });
     test_value_le(
         &v,
         &[
-            35, 0, 0, 0, // UuidSet
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            16, 0, 0, 0, 0, 0, 0, 0, // uuid length
+            35, // UuidSet
+            1,  // length
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // key 0
         ],
@@ -2343,9 +2343,9 @@ fn value_uuid_set() {
     test_value_be(
         &v,
         &[
-            0, 0, 0, 35, // UuidSet
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0, 0, 0, 0, 0, 0, 0, 16, // uuid length
+            35, // UuidSet
+            1,  // length
+            16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // key 0
         ],
@@ -2358,34 +2358,34 @@ fn value_struct() {
     test_value_le(
         &v,
         &[
-            36, 0, 0, 0, // Struct
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            36, // Struct
+            0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 36, // Struct
-            0, 0, 0, 0, 0, 0, 0, 0, // length
+            36, // Struct
+            0,  // length
         ],
     );
     let v = Value::Struct(hashmap! { 0x12345678 => Value::None });
     test_value_le(
         &v,
         &[
-            36, 0, 0, 0, // Struct
-            1, 0, 0, 0, 0, 0, 0, 0, // length
-            0x78, 0x56, 0x34, 0x12, // key 0
-            0, 0, 0, 0, // value 0
+            36, // Struct
+            1,  // length
+            252, 0x78, 0x56, 0x34, 0x12, // key 0
+            0,    // value 0
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 36, // Struct
-            0, 0, 0, 0, 0, 0, 0, 1, // length
-            0x12, 0x34, 0x56, 0x78, // key 0
-            0, 0, 0, 0, // value 0
+            36, // Struct
+            1,  // length
+            252, 0x12, 0x34, 0x56, 0x78, // key 0
+            0,    // value 0
         ],
     );
 }
@@ -2399,17 +2399,17 @@ fn value_enum() {
     test_value_le(
         &v,
         &[
-            37, 0, 0, 0, // Enum
-            0x78, 0x56, 0x34, 0x12, // variant
-            0, 0, 0, 0, // value
+            37, // Enum
+            252, 0x78, 0x56, 0x34, 0x12, // variant
+            0,    // value
         ],
     );
     test_value_be(
         &v,
         &[
-            0, 0, 0, 37, // Enum
-            0x12, 0x34, 0x56, 0x78, // variant
-            0, 0, 0, 0, // value
+            37, // Enum
+            252, 0x12, 0x34, 0x56, 0x78, // variant
+            0,    // value
         ],
     );
 }

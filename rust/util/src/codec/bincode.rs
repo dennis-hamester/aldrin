@@ -43,11 +43,9 @@ impl Serializer for BincodeSerializer {
         let mut dst = BytesMut::new();
         match self.endian {
             Endian::Big => bincode::options()
-                .with_fixint_encoding()
                 .with_big_endian()
                 .serialize_into((&mut dst).writer(), &msg)?,
             Endian::Little => bincode::options()
-                .with_fixint_encoding()
                 .with_little_endian()
                 .serialize_into((&mut dst).writer(), &msg)?,
         }
@@ -56,14 +54,8 @@ impl Serializer for BincodeSerializer {
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, BincodeError> {
         match self.endian {
-            Endian::Big => bincode::options()
-                .with_fixint_encoding()
-                .with_big_endian()
-                .deserialize(&src),
-            Endian::Little => bincode::options()
-                .with_fixint_encoding()
-                .with_little_endian()
-                .deserialize(&src),
+            Endian::Big => bincode::options().with_big_endian().deserialize(&src),
+            Endian::Little => bincode::options().with_little_endian().deserialize(&src),
         }
     }
 }
