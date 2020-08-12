@@ -6,7 +6,7 @@ version = "0.1.0"
 dependencies = [
  "aldrin-client",
  "aldrin-proto",
- "aldrin-util",
+ "aldrin-test",
  "futures-channel",
  "futures-core",
  "futures-util",
