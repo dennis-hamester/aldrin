@@ -12,13 +12,13 @@ use std::task::{Context, Poll};
 ///
 /// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo is
 /// full, this will cause backpressure to the sender.
-pub fn channel(fifo_size: usize) -> (Channel, Channel) {
+pub fn bounded(fifo_size: usize) -> (Bounded, Bounded) {
     let (sender1, receiver1) = mpsc::channel(fifo_size);
     let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        Channel::new(None, receiver1, sender2),
-        Channel::new(None, receiver2, sender1),
+        Bounded::new(None, receiver1, sender2),
+        Bounded::new(None, receiver2, sender1),
     )
 }
 
@@ -26,7 +26,7 @@ pub fn channel(fifo_size: usize) -> (Channel, Channel) {
 ///
 /// Both transports have a separate fifo for receiving [`Message`s](Message). If either fifo runs
 /// full, backpressure will be applied to the sender.
-pub fn channel_with_name<N>(fifo_size: usize, name: N) -> (Channel, Channel)
+pub fn bounded_with_name<N>(fifo_size: usize, name: N) -> (Bounded, Bounded)
 where
     N: Into<String>,
 {
@@ -35,8 +35,8 @@ where
     let (sender2, receiver2) = mpsc::channel(fifo_size);
 
     (
-        Channel::new(Some(name.clone()), receiver1, sender2),
-        Channel::new(Some(name), receiver2, sender1),
+        Bounded::new(Some(name.clone()), receiver1, sender2),
+        Bounded::new(Some(name), receiver2, sender1),
     )
 }
 
@@ -45,19 +45,19 @@ where
 /// Bounded transports have an internal fifo for receiving [`Message`s](Message). If this runs full,
 /// backpressure will be applied to the sender.
 #[derive(Debug)]
-pub struct Channel {
+pub struct Bounded {
     name: Option<String>,
     receiver: mpsc::Receiver<Message>,
     sender: mpsc::Sender<Message>,
 }
 
-impl Channel {
+impl Bounded {
     fn new(
         name: Option<String>,
         receiver: mpsc::Receiver<Message>,
         sender: mpsc::Sender<Message>,
     ) -> Self {
-        Channel {
+        Bounded {
             name,
             receiver,
             sender,
@@ -77,7 +77,7 @@ impl fmt::Display for Disconnected {
 
 impl Error for Disconnected {}
 
-impl AsyncTransport for Channel {
+impl AsyncTransport for Bounded {
     type Error = Disconnected;
 
     fn receive_poll(

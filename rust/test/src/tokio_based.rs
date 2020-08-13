@@ -233,7 +233,7 @@ impl<'a> ClientBuilder<'a> {
 
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
-    /// See [`aldrin_util::channel::channel`] for more information on the `fifo_size` parameter.
+    /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
     pub fn bounded_channel(self, fifo_size: usize) -> Self {
         self.0.bounded_channel(fifo_size);
         self

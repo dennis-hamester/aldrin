@@ -244,7 +244,7 @@ impl<'a> ClientBuilder<'a> {
     pub async fn build(self) -> TestClient {
         let (t1, t2): (Box<dyn TestTransport>, Box<dyn TestTransport>) = match self.channel {
             Some(fifo_size) => {
-                let (t1, t2) = channel::channel(fifo_size);
+                let (t1, t2) = channel::bounded(fifo_size);
                 (Box::new(t1), Box::new(t2))
             }
             None => {
@@ -290,7 +290,7 @@ impl<'a> ClientBuilder<'a> {
 
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
-    /// See [`aldrin_util::channel::channel`] for more information on the `fifo_size` parameter.
+    /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.channel = Some(fifo_size);
         self
