@@ -126,8 +126,8 @@ struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ t
 struct_inline = { kw_struct ~ tok_cur_open ~ struct_field* ~ tok_cur_close }
 struct_field = { kw_required? ~ ident ~ tok_at ~ lit_pos_int ~ tok_eq ~ type_name_or_inline }
 
-enum_def = { attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant+ ~ tok_cur_close }
-enum_inline = { kw_enum ~ tok_cur_open ~ enum_variant+ ~ tok_cur_close }
+enum_def = { attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ tok_cur_close }
+enum_inline = { kw_enum ~ tok_cur_open ~ enum_variant* ~ tok_cur_close }
 enum_variant = { ident ~ tok_at ~ lit_pos_int ~ ((tok_eq ~ enum_variant_type) | tok_term) }
 enum_variant_type = { kw_optional? ~ type_name_or_inline }
 

@@ -7,6 +7,7 @@ mod duplicate_service_item;
 mod duplicate_service_uuid;
 mod duplicate_struct_field;
 mod duplicate_struct_field_id;
+mod empty_enum;
 mod extern_type_not_found;
 mod import_not_found;
 mod invalid_const_value;
@@ -33,6 +34,7 @@ pub use duplicate_service_item::DuplicateServiceItem;
 pub use duplicate_service_uuid::DuplicateServiceUuid;
 pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
+pub use empty_enum::EmptyEnum;
 pub use extern_type_not_found::ExternTypeNotFound;
 pub use import_not_found::ImportNotFound;
 pub use invalid_const_value::InvalidConstValue;
@@ -59,6 +61,7 @@ pub enum Error {
     DuplicateServiceUuid(DuplicateServiceUuid),
     DuplicateStructField(DuplicateStructField),
     DuplicateStructFieldId(DuplicateStructFieldId),
+    EmptyEnum(EmptyEnum),
     ExternTypeNotFound(ExternTypeNotFound),
     ImportNotFound(ImportNotFound),
     InvalidConstValue(InvalidConstValue),
@@ -90,6 +93,7 @@ impl Diagnostic for Error {
             Error::DuplicateServiceUuid(e) => e.schema_name(),
             Error::DuplicateStructField(e) => e.schema_name(),
             Error::DuplicateStructFieldId(e) => e.schema_name(),
+            Error::EmptyEnum(e) => e.schema_name(),
             Error::ExternTypeNotFound(e) => e.schema_name(),
             Error::ImportNotFound(e) => e.schema_name(),
             Error::InvalidConstValue(e) => e.schema_name(),
@@ -117,6 +121,7 @@ impl Diagnostic for Error {
             Error::DuplicateServiceUuid(e) => e.format(parsed),
             Error::DuplicateStructField(e) => e.format(parsed),
             Error::DuplicateStructFieldId(e) => e.format(parsed),
+            Error::EmptyEnum(e) => e.format(parsed),
             Error::ExternTypeNotFound(e) => e.format(parsed),
             Error::ImportNotFound(e) => e.format(parsed),
             Error::InvalidConstValue(e) => e.format(parsed),

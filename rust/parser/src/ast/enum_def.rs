@@ -1,5 +1,5 @@
 use super::{Attribute, Ident, LitPosInt, TypeNameOrInline};
-use crate::error::{DuplicateEnumVariant, DuplicateEnumVariantId, InvalidEnumVariantId};
+use crate::error::{DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{NonCamelCaseEnum, NonCamelCaseEnumVariant};
@@ -56,6 +56,7 @@ impl EnumDef {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateEnumVariant::validate(&self.vars, self.name.span(), Some(&self.name), validate);
         DuplicateEnumVariantId::validate(&self.vars, self.name.span(), Some(&self.name), validate);
+        EmptyEnum::validate(&self.vars, self.span, Some(&self.name), validate);
         NonCamelCaseEnum::validate(self, validate);
 
         self.name.validate(validate);
@@ -120,6 +121,7 @@ impl InlineEnum {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateEnumVariant::validate(&self.vars, self.kw_span, None, validate);
         DuplicateEnumVariantId::validate(&self.vars, self.kw_span, None, validate);
+        EmptyEnum::validate(&self.vars, self.span, None, validate);
 
         for var in &self.vars {
             var.validate(validate);
