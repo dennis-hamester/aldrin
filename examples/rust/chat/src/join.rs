@@ -2,19 +2,19 @@ use super::list::query_rooms;
 use super::{chat, JoinArgs};
 use aldrin_client::{Client, ObjectUuid};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use anyhow::Result;
 use crossterm::{cursor, style, terminal};
 use futures::channel::mpsc::{unbounded, UnboundedSender};
 use futures::stream::StreamExt;
 use linefeed::{DefaultTerminal, Interface, ReadResult};
 use std::cmp::Ordering;
-use std::error::Error;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::select;
 
-pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
+pub(crate) async fn run(args: JoinArgs) -> Result<()> {
     let addr = args.broker;
     println!("Connecting to broker at {}.", addr);
 
@@ -201,7 +201,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<(), Box<dyn Error>> {
 fn run_linefeed(
     interface: Arc<Interface<DefaultTerminal>>,
     sender: UnboundedSender<String>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     loop {
         if sender.is_closed() {
             return Ok(());

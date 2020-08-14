@@ -11,6 +11,7 @@ aldrin-broker = { path = "../../../rust/broker" }
 aldrin-client = { path = "../../../rust/client" }
 aldrin-codegen-macros = { path = "../../../rust/codegen-macros" }
 aldrin-util = { path = "../../../rust/util", features = ["channel", "codec", "json", "tokio-io"] }
+anyhow = "1.0.32"
 clap = { version = "3.0.0-beta.1", features = ["wrap_help"] }
 crossterm = "0.16.0"
 futures = { version = "0.3.4", default-features = false, features = ["std"] }

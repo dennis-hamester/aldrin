@@ -1,12 +1,12 @@
 use super::{chat, ListArgs};
 use aldrin_client::{Client, Handle, ServiceEvent, ServiceId, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use anyhow::Result;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
-use std::error::Error;
 use tokio::net::TcpStream;
 
-pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
+pub(crate) async fn run(args: ListArgs) -> Result<()> {
     let addr = args.broker;
     println!("Connecting to broker at {}.", addr);
 
@@ -40,9 +40,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub(crate) async fn query_rooms(
-    handle: &Handle,
-) -> Result<HashMap<ServiceId, String>, Box<dyn Error>> {
+pub(crate) async fn query_rooms(handle: &Handle) -> Result<HashMap<ServiceId, String>> {
     let mut svcs = handle.services(SubscribeMode::CurrentOnly)?;
     let mut res = HashMap::new();
 

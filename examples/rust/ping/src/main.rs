@@ -1,10 +1,10 @@
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use anyhow::Result;
 use clap::{AppSettings, Clap};
 use futures::future::select_all;
 use futures::stream::StreamExt;
-use std::error::Error;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
 use tokio::net::{TcpListener, TcpStream};
@@ -39,7 +39,7 @@ async fn add_connection(
     addr: SocketAddr,
     handle: BrokerHandle,
     fifo_size: Option<usize>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     println!("Incoming connection from {}.", addr);
 
     let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
@@ -58,7 +58,7 @@ async fn add_connection(
     Ok(())
 }
 
-async fn broker(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
+async fn broker(args: BrokerArgs) -> Result<()> {
     let broker = if let Some(fifo_size) = args.broker_fifo_size {
         Broker::with_fifo_size(NonZeroUsize::new(fifo_size))
     } else {
@@ -93,7 +93,7 @@ struct RunArgs {
     delay: u32,
 }
 
-async fn run(args: RunArgs) -> Result<(), Box<dyn Error>> {
+async fn run(args: RunArgs) -> Result<()> {
     let addr = args.broker;
     println!("Connecting to broker at {}.", addr);
 
@@ -169,11 +169,9 @@ enum Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     match Args::parse() {
-        Args::Broker(args) => broker(args).await?,
-        Args::Run(args) => run(args).await?,
-    };
-
-    Ok(())
+        Args::Broker(args) => broker(args).await,
+        Args::Run(args) => run(args).await,
+    }
 }

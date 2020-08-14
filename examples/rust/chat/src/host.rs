@@ -1,14 +1,14 @@
 use super::{chat, HostArgs};
 use aldrin_client::{Client, ObjectEvent, ObjectUuid, SubscribeMode};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use anyhow::Result;
 use futures::stream::StreamExt;
 use std::collections::{HashMap, HashSet};
-use std::error::Error;
 use tokio::net::TcpStream;
 use tokio::select;
 use uuid::Uuid;
 
-pub(crate) async fn run(args: HostArgs) -> Result<(), Box<dyn Error>> {
+pub(crate) async fn run(args: HostArgs) -> Result<()> {
     let addr = args.broker;
     println!("Connecting to broker at {}.", addr);
 

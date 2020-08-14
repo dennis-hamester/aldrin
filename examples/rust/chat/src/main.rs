@@ -5,8 +5,8 @@ mod list;
 
 aldrin_codegen_macros::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
 
+use anyhow::Result;
 use clap::{AppSettings, Clap};
-use std::error::Error;
 use std::net::SocketAddr;
 use uuid::Uuid;
 
@@ -72,13 +72,11 @@ enum Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     match Args::parse() {
-        Args::Broker(args) => broker::run(args).await?,
-        Args::Host(args) => host::run(args).await?,
-        Args::List(args) => list::run(args).await?,
-        Args::Join(args) => join::run(args).await?,
-    };
-
-    Ok(())
+        Args::Broker(args) => broker::run(args).await,
+        Args::Host(args) => host::run(args).await,
+        Args::List(args) => list::run(args).await,
+        Args::Join(args) => join::run(args).await,
+    }
 }

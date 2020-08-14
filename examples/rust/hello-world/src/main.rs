@@ -1,11 +1,11 @@
 use aldrin_broker::Broker;
 use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceEvent, ServiceUuid, SubscribeMode};
 use aldrin_util::channel::{unbounded, Unbounded};
+use anyhow::Result;
 use futures::stream::StreamExt;
-use std::error::Error;
 use uuid::Uuid;
 
-async fn broker(t: Unbounded) -> Result<(), Box<dyn Error>> {
+async fn broker(t: Unbounded) -> Result<()> {
     let broker = Broker::new();
     let handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
@@ -19,7 +19,7 @@ async fn broker(t: Unbounded) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
+async fn client(t: Unbounded) -> Result<()> {
     let client = Client::connect(t).await?;
     let handle = client.handle().clone();
     let join_handle = tokio::spawn(async { client.run().await.unwrap() });
@@ -58,7 +58,7 @@ async fn client(t: Unbounded) -> Result<(), Box<dyn Error>> {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     let (conn_transport, client_transport) = unbounded();
 
     let broker = tokio::spawn(async { broker(conn_transport).await.unwrap() });

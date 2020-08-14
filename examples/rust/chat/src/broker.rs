@@ -1,15 +1,11 @@
 use super::BrokerArgs;
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
-use std::error::Error;
+use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 
-async fn add_connection(
-    socket: TcpStream,
-    addr: SocketAddr,
-    handle: BrokerHandle,
-) -> Result<(), Box<dyn Error>> {
+async fn add_connection(socket: TcpStream, addr: SocketAddr, handle: BrokerHandle) -> Result<()> {
     println!("Incoming connection from {}.", addr);
 
     let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
@@ -22,7 +18,7 @@ async fn add_connection(
     Ok(())
 }
 
-pub(crate) async fn run(args: BrokerArgs) -> Result<(), Box<dyn Error>> {
+pub(crate) async fn run(args: BrokerArgs) -> Result<()> {
     let broker = Broker::new();
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
