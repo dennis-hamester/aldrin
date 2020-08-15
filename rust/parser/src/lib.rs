@@ -7,6 +7,8 @@ mod issues;
 mod parser;
 mod schema;
 mod span;
+#[cfg(test)]
+mod test;
 mod util;
 mod validate;
 
