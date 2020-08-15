@@ -7,6 +7,17 @@ macro_rules! ui_test {
     };
 }
 
+macro_rules! issue {
+    ($name:ident) => {{
+        let mut schema_path: std::path::PathBuf =
+            ["test", "issues", stringify!($name)].iter().collect();
+        schema_path.set_extension("aldrin");
+        let parser = $crate::Parser::new();
+        parser.parse(schema_path)
+    }};
+}
+
+mod issues;
 mod ui_tests;
 
 use crate::{Diagnostic, Parser};

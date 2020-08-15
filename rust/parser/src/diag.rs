@@ -5,6 +5,7 @@
 
 use crate::{Parsed, Position, Schema, Span};
 use std::borrow::Cow;
+use std::cmp;
 use std::fmt;
 use std::path::Path;
 
@@ -361,7 +362,7 @@ impl<'a> Formatter<'a> {
             let (from, to) = if diff >= 8 {
                 self.trimmed_context(span.from.line_col.line, trimmed);
                 (
-                    span.from.line_col.column + 3 - diff,
+                    cmp::max(span.from.line_col.column.saturating_sub(diff), 1) + 3,
                     span.to.line_col.column + 3 - diff,
                 )
             } else {
