@@ -2,6 +2,7 @@ mod check;
 mod diag;
 mod rust;
 
+use anyhow::Result;
 use clap::{AppSettings, Clap};
 use std::convert::Infallible;
 use std::path::PathBuf;
@@ -78,16 +79,15 @@ pub struct CommonGenArgs {
     no_server: bool,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let res = match Args::parse() {
-        Args::Check(args) => check::run(args),
-        Args::Rust(args) => rust::run(args),
+        Args::Check(args) => check::run(args)?,
+        Args::Rust(args) => rust::run(args)?,
     };
 
-    let exit_code = match res {
-        Ok(()) => 0,
-        Err(()) => 1,
-    };
+    if !res {
+        process::exit(1);
+    }
 
-    process::exit(exit_code);
+    Ok(())
 }
