@@ -51,7 +51,7 @@ pub fn run(args: RustArgs) -> Result<(), ()> {
     diag::print_diagnostics(&parsed, args.common_args.color).ok();
 
     if parsed.errors().is_empty() {
-        if !parsed.warnings().is_empty() {
+        if parsed.warnings().is_empty() && parsed.other_warnings().is_empty() {
             println!("Some warning(s) found.");
         }
     } else {

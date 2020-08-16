@@ -43,6 +43,12 @@ pub fn print_diagnostics(parsed: &Parsed, color: Color) -> Result<()> {
         writeln!(stream)?;
     }
 
+    for warning in parsed.other_warnings() {
+        let formatted = warning.format(parsed);
+        print_formatted(&mut stream, &formatted)?;
+        writeln!(stream)?;
+    }
+
     Ok(())
 }
 
