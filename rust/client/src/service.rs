@@ -283,6 +283,14 @@ impl ServiceId {
 pub struct ServiceUuid(pub Uuid);
 
 impl ServiceUuid {
+    /// Creates a ServiceUuid with a random v4 UUID.
+    ///
+    /// In general, random [`ServiceUuid`s](ServiceUuid) have limited use. But it may occasionally
+    /// be convenient to create random [`ServiceUuid`s](ServiceUuid) in e.g. unit-tests.
+    pub fn new_v4() -> Self {
+        ServiceUuid(Uuid::new_v4())
+    }
+
     /// Creates an ServiceUuid from an unsigned 128bit value in big-endian order.
     ///
     /// # Examples

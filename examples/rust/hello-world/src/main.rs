@@ -3,7 +3,6 @@ use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceEvent, ServiceUuid, 
 use aldrin_util::channel::{unbounded, Unbounded};
 use anyhow::Result;
 use futures::stream::StreamExt;
-use uuid::Uuid;
 
 async fn broker(t: Unbounded) -> Result<()> {
     let broker = Broker::new();
@@ -46,7 +45,7 @@ async fn client(t: Unbounded) -> Result<()> {
     }));
 
     let mut obj = handle.create_object(ObjectUuid::new_v4()).await?;
-    let mut svc = obj.create_service(ServiceUuid(Uuid::new_v4())).await?;
+    let mut svc = obj.create_service(ServiceUuid::new_v4()).await?;
 
     svc.destroy().await?;
     obj.destroy().await?;

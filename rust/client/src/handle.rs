@@ -524,7 +524,6 @@ impl Handle {
     ///
     /// ```
     /// use aldrin_client::{ObjectUuid, ServiceUuid};
-    /// use uuid::Uuid;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -540,7 +539,7 @@ impl Handle {
     /// // Create an object and service:
     /// let object_uuid = ObjectUuid::new_v4();
     /// let object = handle.create_object(object_uuid).await?;
-    /// let service_uuid = ServiceUuid(Uuid::new_v4());
+    /// let service_uuid = ServiceUuid::new_v4();
     /// let service = object.create_service(service_uuid).await?;
     ///
     /// // Find a service without specifying an object UUID:
@@ -561,7 +560,7 @@ impl Handle {
     ///
     /// // Searching for a non-existent service yields None:
     /// let non_existent = handle
-    ///     .find_service(ServiceUuid(Uuid::new_v4()), None)
+    ///     .find_service(ServiceUuid::new_v4(), None)
     ///     .await?;
     /// assert!(non_existent.is_none());
     /// # Ok(())
@@ -610,7 +609,6 @@ impl Handle {
     /// use aldrin_client::{ObjectUuid, ServiceUuid};
     /// use std::time::Duration;
     /// use tokio::time;
-    /// use uuid::Uuid;
     ///
     /// // 4d090fab-8614-43d1-8473-f29ff84ffc6b
     /// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x4d090fab861443d18473f29ff84ffc6b);
@@ -646,7 +644,7 @@ impl Handle {
     /// // Searching for a non-existent service yields None:
     /// let non_existent = time::timeout(
     ///     Duration::from_millis(500),
-    ///     handle.wait_for_service(ServiceUuid(Uuid::new_v4()), None),
+    ///     handle.wait_for_service(ServiceUuid::new_v4(), None),
     /// )
     /// .await;
     /// assert!(non_existent.is_err());
