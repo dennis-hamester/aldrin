@@ -1,6 +1,8 @@
 mod error;
 mod event;
 mod handle;
+#[cfg(test)]
+mod test;
 
 use crate::conn_id::ConnectionId;
 use aldrin_proto::{AsyncTransport, AsyncTransportExt, Message};
@@ -64,6 +66,8 @@ where
                     if let Some(fifo_size) = self.fifo_size {
                         while let Ok(Some(msg)) = self.recv.try_next() {
                             if outgoing.len() >= fifo_size.get() {
+                                self.send_broker_shutdown(id)?;
+                                self.drain_broker_recv().await;
                                 return Err(ConnectionError::FifoOverflow);
                             } else {
                                 outgoing.push(msg);
