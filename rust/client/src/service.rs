@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use crate::{Error, Handle, ObjectId};
 use aldrin_proto::{CallFunctionResult, Value};
 use futures_channel::mpsc::UnboundedReceiver;
@@ -232,7 +235,7 @@ impl FusedStream for Service {
         self.inner
             .as_ref()
             .map(|i| i.function_calls.is_terminated())
-            .unwrap_or(false)
+            .unwrap_or(true)
     }
 }
 

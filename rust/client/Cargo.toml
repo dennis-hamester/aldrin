@@ -15,6 +15,7 @@ uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
 
 [dev-dependencies]
 aldrin-broker = { version = "0.1.0", path = "../broker" }
+aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
 aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
 futures = { version = "0.3.4", default-features = false }
 tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }

@@ -20,6 +20,7 @@ version = "0.1.0"
 dependencies = [
  "aldrin-broker",
  "aldrin-proto",
+ "aldrin-test",
  "aldrin-util",
  "futures",
  "futures-channel",
