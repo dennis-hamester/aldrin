@@ -119,6 +119,10 @@ use futures_util::future;
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 
+// For tests directly in aldrin_broker and aldrin_client.
+#[doc(hidden)]
+pub use {aldrin_broker, aldrin_client};
+
 pub use transport::TestTransport;
 
 /// Broker for use in tests.
