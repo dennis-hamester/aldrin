@@ -901,6 +901,25 @@ where
             .await
             .map_err(Into::into)
     }
+
+    fn shutdown_all_events(&self) {
+        for by_service in self.subscriptions.values() {
+            for by_function in by_service.values() {
+                for events in by_function.values() {
+                    events.close_channel();
+                }
+            }
+        }
+    }
+}
+
+impl<T> Drop for Client<T>
+where
+    T: AsyncTransport + Unpin,
+{
+    fn drop(&mut self) {
+        self.shutdown_all_events();
+    }
 }
 
 /// Mode of subscription for object and service creation events.

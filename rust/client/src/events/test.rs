@@ -1,0 +1,47 @@
+use aldrin_test::aldrin_client::{ObjectUuid, ServiceUuid};
+use aldrin_test::tokio_based::TestBroker;
+use futures_util::stream::{FusedStream, StreamExt};
+use std::time::Duration;
+use tokio::time;
+
+#[tokio::test]
+async fn stop_on_client_shutdown() {
+    let broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4()).await.unwrap();
+
+    let mut events = client.events();
+    events.subscribe(svc.id(), 0).await.unwrap();
+
+    client.shutdown();
+    client.join().await;
+
+    let event = time::timeout(Duration::from_millis(100), events.next())
+        .await
+        .unwrap();
+    assert!(event.is_none());
+    assert!(events.is_terminated());
+}
+
+#[tokio::test]
+async fn stop_on_broker_shutdown() {
+    let broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4()).await.unwrap();
+
+    let mut events = client.events();
+    events.subscribe(svc.id(), 0).await.unwrap();
+
+    broker.shutdown();
+    client.join().await;
+
+    let event = time::timeout(Duration::from_millis(100), events.next())
+        .await
+        .unwrap();
+    assert!(event.is_none());
+    assert!(events.is_terminated());
+}

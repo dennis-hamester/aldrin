@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use super::{Error, Handle, ServiceCookie, ServiceId};
 use aldrin_proto::Value;
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
@@ -193,7 +196,7 @@ impl Stream for Events {
 
 impl FusedStream for Events {
     fn is_terminated(&self) -> bool {
-        false
+        self.recv.is_terminated()
     }
 }
 
