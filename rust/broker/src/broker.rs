@@ -879,10 +879,7 @@ impl Default for Broker {
 
 fn broadcast<'a, I>(conns: I, state: &mut State, msg: Message)
 where
-    // This should really be IntoIterator, but we're hitting a compiler bug:
-    // https://github.com/tokio-rs/tokio/issues/1835
-    // https://github.com/rust-lang/rust/issues/60658
-    I: Iterator<Item = (&'a ConnectionId, &'a mut ConnectionState)>,
+    I: IntoIterator<Item = (&'a ConnectionId, &'a mut ConnectionState)>,
 {
     for (id, conn) in conns {
         // Shutdown connection on error, but don't abort loop.
