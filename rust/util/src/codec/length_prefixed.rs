@@ -59,12 +59,12 @@ impl Packetizer for LengthPrefixed {
         Ok(())
     }
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
         match self.cur {
             Some(len) => {
                 if src.len() >= len {
                     self.cur = None;
-                    Ok(Some(src.split_to(len).freeze()))
+                    Ok(Some(src.split_to(len)))
                 } else {
                     Ok(None)
                 }
@@ -81,7 +81,7 @@ impl Packetizer for LengthPrefixed {
                         .ok_or(LengthPrefixedError)?;
 
                     if src.len() >= len {
-                        Ok(Some(src.split_to(len).freeze()))
+                        Ok(Some(src.split_to(len)))
                     } else {
                         self.cur = Some(len);
                         src.reserve(len);

@@ -75,7 +75,7 @@ where
 
         loop {
             match this.packetizer.decode(this.read_buf) {
-                Ok(Some(pkt)) => match this.serializer.deserialize(pkt) {
+                Ok(Some(pkt)) => match this.serializer.deserialize(pkt.freeze()) {
                     Ok(msg) => return Poll::Ready(Ok(msg)),
                     Err(e) => return Poll::Ready(Err(TokioCodecError::Serializer(e))),
                 },

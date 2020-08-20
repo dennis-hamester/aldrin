@@ -4,7 +4,7 @@ pub trait Packetizer {
     type Error;
 
     fn encode(&mut self, data: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error>;
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error>;
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error>;
 }
 
 impl<T: Packetizer + ?Sized> Packetizer for &mut T {
@@ -14,7 +14,7 @@ impl<T: Packetizer + ?Sized> Packetizer for &mut T {
         (*self).encode(data, dst)
     }
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
         (*self).decode(src)
     }
 }
@@ -26,7 +26,7 @@ impl<T: Packetizer + ?Sized> Packetizer for Box<T> {
         (**self).encode(data, dst)
     }
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
         (**self).decode(src)
     }
 }
@@ -63,7 +63,7 @@ where
         self.packetizer.encode(data, dst).map_err(&mut self.map_err)
     }
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Bytes>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
         self.packetizer.decode(src).map_err(&mut self.map_err)
     }
 }
