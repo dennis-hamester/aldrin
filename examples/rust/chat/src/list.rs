@@ -1,6 +1,6 @@
 use super::{chat, ListArgs};
 use aldrin_client::{Client, Handle, ServiceEvent, ServiceId, SubscribeMode};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
@@ -11,7 +11,12 @@ pub(crate) async fn run(args: ListArgs) -> Result<()> {
     println!("Connecting to broker at {}.", addr);
 
     let socket = TcpStream::connect(&addr).await?;
-    let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
+    let t = TokioCodec::new(
+        socket,
+        LengthPrefixed::default(),
+        NoopFilter,
+        JsonSerializer::default(),
+    );
     let client = Client::connect(t).await?;
     println!("Connection to broker at {} established.", addr);
 

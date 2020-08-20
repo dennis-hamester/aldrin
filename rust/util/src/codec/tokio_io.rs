@@ -1,4 +1,4 @@
-use super::{Packetizer, Serializer};
+use super::{Filter, Packetizer, Serializer};
 use aldrin_proto::{AsyncTransport, Message};
 use bytes::BytesMut;
 use pin_project::pin_project;
@@ -15,31 +15,35 @@ const BACKPRESSURE_BOUNDARY: usize = INITIAL_CAPACITY;
 
 #[pin_project]
 #[derive(Debug)]
-pub struct TokioCodec<T, P, S>
+pub struct TokioCodec<T, P, F, S>
 where
     T: AsyncRead + AsyncWrite,
     P: Packetizer,
+    F: Filter,
     S: Serializer,
 {
     #[pin]
     io: T,
     packetizer: P,
+    filter: F,
     serializer: S,
     read_buf: BytesMut,
     write_buf: Option<BytesMut>,
     name: Option<String>,
 }
 
-impl<T, P, S> TokioCodec<T, P, S>
+impl<T, P, F, S> TokioCodec<T, P, F, S>
 where
     T: AsyncRead + AsyncWrite,
     P: Packetizer,
+    F: Filter,
     S: Serializer,
 {
-    pub fn new(io: T, packetizer: P, serializer: S) -> Self {
+    pub fn new(io: T, packetizer: P, filter: F, serializer: S) -> Self {
         TokioCodec {
             io,
             packetizer,
+            filter,
             serializer,
             read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
             write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
@@ -47,13 +51,14 @@ where
         }
     }
 
-    pub fn with_name<N>(io: T, packetizer: P, serializer: S, name: N) -> Self
+    pub fn with_name<N>(io: T, packetizer: P, filter: F, serializer: S, name: N) -> Self
     where
         N: Into<String>,
     {
         TokioCodec {
             io,
             packetizer,
+            filter,
             serializer,
             read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
             write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
@@ -62,22 +67,26 @@ where
     }
 }
 
-impl<T, P, S> AsyncTransport for TokioCodec<T, P, S>
+impl<T, P, F, S> AsyncTransport for TokioCodec<T, P, F, S>
 where
     T: AsyncRead + AsyncWrite,
     P: Packetizer,
+    F: Filter,
     S: Serializer,
 {
-    type Error = TokioCodecError<P::Error, S::Error>;
+    type Error = TokioCodecError<P::Error, F::Error, S::Error>;
 
     fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
         let mut this = self.project();
 
         loop {
             match this.packetizer.decode(this.read_buf) {
-                Ok(Some(pkt)) => match this.serializer.deserialize(pkt.freeze()) {
-                    Ok(msg) => return Poll::Ready(Ok(msg)),
-                    Err(e) => return Poll::Ready(Err(TokioCodecError::Serializer(e))),
+                Ok(Some(pkt)) => match this.filter.backward(pkt) {
+                    Ok(pkt) => match this.serializer.deserialize(pkt.freeze()) {
+                        Ok(msg) => return Poll::Ready(Ok(msg)),
+                        Err(e) => return Poll::Ready(Err(TokioCodecError::Serializer(e))),
+                    },
+                    Err(e) => return Poll::Ready(Err(TokioCodecError::Filter(e))),
                 },
                 Ok(None) => {}
                 Err(e) => return Poll::Ready(Err(TokioCodecError::Packetizer(e))),
@@ -113,6 +122,8 @@ where
             .serialize(msg)
             .map_err(TokioCodecError::Serializer)?;
 
+        let pkt = this.filter.forward(pkt).map_err(TokioCodecError::Filter)?;
+
         this.packetizer
             .encode(pkt.freeze(), write_buf)
             .map_err(TokioCodecError::Packetizer)?;
@@ -145,29 +156,33 @@ where
 }
 
 #[derive(Debug)]
-pub enum TokioCodecError<P, S> {
+pub enum TokioCodecError<P, F, S> {
     Io(IoError),
     Packetizer(P),
+    Filter(F),
     Serializer(S),
 }
 
-impl<P, S> fmt::Display for TokioCodecError<P, S>
+impl<P, F, S> fmt::Display for TokioCodecError<P, F, S>
 where
     P: fmt::Display,
+    F: fmt::Display,
     S: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             TokioCodecError::Io(e) => e.fmt(f),
             TokioCodecError::Packetizer(e) => e.fmt(f),
+            TokioCodecError::Filter(e) => e.fmt(f),
             TokioCodecError::Serializer(e) => e.fmt(f),
         }
     }
 }
 
-impl<P, S> StdError for TokioCodecError<P, S>
+impl<P, F, S> StdError for TokioCodecError<P, F, S>
 where
     P: fmt::Display + fmt::Debug,
+    F: fmt::Display + fmt::Debug,
     S: fmt::Display + fmt::Debug,
 {
 }

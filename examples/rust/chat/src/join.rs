@@ -1,7 +1,7 @@
 use super::list::query_rooms;
 use super::{chat, JoinArgs};
 use aldrin_client::{Client, ObjectUuid};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, TokioCodec};
+use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use crossterm::{cursor, style, terminal};
 use futures::channel::mpsc::{unbounded, UnboundedSender};
@@ -19,7 +19,12 @@ pub(crate) async fn run(args: JoinArgs) -> Result<()> {
     println!("Connecting to broker at {}.", addr);
 
     let socket = TcpStream::connect(&addr).await?;
-    let t = TokioCodec::new(socket, LengthPrefixed::default(), JsonSerializer::default());
+    let t = TokioCodec::new(
+        socket,
+        LengthPrefixed::default(),
+        NoopFilter,
+        JsonSerializer::default(),
+    );
     let client = Client::connect(t).await?;
     let handle = client.handle().clone();
     println!("Connection to broker at {} established.", addr);
