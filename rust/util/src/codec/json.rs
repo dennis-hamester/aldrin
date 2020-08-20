@@ -36,12 +36,14 @@ impl Default for JsonSerializer {
 impl Serializer for JsonSerializer {
     type Error = JsonError;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), JsonError> {
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, JsonError> {
+        let mut dst = BytesMut::new();
         if self.pretty {
-            serde_json::to_writer_pretty(dst.writer(), &msg)
+            serde_json::to_writer_pretty((&mut dst).writer(), &msg)?
         } else {
-            serde_json::to_writer(dst.writer(), &msg)
+            serde_json::to_writer((&mut dst).writer(), &msg)?
         }
+        Ok(dst)
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, JsonError> {

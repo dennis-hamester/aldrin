@@ -1,6 +1,5 @@
 use super::{JsonSerializer, Serializer};
 use aldrin_proto::*;
-use bytes::BytesMut;
 use maplit::{hashmap, hashset};
 use serde_json::json;
 use std::str::from_utf8;
@@ -13,9 +12,8 @@ const UUID4: Uuid = Uuid::from_u128(0x7ff46206eddc4a9e8ce9707b1f35a1ba);
 
 fn test_message(m: Message, j: serde_json::Value) {
     let mut ser = JsonSerializer::with_pretty(false);
-    let mut buf = BytesMut::new();
 
-    ser.serialize(m.clone(), &mut buf).unwrap();
+    let buf = ser.serialize(m.clone()).unwrap();
     let j2_str = from_utf8(&buf).unwrap();
     let j2: serde_json::Value = serde_json::from_str(&j2_str).unwrap();
     assert_eq!(j, j2);

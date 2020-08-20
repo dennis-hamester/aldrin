@@ -39,17 +39,19 @@ impl Default for BincodeSerializer {
 impl Serializer for BincodeSerializer {
     type Error = BincodeError;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), BincodeError> {
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, BincodeError> {
+        let mut dst = BytesMut::new();
         match self.endian {
             Endian::Big => bincode::options()
                 .with_fixint_encoding()
                 .with_big_endian()
-                .serialize_into(dst.writer(), &msg),
+                .serialize_into((&mut dst).writer(), &msg)?,
             Endian::Little => bincode::options()
                 .with_fixint_encoding()
                 .with_little_endian()
-                .serialize_into(dst.writer(), &msg),
+                .serialize_into((&mut dst).writer(), &msg)?,
         }
+        Ok(dst)
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, BincodeError> {

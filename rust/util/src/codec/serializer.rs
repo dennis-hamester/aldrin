@@ -4,15 +4,15 @@ use bytes::{Bytes, BytesMut};
 pub trait Serializer {
     type Error;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error>;
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, Self::Error>;
     fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error>;
 }
 
 impl<T: Serializer + ?Sized> Serializer for &mut T {
     type Error = T::Error;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        (*self).serialize(msg, dst)
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, Self::Error> {
+        (*self).serialize(msg)
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error> {
@@ -23,8 +23,8 @@ impl<T: Serializer + ?Sized> Serializer for &mut T {
 impl<T: Serializer + ?Sized> Serializer for Box<T> {
     type Error = T::Error;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        (**self).serialize(msg, dst)
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, Self::Error> {
+        (**self).serialize(msg)
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error> {
@@ -60,10 +60,8 @@ where
 {
     type Error = E;
 
-    fn serialize(&mut self, msg: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        self.serializer
-            .serialize(msg, dst)
-            .map_err(&mut self.map_err)
+    fn serialize(&mut self, msg: Message) -> Result<BytesMut, Self::Error> {
+        self.serializer.serialize(msg).map_err(&mut self.map_err)
     }
 
     fn deserialize(&mut self, src: Bytes) -> Result<Message, Self::Error> {

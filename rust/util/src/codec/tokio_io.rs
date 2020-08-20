@@ -108,14 +108,14 @@ where
         let this = self.project();
         let write_buf = this.write_buf.as_mut().unwrap();
 
-        let mut pkt = BytesMut::new();
-        if let Err(e) = this.serializer.serialize(msg, &mut pkt) {
-            return Err(TokioCodecError::Serializer(e));
-        }
+        let pkt = this
+            .serializer
+            .serialize(msg)
+            .map_err(TokioCodecError::Serializer)?;
 
-        if let Err(e) = this.packetizer.encode(pkt.freeze(), write_buf) {
-            return Err(TokioCodecError::Packetizer(e));
-        }
+        this.packetizer
+            .encode(pkt.freeze(), write_buf)
+            .map_err(TokioCodecError::Packetizer)?;
 
         Ok(())
     }
