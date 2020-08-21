@@ -520,6 +520,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
+        genln!(self, "    pub fn handle(&self) -> &aldrin_client::Handle {{");
+        genln!(self, "        &self.client");
+        genln!(self, "    }}");
+        genln!(self);
 
         for item in svc.items() {
             let func = match item {
@@ -777,6 +781,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
         genln!(self, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
         genln!(self, "        self.service.id()");
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn handle(&self) -> &aldrin_client::Handle {{");
+        genln!(self, "        self.service.handle()");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub async fn destroy(&mut self) -> Result<(), aldrin_client::Error> {{");
