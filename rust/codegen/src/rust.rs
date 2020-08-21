@@ -167,8 +167,10 @@ impl<'a> RustGenerator<'a> {
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
         let builder_name = struct_builder_name(name);
+        let has_required_fields = fields.iter().any(ast::StructField::required);
 
-        genln!(self, "#[derive(Debug, Clone{})]", attrs.additional_derives());
+        let derive_default = if has_required_fields { "" } else { ", Default" };
+        genln!(self, "#[derive(Debug, Clone{}{})]", derive_default, attrs.additional_derives());
         genln!(self, "#[non_exhaustive]");
         genln!(self, "pub struct {} {{", name);
         for field in fields {
@@ -263,7 +265,7 @@ impl<'a> RustGenerator<'a> {
             }
         }
 
-        if !fields.iter().any(ast::StructField::required) {
+        if !has_required_fields {
             genln!(self, "    pub fn build(self) -> {} {{", name);
             genln!(self, "        {} {{", name);
             for field in fields {
