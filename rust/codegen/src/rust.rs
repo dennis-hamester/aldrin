@@ -935,17 +935,17 @@ impl<'a> RustGenerator<'a> {
             if let Some(ev_type) = ev.event_type() {
                 let var_type = event_variant_type(svc_name, ev_name, ev_type);
                 if ev_type.optional() {
-                    genln!(self, "    pub async fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", id);
+                    genln!(self, "    pub fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
+                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))", id);
                     genln!(self, "    }}");
                 } else {
-                    genln!(self, "    pub async fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg)).await", id);
+                    genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
+                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))", id);
                     genln!(self, "    }}");
                 }
             } else {
-                genln!(self, "    pub async fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
-                genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None).await", id);
+                genln!(self, "    pub fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
+                genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None)", id);
                 genln!(self, "    }}");
             }
 

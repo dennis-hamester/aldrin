@@ -51,7 +51,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                         if let Some((&cookie, _)) =
                                 members.iter().find(|(_, &(_, cookie))| cookie == id.cookie.0) {
                             let (name, _) = members.remove(&cookie).unwrap();
-                            emitter.left(name).await?;
+                            emitter.left(name)?;
                         }
                     }
                 }
@@ -77,7 +77,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                         let cookie = Uuid::new_v4();
                         members.insert(cookie, (args.name.clone(), args.object_cookie));
                         reply.ok(cookie)?;
-                        emitter.joined(args.name).await?;
+                        emitter.joined(args.name)?;
                     }
 
                     chat::ChatFunction::Send(args, reply) => {
@@ -89,8 +89,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                                         .set_sender(name.clone())
                                         .set_message(args.message)
                                         .build()?,
-                                )
-                                .await?;
+                                )?;
                             }
 
                             None => reply.err(chat::ChatSendError::InvalidCookie)?,

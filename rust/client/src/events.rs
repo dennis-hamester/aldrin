@@ -59,13 +59,13 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// events.subscribe(service_id, 1).await?;
 /// events.subscribe(service_id, 2).await?;
 ///
-/// # handle.emit_event(service_id, 1, 32u32.into_value()).await?;
+/// # handle.emit_event(service_id, 1, 32u32.into_value())?;
 /// while let Some(event) = events.next().await {
 ///     match event {
 ///         Event { id: 1, args, .. } => {
 ///             let arg = u32::from_value(args)?;
 ///             println!("Event 1 with u32 arg {}.", arg);
-///             # handle.emit_event(service_id, 2, "Hello, world!".into_value()).await?;
+///             # handle.emit_event(service_id, 2, "Hello, world!".into_value())?;
 ///         }
 ///
 ///         Event { id: 2, args, .. } => {

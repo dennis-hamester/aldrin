@@ -121,7 +121,7 @@ use uuid::Uuid;
 ///             let name = String::from_value(func.args)?;
 ///             if users.insert(name.clone()) {
 ///                 // Emit an event that a new user with the given name joined:
-///                 handle.emit_event(service_id, JOINED_CHAT, name.into_value()).await?;
+///                 handle.emit_event(service_id, JOINED_CHAT, name.into_value())?;
 ///
 ///                 func.reply.ok(Value::None)?;
 ///             } else {
@@ -134,7 +134,7 @@ use uuid::Uuid;
 ///             let name = String::from_value(func.args)?;
 ///             if users.remove(&name) {
 ///                 // Emit an event that a user with the given name left:
-///                 handle.emit_event(service_id, LEFT_CHAT, name.into_value()).await?;
+///                 handle.emit_event(service_id, LEFT_CHAT, name.into_value())?;
 ///
 ///                 func.reply.ok(Value::None)?;
 ///             } else {
@@ -148,7 +148,7 @@ use uuid::Uuid;
 ///         SEND_MESSAGE => {
 ///             // Broadcast the message:
 ///             let message = String::from_value(func.args)?;
-///             handle.emit_event(service_id, MESSAGE_SENT, message.into_value()).await?;
+///             handle.emit_event(service_id, MESSAGE_SENT, message.into_value())?;
 ///             func.reply.ok(Value::None)?;
 ///         }
 ///

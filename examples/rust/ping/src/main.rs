@@ -140,7 +140,7 @@ async fn run(args: RunArgs) -> Result<()> {
 
             _ = &mut delay => {
                 delay = delay_for(Duration::from_millis(args.delay as u64));
-                emitter.ping().await?;
+                emitter.ping()?;
                 outgoing += 1;
             }
 

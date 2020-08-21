@@ -380,16 +380,11 @@ impl Handle {
     /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
-    /// handle.emit_event(service_id, 1, "Hello, world!".into_value()).await?;
+    /// handle.emit_event(service_id, 1, "Hello, world!".into_value())?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn emit_event(
-        &self,
-        service_id: ServiceId,
-        event: u32,
-        args: Value,
-    ) -> Result<(), Error> {
+    pub fn emit_event(&self, service_id: ServiceId, event: u32, args: Value) -> Result<(), Error> {
         self.send
             .unbounded_send(Request::EmitEvent(EmitEventRequest {
                 service_cookie: service_id.cookie,
