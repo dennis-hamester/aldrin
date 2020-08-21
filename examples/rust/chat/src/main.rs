@@ -3,7 +3,7 @@ mod host;
 mod join;
 mod list;
 
-aldrin_codegen_macros::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
+aldrin_client::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
 
 use anyhow::Result;
 use clap::{AppSettings, Clap};

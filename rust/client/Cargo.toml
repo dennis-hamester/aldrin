@@ -6,12 +6,17 @@ authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 
+[features]
+codegen = ["aldrin-codegen-macros"]
+
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 futures-channel = { version = "0.3.4", default-features = false, features = ["std"] }
 futures-core = { version = "0.3.4", default-features = false }
 futures-util = { version = "0.3.4", default-features = false }
 uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
+
+aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen-macros" }
 
 [dev-dependencies]
 aldrin-broker = { version = "0.1.0", path = "../broker" }

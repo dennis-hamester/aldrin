@@ -11,7 +11,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::select;
 use tokio::time::{delay_for, Duration};
 
-aldrin_codegen_macros::generate!("../../schemas/ping.aldrin", warnings_as_errors = true);
+aldrin_client::generate!("../../schemas/ping.aldrin", warnings_as_errors = true);
 
 const MEASURE_UPDATE_MS: u64 = 5000;
 

@@ -90,6 +90,8 @@ use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
+#[cfg(feature = "codegen")]
+pub use aldrin_codegen_macros::generate;
 pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
 pub use handle::{CallFunctionFuture, Handle};

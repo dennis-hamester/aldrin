@@ -19,6 +19,7 @@ name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
  "aldrin-broker",
+ "aldrin-codegen-macros",
  "aldrin-proto",
  "aldrin-test",
  "aldrin-util",
