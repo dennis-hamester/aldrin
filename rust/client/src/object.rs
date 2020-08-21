@@ -10,7 +10,7 @@ use uuid::Uuid;
 /// identified by an [`ObjectId`] on the bus.
 ///
 /// [`Object`] holds an internal [`Handle`] and will thus prevent the [`Client`](crate::Client) from
-/// shutting down automatically. The [`Handle`] is released when the [`Object`] is destroyed.
+/// shutting down automatically. The [`Handle`] is released when the [`Object`] is dropped.
 ///
 /// # Examples
 ///
@@ -49,15 +49,12 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Object {
     id: ObjectId,
-    client: Option<Handle>,
+    client: Handle,
 }
 
 impl Object {
     pub(crate) fn new(id: ObjectId, client: Handle) -> Self {
-        Object {
-            id,
-            client: Some(client),
-        }
+        Object { id, client }
     }
 
     /// Returns the id of the object.
@@ -66,22 +63,15 @@ impl Object {
     }
 
     /// Returns a handle to the client that was used to create the object.
-    ///
-    /// `None` is returned after the [`Object`] has been [destroyed](Object::destroy) manually.
-    pub fn handle(&self) -> Option<&Handle> {
-        self.client.as_ref()
+    pub fn handle(&self) -> &Handle {
+        &self.client
     }
 
     /// Destroys the object.
     ///
     /// If the object has already been destroyed, [`Error::InvalidObject`] is returned.
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        let client = self.client.as_mut().ok_or(Error::InvalidObject(self.id))?;
-        let res = client.destroy_object(self.id).await;
-        if res.is_ok() {
-            self.client.take();
-        }
-        res
+        self.client.destroy_object(self.id).await
     }
 
     /// Creates a service on the object.
@@ -122,16 +112,13 @@ impl Object {
     /// # }
     /// ```
     pub async fn create_service(&self, uuid: ServiceUuid) -> Result<Service, Error> {
-        let client = self.client.as_ref().ok_or(Error::InvalidObject(self.id))?;
-        client.create_service(self.id, uuid).await
+        self.client.create_service(self.id, uuid).await
     }
 }
 
 impl Drop for Object {
     fn drop(&mut self) {
-        if let Some(client) = self.client.take() {
-            client.destroy_object_now(self.id.cookie);
-        }
+        self.client.destroy_object_now(self.id.cookie);
     }
 }
 
