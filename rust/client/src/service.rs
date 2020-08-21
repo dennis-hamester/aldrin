@@ -51,7 +51,6 @@ use uuid::Uuid;
 /// // Create a service and destroy it again explicitly:
 /// let mut service = object.create_service(SERVICE_UUID).await?;
 /// service.destroy().await?;
-/// assert!(service.handle().is_none());
 ///
 /// // Destroy a service implicitly by dropping it:
 /// let service = object.create_service(SERVICE_UUID).await?;
@@ -161,7 +160,8 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Service {
     id: ServiceId,
-    inner: Option<Inner>,
+    client: Handle,
+    function_calls: Option<UnboundedReceiver<(u32, Value, u32)>>,
 }
 
 impl Service {
@@ -172,10 +172,8 @@ impl Service {
     ) -> Self {
         Service {
             id,
-            inner: Some(Inner {
-                client,
-                function_calls,
-            }),
+            client,
+            function_calls: Some(function_calls),
         }
     }
 
@@ -185,30 +183,21 @@ impl Service {
     }
 
     /// Returns a handle to the client that was used to create the service.
-    ///
-    /// `None` is returned after the [`Service`] has been manually [destroyed](Service::destroy).
-    pub fn handle(&self) -> Option<&Handle> {
-        self.inner.as_ref().map(|i| &i.client)
+    pub fn handle(&self) -> &Handle {
+        &self.client
     }
 
     /// Destroys the service.
     ///
     /// If the [`Service`] has already been destroyed, then [`Error::InvalidService`] is returned.
     pub async fn destroy(&mut self) -> Result<(), Error> {
-        let inner = self.inner.as_mut().ok_or(Error::InvalidService(self.id))?;
-        let res = inner.client.destroy_service(self.id).await;
-        if res.is_ok() {
-            self.inner.take();
-        }
-        res
+        self.client.destroy_service(self.id).await
     }
 }
 
 impl Drop for Service {
     fn drop(&mut self) {
-        if let Some(inner) = self.inner.take() {
-            inner.client.destroy_service_now(self.id.cookie);
-        }
+        self.client.destroy_service_now(self.id.cookie);
     }
 }
 
@@ -216,33 +205,36 @@ impl Stream for Service {
     type Item = FunctionCall;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
-        let inner = match self.inner.as_mut() {
-            Some(inner) => inner,
+        let function_calls = match self.function_calls.as_mut() {
+            Some(function_calls) => Pin::new(function_calls),
             None => return Poll::Ready(None),
         };
 
-        let function_calls = Pin::new(&mut inner.function_calls);
-        function_calls.poll_next(cx).map(|r| {
-            r.map(|(function, args, serial)| {
-                FunctionCall::new(function, args, inner.client.clone(), serial)
-            })
-        })
+        match function_calls.poll_next(cx) {
+            Poll::Ready(Some((function, args, serial))) => Poll::Ready(Some(FunctionCall::new(
+                function,
+                args,
+                self.client.clone(),
+                serial,
+            ))),
+
+            Poll::Ready(None) => {
+                self.function_calls = None;
+                Poll::Ready(None)
+            }
+
+            Poll::Pending => Poll::Pending,
+        }
     }
 }
 
 impl FusedStream for Service {
     fn is_terminated(&self) -> bool {
-        self.inner
+        self.function_calls
             .as_ref()
-            .map(|i| i.function_calls.is_terminated())
+            .map(FusedStream::is_terminated)
             .unwrap_or(true)
     }
-}
-
-#[derive(Debug)]
-struct Inner {
-    client: Handle,
-    function_calls: UnboundedReceiver<(u32, Value, u32)>,
 }
 
 /// Id of a service.

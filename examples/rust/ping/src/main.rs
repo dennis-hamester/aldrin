@@ -116,7 +116,7 @@ async fn run(args: RunArgs) -> Result<()> {
 
     let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let ping = ping::Ping::create(&obj).await?;
-    let emitter = ping.event_emitter().unwrap();
+    let emitter = ping.event_emitter();
     let mut svcs = handle.services(SubscribeMode::All)?;
     let mut others = Vec::new();
     let mut delay = delay_for(Duration::from_millis(args.delay as u64));

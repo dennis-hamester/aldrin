@@ -33,7 +33,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
 
     let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     let mut room = chat::Chat::create(&obj).await?;
-    let emitter = room.event_emitter().unwrap();
+    let emitter = room.event_emitter();
     let mut objects = HashSet::new();
     let mut objs = handle.objects(SubscribeMode::All)?;
     let mut members = HashMap::new();

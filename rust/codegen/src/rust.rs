@@ -783,12 +783,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.service.destroy().await");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn event_emitter(&self) -> Option<{}> {{", event_emitter);
-        genln!(self, "        let client = self.service.handle().cloned()?;");
-        genln!(self, "        Some({}EventEmitter {{", svc_name);
-        genln!(self, "            client,");
+        genln!(self, "    pub fn event_emitter(&self) -> {} {{", event_emitter);
+        genln!(self, "        {}EventEmitter {{", svc_name);
+        genln!(self, "            client: self.service.handle().clone(),");
         genln!(self, "            id: self.service.id(),");
-        genln!(self, "        }})");
+        genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
