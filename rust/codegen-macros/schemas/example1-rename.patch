@@ -1,6 +1,6 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -4,32 +4,32 @@
+@@ -5,12 +5,12 @@
  
  #[derive(Debug, Clone, Default)]
  #[non_exhaustive]
@@ -12,8 +12,10 @@
  
 -impl MyStruct {
 +impl MyStructRenamed {
-     pub fn builder() -> MyStructBuilder {
-         MyStructBuilder::new()
+     pub fn new() -> Self {
+         Default::default()
+     }
+@@ -20,21 +20,21 @@
      }
  }
  
@@ -38,7 +40,7 @@
      fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {
          let mut v = std::collections::HashMap::new();
          if let Some(field1) = self.field1 {
-@@ -67,8 +67,8 @@
+@@ -72,8 +72,8 @@
          self
      }
  

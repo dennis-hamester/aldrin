@@ -188,6 +188,12 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", name);
+        if !has_required_fields {
+            genln!(self, "    pub fn new() -> Self {{");
+            genln!(self, "        Default::default()");
+            genln!(self, "    }}");
+            genln!(self);
+        }
         genln!(self, "    pub fn builder() -> {} {{", builder_name);
         genln!(self, "        {}::new()", builder_name);
         genln!(self, "    }}");
