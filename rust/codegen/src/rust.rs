@@ -841,7 +841,9 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "                }}");
             genln!(self);
         }
-        genln!(self, "                _ => {{}}");
+        genln!(self, "                _ => {{");
+        genln!(self, "                    call.reply.invalid_function().ok();");
+        genln!(self, "                }}");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");

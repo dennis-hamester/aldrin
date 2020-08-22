@@ -21,3 +21,17 @@ async fn auto_reply_with_invalid_args() {
     let res = client.call_function(id, 2, Value::None).unwrap().await;
     assert_eq!(res, Err(Error::InvalidArgs(id, 2)));
 }
+
+#[tokio::test]
+async fn auto_reply_with_invalid_function() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let mut svc = test1::Test1::create(&obj).await.unwrap();
+    let id = svc.id();
+    tokio::spawn(async move { while svc.next().await.is_some() {} });
+
+    let res = client.call_function(id, 3, Value::None).unwrap().await;
+    assert_eq!(res, Err(Error::InvalidFunction(id, 3)));
+}
