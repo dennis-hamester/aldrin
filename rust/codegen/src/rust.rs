@@ -814,7 +814,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
         genln!(self, "            }};");
         genln!(self);
-        genln!(self, "            match (call.id, call.args) {{");
+        genln!(self, "            match call.id {{");
         for item in svc.items() {
             let func = match item {
                 ast::ServiceItem::Function(func) => func,
@@ -824,17 +824,18 @@ impl<'a> RustGenerator<'a> {
             let id = func.id().value();
             let function = service_function_variant(func_name);
             let reply = function_reply(svc_name, func_name);
+            genln!(self, "                {} => {{", id);
             if func.args().is_some() {
-                genln!(self, "                ({}, arg) => {{", id);
-                genln!(self, "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(arg) {{");
+                genln!(self, "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(call.args) {{");
                 genln!(self, "                        return std::task::Poll::Ready(Some({}::{}(arg, {}(call.reply))));", functions, function, reply);
-                genln!(self, "                    }}");
-                genln!(self, "                }}");
             } else {
-                genln!(self, "                ({}, aldrin_client::codegen::aldrin_proto::Value::None) => {{", id);
-                genln!(self, "                    return std::task::Poll::Ready(Some({}::{}({}(call.reply))));", functions, function, reply);
-                genln!(self, "                }}");
+                genln!(self, "                    if let aldrin_client::codegen::aldrin_proto::Value::None = call.args {{");
+                genln!(self, "                        return std::task::Poll::Ready(Some({}::{}({}(call.reply))));", functions, function, reply);
             }
+            genln!(self, "                    }} else {{");
+            genln!(self, "                        call.reply.invalid_args().ok();");
+            genln!(self, "                    }}");
+            genln!(self, "                }}");
             genln!(self);
         }
         genln!(self, "                _ => {{}}");
