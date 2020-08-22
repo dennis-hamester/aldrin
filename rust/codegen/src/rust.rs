@@ -905,13 +905,6 @@ impl<'a> RustGenerator<'a> {
                 genln!(self);
             }
 
-            if func.args().is_some() {
-                genln!(self, "    pub fn invalid_args(self) -> Result<(), aldrin_client::Error> {{");
-                genln!(self, "        self.0.invalid_args()");
-                genln!(self, "    }}");
-                genln!(self);
-            }
-
             genln!(self, "    pub fn abort(self) -> Result<(), aldrin_client::Error> {{");
             genln!(self, "        self.0.abort()");
             genln!(self, "    }}");
