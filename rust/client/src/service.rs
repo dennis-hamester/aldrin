@@ -161,7 +161,7 @@ use uuid::Uuid;
 pub struct Service {
     id: ServiceId,
     client: Handle,
-    function_calls: Option<UnboundedReceiver<(u32, Value, u32)>>,
+    function_calls: UnboundedReceiver<(u32, Value, u32)>,
 }
 
 impl Service {
@@ -173,7 +173,7 @@ impl Service {
         Service {
             id,
             client,
-            function_calls: Some(function_calls),
+            function_calls,
         }
     }
 
@@ -205,35 +205,17 @@ impl Stream for Service {
     type Item = FunctionCall;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
-        let function_calls = match self.function_calls.as_mut() {
-            Some(function_calls) => Pin::new(function_calls),
-            None => return Poll::Ready(None),
-        };
-
-        match function_calls.poll_next(cx) {
-            Poll::Ready(Some((function, args, serial))) => Poll::Ready(Some(FunctionCall::new(
-                function,
-                args,
-                self.client.clone(),
-                serial,
-            ))),
-
-            Poll::Ready(None) => {
-                self.function_calls = None;
-                Poll::Ready(None)
-            }
-
-            Poll::Pending => Poll::Pending,
-        }
+        Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
+            r.map(|(function, args, serial)| {
+                FunctionCall::new(function, args, self.client.clone(), serial)
+            })
+        })
     }
 }
 
 impl FusedStream for Service {
     fn is_terminated(&self) -> bool {
-        self.function_calls
-            .as_ref()
-            .map(FusedStream::is_terminated)
-            .unwrap_or(true)
+        self.function_calls.is_terminated()
     }
 }
 
