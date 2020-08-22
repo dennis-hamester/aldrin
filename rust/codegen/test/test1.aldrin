@@ -1,0 +1,10 @@
+service Test1 {
+    uuid = 30724ea3-1c8d-41a4-a801-f5424ab2a342;
+    version = 1;
+
+    fn no_args @ 1;
+
+    fn with_args @ 2 {
+        args = u32;
+    }
+}

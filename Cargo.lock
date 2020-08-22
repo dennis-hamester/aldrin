@@ -35,9 +35,14 @@ dependencies = [
 name = "aldrin-codegen"
 version = "0.1.0"
 dependencies = [
+ "aldrin-client",
  "aldrin-parser",
+ "aldrin-proto",
+ "aldrin-test",
  "diffy",
+ "futures",
  "heck",
+ "tokio",
 ]
 
 [[package]]

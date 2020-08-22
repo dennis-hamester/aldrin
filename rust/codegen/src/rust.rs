@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use crate::error::{Error, SubprocessError};
 use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
