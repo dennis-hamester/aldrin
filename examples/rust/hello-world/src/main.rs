@@ -6,13 +6,13 @@ use futures::stream::StreamExt;
 
 async fn broker(t: Unbounded) -> Result<()> {
     let broker = Broker::new();
-    let handle = broker.handle().clone();
+    let mut handle = broker.handle().clone();
     let join_handle = tokio::spawn(broker.run());
 
     let conn = handle.add_connection(t).await?;
     conn.run().await?;
 
-    handle.shutdown();
+    handle.shutdown().await;
     join_handle.await??;
 
     Ok(())

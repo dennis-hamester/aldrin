@@ -43,7 +43,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_broker::Broker::new();
-/// # let handle = broker.handle().clone();
+/// # let mut handle = broker.handle().clone();
 /// # tokio::spawn(broker.run());
 /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
 /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });

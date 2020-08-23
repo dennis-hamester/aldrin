@@ -21,12 +21,6 @@ struct BrokerArgs {
     #[clap(short, long, default_value = "127.0.0.1:5000")]
     listen: SocketAddr,
 
-    /// Internal broker fifo size
-    ///
-    /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
-    #[clap(short, long)]
-    broker_fifo_size: Option<usize>,
-
     /// Internal connection fifo size
     ///
     /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
@@ -37,7 +31,7 @@ struct BrokerArgs {
 async fn add_connection(
     socket: TcpStream,
     addr: SocketAddr,
-    handle: BrokerHandle,
+    mut handle: BrokerHandle,
     fifo_size: Option<usize>,
 ) -> Result<()> {
     println!("Incoming connection from {}.", addr);
@@ -64,11 +58,7 @@ async fn add_connection(
 }
 
 async fn broker(args: BrokerArgs) -> Result<()> {
-    let broker = if let Some(fifo_size) = args.broker_fifo_size {
-        Broker::with_fifo_size(NonZeroUsize::new(fifo_size))
-    } else {
-        Broker::new()
-    };
+    let broker = Broker::new();
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
 

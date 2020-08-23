@@ -21,7 +21,7 @@ async fn shutdown_idle() {
 async fn client_builder() {
     let broker = TestBroker::new();
     let mut builder = broker.client_builder();
-    let mut base = builder.0;
+    let mut base = builder.0.clone();
 
     assert_eq!(builder.0.channel, base.channel);
     assert_eq!(builder.0.conn, base.conn);

@@ -12,25 +12,22 @@ use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::*;
 use conn_state::ConnectionState;
-use futures_channel::mpsc::{unbounded, UnboundedReceiver};
-use futures_core::stream::FusedStream;
+use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
 use object::{Object, ObjectCookie, ObjectUuid};
 use service::{Service, ServiceCookie, ServiceUuid};
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
-use std::num::NonZeroUsize;
 
 pub use error::BrokerError;
 pub use handle::BrokerHandle;
 
-const DEFAULT_FIFO_SIZE: usize = 32;
+const FIFO_SIZE: usize = 32;
 
 #[derive(Debug)]
 #[must_use = "brokers do nothing unless you `.await` or poll `Broker::run()`"]
 pub struct Broker {
-    fifo_size: Option<NonZeroUsize>,
-    recv: UnboundedReceiver<ConnectionEvent>,
+    recv: Receiver<ConnectionEvent>,
     handle: Option<BrokerHandle>,
     conns: HashMap<ConnectionId, ConnectionState>,
     obj_uuids: HashMap<ObjectCookie, ObjectUuid>,
@@ -52,23 +49,11 @@ pub struct Broker {
 }
 
 impl Broker {
-    /// Creates a broker with the default fifo size.
-    ///
-    /// The default fifo size is 32. Use [`Broker::with_fifo_size`] to create a broker with a custom
-    /// fifo size.
+    /// Creates a new broker.
     pub fn new() -> Self {
-        Self::with_fifo_size(NonZeroUsize::new(DEFAULT_FIFO_SIZE))
-    }
-
-    /// Creates a broker with a custom fifo size.
-    ///
-    /// If `fifo_size` is `None`, then the internal fifo will be unbounded, which should be used
-    /// with care. If the fifo overflows, [`Broker::run`] will return immediately with an error.
-    pub fn with_fifo_size(fifo_size: Option<NonZeroUsize>) -> Self {
-        let (send, recv) = unbounded();
+        let (send, recv) = channel(FIFO_SIZE);
 
         Broker {
-            fifo_size,
             recv,
             handle: Some(BrokerHandle::new(send)),
             conns: HashMap::new(),
@@ -88,35 +73,19 @@ impl Broker {
         self.handle.take().unwrap();
 
         let mut state = State::new();
-        let mut queue = Vec::with_capacity(self.fifo_size.map(NonZeroUsize::get).unwrap_or(1));
 
         loop {
-            if state.shutdown_now()
-                || (state.shutdown_idle() && self.conns.is_empty())
-                || self.recv.is_terminated()
-            {
+            if state.shutdown_now() || (state.shutdown_idle() && self.conns.is_empty()) {
                 return Ok(());
             }
 
-            match self.recv.next().await {
-                Some(ev) => queue.push(ev),
+            let ev = match self.recv.next().await {
+                Some(ev) => ev,
                 None => return Ok(()),
             };
 
-            if let Some(fifo_size) = self.fifo_size {
-                while let Ok(Some(ev)) = self.recv.try_next() {
-                    if queue.len() >= fifo_size.get() {
-                        return Err(BrokerError::FifoOverflow);
-                    } else {
-                        queue.push(ev);
-                    }
-                }
-            }
-
-            for ev in queue.drain(..) {
-                self.handle_event(&mut state, ev);
-                self.process_loop_result(&mut state);
-            }
+            self.handle_event(&mut state, ev);
+            self.process_loop_result(&mut state);
         }
     }
 

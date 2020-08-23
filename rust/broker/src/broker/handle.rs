@@ -2,19 +2,20 @@ use super::BrokerError;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::*;
-use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_channel::mpsc::{unbounded, Sender};
+use futures_util::sink::SinkExt;
 use std::num::NonZeroUsize;
 
 const DEFAULT_FIFO_SIZE: usize = 32;
 
 #[derive(Debug, Clone)]
 pub struct BrokerHandle {
-    send: UnboundedSender<ConnectionEvent>,
+    send: Sender<ConnectionEvent>,
     ids: ConnectionIdManager,
 }
 
 impl BrokerHandle {
-    pub(crate) fn new(send: UnboundedSender<ConnectionEvent>) -> BrokerHandle {
+    pub(crate) fn new(send: Sender<ConnectionEvent>) -> BrokerHandle {
         BrokerHandle {
             send,
             ids: ConnectionIdManager::new(),
@@ -25,7 +26,10 @@ impl BrokerHandle {
     ///
     /// The default fifo size is 32. Use [`BrokerHandle::add_connection_with_fifo_size`] to add a
     /// connection with a custom fifo size.
-    pub async fn add_connection<T>(&self, t: T) -> Result<Connection<T>, EstablishError<T::Error>>
+    pub async fn add_connection<T>(
+        &mut self,
+        t: T,
+    ) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
@@ -42,7 +46,7 @@ impl BrokerHandle {
     /// The `fifo_size` parameter affects only outgoing messages. Incoming messages are immediately
     /// passed to the broker.
     pub async fn add_connection_with_fifo_size<T>(
-        &self,
+        &mut self,
         mut t: T,
         fifo_size: Option<NonZeroUsize>,
     ) -> Result<Connection<T>, EstablishError<T::Error>>
@@ -72,27 +76,31 @@ impl BrokerHandle {
         let (send, recv) = unbounded();
 
         self.send
-            .unbounded_send(ConnectionEvent::NewConnection(id.clone(), send))
+            .send(ConnectionEvent::NewConnection(id.clone(), send))
+            .await
             .map_err(|_| EstablishError::BrokerShutdown)?;
 
         Ok(Connection::new(t, id, self.send.clone(), recv, fifo_size))
     }
 
-    pub fn shutdown(&self) {
+    pub async fn shutdown(&mut self) {
+        self.send.send(ConnectionEvent::ShutdownBroker).await.ok();
+    }
+
+    pub async fn shutdown_idle(&mut self) {
         self.send
-            .unbounded_send(ConnectionEvent::ShutdownBroker)
+            .send(ConnectionEvent::ShutdownIdleBroker)
+            .await
             .ok();
     }
 
-    pub fn shutdown_idle(&self) {
+    pub async fn shutdown_connection(
+        &mut self,
+        conn: &ConnectionHandle,
+    ) -> Result<(), BrokerError> {
         self.send
-            .unbounded_send(ConnectionEvent::ShutdownIdleBroker)
-            .ok();
-    }
-
-    pub fn shutdown_connection(&self, conn: &ConnectionHandle) -> Result<(), BrokerError> {
-        self.send
-            .unbounded_send(ConnectionEvent::ShutdownConnection(conn.id().clone()))
+            .send(ConnectionEvent::ShutdownConnection(conn.id().clone()))
+            .await
             .map_err(|_| BrokerError::BrokerShutdown)
     }
 }

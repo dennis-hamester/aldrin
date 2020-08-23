@@ -23,7 +23,7 @@
 //!
 //!     // Create a broker and client:
 //!     let mut broker = TestBroker::new();
-//!     let client = broker.add_client().await;
+//!     let mut client = broker.add_client().await;
 //!
 //!     // Run our calculator server:
 //!     tokio::spawn(run_calculator(client.clone()));
@@ -42,8 +42,7 @@
 //!     assert!(calc.add(CalculatorAddArgs { lhs: i32::MIN, rhs: -1 })?.await?.is_err());
 //!
 //!     // Shut everything down:
-//!     client.shutdown();
-//!     broker.shutdown_idle();
+//!     client.join().await;
 //!     broker.join().await;
 //!     Ok(())
 //! }
@@ -73,8 +72,7 @@ mod test;
 use aldrin_broker::{BrokerError, BrokerHandle, ConnectionError, ConnectionHandle};
 use aldrin_client::{Handle, RunError};
 use aldrin_util::channel::Disconnected;
-use std::num::NonZeroUsize;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use tokio::task::JoinHandle;
 
 /// Tokio-based broker for use in tests.
@@ -93,24 +91,9 @@ pub struct TestBroker {
 }
 
 impl TestBroker {
-    /// Creates a new broker with the default settings.
-    ///
-    /// This function uses the same defaults as [`aldrin_broker::Broker::new`].
+    /// Creates a new broker.
     pub fn new() -> Self {
         let mut broker = crate::TestBroker::new();
-        let join = tokio::spawn(broker.take_broker().run());
-        TestBroker {
-            handle: broker.handle,
-            join: Some(join),
-        }
-    }
-
-    /// Creates a new broker with a custom fifo size.
-    ///
-    /// The `fifo_size` argument is passed directly to
-    /// [`aldrin_broker::Broker::with_fifo_size`]. See the documentation there for more information.
-    pub fn with_fifo_size(fifo_size: Option<NonZeroUsize>) -> Self {
-        let mut broker = crate::TestBroker::with_fifo_size(fifo_size);
         let join = tokio::spawn(broker.take_broker().run());
         TestBroker {
             handle: broker.handle,
@@ -129,7 +112,7 @@ impl TestBroker {
     /// This function will panic if the [`Broker`](aldrin_broker::Broker) task has already been
     /// joined or attempted to join (see notes above as well).
     pub async fn join(&mut self) {
-        self.handle.shutdown();
+        self.handle.shutdown().await;
         self.join
             .take()
             .expect("already joined")
@@ -149,7 +132,7 @@ impl TestBroker {
     /// This function will panic if the [`Broker`](aldrin_broker::Broker) task has already been
     /// joined or attempted to join (see notes above as well).
     pub async fn join_idle(&mut self) {
-        self.handle.shutdown_idle();
+        self.handle.shutdown_idle().await;
         self.join
             .take()
             .expect("already joined")
@@ -165,7 +148,7 @@ impl TestBroker {
     /// default [`Client`](aldrin_client::Client) can be added directly with
     /// [`add_client`](TestBroker::add_client).
     pub fn client_builder(&self) -> ClientBuilder {
-        ClientBuilder::new(&self.handle)
+        ClientBuilder::new(self.handle.clone())
     }
 
     /// Creates a default `Client`.
@@ -192,23 +175,29 @@ impl Deref for TestBroker {
     }
 }
 
+impl DerefMut for TestBroker {
+    fn deref_mut(&mut self) -> &mut BrokerHandle {
+        &mut self.handle
+    }
+}
+
 /// Tokio-based builder struct for a new `Client`.
 ///
 /// A [`ClientBuilder`] allows for more control over how [`Client`](aldrin_client::Client) and
 /// [`Connection`](aldrin_broker::Connection) are setup, specifically the respective fifo sizes. If
-/// you do not any special settings though, it is recommended to use [`TestBroker::add_client`]
+/// you do not required any special settings, it is recommended to use [`TestBroker::add_client`]
 /// instead.
-#[derive(Debug, Copy, Clone)]
-pub struct ClientBuilder<'a>(crate::ClientBuilder<'a>);
+#[derive(Debug, Clone)]
+pub struct ClientBuilder(crate::ClientBuilder);
 
-impl<'a> ClientBuilder<'a> {
+impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
     /// The defaults after creating the [`ClientBuilder`] use an unbounded channel between
     /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin_client::Client) and the a default
     /// fifo size for the [`Connection`](aldrin_broker::Connection) (see
     /// [`aldrin_broker::BrokerHandle::add_connection`]).
-    pub fn new(broker: &'a BrokerHandle) -> Self {
+    pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder(crate::ClientBuilder::new(broker))
     }
 
@@ -291,7 +280,7 @@ pub struct TestClient {
 
 impl TestClient {
     /// Creates a new `ClientBuilder`.
-    pub fn builder(broker: &BrokerHandle) -> ClientBuilder {
+    pub fn builder(broker: BrokerHandle) -> ClientBuilder {
         ClientBuilder::new(broker)
     }
 

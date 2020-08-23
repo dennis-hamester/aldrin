@@ -77,7 +77,7 @@
 //!
 //!     // Shut everything down:
 //!     client.shutdown();
-//!     broker.shutdown_idle();
+//!     broker.shutdown_idle().await;
 //!     broker_join.await??;
 //!     Ok(())
 //! }
@@ -117,7 +117,7 @@ use aldrin_client::{Client, Handle};
 use aldrin_util::channel;
 use futures_util::future;
 use std::num::NonZeroUsize;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 // For tests directly in aldrin_broker and aldrin_client.
 #[doc(hidden)]
@@ -144,24 +144,9 @@ pub struct TestBroker {
 }
 
 impl TestBroker {
-    /// Creates a new broker with the default settings.
-    ///
-    /// This function uses the same defaults as [`aldrin_broker::Broker::new`].
+    /// Creates a new broker.
     pub fn new() -> Self {
         let broker = Broker::new();
-        let handle = broker.handle().clone();
-        TestBroker {
-            handle,
-            broker: Some(broker),
-        }
-    }
-
-    /// Creates a new broker with a custom fifo size.
-    ///
-    /// The `fifo_size` argument is passed directly to
-    /// [`aldrin_broker::Broker::with_fifo_size`]. See the documentation there for more information.
-    pub fn with_fifo_size(fifo_size: Option<NonZeroUsize>) -> Self {
-        let broker = Broker::with_fifo_size(fifo_size);
         let handle = broker.handle().clone();
         TestBroker {
             handle,
@@ -189,7 +174,7 @@ impl TestBroker {
     /// [`add_client`](TestBroker::add_client).
     pub fn client_builder(&self) -> ClientBuilder {
         ClientBuilder {
-            broker: &self.handle,
+            broker: self.handle.clone(),
             channel: None,
             conn: None,
         }
@@ -218,25 +203,31 @@ impl Deref for TestBroker {
     }
 }
 
+impl DerefMut for TestBroker {
+    fn deref_mut(&mut self) -> &mut BrokerHandle {
+        &mut self.handle
+    }
+}
+
 /// Builder struct for a new `Client`.
 ///
 /// A [`ClientBuilder`] allows for more control over how [`Client`] and [`Connection`] are setup,
-/// specifically the respective fifo sizes. If you do not any special settings though, it is
+/// specifically the respective fifo sizes. If you do not require any special settings, it is
 /// recommended to use [`TestBroker::add_client`] instead.
-#[derive(Debug, Copy, Clone)]
-pub struct ClientBuilder<'a> {
-    broker: &'a BrokerHandle,
+#[derive(Debug, Clone)]
+pub struct ClientBuilder {
+    broker: BrokerHandle,
     channel: Option<usize>,
     conn: Option<usize>,
 }
 
-impl<'a> ClientBuilder<'a> {
+impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
     /// The defaults after creating the [`ClientBuilder`] use an unbounded channel between
     /// [`Broker`] and [`Client`] and the a default fifo size for the [`Connection`] (see
     /// [`aldrin_broker::BrokerHandle::add_connection`]).
-    pub fn new(broker: &'a BrokerHandle) -> Self {
+    pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder {
             broker,
             channel: None,
@@ -245,7 +236,7 @@ impl<'a> ClientBuilder<'a> {
     }
 
     /// Creates a new `TestClient` with the current settings.
-    pub async fn build(self) -> TestClient {
+    pub async fn build(mut self) -> TestClient {
         let (t1, t2): (Box<dyn TestTransport>, Box<dyn TestTransport>) = match self.channel {
             Some(fifo_size) => {
                 let (t1, t2) = channel::bounded(fifo_size);
@@ -357,7 +348,7 @@ pub struct TestClient {
 
 impl TestClient {
     /// Creates a new `ClientBuilder`.
-    pub fn builder(broker: &BrokerHandle) -> ClientBuilder {
+    pub fn builder(broker: BrokerHandle) -> ClientBuilder {
         ClientBuilder::new(broker)
     }
 

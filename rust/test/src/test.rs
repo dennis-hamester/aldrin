@@ -16,7 +16,7 @@ async fn shutdown_idle() {
         let client2_join = tokio::spawn(client2.take_client().run());
         let conn2_join = tokio::spawn(client2.take_connection().run());
 
-        broker.shutdown_idle();
+        broker.shutdown_idle().await;
 
         client1.shutdown();
         client1_join.await.unwrap().unwrap();
