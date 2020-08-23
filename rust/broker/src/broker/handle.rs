@@ -4,9 +4,6 @@ use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::*;
 use futures_channel::mpsc::{unbounded, Sender};
 use futures_util::sink::SinkExt;
-use std::num::NonZeroUsize;
-
-const DEFAULT_FIFO_SIZE: usize = 32;
 
 #[derive(Debug, Clone)]
 pub struct BrokerHandle {
@@ -22,33 +19,10 @@ impl BrokerHandle {
         }
     }
 
-    /// Adds a connection with the default fifo size.
-    ///
-    /// The default fifo size is 32. Use [`BrokerHandle::add_connection_with_fifo_size`] to add a
-    /// connection with a custom fifo size.
+    /// Adds a new connection.
     pub async fn add_connection<T>(
         &mut self,
-        t: T,
-    ) -> Result<Connection<T>, EstablishError<T::Error>>
-    where
-        T: AsyncTransport + Unpin,
-    {
-        self.add_connection_with_fifo_size(t, NonZeroUsize::new(DEFAULT_FIFO_SIZE))
-            .await
-    }
-
-    /// Adds a connection with a custom fifo size.
-    ///
-    /// If `fifo_size` is `None`, then the internal fifo will be unbounded, which should be used
-    /// with care. If the fifo overflows, [`Connection::run`] will return immediately with an
-    /// error.
-    ///
-    /// The `fifo_size` parameter affects only outgoing messages. Incoming messages are immediately
-    /// passed to the broker.
-    pub async fn add_connection_with_fifo_size<T>(
-        &mut self,
         mut t: T,
-        fifo_size: Option<NonZeroUsize>,
     ) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: AsyncTransport + Unpin,
@@ -80,7 +54,7 @@ impl BrokerHandle {
             .await
             .map_err(|_| EstablishError::BrokerShutdown)?;
 
-        Ok(Connection::new(t, id, self.send.clone(), recv, fifo_size))
+        Ok(Connection::new(t, id, self.send.clone(), recv))
     }
 
     pub async fn shutdown(&mut self) {

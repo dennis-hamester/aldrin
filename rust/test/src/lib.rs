@@ -4,7 +4,7 @@
 //! multiple clients and is intended to be used in unit tests.
 //!
 //! If you are using Tokio, it is strongly recommended to enable this crate's `tokio` feature and
-//! use the type in the `tokio_based` module instead of the crate-level types.
+//! use the types in the `tokio_based` module instead of the crate-level types.
 //!
 //! # Example
 //!
@@ -116,7 +116,6 @@ use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
 use aldrin_client::{Client, Handle};
 use aldrin_util::channel;
 use futures_util::future;
-use std::num::NonZeroUsize;
 use std::ops::{Deref, DerefMut};
 
 // For tests directly in aldrin_broker and aldrin_client.
@@ -173,11 +172,7 @@ impl TestBroker {
     /// [`Client`] or its [`Connection`]. A default [`Client`] can be added directly with
     /// [`add_client`](TestBroker::add_client).
     pub fn client_builder(&self) -> ClientBuilder {
-        ClientBuilder {
-            broker: self.handle.clone(),
-            channel: None,
-            conn: None,
-        }
+        ClientBuilder::new(self.handle.clone())
     }
 
     /// Creates a default `Client`.
@@ -212,26 +207,23 @@ impl DerefMut for TestBroker {
 /// Builder struct for a new `Client`.
 ///
 /// A [`ClientBuilder`] allows for more control over how [`Client`] and [`Connection`] are setup,
-/// specifically the respective fifo sizes. If you do not require any special settings, it is
-/// recommended to use [`TestBroker::add_client`] instead.
+/// specifically what kind of channel is used as the transport. If you do not require any special
+/// settings, it is recommended to use [`TestBroker::add_client`] instead.
 #[derive(Debug, Clone)]
 pub struct ClientBuilder {
     broker: BrokerHandle,
     channel: Option<usize>,
-    conn: Option<usize>,
 }
 
 impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
-    /// The defaults after creating the [`ClientBuilder`] use an unbounded channel between
-    /// [`Broker`] and [`Client`] and the a default fifo size for the [`Connection`] (see
-    /// [`aldrin_broker::BrokerHandle::add_connection`]).
+    /// The default [`ClientBuilder`] is configured to use an unbounded channel between [`Broker`]
+    /// and [`Client`].
     pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder {
             broker,
             channel: None,
-            conn: None,
         }
     }
 
@@ -249,17 +241,7 @@ impl ClientBuilder {
         };
 
         let client = Client::connect(t1);
-        let conn = async {
-            match self.conn.map(NonZeroUsize::new) {
-                Some(Some(fifo_size)) => {
-                    self.broker
-                        .add_connection_with_fifo_size(t2, Some(fifo_size))
-                        .await
-                }
-                Some(None) => self.broker.add_connection_with_fifo_size(t2, None).await,
-                None => self.broker.add_connection(t2).await,
-            }
-        };
+        let conn = self.broker.add_connection(t2);
 
         let (client, conn) = future::join(client, conn).await;
         let client = client.expect("client failed to connect");
@@ -288,35 +270,6 @@ impl ClientBuilder {
     /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.channel = Some(fifo_size);
-        self
-    }
-
-    /// Uses the default fifo size for the `Connection`.
-    ///
-    /// This is the default after creating a new [`ClientBuilder`]. See
-    /// [`aldrin_broker::BrokerHandle::add_connection`] for more information on the default.
-    pub fn default_connection_fifo_size(mut self) -> Self {
-        self.conn = None;
-        self
-    }
-
-    /// Uses an unbounded fifo for the `Connection`.
-    ///
-    /// This is equivalent to calling [`connection_fifo_size`](ClientBuilder::connection_fifo_size)
-    /// with a `fifo_size` of 0. See [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`]
-    /// for more information.
-    pub fn unbounded_connection_fifo_size(mut self) -> Self {
-        self.conn = Some(0);
-        self
-    }
-
-    /// Uses a specific fifo size for the `Connection`.
-    ///
-    /// Calling this function with a `fifo_size` of 0 is equivalent to calling
-    /// [`unbounded_connection_fifo_size`](ClientBuilder::unbounded_connection_fifo_size). See
-    /// [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`] for more information.
-    pub fn connection_fifo_size(mut self, fifo_size: usize) -> Self {
-        self.conn = Some(fifo_size);
         self
     }
 }

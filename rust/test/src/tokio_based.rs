@@ -104,8 +104,8 @@ impl TestBroker {
     /// Shuts down the broker and joins its task.
     ///
     /// This function cannot be canceled in a meaningful way after it has been polled once, because
-    /// it would panic if called (and polled) again. Ensure you call it only once and then poll it
-    /// to completion.
+    /// it would panic if called (and polled) again. Ensure that you call it only once and then poll
+    /// it to completion.
     ///
     /// # Panics
     ///
@@ -124,8 +124,8 @@ impl TestBroker {
     /// Shuts down the broker when idle and joins its task.
     ///
     /// This function cannot be canceled in a meaningful way after it has been polled once, because
-    /// it would panic if called (and polled) again. Ensure you call it only once and then poll it
-    /// to completion.
+    /// it would panic if called (and polled) again. Ensure that you call it only once and then poll
+    /// it to completion.
     ///
     /// # Panics
     ///
@@ -184,19 +184,17 @@ impl DerefMut for TestBroker {
 /// Tokio-based builder struct for a new `Client`.
 ///
 /// A [`ClientBuilder`] allows for more control over how [`Client`](aldrin_client::Client) and
-/// [`Connection`](aldrin_broker::Connection) are setup, specifically the respective fifo sizes. If
-/// you do not required any special settings, it is recommended to use [`TestBroker::add_client`]
-/// instead.
+/// [`Connection`](aldrin_broker::Connection) are setup, specifically what kind of channel is used
+/// as the transport. If you do not required any special settings, it is recommended to use
+/// [`TestBroker::add_client`] instead.
 #[derive(Debug, Clone)]
 pub struct ClientBuilder(crate::ClientBuilder);
 
 impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
-    /// The defaults after creating the [`ClientBuilder`] use an unbounded channel between
-    /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin_client::Client) and the a default
-    /// fifo size for the [`Connection`](aldrin_broker::Connection) (see
-    /// [`aldrin_broker::BrokerHandle::add_connection`]).
+    /// The default [`ClientBuilder`] is configured to use an unbounded channel between [`Broker`]
+    /// and [`Client`].
     pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder(crate::ClientBuilder::new(broker))
     }
@@ -225,35 +223,6 @@ impl ClientBuilder {
     /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.0 = self.0.bounded_channel(fifo_size);
-        self
-    }
-
-    /// Uses the default fifo size for the `Connection`.
-    ///
-    /// This is the default after creating a new [`ClientBuilder`]. See
-    /// [`aldrin_broker::BrokerHandle::add_connection`] for more information on the default.
-    pub fn default_connection_fifo_size(mut self) -> Self {
-        self.0 = self.0.default_connection_fifo_size();
-        self
-    }
-
-    /// Uses an unbounded fifo for the `Connection`.
-    ///
-    /// This is equivalent to calling [`connection_fifo_size`](ClientBuilder::connection_fifo_size)
-    /// with a `fifo_size` of 0. See [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`]
-    /// for more information.
-    pub fn unbounded_connection_fifo_size(mut self) -> Self {
-        self.0 = self.0.unbounded_connection_fifo_size();
-        self
-    }
-
-    /// Uses a specific fifo size for the `Connection`.
-    ///
-    /// Calling this function with a `fifo_size` of 0 is equivalent to calling
-    /// [`unbounded_connection_fifo_size`](ClientBuilder::unbounded_connection_fifo_size). See
-    /// [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`] for more information.
-    pub fn connection_fifo_size(mut self, fifo_size: usize) -> Self {
-        self.0 = self.0.connection_fifo_size(fifo_size);
         self
     }
 }

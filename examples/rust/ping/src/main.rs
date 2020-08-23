@@ -6,7 +6,6 @@ use clap::{AppSettings, Clap};
 use futures::future::select_all;
 use futures::stream::StreamExt;
 use std::net::SocketAddr;
-use std::num::NonZeroUsize;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::select;
 use tokio::time::{delay_for, Duration};
@@ -20,19 +19,12 @@ struct BrokerArgs {
     /// IP address and port
     #[clap(short, long, default_value = "127.0.0.1:5000")]
     listen: SocketAddr,
-
-    /// Internal connection fifo size
-    ///
-    /// The default is defined by the broker implementation. Use 0 to make the fifo unbounded.
-    #[clap(short, long)]
-    conn_fifo_size: Option<usize>,
 }
 
 async fn add_connection(
     socket: TcpStream,
     addr: SocketAddr,
     mut handle: BrokerHandle,
-    fifo_size: Option<usize>,
 ) -> Result<()> {
     println!("Incoming connection from {}.", addr);
 
@@ -42,13 +34,7 @@ async fn add_connection(
         NoopFilter,
         JsonSerializer::default(),
     );
-    let conn = if let Some(fifo_size) = fifo_size {
-        handle
-            .add_connection_with_fifo_size(t, NonZeroUsize::new(fifo_size))
-            .await?
-    } else {
-        handle.add_connection(t).await?
-    };
+    let conn = handle.add_connection(t).await?;
     println!("Connection from {} established.", addr);
 
     conn.run().await?;
@@ -68,9 +54,8 @@ async fn broker(args: BrokerArgs) -> Result<()> {
     loop {
         let (socket, addr) = listener.accept().await?;
         let handle = handle.clone();
-        let conn_fifo_size = args.conn_fifo_size;
         tokio::spawn(async move {
-            if let Err(e) = add_connection(socket, addr, handle, conn_fifo_size).await {
+            if let Err(e) = add_connection(socket, addr, handle).await {
                 println!("Error on connection from {}: {}.", addr, e);
             }
         });

@@ -24,7 +24,6 @@ async fn client_builder() {
     let mut base = builder.0.clone();
 
     assert_eq!(builder.0.channel, base.channel);
-    assert_eq!(builder.0.conn, base.conn);
 
     builder = builder.bounded_channel(1);
     base = base.bounded_channel(1);
@@ -33,16 +32,4 @@ async fn client_builder() {
     builder = builder.unbounded_channel();
     base = base.unbounded_channel();
     assert_eq!(builder.0.channel, base.channel);
-
-    builder = builder.unbounded_connection_fifo_size();
-    base = base.unbounded_connection_fifo_size();
-    assert_eq!(builder.0.conn, base.conn);
-
-    builder = builder.default_connection_fifo_size();
-    base = base.default_connection_fifo_size();
-    assert_eq!(builder.0.conn, base.conn);
-
-    builder = builder.connection_fifo_size(1);
-    base = base.connection_fifo_size(1);
-    assert_eq!(builder.0.conn, base.conn);
 }
