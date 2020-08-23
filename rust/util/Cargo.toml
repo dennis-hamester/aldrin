@@ -5,6 +5,7 @@ version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
+autobenches = false
 
 [features]
 bincode-serializer = ["aldrin-proto/serde-derive", "bincode", "codec"]
@@ -25,5 +26,10 @@ serde_json = { optional = true, version = "1.0.48" }
 tokio = { optional = true, version = "0.2.11" }
 
 [dev-dependencies]
+criterion = "0.3.3"
 maplit = "1.0.2"
 uuid = "0.8.1"
+
+[[bench]]
+name = "benches"
+harness = false
