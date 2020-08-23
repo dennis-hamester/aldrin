@@ -226,16 +226,16 @@ impl<'a> ClientBuilder<'a> {
     /// Uses an unbounded channel as the transport between `Broker` and `Client`.
     ///
     /// This is the default after creating a new [`ClientBuilder`].
-    pub fn unbounded_channel(self) -> Self {
-        self.0.unbounded_channel();
+    pub fn unbounded_channel(mut self) -> Self {
+        self.0 = self.0.unbounded_channel();
         self
     }
 
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
     /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
-    pub fn bounded_channel(self, fifo_size: usize) -> Self {
-        self.0.bounded_channel(fifo_size);
+    pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
+        self.0 = self.0.bounded_channel(fifo_size);
         self
     }
 
@@ -243,8 +243,8 @@ impl<'a> ClientBuilder<'a> {
     ///
     /// This is the default after creating a new [`ClientBuilder`]. See
     /// [`aldrin_broker::BrokerHandle::add_connection`] for more information on the default.
-    pub fn default_connection_fifo_size(self) -> Self {
-        self.0.default_connection_fifo_size();
+    pub fn default_connection_fifo_size(mut self) -> Self {
+        self.0 = self.0.default_connection_fifo_size();
         self
     }
 
@@ -253,8 +253,8 @@ impl<'a> ClientBuilder<'a> {
     /// This is equivalent to calling [`connection_fifo_size`](ClientBuilder::connection_fifo_size)
     /// with a `fifo_size` of 0. See [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`]
     /// for more information.
-    pub fn unbounded_connection_fifo_size(self) -> Self {
-        self.0.unbounded_connection_fifo_size();
+    pub fn unbounded_connection_fifo_size(mut self) -> Self {
+        self.0 = self.0.unbounded_connection_fifo_size();
         self
     }
 
@@ -263,8 +263,8 @@ impl<'a> ClientBuilder<'a> {
     /// Calling this function with a `fifo_size` of 0 is equivalent to calling
     /// [`unbounded_connection_fifo_size`](ClientBuilder::unbounded_connection_fifo_size). See
     /// [`aldrin_broker::BrokerHandle::add_connection_with_fifo_size`] for more information.
-    pub fn connection_fifo_size(self, fifo_size: usize) -> Self {
-        self.0.connection_fifo_size(fifo_size);
+    pub fn connection_fifo_size(mut self, fifo_size: usize) -> Self {
+        self.0 = self.0.connection_fifo_size(fifo_size);
         self
     }
 }
