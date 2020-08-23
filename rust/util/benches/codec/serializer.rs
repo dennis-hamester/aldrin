@@ -1,3 +1,5 @@
+#[cfg(feature = "bincode-serializer")]
+mod bincode;
 #[cfg(feature = "json")]
 mod json;
 
@@ -19,6 +21,12 @@ pub fn run(c: &mut Criterion) {
         {
             json::serialize(&mut group, size);
             json::deserialize(&mut group, size);
+        }
+
+        #[cfg(feature = "bincode-serializer")]
+        {
+            bincode::serialize(&mut group, size);
+            bincode::deserialize(&mut group, size);
         }
     }
     group.finish();
