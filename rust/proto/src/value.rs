@@ -27,6 +27,7 @@ pub enum Value {
     String(String),
     Uuid(Uuid),
     ObjectId(ObjectId),
+    ServiceId(ServiceId),
     Vec(Vec<Value>),
     Bytes(Vec<u8>),
     U8Map(HashMap<u8, Value>),
@@ -133,6 +134,58 @@ impl FromValue for ObjectId {
 impl IntoValue for ObjectId {
     fn into_value(self) -> Value {
         Value::ObjectId(self)
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ServiceId {
+    /// UUID of the object.
+    pub object_uuid: Uuid,
+
+    /// Cookie of the object.
+    pub object_cookie: Uuid,
+
+    /// UUID of the service.
+    pub service_uuid: Uuid,
+
+    /// Cookie of the service.
+    pub service_cookie: Uuid,
+}
+
+impl ServiceId {
+    /// Creates a new `ServiceId` from an object and service uuid and cookie.
+    pub fn new(
+        object_uuid: Uuid,
+        object_cookie: Uuid,
+        service_uuid: Uuid,
+        service_cookie: Uuid,
+    ) -> Self {
+        ServiceId {
+            object_uuid,
+            object_cookie,
+            service_uuid,
+            service_cookie,
+        }
+    }
+}
+
+impl FromValue for ServiceId {
+    fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
+        match v {
+            Value::ServiceId(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for ServiceId {
+    fn into_value(self) -> Value {
+        Value::ServiceId(self)
     }
 }
 

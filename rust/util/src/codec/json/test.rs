@@ -128,6 +128,24 @@ fn value_object_id() {
 }
 
 #[test]
+fn value_service_id() {
+    test_value(
+        Value::ServiceId(ServiceId {
+            object_uuid: UUID1,
+            object_cookie: UUID2,
+            service_uuid: UUID3,
+            service_cookie: UUID4,
+        }),
+        json!({"service-id": {
+            "object-uuid": UUID1,
+            "object-cookie": UUID2,
+            "service-uuid": UUID3,
+            "service-cookie": UUID4,
+        }}),
+    );
+}
+
+#[test]
 fn value_vec() {
     test_value(Value::Vec(vec![]), json!({"vec": []}));
     test_value(Value::Vec(vec![Value::None]), json!({"vec": ["none"]}));

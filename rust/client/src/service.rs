@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-use crate::{Error, Handle, ObjectId};
+use crate::{Error, Handle, ObjectCookie, ObjectId, ObjectUuid};
 use aldrin_proto::{CallFunctionResult, Value};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
@@ -247,6 +247,30 @@ impl ServiceId {
             object_id,
             uuid,
             cookie,
+        }
+    }
+}
+
+impl From<aldrin_proto::ServiceId> for ServiceId {
+    fn from(id: aldrin_proto::ServiceId) -> Self {
+        ServiceId {
+            object_id: ObjectId {
+                uuid: ObjectUuid(id.object_uuid),
+                cookie: ObjectCookie(id.object_cookie),
+            },
+            uuid: ServiceUuid(id.service_uuid),
+            cookie: ServiceCookie(id.service_cookie),
+        }
+    }
+}
+
+impl From<ServiceId> for aldrin_proto::ServiceId {
+    fn from(id: ServiceId) -> Self {
+        aldrin_proto::ServiceId {
+            object_uuid: id.object_id.uuid.0,
+            object_cookie: id.object_id.cookie.0,
+            service_uuid: id.uuid.0,
+            service_cookie: id.cookie.0,
         }
     }
 }
