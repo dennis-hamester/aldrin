@@ -295,6 +295,7 @@ where
             Message::SubscribeEventReply(re) => self.subscribe_event_reply(re),
             Message::UnsubscribeEvent(ev) => self.event_unsubscribed(ev),
             Message::EmitEvent(ev) => self.event_emitted(ev),
+            Message::QueryObjectReply(_re) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -305,7 +306,8 @@ where
             | Message::CreateService(_)
             | Message::DestroyService(_)
             | Message::SubscribeServices(_)
-            | Message::UnsubscribeServices(()) => Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::UnsubscribeServices(())
+            | Message::QueryObject(_) => Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(()) => unreachable!(), // Handled in run.
         }

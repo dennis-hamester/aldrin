@@ -35,6 +35,8 @@ pub enum Message {
     SubscribeEventReply(SubscribeEventReply),
     UnsubscribeEvent(UnsubscribeEvent),
     EmitEvent(EmitEvent),
+    QueryObject(QueryObject),
+    QueryObjectReply(QueryObjectReply),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -463,4 +465,40 @@ pub struct EmitEvent {
     pub service_cookie: Uuid,
     pub event: u32,
     pub args: Value,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct QueryObject {
+    pub serial: u32,
+    pub uuid: Uuid,
+    pub with_services: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub enum QueryObjectResult {
+    Cookie(Uuid),
+    Service { uuid: Uuid, cookie: Uuid },
+    Done,
+    InvalidObject,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct QueryObjectReply {
+    pub serial: u32,
+    pub result: QueryObjectResult,
 }

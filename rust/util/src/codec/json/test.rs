@@ -788,3 +788,58 @@ fn message_emit_event() {
         json!({"emit-event": {"service-cookie": UUID1, "event": 0, "args": "none"}}),
     );
 }
+
+#[test]
+fn message_query_object() {
+    test_message(
+        Message::QueryObject(QueryObject {
+            serial: 0,
+            uuid: UUID1,
+            with_services: true,
+        }),
+        json!({"query-object": {"serial": 0, "uuid": UUID1, "with-services": true}}),
+    );
+}
+
+#[test]
+fn message_query_object_reply() {
+    test_message(
+        Message::QueryObjectReply(QueryObjectReply {
+            serial: 0,
+            result: QueryObjectResult::Cookie(UUID1),
+        }),
+        json!({"query-object-reply": {"serial": 0, "result": {"cookie": UUID1}}}),
+    );
+    test_message(
+        Message::QueryObjectReply(QueryObjectReply {
+            serial: 0,
+            result: QueryObjectResult::Service {
+                uuid: UUID1,
+                cookie: UUID2,
+            },
+        }),
+        json!({"query-object-reply": {
+            "serial": 0,
+            "result": {
+                "service": {
+                    "uuid": UUID1,
+                    "cookie": UUID2,
+                }
+            }
+        }}),
+    );
+    test_message(
+        Message::QueryObjectReply(QueryObjectReply {
+            serial: 0,
+            result: QueryObjectResult::Done,
+        }),
+        json!({"query-object-reply": {"serial": 0, "result": "done"}}),
+    );
+    test_message(
+        Message::QueryObjectReply(QueryObjectReply {
+            serial: 0,
+            result: QueryObjectResult::InvalidObject,
+        }),
+        json!({"query-object-reply": {"serial": 0, "result": "invalid-object"}}),
+    );
+}

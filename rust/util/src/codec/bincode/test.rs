@@ -1227,6 +1227,142 @@ fn message_emit_event() {
 }
 
 #[test]
+fn message_query_object() {
+    let m = Message::QueryObject(QueryObject {
+        serial: 0x12345678,
+        uuid: Uuid::from_u128(0x00112233445566778899aabbccddeeff),
+        with_services: true,
+    });
+    test_message_le(
+        &m,
+        &[
+            27, // QueryObject
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            1,    // with_services
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            27, // QueryObject
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            1,    // with_services
+        ],
+    );
+}
+
+#[test]
+fn message_query_object_reply() {
+    let m = Message::QueryObjectReply(QueryObjectReply {
+        serial: 0x12345678,
+        result: QueryObjectResult::Cookie(Uuid::from_u128(0x00112233445566778899aabbccddeeff)),
+    });
+    test_message_le(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Cookie
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Cookie
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+        ],
+    );
+    let m = Message::QueryObjectReply(QueryObjectReply {
+        serial: 0x12345678,
+        result: QueryObjectResult::Service {
+            uuid: Uuid::from_u128(0x00112233445566778899aabbccddeeff),
+            cookie: Uuid::from_u128(0x0112233445566778899aabbccddeeff0),
+        },
+    });
+    test_message_le(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // Service
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            16,   // cookie length
+            0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
+            0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // Cookie
+            16,   // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            16,   // cookie length
+            0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
+            0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
+        ],
+    );
+    let m = Message::QueryObjectReply(QueryObjectReply {
+        serial: 0x12345678,
+        result: QueryObjectResult::Done,
+    });
+    test_message_le(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // Done
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // Done
+        ],
+    );
+    let m = Message::QueryObjectReply(QueryObjectReply {
+        serial: 0x12345678,
+        result: QueryObjectResult::InvalidObject,
+    });
+    test_message_le(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            3,    // InvalidObject
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            28, // QueryObjectReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            3,    // InvalidObject
+        ],
+    );
+}
+
+#[test]
 fn value_none() {
     let v = Value::None;
     test_value_le(
