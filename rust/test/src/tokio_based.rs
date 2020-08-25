@@ -193,8 +193,8 @@ pub struct ClientBuilder(crate::ClientBuilder);
 impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
-    /// The default [`ClientBuilder`] is configured to use an unbounded channel between [`Broker`]
-    /// and [`Client`].
+    /// The default [`ClientBuilder`] is configured to use an unbounded channel between
+    /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin_client::Client).
     pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder(crate::ClientBuilder::new(broker))
     }
