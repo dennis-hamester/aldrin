@@ -53,6 +53,7 @@ pub enum TypeNameKind {
     String,
     Uuid,
     ObjectId,
+    ServiceId,
     Value,
     Vec(Box<TypeName>),
     Bytes,
@@ -79,6 +80,7 @@ impl TypeNameKind {
             Rule::kw_string => TypeNameKind::String,
             Rule::kw_uuid => TypeNameKind::Uuid,
             Rule::kw_object_id => TypeNameKind::ObjectId,
+            Rule::kw_service_id => TypeNameKind::ServiceId,
             Rule::kw_value => TypeNameKind::Value,
             Rule::vec_type => {
                 let mut pairs = pair.into_inner();

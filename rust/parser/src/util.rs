@@ -12,6 +12,7 @@ const BUILTIN_TYPES: &[&str] = &[
     "i64",
     "i8",
     "object_id",
+    "service_id",
     "string",
     "u16",
     "u32",

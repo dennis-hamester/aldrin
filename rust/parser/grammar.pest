@@ -51,6 +51,7 @@ kw_i64 = @{ "i64" }
 kw_string = @{ "string" }
 kw_uuid = @{ "uuid" }
 kw_object_id = @{ "object_id" }
+kw_service_id = @{ "service_id" }
 kw_bool = @{ "bool" }
 kw_f32 = @{ "f32" }
 kw_f64 = @{ "f64" }
@@ -101,6 +102,7 @@ type_name = {
     | kw_string
     | kw_uuid
     | kw_object_id
+    | kw_service_id
     | kw_value
     | vec_type
     | kw_bytes

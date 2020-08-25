@@ -2,7 +2,7 @@
 mod test;
 
 use crate::{Error, Handle, ObjectCookie, ObjectId, ObjectUuid};
-use aldrin_proto::{CallFunctionResult, Value};
+use aldrin_proto::{CallFunctionResult, ConversionError, FromValue, IntoValue, Value};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::fmt;
@@ -272,6 +272,21 @@ impl From<ServiceId> for aldrin_proto::ServiceId {
             service_uuid: id.uuid.0,
             service_cookie: id.cookie.0,
         }
+    }
+}
+
+impl FromValue for ServiceId {
+    fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
+        match v {
+            Value::ServiceId(v) => Ok(v.into()),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for ServiceId {
+    fn into_value(self) -> Value {
+        Value::ServiceId(self.into())
     }
 }
 
