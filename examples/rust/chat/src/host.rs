@@ -49,7 +49,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                     ObjectEvent::Destroyed(id) => {
                         objects.remove(&id.cookie);
                         if let Some((&cookie, _)) =
-                                members.iter().find(|(_, &(_, cookie))| cookie == id.cookie.0) {
+                                members.iter().find(|(_, &(_, cookie))| cookie == id.cookie) {
                             let (name, _) = members.remove(&cookie).unwrap();
                             emitter.left(name)?;
                         }
@@ -64,7 +64,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                     }
 
                     chat::ChatFunction::Join(args, reply) => {
-                        if !objects.iter().any(|cookie| cookie.0 == args.object_cookie) {
+                        if !objects.iter().any(|&cookie| cookie == args.object.cookie) {
                             reply.err(chat::ChatJoinError::InvalidObject)?;
                             continue;
                         }
@@ -75,7 +75,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                         }
 
                         let cookie = Uuid::new_v4();
-                        members.insert(cookie, (args.name.clone(), args.object_cookie));
+                        members.insert(cookie, (args.name.clone(), args.object.cookie));
                         reply.ok(cookie)?;
                         emitter.joined(args.name)?;
                     }

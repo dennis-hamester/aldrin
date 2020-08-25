@@ -72,7 +72,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<()> {
     let cookie = match room
         .join(
             chat::ChatJoinArgs::builder()
-                .set_object_cookie(ident_obj.id().cookie.0)
+                .set_object(ident_obj.id())
                 .set_name(args.name.clone())
                 .build()?,
         )?

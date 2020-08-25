@@ -8,7 +8,7 @@ service Chat {
 
     fn join @ 2 {
         args = struct {
-            required object_cookie @ 1 = uuid;
+            required object @ 1 = object_id;
             required name @ 2 = string;
         }
 
