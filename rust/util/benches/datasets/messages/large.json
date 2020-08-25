@@ -1,0 +1,36 @@
+{
+    "call-function": {
+        "serial": 1,
+        "service-cookie": "1bfeb579-a10e-46ae-926e-840989259ed7",
+        "function": 2,
+        "args": {
+            "struct": {
+                "1": {
+                    "string": "foobar"
+                },
+                "2": {
+                    "vec": [
+                        {
+                            "u64": 1234567890
+                        },
+                        {
+                            "enum": {
+                                "variant": 1000,
+                                "value": "none"
+                            }
+                        }
+                    ]
+                },
+                "3": {
+                    "i32": -10000
+                },
+                "4": {
+                    "uuid": "b5ffd182-ce88-41ed-b912-87a1c78cff9c"
+                },
+                "5": {
+                    "bytes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+                }
+            }
+        }
+    }
+}

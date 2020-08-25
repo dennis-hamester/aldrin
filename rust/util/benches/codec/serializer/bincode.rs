@@ -1,10 +1,14 @@
-use super::MessageSize;
+use crate::datasets::{MessageSize, Messages};
 use aldrin_util::codec::{BincodeSerializer, Endian, Serializer};
 use criterion::measurement::Measurement;
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId};
 use std::fmt;
 
-pub fn serialize<M: Measurement>(group: &mut BenchmarkGroup<M>, size: MessageSize) {
+pub fn serialize<M: Measurement>(
+    group: &mut BenchmarkGroup<M>,
+    dataset: &Messages,
+    size: MessageSize,
+) {
     for &endian in &[Endian::Big, Endian::Little] {
         let input = BincodeInput { size, endian };
         group.bench_with_input(
@@ -14,7 +18,7 @@ pub fn serialize<M: Measurement>(group: &mut BenchmarkGroup<M>, size: MessageSiz
                 b.iter_batched(
                     || {
                         let bincode = BincodeSerializer::with_endian(input.endian);
-                        let msg = input.size.get();
+                        let msg = dataset.get(input.size).clone();
                         (bincode, msg)
                     },
                     |(mut bincode, msg)| bincode.serialize(msg).unwrap(),
@@ -25,7 +29,11 @@ pub fn serialize<M: Measurement>(group: &mut BenchmarkGroup<M>, size: MessageSiz
     }
 }
 
-pub fn deserialize<M: Measurement>(group: &mut BenchmarkGroup<M>, size: MessageSize) {
+pub fn deserialize<M: Measurement>(
+    group: &mut BenchmarkGroup<M>,
+    dataset: &Messages,
+    size: MessageSize,
+) {
     for &endian in &[Endian::Big, Endian::Little] {
         let input = BincodeInput { size, endian };
         group.bench_with_input(
@@ -35,7 +43,7 @@ pub fn deserialize<M: Measurement>(group: &mut BenchmarkGroup<M>, size: MessageS
                 b.iter_batched(
                     || {
                         let mut bincode = BincodeSerializer::with_endian(input.endian);
-                        let msg = input.size.get();
+                        let msg = dataset.get(input.size).clone();
                         let data = bincode.serialize(msg).unwrap().freeze();
                         (bincode, data)
                     },

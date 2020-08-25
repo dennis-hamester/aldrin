@@ -1,5 +1,7 @@
 #[cfg(feature = "codec")]
 mod codec;
+#[cfg(any(feature = "json", feature = "bincode-serializer"))]
+mod datasets;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 

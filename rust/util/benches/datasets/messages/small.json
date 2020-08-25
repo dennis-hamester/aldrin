@@ -1,0 +1,10 @@
+{
+    "call-function-reply": {
+        "serial": 1,
+        "result": {
+            "ok": {
+                "u32": 0
+            }
+        }
+    }
+}
