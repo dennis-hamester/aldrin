@@ -53,10 +53,16 @@ pub enum Value {
 
 /// Wrapper for `Vec<u8>`.
 ///
-/// This wrapper exists only allow different implementations of [`FromValue`] and [`IntoValue`] than
-/// those for `Vec<u8>`, which convert between `u8` and [`Value`].
+/// This wrapper exists only to enable different implementations of [`FromValue`] and [`IntoValue`]
+/// than those for `Vec<u8>`, which convert between `u8` and [`Value`].
 #[derive(Debug, Clone)]
 pub struct Bytes(pub Vec<u8>);
+
+impl From<Vec<u8>> for Bytes {
+    fn from(v: Vec<u8>) -> Self {
+        Bytes(v)
+    }
+}
 
 pub trait FromValue: Sized {
     fn from_value(v: Value) -> Result<Self, ConversionError>;
