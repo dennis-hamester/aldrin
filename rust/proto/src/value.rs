@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 use std::hash::BuildHasher;
+use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -61,6 +62,20 @@ pub struct Bytes(pub Vec<u8>);
 impl From<Vec<u8>> for Bytes {
     fn from(v: Vec<u8>) -> Self {
         Bytes(v)
+    }
+}
+
+impl Deref for Bytes {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Bytes {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
