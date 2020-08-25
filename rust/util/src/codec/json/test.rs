@@ -117,6 +117,17 @@ fn value_uuid() {
 }
 
 #[test]
+fn value_object_id() {
+    test_value(
+        Value::ObjectId(ObjectId {
+            uuid: UUID1,
+            cookie: UUID2,
+        }),
+        json!({"object-id": {"uuid": UUID1, "cookie": UUID2}}),
+    );
+}
+
+#[test]
 fn value_vec() {
     test_value(Value::Vec(vec![]), json!({"vec": []}));
     test_value(Value::Vec(vec![Value::None]), json!({"vec": ["none"]}));

@@ -1527,19 +1527,51 @@ fn value_uuid() {
 }
 
 #[test]
+fn value_object_id() {
+    let v = Value::ObjectId(ObjectId {
+        uuid: Uuid::from_u128(0x00112233445566778899aabbccddeeff),
+        cookie: Uuid::from_u128(0x0112233445566778899aabbccddeeff0),
+    });
+    test_value_le(
+        &v,
+        &[
+            14, // ObjectId
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            16,   // cookie length
+            0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
+            0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
+        ],
+    );
+    test_value_be(
+        &v,
+        &[
+            14, // ObjectId
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // uuid
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // uuid
+            16,   // cookie length
+            0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // cookie
+            0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // cookie
+        ],
+    );
+}
+
+#[test]
 fn value_vec() {
     let v = Value::Vec(vec![]);
     test_value_le(
         &v,
         &[
-            14, // Vec
+            15, // Vec
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            14, // Vec
+            15, // Vec
             0,  // length
         ],
     );
@@ -1547,7 +1579,7 @@ fn value_vec() {
     test_value_le(
         &v,
         &[
-            14, // Vec
+            15, // Vec
             1,  // length
             0,  // value 0
         ],
@@ -1555,7 +1587,7 @@ fn value_vec() {
     test_value_be(
         &v,
         &[
-            14, // Vec
+            15, // Vec
             1,  // length
             0,  // value 0
         ],
@@ -1568,14 +1600,14 @@ fn value_bytes() {
     test_value_le(
         &v,
         &[
-            15, // Bytes
+            16, // Bytes
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            15, // Bytes
+            16, // Bytes
             0,  // length
         ],
     );
@@ -1583,7 +1615,7 @@ fn value_bytes() {
     test_value_le(
         &v,
         &[
-            15, // Bytes
+            16, // Bytes
             4,  // length
             0x12, 0x34, 0x56, 0x78, // bytes
         ],
@@ -1591,7 +1623,7 @@ fn value_bytes() {
     test_value_be(
         &v,
         &[
-            15, // Bytes
+            16, // Bytes
             4,  // length
             0x12, 0x34, 0x56, 0x78, // bytes
         ],
@@ -1604,14 +1636,14 @@ fn value_u8_map() {
     test_value_le(
         &v,
         &[
-            16, // U8Map
+            17, // U8Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            16, // U8Map
+            17, // U8Map
             0,  // length
         ],
     );
@@ -1619,7 +1651,7 @@ fn value_u8_map() {
     test_value_le(
         &v,
         &[
-            16,   // U8Map
+            17,   // U8Map
             1,    // length
             0x12, // key 0
             0,    // value 0
@@ -1628,7 +1660,7 @@ fn value_u8_map() {
     test_value_be(
         &v,
         &[
-            16,   // U8Map
+            17,   // U8Map
             1,    // length
             0x12, // key 0
             0,    // value 0
@@ -1642,14 +1674,14 @@ fn value_i8_map() {
     test_value_le(
         &v,
         &[
-            17, // I8Map
+            18, // I8Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            17, // I8Map
+            18, // I8Map
             0,  // length
         ],
     );
@@ -1657,7 +1689,7 @@ fn value_i8_map() {
     test_value_le(
         &v,
         &[
-            17,   // I8Map
+            18,   // I8Map
             1,    // length
             0x12, // key 0
             0,    // value 0
@@ -1666,7 +1698,7 @@ fn value_i8_map() {
     test_value_be(
         &v,
         &[
-            17,   // I8Map
+            18,   // I8Map
             1,    // length
             0x12, // key 0
             0,    // value 0
@@ -1680,14 +1712,14 @@ fn value_u16_map() {
     test_value_le(
         &v,
         &[
-            18, // U16Map
+            19, // U16Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            18, // U16Map
+            19, // U16Map
             0,  // length
         ],
     );
@@ -1695,7 +1727,7 @@ fn value_u16_map() {
     test_value_le(
         &v,
         &[
-            18, // U16Map
+            19, // U16Map
             1,  // length
             251, 0x34, 0x12, // key 0
             0,    // value 0
@@ -1704,7 +1736,7 @@ fn value_u16_map() {
     test_value_be(
         &v,
         &[
-            18, // U16Map
+            19, // U16Map
             1,  // length
             251, 0x12, 0x34, // key 0
             0,    // value 0
@@ -1718,14 +1750,14 @@ fn value_i16_map() {
     test_value_le(
         &v,
         &[
-            19, // I16Map
+            20, // I16Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            19, // I16Map
+            20, // I16Map
             0,  // length
         ],
     );
@@ -1733,7 +1765,7 @@ fn value_i16_map() {
     test_value_le(
         &v,
         &[
-            19, // I16Map
+            20, // I16Map
             1,  // length
             251, 0x68, 0x24, // key 0
             0,    // value 0
@@ -1742,7 +1774,7 @@ fn value_i16_map() {
     test_value_be(
         &v,
         &[
-            19, // I16Map
+            20, // I16Map
             1,  // length
             251, 0x24, 0x68, // key 0
             0,    // value 0
@@ -1756,14 +1788,14 @@ fn value_u32_map() {
     test_value_le(
         &v,
         &[
-            20, // U32Map
+            21, // U32Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            20, // U32Map
+            21, // U32Map
             0,  // length
         ],
     );
@@ -1771,7 +1803,7 @@ fn value_u32_map() {
     test_value_le(
         &v,
         &[
-            20, // U32Map
+            21, // U32Map
             1,  // length
             252, 0x78, 0x56, 0x34, 0x12, // key 0
             0,    // value 0
@@ -1780,7 +1812,7 @@ fn value_u32_map() {
     test_value_be(
         &v,
         &[
-            20, // U32Map
+            21, // U32Map
             1,  // length
             252, 0x12, 0x34, 0x56, 0x78, // key 0
             0,    // value 0
@@ -1794,14 +1826,14 @@ fn value_i32_map() {
     test_value_le(
         &v,
         &[
-            21, // I32Map
+            22, // I32Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            21, // I32Map
+            22, // I32Map
             0,  // length
         ],
     );
@@ -1809,7 +1841,7 @@ fn value_i32_map() {
     test_value_le(
         &v,
         &[
-            21, // I32Map
+            22, // I32Map
             1,  // length
             252, 0xf0, 0xac, 0x68, 0x24, // key 0
             0,    // value 0
@@ -1818,7 +1850,7 @@ fn value_i32_map() {
     test_value_be(
         &v,
         &[
-            21, // I32Map
+            22, // I32Map
             1,  // length
             252, 0x24, 0x68, 0xac, 0xf0, // key 0
             0,    // value 0
@@ -1832,14 +1864,14 @@ fn value_u64_map() {
     test_value_le(
         &v,
         &[
-            22, // U64Map
+            23, // U64Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            22, // U64Map
+            23, // U64Map
             0,  // length
         ],
     );
@@ -1847,7 +1879,7 @@ fn value_u64_map() {
     test_value_le(
         &v,
         &[
-            22, // U64Map
+            23, // U64Map
             1,  // length
             253, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // key 0
             0,    // value 0
@@ -1856,7 +1888,7 @@ fn value_u64_map() {
     test_value_be(
         &v,
         &[
-            22, // U64Map
+            23, // U64Map
             1,  // length
             253, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // key 0
             0,    // value 0
@@ -1870,14 +1902,14 @@ fn value_i64_map() {
     test_value_le(
         &v,
         &[
-            23, // I64Map
+            24, // I64Map
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            23, // I64Map
+            24, // I64Map
             0,  // length
         ],
     );
@@ -1885,7 +1917,7 @@ fn value_i64_map() {
     test_value_le(
         &v,
         &[
-            23, // I64Map
+            24, // I64Map
             1,  // length
             253, 0xe0, 0xbd, 0x79, 0x35, 0xf1, 0xac, 0x68, 0x24, // key 0
             0,    // value 0
@@ -1894,7 +1926,7 @@ fn value_i64_map() {
     test_value_be(
         &v,
         &[
-            23, // I64Map
+            24, // I64Map
             1,  // length
             253, 0x24, 0x68, 0xac, 0xf1, 0x35, 0x79, 0xbd, 0xe0, // key 0
             0,    // value 0
@@ -1908,14 +1940,14 @@ fn value_string_map() {
     test_value_le(
         &v,
         &[
-            24, // StringMap
+            25, // StringMap
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            24, // StringMap
+            25, // StringMap
             0,  // length
         ],
     );
@@ -1923,7 +1955,7 @@ fn value_string_map() {
     test_value_le(
         &v,
         &[
-            24, // StringMap
+            25, // StringMap
             1,  // length
             6,  // length key 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
@@ -1933,7 +1965,7 @@ fn value_string_map() {
     test_value_be(
         &v,
         &[
-            24, // StringMap
+            25, // StringMap
             1,  // length
             6,  // length key 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
@@ -1948,14 +1980,14 @@ fn value_uuid_map() {
     test_value_le(
         &v,
         &[
-            25, // UuidMap
+            26, // UuidMap
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            25, // UuidMap
+            26, // UuidMap
             0,  // length
         ],
     );
@@ -1965,7 +1997,7 @@ fn value_uuid_map() {
     test_value_le(
         &v,
         &[
-            25, // UuidMap
+            26, // UuidMap
             1,  // length
             16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
@@ -1976,7 +2008,7 @@ fn value_uuid_map() {
     test_value_be(
         &v,
         &[
-            25, // UuidMap
+            26, // UuidMap
             1,  // length
             16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
@@ -1992,14 +2024,14 @@ fn value_u8_set() {
     test_value_le(
         &v,
         &[
-            26, // U8Set
+            27, // U8Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            26, // U8Set
+            27, // U8Set
             0,  // length
         ],
     );
@@ -2007,7 +2039,7 @@ fn value_u8_set() {
     test_value_le(
         &v,
         &[
-            26,   // U8Set
+            27,   // U8Set
             1,    // length
             0x12, // value 0
         ],
@@ -2015,7 +2047,7 @@ fn value_u8_set() {
     test_value_be(
         &v,
         &[
-            26,   // U8Set
+            27,   // U8Set
             1,    // length
             0x12, // value 0
         ],
@@ -2028,14 +2060,14 @@ fn value_i8_set() {
     test_value_le(
         &v,
         &[
-            27, // I8Set
+            28, // I8Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            27, // I8Set
+            28, // I8Set
             0,  // length
         ],
     );
@@ -2043,7 +2075,7 @@ fn value_i8_set() {
     test_value_le(
         &v,
         &[
-            27,   // I8Set
+            28,   // I8Set
             1,    // length
             0x12, // value 0
         ],
@@ -2051,7 +2083,7 @@ fn value_i8_set() {
     test_value_be(
         &v,
         &[
-            27,   // I8Set
+            28,   // I8Set
             1,    // length
             0x12, // value 0
         ],
@@ -2064,14 +2096,14 @@ fn value_u16_set() {
     test_value_le(
         &v,
         &[
-            28, // U16Set
+            29, // U16Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            28, // U16Set
+            29, // U16Set
             0,  // length
         ],
     );
@@ -2079,7 +2111,7 @@ fn value_u16_set() {
     test_value_le(
         &v,
         &[
-            28, // U16Set
+            29, // U16Set
             1,  // length
             251, 0x34, 0x12, // value 0
         ],
@@ -2087,7 +2119,7 @@ fn value_u16_set() {
     test_value_be(
         &v,
         &[
-            28, // U16Set
+            29, // U16Set
             1,  // length
             251, 0x12, 0x34, // value 0
         ],
@@ -2100,14 +2132,14 @@ fn value_i16_set() {
     test_value_le(
         &v,
         &[
-            29, // I16Set
+            30, // I16Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            29, // I16Set
+            30, // I16Set
             0,  // length
         ],
     );
@@ -2115,7 +2147,7 @@ fn value_i16_set() {
     test_value_le(
         &v,
         &[
-            29, // I16Set
+            30, // I16Set
             1,  // length
             251, 0x68, 0x24, // value 0
         ],
@@ -2123,7 +2155,7 @@ fn value_i16_set() {
     test_value_be(
         &v,
         &[
-            29, // I16Set
+            30, // I16Set
             1,  // length
             251, 0x24, 0x68, // value 0
         ],
@@ -2136,14 +2168,14 @@ fn value_u32_set() {
     test_value_le(
         &v,
         &[
-            30, // U32Set
+            31, // U32Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            30, // U32Set
+            31, // U32Set
             0,  // length
         ],
     );
@@ -2151,7 +2183,7 @@ fn value_u32_set() {
     test_value_le(
         &v,
         &[
-            30, // U32Set
+            31, // U32Set
             1,  // length
             252, 0x78, 0x56, 0x34, 0x12, // value 0
         ],
@@ -2159,7 +2191,7 @@ fn value_u32_set() {
     test_value_be(
         &v,
         &[
-            30, // U32Set
+            31, // U32Set
             1,  // length
             252, 0x12, 0x34, 0x56, 0x78, // value 0
         ],
@@ -2172,14 +2204,14 @@ fn value_i32_set() {
     test_value_le(
         &v,
         &[
-            31, // I32Set
+            32, // I32Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            31, // I32Set
+            32, // I32Set
             0,  // length
         ],
     );
@@ -2187,7 +2219,7 @@ fn value_i32_set() {
     test_value_le(
         &v,
         &[
-            31, // I32Set
+            32, // I32Set
             1,  // length
             252, 0xf0, 0xac, 0x68, 0x24, // value 0
         ],
@@ -2195,7 +2227,7 @@ fn value_i32_set() {
     test_value_be(
         &v,
         &[
-            31, // I32Set
+            32, // I32Set
             1,  // length
             252, 0x24, 0x68, 0xac, 0xf0, // value 0
         ],
@@ -2208,14 +2240,14 @@ fn value_u64_set() {
     test_value_le(
         &v,
         &[
-            32, // U64Set
+            33, // U64Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            32, // U64Set
+            33, // U64Set
             0,  // length
         ],
     );
@@ -2223,7 +2255,7 @@ fn value_u64_set() {
     test_value_le(
         &v,
         &[
-            32, // U64Set
+            33, // U64Set
             1,  // length
             253, 0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12, // value 0
         ],
@@ -2231,7 +2263,7 @@ fn value_u64_set() {
     test_value_be(
         &v,
         &[
-            32, // U64Set
+            33, // U64Set
             1,  // length
             253, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, // value 0
         ],
@@ -2244,14 +2276,14 @@ fn value_i64_set() {
     test_value_le(
         &v,
         &[
-            33, // I64Set
+            34, // I64Set
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            33, // I64Set
+            34, // I64Set
             0,  // length
         ],
     );
@@ -2259,7 +2291,7 @@ fn value_i64_set() {
     test_value_le(
         &v,
         &[
-            33, // I64Set
+            34, // I64Set
             1,  // length
             253, 0xe0, 0xbd, 0x79, 0x35, 0xf1, 0xac, 0x68, 0x24, // value 0
         ],
@@ -2267,7 +2299,7 @@ fn value_i64_set() {
     test_value_be(
         &v,
         &[
-            33, // I64Set
+            34, // I64Set
             1,  // length
             253, 0x24, 0x68, 0xac, 0xf1, 0x35, 0x79, 0xbd, 0xe0, // value 0
         ],
@@ -2280,14 +2312,14 @@ fn value_string_set() {
     test_value_le(
         &v,
         &[
-            34, // StringSet
+            35, // StringSet
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            34, // StringSet
+            35, // StringSet
             0,  // length
         ],
     );
@@ -2295,7 +2327,7 @@ fn value_string_set() {
     test_value_le(
         &v,
         &[
-            34, // StringSet
+            35, // StringSet
             1,  // length
             6,  // length value 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
@@ -2304,7 +2336,7 @@ fn value_string_set() {
     test_value_be(
         &v,
         &[
-            34, // StringSet
+            35, // StringSet
             1,  // length
             6,  // length value 0
             b'a', b'l', b'd', b'r', b'i', b'n', // value key 0
@@ -2318,14 +2350,14 @@ fn value_uuid_set() {
     test_value_le(
         &v,
         &[
-            35, // UuidSet
+            36, // UuidSet
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            35, // UuidSet
+            36, // UuidSet
             0,  // length
         ],
     );
@@ -2333,7 +2365,7 @@ fn value_uuid_set() {
     test_value_le(
         &v,
         &[
-            35, // UuidSet
+            36, // UuidSet
             1,  // length
             16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
@@ -2343,7 +2375,7 @@ fn value_uuid_set() {
     test_value_be(
         &v,
         &[
-            35, // UuidSet
+            36, // UuidSet
             1,  // length
             16, // uuid length
             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // key 0
@@ -2358,14 +2390,14 @@ fn value_struct() {
     test_value_le(
         &v,
         &[
-            36, // Struct
+            37, // Struct
             0,  // length
         ],
     );
     test_value_be(
         &v,
         &[
-            36, // Struct
+            37, // Struct
             0,  // length
         ],
     );
@@ -2373,7 +2405,7 @@ fn value_struct() {
     test_value_le(
         &v,
         &[
-            36, // Struct
+            37, // Struct
             1,  // length
             252, 0x78, 0x56, 0x34, 0x12, // key 0
             0,    // value 0
@@ -2382,7 +2414,7 @@ fn value_struct() {
     test_value_be(
         &v,
         &[
-            36, // Struct
+            37, // Struct
             1,  // length
             252, 0x12, 0x34, 0x56, 0x78, // key 0
             0,    // value 0
@@ -2399,7 +2431,7 @@ fn value_enum() {
     test_value_le(
         &v,
         &[
-            37, // Enum
+            38, // Enum
             252, 0x78, 0x56, 0x34, 0x12, // variant
             0,    // value
         ],
@@ -2407,7 +2439,7 @@ fn value_enum() {
     test_value_be(
         &v,
         &[
-            37, // Enum
+            38, // Enum
             252, 0x12, 0x34, 0x56, 0x78, // variant
             0,    // value
         ],

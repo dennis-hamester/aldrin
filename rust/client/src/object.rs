@@ -146,6 +146,24 @@ impl ObjectId {
     }
 }
 
+impl From<aldrin_proto::ObjectId> for ObjectId {
+    fn from(id: aldrin_proto::ObjectId) -> Self {
+        ObjectId {
+            uuid: ObjectUuid(id.uuid),
+            cookie: ObjectCookie(id.cookie),
+        }
+    }
+}
+
+impl From<ObjectId> for aldrin_proto::ObjectId {
+    fn from(id: ObjectId) -> Self {
+        aldrin_proto::ObjectId {
+            uuid: id.uuid.0,
+            cookie: id.cookie.0,
+        }
+    }
+}
+
 /// UUID of an object.
 ///
 /// [`ObjectUuid`s](ObjectUuid) are chosen by the user when [creating](Handle::create_object) an

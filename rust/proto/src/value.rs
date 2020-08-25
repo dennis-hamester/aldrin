@@ -26,6 +26,7 @@ pub enum Value {
     F64(f64),
     String(String),
     Uuid(Uuid),
+    ObjectId(ObjectId),
     Vec(Vec<Value>),
     Bytes(Vec<u8>),
     U8Map(HashMap<u8, Value>),
@@ -96,6 +97,42 @@ impl FromValue for Value {
 impl IntoValue for Value {
     fn into_value(self) -> Value {
         self
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ObjectId {
+    /// UUID of the object.
+    pub uuid: Uuid,
+
+    /// Cookie of the object.
+    pub cookie: Uuid,
+}
+
+impl ObjectId {
+    /// Creates a new `ObjectId` from a uuid and cookie.
+    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
+        ObjectId { uuid, cookie }
+    }
+}
+
+impl FromValue for ObjectId {
+    fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
+        match v {
+            Value::ObjectId(v) => Ok(v),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for ObjectId {
+    fn into_value(self) -> Value {
+        Value::ObjectId(self)
     }
 }
 
