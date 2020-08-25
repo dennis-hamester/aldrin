@@ -1,4 +1,5 @@
 use super::{Error, Handle, Service, ServiceUuid};
+use aldrin_proto::{ConversionError, FromValue, IntoValue, Value};
 use std::fmt;
 use uuid::Uuid;
 
@@ -161,6 +162,21 @@ impl From<ObjectId> for aldrin_proto::ObjectId {
             uuid: id.uuid.0,
             cookie: id.cookie.0,
         }
+    }
+}
+
+impl FromValue for ObjectId {
+    fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
+        match v {
+            Value::ObjectId(v) => Ok(v.into()),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for ObjectId {
+    fn into_value(self) -> Value {
+        Value::ObjectId(self.into())
     }
 }
 

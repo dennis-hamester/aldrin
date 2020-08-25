@@ -5,7 +5,19 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 const BUILTIN_TYPES: &[&str] = &[
-    "bool", "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "string", "uuid", "bytes",
+    "bool",
+    "bytes",
+    "i16",
+    "i32",
+    "i64",
+    "i8",
+    "object_id",
+    "string",
+    "u16",
+    "u32",
+    "u64",
+    "u8",
+    "uuid",
     "value",
 ];
 

@@ -1004,6 +1004,7 @@ fn type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "String".to_owned(),
         ast::TypeNameKind::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin_client::ObjectId".to_owned(),
         ast::TypeNameKind::Value => "aldrin_client::codegen::aldrin_proto::Value".to_owned(),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
             ast::TypeNameKind::U8 => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
