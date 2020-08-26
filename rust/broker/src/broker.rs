@@ -10,7 +10,15 @@ mod test;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
-use aldrin_proto::*;
+use aldrin_proto::{
+    CallFunction, CallFunctionReply, CallFunctionResult, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent, ObjectDestroyedEvent,
+    ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, UnsubscribeEvent,
+};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;

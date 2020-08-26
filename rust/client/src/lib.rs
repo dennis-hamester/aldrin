@@ -80,7 +80,15 @@ pub mod codegen {
     pub use uuid;
 }
 
-use aldrin_proto::*;
+use aldrin_proto::{
+    AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,
+    Connect, ConnectReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ServiceCreatedEvent, ServiceDestroyedEvent,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
+    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
+};
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -190,8 +198,10 @@ where
     /// # }
     /// ```
     pub async fn connect(mut t: T) -> Result<Self, ConnectError<T::Error>> {
-        t.send_and_flush(Message::Connect(Connect { version: VERSION }))
-            .await?;
+        t.send_and_flush(Message::Connect(Connect {
+            version: aldrin_proto::VERSION,
+        }))
+        .await?;
 
         match t.receive().await? {
             Message::ConnectReply(ConnectReply::Ok) => {}

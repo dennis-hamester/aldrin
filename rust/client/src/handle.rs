@@ -3,7 +3,10 @@ use super::{
     ObjectId, ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceEvent, ServiceId,
     ServiceUuid, Services, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
 };
-use aldrin_proto::*;
+use aldrin_proto::{
+    CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
+    DestroyServiceResult, SubscribeEventResult, Value,
+};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_channel::oneshot;
 use futures_util::stream::StreamExt;

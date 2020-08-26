@@ -1,7 +1,7 @@
 use super::BrokerError;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::*;
+use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message};
 use futures_channel::mpsc::{unbounded, Sender};
 use futures_util::sink::SinkExt;
 
@@ -28,7 +28,7 @@ impl BrokerHandle {
         T: AsyncTransport + Unpin,
     {
         match t.receive().await? {
-            Message::Connect(msg) if msg.version == VERSION => {
+            Message::Connect(msg) if msg.version == aldrin_proto::VERSION => {
                 t.send_and_flush(Message::ConnectReply(ConnectReply::Ok))
                     .await?;
                 Ok(())
@@ -36,7 +36,7 @@ impl BrokerHandle {
 
             Message::Connect(msg) => {
                 t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
-                    VERSION,
+                    aldrin_proto::VERSION,
                 )))
                 .await
                 .ok();

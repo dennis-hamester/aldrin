@@ -2,7 +2,10 @@ use super::{
     EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
     ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
-use aldrin_proto::*;
+use aldrin_proto::{
+    CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
+    DestroyServiceResult, SubscribeEventResult, Value,
+};
 use futures_channel::{mpsc, oneshot};
 
 #[derive(Debug)]
