@@ -8,8 +8,9 @@ use aldrin_proto::{
     CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
     DestroyServiceResult, SubscribeEventResult, Value,
 };
-use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
+use futures_core::stream::{FusedStream, Stream};
 use futures_util::stream::StreamExt;
 use std::future::Future;
 use std::pin::Pin;
@@ -708,10 +709,84 @@ impl Handle {
             .unbounded_send(Request::QueryObject(QueryObjectRequest {
                 object_uuid,
                 reply: rep_send,
+                with_services: false,
             }))
             .map_err(|_| Error::ClientShutdown)?;
-        let object_id = rep_recv.await.map_err(|_| Error::ClientShutdown)?;
-        Ok(object_id.map(Into::into))
+
+        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
+            Some((object_cookie, object_services)) => {
+                debug_assert!(object_services.is_none());
+                Ok(Some(ObjectId {
+                    uuid: object_uuid,
+                    cookie: object_cookie,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Queries the id and services of an object identified by a UUID.
+    ///
+    /// This returns the [`ObjectId`] as well as an [`ObjectServices`] stream of all
+    /// [`ServiceId`s](ServiceId) of the object identified by `uuid`. If `uuid` does not name a
+    /// valid object, then `None` is returned.
+    ///
+    /// Use [`resolve_object`](Handle::resolve_object) if you just need to resolve an [`ObjectUuid`]
+    /// to an [`ObjectId`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use futures::stream::StreamExt;
+    /// use std::collections::HashSet;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
+    /// let service1 = object.create_service(ServiceUuid::new_v4()).await?;
+    /// let service2 = object.create_service(ServiceUuid::new_v4()).await?;
+    ///
+    /// let (object_id, object_services) = handle
+    ///     .query_object_services(object.id().uuid)
+    ///     .await?
+    ///     .unwrap();
+    /// assert_eq!(object_id, object.id());
+    ///
+    /// let mut service_ids: HashSet<_> = object_services.collect().await;
+    /// assert_eq!(service_ids.len(), 2);
+    /// assert!(service_ids.remove(&service1.id()));
+    /// assert!(service_ids.remove(&service2.id()));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn query_object_services(
+        &self,
+        object_uuid: ObjectUuid,
+    ) -> Result<Option<(ObjectId, ObjectServices)>, Error> {
+        let (rep_send, rep_recv) = oneshot::channel();
+        self.send
+            .unbounded_send(Request::QueryObject(QueryObjectRequest {
+                object_uuid,
+                reply: rep_send,
+                with_services: true,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
+            Some((object_cookie, object_services)) => {
+                let object_id = ObjectId {
+                    uuid: object_uuid,
+                    cookie: object_cookie,
+                };
+                let recv = object_services.unwrap();
+                Ok(Some((object_id, ObjectServices { object_id, recv })))
+            }
+            None => Ok(None),
+        }
     }
 }
 
@@ -751,5 +826,31 @@ impl Future for CallFunctionFuture {
                 Err(Error::InvalidArgs(self.service_id, self.function))
             }
         })
+    }
+}
+
+/// Stream of service ids of an object.
+///
+/// This stream is created with [`query_object_services`](Handle::query_object_services).
+#[derive(Debug)]
+#[must_use = "streams do nothing unless you poll them"]
+pub struct ObjectServices {
+    object_id: ObjectId,
+    recv: UnboundedReceiver<(ServiceUuid, ServiceCookie)>,
+}
+
+impl Stream for ObjectServices {
+    type Item = ServiceId;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        Pin::new(&mut self.recv)
+            .poll_next(cx)
+            .map(|ids| ids.map(|(uuid, cookie)| ServiceId::new(self.object_id, uuid, cookie)))
+    }
+}
+
+impl FusedStream for ObjectServices {
+    fn is_terminated(&self) -> bool {
+        self.recv.is_terminated()
     }
 }

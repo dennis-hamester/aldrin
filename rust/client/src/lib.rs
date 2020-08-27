@@ -95,7 +95,8 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, UnsubscribeEventRequest,
+    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
+    UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -105,7 +106,7 @@ use std::collections::HashSet;
 pub use aldrin_codegen_macros::generate;
 pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
-pub use handle::{CallFunctionFuture, Handle};
+pub use handle::{CallFunctionFuture, Handle, ObjectServices};
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use objects::{ObjectEvent, Objects};
 pub use service::{
@@ -679,18 +680,38 @@ where
         if let Some(id_reply) = data.id_reply.take() {
             match reply.result {
                 QueryObjectResult::Cookie(cookie) => {
-                    id_reply
-                        .send(Some(ObjectId {
-                            uuid: data.object_uuid,
-                            cookie: ObjectCookie(cookie),
-                        }))
-                        .ok();
-                    self.query_object.remove(reply.serial);
+                    if data.with_services {
+                        let (send, recv) = mpsc::unbounded();
+                        data.svc_reply = Some(send);
+                        id_reply.send(Some((ObjectCookie(cookie), Some(recv)))).ok();
+                    } else {
+                        id_reply.send(Some((ObjectCookie(cookie), None))).ok();
+                        self.query_object.remove(reply.serial);
+                    }
                     Ok(())
                 }
 
                 QueryObjectResult::InvalidObject => {
                     id_reply.send(None).ok();
+                    self.query_object.remove(reply.serial);
+                    Ok(())
+                }
+
+                _ => Err(RunError::UnexpectedMessageReceived(
+                    Message::QueryObjectReply(reply),
+                )),
+            }
+        } else if data.with_services {
+            match reply.result {
+                QueryObjectResult::Service { uuid, cookie } => {
+                    let svc_reply = data.svc_reply.as_ref().unwrap();
+                    svc_reply
+                        .unbounded_send((ServiceUuid(uuid), ServiceCookie(cookie)))
+                        .ok();
+                    Ok(())
+                }
+
+                QueryObjectResult::Done => {
                     self.query_object.remove(reply.serial);
                     Ok(())
                 }
@@ -960,12 +981,14 @@ where
         let serial = self.query_object.insert(QueryObjectData {
             object_uuid: req.object_uuid,
             id_reply: Some(req.reply),
+            with_services: req.with_services,
+            svc_reply: None,
         });
         self.t
             .send_and_flush(Message::QueryObject(QueryObject {
                 serial,
                 uuid: req.object_uuid.0,
-                with_services: false,
+                with_services: req.with_services,
             }))
             .await
             .map_err(Into::into)
@@ -1007,5 +1030,7 @@ pub enum SubscribeMode {
 #[derive(Debug)]
 struct QueryObjectData {
     object_uuid: ObjectUuid,
-    id_reply: Option<oneshot::Sender<Option<ObjectId>>>,
+    id_reply: Option<oneshot::Sender<QueryObjectRequestReply>>,
+    with_services: bool,
+    svc_reply: Option<mpsc::UnboundedSender<(ServiceUuid, ServiceCookie)>>,
 }

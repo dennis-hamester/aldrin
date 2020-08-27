@@ -1,5 +1,5 @@
 use super::{
-    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid,
+    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
     ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
@@ -57,8 +57,14 @@ pub(crate) struct EmitEventRequest {
     pub args: Value,
 }
 
+pub(crate) type QueryObjectRequestReply = Option<(
+    ObjectCookie,
+    Option<mpsc::UnboundedReceiver<(ServiceUuid, ServiceCookie)>>,
+)>;
+
 #[derive(Debug)]
 pub(crate) struct QueryObjectRequest {
     pub object_uuid: ObjectUuid,
-    pub reply: oneshot::Sender<Option<ObjectId>>,
+    pub reply: oneshot::Sender<QueryObjectRequestReply>,
+    pub with_services: bool,
 }
