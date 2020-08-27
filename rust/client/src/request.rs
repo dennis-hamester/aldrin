@@ -1,5 +1,5 @@
 use super::{
-    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
+    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid,
     ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
@@ -31,6 +31,7 @@ pub(crate) enum Request {
     SubscribeEvent(SubscribeEventRequest),
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
+    QueryObject(QueryObjectRequest),
 }
 
 #[derive(Debug)]
@@ -54,4 +55,10 @@ pub(crate) struct EmitEventRequest {
     pub service_cookie: ServiceCookie,
     pub event: u32,
     pub args: Value,
+}
+
+#[derive(Debug)]
+pub(crate) struct QueryObjectRequest {
+    pub object_uuid: ObjectUuid,
+    pub reply: oneshot::Sender<Option<ObjectId>>,
 }

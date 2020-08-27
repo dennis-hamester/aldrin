@@ -1,7 +1,8 @@
 use super::{
     EmitEventRequest, Error, Events, EventsId, EventsRequest, Object, ObjectCookie, ObjectEvent,
-    ObjectId, ObjectUuid, Objects, Request, Service, ServiceCookie, ServiceEvent, ServiceId,
-    ServiceUuid, Services, SubscribeEventRequest, SubscribeMode, UnsubscribeEventRequest,
+    ObjectId, ObjectUuid, Objects, QueryObjectRequest, Request, Service, ServiceCookie,
+    ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeEventRequest, SubscribeMode,
+    UnsubscribeEventRequest,
 };
 use aldrin_proto::{
     CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
@@ -672,6 +673,45 @@ impl Handle {
         }
 
         Err(Error::ClientShutdown)
+    }
+
+    /// Resolves an object UUID to its full id.
+    ///
+    /// This method returns `None`, if the object identified by `object_uuid` doesn't exist.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// use aldrin_client::ObjectUuid;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
+    ///
+    /// let object_id = object.id();
+    /// let object_uuid = object_id.uuid;
+    ///
+    /// let resolved = handle.resolve_object(object_uuid).await?;
+    /// assert_eq!(resolved, Some(object_id));
+    ///
+    /// let resolved = handle.resolve_object(ObjectUuid::new_v4()).await?;
+    /// assert_eq!(resolved, None);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn resolve_object(&self, object_uuid: ObjectUuid) -> Result<Option<ObjectId>, Error> {
+        let (rep_send, rep_recv) = oneshot::channel();
+        self.send
+            .unbounded_send(Request::QueryObject(QueryObjectRequest {
+                object_uuid,
+                reply: rep_send,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+        let object_id = rep_recv.await.map_err(|_| Error::ClientShutdown)?;
+        Ok(object_id.map(Into::into))
     }
 }
 

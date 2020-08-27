@@ -85,15 +85,18 @@ use aldrin_proto::{
     Connect, ConnectReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
     CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ServiceCreatedEvent, ServiceDestroyedEvent,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
+    Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
+    QueryObjectResult, ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
+    SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
 };
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
-use request::{EmitEventRequest, Request, SubscribeEventRequest, UnsubscribeEventRequest};
+use request::{
+    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, UnsubscribeEventRequest,
+};
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
@@ -155,6 +158,7 @@ where
     )>,
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
+    query_object: SerialMap<QueryObjectData>,
 }
 
 impl<T> Client<T>
@@ -227,6 +231,7 @@ where
             subscribe_event: SerialMap::new(),
             subscriptions: HashMap::new(),
             broker_subscriptions: HashMap::new(),
+            query_object: SerialMap::new(),
         })
     }
 
@@ -305,7 +310,7 @@ where
             Message::SubscribeEventReply(re) => self.subscribe_event_reply(re),
             Message::UnsubscribeEvent(ev) => self.event_unsubscribed(ev),
             Message::EmitEvent(ev) => self.event_emitted(ev),
-            Message::QueryObjectReply(_re) => todo!(),
+            Message::QueryObjectReply(re) => self.query_object_reply(re),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -665,6 +670,40 @@ where
         Ok(())
     }
 
+    fn query_object_reply(&mut self, reply: QueryObjectReply) -> Result<(), RunError<T::Error>> {
+        let data = match self.query_object.get_mut(reply.serial) {
+            Some(data) => data,
+            None => return Ok(()),
+        };
+
+        if let Some(id_reply) = data.id_reply.take() {
+            match reply.result {
+                QueryObjectResult::Cookie(cookie) => {
+                    id_reply
+                        .send(Some(ObjectId {
+                            uuid: data.object_uuid,
+                            cookie: ObjectCookie(cookie),
+                        }))
+                        .ok();
+                    self.query_object.remove(reply.serial);
+                    Ok(())
+                }
+
+                QueryObjectResult::InvalidObject => {
+                    id_reply.send(None).ok();
+                    self.query_object.remove(reply.serial);
+                    Ok(())
+                }
+
+                _ => Err(RunError::UnexpectedMessageReceived(
+                    Message::QueryObjectReply(reply),
+                )),
+            }
+        } else {
+            unreachable!()
+        }
+    }
+
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
@@ -686,6 +725,7 @@ where
             Request::SubscribeEvent(req) => self.subscribe_event(req).await,
             Request::UnsubscribeEvent(req) => self.unsubscribe_event(req).await,
             Request::EmitEvent(req) => self.emit_event(req).await,
+            Request::QueryObject(req) => self.query_object(req).await,
 
             // Handled in Client::run()
             Request::Shutdown => unreachable!(),
@@ -916,6 +956,21 @@ where
             .map_err(Into::into)
     }
 
+    async fn query_object(&mut self, req: QueryObjectRequest) -> Result<(), RunError<T::Error>> {
+        let serial = self.query_object.insert(QueryObjectData {
+            object_uuid: req.object_uuid,
+            id_reply: Some(req.reply),
+        });
+        self.t
+            .send_and_flush(Message::QueryObject(QueryObject {
+                serial,
+                uuid: req.object_uuid.0,
+                with_services: false,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
     fn shutdown_all_events(&self) {
         for by_service in self.subscriptions.values() {
             for by_function in by_service.values() {
@@ -947,4 +1002,10 @@ pub enum SubscribeMode {
 
     /// Receive events only for future objects or services.
     NewOnly,
+}
+
+#[derive(Debug)]
+struct QueryObjectData {
+    object_uuid: ObjectUuid,
+    id_reply: Option<oneshot::Sender<Option<ObjectId>>>,
 }
