@@ -415,8 +415,11 @@ impl<'a> RustGenerator<'a> {
         let svc_name = svc.name().value();
         let svc_uuid_const = service_uuid_const(svc);
         let svc_uuid = svc.uuid().value();
+        let svc_version_const = service_version_const(svc);
+        let svc_version = svc.version().value();
 
         genln!(self, "pub const {}: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid::from_u128({:#034x});", svc_uuid_const, svc_uuid.as_u128());
+        genln!(self, "pub const {}: u32 = {};", svc_version_const, svc_version);
         genln!(self);
 
         if self.options.client {
@@ -1070,6 +1073,10 @@ fn enum_inline_variant_type(enum_name: &str, var_name: &str) -> String {
 
 fn service_uuid_const(svc: &ast::ServiceDef) -> String {
     format!("{}_UUID", svc.name().value().to_shouty_snake_case())
+}
+
+fn service_version_const(svc: &ast::ServiceDef) -> String {
+    format!("{}_VERSION", svc.name().value().to_shouty_snake_case())
 }
 
 fn service_proxy_name(svc_name: &str) -> String {
