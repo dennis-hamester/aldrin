@@ -817,6 +817,7 @@ where
                 serial,
                 object_cookie: object_cookie.0,
                 uuid: service_uuid.0,
+                version: todo!(),
             }))
             .await
             .map_err(Into::into)

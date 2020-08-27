@@ -509,8 +509,14 @@ fn message_create_service() {
             serial: 0,
             object_cookie: UUID1,
             uuid: UUID2,
+            version: 1,
         }),
-        json!({"create-service": {"serial": 0, "object-cookie": UUID1, "uuid": UUID2}}),
+        json!({"create-service": {
+            "serial": 0,
+            "object-cookie": UUID1,
+            "uuid": UUID2,
+            "version": 1,
+        }}),
     );
 }
 

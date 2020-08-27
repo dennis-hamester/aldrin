@@ -206,6 +206,7 @@ pub struct CreateService {
     pub serial: u32,
     pub object_cookie: Uuid,
     pub uuid: Uuid,
+    pub version: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

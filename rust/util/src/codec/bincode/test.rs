@@ -474,6 +474,7 @@ fn message_create_service() {
         serial: 0x12345678,
         object_cookie: Uuid::from_u128(0x00112233445566778899aabbccddeeff),
         uuid: Uuid::from_u128(0x0112233445566778899aabbccddeeff0),
+        version: 0x01234567,
     });
     test_message_le(
         &m,
@@ -486,6 +487,7 @@ fn message_create_service() {
             16,   // uuid length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // uuid
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // uuid
+            252, 0x67, 0x45, 0x23, 0x01, // version
         ],
     );
     test_message_be(
@@ -499,6 +501,7 @@ fn message_create_service() {
             16,   // uuid length
             0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, // uuid
             0x89, 0x9a, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0, // uuid
+            252, 0x01, 0x23, 0x45, 0x67, // version
         ],
     );
 }
