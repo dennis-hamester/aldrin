@@ -761,8 +761,8 @@ impl Broker {
         };
 
         let uuid = ObjectUuid(req.uuid);
-        let cookie = match self.objs.get(&uuid) {
-            Some(obj) => obj.cookie(),
+        let obj = match self.objs.get(&uuid) {
+            Some(obj) => obj,
             None => {
                 let msg = Message::QueryObjectReply(QueryObjectReply {
                     serial: req.serial,
@@ -777,7 +777,7 @@ impl Broker {
 
         let msg = Message::QueryObjectReply(QueryObjectReply {
             serial: req.serial,
-            result: QueryObjectResult::Cookie(cookie.0),
+            result: QueryObjectResult::Cookie(obj.cookie().0),
         });
         if let Err(()) = conn.send(msg) {
             state.push_remove_conn(id.clone());
@@ -788,7 +788,31 @@ impl Broker {
             return Ok(());
         }
 
-        todo!()
+        for cookie in obj.services() {
+            let (_, _, uuid) = self.svc_uuids.get(&cookie).expect("inconsistent state");
+            let msg = Message::QueryObjectReply(QueryObjectReply {
+                serial: req.serial,
+                result: QueryObjectResult::Service {
+                    uuid: uuid.0,
+                    cookie: cookie.0,
+                },
+            });
+            if let Err(()) = conn.send(msg) {
+                state.push_remove_conn(id.clone());
+                return Ok(());
+            }
+        }
+
+        let msg = Message::QueryObjectReply(QueryObjectReply {
+            serial: req.serial,
+            result: QueryObjectResult::Done,
+        });
+        if let Err(()) = conn.send(msg) {
+            state.push_remove_conn(id.clone());
+            return Ok(());
+        }
+
+        Ok(())
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
