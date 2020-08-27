@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
 pub(crate) struct SerialMap<T> {
@@ -15,11 +15,14 @@ impl<T> SerialMap<T> {
     }
 
     pub fn insert(&mut self, obj: T) -> u32 {
-        let serial = self.next;
-        self.next = self.next.wrapping_add(1);
-        let dup = self.elems.insert(serial, obj);
-        assert!(dup.is_none());
-        serial
+        loop {
+            let serial = self.next;
+            self.next = self.next.wrapping_add(1);
+            if let Entry::Vacant(entry) = self.elems.entry(serial) {
+                entry.insert(obj);
+                return serial;
+            }
+        }
     }
 
     pub fn remove(&mut self, serial: u32) -> Option<T> {
