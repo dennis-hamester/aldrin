@@ -129,7 +129,7 @@ impl<'a> Formatted<'a> {
         &self.intro.chunks[2].0
     }
 
-    /// Returns number of lines.
+    /// Returns the number of lines.
     pub fn len(&self) -> usize {
         self.lines.len() + 1
     }
@@ -197,7 +197,7 @@ pub struct Line<'a> {
 
 #[allow(clippy::len_without_is_empty)]
 impl<'a> Line<'a> {
-    /// Returns number of chunks in this line.
+    /// Returns the number of chunks in this line.
     pub fn len(&self) -> usize {
         self.chunks.len() + 1
     }
