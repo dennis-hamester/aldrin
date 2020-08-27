@@ -5,9 +5,10 @@
 
 use crate::{Parsed, Position, Schema, Span};
 use std::borrow::Cow;
-use std::cmp;
 use std::fmt;
 use std::path::Path;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 /// Diagnostic information about an error or a warning.
 pub trait Diagnostic {
@@ -359,21 +360,25 @@ impl<'a> Formatter<'a> {
 
             let trimmed = line.trim_start();
             let diff = line.len() - trimmed.len();
-            let (from, to) = if diff >= 8 {
+            let (source, from) = if diff >= 8 {
                 self.trimmed_context(span.from.line_col.line, trimmed);
-                (
-                    cmp::max(span.from.line_col.column.saturating_sub(diff), 1) + 3,
-                    span.to.line_col.column + 3 - diff,
-                )
+                let from = span.from.line_col.column.saturating_sub(diff + 1);
+                let to = span.to.line_col.column - diff - 1;
+                let trimmed = &trimmed[from..to];
+                (trimmed, from + 4)
             } else {
                 self.context(span.from.line_col.line, line);
-                (span.from.line_col.column - 1, span.to.line_col.column - 1)
+                let from = span.from.line_col.column - 1;
+                let to = span.to.line_col.column - 1;
+                (&line[from..to], from)
             };
 
+            let to: usize = source.graphemes(true).map(UnicodeWidthStr::width).sum();
+
             if lines.peek().is_some() {
-                self.indicator(from, to, "", is_main_block);
+                self.indicator(from, from + to, "", is_main_block);
             } else {
-                self.indicator(from, to, text, is_main_block);
+                self.indicator(from, from + to, text, is_main_block);
                 self.empty_context();
                 break;
             }

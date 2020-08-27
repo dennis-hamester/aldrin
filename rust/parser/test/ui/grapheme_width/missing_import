@@ -1,0 +1,17 @@
+error: file not found for schema `bar`
+  --> test/ui/grapheme_width.aldrin:1:1
+   |
+ 1 | import
+   | ^^^^^^
+ 2 | // こんにちは
+   | ^^^^^^^^^^^^^
+ 3 | // ȺӀժɾìղ
+   | ^^^^^^^^^
+ 4 | ... // uıɹpl∀
+   |     ^^^^^^^^^
+ 5 | // A̴̞͓̙͓̾̓͌̌̚͜l̷̛͍̟̗̬̜̍̔̌̔d̸͖̪͔̠̝̂͆͆͋̕r̵̟̖̖̟̓̐͌̇͆͜i̸̯̻̫̱̙͊͆̋͆͘n̸̨̳̺͖̣̄͌́͝
+   | ^^^^^^^^^
+ 6 | bar;
+   | ^^^^
+   |
+   = note: an include directory may be missing
