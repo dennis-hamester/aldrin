@@ -15,9 +15,9 @@ use aldrin_proto::{
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent, ObjectDestroyedEvent,
-    ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
-    SubscribeServicesReply, UnsubscribeEvent,
+    QueryObject, QueryObjectReply, QueryObjectResult, ServiceCreatedEvent, ServiceDestroyedEvent,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
+    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
 };
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
@@ -298,7 +298,7 @@ impl Broker {
             Message::SubscribeEvent(req) => self.subscribe_event(id, req),
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, req),
-            Message::QueryObject(_req) => todo!(),
+            Message::QueryObject(req) => self.query_object(state, id, req),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -747,6 +747,48 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    fn query_object(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: QueryObject,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        let uuid = ObjectUuid(req.uuid);
+        let cookie = match self.objs.get(&uuid) {
+            Some(obj) => obj.cookie(),
+            None => {
+                let msg = Message::QueryObjectReply(QueryObjectReply {
+                    serial: req.serial,
+                    result: QueryObjectResult::InvalidObject,
+                });
+                if let Err(()) = conn.send(msg) {
+                    state.push_remove_conn(id.clone());
+                }
+                return Ok(());
+            }
+        };
+
+        let msg = Message::QueryObjectReply(QueryObjectReply {
+            serial: req.serial,
+            result: QueryObjectResult::Cookie(cookie.0),
+        });
+        if let Err(()) = conn.send(msg) {
+            state.push_remove_conn(id.clone());
+            return Ok(());
+        }
+
+        if !req.with_services {
+            return Ok(());
+        }
+
+        todo!()
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
