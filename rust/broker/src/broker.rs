@@ -345,7 +345,7 @@ impl Broker {
                 }))?;
                 let dup = self.obj_uuids.insert(cookie, uuid);
                 debug_assert!(dup.is_none());
-                entry.insert(Object::new(id.clone()));
+                entry.insert(Object::new(id.clone(), cookie));
                 conn.add_object(cookie);
                 state.push_add_obj(uuid, cookie);
                 Ok(())

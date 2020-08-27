@@ -6,19 +6,25 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub(crate) struct Object {
     conn_id: ConnectionId,
+    cookie: ObjectCookie,
     svcs: HashSet<ServiceCookie>,
 }
 
 impl Object {
-    pub fn new(conn_id: ConnectionId) -> Self {
+    pub fn new(conn_id: ConnectionId, cookie: ObjectCookie) -> Self {
         Object {
             conn_id,
+            cookie,
             svcs: HashSet::new(),
         }
     }
 
     pub fn conn_id(&self) -> &ConnectionId {
         &self.conn_id
+    }
+
+    pub fn cookie(&self) -> ObjectCookie {
+        self.cookie
     }
 
     pub fn add_service(&mut self, cookie: ServiceCookie) {
