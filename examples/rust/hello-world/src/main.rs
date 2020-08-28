@@ -45,7 +45,7 @@ async fn client(t: Unbounded) -> Result<()> {
     }));
 
     let mut obj = handle.create_object(ObjectUuid::new_v4()).await?;
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 1).await?;
+    let svc = obj.create_service(ServiceUuid::new_v4(), 1).await?;
 
     svc.destroy().await?;
     obj.destroy().await?;

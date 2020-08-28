@@ -49,7 +49,7 @@ use uuid::Uuid;
 /// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service and destroy it again explicitly:
-/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
+/// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// service.destroy().await?;
 ///
 /// // Destroy a service implicitly by dropping it:
@@ -57,7 +57,7 @@ use uuid::Uuid;
 /// mem::drop(service);
 ///
 /// // Destroy a service implicitly by dropping the object:
-/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
+/// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id = service.id();
 /// mem::drop(object);
 /// assert_eq!(service.destroy().await, Err(Error::InvalidService(service_id)));
@@ -198,7 +198,7 @@ impl Service {
     /// Destroys the service.
     ///
     /// If the [`Service`] has already been destroyed, then [`Error::InvalidService`] is returned.
-    pub async fn destroy(&mut self) -> Result<(), Error> {
+    pub async fn destroy(&self) -> Result<(), Error> {
         self.client.destroy_service(self.id).await
     }
 }
@@ -361,12 +361,12 @@ impl fmt::Display for ServiceUuid {
 /// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service:
-/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
+/// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id1 = service.id();
 /// service.destroy().await?;
 ///
 /// // Create the same service again:
-/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
+/// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id2 = service.id();
 /// service.destroy().await?;
 ///
