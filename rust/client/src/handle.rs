@@ -592,7 +592,6 @@ impl Handle {
     /// let service_id = handle.wait_for_service(SERVICE_UUID, Some(object.id().uuid)).await?;
     /// assert_eq!(service_id, service.id());
     ///
-    /// // Searching for a non-existent service yields None:
     /// let non_existent = time::timeout(
     ///     Duration::from_millis(500),
     ///     handle.wait_for_service(ServiceUuid::new_v4(), None),
