@@ -183,6 +183,7 @@ impl Handle {
         match res {
             CreateServiceResult::Ok(cookie) => Ok(Service::new(
                 ServiceId::new(object_id, service_uuid, ServiceCookie(cookie)),
+                version,
                 self.clone(),
                 recv.unwrap(),
             )),

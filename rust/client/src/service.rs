@@ -160,6 +160,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Service {
     id: ServiceId,
+    version: u32,
     client: Handle,
     function_calls: UnboundedReceiver<(u32, Value, u32)>,
 }
@@ -167,11 +168,13 @@ pub struct Service {
 impl Service {
     pub(crate) fn new(
         id: ServiceId,
+        version: u32,
         client: Handle,
         function_calls: UnboundedReceiver<(u32, Value, u32)>,
     ) -> Self {
         Service {
             id,
+            version,
             client,
             function_calls,
         }
@@ -180,6 +183,11 @@ impl Service {
     /// Returns the id of the service.
     pub fn id(&self) -> ServiceId {
         self.id
+    }
+
+    /// Returns the version of the service.
+    pub fn version(&self) -> u32 {
+        self.version
     }
 
     /// Returns a handle to the client that was used to create the service.
