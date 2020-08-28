@@ -52,7 +52,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # tokio::spawn(client.run());
 /// # tokio::spawn(conn.await??.run());
 /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
 /// # let service_id = svc.id();
 /// let mut events = handle.events();
 ///

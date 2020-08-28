@@ -102,18 +102,18 @@ impl Object {
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
     ///
     /// // Create a service:
-    /// let service = object.create_service(MY_SERVICE_UUID).await?;
+    /// let service = object.create_service(MY_SERVICE_UUID, 0).await?;
     ///
     /// // Trying to create the same service on the same object again will cause an error:
     /// assert_eq!(
-    ///     object.create_service(MY_SERVICE_UUID).await.unwrap_err(),
+    ///     object.create_service(MY_SERVICE_UUID, 0).await.unwrap_err(),
     ///     Error::DuplicateService(object.id(), MY_SERVICE_UUID),
     /// );
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn create_service(&self, uuid: ServiceUuid) -> Result<Service, Error> {
-        self.client.create_service(self.id, uuid).await
+    pub async fn create_service(&self, uuid: ServiceUuid, version: u32) -> Result<Service, Error> {
+        self.client.create_service(self.id, uuid, version).await
     }
 }
 

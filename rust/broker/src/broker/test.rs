@@ -9,7 +9,7 @@ async fn disconnect_during_function_call() {
 
     let mut client1 = broker.add_client().await;
     let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4()).await.unwrap();
+    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;

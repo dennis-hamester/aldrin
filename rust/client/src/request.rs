@@ -17,6 +17,7 @@ pub(crate) enum Request {
     CreateService(
         ObjectCookie,
         ServiceUuid,
+        u32,
         oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ),
     DestroyService(ServiceCookie, oneshot::Sender<DestroyServiceResult>),

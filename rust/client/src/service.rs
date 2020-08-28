@@ -49,15 +49,15 @@ use uuid::Uuid;
 /// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service and destroy it again explicitly:
-/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
 /// service.destroy().await?;
 ///
 /// // Destroy a service implicitly by dropping it:
-/// let service = object.create_service(SERVICE_UUID).await?;
+/// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// mem::drop(service);
 ///
 /// // Destroy a service implicitly by dropping the object:
-/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id = service.id();
 /// mem::drop(object);
 /// assert_eq!(service.destroy().await, Err(Error::InvalidService(service_id)));
@@ -103,7 +103,7 @@ use uuid::Uuid;
 ///
 /// // Create object and our chat service:
 /// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
-/// let mut service = object.create_service(CHAT_UUID).await?;
+/// let mut service = object.create_service(CHAT_UUID, 1).await?;
 /// let service_id = service.id();
 ///
 /// // HashSet to keep track of users:
@@ -353,12 +353,12 @@ impl fmt::Display for ServiceUuid {
 /// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service:
-/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id1 = service.id();
 /// service.destroy().await?;
 ///
 /// // Create the same service again:
-/// let mut service = object.create_service(SERVICE_UUID).await?;
+/// let mut service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id2 = service.id();
 /// service.destroy().await?;
 ///

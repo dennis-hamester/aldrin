@@ -730,8 +730,8 @@ where
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
             Request::DestroyObject(cookie, reply) => self.destroy_object(cookie, reply).await,
             Request::SubscribeObjects(sender, mode) => self.subscribe_objects(sender, mode).await,
-            Request::CreateService(object_cookie, service_uuid, reply) => {
-                self.create_service(object_cookie, service_uuid, reply)
+            Request::CreateService(object_cookie, service_uuid, version, reply) => {
+                self.create_service(object_cookie, service_uuid, version, reply)
                     .await
             }
             Request::DestroyService(cookie, reply) => self.destroy_service(cookie, reply).await,
@@ -809,6 +809,7 @@ where
         &mut self,
         object_cookie: ObjectCookie,
         service_uuid: ServiceUuid,
+        version: u32,
         reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_service.insert(reply);
@@ -817,7 +818,7 @@ where
                 serial,
                 object_cookie: object_cookie.0,
                 uuid: service_uuid.0,
-                version: todo!(),
+                version,
             }))
             .await
             .map_err(Into::into)

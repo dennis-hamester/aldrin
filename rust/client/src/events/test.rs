@@ -10,7 +10,7 @@ async fn stop_on_client_shutdown() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     let mut events = client.events();
     events.subscribe(svc.id(), 0).await.unwrap();
@@ -31,7 +31,7 @@ async fn stop_on_broker_shutdown() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     let mut events = client.events();
     events.subscribe(svc.id(), 0).await.unwrap();

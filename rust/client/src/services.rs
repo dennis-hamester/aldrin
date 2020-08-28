@@ -36,7 +36,7 @@ use std::task::{Context, Poll};
 /// # tokio::spawn(conn.await??.run());
 /// let mut services = handle.services(SubscribeMode::CurrentOnly)?;
 /// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # object.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+/// # object.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
 ///
 /// while let Some(event) = services.next().await {
 ///     match event {
@@ -77,7 +77,7 @@ use std::task::{Context, Poll};
 /// # tokio::spawn(client.run());
 /// # tokio::spawn(conn.await??.run());
 /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # let svc = obj.create_service(INTERESTING_SERVICE_UUID).await?;
+/// # let svc = obj.create_service(INTERESTING_SERVICE_UUID, 0).await?;
 /// let mut services = handle.services(SubscribeMode::CurrentOnly)?;
 ///
 /// let service_id = services

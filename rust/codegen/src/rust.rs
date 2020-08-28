@@ -778,6 +778,7 @@ impl<'a> RustGenerator<'a> {
     fn service_def_server(&mut self, svc: &ast::ServiceDef) {
         let svc_name = svc.name().value();
         let svc_uuid_const = service_uuid_const(svc);
+        let svc_version_const = service_version_const(svc);
         let event_emitter = event_emitter(svc_name);
 
         genln!(self, "#[derive(Debug)]");
@@ -789,7 +790,7 @@ impl<'a> RustGenerator<'a> {
 
         genln!(self, "impl {} {{", svc_name);
         genln!(self, "    pub async fn create(object: &aldrin_client::Object) -> Result<Self, aldrin_client::Error> {{");
-        genln!(self, "        let service = object.create_service({}).await?;", svc_uuid_const);
+        genln!(self, "        let service = object.create_service({}, {}).await?;", svc_uuid_const, svc_version_const);
         genln!(self, "        Ok({} {{ service }})", svc_name);
         genln!(self, "    }}");
         genln!(self);

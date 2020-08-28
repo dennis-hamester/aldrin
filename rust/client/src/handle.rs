@@ -168,12 +168,14 @@ impl Handle {
         &self,
         object_id: ObjectId,
         service_uuid: ServiceUuid,
+        version: u32,
     ) -> Result<Service, Error> {
         let (res_send, res_reply) = oneshot::channel();
         self.send
             .unbounded_send(Request::CreateService(
                 object_id.cookie,
                 service_uuid,
+                version,
                 res_send,
             ))
             .map_err(|_| Error::ClientShutdown)?;
@@ -253,7 +255,7 @@ impl Handle {
     /// # tokio::spawn(client.run());
     /// # tokio::spawn(conn.await??.run());
     /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_function(service_id, 1, "1 + 2 = ?".into_value())?;
@@ -382,7 +384,7 @@ impl Handle {
     /// # tokio::spawn(client.run());
     /// # tokio::spawn(conn.await??.run());
     /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4())).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
     /// handle.emit_event(service_id, 1, "Hello, world!".into_value())?;
@@ -491,7 +493,7 @@ impl Handle {
     /// let object_uuid = ObjectUuid::new_v4();
     /// let object = handle.create_object(object_uuid).await?;
     /// let service_uuid = ServiceUuid::new_v4();
-    /// let service = object.create_service(service_uuid).await?;
+    /// let service = object.create_service(service_uuid, 1).await?;
     ///
     /// // Find a service without specifying an object UUID:
     /// let service_id = handle
@@ -581,7 +583,7 @@ impl Handle {
     ///
     /// // Create the object and service:
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// let service = object.create_service(SERVICE_UUID).await?;
+    /// let service = object.create_service(SERVICE_UUID, 1).await?;
     ///
     /// // Now the future will resolve:
     /// let service_id = service_id.await?;
@@ -697,8 +699,8 @@ impl Handle {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// let service1 = object.create_service(ServiceUuid::new_v4()).await?;
-    /// let service2 = object.create_service(ServiceUuid::new_v4()).await?;
+    /// let service1 = object.create_service(ServiceUuid::new_v4(), 1).await?;
+    /// let service2 = object.create_service(ServiceUuid::new_v4(), 1).await?;
     ///
     /// let (object_id, object_services) = handle
     ///     .query_object_services(object.id().uuid)
