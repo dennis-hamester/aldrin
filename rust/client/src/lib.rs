@@ -86,9 +86,10 @@ use aldrin_proto::{
     CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
     Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
-    QueryObjectResult, ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
-    SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
+    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, UnsubscribeEvent, Value,
 };
 use events::{EventsId, EventsRequest};
 use futures_channel::{mpsc, oneshot};
@@ -160,6 +161,7 @@ where
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
     query_object: SerialMap<QueryObjectData>,
+    query_service_version: SerialMap<oneshot::Sender<QueryServiceVersionResult>>,
 }
 
 impl<T> Client<T>
@@ -233,6 +235,7 @@ where
             subscriptions: HashMap::new(),
             broker_subscriptions: HashMap::new(),
             query_object: SerialMap::new(),
+            query_service_version: SerialMap::new(),
         })
     }
 
@@ -312,7 +315,7 @@ where
             Message::UnsubscribeEvent(ev) => self.event_unsubscribed(ev),
             Message::EmitEvent(ev) => self.event_emitted(ev),
             Message::QueryObjectReply(re) => self.query_object_reply(re),
-            Message::QueryServiceVersionReply(_re) => todo!(),
+            Message::QueryServiceVersionReply(re) => self.query_service_version_reply(re),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -727,6 +730,19 @@ where
         }
     }
 
+    fn query_service_version_reply(
+        &mut self,
+        reply: QueryServiceVersionReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let send = match self.query_service_version.remove(reply.serial) {
+            Some(send) => send,
+            None => return Ok(()),
+        };
+
+        send.send(reply.result).ok();
+        Ok(())
+    }
+
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
             Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
@@ -749,6 +765,9 @@ where
             Request::UnsubscribeEvent(req) => self.unsubscribe_event(req).await,
             Request::EmitEvent(req) => self.emit_event(req).await,
             Request::QueryObject(req) => self.query_object(req).await,
+            Request::QueryServiceVersion(cookie, reply) => {
+                self.query_service_version(cookie, reply).await
+            }
 
             // Handled in Client::run()
             Request::Shutdown => unreachable!(),
@@ -993,6 +1012,21 @@ where
                 serial,
                 uuid: req.object_uuid.0,
                 with_services: req.with_services,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn query_service_version(
+        &mut self,
+        cookie: ServiceCookie,
+        reply: oneshot::Sender<QueryServiceVersionResult>,
+    ) -> Result<(), RunError<T::Error>> {
+        let serial = self.query_service_version.insert(reply);
+        self.t
+            .send_and_flush(Message::QueryServiceVersion(QueryServiceVersion {
+                serial,
+                cookie: cookie.0,
             }))
             .await
             .map_err(Into::into)

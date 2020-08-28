@@ -4,7 +4,7 @@ use super::{
 };
 use aldrin_proto::{
     CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
-    DestroyServiceResult, SubscribeEventResult, Value,
+    DestroyServiceResult, QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::{mpsc, oneshot};
 
@@ -33,6 +33,7 @@ pub(crate) enum Request {
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
     QueryObject(QueryObjectRequest),
+    QueryServiceVersion(ServiceCookie, oneshot::Sender<QueryServiceVersionResult>),
 }
 
 #[derive(Debug)]

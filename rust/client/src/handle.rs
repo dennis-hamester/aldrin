@@ -6,7 +6,7 @@ use super::{
 };
 use aldrin_proto::{
     CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
-    DestroyServiceResult, SubscribeEventResult, Value,
+    DestroyServiceResult, QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -739,6 +739,44 @@ impl Handle {
                 Ok(Some((object_id, ObjectServices { object_id, recv })))
             }
             None => Ok(None),
+        }
+    }
+
+    /// Queries the version of a service.
+    ///
+    /// If `service_id` does not name a valid service, then `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
+    /// let service = object.create_service(ServiceUuid::new_v4(), 2).await?;
+    ///
+    /// let version = handle.query_service_version(service.id()).await?;
+    /// assert_eq!(version, Some(2));
+    ///
+    /// service.destroy().await?;
+    /// let version = handle.query_service_version(service.id()).await?;
+    /// assert_eq!(version, None);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn query_service_version(&self, service_id: ServiceId) -> Result<Option<u32>, Error> {
+        let (rep_send, rep_recv) = oneshot::channel();
+        self.send
+            .unbounded_send(Request::QueryServiceVersion(service_id.cookie, rep_send))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
+            QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
+            QueryServiceVersionResult::InvalidService => Ok(None),
         }
     }
 }
