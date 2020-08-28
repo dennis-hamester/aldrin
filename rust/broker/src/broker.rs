@@ -40,7 +40,7 @@ pub struct Broker {
     conns: HashMap<ConnectionId, ConnectionState>,
     obj_uuids: HashMap<ObjectCookie, ObjectUuid>,
     objs: HashMap<ObjectUuid, Object>,
-    svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid)>,
+    svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid, u32)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
 
     /// Map of pending function calls.
@@ -478,7 +478,7 @@ impl Broker {
 
         let dup = self
             .svc_uuids
-            .insert(svc_cookie, (obj_uuid, obj_cookie, svc_uuid));
+            .insert(svc_cookie, (obj_uuid, obj_cookie, svc_uuid, req.version));
         debug_assert!(dup.is_none());
         entry.insert(Service::new());
         obj.add_service(svc_cookie);
@@ -499,7 +499,7 @@ impl Broker {
         };
 
         let svc_cookie = ServiceCookie(req.cookie);
-        let (obj_uuid, _, _) = match self.svc_uuids.get(&svc_cookie) {
+        let (obj_uuid, _, _, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(ids) => *ids,
             None => {
                 return conn.send(Message::DestroyServiceReply(DestroyServiceReply {
@@ -535,7 +535,7 @@ impl Broker {
         conn.set_services_subscribed(true);
 
         if let Some(serial) = req.serial {
-            for (&svc_cookie, &(obj_uuid, obj_cookie, svc_uuid)) in &self.svc_uuids {
+            for (&svc_cookie, &(obj_uuid, obj_cookie, svc_uuid, _)) in &self.svc_uuids {
                 conn.send(Message::ServiceCreatedEvent(ServiceCreatedEvent {
                     object_uuid: obj_uuid.0,
                     object_cookie: obj_cookie.0,
@@ -570,7 +570,7 @@ impl Broker {
         req: CallFunction,
     ) -> Result<(), ()> {
         let svc_cookie = ServiceCookie(req.service_cookie);
-        let (obj_uuid, _, svc_uuid) = match self.svc_uuids.get(&svc_cookie) {
+        let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(uuids) => *uuids,
             None => {
                 let conn = match self.conns.get_mut(id) {
@@ -658,7 +658,7 @@ impl Broker {
         };
 
         let svc_cookie = ServiceCookie(req.service_cookie);
-        let (obj_uuid, _, svc_uuid) = match self.svc_uuids.get(&svc_cookie) {
+        let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(&ids) => ids,
             None => {
                 return conn.send(Message::SubscribeEventReply(SubscribeEventReply {
@@ -707,7 +707,7 @@ impl Broker {
         req: UnsubscribeEvent,
     ) -> Result<(), ()> {
         let svc_cookie = ServiceCookie(req.service_cookie);
-        let (obj_uuid, _, svc_uuid) = match self.svc_uuids.get(&svc_cookie) {
+        let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(ids) => *ids,
             None => return Ok(()),
         };
@@ -778,7 +778,7 @@ impl Broker {
         }
 
         for cookie in obj.services() {
-            let (_, _, uuid) = self.svc_uuids.get(&cookie).expect("inconsistent state");
+            let (_, _, uuid, _) = self.svc_uuids.get(&cookie).expect("inconsistent state");
             conn.send(Message::QueryObjectReply(QueryObjectReply {
                 serial: req.serial,
                 result: QueryObjectResult::Service {
@@ -825,7 +825,7 @@ impl Broker {
     /// This function will also remove everything related to `svc_cookie`, e.g. pending function
     /// calls. It is safe to call with an invalid `svc_cookie`.
     fn remove_service(&mut self, state: &mut State, svc_cookie: ServiceCookie) {
-        let (obj_uuid, obj_cookie, svc_uuid) = match self.svc_uuids.remove(&svc_cookie) {
+        let (obj_uuid, obj_cookie, svc_uuid, _) = match self.svc_uuids.remove(&svc_cookie) {
             Some(ids) => ids,
             None => return,
         };
@@ -876,7 +876,7 @@ impl Broker {
         svc_cookie: ServiceCookie,
         event: u32,
     ) {
-        let (obj_uuid, _, svc_uuid) = match self.svc_uuids.get(&svc_cookie) {
+        let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(ids) => *ids,
             None => return,
         };
