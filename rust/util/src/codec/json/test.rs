@@ -849,3 +849,32 @@ fn message_query_object_reply() {
         json!({"query-object-reply": {"serial": 0, "result": "invalid-object"}}),
     );
 }
+
+#[test]
+fn message_query_service_version() {
+    test_message(
+        Message::QueryServiceVersion(QueryServiceVersion {
+            serial: 0,
+            cookie: UUID1,
+        }),
+        json!({"query-service-version": {"serial": 0, "cookie": UUID1}}),
+    );
+}
+
+#[test]
+fn message_query_service_version_reply() {
+    test_message(
+        Message::QueryServiceVersionReply(QueryServiceVersionReply {
+            serial: 0,
+            result: QueryServiceVersionResult::Ok(1),
+        }),
+        json!({"query-service-version-reply": {"serial": 0, "result": {"ok": 1}}}),
+    );
+    test_message(
+        Message::QueryServiceVersionReply(QueryServiceVersionReply {
+            serial: 0,
+            result: QueryServiceVersionResult::InvalidService,
+        }),
+        json!({"query-service-version-reply": {"serial": 0, "result": "invalid-service"}}),
+    );
+}

@@ -312,6 +312,7 @@ where
             Message::UnsubscribeEvent(ev) => self.event_unsubscribed(ev),
             Message::EmitEvent(ev) => self.event_emitted(ev),
             Message::QueryObjectReply(re) => self.query_object_reply(re),
+            Message::QueryServiceVersionReply(_re) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -323,7 +324,8 @@ where
             | Message::DestroyService(_)
             | Message::SubscribeServices(_)
             | Message::UnsubscribeServices(())
-            | Message::QueryObject(_) => Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::QueryObject(_)
+            | Message::QueryServiceVersion(_) => Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(()) => unreachable!(), // Handled in run.
         }

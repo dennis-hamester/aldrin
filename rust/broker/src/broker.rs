@@ -299,6 +299,7 @@ impl Broker {
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, req),
             Message::QueryObject(req) => self.query_object(state, id, req),
+            Message::QueryServiceVersion(_req) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -313,7 +314,8 @@ impl Broker {
             | Message::ServiceCreatedEvent(_)
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_)
-            | Message::QueryObjectReply(_) => Err(()),
+            | Message::QueryObjectReply(_)
+            | Message::QueryServiceVersionReply(_) => Err(()),
 
             Message::Shutdown(()) => unreachable!(), // Handled by connection.
         }

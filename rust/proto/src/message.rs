@@ -37,6 +37,8 @@ pub enum Message {
     EmitEvent(EmitEvent),
     QueryObject(QueryObject),
     QueryObjectReply(QueryObjectReply),
+    QueryServiceVersion(QueryServiceVersion),
+    QueryServiceVersionReply(QueryServiceVersionReply),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -502,4 +504,50 @@ pub enum QueryObjectResult {
 pub struct QueryObjectReply {
     pub serial: u32,
     pub result: QueryObjectResult,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct QueryServiceVersion {
+    pub serial: u32,
+    pub cookie: Uuid,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub enum QueryServiceVersionResult {
+    Ok(u32),
+    InvalidService,
+}
+
+impl QueryServiceVersionResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            QueryServiceVersionResult::Ok(_) => true,
+            QueryServiceVersionResult::InvalidService => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct QueryServiceVersionReply {
+    pub serial: u32,
+    pub result: QueryServiceVersionResult,
 }

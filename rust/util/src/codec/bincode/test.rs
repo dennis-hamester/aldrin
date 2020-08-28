@@ -1366,6 +1366,80 @@ fn message_query_object_reply() {
 }
 
 #[test]
+fn message_query_service_version() {
+    let m = Message::QueryServiceVersion(QueryServiceVersion {
+        serial: 0x12345678,
+        cookie: Uuid::from_u128(0x00112233445566778899aabbccddeeff),
+    });
+    test_message_le(
+        &m,
+        &[
+            29, // QueryServiceVersion
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            29, // QueryServiceVersion
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+}
+
+#[test]
+fn message_query_service_version_reply() {
+    let m = Message::QueryServiceVersionReply(QueryServiceVersionReply {
+        serial: 0x12345678,
+        result: QueryServiceVersionResult::Ok(0x01234567),
+    });
+    test_message_le(
+        &m,
+        &[
+            30, // QueryServiceVersionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+            252, 0x67, 0x45, 0x23, 0x01, // version
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            30, // QueryServiceVersionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+            252, 0x01, 0x23, 0x45, 0x67, // version
+        ],
+    );
+    let m = Message::QueryServiceVersionReply(QueryServiceVersionReply {
+        serial: 0x12345678,
+        result: QueryServiceVersionResult::InvalidService,
+    });
+    test_message_le(
+        &m,
+        &[
+            30, // QueryServiceVersionReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidService
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            30, // QueryServiceVersionReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidService
+        ],
+    );
+}
+
+#[test]
 fn value_none() {
     let v = Value::None;
     test_value_le(
