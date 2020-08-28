@@ -298,7 +298,7 @@ impl Broker {
             Message::SubscribeEvent(req) => self.subscribe_event(id, req),
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, req),
-            Message::QueryObject(req) => self.query_object(state, id, req),
+            Message::QueryObject(req) => self.query_object(id, req),
             Message::QueryServiceVersion(_req) => todo!(),
 
             Message::Connect(_)
@@ -751,12 +751,7 @@ impl Broker {
         Ok(())
     }
 
-    fn query_object(
-        &mut self,
-        state: &mut State,
-        id: &ConnectionId,
-        req: QueryObject,
-    ) -> Result<(), ()> {
+    fn query_object(&mut self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -766,25 +761,17 @@ impl Broker {
         let obj = match self.objs.get(&uuid) {
             Some(obj) => obj,
             None => {
-                let msg = Message::QueryObjectReply(QueryObjectReply {
+                return conn.send(Message::QueryObjectReply(QueryObjectReply {
                     serial: req.serial,
                     result: QueryObjectResult::InvalidObject,
-                });
-                if let Err(()) = conn.send(msg) {
-                    state.push_remove_conn(id.clone());
-                }
-                return Ok(());
+                }));
             }
         };
 
-        let msg = Message::QueryObjectReply(QueryObjectReply {
+        conn.send(Message::QueryObjectReply(QueryObjectReply {
             serial: req.serial,
             result: QueryObjectResult::Cookie(obj.cookie().0),
-        });
-        if let Err(()) = conn.send(msg) {
-            state.push_remove_conn(id.clone());
-            return Ok(());
-        }
+        }))?;
 
         if !req.with_services {
             return Ok(());
@@ -792,27 +779,19 @@ impl Broker {
 
         for cookie in obj.services() {
             let (_, _, uuid) = self.svc_uuids.get(&cookie).expect("inconsistent state");
-            let msg = Message::QueryObjectReply(QueryObjectReply {
+            conn.send(Message::QueryObjectReply(QueryObjectReply {
                 serial: req.serial,
                 result: QueryObjectResult::Service {
                     uuid: uuid.0,
                     cookie: cookie.0,
                 },
-            });
-            if let Err(()) = conn.send(msg) {
-                state.push_remove_conn(id.clone());
-                return Ok(());
-            }
+            }))?;
         }
 
-        let msg = Message::QueryObjectReply(QueryObjectReply {
+        conn.send(Message::QueryObjectReply(QueryObjectReply {
             serial: req.serial,
             result: QueryObjectResult::Done,
-        });
-        if let Err(()) = conn.send(msg) {
-            state.push_remove_conn(id.clone());
-            return Ok(());
-        }
+        }))?;
 
         Ok(())
     }
