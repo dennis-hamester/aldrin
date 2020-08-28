@@ -65,7 +65,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<()> {
     };
 
     let ident_obj = handle.create_object(ObjectUuid::new_v4()).await?;
-    let room = chat::ChatProxy::bind(handle.clone(), id)?;
+    let room = chat::ChatProxy::bind(handle.clone(), id).await?;
     let mut room_events = room.events();
     room_events.subscribe_all().await?;
 

@@ -30,7 +30,7 @@
 //!
 //!     // Create a proxy to the calculator:
 //!     let service_id = client.wait_for_service(CALCULATOR_UUID, None).await?;
-//!     let calc = CalculatorProxy::bind(client.clone(), service_id)?;
+//!     let calc = CalculatorProxy::bind(client.clone(), service_id).await?;
 //!
 //!     // Perform a few tests:
 //!     assert_eq!(calc.add(CalculatorAddArgs { lhs: 1, rhs: 2 })?.await?.unwrap(), 3);

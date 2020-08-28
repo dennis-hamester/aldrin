@@ -59,7 +59,7 @@ pub(crate) async fn query_rooms(handle: &Handle) -> Result<HashMap<ServiceId, St
             continue;
         }
 
-        let room = chat::ChatProxy::bind(handle.clone(), id)?;
+        let room = chat::ChatProxy::bind(handle.clone(), id).await?;
         let name = room.get_name()?.await?;
         res.insert(id, name);
     }

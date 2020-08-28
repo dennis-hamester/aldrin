@@ -106,7 +106,7 @@ async fn run(args: RunArgs) -> Result<()> {
         select! {
             Some(ServiceEvent::Created(id)) = svcs.next() => {
                 if id.uuid == ping::PING_UUID {
-                    let other = ping::PingProxy::bind(handle.clone(), id)?;
+                    let other = ping::PingProxy::bind(handle.clone(), id).await?;
                     let mut events = other.events();
                     events.subscribe_ping().await?;
                     others.push(events);
