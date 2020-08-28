@@ -33,7 +33,7 @@ use uuid::Uuid;
 /// # tokio::spawn(client.run());
 /// # tokio::spawn(conn.await??.run());
 /// // Create an object with a random UUID:
-/// let mut object1 = handle.create_object(ObjectUuid::new_v4()).await?;
+/// let object1 = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // Destroy object1 explicitly:
 /// object1.destroy().await?;
@@ -71,7 +71,7 @@ impl Object {
     /// Destroys the object.
     ///
     /// If the object has already been destroyed, [`Error::InvalidObject`] is returned.
-    pub async fn destroy(&mut self) -> Result<(), Error> {
+    pub async fn destroy(&self) -> Result<(), Error> {
         self.client.destroy_object(self.id).await
     }
 
@@ -240,12 +240,12 @@ impl fmt::Display for ObjectUuid {
 /// let object_uuid = ObjectUuid::new_v4();
 ///
 /// // Create an object:
-/// let mut object = handle.create_object(object_uuid).await?;
+/// let object = handle.create_object(object_uuid).await?;
 /// let object_id1 = object.id();
 /// object.destroy().await?;
 ///
 /// // Create the same object again:
-/// let mut object = handle.create_object(object_uuid).await?;
+/// let object = handle.create_object(object_uuid).await?;
 /// let object_id2 = object.id();
 /// object.destroy().await?;
 ///

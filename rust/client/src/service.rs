@@ -46,7 +46,7 @@ use uuid::Uuid;
 /// # let handle = client.handle().clone();
 /// # tokio::spawn(client.run());
 /// # tokio::spawn(conn.await??.run());
-/// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
+/// let object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service and destroy it again explicitly:
 /// let service = object.create_service(SERVICE_UUID, 1).await?;
@@ -102,7 +102,7 @@ use uuid::Uuid;
 /// # tokio::spawn(conn.await??.run());
 ///
 /// // Create object and our chat service:
-/// let mut object = handle.create_object(ObjectUuid::new_v4()).await?;
+/// let object = handle.create_object(ObjectUuid::new_v4()).await?;
 /// let mut service = object.create_service(CHAT_UUID, 1).await?;
 /// let service_id = service.id();
 ///
