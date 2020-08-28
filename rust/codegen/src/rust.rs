@@ -798,6 +798,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.service.id()");
         genln!(self, "    }}");
         genln!(self);
+        genln!(self, "    pub fn version(&self) -> u32 {{");
+        genln!(self, "        self.service.version()");
+        genln!(self, "    }}");
+        genln!(self);
         genln!(self, "    pub fn handle(&self) -> &aldrin_client::Handle {{");
         genln!(self, "        self.service.handle()");
         genln!(self, "    }}");
