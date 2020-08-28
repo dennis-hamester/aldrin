@@ -15,9 +15,11 @@ use aldrin_proto::{
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent, ObjectDestroyedEvent,
-    QueryObject, QueryObjectReply, QueryObjectResult, ServiceCreatedEvent, ServiceDestroyedEvent,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
+    QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, ServiceCreatedEvent,
+    ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
+    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply,
+    UnsubscribeEvent,
 };
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
@@ -299,7 +301,7 @@ impl Broker {
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, req),
             Message::QueryObject(req) => self.query_object(id, req),
-            Message::QueryServiceVersion(_req) => todo!(),
+            Message::QueryServiceVersion(req) => self.query_service_version(id, req),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -792,6 +794,39 @@ impl Broker {
             serial: req.serial,
             result: QueryObjectResult::Done,
         }))?;
+
+        Ok(())
+    }
+
+    fn query_service_version(
+        &mut self,
+        id: &ConnectionId,
+        req: QueryServiceVersion,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        match self.svc_uuids.get(&ServiceCookie(req.cookie)) {
+            Some(&(_, _, _, version)) => {
+                conn.send(Message::QueryServiceVersionReply(
+                    QueryServiceVersionReply {
+                        serial: req.serial,
+                        result: QueryServiceVersionResult::Ok(version),
+                    },
+                ))?;
+            }
+
+            None => {
+                conn.send(Message::QueryServiceVersionReply(
+                    QueryServiceVersionReply {
+                        serial: req.serial,
+                        result: QueryServiceVersionResult::InvalidService,
+                    },
+                ))?;
+            }
+        }
 
         Ok(())
     }
