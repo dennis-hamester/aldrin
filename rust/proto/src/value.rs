@@ -116,6 +116,24 @@ impl IntoValue for () {
     }
 }
 
+impl<T> FromValue for Box<T>
+where
+    T: FromValue,
+{
+    fn from_value(v: Value) -> Result<Box<T>, ConversionError> {
+        Ok(Box::new(T::from_value(v)?))
+    }
+}
+
+impl<T> IntoValue for Box<T>
+where
+    T: IntoValue,
+{
+    fn into_value(self) -> Value {
+        (*self).into_value()
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde-derive",
