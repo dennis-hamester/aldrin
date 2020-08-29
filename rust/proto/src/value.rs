@@ -101,6 +101,21 @@ impl IntoValue for Value {
     }
 }
 
+impl FromValue for () {
+    fn from_value(v: Value) -> Result<(), ConversionError> {
+        match v {
+            Value::None => Ok(()),
+            _ => Err(ConversionError),
+        }
+    }
+}
+
+impl IntoValue for () {
+    fn into_value(self) -> Value {
+        Value::None
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde-derive",
