@@ -29,8 +29,8 @@
  
 -        Ok(MyStruct {
 +        Ok(MyStructRenamed {
-             field1: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&1).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,
-             field2: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&2).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,
+             field1: v.remove(&1).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,
+             field2: v.remove(&2).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,
          })
      }
  }

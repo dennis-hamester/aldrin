@@ -6,7 +6,7 @@ use super::{
 };
 use aldrin_proto::{
     CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
-    DestroyServiceResult, QueryServiceVersionResult, SubscribeEventResult, Value,
+    DestroyServiceResult, IntoValue, QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -241,7 +241,6 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::{FromValue, IntoValue};
     /// # use futures::stream::StreamExt;
     ///
     /// # #[tokio::main]
@@ -259,8 +258,8 @@ impl Handle {
     /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
-    /// let result = handle.call_function(service_id, 1, "1 + 2 = ?".into_value())?;
-    /// # svc.next().await.unwrap().reply.ok(3u32.into_value())?;
+    /// let result = handle.call_function(service_id, 1, "1 + 2 = ?")?;
+    /// # svc.next().await.unwrap().reply.ok(3u32)?;
     ///
     /// // Await the result. The `?` here checks for errors on the protocol level, such as a
     /// // intermediate shutdown, or whether the function call was aborted by the callee.
@@ -269,7 +268,7 @@ impl Handle {
     /// // Now, result is of type `Result<Value, Value>`, directly representing the return value of
     /// // the function call.
     /// match result {
-    ///     Ok(ok) => assert_eq!(u32::from_value(ok)?, 3),
+    ///     Ok(ok) => assert_eq!(ok.convert::<u32>()?, 3),
     ///     Err(err) => panic!("Function call failed: {:?}.", err),
     /// }
     /// # Ok(())
@@ -279,14 +278,14 @@ impl Handle {
         &self,
         service_id: ServiceId,
         function: u32,
-        args: Value,
+        args: impl IntoValue,
     ) -> Result<CallFunctionFuture, Error> {
         let (send, recv) = oneshot::channel();
         self.send
             .unbounded_send(Request::CallFunction(
                 service_id.cookie,
                 function,
-                args,
+                args.into_value(),
                 send,
             ))
             .map_err(|_| Error::ClientShutdown)?;
@@ -372,7 +371,6 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::IntoValue;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_broker::Broker::new();
@@ -388,16 +386,21 @@ impl Handle {
     /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
-    /// handle.emit_event(service_id, 1, "Hello, world!".into_value())?;
+    /// handle.emit_event(service_id, 1, "Hello, world!")?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn emit_event(&self, service_id: ServiceId, event: u32, args: Value) -> Result<(), Error> {
+    pub fn emit_event(
+        &self,
+        service_id: ServiceId,
+        event: u32,
+        args: impl IntoValue,
+    ) -> Result<(), Error> {
         self.send
             .unbounded_send(Request::EmitEvent(EmitEventRequest {
                 service_cookie: service_id.cookie,
                 event,
-                args,
+                args: args.into_value(),
             }))
             .map_err(|_| Error::ClientShutdown)
     }

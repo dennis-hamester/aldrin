@@ -70,7 +70,6 @@ use uuid::Uuid;
 ///
 /// ```
 /// use aldrin_client::{ObjectUuid, ServiceUuid};
-/// use aldrin_proto::{FromValue, IntoValue, Value};
 /// use futures::stream::StreamExt;
 /// use std::collections::HashSet;
 ///
@@ -109,7 +108,7 @@ use uuid::Uuid;
 /// // HashSet to keep track of users:
 /// let mut users = HashSet::new();
 ///
-/// # handle.call_function(service.id(), SHUTDOWN, Value::None)?;
+/// # handle.call_function(service.id(), SHUTDOWN, ())?;
 /// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
 /// // which contains the function's id, the arguments, and a reply object.
 /// while let Some(func) = service.next().await {
@@ -117,38 +116,38 @@ use uuid::Uuid;
 ///         SHUTDOWN => break,
 ///
 ///         JOIN_CHAT => {
-///             let name = String::from_value(func.args)?;
+///             let name: String = func.args.convert()?;
 ///             if users.insert(name.clone()) {
 ///                 // Emit an event that a new user with the given name joined:
-///                 handle.emit_event(service_id, JOINED_CHAT, name.into_value())?;
+///                 handle.emit_event(service_id, JOINED_CHAT, name)?;
 ///
-///                 func.reply.ok(Value::None)?;
+///                 func.reply.ok(())?;
 ///             } else {
 ///                 // Signal that the name is already taken.
-///                 func.reply.err(Value::None)?;
+///                 func.reply.err(())?;
 ///             }
 ///         }
 ///
 ///         LEAVE_CHAT => {
-///             let name = String::from_value(func.args)?;
+///             let name: String = func.args.convert()?;
 ///             if users.remove(&name) {
 ///                 // Emit an event that a user with the given name left:
-///                 handle.emit_event(service_id, LEFT_CHAT, name.into_value())?;
+///                 handle.emit_event(service_id, LEFT_CHAT, name)?;
 ///
-///                 func.reply.ok(Value::None)?;
+///                 func.reply.ok(())?;
 ///             } else {
 ///                 // Signal that the name is not known.
-///                 func.reply.err(Value::None)?;
+///                 func.reply.err(())?;
 ///             }
 ///         }
 ///
-///         LIST_USERS => func.reply.ok(users.clone().into_value())?,
+///         LIST_USERS => func.reply.ok(users.clone())?,
 ///
 ///         SEND_MESSAGE => {
 ///             // Broadcast the message:
-///             let message = String::from_value(func.args)?;
-///             handle.emit_event(service_id, MESSAGE_SENT, message.into_value())?;
-///             func.reply.ok(Value::None)?;
+///             let message = func.args.convert()?;
+///             handle.emit_event(service_id, MESSAGE_SENT, message)?;
+///             func.reply.ok(())?;
 ///         }
 ///
 ///         _ => {}
@@ -444,19 +443,19 @@ impl FunctionCallReply {
     }
 
     /// Signals that the function call was successful.
-    pub fn ok(mut self, res: Value) -> Result<(), Error> {
+    pub fn ok(mut self, res: impl IntoValue) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Ok(res))
+            .function_call_reply(self.serial, CallFunctionResult::Ok(res.into_value()))
     }
 
     /// Signals that the function call has failed.
-    pub fn err(mut self, res: Value) -> Result<(), Error> {
+    pub fn err(mut self, res: impl IntoValue) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Err(res))
+            .function_call_reply(self.serial, CallFunctionResult::Err(res.into_value()))
     }
 
     /// Aborts the function call.

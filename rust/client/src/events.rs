@@ -36,8 +36,6 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 ///
 /// ```
 /// use aldrin_client::{Event, SubscribeMode};
-/// use aldrin_proto::FromValue;
-/// # use aldrin_proto::IntoValue;
 /// use futures::stream::StreamExt;
 ///
 /// # #[tokio::main]
@@ -59,17 +57,17 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// events.subscribe(service_id, 1).await?;
 /// events.subscribe(service_id, 2).await?;
 ///
-/// # handle.emit_event(service_id, 1, 32u32.into_value())?;
+/// # handle.emit_event(service_id, 1, 32u32)?;
 /// while let Some(event) = events.next().await {
 ///     match event {
 ///         Event { id: 1, args, .. } => {
-///             let arg = u32::from_value(args)?;
+///             let arg: u32 = args.convert()?;
 ///             println!("Event 1 with u32 arg {}.", arg);
-///             # handle.emit_event(service_id, 2, "Hello, world!".into_value())?;
+///             # handle.emit_event(service_id, 2, "Hello, world!")?;
 ///         }
 ///
 ///         Event { id: 2, args, .. } => {
-///             let arg = String::from_value(args)?;
+///             let arg: String = args.convert()?;
 ///             println!("Event 2 with string arg {}.", arg);
 ///             # svc.destroy().await?;
 ///         }

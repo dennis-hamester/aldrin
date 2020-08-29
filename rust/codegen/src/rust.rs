@@ -212,9 +212,9 @@ impl<'a> RustGenerator<'a> {
             let field_name = field.name().value();
             let field_id = field.id().value();
             if field.required() {
-                genln!(self, "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).ok_or(aldrin_client::codegen::aldrin_proto::ConversionError)?)?,", field_name, field_id);
+                genln!(self, "            {}: v.remove(&{}).ok_or(aldrin_client::codegen::aldrin_proto::ConversionError)?.convert()?,", field_name, field_id);
             } else {
-                genln!(self, "            {}: aldrin_client::codegen::aldrin_proto::FromValue::from_value(v.remove(&{}).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None))?,", field_name, field_id);
+                genln!(self, "            {}: v.remove(&{}).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,", field_name, field_id);
             }
         }
         genln!(self, "        }})");
@@ -358,7 +358,7 @@ impl<'a> RustGenerator<'a> {
             let var_name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            ({}, val) => Ok({}::{}(aldrin_client::codegen::aldrin_proto::FromValue::from_value(val)?)),", id, name, var_name);
+                genln!(self, "            ({}, val) => Ok({}::{}(val.convert()?)),", id, name, var_name);
             } else {
                 genln!(self, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", id, name, var_name);
             }
@@ -564,9 +564,9 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "    pub fn {}(&self{}) -> Result<{}, aldrin_client::Error> {{", func_name, arg, reply_future);
             if func.args().is_some() {
-                genln!(self, "        let reply = self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))?;", id);
+                genln!(self, "        let reply = self.client.call_function(self.id, {}, arg)?;", id);
             } else {
-                genln!(self, "        let reply = self.client.call_function(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None)?;", id);
+                genln!(self, "        let reply = self.client.call_function(self.id, {}, ())?;", id);
             }
             genln!(self, "        Ok({}(reply))", reply_future);
             genln!(self, "    }}");
@@ -627,17 +627,17 @@ impl<'a> RustGenerator<'a> {
 
             match (func.ok().is_some(), func.err().is_some()) {
                 (true, true) => {
-                    genln!(self, "            Ok(v) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map(Ok).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
-                    genln!(self, "            Err(e) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(e).map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                    genln!(self, "            Ok(v) => std::task::Poll::Ready(v.convert().map(Ok).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                    genln!(self, "            Err(e) => std::task::Poll::Ready(e.convert().map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
                 }
                 (true, false) => {
-                    genln!(self, "            Ok(v) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(v).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                    genln!(self, "            Ok(v) => std::task::Poll::Ready(v.convert().map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
                     genln!(self, "            Err(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
                 }
                 (false, true) => {
                     genln!(self, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(Ok(()))),");
                     genln!(self, "            Ok(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
-                    genln!(self, "            Err(e) => std::task::Poll::Ready(aldrin_client::codegen::aldrin_proto::FromValue::from_value(e).map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
+                    genln!(self, "            Err(e) => std::task::Poll::Ready(e.convert().map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
                 }
                 (false, false) => {
                     genln!(self, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(())),");
@@ -730,7 +730,7 @@ impl<'a> RustGenerator<'a> {
             let variant = service_event_variant(ev_name);
             genln!(self, "                    {} => {{", id);
             if ev.event_type().is_some() {
-                genln!(self, "                        if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(ev.args) {{");
+                genln!(self, "                        if let Ok(arg) = ev.args.convert() {{");
                 genln!(self, "                            return std::task::Poll::Ready(Some({}::{}(arg)));", event, variant);
                 genln!(self, "                        }}");
             } else {
@@ -851,7 +851,7 @@ impl<'a> RustGenerator<'a> {
             let reply = function_reply(svc_name, func_name);
             genln!(self, "                {} => {{", id);
             if func.args().is_some() {
-                genln!(self, "                    if let Ok(arg) = aldrin_client::codegen::aldrin_proto::FromValue::from_value(call.args) {{");
+                genln!(self, "                    if let Ok(arg) = call.args.convert() {{");
                 genln!(self, "                        return std::task::Poll::Ready(Some({}::{}(arg, {}(call.reply))));", functions, function, reply);
             } else {
                 genln!(self, "                    if let aldrin_client::codegen::aldrin_proto::Value::None = call.args {{");
@@ -916,18 +916,18 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "impl {} {{", reply);
             if let Some(ok) = func.ok() {
                 genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(svc_name, func_name, ok));
-                genln!(self, "        self.0.ok(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))");
+                genln!(self, "        self.0.ok(arg)");
                 genln!(self, "    }}");
             } else {
                 genln!(self, "    pub fn ok(self) -> Result<(), aldrin_client::Error> {{");
-                genln!(self, "        self.0.ok(aldrin_client::codegen::aldrin_proto::Value::None)");
+                genln!(self, "        self.0.ok(())");
                 genln!(self, "    }}");
             }
             genln!(self);
 
             if let Some(err) = func.err() {
                 genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_type(svc_name, func_name, err));
-                genln!(self, "        self.0.err(aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))");
+                genln!(self, "        self.0.err(arg)");
                 genln!(self, "    }}");
                 genln!(self);
             }
@@ -966,16 +966,16 @@ impl<'a> RustGenerator<'a> {
                 let var_type = event_variant_type(svc_name, ev_name, ev_type);
                 if ev_type.optional() {
                     genln!(self, "    pub fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))", id);
+                    genln!(self, "        self.client.emit_event(self.id, {}, arg)", id);
                     genln!(self, "    }}");
                 } else {
                     genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(arg))", id);
+                    genln!(self, "        self.client.emit_event(self.id, {}, arg)", id);
                     genln!(self, "    }}");
                 }
             } else {
                 genln!(self, "    pub fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
-                genln!(self, "        self.client.emit_event(self.id, {}, aldrin_client::codegen::aldrin_proto::Value::None)", id);
+                genln!(self, "        self.client.emit_event(self.id, {}, ())", id);
                 genln!(self, "    }}");
             }
 
