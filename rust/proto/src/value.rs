@@ -54,6 +54,15 @@ pub enum Value {
     Enum { variant: u32, value: Box<Value> },
 }
 
+impl Value {
+    // Converts this value to another type.
+    //
+    // `convert` can be used with any type `T` that implements the [`FromValue`] trait.
+    pub fn convert<T: FromValue>(self) -> Result<T, ConversionError> {
+        T::from_value(self)
+    }
+}
+
 /// Wrapper for `Vec<u8>`.
 ///
 /// This wrapper exists only to enable different implementations of [`FromValue`] and [`IntoValue`]
