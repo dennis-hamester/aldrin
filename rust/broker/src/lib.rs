@@ -6,5 +6,5 @@ mod conn;
 mod conn_id;
 mod serial_map;
 
-pub use broker::{Broker, BrokerError, BrokerHandle};
+pub use broker::{Broker, BrokerHandle, BrokerShutdown};
 pub use conn::{Connection, ConnectionError, ConnectionHandle, EstablishError};

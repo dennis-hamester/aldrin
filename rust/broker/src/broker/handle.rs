@@ -1,4 +1,4 @@
-use super::BrokerError;
+use super::BrokerShutdown;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message};
@@ -71,10 +71,10 @@ impl BrokerHandle {
     pub async fn shutdown_connection(
         &mut self,
         conn: &ConnectionHandle,
-    ) -> Result<(), BrokerError> {
+    ) -> Result<(), BrokerShutdown> {
         self.send
             .send(ConnectionEvent::ShutdownConnection(conn.id().clone()))
             .await
-            .map_err(|_| BrokerError::BrokerShutdown)
+            .map_err(|_| BrokerShutdown)
     }
 }

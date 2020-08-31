@@ -29,7 +29,7 @@ use service::{Service, ServiceCookie, ServiceUuid};
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 
-pub use error::BrokerError;
+pub use error::BrokerShutdown;
 pub use handle::BrokerHandle;
 
 const FIFO_SIZE: usize = 32;

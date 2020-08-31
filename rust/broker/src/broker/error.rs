@@ -1,19 +1,13 @@
 use std::error::Error;
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BrokerError {
-    BrokerShutdown,
-    FifoOverflow,
-}
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct BrokerShutdown;
 
-impl fmt::Display for BrokerError {
+impl fmt::Display for BrokerShutdown {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BrokerError::BrokerShutdown => f.write_str("broker shutdown"),
-            BrokerError::FifoOverflow => f.write_str("fifo overflow"),
-        }
+        f.write_str("broker shutdown")
     }
 }
 
-impl Error for BrokerError {}
+impl Error for BrokerShutdown {}
