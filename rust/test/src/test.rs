@@ -26,7 +26,7 @@ async fn shutdown_idle() {
         client2_join.await.unwrap().unwrap();
         conn2_join.await.unwrap().unwrap();
 
-        broker_join.await.unwrap().unwrap();
+        broker_join.await.unwrap();
     };
 
     time::timeout(Duration::from_secs(1), test).await.unwrap();

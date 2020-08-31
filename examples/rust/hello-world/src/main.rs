@@ -13,7 +13,7 @@ async fn broker(t: Unbounded) -> Result<()> {
     conn.run().await?;
 
     handle.shutdown().await;
-    join_handle.await??;
+    join_handle.await?;
 
     Ok(())
 }

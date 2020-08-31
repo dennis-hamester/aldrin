@@ -78,7 +78,7 @@
 //!     // Shut everything down:
 //!     client.shutdown();
 //!     broker.shutdown_idle().await;
-//!     broker_join.await??;
+//!     broker_join.await?;
 //!     Ok(())
 //! }
 //!

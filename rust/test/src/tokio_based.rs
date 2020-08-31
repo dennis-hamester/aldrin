@@ -69,7 +69,7 @@
 #[cfg(test)]
 mod test;
 
-use aldrin_broker::{BrokerError, BrokerHandle, ConnectionError, ConnectionHandle};
+use aldrin_broker::{BrokerHandle, ConnectionError, ConnectionHandle};
 use aldrin_client::{Handle, RunError};
 use aldrin_util::channel::Disconnected;
 use std::ops::{Deref, DerefMut};
@@ -87,7 +87,7 @@ pub struct TestBroker {
     /// Handle to the broker.
     pub handle: BrokerHandle,
 
-    join: Option<JoinHandle<Result<(), BrokerError>>>,
+    join: Option<JoinHandle<()>>,
 }
 
 impl TestBroker {
@@ -113,12 +113,7 @@ impl TestBroker {
     /// joined or attempted to join (see notes above as well).
     pub async fn join(&mut self) {
         self.handle.shutdown().await;
-        self.join
-            .take()
-            .expect("already joined")
-            .await
-            .unwrap()
-            .unwrap();
+        self.join.take().expect("already joined").await.unwrap();
     }
 
     /// Shuts down the broker when idle and joins its task.
@@ -133,12 +128,7 @@ impl TestBroker {
     /// joined or attempted to join (see notes above as well).
     pub async fn join_idle(&mut self) {
         self.handle.shutdown_idle().await;
-        self.join
-            .take()
-            .expect("already joined")
-            .await
-            .unwrap()
-            .unwrap();
+        self.join.take().expect("already joined").await.unwrap();
     }
 
     /// Creates a new `ClientBuilder`.

@@ -79,19 +79,19 @@ impl Broker {
         self.handle.as_ref().unwrap()
     }
 
-    pub async fn run(mut self) -> Result<(), BrokerError> {
+    pub async fn run(mut self) {
         self.handle.take().unwrap();
 
         let mut state = State::new();
 
         loop {
             if state.shutdown_now() || (state.shutdown_idle() && self.conns.is_empty()) {
-                return Ok(());
+                return;
             }
 
             let ev = match self.recv.next().await {
                 Some(ev) => ev,
-                None => return Ok(()),
+                None => return,
             };
 
             self.handle_event(&mut state, ev);
