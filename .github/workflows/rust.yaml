@@ -35,7 +35,7 @@ jobs:
       - name: Cargo version
         run: cargo --version --verbose
       - name: Cargo check
-        run: cargo check --all-features
+        run: cargo check --all-features --tests --benches
       - name: Cargo test
         run: cargo test --all-features
       - name: Cargo clippy
