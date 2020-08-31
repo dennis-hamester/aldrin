@@ -5,8 +5,9 @@ on:
     branches-ignore:
     - 'wip/**'
     paths:
-    - 'rust/**'
+    - '.github/workflows/**'
     - 'gen/**'
+    - 'rust/**'
 
 jobs:
 

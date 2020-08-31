@@ -5,9 +5,10 @@ on:
     branches-ignore:
     - 'wip/**'
     paths:
-    - 'rust/**'
-    - 'examples/schemas/**'
+    - '.github/workflows/**'
     - 'examples/rust/**'
+    - 'examples/schemas/**'
+    - 'rust/**'
 
 jobs:
 
