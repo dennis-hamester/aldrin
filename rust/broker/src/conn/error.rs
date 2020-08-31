@@ -5,7 +5,6 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConnectionError<T> {
     UnexpectedBrokerShutdown,
-    FifoOverflow,
     Transport(T),
 }
 
@@ -22,7 +21,6 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectionError::UnexpectedBrokerShutdown => f.write_str("unexpected broker shutdown"),
-            ConnectionError::FifoOverflow => f.write_str("fifo overflow"),
             ConnectionError::Transport(e) => e.fmt(f),
         }
     }
