@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt;
 
+/// Broker has shut down.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct BrokerShutdown;
 
