@@ -34,6 +34,45 @@ pub use handle::BrokerHandle;
 
 const FIFO_SIZE: usize = 32;
 
+/// Aldrin broker.
+///
+/// This is the central message broker present in every Aldrin bus. After creating a `Broker` with
+/// [`new`](Broker::new), it must be turned into future with [`run`](Broker::run) and then polled to
+/// completion.
+///
+/// [`BrokerHandle`s](BrokerHandle) are used to interact with a running `Broker` and can be acquired
+/// with the [`handle`](Broker::handle) method. Through a `BrokerHandle`, you can add new
+/// connections to the `Broker` as well as shut it down again.
+///
+/// The `Broker` will automatically shut down, when there are no active connections and the last
+/// `BrokerHandle` has been dropped.
+///
+/// # Examples
+///
+/// ```
+/// use aldrin_broker::Broker;
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     // Create a new broker:
+///     let broker = Broker::new();
+///
+///     // Acquire a BrokerHandle:
+///     let mut handle = broker.handle().clone();
+///
+///     // Run the broker:
+///     let join = tokio::spawn(broker.run());
+///
+///     // Add connections to the broker:
+///     // ...
+///
+///     // Shut down the broker:
+///     handle.shutdown().await;
+///     join.await?;
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug)]
 #[must_use = "brokers do nothing unless you `.await` or poll `Broker::run()`"]
 pub struct Broker {
@@ -60,6 +99,9 @@ pub struct Broker {
 
 impl Broker {
     /// Creates a new broker.
+    ///
+    /// After creating a `Broker`, it must be turned into a future with [`run`](Broker::run) and
+    /// polled to completion.
     pub fn new() -> Self {
         let (send, recv) = channel(FIFO_SIZE);
 
@@ -75,10 +117,23 @@ impl Broker {
         }
     }
 
+    /// Returns a reference to the broker handle.
+    ///
+    /// It is important to acquire at least one [`BrokerHandle`] before [`run`ning](Broker::run) the
+    /// `Broker`. `BrokerHandle`s are the only way to add new connections to the `Broker`.
+    ///
+    /// Note also, that this method returns only a reference. However, `BrokerHandle`s are cheap to
+    /// `clone`.
     pub fn handle(&self) -> &BrokerHandle {
         self.handle.as_ref().unwrap()
     }
 
+    /// Runs the broker.
+    ///
+    /// This is a long running method, that will only return when explicitly shut down or when there
+    /// are no connected clients and the last [`BrokerHandle`] has been dropped.
+    ///
+    /// Make sure to [acquire](Broker::handle) a `BrokerHandle` before running the `Broker`.
     pub async fn run(mut self) {
         self.handle.take().unwrap();
 

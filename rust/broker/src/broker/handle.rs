@@ -5,6 +5,14 @@ use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message};
 use futures_channel::mpsc::{unbounded, Sender};
 use futures_util::sink::SinkExt;
 
+/// Handle of an active broker.
+///
+/// `BrokerHandle`s are used to interact with an active [`Broker`](crate::Broker). The first
+/// `BrokerHandle` can be acquired from the `Broker` with [`handle`](crate::Broker::handle), and
+/// from then on, `BrokerHandle`s can be cloned cheaply.
+///
+/// The `Broker` will automatically shut down when the last `BrokerHandle` has been dropped and
+/// while there are no active clients.
 #[derive(Debug, Clone)]
 pub struct BrokerHandle {
     send: Sender<ConnectionEvent>,
@@ -19,7 +27,37 @@ impl BrokerHandle {
         }
     }
 
-    /// Adds a new connection.
+    /// Establishes a new connection.
+    ///
+    /// This method performs the initial connection setup and Aldrin handshake between broker and
+    /// client. If successful, the resulting [`Connection`] must be [`run`](Connection::run) and
+    /// polled to completion, much like the [`Broker`](crate::Broker) itself.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// // Create an AsyncTransport to a new incoming connection:
+    /// // let t = ...
+    ///
+    /// # let mut broker_handle = TestBroker::new();
+    /// # let (t, t2) = aldrin_util::channel::unbounded();
+    /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
+    /// // Establish a connection to the client:
+    /// let connection = broker_handle.add_connection(t).await?;
+    ///
+    /// // Run the connection:
+    /// tokio::spawn(connection.run());
+    ///
+    /// // The connection is now active and the client is fully connected.
+    /// # let client = client_join.await??;
+    /// # tokio::spawn(client.run());
+    /// # broker_handle.join().await;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn add_connection<T>(
         &mut self,
         mut t: T,
@@ -57,10 +95,62 @@ impl BrokerHandle {
         Ok(Connection::new(t, id, self.send.clone(), recv))
     }
 
+    /// Shuts down the broker.
+    ///
+    /// This method informs the [`Broker`](crate::Broker) that it should initiate shutdown, but
+    /// doesn't block until `Broker` has done so. The `Broker` will cleanly shut down all
+    /// connections, before the [`Broker::run`](crate::Broker::run) returns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_broker::Broker;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let broker = Broker::new();
+    /// let mut handle = broker.handle().clone();
+    /// let join = tokio::spawn(broker.run());
+    ///
+    /// // Tell the broker to shutdown:
+    /// handle.shutdown().await;
+    ///
+    /// // `run` will return as soon as all connections have been shut down:
+    /// join.await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn shutdown(&mut self) {
         self.send.send(ConnectionEvent::ShutdownBroker).await.ok();
     }
 
+    /// Shuts down the broker when the last client disconnects.
+    ///
+    /// This method informs the [`Broker`](crate::Broker) that it should shutdown as soon as there
+    /// are no active clients left.
+    ///
+    /// Calling this method does not prevent new connections. It also doesn't actively tell the
+    /// connected clients to shut down.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_broker::Broker;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let broker = Broker::new();
+    /// let mut handle = broker.handle().clone();
+    /// let join = tokio::spawn(broker.run());
+    ///
+    /// // Tell the broker to shutdown when it becomes idle:
+    /// handle.shutdown_idle().await;
+    ///
+    /// // `run` will return as soon as the last client disconnects:
+    /// join.await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn shutdown_idle(&mut self) {
         self.send
             .send(ConnectionEvent::ShutdownIdleBroker)
@@ -68,6 +158,40 @@ impl BrokerHandle {
             .ok();
     }
 
+    /// Shuts down a specific connection.
+    ///
+    /// Similar to the other shutdown methods, this method will only initiate shutdown of the
+    /// [`Connection`] specified by `conn` and then return before it has actually shut down.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// // Create an AsyncTransport to a new incoming connection:
+    /// // let t = ...
+    ///
+    /// # let mut broker_handle = TestBroker::new();
+    /// # let (t, t2) = aldrin_util::channel::unbounded();
+    /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
+    /// // Establish a connection to the client:
+    /// let connection = broker_handle.add_connection(t).await?;
+    ///
+    /// // Get a handle to the connection:
+    /// let connection_handle = connection.handle().clone();
+    ///
+    /// // Run the connection:
+    /// let connection_join = tokio::spawn(connection.run());
+    /// # let client = client_join.await??;
+    /// # tokio::spawn(client.run());
+    ///
+    /// // Tell the broker to shut down the connection again:
+    /// broker_handle.shutdown_connection(&connection_handle).await?;
+    /// connection_join.await??;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn shutdown_connection(
         &mut self,
         conn: &ConnectionHandle,
