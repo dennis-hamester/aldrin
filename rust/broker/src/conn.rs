@@ -15,6 +15,14 @@ pub(crate) use event::ConnectionEvent;
 pub use error::{ConnectionError, EstablishError};
 pub use handle::ConnectionHandle;
 
+/// Connection between a broker and a client.
+///
+/// `Connection`s can be established with
+/// [`BrokerHandle::add_connection`](crate::BrokerHandle::add_connection) and must then be
+/// [`run`](Connection::run) and polled to completion.
+///
+/// You can optionally [acquire](Connection::handle) a [`ConnectionHandle`] if you need to be able
+/// to shut down specific `Connection`s.
 #[derive(Debug)]
 #[must_use = "connections do nothing unless you `.await` or poll `Connection::run()`"]
 pub struct Connection<T>
@@ -45,10 +53,21 @@ where
         }
     }
 
+    /// Returns a reference to the connection handle.
+    ///
+    /// [`ConnectionHandle`s](ConnectionHandle) can be used to [shut
+    /// down](crate::BrokerHandle::shutdown_connection) a specific `Connection`.
+    ///
+    /// Note also, that this method returns only a reference. However, `ConnectionHandle`s are cheap
+    /// to `clone`.
     pub fn handle(&self) -> &ConnectionHandle {
         self.handle.as_ref().unwrap()
     }
 
+    /// Runs the connections.
+    ///
+    /// After [establishing](crate::BrokerHandle::add_connection) a new `Connection`, this method
+    /// must be called and polled to completion to run the `Connection`.
     pub async fn run(mut self) -> Result<(), ConnectionError<T::Error>> {
         let id = self.handle.take().unwrap().into_id();
 
