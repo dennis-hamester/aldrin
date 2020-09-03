@@ -517,6 +517,10 @@ impl Handle {
     ///
     /// // Searching for a non-existent service yields None:
     /// let non_existent = handle
+    ///     .find_service(ServiceUuid::new_v4(), Some(object_uuid))
+    ///     .await?;
+    /// assert!(non_existent.is_none());
+    /// let non_existent = handle
     ///     .find_service(ServiceUuid::new_v4(), None)
     ///     .await?;
     /// assert!(non_existent.is_none());
@@ -528,21 +532,44 @@ impl Handle {
         service_uuid: ServiceUuid,
         object_uuid: Option<ObjectUuid>,
     ) -> Result<Option<ServiceId>, Error> {
+        if let Some(object_uuid) = object_uuid {
+            self.find_object_service(object_uuid, service_uuid).await
+        } else {
+            self.find_any_service(service_uuid).await
+        }
+    }
+
+    async fn find_any_service(
+        &self,
+        service_uuid: ServiceUuid,
+    ) -> Result<Option<ServiceId>, Error> {
         let mut services = self.services(SubscribeMode::CurrentOnly)?;
 
         while let Some(ev) = services.next().await {
-            let id = match ev {
-                ServiceEvent::Created(id) if id.uuid == service_uuid => id,
-                _ => continue,
-            };
-
-            if let Some(object_uuid) = object_uuid {
-                if id.object_id.uuid != object_uuid {
-                    continue;
+            if let ServiceEvent::Created(id) = ev {
+                if id.uuid == service_uuid {
+                    return Ok(Some(id));
                 }
             }
+        }
 
-            return Ok(Some(id));
+        Ok(None)
+    }
+
+    async fn find_object_service(
+        &self,
+        object_uuid: ObjectUuid,
+        service_uuid: ServiceUuid,
+    ) -> Result<Option<ServiceId>, Error> {
+        let mut services = match self.query_object_services(object_uuid).await? {
+            Some((_, services)) => services,
+            None => return Ok(None),
+        };
+
+        while let Some(id) = services.next().await {
+            if id.uuid == service_uuid {
+                return Ok(Some(id));
+            }
         }
 
         Ok(None)
