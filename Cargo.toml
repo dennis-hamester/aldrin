@@ -2,6 +2,7 @@
 members = [
     "gen",
     "rust/broker",
+    "rust/channel",
     "rust/client",
     "rust/codegen",
     "rust/codegen-macros",

@@ -17,6 +17,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aldrin-channel"
+version = "0.1.0"
+dependencies = [
+ "aldrin-broker",
+ "aldrin-client",
+ "aldrin-proto",
+ "futures",
+ "futures-channel",
+ "futures-core",
+ "tokio",
+]
+
+[[package]]
 name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
