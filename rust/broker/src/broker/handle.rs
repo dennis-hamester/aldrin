@@ -43,7 +43,7 @@ impl BrokerHandle {
     /// // let t = ...
     ///
     /// # let mut broker_handle = TestBroker::new();
-    /// # let (t, t2) = aldrin_util::channel::unbounded();
+    /// # let (t, t2) = aldrin_channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
     /// // Establish a connection to the client:
     /// let connection = broker_handle.add_connection(t).await?;
@@ -173,7 +173,7 @@ impl BrokerHandle {
     /// // let t = ...
     ///
     /// # let mut broker_handle = TestBroker::new();
-    /// # let (t, t2) = aldrin_util::channel::unbounded();
+    /// # let (t, t2) = aldrin_channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
     /// // Establish a connection to the client:
     /// let connection = broker_handle.add_connection(t).await?;

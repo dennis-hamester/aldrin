@@ -4,6 +4,7 @@
 name = "aldrin-broker"
 version = "0.1.0"
 dependencies = [
+ "aldrin-channel",
  "aldrin-client",
  "aldrin-proto",
  "aldrin-test",
@@ -33,10 +34,10 @@ dependencies = [
 name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
+ "aldrin-channel",
  "aldrin-codegen-macros",
  "aldrin-proto",
  "aldrin-test",
- "aldrin-util",
  "futures",
  "futures-channel",
  "futures-core",
@@ -111,10 +112,10 @@ name = "aldrin-test"
 version = "0.1.0"
 dependencies = [
  "aldrin-broker",
+ "aldrin-channel",
  "aldrin-client",
  "aldrin-codegen-macros",
  "aldrin-proto",
- "aldrin-util",
  "anyhow",
  "futures",
  "futures-util",
@@ -129,8 +130,6 @@ dependencies = [
  "bincode",
  "bytes",
  "criterion",
- "futures-channel",
- "futures-core",
  "maplit",
  "pin-project",
  "serde_json",

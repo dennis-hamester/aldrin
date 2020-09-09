@@ -8,8 +8,8 @@ publish = false
 
 [dependencies]
 aldrin-broker = { path = "../../../rust/broker" }
+aldrin-channel = { path = "../../../rust/channel" }
 aldrin-client = { path = "../../../rust/client" }
-aldrin-util = { path = "../../../rust/util", features = ["channel"] }
 anyhow = "1.0.32"
 futures = { version = "0.3.4", default-features = false }
 tokio = { version = "0.2.11", default-features = false, features = ["rt-core", "macros"] }

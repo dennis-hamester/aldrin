@@ -8,9 +8,9 @@ edition = "2018"
 
 [dependencies]
 aldrin-broker = { version = "0.1.0", path = "../broker" }
+aldrin-channel = { version = "0.1.0", path = "../channel" }
 aldrin-client = { version = "0.1.0", path = "../client" }
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
 futures-util = { version = "0.3.4", default-features = false }
 
 tokio = { optional = true, version = "0.2.11", features = ["rt-core"] }

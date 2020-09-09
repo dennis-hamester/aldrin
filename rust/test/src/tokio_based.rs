@@ -70,8 +70,8 @@
 mod test;
 
 use aldrin_broker::{BrokerHandle, ConnectionError, ConnectionHandle};
+use aldrin_channel::Disconnected;
 use aldrin_client::{Handle, RunError};
-use aldrin_util::channel::Disconnected;
 use std::ops::{Deref, DerefMut};
 use tokio::task::JoinHandle;
 
@@ -210,7 +210,7 @@ impl ClientBuilder {
 
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
-    /// See [`aldrin_util::channel::bounded`] for more information on the `fifo_size` parameter.
+    /// See [`aldrin_channel::bounded`] for more information on the `fifo_size` parameter.
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.0 = self.0.bounded_channel(fifo_size);
         self

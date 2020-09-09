@@ -9,7 +9,6 @@ autobenches = false
 
 [features]
 bincode-serializer = ["aldrin-proto/serde-derive", "bincode", "codec"]
-channel = ["futures-channel", "futures-core"]
 codec = ["bytes"]
 json = ["aldrin-proto/serde-derive", "codec", "serde_json"]
 tokio-io = ["codec", "pin-project", "tokio"]
@@ -19,8 +18,6 @@ aldrin-proto = { version = "0.1.0", path = "../proto" }
 
 bincode = { optional = true, version = "1.3.1" }
 bytes = { optional = true, version = "0.5.4" }
-futures-channel = { optional = true, version = "0.3.4" }
-futures-core = { optional = true, version = "0.3.4" }
 pin-project = { optional = true, version = "0.4.8" }
 serde_json = { optional = true, version = "1.0.48" }
 tokio = { optional = true, version = "0.2.11" }

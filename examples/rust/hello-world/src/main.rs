@@ -1,6 +1,6 @@
 use aldrin_broker::Broker;
+use aldrin_channel::Unbounded;
 use aldrin_client::{Client, ObjectEvent, ObjectUuid, ServiceEvent, ServiceUuid, SubscribeMode};
-use aldrin_util::channel::{unbounded, Unbounded};
 use anyhow::Result;
 use futures::stream::StreamExt;
 
@@ -58,7 +58,7 @@ async fn client(t: Unbounded) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let (conn_transport, client_transport) = unbounded();
+    let (conn_transport, client_transport) = aldrin_channel::unbounded();
 
     let broker = tokio::spawn(async { broker(conn_transport).await.unwrap() });
     let client = tokio::spawn(async { client(client_transport).await.unwrap() });

@@ -19,7 +19,7 @@ uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
 aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen-macros" }
 
 [dev-dependencies]
+aldrin-channel = { version = "0.1.0", path = "../channel" }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
-aldrin-util = { version = "0.1.0", path = "../util", features = ["channel"] }
 futures = { version = "0.3.4", default-features = false }
 tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }
