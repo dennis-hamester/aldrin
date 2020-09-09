@@ -6,9 +6,9 @@ version = "0.1.0"
 dependencies = [
  "aldrin-channel",
  "aldrin-client",
+ "aldrin-codec",
  "aldrin-proto",
  "aldrin-test",
- "aldrin-util",
  "anyhow",
  "futures-channel",
  "futures-core",
@@ -42,6 +42,21 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "aldrin-codec"
+version = "0.1.0"
+dependencies = [
+ "aldrin-proto",
+ "bincode",
+ "bytes",
+ "criterion",
+ "maplit",
+ "pin-project",
+ "serde_json",
  "tokio",
  "uuid",
 ]
@@ -120,21 +135,6 @@ dependencies = [
  "futures",
  "futures-util",
  "tokio",
-]
-
-[[package]]
-name = "aldrin-util"
-version = "0.1.0"
-dependencies = [
- "aldrin-proto",
- "bincode",
- "bytes",
- "criterion",
- "maplit",
- "pin-project",
- "serde_json",
- "tokio",
- "uuid",
 ]
 
 [[package]]

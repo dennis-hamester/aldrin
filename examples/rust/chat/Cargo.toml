@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 aldrin-broker = { path = "../../../rust/broker" }
 aldrin-client = { path = "../../../rust/client", features = ["codegen"] }
-aldrin-util = { path = "../../../rust/util", features = ["codec", "json", "tokio-io"] }
+aldrin-codec = { path = "../../../rust/codec", features = ["json", "tokio-io"] }
 anyhow = "1.0.32"
 clap = { version = "3.0.0-beta.1", features = ["wrap_help"] }
 crossterm = "0.16.0"

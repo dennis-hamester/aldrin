@@ -16,7 +16,7 @@ uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
 [dev-dependencies]
 aldrin-channel = { version = "0.1.0", path = "../channel" }
 aldrin-client = { version = "0.1.0", path = "../client" }
+aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json", "tokio-io"] }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
-aldrin-util = { version = "0.1.0", path = "../util", features = ["json", "tokio-io"] }
 anyhow = "1.0.32"
 tokio = { version = "0.2.11", features = ["macros", "rt-core", "tcp", "time"] }

@@ -1,6 +1,6 @@
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use clap::{AppSettings, Clap};
 use futures::future::select_all;

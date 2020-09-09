@@ -1,6 +1,6 @@
 [package]
-name = "aldrin-util"
-description = "Additional utilities for working with Aldrin."
+name = "aldrin-codec"
+description = "Encoder/decoder-based Aldrin transports"
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
@@ -8,16 +8,15 @@ edition = "2018"
 autobenches = false
 
 [features]
-bincode-serializer = ["aldrin-proto/serde-derive", "bincode", "codec"]
-codec = ["bytes"]
-json = ["aldrin-proto/serde-derive", "codec", "serde_json"]
-tokio-io = ["codec", "pin-project", "tokio"]
+bincode-serializer = ["aldrin-proto/serde-derive", "bincode"]
+json = ["aldrin-proto/serde-derive", "serde_json"]
+tokio-io = ["pin-project", "tokio"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
+bytes = "0.5.4"
 
 bincode = { optional = true, version = "1.3.1" }
-bytes = { optional = true, version = "0.5.4" }
 pin-project = { optional = true, version = "0.4.8" }
 serde_json = { optional = true, version = "1.0.48" }
 tokio = { optional = true, version = "0.2.11" }

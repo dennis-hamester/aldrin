@@ -1,3 +1,6 @@
+#![deny(intra_doc_link_resolution_failure)]
+#![deny(missing_debug_implementations)]
+
 #[cfg(feature = "bincode-serializer")]
 mod bincode;
 #[cfg(feature = "json")]

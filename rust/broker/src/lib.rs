@@ -9,7 +9,7 @@
 //! which in turn communicates with the `Broker` through internal channels.
 //!
 //! The details of a `Connection` are further abstracted by the [`aldrin_proto::AsyncTransport`]
-//! trait. This crate does not define any implementations of that trait. The `aldrin_util` crate
+//! trait. This crate does not define any implementations of that trait. The `aldrin-codec` crate
 //! however defines several transports that can be used here.
 //!
 //! Furthermore, this crate does not depend on any async runtime, such as e.g. Tokio. Neither the
@@ -21,14 +21,14 @@
 //!
 //! A typical use-case is to have a stand-alone broker application, which simply listens for new
 //! connections in an infinite loop. In this example, we'll be using Tokio and TCP/IP connections
-//! with JSON serialization implemented by the `aldrin_util` crate.
+//! with JSON serialization implemented by the `aldrin-codec` crate.
 //!
 //! ```
 //! use aldrin_broker::Broker;
+//! use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;
-//! use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {

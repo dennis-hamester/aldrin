@@ -1,6 +1,6 @@
 use super::{chat, HostArgs};
 use aldrin_client::{Client, ObjectEvent, ObjectUuid, SubscribeMode};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use std::collections::{HashMap, HashSet};

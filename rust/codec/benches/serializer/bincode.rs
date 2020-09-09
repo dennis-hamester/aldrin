@@ -1,5 +1,5 @@
 use crate::datasets::{MessageSize, Messages};
-use aldrin_util::codec::{JsonSerializer, Serializer};
+use aldrin_codec::{BincodeSerializer, Endian, Serializer};
 use criterion::measurement::Measurement;
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId};
 use std::fmt;
@@ -9,19 +9,19 @@ pub fn serialize<M: Measurement>(
     dataset: &Messages,
     size: MessageSize,
 ) {
-    for &pretty in &[true, false] {
-        let input = JsonInput { size, pretty };
+    for &endian in &[Endian::Big, Endian::Little] {
+        let input = BincodeInput { size, endian };
         group.bench_with_input(
-            BenchmarkId::new("JSON/serialize", input),
+            BenchmarkId::new("Bincode/serialize", input),
             &input,
             |b, input| {
                 b.iter_batched(
                     || {
-                        let json = JsonSerializer::with_pretty(input.pretty);
+                        let bincode = BincodeSerializer::with_endian(input.endian);
                         let msg = dataset.get(input.size).clone();
-                        (json, msg)
+                        (bincode, msg)
                     },
-                    |(mut json, msg)| json.serialize(msg).unwrap(),
+                    |(mut bincode, msg)| bincode.serialize(msg).unwrap(),
                     BatchSize::SmallInput,
                 );
             },
@@ -34,20 +34,20 @@ pub fn deserialize<M: Measurement>(
     dataset: &Messages,
     size: MessageSize,
 ) {
-    for &pretty in &[true, false] {
-        let input = JsonInput { size, pretty };
+    for &endian in &[Endian::Big, Endian::Little] {
+        let input = BincodeInput { size, endian };
         group.bench_with_input(
-            BenchmarkId::new("JSON/deserialize", input),
+            BenchmarkId::new("Bincode/deserialize", input),
             &input,
             |b, input| {
                 b.iter_batched(
                     || {
-                        let mut json = JsonSerializer::with_pretty(input.pretty);
+                        let mut bincode = BincodeSerializer::with_endian(input.endian);
                         let msg = dataset.get(input.size).clone();
-                        let data = json.serialize(msg).unwrap().freeze();
-                        (json, data)
+                        let data = bincode.serialize(msg).unwrap().freeze();
+                        (bincode, data)
                     },
-                    |(mut json, data)| json.deserialize(data).unwrap(),
+                    |(mut bincode, data)| bincode.deserialize(data).unwrap(),
                     BatchSize::SmallInput,
                 );
             },
@@ -56,14 +56,17 @@ pub fn deserialize<M: Measurement>(
 }
 
 #[derive(Copy, Clone)]
-struct JsonInput {
+struct BincodeInput {
     size: MessageSize,
-    pretty: bool,
+    endian: Endian,
 }
 
-impl fmt::Display for JsonInput {
+impl fmt::Display for BincodeInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let pretty = if self.pretty { "pretty" } else { "not pretty" };
-        write!(f, "{}/{}", self.size, pretty)
+        let endian = match self.endian {
+            Endian::Big => "big",
+            Endian::Little => "little",
+        };
+        write!(f, "{}/{} endian", self.size, endian)
     }
 }

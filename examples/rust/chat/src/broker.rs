@@ -1,6 +1,6 @@
 use super::BrokerArgs;
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};

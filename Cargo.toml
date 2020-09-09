@@ -4,10 +4,10 @@ members = [
     "rust/broker",
     "rust/channel",
     "rust/client",
+    "rust/codec",
     "rust/codegen",
     "rust/codegen-macros",
     "rust/parser",
     "rust/proto",
     "rust/test",
-    "rust/util",
 ]

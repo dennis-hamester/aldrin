@@ -1,4 +1,4 @@
-use aldrin_util::codec::{Endian, LengthPrefixed, Packetizer};
+use aldrin_codec::{Endian, LengthPrefixed, Packetizer};
 use bytes::{Bytes, BytesMut};
 use criterion::measurement::Measurement;
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId, Criterion, Throughput};

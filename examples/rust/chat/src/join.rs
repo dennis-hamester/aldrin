@@ -1,7 +1,7 @@
 use super::list::query_rooms;
 use super::{chat, JoinArgs};
 use aldrin_client::{Client, ObjectUuid};
-use aldrin_util::codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
 use anyhow::Result;
 use crossterm::{cursor, style, terminal};
 use futures::channel::mpsc::{unbounded, UnboundedSender};
