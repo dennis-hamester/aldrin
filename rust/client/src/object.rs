@@ -23,15 +23,8 @@ use uuid::Uuid;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// // Create an object with a random UUID:
 /// let object1 = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
@@ -90,15 +83,8 @@ impl Object {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_broker::Broker::new();
-    /// # let mut handle = broker.handle().clone();
-    /// # tokio::spawn(broker.run());
-    /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-    /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-    /// # let client = aldrin_client::Client::connect(async_transport).await?;
-    /// # let handle = client.handle().clone();
-    /// # tokio::spawn(client.run());
-    /// # tokio::spawn(conn.await??.run());
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let handle = broker.add_client().await;
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
     ///
     /// // Create a service:
@@ -228,15 +214,8 @@ impl fmt::Display for ObjectUuid {
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// let object_uuid = ObjectUuid::new_v4();
 ///
 /// // Create an object:

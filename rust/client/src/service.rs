@@ -37,15 +37,8 @@ use uuid::Uuid;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
 /// // Create a service and destroy it again explicitly:
@@ -90,16 +83,8 @@ use uuid::Uuid;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
-///
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// // Create object and our chat service:
 /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
 /// let mut service = object.create_service(CHAT_UUID, 1).await?;
@@ -348,17 +333,9 @@ impl fmt::Display for ServiceUuid {
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-///
 /// // Create a service:
 /// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id1 = service.id();

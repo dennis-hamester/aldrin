@@ -30,9 +30,8 @@
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn Error>> {
-//!     # let broker = aldrin_broker::Broker::new();
-//!     # let mut handle = broker.handle().clone();
-//!     # tokio::spawn(broker.run());
+//!     # let broker = aldrin_test::tokio_based::TestBroker::new();
+//!     # let mut handle = broker.clone();
 //!     # let (async_transport, t2) = aldrin_util::channel::unbounded();
 //!     # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
 //!     // Create an AsyncTransport for connecting to the broker.
@@ -180,9 +179,8 @@ where
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_broker::Broker::new();
-    /// # let mut handle = broker.handle().clone();
-    /// # tokio::spawn(broker.run());
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let mut handle = broker.clone();
     /// # let (async_transport, t2) = aldrin_util::channel::unbounded();
     /// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
     /// // Create an AsyncTransport for connecting to the broker.

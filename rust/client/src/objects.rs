@@ -25,15 +25,8 @@ use std::task::{Context, Poll};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// let mut objects = handle.objects(SubscribeMode::CurrentOnly)?;
 /// # handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
 ///
@@ -66,15 +59,8 @@ use std::task::{Context, Poll};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_broker::Broker::new();
-/// # let mut handle = broker.handle().clone();
-/// # tokio::spawn(broker.run());
-/// # let (async_transport, t2) = aldrin_util::channel::unbounded();
-/// # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
-/// # let client = aldrin_client::Client::connect(async_transport).await?;
-/// # let handle = client.handle().clone();
-/// # tokio::spawn(client.run());
-/// # tokio::spawn(conn.await??.run());
+/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let handle = broker.add_client().await;
 /// # let obj = handle.create_object(INTERESTING_OBJECT_UUID).await?;
 /// let mut objects = handle.objects(SubscribeMode::CurrentOnly)?;
 ///
