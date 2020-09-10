@@ -9,17 +9,17 @@ use bytes::{Bytes, BytesMut};
 pub use serde_json::Error as JsonError;
 
 #[derive(Debug)]
-pub struct JsonSerializer {
+pub struct Json {
     pretty: bool,
 }
 
-impl JsonSerializer {
+impl Json {
     pub fn new() -> Self {
         Default::default()
     }
 
     pub fn with_pretty(pretty: bool) -> Self {
-        JsonSerializer { pretty }
+        Json { pretty }
     }
 
     pub fn pretty(&self) -> bool {
@@ -27,13 +27,13 @@ impl JsonSerializer {
     }
 }
 
-impl Default for JsonSerializer {
+impl Default for Json {
     fn default() -> Self {
-        JsonSerializer { pretty: true }
+        Json { pretty: true }
     }
 }
 
-impl Serializer for JsonSerializer {
+impl Serializer for Json {
     type Error = JsonError;
 
     fn serialize(&mut self, msg: Message) -> Result<BytesMut, JsonError> {

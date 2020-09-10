@@ -2,7 +2,8 @@ use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
 use aldrin_codec::filter::Noop;
 use aldrin_codec::packetizer::LengthPrefixed;
-use aldrin_codec::{JsonSerializer, TokioCodec};
+use aldrin_codec::serializer::Json;
+use aldrin_codec::TokioCodec;
 use anyhow::Result;
 use clap::{AppSettings, Clap};
 use futures::future::select_all;
@@ -30,12 +31,7 @@ async fn add_connection(
 ) -> Result<()> {
     println!("Incoming connection from {}.", addr);
 
-    let t = TokioCodec::new(
-        socket,
-        LengthPrefixed::default(),
-        Noop,
-        JsonSerializer::default(),
-    );
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), Noop, Json::default());
     let conn = handle.add_connection(t).await?;
     println!("Connection from {} established.", addr);
 
@@ -80,12 +76,7 @@ async fn run(args: RunArgs) -> Result<()> {
     println!("Connecting to broker at {}.", addr);
 
     let socket = TcpStream::connect(&addr).await?;
-    let t = TokioCodec::new(
-        socket,
-        LengthPrefixed::default(),
-        Noop,
-        JsonSerializer::default(),
-    );
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), Noop, Json::default());
     let client = Client::connect(t).await?;
     let handle = client.handle().clone();
     tokio::spawn(client.run());

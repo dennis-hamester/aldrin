@@ -25,9 +25,10 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
+//! use aldrin_codec::TokioCodec;
 //! use aldrin_codec::filter::Noop;
 //! use aldrin_codec::packetizer::LengthPrefixed;
-//! use aldrin_codec::{JsonSerializer, TokioCodec};
+//! use aldrin_codec::serializer::Json;
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;
@@ -51,7 +52,7 @@
 //!             socket,
 //!             LengthPrefixed::default(),
 //!             Noop,
-//!             JsonSerializer::default(),
+//!             Json::default(),
 //!         );
 //!
 //!         // Add the connection and run it:

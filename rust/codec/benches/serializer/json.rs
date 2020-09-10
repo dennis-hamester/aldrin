@@ -1,5 +1,6 @@
 use crate::datasets::{MessageSize, Messages};
-use aldrin_codec::{JsonSerializer, Serializer};
+use aldrin_codec::serializer::Json;
+use aldrin_codec::Serializer;
 use criterion::measurement::Measurement;
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId};
 use std::fmt;
@@ -17,7 +18,7 @@ pub fn serialize<M: Measurement>(
             |b, input| {
                 b.iter_batched(
                     || {
-                        let json = JsonSerializer::with_pretty(input.pretty);
+                        let json = Json::with_pretty(input.pretty);
                         let msg = dataset.get(input.size).clone();
                         (json, msg)
                     },
@@ -42,7 +43,7 @@ pub fn deserialize<M: Measurement>(
             |b, input| {
                 b.iter_batched(
                     || {
-                        let mut json = JsonSerializer::with_pretty(input.pretty);
+                        let mut json = Json::with_pretty(input.pretty);
                         let msg = dataset.get(input.size).clone();
                         let data = json.serialize(msg).unwrap().freeze();
                         (json, data)

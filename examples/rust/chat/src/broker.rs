@@ -2,7 +2,8 @@ use super::BrokerArgs;
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_codec::filter::Noop;
 use aldrin_codec::packetizer::LengthPrefixed;
-use aldrin_codec::{JsonSerializer, TokioCodec};
+use aldrin_codec::serializer::Json;
+use aldrin_codec::TokioCodec;
 use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
@@ -14,12 +15,7 @@ async fn add_connection(
 ) -> Result<()> {
     println!("Incoming connection from {}.", addr);
 
-    let t = TokioCodec::new(
-        socket,
-        LengthPrefixed::default(),
-        Noop,
-        JsonSerializer::default(),
-    );
+    let t = TokioCodec::new(socket, LengthPrefixed::default(), Noop, Json::default());
     let conn = handle.add_connection(t).await?;
     println!("Connection from {} established.", addr);
 
