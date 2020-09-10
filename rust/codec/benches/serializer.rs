@@ -1,6 +1,6 @@
 #[cfg(feature = "bincode-serializer")]
 mod bincode;
-#[cfg(feature = "json")]
+#[cfg(feature = "json-serializer")]
 mod json;
 
 use crate::datasets::{MessageSize, Messages};
@@ -12,7 +12,7 @@ pub fn run(c: &mut Criterion) {
     for &size in &[MessageSize::Small, MessageSize::Large] {
         group.throughput(Throughput::Elements(1));
 
-        #[cfg(feature = "json")]
+        #[cfg(feature = "json-serializer")]
         {
             json::serialize(&mut group, &dataset, size);
             json::deserialize(&mut group, &dataset, size);

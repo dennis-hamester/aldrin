@@ -3,7 +3,7 @@
 
 #[cfg(feature = "bincode-serializer")]
 mod bincode;
-#[cfg(feature = "json")]
+#[cfg(feature = "json-serializer")]
 mod json;
 mod length_prefixed;
 mod noop_filter;
@@ -17,7 +17,7 @@ pub mod serializer;
 #[cfg(feature = "bincode-serializer")]
 pub use self::bincode::{BincodeError, BincodeSerializer};
 pub use filter::{Filter, FilterExt};
-#[cfg(feature = "json")]
+#[cfg(feature = "json-serializer")]
 pub use json::{JsonError, JsonSerializer};
 pub use length_prefixed::{LengthPrefixed, LengthPrefixedBuilder, LengthPrefixedError};
 pub use noop_filter::NoopFilter;

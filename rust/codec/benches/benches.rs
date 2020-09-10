@@ -1,7 +1,7 @@
-#[cfg(any(feature = "json", feature = "bincode-serializer"))]
+#[cfg(any(feature = "json-serializer", feature = "bincode-serializer"))]
 mod datasets;
 mod packetizer;
-#[cfg(any(feature = "json", feature = "bincode-serializer"))]
+#[cfg(any(feature = "json-serializer", feature = "bincode-serializer"))]
 mod serializer;
 
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -9,7 +9,7 @@ use criterion::{criterion_group, criterion_main, Criterion};
 pub fn run(c: &mut Criterion) {
     packetizer::run(c);
 
-    #[cfg(any(feature = "json", feature = "bincode-serializer"))]
+    #[cfg(any(feature = "json-serializer", feature = "bincode-serializer"))]
     serializer::run(c);
 }
 
