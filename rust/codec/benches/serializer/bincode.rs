@@ -1,5 +1,6 @@
 use crate::datasets::{MessageSize, Messages};
-use aldrin_codec::{BincodeSerializer, Endian, Serializer};
+use aldrin_codec::serializer::Bincode;
+use aldrin_codec::{Endian, Serializer};
 use criterion::measurement::Measurement;
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId};
 use std::fmt;
@@ -17,7 +18,7 @@ pub fn serialize<M: Measurement>(
             |b, input| {
                 b.iter_batched(
                     || {
-                        let bincode = BincodeSerializer::with_endian(input.endian);
+                        let bincode = Bincode::with_endian(input.endian);
                         let msg = dataset.get(input.size).clone();
                         (bincode, msg)
                     },
@@ -42,7 +43,7 @@ pub fn deserialize<M: Measurement>(
             |b, input| {
                 b.iter_batched(
                     || {
-                        let mut bincode = BincodeSerializer::with_endian(input.endian);
+                        let mut bincode = Bincode::with_endian(input.endian);
                         let msg = dataset.get(input.size).clone();
                         let data = bincode.serialize(msg).unwrap().freeze();
                         (bincode, data)

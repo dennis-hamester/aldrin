@@ -1,5 +1,11 @@
+#[cfg(feature = "bincode-serializer")]
+mod bincode;
+
 use aldrin_proto::Message;
 use bytes::{Bytes, BytesMut};
+
+#[cfg(feature = "bincode-serializer")]
+pub use self::bincode::{Bincode, BincodeError};
 
 pub trait Serializer {
     type Error;

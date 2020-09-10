@@ -1,11 +1,12 @@
-use super::{BincodeSerializer, Endian, Serializer};
+use super::Bincode;
+use crate::{Endian, Serializer};
 use aldrin_proto::*;
 use bytes::Buf;
 use maplit::{hashmap, hashset};
 use uuid::Uuid;
 
 fn test_message(m: &Message, b: &[u8], endian: Endian) {
-    let mut ser = BincodeSerializer::with_endian(endian);
+    let mut ser = Bincode::with_endian(endian);
 
     let b2 = ser.serialize(m.clone()).unwrap();
     assert_eq!(b, b2.bytes());

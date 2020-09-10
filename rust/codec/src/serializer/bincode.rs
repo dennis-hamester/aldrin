@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod test;
 
-use super::{Endian, Serializer};
+use super::Serializer;
+use crate::Endian;
 use aldrin_proto::Message;
 use bincode::Options;
 use bytes::buf::BufMutExt;
@@ -10,17 +11,17 @@ use bytes::{Bytes, BytesMut};
 pub use bincode::Error as BincodeError;
 
 #[derive(Debug)]
-pub struct BincodeSerializer {
+pub struct Bincode {
     endian: Endian,
 }
 
-impl BincodeSerializer {
+impl Bincode {
     pub fn new() -> Self {
         Default::default()
     }
 
     pub fn with_endian(endian: Endian) -> Self {
-        BincodeSerializer { endian }
+        Bincode { endian }
     }
 
     pub fn endian(&self) -> Endian {
@@ -28,15 +29,15 @@ impl BincodeSerializer {
     }
 }
 
-impl Default for BincodeSerializer {
+impl Default for Bincode {
     fn default() -> Self {
-        BincodeSerializer {
+        Bincode {
             endian: Endian::Big,
         }
     }
 }
 
-impl Serializer for BincodeSerializer {
+impl Serializer for Bincode {
     type Error = BincodeError;
 
     fn serialize(&mut self, msg: Message) -> Result<BytesMut, BincodeError> {

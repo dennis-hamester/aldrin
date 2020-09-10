@@ -1,8 +1,6 @@
 #![deny(intra_doc_link_resolution_failure)]
 #![deny(missing_debug_implementations)]
 
-#[cfg(feature = "bincode-serializer")]
-mod bincode;
 #[cfg(feature = "json-serializer")]
 mod json;
 #[cfg(feature = "tokio-codec")]
@@ -12,8 +10,6 @@ pub mod filter;
 pub mod packetizer;
 pub mod serializer;
 
-#[cfg(feature = "bincode-serializer")]
-pub use self::bincode::{BincodeError, BincodeSerializer};
 pub use filter::{Filter, FilterExt};
 #[cfg(feature = "json-serializer")]
 pub use json::{JsonError, JsonSerializer};
