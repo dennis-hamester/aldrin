@@ -1,4 +1,5 @@
-use super::{Endian, Packetizer};
+use super::Packetizer;
+use crate::Endian;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::error::Error as StdError;
 use std::fmt;

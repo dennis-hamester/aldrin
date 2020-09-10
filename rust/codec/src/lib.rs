@@ -5,7 +5,6 @@
 mod bincode;
 #[cfg(feature = "json-serializer")]
 mod json;
-mod length_prefixed;
 #[cfg(feature = "tokio-codec")]
 mod tokio_codec;
 
@@ -18,7 +17,6 @@ pub use self::bincode::{BincodeError, BincodeSerializer};
 pub use filter::{Filter, FilterExt};
 #[cfg(feature = "json-serializer")]
 pub use json::{JsonError, JsonSerializer};
-pub use length_prefixed::{LengthPrefixed, LengthPrefixedBuilder, LengthPrefixedError};
 pub use packetizer::{Packetizer, PacketizerExt};
 pub use serializer::{Serializer, SerializerExt};
 #[cfg(feature = "tokio-codec")]
