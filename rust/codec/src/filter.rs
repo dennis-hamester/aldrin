@@ -1,6 +1,10 @@
+mod noop;
+
 use bytes::BytesMut;
 use std::error::Error as StdError;
 use std::fmt;
+
+pub use noop::Noop;
 
 pub trait Filter {
     type Error;

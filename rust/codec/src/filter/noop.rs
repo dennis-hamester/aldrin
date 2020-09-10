@@ -3,9 +3,9 @@ use bytes::BytesMut;
 use std::convert::Infallible;
 
 #[derive(Default, Debug)]
-pub struct NoopFilter;
+pub struct Noop;
 
-impl Filter for NoopFilter {
+impl Filter for Noop {
     type Error = Infallible;
 
     fn forward(&mut self, data: BytesMut) -> Result<BytesMut, Self::Error> {

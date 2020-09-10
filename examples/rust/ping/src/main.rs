@@ -1,6 +1,7 @@
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_client::{Client, ObjectUuid, ServiceEvent, SubscribeMode};
-use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::filter::Noop;
+use aldrin_codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use anyhow::Result;
 use clap::{AppSettings, Clap};
 use futures::future::select_all;
@@ -31,7 +32,7 @@ async fn add_connection(
     let t = TokioCodec::new(
         socket,
         LengthPrefixed::default(),
-        NoopFilter,
+        Noop,
         JsonSerializer::default(),
     );
     let conn = handle.add_connection(t).await?;
@@ -81,7 +82,7 @@ async fn run(args: RunArgs) -> Result<()> {
     let t = TokioCodec::new(
         socket,
         LengthPrefixed::default(),
-        NoopFilter,
+        Noop,
         JsonSerializer::default(),
     );
     let client = Client::connect(t).await?;

@@ -1,7 +1,8 @@
 use super::list::query_rooms;
 use super::{chat, JoinArgs};
 use aldrin_client::{Client, ObjectUuid};
-use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::filter::Noop;
+use aldrin_codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use anyhow::Result;
 use crossterm::{cursor, style, terminal};
 use futures::channel::mpsc::{unbounded, UnboundedSender};
@@ -22,7 +23,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<()> {
     let t = TokioCodec::new(
         socket,
         LengthPrefixed::default(),
-        NoopFilter,
+        Noop,
         JsonSerializer::default(),
     );
     let client = Client::connect(t).await?;

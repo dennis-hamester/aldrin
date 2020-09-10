@@ -1,6 +1,7 @@
 use super::{chat, ListArgs};
 use aldrin_client::{Client, Handle, ServiceEvent, ServiceId, SubscribeMode};
-use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+use aldrin_codec::filter::Noop;
+use aldrin_codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
@@ -14,7 +15,7 @@ pub(crate) async fn run(args: ListArgs) -> Result<()> {
     let t = TokioCodec::new(
         socket,
         LengthPrefixed::default(),
-        NoopFilter,
+        Noop,
         JsonSerializer::default(),
     );
     let client = Client::connect(t).await?;

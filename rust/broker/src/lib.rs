@@ -25,7 +25,8 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
-//! use aldrin_codec::{JsonSerializer, LengthPrefixed, NoopFilter, TokioCodec};
+//! use aldrin_codec::filter::Noop;
+//! use aldrin_codec::{JsonSerializer, LengthPrefixed, TokioCodec};
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;
@@ -48,7 +49,7 @@
 //!         let transport = TokioCodec::new(
 //!             socket,
 //!             LengthPrefixed::default(),
-//!             NoopFilter,
+//!             Noop,
 //!             JsonSerializer::default(),
 //!         );
 //!
