@@ -10,7 +10,7 @@ autobenches = false
 [features]
 bincode-serializer = ["aldrin-proto/serde-derive", "bincode"]
 json-serializer = ["aldrin-proto/serde-derive", "serde_json"]
-tokio-io = ["pin-project", "tokio"]
+tokio-codec = ["pin-project", "tokio"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }

@@ -7,8 +7,8 @@ mod bincode;
 mod json;
 mod length_prefixed;
 mod noop_filter;
-#[cfg(feature = "tokio-io")]
-mod tokio_io;
+#[cfg(feature = "tokio-codec")]
+mod tokio_codec;
 
 pub mod filter;
 pub mod packetizer;
@@ -23,8 +23,8 @@ pub use length_prefixed::{LengthPrefixed, LengthPrefixedBuilder, LengthPrefixedE
 pub use noop_filter::NoopFilter;
 pub use packetizer::{Packetizer, PacketizerExt};
 pub use serializer::{Serializer, SerializerExt};
-#[cfg(feature = "tokio-io")]
-pub use tokio_io::{TokioCodec, TokioCodecError};
+#[cfg(feature = "tokio-codec")]
+pub use tokio_codec::{TokioCodec, TokioCodecError};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Endian {
