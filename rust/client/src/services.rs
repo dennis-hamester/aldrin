@@ -29,7 +29,7 @@ use std::task::{Context, Poll};
 /// # let handle = broker.add_client().await;
 /// let mut services = handle.services(SubscribeMode::CurrentOnly)?;
 /// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # object.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
+/// # object.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
 ///
 /// while let Some(event) = services.next().await {
 ///     match event {

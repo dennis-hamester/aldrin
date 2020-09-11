@@ -240,7 +240,7 @@ impl Handle {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_function(service_id, 1, "1 + 2 = ?")?;
@@ -361,7 +361,7 @@ impl Handle {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
     /// handle.emit_event(service_id, 1, "Hello, world!")?;

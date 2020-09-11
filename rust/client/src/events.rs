@@ -43,7 +43,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # let broker = aldrin_test::tokio_based::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid(uuid::Uuid::new_v4()), 0).await?;
+/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
 /// # let service_id = svc.id();
 /// let mut events = handle.events();
 ///
