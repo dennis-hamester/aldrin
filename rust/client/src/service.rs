@@ -403,7 +403,7 @@ impl FunctionCall {
 /// Every [`FunctionCall`] contains a [`FunctionCallReply`]. It can be used once to set the return
 /// value of the function call.
 ///
-/// When [`FunctionCall`] is dropped (as opposed to consumed by one of its methods),
+/// When [`FunctionCallReply`] is dropped (as opposed to consumed by one of its methods),
 /// [`abort`](FunctionCallReply::abort) will be called implicitly.
 #[derive(Debug)]
 pub struct FunctionCallReply {
