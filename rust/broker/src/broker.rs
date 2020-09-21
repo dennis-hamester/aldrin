@@ -626,15 +626,15 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
         let svc_cookie = ServiceCookie(req.service_cookie);
         let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(uuids) => *uuids,
             None => {
-                let conn = match self.conns.get_mut(id) {
-                    Some(conn) => conn,
-                    None => return Ok(()),
-                };
-
                 return conn.send(Message::CallFunctionReply(CallFunctionReply {
                     serial: req.serial,
                     result: CallFunctionResult::InvalidService,
@@ -651,6 +651,12 @@ impl Broker {
         let serial = self
             .function_calls
             .insert((req.serial, id.clone(), obj_uuid, svc_uuid));
+
+        match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
+            Some(svc) => svc.add_function_call(serial),
+            None => panic!("inconsistent state"),
+        }
+
         let res = callee_conn.send(Message::CallFunction(CallFunction {
             serial,
             service_cookie: svc_cookie.0,
@@ -658,15 +664,7 @@ impl Broker {
             args: req.args,
         }));
 
-        if res.is_ok() {
-            let svc = match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
-                Some(svc) => svc,
-                None => panic!("inconsistent state"),
-            };
-
-            svc.add_function_call(serial);
-        } else {
-            self.function_calls.remove(serial);
+        if res.is_err() {
             state.push_remove_conn(callee_id.clone());
         }
 
