@@ -95,8 +95,8 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CreateObjectRequest, EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request,
-    SubscribeEventRequest, UnsubscribeEventRequest,
+    CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest,
+    QueryObjectRequestReply, Request, SubscribeEventRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -741,7 +741,7 @@ where
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
             Request::CreateObject(req) => self.req_create_object(req).await,
-            Request::DestroyObject(cookie, reply) => self.req_destroy_object(cookie, reply).await,
+            Request::DestroyObject(req) => self.req_destroy_object(req).await,
             Request::SubscribeObjects(sender, mode) => {
                 self.req_subscribe_objects(sender, mode).await
             }
@@ -789,14 +789,13 @@ where
 
     async fn req_destroy_object(
         &mut self,
-        cookie: ObjectCookie,
-        reply: oneshot::Sender<DestroyObjectResult>,
+        req: DestroyObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.destroy_object.insert(reply);
+        let serial = self.destroy_object.insert(req.reply);
         self.t
             .send_and_flush(Message::DestroyObject(DestroyObject {
                 serial,
-                cookie: cookie.0,
+                cookie: req.cookie.0,
             }))
             .await
             .map_err(Into::into)

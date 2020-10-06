@@ -1,7 +1,7 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CreateObjectRequest, EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest,
-    UnsubscribeEventRequest,
+    CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest, Request,
+    SubscribeEventRequest, UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -129,11 +129,15 @@ impl Handle {
     }
 
     pub(crate) async fn destroy_object(&self, id: ObjectId) -> Result<(), Error> {
-        let (res_send, res_reply) = oneshot::channel();
+        let (send, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyObject(id.cookie, res_send))
+            .unbounded_send(Request::DestroyObject(DestroyObjectRequest {
+                cookie: id.cookie,
+                reply: send,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
-        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+
+        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
             DestroyObjectResult::InvalidObject => Err(Error::InvalidObject(id)),
@@ -142,9 +146,12 @@ impl Handle {
     }
 
     pub(crate) fn destroy_object_now(&self, cookie: ObjectCookie) {
-        let (res_send, _) = oneshot::channel();
+        let (reply, _) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyObject(cookie, res_send))
+            .unbounded_send(Request::DestroyObject(DestroyObjectRequest {
+                cookie,
+                reply,
+            }))
             .ok();
     }
 
