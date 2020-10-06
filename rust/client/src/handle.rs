@@ -1,7 +1,7 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
     CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest, Request,
-    SubscribeEventRequest, UnsubscribeEventRequest,
+    SubscribeEventRequest, SubscribeObjectsRequest, UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -163,11 +163,14 @@ impl Handle {
     ///
     /// See [`Objects`] for more information and usage examples.
     pub fn objects(&self, mode: SubscribeMode) -> Result<Objects, Error> {
-        let (ev_send, ev_recv) = unbounded();
+        let (send, recv) = unbounded();
         self.send
-            .unbounded_send(Request::SubscribeObjects(ev_send, mode))
+            .unbounded_send(Request::SubscribeObjects(SubscribeObjectsRequest {
+                mode,
+                sender: send,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(Objects::new(ev_recv))
+        Ok(Objects::new(recv))
     }
 
     pub(crate) async fn create_service(

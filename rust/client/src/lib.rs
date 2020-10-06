@@ -96,7 +96,8 @@ use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
     CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest,
-    QueryObjectRequestReply, Request, SubscribeEventRequest, UnsubscribeEventRequest,
+    QueryObjectRequestReply, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -145,7 +146,7 @@ where
     handle: Option<Handle>,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    object_events: SerialMap<(mpsc::UnboundedSender<ObjectEvent>, SubscribeMode)>,
+    object_events: SerialMap<SubscribeObjectsRequest>,
     create_service: SerialMap<CreateServiceReplySender>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
@@ -358,7 +359,12 @@ where
         &mut self,
         msg: SubscribeObjectsReply,
     ) -> Result<(), RunError<T::Error>> {
-        if let Some((_, SubscribeMode::CurrentOnly)) = self.object_events.get_mut(msg.serial) {
+        let req = match self.object_events.get_mut(msg.serial) {
+            Some(req) => req,
+            None => return Ok(()),
+        };
+
+        if req.mode == SubscribeMode::CurrentOnly {
             self.object_events.remove(msg.serial);
         }
 
@@ -375,16 +381,16 @@ where
         ));
 
         if let Some(serial) = msg.serial {
-            if let Some((send, _)) = self.object_events.get_mut(serial) {
-                if send.unbounded_send(obj_ev).is_err() {
+            if let Some(req) = self.object_events.get_mut(serial) {
+                if req.sender.unbounded_send(obj_ev).is_err() {
                     self.object_events.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
-            for (serial, (send, _)) in self.object_events.iter_mut() {
-                if send.unbounded_send(obj_ev).is_err() {
+            for (serial, req) in self.object_events.iter_mut() {
+                if req.sender.unbounded_send(obj_ev).is_err() {
                     remove.push(serial);
                 }
             }
@@ -412,8 +418,8 @@ where
 
         let mut remove = Vec::new();
 
-        for (serial, (send, _)) in self.object_events.iter_mut() {
-            if send.unbounded_send(obj_ev).is_err() {
+        for (serial, req) in self.object_events.iter_mut() {
+            if req.sender.unbounded_send(obj_ev).is_err() {
                 remove.push(serial);
             }
         }
@@ -742,9 +748,7 @@ where
         match req {
             Request::CreateObject(req) => self.req_create_object(req).await,
             Request::DestroyObject(req) => self.req_destroy_object(req).await,
-            Request::SubscribeObjects(sender, mode) => {
-                self.req_subscribe_objects(sender, mode).await
-            }
+            Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
             Request::CreateService(object_cookie, service_uuid, version, reply) => {
                 self.req_create_service(object_cookie, service_uuid, version, reply)
                     .await
@@ -803,11 +807,11 @@ where
 
     async fn req_subscribe_objects(
         &mut self,
-        sender: mpsc::UnboundedSender<ObjectEvent>,
-        mode: SubscribeMode,
+        req: SubscribeObjectsRequest,
     ) -> Result<(), RunError<T::Error>> {
+        let mode = req.mode;
         let is_empty = self.object_events.is_empty();
-        let serial = self.object_events.insert((sender, mode));
+        let serial = self.object_events.insert(req);
         let (send, serial) = match mode {
             SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
             SubscribeMode::NewOnly => (is_empty, None),
