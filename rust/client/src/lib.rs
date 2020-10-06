@@ -95,8 +95,8 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
-    UnsubscribeEventRequest,
+    CreateObjectRequest, EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request,
+    SubscribeEventRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -740,7 +740,7 @@ where
 
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
-            Request::CreateObject(uuid, reply) => self.req_create_object(uuid, reply).await,
+            Request::CreateObject(req) => self.req_create_object(req).await,
             Request::DestroyObject(cookie, reply) => self.req_destroy_object(cookie, reply).await,
             Request::SubscribeObjects(sender, mode) => {
                 self.req_subscribe_objects(sender, mode).await
@@ -775,14 +775,13 @@ where
 
     async fn req_create_object(
         &mut self,
-        uuid: ObjectUuid,
-        reply: oneshot::Sender<CreateObjectResult>,
+        req: CreateObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_object.insert(reply);
+        let serial = self.create_object.insert(req.reply);
         self.t
             .send_and_flush(Message::CreateObject(CreateObject {
                 serial,
-                uuid: uuid.0,
+                uuid: req.uuid.0,
             }))
             .await
             .map_err(Into::into)

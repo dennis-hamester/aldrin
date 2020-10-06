@@ -11,7 +11,7 @@ use futures_channel::{mpsc, oneshot};
 #[derive(Debug)]
 pub(crate) enum Request {
     Shutdown,
-    CreateObject(ObjectUuid, oneshot::Sender<CreateObjectResult>),
+    CreateObject(CreateObjectRequest),
     DestroyObject(ObjectCookie, oneshot::Sender<DestroyObjectResult>),
     SubscribeObjects(mpsc::UnboundedSender<ObjectEvent>, SubscribeMode),
     CreateService(
@@ -34,6 +34,12 @@ pub(crate) enum Request {
     EmitEvent(EmitEventRequest),
     QueryObject(QueryObjectRequest),
     QueryServiceVersion(ServiceCookie, oneshot::Sender<QueryServiceVersionResult>),
+}
+
+#[derive(Debug)]
+pub(crate) struct CreateObjectRequest {
+    pub uuid: ObjectUuid,
+    pub reply: oneshot::Sender<CreateObjectResult>,
 }
 
 #[derive(Debug)]

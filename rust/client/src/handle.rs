@@ -1,6 +1,7 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, UnsubscribeEventRequest,
+    CreateObjectRequest, EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest,
+    UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -109,11 +110,15 @@ impl Handle {
     /// # }
     /// ```
     pub async fn create_object(&self, uuid: ObjectUuid) -> Result<Object, Error> {
-        let (res_send, res_reply) = oneshot::channel();
+        let (send, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CreateObject(uuid, res_send))
+            .unbounded_send(Request::CreateObject(CreateObjectRequest {
+                uuid,
+                reply: send,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
-        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+
+        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
         match reply {
             CreateObjectResult::Ok(cookie) => Ok(Object::new(
                 ObjectId::new(uuid, ObjectCookie(cookie)),
