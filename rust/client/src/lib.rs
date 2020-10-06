@@ -740,28 +740,32 @@ where
 
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
-            Request::CreateObject(uuid, reply) => self.create_object(uuid, reply).await,
-            Request::DestroyObject(cookie, reply) => self.destroy_object(cookie, reply).await,
-            Request::SubscribeObjects(sender, mode) => self.subscribe_objects(sender, mode).await,
+            Request::CreateObject(uuid, reply) => self.req_create_object(uuid, reply).await,
+            Request::DestroyObject(cookie, reply) => self.req_destroy_object(cookie, reply).await,
+            Request::SubscribeObjects(sender, mode) => {
+                self.req_subscribe_objects(sender, mode).await
+            }
             Request::CreateService(object_cookie, service_uuid, version, reply) => {
-                self.create_service(object_cookie, service_uuid, version, reply)
+                self.req_create_service(object_cookie, service_uuid, version, reply)
                     .await
             }
-            Request::DestroyService(cookie, reply) => self.destroy_service(cookie, reply).await,
-            Request::SubscribeServices(sender, mode) => self.subscribe_services(sender, mode).await,
+            Request::DestroyService(cookie, reply) => self.req_destroy_service(cookie, reply).await,
+            Request::SubscribeServices(sender, mode) => {
+                self.req_subscribe_services(sender, mode).await
+            }
             Request::CallFunction(service_cookie, function, args, reply) => {
-                self.call_function(service_cookie, function, args, reply)
+                self.req_call_function(service_cookie, function, args, reply)
                     .await
             }
             Request::FunctionCallReply(serial, result) => {
-                self.function_call_reply(serial, result).await
+                self.req_function_call_reply(serial, result).await
             }
-            Request::SubscribeEvent(req) => self.subscribe_event(req).await,
-            Request::UnsubscribeEvent(req) => self.unsubscribe_event(req).await,
-            Request::EmitEvent(req) => self.emit_event(req).await,
-            Request::QueryObject(req) => self.query_object(req).await,
+            Request::SubscribeEvent(req) => self.req_subscribe_event(req).await,
+            Request::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
+            Request::EmitEvent(req) => self.req_emit_event(req).await,
+            Request::QueryObject(req) => self.req_query_object(req).await,
             Request::QueryServiceVersion(cookie, reply) => {
-                self.query_service_version(cookie, reply).await
+                self.req_query_service_version(cookie, reply).await
             }
 
             // Handled in Client::run()
@@ -769,7 +773,7 @@ where
         }
     }
 
-    async fn create_object(
+    async fn req_create_object(
         &mut self,
         uuid: ObjectUuid,
         reply: oneshot::Sender<CreateObjectResult>,
@@ -784,7 +788,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn destroy_object(
+    async fn req_destroy_object(
         &mut self,
         cookie: ObjectCookie,
         reply: oneshot::Sender<DestroyObjectResult>,
@@ -799,7 +803,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_objects(
+    async fn req_subscribe_objects(
         &mut self,
         sender: mpsc::UnboundedSender<ObjectEvent>,
         mode: SubscribeMode,
@@ -821,7 +825,7 @@ where
         }
     }
 
-    async fn create_service(
+    async fn req_create_service(
         &mut self,
         object_cookie: ObjectCookie,
         service_uuid: ServiceUuid,
@@ -840,7 +844,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn destroy_service(
+    async fn req_destroy_service(
         &mut self,
         cookie: ServiceCookie,
         reply: oneshot::Sender<DestroyServiceResult>,
@@ -855,7 +859,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_services(
+    async fn req_subscribe_services(
         &mut self,
         sender: mpsc::UnboundedSender<ServiceEvent>,
         mode: SubscribeMode,
@@ -877,7 +881,7 @@ where
         }
     }
 
-    async fn call_function(
+    async fn req_call_function(
         &mut self,
         service_cookie: ServiceCookie,
         function: u32,
@@ -896,7 +900,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn function_call_reply(
+    async fn req_function_call_reply(
         &mut self,
         serial: u32,
         result: CallFunctionResult,
@@ -910,7 +914,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn subscribe_event(
+    async fn req_subscribe_event(
         &mut self,
         req: SubscribeEventRequest,
     ) -> Result<(), RunError<T::Error>> {
@@ -948,7 +952,7 @@ where
         }
     }
 
-    async fn unsubscribe_event(
+    async fn req_unsubscribe_event(
         &mut self,
         req: UnsubscribeEventRequest,
     ) -> Result<(), RunError<T::Error>> {
@@ -984,7 +988,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
+    async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
         self.t
             .send_and_flush(Message::EmitEvent(EmitEvent {
                 service_cookie: req.service_cookie.0,
@@ -995,7 +999,10 @@ where
             .map_err(Into::into)
     }
 
-    async fn query_object(&mut self, req: QueryObjectRequest) -> Result<(), RunError<T::Error>> {
+    async fn req_query_object(
+        &mut self,
+        req: QueryObjectRequest,
+    ) -> Result<(), RunError<T::Error>> {
         let serial = self.query_object.insert(QueryObjectData {
             object_uuid: req.object_uuid,
             id_reply: Some(req.reply),
@@ -1012,7 +1019,7 @@ where
             .map_err(Into::into)
     }
 
-    async fn query_service_version(
+    async fn req_query_service_version(
         &mut self,
         cookie: ServiceCookie,
         reply: oneshot::Sender<QueryServiceVersionResult>,
