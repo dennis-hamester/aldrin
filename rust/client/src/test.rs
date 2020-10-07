@@ -1,4 +1,4 @@
-use aldrin_test::aldrin_client::ObjectUuid;
+use aldrin_test::aldrin_client::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use std::future::Future;
 use std::mem;
@@ -56,4 +56,27 @@ async fn abort_create_object() {
     time::delay_for(Duration::from_millis(100)).await;
 
     assert!(client.resolve_object(uuid).await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn abort_create_service() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let uuid = ServiceUuid::new_v4();
+    let fut = obj.create_service(uuid, 0);
+
+    // This assumes that polling the future once is enough to create the service.
+    PollOnce(Box::pin(fut)).await;
+
+    // The service may have been created temporarily. Give client and broker some time to destroy it
+    // again.
+    time::delay_for(Duration::from_millis(100)).await;
+
+    assert!(client
+        .find_service(uuid, Some(obj.id().uuid))
+        .await
+        .unwrap()
+        .is_none());
 }
