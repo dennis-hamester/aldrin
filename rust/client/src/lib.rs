@@ -68,6 +68,8 @@ mod request;
 mod serial_map;
 mod service;
 mod services;
+#[cfg(test)]
+mod test;
 
 /// Re-exports for the code generator.
 ///
