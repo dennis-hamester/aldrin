@@ -3,8 +3,8 @@ use super::{
     ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
-    DestroyServiceResult, QueryServiceVersionResult, SubscribeEventResult, Value,
+    CallFunctionResult, CreateObjectResult, DestroyObjectResult, DestroyServiceResult,
+    QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::{mpsc, oneshot};
 
@@ -14,12 +14,7 @@ pub(crate) enum Request {
     CreateObject(CreateObjectRequest),
     DestroyObject(DestroyObjectRequest),
     SubscribeObjects(SubscribeObjectsRequest),
-    CreateService(
-        ObjectCookie,
-        ServiceUuid,
-        u32,
-        oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
-    ),
+    CreateService(CreateServiceRequest),
     DestroyService(ServiceCookie, oneshot::Sender<DestroyServiceResult>),
     SubscribeServices(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode),
     CallFunction(
@@ -52,6 +47,25 @@ pub(crate) struct DestroyObjectRequest {
 pub(crate) struct SubscribeObjectsRequest {
     pub mode: SubscribeMode,
     pub sender: mpsc::UnboundedSender<ObjectEvent>,
+}
+
+#[derive(Debug)]
+pub(crate) enum CreateServiceRequestResult {
+    Ok {
+        cookie: ServiceCookie,
+        function_calls: FunctionCallReceiver,
+    },
+    DuplicateService,
+    InvalidObject,
+    ForeignObject,
+}
+
+#[derive(Debug)]
+pub(crate) struct CreateServiceRequest {
+    pub object_cookie: ObjectCookie,
+    pub service_uuid: ServiceUuid,
+    pub version: u32,
+    pub reply: oneshot::Sender<CreateServiceRequestResult>,
 }
 
 #[derive(Debug)]

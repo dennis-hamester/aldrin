@@ -1,15 +1,16 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest, Request,
-    SubscribeEventRequest, SubscribeObjectsRequest, UnsubscribeEventRequest,
+    CreateObjectRequest, CreateServiceRequest, CreateServiceRequestResult, DestroyObjectRequest,
+    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
     ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, CreateObjectResult, CreateServiceResult, DestroyObjectResult,
-    DestroyServiceResult, IntoValue, QueryServiceVersionResult, SubscribeEventResult, Value,
+    CallFunctionResult, CreateObjectResult, DestroyObjectResult, DestroyServiceResult, IntoValue,
+    QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -179,28 +180,32 @@ impl Handle {
         service_uuid: ServiceUuid,
         version: u32,
     ) -> Result<Service, Error> {
-        let (res_send, res_reply) = oneshot::channel();
+        let (send, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CreateService(
-                object_id.cookie,
+            .unbounded_send(Request::CreateService(CreateServiceRequest {
+                object_cookie: object_id.cookie,
                 service_uuid,
                 version,
-                res_send,
-            ))
+                reply: send,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
-        let (res, recv) = res_reply.await.map_err(|_| Error::ClientShutdown)?;
+
+        let res = recv.await.map_err(|_| Error::ClientShutdown)?;
         match res {
-            CreateServiceResult::Ok(cookie) => Ok(Service::new(
-                ServiceId::new(object_id, service_uuid, ServiceCookie(cookie)),
+            CreateServiceRequestResult::Ok {
+                cookie,
+                function_calls,
+            } => Ok(Service::new(
+                ServiceId::new(object_id, service_uuid, cookie),
                 version,
                 self.clone(),
-                recv.unwrap(),
+                function_calls,
             )),
-            CreateServiceResult::DuplicateService => {
+            CreateServiceRequestResult::DuplicateService => {
                 Err(Error::DuplicateService(object_id, service_uuid))
             }
-            CreateServiceResult::InvalidObject => Err(Error::InvalidObject(object_id)),
-            CreateServiceResult::ForeignObject => unreachable!(),
+            CreateServiceRequestResult::InvalidObject => Err(Error::InvalidObject(object_id)),
+            CreateServiceRequestResult::ForeignObject => unreachable!(),
         }
     }
 

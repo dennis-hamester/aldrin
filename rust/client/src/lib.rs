@@ -95,9 +95,9 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CreateObjectRequest, DestroyObjectRequest, EmitEventRequest, QueryObjectRequest,
-    QueryObjectRequestReply, Request, SubscribeEventRequest, SubscribeObjectsRequest,
-    UnsubscribeEventRequest,
+    CreateObjectRequest, CreateServiceRequest, CreateServiceRequestResult, DestroyObjectRequest,
+    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
+    SubscribeObjectsRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -116,8 +116,6 @@ pub use service::{
 pub use services::{ServiceEvent, Services};
 
 type FunctionCallReceiver = mpsc::UnboundedReceiver<(u32, Value, u32)>;
-type CreateServiceReplySender =
-    oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>;
 type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<EventsRequest>>>;
 
 /// Aldrin client used to connect to a broker.
@@ -147,7 +145,7 @@ where
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     object_events: SerialMap<SubscribeObjectsRequest>,
-    create_service: SerialMap<CreateServiceReplySender>,
+    create_service: SerialMap<oneshot::Sender<CreateServiceRequestResult>>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
@@ -439,19 +437,28 @@ where
         &mut self,
         msg: CreateServiceReply,
     ) -> Result<(), RunError<T::Error>> {
-        if let Some(rep_send) = self.create_service.remove(msg.serial) {
-            let recv = if let CreateServiceResult::Ok(cookie) = msg.result {
-                let (send, recv) = mpsc::unbounded();
-                let dup = self.services.insert(ServiceCookie(cookie), send);
+        let send = match self.create_service.remove(msg.serial) {
+            Some(send) => send,
+            None => return Ok(()),
+        };
+
+        let res = match msg.result {
+            CreateServiceResult::Ok(cookie) => {
+                let (send, function_calls) = mpsc::unbounded();
+                let cookie = ServiceCookie(cookie);
+                let dup = self.services.insert(cookie, send);
                 debug_assert!(dup.is_none());
-                Some(recv)
-            } else {
-                None
-            };
+                CreateServiceRequestResult::Ok {
+                    cookie,
+                    function_calls,
+                }
+            }
+            CreateServiceResult::DuplicateService => CreateServiceRequestResult::DuplicateService,
+            CreateServiceResult::InvalidObject => CreateServiceRequestResult::InvalidObject,
+            CreateServiceResult::ForeignObject => CreateServiceRequestResult::ForeignObject,
+        };
 
-            rep_send.send((msg.result, recv)).ok();
-        }
-
+        send.send(res).ok();
         Ok(())
     }
 
@@ -749,10 +756,7 @@ where
             Request::CreateObject(req) => self.req_create_object(req).await,
             Request::DestroyObject(req) => self.req_destroy_object(req).await,
             Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
-            Request::CreateService(object_cookie, service_uuid, version, reply) => {
-                self.req_create_service(object_cookie, service_uuid, version, reply)
-                    .await
-            }
+            Request::CreateService(req) => self.req_create_service(req).await,
             Request::DestroyService(cookie, reply) => self.req_destroy_service(cookie, reply).await,
             Request::SubscribeServices(sender, mode) => {
                 self.req_subscribe_services(sender, mode).await
@@ -829,18 +833,15 @@ where
 
     async fn req_create_service(
         &mut self,
-        object_cookie: ObjectCookie,
-        service_uuid: ServiceUuid,
-        version: u32,
-        reply: oneshot::Sender<(CreateServiceResult, Option<FunctionCallReceiver>)>,
+        req: CreateServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_service.insert(reply);
+        let serial = self.create_service.insert(req.reply);
         self.t
             .send_and_flush(Message::CreateService(CreateService {
                 serial,
-                object_cookie: object_cookie.0,
-                uuid: service_uuid.0,
-                version,
+                object_cookie: req.object_cookie.0,
+                uuid: req.service_uuid.0,
+                version: req.version,
             }))
             .await
             .map_err(Into::into)
