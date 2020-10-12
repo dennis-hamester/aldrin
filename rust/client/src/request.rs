@@ -10,6 +10,8 @@ use futures_channel::{mpsc, oneshot};
 
 #[derive(Debug)]
 pub(crate) enum Request {
+    HandleCloned,
+    HandleDropped,
     Shutdown,
     CreateObject(CreateObjectRequest),
     DestroyObject(DestroyObjectRequest),

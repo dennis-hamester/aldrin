@@ -56,7 +56,7 @@ use std::task::{Context, Poll};
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Handle {
     send: UnboundedSender<Request>,
 }
@@ -787,6 +787,21 @@ impl Handle {
             QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
             QueryServiceVersionResult::InvalidService => Ok(None),
         }
+    }
+}
+
+impl Clone for Handle {
+    fn clone(&self) -> Self {
+        self.send.unbounded_send(Request::HandleCloned).ok();
+        Handle {
+            send: self.send.clone(),
+        }
+    }
+}
+
+impl Drop for Handle {
+    fn drop(&mut self) {
+        self.send.unbounded_send(Request::HandleDropped).ok();
     }
 }
 

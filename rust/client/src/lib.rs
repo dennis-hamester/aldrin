@@ -143,7 +143,8 @@ where
 {
     t: T,
     recv: mpsc::UnboundedReceiver<Request>,
-    handle: Option<Handle>,
+    handle: Handle,
+    num_handles: usize,
     create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     object_events: SerialMap<SubscribeObjectsRequest>,
@@ -221,7 +222,8 @@ where
         Ok(Client {
             t,
             recv,
-            handle: Some(Handle::new(send)),
+            handle: Handle::new(send),
+            num_handles: 1,
             create_object: SerialMap::new(),
             destroy_object: SerialMap::new(),
             object_events: SerialMap::new(),
@@ -245,7 +247,7 @@ where
     ///
     /// When the last [`Handle`] is dropped, the [`Client`] will automatically shut down.
     pub fn handle(&self) -> &Handle {
-        self.handle.as_ref().unwrap()
+        &self.handle
     }
 
     /// Runs the client until it shuts down.
@@ -264,8 +266,6 @@ where
     /// types (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
     /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
-        self.handle.take().unwrap();
-
         loop {
             match select(self.t.receive(), self.recv.next()).await {
                 Either::Left((Ok(Message::Shutdown(())), _)) => {
@@ -275,16 +275,21 @@ where
 
                 Either::Left((Ok(msg), _)) => self.handle_message(msg).await?,
                 Either::Left((Err(e), _)) => return Err(e.into()),
-
-                Either::Right((Some(Request::Shutdown), _)) | Either::Right((None, _)) => {
-                    self.t.send_and_flush(Message::Shutdown(())).await?;
-                    self.drain_transport().await?;
-                    return Ok(());
-                }
-
+                Either::Right((Some(Request::Shutdown), _)) => break,
                 Either::Right((Some(req), _)) => self.handle_request(req).await?,
+
+                // Unreachable, because Client holds a sender.
+                Either::Right((None, _)) => unreachable!(),
+            }
+
+            if self.num_handles == 1 {
+                break;
             }
         }
+
+        self.t.send_and_flush(Message::Shutdown(())).await?;
+        self.drain_transport().await?;
+        Ok(())
     }
 
     async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
@@ -755,6 +760,8 @@ where
 
     async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
         match req {
+            Request::HandleCloned => self.req_handle_cloned(),
+            Request::HandleDropped => self.req_handle_dropped(),
             Request::CreateObject(req) => self.req_create_object(req).await,
             Request::DestroyObject(req) => self.req_destroy_object(req).await,
             Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
@@ -781,6 +788,17 @@ where
             // Handled in Client::run()
             Request::Shutdown => unreachable!(),
         }
+    }
+
+    fn req_handle_cloned(&mut self) -> Result<(), RunError<T::Error>> {
+        self.num_handles += 1;
+        Ok(())
+    }
+
+    fn req_handle_dropped(&mut self) -> Result<(), RunError<T::Error>> {
+        self.num_handles -= 1;
+        debug_assert!(self.num_handles >= 1);
+        Ok(())
     }
 
     async fn req_create_object(
