@@ -342,10 +342,16 @@ where
         &mut self,
         msg: CreateObjectReply,
     ) -> Result<(), RunError<T::Error>> {
-        if let Some(send) = self.create_object.remove(msg.serial) {
-            send.send(msg.result).ok();
-        }
+        let send = match self.create_object.remove(msg.serial) {
+            Some(send) => send,
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::CreateObjectReply(msg),
+                ))
+            }
+        };
 
+        send.send(msg.result).ok();
         Ok(())
     }
 
