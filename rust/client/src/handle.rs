@@ -9,7 +9,7 @@ use crate::{
     ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, CreateObjectResult, DestroyObjectResult, DestroyServiceResult, IntoValue,
+    CallFunctionResult, DestroyObjectResult, DestroyServiceResult, IntoValue,
     QueryServiceVersionResult, SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
@@ -119,14 +119,7 @@ impl Handle {
             }))
             .map_err(|_| Error::ClientShutdown)?;
 
-        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
-        match reply {
-            CreateObjectResult::Ok(cookie) => Ok(Object::new(
-                ObjectId::new(uuid, ObjectCookie(cookie)),
-                self.clone(),
-            )),
-            CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject(uuid)),
-        }
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
     pub(crate) async fn destroy_object(&self, id: ObjectId) -> Result<(), Error> {

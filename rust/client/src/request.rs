@@ -1,10 +1,10 @@
 use super::{
-    EventsId, EventsRequest, FunctionCallReceiver, ObjectCookie, ObjectEvent, ObjectUuid,
-    ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
+    Error, EventsId, EventsRequest, FunctionCallReceiver, Object, ObjectCookie, ObjectEvent,
+    ObjectUuid, ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, CreateObjectResult, DestroyObjectResult, DestroyServiceResult,
-    QueryServiceVersionResult, SubscribeEventResult, Value,
+    CallFunctionResult, DestroyObjectResult, DestroyServiceResult, QueryServiceVersionResult,
+    SubscribeEventResult, Value,
 };
 use futures_channel::{mpsc, oneshot};
 
@@ -36,7 +36,7 @@ pub(crate) enum Request {
 #[derive(Debug)]
 pub(crate) struct CreateObjectRequest {
     pub uuid: ObjectUuid,
-    pub reply: oneshot::Sender<CreateObjectResult>,
+    pub reply: oneshot::Sender<Result<Object, Error>>,
 }
 
 #[derive(Debug)]

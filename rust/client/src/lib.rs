@@ -145,7 +145,7 @@ where
     recv: mpsc::UnboundedReceiver<Request>,
     handle: Handle,
     num_handles: usize,
-    create_object: SerialMap<oneshot::Sender<CreateObjectResult>>,
+    create_object: SerialMap<CreateObjectRequest>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     object_events: SerialMap<SubscribeObjectsRequest>,
     create_service: SerialMap<oneshot::Sender<CreateServiceRequestResult>>,
@@ -342,8 +342,8 @@ where
         &mut self,
         msg: CreateObjectReply,
     ) -> Result<(), RunError<T::Error>> {
-        let send = match self.create_object.remove(msg.serial) {
-            Some(send) => send,
+        let req = match self.create_object.remove(msg.serial) {
+            Some(req) => req,
             None => {
                 return Err(RunError::UnexpectedMessageReceived(
                     Message::CreateObjectReply(msg),
@@ -351,7 +351,15 @@ where
             }
         };
 
-        send.send(msg.result).ok();
+        let reply = match msg.result {
+            CreateObjectResult::Ok(cookie) => Ok(Object::new(
+                ObjectId::new(req.uuid, ObjectCookie(cookie)),
+                self.handle.clone(),
+            )),
+            CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject(req.uuid)),
+        };
+
+        req.reply.send(reply).ok();
         Ok(())
     }
 
@@ -811,12 +819,10 @@ where
         &mut self,
         req: CreateObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_object.insert(req.reply);
+        let uuid = req.uuid.0;
+        let serial = self.create_object.insert(req);
         self.t
-            .send_and_flush(Message::CreateObject(CreateObject {
-                serial,
-                uuid: req.uuid.0,
-            }))
+            .send_and_flush(Message::CreateObject(CreateObject { serial, uuid }))
             .await
             .map_err(Into::into)
     }
