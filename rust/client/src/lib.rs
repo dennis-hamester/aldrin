@@ -460,7 +460,11 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let send = match self.create_service.remove(msg.serial) {
             Some(send) => send,
-            None => return Ok(()),
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::CreateServiceReply(msg),
+                ))
+            }
         };
 
         let res = match msg.result {
