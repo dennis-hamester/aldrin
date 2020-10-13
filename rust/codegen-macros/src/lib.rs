@@ -6,7 +6,7 @@
 //! See the documentation of the [`generate!`] macro for more information and usage examples.
 
 #![allow(clippy::needless_doctest_main)]
-#![deny(intra_doc_link_resolution_failure)]
+#![deny(broken_intra_doc_links)]
 #![deny(missing_docs)]
 
 extern crate proc_macro;
