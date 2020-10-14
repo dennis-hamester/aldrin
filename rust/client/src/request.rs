@@ -1,6 +1,6 @@
 use super::{
-    Error, EventsId, EventsRequest, FunctionCallReceiver, Object, ObjectCookie, ObjectEvent,
-    ObjectUuid, ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
+    Error, EventsId, EventsRequest, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid,
+    Service, ServiceCookie, ServiceEvent, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
     CallFunctionResult, DestroyObjectResult, DestroyServiceResult, QueryServiceVersionResult,
@@ -52,22 +52,11 @@ pub(crate) struct SubscribeObjectsRequest {
 }
 
 #[derive(Debug)]
-pub(crate) enum CreateServiceRequestResult {
-    Ok {
-        cookie: ServiceCookie,
-        function_calls: FunctionCallReceiver,
-    },
-    DuplicateService,
-    InvalidObject,
-    ForeignObject,
-}
-
-#[derive(Debug)]
 pub(crate) struct CreateServiceRequest {
-    pub object_cookie: ObjectCookie,
+    pub object_id: ObjectId,
     pub service_uuid: ServiceUuid,
     pub version: u32,
-    pub reply: oneshot::Sender<CreateServiceRequestResult>,
+    pub reply: oneshot::Sender<Result<Service, Error>>,
 }
 
 #[derive(Debug)]

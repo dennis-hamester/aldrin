@@ -1,7 +1,7 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CreateObjectRequest, CreateServiceRequest, CreateServiceRequestResult, DestroyObjectRequest,
-    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, EmitEventRequest,
+    QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
     UnsubscribeEventRequest,
 };
 use crate::{
@@ -173,33 +173,17 @@ impl Handle {
         service_uuid: ServiceUuid,
         version: u32,
     ) -> Result<Service, Error> {
-        let (send, recv) = oneshot::channel();
+        let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(Request::CreateService(CreateServiceRequest {
-                object_cookie: object_id.cookie,
+                object_id,
                 service_uuid,
                 version,
-                reply: send,
+                reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
 
-        let res = recv.await.map_err(|_| Error::ClientShutdown)?;
-        match res {
-            CreateServiceRequestResult::Ok {
-                cookie,
-                function_calls,
-            } => Ok(Service::new(
-                ServiceId::new(object_id, service_uuid, cookie),
-                version,
-                self.clone(),
-                function_calls,
-            )),
-            CreateServiceRequestResult::DuplicateService => {
-                Err(Error::DuplicateService(object_id, service_uuid))
-            }
-            CreateServiceRequestResult::InvalidObject => Err(Error::InvalidObject(object_id)),
-            CreateServiceRequestResult::ForeignObject => unreachable!(),
-        }
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
     pub(crate) async fn destroy_service(&self, id: ServiceId) -> Result<(), Error> {

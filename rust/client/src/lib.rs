@@ -97,8 +97,8 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CreateObjectRequest, CreateServiceRequest, CreateServiceRequestResult, DestroyObjectRequest,
-    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, EmitEventRequest,
+    QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
     SubscribeObjectsRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
@@ -117,7 +117,6 @@ pub use service::{
 };
 pub use services::{ServiceEvent, Services};
 
-type FunctionCallReceiver = mpsc::UnboundedReceiver<(u32, Value, u32)>;
 type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<EventsRequest>>>;
 
 /// Aldrin client used to connect to a broker.
@@ -148,7 +147,7 @@ where
     create_object: SerialMap<CreateObjectRequest>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     object_events: SerialMap<SubscribeObjectsRequest>,
-    create_service: SerialMap<oneshot::Sender<CreateServiceRequestResult>>,
+    create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
     service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
@@ -458,8 +457,8 @@ where
         &mut self,
         msg: CreateServiceReply,
     ) -> Result<(), RunError<T::Error>> {
-        let send = match self.create_service.remove(msg.serial) {
-            Some(send) => send,
+        let req = match self.create_service.remove(msg.serial) {
+            Some(req) => req,
             None => {
                 return Err(RunError::UnexpectedMessageReceived(
                     Message::CreateServiceReply(msg),
@@ -467,23 +466,27 @@ where
             }
         };
 
-        let res = match msg.result {
+        let reply = match msg.result {
             CreateServiceResult::Ok(cookie) => {
                 let (send, function_calls) = mpsc::unbounded();
                 let cookie = ServiceCookie(cookie);
                 let dup = self.services.insert(cookie, send);
                 debug_assert!(dup.is_none());
-                CreateServiceRequestResult::Ok {
-                    cookie,
+                Ok(Service::new(
+                    ServiceId::new(req.object_id, req.service_uuid, cookie),
+                    req.version,
+                    self.handle.clone(),
                     function_calls,
-                }
+                ))
             }
-            CreateServiceResult::DuplicateService => CreateServiceRequestResult::DuplicateService,
-            CreateServiceResult::InvalidObject => CreateServiceRequestResult::InvalidObject,
-            CreateServiceResult::ForeignObject => CreateServiceRequestResult::ForeignObject,
+            CreateServiceResult::DuplicateService => {
+                Err(Error::DuplicateService(req.object_id, req.service_uuid))
+            }
+            CreateServiceResult::InvalidObject => Err(Error::InvalidObject(req.object_id)),
+            CreateServiceResult::ForeignObject => unreachable!(),
         };
 
-        send.send(res).ok();
+        req.reply.send(reply).ok();
         Ok(())
     }
 
@@ -871,13 +874,16 @@ where
         &mut self,
         req: CreateServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_service.insert(req.reply);
+        let object_cookie = req.object_id.cookie.0;
+        let uuid = req.service_uuid.0;
+        let version = req.version;
+        let serial = self.create_service.insert(req);
         self.t
             .send_and_flush(Message::CreateService(CreateService {
                 serial,
-                object_cookie: req.object_cookie.0,
-                uuid: req.service_uuid.0,
-                version: req.version,
+                object_cookie,
+                uuid,
+                version,
             }))
             .await
             .map_err(Into::into)
