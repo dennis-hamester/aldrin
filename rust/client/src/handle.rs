@@ -1,7 +1,7 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, EmitEventRequest,
-    QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
+    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
     UnsubscribeEventRequest,
 };
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
     ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, DestroyServiceResult, IntoValue,
-    QueryServiceVersionResult, SubscribeEventResult, Value,
+    CallFunctionResult, DestroyObjectResult, IntoValue, QueryServiceVersionResult,
+    SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -187,22 +187,18 @@ impl Handle {
     }
 
     pub(crate) async fn destroy_service(&self, id: ServiceId) -> Result<(), Error> {
-        let (res_send, res_reply) = oneshot::channel();
+        let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyService(id.cookie, res_send))
+            .unbounded_send(Request::DestroyService(DestroyServiceRequest { id, reply }))
             .map_err(|_| Error::ClientShutdown)?;
-        let reply = res_reply.await.map_err(|_| Error::ClientShutdown)?;
-        match reply {
-            DestroyServiceResult::Ok => Ok(()),
-            DestroyServiceResult::InvalidService => Err(Error::InvalidService(id)),
-            DestroyServiceResult::ForeignObject => unreachable!(),
-        }
+
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
-    pub(crate) fn destroy_service_now(&self, cookie: ServiceCookie) {
-        let (res_send, _) = oneshot::channel();
+    pub(crate) fn destroy_service_now(&self, id: ServiceId) {
+        let (reply, _) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyService(cookie, res_send))
+            .unbounded_send(Request::DestroyService(DestroyServiceRequest { id, reply }))
             .ok();
     }
 

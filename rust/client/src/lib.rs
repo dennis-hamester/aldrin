@@ -97,8 +97,8 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, EmitEventRequest,
-    QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
+    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
     SubscribeObjectsRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
@@ -148,7 +148,7 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     object_events: SerialMap<SubscribeObjectsRequest>,
     create_service: SerialMap<CreateServiceRequest>,
-    destroy_service: SerialMap<(ServiceCookie, oneshot::Sender<DestroyServiceResult>)>,
+    destroy_service: SerialMap<DestroyServiceRequest>,
     service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<(u32, Value, u32)>>,
@@ -494,18 +494,23 @@ where
         &mut self,
         msg: DestroyServiceReply,
     ) -> Result<(), RunError<T::Error>> {
-        let (cookie, send) = match self.destroy_service.remove(msg.serial) {
-            Some(data) => data,
+        let req = match self.destroy_service.remove(msg.serial) {
+            Some(req) => req,
             None => return Ok(()),
         };
 
-        if let DestroyServiceResult::Ok = msg.result {
-            let contained = self.services.remove(&cookie);
-            debug_assert!(contained.is_some());
-            self.broker_subscriptions.remove(&cookie);
-        }
+        let reply = match msg.result {
+            DestroyServiceResult::Ok => {
+                let contained = self.services.remove(&req.id.cookie);
+                debug_assert!(contained.is_some());
+                self.broker_subscriptions.remove(&req.id.cookie);
+                Ok(())
+            }
+            DestroyServiceResult::InvalidService => Err(Error::InvalidService(req.id)),
+            DestroyServiceResult::ForeignObject => unreachable!(),
+        };
 
-        send.send(msg.result).ok();
+        req.reply.send(reply).ok();
         Ok(())
     }
 
@@ -787,7 +792,7 @@ where
             Request::DestroyObject(req) => self.req_destroy_object(req).await,
             Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
             Request::CreateService(req) => self.req_create_service(req).await,
-            Request::DestroyService(cookie, reply) => self.req_destroy_service(cookie, reply).await,
+            Request::DestroyService(req) => self.req_destroy_service(req).await,
             Request::SubscribeServices(sender, mode) => {
                 self.req_subscribe_services(sender, mode).await
             }
@@ -891,15 +896,12 @@ where
 
     async fn req_destroy_service(
         &mut self,
-        cookie: ServiceCookie,
-        reply: oneshot::Sender<DestroyServiceResult>,
+        req: DestroyServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.destroy_service.insert((cookie, reply));
+        let cookie = req.id.cookie.0;
+        let serial = self.destroy_service.insert(req);
         self.t
-            .send_and_flush(Message::DestroyService(DestroyService {
-                serial,
-                cookie: cookie.0,
-            }))
+            .send_and_flush(Message::DestroyService(DestroyService { serial, cookie }))
             .await
             .map_err(Into::into)
     }

@@ -189,7 +189,7 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        self.client.destroy_service_now(self.id.cookie);
+        self.client.destroy_service_now(self.id);
     }
 }
 
