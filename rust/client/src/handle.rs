@@ -1,8 +1,8 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, UnsubscribeEventRequest,
+    CallFunctionRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
+    DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest,
+    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -263,14 +263,14 @@ impl Handle {
         function: u32,
         args: impl IntoValue,
     ) -> Result<CallFunctionFuture, Error> {
-        let (send, recv) = oneshot::channel();
+        let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CallFunction(
-                service_id.cookie,
+            .unbounded_send(Request::CallFunction(CallFunctionRequest {
+                service_cookie: service_id.cookie,
                 function,
-                args.into_value(),
-                send,
-            ))
+                args: args.into_value(),
+                reply,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
         Ok(CallFunctionFuture {
             recv,

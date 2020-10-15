@@ -97,9 +97,10 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
-    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
+    CallFunctionRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
+    DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request,
+    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
+    UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -799,10 +800,7 @@ where
             Request::CreateService(req) => self.req_create_service(req).await,
             Request::DestroyService(req) => self.req_destroy_service(req).await,
             Request::SubscribeServices(req) => self.req_subscribe_services(req).await,
-            Request::CallFunction(service_cookie, function, args, reply) => {
-                self.req_call_function(service_cookie, function, args, reply)
-                    .await
-            }
+            Request::CallFunction(req) => self.req_call_function(req).await,
             Request::FunctionCallReply(serial, result) => {
                 self.req_function_call_reply(serial, result).await
             }
@@ -933,18 +931,15 @@ where
 
     async fn req_call_function(
         &mut self,
-        service_cookie: ServiceCookie,
-        function: u32,
-        args: Value,
-        reply: oneshot::Sender<CallFunctionResult>,
+        req: CallFunctionRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.function_calls.insert(reply);
+        let serial = self.function_calls.insert(req.reply);
         self.t
             .send_and_flush(Message::CallFunction(CallFunction {
                 serial,
-                service_cookie: service_cookie.0,
-                function,
-                args,
+                service_cookie: req.service_cookie.0,
+                function: req.function,
+                args: req.args,
             }))
             .await
             .map_err(Into::into)
