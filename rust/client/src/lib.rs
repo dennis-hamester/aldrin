@@ -97,10 +97,10 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use request::{
-    CallFunctionRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
-    DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request,
-    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
-    UnsubscribeEventRequest,
+    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest,
+    QueryObjectRequestReply, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -801,9 +801,7 @@ where
             Request::DestroyService(req) => self.req_destroy_service(req).await,
             Request::SubscribeServices(req) => self.req_subscribe_services(req).await,
             Request::CallFunction(req) => self.req_call_function(req).await,
-            Request::FunctionCallReply(serial, result) => {
-                self.req_function_call_reply(serial, result).await
-            }
+            Request::CallFunctionReply(req) => self.req_call_function_reply(req).await,
             Request::SubscribeEvent(req) => self.req_subscribe_event(req).await,
             Request::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
             Request::EmitEvent(req) => self.req_emit_event(req).await,
@@ -945,15 +943,14 @@ where
             .map_err(Into::into)
     }
 
-    async fn req_function_call_reply(
+    async fn req_call_function_reply(
         &mut self,
-        serial: u32,
-        result: CallFunctionResult,
+        req: CallFunctionReplyRequest,
     ) -> Result<(), RunError<T::Error>> {
         self.t
             .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
-                serial,
-                result,
+                serial: req.serial,
+                result: req.result,
             }))
             .await
             .map_err(Into::into)

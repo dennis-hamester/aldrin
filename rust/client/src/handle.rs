@@ -1,8 +1,9 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
-    CallFunctionRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
-    DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest,
-    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
+    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, Request,
+    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
+    UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -285,16 +286,19 @@ impl Handle {
         result: CallFunctionResult,
     ) -> Result<(), Error> {
         self.send
-            .unbounded_send(Request::FunctionCallReply(serial, result))
+            .unbounded_send(Request::CallFunctionReply(CallFunctionReplyRequest {
+                serial,
+                result,
+            }))
             .map_err(|_| Error::ClientShutdown)
     }
 
     pub(crate) fn abort_function_call_now(&self, serial: u32) {
         self.send
-            .unbounded_send(Request::FunctionCallReply(
+            .unbounded_send(Request::CallFunctionReply(CallFunctionReplyRequest {
                 serial,
-                CallFunctionResult::Aborted,
-            ))
+                result: CallFunctionResult::Aborted,
+            }))
             .ok();
     }
 

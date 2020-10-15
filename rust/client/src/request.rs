@@ -19,7 +19,7 @@ pub(crate) enum Request {
     DestroyService(DestroyServiceRequest),
     SubscribeServices(SubscribeServicesRequest),
     CallFunction(CallFunctionRequest),
-    FunctionCallReply(u32, CallFunctionResult),
+    CallFunctionReply(CallFunctionReplyRequest),
     SubscribeEvent(SubscribeEventRequest),
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
@@ -71,6 +71,12 @@ pub(crate) struct CallFunctionRequest {
     pub function: u32,
     pub args: Value,
     pub reply: oneshot::Sender<CallFunctionResult>,
+}
+
+#[derive(Debug)]
+pub(crate) struct CallFunctionReplyRequest {
+    pub serial: u32,
+    pub result: CallFunctionResult,
 }
 
 #[derive(Debug)]
