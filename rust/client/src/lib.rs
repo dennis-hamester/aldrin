@@ -99,7 +99,7 @@ use futures_util::stream::StreamExt;
 use request::{
     CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, QueryObjectRequest, QueryObjectRequestReply, Request, SubscribeEventRequest,
-    SubscribeObjectsRequest, UnsubscribeEventRequest,
+    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -149,7 +149,7 @@ where
     object_events: SerialMap<SubscribeObjectsRequest>,
     create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<DestroyServiceRequest>,
-    service_events: SerialMap<(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode)>,
+    service_events: SerialMap<SubscribeServicesRequest>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<(u32, Value, u32)>>,
     subscribe_event: SerialMap<(
@@ -518,7 +518,12 @@ where
         &mut self,
         msg: SubscribeServicesReply,
     ) -> Result<(), RunError<T::Error>> {
-        if let Some((_, SubscribeMode::CurrentOnly)) = self.service_events.get_mut(msg.serial) {
+        let req = match self.service_events.get_mut(msg.serial) {
+            Some(req) => req,
+            None => return Ok(()),
+        };
+
+        if req.mode == SubscribeMode::CurrentOnly {
             self.service_events.remove(msg.serial);
         }
 
@@ -536,16 +541,16 @@ where
         ));
 
         if let Some(serial) = msg.serial {
-            if let Some((send, _)) = self.service_events.get_mut(serial) {
-                if send.unbounded_send(svc_ev).is_err() {
+            if let Some(req) = self.service_events.get_mut(serial) {
+                if req.sender.unbounded_send(svc_ev).is_err() {
                     self.service_events.remove(serial);
                 }
             }
         } else {
             let mut remove = Vec::new();
 
-            for (serial, (send, _)) in self.service_events.iter_mut() {
-                if send.unbounded_send(svc_ev).is_err() {
+            for (serial, req) in self.service_events.iter_mut() {
+                if req.sender.unbounded_send(svc_ev).is_err() {
                     remove.push(serial);
                 }
             }
@@ -579,8 +584,8 @@ where
                 ServiceCookie(msg.cookie),
             ));
 
-            for (serial, (send, _)) in self.service_events.iter_mut() {
-                if send.unbounded_send(svc_ev).is_err() {
+            for (serial, req) in self.service_events.iter_mut() {
+                if req.sender.unbounded_send(svc_ev).is_err() {
                     remove.push(serial);
                 }
             }
@@ -793,9 +798,7 @@ where
             Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
             Request::CreateService(req) => self.req_create_service(req).await,
             Request::DestroyService(req) => self.req_destroy_service(req).await,
-            Request::SubscribeServices(sender, mode) => {
-                self.req_subscribe_services(sender, mode).await
-            }
+            Request::SubscribeServices(req) => self.req_subscribe_services(req).await,
             Request::CallFunction(service_cookie, function, args, reply) => {
                 self.req_call_function(service_cookie, function, args, reply)
                     .await
@@ -908,11 +911,11 @@ where
 
     async fn req_subscribe_services(
         &mut self,
-        sender: mpsc::UnboundedSender<ServiceEvent>,
-        mode: SubscribeMode,
+        req: SubscribeServicesRequest,
     ) -> Result<(), RunError<T::Error>> {
+        let mode = req.mode;
         let is_empty = self.service_events.is_empty();
-        let serial = self.service_events.insert((sender, mode));
+        let serial = self.service_events.insert(req);
         let (send, serial) = match mode {
             SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
             SubscribeMode::NewOnly => (is_empty, None),

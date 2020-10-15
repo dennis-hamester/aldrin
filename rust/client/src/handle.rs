@@ -2,7 +2,7 @@ use crate::events::{EventsId, EventsRequest};
 use crate::request::{
     CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, QueryObjectRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
-    UnsubscribeEventRequest,
+    SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -210,11 +210,14 @@ impl Handle {
     ///
     /// See [`Services`] for more information and usage examples.
     pub fn services(&self, mode: SubscribeMode) -> Result<Services, Error> {
-        let (ev_send, ev_recv) = unbounded();
+        let (sender, recv) = unbounded();
         self.send
-            .unbounded_send(Request::SubscribeServices(ev_send, mode))
+            .unbounded_send(Request::SubscribeServices(SubscribeServicesRequest {
+                mode,
+                sender,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(Services::new(ev_recv))
+        Ok(Services::new(recv))
     }
 
     /// Calls a function on a service.

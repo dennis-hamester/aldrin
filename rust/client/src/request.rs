@@ -17,7 +17,7 @@ pub(crate) enum Request {
     SubscribeObjects(SubscribeObjectsRequest),
     CreateService(CreateServiceRequest),
     DestroyService(DestroyServiceRequest),
-    SubscribeServices(mpsc::UnboundedSender<ServiceEvent>, SubscribeMode),
+    SubscribeServices(SubscribeServicesRequest),
     CallFunction(
         ServiceCookie,
         u32,
@@ -62,6 +62,12 @@ pub(crate) struct CreateServiceRequest {
 pub(crate) struct DestroyServiceRequest {
     pub id: ServiceId,
     pub reply: oneshot::Sender<Result<(), Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SubscribeServicesRequest {
+    pub mode: SubscribeMode,
+    pub sender: mpsc::UnboundedSender<ServiceEvent>,
 }
 
 #[derive(Debug)]
