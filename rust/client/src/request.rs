@@ -24,7 +24,7 @@ pub(crate) enum Request {
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
     QueryObject(QueryObjectRequest),
-    QueryServiceVersion(ServiceCookie, oneshot::Sender<QueryServiceVersionResult>),
+    QueryServiceVersion(QueryServiceVersionRequest),
 }
 
 #[derive(Debug)]
@@ -112,4 +112,10 @@ pub(crate) struct QueryObjectRequest {
     pub object_uuid: ObjectUuid,
     pub reply: oneshot::Sender<QueryObjectRequestReply>,
     pub with_services: bool,
+}
+
+#[derive(Debug)]
+pub(crate) struct QueryServiceVersionRequest {
+    pub cookie: ServiceCookie,
+    pub reply: oneshot::Sender<QueryServiceVersionResult>,
 }

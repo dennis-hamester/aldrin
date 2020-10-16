@@ -99,8 +99,8 @@ use futures_util::stream::StreamExt;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
     DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest,
-    QueryObjectRequestReply, Request, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, UnsubscribeEventRequest,
+    QueryObjectRequestReply, QueryServiceVersionRequest, Request, SubscribeEventRequest,
+    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use serial_map::SerialMap;
 use std::collections::hash_map::{Entry, HashMap};
@@ -806,9 +806,7 @@ where
             Request::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
             Request::EmitEvent(req) => self.req_emit_event(req).await,
             Request::QueryObject(req) => self.req_query_object(req).await,
-            Request::QueryServiceVersion(cookie, reply) => {
-                self.req_query_service_version(cookie, reply).await
-            }
+            Request::QueryServiceVersion(req) => self.req_query_service_version(req).await,
 
             // Handled in Client::run()
             Request::Shutdown => unreachable!(),
@@ -1063,14 +1061,13 @@ where
 
     async fn req_query_service_version(
         &mut self,
-        cookie: ServiceCookie,
-        reply: oneshot::Sender<QueryServiceVersionResult>,
+        req: QueryServiceVersionRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.query_service_version.insert(reply);
+        let serial = self.query_service_version.insert(req.reply);
         self.t
             .send_and_flush(Message::QueryServiceVersion(QueryServiceVersion {
                 serial,
-                cookie: cookie.0,
+                cookie: req.cookie.0,
             }))
             .await
             .map_err(Into::into)

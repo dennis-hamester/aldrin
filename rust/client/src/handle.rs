@@ -1,9 +1,9 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest, Request,
-    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
-    UnsubscribeEventRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest,
+    QueryServiceVersionRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
@@ -758,12 +758,15 @@ impl Handle {
     /// # }
     /// ```
     pub async fn query_service_version(&self, service_id: ServiceId) -> Result<Option<u32>, Error> {
-        let (rep_send, rep_recv) = oneshot::channel();
+        let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::QueryServiceVersion(service_id.cookie, rep_send))
+            .unbounded_send(Request::QueryServiceVersion(QueryServiceVersionRequest {
+                cookie: service_id.cookie,
+                reply,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
 
-        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
+        match recv.await.map_err(|_| Error::ClientShutdown)? {
             QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
             QueryServiceVersionResult::InvalidService => Ok(None),
         }
