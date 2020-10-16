@@ -293,15 +293,6 @@ impl Handle {
             .map_err(|_| Error::ClientShutdown)
     }
 
-    pub(crate) fn abort_function_call_now(&self, serial: u32) {
-        self.send
-            .unbounded_send(Request::CallFunctionReply(CallFunctionReplyRequest {
-                serial,
-                result: CallFunctionResult::Aborted,
-            }))
-            .ok();
-    }
-
     /// Creates an Events object used to subscribe to service events.
     ///
     /// See [`Events`] for more information and usage examples.

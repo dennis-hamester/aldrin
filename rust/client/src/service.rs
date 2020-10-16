@@ -468,7 +468,9 @@ impl FunctionCallReply {
 impl Drop for FunctionCallReply {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client.abort_function_call_now(self.serial);
+            client
+                .function_call_reply(self.serial, CallFunctionResult::Aborted)
+                .ok();
         }
     }
 }
