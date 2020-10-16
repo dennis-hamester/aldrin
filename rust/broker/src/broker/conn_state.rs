@@ -36,7 +36,7 @@ impl ConnectionState {
         debug_assert!(contained);
     }
 
-    pub fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectCookie> + 'a {
+    pub fn objects(&self) -> impl Iterator<Item = ObjectCookie> + '_ {
         self.objects.iter().copied()
     }
 
@@ -77,7 +77,7 @@ impl ConnectionState {
         self.subscriptions.remove(&svc_cookie);
     }
 
-    pub fn subscriptions<'a>(&'a self) -> impl Iterator<Item = (ServiceCookie, u32)> + 'a {
+    pub fn subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
         self.subscriptions
             .iter()
             .flat_map(|(&c, ids)| ids.iter().map(move |&id| (c, id)))

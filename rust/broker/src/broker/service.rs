@@ -29,7 +29,7 @@ impl Service {
         debug_assert!(contained);
     }
 
-    pub fn function_calls<'a>(&'a self) -> impl Iterator<Item = u32> + 'a {
+    pub fn function_calls(&self) -> impl Iterator<Item = u32> + '_ {
         self.function_calls.iter().copied()
     }
 

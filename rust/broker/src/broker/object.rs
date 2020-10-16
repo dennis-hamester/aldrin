@@ -37,7 +37,7 @@ impl Object {
         debug_assert!(contained);
     }
 
-    pub fn services<'a>(&'a self) -> impl Iterator<Item = ServiceCookie> + 'a {
+    pub fn services(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
         self.svcs.iter().copied()
     }
 }
