@@ -287,7 +287,7 @@ where
         &mut self,
         msg: SubscribeObjectsReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.object_events.get_mut(msg.serial) {
+        let req = match self.object_events.get(msg.serial) {
             Some(req) => req,
             None => return Ok(()),
         };
@@ -309,7 +309,7 @@ where
         ));
 
         if let Some(serial) = msg.serial {
-            if let Some(req) = self.object_events.get_mut(serial) {
+            if let Some(req) = self.object_events.get(serial) {
                 if req.sender.unbounded_send(obj_ev).is_err() {
                     self.object_events.remove(serial);
                 }
@@ -428,7 +428,7 @@ where
         &mut self,
         msg: SubscribeServicesReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.service_events.get_mut(msg.serial) {
+        let req = match self.service_events.get(msg.serial) {
             Some(req) => req,
             None => return Ok(()),
         };
@@ -451,7 +451,7 @@ where
         ));
 
         if let Some(serial) = msg.serial {
-            if let Some(req) = self.service_events.get_mut(serial) {
+            if let Some(req) = self.service_events.get(serial) {
                 if req.sender.unbounded_send(svc_ev).is_err() {
                     self.service_events.remove(serial);
                 }

@@ -33,6 +33,10 @@ impl<T> SerialMap<T> {
         self.elems.remove(&serial)
     }
 
+    pub fn get(&mut self, serial: u32) -> Option<&T> {
+        self.elems.get(&serial)
+    }
+
     pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
         self.elems.get_mut(&serial)
     }
