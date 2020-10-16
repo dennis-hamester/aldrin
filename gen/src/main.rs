@@ -53,7 +53,7 @@ impl FromStr for Color {
 #[derive(Clap)]
 pub struct CommonReadArgs {
     /// Additional include directories
-    #[clap(short = "I", long, name = "include_dir")]
+    #[clap(short = 'I', long, name = "include_dir")]
     #[clap(number_of_values(1))]
     include: Vec<PathBuf>,
 }
@@ -67,7 +67,7 @@ pub struct CommonGenArgs {
     output_dir: PathBuf,
 
     /// Overwrite output files
-    #[clap(short = "f", long)]
+    #[clap(short = 'f', long)]
     overwrite: bool,
 
     /// Skip generating client-side code for services

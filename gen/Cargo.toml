@@ -11,6 +11,6 @@ aldrin-codegen = { version = "0.1.0", path = "../rust/codegen", features = ["rus
 aldrin-parser = { version = "0.1.0", path = "../rust/parser" }
 anyhow = "1.0.32"
 atty = "0.2.14"
-clap = { version = "3.0.0-beta.1", features = ["wrap_help"] }
+clap = { version = "3.0.0-beta.2", features = ["wrap_help"] }
 once_cell = "1.4.0"
 termcolor = "1.1.0"
