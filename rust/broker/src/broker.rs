@@ -83,18 +83,7 @@ pub struct Broker {
     objs: HashMap<ObjectUuid, Object>,
     svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid, u32)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
-
-    /// Map of pending function calls.
-    ///
-    /// The serial of an entry refers to the callee and will be referenced in
-    /// [`CallFunctionReply`] message.
-    ///
-    /// The elements of the tuple are:
-    /// 1. Serial used by the caller in the [`CallFunction`] message.
-    /// 2. [`ConnectionId`] of the caller.
-    /// 3. [`ObjectUuid`] which owns the called service.
-    /// 4. [`ServiceUuid`] on which the function has been called.
-    function_calls: SerialMap<(u32, ConnectionId, ObjectUuid, ServiceUuid)>,
+    function_calls: SerialMap<PendingFunctionCall>,
 }
 
 impl Broker {
@@ -648,9 +637,12 @@ impl Broker {
         };
         let callee_conn = self.conns.get_mut(callee_id).expect("inconsistent state");
 
-        let serial = self
-            .function_calls
-            .insert((req.serial, id.clone(), obj_uuid, svc_uuid));
+        let serial = self.function_calls.insert(PendingFunctionCall {
+            caller_serial: req.serial,
+            caller_conn_id: id.clone(),
+            callee_obj: obj_uuid,
+            callee_svc: svc_uuid,
+        });
 
         match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
             Some(svc) => svc.add_function_call(serial),
@@ -672,30 +664,30 @@ impl Broker {
     }
 
     fn call_function_reply(&mut self, state: &mut State, req: CallFunctionReply) -> Result<(), ()> {
-        let (serial, conn_id, obj_uuid, svc_uuid) = match self.function_calls.remove(req.serial) {
-            Some(caller) => caller,
+        let call = match self.function_calls.remove(req.serial) {
+            Some(call) => call,
             None => return Ok(()),
         };
 
         let svc = self
             .svcs
-            .get_mut(&(obj_uuid, svc_uuid))
+            .get_mut(&(call.callee_obj, call.callee_svc))
             .expect("inconsistent state");
         svc.remove_function_call(req.serial);
 
-        let conn = match self.conns.get_mut(&conn_id) {
+        let conn = match self.conns.get_mut(&call.caller_conn_id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
 
         if conn
             .send(Message::CallFunctionReply(CallFunctionReply {
-                serial,
+                serial: call.caller_serial,
                 result: req.result,
             }))
             .is_err()
         {
-            state.push_remove_conn(conn_id);
+            state.push_remove_conn(call.caller_conn_id);
         }
 
         Ok(())
@@ -930,11 +922,15 @@ impl Broker {
         }
 
         for serial in svc.function_calls() {
-            let (serial, conn_id, _, _) = self
+            let call = self
                 .function_calls
                 .remove(serial)
                 .expect("inconsistent state");
-            state.push_remove_function_call(serial, conn_id, CallFunctionResult::InvalidService);
+            state.push_remove_function_call(
+                call.caller_serial,
+                call.caller_conn_id,
+                CallFunctionResult::InvalidService,
+            );
         }
 
         for conn_id in svc.subscribed_conn_ids() {
@@ -1001,4 +997,12 @@ where
             state.push_remove_conn(id.clone());
         }
     }
+}
+
+#[derive(Debug)]
+struct PendingFunctionCall {
+    caller_serial: u32,
+    caller_conn_id: ConnectionId,
+    callee_obj: ObjectUuid,
+    callee_svc: ServiceUuid,
 }
