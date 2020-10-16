@@ -1,6 +1,7 @@
-use super::{
-    Error, EventsId, EventsRequest, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid,
-    Service, ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
+use crate::events::{EventsId, EventsRequest};
+use crate::{
+    Error, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Service, ServiceCookie,
+    ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
     CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult, SubscribeEventResult, Value,
