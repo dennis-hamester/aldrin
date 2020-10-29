@@ -317,7 +317,7 @@ where
         } else {
             let mut remove = Vec::new();
 
-            for (serial, req) in self.object_events.iter_mut() {
+            for (serial, req) in self.object_events.iter() {
                 if req.sender.unbounded_send(obj_ev).is_err() {
                     remove.push(serial);
                 }
@@ -346,7 +346,7 @@ where
 
         let mut remove = Vec::new();
 
-        for (serial, req) in self.object_events.iter_mut() {
+        for (serial, req) in self.object_events.iter() {
             if req.sender.unbounded_send(obj_ev).is_err() {
                 remove.push(serial);
             }
@@ -459,7 +459,7 @@ where
         } else {
             let mut remove = Vec::new();
 
-            for (serial, req) in self.service_events.iter_mut() {
+            for (serial, req) in self.service_events.iter() {
                 if req.sender.unbounded_send(svc_ev).is_err() {
                     remove.push(serial);
                 }
@@ -494,7 +494,7 @@ where
                 ServiceCookie(msg.cookie),
             ));
 
-            for (serial, req) in self.service_events.iter_mut() {
+            for (serial, req) in self.service_events.iter() {
                 if req.sender.unbounded_send(svc_ev).is_err() {
                     remove.push(serial);
                 }

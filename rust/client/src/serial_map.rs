@@ -41,7 +41,7 @@ impl<T> SerialMap<T> {
         self.elems.get_mut(&serial)
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (u32, &mut T)> {
-        self.elems.iter_mut().map(|(&s, e)| (s, e))
+    pub fn iter(&self) -> impl Iterator<Item = (u32, &T)> {
+        self.elems.iter().map(|(&s, e)| (s, e))
     }
 }
