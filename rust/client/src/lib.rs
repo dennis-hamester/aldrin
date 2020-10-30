@@ -87,7 +87,7 @@ pub use aldrin_codegen_macros::generate;
 pub use client::Client;
 pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
-pub use handle::{CallFunctionFuture, Handle, ObjectServices};
+pub use handle::{Handle, ObjectServices, PendingFunctionReply};
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use objects::{ObjectEvent, Objects};
 pub use service::{

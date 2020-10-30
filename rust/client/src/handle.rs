@@ -226,7 +226,7 @@ impl Handle {
     /// The function with id `function` will be called with the arguments `args` on the service
     /// identified by `service_id`.
     ///
-    /// The returned value of type [`CallFunctionFuture`] is a future which will resolve to the
+    /// The returned value of type [`PendingFunctionReply`] is a future which will resolve to the
     /// result of the function call.
     ///
     /// # Examples
@@ -263,7 +263,7 @@ impl Handle {
         service_id: ServiceId,
         function: u32,
         args: impl IntoValue,
-    ) -> Result<CallFunctionFuture, Error> {
+    ) -> Result<PendingFunctionReply, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(Request::CallFunction(CallFunctionRequest {
@@ -273,7 +273,7 @@ impl Handle {
                 reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(CallFunctionFuture {
+        Ok(PendingFunctionReply {
             recv,
             service_id,
             function,
@@ -787,13 +787,13 @@ impl Drop for Handle {
 /// of the function.
 #[derive(Debug)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct CallFunctionFuture {
+pub struct PendingFunctionReply {
     recv: oneshot::Receiver<CallFunctionResult>,
     service_id: ServiceId,
     function: u32,
 }
 
-impl Future for CallFunctionFuture {
+impl Future for PendingFunctionReply {
     type Output = Result<Result<Value, Value>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {

@@ -611,7 +611,7 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "#[derive(Debug)]");
             genln!(self, "#[must_use = \"futures do nothing unless you `.await` or poll them\"]");
-            genln!(self, "pub struct {}(#[doc(hidden)] aldrin_client::CallFunctionFuture);", reply_future);
+            genln!(self, "pub struct {}(#[doc(hidden)] aldrin_client::PendingFunctionReply);", reply_future);
             genln!(self);
             genln!(self, "impl std::future::Future for {} {{", reply_future);
             genln!(self, "    type Output = Result<{}, aldrin_client::Error>;", res);
