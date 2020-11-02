@@ -9,7 +9,7 @@ use aldrin_proto::{
 use futures_channel::{mpsc, oneshot};
 
 #[derive(Debug)]
-pub(crate) enum Request {
+pub(crate) enum HandleRequest {
     HandleCloned,
     HandleDropped,
     Shutdown,

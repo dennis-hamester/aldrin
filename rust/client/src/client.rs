@@ -1,8 +1,8 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest,
-    QueryObjectRequestReply, QueryServiceVersionRequest, Request, SubscribeEventRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
+    QueryObjectRequest, QueryObjectRequestReply, QueryServiceVersionRequest, SubscribeEventRequest,
     SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
@@ -51,7 +51,7 @@ where
     T: AsyncTransport + Unpin,
 {
     t: T,
-    recv: mpsc::UnboundedReceiver<Request>,
+    recv: mpsc::UnboundedReceiver<HandleRequest>,
     handle: Handle,
     num_handles: usize,
     create_object: SerialMap<CreateObjectRequest>,
@@ -184,7 +184,7 @@ where
 
                 Either::Left((Ok(msg), _)) => self.handle_message(msg).await?,
                 Either::Left((Err(e), _)) => return Err(e.into()),
-                Either::Right((Some(Request::Shutdown), _)) => break,
+                Either::Right((Some(HandleRequest::Shutdown), _)) => break,
                 Either::Right((Some(req), _)) => self.handle_request(req).await?,
 
                 // Unreachable, because Client holds a sender.
@@ -699,26 +699,26 @@ where
         Ok(())
     }
 
-    async fn handle_request(&mut self, req: Request) -> Result<(), RunError<T::Error>> {
+    async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
-            Request::HandleCloned => self.req_handle_cloned(),
-            Request::HandleDropped => self.req_handle_dropped(),
-            Request::CreateObject(req) => self.req_create_object(req).await,
-            Request::DestroyObject(req) => self.req_destroy_object(req).await,
-            Request::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
-            Request::CreateService(req) => self.req_create_service(req).await,
-            Request::DestroyService(req) => self.req_destroy_service(req).await,
-            Request::SubscribeServices(req) => self.req_subscribe_services(req).await,
-            Request::CallFunction(req) => self.req_call_function(req).await,
-            Request::CallFunctionReply(req) => self.req_call_function_reply(req).await,
-            Request::SubscribeEvent(req) => self.req_subscribe_event(req).await,
-            Request::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
-            Request::EmitEvent(req) => self.req_emit_event(req).await,
-            Request::QueryObject(req) => self.req_query_object(req).await,
-            Request::QueryServiceVersion(req) => self.req_query_service_version(req).await,
+            HandleRequest::HandleCloned => self.req_handle_cloned(),
+            HandleRequest::HandleDropped => self.req_handle_dropped(),
+            HandleRequest::CreateObject(req) => self.req_create_object(req).await,
+            HandleRequest::DestroyObject(req) => self.req_destroy_object(req).await,
+            HandleRequest::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
+            HandleRequest::CreateService(req) => self.req_create_service(req).await,
+            HandleRequest::DestroyService(req) => self.req_destroy_service(req).await,
+            HandleRequest::SubscribeServices(req) => self.req_subscribe_services(req).await,
+            HandleRequest::CallFunction(req) => self.req_call_function(req).await,
+            HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await,
+            HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await,
+            HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
+            HandleRequest::EmitEvent(req) => self.req_emit_event(req).await,
+            HandleRequest::QueryObject(req) => self.req_query_object(req).await,
+            HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await,
 
             // Handled in Client::run()
-            Request::Shutdown => unreachable!(),
+            HandleRequest::Shutdown => unreachable!(),
         }
     }
 

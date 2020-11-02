@@ -1,8 +1,8 @@
 use crate::events::{EventsId, EventsRequest};
 use crate::request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, QueryObjectRequest,
-    QueryServiceVersionRequest, Request, SubscribeEventRequest, SubscribeObjectsRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
+    QueryObjectRequest, QueryServiceVersionRequest, SubscribeEventRequest, SubscribeObjectsRequest,
     SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::{
@@ -59,11 +59,11 @@ use std::task::{Context, Poll};
 /// ```
 #[derive(Debug)]
 pub struct Handle {
-    send: UnboundedSender<Request>,
+    send: UnboundedSender<HandleRequest>,
 }
 
 impl Handle {
-    pub(crate) fn new(send: UnboundedSender<Request>) -> Self {
+    pub(crate) fn new(send: UnboundedSender<HandleRequest>) -> Self {
         Handle { send }
     }
 
@@ -77,7 +77,7 @@ impl Handle {
     /// will not treat that as an error. This is different than most other functions, which would
     /// return [`Error::ClientShutdown`] instead.
     pub fn shutdown(&self) {
-        self.send.unbounded_send(Request::Shutdown).ok();
+        self.send.unbounded_send(HandleRequest::Shutdown).ok();
     }
 
     /// Creates a new object on the bus.
@@ -114,7 +114,7 @@ impl Handle {
     pub async fn create_object(&self, uuid: ObjectUuid) -> Result<Object, Error> {
         let (send, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CreateObject(CreateObjectRequest {
+            .unbounded_send(HandleRequest::CreateObject(CreateObjectRequest {
                 uuid,
                 reply: send,
             }))
@@ -126,7 +126,7 @@ impl Handle {
     pub(crate) async fn destroy_object(&self, id: ObjectId) -> Result<(), Error> {
         let (send, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyObject(DestroyObjectRequest {
+            .unbounded_send(HandleRequest::DestroyObject(DestroyObjectRequest {
                 cookie: id.cookie,
                 reply: send,
             }))
@@ -143,7 +143,7 @@ impl Handle {
     pub(crate) fn destroy_object_now(&self, cookie: ObjectCookie) {
         let (reply, _) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyObject(DestroyObjectRequest {
+            .unbounded_send(HandleRequest::DestroyObject(DestroyObjectRequest {
                 cookie,
                 reply,
             }))
@@ -160,7 +160,7 @@ impl Handle {
     pub fn objects(&self, mode: SubscribeMode) -> Result<Objects, Error> {
         let (send, recv) = unbounded();
         self.send
-            .unbounded_send(Request::SubscribeObjects(SubscribeObjectsRequest {
+            .unbounded_send(HandleRequest::SubscribeObjects(SubscribeObjectsRequest {
                 mode,
                 sender: send,
             }))
@@ -176,7 +176,7 @@ impl Handle {
     ) -> Result<Service, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CreateService(CreateServiceRequest {
+            .unbounded_send(HandleRequest::CreateService(CreateServiceRequest {
                 object_id,
                 service_uuid,
                 version,
@@ -190,7 +190,10 @@ impl Handle {
     pub(crate) async fn destroy_service(&self, id: ServiceId) -> Result<(), Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyService(DestroyServiceRequest { id, reply }))
+            .unbounded_send(HandleRequest::DestroyService(DestroyServiceRequest {
+                id,
+                reply,
+            }))
             .map_err(|_| Error::ClientShutdown)?;
 
         recv.await.map_err(|_| Error::ClientShutdown)?
@@ -199,7 +202,10 @@ impl Handle {
     pub(crate) fn destroy_service_now(&self, id: ServiceId) {
         let (reply, _) = oneshot::channel();
         self.send
-            .unbounded_send(Request::DestroyService(DestroyServiceRequest { id, reply }))
+            .unbounded_send(HandleRequest::DestroyService(DestroyServiceRequest {
+                id,
+                reply,
+            }))
             .ok();
     }
 
@@ -213,7 +219,7 @@ impl Handle {
     pub fn services(&self, mode: SubscribeMode) -> Result<Services, Error> {
         let (sender, recv) = unbounded();
         self.send
-            .unbounded_send(Request::SubscribeServices(SubscribeServicesRequest {
+            .unbounded_send(HandleRequest::SubscribeServices(SubscribeServicesRequest {
                 mode,
                 sender,
             }))
@@ -266,7 +272,7 @@ impl Handle {
     ) -> Result<PendingFunctionReply, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::CallFunction(CallFunctionRequest {
+            .unbounded_send(HandleRequest::CallFunction(CallFunctionRequest {
                 service_cookie: service_id.cookie,
                 function,
                 args: args.into_value(),
@@ -286,7 +292,7 @@ impl Handle {
         result: CallFunctionResult,
     ) -> Result<(), Error> {
         self.send
-            .unbounded_send(Request::CallFunctionReply(CallFunctionReplyRequest {
+            .unbounded_send(HandleRequest::CallFunctionReply(CallFunctionReplyRequest {
                 serial,
                 result,
             }))
@@ -309,7 +315,7 @@ impl Handle {
     ) -> Result<(), Error> {
         let (rep_send, rep_recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::SubscribeEvent(SubscribeEventRequest {
+            .unbounded_send(HandleRequest::SubscribeEvent(SubscribeEventRequest {
                 events_id,
                 service_cookie: service_id.cookie,
                 id,
@@ -331,7 +337,7 @@ impl Handle {
         id: u32,
     ) -> Result<(), Error> {
         self.send
-            .unbounded_send(Request::UnsubscribeEvent(UnsubscribeEventRequest {
+            .unbounded_send(HandleRequest::UnsubscribeEvent(UnsubscribeEventRequest {
                 events_id,
                 service_cookie: service_id.cookie,
                 id,
@@ -368,7 +374,7 @@ impl Handle {
         args: impl IntoValue,
     ) -> Result<(), Error> {
         self.send
-            .unbounded_send(Request::EmitEvent(EmitEventRequest {
+            .unbounded_send(HandleRequest::EmitEvent(EmitEventRequest {
                 service_cookie: service_id.cookie,
                 event,
                 args: args.into_value(),
@@ -639,7 +645,7 @@ impl Handle {
     pub async fn resolve_object(&self, object_uuid: ObjectUuid) -> Result<Option<ObjectId>, Error> {
         let (rep_send, rep_recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::QueryObject(QueryObjectRequest {
+            .unbounded_send(HandleRequest::QueryObject(QueryObjectRequest {
                 object_uuid,
                 reply: rep_send,
                 with_services: false,
@@ -702,7 +708,7 @@ impl Handle {
     ) -> Result<Option<(ObjectId, ObjectServices)>, Error> {
         let (rep_send, rep_recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::QueryObject(QueryObjectRequest {
+            .unbounded_send(HandleRequest::QueryObject(QueryObjectRequest {
                 object_uuid,
                 reply: rep_send,
                 with_services: true,
@@ -751,10 +757,12 @@ impl Handle {
     pub async fn query_service_version(&self, service_id: ServiceId) -> Result<Option<u32>, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(Request::QueryServiceVersion(QueryServiceVersionRequest {
-                cookie: service_id.cookie,
-                reply,
-            }))
+            .unbounded_send(HandleRequest::QueryServiceVersion(
+                QueryServiceVersionRequest {
+                    cookie: service_id.cookie,
+                    reply,
+                },
+            ))
             .map_err(|_| Error::ClientShutdown)?;
 
         match recv.await.map_err(|_| Error::ClientShutdown)? {
@@ -766,7 +774,7 @@ impl Handle {
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        self.send.unbounded_send(Request::HandleCloned).ok();
+        self.send.unbounded_send(HandleRequest::HandleCloned).ok();
         Handle {
             send: self.send.clone(),
         }
@@ -775,7 +783,7 @@ impl Clone for Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        self.send.unbounded_send(Request::HandleDropped).ok();
+        self.send.unbounded_send(HandleRequest::HandleDropped).ok();
     }
 }
 
