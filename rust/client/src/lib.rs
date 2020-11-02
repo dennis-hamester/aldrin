@@ -65,7 +65,6 @@ mod events;
 mod handle;
 mod object;
 mod objects;
-mod request;
 mod serial_map;
 mod service;
 mod services;

@@ -1,5 +1,5 @@
 use crate::events::{EventsId, EventsRequest};
-use crate::request::{
+use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
     DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
     QueryObjectRequest, QueryObjectRequestReply, QueryServiceVersionRequest, SubscribeEventRequest,

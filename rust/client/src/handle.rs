@@ -1,10 +1,6 @@
+pub(crate) mod request;
+
 use crate::events::{EventsId, EventsRequest};
-use crate::request::{
-    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
-    QueryObjectRequest, QueryServiceVersionRequest, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, UnsubscribeEventRequest,
-};
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
     ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
@@ -17,6 +13,12 @@ use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
 use futures_core::stream::{FusedStream, Stream};
 use futures_util::stream::StreamExt;
+use request::{
+    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
+    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
+    QueryObjectRequest, QueryServiceVersionRequest, SubscribeEventRequest, SubscribeObjectsRequest,
+    SubscribeServicesRequest, UnsubscribeEventRequest,
+};
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
