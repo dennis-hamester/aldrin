@@ -146,7 +146,7 @@ pub struct Service {
     id: ServiceId,
     version: u32,
     client: Handle,
-    function_calls: UnboundedReceiver<(u32, Value, u32)>,
+    function_calls: UnboundedReceiver<RawFunctionCall>,
 }
 
 impl Service {
@@ -154,7 +154,7 @@ impl Service {
         id: ServiceId,
         version: u32,
         client: Handle,
-        function_calls: UnboundedReceiver<(u32, Value, u32)>,
+        function_calls: UnboundedReceiver<RawFunctionCall>,
     ) -> Self {
         Service {
             id,
@@ -198,9 +198,7 @@ impl Stream for Service {
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
         Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
-            r.map(|(function, args, serial)| {
-                FunctionCall::new(function, args, self.client.clone(), serial)
-            })
+            r.map(|req| FunctionCall::new(req.function, req.args, self.client.clone(), req.serial))
         })
     }
 }
@@ -473,4 +471,11 @@ impl Drop for FunctionCallReply {
                 .ok();
         }
     }
+}
+
+#[derive(Debug)]
+pub(crate) struct RawFunctionCall {
+    pub serial: u32,
+    pub function: u32,
+    pub args: Value,
 }

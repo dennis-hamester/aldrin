@@ -7,6 +7,7 @@ use crate::handle::request::{
     SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
+use crate::service::RawFunctionCall;
 use crate::{
     Error, Handle, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Service, ServiceCookie,
     ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
@@ -20,7 +21,7 @@ use aldrin_proto::{
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
     ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
-    SubscribeServicesReply, UnsubscribeEvent, Value,
+    SubscribeServicesReply, UnsubscribeEvent,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -62,7 +63,7 @@ where
     destroy_service: SerialMap<DestroyServiceRequest>,
     service_events: SerialMap<SubscribeServicesRequest>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
-    services: HashMap<ServiceCookie, mpsc::UnboundedSender<(u32, Value, u32)>>,
+    services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawFunctionCall>>,
     subscribe_event: SerialMap<(
         EventsId,
         ServiceCookie,
@@ -532,11 +533,13 @@ where
     async fn msg_call_function(&mut self, msg: CallFunction) -> Result<(), RunError<T::Error>> {
         let cookie = ServiceCookie(msg.service_cookie);
         let send = self.services.get_mut(&cookie).expect("inconsistent state");
+        let req = RawFunctionCall {
+            serial: msg.serial,
+            function: msg.function,
+            args: msg.args,
+        };
 
-        if send
-            .unbounded_send((msg.function, msg.args, msg.serial))
-            .is_err()
-        {
+        if send.unbounded_send(req).is_err() {
             self.t
                 .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
                     serial: msg.serial,
