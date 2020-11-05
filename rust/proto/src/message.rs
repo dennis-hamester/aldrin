@@ -470,7 +470,7 @@ pub struct EmitEvent {
     pub args: Value,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -495,7 +495,7 @@ pub enum QueryObjectResult {
     InvalidObject,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -506,7 +506,7 @@ pub struct QueryObjectReply {
     pub result: QueryObjectResult,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -541,7 +541,7 @@ impl QueryServiceVersionResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
