@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
@@ -114,7 +117,7 @@ impl FromValue for () {
     fn from_value(v: Value) -> Result<(), ConversionError> {
         match v {
             Value::None => Ok(()),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -168,7 +171,7 @@ impl FromValue for ObjectId {
     fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
         match v {
             Value::ObjectId(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -220,7 +223,7 @@ impl FromValue for ServiceId {
     fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
         match v {
             Value::ServiceId(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -259,7 +262,7 @@ impl FromValue for bool {
     fn from_value(v: Value) -> Result<bool, ConversionError> {
         match v {
             Value::Bool(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -274,7 +277,7 @@ impl FromValue for u8 {
     fn from_value(v: Value) -> Result<u8, ConversionError> {
         match v {
             Value::U8(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -289,7 +292,7 @@ impl FromValue for i8 {
     fn from_value(v: Value) -> Result<i8, ConversionError> {
         match v {
             Value::I8(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -304,7 +307,7 @@ impl FromValue for u16 {
     fn from_value(v: Value) -> Result<u16, ConversionError> {
         match v {
             Value::U16(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -319,7 +322,7 @@ impl FromValue for i16 {
     fn from_value(v: Value) -> Result<i16, ConversionError> {
         match v {
             Value::I16(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -334,7 +337,7 @@ impl FromValue for u32 {
     fn from_value(v: Value) -> Result<u32, ConversionError> {
         match v {
             Value::U32(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -349,7 +352,7 @@ impl FromValue for i32 {
     fn from_value(v: Value) -> Result<i32, ConversionError> {
         match v {
             Value::I32(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -364,7 +367,7 @@ impl FromValue for u64 {
     fn from_value(v: Value) -> Result<u64, ConversionError> {
         match v {
             Value::U64(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -379,7 +382,7 @@ impl FromValue for i64 {
     fn from_value(v: Value) -> Result<i64, ConversionError> {
         match v {
             Value::I64(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -394,7 +397,7 @@ impl FromValue for f32 {
     fn from_value(v: Value) -> Result<f32, ConversionError> {
         match v {
             Value::F32(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -409,7 +412,7 @@ impl FromValue for f64 {
     fn from_value(v: Value) -> Result<f64, ConversionError> {
         match v {
             Value::F64(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -424,7 +427,7 @@ impl FromValue for String {
     fn from_value(v: Value) -> Result<String, ConversionError> {
         match v {
             Value::String(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -445,7 +448,7 @@ impl FromValue for Uuid {
     fn from_value(v: Value) -> Result<Uuid, ConversionError> {
         match v {
             Value::Uuid(v) => Ok(v),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -458,12 +461,35 @@ impl IntoValue for Uuid {
 
 impl<T> FromValue for Vec<T>
 where
-    T: FromValue,
+    T: FromValue + IntoValue,
 {
     fn from_value(v: Value) -> Result<Vec<T>, ConversionError> {
         match v {
-            Value::Vec(v) => v.into_iter().map(T::from_value).collect(),
-            _ => Err(ConversionError),
+            Value::Vec(v) => {
+                let len = v.len();
+                let mut res = Vec::with_capacity(len);
+
+                let mut iter = v.into_iter();
+                for v in &mut iter {
+                    match T::from_value(v) {
+                        Ok(v) => res.push(v),
+                        Err(e) => {
+                            // Restore original value
+                            let mut err = Vec::with_capacity(len);
+                            err.extend(res.into_iter().map(T::into_value));
+                            if let Some(v) = e.0 {
+                                err.push(v);
+                            }
+                            err.extend(iter);
+                            return Err(ConversionError(Some(Value::Vec(err))));
+                        }
+                    }
+                }
+
+                Ok(res)
+            }
+
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -481,7 +507,7 @@ impl FromValue for Bytes {
     fn from_value(v: Value) -> Result<Self, ConversionError> {
         match v {
             Value::Bytes(v) => Ok(Bytes(v)),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
@@ -496,16 +522,39 @@ macro_rules! impl_map {
     ($key:ty, $var:ident) => {
         impl<V, S> FromValue for HashMap<$key, V, S>
         where
-            V: FromValue,
+            V: FromValue + IntoValue,
             S: BuildHasher + Default,
         {
             fn from_value(v: Value) -> Result<HashMap<$key, V, S>, ConversionError> {
                 match v {
-                    Value::$var(v) => v
-                        .into_iter()
-                        .map(|(k, v)| V::from_value(v).map(|v| (k, v)))
-                        .collect(),
-                    _ => Err(ConversionError),
+                    Value::$var(v) => {
+                        let len = v.len();
+                        let mut res = HashMap::with_capacity_and_hasher(v.len(), S::default());
+
+                        let mut iter = v.into_iter();
+                        for (k, v) in &mut iter {
+                            match V::from_value(v) {
+                                Ok(v) => {
+                                    res.insert(k, v);
+                                }
+
+                                Err(e) => {
+                                    // Restore original value
+                                    let mut err = HashMap::with_capacity(len);
+                                    err.extend(res.into_iter().map(|(k, v)| (k, v.into_value())));
+                                    if let Some(v) = e.0 {
+                                        err.insert(k, v);
+                                    }
+                                    err.extend(iter);
+                                    return Err(ConversionError(Some(Value::$var(err))));
+                                }
+                            }
+                        }
+
+                        Ok(res)
+                    }
+
+                    _ => Err(ConversionError(Some(v))),
                 }
             }
         }
@@ -541,7 +590,7 @@ macro_rules! impl_set {
             fn from_value(v: Value) -> Result<HashSet<$key>, ConversionError> {
                 match v {
                     Value::$var(v) => Ok(v),
-                    _ => Err(ConversionError),
+                    _ => Err(ConversionError(Some(v))),
                 }
             }
         }
@@ -566,8 +615,8 @@ impl_set!(i64, I64Set);
 impl_set!(String, StringSet);
 impl_set!(Uuid, UuidSet);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ConversionError;
+#[derive(Debug, Clone, PartialEq)]
+pub struct ConversionError(pub Option<Value>);
 
 impl fmt::Display for ConversionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
