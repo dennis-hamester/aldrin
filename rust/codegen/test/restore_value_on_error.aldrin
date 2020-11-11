@@ -1,3 +1,10 @@
+struct EmptyStruct {}
+
+struct Struct {
+    required field1 @ 1 = u32;
+    field2 @ 2 = u32;
+}
+
 enum Enum {
     Variant1 @ 1;
     Variant2 @ 2 = u32;

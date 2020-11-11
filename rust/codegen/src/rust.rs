@@ -69,12 +69,16 @@ struct RustGenerator<'a> {
     output: RustOutput,
 }
 
+macro_rules! gen {
+    ($this:expr, $($arg:tt)+) => { write!($this.output.module_content, $($arg)+).unwrap(); };
+}
+
 macro_rules! genln {
     ($this:expr) => { writeln!($this.output.module_content).unwrap(); };
     ($this:expr, $($arg:tt)+) => { writeln!($this.output.module_content, $($arg)+).unwrap(); };
 }
 
-#[rustfmt::skip::macros(genln)]
+#[rustfmt::skip::macros(gen, genln)]
 impl<'a> RustGenerator<'a> {
     fn generate(mut self) -> Result<RustOutput, Error> {
         genln!(self, "#![allow(clippy::large_enum_variant)]");
@@ -204,20 +208,53 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
         genln!(self, "        let mut v = match v {{");
         genln!(self, "            aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,");
-        genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
+        genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
+
+        if !fields.is_empty() {
+            gen!(self, "        let mut res = (");
+            for _ in 0..fields.len() {
+                gen!(self, "None, ");
+            }
+            genln!(self, ");");
+
+            gen!(self, "        let is_err = ");
+            for (i, field) in fields.iter().enumerate() {
+                if i > 0 {
+                    gen!(self, " || ");
+                }
+
+                let field_id = field.id().value();
+                let is_required = if field.required() { "true" } else { "false" };
+                gen!(self, "!aldrin_client::codegen::get_struct_field(&mut v, {}, &mut res.{}, {})", field_id, i, is_required);
+            }
+            genln!(self, ";");
+            genln!(self);
+
+            genln!(self, "        if is_err {{");
+            for (i, field) in fields.iter().enumerate() {
+                let field_id = field.id().value();
+                genln!(self, "            if let Some(field) = res.{}.take() {{", i);
+                genln!(self, "                v.insert({}, aldrin_client::codegen::aldrin_proto::IntoValue::into_value(field));", field_id);
+                genln!(self, "            }}");
+                genln!(self);
+            }
+            genln!(self, "            return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Struct(v))));");
+            genln!(self, "        }}");
+            genln!(self);
+        }
+
         genln!(self, "        Ok({} {{", name);
-        for field in fields {
-            let field_name = field.name().value();
-            let field_id = field.id().value();
+        for (i, field) in fields.iter().enumerate() {
             if field.required() {
-                genln!(self, "            {}: v.remove(&{}).ok_or(aldrin_client::codegen::aldrin_proto::ConversionError)?.convert()?,", field_name, field_id);
+                genln!(self, "            {}: res.{}.unwrap(),", field.name().value(), i);
             } else {
-                genln!(self, "            {}: v.remove(&{}).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,", field_name, field_id);
+                genln!(self, "            {}: res.{}.flatten(),", field.name().value(), i);
             }
         }
         genln!(self, "        }})");
+
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
