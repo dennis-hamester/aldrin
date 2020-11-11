@@ -271,7 +271,7 @@ impl FromValue for ServiceId {
     fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
         match v {
             Value::ServiceId(v) => Ok(v.into()),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }

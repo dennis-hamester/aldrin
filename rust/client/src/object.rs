@@ -155,7 +155,7 @@ impl FromValue for ObjectId {
     fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
         match v {
             Value::ObjectId(v) => Ok(v.into()),
-            _ => Err(ConversionError),
+            _ => Err(ConversionError(Some(v))),
         }
     }
 }
