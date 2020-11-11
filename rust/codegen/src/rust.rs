@@ -350,7 +350,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
         genln!(self, "        let (var, val) = match v {{");
         genln!(self, "            aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant, value }} => (variant, *value),");
-        genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
+        genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
         genln!(self, "        match (var, val) {{");
@@ -358,12 +358,12 @@ impl<'a> RustGenerator<'a> {
             let var_name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            ({}, val) => Ok({}::{}(val.convert()?)),", id, name, var_name);
+                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::codegen::aldrin_proto::ConversionError(e.0.map(|v| aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
             } else {
                 genln!(self, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", id, name, var_name);
             }
         }
-        genln!(self, "            _ => Err(aldrin_client::codegen::aldrin_proto::ConversionError),");
+        genln!(self, "            (_, val) => Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
