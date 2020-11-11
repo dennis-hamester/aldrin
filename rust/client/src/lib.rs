@@ -71,15 +71,8 @@ mod services;
 #[cfg(test)]
 mod test;
 
-/// Re-exports for the code generator.
-///
-/// This module and its contents are not part of the public API.
 #[doc(hidden)]
-pub mod codegen {
-    pub use aldrin_proto;
-    pub use futures_core;
-    pub use uuid;
-}
+pub mod codegen;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
