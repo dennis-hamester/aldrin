@@ -1,6 +1,6 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -5,12 +5,12 @@
+@@ -5,22 +5,22 @@
  
  #[derive(Debug, Clone, Default)]
  #[non_exhaustive]
@@ -15,7 +15,11 @@
      pub fn new() -> Self {
          Default::default()
      }
-@@ -20,21 +20,21 @@
+ 
+-    pub fn builder() -> MyStructBuilder {
+-        MyStructBuilder::new()
++    pub fn builder() -> MyStructRenamedBuilder {
++        MyStructRenamedBuilder::new()
      }
  }
  
@@ -24,13 +28,14 @@
      fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {
          let mut v = match v {
              aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,
-             _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError),
-         };
+@@ -42,14 +42,14 @@
+             return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Struct(v))));
+         }
  
 -        Ok(MyStruct {
 +        Ok(MyStructRenamed {
-             field1: v.remove(&1).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,
-             field2: v.remove(&2).unwrap_or(aldrin_client::codegen::aldrin_proto::Value::None).convert()?,
+             field1: res.0.flatten(),
+             field2: res.1.flatten(),
          })
      }
  }
@@ -40,7 +45,25 @@
      fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {
          let mut v = std::collections::HashMap::new();
          if let Some(field1) = self.field1 {
-@@ -72,8 +72,8 @@
+@@ -63,7 +63,7 @@
+ }
+ 
+ #[derive(Debug, Clone, Default)]
+-pub struct MyStructBuilder {
++pub struct MyStructRenamedBuilder {
+     #[doc(hidden)]
+     field1: Option<u32>,
+ 
+@@ -72,7 +72,7 @@
+ 
+ }
+ 
+-impl MyStructBuilder {
++impl MyStructRenamedBuilder {
+     pub fn new() -> Self {
+         Default::default()
+     }
+@@ -87,8 +87,8 @@
          self
      }
  
