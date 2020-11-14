@@ -1,3 +1,4 @@
+use crate::error::{ConnectError, RunError};
 use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
@@ -7,8 +8,8 @@ use crate::handle::request::{
 };
 use crate::serial_map::SerialMap;
 use crate::{
-    ConnectError, Error, Handle, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, RunError,
-    Service, ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
+    Error, Handle, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Service, ServiceCookie,
+    ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
 };
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,

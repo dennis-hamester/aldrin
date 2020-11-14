@@ -60,7 +60,6 @@
 #![deny(missing_docs)]
 
 mod client;
-mod error;
 mod events;
 mod handle;
 mod object;
@@ -73,12 +72,13 @@ mod test;
 
 #[doc(hidden)]
 pub mod codegen;
+pub mod error;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
 pub use aldrin_proto::{Bytes, Value};
 pub use client::Client;
-pub use error::{ConnectError, Error, RunError};
+pub use error::Error;
 pub use events::{Event, Events};
 pub use handle::{Handle, ObjectServices, PendingFunctionReply};
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};

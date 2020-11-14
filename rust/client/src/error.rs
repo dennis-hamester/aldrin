@@ -1,3 +1,5 @@
+//! Error types.
+
 use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use aldrin_proto::Message;
 use std::error::Error as StdError;
