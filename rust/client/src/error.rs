@@ -133,6 +133,9 @@ pub enum Error {
 
     /// A function call was replied to with an invalid result.
     InvalidFunctionResult(InvalidFunctionResult),
+
+    /// An invalid function call was received.
+    InvalidFunctionCall(InvalidFunctionCall),
 }
 
 impl fmt::Display for Error {
@@ -160,6 +163,7 @@ impl fmt::Display for Error {
             Error::FunctionCallAborted => f.write_str("function call aborted"),
             Error::MissingRequiredField => f.write_str("required field missing"),
             Error::InvalidFunctionResult(e) => e.fmt(f),
+            Error::InvalidFunctionCall(e) => e.fmt(f),
         }
     }
 }
@@ -208,3 +212,35 @@ impl From<InvalidFunctionResult> for Error {
 }
 
 impl StdError for InvalidFunctionResult {}
+
+/// An invalid function call was received.
+///
+/// This error is typically an indication of an incompatible schema mismatch.
+#[derive(Debug, Clone, PartialEq)]
+pub struct InvalidFunctionCall {
+    /// Id of the service, that was called.
+    pub service_id: ServiceId,
+
+    /// Id of the function, that was called.
+    pub function: u32,
+
+    /// Arguments of the function call.
+    pub args: Option<Value>,
+}
+
+impl fmt::Display for InvalidFunctionCall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!(
+            "service {} called with invalid function {} or arguments",
+            self.service_id.uuid, self.function,
+        ))
+    }
+}
+
+impl From<InvalidFunctionCall> for Error {
+    fn from(e: InvalidFunctionCall) -> Self {
+        Error::InvalidFunctionCall(e)
+    }
+}
+
+impl StdError for InvalidFunctionCall {}

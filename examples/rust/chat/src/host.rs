@@ -55,7 +55,7 @@ pub(crate) async fn run(args: HostArgs) -> Result<()> {
                 }
             }
 
-            Some(call) = room.next() => {
+            Some(Ok(call)) = room.next() => {
                 match call {
                     chat::ChatFunction::GetName(reply) => {
                         reply.ok(args.name.clone())?;

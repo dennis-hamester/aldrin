@@ -55,7 +55,7 @@
 //!     let mut calc = calculator::Calculator::create(&object).await?;
 //!
 //!     // There is just a single function, thus not need to `match`.
-//!     while let Some(CalculatorFunction::Add(args, reply)) = calc.next().await {
+//!     while let Some(CalculatorFunction::Add(args, reply)) = calc.next().await.transpose()? {
 //!         match args.lhs.checked_add(args.rhs) {
 //!             Some(res) => reply.ok(res)?,
 //!             None => reply.err(CalculatorAddError::Overflow)?,

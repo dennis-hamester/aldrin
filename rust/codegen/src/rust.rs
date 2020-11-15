@@ -814,17 +814,16 @@ impl<'a> RustGenerator<'a> {
 
         let functions = service_functions(svc_name);
         genln!(self, "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{", svc_name);
-        genln!(self, "    type Item = {};", functions);
+        genln!(self, "    type Item = Result<{}, aldrin_client::error::InvalidFunctionCall>;", functions);
         genln!(self);
-        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}>> {{", functions);
-        genln!(self, "        loop {{");
-        genln!(self, "            let call = match std::pin::Pin::new(&mut self.service).poll_next(cx) {{");
-        genln!(self, "                std::task::Poll::Ready(Some(call)) => call,");
-        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
-        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
-        genln!(self, "            }};");
+        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
+        genln!(self, "        let call = match std::pin::Pin::new(&mut self.service).poll_next(cx) {{");
+        genln!(self, "            std::task::Poll::Ready(Some(call)) => call,");
+        genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
+        genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
+        genln!(self, "        }};");
         genln!(self);
-        genln!(self, "            match call.id {{");
+        genln!(self, "        match call.id {{");
         for item in svc.items() {
             let func = match item {
                 ast::ServiceItem::Function(func) => func,
@@ -834,23 +833,42 @@ impl<'a> RustGenerator<'a> {
             let id = func.id().value();
             let function = service_function_variant(func_name);
             let reply = function_reply(svc_name, func_name);
-            genln!(self, "                {} => {{", id);
+
             if func.args().is_some() {
-                genln!(self, "                    if let Ok(arg) = call.args.convert() {{");
-                genln!(self, "                        return std::task::Poll::Ready(Some({}::{}(arg, {}(call.reply))));", functions, function, reply);
+                genln!(self, "            {} => match call.args.convert() {{", id);
+                genln!(self, "                Ok(args) => std::task::Poll::Ready(Some(Ok({}::{}(args, {}(call.reply))))),", functions, function, reply);
+                genln!(self, "                Err(e) => {{");
+                genln!(self, "                    call.reply.invalid_args().ok();");
+                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+                genln!(self, "                        service_id: self.service.id(),");
+                genln!(self, "                        function: call.id,");
+                genln!(self, "                        args: e.0,");
+                genln!(self, "                    }})))");
+                genln!(self, "                }}");
+                genln!(self, "            }},");
             } else {
-                genln!(self, "                    if let aldrin_client::codegen::aldrin_proto::Value::None = call.args {{");
-                genln!(self, "                        return std::task::Poll::Ready(Some({}::{}({}(call.reply))));", functions, function, reply);
+                genln!(self, "            {} => {{", id);
+                genln!(self, "                if let aldrin_client::codegen::aldrin_proto::Value::None = call.args {{");
+                genln!(self, "                    std::task::Poll::Ready(Some(Ok({}::{}({}(call.reply)))))", functions, function, reply);
+                genln!(self, "                }} else {{");
+                genln!(self, "                    call.reply.invalid_args().ok();");
+                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+                genln!(self, "                        service_id: self.service.id(),");
+                genln!(self, "                        function: call.id,");
+                genln!(self, "                        args: Some(call.args),");
+                genln!(self, "                    }})))");
+                genln!(self, "                }}");
+                genln!(self, "            }}");
             }
-            genln!(self, "                    }} else {{");
-            genln!(self, "                        call.reply.invalid_args().ok();");
-            genln!(self, "                    }}");
-            genln!(self, "                }}");
             genln!(self);
         }
-        genln!(self, "                _ => {{");
-        genln!(self, "                    call.reply.invalid_function().ok();");
-        genln!(self, "                }}");
+        genln!(self, "            _ => {{");
+        genln!(self, "                call.reply.invalid_function().ok();");
+        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+        genln!(self, "                    service_id: self.service.id(),");
+        genln!(self, "                    function: call.id,");
+        genln!(self, "                    args: Some(call.args),");
+        genln!(self, "                }})))");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");
