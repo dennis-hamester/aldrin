@@ -293,6 +293,48 @@ impl Handle {
         Ok(PendingFunctionResult::new(recv, service_id, function))
     }
 
+    /// Calls an infallible function on a service.
+    ///
+    /// Use this method if the called function is guaranteed to never fail. If this is not true, and
+    /// the function fails, then [`Error::InvalidFunctionResult`] will be returned.
+    ///
+    /// The returned value of type [`PendingFunctionValue`] is a future which will resolve to the
+    /// value of the function call.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use futures::stream::StreamExt;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+    /// # let service_id = svc.id();
+    /// // Call function 1 with "1 + 2 = ?" as the argument.
+    /// let result = handle.call_infallible_function(service_id, 1, "1 + 2 = ?")?;
+    /// # svc.next().await.unwrap().reply.ok(3u32)?;
+    ///
+    /// assert_eq!(3u32, result.await?);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn call_infallible_function<Args, T>(
+        &self,
+        service_id: ServiceId,
+        function: u32,
+        args: Args,
+    ) -> Result<PendingFunctionValue<T>, Error>
+    where
+        Args: IntoValue,
+        T: FromValue,
+    {
+        let reply = self.call_function(service_id, function, args)?;
+        Ok(PendingFunctionValue(reply))
+    }
+
     pub(crate) fn function_call_reply(
         &self,
         serial: u32,
@@ -870,6 +912,37 @@ impl<T, E> fmt::Debug for PendingFunctionResult<T, E> {
             .field("service_id", &self.service_id)
             .field("function", &self.function)
             .field("_res", &self._res)
+            .finish()
+    }
+}
+
+/// Future to await the result of an infallible function call.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
+pub struct PendingFunctionValue<T = Value>(PendingFunctionResult<T, Value>);
+
+impl<T: FromValue> Future for PendingFunctionValue<T> {
+    type Output = Result<T, Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        match Pin::new(&mut self.0).poll(cx) {
+            Poll::Ready(res) => Poll::Ready(res?.map_err(|e| {
+                InvalidFunctionResult {
+                    service_id: self.0.service_id,
+                    function: self.0.function,
+                    result: Err(Some(e)),
+                }
+                .into()
+            })),
+
+            Poll::Pending => Poll::Pending,
+        }
+    }
+}
+
+impl<T> fmt::Debug for PendingFunctionValue<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("PendingFunctionValue")
+            .field(&self.0)
             .finish()
     }
 }

@@ -168,8 +168,12 @@ impl StdError for Error {}
 
 /// A function call was replied to with an invalid result.
 ///
-/// This error occurs when the result is not convertible to the expected types, `T` or `E` (see
-/// [`PendingFunctionResult`](crate::PendingFunctionResult)).
+/// For fallible functions invoked via [`Handle::call_function`](crate::Handle::call_function), this
+/// error occurs when the result is not convertible to either `T` or `E` (see
+/// [`PendingFunctionResult`](crate::PendingFunctionResult)). For infallible function invoked via
+/// [`Handle::call_infallible_function`](crate::Handle::call_infallible_function), this error occurs
+/// when the result is not convertible to `T` or when it indicates an error (see
+/// [`PendingFunctionValue`](crate::PendingFunctionValue)).
 ///
 /// When using auto-generated code, this is typically an indication of an incompatible schema
 /// mismatch.
