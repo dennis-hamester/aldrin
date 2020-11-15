@@ -137,7 +137,7 @@ pub(crate) async fn run(args: JoinArgs) -> Result<()> {
 
             event = room_events.next() => {
                 let event = match event {
-                    Some(event) => event,
+                    Some(event) => event?,
                     None => break,
                 };
 

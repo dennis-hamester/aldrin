@@ -699,38 +699,54 @@ impl<'a> RustGenerator<'a> {
 
         let event = service_event(svc_name);
         genln!(self, "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{", events);
-        genln!(self, "    type Item = {};", event);
+        genln!(self, "    type Item = Result<{}, aldrin_client::error::InvalidEventArguments>;", event);
         genln!(self);
-        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<{}>> {{", event);
+        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        loop {{");
-        genln!(self, "            match std::pin::Pin::new(&mut self.events).poll_next(cx) {{");
-        genln!(self, "                std::task::Poll::Ready(Some(ev)) => match ev.id {{");
+        genln!(self, "            let ev = match std::pin::Pin::new(&mut self.events).poll_next(cx) {{");
+        genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
+        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
+        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
+        genln!(self, "            }};");
+        genln!(self);
+
+        genln!(self, "            match ev.id {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
                 _ => continue,
             };
+
             let ev_name = ev.name().value();
             let id = ev.id().value();
             let variant = service_event_variant(ev_name);
-            genln!(self, "                    {} => {{", id);
+
             if ev.event_type().is_some() {
-                genln!(self, "                        if let Ok(arg) = ev.args.convert() {{");
-                genln!(self, "                            return std::task::Poll::Ready(Some({}::{}(arg)));", event, variant);
-                genln!(self, "                        }}");
+                genln!(self, "                {} => match ev.args.convert() {{", id);
+                genln!(self, "                    Ok(args) => return std::task::Poll::Ready(Some(Ok({}::{}(args)))),", event, variant);
+                genln!(self, "                    Err(e) => return std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidEventArguments {{");
+                genln!(self, "                        service_id: self.id,");
+                genln!(self, "                        event: ev.id,");
+                genln!(self, "                        args: e.0,");
+                genln!(self, "                    }}))),");
+                genln!(self, "                }},");
             } else {
-                genln!(self, "                        if let aldrin_client::codegen::aldrin_proto::Value::None = ev.args {{");
-                genln!(self, "                            return std::task::Poll::Ready(Some({}::{}));", event, variant);
-                genln!(self, "                        }}");
+                genln!(self, "                {} => {{", id);
+                genln!(self, "                    if let aldrin_client::codegen::aldrin_proto::Value::None = ev.args {{");
+                genln!(self, "                        return std::task::Poll::Ready(Some(Ok({}::{})));", event, variant);
+                genln!(self, "                    }} else {{");
+                genln!(self, "                        return std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidEventArguments {{");
+                genln!(self, "                            service_id: self.id,");
+                genln!(self, "                            event: ev.id,");
+                genln!(self, "                            args: Some(ev.args),");
+                genln!(self, "                        }})));");
+                genln!(self, "                    }}");
+                genln!(self, "                }}");
             }
-            genln!(self, "                    }}");
             genln!(self);
         }
-        genln!(self, "                    _ => {{}}");
-        genln!(self, "                }},");
-        genln!(self);
-        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
-        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
+
+        genln!(self, "                _ => {{}}");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");

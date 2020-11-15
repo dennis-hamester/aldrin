@@ -136,6 +136,9 @@ pub enum Error {
 
     /// An invalid function call was received.
     InvalidFunctionCall(InvalidFunctionCall),
+
+    /// An event was received with invalid arguments.
+    InvalidEventArguments(InvalidEventArguments),
 }
 
 impl fmt::Display for Error {
@@ -164,6 +167,7 @@ impl fmt::Display for Error {
             Error::MissingRequiredField => f.write_str("required field missing"),
             Error::InvalidFunctionResult(e) => e.fmt(f),
             Error::InvalidFunctionCall(e) => e.fmt(f),
+            Error::InvalidEventArguments(e) => e.fmt(f),
         }
     }
 }
@@ -244,3 +248,35 @@ impl From<InvalidFunctionCall> for Error {
 }
 
 impl StdError for InvalidFunctionCall {}
+
+/// An event was received with invalid arguments.
+///
+/// This error is typically an indication of an incompatible schema mismatch.
+#[derive(Debug, Clone, PartialEq)]
+pub struct InvalidEventArguments {
+    /// Id of the service, that emitted the event.
+    pub service_id: ServiceId,
+
+    /// Id of the event.
+    pub event: u32,
+
+    /// Arguments of the event.
+    pub args: Option<Value>,
+}
+
+impl fmt::Display for InvalidEventArguments {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!(
+            "service {} emitted event {} with invalid arguments",
+            self.event, self.service_id.uuid,
+        ))
+    }
+}
+
+impl From<InvalidEventArguments> for Error {
+    fn from(e: InvalidEventArguments) -> Self {
+        Error::InvalidEventArguments(e)
+    }
+}
+
+impl StdError for InvalidEventArguments {}
