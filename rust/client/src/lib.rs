@@ -83,6 +83,7 @@ pub mod codegen {
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
+pub use aldrin_proto::{Bytes, Value};
 pub use client::Client;
 pub use error::{ConnectError, Error, RunError};
 pub use events::{Event, Events};
