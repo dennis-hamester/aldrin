@@ -80,7 +80,7 @@ pub use aldrin_proto::{Bytes, Value};
 pub use client::Client;
 pub use error::Error;
 pub use events::{Event, Events};
-pub use handle::{Handle, ObjectServices, PendingFunctionReply};
+pub use handle::{Handle, ObjectServices, PendingFunctionResult, PendingFunctionValue};
 pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
 pub use objects::{ObjectEvent, Objects};
 pub use service::{

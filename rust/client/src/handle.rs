@@ -237,7 +237,7 @@ impl Handle {
     /// The function with id `function` will be called with the arguments `args` on the service
     /// identified by `service_id`.
     ///
-    /// The returned value of type [`PendingFunctionReply`] is a future which will resolve to the
+    /// The returned value of type [`PendingFunctionResult`] is a future which will resolve to the
     /// result of the function call.
     ///
     /// # Examples
@@ -275,7 +275,7 @@ impl Handle {
         service_id: ServiceId,
         function: u32,
         args: Args,
-    ) -> Result<PendingFunctionReply<T, E>, Error>
+    ) -> Result<PendingFunctionResult<T, E>, Error>
     where
         Args: IntoValue,
         T: FromValue,
@@ -290,7 +290,7 @@ impl Handle {
                 reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(PendingFunctionReply::new(recv, service_id, function))
+        Ok(PendingFunctionResult::new(recv, service_id, function))
     }
 
     pub(crate) fn function_call_reply(
@@ -800,20 +800,20 @@ impl Drop for Handle {
 /// represents the success or failure ([`Error`]) on the protocol and client library level. The
 /// inner `Result<T, E>` represents the actual result of the function.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PendingFunctionReply<T = Value, E = Value> {
+pub struct PendingFunctionResult<T = Value, E = Value> {
     recv: oneshot::Receiver<CallFunctionResult>,
     service_id: ServiceId,
     function: u32,
     _res: PhantomData<fn() -> (T, E)>,
 }
 
-impl<T, E> PendingFunctionReply<T, E> {
+impl<T, E> PendingFunctionResult<T, E> {
     pub(crate) fn new(
         recv: oneshot::Receiver<CallFunctionResult>,
         service_id: ServiceId,
         function: u32,
     ) -> Self {
-        PendingFunctionReply {
+        PendingFunctionResult {
             recv,
             service_id,
             function,
@@ -822,7 +822,7 @@ impl<T, E> PendingFunctionReply<T, E> {
     }
 }
 
-impl<T: FromValue, E: FromValue> Future for PendingFunctionReply<T, E> {
+impl<T: FromValue, E: FromValue> Future for PendingFunctionResult<T, E> {
     type Output = Result<Result<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
@@ -863,9 +863,9 @@ impl<T: FromValue, E: FromValue> Future for PendingFunctionReply<T, E> {
     }
 }
 
-impl<T, E> fmt::Debug for PendingFunctionReply<T, E> {
+impl<T, E> fmt::Debug for PendingFunctionResult<T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("PendingFunctionReply")
+        f.debug_struct("PendingFunctionResult")
             .field("recv", &self.recv)
             .field("service_id", &self.service_id)
             .field("function", &self.function)

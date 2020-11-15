@@ -169,7 +169,7 @@ impl StdError for Error {}
 /// A function call was replied to with an invalid result.
 ///
 /// This error occurs when the result is not convertible to the expected types, `T` or `E` (see
-/// [`PendingFunctionReply`](crate::PendingFunctionReply)).
+/// [`PendingFunctionResult`](crate::PendingFunctionResult)).
 ///
 /// When using auto-generated code, this is typically an indication of an incompatible schema
 /// mismatch.
