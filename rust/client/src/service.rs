@@ -93,7 +93,7 @@ use uuid::Uuid;
 /// // HashSet to keep track of users:
 /// let mut users = HashSet::new();
 ///
-/// # handle.call_function(service.id(), SHUTDOWN, ())?;
+/// # handle.call_function::<_, (), ()>(service.id(), SHUTDOWN, ())?;
 /// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
 /// // which contains the function's id, the arguments, and a reply object.
 /// while let Some(func) = service.next().await {

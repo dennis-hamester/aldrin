@@ -1,12 +1,13 @@
 pub(crate) mod request;
 
+use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{
     Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
     ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, IntoValue, QueryServiceVersionResult,
+    CallFunctionResult, DestroyObjectResult, FromValue, IntoValue, QueryServiceVersionResult,
     SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
@@ -19,7 +20,9 @@ use request::{
     QueryObjectRequest, QueryServiceVersionRequest, SubscribeEventRequest, SubscribeObjectsRequest,
     SubscribeServicesRequest, UnsubscribeEventRequest,
 };
+use std::fmt;
 use std::future::Future;
+use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -240,6 +243,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
+    /// use aldrin_proto::Value;
     /// # use futures::stream::StreamExt;
     ///
     /// # #[tokio::main]
@@ -250,28 +254,33 @@ impl Handle {
     /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
-    /// let result = handle.call_function(service_id, 1, "1 + 2 = ?")?;
+    /// let result = handle.call_function::<_, u32, String>(service_id, 1, "1 + 2 = ?")?;
     /// # svc.next().await.unwrap().reply.ok(3u32)?;
     ///
     /// // Await the result. The `?` here checks for errors on the protocol level, such as a
     /// // intermediate shutdown, or whether the function call was aborted by the callee.
     /// let result = result.await?;
     ///
-    /// // Now, result is of type `Result<Value, Value>`, directly representing the return value of
-    /// // the function call.
+    /// // Now, result is of type `Result<u32, String>`, directly representing the result of the
+    /// // function call.
     /// match result {
-    ///     Ok(ok) => assert_eq!(ok.convert::<u32>()?, 3),
-    ///     Err(err) => panic!("Function call failed: {:?}.", err),
+    ///     Ok(ok) => assert_eq!(ok, 3),
+    ///     Err(err) => panic!("Function call failed: {}.", err),
     /// }
     /// # Ok(())
     /// # }
     /// ```
-    pub fn call_function(
+    pub fn call_function<Args, T, E>(
         &self,
         service_id: ServiceId,
         function: u32,
-        args: impl IntoValue,
-    ) -> Result<PendingFunctionReply, Error> {
+        args: Args,
+    ) -> Result<PendingFunctionReply<T, E>, Error>
+    where
+        Args: IntoValue,
+        T: FromValue,
+        E: FromValue,
+    {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CallFunction(CallFunctionRequest {
@@ -281,11 +290,7 @@ impl Handle {
                 reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
-        Ok(PendingFunctionReply {
-            recv,
-            service_id,
-            function,
-        })
+        Ok(PendingFunctionReply::new(recv, service_id, function))
     }
 
     pub(crate) fn function_call_reply(
@@ -791,20 +796,34 @@ impl Drop for Handle {
 
 /// Future to await the result of a function call.
 ///
-/// The future resolves to the type `Result<Result<`[`Value`]`, `[`Value`]`>, `[`Error`]`>`. The
-/// outer `Result<_, `[`Error`]`>` represents the success or failure on the protocol and client
-/// library level. The inner `Result<`[`Value`]`, `[`Value`]`>` represents the actual return value
-/// of the function.
-#[derive(Debug)]
+/// The future resolves to the type `Result<Result<T, E>, Error>`. The outer `Result<_, Error>`
+/// represents the success or failure ([`Error`]) on the protocol and client library level. The
+/// inner `Result<T, E>` represents the actual result of the function.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PendingFunctionReply {
+pub struct PendingFunctionReply<T = Value, E = Value> {
     recv: oneshot::Receiver<CallFunctionResult>,
     service_id: ServiceId,
     function: u32,
+    _res: PhantomData<fn() -> (T, E)>,
 }
 
-impl Future for PendingFunctionReply {
-    type Output = Result<Result<Value, Value>, Error>;
+impl<T, E> PendingFunctionReply<T, E> {
+    pub(crate) fn new(
+        recv: oneshot::Receiver<CallFunctionResult>,
+        service_id: ServiceId,
+        function: u32,
+    ) -> Self {
+        PendingFunctionReply {
+            recv,
+            service_id,
+            function,
+            _res: PhantomData,
+        }
+    }
+}
+
+impl<T: FromValue, E: FromValue> Future for PendingFunctionReply<T, E> {
+    type Output = Result<Result<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let res = match Pin::new(&mut self.recv).poll(cx) {
@@ -814,8 +833,24 @@ impl Future for PendingFunctionReply {
         };
 
         Poll::Ready(match res {
-            CallFunctionResult::Ok(v) => Ok(Ok(v)),
-            CallFunctionResult::Err(v) => Ok(Err(v)),
+            CallFunctionResult::Ok(t) => match t.convert() {
+                Ok(t) => Ok(Ok(t)),
+                Err(e) => Err(InvalidFunctionResult {
+                    service_id: self.service_id,
+                    function: self.function,
+                    result: Ok(e.0),
+                }
+                .into()),
+            },
+            CallFunctionResult::Err(e) => match e.convert() {
+                Ok(e) => Ok(Err(e)),
+                Err(e) => Err(InvalidFunctionResult {
+                    service_id: self.service_id,
+                    function: self.function,
+                    result: Err(e.0),
+                }
+                .into()),
+            },
             CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
             CallFunctionResult::InvalidService => Err(Error::InvalidService(self.service_id)),
             CallFunctionResult::InvalidFunction => {
@@ -825,6 +860,17 @@ impl Future for PendingFunctionReply {
                 Err(Error::InvalidArgs(self.service_id, self.function))
             }
         })
+    }
+}
+
+impl<T, E> fmt::Debug for PendingFunctionReply<T, E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("PendingFunctionReply")
+            .field("recv", &self.recv)
+            .field("service_id", &self.service_id)
+            .field("function", &self.function)
+            .field("_res", &self._res)
+            .finish()
     }
 }
 

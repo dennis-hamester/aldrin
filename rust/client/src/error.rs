@@ -1,7 +1,7 @@
 //! Error types.
 
 use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
-use aldrin_proto::Message;
+use aldrin_proto::{Message, Value};
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -83,7 +83,7 @@ where
 impl<T: fmt::Debug + fmt::Display> StdError for RunError<T> {}
 
 /// Standard error type used for most functions.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Error {
     /// The client has shut down.
     ///
@@ -131,11 +131,8 @@ pub enum Error {
     /// This variant is only ever returned by auto-generated code.
     MissingRequiredField,
 
-    /// An unexpected reply to a service function call was received.
-    ///
-    /// This variant is only ever returned by auto-generated code. It typically means that there is
-    /// some issue or difference with the service schemas.
-    UnexpectedFunctionReply,
+    /// A function call was replied to with an invalid result.
+    InvalidFunctionResult(InvalidFunctionResult),
 }
 
 impl fmt::Display for Error {
@@ -162,9 +159,48 @@ impl fmt::Display for Error {
             )),
             Error::FunctionCallAborted => f.write_str("function call aborted"),
             Error::MissingRequiredField => f.write_str("required field missing"),
-            Error::UnexpectedFunctionReply => f.write_str("unexpected function reply"),
+            Error::InvalidFunctionResult(e) => e.fmt(f),
         }
     }
 }
 
 impl StdError for Error {}
+
+/// A function call was replied to with an invalid result.
+///
+/// This error occurs when the result is not convertible to the expected types, `T` or `E` (see
+/// [`PendingFunctionReply`](crate::PendingFunctionReply)).
+///
+/// When using auto-generated code, this is typically an indication of an incompatible schema
+/// mismatch.
+#[derive(Debug, Clone, PartialEq)]
+pub struct InvalidFunctionResult {
+    /// Id of the service, that was called.
+    pub service_id: ServiceId,
+
+    /// Id of the function, that was called.
+    pub function: u32,
+
+    /// The offending result, that was sent by the service.
+    ///
+    /// When encountering conversion errors, the original [`Value`] cannot always be recovered. This
+    /// is why both the ok and error values are wrapped in [`Option`s](Option).
+    pub result: Result<Option<Value>, Option<Value>>,
+}
+
+impl fmt::Display for InvalidFunctionResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!(
+            "function {} of service {} returned an invalid result",
+            self.function, self.service_id.uuid,
+        ))
+    }
+}
+
+impl From<InvalidFunctionResult> for Error {
+    fn from(e: InvalidFunctionResult) -> Self {
+        Error::InvalidFunctionResult(e)
+    }
+}
+
+impl StdError for InvalidFunctionResult {}
