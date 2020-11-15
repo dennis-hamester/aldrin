@@ -590,7 +590,6 @@ impl<'a> RustGenerator<'a> {
                 _ => continue,
             };
             let func_name = func.name().value();
-            let reply_future = service_reply_future(svc_name, func_name);
             let id = func.id().value();
 
             let arg = if let Some(args) = func.args() {
@@ -599,14 +598,31 @@ impl<'a> RustGenerator<'a> {
                 String::new()
             };
 
-            genln!(self, "    pub fn {}(&self{}) -> Result<{}, aldrin_client::Error> {{", func_name, arg, reply_future);
-            if func.args().is_some() {
-                genln!(self, "        let reply = self.client.call_function(self.id, {}, arg)?;", id);
+            let ok = if let Some(ok) = func.ok() {
+                function_ok_type(svc_name, func_name, ok)
             } else {
-                genln!(self, "        let reply = self.client.call_function(self.id, {}, ())?;", id);
+                "()".to_owned()
+            };
+
+            if let Some(err) = func.err() {
+                let err = function_err_type(svc_name, func_name, err);
+                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionResult<{}, {}>, aldrin_client::Error> {{", func_name, arg, ok, err);
+                if func.args().is_some() {
+                    genln!(self, "        self.client.call_function(self.id, {}, arg)", id);
+                } else {
+                    genln!(self, "        self.client.call_function(self.id, {}, ())", id);
+                }
+                genln!(self, "    }}");
+            } else {
+                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionValue<{}>, aldrin_client::Error> {{", func_name, arg, ok);
+                if func.args().is_some() {
+                    genln!(self, "        self.client.call_infallible_function(self.id, {}, arg)", id);
+                } else {
+                    genln!(self, "        self.client.call_infallible_function(self.id, {}, ())", id);
+                }
+                genln!(self, "    }}");
             }
-            genln!(self, "        Ok({}(reply))", reply_future);
-            genln!(self, "    }}");
+
             genln!(self);
         }
 
@@ -619,74 +635,6 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
-
-        for item in svc.items() {
-            let func = match item {
-                ast::ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-            let func_name = func.name().value();
-            let reply_future = service_reply_future(svc_name, func_name);
-
-            let res = {
-                let ok = if let Some(ok) = func.ok() {
-                    function_ok_type(svc_name, func_name, ok)
-                } else {
-                    "()".to_owned()
-                };
-
-                if let Some(err) = func.err() {
-                    format!(
-                        "Result<{}, {}>",
-                        ok,
-                        function_err_type(svc_name, func_name, err)
-                    )
-                } else {
-                    ok
-                }
-            };
-
-            genln!(self, "#[derive(Debug)]");
-            genln!(self, "#[must_use = \"futures do nothing unless you `.await` or poll them\"]");
-            genln!(self, "pub struct {}(#[doc(hidden)] aldrin_client::PendingFunctionReply);", reply_future);
-            genln!(self);
-            genln!(self, "impl std::future::Future for {} {{", reply_future);
-            genln!(self, "    type Output = Result<{}, aldrin_client::Error>;", res);
-            genln!(self);
-            genln!(self, "    fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Self::Output> {{");
-            genln!(self, "        let res = match std::pin::Pin::new(&mut self.0).poll(cx) {{");
-            genln!(self, "            std::task::Poll::Ready(Ok(res)) => res,");
-            genln!(self, "            std::task::Poll::Ready(Err(e)) => return std::task::Poll::Ready(Err(e)),");
-            genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
-            genln!(self, "        }};");
-            genln!(self);
-            genln!(self, "        match res {{");
-
-            match (func.ok().is_some(), func.err().is_some()) {
-                (true, true) => {
-                    genln!(self, "            Ok(v) => std::task::Poll::Ready(v.convert().map(Ok).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
-                    genln!(self, "            Err(e) => std::task::Poll::Ready(e.convert().map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
-                }
-                (true, false) => {
-                    genln!(self, "            Ok(v) => std::task::Poll::Ready(v.convert().map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
-                    genln!(self, "            Err(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
-                }
-                (false, true) => {
-                    genln!(self, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(Ok(()))),");
-                    genln!(self, "            Ok(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
-                    genln!(self, "            Err(e) => std::task::Poll::Ready(e.convert().map(Err).map_err(|_| aldrin_client::Error::UnexpectedFunctionReply)),");
-                }
-                (false, false) => {
-                    genln!(self, "            Ok(aldrin_client::codegen::aldrin_proto::Value::None) => std::task::Poll::Ready(Ok(())),");
-                    genln!(self, "            Ok(_) | Err(_) => std::task::Poll::Ready(Err(aldrin_client::Error::UnexpectedFunctionReply)),");
-                }
-            }
-
-            genln!(self, "        }}");
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
-        }
 
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", events);
@@ -1131,10 +1079,6 @@ fn service_version_const(svc: &ast::ServiceDef) -> String {
 
 fn service_proxy_name(svc_name: &str) -> String {
     format!("{}Proxy", svc_name)
-}
-
-fn service_reply_future(svc_name: &str, func_name: &str) -> String {
-    format!("{}{}Future", svc_name, func_name.to_camel_case())
 }
 
 fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {

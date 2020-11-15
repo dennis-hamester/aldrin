@@ -17,10 +17,16 @@ async fn auto_reply_with_invalid_args() {
     let id = svc.id();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = client.call_function(id, 1, Value::U32(0)).unwrap().await;
+    let res = client
+        .call_infallible_function::<u32, ()>(id, 1, 0)
+        .unwrap()
+        .await;
     assert_eq!(res, Err(Error::InvalidArgs(id, 1)));
 
-    let res = client.call_function(id, 2, Value::None).unwrap().await;
+    let res = client
+        .call_infallible_function::<(), ()>(id, 2, ())
+        .unwrap()
+        .await;
     assert_eq!(res, Err(Error::InvalidArgs(id, 2)));
 }
 
@@ -34,7 +40,10 @@ async fn auto_reply_with_invalid_function() {
     let id = svc.id();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = client.call_function(id, 3, Value::None).unwrap().await;
+    let res = client
+        .call_infallible_function::<(), ()>(id, 3, ())
+        .unwrap()
+        .await;
     assert_eq!(res, Err(Error::InvalidFunction(id, 3)));
 }
 
