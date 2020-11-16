@@ -205,9 +205,9 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
+        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
         genln!(self, "        let mut v = match v {{");
-        genln!(self, "            aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,");
+        genln!(self, "            aldrin_client::Value::Struct(v) => v,");
         genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
@@ -240,7 +240,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            }}");
                 genln!(self);
             }
-            genln!(self, "            return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Struct(v))));");
+            genln!(self, "            return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::Value::Struct(v))));");
             genln!(self, "        }}");
             genln!(self);
         }
@@ -260,7 +260,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{", name);
-        genln!(self, "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{");
+        genln!(self, "    fn into_value(self) -> aldrin_client::Value {{");
         genln!(self, "        let mut v = std::collections::HashMap::new();");
         for field in fields {
             let field_name = field.name().value();
@@ -273,7 +273,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "        }}");
             }
         }
-        genln!(self, "        aldrin_client::codegen::aldrin_proto::Value::Struct(v)");
+        genln!(self, "        aldrin_client::Value::Struct(v)");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
@@ -384,9 +384,9 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl aldrin_client::codegen::aldrin_proto::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
+        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {{");
         genln!(self, "        let (var, val) = match v {{");
-        genln!(self, "            aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant, value }} => (variant, *value),");
+        genln!(self, "            aldrin_client::Value::Enum {{ variant, value }} => (variant, *value),");
         genln!(self, "            _ => return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
@@ -395,27 +395,27 @@ impl<'a> RustGenerator<'a> {
             let var_name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::codegen::aldrin_proto::ConversionError(e.0.map(|v| aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
+                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::codegen::aldrin_proto::ConversionError(e.0.map(|v| aldrin_client::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
             } else {
-                genln!(self, "            ({}, aldrin_client::codegen::aldrin_proto::Value::None) => Ok({}::{}),", id, name, var_name);
+                genln!(self, "            ({}, aldrin_client::Value::None) => Ok({}::{}),", id, name, var_name);
             }
         }
-        genln!(self, "            (_, val) => Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
+        genln!(self, "            (_, val) => Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl aldrin_client::codegen::aldrin_proto::IntoValue for {} {{", name);
-        genln!(self, "    fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {{");
+        genln!(self, "    fn into_value(self) -> aldrin_client::Value {{");
         genln!(self, "        match self {{");
         for var in vars {
             let var_name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            {}::{}(v) => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(v.into_value()) }},", name, var_name, id);
+                genln!(self, "            {}::{}(v) => aldrin_client::Value::Enum {{ variant: {}, value: Box::new(v.into_value()) }},", name, var_name, id);
             } else {
-                genln!(self, "            {}::{} => aldrin_client::codegen::aldrin_proto::Value::Enum {{ variant: {}, value: Box::new(aldrin_client::codegen::aldrin_proto::Value::None) }},", name, var_name, id);
+                genln!(self, "            {}::{} => aldrin_client::Value::Enum {{ variant: {}, value: Box::new(aldrin_client::Value::None) }},", name, var_name, id);
             }
         }
         genln!(self, "        }}");
@@ -732,7 +732,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                }},");
             } else {
                 genln!(self, "                {} => {{", id);
-                genln!(self, "                    if let aldrin_client::codegen::aldrin_proto::Value::None = ev.args {{");
+                genln!(self, "                    if let aldrin_client::Value::None = ev.args {{");
                 genln!(self, "                        return std::task::Poll::Ready(Some(Ok({}::{})));", event, variant);
                 genln!(self, "                    }} else {{");
                 genln!(self, "                        return std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidEventArguments {{");
@@ -864,7 +864,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            }},");
             } else {
                 genln!(self, "            {} => {{", id);
-                genln!(self, "                if let aldrin_client::codegen::aldrin_proto::Value::None = call.args {{");
+                genln!(self, "                if let aldrin_client::Value::None = call.args {{");
                 genln!(self, "                    std::task::Poll::Ready(Some(Ok({}::{}({}(call.reply)))))", functions, function, reply);
                 genln!(self, "                }} else {{");
                 genln!(self, "                    call.reply.invalid_args().ok();");
@@ -1041,12 +1041,12 @@ fn type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
         ast::TypeNameKind::ObjectId => "aldrin_client::ObjectId".to_owned(),
         ast::TypeNameKind::ServiceId => "aldrin_client::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => "aldrin_client::codegen::aldrin_proto::Value".to_owned(),
+        ast::TypeNameKind::Value => "aldrin_client::Value".to_owned(),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin_client::Bytes".to_owned(),
             _ => format!("Vec<{}>", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin_client::Bytes".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),

@@ -25,11 +25,11 @@
  
 -impl aldrin_client::codegen::aldrin_proto::FromValue for MyStruct {
 +impl aldrin_client::codegen::aldrin_proto::FromValue for MyStructRenamed {
-     fn from_value(v: aldrin_client::codegen::aldrin_proto::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {
+     fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {
          let mut v = match v {
-             aldrin_client::codegen::aldrin_proto::Value::Struct(v) => v,
+             aldrin_client::Value::Struct(v) => v,
 @@ -42,14 +42,14 @@
-             return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::codegen::aldrin_proto::Value::Struct(v))));
+             return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::Value::Struct(v))));
          }
  
 -        Ok(MyStruct {
@@ -42,7 +42,7 @@
  
 -impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStruct {
 +impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStructRenamed {
-     fn into_value(self) -> aldrin_client::codegen::aldrin_proto::Value {
+     fn into_value(self) -> aldrin_client::Value {
          let mut v = std::collections::HashMap::new();
          if let Some(field1) = self.field1 {
 @@ -63,7 +63,7 @@
