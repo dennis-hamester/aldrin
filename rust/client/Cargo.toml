@@ -22,4 +22,4 @@ aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen
 aldrin-channel = { version = "0.1.0", path = "../channel" }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
 futures = { version = "0.3.4", default-features = false }
-tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }
+tokio = { version = "0.3.3", features = ["macros", "rt-multi-thread", "time"] }

@@ -1,13 +1,13 @@
 use super::{Filter, Packetizer, Serializer};
 use aldrin_proto::{AsyncTransport, Message};
-use bytes::BytesMut;
+use bytes::{Buf, BufMut, BytesMut};
 use pin_project::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 const INITIAL_CAPACITY: usize = 8 * 1024;
 const BACKPRESSURE_BOUNDARY: usize = INITIAL_CAPACITY;
@@ -91,11 +91,17 @@ where
                 Err(e) => return Poll::Ready(Err(TokioCodecError::Packetizer(e))),
             }
 
-            match this.io.as_mut().poll_read_buf(cx, this.read_buf) {
-                Poll::Ready(Ok(0)) => {
+            let mut read_buf = ReadBuf::uninit(this.read_buf.bytes_mut());
+            match this.io.as_mut().poll_read(cx, &mut read_buf) {
+                Poll::Ready(Ok(())) if read_buf.filled().is_empty() => {
                     return Poll::Ready(Err(TokioCodecError::Io(IoErrorKind::UnexpectedEof.into())))
                 }
-                Poll::Ready(Ok(_)) => {}
+                Poll::Ready(Ok(())) => {
+                    let len = read_buf.filled().len();
+                    unsafe {
+                        this.read_buf.advance_mut(len);
+                    }
+                }
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
                 Poll::Pending => return Poll::Pending,
             }
@@ -135,12 +141,14 @@ where
         let write_buf = this.write_buf.as_mut().unwrap();
 
         while !write_buf.is_empty() {
-            match this.io.as_mut().poll_write_buf(cx, write_buf) {
+            match this.io.as_mut().poll_write(cx, write_buf) {
                 Poll::Ready(Ok(0)) => {
                     this.write_buf.take();
                     return Poll::Ready(Err(TokioCodecError::Io(IoErrorKind::WriteZero.into())));
                 }
-                Poll::Ready(Ok(_)) => {}
+                Poll::Ready(Ok(n)) => {
+                    write_buf.advance(n);
+                }
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
                 Poll::Pending => return Poll::Pending,
             }

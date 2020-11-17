@@ -11,7 +11,7 @@ use futures::stream::StreamExt;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::select;
-use tokio::time::{delay_for, Duration};
+use tokio::time::{sleep, Duration};
 
 aldrin_client::generate!("../../schemas/ping.aldrin", warnings_as_errors = true);
 
@@ -46,7 +46,7 @@ async fn broker(args: BrokerArgs) -> Result<()> {
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
 
-    let mut listener = TcpListener::bind(&args.listen).await?;
+    let listener = TcpListener::bind(&args.listen).await?;
     println!("Listen for connections on {}.", args.listen);
 
     loop {
@@ -87,8 +87,8 @@ async fn run(args: RunArgs) -> Result<()> {
     let emitter = ping.event_emitter();
     let mut svcs = handle.services(SubscribeMode::All)?;
     let mut others = Vec::new();
-    let mut delay = delay_for(Duration::from_millis(args.delay as u64));
-    let mut measure = delay_for(Duration::from_millis(MEASURE_UPDATE_MS));
+    let mut delay = sleep(Duration::from_millis(args.delay as u64));
+    let mut measure = sleep(Duration::from_millis(MEASURE_UPDATE_MS));
     let mut outgoing = 0;
     let mut incoming = 0;
 
@@ -107,7 +107,7 @@ async fn run(args: RunArgs) -> Result<()> {
             }
 
             _ = &mut delay => {
-                delay = delay_for(Duration::from_millis(args.delay as u64));
+                delay = sleep(Duration::from_millis(args.delay as u64));
                 emitter.ping()?;
                 outgoing += 1;
             }
@@ -120,7 +120,7 @@ async fn run(args: RunArgs) -> Result<()> {
             }
 
             _ = &mut measure => {
-                measure = delay_for(Duration::from_millis(MEASURE_UPDATE_MS));
+                measure = sleep(Duration::from_millis(MEASURE_UPDATE_MS));
                 println!();
                 println!("Statistics over the last {} milliseconds:", MEASURE_UPDATE_MS);
                 println!("Outgoing pings: {}", outgoing);

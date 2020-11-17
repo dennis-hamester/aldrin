@@ -30,7 +30,7 @@ pub(crate) async fn run(args: BrokerArgs) -> Result<()> {
     let handle = broker.handle().clone();
     tokio::spawn(broker.run());
 
-    let mut listener = TcpListener::bind(&args.bind).await?;
+    let listener = TcpListener::bind(&args.bind).await?;
     println!("Listen for connections on {}.", args.bind);
 
     loop {

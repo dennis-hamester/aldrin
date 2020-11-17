@@ -13,10 +13,10 @@ aldrin-client = { version = "0.1.0", path = "../client" }
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 futures-util = { version = "0.3.4", default-features = false }
 
-tokio = { optional = true, version = "0.2.11", features = ["rt-core"] }
+tokio = { optional = true, version = "0.3.3", features = ["rt"] }
 
 [dev-dependencies]
 aldrin-codegen-macros = { version = "0.1.0", path = "../codegen-macros" }
 anyhow = "1.0.32"
 futures = { version = "0.3.4", default-features = false }
-tokio = { version = "0.2.11", features = ["macros", "rt-core", "time"] }
+tokio = { version = "0.3.3", features = ["macros", "rt-multi-thread", "time"] }

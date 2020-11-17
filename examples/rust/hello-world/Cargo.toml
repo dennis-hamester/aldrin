@@ -12,4 +12,4 @@ aldrin-channel = { path = "../../../rust/channel" }
 aldrin-client = { path = "../../../rust/client" }
 anyhow = "1.0.32"
 futures = { version = "0.3.4", default-features = false }
-tokio = { version = "0.2.11", default-features = false, features = ["rt-core", "macros"] }
+tokio = { version = "0.3.3", default-features = false, features = ["macros", "rt-multi-thread"] }

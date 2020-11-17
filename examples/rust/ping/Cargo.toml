@@ -13,4 +13,4 @@ aldrin-codec = { path = "../../../rust/codec", features = ["json-serializer", "t
 anyhow = "1.0.32"
 clap = { version = "3.0.0-beta.2", features = ["wrap_help"] }
 futures = { version = "0.3.4", default-features = false, features = ["std"] }
-tokio = { version = "0.2.11", default-features = false, features = ["rt-threaded", "macros", "tcp", "time"] }
+tokio = { version = "0.3.3", default-features = false, features = ["macros", "net", "rt-multi-thread", "time"] }

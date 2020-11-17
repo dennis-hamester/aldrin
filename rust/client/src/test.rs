@@ -53,7 +53,7 @@ async fn abort_create_object() {
 
     // The object may have been created temporarily. Give client and broker some time to destroy it
     // again.
-    time::delay_for(Duration::from_millis(100)).await;
+    time::sleep(Duration::from_millis(100)).await;
 
     assert!(client.resolve_object(uuid).await.unwrap().is_none());
 }
@@ -72,7 +72,7 @@ async fn abort_create_service() {
 
     // The service may have been created temporarily. Give client and broker some time to destroy it
     // again.
-    time::delay_for(Duration::from_millis(100)).await;
+    time::sleep(Duration::from_millis(100)).await;
 
     assert!(client
         .find_service(uuid, Some(obj.id().uuid))
