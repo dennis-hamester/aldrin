@@ -60,7 +60,7 @@ jobs:
       - name: Cargo version
         run: cargo --version --verbose
       - name: Cargo doc
-        run: cargo doc --all-features
+        run: cargo doc --all-features --no-deps
 
   style:
     name: Code style
