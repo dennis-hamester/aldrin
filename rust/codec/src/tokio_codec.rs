@@ -5,6 +5,7 @@ use pin_project::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
+use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
@@ -91,19 +92,25 @@ where
                 Err(e) => return Poll::Ready(Err(TokioCodecError::Packetizer(e))),
             }
 
-            let mut read_buf = ReadBuf::uninit(this.read_buf.bytes_mut());
-            match this.io.as_mut().poll_read(cx, &mut read_buf) {
-                Poll::Ready(Ok(())) if read_buf.filled().is_empty() => {
-                    return Poll::Ready(Err(TokioCodecError::Io(IoErrorKind::UnexpectedEof.into())))
-                }
-                Poll::Ready(Ok(())) => {
-                    let len = read_buf.filled().len();
-                    unsafe {
-                        this.read_buf.advance_mut(len);
+            let len = {
+                let dst = this.read_buf.bytes_mut();
+                let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
+                let mut read_buf = ReadBuf::uninit(dst);
+
+                match this.io.as_mut().poll_read(cx, &mut read_buf) {
+                    Poll::Ready(Ok(())) if read_buf.filled().is_empty() => {
+                        return Poll::Ready(Err(TokioCodecError::Io(
+                            IoErrorKind::UnexpectedEof.into(),
+                        )))
                     }
+                    Poll::Ready(Ok(())) => read_buf.filled().len(),
+                    Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
+                    Poll::Pending => return Poll::Pending,
                 }
-                Poll::Ready(Err(e)) => return Poll::Ready(Err(TokioCodecError::Io(e))),
-                Poll::Pending => return Poll::Pending,
+            };
+
+            unsafe {
+                this.read_buf.advance_mut(len);
             }
         }
     }

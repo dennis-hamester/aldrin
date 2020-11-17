@@ -3,8 +3,7 @@ mod test;
 
 use super::Serializer;
 use aldrin_proto::Message;
-use bytes::buf::BufMutExt;
-use bytes::{Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 
 pub use serde_json::Error as JsonError;
 

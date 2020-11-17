@@ -5,8 +5,7 @@ use super::Serializer;
 use crate::Endian;
 use aldrin_proto::Message;
 use bincode::Options;
-use bytes::buf::BufMutExt;
-use bytes::{Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 
 pub use bincode::Error as BincodeError;
 
