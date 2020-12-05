@@ -213,23 +213,23 @@ where
 
     async fn handle_message(&mut self, msg: Message) -> Result<(), RunError<T::Error>> {
         match msg {
-            Message::CreateObjectReply(msg) => self.msg_create_object_reply(msg),
+            Message::CreateObjectReply(msg) => self.msg_create_object_reply(msg)?,
             Message::DestroyObjectReply(msg) => self.msg_destroy_object_reply(msg),
             Message::SubscribeObjectsReply(msg) => self.msg_subscribe_objects_reply(msg),
-            Message::ObjectCreatedEvent(msg) => self.msg_object_created_event(msg).await,
-            Message::ObjectDestroyedEvent(msg) => self.msg_object_destroyed_event(msg).await,
-            Message::CreateServiceReply(msg) => self.msg_create_service_reply(msg),
+            Message::ObjectCreatedEvent(msg) => self.msg_object_created_event(msg).await?,
+            Message::ObjectDestroyedEvent(msg) => self.msg_object_destroyed_event(msg).await?,
+            Message::CreateServiceReply(msg) => self.msg_create_service_reply(msg)?,
             Message::DestroyServiceReply(msg) => self.msg_destroy_service_reply(msg),
             Message::SubscribeServicesReply(msg) => self.msg_subscribe_services_reply(msg),
-            Message::ServiceCreatedEvent(msg) => self.msg_service_created_event(msg).await,
-            Message::ServiceDestroyedEvent(msg) => self.msg_service_destroyed_event(msg).await,
-            Message::CallFunction(msg) => self.msg_call_function(msg).await,
+            Message::ServiceCreatedEvent(msg) => self.msg_service_created_event(msg).await?,
+            Message::ServiceDestroyedEvent(msg) => self.msg_service_destroyed_event(msg).await?,
+            Message::CallFunction(msg) => self.msg_call_function(msg).await?,
             Message::CallFunctionReply(msg) => self.msg_call_function_reply(msg),
             Message::SubscribeEvent(msg) => self.msg_subscribe_event(msg),
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
-            Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg),
+            Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
 
             Message::Connect(_)
@@ -243,10 +243,14 @@ where
             | Message::SubscribeServices(_)
             | Message::UnsubscribeServices(())
             | Message::QueryObject(_)
-            | Message::QueryServiceVersion(_) => Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::QueryServiceVersion(_) => {
+                return Err(RunError::UnexpectedMessageReceived(msg))
+            }
 
             Message::Shutdown(()) => unreachable!(), // Handled in run.
         }
+
+        Ok(())
     }
 
     fn msg_create_object_reply(
@@ -274,31 +278,21 @@ where
         Ok(())
     }
 
-    fn msg_destroy_object_reply(
-        &mut self,
-        msg: DestroyObjectReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_destroy_object_reply(&mut self, msg: DestroyObjectReply) {
         if let Some(send) = self.destroy_object.remove(msg.serial) {
             send.send(msg.result).ok();
         }
-
-        Ok(())
     }
 
-    fn msg_subscribe_objects_reply(
-        &mut self,
-        msg: SubscribeObjectsReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_subscribe_objects_reply(&mut self, msg: SubscribeObjectsReply) {
         let req = match self.object_events.get(msg.serial) {
             Some(req) => req,
-            None => return Ok(()),
+            None => return,
         };
 
         if req.mode == SubscribeMode::CurrentOnly {
             self.object_events.remove(msg.serial);
         }
-
-        Ok(())
     }
 
     async fn msg_object_created_event(
@@ -402,13 +396,10 @@ where
         Ok(())
     }
 
-    fn msg_destroy_service_reply(
-        &mut self,
-        msg: DestroyServiceReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_destroy_service_reply(&mut self, msg: DestroyServiceReply) {
         let req = match self.destroy_service.remove(msg.serial) {
             Some(req) => req,
-            None => return Ok(()),
+            None => return,
         };
 
         let reply = match msg.result {
@@ -423,23 +414,17 @@ where
         };
 
         req.reply.send(reply).ok();
-        Ok(())
     }
 
-    fn msg_subscribe_services_reply(
-        &mut self,
-        msg: SubscribeServicesReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_subscribe_services_reply(&mut self, msg: SubscribeServicesReply) {
         let req = match self.service_events.get(msg.serial) {
             Some(req) => req,
-            None => return Ok(()),
+            None => return,
         };
 
         if req.mode == SubscribeMode::CurrentOnly {
             self.service_events.remove(msg.serial);
         }
-
-        Ok(())
     }
 
     async fn msg_service_created_event(
@@ -551,34 +536,26 @@ where
         Ok(())
     }
 
-    fn msg_call_function_reply(
-        &mut self,
-        msg: CallFunctionReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_call_function_reply(&mut self, msg: CallFunctionReply) {
         let send = self
             .function_calls
             .remove(msg.serial)
             .expect("inconsistent state");
         send.send(msg.result).ok();
-        Ok(())
     }
 
-    fn msg_subscribe_event(&mut self, msg: SubscribeEvent) -> Result<(), RunError<T::Error>> {
+    fn msg_subscribe_event(&mut self, msg: SubscribeEvent) {
         self.broker_subscriptions
             .entry(ServiceCookie(msg.service_cookie))
             .or_default()
             .insert(msg.event);
-        Ok(())
     }
 
-    fn msg_subscribe_event_reply(
-        &mut self,
-        msg: SubscribeEventReply,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_subscribe_event_reply(&mut self, msg: SubscribeEventReply) {
         let (events_id, service_cookie, id, rep_send) =
             match self.subscribe_event.remove(msg.serial) {
                 Some(req) => req,
-                None => return Ok(()),
+                None => return,
             };
 
         // || would short-circuit and changing the order would move msg.result out.
@@ -592,26 +569,22 @@ where
                 .or_default()
                 .remove(&events_id);
         }
-
-        Ok(())
     }
 
-    fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) -> Result<(), RunError<T::Error>> {
+    fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
         let service_cookie = ServiceCookie(msg.service_cookie);
         let mut subs = match self.broker_subscriptions.entry(service_cookie) {
             Entry::Occupied(subs) => subs,
-            Entry::Vacant(_) => return Ok(()),
+            Entry::Vacant(_) => return,
         };
 
         subs.get_mut().remove(&msg.event);
         if subs.get().is_empty() {
             subs.remove();
         }
-
-        Ok(())
     }
 
-    fn msg_emit_event(&mut self, msg: EmitEvent) -> Result<(), RunError<T::Error>> {
+    fn msg_emit_event(&mut self, msg: EmitEvent) {
         let service_cookie = ServiceCookie(msg.service_cookie);
         let senders = match self
             .subscriptions
@@ -619,7 +592,7 @@ where
             .and_then(|s| s.get_mut(&msg.event))
         {
             Some(senders) => senders,
-            None => return Ok(()),
+            None => return,
         };
 
         for sender in senders.values_mut() {
@@ -632,8 +605,6 @@ where
                 ))
                 .ok();
         }
-
-        Ok(())
     }
 
     fn msg_query_object_reply(&mut self, msg: QueryObjectReply) -> Result<(), RunError<T::Error>> {
@@ -690,51 +661,44 @@ where
         }
     }
 
-    fn msg_query_service_version_reply(
-        &mut self,
-        msg: QueryServiceVersionReply,
-    ) -> Result<(), RunError<T::Error>> {
-        let send = match self.query_service_version.remove(msg.serial) {
-            Some(send) => send,
-            None => return Ok(()),
-        };
-
-        send.send(msg.result).ok();
-        Ok(())
+    fn msg_query_service_version_reply(&mut self, msg: QueryServiceVersionReply) {
+        if let Some(send) = self.query_service_version.remove(msg.serial) {
+            send.send(msg.result).ok();
+        }
     }
 
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
             HandleRequest::HandleDropped => self.req_handle_dropped(),
-            HandleRequest::CreateObject(req) => self.req_create_object(req).await,
-            HandleRequest::DestroyObject(req) => self.req_destroy_object(req).await,
-            HandleRequest::SubscribeObjects(req) => self.req_subscribe_objects(req).await,
-            HandleRequest::CreateService(req) => self.req_create_service(req).await,
-            HandleRequest::DestroyService(req) => self.req_destroy_service(req).await,
-            HandleRequest::SubscribeServices(req) => self.req_subscribe_services(req).await,
-            HandleRequest::CallFunction(req) => self.req_call_function(req).await,
-            HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await,
-            HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await,
-            HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await,
-            HandleRequest::EmitEvent(req) => self.req_emit_event(req).await,
-            HandleRequest::QueryObject(req) => self.req_query_object(req).await,
-            HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await,
+            HandleRequest::CreateObject(req) => self.req_create_object(req).await?,
+            HandleRequest::DestroyObject(req) => self.req_destroy_object(req).await?,
+            HandleRequest::SubscribeObjects(req) => self.req_subscribe_objects(req).await?,
+            HandleRequest::CreateService(req) => self.req_create_service(req).await?,
+            HandleRequest::DestroyService(req) => self.req_destroy_service(req).await?,
+            HandleRequest::SubscribeServices(req) => self.req_subscribe_services(req).await?,
+            HandleRequest::CallFunction(req) => self.req_call_function(req).await?,
+            HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await?,
+            HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
+            HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
+            HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
+            HandleRequest::QueryObject(req) => self.req_query_object(req).await?,
+            HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await?,
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
         }
-    }
 
-    fn req_handle_cloned(&mut self) -> Result<(), RunError<T::Error>> {
-        self.num_handles += 1;
         Ok(())
     }
 
-    fn req_handle_dropped(&mut self) -> Result<(), RunError<T::Error>> {
+    fn req_handle_cloned(&mut self) {
+        self.num_handles += 1;
+    }
+
+    fn req_handle_dropped(&mut self) {
         self.num_handles -= 1;
         debug_assert!(self.num_handles >= 1);
-        Ok(())
     }
 
     async fn req_create_object(
