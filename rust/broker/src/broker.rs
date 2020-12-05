@@ -331,21 +331,21 @@ impl Broker {
         msg: Message,
     ) -> Result<(), ()> {
         match msg {
-            Message::CreateObject(req) => self.create_object(state, id, req),
-            Message::DestroyObject(req) => self.destroy_object(state, id, req),
-            Message::SubscribeObjects(req) => self.subscribe_objects(id, req),
+            Message::CreateObject(req) => self.create_object(state, id, req)?,
+            Message::DestroyObject(req) => self.destroy_object(state, id, req)?,
+            Message::SubscribeObjects(req) => self.subscribe_objects(id, req)?,
             Message::UnsubscribeObjects(()) => self.unsubscribe_objects(id),
-            Message::CreateService(req) => self.create_service(state, id, req),
-            Message::DestroyService(req) => self.destroy_service(state, id, req),
-            Message::SubscribeServices(req) => self.subscribe_services(id, req),
+            Message::CreateService(req) => self.create_service(state, id, req)?,
+            Message::DestroyService(req) => self.destroy_service(state, id, req)?,
+            Message::SubscribeServices(req) => self.subscribe_services(id, req)?,
             Message::UnsubscribeServices(()) => self.unsubscribe_services(id),
-            Message::CallFunction(req) => self.call_function(state, id, req),
+            Message::CallFunction(req) => self.call_function(state, id, req)?,
             Message::CallFunctionReply(req) => self.call_function_reply(state, req),
-            Message::SubscribeEvent(req) => self.subscribe_event(id, req),
+            Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, req),
-            Message::QueryObject(req) => self.query_object(id, req),
-            Message::QueryServiceVersion(req) => self.query_service_version(id, req),
+            Message::QueryObject(req) => self.query_object(id, req)?,
+            Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -361,10 +361,12 @@ impl Broker {
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_)
             | Message::QueryObjectReply(_)
-            | Message::QueryServiceVersionReply(_) => Err(()),
+            | Message::QueryServiceVersionReply(_) => return Err(()),
 
             Message::Shutdown(()) => unreachable!(), // Handled by connection.
         }
+
+        Ok(())
     }
 
     fn create_object(
@@ -465,14 +467,10 @@ impl Broker {
         Ok(())
     }
 
-    fn unsubscribe_objects(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_objects_subscribed(false);
-        Ok(())
+    fn unsubscribe_objects(&mut self, id: &ConnectionId) {
+        if let Some(conn) = self.conns.get_mut(id) {
+            conn.set_objects_subscribed(false);
+        }
     }
 
     fn create_service(
@@ -599,14 +597,10 @@ impl Broker {
         Ok(())
     }
 
-    fn unsubscribe_services(&mut self, id: &ConnectionId) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
-        };
-
-        conn.set_services_subscribed(false);
-        Ok(())
+    fn unsubscribe_services(&mut self, id: &ConnectionId) {
+        if let Some(conn) = self.conns.get_mut(id) {
+            conn.set_services_subscribed(false);
+        }
     }
 
     fn call_function(
@@ -663,10 +657,10 @@ impl Broker {
         Ok(())
     }
 
-    fn call_function_reply(&mut self, state: &mut State, req: CallFunctionReply) -> Result<(), ()> {
+    fn call_function_reply(&mut self, state: &mut State, req: CallFunctionReply) {
         let call = match self.function_calls.remove(req.serial) {
             Some(call) => call,
-            None => return Ok(()),
+            None => return,
         };
 
         let svc = self
@@ -677,7 +671,7 @@ impl Broker {
 
         let conn = match self.conns.get_mut(&call.caller_conn_id) {
             Some(conn) => conn,
-            None => return Ok(()),
+            None => return,
         };
 
         if conn
@@ -689,8 +683,6 @@ impl Broker {
         {
             state.push_remove_conn(call.caller_conn_id);
         }
-
-        Ok(())
     }
 
     fn subscribe_event(&mut self, id: &ConnectionId, req: SubscribeEvent) -> Result<(), ()> {
@@ -747,16 +739,11 @@ impl Broker {
         Ok(())
     }
 
-    fn unsubscribe_event(
-        &mut self,
-        state: &mut State,
-        id: &ConnectionId,
-        req: UnsubscribeEvent,
-    ) -> Result<(), ()> {
+    fn unsubscribe_event(&mut self, state: &mut State, id: &ConnectionId, req: UnsubscribeEvent) {
         let svc_cookie = ServiceCookie(req.service_cookie);
         let (obj_uuid, _, svc_uuid, _) = match self.svc_uuids.get(&svc_cookie) {
             Some(ids) => *ids,
-            None => return Ok(()),
+            None => return,
         };
         let svc = self
             .svcs
@@ -765,7 +752,7 @@ impl Broker {
 
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
-            None => return Ok(()),
+            None => return,
         };
 
         conn.remove_subscription(svc_cookie, req.event);
@@ -780,11 +767,9 @@ impl Broker {
                 state.push_remove_conn(conn_id.clone());
             }
         }
-
-        Ok(())
     }
 
-    fn emit_event(&mut self, state: &mut State, req: EmitEvent) -> Result<(), ()> {
+    fn emit_event(&mut self, state: &mut State, req: EmitEvent) {
         let svc_cookie = ServiceCookie(req.service_cookie);
         for (conn_id, conn) in self.conns.iter_mut() {
             if conn.is_subscribed_to(svc_cookie, req.event) {
@@ -794,8 +779,6 @@ impl Broker {
                 }
             }
         }
-
-        Ok(())
     }
 
     fn query_object(&mut self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
