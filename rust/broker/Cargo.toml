@@ -19,4 +19,4 @@ aldrin-client = { version = "0.1.0", path = "../client" }
 aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json-serializer", "tokio-codec"] }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
 anyhow = "1.0.32"
-tokio = { version = "0.3.3", features = ["macros", "net", "rt-multi-thread", "time"] }
+tokio = { version = "1.0.0", features = ["macros", "net", "rt-multi-thread", "time"] }
