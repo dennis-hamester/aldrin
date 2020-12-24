@@ -87,8 +87,8 @@ async fn run(args: RunArgs) -> Result<()> {
     let emitter = ping.event_emitter();
     let mut svcs = handle.services(SubscribeMode::All)?;
     let mut others = Vec::new();
-    let mut delay = sleep(Duration::from_millis(args.delay as u64));
-    let mut measure = sleep(Duration::from_millis(MEASURE_UPDATE_MS));
+    let mut delay = Box::pin(sleep(Duration::from_millis(args.delay as u64)));
+    let mut measure = Box::pin(sleep(Duration::from_millis(MEASURE_UPDATE_MS)));
     let mut outgoing = 0;
     let mut incoming = 0;
 
@@ -107,7 +107,7 @@ async fn run(args: RunArgs) -> Result<()> {
             }
 
             _ = &mut delay => {
-                delay = sleep(Duration::from_millis(args.delay as u64));
+                delay = Box::pin(sleep(Duration::from_millis(args.delay as u64)));
                 emitter.ping()?;
                 outgoing += 1;
             }
@@ -120,7 +120,7 @@ async fn run(args: RunArgs) -> Result<()> {
             }
 
             _ = &mut measure => {
-                measure = sleep(Duration::from_millis(MEASURE_UPDATE_MS));
+                measure = Box::pin(sleep(Duration::from_millis(MEASURE_UPDATE_MS)));
                 println!();
                 println!("Statistics over the last {} milliseconds:", MEASURE_UPDATE_MS);
                 println!("Outgoing pings: {}", outgoing);
