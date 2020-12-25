@@ -93,7 +93,7 @@ where
             }
 
             let len = {
-                let dst = this.read_buf.bytes_mut();
+                let dst = this.read_buf.chunk_mut();
                 let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
                 let mut read_buf = ReadBuf::uninit(dst);
 
