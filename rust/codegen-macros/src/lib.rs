@@ -162,6 +162,26 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// }
 /// ```
 ///
+/// # Omitting `#[non_exhaustive]` attribute
+///
+/// The `#[non_exhaustive]` attribute can optionally be skipped on structs, enums, service event
+/// enums and service function enums. Set one or more of:
+///
+/// - `struct_non_exhaustive = false`
+/// - `enum_non_exhaustive = false`
+/// - `event_non_exhaustive = false`
+/// - `function_non_exhaustive = false`
+///
+/// ```
+/// aldrin_codegen_macros::generate! {
+///     "schemas/example1.aldrin",
+///     struct_non_exhaustive = false,
+///     enum_non_exhaustive = false,
+///     event_non_exhaustive = false,
+///     function_non_exhaustive = false,
+/// }
+/// ```
+///
 /// # Errors and warnings
 ///
 /// Any errors and warnings from the schemas will be shown as part of the regular compiler
@@ -236,6 +256,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
         let mut rust_options = RustOptions::new();
         rust_options.patch = args.patch.as_deref();
         rust_options.struct_builders = args.struct_builders;
+        rust_options.struct_non_exhaustive = args.struct_non_exhaustive;
+        rust_options.enum_non_exhaustive = args.enum_non_exhaustive;
+        rust_options.event_non_exhaustive = args.event_non_exhaustive;
+        rust_options.function_non_exhaustive = args.function_non_exhaustive;
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
@@ -281,6 +305,10 @@ struct Args {
     suppress_warnings: bool,
     patch: Option<PathBuf>,
     struct_builders: bool,
+    struct_non_exhaustive: bool,
+    enum_non_exhaustive: bool,
+    event_non_exhaustive: bool,
+    function_non_exhaustive: bool,
 }
 
 impl Parse for Args {
@@ -294,6 +322,10 @@ impl Parse for Args {
             suppress_warnings: false,
             patch: None,
             struct_builders: true,
+            struct_non_exhaustive: true,
+            enum_non_exhaustive: true,
+            event_non_exhaustive: true,
+            function_non_exhaustive: true,
         };
 
         // Additional schemas
@@ -329,6 +361,14 @@ impl Parse for Args {
                 args.patch = Some(lit_str_to_path(lit_str));
             } else if opt == "struct_builders" {
                 args.struct_builders = input.parse::<LitBool>()?.value;
+            } else if opt == "struct_non_exhaustive" {
+                args.struct_non_exhaustive = input.parse::<LitBool>()?.value;
+            } else if opt == "enum_non_exhaustive" {
+                args.enum_non_exhaustive = input.parse::<LitBool>()?.value;
+            } else if opt == "event_non_exhaustive" {
+                args.event_non_exhaustive = input.parse::<LitBool>()?.value;
+            } else if opt == "function_non_exhaustive" {
+                args.function_non_exhaustive = input.parse::<LitBool>()?.value;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
