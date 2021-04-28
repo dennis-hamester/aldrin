@@ -18,6 +18,10 @@ pub struct RustArgs {
     #[clap(flatten)]
     common_gen_args: CommonGenArgs,
 
+    /// Don't generate builders for structs
+    #[clap(long)]
+    no_struct_builders: bool,
+
     /// Format output with rustfmt
     ///
     /// The formatting style can be customized with --rustfmt-toml.
@@ -68,6 +72,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     rust_options.rustfmt = args.format;
     rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
     rust_options.patch = args.patch.as_deref();
+    rust_options.struct_builders = !args.no_struct_builders;
 
     let gen = Generator::new(&options, &parsed);
     let output = gen.generate_rust(&rust_options)?;
