@@ -19,6 +19,10 @@ pub struct RustOptions<'a> {
     pub rustfmt_toml: Option<&'a Path>,
     pub patch: Option<&'a Path>,
     pub struct_builders: bool,
+    pub struct_non_exhaustive: bool,
+    pub enum_non_exhaustive: bool,
+    pub event_non_exhaustive: bool,
+    pub function_non_exhaustive: bool,
 }
 
 impl<'a> RustOptions<'a> {
@@ -28,6 +32,10 @@ impl<'a> RustOptions<'a> {
             rustfmt_toml: None,
             patch: None,
             struct_builders: true,
+            struct_non_exhaustive: true,
+            enum_non_exhaustive: true,
+            event_non_exhaustive: true,
+            function_non_exhaustive: true,
         }
     }
 }
@@ -180,7 +188,9 @@ impl<'a> RustGenerator<'a> {
 
         let derive_default = if has_required_fields { "" } else { ", Default" };
         genln!(self, "#[derive(Debug, Clone{}{})]", derive_default, attrs.additional_derives());
-        genln!(self, "#[non_exhaustive]");
+        if self.rust_options.struct_non_exhaustive {
+            genln!(self, "#[non_exhaustive]");
+        }
         genln!(self, "pub struct {} {{", name);
         for field in fields {
             let field_name = field.name().value();
@@ -372,7 +382,9 @@ impl<'a> RustGenerator<'a> {
             .unwrap_or_else(RustAttributes::new);
 
         genln!(self, "#[derive(Debug, Clone{})]", attrs.additional_derives());
-        genln!(self, "#[non_exhaustive]");
+        if self.rust_options.enum_non_exhaustive {
+            genln!(self, "#[non_exhaustive]");
+        }
         genln!(self, "pub enum {} {{", name);
         for var in vars {
             let var_name = var.name().value();
@@ -768,7 +780,9 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "#[derive(Debug, Clone)]");
-        genln!(self, "#[non_exhaustive]");
+        if self.rust_options.event_non_exhaustive {
+            genln!(self, "#[non_exhaustive]");
+        }
         genln!(self, "pub enum {} {{", event);
         for item in svc.items() {
             let ev = match item {
@@ -906,7 +920,9 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "#[derive(Debug)]");
-        genln!(self, "#[non_exhaustive]");
+        if self.rust_options.function_non_exhaustive {
+            genln!(self, "#[non_exhaustive]");
+        }
         genln!(self, "pub enum {} {{", functions);
         for item in svc.items() {
             let func = match item {
