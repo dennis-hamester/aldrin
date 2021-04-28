@@ -22,6 +22,22 @@ pub struct RustArgs {
     #[clap(long)]
     no_struct_builders: bool,
 
+    /// Don't annotate structs with non_exhaustive attribute
+    #[clap(long)]
+    no_struct_non_exhaustive: bool,
+
+    /// Don't annotate enums with non_exhaustive attribute
+    #[clap(long)]
+    no_enum_non_exhaustive: bool,
+
+    /// Don't annotate service event enums with non_exhaustive attribute
+    #[clap(long)]
+    no_event_non_exhaustive: bool,
+
+    /// Don't annotate service function enums with non_exhaustive attribute
+    #[clap(long)]
+    no_function_non_exhaustive: bool,
+
     /// Format output with rustfmt
     ///
     /// The formatting style can be customized with --rustfmt-toml.
@@ -73,6 +89,10 @@ pub fn run(args: RustArgs) -> Result<bool> {
     rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
     rust_options.patch = args.patch.as_deref();
     rust_options.struct_builders = !args.no_struct_builders;
+    rust_options.struct_non_exhaustive = !args.no_struct_non_exhaustive;
+    rust_options.enum_non_exhaustive = !args.no_enum_non_exhaustive;
+    rust_options.event_non_exhaustive = !args.no_event_non_exhaustive;
+    rust_options.function_non_exhaustive = !args.no_function_non_exhaustive;
 
     let gen = Generator::new(&options, &parsed);
     let output = gen.generate_rust(&rust_options)?;
