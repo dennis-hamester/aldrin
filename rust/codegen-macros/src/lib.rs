@@ -141,6 +141,27 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// }
 /// ```
 ///
+/// # Omitting struct builders
+///
+/// For every struct in the schema, usually a corresponding builder is generated as well. This can
+/// be turned off by setting `struct_builders = false`.
+///
+/// ```
+/// aldrin_codegen_macros::generate! {
+///     "schemas/example1.aldrin",
+///     struct_builders = false,
+/// }
+///
+/// fn main() {
+///     // example1::MyStruct::builder() and example1::MyStructBuilder are not generated
+///
+///     let my_struct = example1::MyStruct {
+///         field1: Some(42),
+///         field2: None,
+///     };
+/// }
+/// ```
+///
 /// # Errors and warnings
 ///
 /// Any errors and warnings from the schemas will be shown as part of the regular compiler
@@ -214,6 +235,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
         let mut rust_options = RustOptions::new();
         rust_options.patch = args.patch.as_deref();
+        rust_options.struct_builders = args.struct_builders;
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
@@ -258,6 +280,7 @@ struct Args {
     warnings_as_errors: bool,
     suppress_warnings: bool,
     patch: Option<PathBuf>,
+    struct_builders: bool,
 }
 
 impl Parse for Args {
@@ -270,6 +293,7 @@ impl Parse for Args {
             warnings_as_errors: false,
             suppress_warnings: false,
             patch: None,
+            struct_builders: true,
         };
 
         // Additional schemas
@@ -303,6 +327,8 @@ impl Parse for Args {
             } else if opt == "patch" {
                 let lit_str = input.parse::<LitStr>()?;
                 args.patch = Some(lit_str_to_path(lit_str));
+            } else if opt == "struct_builders" {
+                args.struct_builders = input.parse::<LitBool>()?.value;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
