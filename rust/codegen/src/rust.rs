@@ -18,6 +18,7 @@ pub struct RustOptions<'a> {
     pub rustfmt: bool,
     pub rustfmt_toml: Option<&'a Path>,
     pub patch: Option<&'a Path>,
+    pub struct_builders: bool,
 }
 
 impl<'a> RustOptions<'a> {
@@ -26,6 +27,7 @@ impl<'a> RustOptions<'a> {
             rustfmt: false,
             rustfmt_toml: None,
             patch: None,
+            struct_builders: true,
         }
     }
 }
@@ -198,9 +200,12 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
         }
-        genln!(self, "    pub fn builder() -> {} {{", builder_name);
-        genln!(self, "        {}::new()", builder_name);
-        genln!(self, "    }}");
+
+        if self.rust_options.struct_builders {
+            genln!(self, "    pub fn builder() -> {} {{", builder_name);
+            genln!(self, "        {}::new()", builder_name);
+            genln!(self, "    }}");
+        }
         genln!(self, "}}");
         genln!(self);
 
@@ -278,63 +283,65 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "#[derive(Debug, Clone, Default)]");
-        genln!(self, "pub struct {} {{", builder_name);
-        for field in fields {
-            let field_name = field.name().value();
-            genln!(self, "    #[doc(hidden)]");
-            genln!(self, "    {}: Option<{}>,", field_name, struct_field_type(name, field));
-            genln!(self);
-        }
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl {} {{", builder_name);
-        genln!(self, "    pub fn new() -> Self {{");
-        genln!(self, "        Default::default()");
-        genln!(self, "    }}");
-        genln!(self);
-        for field in fields {
-            let field_name = field.name().value();
-            if field.required() {
-                genln!(self, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", field_name, struct_field_type(name, field));
-                genln!(self, "        self.{0} = Some({0});", field_name);
-                genln!(self, "        self");
-                genln!(self, "    }}");
-                genln!(self);
-            } else {
-                genln!(self, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", field_name, struct_field_type(name, field));
-                genln!(self, "        self.{0} = {0};", field_name);
-                genln!(self, "        self");
-                genln!(self, "    }}");
-                genln!(self);
-            }
-        }
-
-        if !has_required_fields {
-            genln!(self, "    pub fn build(self) -> {} {{", name);
-            genln!(self, "        {} {{", name);
+        if self.rust_options.struct_builders {
+            genln!(self, "#[derive(Debug, Clone, Default)]");
+            genln!(self, "pub struct {} {{", builder_name);
             for field in fields {
                 let field_name = field.name().value();
-                genln!(self, "            {0}: self.{0},", field_name);
+                genln!(self, "    #[doc(hidden)]");
+                genln!(self, "    {}: Option<{}>,", field_name, struct_field_type(name, field));
+                genln!(self);
             }
-            genln!(self, "        }}");
-        } else {
-            genln!(self, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", name);
-            genln!(self, "        Ok({} {{", name);
+            genln!(self, "}}");
+            genln!(self);
+
+            genln!(self, "impl {} {{", builder_name);
+            genln!(self, "    pub fn new() -> Self {{");
+            genln!(self, "        Default::default()");
+            genln!(self, "    }}");
+            genln!(self);
             for field in fields {
                 let field_name = field.name().value();
                 if field.required() {
-                    genln!(self, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", field_name);
+                    genln!(self, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", field_name, struct_field_type(name, field));
+                    genln!(self, "        self.{0} = Some({0});", field_name);
+                    genln!(self, "        self");
+                    genln!(self, "    }}");
+                    genln!(self);
                 } else {
-                    genln!(self, "            {0}: self.{0},", field_name);
+                    genln!(self, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", field_name, struct_field_type(name, field));
+                    genln!(self, "        self.{0} = {0};", field_name);
+                    genln!(self, "        self");
+                    genln!(self, "    }}");
+                    genln!(self);
                 }
             }
-            genln!(self, "        }})");
+
+            if !has_required_fields {
+                genln!(self, "    pub fn build(self) -> {} {{", name);
+                genln!(self, "        {} {{", name);
+                for field in fields {
+                    let field_name = field.name().value();
+                    genln!(self, "            {0}: self.{0},", field_name);
+                }
+                genln!(self, "        }}");
+            } else {
+                genln!(self, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", name);
+                genln!(self, "        Ok({} {{", name);
+                for field in fields {
+                    let field_name = field.name().value();
+                    if field.required() {
+                        genln!(self, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", field_name);
+                    } else {
+                        genln!(self, "            {0}: self.{0},", field_name);
+                    }
+                }
+                genln!(self, "        }})");
+            }
+            genln!(self, "    }}");
+            genln!(self, "}}");
+            genln!(self);
         }
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
 
         for field in fields {
             let field_name = field.name().value();
