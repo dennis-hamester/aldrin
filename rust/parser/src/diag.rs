@@ -646,8 +646,7 @@ fn gen_padding(size: usize) -> Cow<'static, str> {
     if size < PADDING.len() {
         PADDING[..size].into()
     } else {
-        use std::iter::{repeat, FromIterator};
-        String::from_iter(repeat(' ').take(size)).into()
+        std::iter::repeat(' ').take(size).collect::<String>().into()
     }
 }
 
@@ -656,8 +655,7 @@ fn gen_main_indicator(size: usize) -> Cow<'static, str> {
     if size < INDICATOR.len() {
         INDICATOR[..size].into()
     } else {
-        use std::iter::{repeat, FromIterator};
-        String::from_iter(repeat('^').take(size)).into()
+        std::iter::repeat('^').take(size).collect::<String>().into()
     }
 }
 
@@ -666,7 +664,6 @@ fn gen_info_indicator(size: usize) -> Cow<'static, str> {
     if size < INDICATOR.len() {
         INDICATOR[..size].into()
     } else {
-        use std::iter::{repeat, FromIterator};
-        String::from_iter(repeat('-').take(size)).into()
+        std::iter::repeat('-').take(size).collect::<String>().into()
     }
 }
