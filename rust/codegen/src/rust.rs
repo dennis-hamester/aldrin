@@ -89,6 +89,7 @@ macro_rules! genln {
 }
 
 #[rustfmt::skip::macros(gen, genln)]
+#[allow(clippy::branches_sharing_code)]
 impl<'a> RustGenerator<'a> {
     fn generate(mut self) -> Result<RustOutput, Error> {
         genln!(self, "#![allow(clippy::large_enum_variant)]");
