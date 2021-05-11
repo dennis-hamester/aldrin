@@ -1,0 +1,18 @@
+[package]
+name = "conformance-test-client"
+description = "Host for aldrin-client conformance tests"
+version = "0.0.0"
+authors = ["Aldrin Contributors"]
+license = "Apache-2.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+aldrin-client = { version = "0.1.0", path = "../client" }
+aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json-serializer", "tokio-codec"] }
+aldrin-conformance-test-shared = { version = "0.1.0", path = "../../conformance-test-shared" }
+anyhow = "1.0.32"
+futures = { version = "0.3.4", default-features = false }
+serde_json = "1.0.48"
+tokio = { version = "1.0.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
+tokio-util = { version = "0.6.7", features = ["codec"] }

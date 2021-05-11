@@ -6,6 +6,8 @@ on:
     - 'wip/**'
     paths:
     - '.github/workflows/**'
+    - 'conformance-tester-shared/**'
+    - 'conformance-tester/**'
     - 'gen/**'
     - 'rust/**'
 

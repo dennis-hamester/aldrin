@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "conformance-test-shared",
+    "conformance-tester",
     "gen",
     "rust/broker",
     "rust/channel",
@@ -7,6 +9,7 @@ members = [
     "rust/codec",
     "rust/codegen",
     "rust/codegen-macros",
+    "rust/conformance-test-client",
     "rust/parser",
     "rust/proto",
     "rust/test",
