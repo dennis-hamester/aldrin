@@ -1,0 +1,76 @@
+--- example1-orig.rs
++++ example1-patched.rs
+@@ -5,22 +5,22 @@
+ 
+ #[derive(Debug, Clone, Default)]
+ #[non_exhaustive]
+-pub struct MyStructRenamed {
++pub struct MyStructRenamedAgain {
+     pub field1: Option<u32>,
+     pub field2: Option<u32>,
+ }
+ 
+-impl MyStructRenamed {
++impl MyStructRenamedAgain {
+     pub fn new() -> Self {
+         Default::default()
+     }
+ 
+-    pub fn builder() -> MyStructRenamedBuilder {
+-        MyStructRenamedBuilder::new()
++    pub fn builder() -> MyStructRenamedAgainBuilder {
++        MyStructRenamedAgainBuilder::new()
+     }
+ }
+ 
+-impl aldrin_client::codegen::aldrin_proto::FromValue for MyStructRenamed {
++impl aldrin_client::codegen::aldrin_proto::FromValue for MyStructRenamedAgain {
+     fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::codegen::aldrin_proto::ConversionError> {
+         let mut v = match v {
+             aldrin_client::Value::Struct(v) => v,
+@@ -42,14 +42,14 @@
+             return Err(aldrin_client::codegen::aldrin_proto::ConversionError(Some(aldrin_client::Value::Struct(v))));
+         }
+ 
+-        Ok(MyStructRenamed {
++        Ok(MyStructRenamedAgain {
+             field1: res.0.flatten(),
+             field2: res.1.flatten(),
+         })
+     }
+ }
+ 
+-impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStructRenamed {
++impl aldrin_client::codegen::aldrin_proto::IntoValue for MyStructRenamedAgain {
+     fn into_value(self) -> aldrin_client::Value {
+         let mut v = std::collections::HashMap::new();
+         if let Some(field1) = self.field1 {
+@@ -63,7 +63,7 @@
+ }
+ 
+ #[derive(Debug, Clone, Default)]
+-pub struct MyStructRenamedBuilder {
++pub struct MyStructRenamedAgainBuilder {
+     #[doc(hidden)]
+     field1: Option<u32>,
+ 
+@@ -72,7 +72,7 @@
+ 
+ }
+ 
+-impl MyStructRenamedBuilder {
++impl MyStructRenamedAgainBuilder {
+     pub fn new() -> Self {
+         Default::default()
+     }
+@@ -87,8 +87,8 @@
+         self
+     }
+ 
+-    pub fn build(self) -> MyStructRenamed {
+-        MyStructRenamed {
++    pub fn build(self) -> MyStructRenamedAgain {
++        MyStructRenamedAgain {
+             field1: self.field1,
+             field2: self.field2,
+         }

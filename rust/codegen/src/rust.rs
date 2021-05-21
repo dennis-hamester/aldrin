@@ -17,7 +17,7 @@ use std::process::{Command, Stdio};
 pub struct RustOptions<'a> {
     pub rustfmt: bool,
     pub rustfmt_toml: Option<&'a Path>,
-    pub patch: Option<&'a Path>,
+    pub patches: Vec<&'a Path>,
     pub struct_builders: bool,
     pub struct_non_exhaustive: bool,
     pub enum_non_exhaustive: bool,
@@ -30,7 +30,7 @@ impl<'a> RustOptions<'a> {
         RustOptions {
             rustfmt: false,
             rustfmt_toml: None,
-            patch: None,
+            patches: Vec::new(),
             struct_builders: true,
             struct_non_exhaustive: true,
             enum_non_exhaustive: true,
@@ -102,7 +102,7 @@ impl<'a> RustGenerator<'a> {
             self.definition(def);
         }
 
-        if let Some(patch) = self.rust_options.patch {
+        for patch in &self.rust_options.patches {
             self.patch(patch)?;
         }
 

@@ -53,8 +53,8 @@ pub struct RustArgs {
     /// Path to a patch to apply to the generated code
     ///
     /// If --format is used as well, the patch is applied before formatting the code.
-    #[clap(short, long)]
-    patch: Option<PathBuf>,
+    #[clap(short, long, number_of_values = 1)]
+    patch: Vec<PathBuf>,
 
     /// Path to an Aldrin schema file
     #[clap(name = "schema")]
@@ -87,7 +87,9 @@ pub fn run(args: RustArgs) -> Result<bool> {
     let mut rust_options = RustOptions::new();
     rust_options.rustfmt = args.format;
     rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
-    rust_options.patch = args.patch.as_deref();
+    for patch in &args.patch {
+        rust_options.patches.push(patch);
+    }
     rust_options.struct_builders = !args.no_struct_builders;
     rust_options.struct_non_exhaustive = !args.no_struct_non_exhaustive;
     rust_options.enum_non_exhaustive = !args.no_enum_non_exhaustive;

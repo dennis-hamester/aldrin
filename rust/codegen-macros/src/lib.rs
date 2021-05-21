@@ -122,10 +122,10 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// # Patching the generated code
 ///
-/// You can specify an additional patch file, which will be applied to the generated code. This
-/// allows for arbitrary changes, such as for example custom additional derives.
+/// You can specify additional patch files, which will be applied to the generated code. This allows
+/// for arbitrary changes, such as for example custom additional derives.
 ///
-/// A patch can only be specified when generating code for a single schema.
+/// Patches can only be specified when generating code for a single schema.
 ///
 /// ```
 /// aldrin_codegen_macros::generate! {
@@ -135,6 +135,23 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     example1::MyStructRenamed::builder()
+///         .set_field1(Some(12))
+///         .set_field2(Some(34))
+///         .build();
+/// }
+/// ```
+///
+/// Patches are applied in the order they are specified.
+///
+/// ```
+/// aldrin_codegen_macros::generate! {
+///     "schemas/example1.aldrin",
+///     patch = "schemas/example1-rename.patch",
+///     patch = "schemas/example1-rename-again.patch",
+/// }
+///
+/// fn main() {
+///     example1::MyStructRenamedAgain::builder()
 ///         .set_field1(Some(12))
 ///         .set_field2(Some(34))
 ///         .build();
@@ -254,7 +271,9 @@ pub fn generate(input: TokenStream) -> TokenStream {
         let gen = Generator::new(&args.options, &parsed);
 
         let mut rust_options = RustOptions::new();
-        rust_options.patch = args.patch.as_deref();
+        for patch in &args.patches {
+            rust_options.patches.push(patch);
+        }
         rust_options.struct_builders = args.struct_builders;
         rust_options.struct_non_exhaustive = args.struct_non_exhaustive;
         rust_options.enum_non_exhaustive = args.enum_non_exhaustive;
@@ -278,16 +297,16 @@ pub fn generate(input: TokenStream) -> TokenStream {
         )
         .unwrap();
 
-        if let Some(patch) = args.patch.as_deref() {
+        for patch in &args.patches {
             write!(
                 &mut modules,
-                "const _: &[u8] = include_bytes!(\"{}\"); }}",
+                "const _: &[u8] = include_bytes!(\"{}\"); ",
                 patch.display()
             )
             .unwrap();
-        } else {
-            write!(&mut modules, "}}").unwrap();
         }
+
+        write!(&mut modules, "}}").unwrap();
     }
 
     if abort {
@@ -303,7 +322,7 @@ struct Args {
     options: Options,
     warnings_as_errors: bool,
     suppress_warnings: bool,
-    patch: Option<PathBuf>,
+    patches: Vec<PathBuf>,
     struct_builders: bool,
     struct_non_exhaustive: bool,
     enum_non_exhaustive: bool,
@@ -320,7 +339,7 @@ impl Parse for Args {
             options: Options::default(),
             warnings_as_errors: false,
             suppress_warnings: false,
-            patch: None,
+            patches: Vec::new(),
             struct_builders: true,
             struct_non_exhaustive: true,
             enum_non_exhaustive: true,
@@ -358,7 +377,7 @@ impl Parse for Args {
                 args.suppress_warnings = input.parse::<LitBool>()?.value;
             } else if opt == "patch" {
                 let lit_str = input.parse::<LitStr>()?;
-                args.patch = Some(lit_str_to_path(lit_str));
+                args.patches.push(lit_str_to_path(lit_str));
             } else if opt == "struct_builders" {
                 args.struct_builders = input.parse::<LitBool>()?.value;
             } else if opt == "struct_non_exhaustive" {
@@ -379,10 +398,10 @@ impl Parse for Args {
             input.parse::<Token![,]>()?;
         }
 
-        if (args.schemas.len() > 1) && args.patch.is_some() {
+        if (args.schemas.len() > 1) && !args.patches.is_empty() {
             return Err(Error::new(
                 Span::call_site(),
-                "patch cannot be applied to multiple schemas",
+                "patches cannot be applied to multiple schemas",
             ));
         }
 
