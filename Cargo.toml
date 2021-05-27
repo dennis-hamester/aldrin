@@ -9,6 +9,7 @@ members = [
     "rust/codec",
     "rust/codegen",
     "rust/codegen-macros",
+    "rust/conformance-test-broker",
     "rust/conformance-test-client",
     "rust/parser",
     "rust/proto",

@@ -1,3 +1,4 @@
+mod broker;
 mod client;
 mod output;
 mod test;
@@ -23,6 +24,9 @@ struct Args {
 
 #[derive(Clap)]
 enum Command {
+    /// Broker testing
+    Broker(broker::Args),
+
     /// Client testing
     Client(client::Args),
 }
@@ -33,6 +37,7 @@ fn main() -> Result<()> {
         let output = output::make_output(args.color)?;
 
         match args.command {
+            Command::Broker(args) => broker::run(output, args)?,
             Command::Client(args) => client::run(output, args)?,
         }
     };
