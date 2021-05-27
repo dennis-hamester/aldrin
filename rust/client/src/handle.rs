@@ -305,7 +305,6 @@ impl Handle {
     ///
     /// ```
     /// # use futures::stream::StreamExt;
-    ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
