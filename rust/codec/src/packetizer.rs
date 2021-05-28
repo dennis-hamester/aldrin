@@ -1,9 +1,11 @@
 mod length_prefixed;
+mod newline_terminated;
 mod nul_terminated;
 
 use bytes::{Bytes, BytesMut};
 
 pub use length_prefixed::{LengthPrefixed, LengthPrefixedBuilder, LengthPrefixedError};
+pub use newline_terminated::{NewlineTerminated, NewlineTerminatedError};
 pub use nul_terminated::{NulTerminated, NulTerminatedError};
 
 pub trait Packetizer {

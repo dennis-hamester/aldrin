@@ -1,4 +1,4 @@
-use aldrin_codec::packetizer::{LengthPrefixed, NulTerminated};
+use aldrin_codec::packetizer::{LengthPrefixed, NewlineTerminated, NulTerminated};
 use aldrin_codec::{Endian, Packetizer};
 use bytes::{Bytes, BytesMut};
 use criterion::measurement::Measurement;
@@ -15,6 +15,8 @@ pub fn run(c: &mut Criterion) {
         length_prefixed_decode(&mut group, size);
         nul_terminated_encode(&mut group, size);
         nul_terminated_decode(&mut group, size);
+        newline_terminated_encode(&mut group, size);
+        newline_terminated_decode(&mut group, size);
     }
     group.finish();
 }
@@ -107,6 +109,50 @@ fn nul_terminated_decode<M: Measurement>(group: &mut BenchmarkGroup<M>, size: us
                     (nul_terminated, encoded)
                 },
                 |(mut nul_terminated, mut data)| nul_terminated.decode(&mut data).unwrap().unwrap(),
+                BatchSize::SmallInput,
+            );
+        },
+    );
+}
+
+fn newline_terminated_encode<M: Measurement>(group: &mut BenchmarkGroup<M>, size: usize) {
+    group.bench_with_input(
+        BenchmarkId::new("NewlineTerminated/encode", size),
+        &size,
+        |b, &size| {
+            b.iter_batched(
+                || {
+                    let newline_terminated = NewlineTerminated::new();
+                    let data = create_data(size);
+                    let dst = BytesMut::with_capacity(2 * data.len());
+                    (newline_terminated, data, dst)
+                },
+                |(mut newline_terminated, data, mut dst)| {
+                    newline_terminated.encode(data, &mut dst).unwrap();
+                    dst
+                },
+                BatchSize::SmallInput,
+            );
+        },
+    );
+}
+
+fn newline_terminated_decode<M: Measurement>(group: &mut BenchmarkGroup<M>, size: usize) {
+    group.bench_with_input(
+        BenchmarkId::new("NewlineTerminated/decode", size),
+        &size,
+        |b, &size| {
+            b.iter_batched(
+                || {
+                    let mut newline_terminated = NewlineTerminated::new();
+                    let data = create_data(size);
+                    let mut encoded = BytesMut::new();
+                    newline_terminated.encode(data, &mut encoded).unwrap();
+                    (newline_terminated, encoded)
+                },
+                |(mut newline_terminated, mut data)| {
+                    newline_terminated.decode(&mut data).unwrap().unwrap()
+                },
                 BatchSize::SmallInput,
             );
         },
