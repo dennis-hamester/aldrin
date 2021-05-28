@@ -31,7 +31,7 @@ impl Bincode {
 impl Default for Bincode {
     fn default() -> Self {
         Bincode {
-            endian: Endian::Big,
+            endian: Endian::Little,
         }
     }
 }
