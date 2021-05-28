@@ -52,16 +52,23 @@ impl Packetizer for NulTerminated {
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
         debug_assert!(src.len() >= self.cur);
-        let nul_idx = src[self.cur..src.len()].iter().position(|&x| x == 0);
+        let nul_idx = src[self.cur..src.len()]
+            .iter()
+            .position(|&x| x == 0)
+            .map(|nul_idx| self.cur + nul_idx);
+
         match nul_idx {
-            Some(nul_idx) if self.cur + nul_idx > (self.max_len - 1) => Err(NulTerminatedError),
+            Some(nul_idx) if nul_idx > (self.max_len - 1) => Err(NulTerminatedError),
+
             Some(nul_idx) => {
-                let packet = src.split_to(self.cur + nul_idx);
+                let packet = src.split_to(nul_idx);
                 src.advance(1);
                 self.cur = 0;
                 Ok(Some(packet))
             }
+
             None if src.len() > (self.max_len - 1) => Err(NulTerminatedError),
+
             None => {
                 self.cur = src.len();
                 Ok(None)
