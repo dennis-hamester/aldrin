@@ -108,7 +108,7 @@ impl LengthPrefixedBuilder {
         LengthPrefixedBuilder {
             len_size: 4,
             max_len: u32::max_value() as usize,
-            endian: Endian::Big,
+            endian: Endian::Little,
         }
     }
 
