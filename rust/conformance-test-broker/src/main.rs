@@ -1,6 +1,6 @@
 use aldrin_broker::{Broker, BrokerHandle};
 use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NulTerminated;
+use aldrin_codec::packetizer::NewlineTerminated;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
@@ -81,8 +81,12 @@ impl BrokerUnderTest {
     }
 
     async fn handle_new_connection(mut broker: BrokerHandle, stream: TcpStream) -> Result<()> {
-        let transport =
-            TokioCodec::new(stream, NulTerminated::new(), Noop, Json::with_pretty(false));
+        let transport = TokioCodec::new(
+            stream,
+            NewlineTerminated::new(),
+            Noop,
+            Json::with_pretty(false),
+        );
         let conn = broker.add_connection(transport).await?;
         tokio::spawn(conn.run());
         Ok(())

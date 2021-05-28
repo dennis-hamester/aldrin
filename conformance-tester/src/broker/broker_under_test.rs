@@ -1,7 +1,7 @@
 use super::BrokerRunArgs;
 use crate::test::RunError;
 use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NulTerminated;
+use aldrin_codec::packetizer::NewlineTerminated;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
@@ -130,8 +130,13 @@ impl Client {
         let stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).await?;
 
         Ok(Box::new(
-            TokioCodec::new(stream, NulTerminated::new(), Noop, Json::with_pretty(false))
-                .map_err(Error::from),
+            TokioCodec::new(
+                stream,
+                NewlineTerminated::new(),
+                Noop,
+                Json::with_pretty(false),
+            )
+            .map_err(Error::from),
         ))
     }
 

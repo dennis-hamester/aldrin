@@ -1,6 +1,6 @@
 use aldrin_client::{Client, Handle};
 use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NulTerminated;
+use aldrin_codec::packetizer::NewlineTerminated;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::client::ToClientMessage;
@@ -25,8 +25,12 @@ struct ClientUnderTest {
 impl ClientUnderTest {
     async fn new(port: u16) -> Result<Self> {
         let stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).await?;
-        let transport =
-            TokioCodec::new(stream, NulTerminated::new(), Noop, Json::with_pretty(false));
+        let transport = TokioCodec::new(
+            stream,
+            NewlineTerminated::new(),
+            Noop,
+            Json::with_pretty(false),
+        );
         let client = Client::connect(transport).await?;
         let handle = client.handle().clone();
         let join = tokio::spawn(client.run().map_err(Error::from));
