@@ -97,7 +97,7 @@ impl Schema {
             }
         };
 
-        let mut schema_name_pairs = match Grammar::parse(Rule::schema_name, &file_stem_str) {
+        let mut schema_name_pairs = match Grammar::parse(Rule::schema_name, file_stem_str) {
             Ok(schema_name_pairs) => schema_name_pairs,
             Err(_) => {
                 issues.add_error(InvalidSchemaName::new(file_stem_str));

@@ -197,7 +197,7 @@ impl StructField {
     }
 
     fn validate(&self, validate: &mut Validate) {
-        InvalidStructFieldId::validate(&self, validate);
+        InvalidStructFieldId::validate(self, validate);
         NonSnakeCaseStructField::validate(self, validate);
 
         self.name.validate(validate);

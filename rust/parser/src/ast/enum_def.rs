@@ -184,7 +184,7 @@ impl EnumVariant {
     }
 
     fn validate(&self, validate: &mut Validate) {
-        InvalidEnumVariantId::validate(&self, validate);
+        InvalidEnumVariantId::validate(self, validate);
         NonCamelCaseEnumVariant::validate(self, validate);
 
         self.name.validate(validate);
