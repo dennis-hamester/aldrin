@@ -8,7 +8,7 @@ use crate::test::{MessageType, RunBox, RunError, Test};
 use anyhow::{anyhow, Result};
 use std::future::Future;
 use std::time::Duration;
-use tokio::time;
+use tokio::time::{self, Instant};
 
 pub fn make_tests() -> Vec<ClientTest> {
     vec![
@@ -23,13 +23,18 @@ async fn run_test<F>(test: F, args: ClientRunArgs) -> Result<(), RunError>
 where
     F: for<'a> RunHelper<'a>,
 {
-    let timeout = Duration::from_millis(args.timeout);
-    let mut client = ClientUnderTest::new(args).await?;
-    let res = match time::timeout(timeout, test.call(&mut client)).await {
+    let timeout = Instant::now() + Duration::from_millis(args.timeout);
+
+    let mut client = time::timeout_at(timeout, ClientUnderTest::new(args))
+        .await
+        .map_err(|_| RunError::bare(anyhow!("timeout while starting client")))??;
+
+    let res = match time::timeout_at(timeout, test.call(&mut client)).await {
         Ok(Ok(())) => Ok(()),
         Ok(Err(e)) => Err(e),
         Err(_) => Err(anyhow!("test timed out")),
     };
+
     client.result(res).await
 }
 
