@@ -16,7 +16,7 @@ fn test_message(m: Message, j: serde_json::Value) {
 
     let buf = ser.serialize(m.clone()).unwrap();
     let j2_str = from_utf8(&buf).unwrap();
-    let j2: serde_json::Value = serde_json::from_str(&j2_str).unwrap();
+    let j2: serde_json::Value = serde_json::from_str(j2_str).unwrap();
     assert_eq!(j, j2);
 
     let m2: Message = serde_json::from_value(j).unwrap();
