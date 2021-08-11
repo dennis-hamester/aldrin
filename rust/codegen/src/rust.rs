@@ -80,12 +80,12 @@ struct RustGenerator<'a> {
 }
 
 macro_rules! gen {
-    ($this:expr, $($arg:tt)+) => { write!($this.output.module_content, $($arg)+).unwrap(); };
+    ($this:expr, $($arg:tt)+) => { write!($this.output.module_content, $($arg)+).unwrap() };
 }
 
 macro_rules! genln {
-    ($this:expr) => { writeln!($this.output.module_content).unwrap(); };
-    ($this:expr, $($arg:tt)+) => { writeln!($this.output.module_content, $($arg)+).unwrap(); };
+    ($this:expr) => { writeln!($this.output.module_content).unwrap() };
+    ($this:expr, $($arg:tt)+) => { writeln!($this.output.module_content, $($arg)+).unwrap() };
 }
 
 #[rustfmt::skip::macros(gen, genln)]
