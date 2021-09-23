@@ -12,7 +12,7 @@ aldrin-conformance-test-shared = { version = "0.1.0", path = "../conformance-tes
 aldrin-proto = { version = "0.1.0", path = "../rust/proto" }
 anyhow = "1.0.32"
 atty = "0.2.14"
-clap = { version = "3.0.0-beta.2", features = ["wrap_help"] }
+clap = { version = "3.0.0-beta.4", features = ["wrap_help"] }
 futures = { version = "0.3.4", default-features = false }
 num_cpus = "1.13.0"
 once_cell = "1.4.0"

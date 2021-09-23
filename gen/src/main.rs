@@ -12,7 +12,7 @@ use std::str::FromStr;
 #[derive(Clap)]
 #[clap(version, author, about,
     global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::VersionlessSubcommands,
+    global_setting = AppSettings::DisableVersionForSubcommands,
 )]
 enum Args {
     /// Checks an Aldrin schema for errors

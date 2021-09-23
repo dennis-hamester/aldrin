@@ -135,8 +135,8 @@ async fn run(args: RunArgs) -> Result<()> {
 #[derive(Clap)]
 #[clap(
     global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::VersionlessSubcommands,
-    global_setting = AppSettings::DisableVersion,
+    global_setting = AppSettings::DisableVersionFlag,
+    global_setting = AppSettings::DisableVersionForSubcommands
 )]
 enum Args {
     /// Runs an Aldrin broker

@@ -54,8 +54,8 @@ struct JoinArgs {
 #[derive(Clap)]
 #[clap(
     global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::VersionlessSubcommands,
-    global_setting = AppSettings::DisableVersion,
+    global_setting = AppSettings::DisableVersionForSubcommands,
+    global_setting = AppSettings::DisableVersionFlag,
 )]
 enum Args {
     /// Runs an Aldrin broker on which chat rooms can be hosted

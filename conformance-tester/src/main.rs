@@ -11,7 +11,7 @@ use std::process;
 #[derive(Clap)]
 #[clap(version, author, about,
     global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::VersionlessSubcommands,
+    global_setting = AppSettings::DisableVersionForSubcommands,
 )]
 struct Args {
     /// When to color output
@@ -25,9 +25,11 @@ struct Args {
 #[derive(Clap)]
 enum Command {
     /// Broker testing
+    #[clap(subcommand)]
     Broker(broker::Args),
 
     /// Client testing
+    #[clap(subcommand)]
     Client(client::Args),
 }
 
