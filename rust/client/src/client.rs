@@ -921,7 +921,6 @@ where
         req: QueryObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.query_object.insert(QueryObjectData {
-            object_uuid: req.object_uuid,
             id_reply: Some(req.reply),
             with_services: req.with_services,
             svc_reply: None,
@@ -972,7 +971,6 @@ where
 
 #[derive(Debug)]
 struct QueryObjectData {
-    object_uuid: ObjectUuid,
     id_reply: Option<oneshot::Sender<QueryObjectRequestReply>>,
     with_services: bool,
     svc_reply: Option<mpsc::UnboundedSender<(ServiceUuid, ServiceCookie)>>,
