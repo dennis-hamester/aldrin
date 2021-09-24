@@ -41,7 +41,7 @@ jobs:
       - name: Cargo test
         run: cargo test --all-features
       - name: Cargo clippy
-        run: cargo clippy --all-features
+        run: cargo clippy --all-features --tests --benches
 
   doc:
     name: Check docs
