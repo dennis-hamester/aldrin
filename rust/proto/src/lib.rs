@@ -1,5 +1,5 @@
-#![deny(broken_intra_doc_links)]
 #![deny(missing_debug_implementations)]
+#![deny(rustdoc::broken_intra_doc_links)]
 
 mod message;
 mod value;

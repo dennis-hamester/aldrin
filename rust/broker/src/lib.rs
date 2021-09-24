@@ -62,9 +62,9 @@
 //! }
 //! ```
 
-#![deny(broken_intra_doc_links)]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
+#![deny(rustdoc::broken_intra_doc_links)]
 
 mod broker;
 mod conn;

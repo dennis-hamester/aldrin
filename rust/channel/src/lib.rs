@@ -53,9 +53,9 @@
 //! }
 //! ```
 
-#![deny(broken_intra_doc_links)]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
+#![deny(rustdoc::broken_intra_doc_links)]
 
 use aldrin_proto::{AsyncTransport, Message};
 use futures_channel::mpsc;
