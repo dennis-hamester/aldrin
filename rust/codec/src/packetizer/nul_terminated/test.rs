@@ -82,7 +82,7 @@ fn exceed_max_length_encode() {
     assert_eq!(buf, b"123\0"[..]);
 
     nul_terminated.encode(b"456"[..].into(), &mut buf).unwrap();
-    assert_eq!(buf, b"123\0456\0"[..]);
+    assert_eq!(buf, b"123\x00456\x00"[..]);
 }
 
 #[test]
