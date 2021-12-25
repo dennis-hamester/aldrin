@@ -259,6 +259,7 @@ impl ClientBuilder {
     /// Uses an unbounded channel as the transport between `Broker` and `Client`.
     ///
     /// This is the default after creating a new [`ClientBuilder`].
+    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
     pub fn unbounded_channel(mut self) -> Self {
         self.channel = None;
         self
@@ -267,6 +268,7 @@ impl ClientBuilder {
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
     /// See [`aldrin_channel::bounded`] for more information on the `fifo_size` parameter.
+    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.channel = Some(fifo_size);
         self

@@ -126,31 +126,37 @@ impl LengthPrefixedBuilder {
         }
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn length_size(mut self, length_size: u8) -> Self {
         self.len_size = length_size;
         self
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn max_length(mut self, max_length: usize) -> Self {
         self.max_len = max_length;
         self
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn endian(mut self, endian: Endian) -> Self {
         self.endian = endian;
         self
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn big_endian(mut self) -> Self {
         self.endian = Endian::Big;
         self
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn little_endian(mut self) -> Self {
         self.endian = Endian::Little;
         self
     }
 
+    #[must_use = "this method follows the builder pattern and returns a new `LengthPrefixedBuilder`"]
     pub fn native_endian(self) -> Self {
         if cfg!(target_endian = "big") {
             self.big_endian()
