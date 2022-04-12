@@ -10,7 +10,7 @@ edition = "2018"
 serde-derive = ["serde", "uuid/serde"]
 
 [dependencies]
-pin-project = "1.0.1"
+pin-project = "1.0.10"
 uuid = { version = "0.8.1", default-features = false }
 
 serde = { optional = true, version = "1.0.104", features = ["derive"] }

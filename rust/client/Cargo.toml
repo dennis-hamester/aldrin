@@ -11,9 +11,9 @@ codegen = ["aldrin-codegen-macros"]
 
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-channel = { version = "0.3.4", default-features = false, features = ["std"] }
-futures-core = { version = "0.3.4", default-features = false }
-futures-util = { version = "0.3.4", default-features = false }
+futures-channel = { version = "0.3.21", default-features = false, features = ["std"] }
+futures-core = { version = "0.3.21", default-features = false }
+futures-util = { version = "0.3.21", default-features = false }
 uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
 
 aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen-macros" }
@@ -21,5 +21,5 @@ aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen
 [dev-dependencies]
 aldrin-channel = { version = "0.1.0", path = "../channel" }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
-futures = { version = "0.3.4", default-features = false }
+futures = { version = "0.3.21", default-features = false }
 tokio = { version = "1.0.0", features = ["macros", "rt-multi-thread", "time"] }

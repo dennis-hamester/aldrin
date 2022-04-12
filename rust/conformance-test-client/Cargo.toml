@@ -12,7 +12,7 @@ aldrin-client = { version = "0.1.0", path = "../client" }
 aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json-serializer", "tokio-codec"] }
 aldrin-conformance-test-shared = { version = "0.1.0", path = "../../conformance-test-shared" }
 anyhow = "1.0.32"
-futures = { version = "0.3.4", default-features = false }
+futures = { version = "0.3.21", default-features = false }
 serde_json = "1.0.48"
 tokio = { version = "1.0.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 tokio-util = { version = "0.6.7", features = ["codec"] }
