@@ -3,7 +3,7 @@ use crate::ast::{Ident, StructDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
 pub struct NonCamelCaseStruct {
@@ -14,7 +14,7 @@ pub struct NonCamelCaseStruct {
 
 impl NonCamelCaseStruct {
     pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate) {
-        let camel_case = struct_def.name().value().to_camel_case();
+        let camel_case = struct_def.name().value().to_upper_camel_case();
         if struct_def.name().value() != camel_case {
             validate.add_warning(NonCamelCaseStruct {
                 schema_name: validate.schema_name().to_owned(),

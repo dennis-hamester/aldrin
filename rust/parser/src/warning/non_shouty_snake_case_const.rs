@@ -3,7 +3,7 @@ use crate::ast::{ConstDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::ShoutySnakeCase;
+use heck::ToShoutySnakeCase;
 
 #[derive(Debug)]
 pub struct NonShoutySnakeCaseConst {

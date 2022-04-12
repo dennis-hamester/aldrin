@@ -2,7 +2,7 @@ use super::Warning;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::SnakeCase;
+use heck::ToSnakeCase;
 
 #[derive(Debug)]
 pub struct NonSnakeCaseSchemaName {

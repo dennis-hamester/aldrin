@@ -3,7 +3,7 @@ use crate::ast::{EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
 pub struct NonCamelCaseEnumVariant {
@@ -14,7 +14,7 @@ pub struct NonCamelCaseEnumVariant {
 
 impl NonCamelCaseEnumVariant {
     pub(crate) fn validate(var: &EnumVariant, validate: &mut Validate) {
-        let camel_case = var.name().value().to_camel_case();
+        let camel_case = var.name().value().to_upper_camel_case();
         if var.name().value() != camel_case {
             validate.add_warning(NonCamelCaseEnumVariant {
                 schema_name: validate.schema_name().to_owned(),

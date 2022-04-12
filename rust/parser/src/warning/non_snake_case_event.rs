@@ -3,7 +3,7 @@ use crate::ast::{EventDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::SnakeCase;
+use heck::ToSnakeCase;
 
 #[derive(Debug)]
 pub struct NonSnakeCaseEvent {

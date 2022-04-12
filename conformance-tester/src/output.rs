@@ -109,7 +109,7 @@ pub fn describe_test(mut output: impl WriteColor, test: impl Test) -> Result<()>
     let desc = test.long().unwrap_or("No description available.");
     let termwidth = get_termwidth();
 
-    for line in textwrap::wrap_iter(desc, termwidth - 4) {
+    for line in textwrap::wrap(desc, termwidth - 4) {
         writeln!(output, "  {}", line)?;
     }
 

@@ -3,7 +3,7 @@ use crate::ast::{Ident, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
 pub struct NonCamelCaseService {
@@ -14,7 +14,7 @@ pub struct NonCamelCaseService {
 
 impl NonCamelCaseService {
     pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate) {
-        let camel_case = service_def.name().value().to_camel_case();
+        let camel_case = service_def.name().value().to_upper_camel_case();
         if service_def.name().value() != camel_case {
             validate.add_warning(NonCamelCaseService {
                 schema_name: validate.schema_name().to_owned(),

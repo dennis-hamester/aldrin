@@ -5,7 +5,7 @@ use crate::error::{Error, SubprocessError};
 use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
 use diffy::Patch;
-use heck::{CamelCase, ShoutySnakeCase};
+use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
@@ -1108,7 +1108,7 @@ fn struct_field_type(struct_name: &str, field: &ast::StructField) -> String {
 }
 
 fn struct_inline_field_type(struct_name: &str, field_name: &str) -> String {
-    format!("{}{}", struct_name, field_name.to_camel_case())
+    format!("{}{}", struct_name, field_name.to_upper_camel_case())
 }
 
 fn struct_builder_name(base: &str) -> String {
@@ -1144,7 +1144,7 @@ fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::Function
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Args", svc_name, func_name.to_camel_case())
+            format!("{}{}Args", svc_name, func_name.to_upper_camel_case())
         }
     }
 }
@@ -1163,7 +1163,7 @@ fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPa
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Ok", svc_name, func_name.to_camel_case())
+            format!("{}{}Ok", svc_name, func_name.to_upper_camel_case())
         }
     }
 }
@@ -1182,7 +1182,7 @@ fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionP
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Error", svc_name, func_name.to_camel_case())
+            format!("{}{}Error", svc_name, func_name.to_upper_camel_case())
         }
     }
 }
@@ -1206,7 +1206,7 @@ fn service_event(svc_name: &str) -> String {
 }
 
 fn service_event_variant(ev_name: &str) -> String {
-    ev_name.to_camel_case()
+    ev_name.to_upper_camel_case()
 }
 
 fn subscribe_event(ev_name: &str) -> String {
@@ -1235,11 +1235,11 @@ fn service_functions(svc_name: &str) -> String {
 }
 
 fn service_function_variant(func_name: &str) -> String {
-    func_name.to_camel_case()
+    func_name.to_upper_camel_case()
 }
 
 fn function_reply(svc_name: &str, func_name: &str) -> String {
-    format!("{}{}Reply", svc_name, func_name.to_camel_case())
+    format!("{}{}Reply", svc_name, func_name.to_upper_camel_case())
 }
 
 struct RustAttributes {
