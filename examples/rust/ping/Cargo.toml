@@ -11,6 +11,6 @@ aldrin-broker = { path = "../../../rust/broker" }
 aldrin-client = { path = "../../../rust/client", features = ["codegen"] }
 aldrin-codec = { path = "../../../rust/codec", features = ["json-serializer", "tokio-codec"] }
 anyhow = "1.0.32"
-clap = { version = "3.0.0-beta.4", features = ["wrap_help"] }
+clap = { version = "3.1.8", features = ["derive", "wrap_help"] }
 futures = { version = "0.3.4", default-features = false, features = ["std"] }
 tokio = { version = "1.0.0", default-features = false, features = ["macros", "net", "rt-multi-thread", "time"] }

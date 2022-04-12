@@ -2,12 +2,12 @@ use crate::{diag, CommonArgs, CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::Parser;
 use anyhow::Result;
-use clap::Clap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 
-#[derive(Clap)]
+#[derive(clap::Parser)]
+#[clap(arg_required_else_help = true)]
 pub struct RustArgs {
     #[clap(flatten)]
     common_args: CommonArgs,

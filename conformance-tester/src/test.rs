@@ -1,6 +1,6 @@
 use crate::output;
 use anyhow::{anyhow, Error, Result};
-use clap::Clap;
+use clap::Parser;
 use std::collections::VecDeque;
 use std::fmt;
 use std::future::Future;
@@ -10,7 +10,7 @@ use termcolor::WriteColor;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct CommonRunArgs {
     /// Maximum number of tests to run in parallel
     ///

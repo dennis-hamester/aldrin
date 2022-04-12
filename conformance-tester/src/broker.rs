@@ -5,11 +5,10 @@ use crate::test::{CommonRunArgs, Test};
 use crate::{output, test};
 use anyhow::{anyhow, Result};
 use broker_under_test::BrokerUnderTest;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use termcolor::WriteColor;
 
-#[derive(Clap)]
-#[clap(setting = AppSettings::SubcommandRequiredElseHelp)]
+#[derive(Parser)]
 pub enum Args {
     /// Lists available broker tests
     List,
@@ -21,7 +20,7 @@ pub enum Args {
     Run(RunArgs),
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct RunArgs {
     #[clap(flatten)]
     common: CommonRunArgs,
@@ -30,7 +29,7 @@ pub struct RunArgs {
     run_args: BrokerRunArgs,
 }
 
-#[derive(Clone, Clap)]
+#[derive(Clone, Parser)]
 pub struct BrokerRunArgs {
     /// Path to the broker
     broker: String,
@@ -47,7 +46,7 @@ pub struct BrokerRunArgs {
     shutdown_timeout: u64,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct DescribeArgs {
     /// Name of the test to describe
     test: String,

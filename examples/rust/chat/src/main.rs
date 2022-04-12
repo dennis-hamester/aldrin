@@ -6,18 +6,18 @@ mod list;
 aldrin_client::generate!("../../schemas/chat.aldrin", warnings_as_errors = true);
 
 use anyhow::Result;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use std::net::SocketAddr;
 use uuid::Uuid;
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct BrokerArgs {
     /// IP address and port
     #[clap(default_value = "127.0.0.1:5000", name = "endpoint")]
     bind: SocketAddr,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct HostArgs {
     /// IP address and port of the broker
     #[clap(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
@@ -27,14 +27,14 @@ struct HostArgs {
     name: String,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct ListArgs {
     /// IP address and port of the broker
     #[clap(default_value = "127.0.0.1:5000", name = "endpoint")]
     broker: SocketAddr,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct JoinArgs {
     /// IP address and port of the broker
     #[clap(short, long, default_value = "127.0.0.1:5000", name = "endpoint")]
@@ -51,12 +51,7 @@ struct JoinArgs {
     name: String,
 }
 
-#[derive(Clap)]
-#[clap(
-    global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::DisableVersionForSubcommands,
-    global_setting = AppSettings::DisableVersionFlag,
-)]
+#[derive(Parser)]
 enum Args {
     /// Runs an Aldrin broker on which chat rooms can be hosted
     Broker(BrokerArgs),

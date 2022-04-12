@@ -4,15 +4,12 @@ mod output;
 mod test;
 
 use anyhow::Result;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use output::ColorChoice;
 use std::process;
 
-#[derive(Clap)]
-#[clap(version, author, about,
-    global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::DisableVersionForSubcommands,
-)]
+#[derive(Parser)]
+#[clap(version, about)]
 struct Args {
     /// When to color output
     #[clap(long, default_value = "auto", possible_values = &["auto", "always", "never"])]
@@ -22,7 +19,7 @@ struct Args {
     command: Command,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum Command {
     /// Broker testing
     #[clap(subcommand)]

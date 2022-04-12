@@ -5,7 +5,7 @@ use aldrin_codec::packetizer::LengthPrefixed;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use anyhow::Result;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use futures::future::select_all;
 use futures::stream::StreamExt;
 use std::net::SocketAddr;
@@ -17,7 +17,7 @@ aldrin_client::generate!("../../schemas/ping.aldrin", warnings_as_errors = true)
 
 const MEASURE_UPDATE_MS: u64 = 5000;
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct BrokerArgs {
     /// IP address and port
     #[clap(short, long, default_value = "127.0.0.1:5000")]
@@ -60,7 +60,7 @@ async fn broker(args: BrokerArgs) -> Result<()> {
     }
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct RunArgs {
     /// IP address and port of the broker
     #[clap(short, long, default_value = "127.0.0.1:5000")]
@@ -132,12 +132,7 @@ async fn run(args: RunArgs) -> Result<()> {
     }
 }
 
-#[derive(Clap)]
-#[clap(
-    global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::DisableVersionFlag,
-    global_setting = AppSettings::DisableVersionForSubcommands
-)]
+#[derive(Parser)]
 enum Args {
     /// Runs an Aldrin broker
     Broker(BrokerArgs),

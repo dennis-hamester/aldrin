@@ -1,10 +1,10 @@
 use crate::{diag, CommonArgs, CommonReadArgs};
 use aldrin_parser::Parser;
 use anyhow::Result;
-use clap::Clap;
 use std::path::PathBuf;
 
-#[derive(Clap)]
+#[derive(clap::Parser)]
+#[clap(arg_required_else_help = true)]
 pub struct CheckArgs {
     #[clap(flatten)]
     common_args: CommonArgs,

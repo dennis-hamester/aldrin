@@ -4,12 +4,11 @@ mod tests;
 use crate::test::{CommonRunArgs, Test};
 use crate::{output, test};
 use anyhow::{anyhow, Result};
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use client_under_test::ClientUnderTest;
 use termcolor::WriteColor;
 
-#[derive(Clap)]
-#[clap(setting = AppSettings::SubcommandRequiredElseHelp)]
+#[derive(Parser)]
 pub enum Args {
     /// Lists available client tests
     List,
@@ -21,7 +20,7 @@ pub enum Args {
     Run(RunArgs),
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct RunArgs {
     #[clap(flatten)]
     common: CommonRunArgs,
@@ -30,7 +29,7 @@ pub struct RunArgs {
     run_args: ClientRunArgs,
 }
 
-#[derive(Clone, Clap)]
+#[derive(Clone, Parser)]
 pub struct ClientRunArgs {
     /// Path to the client
     client: String,
@@ -47,7 +46,7 @@ pub struct ClientRunArgs {
     shutdown_timeout: u64,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct DescribeArgs {
     /// Name of the test to describe
     test: String,

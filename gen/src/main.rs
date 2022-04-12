@@ -3,17 +3,14 @@ mod diag;
 mod rust;
 
 use anyhow::Result;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use std::convert::Infallible;
 use std::path::PathBuf;
 use std::process;
 use std::str::FromStr;
 
-#[derive(Clap)]
-#[clap(version, author, about,
-    global_setting = AppSettings::ColoredHelp,
-    global_setting = AppSettings::DisableVersionForSubcommands,
-)]
+#[derive(Parser)]
+#[clap(version, about)]
 enum Args {
     /// Checks an Aldrin schema for errors
     Check(check::CheckArgs),
@@ -22,7 +19,7 @@ enum Args {
     Rust(rust::RustArgs),
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct CommonArgs {
     /// When to color output
     #[clap(long, default_value = "auto")]
@@ -50,15 +47,14 @@ impl FromStr for Color {
     }
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct CommonReadArgs {
     /// Additional include directories
-    #[clap(short = 'I', long, name = "include_dir")]
-    #[clap(number_of_values(1))]
+    #[clap(short = 'I', long, name = "include_dir", number_of_values = 1)]
     include: Vec<PathBuf>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct CommonGenArgs {
     /// Output directory
     ///
