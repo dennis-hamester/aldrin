@@ -14,7 +14,7 @@ aldrin-proto = { version = "0.1.0", path = "../proto" }
 futures-channel = { version = "0.3.21", default-features = false, features = ["std"] }
 futures-core = { version = "0.3.21", default-features = false }
 futures-util = { version = "0.3.21", default-features = false }
-uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
+uuid = { version = "1.1.2", default-features = false, features = ["v4"] }
 
 aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen-macros" }
 

@@ -26,7 +26,7 @@ aldrin-proto = { version = "0.1.0", path = "../proto", features = ["serde-derive
 criterion = "0.3.3"
 maplit = "1.0.2"
 serde_json = "1.0.48"
-uuid = "0.8.1"
+uuid = "1.1.2"
 
 [[bench]]
 name = "benches"

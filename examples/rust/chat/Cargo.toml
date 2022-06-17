@@ -16,4 +16,4 @@ crossterm = "0.16.0"
 futures = { version = "0.3.21", default-features = false, features = ["std"] }
 linefeed = "0.6.0"
 tokio = { version = "1.0.0", default-features = false, features = ["macros", "net", "rt-multi-thread"] }
-uuid = { version = "0.8.1", default-features = false, features = ["v4"] }
+uuid = { version = "1.1.2", default-features = false, features = ["v4"] }
