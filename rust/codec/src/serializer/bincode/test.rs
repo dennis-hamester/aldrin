@@ -8,7 +8,7 @@ fn test_message(m: &Message, b: &[u8], endian: Endian) {
     let mut ser = Bincode::with_endian(endian);
 
     let b2 = ser.serialize(m.clone()).unwrap();
-    assert_eq!(b, b2);
+    assert_eq!(b, &b2[..]);
 
     let m2 = ser.deserialize(b2.freeze()).unwrap();
     assert_eq!(*m, m2);
