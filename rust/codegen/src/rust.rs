@@ -1042,7 +1042,7 @@ impl<'a> RustGenerator<'a> {
             ast::ConstValue::U64(v) => genln!(self, "pub const {}: u64 = {};", name, v.value()),
             ast::ConstValue::I64(v) => genln!(self, "pub const {}: i64 = {};", name, v.value()),
             ast::ConstValue::String(v) => genln!(self, "pub const {}: &str = \"{}\";", name, v.value()),
-            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin_client::codegen::uuid::Uuid = aldrin_client::codegen::uuid::Uuid::from_u128({:#034x});", name, v.value().as_u128()),
+            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin_client::codegen::uuid::Uuid = aldrin_client::codegen::uuid::uuid!(\"{}\");", name, v.value()),
         };
 
         genln!(self);
