@@ -4,12 +4,12 @@ use aldrin_proto::*;
 use maplit::{hashmap, hashset};
 use serde_json::json;
 use std::str::from_utf8;
-use uuid::Uuid;
+use uuid::{uuid, Uuid};
 
-const UUID1: Uuid = Uuid::from_u128(0x2a6c868348b94c82956144201d707232);
-const UUID2: Uuid = Uuid::from_u128(0x1d0720e669444801a07faaa075a46339);
-const UUID3: Uuid = Uuid::from_u128(0x8892f6c4f4c845c793730b40a6bb3097);
-const UUID4: Uuid = Uuid::from_u128(0x7ff46206eddc4a9e8ce9707b1f35a1ba);
+const UUID1: Uuid = uuid!("2a6c8683-48b9-4c82-9561-44201d707232");
+const UUID2: Uuid = uuid!("1d0720e6-6944-4801-a07f-aaa075a46339");
+const UUID3: Uuid = uuid!("8892f6c4-f4c8-45c7-9373-0b40a6bb3097");
+const UUID4: Uuid = uuid!("7ff46206-eddc-4a9e-8ce9-707b1f35a1ba");
 
 fn test_message(m: Message, j: serde_json::Value) {
     let mut ser = Json::with_pretty(false);
