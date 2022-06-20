@@ -21,3 +21,4 @@ aldrin-proto = { version = "0.1.0", path = "../proto" }
 aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
 futures = { version = "0.3.21", default-features = false }
 tokio = { version = "1.0.0", features = ["macros", "rt"] }
+uuid = { version = "1.1.2", default-features = false }

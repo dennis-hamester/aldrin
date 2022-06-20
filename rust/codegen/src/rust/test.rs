@@ -1,11 +1,13 @@
 aldrin_client::generate!("test/test1.aldrin");
 aldrin_client::generate!("test/restore_value_on_error.aldrin");
+aldrin_client::generate!("test/constants.aldrin");
 
 use aldrin_client::{Error, ObjectUuid};
 use aldrin_proto::{FromValue, Value};
 use aldrin_test::tokio_based::TestBroker;
 use futures::StreamExt;
 use std::collections::HashMap;
+use uuid::uuid;
 
 #[tokio::test]
 async fn auto_reply_with_invalid_args() {
@@ -122,4 +124,21 @@ fn restore_enum_on_error() {
     };
     let after = restore_value_on_error::Enum::from_value(before.clone()).unwrap_err();
     assert_eq!(before, after.0.unwrap());
+}
+
+#[test]
+fn constants() {
+    assert_eq!(constants::CONST_U8, 1);
+    assert_eq!(constants::CONST_I8, 2);
+    assert_eq!(constants::CONST_U16, 3);
+    assert_eq!(constants::CONST_I16, 4);
+    assert_eq!(constants::CONST_U32, 5);
+    assert_eq!(constants::CONST_I32, 6);
+    assert_eq!(constants::CONST_U64, 7);
+    assert_eq!(constants::CONST_I64, 8);
+    assert_eq!(constants::CONST_STRING, "string");
+    assert_eq!(
+        constants::CONST_UUID,
+        uuid!("5c368dc9-e6d3-4545-86d1-435fe3e771cc")
+    );
 }
