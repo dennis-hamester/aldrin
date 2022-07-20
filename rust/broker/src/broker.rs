@@ -4,6 +4,8 @@ mod handle;
 mod object;
 mod service;
 mod state;
+#[cfg(feature = "statistics")]
+mod statistics;
 #[cfg(test)]
 mod test;
 
@@ -31,6 +33,8 @@ use std::collections::hash_map::{Entry, HashMap};
 
 pub use error::BrokerShutdown;
 pub use handle::BrokerHandle;
+#[cfg(feature = "statistics")]
+pub use statistics::BrokerStatistics;
 
 const FIFO_SIZE: usize = 32;
 
@@ -84,6 +88,8 @@ pub struct Broker {
     svc_uuids: HashMap<ServiceCookie, (ObjectUuid, ObjectCookie, ServiceUuid, u32)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
     function_calls: SerialMap<PendingFunctionCall>,
+    #[cfg(feature = "statistics")]
+    statistics: BrokerStatistics,
 }
 
 impl Broker {
@@ -103,6 +109,8 @@ impl Broker {
             svc_uuids: HashMap::new(),
             svcs: HashMap::new(),
             function_calls: SerialMap::new(),
+            #[cfg(feature = "statistics")]
+            statistics: BrokerStatistics::new(),
         }
     }
 
@@ -191,6 +199,11 @@ impl Broker {
 
             ConnectionEvent::ShutdownConnection(id) => {
                 state.push_remove_conn(id);
+            }
+
+            #[cfg(feature = "statistics")]
+            ConnectionEvent::TakeStatistics(sender) => {
+                sender.send(self.statistics.take()).ok();
             }
         }
     }

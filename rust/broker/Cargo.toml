@@ -6,6 +6,9 @@ authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2018"
 
+[features]
+statistics = []
+
 [dependencies]
 aldrin-proto = { version = "0.1.0", path = "../proto" }
 futures-channel = { version = "0.3.21", default-features = false, features = ["sink", "std"] }

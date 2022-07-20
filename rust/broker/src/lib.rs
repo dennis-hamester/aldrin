@@ -71,5 +71,7 @@ mod conn;
 mod conn_id;
 mod serial_map;
 
+#[cfg(feature = "statistics")]
+pub use broker::BrokerStatistics;
 pub use broker::{Broker, BrokerHandle, BrokerShutdown};
 pub use conn::{Connection, ConnectionError, ConnectionHandle, EstablishError};

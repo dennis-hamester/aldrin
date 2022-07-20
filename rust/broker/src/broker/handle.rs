@@ -1,8 +1,12 @@
 use super::BrokerShutdown;
+#[cfg(feature = "statistics")]
+use super::BrokerStatistics;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
 use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message};
-use futures_channel::mpsc::{unbounded, Sender};
+use futures_channel::mpsc;
+#[cfg(feature = "statistics")]
+use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
 
 /// Handle of an active broker.
@@ -15,12 +19,12 @@ use futures_util::sink::SinkExt;
 /// while there are no active clients.
 #[derive(Debug, Clone)]
 pub struct BrokerHandle {
-    send: Sender<ConnectionEvent>,
+    send: mpsc::Sender<ConnectionEvent>,
     ids: ConnectionIdManager,
 }
 
 impl BrokerHandle {
-    pub(crate) fn new(send: Sender<ConnectionEvent>) -> BrokerHandle {
+    pub(crate) fn new(send: mpsc::Sender<ConnectionEvent>) -> BrokerHandle {
         BrokerHandle {
             send,
             ids: ConnectionIdManager::new(),
@@ -85,7 +89,7 @@ impl BrokerHandle {
         }?;
 
         let id = self.ids.acquire();
-        let (send, recv) = unbounded();
+        let (send, recv) = mpsc::unbounded();
 
         self.send
             .send(ConnectionEvent::NewConnection(id.clone(), send))
@@ -200,5 +204,35 @@ impl BrokerHandle {
             .send(ConnectionEvent::ShutdownConnection(conn.id().clone()))
             .await
             .map_err(|_| BrokerShutdown)
+    }
+
+    /// Gets the current broker statistics.
+    ///
+    /// Some statistics are measured over the time interval between two calls to this function. Such
+    /// statistics will be reset to 0 when this function is called.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let mut broker_handle = TestBroker::new();
+    /// let statistics = broker_handle.take_statistics().await?;
+    ///
+    /// // Calculate the duration over which the statistics were measured.
+    /// let time_diff = statistics.end - statistics.start;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "statistics")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "statistics")))]
+    pub async fn take_statistics(&mut self) -> Result<BrokerStatistics, BrokerShutdown> {
+        let (send, recv) = oneshot::channel();
+        self.send
+            .send(ConnectionEvent::TakeStatistics(send))
+            .await
+            .map_err(|_| BrokerShutdown)?;
+        recv.await.map_err(|_| BrokerShutdown)
     }
 }
