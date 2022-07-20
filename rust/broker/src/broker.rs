@@ -435,6 +435,12 @@ impl Broker {
                 entry.insert(Object::new(id.clone(), cookie));
                 conn.add_object(cookie);
                 state.push_add_obj(uuid, cookie);
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.num_objects += 1;
+                }
+
                 Ok(())
             }
         }
@@ -913,6 +919,11 @@ impl Broker {
 
         for svc_cookie in obj.services() {
             self.remove_service(state, svc_cookie);
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_objects -= 1;
         }
     }
 

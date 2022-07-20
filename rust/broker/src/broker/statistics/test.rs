@@ -1,3 +1,4 @@
+use aldrin_client::ObjectUuid;
 use aldrin_test::tokio_based::TestBroker;
 
 #[tokio::test]
@@ -57,6 +58,25 @@ async fn connections() {
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
     assert_eq!(stats.connections_shut_down, 0);
+
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn num_objects() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 0);
+
+    let _obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 1);
+
+    let _obj2 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 2);
+
+    client.join().await;
+    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 0);
 
     broker.join().await;
 }

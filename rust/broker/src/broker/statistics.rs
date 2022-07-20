@@ -27,6 +27,9 @@ pub struct BrokerStatistics {
 
     /// The number of connections shut down.
     pub connections_shut_down: usize,
+
+    /// The number of current objects.
+    pub num_objects: usize,
 }
 
 impl BrokerStatistics {
@@ -43,6 +46,7 @@ impl BrokerStatistics {
             num_connections: 0,
             connections_added: 0,
             connections_shut_down: 0,
+            num_objects: 0,
         }
     }
 
