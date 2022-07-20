@@ -6,6 +6,8 @@ on:
     - 'wip/**'
     paths:
     - '.github/workflows/**'
+    - 'Cargo.lock'
+    - 'Cargo.toml'
     - 'conformance-tester-shared/**'
     - 'conformance-tester/**'
     - 'gen/**'
