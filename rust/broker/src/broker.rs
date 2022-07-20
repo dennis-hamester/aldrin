@@ -176,6 +176,11 @@ impl Broker {
             ConnectionEvent::NewConnection(id, sender) => {
                 let dup = self.conns.insert(id, ConnectionState::new(sender));
                 debug_assert!(dup.is_none());
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.num_connections += 1;
+                }
             }
 
             ConnectionEvent::ConnectionShutdown(id) => {
@@ -346,6 +351,11 @@ impl Broker {
 
         for (svc_cookie, event) in conn.subscriptions() {
             self.remove_subscription(state, id, svc_cookie, event);
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_connections -= 1;
         }
     }
 

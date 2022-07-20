@@ -17,3 +17,24 @@ async fn timestamp_monotonicity() {
 
     broker.join().await;
 }
+
+#[tokio::test]
+async fn num_connections() {
+    let mut broker = TestBroker::new();
+
+    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 0);
+
+    let mut client1 = broker.add_client().await;
+    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 1);
+
+    let mut client2 = broker.add_client().await;
+    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 2);
+
+    client1.join().await;
+    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 1);
+
+    client2.join().await;
+    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 0);
+
+    broker.join().await;
+}

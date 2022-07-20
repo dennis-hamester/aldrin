@@ -18,6 +18,9 @@ pub struct BrokerStatistics {
 
     /// The [`Instant`] when the broker stopped taking these statistics.
     pub end: Instant,
+
+    /// The number of current connections.
+    pub num_connections: usize,
 }
 
 impl BrokerStatistics {
@@ -31,6 +34,7 @@ impl BrokerStatistics {
         Self {
             start: now,
             end: now,
+            num_connections: 0,
         }
     }
 
