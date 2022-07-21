@@ -143,6 +143,18 @@ impl Broker {
         }
     }
 
+    fn broadcast_filtered<P>(&self, state: &mut State, msg: Message, mut predicate: P)
+    where
+        P: FnMut(&ConnectionState) -> bool,
+    {
+        for (id, conn) in self.conns.iter().filter(|(_, c)| predicate(c)) {
+            // Shutdown connection on error, but don't abort loop.
+            if let Err(()) = conn.send(msg.clone()) {
+                state.push_remove_conn(id.clone());
+            }
+        }
+    }
+
     fn handle_event(&mut self, state: &mut State, ev: ConnectionEvent) {
         match ev {
             ConnectionEvent::NewConnection(id, sender) => {
@@ -189,21 +201,20 @@ impl Broker {
             }
 
             if let Some((uuid, cookie)) = state.pop_add_obj() {
-                broadcast(
-                    self.conns.iter().filter(|(_, c)| c.objects_subscribed()),
+                self.broadcast_filtered(
                     state,
                     Message::ObjectCreatedEvent(ObjectCreatedEvent {
                         uuid: uuid.0,
                         cookie: cookie.0,
                         serial: None,
                     }),
+                    ConnectionState::objects_subscribed,
                 );
                 continue;
             }
 
             if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_add_svc() {
-                broadcast(
-                    self.conns.iter().filter(|(_, c)| c.services_subscribed()),
+                self.broadcast_filtered(
                     state,
                     Message::ServiceCreatedEvent(ServiceCreatedEvent {
                         object_uuid: obj_uuid.0,
@@ -212,6 +223,7 @@ impl Broker {
                         cookie: cookie.0,
                         serial: None,
                     }),
+                    ConnectionState::services_subscribed,
                 );
                 continue;
             }
@@ -232,8 +244,7 @@ impl Broker {
             }
 
             if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_remove_svc() {
-                broadcast(
-                    self.conns.iter().filter(|(_, c)| c.services_subscribed()),
+                self.broadcast_filtered(
                     state,
                     Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
                         object_uuid: obj_uuid.0,
@@ -241,6 +252,7 @@ impl Broker {
                         uuid: uuid.0,
                         cookie: cookie.0,
                     }),
+                    ConnectionState::services_subscribed,
                 );
                 continue;
             }
@@ -265,13 +277,13 @@ impl Broker {
             }
 
             if let Some((uuid, cookie)) = state.pop_remove_obj() {
-                broadcast(
-                    self.conns.iter().filter(|(_, c)| c.objects_subscribed()),
+                self.broadcast_filtered(
                     state,
                     Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
                         uuid: uuid.0,
                         cookie: cookie.0,
                     }),
+                    ConnectionState::objects_subscribed,
                 );
                 continue;
             }
@@ -955,18 +967,6 @@ impl Broker {
 impl Default for Broker {
     fn default() -> Self {
         Broker::new()
-    }
-}
-
-fn broadcast<'a, I>(conns: I, state: &mut State, msg: Message)
-where
-    I: IntoIterator<Item = (&'a ConnectionId, &'a ConnectionState)>,
-{
-    for (id, conn) in conns {
-        // Shutdown connection on error, but don't abort loop.
-        if let Err(()) = conn.send(msg.clone()) {
-            state.push_remove_conn(id.clone());
-        }
     }
 }
 
