@@ -180,6 +180,7 @@ impl Broker {
                 #[cfg(feature = "statistics")]
                 {
                     self.statistics.num_connections += 1;
+                    self.statistics.connections_added += 1;
                 }
             }
 

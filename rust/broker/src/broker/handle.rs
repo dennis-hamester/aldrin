@@ -224,6 +224,11 @@ impl BrokerHandle {
     /// let time_diff = statistics.end - statistics.start;
     ///
     /// println!("The current number of connections is {}.", statistics.num_connections);
+    /// println!(
+    ///     "{} connections were added within the last {} seconds.",
+    ///     statistics.connections_added,
+    ///     time_diff.as_secs_f32()
+    /// );
     /// # Ok(())
     /// # }
     /// ```

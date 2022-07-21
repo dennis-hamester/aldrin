@@ -21,6 +21,9 @@ pub struct BrokerStatistics {
 
     /// The number of current connections.
     pub num_connections: usize,
+
+    /// The number of new connections added.
+    pub connections_added: usize,
 }
 
 impl BrokerStatistics {
@@ -35,6 +38,7 @@ impl BrokerStatistics {
             start: now,
             end: now,
             num_connections: 0,
+            connections_added: 0,
         }
     }
 
@@ -45,6 +49,9 @@ impl BrokerStatistics {
         // Fixup timestamps.
         res.end = now;
         self.start = now;
+
+        // Reset statistics to 0.
+        self.connections_added = 0;
 
         res
     }

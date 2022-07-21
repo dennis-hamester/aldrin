@@ -19,22 +19,34 @@ async fn timestamp_monotonicity() {
 }
 
 #[tokio::test]
-async fn num_connections() {
+async fn connections() {
     let mut broker = TestBroker::new();
 
-    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 0);
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_connections, 0);
+    assert_eq!(stats.connections_added, 0);
 
+    // Add 1 client.
     let mut client1 = broker.add_client().await;
-    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 1);
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_connections, 1);
+    assert_eq!(stats.connections_added, 1);
 
-    let mut client2 = broker.add_client().await;
-    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 2);
-
+    // Remove 1 client and add 2.
     client1.join().await;
-    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 1);
+    let mut client2 = broker.add_client().await;
+    let mut client3 = broker.add_client().await;
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_connections, 2);
+    assert_eq!(stats.connections_added, 2);
 
+    // Remove 2 clients.
     client2.join().await;
-    assert_eq!(broker.take_statistics().await.unwrap().num_connections, 0);
+    client3.join().await;
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_connections, 0);
+    assert_eq!(stats.connections_added, 0);
 
     broker.join().await;
 }
