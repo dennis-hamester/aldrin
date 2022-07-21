@@ -5,7 +5,6 @@ use pin_project::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
-use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
@@ -94,7 +93,9 @@ where
 
             let len = {
                 let dst = this.read_buf.chunk_mut();
-                let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
+                // SAFETY: Tokio guarantees that only initialized bytes are written and that the
+                // buffer is never read from.
+                let dst = unsafe { dst.as_uninit_slice_mut() };
                 let mut read_buf = ReadBuf::uninit(dst);
 
                 match this.io.as_mut().poll_read(cx, &mut read_buf) {
@@ -109,6 +110,7 @@ where
                 }
             };
 
+            // SAFETY: len bytes have been read and initialized within this.read_buf.
             unsafe {
                 this.read_buf.advance_mut(len);
             }
