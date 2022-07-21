@@ -637,6 +637,7 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_services += 1;
+            self.statistics.services_created += 1;
         }
 
         Ok(())

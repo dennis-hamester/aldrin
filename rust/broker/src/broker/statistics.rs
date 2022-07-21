@@ -53,6 +53,9 @@ pub struct BrokerStatistics {
 
     /// The number of current services.
     pub num_services: usize,
+
+    /// The number of services created.
+    pub services_created: usize,
 }
 
 impl BrokerStatistics {
@@ -75,6 +78,7 @@ impl BrokerStatistics {
             objects_created: 0,
             objects_destroyed: 0,
             num_services: 0,
+            services_created: 0,
         }
     }
 
@@ -93,6 +97,7 @@ impl BrokerStatistics {
         self.connections_shut_down = 0;
         self.objects_created = 0;
         self.objects_destroyed = 0;
+        self.services_created = 0;
 
         res
     }

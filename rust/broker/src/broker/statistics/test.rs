@@ -137,6 +137,7 @@ async fn services() {
     assert_eq!(stats.messages_sent, 0);
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_services, 0);
+    assert_eq!(stats.services_created, 0);
 
     // Create 1 object with 3 services.
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -147,6 +148,7 @@ async fn services() {
     assert_eq!(stats.messages_sent, 4);
     assert_eq!(stats.messages_received, 4);
     assert_eq!(stats.num_services, 3);
+    assert_eq!(stats.services_created, 3);
 
     // Destroy 1 service.
     svc1.destroy().await.unwrap();
@@ -154,6 +156,7 @@ async fn services() {
     assert_eq!(stats.messages_sent, 1);
     assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_services, 2);
+    assert_eq!(stats.services_created, 0);
 
     // Destroy 2 services.
     svc2.destroy().await.unwrap();
@@ -162,12 +165,14 @@ async fn services() {
     assert_eq!(stats.messages_sent, 2);
     assert_eq!(stats.messages_received, 2);
     assert_eq!(stats.num_services, 0);
+    assert_eq!(stats.services_created, 0);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_services, 0);
+    assert_eq!(stats.services_created, 0);
 
     client.join().await;
     broker.join().await;
