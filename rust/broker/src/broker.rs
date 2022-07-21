@@ -634,6 +634,11 @@ impl Broker {
         obj.add_service(svc_cookie);
         state.push_add_svc(obj_uuid, obj_cookie, svc_uuid, svc_cookie);
 
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_services += 1;
+        }
+
         Ok(())
     }
 
@@ -1101,6 +1106,11 @@ impl Broker {
                     );
                 }
             }
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_services -= 1;
         }
     }
 

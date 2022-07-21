@@ -1,4 +1,4 @@
-use aldrin_client::ObjectUuid;
+use aldrin_client::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 
 #[tokio::test]
@@ -122,6 +122,52 @@ async fn objects() {
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
     assert_eq!(stats.objects_destroyed, 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn services() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_services, 0);
+
+    // Create 1 object with 3 services.
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let svc3 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 4);
+    assert_eq!(stats.messages_received, 4);
+    assert_eq!(stats.num_services, 3);
+
+    // Destroy 1 service.
+    svc1.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_services, 2);
+
+    // Destroy 2 services.
+    svc2.destroy().await.unwrap();
+    svc3.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_services, 0);
+
+    // Final state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_services, 0);
 
     client.join().await;
     broker.join().await;

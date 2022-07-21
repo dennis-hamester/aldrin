@@ -50,6 +50,9 @@ pub struct BrokerStatistics {
 
     /// The number of objects destroyed.
     pub objects_destroyed: usize,
+
+    /// The number of current services.
+    pub num_services: usize,
 }
 
 impl BrokerStatistics {
@@ -71,6 +74,7 @@ impl BrokerStatistics {
             num_objects: 0,
             objects_created: 0,
             objects_destroyed: 0,
+            num_services: 0,
         }
     }
 
