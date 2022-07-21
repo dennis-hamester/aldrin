@@ -71,12 +71,14 @@ async fn objects() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
+    assert_eq!(stats.objects_destroyed, 0);
 
     // Create 1 object.
     let obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_objects, 1);
     assert_eq!(stats.objects_created, 1);
+    assert_eq!(stats.objects_destroyed, 0);
 
     // Destroy 1 object and create 2.
     obj1.destroy().await.unwrap();
@@ -85,6 +87,7 @@ async fn objects() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_objects, 2);
     assert_eq!(stats.objects_created, 2);
+    assert_eq!(stats.objects_destroyed, 1);
 
     // Destroy 2 objects.
     obj2.destroy().await.unwrap();
@@ -92,11 +95,13 @@ async fn objects() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
+    assert_eq!(stats.objects_destroyed, 2);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
+    assert_eq!(stats.objects_destroyed, 0);
 
     client.join().await;
     broker.join().await;

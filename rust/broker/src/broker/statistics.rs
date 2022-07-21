@@ -33,6 +33,9 @@ pub struct BrokerStatistics {
 
     /// The number of objects created.
     pub objects_created: usize,
+
+    /// The number of objects destroyed.
+    pub objects_destroyed: usize,
 }
 
 impl BrokerStatistics {
@@ -51,6 +54,7 @@ impl BrokerStatistics {
             connections_shut_down: 0,
             num_objects: 0,
             objects_created: 0,
+            objects_destroyed: 0,
         }
     }
 
@@ -66,6 +70,7 @@ impl BrokerStatistics {
         self.connections_added = 0;
         self.connections_shut_down = 0;
         self.objects_created = 0;
+        self.objects_destroyed = 0;
 
         res
     }
