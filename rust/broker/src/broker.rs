@@ -792,6 +792,11 @@ impl Broker {
             state.push_remove_conn(callee_id.clone());
         }
 
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_function_calls += 1;
+        }
+
         Ok(())
     }
 
@@ -800,6 +805,11 @@ impl Broker {
             Some(call) => call,
             None => return,
         };
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_function_calls -= 1;
+        }
 
         let svc = self
             .svcs

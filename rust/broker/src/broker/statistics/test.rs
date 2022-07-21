@@ -1,5 +1,6 @@
 use aldrin_client::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
+use futures_util::stream::StreamExt;
 
 #[tokio::test]
 async fn timestamp_monotonicity() {
@@ -178,6 +179,59 @@ async fn services() {
     assert_eq!(stats.num_services, 0);
     assert_eq!(stats.services_created, 0);
     assert_eq!(stats.services_destroyed, 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn function_calls() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_function_calls, 0);
+
+    // Call 2 function.
+    let reply1 = client
+        .call_infallible_function::<(), ()>(svc.id(), 0, ())
+        .unwrap();
+    let call1 = svc.next().await.unwrap();
+    let reply2 = client
+        .call_infallible_function::<(), ()>(svc.id(), 0, ())
+        .unwrap();
+    let call2 = svc.next().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_function_calls, 2);
+
+    // Reply 1 function call.
+    call1.reply.ok(()).unwrap();
+    reply1.await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_function_calls, 1);
+
+    // Reply 1 function call.
+    call2.reply.ok(()).unwrap();
+    reply2.await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_function_calls, 0);
+
+    // Final state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_function_calls, 0);
 
     client.join().await;
     broker.join().await;

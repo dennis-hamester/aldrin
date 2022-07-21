@@ -59,6 +59,9 @@ pub struct BrokerStatistics {
 
     /// The number of services destroyed.
     pub services_destroyed: usize,
+
+    /// The number of currently pending function calls.
+    pub num_function_calls: usize,
 }
 
 impl BrokerStatistics {
@@ -83,6 +86,7 @@ impl BrokerStatistics {
             num_services: 0,
             services_created: 0,
             services_destroyed: 0,
+            num_function_calls: 0,
         }
     }
 
