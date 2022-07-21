@@ -130,7 +130,7 @@ impl Broker {
 
         loop {
             if state.shutdown_now() || (state.shutdown_idle() && self.conns.is_empty()) {
-                return;
+                break;
             }
 
             let ev = match self.recv.next().await {
@@ -141,6 +141,14 @@ impl Broker {
             self.handle_event(&mut state, ev);
             self.process_loop_result(&mut state);
         }
+
+        debug_assert!(!state.has_work_left());
+        debug_assert!(self.conns.is_empty());
+        debug_assert!(self.obj_uuids.is_empty());
+        debug_assert!(self.objs.is_empty());
+        debug_assert!(self.svc_uuids.is_empty());
+        debug_assert!(self.svcs.is_empty());
+        debug_assert!(self.function_calls.is_empty());
     }
 
     fn broadcast_filtered<P>(&self, state: &mut State, msg: Message, mut predicate: P)

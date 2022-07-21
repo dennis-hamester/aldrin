@@ -28,4 +28,8 @@ impl<T> SerialMap<T> {
     pub fn remove(&mut self, serial: u32) -> Option<T> {
         self.elems.remove(&serial)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.elems.is_empty()
+    }
 }
