@@ -40,7 +40,7 @@ impl ConnectionState {
         self.objects.iter().copied()
     }
 
-    pub fn send(&mut self, msg: Message) -> Result<(), ()> {
+    pub fn send(&self, msg: Message) -> Result<(), ()> {
         self.send.unbounded_send(msg).map_err(|_| ())
     }
 

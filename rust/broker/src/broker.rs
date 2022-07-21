@@ -190,9 +190,7 @@ impl Broker {
 
             if let Some((uuid, cookie)) = state.pop_add_obj() {
                 broadcast(
-                    self.conns
-                        .iter_mut()
-                        .filter(|(_, c)| c.objects_subscribed()),
+                    self.conns.iter().filter(|(_, c)| c.objects_subscribed()),
                     state,
                     Message::ObjectCreatedEvent(ObjectCreatedEvent {
                         uuid: uuid.0,
@@ -205,9 +203,7 @@ impl Broker {
 
             if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_add_svc() {
                 broadcast(
-                    self.conns
-                        .iter_mut()
-                        .filter(|(_, c)| c.services_subscribed()),
+                    self.conns.iter().filter(|(_, c)| c.services_subscribed()),
                     state,
                     Message::ServiceCreatedEvent(ServiceCreatedEvent {
                         object_uuid: obj_uuid.0,
@@ -221,7 +217,7 @@ impl Broker {
             }
 
             if let Some((conn_id, svc_cookie, event)) = state.pop_unsubscribe() {
-                let conn = match self.conns.get_mut(&conn_id) {
+                let conn = match self.conns.get(&conn_id) {
                     Some(conn) => conn,
                     None => continue,
                 };
@@ -237,9 +233,7 @@ impl Broker {
 
             if let Some((obj_uuid, obj_cookie, uuid, cookie)) = state.pop_remove_svc() {
                 broadcast(
-                    self.conns
-                        .iter_mut()
-                        .filter(|(_, c)| c.services_subscribed()),
+                    self.conns.iter().filter(|(_, c)| c.services_subscribed()),
                     state,
                     Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
                         object_uuid: obj_uuid.0,
@@ -254,7 +248,7 @@ impl Broker {
             if let Some((conn_id, obj_uuid, obj_cookie, svc_uuid, svc_cookie)) =
                 state.pop_remove_subscriptions()
             {
-                let conn = match self.conns.get_mut(&conn_id) {
+                let conn = match self.conns.get(&conn_id) {
                     Some(conn) => conn,
                     None => continue,
                 };
@@ -272,9 +266,7 @@ impl Broker {
 
             if let Some((uuid, cookie)) = state.pop_remove_obj() {
                 broadcast(
-                    self.conns
-                        .iter_mut()
-                        .filter(|(_, c)| c.objects_subscribed()),
+                    self.conns.iter().filter(|(_, c)| c.objects_subscribed()),
                     state,
                     Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
                         uuid: uuid.0,
@@ -285,7 +277,7 @@ impl Broker {
             }
 
             if let Some((serial, conn_id, result)) = state.pop_remove_function_call() {
-                let conn = match self.conns.get_mut(&conn_id) {
+                let conn = match self.conns.get(&conn_id) {
                     Some(conn) => conn,
                     None => continue,
                 };
@@ -307,7 +299,7 @@ impl Broker {
     }
 
     fn shutdown_connection(&mut self, state: &mut State, id: &ConnectionId) {
-        let mut conn = match self.conns.remove(id) {
+        let conn = match self.conns.remove(id) {
             Some(conn) => conn,
             None => return,
         };
@@ -409,7 +401,7 @@ impl Broker {
         id: &ConnectionId,
         req: DestroyObject,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -479,7 +471,7 @@ impl Broker {
         id: &ConnectionId,
         req: CreateService,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -537,7 +529,7 @@ impl Broker {
         id: &ConnectionId,
         req: DestroyService,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -609,7 +601,7 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -629,7 +621,7 @@ impl Broker {
             Some(obj) => obj.conn_id(),
             None => panic!("inconsistent state"),
         };
-        let callee_conn = self.conns.get_mut(callee_id).expect("inconsistent state");
+        let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
 
         let serial = self.function_calls.insert(PendingFunctionCall {
             caller_serial: req.serial,
@@ -669,7 +661,7 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(req.serial);
 
-        let conn = match self.conns.get_mut(&call.caller_conn_id) {
+        let conn = match self.conns.get(&call.caller_conn_id) {
             Some(conn) => conn,
             None => return,
         };
@@ -725,7 +717,7 @@ impl Broker {
                 .get_mut(&obj_uuid)
                 .expect("inconsistent state")
                 .conn_id();
-            if let Some(target_conn) = self.conns.get_mut(target_conn_id) {
+            if let Some(target_conn) = self.conns.get(target_conn_id) {
                 target_conn
                     .send(Message::SubscribeEvent(SubscribeEvent {
                         serial: None,
@@ -761,7 +753,7 @@ impl Broker {
         if send_unsubscribe {
             let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
             let conn_id = obj.conn_id();
-            let conn = self.conns.get_mut(conn_id).expect("inconsistent state");
+            let conn = self.conns.get(conn_id).expect("inconsistent state");
             let msg = Message::UnsubscribeEvent(req);
             if let Err(()) = conn.send(msg) {
                 state.push_remove_conn(conn_id.clone());
@@ -769,9 +761,9 @@ impl Broker {
         }
     }
 
-    fn emit_event(&mut self, state: &mut State, req: EmitEvent) {
+    fn emit_event(&self, state: &mut State, req: EmitEvent) {
         let svc_cookie = ServiceCookie(req.service_cookie);
-        for (conn_id, conn) in self.conns.iter_mut() {
+        for (conn_id, conn) in self.conns.iter() {
             if conn.is_subscribed_to(svc_cookie, req.event) {
                 let msg = Message::EmitEvent(req.clone());
                 if let Err(()) = conn.send(msg) {
@@ -781,8 +773,8 @@ impl Broker {
         }
     }
 
-    fn query_object(&mut self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+    fn query_object(&self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -826,12 +818,8 @@ impl Broker {
         Ok(())
     }
 
-    fn query_service_version(
-        &mut self,
-        id: &ConnectionId,
-        req: QueryServiceVersion,
-    ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
+    fn query_service_version(&self, id: &ConnectionId, req: QueryServiceVersion) -> Result<(), ()> {
+        let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -972,7 +960,7 @@ impl Default for Broker {
 
 fn broadcast<'a, I>(conns: I, state: &mut State, msg: Message)
 where
-    I: IntoIterator<Item = (&'a ConnectionId, &'a mut ConnectionState)>,
+    I: IntoIterator<Item = (&'a ConnectionId, &'a ConnectionState)>,
 {
     for (id, conn) in conns {
         // Shutdown connection on error, but don't abort loop.
