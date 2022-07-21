@@ -26,6 +26,7 @@ async fn connections() {
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
     assert_eq!(stats.connections_shut_down, 0);
@@ -34,6 +35,7 @@ async fn connections() {
     let mut client1 = broker.add_client().await;
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 1);
     assert_eq!(stats.connections_added, 1);
     assert_eq!(stats.connections_shut_down, 0);
@@ -44,6 +46,7 @@ async fn connections() {
     let mut client3 = broker.add_client().await;
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 2);
     assert_eq!(stats.connections_added, 2);
     assert_eq!(stats.connections_shut_down, 1);
@@ -53,6 +56,7 @@ async fn connections() {
     client3.join().await;
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
     assert_eq!(stats.connections_shut_down, 2);
@@ -60,6 +64,7 @@ async fn connections() {
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
     assert_eq!(stats.connections_shut_down, 0);
@@ -75,6 +80,7 @@ async fn objects() {
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
     assert_eq!(stats.objects_destroyed, 0);
@@ -83,6 +89,7 @@ async fn objects() {
     let obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_objects, 1);
     assert_eq!(stats.objects_created, 1);
     assert_eq!(stats.objects_destroyed, 0);
@@ -93,6 +100,7 @@ async fn objects() {
     let obj3 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 3);
+    assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.num_objects, 2);
     assert_eq!(stats.objects_created, 2);
     assert_eq!(stats.objects_destroyed, 1);
@@ -102,6 +110,7 @@ async fn objects() {
     obj3.destroy().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
     assert_eq!(stats.objects_destroyed, 2);
@@ -109,6 +118,7 @@ async fn objects() {
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_objects, 0);
     assert_eq!(stats.objects_created, 0);
     assert_eq!(stats.objects_destroyed, 0);

@@ -205,6 +205,11 @@ impl Broker {
                 if let Err(()) = self.handle_message(state, &id, msg) {
                     state.push_remove_conn(id);
                 }
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.messages_received += 1;
+                }
             }
 
             ConnectionEvent::ShutdownBroker => {

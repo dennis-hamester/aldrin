@@ -26,6 +26,13 @@ pub struct BrokerStatistics {
     /// few messages are missed.
     pub messages_sent: usize,
 
+    /// Number of messages received from connections.
+    ///
+    /// This number is not perfectly accurate. It does not cover messages received during the
+    /// handshake with a new connection and messages received under certain shutdown scenarios.
+    /// Overall, only very few messages are missed.
+    pub messages_received: usize,
+
     /// The number of current connections.
     pub num_connections: usize,
 
@@ -57,6 +64,7 @@ impl BrokerStatistics {
             start: now,
             end: now,
             messages_sent: 0,
+            messages_received: 0,
             num_connections: 0,
             connections_added: 0,
             connections_shut_down: 0,
@@ -76,6 +84,7 @@ impl BrokerStatistics {
 
         // Reset statistics to 0.
         self.messages_sent = 0;
+        self.messages_received = 0;
         self.connections_added = 0;
         self.connections_shut_down = 0;
         self.objects_created = 0;
