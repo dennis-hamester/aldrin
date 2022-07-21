@@ -439,6 +439,7 @@ impl Broker {
                 #[cfg(feature = "statistics")]
                 {
                     self.statistics.num_objects += 1;
+                    self.statistics.objects_created += 1;
                 }
 
                 Ok(())

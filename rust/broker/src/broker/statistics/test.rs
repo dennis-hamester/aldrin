@@ -63,20 +63,41 @@ async fn connections() {
 }
 
 #[tokio::test]
-async fn num_objects() {
+async fn objects() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
-    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 0);
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_objects, 0);
+    assert_eq!(stats.objects_created, 0);
 
-    let _obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 1);
+    // Create 1 object.
+    let obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_objects, 1);
+    assert_eq!(stats.objects_created, 1);
 
-    let _obj2 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 2);
+    // Destroy 1 object and create 2.
+    obj1.destroy().await.unwrap();
+    let obj2 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let obj3 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_objects, 2);
+    assert_eq!(stats.objects_created, 2);
+
+    // Destroy 2 objects.
+    obj2.destroy().await.unwrap();
+    obj3.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_objects, 0);
+    assert_eq!(stats.objects_created, 0);
+
+    // Final state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_objects, 0);
+    assert_eq!(stats.objects_created, 0);
 
     client.join().await;
-    assert_eq!(broker.take_statistics().await.unwrap().num_objects, 0);
-
     broker.join().await;
 }

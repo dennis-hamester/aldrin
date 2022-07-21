@@ -30,6 +30,9 @@ pub struct BrokerStatistics {
 
     /// The number of current objects.
     pub num_objects: usize,
+
+    /// The number of objects created.
+    pub objects_created: usize,
 }
 
 impl BrokerStatistics {
@@ -47,6 +50,7 @@ impl BrokerStatistics {
             connections_added: 0,
             connections_shut_down: 0,
             num_objects: 0,
+            objects_created: 0,
         }
     }
 
@@ -61,6 +65,7 @@ impl BrokerStatistics {
         // Reset statistics to 0.
         self.connections_added = 0;
         self.connections_shut_down = 0;
+        self.objects_created = 0;
 
         res
     }
