@@ -39,9 +39,16 @@ pub use statistics::BrokerStatistics;
 const FIFO_SIZE: usize = 32;
 
 macro_rules! send {
-    ($self:expr, $conn:expr, $msg:expr) => {
-        $conn.send($msg)
-    };
+    ($self:expr, $conn:expr, $msg:expr) => {{
+        let res = $conn.send($msg);
+
+        #[cfg(feature = "statistics")]
+        {
+            $self.statistics.messages_sent += 1;
+        }
+
+        res
+    }};
 }
 
 /// Aldrin broker.
@@ -165,7 +172,7 @@ impl Broker {
         debug_assert!(self.function_calls.is_empty());
     }
 
-    fn broadcast_filtered<P>(&self, state: &mut State, msg: Message, mut predicate: P)
+    fn broadcast_filtered<P>(&mut self, state: &mut State, msg: Message, mut predicate: P)
     where
         P: FnMut(&ConnectionState) -> bool,
     {
@@ -903,7 +910,7 @@ impl Broker {
         }
     }
 
-    fn emit_event(&self, state: &mut State, req: EmitEvent) {
+    fn emit_event(&mut self, state: &mut State, req: EmitEvent) {
         let svc_cookie = ServiceCookie(req.service_cookie);
         for (conn_id, conn) in self.conns.iter() {
             if conn.is_subscribed_to(svc_cookie, req.event) {
@@ -915,7 +922,7 @@ impl Broker {
         }
     }
 
-    fn query_object(&self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
+    fn query_object(&mut self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {
         let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -976,7 +983,11 @@ impl Broker {
         Ok(())
     }
 
-    fn query_service_version(&self, id: &ConnectionId, req: QueryServiceVersion) -> Result<(), ()> {
+    fn query_service_version(
+        &mut self,
+        id: &ConnectionId,
+        req: QueryServiceVersion,
+    ) -> Result<(), ()> {
         let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
