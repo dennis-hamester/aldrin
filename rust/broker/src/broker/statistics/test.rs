@@ -26,12 +26,14 @@ async fn connections() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
+    assert_eq!(stats.connections_shut_down, 0);
 
     // Add 1 client.
     let mut client1 = broker.add_client().await;
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_connections, 1);
     assert_eq!(stats.connections_added, 1);
+    assert_eq!(stats.connections_shut_down, 0);
 
     // Remove 1 client and add 2.
     client1.join().await;
@@ -40,6 +42,7 @@ async fn connections() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_connections, 2);
     assert_eq!(stats.connections_added, 2);
+    assert_eq!(stats.connections_shut_down, 1);
 
     // Remove 2 clients.
     client2.join().await;
@@ -47,6 +50,13 @@ async fn connections() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);
+    assert_eq!(stats.connections_shut_down, 2);
+
+    // Final state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_connections, 0);
+    assert_eq!(stats.connections_added, 0);
+    assert_eq!(stats.connections_shut_down, 0);
 
     broker.join().await;
 }

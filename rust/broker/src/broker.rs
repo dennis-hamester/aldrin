@@ -357,6 +357,7 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_connections -= 1;
+            self.statistics.connections_shut_down += 1;
         }
     }
 
