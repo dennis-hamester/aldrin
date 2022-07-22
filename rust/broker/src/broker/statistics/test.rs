@@ -197,6 +197,7 @@ async fn function_calls() {
     assert_eq!(stats.messages_received, 2);
     assert_eq!(stats.num_function_calls, 0);
     assert_eq!(stats.functions_called, 0);
+    assert_eq!(stats.functions_replied, 0);
 
     // Call 2 function.
     let reply1 = client
@@ -212,6 +213,7 @@ async fn function_calls() {
     assert_eq!(stats.messages_received, 2);
     assert_eq!(stats.num_function_calls, 2);
     assert_eq!(stats.functions_called, 2);
+    assert_eq!(stats.functions_replied, 0);
 
     // Reply 1 function call.
     call1.reply.ok(()).unwrap();
@@ -221,6 +223,7 @@ async fn function_calls() {
     assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_function_calls, 1);
     assert_eq!(stats.functions_called, 0);
+    assert_eq!(stats.functions_replied, 1);
 
     // Reply 1 function call.
     call2.reply.ok(()).unwrap();
@@ -230,6 +233,7 @@ async fn function_calls() {
     assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_function_calls, 0);
     assert_eq!(stats.functions_called, 0);
+    assert_eq!(stats.functions_replied, 1);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
@@ -237,6 +241,7 @@ async fn function_calls() {
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_function_calls, 0);
     assert_eq!(stats.functions_called, 0);
+    assert_eq!(stats.functions_replied, 0);
 
     client.join().await;
     broker.join().await;
