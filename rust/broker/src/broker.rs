@@ -795,6 +795,7 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_function_calls += 1;
+            self.statistics.functions_called += 1;
         }
 
         Ok(())
