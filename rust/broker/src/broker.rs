@@ -941,6 +941,11 @@ impl Broker {
                 if let Err(()) = send!(self, conn, msg) {
                     state.push_remove_conn(conn_id.clone());
                 }
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.events_sent += 1;
+                }
             }
         }
 

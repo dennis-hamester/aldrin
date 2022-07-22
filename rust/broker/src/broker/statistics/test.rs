@@ -270,6 +270,7 @@ async fn events() {
     assert_eq!(stats.messages_sent, 5);
     assert_eq!(stats.messages_received, 4);
     assert_eq!(stats.events_received, 0);
+    assert_eq!(stats.events_sent, 0);
 
     // Emit 3 events on 0.
     client1.emit_event(svc.id(), 0, ()).unwrap();
@@ -281,6 +282,7 @@ async fn events() {
     assert_eq!(stats.messages_sent, 6);
     assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.events_received, 3);
+    assert_eq!(stats.events_sent, 6);
 
     // Emit 2 events on 0.
     // Emit 1 event on 1.
@@ -293,12 +295,14 @@ async fn events() {
     assert_eq!(stats.messages_sent, 4);
     assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.events_received, 3);
+    assert_eq!(stats.events_sent, 4);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 0);
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.events_received, 0);
+    assert_eq!(stats.events_sent, 0);
 
     client1.join().await;
     client2.join().await;
