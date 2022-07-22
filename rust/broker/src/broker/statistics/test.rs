@@ -1,6 +1,8 @@
 use aldrin_client::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::stream::StreamExt;
+use std::time::Duration;
+use tokio::time;
 
 #[tokio::test]
 async fn timestamp_monotonicity() {
@@ -244,5 +246,62 @@ async fn function_calls() {
     assert_eq!(stats.functions_replied, 0);
 
     client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn events() {
+    let mut broker = TestBroker::new();
+
+    let mut client1 = broker.add_client().await;
+    let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+
+    let mut client2 = broker.add_client().await;
+    let mut events2 = client2.events();
+    events2.subscribe(svc.id(), 0).await.unwrap();
+
+    let mut client3 = broker.add_client().await;
+    let mut events3 = client3.events();
+    events3.subscribe(svc.id(), 0).await.unwrap();
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 5);
+    assert_eq!(stats.messages_received, 4);
+    assert_eq!(stats.events_received, 0);
+
+    // Emit 3 events on 0.
+    client1.emit_event(svc.id(), 0, ()).unwrap();
+    client1.emit_event(svc.id(), 0, ()).unwrap();
+    client1.emit_event(svc.id(), 0, ()).unwrap();
+    // HACK: Aldrin doesn't have a proper way of synchronizing with the broker.
+    time::sleep(Duration::from_millis(100)).await;
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 6);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.events_received, 3);
+
+    // Emit 2 events on 0.
+    // Emit 1 event on 1.
+    client1.emit_event(svc.id(), 0, ()).unwrap();
+    client1.emit_event(svc.id(), 0, ()).unwrap();
+    client1.emit_event(svc.id(), 1, ()).unwrap();
+    // HACK: Aldrin doesn't have a proper way of synchronizing with the broker.
+    time::sleep(Duration::from_millis(100)).await;
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 4);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.events_received, 3);
+
+    // Final state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.events_received, 0);
+
+    client1.join().await;
+    client2.join().await;
+    client3.join().await;
     broker.join().await;
 }

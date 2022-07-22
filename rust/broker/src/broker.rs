@@ -943,6 +943,11 @@ impl Broker {
                 }
             }
         }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.events_received += 1;
+        }
     }
 
     fn query_object(&mut self, id: &ConnectionId, req: QueryObject) -> Result<(), ()> {

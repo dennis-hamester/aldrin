@@ -68,6 +68,9 @@ pub struct BrokerStatistics {
 
     /// The number of functions replied.
     pub functions_replied: usize,
+
+    /// The number of events received by the Broker.
+    pub events_received: usize,
 }
 
 impl BrokerStatistics {
@@ -95,6 +98,7 @@ impl BrokerStatistics {
             num_function_calls: 0,
             functions_called: 0,
             functions_replied: 0,
+            events_received: 0,
         }
     }
 
@@ -117,6 +121,7 @@ impl BrokerStatistics {
         self.services_destroyed = 0;
         self.functions_called = 0;
         self.functions_replied = 0;
+        self.events_received = 0;
 
         res
     }
