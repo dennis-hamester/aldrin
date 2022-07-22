@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use super::Packetizer;
 use crate::Endian;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -77,6 +80,11 @@ impl Packetizer for LengthPrefixed {
                         Endian::Big => src.get_uint(self.len_size as usize) as usize,
                         Endian::Little => src.get_uint_le(self.len_size as usize) as usize,
                     };
+
+                    if len > self.max_len {
+                        return Err(LengthPrefixedError);
+                    }
+
                     let len = len
                         .checked_sub(self.len_size as usize)
                         .ok_or(LengthPrefixedError)?;
