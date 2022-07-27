@@ -268,7 +268,7 @@ impl fmt::Display for InvalidEventArguments {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_fmt(format_args!(
             "service {} emitted event {} with invalid arguments",
-            self.event, self.service_id.uuid,
+            self.service_id.uuid, self.event,
         ))
     }
 }
