@@ -388,7 +388,7 @@ fn message_create_object() {
     test_message(
         Message::CreateObject(CreateObject {
             serial: 0,
-            uuid: UUID1,
+            uuid: ObjectUuid(UUID1),
         }),
         json!({"create-object": {"serial": 0, "uuid": UUID1}}),
     );
@@ -399,7 +399,7 @@ fn message_create_object_reply() {
     test_message(
         Message::CreateObjectReply(CreateObjectReply {
             serial: 0,
-            result: CreateObjectResult::Ok(UUID1),
+            result: CreateObjectResult::Ok(ObjectCookie(UUID1)),
         }),
         json!({"create-object-reply": {"serial": 0, "result": {"ok": UUID1}}}),
     );
@@ -417,7 +417,7 @@ fn message_destroy_object() {
     test_message(
         Message::DestroyObject(DestroyObject {
             serial: 0,
-            cookie: UUID1,
+            cookie: ObjectCookie(UUID1),
         }),
         json!({"destroy-object": {"serial": 0, "cookie": UUID1}}),
     );
@@ -480,19 +480,17 @@ fn message_unsubscribe_objects() {
 fn message_object_created_event() {
     test_message(
         Message::ObjectCreatedEvent(ObjectCreatedEvent {
-            uuid: UUID1,
-            cookie: UUID2,
+            id: ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
             serial: None,
         }),
-        json!({"object-created-event": {"uuid": UUID1, "cookie": UUID2, "serial": null}}),
+        json!({"object-created-event": {"id": {"uuid": UUID1, "cookie": UUID2}, "serial": null}}),
     );
     test_message(
         Message::ObjectCreatedEvent(ObjectCreatedEvent {
-            uuid: UUID1,
-            cookie: UUID2,
+            id: ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
             serial: Some(0),
         }),
-        json!({"object-created-event": {"uuid": UUID1, "cookie": UUID2, "serial": 0}}),
+        json!({"object-created-event": {"id": {"uuid": UUID1, "cookie": UUID2}, "serial": 0}}),
     );
 }
 
@@ -500,10 +498,9 @@ fn message_object_created_event() {
 fn message_object_destroyed_event() {
     test_message(
         Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
-            uuid: UUID1,
-            cookie: UUID2,
+            id: ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
         }),
-        json!({"object-destroyed-event": {"uuid": UUID1, "cookie": UUID2}}),
+        json!({"object-destroyed-event": {"id": {"uuid": UUID1, "cookie": UUID2}}}),
     );
 }
 
@@ -512,8 +509,8 @@ fn message_create_service() {
     test_message(
         Message::CreateService(CreateService {
             serial: 0,
-            object_cookie: UUID1,
-            uuid: UUID2,
+            object_cookie: ObjectCookie(UUID1),
+            uuid: ServiceUuid(UUID2),
             version: 1,
         }),
         json!({"create-service": {
@@ -530,7 +527,7 @@ fn message_create_service_reply() {
     test_message(
         Message::CreateServiceReply(CreateServiceReply {
             serial: 0,
-            result: CreateServiceResult::Ok(UUID1),
+            result: CreateServiceResult::Ok(ServiceCookie(UUID1)),
         }),
         json!({"create-service-reply": {"serial": 0, "result": {"ok": UUID1}}}),
     );
@@ -562,7 +559,7 @@ fn message_destroy_service() {
     test_message(
         Message::DestroyService(DestroyService {
             serial: 0,
-            cookie: UUID1,
+            cookie: ServiceCookie(UUID1),
         }),
         json!({"destroy-service": {"serial": 0, "cookie": UUID1}}),
     );
@@ -625,33 +622,43 @@ fn message_unsubscribe_services() {
 fn message_service_created_event() {
     test_message(
         Message::ServiceCreatedEvent(ServiceCreatedEvent {
-            object_uuid: UUID1,
-            object_cookie: UUID2,
-            uuid: UUID3,
-            cookie: UUID4,
+            id: ServiceId::new(
+                ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
+                ServiceUuid(UUID3),
+                ServiceCookie(UUID4),
+            ),
             serial: None,
         }),
         json!({"service-created-event": {
-            "object-uuid": UUID1,
-            "object-cookie": UUID2,
-            "uuid": UUID3,
-            "cookie": UUID4,
+            "id": {
+                "object-id": {
+                    "uuid": UUID1,
+                    "cookie": UUID2,
+                },
+                "uuid": UUID3,
+                "cookie": UUID4,
+            },
             "serial": null,
         }}),
     );
     test_message(
         Message::ServiceCreatedEvent(ServiceCreatedEvent {
-            object_uuid: UUID1,
-            object_cookie: UUID2,
-            uuid: UUID3,
-            cookie: UUID4,
+            id: ServiceId::new(
+                ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
+                ServiceUuid(UUID3),
+                ServiceCookie(UUID4),
+            ),
             serial: Some(0),
         }),
         json!({"service-created-event": {
-            "object-uuid": UUID1,
-            "object-cookie": UUID2,
-            "uuid": UUID3,
-            "cookie": UUID4,
+            "id": {
+                "object-id": {
+                    "uuid": UUID1,
+                    "cookie": UUID2,
+                },
+                "uuid": UUID3,
+                "cookie": UUID4,
+            },
             "serial": 0,
         }}),
     );
@@ -661,16 +668,21 @@ fn message_service_created_event() {
 fn message_service_destroyed_event() {
     test_message(
         Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
-            object_uuid: UUID1,
-            object_cookie: UUID2,
-            uuid: UUID3,
-            cookie: UUID4,
+            id: ServiceId::new(
+                ObjectId::new(ObjectUuid(UUID1), ObjectCookie(UUID2)),
+                ServiceUuid(UUID3),
+                ServiceCookie(UUID4),
+            ),
         }),
         json!({"service-destroyed-event": {
-            "object-uuid": UUID1,
-            "object-cookie": UUID2,
-            "uuid": UUID3,
-            "cookie": UUID4,
+            "id": {
+                "object-id": {
+                    "uuid": UUID1,
+                    "cookie": UUID2,
+                },
+                "uuid": UUID3,
+                "cookie": UUID4,
+            },
         }}),
     );
 }
@@ -680,7 +692,7 @@ fn message_call_function() {
     test_message(
         Message::CallFunction(CallFunction {
             serial: 0,
-            service_cookie: UUID1,
+            service_cookie: ServiceCookie(UUID1),
             function: 1,
             args: Value::None,
         }),
@@ -744,7 +756,7 @@ fn message_subscribe_event() {
     test_message(
         Message::SubscribeEvent(SubscribeEvent {
             serial: None,
-            service_cookie: UUID1,
+            service_cookie: ServiceCookie(UUID1),
             event: 0,
         }),
         json!({"subscribe-event": {"serial": null, "service-cookie": UUID1, "event": 0}}),
@@ -752,7 +764,7 @@ fn message_subscribe_event() {
     test_message(
         Message::SubscribeEvent(SubscribeEvent {
             serial: Some(0),
-            service_cookie: UUID1,
+            service_cookie: ServiceCookie(UUID1),
             event: 1,
         }),
         json!({"subscribe-event": {"serial": 0, "service-cookie": UUID1, "event": 1}}),
@@ -781,7 +793,7 @@ fn message_subscribe_event_reply() {
 fn message_unsubscribe_event() {
     test_message(
         Message::UnsubscribeEvent(UnsubscribeEvent {
-            service_cookie: UUID1,
+            service_cookie: ServiceCookie(UUID1),
             event: 0,
         }),
         json!({"unsubscribe-event": {"service-cookie": UUID1, "event": 0}}),
@@ -792,7 +804,7 @@ fn message_unsubscribe_event() {
 fn message_emit_event() {
     test_message(
         Message::EmitEvent(EmitEvent {
-            service_cookie: UUID1,
+            service_cookie: ServiceCookie(UUID1),
             event: 0,
             args: Value::None,
         }),
@@ -805,7 +817,7 @@ fn message_query_object() {
     test_message(
         Message::QueryObject(QueryObject {
             serial: 0,
-            uuid: UUID1,
+            uuid: ObjectUuid(UUID1),
             with_services: true,
         }),
         json!({"query-object": {"serial": 0, "uuid": UUID1, "with-services": true}}),
@@ -817,7 +829,7 @@ fn message_query_object_reply() {
     test_message(
         Message::QueryObjectReply(QueryObjectReply {
             serial: 0,
-            result: QueryObjectResult::Cookie(UUID1),
+            result: QueryObjectResult::Cookie(ObjectCookie(UUID1)),
         }),
         json!({"query-object-reply": {"serial": 0, "result": {"cookie": UUID1}}}),
     );
@@ -825,8 +837,8 @@ fn message_query_object_reply() {
         Message::QueryObjectReply(QueryObjectReply {
             serial: 0,
             result: QueryObjectResult::Service {
-                uuid: UUID1,
-                cookie: UUID2,
+                uuid: ServiceUuid(UUID1),
+                cookie: ServiceCookie(UUID2),
             },
         }),
         json!({"query-object-reply": {
@@ -860,7 +872,7 @@ fn message_query_service_version() {
     test_message(
         Message::QueryServiceVersion(QueryServiceVersion {
             serial: 0,
-            cookie: UUID1,
+            cookie: ServiceCookie(UUID1),
         }),
         json!({"query-service-version": {"serial": 0, "cookie": UUID1}}),
     );

@@ -128,7 +128,7 @@ fn message_shutdown() {
 fn message_create_object() {
     let m = Message::CreateObject(CreateObject {
         serial: 0x12345678,
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        uuid: ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
     });
     test_message_le(
         &m,
@@ -156,7 +156,7 @@ fn message_create_object() {
 fn message_create_object_reply() {
     let m = Message::CreateObjectReply(CreateObjectReply {
         serial: 0x12345678,
-        result: CreateObjectResult::Ok(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        result: CreateObjectResult::Ok(ObjectCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff"))),
     });
     test_message_le(
         &m,
@@ -206,7 +206,7 @@ fn message_create_object_reply() {
 fn message_destroy_object() {
     let m = Message::DestroyObject(DestroyObject {
         serial: 0x12345678,
-        cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        cookie: ObjectCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
     });
     test_message_le(
         &m,
@@ -371,8 +371,10 @@ fn message_unsubscribe_objects() {
 #[test]
 fn message_object_created_event() {
     let m = Message::ObjectCreatedEvent(ObjectCreatedEvent {
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+        id: ObjectId::new(
+            ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+            ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+        ),
         serial: None,
     });
     test_message_le(
@@ -402,8 +404,10 @@ fn message_object_created_event() {
         ],
     );
     let m = Message::ObjectCreatedEvent(ObjectCreatedEvent {
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+        id: ObjectId::new(
+            ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+            ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+        ),
         serial: Some(0x12345678),
     });
     test_message_le(
@@ -439,8 +443,10 @@ fn message_object_created_event() {
 #[test]
 fn message_object_destroyed_event() {
     let m = Message::ObjectDestroyedEvent(ObjectDestroyedEvent {
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+        id: ObjectId::new(
+            ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+            ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+        ),
     });
     test_message_le(
         &m,
@@ -472,8 +478,8 @@ fn message_object_destroyed_event() {
 fn message_create_service() {
     let m = Message::CreateService(CreateService {
         serial: 0x12345678,
-        object_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        uuid: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+        object_cookie: ObjectCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        uuid: ServiceUuid(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
         version: 0x01234567,
     });
     test_message_le(
@@ -510,7 +516,9 @@ fn message_create_service() {
 fn message_create_service_reply() {
     let m = Message::CreateServiceReply(CreateServiceReply {
         serial: 0x12345678,
-        result: CreateServiceResult::Ok(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        result: CreateServiceResult::Ok(ServiceCookie(uuid!(
+            "00112233-4455-6677-8899-aabbccddeeff"
+        ))),
     });
     test_message_le(
         &m,
@@ -600,7 +608,7 @@ fn message_create_service_reply() {
 fn message_destroy_service() {
     let m = Message::DestroyService(DestroyService {
         serial: 0x12345678,
-        cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
     });
     test_message_le(
         &m,
@@ -765,10 +773,14 @@ fn message_unsubscribe_services() {
 #[test]
 fn message_service_created_event() {
     let m = Message::ServiceCreatedEvent(ServiceCreatedEvent {
-        object_uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        object_cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
-        uuid: uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1"),
-        cookie: uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2"),
+        id: ServiceId::new(
+            ObjectId::new(
+                ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+                ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+            ),
+            ServiceUuid(uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1")),
+            ServiceCookie(uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2")),
+        ),
         serial: None,
     });
     test_message_le(
@@ -810,10 +822,14 @@ fn message_service_created_event() {
         ],
     );
     let m = Message::ServiceCreatedEvent(ServiceCreatedEvent {
-        object_uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        object_cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
-        uuid: uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1"),
-        cookie: uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2"),
+        id: ServiceId::new(
+            ObjectId::new(
+                ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+                ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+            ),
+            ServiceUuid(uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1")),
+            ServiceCookie(uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2")),
+        ),
         serial: Some(0x12345678),
     });
     test_message_le(
@@ -861,10 +877,14 @@ fn message_service_created_event() {
 #[test]
 fn message_service_destroyed_event() {
     let m = Message::ServiceDestroyedEvent(ServiceDestroyedEvent {
-        object_uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        object_cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
-        uuid: uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1"),
-        cookie: uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2"),
+        id: ServiceId::new(
+            ObjectId::new(
+                ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+                ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+            ),
+            ServiceUuid(uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1")),
+            ServiceCookie(uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2")),
+        ),
     });
     test_message_le(
         &m,
@@ -908,7 +928,7 @@ fn message_service_destroyed_event() {
 fn message_call_function() {
     let m = Message::CallFunction(CallFunction {
         serial: 0x12345678,
-        service_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        service_cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         function: 0x87654321,
         args: Value::None,
     });
@@ -1070,7 +1090,7 @@ fn message_call_function_reply() {
 fn message_subscribe_event() {
     let m = Message::SubscribeEvent(SubscribeEvent {
         serial: None,
-        service_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        service_cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         event: 0x87654321,
     });
     test_message_le(
@@ -1097,7 +1117,7 @@ fn message_subscribe_event() {
     );
     let m = Message::SubscribeEvent(SubscribeEvent {
         serial: Some(0x12345678),
-        service_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        service_cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         event: 0x87654321,
     });
     test_message_le(
@@ -1173,7 +1193,7 @@ fn message_subscribe_event_reply() {
 #[test]
 fn message_unsubscribe_event() {
     let m = Message::UnsubscribeEvent(UnsubscribeEvent {
-        service_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        service_cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         event: 0x87654321,
     });
     test_message_le(
@@ -1201,7 +1221,7 @@ fn message_unsubscribe_event() {
 #[test]
 fn message_emit_event() {
     let m = Message::EmitEvent(EmitEvent {
-        service_cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        service_cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         event: 0x87654321,
         args: Value::None,
     });
@@ -1233,7 +1253,7 @@ fn message_emit_event() {
 fn message_query_object() {
     let m = Message::QueryObject(QueryObject {
         serial: 0x12345678,
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        uuid: ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
         with_services: true,
     });
     test_message_le(
@@ -1264,7 +1284,9 @@ fn message_query_object() {
 fn message_query_object_reply() {
     let m = Message::QueryObjectReply(QueryObjectReply {
         serial: 0x12345678,
-        result: QueryObjectResult::Cookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        result: QueryObjectResult::Cookie(ObjectCookie(uuid!(
+            "00112233-4455-6677-8899-aabbccddeeff"
+        ))),
     });
     test_message_le(
         &m,
@@ -1291,8 +1313,8 @@ fn message_query_object_reply() {
     let m = Message::QueryObjectReply(QueryObjectReply {
         serial: 0x12345678,
         result: QueryObjectResult::Service {
-            uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-            cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+            uuid: ServiceUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+            cookie: ServiceCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
         },
     });
     test_message_le(
@@ -1369,7 +1391,7 @@ fn message_query_object_reply() {
 fn message_query_service_version() {
     let m = Message::QueryServiceVersion(QueryServiceVersion {
         serial: 0x12345678,
-        cookie: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
+        cookie: ServiceCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
     });
     test_message_le(
         &m,

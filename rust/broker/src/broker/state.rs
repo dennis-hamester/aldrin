@@ -1,23 +1,17 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::{CallFunctionResult, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
+use aldrin_proto::{CallFunctionResult, ObjectId, ServiceCookie, ServiceId};
 
 #[derive(Debug)]
 pub(super) struct State {
     shutdown_now: bool,
     shutdown_idle: bool,
-    add_objs: Vec<(ObjectUuid, ObjectCookie)>,
+    add_objs: Vec<ObjectId>,
     remove_conns: Vec<ConnectionId>,
-    remove_objs: Vec<(ObjectUuid, ObjectCookie)>,
-    add_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
-    remove_svcs: Vec<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)>,
+    remove_objs: Vec<ObjectId>,
+    add_svcs: Vec<ServiceId>,
+    remove_svcs: Vec<ServiceId>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
-    remove_subscriptions: Vec<(
-        ConnectionId,
-        ObjectUuid,
-        ObjectCookie,
-        ServiceUuid,
-        ServiceCookie,
-    )>,
+    remove_subscriptions: Vec<(ConnectionId, ServiceId)>,
     unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
 }
 
@@ -64,11 +58,11 @@ impl State {
             || !self.unsubscribe.is_empty()
     }
 
-    pub fn push_add_obj(&mut self, uuid: ObjectUuid, cookie: ObjectCookie) {
-        self.add_objs.push((uuid, cookie));
+    pub fn push_add_obj(&mut self, id: ObjectId) {
+        self.add_objs.push(id);
     }
 
-    pub fn pop_add_obj(&mut self) -> Option<(ObjectUuid, ObjectCookie)> {
+    pub fn pop_add_obj(&mut self) -> Option<ObjectId> {
         self.add_objs.pop()
     }
 
@@ -87,45 +81,27 @@ impl State {
         self.remove_conns.pop()
     }
 
-    pub fn push_remove_obj(&mut self, uuid: ObjectUuid, cookie: ObjectCookie) {
-        self.remove_objs.push((uuid, cookie));
+    pub fn push_remove_obj(&mut self, id: ObjectId) {
+        self.remove_objs.push(id);
     }
 
-    pub fn pop_remove_obj(&mut self) -> Option<(ObjectUuid, ObjectCookie)> {
+    pub fn pop_remove_obj(&mut self) -> Option<ObjectId> {
         self.remove_objs.pop()
     }
 
-    pub fn push_add_svc(
-        &mut self,
-        object_uuid: ObjectUuid,
-        object_cookie: ObjectCookie,
-        uuid: ServiceUuid,
-        cookie: ServiceCookie,
-    ) {
-        self.add_svcs
-            .push((object_uuid, object_cookie, uuid, cookie));
+    pub fn push_add_svc(&mut self, id: ServiceId) {
+        self.add_svcs.push(id);
     }
 
-    pub fn pop_add_svc(
-        &mut self,
-    ) -> Option<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)> {
+    pub fn pop_add_svc(&mut self) -> Option<ServiceId> {
         self.add_svcs.pop()
     }
 
-    pub fn push_remove_svc(
-        &mut self,
-        object_uuid: ObjectUuid,
-        object_cookie: ObjectCookie,
-        uuid: ServiceUuid,
-        cookie: ServiceCookie,
-    ) {
-        self.remove_svcs
-            .push((object_uuid, object_cookie, uuid, cookie));
+    pub fn push_remove_svc(&mut self, id: ServiceId) {
+        self.remove_svcs.push(id);
     }
 
-    pub fn pop_remove_svc(
-        &mut self,
-    ) -> Option<(ObjectUuid, ObjectCookie, ServiceUuid, ServiceCookie)> {
+    pub fn pop_remove_svc(&mut self) -> Option<ServiceId> {
         self.remove_svcs.pop()
     }
 
@@ -142,27 +118,11 @@ impl State {
         self.remove_function_calls.pop()
     }
 
-    pub fn push_remove_subscriptions(
-        &mut self,
-        conn_id: ConnectionId,
-        obj_uuid: ObjectUuid,
-        obj_cookie: ObjectCookie,
-        svc_uuid: ServiceUuid,
-        svc_cookie: ServiceCookie,
-    ) {
-        self.remove_subscriptions
-            .push((conn_id, obj_uuid, obj_cookie, svc_uuid, svc_cookie));
+    pub fn push_remove_subscriptions(&mut self, conn_id: ConnectionId, id: ServiceId) {
+        self.remove_subscriptions.push((conn_id, id));
     }
 
-    pub fn pop_remove_subscriptions(
-        &mut self,
-    ) -> Option<(
-        ConnectionId,
-        ObjectUuid,
-        ObjectCookie,
-        ServiceUuid,
-        ServiceCookie,
-    )> {
+    pub fn pop_remove_subscriptions(&mut self) -> Option<(ConnectionId, ServiceId)> {
         self.remove_subscriptions.pop()
     }
 

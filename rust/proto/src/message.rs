@@ -1,5 +1,5 @@
-use super::Value;
-use uuid::Uuid;
+use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
+use crate::value::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
@@ -70,7 +70,7 @@ pub enum ConnectReply {
 )]
 pub struct CreateObject {
     pub serial: u32,
-    pub uuid: Uuid,
+    pub uuid: ObjectUuid,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -80,7 +80,7 @@ pub struct CreateObject {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub enum CreateObjectResult {
-    Ok(Uuid),
+    Ok(ObjectCookie),
     DuplicateObject,
 }
 
@@ -116,7 +116,7 @@ pub struct CreateObjectReply {
 )]
 pub struct DestroyObject {
     pub serial: u32,
-    pub cookie: Uuid,
+    pub cookie: ObjectCookie,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -182,8 +182,7 @@ pub struct SubscribeObjectsReply {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct ObjectCreatedEvent {
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub id: ObjectId,
     pub serial: Option<u32>,
 }
 
@@ -194,8 +193,7 @@ pub struct ObjectCreatedEvent {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct ObjectDestroyedEvent {
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub id: ObjectId,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -206,8 +204,8 @@ pub struct ObjectDestroyedEvent {
 )]
 pub struct CreateService {
     pub serial: u32,
-    pub object_cookie: Uuid,
-    pub uuid: Uuid,
+    pub object_cookie: ObjectCookie,
+    pub uuid: ServiceUuid,
     pub version: u32,
 }
 
@@ -218,7 +216,7 @@ pub struct CreateService {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub enum CreateServiceResult {
-    Ok(Uuid),
+    Ok(ServiceCookie),
     DuplicateService,
     InvalidObject,
     ForeignObject,
@@ -258,7 +256,7 @@ pub struct CreateServiceReply {
 )]
 pub struct DestroyService {
     pub serial: u32,
-    pub cookie: Uuid,
+    pub cookie: ServiceCookie,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -324,10 +322,7 @@ pub struct SubscribeServicesReply {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct ServiceCreatedEvent {
-    pub object_uuid: Uuid,
-    pub object_cookie: Uuid,
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub id: ServiceId,
     pub serial: Option<u32>,
 }
 
@@ -338,10 +333,7 @@ pub struct ServiceCreatedEvent {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct ServiceDestroyedEvent {
-    pub object_uuid: Uuid,
-    pub object_cookie: Uuid,
-    pub uuid: Uuid,
-    pub cookie: Uuid,
+    pub id: ServiceId,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -352,7 +344,7 @@ pub struct ServiceDestroyedEvent {
 )]
 pub struct CallFunction {
     pub serial: u32,
-    pub service_cookie: Uuid,
+    pub service_cookie: ServiceCookie,
     pub function: u32,
     pub args: Value,
 }
@@ -408,7 +400,7 @@ pub struct CallFunctionReply {
 )]
 pub struct SubscribeEvent {
     pub serial: Option<u32>,
-    pub service_cookie: Uuid,
+    pub service_cookie: ServiceCookie,
     pub event: u32,
 }
 
@@ -454,7 +446,7 @@ pub struct SubscribeEventReply {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct UnsubscribeEvent {
-    pub service_cookie: Uuid,
+    pub service_cookie: ServiceCookie,
     pub event: u32,
 }
 
@@ -465,7 +457,7 @@ pub struct UnsubscribeEvent {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub struct EmitEvent {
-    pub service_cookie: Uuid,
+    pub service_cookie: ServiceCookie,
     pub event: u32,
     pub args: Value,
 }
@@ -478,7 +470,7 @@ pub struct EmitEvent {
 )]
 pub struct QueryObject {
     pub serial: u32,
-    pub uuid: Uuid,
+    pub uuid: ObjectUuid,
     pub with_services: bool,
 }
 
@@ -489,8 +481,11 @@ pub struct QueryObject {
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub enum QueryObjectResult {
-    Cookie(Uuid),
-    Service { uuid: Uuid, cookie: Uuid },
+    Cookie(ObjectCookie),
+    Service {
+        uuid: ServiceUuid,
+        cookie: ServiceCookie,
+    },
     Done,
     InvalidObject,
 }
@@ -514,7 +509,7 @@ pub struct QueryObjectReply {
 )]
 pub struct QueryServiceVersion {
     pub serial: u32,
-    pub cookie: Uuid,
+    pub cookie: ServiceCookie,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

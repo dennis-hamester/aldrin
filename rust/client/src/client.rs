@@ -14,12 +14,11 @@ use aldrin_proto::{
     Connect, ConnectReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
     CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    Message, ObjectCookie, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, ObjectUuid,
-    QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, ServiceCookie, ServiceCreatedEvent,
-    ServiceDestroyedEvent, ServiceId, ServiceUuid, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
-    SubscribeServicesReply, UnsubscribeEvent,
+    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
+    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
+    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -266,7 +265,7 @@ where
 
         let reply = match msg.result {
             CreateObjectResult::Ok(cookie) => Ok(Object::new(
-                ObjectId::new(req.uuid, ObjectCookie(cookie)),
+                ObjectId::new(req.uuid, cookie),
                 self.handle.clone(),
             )),
             CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject(req.uuid)),
@@ -297,10 +296,7 @@ where
         &mut self,
         msg: ObjectCreatedEvent,
     ) -> Result<(), RunError<T::Error>> {
-        let obj_ev = ObjectEvent::Created(ObjectId::new(
-            ObjectUuid(msg.uuid),
-            ObjectCookie(msg.cookie),
-        ));
+        let obj_ev = ObjectEvent::Created(msg.id);
 
         if let Some(serial) = msg.serial {
             if let Some(req) = self.object_events.get(serial) {
@@ -333,10 +329,7 @@ where
         &mut self,
         msg: ObjectDestroyedEvent,
     ) -> Result<(), RunError<T::Error>> {
-        let obj_ev = ObjectEvent::Destroyed(ObjectId::new(
-            ObjectUuid(msg.uuid),
-            ObjectCookie(msg.cookie),
-        ));
+        let obj_ev = ObjectEvent::Destroyed(msg.id);
 
         let mut remove = Vec::new();
 
@@ -373,7 +366,6 @@ where
         let reply = match msg.result {
             CreateServiceResult::Ok(cookie) => {
                 let (send, function_calls) = mpsc::unbounded();
-                let cookie = ServiceCookie(cookie);
                 let dup = self.services.insert(cookie, send);
                 debug_assert!(dup.is_none());
                 Ok(Service::new(
@@ -429,11 +421,7 @@ where
         &mut self,
         msg: ServiceCreatedEvent,
     ) -> Result<(), RunError<T::Error>> {
-        let svc_ev = ServiceEvent::Created(ServiceId::new(
-            ObjectId::new(ObjectUuid(msg.object_uuid), ObjectCookie(msg.object_cookie)),
-            ServiceUuid(msg.uuid),
-            ServiceCookie(msg.cookie),
-        ));
+        let svc_ev = ServiceEvent::Created(msg.id);
 
         if let Some(serial) = msg.serial {
             if let Some(req) = self.service_events.get(serial) {
@@ -467,17 +455,12 @@ where
         msg: ServiceDestroyedEvent,
     ) -> Result<(), RunError<T::Error>> {
         let mut remove = Vec::new();
-        let service_cookie = ServiceCookie(msg.cookie);
 
         // A ServiceDestroyedEvent can also be sent, when we have active subscriptions on a
         // service. If that is the sole reason for this event, then make sure not to send
         // UnsubscribeServicesDestroyed below.
         if !self.service_events.is_empty() {
-            let svc_ev = ServiceEvent::Destroyed(ServiceId::new(
-                ObjectId::new(ObjectUuid(msg.object_uuid), ObjectCookie(msg.object_cookie)),
-                ServiceUuid(msg.uuid),
-                ServiceCookie(msg.cookie),
-            ));
+            let svc_ev = ServiceEvent::Destroyed(msg.id);
 
             for (serial, req) in self.service_events.iter() {
                 if req.sender.unbounded_send(svc_ev).is_err() {
@@ -494,16 +477,16 @@ where
             }
         }
 
-        self.broker_subscriptions.remove(&service_cookie);
+        self.broker_subscriptions.remove(&msg.id.cookie);
 
-        if let Some(ids) = self.subscriptions.remove(&service_cookie) {
+        if let Some(ids) = self.subscriptions.remove(&msg.id.cookie) {
             let mut dups = HashSet::new();
             for (_, events_ids) in ids {
                 for (events_id, sender) in events_ids {
                     if dups.insert(events_id) {
                         // Should we close the channel in case of send errors?
                         sender
-                            .unbounded_send(EventsRequest::ServiceDestroyed(service_cookie))
+                            .unbounded_send(EventsRequest::ServiceDestroyed(msg.id.cookie))
                             .ok();
                     }
                 }
@@ -514,8 +497,10 @@ where
     }
 
     async fn msg_call_function(&mut self, msg: CallFunction) -> Result<(), RunError<T::Error>> {
-        let cookie = ServiceCookie(msg.service_cookie);
-        let send = self.services.get_mut(&cookie).expect("inconsistent state");
+        let send = self
+            .services
+            .get_mut(&msg.service_cookie)
+            .expect("inconsistent state");
         let req = RawFunctionCall {
             serial: msg.serial,
             function: msg.function,
@@ -544,7 +529,7 @@ where
 
     fn msg_subscribe_event(&mut self, msg: SubscribeEvent) {
         self.broker_subscriptions
-            .entry(ServiceCookie(msg.service_cookie))
+            .entry(msg.service_cookie)
             .or_default()
             .insert(msg.event);
     }
@@ -570,8 +555,7 @@ where
     }
 
     fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
-        let service_cookie = ServiceCookie(msg.service_cookie);
-        let mut subs = match self.broker_subscriptions.entry(service_cookie) {
+        let mut subs = match self.broker_subscriptions.entry(msg.service_cookie) {
             Entry::Occupied(subs) => subs,
             Entry::Vacant(_) => return,
         };
@@ -583,10 +567,9 @@ where
     }
 
     fn msg_emit_event(&mut self, msg: EmitEvent) {
-        let service_cookie = ServiceCookie(msg.service_cookie);
         let senders = match self
             .subscriptions
-            .get_mut(&service_cookie)
+            .get_mut(&msg.service_cookie)
             .and_then(|s| s.get_mut(&msg.event))
         {
             Some(senders) => senders,
@@ -597,7 +580,7 @@ where
             // Should we close the channel in case of send errors?
             sender
                 .unbounded_send(EventsRequest::EmitEvent(
-                    service_cookie,
+                    msg.service_cookie,
                     msg.event,
                     msg.args.clone(),
                 ))
@@ -617,9 +600,9 @@ where
                     if data.with_services {
                         let (send, recv) = mpsc::unbounded();
                         data.svc_reply = Some(send);
-                        id_reply.send(Some((ObjectCookie(cookie), Some(recv)))).ok();
+                        id_reply.send(Some((cookie, Some(recv)))).ok();
                     } else {
-                        id_reply.send(Some((ObjectCookie(cookie), None))).ok();
+                        id_reply.send(Some((cookie, None))).ok();
                         self.query_object.remove(msg.serial);
                     }
                     Ok(())
@@ -639,9 +622,7 @@ where
             match msg.result {
                 QueryObjectResult::Service { uuid, cookie } => {
                     let svc_reply = data.svc_reply.as_ref().unwrap();
-                    svc_reply
-                        .unbounded_send((ServiceUuid(uuid), ServiceCookie(cookie)))
-                        .ok();
+                    svc_reply.unbounded_send((uuid, cookie)).ok();
                     Ok(())
                 }
 
@@ -703,7 +684,7 @@ where
         &mut self,
         req: CreateObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let uuid = req.uuid.0;
+        let uuid = req.uuid;
         let serial = self.create_object.insert(req);
         self.t
             .send_and_flush(Message::CreateObject(CreateObject { serial, uuid }))
@@ -719,7 +700,7 @@ where
         self.t
             .send_and_flush(Message::DestroyObject(DestroyObject {
                 serial,
-                cookie: req.cookie.0,
+                cookie: req.cookie,
             }))
             .await
             .map_err(Into::into)
@@ -751,8 +732,8 @@ where
         &mut self,
         req: CreateServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let object_cookie = req.object_id.cookie.0;
-        let uuid = req.service_uuid.0;
+        let object_cookie = req.object_id.cookie;
+        let uuid = req.service_uuid;
         let version = req.version;
         let serial = self.create_service.insert(req);
         self.t
@@ -770,7 +751,7 @@ where
         &mut self,
         req: DestroyServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.id.cookie.0;
+        let cookie = req.id.cookie;
         let serial = self.destroy_service.insert(req);
         self.t
             .send_and_flush(Message::DestroyService(DestroyService { serial, cookie }))
@@ -808,7 +789,7 @@ where
         self.t
             .send_and_flush(Message::CallFunction(CallFunction {
                 serial,
-                service_cookie: req.service_cookie.0,
+                service_cookie: req.service_cookie,
                 function: req.function,
                 args: req.args,
             }))
@@ -853,7 +834,7 @@ where
             self.t
                 .send_and_flush(Message::SubscribeEvent(SubscribeEvent {
                     serial,
-                    service_cookie: req.service_cookie.0,
+                    service_cookie: req.service_cookie,
                     event: req.id,
                 }))
                 .await
@@ -896,7 +877,7 @@ where
 
         self.t
             .send_and_flush(Message::UnsubscribeEvent(UnsubscribeEvent {
-                service_cookie: req.service_cookie.0,
+                service_cookie: req.service_cookie,
                 event: req.id,
             }))
             .await
@@ -906,7 +887,7 @@ where
     async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
         self.t
             .send_and_flush(Message::EmitEvent(EmitEvent {
-                service_cookie: req.service_cookie.0,
+                service_cookie: req.service_cookie,
                 event: req.event,
                 args: req.args,
             }))
@@ -926,7 +907,7 @@ where
         self.t
             .send_and_flush(Message::QueryObject(QueryObject {
                 serial,
-                uuid: req.object_uuid.0,
+                uuid: req.object_uuid,
                 with_services: req.with_services,
             }))
             .await
@@ -941,7 +922,7 @@ where
         self.t
             .send_and_flush(Message::QueryServiceVersion(QueryServiceVersion {
                 serial,
-                cookie: req.cookie.0,
+                cookie: req.cookie,
             }))
             .await
             .map_err(Into::into)
