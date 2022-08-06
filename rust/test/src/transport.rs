@@ -8,7 +8,7 @@ use std::fmt::Debug;
 /// used in this crate are always based on the channels available in [`aldrin_channel`]. The actual
 /// transport type used in this crate is `Box<dyn TestTransport>`.
 pub trait TestTransport:
-    Sealed + AsyncTransport<Error = Disconnected> + Debug + Unpin + Send
+    Sealed + AsyncTransport<Error = Disconnected> + Debug + Unpin + Send + Sync
 {
 }
 
