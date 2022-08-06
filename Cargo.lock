@@ -25,7 +25,6 @@ dependencies = [
  "futures-core",
  "futures-util",
  "tokio",
- "uuid",
 ]
 
 [[package]]

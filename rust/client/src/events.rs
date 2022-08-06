@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test;
 
-use super::{Error, Handle, ServiceCookie, ServiceId};
-use aldrin_proto::Value;
+use super::{Error, Handle};
+use aldrin_proto::{ServiceCookie, ServiceId, Value};
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};

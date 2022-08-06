@@ -1,14 +1,12 @@
 #[cfg(test)]
 mod test;
 
-use crate::{Error, Handle, ObjectCookie, ObjectId, ObjectUuid};
-use aldrin_proto::{CallFunctionResult, ConversionError, FromValue, IntoValue, Value};
+use crate::{Error, Handle};
+use aldrin_proto::{CallFunctionResult, IntoValue, ServiceId, Value};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
-use std::fmt;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use uuid::Uuid;
 
 /// Owned service on the bus.
 ///
@@ -206,165 +204,6 @@ impl Stream for Service {
 impl FusedStream for Service {
     fn is_terminated(&self) -> bool {
         self.function_calls.is_terminated()
-    }
-}
-
-/// Id of a service.
-///
-/// An [`ServiceId`] consists of three parts:
-/// - An [`ObjectId`], identifying the associated [`Object`](crate::Object) on the bus
-/// - A [`ServiceUuid`], identifying the [`Service`] on the [`Object`](crate::Object)
-/// - A [`ServiceCookie`], a random UUID chosen by the broker
-///
-/// It is important to point out, that when a service is destroyed and later created again with the
-/// same [`ServiceUuid`], then the [`ServiceCookie`] and consequently the [`ServiceId`] will be
-/// different. See [`ServiceCookie`] for more information.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ServiceId {
-    /// Id of the associated object.
-    pub object_id: ObjectId,
-
-    /// UUID of the service.
-    pub uuid: ServiceUuid,
-
-    /// Cookie of the service.
-    pub cookie: ServiceCookie,
-}
-
-impl ServiceId {
-    pub(crate) fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
-        ServiceId {
-            object_id,
-            uuid,
-            cookie,
-        }
-    }
-}
-
-impl From<aldrin_proto::ServiceId> for ServiceId {
-    fn from(id: aldrin_proto::ServiceId) -> Self {
-        ServiceId {
-            object_id: ObjectId {
-                uuid: ObjectUuid(id.object_uuid),
-                cookie: ObjectCookie(id.object_cookie),
-            },
-            uuid: ServiceUuid(id.service_uuid),
-            cookie: ServiceCookie(id.service_cookie),
-        }
-    }
-}
-
-impl From<ServiceId> for aldrin_proto::ServiceId {
-    fn from(id: ServiceId) -> Self {
-        aldrin_proto::ServiceId {
-            object_uuid: id.object_id.uuid.0,
-            object_cookie: id.object_id.cookie.0,
-            service_uuid: id.uuid.0,
-            service_cookie: id.cookie.0,
-        }
-    }
-}
-
-impl FromValue for ServiceId {
-    fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
-        match v {
-            Value::ServiceId(v) => Ok(v.into()),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for ServiceId {
-    fn into_value(self) -> Value {
-        Value::ServiceId(self.into())
-    }
-}
-
-/// UUID of a service.
-///
-/// [`ServiceUuid`s](ServiceUuid) are chosen by the user when
-/// [creating](crate::Object::create_service) a service and must be unique among all services of an
-/// [`Object`](crate::Object).
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ServiceUuid(pub Uuid);
-
-impl ServiceUuid {
-    /// Creates a ServiceUuid with a random v4 UUID.
-    ///
-    /// In general, random [`ServiceUuid`s](ServiceUuid) have limited use. But it may occasionally
-    /// be convenient to create random [`ServiceUuid`s](ServiceUuid) in e.g. unit-tests.
-    pub fn new_v4() -> Self {
-        ServiceUuid(Uuid::new_v4())
-    }
-
-    /// Creates an ServiceUuid from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_client::ServiceUuid;
-    /// // b94fb06d-791b-4aa9-afd1-9e2f69345eee
-    /// let service_uuid = ServiceUuid::from_u128(0xb94fb06d791b4aa9afd19e2f69345eee);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ServiceUuid(Uuid::from_u128(uuid))
-    }
-}
-
-impl fmt::Display for ServiceUuid {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-/// Cookie of a service.
-///
-/// [`ServiceCookie`s](ServiceCookie) are chosen by the broker when
-/// [creating](crate::Object::create_service) a [`Service`]. They help distinguish the [`Service`]
-/// across time.
-///
-/// ```
-/// use aldrin_client::ServiceUuid;
-///
-/// // 10e70a49-18ce-447c-949e-22fbd536a475
-/// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x10e70a4918ce447c949e22fbd536a475);
-///
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio_based::TestBroker::new();
-/// # let handle = broker.add_client().await;
-/// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// // Create a service:
-/// let service = object.create_service(SERVICE_UUID, 1).await?;
-/// let service_id1 = service.id();
-/// service.destroy().await?;
-///
-/// // Create the same service again:
-/// let service = object.create_service(SERVICE_UUID, 1).await?;
-/// let service_id2 = service.id();
-/// service.destroy().await?;
-///
-/// // The service UUIDs will be equal:
-/// assert_eq!(service_id1.uuid, SERVICE_UUID);
-/// assert_eq!(service_id2.uuid, SERVICE_UUID);
-///
-/// // But the cookies will be different:
-/// assert_ne!(service_id1.cookie, service_id2.cookie);
-///
-/// // Consequently, the ids will be different as well:
-/// assert_ne!(service_id1, service_id2);
-/// # Ok(())
-/// # }
-/// ```
-///
-/// In general, [`ServiceCookie`s](ServiceCookie) should be considered an implementation detail of
-/// the Aldrin protocol and there is rarely a reason to deal with them manually.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ServiceCookie(pub Uuid);
-
-impl fmt::Display for ServiceCookie {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
     }
 }
 

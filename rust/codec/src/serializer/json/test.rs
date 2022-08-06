@@ -121,8 +121,8 @@ fn value_uuid() {
 fn value_object_id() {
     test_value(
         Value::ObjectId(ObjectId {
-            uuid: UUID1,
-            cookie: UUID2,
+            uuid: ObjectUuid(UUID1),
+            cookie: ObjectCookie(UUID2),
         }),
         json!({"object-id": {"uuid": UUID1, "cookie": UUID2}}),
     );
@@ -132,16 +132,20 @@ fn value_object_id() {
 fn value_service_id() {
     test_value(
         Value::ServiceId(ServiceId {
-            object_uuid: UUID1,
-            object_cookie: UUID2,
-            service_uuid: UUID3,
-            service_cookie: UUID4,
+            object_id: ObjectId {
+                uuid: ObjectUuid(UUID1),
+                cookie: ObjectCookie(UUID2),
+            },
+            uuid: ServiceUuid(UUID3),
+            cookie: ServiceCookie(UUID4),
         }),
         json!({"service-id": {
-            "object-uuid": UUID1,
-            "object-cookie": UUID2,
-            "service-uuid": UUID3,
-            "service-cookie": UUID4,
+            "object-id": {
+                "uuid": UUID1,
+                "cookie": UUID2,
+            },
+            "uuid": UUID3,
+            "cookie": UUID4,
         }}),
     );
 }

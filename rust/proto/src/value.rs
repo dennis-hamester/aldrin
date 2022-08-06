@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test;
 
+use crate::{ObjectId, ServiceId};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
@@ -143,94 +144,6 @@ where
 {
     fn into_value(self) -> Value {
         (*self).into_value()
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(
-    feature = "serde-derive",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case", deny_unknown_fields)
-)]
-pub struct ObjectId {
-    /// UUID of the object.
-    pub uuid: Uuid,
-
-    /// Cookie of the object.
-    pub cookie: Uuid,
-}
-
-impl ObjectId {
-    /// Creates a new `ObjectId` from a uuid and cookie.
-    pub fn new(uuid: Uuid, cookie: Uuid) -> Self {
-        ObjectId { uuid, cookie }
-    }
-}
-
-impl FromValue for ObjectId {
-    fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
-        match v {
-            Value::ObjectId(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for ObjectId {
-    fn into_value(self) -> Value {
-        Value::ObjectId(self)
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(
-    feature = "serde-derive",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case", deny_unknown_fields)
-)]
-pub struct ServiceId {
-    /// UUID of the object.
-    pub object_uuid: Uuid,
-
-    /// Cookie of the object.
-    pub object_cookie: Uuid,
-
-    /// UUID of the service.
-    pub service_uuid: Uuid,
-
-    /// Cookie of the service.
-    pub service_cookie: Uuid,
-}
-
-impl ServiceId {
-    /// Creates a new `ServiceId` from an object and service uuid and cookie.
-    pub fn new(
-        object_uuid: Uuid,
-        object_cookie: Uuid,
-        service_uuid: Uuid,
-        service_cookie: Uuid,
-    ) -> Self {
-        ServiceId {
-            object_uuid,
-            object_cookie,
-            service_uuid,
-            service_cookie,
-        }
-    }
-}
-
-impl FromValue for ServiceId {
-    fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
-        match v {
-            Value::ServiceId(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for ServiceId {
-    fn into_value(self) -> Value {
-        Value::ServiceId(self)
     }
 }
 

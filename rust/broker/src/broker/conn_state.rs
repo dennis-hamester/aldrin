@@ -1,5 +1,4 @@
-use super::{ObjectCookie, ServiceCookie};
-use aldrin_proto::Message;
+use aldrin_proto::{Message, ObjectCookie, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;

@@ -1,10 +1,8 @@
 use crate::events::{EventsId, EventsRequest};
-use crate::{
-    Error, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Service, ServiceCookie,
-    ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
-};
+use crate::{Error, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult, SubscribeEventResult, Value,
+    CallFunctionResult, DestroyObjectResult, ObjectCookie, ObjectId, ObjectUuid,
+    QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid, SubscribeEventResult, Value,
 };
 use futures_channel::{mpsc, oneshot};
 

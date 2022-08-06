@@ -1,7 +1,6 @@
-use super::ServiceCookie;
 use crate::conn_id::ConnectionId;
+use aldrin_proto::{ObjectCookie, ServiceCookie};
 use std::collections::HashSet;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Object {
@@ -39,17 +38,5 @@ impl Object {
 
     pub fn services(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
         self.svcs.iter().copied()
-    }
-}
-
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct ObjectUuid(pub Uuid);
-
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct ObjectCookie(pub Uuid);
-
-impl ObjectCookie {
-    pub fn new_v4() -> Self {
-        ObjectCookie(Uuid::new_v4())
     }
 }

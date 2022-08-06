@@ -1742,8 +1742,8 @@ fn value_uuid() {
 #[test]
 fn value_object_id() {
     let v = Value::ObjectId(ObjectId {
-        uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
+        uuid: ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        cookie: ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
     });
     test_value_le(
         &v,
@@ -1774,10 +1774,12 @@ fn value_object_id() {
 #[test]
 fn value_service_id() {
     let v = Value::ServiceId(ServiceId {
-        object_uuid: uuid!("00112233-4455-6677-8899-aabbccddeeff"),
-        object_cookie: uuid!("01122334-4556-6778-899a-abbccddeeff0"),
-        service_uuid: uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1"),
-        service_cookie: uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2"),
+        object_id: ObjectId {
+            uuid: ObjectUuid(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+            cookie: ObjectCookie(uuid!("01122334-4556-6778-899a-abbccddeeff0")),
+        },
+        uuid: ServiceUuid(uuid!("02132435-4657-6879-8a9b-acbdcedfe0f1")),
+        cookie: ServiceCookie(uuid!("03142536-4758-697a-8b9c-adbecfd0e1f2")),
     });
     test_value_le(
         &v,

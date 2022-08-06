@@ -1,7 +1,6 @@
 //! Error types.
 
-use super::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
-use aldrin_proto::{Message, Value};
+use aldrin_proto::{Message, ObjectId, ObjectUuid, ServiceId, ServiceUuid, Value};
 use std::error::Error as StdError;
 use std::fmt;
 

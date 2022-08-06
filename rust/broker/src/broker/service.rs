@@ -1,7 +1,6 @@
 use super::ConnectionId;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Service {
@@ -73,17 +72,5 @@ impl Service {
             res.extend(conn_ids);
         }
         res.into_iter()
-    }
-}
-
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct ServiceUuid(pub Uuid);
-
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct ServiceCookie(pub Uuid);
-
-impl ServiceCookie {
-    pub fn new_v4() -> Self {
-        ServiceCookie(Uuid::new_v4())
     }
 }

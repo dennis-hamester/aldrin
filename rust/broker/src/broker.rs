@@ -16,18 +16,18 @@ use aldrin_proto::{
     CallFunction, CallFunctionReply, CallFunctionResult, CreateObject, CreateObjectReply,
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent, ObjectDestroyedEvent,
-    QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, ServiceCreatedEvent,
-    ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
-    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply,
-    UnsubscribeEvent,
+    DestroyServiceResult, EmitEvent, Message, ObjectCookie, ObjectCreatedEvent,
+    ObjectDestroyedEvent, ObjectUuid, QueryObject, QueryObjectReply, QueryObjectResult,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult, ServiceCookie,
+    ServiceCreatedEvent, ServiceDestroyedEvent, ServiceUuid, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, UnsubscribeEvent,
 };
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
-use object::{Object, ObjectCookie, ObjectUuid};
-use service::{Service, ServiceCookie, ServiceUuid};
+use object::Object;
+use service::Service;
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 

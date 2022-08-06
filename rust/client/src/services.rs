@@ -1,4 +1,4 @@
-use super::ServiceId;
+use aldrin_proto::ServiceId;
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
 use std::pin::Pin;

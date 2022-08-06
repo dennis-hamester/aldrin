@@ -8,18 +8,16 @@ use crate::handle::request::{
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
-use crate::{
-    Error, Handle, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Service, ServiceCookie,
-    ServiceEvent, ServiceId, ServiceUuid, SubscribeMode,
-};
+use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,
     Connect, ConnectReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
     CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
-    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    ServiceCreatedEvent, ServiceDestroyedEvent, SubscribeEvent, SubscribeEventReply,
+    Message, ObjectCookie, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, ObjectUuid,
+    QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, ServiceCookie, ServiceCreatedEvent,
+    ServiceDestroyedEvent, ServiceId, ServiceUuid, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
     SubscribeServicesReply, UnsubscribeEvent,
 };

@@ -8,6 +8,7 @@ edition = "2018"
 
 [features]
 serde-derive = ["serde", "uuid/serde"]
+new-v4-ids = ["uuid/v4"]
 
 [dependencies]
 pin-project = "1.0.10"

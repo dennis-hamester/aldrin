@@ -1,4 +1,4 @@
-use super::ObjectId;
+use aldrin_proto::ObjectId;
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
 use std::pin::Pin;

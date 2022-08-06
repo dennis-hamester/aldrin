@@ -3,11 +3,11 @@ pub(crate) mod request;
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{
-    Error, Events, Object, ObjectCookie, ObjectEvent, ObjectId, ObjectUuid, Objects, Service,
-    ServiceCookie, ServiceEvent, ServiceId, ServiceUuid, Services, SubscribeMode,
+    Error, Events, Object, ObjectEvent, Objects, Service, ServiceEvent, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, FromValue, IntoValue, QueryServiceVersionResult,
+    CallFunctionResult, DestroyObjectResult, FromValue, IntoValue, ObjectCookie, ObjectId,
+    ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid,
     SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};

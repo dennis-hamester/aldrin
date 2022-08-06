@@ -76,16 +76,16 @@ pub mod error;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
-pub use aldrin_proto::{Bytes, Value};
+pub use aldrin_proto::{
+    Bytes, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid, Value,
+};
 pub use client::Client;
 pub use error::Error;
 pub use events::{Event, Events};
 pub use handle::{Handle, ObjectServices, PendingFunctionResult, PendingFunctionValue};
-pub use object::{Object, ObjectCookie, ObjectId, ObjectUuid};
+pub use object::Object;
 pub use objects::{ObjectEvent, Objects};
-pub use service::{
-    FunctionCall, FunctionCallReply, Service, ServiceCookie, ServiceId, ServiceUuid,
-};
+pub use service::{FunctionCall, FunctionCallReply, Service};
 pub use services::{ServiceEvent, Services};
 
 /// Mode of subscription for object and service creation events.

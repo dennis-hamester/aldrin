@@ -10,7 +10,7 @@ edition = "2018"
 codegen = ["aldrin-codegen-macros"]
 
 [dependencies]
-aldrin-proto = { version = "0.1.0", path = "../proto" }
+aldrin-proto = { version = "0.1.0", path = "../proto", features = ["new-v4-ids"] }
 futures-channel = { version = "0.3.21", default-features = false, features = ["std"] }
 futures-core = { version = "0.3.21", default-features = false }
 futures-util = { version = "0.3.21", default-features = false }

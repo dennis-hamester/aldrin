@@ -1,6 +1,5 @@
-use super::{ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
 use crate::conn_id::ConnectionId;
-use aldrin_proto::CallFunctionResult;
+use aldrin_proto::{CallFunctionResult, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
 
 #[derive(Debug)]
 pub(super) struct State {
