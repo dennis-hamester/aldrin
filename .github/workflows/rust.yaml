@@ -39,11 +39,11 @@ jobs:
       - name: Cargo version
         run: cargo --version --verbose
       - name: Cargo check
-        run: cargo check --all-features --tests --benches
+        run: cargo check --locked --all-features --tests --benches
       - name: Cargo test
-        run: cargo test --all-features
+        run: cargo test --locked --all-features
       - name: Cargo clippy
-        run: cargo clippy --all-features --tests --benches
+        run: cargo clippy --locked --all-features --tests --benches
 
   doc:
     name: Check docs
@@ -62,7 +62,7 @@ jobs:
       - name: Cargo version
         run: cargo --version --verbose
       - name: Cargo doc
-        run: cargo doc --all-features --no-deps
+        run: cargo doc --locked --all-features --no-deps
 
   style:
     name: Code style
@@ -91,12 +91,12 @@ jobs:
           profile: minimal
           default: true
       - name: Build aldrin-conformance-tester
-        run: cargo build -p aldrin-conformance-tester
+        run: cargo build --locked -p aldrin-conformance-tester
       - name: Build conformance-test-client
-        run: cargo build -p conformance-test-client
+        run: cargo build --locked -p conformance-test-client
       - name: Run client tests
         run: target/debug/aldrin-conformance-tester client run -j1 target/debug/conformance-test-client
       - name: Build conformance-test-broker
-        run: cargo build -p conformance-test-broker
+        run: cargo build --locked -p conformance-test-broker
       - name: Run broker tests
         run: target/debug/aldrin-conformance-tester broker run -j1 target/debug/conformance-test-broker

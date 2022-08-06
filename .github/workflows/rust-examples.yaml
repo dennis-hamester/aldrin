@@ -37,7 +37,7 @@ jobs:
         run: cargo --version --verbose
       - name: Cargo clippy
         working-directory: examples/rust
-        run: cargo clippy --all-features
+        run: cargo clippy --locked --all-features
 
   style:
     name: Code style
