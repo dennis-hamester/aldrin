@@ -41,7 +41,7 @@ pub enum Message {
     QueryServiceVersionReply(QueryServiceVersionReply),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -51,7 +51,7 @@ pub struct Connect {
     pub version: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -62,7 +62,7 @@ pub enum ConnectReply {
     VersionMismatch(u32),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -73,7 +73,7 @@ pub struct CreateObject {
     pub uuid: ObjectUuid,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -97,7 +97,7 @@ impl CreateObjectResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -108,7 +108,7 @@ pub struct CreateObjectReply {
     pub result: CreateObjectResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -119,7 +119,7 @@ pub struct DestroyObject {
     pub cookie: ObjectCookie,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -144,7 +144,7 @@ impl DestroyObjectResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -155,7 +155,7 @@ pub struct DestroyObjectReply {
     pub result: DestroyObjectResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -165,7 +165,7 @@ pub struct SubscribeObjects {
     pub serial: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -175,7 +175,7 @@ pub struct SubscribeObjectsReply {
     pub serial: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -186,7 +186,7 @@ pub struct ObjectCreatedEvent {
     pub serial: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -196,7 +196,7 @@ pub struct ObjectDestroyedEvent {
     pub id: ObjectId,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -209,7 +209,7 @@ pub struct CreateService {
     pub version: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -237,7 +237,7 @@ impl CreateServiceResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -248,7 +248,7 @@ pub struct CreateServiceReply {
     pub result: CreateServiceResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -259,7 +259,7 @@ pub struct DestroyService {
     pub cookie: ServiceCookie,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -284,7 +284,7 @@ impl DestroyServiceResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -295,7 +295,7 @@ pub struct DestroyServiceReply {
     pub result: DestroyServiceResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -305,7 +305,7 @@ pub struct SubscribeServices {
     pub serial: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -315,7 +315,7 @@ pub struct SubscribeServicesReply {
     pub serial: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -326,7 +326,7 @@ pub struct ServiceCreatedEvent {
     pub serial: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -392,7 +392,7 @@ pub struct CallFunctionReply {
     pub result: CallFunctionResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -404,7 +404,7 @@ pub struct SubscribeEvent {
     pub event: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -428,7 +428,7 @@ impl SubscribeEventResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -439,7 +439,7 @@ pub struct SubscribeEventReply {
     pub result: SubscribeEventResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -462,7 +462,7 @@ pub struct EmitEvent {
     pub args: Value,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -474,7 +474,7 @@ pub struct QueryObject {
     pub with_services: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -490,7 +490,7 @@ pub enum QueryObjectResult {
     InvalidObject,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -501,7 +501,7 @@ pub struct QueryObjectReply {
     pub result: QueryObjectResult,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -512,7 +512,7 @@ pub struct QueryServiceVersion {
     pub cookie: ServiceCookie,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -536,7 +536,7 @@ impl QueryServiceVersionResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
