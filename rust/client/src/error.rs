@@ -138,6 +138,28 @@ pub enum Error {
 
     /// An event was received with invalid arguments.
     InvalidEventArguments(InvalidEventArguments),
+
+    /// An operation was performed on an invalid channel.
+    ///
+    /// This error happens in the following cases:
+    /// - Any use of a destroyed channel.
+    /// - Trying to claim a channel when the other end has been destroyed.
+    /// - When the other channel end gets destroyed while waiting for the channel to become
+    ///   established.
+    InvalidChannel,
+
+    /// An operation was performed on a channel that belongs to a different client.
+    ///
+    /// This error happens in the following cases:
+    /// - Trying to destroy an unclaimed channel that has been claimed by a different client in the
+    ///   meantime.
+    /// - Trying to claim a channel which has been claimed by another client.
+    ForeignChannel,
+
+    /// An item received on a channel failed to convert to the expected type.
+    ///
+    /// The offending [`Value`] will included, unless the partial conversion cannot be undone.
+    InvalidItemReceived(Option<Value>),
 }
 
 impl fmt::Display for Error {
@@ -167,6 +189,9 @@ impl fmt::Display for Error {
             Error::InvalidFunctionResult(e) => e.fmt(f),
             Error::InvalidFunctionCall(e) => e.fmt(f),
             Error::InvalidEventArguments(e) => e.fmt(f),
+            Error::InvalidChannel => f.write_str("invalid channel"),
+            Error::ForeignChannel => f.write_str("foreign channel"),
+            Error::InvalidItemReceived(_) => f.write_str("invalid item received"),
         }
     }
 }
