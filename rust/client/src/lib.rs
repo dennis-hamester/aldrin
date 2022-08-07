@@ -59,6 +59,7 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
+mod channel;
 mod client;
 mod error;
 mod events;
@@ -79,6 +80,10 @@ pub use aldrin_codegen_macros::generate;
 pub use aldrin_proto::{
     Bytes, ConversionError, FromValue, IntoValue, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid, Value,
+};
+pub use channel::{
+    PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,
+    UnclaimedReceiver, UnclaimedSender,
 };
 pub use client::Client;
 pub use error::{
