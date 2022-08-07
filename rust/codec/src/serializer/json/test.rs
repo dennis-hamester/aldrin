@@ -359,6 +359,22 @@ fn value_enum() {
 }
 
 #[test]
+fn value_sender() {
+    test_value(
+        Value::Sender(ChannelCookie(UUID1)),
+        json!({ "sender": UUID1 }),
+    );
+}
+
+#[test]
+fn value_receiver() {
+    test_value(
+        Value::Receiver(ChannelCookie(UUID1)),
+        json!({ "receiver": UUID1 }),
+    );
+}
+
+#[test]
 fn message_connect() {
     test_message(
         Message::Connect(Connect { version: 0 }),
@@ -893,5 +909,182 @@ fn message_query_service_version_reply() {
             result: QueryServiceVersionResult::InvalidService,
         }),
         json!({"query-service-version-reply": {"serial": 0, "result": "invalid-service"}}),
+    );
+}
+
+#[test]
+fn message_create_channel() {
+    test_message(
+        Message::CreateChannel(CreateChannel {
+            serial: 0,
+            claim: ChannelEnd::Sender,
+        }),
+        json!({"create-channel": {"serial": 0, "claim": "sender"}}),
+    );
+    test_message(
+        Message::CreateChannel(CreateChannel {
+            serial: 1,
+            claim: ChannelEnd::Receiver,
+        }),
+        json!({"create-channel": {"serial": 1, "claim": "receiver"}}),
+    );
+}
+
+#[test]
+fn message_create_channel_reply() {
+    test_message(
+        Message::CreateChannelReply(CreateChannelReply {
+            serial: 0,
+            cookie: ChannelCookie(UUID1),
+        }),
+        json!({"create-channel-reply": {"serial": 0, "cookie": UUID1}}),
+    );
+}
+
+#[test]
+fn message_destroy_channel_end() {
+    test_message(
+        Message::DestroyChannelEnd(DestroyChannelEnd {
+            serial: 0,
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Sender,
+        }),
+        json!({"destroy-channel-end": {"serial": 0, "cookie": UUID1, "end": "sender"}}),
+    );
+    test_message(
+        Message::DestroyChannelEnd(DestroyChannelEnd {
+            serial: 1,
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Receiver,
+        }),
+        json!({"destroy-channel-end": {"serial": 1, "cookie": UUID1, "end": "receiver"}}),
+    );
+}
+
+#[test]
+fn message_destroy_channel_end_reply() {
+    test_message(
+        Message::DestroyChannelEndReply(DestroyChannelEndReply {
+            serial: 0,
+            result: DestroyChannelEndResult::Ok,
+        }),
+        json!({"destroy-channel-end-reply": {"serial": 0, "result": "ok"}}),
+    );
+    test_message(
+        Message::DestroyChannelEndReply(DestroyChannelEndReply {
+            serial: 0,
+            result: DestroyChannelEndResult::InvalidChannel,
+        }),
+        json!({"destroy-channel-end-reply": {"serial": 0, "result": "invalid-channel"}}),
+    );
+    test_message(
+        Message::DestroyChannelEndReply(DestroyChannelEndReply {
+            serial: 0,
+            result: DestroyChannelEndResult::ForeignChannel,
+        }),
+        json!({"destroy-channel-end-reply": {"serial": 0, "result": "foreign-channel"}}),
+    );
+}
+
+#[test]
+fn message_channel_end_destroyed() {
+    test_message(
+        Message::ChannelEndDestroyed(ChannelEndDestroyed {
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Sender,
+        }),
+        json!({"channel-end-destroyed": {"cookie": UUID1, "end": "sender"}}),
+    );
+    test_message(
+        Message::ChannelEndDestroyed(ChannelEndDestroyed {
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Receiver,
+        }),
+        json!({"channel-end-destroyed": {"cookie": UUID1, "end": "receiver"}}),
+    );
+}
+
+#[test]
+fn message_claim_channel_end() {
+    test_message(
+        Message::ClaimChannelEnd(ClaimChannelEnd {
+            serial: 0,
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Sender,
+        }),
+        json!({"claim-channel-end": {"serial": 0, "cookie": UUID1, "end": "sender"}}),
+    );
+    test_message(
+        Message::ClaimChannelEnd(ClaimChannelEnd {
+            serial: 0,
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Receiver,
+        }),
+        json!({"claim-channel-end": {"serial": 0, "cookie": UUID1, "end": "receiver"}}),
+    );
+}
+
+#[test]
+fn message_claim_channel_end_reply() {
+    test_message(
+        Message::ClaimChannelEndReply(ClaimChannelEndReply {
+            serial: 0,
+            result: ClaimChannelEndResult::Ok,
+        }),
+        json!({"claim-channel-end-reply": {"serial": 0, "result": "ok"}}),
+    );
+    test_message(
+        Message::ClaimChannelEndReply(ClaimChannelEndReply {
+            serial: 0,
+            result: ClaimChannelEndResult::InvalidChannel,
+        }),
+        json!({"claim-channel-end-reply": {"serial": 0, "result": "invalid-channel"}}),
+    );
+    test_message(
+        Message::ClaimChannelEndReply(ClaimChannelEndReply {
+            serial: 0,
+            result: ClaimChannelEndResult::AlreadyClaimed,
+        }),
+        json!({"claim-channel-end-reply": {"serial": 0, "result": "already-claimed"}}),
+    );
+}
+
+#[test]
+fn message_channel_end_claimed() {
+    test_message(
+        Message::ChannelEndClaimed(ChannelEndClaimed {
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Sender,
+        }),
+        json!({"channel-end-claimed": {"cookie": UUID1, "end": "sender"}}),
+    );
+    test_message(
+        Message::ChannelEndClaimed(ChannelEndClaimed {
+            cookie: ChannelCookie(UUID1),
+            end: ChannelEnd::Receiver,
+        }),
+        json!({"channel-end-claimed": {"cookie": UUID1, "end": "receiver"}}),
+    );
+}
+
+#[test]
+fn message_send_item() {
+    test_message(
+        Message::SendItem(SendItem {
+            cookie: ChannelCookie(UUID1),
+            item: Value::U32(0),
+        }),
+        json!({"send-item": {"cookie": UUID1, "item": {"u32": 0}}}),
+    );
+}
+
+#[test]
+fn message_item_received() {
+    test_message(
+        Message::ItemReceived(ItemReceived {
+            cookie: ChannelCookie(UUID1),
+            item: Value::U32(0),
+        }),
+        json!({"item-received": {"cookie": UUID1, "item": {"u32": 0}}}),
     );
 }
