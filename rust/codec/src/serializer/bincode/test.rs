@@ -1462,6 +1462,482 @@ fn message_query_service_version_reply() {
 }
 
 #[test]
+fn message_create_channel() {
+    let m = Message::CreateChannel(CreateChannel {
+        serial: 0x12345678,
+        claim: ChannelEnd::Sender,
+    });
+    test_message_le(
+        &m,
+        &[
+            31, // CreateChannel
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Sender
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            31, // CreateChannel
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Sender
+        ],
+    );
+    let m = Message::CreateChannel(CreateChannel {
+        serial: 0x12345678,
+        claim: ChannelEnd::Receiver,
+    });
+    test_message_le(
+        &m,
+        &[
+            31, // CreateChannel
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // Receiver
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            31, // CreateChannel
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // Receiver
+        ],
+    );
+}
+
+#[test]
+fn message_create_channel_reply() {
+    let m = Message::CreateChannelReply(CreateChannelReply {
+        serial: 0x12345678,
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+    });
+    test_message_le(
+        &m,
+        &[
+            32, // CreateChannelReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            32, // CreateChannelReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+}
+
+#[test]
+fn message_destroy_channel_end() {
+    let m = Message::DestroyChannelEnd(DestroyChannelEnd {
+        serial: 0x12345678,
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Sender,
+    });
+    test_message_le(
+        &m,
+        &[
+            33, // DestroyChannelEnd
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            33, // DestroyChannelEnd
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    let m = Message::DestroyChannelEnd(DestroyChannelEnd {
+        serial: 0x12345678,
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Receiver,
+    });
+    test_message_le(
+        &m,
+        &[
+            33, // DestroyChannelEnd
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            33, // DestroyChannelEnd
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+}
+
+#[test]
+fn message_destroy_channel_end_reply() {
+    let m = Message::DestroyChannelEndReply(DestroyChannelEndReply {
+        serial: 0x12345678,
+        result: DestroyChannelEndResult::Ok,
+    });
+    test_message_le(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+        ],
+    );
+    let m = Message::DestroyChannelEndReply(DestroyChannelEndReply {
+        serial: 0x12345678,
+        result: DestroyChannelEndResult::InvalidChannel,
+    });
+    test_message_le(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidChannel
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidChannel
+        ],
+    );
+    let m = Message::DestroyChannelEndReply(DestroyChannelEndReply {
+        serial: 0x12345678,
+        result: DestroyChannelEndResult::ForeignChannel,
+    });
+    test_message_le(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // ForeignChannel
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            34, // DestroyChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // ForeignChannel
+        ],
+    );
+}
+
+#[test]
+fn message_channel_end_destroyed() {
+    let m = Message::ChannelEndDestroyed(ChannelEndDestroyed {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Sender,
+    });
+    test_message_le(
+        &m,
+        &[
+            35, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            35, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    let m = Message::ChannelEndDestroyed(ChannelEndDestroyed {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Receiver,
+    });
+    test_message_le(
+        &m,
+        &[
+            35, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            35, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+}
+
+#[test]
+fn message_claim_channel_end() {
+    let m = Message::ClaimChannelEnd(ClaimChannelEnd {
+        serial: 0x12345678,
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Sender,
+    });
+    test_message_le(
+        &m,
+        &[
+            36, // ClaimChannelEnd
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            36, // ClaimChannelEnd
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    let m = Message::ClaimChannelEnd(ClaimChannelEnd {
+        serial: 0x12345678,
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Receiver,
+    });
+    test_message_le(
+        &m,
+        &[
+            36, // ClaimChannelEnd
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            36, // ClaimChannelEnd
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            16,   // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+}
+
+#[test]
+fn message_claim_channel_end_reply() {
+    let m = Message::ClaimChannelEndReply(ClaimChannelEndReply {
+        serial: 0x12345678,
+        result: ClaimChannelEndResult::Ok,
+    });
+    test_message_le(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            0,    // Ok
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            0,    // Ok
+        ],
+    );
+    let m = Message::ClaimChannelEndReply(ClaimChannelEndReply {
+        serial: 0x12345678,
+        result: ClaimChannelEndResult::InvalidChannel,
+    });
+    test_message_le(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            1,    // InvalidChannel
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            1,    // InvalidChannel
+        ],
+    );
+    let m = Message::ClaimChannelEndReply(ClaimChannelEndReply {
+        serial: 0x12345678,
+        result: ClaimChannelEndResult::AlreadyClaimed,
+    });
+    test_message_le(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x78, 0x56, 0x34, 0x12, // serial
+            2,    // AlreadyClaimed
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            37, // ClaimChannelEndReply
+            252, 0x12, 0x34, 0x56, 0x78, // serial
+            2,    // AlreadyClaimed
+        ],
+    );
+}
+
+#[test]
+fn message_channel_end_claimed() {
+    let m = Message::ChannelEndClaimed(ChannelEndClaimed {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Sender,
+    });
+    test_message_le(
+        &m,
+        &[
+            38, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            38, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // Sender
+        ],
+    );
+    let m = Message::ChannelEndClaimed(ChannelEndClaimed {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        end: ChannelEnd::Receiver,
+    });
+    test_message_le(
+        &m,
+        &[
+            38, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            38, // ChannelEndClaimed
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            1,    // Receiver
+        ],
+    );
+}
+
+#[test]
+fn message_send_item() {
+    let m = Message::SendItem(SendItem {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        item: Value::None,
+    });
+    test_message_le(
+        &m,
+        &[
+            39, // SendItem
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // item
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            39, // SendItem
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // item
+        ],
+    );
+}
+
+#[test]
+fn message_item_received() {
+    let m = Message::ItemReceived(ItemReceived {
+        cookie: ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        item: Value::None,
+    });
+    test_message_le(
+        &m,
+        &[
+            40, // ItemReceived
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // item
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            40, // ItemReceived
+            16, // cookie length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+            0,    // item
+        ],
+    );
+}
+
+#[test]
 fn value_none() {
     let v = Value::None;
     test_value_le(
@@ -2724,6 +3200,52 @@ fn value_enum() {
             39, // Enum
             252, 0x12, 0x34, 0x56, 0x78, // variant
             0,    // value
+        ],
+    );
+}
+
+#[test]
+fn value_sender() {
+    let v = Value::Sender(ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")));
+    test_value_le(
+        &v,
+        &[
+            40, // Sender
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+    test_value_be(
+        &v,
+        &[
+            40, // Sender
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+}
+
+#[test]
+fn value_receiver() {
+    let v = Value::Receiver(ChannelCookie(uuid!("00112233-4455-6677-8899-aabbccddeeff")));
+    test_value_le(
+        &v,
+        &[
+            41, // Receiver
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
+        ],
+    );
+    test_value_be(
+        &v,
+        &[
+            41, // Receiver
+            16, // uuid length
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, // cookie
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, // cookie
         ],
     );
 }
