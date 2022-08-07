@@ -228,6 +228,12 @@ where
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
+            Message::CreateChannelReply(_msg) => todo!(),
+            Message::DestroyChannelEndReply(_msg) => todo!(),
+            Message::ChannelEndDestroyed(_msg) => todo!(),
+            Message::ClaimChannelEndReply(_msg) => todo!(),
+            Message::ChannelEndClaimed(_msg) => todo!(),
+            Message::ItemReceived(_msg) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -240,9 +246,11 @@ where
             | Message::SubscribeServices(_)
             | Message::UnsubscribeServices(())
             | Message::QueryObject(_)
-            | Message::QueryServiceVersion(_) => {
-                return Err(RunError::UnexpectedMessageReceived(msg))
-            }
+            | Message::QueryServiceVersion(_)
+            | Message::CreateChannel(_)
+            | Message::DestroyChannelEnd(_)
+            | Message::ClaimChannelEnd(_)
+            | Message::SendItem(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(()) => unreachable!(), // Handled in run.
         }

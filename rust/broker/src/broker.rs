@@ -377,6 +377,10 @@ impl Broker {
             Message::EmitEvent(req) => self.emit_event(state, req),
             Message::QueryObject(req) => self.query_object(id, req)?,
             Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
+            Message::CreateChannel(_req) => todo!(),
+            Message::DestroyChannelEnd(_req) => todo!(),
+            Message::ClaimChannelEnd(_req) => todo!(),
+            Message::SendItem(_req) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -392,7 +396,13 @@ impl Broker {
             | Message::ServiceDestroyedEvent(_)
             | Message::SubscribeEventReply(_)
             | Message::QueryObjectReply(_)
-            | Message::QueryServiceVersionReply(_) => return Err(()),
+            | Message::QueryServiceVersionReply(_)
+            | Message::CreateChannelReply(_)
+            | Message::DestroyChannelEndReply(_)
+            | Message::ChannelEndDestroyed(_)
+            | Message::ClaimChannelEndReply(_)
+            | Message::ChannelEndClaimed(_)
+            | Message::ItemReceived(_) => return Err(()),
 
             Message::Shutdown(()) => unreachable!(), // Handled by connection.
         }

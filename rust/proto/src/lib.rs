@@ -7,9 +7,11 @@ mod value;
 
 pub mod transport;
 
-pub use ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
+pub use ids::{
+    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
+};
 pub use message::*;
 pub use transport::{AsyncTransport, AsyncTransportExt};
 pub use value::{Bytes, ConversionError, FromValue, IntoValue, Value};
 
-pub const VERSION: u32 = 8;
+pub const VERSION: u32 = 9;

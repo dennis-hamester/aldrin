@@ -1,4 +1,6 @@
-use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
+use crate::ids::{
+    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
+};
 use crate::value::Value;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -39,6 +41,51 @@ pub enum Message {
     QueryObjectReply(QueryObjectReply),
     QueryServiceVersion(QueryServiceVersion),
     QueryServiceVersionReply(QueryServiceVersionReply),
+    CreateChannel(CreateChannel),
+    CreateChannelReply(CreateChannelReply),
+    DestroyChannelEnd(DestroyChannelEnd),
+    DestroyChannelEndReply(DestroyChannelEndReply),
+    ChannelEndDestroyed(ChannelEndDestroyed),
+    ClaimChannelEnd(ClaimChannelEnd),
+    ClaimChannelEndReply(ClaimChannelEndReply),
+    ChannelEndClaimed(ChannelEndClaimed),
+    SendItem(SendItem),
+    ItemReceived(ItemReceived),
+}
+
+/// Sending or receiving end of a channel.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub enum ChannelEnd {
+    /// Sending end of a channel.
+    Sender,
+
+    /// Receiving end of a channel.
+    Receiver,
+}
+
+impl ChannelEnd {
+    /// Returns the other end of the channel.
+    ///
+    /// This function maps [`Sender`](Self::Sender) to [`Receiver`](Self::Receiver) and vice versa.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::ChannelEnd;
+    /// assert_eq!(ChannelEnd::Sender.other(), ChannelEnd::Receiver);
+    /// assert_eq!(ChannelEnd::Receiver.other(), ChannelEnd::Sender);
+    /// ```
+    pub fn other(self) -> Self {
+        match self {
+            Self::Sender => Self::Receiver,
+            Self::Receiver => Self::Sender,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -545,4 +592,166 @@ impl QueryServiceVersionResult {
 pub struct QueryServiceVersionReply {
     pub serial: u32,
     pub result: QueryServiceVersionResult,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct CreateChannel {
+    pub serial: u32,
+    pub claim: ChannelEnd,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct CreateChannelReply {
+    pub serial: u32,
+    pub cookie: ChannelCookie,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct DestroyChannelEnd {
+    pub serial: u32,
+    pub cookie: ChannelCookie,
+    pub end: ChannelEnd,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub enum DestroyChannelEndResult {
+    Ok,
+    InvalidChannel,
+    ForeignChannel,
+}
+
+impl DestroyChannelEndResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            Self::Ok => true,
+            Self::InvalidChannel | Self::ForeignChannel => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct DestroyChannelEndReply {
+    pub serial: u32,
+    pub result: DestroyChannelEndResult,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ChannelEndDestroyed {
+    pub cookie: ChannelCookie,
+    pub end: ChannelEnd,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ClaimChannelEnd {
+    pub serial: u32,
+    pub cookie: ChannelCookie,
+    pub end: ChannelEnd,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub enum ClaimChannelEndResult {
+    Ok,
+    InvalidChannel,
+    AlreadyClaimed,
+}
+
+impl ClaimChannelEndResult {
+    pub fn is_ok(&self) -> bool {
+        match self {
+            Self::Ok => true,
+            Self::InvalidChannel | Self::AlreadyClaimed => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ClaimChannelEndReply {
+    pub serial: u32,
+    pub result: ClaimChannelEndResult,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ChannelEndClaimed {
+    pub cookie: ChannelCookie,
+    pub end: ChannelEnd,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct SendItem {
+    pub cookie: ChannelCookie,
+    pub item: Value,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct ItemReceived {
+    pub cookie: ChannelCookie,
+    pub item: Value,
 }

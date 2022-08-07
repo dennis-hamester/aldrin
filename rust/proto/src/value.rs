@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-use crate::{ObjectId, ServiceId};
+use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use std::collections::{HashMap, HashSet};
 use std::convert::Infallible;
 use std::error::Error;
@@ -57,6 +57,8 @@ pub enum Value {
     UuidSet(HashSet<Uuid>),
     Struct(HashMap<u32, Value>),
     Enum { variant: u32, value: Box<Value> },
+    Sender(ChannelCookie),
+    Receiver(ChannelCookie),
 }
 
 impl Value {

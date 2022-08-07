@@ -337,3 +337,61 @@ impl fmt::Display for ServiceCookie {
         self.0.fmt(f)
     }
 }
+
+/// Cookie of a channel.
+///
+/// [`ChannelCookie`s](Self) are chosen by the broker when creating a channel.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[repr(transparent)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
+pub struct ChannelCookie(pub Uuid);
+
+impl ChannelCookie {
+    /// Creates a [`ChannelCookie`] with a random v4 UUID.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::ChannelCookie;
+    /// let channel_cookie = ChannelCookie::new_v4();
+    /// ```
+    #[cfg(feature = "new-v4-ids")]
+    pub fn new_v4() -> Self {
+        ChannelCookie(Uuid::new_v4())
+    }
+
+    /// Creates a [`ChannelCookie`] from an unsigned 128bit value in big-endian order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::ChannelCookie;
+    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
+    /// let channel_cookie = ChannelCookie::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
+    /// ```
+    pub const fn from_u128(uuid: u128) -> Self {
+        ChannelCookie(Uuid::from_u128(uuid))
+    }
+}
+
+impl From<Uuid> for ChannelCookie {
+    fn from(cookie: Uuid) -> Self {
+        ChannelCookie(cookie)
+    }
+}
+
+impl From<ChannelCookie> for Uuid {
+    fn from(cookie: ChannelCookie) -> Self {
+        cookie.0
+    }
+}
+
+impl fmt::Display for ChannelCookie {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
