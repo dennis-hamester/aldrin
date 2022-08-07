@@ -172,6 +172,8 @@ impl Expected {
             Expected::Keyword("i8"),
             Expected::Keyword("map"),
             Expected::Keyword("object_id"),
+            Expected::Keyword("receiver"),
+            Expected::Keyword("sender"),
             Expected::Keyword("service_id"),
             Expected::Keyword("set"),
             Expected::Keyword("string"),

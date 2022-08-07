@@ -1,0 +1,25 @@
+service Channels {
+    uuid = 442a083b-fe97-4046-9972-13f63545812c;
+    version = 0;
+
+    fn fn1 @ 1 {
+        args = struct {
+            send @ 1 = sender<u32>;
+            recv @ 2 = receiver<u32>;
+        }
+
+        ok = sender<u32>;
+
+        err = receiver<u32>;
+    }
+}
+
+struct S1 {
+    send @ 1 = sender<u32>;
+    recv @ 2 = receiver<u32>;
+}
+
+enum E1 {
+    Send @ 1 = sender<S1>;
+    Recv @ 2 = receiver<S1>;
+}

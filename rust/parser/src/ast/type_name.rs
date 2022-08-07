@@ -59,6 +59,8 @@ pub enum TypeNameKind {
     Bytes,
     Map(KeyTypeName, Box<TypeName>),
     Set(KeyTypeName),
+    Sender(Box<TypeName>),
+    Receiver(Box<TypeName>),
     Extern(SchemaName, Ident),
     Intern(Ident),
 }
@@ -108,6 +110,20 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Set(KeyTypeName::parse(pair))
+            }
+            Rule::sender_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip <.
+                let pair = pairs.next().unwrap();
+                TypeNameKind::Sender(Box::new(TypeName::parse(pair)))
+            }
+            Rule::receiver_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip <.
+                let pair = pairs.next().unwrap();
+                TypeNameKind::Receiver(Box::new(TypeName::parse(pair)))
             }
             Rule::external_type_name => {
                 let mut pairs = pair.into_inner();

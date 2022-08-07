@@ -1,6 +1,7 @@
-aldrin_client::generate!("test/test1.aldrin");
-aldrin_client::generate!("test/restore_value_on_error.aldrin");
+aldrin_client::generate!("test/channels.aldrin");
 aldrin_client::generate!("test/constants.aldrin");
+aldrin_client::generate!("test/restore_value_on_error.aldrin");
+aldrin_client::generate!("test/test1.aldrin");
 
 use aldrin_client::{Error, ObjectUuid};
 use aldrin_proto::{FromValue, Value};

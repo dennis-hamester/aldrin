@@ -66,6 +66,8 @@ kw_version = @{ "version" }
 kw_args = @{ "args" }
 kw_ok = @{ "ok" }
 kw_err = @{ "err" }
+kw_sender = @{ "sender" }
+kw_receiver = @{ "receiver" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -73,6 +75,8 @@ schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 vec_type = { kw_vec ~ tok_ang_open ~ type_name ~ tok_ang_close }
 map_type = { kw_map ~ tok_ang_open ~ key_type_name ~ tok_arrow ~ type_name ~ tok_ang_close }
 set_type = { kw_set ~ tok_ang_open ~ key_type_name ~ tok_ang_close }
+sender_type = { kw_sender ~ tok_ang_open ~ type_name ~ tok_ang_close }
+receiver_type = { kw_receiver ~ tok_ang_open ~ type_name ~ tok_ang_close }
 external_type_name = { schema_name ~ tok_scope ~ ident }
 
 key_type_name = {
@@ -108,6 +112,8 @@ type_name = {
     | kw_bytes
     | map_type
     | set_type
+    | sender_type
+    | receiver_type
     | external_type_name
     | ident
 }

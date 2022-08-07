@@ -1078,6 +1078,10 @@ fn type_name(ty: &ast::TypeName) -> String {
             type_name(v)
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
+        ast::TypeNameKind::Sender(ty) => format!("aldrin_client::UnboundSender<{}>", type_name(ty)),
+        ast::TypeNameKind::Receiver(ty) => {
+            format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
+        }
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }
