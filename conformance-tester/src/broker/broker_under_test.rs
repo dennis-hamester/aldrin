@@ -5,7 +5,10 @@ use aldrin_codec::packetizer::NewlineTerminated;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
-use aldrin_proto::{AsyncTransport, AsyncTransportExt, Connect, ConnectReply, Message, VERSION};
+use aldrin_proto::{
+    AsyncTransport, AsyncTransportExt, ChannelCookie, ChannelEnd, Connect, ConnectReply,
+    CreateChannel, Message, VERSION,
+};
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};
@@ -185,6 +188,42 @@ impl Client {
     pub async fn receive(&mut self) -> Result<Message> {
         let msg = self.transport.receive().await?;
         Ok(msg)
+    }
+
+    pub async fn create_channel(
+        &mut self,
+        serial: u32,
+        claim: ChannelEnd,
+    ) -> Result<ChannelCookie> {
+        self.send(Message::CreateChannel(CreateChannel { serial, claim }))
+            .await
+            .with_context(|| anyhow!("failed to send create-channel message to broker"))?;
+
+        let msg = self
+            .receive()
+            .await
+            .with_context(|| anyhow!("failed to receive create-channel-reply message"))?;
+
+        if let Message::CreateChannelReply(msg) = msg {
+            if msg.serial != serial {
+                Err(anyhow!(
+                    "create-channel-reply received with serial {} but expected {}",
+                    msg.serial,
+                    serial
+                ))
+            } else if msg.cookie.0.is_nil() {
+                Err(anyhow!(
+                    "create-channel-reply received with nil channel cookie"
+                ))
+            } else {
+                Ok(msg.cookie)
+            }
+        } else {
+            Err(anyhow!(
+                "expected create-channel-reply message but received {}",
+                serde_json::to_string(&msg).unwrap()
+            ))
+        }
     }
 }
 

@@ -84,6 +84,8 @@ pub enum MessageType {
     Connect,
     ConnectReply,
     Shutdown,
+    CreateChannel,
+    CreateChannelReply,
 }
 
 impl fmt::Display for MessageType {
@@ -92,6 +94,8 @@ impl fmt::Display for MessageType {
             Self::Connect => f.pad("connect"),
             Self::ConnectReply => f.pad("connect-reply"),
             Self::Shutdown => f.pad("shutdown"),
+            Self::CreateChannel => f.pad("create-channel"),
+            Self::CreateChannelReply => f.pad("create-channel-reply"),
         }
     }
 }
@@ -104,6 +108,8 @@ impl FromStr for MessageType {
             "connect" => Ok(Self::Connect),
             "connect-reply" => Ok(Self::ConnectReply),
             "shutdown" => Ok(Self::Shutdown),
+            "create-channel" => Ok(Self::CreateChannel),
+            "create-channel-reply" => Ok(Self::CreateChannelReply),
             _ => Err(anyhow!("invalid message")),
         }
     }

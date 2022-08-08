@@ -1,5 +1,7 @@
 mod connect_ok;
 mod connect_version_mismatch;
+mod create_channel_with_claimed_receiver;
+mod create_channel_with_claimed_sender;
 mod shutdown_by_broker;
 mod shutdown_by_client;
 
@@ -14,6 +16,8 @@ pub fn make_tests() -> Vec<BrokerTest> {
     vec![
         connect_ok::make_test(),
         connect_version_mismatch::make_test(),
+        create_channel_with_claimed_receiver::make_test(),
+        create_channel_with_claimed_sender::make_test(),
         shutdown_by_broker::make_test(),
         shutdown_by_client::make_test(),
     ]
