@@ -1,3 +1,4 @@
+mod channel;
 mod conn_state;
 mod error;
 mod handle;
