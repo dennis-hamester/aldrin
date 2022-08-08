@@ -14,16 +14,20 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::{
-    CallFunction, CallFunctionReply, CallFunctionResult, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, Message, ObjectCookie, ObjectCreatedEvent,
-    ObjectDestroyedEvent, ObjectId, ObjectUuid, QueryObject, QueryObjectReply, QueryObjectResult,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult, ServiceCookie,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelCookie, ChannelEnd,
+    ChannelEndClaimed, ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
+    DestroyChannelEndReply, DestroyChannelEndResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message, ObjectCookie, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId,
+    ObjectUuid, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCookie,
     ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
     SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
 };
+use channel::Channel;
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
@@ -102,6 +106,7 @@ pub struct Broker {
     svc_uuids: HashMap<ServiceCookie, (ObjectId, ServiceUuid, u32)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
     function_calls: SerialMap<PendingFunctionCall>,
+    channels: HashMap<ChannelCookie, Channel>,
     #[cfg(feature = "statistics")]
     statistics: BrokerStatistics,
 }
@@ -123,6 +128,7 @@ impl Broker {
             svc_uuids: HashMap::new(),
             svcs: HashMap::new(),
             function_calls: SerialMap::new(),
+            channels: HashMap::new(),
             #[cfg(feature = "statistics")]
             statistics: BrokerStatistics::new(),
         }
@@ -349,6 +355,14 @@ impl Broker {
             self.remove_subscription(state, id, svc_cookie, event);
         }
 
+        for chann_cookie in conn.senders() {
+            self.remove_channel_end(state, id, chann_cookie, ChannelEnd::Sender, true);
+        }
+
+        for chann_cookie in conn.receivers() {
+            self.remove_channel_end(state, id, chann_cookie, ChannelEnd::Receiver, true);
+        }
+
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_connections -= 1;
@@ -378,10 +392,10 @@ impl Broker {
             Message::EmitEvent(req) => self.emit_event(state, req),
             Message::QueryObject(req) => self.query_object(id, req)?,
             Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
-            Message::CreateChannel(_req) => todo!(),
-            Message::DestroyChannelEnd(_req) => todo!(),
-            Message::ClaimChannelEnd(_req) => todo!(),
-            Message::SendItem(_req) => todo!(),
+            Message::CreateChannel(req) => self.create_channel(id, req)?,
+            Message::DestroyChannelEnd(req) => self.destroy_channel_end(state, id, req)?,
+            Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
+            Message::SendItem(req) => self.send_item(state, id, req),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1026,6 +1040,183 @@ impl Broker {
         Ok(())
     }
 
+    fn create_channel(&mut self, id: &ConnectionId, req: CreateChannel) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        let cookie = ChannelCookie::new_v4();
+
+        let channel = match req.claim {
+            ChannelEnd::Sender => {
+                conn.add_sender(cookie);
+                Channel::with_claimed_sender(id.clone())
+            }
+
+            ChannelEnd::Receiver => {
+                conn.add_receiver(cookie);
+                Channel::with_claimed_receiver(id.clone())
+            }
+        };
+
+        self.channels.insert(cookie, channel);
+
+        send!(
+            self,
+            conn,
+            Message::CreateChannelReply(CreateChannelReply {
+                serial: req.serial,
+                cookie,
+            })
+        )?;
+
+        Ok(())
+    }
+
+    fn destroy_channel_end(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: DestroyChannelEnd,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        let channel = match self.channels.get(&req.cookie) {
+            Some(channel) => channel,
+            None => {
+                send!(
+                    self,
+                    conn,
+                    Message::DestroyChannelEndReply(DestroyChannelEndReply {
+                        serial: req.serial,
+                        result: DestroyChannelEndResult::InvalidChannel,
+                    })
+                )?;
+                return Ok(());
+            }
+        };
+
+        let (result, claimed) = channel.check_destroy(id, req.end);
+        send!(
+            self,
+            conn,
+            Message::DestroyChannelEndReply(DestroyChannelEndReply {
+                serial: req.serial,
+                result,
+            })
+        )?;
+
+        if result.is_ok() {
+            self.remove_channel_end(state, id, req.cookie, req.end, claimed);
+        }
+
+        Ok(())
+    }
+
+    fn claim_channel_end(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: ClaimChannelEnd,
+    ) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        let channel = match self.channels.get_mut(&req.cookie) {
+            Some(channel) => channel,
+            None => {
+                send!(
+                    self,
+                    conn,
+                    Message::ClaimChannelEndReply(ClaimChannelEndReply {
+                        serial: req.serial,
+                        result: ClaimChannelEndResult::InvalidChannel,
+                    })
+                )?;
+                return Ok(());
+            }
+        };
+
+        match channel.claim(id, req.end) {
+            Ok(other_id) => {
+                match req.end {
+                    ChannelEnd::Sender => conn.add_sender(req.cookie),
+                    ChannelEnd::Receiver => conn.add_receiver(req.cookie),
+                }
+
+                let result = send!(
+                    self,
+                    conn,
+                    Message::ClaimChannelEndReply(ClaimChannelEndReply {
+                        serial: req.serial,
+                        result: ClaimChannelEndResult::Ok,
+                    })
+                );
+
+                let other = self.conns.get_mut(other_id).expect("inconsistent state");
+
+                let other_result = send!(
+                    self,
+                    other,
+                    Message::ChannelEndClaimed(ChannelEndClaimed {
+                        cookie: req.cookie,
+                        end: req.end,
+                    })
+                );
+
+                if other_result.is_err() {
+                    state.push_remove_conn(other_id.clone());
+                }
+
+                result
+            }
+
+            Err(result) => send!(
+                self,
+                conn,
+                Message::ClaimChannelEndReply(ClaimChannelEndReply {
+                    serial: req.serial,
+                    result,
+                })
+            ),
+        }
+    }
+
+    fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) {
+        let receiver_id = match self
+            .channels
+            .get(&req.cookie)
+            .and_then(|c| c.check_send(id))
+        {
+            Some(receiver_id) => receiver_id,
+            None => return,
+        };
+
+        let receiver = match self.conns.get(receiver_id) {
+            Some(receiver) => receiver,
+            None => return,
+        };
+
+        let res = send!(
+            self,
+            receiver,
+            Message::ItemReceived(ItemReceived {
+                cookie: req.cookie,
+                item: req.item,
+            })
+        );
+
+        if res.is_err() {
+            state.push_remove_conn(receiver_id.clone());
+        }
+    }
+
     /// Removes the object `obj_cookie` and queues up events in `state`.
     ///
     /// This function will also remove all services owned by that object as well as everything
@@ -1135,6 +1326,55 @@ impl Broker {
         if svc.remove_subscription(event, conn_id) {
             let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
             state.push_unsubscribe(obj.conn_id().clone(), svc_cookie, event);
+        }
+    }
+
+    /// Removes a channel end and may notify the other side. Possibly also removes the entire
+    /// channel.
+    fn remove_channel_end(
+        &mut self,
+        state: &mut State,
+        conn_id: &ConnectionId,
+        cookie: ChannelCookie,
+        end: ChannelEnd,
+        claimed: bool,
+    ) {
+        let mut channel = match self.channels.entry(cookie) {
+            Entry::Occupied(channel) => channel,
+            Entry::Vacant(_) => return,
+        };
+
+        if claimed {
+            if let Some(conn) = self.conns.get_mut(conn_id) {
+                match end {
+                    ChannelEnd::Sender => conn.remove_sender(cookie),
+                    ChannelEnd::Receiver => conn.remove_receiver(cookie),
+                }
+            }
+        }
+
+        match channel.get_mut().destroy(end) {
+            Some(other_id) => match self.conns.get(other_id) {
+                Some(other) => {
+                    let res = send!(
+                        self,
+                        other,
+                        Message::ChannelEndDestroyed(ChannelEndDestroyed { cookie, end })
+                    );
+
+                    if res.is_err() {
+                        state.push_remove_conn(other_id.clone());
+                    }
+                }
+
+                None => {
+                    channel.remove();
+                }
+            },
+
+            None => {
+                channel.remove();
+            }
         }
     }
 }
