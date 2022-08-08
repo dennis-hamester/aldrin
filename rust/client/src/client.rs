@@ -1,24 +1,27 @@
 use crate::error::{ConnectError, RunError};
 use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
-    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
-    QueryObjectRequest, QueryObjectRequestReply, QueryServiceVersionRequest, SubscribeEventRequest,
-    SubscribeObjectsRequest, SubscribeServicesRequest, UnsubscribeEventRequest,
+    CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
+    CreateClaimedReceiverRequest, CreateClaimedSenderRequest, CreateObjectRequest,
+    CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest, DestroyServiceRequest,
+    EmitEventRequest, HandleRequest, QueryObjectRequest, QueryObjectRequestReply,
+    QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
+    SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,
-    Connect, ConnectReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
-    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    ChannelCookie, ChannelEnd, ClaimChannelEnd, Connect, ConnectReply, CreateChannel, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    DestroyChannelEnd, DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService,
+    DestroyServiceReply, DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent,
+    ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply, QueryObjectResult,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult, SendItem,
     ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
     SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
+    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -71,6 +74,11 @@ where
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
     query_object: SerialMap<QueryObjectData>,
     query_service_version: SerialMap<oneshot::Sender<QueryServiceVersionResult>>,
+    create_channel: SerialMap<CreateChannelData>,
+    destroy_channel_end: SerialMap<DestroyChannelEndRequest>,
+    claim_channel_end: SerialMap<ClaimChannelEndData>,
+    senders: HashMap<ChannelCookie, SenderState>,
+    receivers: HashMap<ChannelCookie, ReceiverState>,
 }
 
 impl<T> Client<T>
@@ -145,6 +153,11 @@ where
             broker_subscriptions: HashMap::new(),
             query_object: SerialMap::new(),
             query_service_version: SerialMap::new(),
+            create_channel: SerialMap::new(),
+            destroy_channel_end: SerialMap::new(),
+            claim_channel_end: SerialMap::new(),
+            senders: HashMap::new(),
+            receivers: HashMap::new(),
         })
     }
 
@@ -671,12 +684,14 @@ where
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
             HandleRequest::QueryObject(req) => self.req_query_object(req).await?,
             HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await?,
-            HandleRequest::CreateClaimedSender(_req) => todo!(),
-            HandleRequest::CreateClaimedReceiver(_req) => todo!(),
-            HandleRequest::DestroyChannelEnd(_req) => todo!(),
-            HandleRequest::ClaimSender(_req) => todo!(),
-            HandleRequest::ClaimReceiver(_req) => todo!(),
-            HandleRequest::SendItem(_req) => todo!(),
+            HandleRequest::CreateClaimedSender(req) => self.req_create_claimed_sender(req).await?,
+            HandleRequest::CreateClaimedReceiver(req) => {
+                self.req_create_claimed_receiver(req).await?
+            }
+            HandleRequest::DestroyChannelEnd(req) => self.req_destroy_channel_end(req).await?,
+            HandleRequest::ClaimSender(req) => self.req_claim_sender(req).await?,
+            HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
+            HandleRequest::SendItem(req) => self.req_send_item(req).await?,
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -942,6 +957,105 @@ where
             .map_err(Into::into)
     }
 
+    async fn req_create_claimed_sender(
+        &mut self,
+        req: CreateClaimedSenderRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let serial = self.create_channel.insert(CreateChannelData::Sender(req));
+        self.t
+            .send_and_flush(Message::CreateChannel(CreateChannel {
+                serial,
+                claim: ChannelEnd::Sender,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_create_claimed_receiver(
+        &mut self,
+        req: CreateClaimedReceiverRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
+        self.t
+            .send_and_flush(Message::CreateChannel(CreateChannel {
+                serial,
+                claim: ChannelEnd::Receiver,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_destroy_channel_end(
+        &mut self,
+        req: DestroyChannelEndRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+        let end = req.end;
+
+        let serial = self.destroy_channel_end.insert(req);
+
+        self.t
+            .send_and_flush(Message::DestroyChannelEnd(DestroyChannelEnd {
+                serial,
+                cookie,
+                end,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_claim_sender(
+        &mut self,
+        req: ClaimSenderRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+
+        let serial = self
+            .claim_channel_end
+            .insert(ClaimChannelEndData::Sender(req));
+
+        self.t
+            .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
+                serial,
+                cookie,
+                end: ChannelEnd::Sender,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_claim_receiver(
+        &mut self,
+        req: ClaimReceiverRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+
+        let serial = self
+            .claim_channel_end
+            .insert(ClaimChannelEndData::Receiver(req));
+
+        self.t
+            .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
+                serial,
+                cookie,
+                end: ChannelEnd::Receiver,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_send_item(&mut self, req: SendItemRequest) -> Result<(), RunError<T::Error>> {
+        debug_assert!(self.senders.contains_key(&req.cookie));
+
+        self.t
+            .send_and_flush(Message::SendItem(SendItem {
+                cookie: req.cookie,
+                item: req.item,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
     fn shutdown_all_events(&self) {
         for by_service in self.subscriptions.values() {
             for by_function in by_service.values() {
@@ -967,4 +1081,30 @@ struct QueryObjectData {
     id_reply: Option<oneshot::Sender<QueryObjectRequestReply>>,
     with_services: bool,
     svc_reply: Option<mpsc::UnboundedSender<(ServiceUuid, ServiceCookie)>>,
+}
+
+#[derive(Debug)]
+enum CreateChannelData {
+    Sender(CreateClaimedSenderRequest),
+    Receiver(CreateClaimedReceiverRequest),
+}
+
+#[derive(Debug)]
+enum ClaimChannelEndData {
+    Sender(ClaimSenderRequest),
+    Receiver(ClaimReceiverRequest),
+}
+
+#[derive(Debug)]
+enum SenderState {
+    Pending(oneshot::Sender<oneshot::Receiver<()>>),
+    Established(oneshot::Sender<()>),
+    ReceiverDestroyed,
+}
+
+#[derive(Debug)]
+enum ReceiverState {
+    Pending(oneshot::Sender<mpsc::UnboundedReceiver<Value>>),
+    Established(mpsc::UnboundedSender<Value>),
+    SenderDestroyed,
 }
