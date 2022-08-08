@@ -24,6 +24,7 @@ static STYLE_MESSAGE_TYPE: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::
 static STYLE_PASSED: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Green), true));
 static STYLE_FAILED: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), true));
 static STYLE_FAILED_DETAIL: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), false));
+static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Cyan), true));
 
 #[derive(Copy, Clone)]
 pub enum ColorChoice {
@@ -127,6 +128,14 @@ pub fn prepare_report(mut output: impl WriteColor, name: &str) -> Result<()> {
     Ok(())
 }
 
+fn print_seperator(mut output: impl WriteColor) -> Result<()> {
+    output.set_color(&STYLE_SEPARATOR)?;
+    write!(output, "|")?;
+    output.set_color(&STYLE_REGULAR)?;
+    write!(output, " ")?;
+    Ok(())
+}
+
 pub fn finish_report(mut output: impl WriteColor, res: Result<(), RunError>) -> Result<()> {
     let err = match res {
         Ok(()) => {
@@ -142,20 +151,36 @@ pub fn finish_report(mut output: impl WriteColor, res: Result<(), RunError>) -> 
     output.set_color(&STYLE_FAILED)?;
     writeln!(output, "failed")?;
 
+    print_seperator(&mut output)?;
     output.set_color(&STYLE_FAILED_DETAIL)?;
     write!(output, "Error")?;
     output.set_color(&STYLE_REGULAR)?;
-    writeln!(output, ": {:?}", err.error)?;
-    writeln!(output)?;
+    write!(output, ": ")?;
 
-    if !err.stderr.is_empty() {
-        output.set_color(&STYLE_FAILED_DETAIL)?;
-        write!(output, "Child's stderr")?;
-        output.set_color(&STYLE_REGULAR)?;
-        writeln!(output, ":")?;
-        writeln!(output, "{}", String::from_utf8_lossy(&err.stderr))?;
-        writeln!(output)?;
+    let error = format!("{:?}", err.error);
+    for (i, line) in error.lines().enumerate() {
+        if i > 0 {
+            print_seperator(&mut output)?;
+        }
+
+        writeln!(output, "{}", line)?;
     }
 
+    if !err.stderr.is_empty() {
+        print_seperator(&mut output)?;
+        writeln!(output)?;
+
+        print_seperator(&mut output)?;
+        write!(output, "Child's stderr")?;
+        writeln!(output, ":")?;
+
+        let stderr = String::from_utf8_lossy(&err.stderr);
+        for line in stderr.lines() {
+            print_seperator(&mut output)?;
+            writeln!(output, "    {}", line)?;
+        }
+    }
+
+    writeln!(output)?;
     Ok(())
 }
