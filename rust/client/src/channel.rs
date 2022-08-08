@@ -1,6 +1,6 @@
 use super::Handle;
 use crate::error::Error;
-use aldrin_proto::{ChannelCookie, ConversionError, FromValue, IntoValue, Value};
+use aldrin_proto::{ChannelCookie, ChannelEnd, ConversionError, FromValue, IntoValue, Value};
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
 use std::marker::PhantomData;
@@ -260,19 +260,21 @@ impl UnclaimedSenderInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Sender, false)
+            .await
     }
 
     async fn claim(mut self) -> Result<SenderInner, Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
-        todo!()
+        client.claim_sender(self.cookie).await
     }
 }
 
 impl Drop for UnclaimedSenderInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            todo!()
+            client.destroy_channel_end_now(self.cookie, ChannelEnd::Sender, false);
         }
     }
 }
@@ -394,7 +396,9 @@ impl PendingSenderInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .await
     }
 
     async fn established(mut self) -> Result<SenderInner, Error> {
@@ -412,7 +416,9 @@ impl PendingSenderInner {
 impl Drop for PendingSenderInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            todo!()
+            state
+                .client
+                .destroy_channel_end_now(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -520,25 +526,29 @@ impl SenderInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .await
     }
 
     fn send(&mut self, item: Value) -> Result<(), Error> {
         let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
 
-        todo!("send item");
+        state.client.send_item(self.cookie, item)?;
 
-        // match state.receiver_destroyed.try_recv() {
-        //     Ok(None) => Ok(()),
-        //     Ok(Some(())) | Err(_) => Err(Error::InvalidChannel),
-        // }
+        match state.receiver_destroyed.try_recv() {
+            Ok(None) => Ok(()),
+            Ok(Some(())) | Err(_) => Err(Error::InvalidChannel),
+        }
     }
 }
 
 impl Drop for SenderInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            todo!()
+            state
+                .client
+                .destroy_channel_end_now(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -798,19 +808,21 @@ impl UnclaimedReceiverInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, false)
+            .await
     }
 
     async fn claim(mut self) -> Result<ReceiverInner, Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
-        todo!()
+        client.claim_receiver(self.cookie).await
     }
 }
 
 impl Drop for UnclaimedReceiverInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            todo!()
+            client.destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, false);
         }
     }
 }
@@ -909,7 +921,9 @@ impl PendingReceiverInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .await
     }
 
     async fn established(mut self) -> Result<ReceiverInner, Error> {
@@ -927,7 +941,9 @@ impl PendingReceiverInner {
 impl Drop for PendingReceiverInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            todo!()
+            state
+                .client
+                .destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }
@@ -1008,14 +1024,18 @@ impl ReceiverInner {
 
     async fn destroy(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        todo!()
+        client
+            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .await
     }
 }
 
 impl Drop for ReceiverInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            todo!()
+            state
+                .client
+                .destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }
