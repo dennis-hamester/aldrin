@@ -1,14 +1,17 @@
 pub(crate) mod request;
 
+use crate::channel::{
+    PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
+};
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{
     Error, Events, Object, ObjectEvent, Objects, Service, ServiceEvent, Services, SubscribeMode,
 };
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, FromValue, IntoValue, ObjectCookie, ObjectId,
-    ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid,
-    SubscribeEventResult, Value,
+    CallFunctionResult, ChannelCookie, ChannelEnd, DestroyObjectResult, FromValue, IntoValue,
+    ObjectCookie, ObjectId, ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId,
+    ServiceUuid, SubscribeEventResult, Value,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -817,6 +820,120 @@ impl Handle {
             QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
             QueryServiceVersionResult::InvalidService => Ok(None),
         }
+    }
+
+    /// Creates a channel and automatically claims the sender.
+    ///
+    /// When creating a channel, one of the two end must be claimed immediately. This function
+    /// claims the sender. Use
+    /// [`create_channel_with_claimed_receiver`](Self::create_channel_with_claimed_receiver) to
+    /// claim the receiver instead.
+    ///
+    /// # Examples
+    ///
+    /// This example assumes that there are 2 clients, represented here by `handle1` and `handle2`.
+    ///
+    /// ```
+    /// # use aldrin_test::tokio_based::TestBroker;
+    /// use futures::StreamExt;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = TestBroker::new();
+    /// # let handle1 = broker.add_client().await;
+    /// # let handle2 = broker.add_client().await;
+    /// // Client 1 creates the channel. It then unbinds the receiver and makes it available to
+    /// // client 2. This will typically happen by returning it from a function call.
+    /// let (sender, receiver) = handle1.create_channel_with_claimed_sender::<u32>().await?;
+    /// let receiver = receiver.unbind();
+    ///
+    /// // Client 2 gets access to the receiver, and then binds and claims it.
+    /// let mut receiver = receiver.claim(handle2.clone()).await?;
+    ///
+    /// // Meanwhile, client 1 waits for the receiver to be claimed.
+    /// let mut sender = sender.established().await?;
+    ///
+    /// // The channel is now fully established and client 1 can send items to client 2.
+    /// sender.send(1)?;
+    /// sender.send(2)?;
+    /// sender.send(3)?;
+    ///
+    /// // Client 1 will destroy (or drop) the channel when it has nothing to send anymore.
+    /// sender.destroy().await?;
+    ///
+    /// // Client 2 receives all values in order. The Result in the return values can indicate
+    /// // conversion errors when an item isn't a u32.
+    /// assert_eq!(receiver.next().await, Some(Ok(1)));
+    /// assert_eq!(receiver.next().await, Some(Ok(2)));
+    /// assert_eq!(receiver.next().await, Some(Ok(3)));
+    ///
+    /// // Client 2 can observe that the sender has been destroyed by receiving None. It follows by
+    /// // also destroying (or dropping) the receiver.
+    /// assert_eq!(receiver.next().await, None);
+    /// receiver.destroy().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn create_channel_with_claimed_sender<T>(
+        &self,
+    ) -> Result<(PendingSender<T>, UnclaimedReceiver<T>), Error>
+    where
+        T: IntoValue + FromValue,
+    {
+        todo!()
+    }
+
+    /// Creates a channel and automatically claims the receiver.
+    ///
+    /// When creating a channel, one of the two end must be claimed immediately. This function
+    /// claims the receiver. Use
+    /// [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) to claim
+    /// the sender instead.
+    ///
+    /// # Examples
+    ///
+    /// See [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) for an
+    /// example.
+    pub async fn create_channel_with_claimed_receiver<T>(
+        &self,
+    ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error>
+    where
+        T: IntoValue + FromValue,
+    {
+        todo!()
+    }
+
+    pub(crate) async fn destroy_channel_end(
+        &self,
+        cookie: ChannelCookie,
+        end: ChannelEnd,
+        claimed: bool,
+    ) -> Result<(), Error> {
+        todo!()
+    }
+
+    pub(crate) fn destroy_channel_end_now(
+        &self,
+        cookie: ChannelCookie,
+        end: ChannelEnd,
+        claimed: bool,
+    ) {
+        todo!()
+    }
+
+    pub(crate) async fn claim_sender(&self, cookie: ChannelCookie) -> Result<SenderInner, Error> {
+        todo!()
+    }
+
+    pub(crate) async fn claim_receiver(
+        &self,
+        cookie: ChannelCookie,
+    ) -> Result<ReceiverInner, Error> {
+        todo!()
+    }
+
+    pub(crate) fn send_item(&self, cookie: ChannelCookie, item: Value) -> Result<(), Error> {
+        todo!()
     }
 }
 
