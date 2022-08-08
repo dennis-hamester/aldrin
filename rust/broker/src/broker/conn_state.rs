@@ -1,4 +1,4 @@
-use aldrin_proto::{Message, ObjectCookie, ServiceCookie};
+use aldrin_proto::{ChannelCookie, Message, ObjectCookie, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
@@ -12,6 +12,9 @@ pub(super) struct ConnectionState {
 
     /// Map of active subscriptions made by this connection.
     subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
+
+    senders: HashSet<ChannelCookie>,
+    receivers: HashSet<ChannelCookie>,
 }
 
 impl ConnectionState {
@@ -22,6 +25,8 @@ impl ConnectionState {
             objects_subscribed: false,
             services_subscribed: false,
             subscriptions: HashMap::new(),
+            senders: HashSet::new(),
+            receivers: HashSet::new(),
         }
     }
 
@@ -87,5 +92,33 @@ impl ConnectionState {
             .get(&svc_cookie)
             .map(|s| s.contains(&id))
             .unwrap_or(false)
+    }
+
+    pub fn add_sender(&mut self, cookie: ChannelCookie) {
+        let unique = self.senders.insert(cookie);
+        debug_assert!(unique);
+    }
+
+    pub fn remove_sender(&mut self, cookie: ChannelCookie) {
+        let contained = self.senders.remove(&cookie);
+        debug_assert!(contained);
+    }
+
+    pub fn senders(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+        self.senders.iter().copied()
+    }
+
+    pub fn add_receiver(&mut self, cookie: ChannelCookie) {
+        let unique = self.receivers.insert(cookie);
+        debug_assert!(unique);
+    }
+
+    pub fn remove_receiver(&mut self, cookie: ChannelCookie) {
+        let contained = self.receivers.remove(&cookie);
+        debug_assert!(contained);
+    }
+
+    pub fn receivers(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+        self.receivers.iter().copied()
     }
 }
