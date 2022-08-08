@@ -18,9 +18,10 @@ use futures_channel::oneshot;
 use futures_core::stream::{FusedStream, Stream};
 use futures_util::stream::StreamExt;
 use request::{
-    CallFunctionReplyRequest, CallFunctionRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest, HandleRequest,
-    QueryObjectRequest, QueryServiceVersionRequest, SubscribeEventRequest, SubscribeObjectsRequest,
+    CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest,
+    DestroyServiceRequest, EmitEventRequest, HandleRequest, QueryObjectRequest,
+    QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
     SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use std::fmt;
@@ -880,7 +881,14 @@ impl Handle {
     where
         T: IntoValue + FromValue,
     {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::CreateClaimedSender(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        let (sender, receiver) = recv.await.map_err(|_| Error::ClientShutdown)?;
+
+        Ok((PendingSender::new(sender), UnclaimedReceiver::new(receiver)))
     }
 
     /// Creates a channel and automatically claims the receiver.
@@ -900,7 +908,14 @@ impl Handle {
     where
         T: IntoValue + FromValue,
     {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::CreateClaimedReceiver(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        let (sender, receiver) = recv.await.map_err(|_| Error::ClientShutdown)?;
+
+        Ok((UnclaimedSender::new(sender), PendingReceiver::new(receiver)))
     }
 
     pub(crate) async fn destroy_channel_end(
@@ -909,7 +924,17 @@ impl Handle {
         end: ChannelEnd,
         claimed: bool,
     ) -> Result<(), Error> {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::DestroyChannelEnd(DestroyChannelEndRequest {
+                cookie,
+                end,
+                claimed,
+                reply,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
     pub(crate) fn destroy_channel_end_now(
@@ -918,22 +943,49 @@ impl Handle {
         end: ChannelEnd,
         claimed: bool,
     ) {
-        todo!()
+        let (reply, _) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::DestroyChannelEnd(DestroyChannelEndRequest {
+                cookie,
+                end,
+                claimed,
+                reply,
+            }))
+            .map_err(|_| Error::ClientShutdown)
+            .ok();
     }
 
     pub(crate) async fn claim_sender(&self, cookie: ChannelCookie) -> Result<SenderInner, Error> {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::ClaimSender(ClaimSenderRequest {
+                cookie,
+                reply,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
     pub(crate) async fn claim_receiver(
         &self,
         cookie: ChannelCookie,
     ) -> Result<ReceiverInner, Error> {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::ClaimReceiver(ClaimReceiverRequest {
+                cookie,
+                reply,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
     pub(crate) fn send_item(&self, cookie: ChannelCookie, item: Value) -> Result<(), Error> {
-        todo!()
+        self.send
+            .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, item }))
+            .map_err(|_| Error::ClientShutdown)
     }
 }
 
