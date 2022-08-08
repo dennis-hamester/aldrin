@@ -1,8 +1,13 @@
+use crate::channel::{
+    PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
+    UnclaimedSenderInner,
+};
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::{
-    CallFunctionResult, DestroyObjectResult, ObjectCookie, ObjectId, ObjectUuid,
-    QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid, SubscribeEventResult, Value,
+    CallFunctionResult, ChannelCookie, ChannelEnd, DestroyObjectResult, ObjectCookie, ObjectId,
+    ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid,
+    SubscribeEventResult, Value,
 };
 use futures_channel::{mpsc, oneshot};
 
@@ -24,6 +29,12 @@ pub(crate) enum HandleRequest {
     EmitEvent(EmitEventRequest),
     QueryObject(QueryObjectRequest),
     QueryServiceVersion(QueryServiceVersionRequest),
+    CreateClaimedSender(CreateClaimedSenderRequest),
+    CreateClaimedReceiver(CreateClaimedReceiverRequest),
+    DestroyChannelEnd(DestroyChannelEndRequest),
+    ClaimSender(ClaimSenderRequest),
+    ClaimReceiver(ClaimReceiverRequest),
+    SendItem(SendItemRequest),
 }
 
 #[derive(Debug)]
@@ -117,4 +128,36 @@ pub(crate) struct QueryObjectRequest {
 pub(crate) struct QueryServiceVersionRequest {
     pub cookie: ServiceCookie,
     pub reply: oneshot::Sender<QueryServiceVersionResult>,
+}
+
+pub(crate) type CreateClaimedSenderRequest =
+    oneshot::Sender<(PendingSenderInner, UnclaimedReceiverInner)>;
+
+pub(crate) type CreateClaimedReceiverRequest =
+    oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>;
+
+#[derive(Debug)]
+pub(crate) struct DestroyChannelEndRequest {
+    pub cookie: ChannelCookie,
+    pub end: ChannelEnd,
+    pub claimed: bool,
+    pub reply: oneshot::Sender<Result<(), Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct ClaimSenderRequest {
+    pub cookie: ChannelCookie,
+    pub reply: oneshot::Sender<Result<SenderInner, Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct ClaimReceiverRequest {
+    pub cookie: ChannelCookie,
+    pub reply: oneshot::Sender<Result<ReceiverInner, Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SendItemRequest {
+    pub cookie: ChannelCookie,
+    pub item: Value,
 }

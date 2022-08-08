@@ -671,6 +671,12 @@ where
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
             HandleRequest::QueryObject(req) => self.req_query_object(req).await?,
             HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await?,
+            HandleRequest::CreateClaimedSender(_req) => todo!(),
+            HandleRequest::CreateClaimedReceiver(_req) => todo!(),
+            HandleRequest::DestroyChannelEnd(_req) => todo!(),
+            HandleRequest::ClaimSender(_req) => todo!(),
+            HandleRequest::ClaimReceiver(_req) => todo!(),
+            HandleRequest::SendItem(_req) => todo!(),
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
