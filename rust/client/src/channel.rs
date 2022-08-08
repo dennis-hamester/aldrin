@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use super::Handle;
 use crate::error::Error;
 use aldrin_proto::{ChannelCookie, ChannelEnd, ConversionError, FromValue, IntoValue, Value};
