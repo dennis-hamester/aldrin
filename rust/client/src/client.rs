@@ -1,3 +1,7 @@
+use crate::channel::{
+    PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
+    UnclaimedSenderInner,
+};
 use crate::error::{ConnectError, RunError};
 use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
@@ -13,13 +17,15 @@ use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,
-    ChannelCookie, ChannelEnd, ClaimChannelEnd, Connect, ConnectReply, CreateChannel, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    DestroyChannelEnd, DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService,
-    DestroyServiceReply, DestroyServiceResult, EmitEvent, Message, ObjectCreatedEvent,
-    ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply, QueryObjectResult,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult, SendItem,
-    ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
+    ChannelCookie, ChannelEnd, ChannelEndClaimed, ChannelEndDestroyed, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, Connect, ConnectReply, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, DestroyChannelEnd, DestroyChannelEndReply,
+    DestroyChannelEndResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
+    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, ItemReceived, Message,
+    ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
+    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    SendItem, ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
     SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
     SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
 };
@@ -28,6 +34,7 @@ use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::mem;
 
 type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<EventsRequest>>>;
 
@@ -241,12 +248,12 @@ where
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
-            Message::CreateChannelReply(_msg) => todo!(),
-            Message::DestroyChannelEndReply(_msg) => todo!(),
-            Message::ChannelEndDestroyed(_msg) => todo!(),
-            Message::ClaimChannelEndReply(_msg) => todo!(),
-            Message::ChannelEndClaimed(_msg) => todo!(),
-            Message::ItemReceived(_msg) => todo!(),
+            Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
+            Message::DestroyChannelEndReply(msg) => self.msg_destroy_channel_end_reply(msg)?,
+            Message::ChannelEndDestroyed(msg) => self.msg_channel_end_destroyed(msg)?,
+            Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
+            Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
+            Message::ItemReceived(msg) => self.msg_item_received(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -664,6 +671,235 @@ where
     fn msg_query_service_version_reply(&mut self, msg: QueryServiceVersionReply) {
         if let Some(send) = self.query_service_version.remove(msg.serial) {
             send.send(msg.result).ok();
+        }
+    }
+
+    fn msg_create_channel_reply(
+        &mut self,
+        msg: CreateChannelReply,
+    ) -> Result<(), RunError<T::Error>> {
+        match self.create_channel.remove(msg.serial) {
+            Some(CreateChannelData::Sender(reply)) => {
+                let (send, recv) = oneshot::channel();
+                let sender = PendingSenderInner::new(msg.cookie, self.handle.clone(), recv);
+                let receiver = UnclaimedReceiverInner::new(msg.cookie, self.handle.clone());
+                let dup = self.senders.insert(msg.cookie, SenderState::Pending(send));
+                debug_assert!(dup.is_none());
+                reply.send((sender, receiver)).ok();
+                Ok(())
+            }
+
+            Some(CreateChannelData::Receiver(reply)) => {
+                let (send, recv) = oneshot::channel();
+                let sender = UnclaimedSenderInner::new(msg.cookie, self.handle.clone());
+                let receiver = PendingReceiverInner::new(msg.cookie, self.handle.clone(), recv);
+                let dup = self
+                    .receivers
+                    .insert(msg.cookie, ReceiverState::Pending(send));
+                debug_assert!(dup.is_none());
+                reply.send((sender, receiver)).ok();
+                Ok(())
+            }
+
+            None => Err(RunError::UnexpectedMessageReceived(
+                Message::CreateChannelReply(msg),
+            )),
+        }
+    }
+
+    fn msg_destroy_channel_end_reply(
+        &mut self,
+        msg: DestroyChannelEndReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let req = match self.destroy_channel_end.remove(msg.serial) {
+            Some(req) => req,
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::DestroyChannelEndReply(msg),
+                ))
+            }
+        };
+
+        if req.claimed {
+            match req.end {
+                ChannelEnd::Sender => {
+                    let contained = self.senders.remove(&req.cookie);
+                    debug_assert!(contained.is_some());
+                }
+
+                ChannelEnd::Receiver => {
+                    let contained = self.receivers.remove(&req.cookie);
+                    debug_assert!(contained.is_some());
+                }
+            }
+        }
+
+        let res = match msg.result {
+            DestroyChannelEndResult::Ok => Ok(()),
+            DestroyChannelEndResult::InvalidChannel => Err(Error::InvalidChannel),
+            DestroyChannelEndResult::ForeignChannel => Err(Error::ForeignChannel),
+        };
+
+        req.reply.send(res).ok();
+        Ok(())
+    }
+
+    fn msg_channel_end_destroyed(
+        &mut self,
+        msg: ChannelEndDestroyed,
+    ) -> Result<(), RunError<T::Error>> {
+        match msg.end {
+            ChannelEnd::Sender => {
+                let receiver = self
+                    .receivers
+                    .get_mut(&msg.cookie)
+                    .map(|receiver| mem::replace(receiver, ReceiverState::SenderDestroyed));
+
+                match receiver {
+                    Some(ReceiverState::Pending(_)) | Some(ReceiverState::Established(_)) => Ok(()),
+                    Some(ReceiverState::SenderDestroyed) | None => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndDestroyed(msg)),
+                    ),
+                }
+            }
+
+            ChannelEnd::Receiver => {
+                let sender = self
+                    .senders
+                    .get_mut(&msg.cookie)
+                    .map(|sender| mem::replace(sender, SenderState::ReceiverDestroyed));
+
+                match sender {
+                    Some(SenderState::Pending(_)) | Some(SenderState::Established(_)) => Ok(()),
+                    Some(SenderState::ReceiverDestroyed) | None => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndDestroyed(msg)),
+                    ),
+                }
+            }
+        }
+    }
+
+    fn msg_claim_channel_end_reply(
+        &mut self,
+        msg: ClaimChannelEndReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let req = match self.claim_channel_end.remove(msg.serial) {
+            Some(req) => req,
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::ClaimChannelEndReply(msg),
+                ))
+            }
+        };
+
+        match req {
+            ClaimChannelEndData::Sender(req) => match msg.result {
+                ClaimChannelEndResult::Ok => {
+                    let (send, recv) = oneshot::channel();
+                    let dup = self
+                        .senders
+                        .insert(req.cookie, SenderState::Established(send));
+                    debug_assert!(dup.is_none());
+                    let sender = SenderInner::new(req.cookie, self.handle.clone(), recv);
+                    req.reply.send(Ok(sender)).ok();
+                }
+
+                ClaimChannelEndResult::InvalidChannel => {
+                    req.reply.send(Err(Error::InvalidChannel)).ok();
+                }
+
+                ClaimChannelEndResult::AlreadyClaimed => {
+                    req.reply.send(Err(Error::ForeignChannel)).ok();
+                }
+            },
+
+            ClaimChannelEndData::Receiver(req) => match msg.result {
+                ClaimChannelEndResult::Ok => {
+                    let (send, recv) = mpsc::unbounded();
+                    let dup = self
+                        .receivers
+                        .insert(req.cookie, ReceiverState::Established(send));
+                    debug_assert!(dup.is_none());
+                    let receiver = ReceiverInner::new(req.cookie, self.handle.clone(), recv);
+                    req.reply.send(Ok(receiver)).ok();
+                }
+
+                ClaimChannelEndResult::InvalidChannel => {
+                    req.reply.send(Err(Error::InvalidChannel)).ok();
+                }
+
+                ClaimChannelEndResult::AlreadyClaimed => {
+                    req.reply.send(Err(Error::ForeignChannel)).ok();
+                }
+            },
+        }
+
+        Ok(())
+    }
+
+    fn msg_channel_end_claimed(
+        &mut self,
+        msg: ChannelEndClaimed,
+    ) -> Result<(), RunError<T::Error>> {
+        match msg.end {
+            ChannelEnd::Sender => {
+                let receiver = match self.receivers.get_mut(&msg.cookie) {
+                    Some(receiver) => receiver,
+                    None => {
+                        return Err(RunError::UnexpectedMessageReceived(
+                            Message::ChannelEndClaimed(msg),
+                        ))
+                    }
+                };
+
+                let (send, recv) = mpsc::unbounded();
+
+                match mem::replace(receiver, ReceiverState::Established(send)) {
+                    ReceiverState::Pending(send) => {
+                        send.send(recv).ok();
+                        Ok(())
+                    }
+
+                    ReceiverState::Established(_) | ReceiverState::SenderDestroyed => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
+                    ),
+                }
+            }
+
+            ChannelEnd::Receiver => {
+                let sender = match self.senders.get_mut(&msg.cookie) {
+                    Some(sender) => sender,
+                    None => {
+                        return Err(RunError::UnexpectedMessageReceived(
+                            Message::ChannelEndClaimed(msg),
+                        ))
+                    }
+                };
+
+                let (send, recv) = oneshot::channel();
+
+                match mem::replace(sender, SenderState::Established(send)) {
+                    SenderState::Pending(send) => {
+                        send.send(recv).ok();
+                        Ok(())
+                    }
+
+                    SenderState::Established(_) | SenderState::ReceiverDestroyed => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
+                    ),
+                }
+            }
+        }
+    }
+
+    fn msg_item_received(&self, msg: ItemReceived) -> Result<(), RunError<T::Error>> {
+        if let Some(ReceiverState::Established(send)) = self.receivers.get(&msg.cookie) {
+            send.unbounded_send(msg.item).ok();
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(Message::ItemReceived(
+                msg,
+            )))
         }
     }
 
