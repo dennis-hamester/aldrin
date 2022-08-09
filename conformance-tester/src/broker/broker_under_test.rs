@@ -7,7 +7,7 @@ use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, ChannelCookie, ChannelEnd, Connect, ConnectReply,
-    CreateChannel, Message, VERSION,
+    CreateChannel, DestroyChannelEnd, DestroyChannelEndResult, Message, VERSION,
 };
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
@@ -221,6 +221,43 @@ impl Client {
         } else {
             Err(anyhow!(
                 "expected create-channel-reply message but received {}",
+                serde_json::to_string(&msg).unwrap()
+            ))
+        }
+    }
+
+    pub async fn send_destroy_channel_end(
+        &mut self,
+        serial: u32,
+        cookie: ChannelCookie,
+        end: ChannelEnd,
+    ) -> Result<DestroyChannelEndResult> {
+        self.send(Message::DestroyChannelEnd(DestroyChannelEnd {
+            serial,
+            cookie,
+            end,
+        }))
+        .await
+        .with_context(|| anyhow!("failed to send destroy-channel-end message to broker"))?;
+
+        let msg = self
+            .receive()
+            .await
+            .with_context(|| anyhow!("failed to receive destroy-channel-end-reply message"))?;
+
+        if let Message::DestroyChannelEndReply(msg) = msg {
+            if msg.serial == serial {
+                Ok(msg.result)
+            } else {
+                Err(anyhow!(
+                    "destroy-channel-end-reply received with serial {} but expected {}",
+                    msg.serial,
+                    serial
+                ))
+            }
+        } else {
+            Err(anyhow!(
+                "expected destroy-channel-end-reply message but received {}",
                 serde_json::to_string(&msg).unwrap()
             ))
         }

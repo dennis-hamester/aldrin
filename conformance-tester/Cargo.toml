@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 aldrin-codec = { version = "0.1.0", path = "../rust/codec", features = ["json-serializer", "tokio-codec"] }
 aldrin-conformance-test-shared = { version = "0.1.0", path = "../conformance-test-shared" }
-aldrin-proto = { version = "0.1.0", path = "../rust/proto" }
+aldrin-proto = { version = "0.1.0", path = "../rust/proto", features = ["new-v4-ids"] }
 anyhow = "1.0.32"
 atty = "0.2.14"
 clap = { version = "3.1.8", features = ["derive", "wrap_help"] }
