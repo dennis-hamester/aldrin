@@ -1071,6 +1071,11 @@ impl Broker {
             })
         )?;
 
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_channels += 1;
+        }
+
         Ok(())
     }
 
@@ -1353,7 +1358,7 @@ impl Broker {
             }
         }
 
-        match channel.get_mut().destroy(end) {
+        let remove = match channel.get_mut().destroy(end) {
             Some(other_id) => match self.conns.get(other_id) {
                 Some(other) => {
                     let res = send!(
@@ -1365,15 +1370,22 @@ impl Broker {
                     if res.is_err() {
                         state.push_remove_conn(other_id.clone());
                     }
+
+                    false
                 }
 
-                None => {
-                    channel.remove();
-                }
+                None => true,
             },
 
-            None => {
-                channel.remove();
+            None => true,
+        };
+
+        if remove {
+            channel.remove();
+
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.num_channels -= 1;
             }
         }
     }

@@ -309,3 +309,53 @@ async fn events() {
     client3.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn channels() {
+    let mut broker = TestBroker::new();
+    let mut client1 = broker.add_client().await;
+    let mut client2 = broker.add_client().await;
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_channels, 0);
+
+    // Create 1 channel.
+    let (mut sender, _receiver) = client1
+        .create_channel_with_claimed_sender::<()>()
+        .await
+        .unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_channels, 1);
+
+    // Create 2 channels and destroy 1.
+    sender.destroy().await.unwrap();
+    let (mut sender, _receiver) = client1
+        .create_channel_with_claimed_sender::<()>()
+        .await
+        .unwrap();
+    let (_sender, mut receiver) = client1
+        .create_channel_with_claimed_receiver::<()>()
+        .await
+        .unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 3);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.num_channels, 2);
+
+    // Destroy 2 channels.
+    sender.destroy().await.unwrap();
+    receiver.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_channels, 0);
+
+    client1.join().await;
+    client2.join().await;
+    broker.join().await;
+}

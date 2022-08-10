@@ -77,6 +77,11 @@ pub struct BrokerStatistics {
     /// This number is different from [`events_received`](Self::events_received), because a single
     /// event may be sent out zero, one or multiple times, depending on the number of subscribers.
     pub events_sent: usize,
+
+    /// The number of current channels.
+    ///
+    /// A channel is counted here as long as at least one end is claimed and not destroyed.
+    pub num_channels: usize,
 }
 
 impl BrokerStatistics {
@@ -106,6 +111,7 @@ impl BrokerStatistics {
             functions_replied: 0,
             events_received: 0,
             events_sent: 0,
+            num_channels: 0,
         }
     }
 
