@@ -28,7 +28,6 @@ where
     serializer: S,
     read_buf: BytesMut,
     write_buf: Option<BytesMut>,
-    name: Option<String>,
 }
 
 impl<T, P, F, S> TokioCodec<T, P, F, S>
@@ -46,22 +45,6 @@ where
             serializer,
             read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
             write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
-            name: None,
-        }
-    }
-
-    pub fn with_name<N>(io: T, packetizer: P, filter: F, serializer: S, name: N) -> Self
-    where
-        N: Into<String>,
-    {
-        TokioCodec {
-            io,
-            packetizer,
-            filter,
-            serializer,
-            read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
-            write_buf: Some(BytesMut::with_capacity(INITIAL_CAPACITY)),
-            name: Some(name.into()),
         }
     }
 }
@@ -164,10 +147,6 @@ where
         }
 
         this.io.poll_flush(cx).map_err(TokioCodecError::Io)
-    }
-
-    fn name(&self) -> Option<&str> {
-        self.name.as_deref()
     }
 }
 

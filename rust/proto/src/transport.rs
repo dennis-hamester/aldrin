@@ -71,16 +71,6 @@ pub trait AsyncTransport {
     ///
     /// Flushing must deliver _all_ prior [`Message`s](Message) to the remote end of the transport.
     fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
-
-    /// Returns an optional transport name.
-    ///
-    /// The name does not need to be unique for a specific broker. The default implementation
-    /// returns `None`.
-    ///
-    /// This method may be called at any time, regardless of the error state.
-    fn name(&self) -> Option<&str> {
-        None
-    }
 }
 
 impl<T> AsyncTransport for Pin<T>
@@ -104,10 +94,6 @@ where
 
     fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         self.get_mut().as_mut().send_poll_flush(cx)
-    }
-
-    fn name(&self) -> Option<&str> {
-        (**self).name()
     }
 }
 
@@ -141,10 +127,6 @@ where
     ) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut **self).send_poll_flush(cx)
     }
-
-    fn name(&self) -> Option<&str> {
-        (**self).name()
-    }
 }
 
 impl<T> AsyncTransport for &mut T
@@ -176,10 +158,6 @@ where
         cx: &mut Context,
     ) -> Poll<Result<(), Self::Error>> {
         T::send_poll_flush(Pin::new(&mut **self), cx)
-    }
-
-    fn name(&self) -> Option<&str> {
-        T::name(*self)
     }
 }
 
@@ -409,9 +387,5 @@ where
         this.transport
             .send_poll_flush(cx)
             .map_err(&mut this.map_err)
-    }
-
-    fn name(&self) -> Option<&str> {
-        self.transport.name()
     }
 }
