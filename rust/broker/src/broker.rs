@@ -1387,6 +1387,7 @@ impl Broker {
             #[cfg(feature = "statistics")]
             {
                 self.statistics.num_channels -= 1;
+                self.statistics.channels_destroyed += 1;
             }
         }
     }

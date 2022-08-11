@@ -322,6 +322,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_channels, 0);
     assert_eq!(stats.channels_created, 0);
+    assert_eq!(stats.channels_destroyed, 0);
 
     // Create 1 channel.
     let (mut sender, _receiver) = client1
@@ -333,6 +334,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_channels, 1);
     assert_eq!(stats.channels_created, 1);
+    assert_eq!(stats.channels_destroyed, 0);
 
     // Create 2 channels and destroy 1.
     sender.destroy().await.unwrap();
@@ -349,6 +351,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.num_channels, 2);
     assert_eq!(stats.channels_created, 2);
+    assert_eq!(stats.channels_destroyed, 1);
 
     // Destroy 2 channels.
     sender.destroy().await.unwrap();
@@ -358,6 +361,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 2);
     assert_eq!(stats.num_channels, 0);
     assert_eq!(stats.channels_created, 0);
+    assert_eq!(stats.channels_destroyed, 2);
 
     client1.join().await;
     client2.join().await;
