@@ -1074,6 +1074,7 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_channels += 1;
+            self.statistics.channels_created += 1;
         }
 
         Ok(())

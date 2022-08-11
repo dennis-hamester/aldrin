@@ -82,6 +82,9 @@ pub struct BrokerStatistics {
     ///
     /// A channel is counted here as long as at least one end is claimed and not destroyed.
     pub num_channels: usize,
+
+    /// The number of channels created.
+    pub channels_created: usize,
 }
 
 impl BrokerStatistics {
@@ -112,6 +115,7 @@ impl BrokerStatistics {
             events_received: 0,
             events_sent: 0,
             num_channels: 0,
+            channels_created: 0,
         }
     }
 
@@ -136,6 +140,7 @@ impl BrokerStatistics {
         self.functions_replied = 0;
         self.events_received = 0;
         self.events_sent = 0;
+        self.channels_created = 0;
 
         res
     }
