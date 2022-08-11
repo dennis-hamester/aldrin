@@ -1195,11 +1195,22 @@ impl Broker {
     }
 
     fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) {
-        let receiver_id = match self
-            .channels
-            .get(&req.cookie)
-            .and_then(|c| c.check_send(id))
+        let channel = match self.channels.get(&req.cookie) {
+            Some(channel) => channel,
+            None => return,
+        };
+
+        let receiver_id = match channel.check_send(id) {
+            (true, receiver_id) => receiver_id,
+            (false, _) => return,
+        };
+
+        #[cfg(feature = "statistics")]
         {
+            self.statistics.items_sent += 1;
+        }
+
+        let receiver_id = match receiver_id {
             Some(receiver_id) => receiver_id,
             None => return,
         };

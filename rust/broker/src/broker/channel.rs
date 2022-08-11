@@ -104,17 +104,17 @@ impl Channel {
         }
     }
 
-    pub fn check_send(&self, conn_id: &ConnectionId) -> Option<&ConnectionId> {
+    pub fn check_send(&self, conn_id: &ConnectionId) -> (bool, Option<&ConnectionId>) {
         match &self.sender {
             ChannelEndState::Claimed(sender) if *sender == *conn_id => {
                 if let ChannelEndState::Claimed(receiver) = &self.receiver {
-                    Some(receiver)
+                    (true, Some(receiver))
                 } else {
-                    None
+                    (true, None)
                 }
             }
 
-            _ => None,
+            _ => (false, None),
         }
     }
 }

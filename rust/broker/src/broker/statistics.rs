@@ -88,6 +88,9 @@ pub struct BrokerStatistics {
 
     /// The number of channels destroyed.
     pub channels_destroyed: usize,
+
+    /// The number of items sent on a channel.
+    pub items_sent: usize,
 }
 
 impl BrokerStatistics {
@@ -120,6 +123,7 @@ impl BrokerStatistics {
             num_channels: 0,
             channels_created: 0,
             channels_destroyed: 0,
+            items_sent: 0,
         }
     }
 
@@ -146,6 +150,7 @@ impl BrokerStatistics {
         self.events_sent = 0;
         self.channels_created = 0;
         self.channels_destroyed = 0;
+        self.items_sent = 0;
 
         res
     }
