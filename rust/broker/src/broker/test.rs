@@ -1,4 +1,6 @@
+use crate::Broker;
 use aldrin_client::{Client, ObjectUuid, ServiceUuid};
+use aldrin_proto::{AsyncTransportExt, Connect, ConnectReply, Message, Value};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::future::{self, Either};
 use futures_util::stream::StreamExt;
@@ -73,4 +75,59 @@ async fn drop_conn_before_function_call() {
     .unwrap();
 
     assert!(res.is_err());
+}
+
+#[tokio::test]
+async fn begin_connect_accept() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    let join = tokio::spawn(broker.run());
+
+    let (mut t1, t2) = aldrin_channel::unbounded();
+
+    t1.send_and_flush(Message::Connect(Connect {
+        version: aldrin_proto::VERSION,
+        data: Value::U32(0),
+    }))
+    .await
+    .unwrap();
+
+    let mut conn = handle.begin_connect(t2).await.unwrap();
+    assert_eq!(conn.take_client_data(), Value::U32(0));
+
+    let _ = conn.accept(Value::U32(1)).await.unwrap();
+    let msg = t1.receive().await.unwrap();
+    assert_eq!(msg, Message::ConnectReply(ConnectReply::Ok(Value::U32(1))));
+
+    handle.shutdown().await;
+    join.await.unwrap();
+}
+
+#[tokio::test]
+async fn begin_connect_reject() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    let join = tokio::spawn(broker.run());
+
+    let (mut t1, t2) = aldrin_channel::unbounded();
+
+    t1.send_and_flush(Message::Connect(Connect {
+        version: aldrin_proto::VERSION,
+        data: Value::U32(0),
+    }))
+    .await
+    .unwrap();
+
+    let mut conn = handle.begin_connect(t2).await.unwrap();
+    assert_eq!(conn.take_client_data(), Value::U32(0));
+
+    conn.reject(Value::U32(1)).await.unwrap();
+    let msg = t1.receive().await.unwrap();
+    assert_eq!(
+        msg,
+        Message::ConnectReply(ConnectReply::Rejected(Value::U32(1)))
+    );
+
+    handle.shutdown().await;
+    join.await.unwrap();
 }

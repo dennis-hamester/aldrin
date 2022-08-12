@@ -3,7 +3,10 @@ use super::BrokerShutdown;
 use super::BrokerStatistics;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message, Value};
+use aldrin_proto::{
+    AsyncTransport, AsyncTransportExt, ConnectReply, ConversionError, FromValue, IntoValue,
+    Message, Value,
+};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -37,6 +40,11 @@ impl BrokerHandle {
     /// client. If successful, the resulting [`Connection`] must be [`run`](Connection::run) and
     /// polled to completion, much like the [`Broker`](crate::Broker) itself.
     ///
+    /// The Aldrin protocol allows client and broker to exchange custom data during the
+    /// handshake. This function will ignore the client's data and send [`Value::None`] back. If you
+    /// need to inspect the data and possibly reject some clients, then use
+    /// [`begin_connect`](Self::begin_connect).
+    ///
     /// # Examples
     ///
     /// ```
@@ -62,38 +70,41 @@ impl BrokerHandle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn connect<T>(&mut self, mut t: T) -> Result<Connection<T>, EstablishError<T::Error>>
+    pub async fn connect<T>(&mut self, t: T) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
-        match t.receive().await? {
-            Message::Connect(msg) if msg.version == aldrin_proto::VERSION => {
-                t.send_and_flush(Message::ConnectReply(ConnectReply::Ok(Value::None)))
-                    .await?;
-                Ok(())
-            }
+        self.begin_connect(t).await?.accept(Value::None).await
+    }
 
-            Message::Connect(msg) => {
-                t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
-                    aldrin_proto::VERSION,
-                )))
-                .await
-                .ok();
-                Err(EstablishError::VersionMismatch(msg.version))
-            }
+    /// Begins establishing a new connection.
+    ///
+    /// Unlike [`connect`](Self::connect), this function will no automatically establish a
+    /// connection. It will only receive the client's initial connection message. This allows you to
+    /// inspect the client's custom data and accept or reject client.
+    pub async fn begin_connect<T>(
+        &mut self,
+        mut t: T,
+    ) -> Result<PendingConnection<T>, EstablishError<T::Error>>
+    where
+        T: AsyncTransport + Unpin,
+    {
+        let connect = match t.receive().await.map_err(EstablishError::Transport)? {
+            Message::Connect(connect) => connect,
+            msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
+        };
 
-            msg => Err(EstablishError::UnexpectedMessageReceived(msg)),
-        }?;
-
-        let id = self.ids.acquire();
-        let (send, recv) = mpsc::unbounded();
-
-        self.send
-            .send(ConnectionEvent::NewConnection(id.clone(), send))
+        if connect.version != aldrin_proto::VERSION {
+            t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
+                aldrin_proto::VERSION,
+            )))
             .await
-            .map_err(|_| EstablishError::BrokerShutdown)?;
+            .ok();
 
-        Ok(Connection::new(t, id, self.send.clone(), recv))
+            return Err(EstablishError::VersionMismatch(connect.version));
+        }
+
+        Ok(PendingConnection::new(self.clone(), t, connect.data))
     }
 
     /// Shuts down the broker.
@@ -238,5 +249,87 @@ impl BrokerHandle {
             .await
             .map_err(|_| BrokerShutdown)?;
         recv.await.map_err(|_| BrokerShutdown)
+    }
+}
+
+/// A pending client connection, that hasn't been accepted or rejected yet.
+///
+/// This type is acquired by [`BrokerHandle::begin_connect`]. It allows inspection of the [client's
+/// custom data](Self::take_client_data) and to [accept](Self::accept) or [reject](Self::reject) a
+/// client.
+///
+/// Dropping this type will simply also drop the transport. No message will be sent back to the
+/// client in this case.
+#[derive(Debug)]
+pub struct PendingConnection<T: AsyncTransport + Unpin> {
+    handle: BrokerHandle,
+    t: T,
+    client_data: Value,
+}
+
+impl<T: AsyncTransport + Unpin> PendingConnection<T> {
+    fn new(handle: BrokerHandle, t: T, client_data: Value) -> Self {
+        Self {
+            handle,
+            t,
+            client_data,
+        }
+    }
+
+    /// Takes the client's data out and leaves [`Value::None`] in its place.
+    pub fn take_client_data(&mut self) -> Value {
+        self.client_data.take()
+    }
+
+    /// Takes the client's data out and tries to convert it to type `D`.
+    ///
+    /// This function simply combines [`take_client_data`](Self::take_client_data) with
+    /// [`Value::convert`].
+    pub fn take_client_data_and_convert<D: FromValue>(&mut self) -> Result<D, ConversionError> {
+        self.take_client_data().convert()
+    }
+
+    /// Accepts a client and sends custom data back to it.
+    ///
+    /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
+    /// like the [`Broker`](crate::Broker) itself.
+    pub async fn accept<D: IntoValue>(
+        mut self,
+        broker_data: D,
+    ) -> Result<Connection<T>, EstablishError<T::Error>> {
+        self.t
+            .send_and_flush(Message::ConnectReply(ConnectReply::Ok(
+                broker_data.into_value(),
+            )))
+            .await
+            .map_err(EstablishError::Transport)?;
+
+        let id = self.handle.ids.acquire();
+        let (send, recv) = mpsc::unbounded();
+
+        self.handle
+            .send
+            .send(ConnectionEvent::NewConnection(id.clone(), send))
+            .await
+            .map_err(|_| EstablishError::BrokerShutdown)?;
+
+        let conn = Connection::new(self.t, id, self.handle.send, recv);
+
+        Ok(conn)
+    }
+
+    /// Rejects a client and sends custom data back to it.
+    pub async fn reject<D: IntoValue>(
+        mut self,
+        broker_data: D,
+    ) -> Result<(), EstablishError<T::Error>> {
+        self.t
+            .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(
+                broker_data.into_value(),
+            )))
+            .await
+            .map_err(EstablishError::Transport)?;
+
+        Ok(())
     }
 }

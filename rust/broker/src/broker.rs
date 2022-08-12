@@ -37,7 +37,7 @@ use state::State;
 use std::collections::hash_map::{Entry, HashMap};
 
 pub use error::BrokerShutdown;
-pub use handle::BrokerHandle;
+pub use handle::{BrokerHandle, PendingConnection};
 #[cfg(feature = "statistics")]
 pub use statistics::BrokerStatistics;
 
