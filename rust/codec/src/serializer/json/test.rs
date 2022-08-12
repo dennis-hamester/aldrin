@@ -377,20 +377,27 @@ fn value_receiver() {
 #[test]
 fn message_connect() {
     test_message(
-        Message::Connect(Connect { version: 0 }),
-        json!({"connect": {"version": 0}}),
+        Message::Connect(Connect {
+            version: 0,
+            data: Value::None,
+        }),
+        json!({"connect": {"version": 0, "data": "none"}}),
     );
 }
 
 #[test]
 fn message_connect_reply() {
     test_message(
-        Message::ConnectReply(ConnectReply::Ok),
-        json!({"connect-reply": "ok"}),
+        Message::ConnectReply(ConnectReply::Ok(Value::None)),
+        json!({"connect-reply": {"ok": "none"}}),
     );
     test_message(
         Message::ConnectReply(ConnectReply::VersionMismatch(0)),
         json!({"connect-reply": {"version-mismatch": 0}}),
+    );
+    test_message(
+        Message::ConnectReply(ConnectReply::Rejected(Value::None)),
+        json!({"connect-reply": {"rejected": "none"}}),
     );
 }
 

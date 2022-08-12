@@ -130,15 +130,19 @@ where
     pub async fn connect(mut t: T) -> Result<Self, ConnectError<T::Error>> {
         t.send_and_flush(Message::Connect(Connect {
             version: aldrin_proto::VERSION,
+            data: Value::None,
         }))
         .await?;
 
-        match t.receive().await? {
-            Message::ConnectReply(ConnectReply::Ok) => {}
-            Message::ConnectReply(ConnectReply::VersionMismatch(v)) => {
-                return Err(ConnectError::VersionMismatch(v))
-            }
+        let connect_reply = match t.receive().await? {
+            Message::ConnectReply(connect_reply) => connect_reply,
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
+        };
+
+        match connect_reply {
+            ConnectReply::Ok(_) => {}
+            ConnectReply::VersionMismatch(v) => return Err(ConnectError::VersionMismatch(v)),
+            ConnectReply::Rejected(_) => todo!(),
         }
 
         let (send, recv) = mpsc::unbounded();

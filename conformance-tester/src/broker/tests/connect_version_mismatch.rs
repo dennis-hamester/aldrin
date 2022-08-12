@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::{Connect, ConnectReply, Message, VERSION};
+use aldrin_proto::{Connect, ConnectReply, Message, Value, VERSION};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "connect-version-mismatch";
@@ -17,6 +17,7 @@ async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
     client
         .send(Message::Connect(Connect {
             version: VERSION - 1,
+            data: Value::None,
         }))
         .await
         .with_context(|| anyhow!("failed to send connect message to broker"))?;

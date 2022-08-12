@@ -7,7 +7,7 @@ use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::{
     AsyncTransport, AsyncTransportExt, ChannelCookie, ChannelEnd, Connect, ConnectReply,
-    CreateChannel, DestroyChannelEnd, DestroyChannelEndResult, Message, VERSION,
+    CreateChannel, DestroyChannelEnd, DestroyChannelEndResult, Message, Value, VERSION,
 };
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
@@ -157,7 +157,10 @@ impl Client {
 
     async fn handshake_impl(transport: &mut TransportBox) -> Result<()> {
         transport
-            .send_and_flush(Message::Connect(Connect { version: VERSION }))
+            .send_and_flush(Message::Connect(Connect {
+                version: VERSION,
+                data: Value::None,
+            }))
             .await
             .with_context(|| anyhow!("failed to send connect message to broker"))?;
 
@@ -166,17 +169,24 @@ impl Client {
             .await
             .with_context(|| anyhow!("failed to receive connect-reply message from broker"))?;
 
-        match msg {
-            Message::ConnectReply(ConnectReply::Ok) => Ok(()),
-            Message::ConnectReply(ConnectReply::VersionMismatch(version)) => Err(anyhow!(
+        let connect_reply = match msg {
+            Message::ConnectReply(connect_reply) => connect_reply,
+            _ => {
+                return Err(anyhow!(
+                    "expected connect-reply message but received {}",
+                    serde_json::to_string(&msg).unwrap()
+                ))
+            }
+        };
+
+        match connect_reply {
+            ConnectReply::Ok(_) => Ok(()),
+            ConnectReply::VersionMismatch(version) => Err(anyhow!(
                 "broker does not implement Aldrin protocol {}, but {}",
                 VERSION,
                 version
             )),
-            _ => Err(anyhow!(
-                "expected connect-reply message but received {}",
-                serde_json::to_string(&msg).unwrap()
-            )),
+            ConnectReply::Rejected(_) => Err(anyhow!("broker rejected connection")),
         }
     }
 

@@ -54,12 +54,14 @@ fn test_value_be(v: &Value, b: &[u8]) {
 fn message_connect() {
     let m = Message::Connect(Connect {
         version: 0x12345678,
+        data: Value::None,
     });
     test_message_le(
         &m,
         &[
             0, // Connect
             252, 0x78, 0x56, 0x34, 0x12, // version
+            0,    // data
         ],
     );
     test_message_be(
@@ -67,18 +69,20 @@ fn message_connect() {
         &[
             0, // Connect
             252, 0x12, 0x34, 0x56, 0x78, // version
+            0,    // data
         ],
     );
 }
 
 #[test]
 fn message_connect_reply() {
-    let m = Message::ConnectReply(ConnectReply::Ok);
+    let m = Message::ConnectReply(ConnectReply::Ok(Value::None));
     test_message_le(
         &m,
         &[
             1, // ConnectReply
             0, // Ok
+            0, // data
         ],
     );
     test_message_be(
@@ -86,6 +90,7 @@ fn message_connect_reply() {
         &[
             1, // ConnectReply
             0, // Ok
+            0, // data
         ],
     );
     let m = Message::ConnectReply(ConnectReply::VersionMismatch(0x12345678));
@@ -103,6 +108,23 @@ fn message_connect_reply() {
             1, // ConnectReply
             1, // VersionMismatch
             252, 0x12, 0x34, 0x56, 0x78, // version
+        ],
+    );
+    let m = Message::ConnectReply(ConnectReply::Rejected(Value::None));
+    test_message_le(
+        &m,
+        &[
+            1, // ConnectReply
+            2, // Rejected
+            0, // data
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            1, // ConnectReply
+            2, // Rejected
+            0, // data
         ],
     );
 }

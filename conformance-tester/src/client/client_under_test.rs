@@ -5,7 +5,9 @@ use aldrin_codec::packetizer::NewlineTerminated;
 use aldrin_codec::serializer::Json;
 use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::client::ToClientMessage;
-use aldrin_proto::{AsyncTransport, AsyncTransportExt, Connect, ConnectReply, Message, VERSION};
+use aldrin_proto::{
+    AsyncTransport, AsyncTransportExt, Connect, ConnectReply, Message, Value, VERSION,
+};
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};
@@ -125,8 +127,11 @@ impl ClientUnderTest {
             .with_context(|| anyhow!("failed to receive connect message"))?;
 
         match msg {
-            Message::Connect(Connect { version: VERSION }) => {}
-            Message::Connect(Connect { version }) => {
+            Message::Connect(Connect {
+                version: VERSION,
+                data: _,
+            }) => {}
+            Message::Connect(Connect { version, data: _ }) => {
                 self.send_message(Message::ConnectReply(ConnectReply::VersionMismatch(
                     VERSION,
                 )))
@@ -146,7 +151,7 @@ impl ClientUnderTest {
             }
         }
 
-        self.send_message(Message::ConnectReply(ConnectReply::Ok))
+        self.send_message(Message::ConnectReply(ConnectReply::Ok(Value::None)))
             .await
             .with_context(|| anyhow!("failed to send connect-reply message"))?;
 

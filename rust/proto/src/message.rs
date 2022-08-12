@@ -88,7 +88,7 @@ impl ChannelEnd {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
@@ -96,17 +96,19 @@ impl ChannelEnd {
 )]
 pub struct Connect {
     pub version: u32,
+    pub data: Value,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
     feature = "serde-derive",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
 pub enum ConnectReply {
-    Ok,
+    Ok(Value),
     VersionMismatch(u32),
+    Rejected(Value),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

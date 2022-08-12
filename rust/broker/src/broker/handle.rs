@@ -3,7 +3,7 @@ use super::BrokerShutdown;
 use super::BrokerStatistics;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message};
+use aldrin_proto::{AsyncTransport, AsyncTransportExt, ConnectReply, Message, Value};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -68,7 +68,7 @@ impl BrokerHandle {
     {
         match t.receive().await? {
             Message::Connect(msg) if msg.version == aldrin_proto::VERSION => {
-                t.send_and_flush(Message::ConnectReply(ConnectReply::Ok))
+                t.send_and_flush(Message::ConnectReply(ConnectReply::Ok(Value::None)))
                     .await?;
                 Ok(())
             }
