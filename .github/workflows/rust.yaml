@@ -33,6 +33,8 @@ jobs:
           profile: minimal
           components: clippy
           default: true
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
       - name: Cargo check
         run: cargo check --locked --all-features --tests --benches
       - name: Cargo test
@@ -52,6 +54,8 @@ jobs:
           toolchain: stable
           profile: minimal
           default: true
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
       - name: Cargo doc
         run: cargo doc --locked --all-features --no-deps
 
@@ -81,6 +85,8 @@ jobs:
           toolchain: stable
           profile: minimal
           default: true
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
       - name: Build aldrin-conformance-tester
         run: cargo build --locked -p aldrin-conformance-tester
       - name: Build conformance-test-client
