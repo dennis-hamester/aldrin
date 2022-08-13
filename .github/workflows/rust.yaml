@@ -5,7 +5,7 @@ on:
     branches-ignore:
     - 'wip/**'
     paths:
-    - '.github/workflows/**'
+    - '.github/workflows/rust.yaml'
     - 'Cargo.lock'
     - 'Cargo.toml'
     - 'conformance-tester-shared/**'
