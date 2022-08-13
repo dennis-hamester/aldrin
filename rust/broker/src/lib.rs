@@ -71,6 +71,7 @@ mod conn;
 mod conn_id;
 mod serial_map;
 
+pub use aldrin_proto::{Bytes, ConversionError, FromValue, IntoValue, Value};
 #[cfg(feature = "statistics")]
 pub use broker::BrokerStatistics;
 pub use broker::{Broker, BrokerHandle, BrokerShutdown};
