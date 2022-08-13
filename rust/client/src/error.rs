@@ -4,6 +4,8 @@ use aldrin_proto::{Message, ObjectId, ObjectUuid, ServiceId, ServiceUuid, Value}
 use std::error::Error as StdError;
 use std::fmt;
 
+pub use aldrin_proto::ConversionError;
+
 /// Error when connecting to a broker.
 #[derive(Debug, Clone)]
 pub enum ConnectError<T> {

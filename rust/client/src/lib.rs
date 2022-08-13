@@ -77,7 +77,8 @@ pub mod error;
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
 pub use aldrin_proto::{
-    Bytes, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid, Value,
+    Bytes, FromValue, IntoValue, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
+    ServiceUuid, Value,
 };
 pub use client::Client;
 pub use error::Error;
