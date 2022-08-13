@@ -71,8 +71,7 @@ mod test;
 
 use aldrin_broker::{BrokerHandle, ConnectionError, ConnectionHandle};
 use aldrin_channel::Disconnected;
-use aldrin_client::error::RunError;
-use aldrin_client::Handle;
+use aldrin_client::{Handle, RunError};
 use std::ops::{Deref, DerefMut};
 use tokio::task::JoinHandle;
 

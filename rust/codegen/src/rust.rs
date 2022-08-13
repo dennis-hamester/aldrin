@@ -222,10 +222,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl aldrin_client::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::error::ConversionError> {{");
+        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::ConversionError> {{");
         genln!(self, "        let mut v = match v {{");
         genln!(self, "            aldrin_client::Value::Struct(v) => v,");
-        genln!(self, "            _ => return Err(aldrin_client::error::ConversionError(Some(v))),");
+        genln!(self, "            _ => return Err(aldrin_client::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
 
@@ -257,7 +257,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            }}");
                 genln!(self);
             }
-            genln!(self, "            return Err(aldrin_client::error::ConversionError(Some(aldrin_client::Value::Struct(v))));");
+            genln!(self, "            return Err(aldrin_client::ConversionError(Some(aldrin_client::Value::Struct(v))));");
             genln!(self, "        }}");
             genln!(self);
         }
@@ -405,10 +405,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl aldrin_client::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::error::ConversionError> {{");
+        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::ConversionError> {{");
         genln!(self, "        let (var, val) = match v {{");
         genln!(self, "            aldrin_client::Value::Enum {{ variant, value }} => (variant, *value),");
-        genln!(self, "            _ => return Err(aldrin_client::error::ConversionError(Some(v))),");
+        genln!(self, "            _ => return Err(aldrin_client::ConversionError(Some(v))),");
         genln!(self, "        }};");
         genln!(self);
         genln!(self, "        match (var, val) {{");
@@ -416,12 +416,12 @@ impl<'a> RustGenerator<'a> {
             let var_name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::error::ConversionError(e.0.map(|v| aldrin_client::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
+                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::ConversionError(e.0.map(|v| aldrin_client::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
             } else {
                 genln!(self, "            ({}, aldrin_client::Value::None) => Ok({}::{}),", id, name, var_name);
             }
         }
-        genln!(self, "            (_, val) => Err(aldrin_client::error::ConversionError(Some(aldrin_client::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
+        genln!(self, "            (_, val) => Err(aldrin_client::ConversionError(Some(aldrin_client::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -720,7 +720,7 @@ impl<'a> RustGenerator<'a> {
 
         let event = service_event(svc_name);
         genln!(self, "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{", events);
-        genln!(self, "    type Item = Result<{}, aldrin_client::error::InvalidEventArguments>;", event);
+        genln!(self, "    type Item = Result<{}, aldrin_client::InvalidEventArguments>;", event);
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        loop {{");
@@ -745,7 +745,7 @@ impl<'a> RustGenerator<'a> {
             if ev.event_type().is_some() {
                 genln!(self, "                {} => match ev.args.convert() {{", id);
                 genln!(self, "                    Ok(args) => return std::task::Poll::Ready(Some(Ok({}::{}(args)))),", event, variant);
-                genln!(self, "                    Err(e) => return std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidEventArguments {{");
+                genln!(self, "                    Err(e) => return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
                 genln!(self, "                        service_id: self.id,");
                 genln!(self, "                        event: ev.id,");
                 genln!(self, "                        args: e.0,");
@@ -756,7 +756,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                    if let aldrin_client::Value::None = ev.args {{");
                 genln!(self, "                        return std::task::Poll::Ready(Some(Ok({}::{})));", event, variant);
                 genln!(self, "                    }} else {{");
-                genln!(self, "                        return std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidEventArguments {{");
+                genln!(self, "                        return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
                 genln!(self, "                            service_id: self.id,");
                 genln!(self, "                            event: ev.id,");
                 genln!(self, "                            args: Some(ev.args),");
@@ -853,7 +853,7 @@ impl<'a> RustGenerator<'a> {
 
         let functions = service_functions(svc_name);
         genln!(self, "impl aldrin_client::codegen::futures_core::stream::Stream for {} {{", svc_name);
-        genln!(self, "    type Item = Result<{}, aldrin_client::error::InvalidFunctionCall>;", functions);
+        genln!(self, "    type Item = Result<{}, aldrin_client::InvalidFunctionCall>;", functions);
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        let call = match std::pin::Pin::new(&mut self.service).poll_next(cx) {{");
@@ -878,7 +878,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                Ok(args) => std::task::Poll::Ready(Some(Ok({}::{}(args, {}(call.reply))))),", functions, function, reply);
                 genln!(self, "                Err(e) => {{");
                 genln!(self, "                    call.reply.invalid_args().ok();");
-                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
                 genln!(self, "                        service_id: self.service.id(),");
                 genln!(self, "                        function: call.id,");
                 genln!(self, "                        args: e.0,");
@@ -891,7 +891,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                    std::task::Poll::Ready(Some(Ok({}::{}({}(call.reply)))))", functions, function, reply);
                 genln!(self, "                }} else {{");
                 genln!(self, "                    call.reply.invalid_args().ok();");
-                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
                 genln!(self, "                        service_id: self.service.id(),");
                 genln!(self, "                        function: call.id,");
                 genln!(self, "                        args: Some(call.args),");
@@ -903,7 +903,7 @@ impl<'a> RustGenerator<'a> {
         }
         genln!(self, "            _ => {{");
         genln!(self, "                call.reply.invalid_function().ok();");
-        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin_client::error::InvalidFunctionCall {{");
+        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
         genln!(self, "                    service_id: self.service.id(),");
         genln!(self, "                    function: call.id,");
         genln!(self, "                    args: Some(call.args),");

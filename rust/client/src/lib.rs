@@ -60,6 +60,7 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 
 mod client;
+mod error;
 mod events;
 mod handle;
 mod object;
@@ -72,16 +73,18 @@ mod test;
 
 #[doc(hidden)]
 pub mod codegen;
-pub mod error;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
 pub use aldrin_proto::{
-    Bytes, FromValue, IntoValue, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
-    ServiceUuid, Value,
+    Bytes, ConversionError, FromValue, IntoValue, ObjectCookie, ObjectId, ObjectUuid,
+    ServiceCookie, ServiceId, ServiceUuid, Value,
 };
 pub use client::Client;
-pub use error::Error;
+pub use error::{
+    ConnectError, Error, InvalidEventArguments, InvalidFunctionCall, InvalidFunctionResult,
+    RunError,
+};
 pub use events::{Event, Events};
 pub use handle::{Handle, ObjectServices, PendingFunctionResult, PendingFunctionValue};
 pub use object::Object;
