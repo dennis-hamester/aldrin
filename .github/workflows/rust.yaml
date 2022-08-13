@@ -33,10 +33,6 @@ jobs:
           profile: minimal
           components: clippy
           default: true
-      - name: Rust version
-        run: rustc --version --verbose
-      - name: Cargo version
-        run: cargo --version --verbose
       - name: Cargo check
         run: cargo check --locked --all-features --tests --benches
       - name: Cargo test
@@ -56,10 +52,6 @@ jobs:
           toolchain: stable
           profile: minimal
           default: true
-      - name: Rust version
-        run: rustc --version --verbose
-      - name: Cargo version
-        run: cargo --version --verbose
       - name: Cargo doc
         run: cargo doc --locked --all-features --no-deps
 
