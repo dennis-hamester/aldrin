@@ -3,6 +3,7 @@ mod test;
 
 use crate::{ObjectId, ServiceId};
 use std::collections::{HashMap, HashSet};
+use std::convert::Infallible;
 use std::error::Error;
 use std::fmt;
 use std::hash::BuildHasher;
@@ -527,6 +528,12 @@ impl_set!(u64, U64Set);
 impl_set!(i64, I64Set);
 impl_set!(String, StringSet);
 impl_set!(Uuid, UuidSet);
+
+impl IntoValue for Infallible {
+    fn into_value(self) -> Value {
+        match self {}
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConversionError(pub Option<Value>);
