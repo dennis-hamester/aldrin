@@ -62,9 +62,22 @@ pub enum Value {
 }
 
 impl Value {
-    // Converts this value to another type.
-    //
-    // `convert` can be used with any type `T` that implements the [`FromValue`] trait.
+    /// Converts this value to another type.
+    ///
+    /// This function can be used with any type `T` that implements the [`FromValue`] trait.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::{ConversionError, Value};
+    /// let x = Value::U32(0);
+    /// let y = x.convert();
+    /// assert_eq!(y, Ok(0u32));
+    ///
+    /// let x = Value::U32(0);
+    /// let y = x.convert::<String>();
+    /// assert_eq!(y, Err(ConversionError(Some(Value::U32(0)))));
+    /// ```
     pub fn convert<T: FromValue>(self) -> Result<T, ConversionError> {
         T::from_value(self)
     }
