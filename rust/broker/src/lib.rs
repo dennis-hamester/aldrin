@@ -56,7 +56,7 @@
 //!         );
 //!
 //!         // Add the connection and run it:
-//!         let connection = handle.add_connection(transport).await?;
+//!         let connection = handle.connect(transport).await?;
 //!         tokio::spawn(connection.run());
 //!     }
 //! }

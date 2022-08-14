@@ -240,7 +240,7 @@ impl ClientBuilder {
         };
 
         let client = Client::connect(t1);
-        let conn = self.broker.add_connection(t2);
+        let conn = self.broker.connect(t2);
 
         let (client, conn) = future::join(client, conn).await;
         let client = client.expect("client failed to connect");

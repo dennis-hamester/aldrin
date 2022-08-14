@@ -37,7 +37,7 @@ async fn drop_conn_before_function_call() {
     // moment.
     let (t1, t2) = aldrin_channel::unbounded();
     let client1_fut = Client::connect(t1);
-    let conn1_fut = broker.add_connection(t2);
+    let conn1_fut = broker.connect(t2);
     let (client1_fut, conn1_fut) = future::join(client1_fut, conn1_fut).await;
     let client1_fut = client1_fut.unwrap();
     let client1 = client1_fut.handle().clone();

@@ -17,9 +17,8 @@ pub use handle::ConnectionHandle;
 
 /// Connection between a broker and a client.
 ///
-/// `Connection`s can be established with
-/// [`BrokerHandle::add_connection`](crate::BrokerHandle::add_connection) and must then be
-/// [`run`](Connection::run) and polled to completion.
+/// `Connection`s can be established with [`BrokerHandle::connect`](crate::BrokerHandle::connect)
+/// and must then be [`run`](Connection::run) and polled to completion.
 ///
 /// You can optionally [acquire](Connection::handle) a [`ConnectionHandle`] if you need to be able
 /// to shut down specific `Connection`s.
@@ -66,8 +65,8 @@ where
 
     /// Runs the connections.
     ///
-    /// After [establishing](crate::BrokerHandle::add_connection) a new `Connection`, this method
-    /// must be called and polled to completion to run the `Connection`.
+    /// After [establishing](crate::BrokerHandle::connect) a new `Connection`, this method must be
+    /// called and polled to completion to run the `Connection`.
     pub async fn run(mut self) -> Result<(), ConnectionError<T::Error>> {
         let id = self.handle.take().unwrap().into_id();
 

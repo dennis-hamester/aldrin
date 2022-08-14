@@ -33,7 +33,7 @@
 //!     # let broker = aldrin_test::tokio_based::TestBroker::new();
 //!     # let mut handle = broker.clone();
 //!     # let (async_transport, t2) = aldrin_channel::unbounded();
-//!     # let conn = tokio::spawn(async move { handle.add_connection(t2).await });
+//!     # let conn = tokio::spawn(async move { handle.connect(t2).await });
 //!     // Create an AsyncTransport for connecting to the broker.
 //!     // let async_transport = ...
 //!

@@ -87,7 +87,7 @@ impl BrokerUnderTest {
             Noop,
             Json::with_pretty(false),
         );
-        let conn = broker.add_connection(transport).await?;
+        let conn = broker.connect(transport).await?;
         tokio::spawn(conn.run());
         Ok(())
     }

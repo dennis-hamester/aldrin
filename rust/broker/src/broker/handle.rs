@@ -50,7 +50,7 @@ impl BrokerHandle {
     /// # let (t, t2) = aldrin_channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
     /// // Establish a connection to the client:
-    /// let connection = broker_handle.add_connection(t).await?;
+    /// let connection = broker_handle.connect(t).await?;
     ///
     /// // Run the connection:
     /// tokio::spawn(connection.run());
@@ -62,10 +62,7 @@ impl BrokerHandle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn add_connection<T>(
-        &mut self,
-        mut t: T,
-    ) -> Result<Connection<T>, EstablishError<T::Error>>
+    pub async fn connect<T>(&mut self, mut t: T) -> Result<Connection<T>, EstablishError<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
@@ -180,7 +177,7 @@ impl BrokerHandle {
     /// # let (t, t2) = aldrin_channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin_client::Client::connect(t2));
     /// // Establish a connection to the client:
-    /// let connection = broker_handle.add_connection(t).await?;
+    /// let connection = broker_handle.connect(t).await?;
     ///
     /// // Get a handle to the connection:
     /// let connection_handle = connection.handle().clone();
