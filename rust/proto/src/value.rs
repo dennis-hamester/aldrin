@@ -5,9 +5,9 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use std::collections::{HashMap, HashSet};
 use std::convert::Infallible;
 use std::error::Error;
-use std::fmt;
 use std::hash::BuildHasher;
 use std::ops::{Deref, DerefMut};
+use std::{fmt, mem};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,6 +67,21 @@ impl Value {
     // `convert` can be used with any type `T` that implements the [`FromValue`] trait.
     pub fn convert<T: FromValue>(self) -> Result<T, ConversionError> {
         T::from_value(self)
+    }
+
+    /// Takes the value out, leaving [`Value::None`] in its place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::Value;
+    /// let mut v1 = Value::U32(0);
+    /// let v2 = v1.take();
+    /// assert_eq!(v1, Value::None);
+    /// assert_eq!(v2, Value::U32(0));
+    /// ```
+    pub fn take(&mut self) -> Self {
+        mem::take(self)
     }
 }
 
