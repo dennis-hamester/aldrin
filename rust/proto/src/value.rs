@@ -70,6 +70,12 @@ impl Value {
     }
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Wrapper for `Vec<u8>`.
 ///
 /// This wrapper exists only to enable different implementations of [`FromValue`] and [`IntoValue`]
