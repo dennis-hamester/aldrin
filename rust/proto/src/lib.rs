@@ -14,4 +14,4 @@ pub use message::*;
 pub use transport::{AsyncTransport, AsyncTransportExt};
 pub use value::{Bytes, ConversionError, FromValue, IntoValue, Value};
 
-pub const VERSION: u32 = 10;
+pub const VERSION: u32 = 11;

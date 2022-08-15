@@ -51,6 +51,8 @@ pub enum Message {
     ChannelEndClaimed(ChannelEndClaimed),
     SendItem(SendItem),
     ItemReceived(ItemReceived),
+    Sync(Sync),
+    SyncReply(SyncReply),
 }
 
 /// Sending or receiving end of a channel.
@@ -756,4 +758,24 @@ pub struct SendItem {
 pub struct ItemReceived {
     pub cookie: ChannelCookie,
     pub item: Value,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct Sync {
+    pub serial: u32,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde-derive",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case", deny_unknown_fields)
+)]
+pub struct SyncReply {
+    pub serial: u32,
 }

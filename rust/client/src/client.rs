@@ -298,6 +298,7 @@ where
             Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
             Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
+            Message::SyncReply(_msg) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -314,7 +315,8 @@ where
             | Message::CreateChannel(_)
             | Message::DestroyChannelEnd(_)
             | Message::ClaimChannelEnd(_)
-            | Message::SendItem(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::SendItem(_)
+            | Message::Sync(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(()) => unreachable!(), // Handled in run.
         }

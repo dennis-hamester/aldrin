@@ -396,6 +396,7 @@ impl Broker {
             Message::DestroyChannelEnd(req) => self.destroy_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
             Message::SendItem(req) => self.send_item(state, id, req),
+            Message::Sync(_req) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -417,7 +418,8 @@ impl Broker {
             | Message::ChannelEndDestroyed(_)
             | Message::ClaimChannelEndReply(_)
             | Message::ChannelEndClaimed(_)
-            | Message::ItemReceived(_) => return Err(()),
+            | Message::ItemReceived(_)
+            | Message::SyncReply(_) => return Err(()),
 
             Message::Shutdown(()) => unreachable!(), // Handled by connection.
         }
