@@ -25,7 +25,7 @@ use aldrin_proto::{
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCookie,
     ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
-    SubscribeServices, SubscribeServicesReply, UnsubscribeEvent,
+    SubscribeServices, SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent,
 };
 use channel::Channel;
 use conn_state::ConnectionState;
@@ -396,7 +396,7 @@ impl Broker {
             Message::DestroyChannelEnd(req) => self.destroy_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
             Message::SendItem(req) => self.send_item(state, id, req),
-            Message::Sync(_req) => todo!(),
+            Message::Sync(req) => self.sync(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1234,6 +1234,19 @@ impl Broker {
         if res.is_err() {
             state.push_remove_conn(receiver_id.clone());
         }
+    }
+
+    fn sync(&mut self, id: &ConnectionId, req: Sync) -> Result<(), ()> {
+        let conn = match self.conns.get(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        send!(
+            self,
+            conn,
+            Message::SyncReply(SyncReply { serial: req.serial })
+        )
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
