@@ -22,8 +22,8 @@ use aldrin_proto::{
     CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
     CreateServiceReply, CreateServiceResult, DestroyChannelEnd, DestroyChannelEndReply,
     DestroyChannelEndResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
-    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, ItemReceived, Message,
-    ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
+    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, IntoValue, ItemReceived,
+    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
     SendItem, ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
     SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
@@ -94,6 +94,10 @@ where
 {
     /// Creates a client and connects to an Aldrin broker.
     ///
+    /// If you need to send custom data to the broker, then use
+    /// [`connect_with_data`](Self::connect_with_data) instead. This function sends [`Value::None`]
+    /// and discards the broker's data.
+    ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
     ///
@@ -127,10 +131,44 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn connect(mut t: T) -> Result<Self, ConnectError<T::Error>> {
+    pub async fn connect(t: T) -> Result<Self, ConnectError<T::Error>> {
+        let (client, _) = Self::connect_with_data(t, Value::None).await?;
+        Ok(client)
+    }
+
+    /// Creates a client and connects to an Aldrin broker. Allows to send and receive custom data.
+    ///
+    /// After creating a client, it must be continuously polled and run to completion with the
+    /// [`run`](Client::run) method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::Client;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let mut handle = broker.clone();
+    /// # let (async_transport, t2) = aldrin_channel::unbounded();
+    /// # tokio::spawn(async move { handle.connect(t2).await });
+    /// // Create an AsyncTransport for connecting to the broker.
+    /// // let async_transport = ...
+    ///
+    /// // Connect to the broker, sending some custom data.
+    /// let (client, data) = Client::connect_with_data(async_transport, "Hi!").await?;
+    ///
+    /// println!("Data the broker sent back: {:?}.", data);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn connect_with_data<D: IntoValue>(
+        mut t: T,
+        data: D,
+    ) -> Result<(Self, Value), ConnectError<T::Error>> {
         t.send_and_flush(Message::Connect(Connect {
             version: aldrin_proto::VERSION,
-            data: Value::None,
+            data: data.into_value(),
         }))
         .await?;
 
@@ -139,14 +177,14 @@ where
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         };
 
-        match connect_reply {
-            ConnectReply::Ok(_) => {}
+        let data = match connect_reply {
+            ConnectReply::Ok(data) => data,
             ConnectReply::VersionMismatch(v) => return Err(ConnectError::VersionMismatch(v)),
             ConnectReply::Rejected(_) => todo!(),
-        }
+        };
 
         let (send, recv) = mpsc::unbounded();
-        Ok(Client {
+        let client = Client {
             t,
             recv,
             handle: Handle::new(send),
@@ -169,7 +207,9 @@ where
             claim_channel_end: SerialMap::new(),
             senders: HashMap::new(),
             receivers: HashMap::new(),
-        })
+        };
+
+        Ok((client, data))
     }
 
     /// Returns a handle to the client.
