@@ -987,6 +987,42 @@ impl Handle {
             .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, item }))
             .map_err(|_| Error::ClientShutdown)
     }
+
+    /// Synchronizes with the client.
+    ///
+    /// This function ensures that all previous requests to the client have been processed. There
+    /// are some occasions in which requests are sent outside of an async context, e.g. when
+    /// dropping values such as [`Object`]. By synchronizing with the client, it is possible to
+    /// ensure that it has processed such a non-async request.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::ObjectUuid;
+    /// use std::mem;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// let obj = handle.create_object(ObjectUuid::new_v4()).await?;
+    ///
+    /// // Dropping obj will request the client to destroy the object.
+    /// mem::drop(obj);
+    ///
+    /// // Ensure the request has actually been processed by the client.
+    /// handle.sync_client().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn sync_client(&self) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::SyncClient(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)
+    }
 }
 
 impl Clone for Handle {

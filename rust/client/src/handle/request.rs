@@ -35,6 +35,7 @@ pub(crate) enum HandleRequest {
     ClaimSender(ClaimSenderRequest),
     ClaimReceiver(ClaimReceiverRequest),
     SendItem(SendItemRequest),
+    SyncClient(SyncClientRequest),
 }
 
 #[derive(Debug)]
@@ -161,3 +162,5 @@ pub(crate) struct SendItemRequest {
     pub cookie: ChannelCookie,
     pub item: Value,
 }
+
+pub(crate) type SyncClientRequest = oneshot::Sender<()>;

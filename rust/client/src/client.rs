@@ -10,7 +10,7 @@ use crate::handle::request::{
     CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, QueryObjectRequest, QueryObjectRequestReply,
     QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, UnsubscribeEventRequest,
+    SubscribeServicesRequest, SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
@@ -972,6 +972,7 @@ where
             HandleRequest::ClaimSender(req) => self.req_claim_sender(req).await?,
             HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
             HandleRequest::SendItem(req) => self.req_send_item(req).await?,
+            HandleRequest::SyncClient(req) => self.req_sync_client(req),
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1334,6 +1335,10 @@ where
             }))
             .await
             .map_err(Into::into)
+    }
+
+    fn req_sync_client(&self, req: SyncClientRequest) {
+        req.send(()).ok();
     }
 
     fn shutdown_all_events(&self) {
