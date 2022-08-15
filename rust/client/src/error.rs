@@ -22,6 +22,9 @@ pub enum ConnectError<T> {
     ///
     /// This error indicates some issue with the lower-level transport mechanism, e.g. an I/O error.
     Transport(T),
+
+    /// The broker rejected the connection.
+    Rejected(Value),
 }
 
 impl<T> From<T> for ConnectError<T> {
@@ -43,6 +46,7 @@ where
                 f.write_str("unexpected message received")
             }
             ConnectError::Transport(e) => e.fmt(f),
+            ConnectError::Rejected(_) => f.write_str("connection rejected"),
         }
     }
 }

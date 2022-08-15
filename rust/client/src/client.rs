@@ -180,7 +180,7 @@ where
         let data = match connect_reply {
             ConnectReply::Ok(data) => data,
             ConnectReply::VersionMismatch(v) => return Err(ConnectError::VersionMismatch(v)),
-            ConnectReply::Rejected(_) => todo!(),
+            ConnectReply::Rejected(data) => return Err(ConnectError::Rejected(data)),
         };
 
         let (send, recv) = mpsc::unbounded();
