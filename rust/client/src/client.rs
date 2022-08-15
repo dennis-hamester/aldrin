@@ -10,7 +10,7 @@ use crate::handle::request::{
     CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, QueryObjectRequest, QueryObjectRequestReply,
     QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, SyncClientRequest, UnsubscribeEventRequest,
+    SubscribeServicesRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
@@ -27,7 +27,8 @@ use aldrin_proto::{
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
     SendItem, ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
     SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, UnsubscribeEvent, Value,
+    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync, SyncReply,
+    UnsubscribeEvent, Value,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -86,6 +87,7 @@ where
     claim_channel_end: SerialMap<ClaimChannelEndData>,
     senders: HashMap<ChannelCookie, SenderState>,
     receivers: HashMap<ChannelCookie, ReceiverState>,
+    sync: SerialMap<SyncBrokerRequest>,
 }
 
 impl<T> Client<T>
@@ -207,6 +209,7 @@ where
             claim_channel_end: SerialMap::new(),
             senders: HashMap::new(),
             receivers: HashMap::new(),
+            sync: SerialMap::new(),
         };
 
         Ok((client, data))
@@ -298,7 +301,7 @@ where
             Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
             Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
-            Message::SyncReply(_msg) => todo!(),
+            Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -949,6 +952,16 @@ where
         }
     }
 
+    fn msg_sync_reply(&mut self, msg: SyncReply) -> Result<(), RunError<T::Error>> {
+        let req = match self.sync.remove(msg.serial) {
+            Some(req) => req,
+            None => return Err(RunError::UnexpectedMessageReceived(Message::SyncReply(msg))),
+        };
+
+        req.send(()).ok();
+        Ok(())
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -975,6 +988,7 @@ where
             HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
             HandleRequest::SendItem(req) => self.req_send_item(req).await?,
             HandleRequest::SyncClient(req) => self.req_sync_client(req),
+            HandleRequest::SyncBroker(req) => self.req_sync_broker(req).await?,
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1341,6 +1355,14 @@ where
 
     fn req_sync_client(&self, req: SyncClientRequest) {
         req.send(()).ok();
+    }
+
+    async fn req_sync_broker(&mut self, req: SyncBrokerRequest) -> Result<(), RunError<T::Error>> {
+        let serial = self.sync.insert(req);
+        self.t
+            .send_and_flush(Message::Sync(Sync { serial }))
+            .await
+            .map_err(Into::into)
     }
 
     fn shutdown_all_events(&self) {

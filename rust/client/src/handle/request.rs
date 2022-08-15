@@ -36,6 +36,7 @@ pub(crate) enum HandleRequest {
     ClaimReceiver(ClaimReceiverRequest),
     SendItem(SendItemRequest),
     SyncClient(SyncClientRequest),
+    SyncBroker(SyncBrokerRequest),
 }
 
 #[derive(Debug)]
@@ -164,3 +165,5 @@ pub(crate) struct SendItemRequest {
 }
 
 pub(crate) type SyncClientRequest = oneshot::Sender<()>;
+
+pub(crate) type SyncBrokerRequest = oneshot::Sender<()>;

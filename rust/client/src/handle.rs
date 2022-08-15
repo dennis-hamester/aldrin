@@ -995,6 +995,9 @@ impl Handle {
     /// dropping values such as [`Object`]. By synchronizing with the client, it is possible to
     /// ensure that it has processed such a non-async request.
     ///
+    /// See also [`sync_broker`](Self::sync_broker), which ensures that such requests have been
+    /// processed by the broker.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1019,6 +1022,45 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SyncClient(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)
+    }
+
+    /// Synchronizes with the broker.
+    ///
+    /// Certain requests such as emitting an event or sending an item on a channel don't synchronize
+    /// with the broker in the same way as e.g. creating an object does. This function can be used
+    /// to ensure that such a request has been processed by the broker.
+    ///
+    /// See also [`sync_client`](Self::sync_client), which ensures only that such requests have been
+    /// processed by the client.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use std::mem;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let handle = broker.add_client().await;
+    /// # let obj = handle.create_object(ObjectUuid::new_v4()).await?;
+    /// # let service = obj.create_service(ServiceUuid::new_v4(), 0).await?;
+    ///
+    /// handle.emit_event(service.id(), 0, "Hi!")?;
+    ///
+    /// // Synchronize with the broker to ensure that the event has actually been processed.
+    /// handle.sync_broker().await?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn sync_broker(&self) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::SyncBroker(reply))
             .map_err(|_| Error::ClientShutdown)?;
 
         recv.await.map_err(|_| Error::ClientShutdown)
