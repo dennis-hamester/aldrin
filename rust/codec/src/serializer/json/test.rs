@@ -1095,3 +1095,19 @@ fn message_item_received() {
         json!({"item-received": {"cookie": UUID1, "item": {"u32": 0}}}),
     );
 }
+
+#[test]
+fn message_sync() {
+    test_message(
+        Message::Sync(Sync { serial: 0 }),
+        json!({"sync": {"serial": 0}}),
+    );
+}
+
+#[test]
+fn message_sync_reply() {
+    test_message(
+        Message::SyncReply(SyncReply { serial: 0 }),
+        json!({"sync-reply": {"serial": 0}}),
+    );
+}

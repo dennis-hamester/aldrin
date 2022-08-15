@@ -1960,6 +1960,44 @@ fn message_item_received() {
 }
 
 #[test]
+fn message_sync() {
+    let m = Message::Sync(Sync { serial: 0 });
+    test_message_le(
+        &m,
+        &[
+            41, // Sync
+            0,  // serial
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            41, // Sync
+            0,  // serial
+        ],
+    );
+}
+
+#[test]
+fn message_sync_reply() {
+    let m = Message::SyncReply(SyncReply { serial: 0 });
+    test_message_le(
+        &m,
+        &[
+            42, // SyncReply
+            0,  // serial
+        ],
+    );
+    test_message_be(
+        &m,
+        &[
+            42, // SyncReply
+            0,  // serial
+        ],
+    );
+}
+
+#[test]
 fn value_none() {
     let v = Value::None;
     test_value_le(
