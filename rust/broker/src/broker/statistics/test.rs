@@ -1,8 +1,6 @@
 use aldrin_client::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::stream::StreamExt;
-use std::time::Duration;
-use tokio::time;
 
 #[tokio::test]
 async fn timestamp_monotonicity() {
@@ -276,11 +274,10 @@ async fn events() {
     client1.emit_event(svc.id(), 0, ()).unwrap();
     client1.emit_event(svc.id(), 0, ()).unwrap();
     client1.emit_event(svc.id(), 0, ()).unwrap();
-    // HACK: Aldrin doesn't have a proper way of synchronizing with the broker.
-    time::sleep(Duration::from_millis(100)).await;
+    client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 6);
-    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.messages_sent, 7);
+    assert_eq!(stats.messages_received, 4);
     assert_eq!(stats.events_received, 3);
     assert_eq!(stats.events_sent, 6);
 
@@ -289,11 +286,10 @@ async fn events() {
     client1.emit_event(svc.id(), 0, ()).unwrap();
     client1.emit_event(svc.id(), 0, ()).unwrap();
     client1.emit_event(svc.id(), 1, ()).unwrap();
-    // HACK: Aldrin doesn't have a proper way of synchronizing with the broker.
-    time::sleep(Duration::from_millis(100)).await;
+    client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 4);
-    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.messages_sent, 5);
+    assert_eq!(stats.messages_received, 4);
     assert_eq!(stats.events_received, 3);
     assert_eq!(stats.events_sent, 4);
 
@@ -362,11 +358,10 @@ async fn channels() {
     sender1.send(()).unwrap();
     sender1.send(()).unwrap();
     sender1.send(()).unwrap();
-    // HACK: Aldrin doesn't have a proper way of synchronizing with the broker.
-    time::sleep(Duration::from_millis(100)).await;
+    client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 5);
-    assert_eq!(stats.messages_received, 4);
+    assert_eq!(stats.messages_sent, 6);
+    assert_eq!(stats.messages_received, 5);
     assert_eq!(stats.num_channels, 2);
     assert_eq!(stats.channels_created, 0);
     assert_eq!(stats.channels_destroyed, 0);
