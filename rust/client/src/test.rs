@@ -80,3 +80,42 @@ async fn abort_create_service() {
         .unwrap()
         .is_none());
 }
+
+#[tokio::test]
+async fn transport_error_before_client_shutdown() {
+    let mut broker = aldrin_test::TestBroker::new();
+    tokio::spawn(broker.take_broker().run());
+
+    let mut client = broker.add_client().await;
+    let join = tokio::spawn(client.take_client().run());
+
+    // Drop the connnection.
+    let _ = client.take_connection();
+
+    // Issue a client shutdown.
+    client.shutdown();
+
+    // Client future must complete with an error.
+    let res = join.await.unwrap();
+    assert!(res.is_err());
+}
+
+#[tokio::test]
+async fn transport_error_after_client_shutdown() {
+    let mut broker = aldrin_test::TestBroker::new();
+    tokio::spawn(broker.take_broker().run());
+
+    let mut client = broker.add_client().await;
+    let join = tokio::spawn(client.take_client().run());
+
+    // Issue a client shutdown.
+    client.shutdown();
+    tokio::task::yield_now().await;
+
+    // Drop the connnection.
+    let _ = client.take_connection();
+
+    // Client future must complete with an error.
+    let res = join.await.unwrap();
+    assert!(res.is_err());
+}
