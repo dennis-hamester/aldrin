@@ -10,16 +10,57 @@ rust-version = "1.64.0"
 [features]
 statistics = []
 
-[dependencies]
-aldrin-proto = { version = "0.1.0", path = "../proto", features = ["new-v4-ids"] }
-futures-channel = { version = "0.3.21", default-features = false, features = ["sink", "std"] }
-futures-core = { version = "0.3.21", default-features = false }
-futures-util = { version = "0.3.21", default-features = false, features = ["sink"] }
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+features = ["new-v4-ids"]
+
+[dependencies.futures-channel]
+version = "0.3.21"
+default-features = false
+features = [
+    "sink",
+    "std",
+]
+
+[dependencies.futures-core]
+version = "0.3.21"
+default-features = false
+
+[dependencies.futures-util]
+version = "0.3.21"
+default-features = false
+features = ["sink"]
 
 [dev-dependencies]
-aldrin-channel = { version = "0.1.0", path = "../channel" }
-aldrin-client = { version = "0.1.0", path = "../client" }
-aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json-serializer", "tokio-codec"] }
-aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
 anyhow = "1.0.32"
-tokio = { version = "1.0.0", features = ["macros", "net", "rt-multi-thread", "time"] }
+
+[dev-dependencies.aldrin-channel]
+version = "0.1.0"
+path = "../channel"
+
+[dev-dependencies.aldrin-client]
+version = "0.1.0"
+path = "../client"
+
+[dev-dependencies.aldrin-codec]
+version = "0.1.0"
+path = "../codec"
+features = [
+    "json-serializer",
+    "tokio-codec",
+]
+
+[dev-dependencies.aldrin-test]
+version = "0.1.0"
+path = "../test"
+features = ["tokio"]
+
+[dev-dependencies.tokio]
+version = "1.0.0"
+features = [
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "time",
+]

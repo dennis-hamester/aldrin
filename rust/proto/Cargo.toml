@@ -8,11 +8,20 @@ edition = "2021"
 rust-version = "1.64.0"
 
 [features]
-serde-derive = ["serde", "uuid/serde"]
 new-v4-ids = ["uuid/v4"]
+serde-derive = [
+    "serde",
+    "uuid/serde",
+]
 
 [dependencies]
 pin-project = "1.0.10"
-uuid = { version = "1.1.2", default-features = false }
 
-serde = { optional = true, version = "1.0.104", features = ["derive"] }
+[dependencies.serde]
+optional = true
+version = "1.0.104"
+features = ["derive"]
+
+[dependencies.uuid]
+version = "1.1.2"
+default-features = false

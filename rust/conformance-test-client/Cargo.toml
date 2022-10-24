@@ -9,11 +9,38 @@ rust-version = "1.64.0"
 publish = false
 
 [dependencies]
-aldrin-client = { version = "0.1.0", path = "../client" }
-aldrin-codec = { version = "0.1.0", path = "../codec", features = ["json-serializer", "tokio-codec"] }
-aldrin-conformance-test-shared = { version = "0.1.0", path = "../../conformance-test-shared" }
 anyhow = "1.0.32"
-futures = { version = "0.3.21", default-features = false }
 serde_json = "1.0.48"
-tokio = { version = "1.0.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
-tokio-util = { version = "0.7.1", features = ["codec"] }
+
+[dependencies.aldrin-client]
+version = "0.1.0"
+path = "../client"
+
+[dependencies.aldrin-codec]
+version = "0.1.0"
+path = "../codec"
+features = [
+    "json-serializer",
+    "tokio-codec",
+]
+
+[dependencies.aldrin-conformance-test-shared]
+version = "0.1.0"
+path = "../../conformance-test-shared"
+
+[dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dependencies.tokio]
+version = "1.0.0"
+features = [
+    "io-std",
+    "macros",
+    "net",
+    "rt-multi-thread",
+]
+
+[dependencies.tokio-util]
+version = "0.7.1"
+features = ["codec"]

@@ -10,17 +10,51 @@ rust-version = "1.64.0"
 [features]
 codegen = ["aldrin-codegen-macros"]
 
-[dependencies]
-aldrin-proto = { version = "0.1.0", path = "../proto", features = ["new-v4-ids"] }
-futures-channel = { version = "0.3.21", default-features = false, features = ["std"] }
-futures-core = { version = "0.3.21", default-features = false }
-futures-util = { version = "0.3.21", default-features = false }
-uuid = { version = "1.1.2", default-features = false, features = ["v4"] }
+[dependencies.aldrin-codegen-macros]
+optional = true
+version = "0.1.0"
+path = "../codegen-macros"
 
-aldrin-codegen-macros = { optional = true, version = "0.1.0", path = "../codegen-macros" }
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+features = ["new-v4-ids"]
 
-[dev-dependencies]
-aldrin-channel = { version = "0.1.0", path = "../channel" }
-aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
-futures = { version = "0.3.21", default-features = false }
-tokio = { version = "1.0.0", features = ["macros", "rt-multi-thread", "time"] }
+[dependencies.futures-channel]
+version = "0.3.21"
+default-features = false
+features = ["std"]
+
+[dependencies.futures-core]
+version = "0.3.21"
+default-features = false
+
+[dependencies.futures-util]
+version = "0.3.21"
+default-features = false
+
+[dependencies.uuid]
+version = "1.1.2"
+default-features = false
+features = ["v4"]
+
+[dev-dependencies.aldrin-channel]
+version = "0.1.0"
+path = "../channel"
+
+[dev-dependencies.aldrin-test]
+version = "0.1.0"
+path = "../test"
+features = ["tokio"]
+
+[dev-dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dev-dependencies.tokio]
+version = "1.0.0"
+features = [
+    "macros",
+    "rt-multi-thread",
+    "time",
+]

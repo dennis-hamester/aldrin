@@ -7,13 +7,33 @@ license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.64.0"
 
-[dependencies]
-aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-channel = "0.3.21"
-futures-core = "0.3.21"
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
 
-[dev-dependencies]
-aldrin-broker = { version = "0.1.0", path = "../broker" }
-aldrin-client = { version = "0.1.0", path = "../client" }
-futures = { version = "0.3.21", default-features = false }
-tokio = { version = "1.0.0", features = ["macros", "rt-multi-thread"] }
+[dependencies.futures-channel]
+version = "0.3.21"
+default-features = false
+
+[dependencies.futures-core]
+version = "0.3.21"
+default-features = false
+
+[dev-dependencies.aldrin-broker]
+version = "0.1.0"
+path = "../broker"
+
+[dev-dependencies.aldrin-client]
+version = "0.1.0"
+path = "../client"
+
+[dev-dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dev-dependencies.tokio]
+version = "1.0.0"
+features = [
+    "macros",
+    "rt-multi-thread",
+]

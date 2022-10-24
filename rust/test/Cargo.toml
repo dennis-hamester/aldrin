@@ -7,17 +7,46 @@ license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.64.0"
 
-[dependencies]
-aldrin-broker = { version = "0.1.0", path = "../broker" }
-aldrin-channel = { version = "0.1.0", path = "../channel" }
-aldrin-client = { version = "0.1.0", path = "../client" }
-aldrin-proto = { version = "0.1.0", path = "../proto" }
-futures-util = { version = "0.3.21", default-features = false }
+[dependencies.aldrin-broker]
+version = "0.1.0"
+path = "../broker"
 
-tokio = { optional = true, version = "1.0.0", features = ["rt"] }
+[dependencies.aldrin-channel]
+version = "0.1.0"
+path = "../channel"
+
+[dependencies.aldrin-client]
+version = "0.1.0"
+path = "../client"
+
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+
+[dependencies.futures-util]
+version = "0.3.21"
+default-features = false
+
+[dependencies.tokio]
+optional = true
+version = "1.0.0"
+features = ["rt"]
 
 [dev-dependencies]
-aldrin-codegen-macros = { version = "0.1.0", path = "../codegen-macros" }
 anyhow = "1.0.32"
-futures = { version = "0.3.21", default-features = false }
-tokio = { version = "1.0.0", features = ["macros", "rt-multi-thread", "time"] }
+
+[dev-dependencies.aldrin-codegen-macros]
+version = "0.1.0"
+path = "../codegen-macros"
+
+[dev-dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dev-dependencies.tokio]
+version = "1.0.0"
+features = [
+    "macros",
+    "rt-multi-thread",
+    "time",
+]

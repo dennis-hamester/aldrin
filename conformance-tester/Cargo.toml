@@ -8,17 +8,55 @@ edition = "2021"
 rust-version = "1.64.0"
 
 [dependencies]
-aldrin-codec = { version = "0.1.0", path = "../rust/codec", features = ["json-serializer", "tokio-codec"] }
-aldrin-conformance-test-shared = { version = "0.1.0", path = "../conformance-test-shared" }
-aldrin-proto = { version = "0.1.0", path = "../rust/proto", features = ["new-v4-ids"] }
 anyhow = "1.0.32"
 atty = "0.2.14"
-clap = { version = "3.1.8", features = ["derive", "wrap_help"] }
-futures = { version = "0.3.21", default-features = false }
 num_cpus = "1.13.0"
 once_cell = "1.4.0"
 serde_json = "1.0.48"
 termcolor = "1.1.0"
-textwrap = { version = "0.15.0", features = ["terminal_size"] }
-tokio = { version = "1.0.0", features = ["io-util", "net", "process", "rt-multi-thread", "time"] }
-tokio-util = { version = "0.7.1", features = ["codec"] }
+
+[dependencies.aldrin-codec]
+version = "0.1.0"
+path = "../rust/codec"
+features = [
+    "json-serializer",
+    "tokio-codec",
+]
+
+[dependencies.aldrin-conformance-test-shared]
+version = "0.1.0"
+path = "../conformance-test-shared"
+
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../rust/proto"
+features = ["new-v4-ids"]
+
+[dependencies.clap]
+version = "3.1.8"
+features = [
+    "derive",
+    "wrap_help",
+]
+
+[dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dependencies.textwrap]
+version = "0.15.0"
+features = ["terminal_size"]
+
+[dependencies.tokio]
+version = "1.0.0"
+features = [
+    "io-util",
+    "net",
+    "process",
+    "rt-multi-thread",
+    "time",
+]
+
+[dependencies.tokio-util]
+version = "0.7.1"
+features = ["codec"]

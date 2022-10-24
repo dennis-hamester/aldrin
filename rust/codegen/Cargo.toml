@@ -12,14 +12,38 @@ default = ["rust"]
 rust = []
 
 [dependencies]
-aldrin-parser = { version = "0.1.0", path = "../parser" }
 diffy = "0.2.0"
 heck = "0.4.0"
 
-[dev-dependencies]
-aldrin-client = { version = "0.1.0", path = "../client", features = ["codegen"] }
-aldrin-proto = { version = "0.1.0", path = "../proto" }
-aldrin-test = { version = "0.1.0", path = "../test", features = ["tokio"] }
-futures = { version = "0.3.21", default-features = false }
-tokio = { version = "1.0.0", features = ["macros", "rt"] }
-uuid = { version = "1.1.2", default-features = false }
+[dependencies.aldrin-parser]
+version = "0.1.0"
+path = "../parser"
+
+[dev-dependencies.aldrin-client]
+version = "0.1.0"
+path = "../client"
+features = ["codegen"]
+
+[dev-dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+
+[dev-dependencies.aldrin-test]
+version = "0.1.0"
+path = "../test"
+features = ["tokio"]
+
+[dev-dependencies.futures]
+version = "0.3.21"
+default-features = false
+
+[dev-dependencies.tokio]
+version = "1.0.0"
+features = [
+    "macros",
+    "rt",
+]
+
+[dev-dependencies.uuid]
+version = "1.1.2"
+default-features = false
