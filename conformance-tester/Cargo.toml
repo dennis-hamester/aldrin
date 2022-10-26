@@ -12,7 +12,7 @@ version = "0.1.0"
 path = "../rust/codec"
 default-features = false
 features = [
-    "json-serializer",
+    "json",
     "tokio-codec",
 ]
 

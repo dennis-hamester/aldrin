@@ -13,9 +13,9 @@ bincode = [
     "aldrin-proto/serde",
     "dep:bincode",
 ]
-json-serializer = [
+json = [
     "aldrin-proto/serde",
-    "serde_json",
+    "dep:serde_json",
 ]
 tokio-codec = [
     "pin-project",

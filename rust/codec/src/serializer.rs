@@ -1,6 +1,6 @@
 #[cfg(feature = "bincode")]
 mod bincode;
-#[cfg(feature = "json-serializer")]
+#[cfg(feature = "json")]
 mod json;
 
 use aldrin_proto::Message;
@@ -8,7 +8,7 @@ use bytes::{Bytes, BytesMut};
 
 #[cfg(feature = "bincode")]
 pub use self::bincode::{Bincode, BincodeError};
-#[cfg(feature = "json-serializer")]
+#[cfg(feature = "json")]
 pub use json::{Json, JsonError};
 
 pub trait Serializer {

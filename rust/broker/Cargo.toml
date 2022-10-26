@@ -48,7 +48,7 @@ path = "../client"
 version = "0.1.0"
 path = "../codec"
 features = [
-    "json-serializer",
+    "json",
     "tokio-codec",
 ]
 
