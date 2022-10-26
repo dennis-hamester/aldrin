@@ -3,74 +3,61 @@ mod diag;
 mod rust;
 
 use anyhow::Result;
-use clap::Parser;
-use std::convert::Infallible;
+use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
 use std::process;
-use std::str::FromStr;
 
 #[derive(Parser)]
 #[clap(version, about)]
 enum Args {
-    /// Checks an Aldrin schema for errors
+    /// Checks an Aldrin schema for errors.
     Check(check::CheckArgs),
 
-    /// Generates code for Rust
+    /// Generates code for Rust.
     Rust(rust::RustArgs),
 }
 
 #[derive(Parser)]
 pub struct CommonArgs {
-    /// When to color output
-    #[clap(long, default_value = "auto")]
-    #[clap(possible_values = &["auto", "always", "never"])]
+    /// When to color output.
+    #[clap(long, default_value_t = Color::Auto)]
+    #[arg(value_enum)]
     color: Color,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, ValueEnum)]
 pub enum Color {
     Auto,
     Always,
     Never,
 }
 
-impl FromStr for Color {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Infallible> {
-        match s {
-            "auto" => Ok(Color::Auto),
-            "always" => Ok(Color::Always),
-            "never" => Ok(Color::Never),
-            _ => unreachable!(),
-        }
-    }
-}
-
 #[derive(Parser)]
 pub struct CommonReadArgs {
-    /// Additional include directories
-    #[clap(short = 'I', long, name = "include_dir", number_of_values = 1)]
+    /// Additional include directories.
+    ///
+    /// Can be specified multiple times.
+    #[clap(short = 'I', long)]
     include: Vec<PathBuf>,
 }
 
 #[derive(Parser)]
 pub struct CommonGenArgs {
-    /// Output directory
+    /// Output directory.
     ///
     /// Files in the output directory will not be overwritten unless --overwrite is specified.
-    #[clap(short, long = "output", name = "output_dir")]
+    #[clap(short, long = "output")]
     output_dir: PathBuf,
 
-    /// Overwrite output files
+    /// Overwrite output files.
     #[clap(short = 'f', long)]
     overwrite: bool,
 
-    /// Skip generating client-side code for services
+    /// Skip generating client-side code for services.
     #[clap(long)]
     no_client: bool,
 
-    /// Skip generating server-side code for services
+    /// Skip generating server-side code for services.
     #[clap(long)]
     no_server: bool,
 }

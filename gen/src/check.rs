@@ -12,9 +12,9 @@ pub struct CheckArgs {
     #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
-    /// Paths to one or more Aldrin schema files
-    #[clap(name = "schema", required = true)]
-    files: Vec<PathBuf>,
+    /// Paths to one or more Aldrin schema files.
+    #[clap(required = true)]
+    schemata: Vec<PathBuf>,
 }
 
 pub fn run(args: CheckArgs) -> Result<bool> {
@@ -26,17 +26,17 @@ pub fn run(args: CheckArgs) -> Result<bool> {
 
     let mut res = true;
     let mut first = true;
-    for file in &args.files {
-        if args.files.len() > 1 {
+    for schema in &args.schemata {
+        if args.schemata.len() > 1 {
             if first {
                 first = false;
             } else {
                 println!();
             }
-            println!("{}:", file.display());
+            println!("{}:", schema.display());
         }
 
-        let parsed = parser.parse(file);
+        let parsed = parser.parse(schema);
         diag::print_diagnostics(&parsed, args.common_args.color)?;
 
         if parsed.errors().is_empty() {

@@ -28,13 +28,16 @@ version = "0.2.14"
 default-features = false
 
 [dependencies.clap]
-version = "3.1.8"
+version = "4.0.18"
 default-features = false
 features = [
     "color",
     "derive",
+    "error-context",
+    "help",
     "std",
     "suggestions",
+    "usage",
     "wrap_help",
 ]
 

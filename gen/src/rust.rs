@@ -18,47 +18,48 @@ pub struct RustArgs {
     #[clap(flatten)]
     common_gen_args: CommonGenArgs,
 
-    /// Don't generate builders for structs
+    /// Don't generate builders for structs.
     #[clap(long)]
     no_struct_builders: bool,
 
-    /// Don't annotate structs with non_exhaustive attribute
+    /// Don't annotate structs with non_exhaustive attribute.
     #[clap(long)]
     no_struct_non_exhaustive: bool,
 
-    /// Don't annotate enums with non_exhaustive attribute
+    /// Don't annotate enums with non_exhaustive attribute.
     #[clap(long)]
     no_enum_non_exhaustive: bool,
 
-    /// Don't annotate service event enums with non_exhaustive attribute
+    /// Don't annotate service event enums with non_exhaustive attribute.
     #[clap(long)]
     no_event_non_exhaustive: bool,
 
-    /// Don't annotate service function enums with non_exhaustive attribute
+    /// Don't annotate service function enums with non_exhaustive attribute.
     #[clap(long)]
     no_function_non_exhaustive: bool,
 
-    /// Format output with rustfmt
+    /// Format output with rustfmt.
     ///
     /// The formatting style can be customized with --rustfmt-toml.
     #[clap(long)]
     format: bool,
 
-    /// Path to rustfmt.toml
+    /// Path to rustfmt.toml.
     ///
     /// If this argument is not specified, standard rustfmt rules apply regarding its configuration.
     #[clap(long)]
     rustfmt_toml: Option<PathBuf>,
 
-    /// Path to a patch to apply to the generated code
+    /// Path to a patch to apply to the generated code.
+    ///
+    /// This argument can be specified multiple times to apply more than one patch.
     ///
     /// If --format is used as well, the patch is applied before formatting the code.
     #[clap(short, long, number_of_values = 1)]
     patch: Vec<PathBuf>,
 
-    /// Path to an Aldrin schema file
-    #[clap(name = "schema")]
-    file: PathBuf,
+    /// Path to an Aldrin schema file.
+    schema: PathBuf,
 }
 
 pub fn run(args: RustArgs) -> Result<bool> {
@@ -68,7 +69,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
         parser.add_schema_path(include);
     }
 
-    let parsed = parser.parse(args.file);
+    let parsed = parser.parse(args.schema);
     diag::print_diagnostics(&parsed, args.common_args.color)?;
 
     if parsed.errors().is_empty() {
