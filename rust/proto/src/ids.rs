@@ -13,7 +13,7 @@ use uuid::Uuid;
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -54,7 +54,7 @@ impl IntoValue for ObjectId {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]
@@ -114,7 +114,7 @@ impl fmt::Display for ObjectUuid {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]
@@ -178,7 +178,7 @@ impl fmt::Display for ObjectCookie {
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -226,7 +226,7 @@ impl IntoValue for ServiceId {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]
@@ -286,7 +286,7 @@ impl fmt::Display for ServiceUuid {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]
@@ -344,7 +344,7 @@ impl fmt::Display for ServiceCookie {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]

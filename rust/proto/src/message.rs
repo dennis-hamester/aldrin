@@ -5,7 +5,7 @@ use crate::value::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -58,7 +58,7 @@ pub enum Message {
 /// Sending or receiving end of a channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -92,7 +92,7 @@ impl ChannelEnd {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -103,7 +103,7 @@ pub struct Connect {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -115,7 +115,7 @@ pub enum ConnectReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -126,7 +126,7 @@ pub struct CreateObject {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -150,7 +150,7 @@ impl CreateObjectResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -161,7 +161,7 @@ pub struct CreateObjectReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -172,7 +172,7 @@ pub struct DestroyObject {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -197,7 +197,7 @@ impl DestroyObjectResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -208,7 +208,7 @@ pub struct DestroyObjectReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -218,7 +218,7 @@ pub struct SubscribeObjects {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -228,7 +228,7 @@ pub struct SubscribeObjectsReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -239,7 +239,7 @@ pub struct ObjectCreatedEvent {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -249,7 +249,7 @@ pub struct ObjectDestroyedEvent {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -262,7 +262,7 @@ pub struct CreateService {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -290,7 +290,7 @@ impl CreateServiceResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -301,7 +301,7 @@ pub struct CreateServiceReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -312,7 +312,7 @@ pub struct DestroyService {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -337,7 +337,7 @@ impl DestroyServiceResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -348,7 +348,7 @@ pub struct DestroyServiceReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -358,7 +358,7 @@ pub struct SubscribeServices {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -368,7 +368,7 @@ pub struct SubscribeServicesReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -379,7 +379,7 @@ pub struct ServiceCreatedEvent {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -389,7 +389,7 @@ pub struct ServiceDestroyedEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -402,7 +402,7 @@ pub struct CallFunction {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -434,7 +434,7 @@ impl CallFunctionResult {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -445,7 +445,7 @@ pub struct CallFunctionReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -457,7 +457,7 @@ pub struct SubscribeEvent {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -481,7 +481,7 @@ impl SubscribeEventResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -492,7 +492,7 @@ pub struct SubscribeEventReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -503,7 +503,7 @@ pub struct UnsubscribeEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -515,7 +515,7 @@ pub struct EmitEvent {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -527,7 +527,7 @@ pub struct QueryObject {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -543,7 +543,7 @@ pub enum QueryObjectResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -554,7 +554,7 @@ pub struct QueryObjectReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -565,7 +565,7 @@ pub struct QueryServiceVersion {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -589,7 +589,7 @@ impl QueryServiceVersionResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -600,7 +600,7 @@ pub struct QueryServiceVersionReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -611,7 +611,7 @@ pub struct CreateChannel {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -622,7 +622,7 @@ pub struct CreateChannelReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -634,7 +634,7 @@ pub struct DestroyChannelEnd {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -659,7 +659,7 @@ impl DestroyChannelEndResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -670,7 +670,7 @@ pub struct DestroyChannelEndReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -681,7 +681,7 @@ pub struct ChannelEndDestroyed {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -693,7 +693,7 @@ pub struct ClaimChannelEnd {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -718,7 +718,7 @@ impl ClaimChannelEndResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -729,7 +729,7 @@ pub struct ClaimChannelEndReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -740,7 +740,7 @@ pub struct ChannelEndClaimed {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -751,7 +751,7 @@ pub struct SendItem {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -762,7 +762,7 @@ pub struct ItemReceived {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
@@ -772,7 +772,7 @@ pub struct Sync {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]

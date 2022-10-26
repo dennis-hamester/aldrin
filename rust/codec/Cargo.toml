@@ -10,11 +10,11 @@ autobenches = false
 
 [features]
 bincode-serializer = [
-    "aldrin-proto/serde-derive",
+    "aldrin-proto/serde",
     "bincode",
 ]
 json-serializer = [
-    "aldrin-proto/serde-derive",
+    "aldrin-proto/serde",
     "serde_json",
 ]
 tokio-codec = [

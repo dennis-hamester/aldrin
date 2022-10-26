@@ -9,8 +9,8 @@ rust-version = "1.64.0"
 
 [features]
 new-v4-ids = ["uuid/v4"]
-serde-derive = [
-    "serde",
+serde = [
+    "dep:serde",
     "uuid/serde",
 ]
 

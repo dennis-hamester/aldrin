@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
-    feature = "serde-derive",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "kebab-case", deny_unknown_fields)
 )]
