@@ -959,6 +959,13 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "impl {} {{", reply);
             if let Some(ok) = func.ok() {
+                if let Some(err) = func.err() {
+                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_type(svc_name, func_name, ok), function_err_type(svc_name, func_name, err));
+                    genln!(self, "        self.0.set(res)");
+                    genln!(self, "    }}");
+                    genln!(self);
+                }
+
                 genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(svc_name, func_name, ok));
                 genln!(self, "        self.0.ok(arg)");
                 genln!(self, "    }}");

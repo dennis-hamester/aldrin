@@ -256,20 +256,28 @@ impl FunctionCallReply {
         }
     }
 
+    /// Sets the function call's reply.
+    pub fn set(self, res: Result<impl IntoValue, impl IntoValue>) -> Result<(), Error> {
+        match res {
+            Ok(arg) => self.ok(arg),
+            Err(arg) => self.err(arg),
+        }
+    }
+
     /// Signals that the function call was successful.
-    pub fn ok(mut self, res: impl IntoValue) -> Result<(), Error> {
+    pub fn ok(mut self, arg: impl IntoValue) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Ok(res.into_value()))
+            .function_call_reply(self.serial, CallFunctionResult::Ok(arg.into_value()))
     }
 
     /// Signals that the function call has failed.
-    pub fn err(mut self, res: impl IntoValue) -> Result<(), Error> {
+    pub fn err(mut self, arg: impl IntoValue) -> Result<(), Error> {
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Err(res.into_value()))
+            .function_call_reply(self.serial, CallFunctionResult::Err(arg.into_value()))
     }
 
     /// Aborts the function call.
