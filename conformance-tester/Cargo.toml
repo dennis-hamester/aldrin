@@ -5,6 +5,7 @@ version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "Apache-2.0"
 edition = "2021"
+rust-version = "1.64.0"
 
 [dependencies]
 aldrin-codec = { version = "0.1.0", path = "../rust/codec", features = ["json-serializer", "tokio-codec"] }
