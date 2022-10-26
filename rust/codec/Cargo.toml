@@ -17,9 +17,9 @@ json = [
     "aldrin-proto/serde",
     "dep:serde_json",
 ]
-tokio-codec = [
-    "pin-project",
-    "tokio",
+tokio = [
+    "dep:pin-project",
+    "dep:tokio",
 ]
 
 [dependencies.aldrin-proto]

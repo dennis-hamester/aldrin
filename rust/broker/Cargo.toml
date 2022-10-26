@@ -49,7 +49,7 @@ version = "0.1.0"
 path = "../codec"
 features = [
     "json",
-    "tokio-codec",
+    "tokio",
 ]
 
 [dev-dependencies.aldrin-test]

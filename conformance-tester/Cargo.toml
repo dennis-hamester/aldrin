@@ -13,7 +13,7 @@ path = "../rust/codec"
 default-features = false
 features = [
     "json",
-    "tokio-codec",
+    "tokio",
 ]
 
 [dependencies.aldrin-conformance-test-shared]
