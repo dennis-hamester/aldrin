@@ -69,7 +69,7 @@ where
             };
 
             w.set_color(style)?;
-            write!(w, "{}", chunk)?;
+            write!(w, "{chunk}")?;
         }
 
         w.set_color(&STYLE_REGULAR)?;

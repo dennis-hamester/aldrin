@@ -65,6 +65,6 @@ struct JsonInput {
 impl fmt::Display for JsonInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let pretty = if self.pretty { "pretty" } else { "not pretty" };
-        write!(f, "{}/{}", self.size, pretty)
+        write!(f, "{}/{pretty}", self.size)
     }
 }

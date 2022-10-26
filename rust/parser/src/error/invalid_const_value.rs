@@ -61,7 +61,7 @@ impl Diagnostic for InvalidConstValue {
 
         let mut fmt = Formatter::new(
             self,
-            format!("invalid constant {} value `{}`", kind, value.value()),
+            format!("invalid constant {kind} value `{}`", value.value()),
         );
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {

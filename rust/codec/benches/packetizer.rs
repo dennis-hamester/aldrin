@@ -175,6 +175,6 @@ impl fmt::Display for LengthPrefixedInput {
             Endian::Big => "big",
             Endian::Little => "little",
         };
-        write!(f, "{} bytes/{} endian", self.size, endian)
+        write!(f, "{} bytes/{endian} endian", self.size)
     }
 }

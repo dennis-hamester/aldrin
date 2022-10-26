@@ -80,7 +80,7 @@ impl Diagnostic for ExternTypeNotFound {
         }
 
         if let Some(ref candidate) = self.candidate {
-            fmt.help(format!("did you mean `{}`?", candidate));
+            fmt.help(format!("did you mean `{candidate}`?"));
         }
 
         fmt.format()

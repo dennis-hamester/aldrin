@@ -55,17 +55,17 @@ fn ui_test_impl(name: &str) {
     for diag in errors.chain(warnings).chain(others) {
         let formatted = diag.format(&parsed).to_string();
         if !expected.remove(&formatted) {
-            eprintln!("Unexpected diagnostic:\n{}\n", formatted);
+            eprintln!("Unexpected diagnostic:\n{formatted}\n");
             fail = true;
         }
     }
 
     for diag in expected {
-        eprintln!("Expected diagnostic:\n{}\n", diag);
+        eprintln!("Expected diagnostic:\n{diag}\n");
         fail = true;
     }
 
     if fail {
-        panic!("UI test `{}` encountered unmatched diagnostics", name);
+        panic!("UI test `{name}` encountered unmatched diagnostics");
     }
 }

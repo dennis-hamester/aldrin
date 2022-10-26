@@ -64,7 +64,7 @@ where
                 f.write_str("unexpected message received")
             }
             EstablishError::VersionMismatch(v) => {
-                f.write_fmt(format_args!("client version {} mismatch", v))
+                f.write_fmt(format_args!("client version {v} mismatch"))
             }
             EstablishError::BrokerShutdown => f.write_str("broker shutdown"),
             EstablishError::Transport(e) => e.fmt(f),

@@ -68,6 +68,6 @@ impl fmt::Display for BincodeInput {
             Endian::Big => "big",
             Endian::Little => "little",
         };
-        write!(f, "{}/{} endian", self.size, endian)
+        write!(f, "{}/{endian} endian", self.size)
     }
 }

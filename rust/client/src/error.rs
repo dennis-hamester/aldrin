@@ -40,7 +40,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ConnectError::VersionMismatch(v) => {
-                f.write_fmt(format_args!("broker version {} mismatch", v))
+                f.write_fmt(format_args!("broker version {v} mismatch"))
             }
             ConnectError::UnexpectedMessageReceived(_) => {
                 f.write_str("unexpected message received")
@@ -170,7 +170,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::ClientShutdown => f.write_str("client shutdown"),
-            Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {}", uuid)),
+            Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {uuid}")),
             Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id.uuid)),
             Error::DuplicateService(obj_id, uuid) => f.write_fmt(format_args!(
                 "duplicate service {} for object {}",

@@ -20,7 +20,7 @@ impl Messages {
 
     fn parse_message(name: impl AsRef<Path>) -> Message {
         let mut path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-        path.extend(&["benches", "datasets", "messages"]);
+        path.extend(["benches", "datasets", "messages"]);
         path.push(name.as_ref());
         let file = File::open(path).unwrap();
         serde_json::from_reader(file).unwrap()

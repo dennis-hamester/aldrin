@@ -67,7 +67,7 @@ where
             }
 
             output.set_color(&STYLE_MESSAGE_TYPE)?;
-            write!(output, "{}", message_type)?;
+            write!(output, "{message_type}")?;
             output.set_color(&STYLE_REGULAR)?;
         }
 
@@ -88,7 +88,7 @@ pub fn describe_test(mut output: impl WriteColor, test: impl Test) -> Result<()>
     for message_type in test.message_types() {
         write!(output, "  - ")?;
         output.set_color(&STYLE_MESSAGE_TYPE)?;
-        writeln!(output, "{}", message_type)?;
+        writeln!(output, "{message_type}")?;
         output.set_color(&STYLE_REGULAR)?;
     }
 
@@ -97,7 +97,7 @@ pub fn describe_test(mut output: impl WriteColor, test: impl Test) -> Result<()>
     let termwidth = get_termwidth();
 
     for line in textwrap::wrap(desc, termwidth - 4) {
-        writeln!(output, "  {}", line)?;
+        writeln!(output, "  {line}")?;
     }
 
     Ok(())
@@ -105,7 +105,7 @@ pub fn describe_test(mut output: impl WriteColor, test: impl Test) -> Result<()>
 
 pub fn prepare_report(mut output: impl WriteColor, name: &str) -> Result<()> {
     output.set_color(&STYLE_TEST_NAME)?;
-    write!(output, "{}", name)?;
+    write!(output, "{name}")?;
 
     output.set_color(&STYLE_REGULAR)?;
     write!(output, " ... ")?;
@@ -149,7 +149,7 @@ pub fn finish_report(mut output: impl WriteColor, res: Result<(), RunError>) -> 
             print_seperator(&mut output)?;
         }
 
-        writeln!(output, "{}", line)?;
+        writeln!(output, "{line}")?;
     }
 
     if !err.stderr.is_empty() {
@@ -163,7 +163,7 @@ pub fn finish_report(mut output: impl WriteColor, res: Result<(), RunError>) -> 
         let stderr = String::from_utf8_lossy(&err.stderr);
         for line in stderr.lines() {
             print_seperator(&mut output)?;
-            writeln!(output, "    {}", line)?;
+            writeln!(output, "    {line}")?;
         }
     }
 

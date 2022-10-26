@@ -1112,11 +1112,11 @@ fn struct_field_type(struct_name: &str, field: &ast::StructField) -> String {
 }
 
 fn struct_inline_field_type(struct_name: &str, field_name: &str) -> String {
-    format!("{}{}", struct_name, field_name.to_upper_camel_case())
+    format!("{struct_name}{}", field_name.to_upper_camel_case())
 }
 
 fn struct_builder_name(base: &str) -> String {
-    format!("{}Builder", base)
+    format!("{base}Builder")
 }
 
 fn enum_variant_name(enum_name: &str, var_name: &str, var_type: &ast::TypeNameOrInline) -> String {
@@ -1129,7 +1129,7 @@ fn enum_variant_name(enum_name: &str, var_name: &str, var_type: &ast::TypeNameOr
 }
 
 fn enum_inline_variant_type(enum_name: &str, var_name: &str) -> String {
-    format!("{}{}", enum_name, var_name)
+    format!("{enum_name}{var_name}")
 }
 
 fn service_uuid_const(svc: &ast::ServiceDef) -> String {
@@ -1141,14 +1141,14 @@ fn service_version_const(svc: &ast::ServiceDef) -> String {
 }
 
 fn service_proxy_name(svc_name: &str) -> String {
-    format!("{}Proxy", svc_name)
+    format!("{svc_name}Proxy")
 }
 
 fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Args", svc_name, func_name.to_upper_camel_case())
+            format!("{svc_name}{}Args", func_name.to_upper_camel_case())
         }
     }
 }
@@ -1157,7 +1157,7 @@ fn function_args_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart)
     let name = function_args_type_name(svc_name, func_name, part);
 
     if part.optional() {
-        format!("Option<{}>", name)
+        format!("Option<{name}>")
     } else {
         name
     }
@@ -1167,7 +1167,7 @@ fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPa
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Ok", svc_name, func_name.to_upper_camel_case())
+            format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
         }
     }
 }
@@ -1176,7 +1176,7 @@ fn function_ok_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -
     let name = function_ok_type_name(svc_name, func_name, part);
 
     if part.optional() {
-        format!("Option<{}>", name)
+        format!("Option<{name}>")
     } else {
         name
     }
@@ -1186,7 +1186,7 @@ fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionP
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Error", svc_name, func_name.to_upper_camel_case())
+            format!("{svc_name}{}Error", func_name.to_upper_camel_case())
         }
     }
 }
@@ -1195,18 +1195,18 @@ fn function_err_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) 
     let name = function_err_type_name(svc_name, func_name, part);
 
     if part.optional() {
-        format!("Option<{}>", name)
+        format!("Option<{name}>")
     } else {
         name
     }
 }
 
 fn service_events(svc_name: &str) -> String {
-    format!("{}Events", svc_name)
+    format!("{svc_name}Events")
 }
 
 fn service_event(svc_name: &str) -> String {
-    format!("{}Event", svc_name)
+    format!("{svc_name}Event")
 }
 
 fn service_event_variant(ev_name: &str) -> String {
@@ -1214,28 +1214,28 @@ fn service_event_variant(ev_name: &str) -> String {
 }
 
 fn subscribe_event(ev_name: &str) -> String {
-    format!("subscribe_{}", ev_name)
+    format!("subscribe_{ev_name}")
 }
 
 fn unsubscribe_event(ev_name: &str) -> String {
-    format!("unsubscribe_{}", ev_name)
+    format!("unsubscribe_{ev_name}")
 }
 
 fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -> String {
     match ev_type.event_type() {
         ast::TypeNameOrInline::TypeName(ref ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{}{}Event", svc_name, service_event_variant(ev_name))
+            format!("{svc_name}{}Event", service_event_variant(ev_name))
         }
     }
 }
 
 fn event_emitter(svc_name: &str) -> String {
-    format!("{}EventEmitter", svc_name)
+    format!("{svc_name}EventEmitter")
 }
 
 fn service_functions(svc_name: &str) -> String {
-    format!("{}Function", svc_name)
+    format!("{svc_name}Function")
 }
 
 fn service_function_variant(func_name: &str) -> String {
@@ -1243,7 +1243,7 @@ fn service_function_variant(func_name: &str) -> String {
 }
 
 fn function_reply(svc_name: &str, func_name: &str) -> String {
-    format!("{}{}Reply", svc_name, func_name.to_upper_camel_case())
+    format!("{svc_name}{}Reply", func_name.to_upper_camel_case())
 }
 
 struct RustAttributes {

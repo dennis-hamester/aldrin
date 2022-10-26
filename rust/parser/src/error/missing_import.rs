@@ -64,7 +64,7 @@ impl Diagnostic for MissingImport {
         }
 
         if let Some(ref candidate) = self.candidate {
-            fmt.help(format!("did you mean `{}`?", candidate));
+            fmt.help(format!("did you mean `{candidate}`?"));
         } else {
             fmt.help(format!(
                 "add `import {};` at the top",

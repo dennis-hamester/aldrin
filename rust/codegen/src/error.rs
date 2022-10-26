@@ -74,12 +74,12 @@ impl fmt::Display for SubprocessError {
         write!(f, "subprocess `{}` failed", self.command)?;
 
         if let Some(code) = self.code {
-            write!(f, " with code {}", code)?;
+            write!(f, " with code {code}")?;
         }
 
         if f.alternate() {
             if let Some(ref stderr) = self.stderr {
-                writeln!(f, ":\n{}", stderr)?;
+                writeln!(f, ":\n{stderr}")?;
             }
         }
 
