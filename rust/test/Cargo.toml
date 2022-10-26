@@ -10,18 +10,22 @@ rust-version = "1.64.0"
 [dependencies.aldrin-broker]
 version = "0.1.0"
 path = "../broker"
+default-features = false
 
 [dependencies.aldrin-channel]
 version = "0.1.0"
 path = "../channel"
+default-features = false
 
 [dependencies.aldrin-client]
 version = "0.1.0"
 path = "../client"
+default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
 path = "../proto"
+default-features = false
 
 [dependencies.futures-util]
 version = "0.3.21"
@@ -30,6 +34,7 @@ default-features = false
 [dependencies.tokio]
 optional = true
 version = "1.0.0"
+default-features = false
 features = ["rt"]
 
 [dev-dependencies]

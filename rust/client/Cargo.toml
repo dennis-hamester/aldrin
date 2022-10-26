@@ -14,10 +14,12 @@ codegen = ["aldrin-codegen-macros"]
 optional = true
 version = "0.1.0"
 path = "../codegen-macros"
+default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
 path = "../proto"
+default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.futures-channel]

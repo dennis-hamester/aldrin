@@ -10,19 +10,33 @@ rust-version = "1.64.0"
 [lib]
 proc-macro = true
 
-[dependencies]
-proc-macro-error = "1.0.3"
-proc-macro2 = "1.0.18"
-syn = "1.0.14"
-
 [dependencies.aldrin-codegen]
 version = "0.1.0"
 path = "../codegen"
+default-features = false
 features = ["rust"]
 
 [dependencies.aldrin-parser]
 version = "0.1.0"
 path = "../parser"
+default-features = false
+
+[dependencies.proc-macro-error]
+version = "1.0.3"
+default-features = false
+
+[dependencies.proc-macro2]
+version = "1.0.18"
+default-features = false
+
+[dependencies.syn]
+version = "1.0.14"
+default-features = false
+features = [
+    "parsing",
+    "printing",
+    "proc-macro",
+]
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"

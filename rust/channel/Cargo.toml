@@ -10,6 +10,7 @@ rust-version = "1.64.0"
 [dependencies.aldrin-proto]
 version = "0.1.0"
 path = "../proto"
+default-features = false
 
 [dependencies.futures-channel]
 version = "0.3.21"

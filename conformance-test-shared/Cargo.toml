@@ -9,6 +9,7 @@ rust-version = "1.64.0"
 
 [dependencies.serde]
 version = "1.0.104"
+default-features = false
 features = ["derive"]
 
 [dev-dependencies]
