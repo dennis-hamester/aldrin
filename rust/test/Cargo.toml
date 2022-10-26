@@ -7,6 +7,9 @@ license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.64.0"
 
+[features]
+tokio = ["dep:tokio"]
+
 [dependencies.aldrin-broker]
 version = "0.1.0"
 path = "../broker"
