@@ -11,8 +11,9 @@ use std::process;
 #[derive(Parser)]
 #[clap(version, about)]
 struct Args {
-    /// When to color output
-    #[clap(long, default_value = "auto", possible_values = &["auto", "always", "never"])]
+    /// When to color output.
+    #[clap(long, default_value_t = ColorChoice::Auto)]
+    #[arg(value_enum)]
     color: ColorChoice,
 
     #[clap(subcommand)]
@@ -21,11 +22,11 @@ struct Args {
 
 #[derive(Parser)]
 enum Command {
-    /// Broker testing
+    /// Broker testing.
     #[clap(subcommand)]
     Broker(broker::Args),
 
-    /// Client testing
+    /// Client testing.
     #[clap(subcommand)]
     Client(client::Args),
 }

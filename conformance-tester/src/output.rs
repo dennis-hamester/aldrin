@@ -1,8 +1,7 @@
 use crate::test::{RunError, Test};
-use anyhow::{anyhow, Error, Result};
+use anyhow::Result;
 use once_cell::sync::Lazy;
 use std::cmp;
-use std::str::FromStr;
 use termcolor::{Color as TermColor, ColorSpec, StandardStream, WriteColor};
 
 fn style(fg: Option<TermColor>, bold: bool) -> ColorSpec {
@@ -26,24 +25,11 @@ static STYLE_FAILED: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), 
 static STYLE_FAILED_DETAIL: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), false));
 static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Cyan), true));
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, clap::ValueEnum)]
 pub enum ColorChoice {
     Auto,
     Always,
     Never,
-}
-
-impl FromStr for ColorChoice {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Error> {
-        match s {
-            "auto" => Ok(ColorChoice::Auto),
-            "always" => Ok(ColorChoice::Always),
-            "never" => Ok(ColorChoice::Never),
-            _ => Err(anyhow!("expected one of auto, always or never")),
-        }
-    }
 }
 
 pub fn make_output(color_choice: ColorChoice) -> Result<impl WriteColor> {

@@ -10,17 +10,18 @@ use termcolor::WriteColor;
 
 #[derive(Parser)]
 pub enum Args {
-    /// Lists available broker tests
+    /// Lists available broker tests.
     List,
 
-    /// Describes a test in more detail
+    /// Describes a test in more detail.
     Describe(DescribeArgs),
 
-    /// Runs broker tests
+    /// Runs broker tests.
     Run(RunArgs),
 }
 
 #[derive(Parser)]
+#[clap(arg_required_else_help = true)]
 pub struct RunArgs {
     #[clap(flatten)]
     common: CommonRunArgs,
@@ -31,24 +32,25 @@ pub struct RunArgs {
 
 #[derive(Clone, Parser)]
 pub struct BrokerRunArgs {
-    /// Path to the broker
+    /// Path to the broker.
     broker: String,
 
     /// Timeout in milliseconds for a test
-    #[clap(long, default_value = "1000")]
+    #[clap(long, default_value_t = 1000)]
     timeout: u64,
 
-    /// Timeout in milliseconds for the broker to shut down
+    /// Timeout in milliseconds for the broker to shut down.
     ///
     /// When a test fails, then the broker will be asked to shut down. If it fails to shut down
     /// within the specified amount of time, then the process will be killed.
-    #[clap(long, default_value = "1000")]
+    #[clap(long, default_value_t = 1000)]
     shutdown_timeout: u64,
 }
 
 #[derive(Parser)]
+#[clap(arg_required_else_help = true)]
 pub struct DescribeArgs {
-    /// Name of the test to describe
+    /// Name of the test to describe.
     test: String,
 }
 
