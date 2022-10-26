@@ -9,9 +9,9 @@ rust-version = "1.64.0"
 autobenches = false
 
 [features]
-bincode-serializer = [
+bincode = [
     "aldrin-proto/serde",
-    "bincode",
+    "dep:bincode",
 ]
 json-serializer = [
     "aldrin-proto/serde",
