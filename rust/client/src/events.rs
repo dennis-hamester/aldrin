@@ -19,7 +19,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// [`unsubscribe`d](Events::unsubscribe). After subscribing to events, this type should be polled
 /// through its implementation of [`Stream`].
 ///
-/// Subscriptions can removed implicitly, e.g. when a [`Service`](crate::Service) has been
+/// Subscriptions can be removed implicitly, e.g. when a [`Service`](crate::Service) has been
 /// destroyed.  When there are no subscriptions left (or when none have been made in the first
 /// place) [`Stream::poll_next`] will return `None`.
 ///
@@ -127,7 +127,7 @@ impl Events {
 
     /// Unsubscribe from an event.
     ///
-    /// This function return `true`, if the event `id` of service `service_id` was subscribed to
+    /// This function returns `true`, if the event `id` of service `service_id` was subscribed to
     /// before the call to this function and is now unsubscribed from. Otherwise `false` is
     /// returned.
     pub fn unsubscribe(&mut self, service_id: ServiceId, id: u32) -> Result<bool, Error> {
