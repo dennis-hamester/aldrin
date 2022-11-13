@@ -9,14 +9,8 @@ rust-version = "1.64.0"
 autobenches = false
 
 [features]
-bincode = [
-    "aldrin-proto/serde",
-    "dep:bincode",
-]
-json = [
-    "aldrin-proto/serde",
-    "dep:serde_json",
-]
+bincode = ["dep:bincode"]
+json = ["dep:serde_json"]
 tokio = [
     "dep:pin-project",
     "dep:tokio",

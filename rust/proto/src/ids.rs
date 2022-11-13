@@ -1,4 +1,7 @@
-use crate::{ConversionError, FromValue, IntoValue, Value};
+use crate::error::{DeserializeError, SerializeError};
+use crate::value_deserializer::{Deserialize, Deserializer};
+use crate::value_serializer::{Serialize, Serializer};
+use bytes::{Buf, BufMut};
 use std::fmt;
 use uuid::Uuid;
 
@@ -12,11 +15,6 @@ use uuid::Uuid;
 /// same [`ObjectUuid`], then the [`ObjectCookie`] and consequently the [`ObjectId`] will be
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case", deny_unknown_fields)
-)]
 pub struct ObjectId {
     /// UUID of the object.
     pub uuid: ObjectUuid,
@@ -27,23 +25,20 @@ pub struct ObjectId {
 
 impl ObjectId {
     /// Creates a new [`ObjectId`] from an [`ObjectUuid`] and [`ObjectCookie`].
-    pub fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
+    pub const fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
         ObjectId { uuid, cookie }
     }
 }
 
-impl FromValue for ObjectId {
-    fn from_value(v: Value) -> Result<ObjectId, ConversionError> {
-        match v {
-            Value::ObjectId(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
+impl Serialize for ObjectId {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_object_id(*self)
     }
 }
 
-impl IntoValue for ObjectId {
-    fn into_value(self) -> Value {
-        Value::ObjectId(self)
+impl Deserialize for ObjectId {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_object_id()
     }
 }
 
@@ -53,11 +48,6 @@ impl IntoValue for ObjectId {
 /// all objects on the bus.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(transparent)
-)]
 pub struct ObjectUuid(pub Uuid);
 
 impl ObjectUuid {
@@ -73,18 +63,17 @@ impl ObjectUuid {
     pub fn new_v4() -> Self {
         ObjectUuid(Uuid::new_v4())
     }
+}
 
-    /// Creates an [`ObjectUuid`] from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::ObjectUuid;
-    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
-    /// let object_uuid = ObjectUuid::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ObjectUuid(Uuid::from_u128(uuid))
+impl Serialize for ObjectUuid {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize for ObjectUuid {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
     }
 }
 
@@ -113,11 +102,6 @@ impl fmt::Display for ObjectUuid {
 /// distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(transparent)
-)]
 pub struct ObjectCookie(pub Uuid);
 
 impl ObjectCookie {
@@ -133,18 +117,17 @@ impl ObjectCookie {
     pub fn new_v4() -> Self {
         ObjectCookie(Uuid::new_v4())
     }
+}
 
-    /// Creates an [`ObjectCookie`] from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::ObjectCookie;
-    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
-    /// let object_cookie = ObjectCookie::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ObjectCookie(Uuid::from_u128(uuid))
+impl Serialize for ObjectCookie {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize for ObjectCookie {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
     }
 }
 
@@ -177,11 +160,6 @@ impl fmt::Display for ObjectCookie {
 /// same [`ServiceUuid`], then the [`ServiceCookie`] and consequently the [`ServiceId`] will be
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case", deny_unknown_fields)
-)]
 pub struct ServiceId {
     /// Id of the associated object.
     pub object_id: ObjectId,
@@ -195,7 +173,7 @@ pub struct ServiceId {
 
 impl ServiceId {
     /// Creates a new [`ServiceId`] from an [`ObjectId`], a [`ServiceUuid`] and a [`ServiceCookie`].
-    pub fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
+    pub const fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
         ServiceId {
             object_id,
             uuid,
@@ -204,18 +182,15 @@ impl ServiceId {
     }
 }
 
-impl FromValue for ServiceId {
-    fn from_value(v: Value) -> Result<ServiceId, ConversionError> {
-        match v {
-            Value::ServiceId(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
+impl Serialize for ServiceId {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_service_id(*self)
     }
 }
 
-impl IntoValue for ServiceId {
-    fn into_value(self) -> Value {
-        Value::ServiceId(self)
+impl Deserialize for ServiceId {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_service_id()
     }
 }
 
@@ -225,11 +200,6 @@ impl IntoValue for ServiceId {
 /// all services of an object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(transparent)
-)]
 pub struct ServiceUuid(pub Uuid);
 
 impl ServiceUuid {
@@ -245,18 +215,17 @@ impl ServiceUuid {
     pub fn new_v4() -> Self {
         ServiceUuid(Uuid::new_v4())
     }
+}
 
-    /// Creates a [`ServiceUuid`] from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::ServiceUuid;
-    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
-    /// let service_uuid = ServiceUuid::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ServiceUuid(Uuid::from_u128(uuid))
+impl Serialize for ServiceUuid {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize for ServiceUuid {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
     }
 }
 
@@ -285,11 +254,6 @@ impl fmt::Display for ServiceUuid {
 /// can still be distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(transparent)
-)]
 pub struct ServiceCookie(pub Uuid);
 
 impl ServiceCookie {
@@ -305,18 +269,17 @@ impl ServiceCookie {
     pub fn new_v4() -> Self {
         ServiceCookie(Uuid::new_v4())
     }
+}
 
-    /// Creates a [`ServiceCookie`] from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::ServiceCookie;
-    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
-    /// let service_cookie = ServiceCookie::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ServiceCookie(Uuid::from_u128(uuid))
+impl Serialize for ServiceCookie {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize for ServiceCookie {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
     }
 }
 
@@ -343,11 +306,6 @@ impl fmt::Display for ServiceCookie {
 /// [`ChannelCookie`s](Self) are chosen by the broker when creating a channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(transparent)
-)]
 pub struct ChannelCookie(pub Uuid);
 
 impl ChannelCookie {
@@ -363,18 +321,17 @@ impl ChannelCookie {
     pub fn new_v4() -> Self {
         ChannelCookie(Uuid::new_v4())
     }
+}
 
-    /// Creates a [`ChannelCookie`] from an unsigned 128bit value in big-endian order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::ChannelCookie;
-    /// // b5f0a160-08ea-44ac-b80b-58a9935a96ad
-    /// let channel_cookie = ChannelCookie::from_u128(0xb5f0a16008ea44acb80b58a9935a96ad);
-    /// ```
-    pub const fn from_u128(uuid: u128) -> Self {
-        ChannelCookie(Uuid::from_u128(uuid))
+impl Serialize for ChannelCookie {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize for ChannelCookie {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
     }
 }
 

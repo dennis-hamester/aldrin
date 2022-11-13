@@ -1,583 +1,480 @@
 #[cfg(test)]
 mod test;
 
-use crate::ids::{ChannelCookie, ObjectId, ServiceId};
-use std::collections::{HashMap, HashSet};
-use std::convert::Infallible;
-use std::error::Error;
-use std::hash::BuildHasher;
-use std::ops::{Deref, DerefMut};
-use std::{fmt, mem};
+use crate::deserialize_key::DeserializeKey;
+use crate::error::{DeserializeError, SerializeError};
+use crate::serialize_key::SerializeKey;
+use crate::value_deserializer::{Deserialize, Deserializer};
+use crate::value_serializer::{Serialize, Serializer};
+use bytes::{Buf, BufMut};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
+use std::hash::{BuildHasher, Hash};
+use std::mem::MaybeUninit;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case", deny_unknown_fields)
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, IntoPrimitive, TryFromPrimitive,
 )]
-pub enum Value {
-    None,
-    Bool(bool),
-    U8(u8),
-    I8(i8),
-    U16(u16),
-    I16(i16),
-    U32(u32),
-    I32(i32),
-    U64(u64),
-    I64(i64),
-    F32(f32),
-    F64(f64),
-    String(String),
-    Uuid(Uuid),
-    ObjectId(ObjectId),
-    ServiceId(ServiceId),
-    Vec(Vec<Value>),
-    Bytes(Vec<u8>),
-    U8Map(HashMap<u8, Value>),
-    I8Map(HashMap<i8, Value>),
-    U16Map(HashMap<u16, Value>),
-    I16Map(HashMap<i16, Value>),
-    U32Map(HashMap<u32, Value>),
-    I32Map(HashMap<i32, Value>),
-    U64Map(HashMap<u64, Value>),
-    I64Map(HashMap<i64, Value>),
-    StringMap(HashMap<String, Value>),
-    UuidMap(HashMap<Uuid, Value>),
-    U8Set(HashSet<u8>),
-    I8Set(HashSet<i8>),
-    U16Set(HashSet<u16>),
-    I16Set(HashSet<i16>),
-    U32Set(HashSet<u32>),
-    I32Set(HashSet<i32>),
-    U64Set(HashSet<u64>),
-    I64Set(HashSet<i64>),
-    StringSet(HashSet<String>),
-    UuidSet(HashSet<Uuid>),
-    Struct(HashMap<u32, Value>),
-    Enum { variant: u32, value: Box<Value> },
-    Sender(ChannelCookie),
-    Receiver(ChannelCookie),
+#[repr(u8)]
+pub enum ValueKind {
+    None = 0,
+    Some = 1,
+    Bool = 2,
+    U8 = 3,
+    I8 = 4,
+    U16 = 5,
+    I16 = 6,
+    U32 = 7,
+    I32 = 8,
+    U64 = 9,
+    I64 = 10,
+    F32 = 11,
+    F64 = 12,
+    String = 13,
+    Uuid = 14,
+    ObjectId = 15,
+    ServiceId = 16,
+    Vec = 17,
+    Bytes = 18,
+    U8Map = 19,
+    I8Map = 20,
+    U16Map = 21,
+    I16Map = 22,
+    U32Map = 23,
+    I32Map = 24,
+    U64Map = 25,
+    I64Map = 26,
+    StringMap = 27,
+    UuidMap = 28,
+    U8Set = 29,
+    I8Set = 30,
+    U16Set = 31,
+    I16Set = 32,
+    U32Set = 33,
+    I32Set = 34,
+    U64Set = 35,
+    I64Set = 36,
+    StringSet = 37,
+    UuidSet = 38,
+    Struct = 39,
+    Enum = 40,
+    Sender = 41,
+    Receiver = 42,
 }
 
-impl Value {
-    /// Converts this value to another type.
-    ///
-    /// This function can be used with any type `T` that implements the [`FromValue`] trait.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::{ConversionError, Value};
-    /// let x = Value::U32(0);
-    /// let y = x.convert();
-    /// assert_eq!(y, Ok(0u32));
-    ///
-    /// let x = Value::U32(0);
-    /// let y = x.convert::<String>();
-    /// assert_eq!(y, Err(ConversionError(Some(Value::U32(0)))));
-    /// ```
-    pub fn convert<T: FromValue>(self) -> Result<T, ConversionError> {
-        T::from_value(self)
-    }
-
-    /// Takes the value out, leaving [`Value::None`] in its place.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_proto::Value;
-    /// let mut v1 = Value::U32(0);
-    /// let v2 = v1.take();
-    /// assert_eq!(v1, Value::None);
-    /// assert_eq!(v2, Value::U32(0));
-    /// ```
-    pub fn take(&mut self) -> Self {
-        mem::take(self)
-    }
-}
-
-impl Default for Value {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-/// Wrapper for `Vec<u8>`.
-///
-/// This wrapper exists only to enable different implementations of [`FromValue`] and [`IntoValue`]
-/// than those for `Vec<u8>`, which convert between `u8` and [`Value`].
-#[derive(Debug, Clone)]
+/// Wrapper for `Vec<u8>` to enable `Serialize` and `Deserialize` specializations.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bytes(pub Vec<u8>);
 
-impl From<Vec<u8>> for Bytes {
-    fn from(v: Vec<u8>) -> Self {
-        Bytes(v)
+/// Wrapper for `&[u8]` to enable `Serialize` and `Deserialize` specializations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BytesRef<'a>(pub &'a [u8]);
+
+impl<T: Serialize + ?Sized> Serialize for &T {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        (*self).serialize(serializer)
     }
 }
 
-impl Deref for Bytes {
-    type Target = Vec<u8>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl<T: Serialize + ?Sized> Serialize for Box<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        (**self).serialize(serializer)
     }
 }
 
-impl DerefMut for Bytes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+impl<T: Deserialize> Deserialize for Box<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        T::deserialize(deserializer).map(Box::new)
     }
 }
 
-pub trait FromValue: Sized {
-    fn from_value(v: Value) -> Result<Self, ConversionError>;
-}
-
-pub trait IntoValue {
-    fn into_value(self) -> Value;
-}
-
-impl FromValue for Value {
-    fn from_value(v: Value) -> Result<Value, ConversionError> {
-        Ok(v)
+impl Serialize for () {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_none()
     }
 }
 
-impl IntoValue for Value {
-    fn into_value(self) -> Value {
-        self
+impl Deserialize for () {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_none()
     }
 }
 
-impl FromValue for () {
-    fn from_value(v: Value) -> Result<(), ConversionError> {
-        match v {
-            Value::None => Ok(()),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for () {
-    fn into_value(self) -> Value {
-        Value::None
-    }
-}
-
-impl<T> FromValue for Box<T>
-where
-    T: FromValue,
-{
-    fn from_value(v: Value) -> Result<Box<T>, ConversionError> {
-        Ok(Box::new(T::from_value(v)?))
-    }
-}
-
-impl<T> IntoValue for Box<T>
-where
-    T: IntoValue,
-{
-    fn into_value(self) -> Value {
-        (*self).into_value()
-    }
-}
-
-impl<T> FromValue for Option<T>
-where
-    T: FromValue,
-{
-    fn from_value(v: Value) -> Result<Option<T>, ConversionError> {
-        match v {
-            Value::None => Ok(None),
-            v => T::from_value(v).map(Some),
-        }
-    }
-}
-
-impl<T> IntoValue for Option<T>
-where
-    T: IntoValue,
-{
-    fn into_value(self) -> Value {
+impl<T: Serialize> Serialize for Option<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
         match self {
-            Some(v) => v.into_value(),
-            None => Value::None,
+            Some(value) => serializer.serialize_some(value),
+            None => serializer.serialize_none(),
         }
     }
 }
 
-impl FromValue for bool {
-    fn from_value(v: Value) -> Result<bool, ConversionError> {
-        match v {
-            Value::Bool(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
+impl<T: Deserialize> Deserialize for Option<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_option()
+    }
+}
+
+impl Serialize for bool {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_bool(*self)
+    }
+}
+
+impl Deserialize for bool {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_bool()
+    }
+}
+
+impl Serialize for u8 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_u8(*self)
+    }
+}
+
+impl Deserialize for u8 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_u8()
+    }
+}
+
+impl Serialize for i8 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_i8(*self)
+    }
+}
+
+impl Deserialize for i8 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_i8()
+    }
+}
+
+impl Serialize for u16 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_u16(*self)
+    }
+}
+
+impl Deserialize for u16 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_u16()
+    }
+}
+
+impl Serialize for i16 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_i16(*self)
+    }
+}
+
+impl Deserialize for i16 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_i16()
+    }
+}
+
+impl Serialize for u32 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_u32(*self)
+    }
+}
+
+impl Deserialize for u32 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_u32()
+    }
+}
+
+impl Serialize for i32 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_i32(*self)
+    }
+}
+
+impl Deserialize for i32 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_i32()
+    }
+}
+
+impl Serialize for u64 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_u64(*self)
+    }
+}
+
+impl Deserialize for u64 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_u64()
+    }
+}
+
+impl Serialize for i64 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_i64(*self)
+    }
+}
+
+impl Deserialize for i64 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_i64()
+    }
+}
+
+impl Serialize for f32 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_f32(*self)
+    }
+}
+
+impl Deserialize for f32 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_f32()
+    }
+}
+
+impl Serialize for f64 {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_f64(*self)
+    }
+}
+
+impl Deserialize for f64 {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_f64()
+    }
+}
+
+impl Serialize for str {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_string(self)
+    }
+}
+
+impl Serialize for String {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_string(self)
+    }
+}
+
+impl Deserialize for String {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_string()
+    }
+}
+
+impl Serialize for Uuid {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(*self)
+    }
+}
+
+impl Deserialize for Uuid {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid()
+    }
+}
+
+impl<T: Serialize> Serialize for Vec<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Deserialize> Deserialize for Vec<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_vec_extend_new()
+    }
+}
+
+impl<T: Serialize> Serialize for VecDeque<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Deserialize> Deserialize for VecDeque<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_vec_extend_new()
+    }
+}
+
+impl<T: Serialize> Serialize for LinkedList<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Deserialize> Deserialize for LinkedList<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_vec_extend_new()
+    }
+}
+
+impl<T: Serialize> Serialize for [T] {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Serialize, const N: usize> Serialize for [T; N] {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        let mut deserializer = deserializer.deserialize_vec()?;
+
+        if deserializer.remaining_elements() != N {
+            return Err(DeserializeError);
         }
-    }
-}
 
-impl IntoValue for bool {
-    fn into_value(self) -> Value {
-        Value::Bool(self)
-    }
-}
+        // SAFETY: This create an array of MaybeUninit<T>, which don't require initialization.
+        let mut arr: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
-impl FromValue for u8 {
-    fn from_value(v: Value) -> Result<u8, ConversionError> {
-        match v {
-            Value::U8(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
+        // Manually count number of elements, so that the safety of this function doesn't depend on
+        // the correctness of VecDeserializer.
+        let mut num = 0;
 
-impl IntoValue for u8 {
-    fn into_value(self) -> Value {
-        Value::U8(self)
-    }
-}
+        for elem in &mut arr {
+            match deserializer.deserialize_element() {
+                Ok(value) => {
+                    elem.write(value);
+                    num += 1;
+                }
 
-impl FromValue for i8 {
-    fn from_value(v: Value) -> Result<i8, ConversionError> {
-        match v {
-            Value::I8(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for i8 {
-    fn into_value(self) -> Value {
-        Value::I8(self)
-    }
-}
-
-impl FromValue for u16 {
-    fn from_value(v: Value) -> Result<u16, ConversionError> {
-        match v {
-            Value::U16(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for u16 {
-    fn into_value(self) -> Value {
-        Value::U16(self)
-    }
-}
-
-impl FromValue for i16 {
-    fn from_value(v: Value) -> Result<i16, ConversionError> {
-        match v {
-            Value::I16(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for i16 {
-    fn into_value(self) -> Value {
-        Value::I16(self)
-    }
-}
-
-impl FromValue for u32 {
-    fn from_value(v: Value) -> Result<u32, ConversionError> {
-        match v {
-            Value::U32(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for u32 {
-    fn into_value(self) -> Value {
-        Value::U32(self)
-    }
-}
-
-impl FromValue for i32 {
-    fn from_value(v: Value) -> Result<i32, ConversionError> {
-        match v {
-            Value::I32(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for i32 {
-    fn into_value(self) -> Value {
-        Value::I32(self)
-    }
-}
-
-impl FromValue for u64 {
-    fn from_value(v: Value) -> Result<u64, ConversionError> {
-        match v {
-            Value::U64(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for u64 {
-    fn into_value(self) -> Value {
-        Value::U64(self)
-    }
-}
-
-impl FromValue for i64 {
-    fn from_value(v: Value) -> Result<i64, ConversionError> {
-        match v {
-            Value::I64(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for i64 {
-    fn into_value(self) -> Value {
-        Value::I64(self)
-    }
-}
-
-impl FromValue for f32 {
-    fn from_value(v: Value) -> Result<f32, ConversionError> {
-        match v {
-            Value::F32(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for f32 {
-    fn into_value(self) -> Value {
-        Value::F32(self)
-    }
-}
-
-impl FromValue for f64 {
-    fn from_value(v: Value) -> Result<f64, ConversionError> {
-        match v {
-            Value::F64(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for f64 {
-    fn into_value(self) -> Value {
-        Value::F64(self)
-    }
-}
-
-impl FromValue for String {
-    fn from_value(v: Value) -> Result<String, ConversionError> {
-        match v {
-            Value::String(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for String {
-    fn into_value(self) -> Value {
-        Value::String(self)
-    }
-}
-
-impl IntoValue for &str {
-    fn into_value(self) -> Value {
-        Value::String(self.to_owned())
-    }
-}
-
-impl FromValue for Uuid {
-    fn from_value(v: Value) -> Result<Uuid, ConversionError> {
-        match v {
-            Value::Uuid(v) => Ok(v),
-            _ => Err(ConversionError(Some(v))),
-        }
-    }
-}
-
-impl IntoValue for Uuid {
-    fn into_value(self) -> Value {
-        Value::Uuid(self)
-    }
-}
-
-impl<T> FromValue for Vec<T>
-where
-    T: FromValue + IntoValue,
-{
-    fn from_value(v: Value) -> Result<Vec<T>, ConversionError> {
-        match v {
-            Value::Vec(v) => {
-                let len = v.len();
-                let mut res = Vec::with_capacity(len);
-
-                let mut iter = v.into_iter();
-                for v in &mut iter {
-                    match T::from_value(v) {
-                        Ok(v) => res.push(v),
-                        Err(e) => {
-                            // Restore original value
-                            let mut err = Vec::with_capacity(len);
-                            err.extend(res.into_iter().map(T::into_value));
-                            if let Some(v) = e.0 {
-                                err.push(v);
-                            }
-                            err.extend(iter);
-                            return Err(ConversionError(Some(Value::Vec(err))));
+                Err(_) => {
+                    for elem in &mut arr[..num] {
+                        // SAFETY: The first num elements have been initialized.
+                        unsafe {
+                            elem.assume_init_drop();
                         }
                     }
+
+                    return Err(DeserializeError);
                 }
-
-                Ok(res)
             }
-
-            _ => Err(ConversionError(Some(v))),
         }
+
+        // Panic, because this would indicate a bug in this crate.
+        assert_eq!(num, N);
+
+        // SAFETY: Exactly num elements have been and num equals N.
+        //
+        // It's impossible to transmute [MaybeUninit<T>; N] to [T; N] on 1.64.0 when T is a generic
+        // or N a const generic. See https://github.com/rust-lang/rust/issues/61956.
+        let value = unsafe {
+            (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[T; N]>)).assume_init_read()
+        };
+
+        Ok(value)
     }
 }
 
-impl<T> IntoValue for Vec<T>
+impl Serialize for Bytes {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_bytes(&self.0)
+    }
+}
+
+impl Deserialize for Bytes {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_bytes_to_vec().map(Bytes)
+    }
+}
+
+impl<'a> Serialize for BytesRef<'a> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_bytes(self.0)
+    }
+}
+
+impl Serialize for bytes::Bytes {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_bytes(self)
+    }
+}
+
+impl Deserialize for bytes::Bytes {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer
+            .deserialize_bytes_to_vec()
+            .map(bytes::Bytes::from)
+    }
+}
+
+impl Serialize for bytes::BytesMut {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_bytes(self)
+    }
+}
+
+impl Deserialize for bytes::BytesMut {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        // This is inefficient, but bytes doesn't currently offer a better alternative.
+        let vec = deserializer.deserialize_bytes_to_vec()?;
+        Ok(bytes::BytesMut::from(vec.as_slice()))
+    }
+}
+
+impl<K: SerializeKey, V: Serialize, S> Serialize for HashMap<K, V, S> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_map_iter(self)
+    }
+}
+
+impl<K, V, S> Deserialize for HashMap<K, V, S>
 where
-    T: IntoValue,
+    K: DeserializeKey + Eq + Hash,
+    V: Deserialize,
+    S: BuildHasher + Default,
 {
-    fn into_value(self) -> Value {
-        Value::Vec(self.into_iter().map(T::into_value).collect())
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_map_extend_new()
     }
 }
 
-impl FromValue for Bytes {
-    fn from_value(v: Value) -> Result<Self, ConversionError> {
-        match v {
-            Value::Bytes(v) => Ok(Bytes(v)),
-            _ => Err(ConversionError(Some(v))),
-        }
+impl<K: SerializeKey, V: Serialize> Serialize for BTreeMap<K, V> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_map_iter(self)
     }
 }
 
-impl IntoValue for Bytes {
-    fn into_value(self) -> Value {
-        Value::Bytes(self.0)
+impl<K: DeserializeKey + Ord, V: Deserialize> Deserialize for BTreeMap<K, V> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_map_extend_new()
     }
 }
 
-macro_rules! impl_map {
-    ($key:ty, $var:ident) => {
-        impl<V, S> FromValue for HashMap<$key, V, S>
-        where
-            V: FromValue + IntoValue,
-            S: BuildHasher + Default,
-        {
-            fn from_value(v: Value) -> Result<HashMap<$key, V, S>, ConversionError> {
-                match v {
-                    Value::$var(v) => {
-                        let len = v.len();
-                        let mut res = HashMap::with_capacity_and_hasher(v.len(), S::default());
-
-                        let mut iter = v.into_iter();
-                        for (k, v) in &mut iter {
-                            match V::from_value(v) {
-                                Ok(v) => {
-                                    res.insert(k, v);
-                                }
-
-                                Err(e) => {
-                                    // Restore original value
-                                    let mut err = HashMap::with_capacity(len);
-                                    err.extend(res.into_iter().map(|(k, v)| (k, v.into_value())));
-                                    if let Some(v) = e.0 {
-                                        err.insert(k, v);
-                                    }
-                                    err.extend(iter);
-                                    return Err(ConversionError(Some(Value::$var(err))));
-                                }
-                            }
-                        }
-
-                        Ok(res)
-                    }
-
-                    _ => Err(ConversionError(Some(v))),
-                }
-            }
-        }
-
-        impl<V, S> IntoValue for HashMap<$key, V, S>
-        where
-            V: IntoValue,
-        {
-            fn into_value(self) -> Value {
-                Value::$var(self.into_iter().map(|(k, v)| (k, v.into_value())).collect())
-            }
-        }
-    };
-}
-
-impl_map!(u8, U8Map);
-impl_map!(i8, I8Map);
-impl_map!(u16, U16Map);
-impl_map!(i16, I16Map);
-impl_map!(u32, U32Map);
-impl_map!(i32, I32Map);
-impl_map!(u64, U64Map);
-impl_map!(i64, I64Map);
-impl_map!(String, StringMap);
-impl_map!(Uuid, UuidMap);
-
-macro_rules! impl_set {
-    // Implement these only for the default BuildHasher, because then they are zero-copy. If you
-    // need implementations for other BuildHashers, then please open a ticket.
-    ($key:ty, $var:ident) => {
-        #[allow(clippy::implicit_hasher)]
-        impl FromValue for HashSet<$key> {
-            fn from_value(v: Value) -> Result<HashSet<$key>, ConversionError> {
-                match v {
-                    Value::$var(v) => Ok(v),
-                    _ => Err(ConversionError(Some(v))),
-                }
-            }
-        }
-
-        #[allow(clippy::implicit_hasher)]
-        impl IntoValue for HashSet<$key> {
-            fn into_value(self) -> Value {
-                Value::$var(self)
-            }
-        }
-    };
-}
-
-impl_set!(u8, U8Set);
-impl_set!(i8, I8Set);
-impl_set!(u16, U16Set);
-impl_set!(i16, I16Set);
-impl_set!(u32, U32Set);
-impl_set!(i32, I32Set);
-impl_set!(u64, U64Set);
-impl_set!(i64, I64Set);
-impl_set!(String, StringSet);
-impl_set!(Uuid, UuidSet);
-
-impl IntoValue for Infallible {
-    fn into_value(self) -> Value {
-        match self {}
+impl<T: SerializeKey, S> Serialize for HashSet<T, S> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_set_iter(self)
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct ConversionError(pub Option<Value>);
-
-impl fmt::Display for ConversionError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("invalid conversion")
+impl<T, S> Deserialize for HashSet<T, S>
+where
+    T: DeserializeKey + Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_set_extend_new()
     }
 }
 
-impl Error for ConversionError {}
+impl<T: SerializeKey> Serialize for BTreeSet<T> {
+    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+        serializer.serialize_set_iter(self)
+    }
+}
+
+impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
+    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_set_extend_new()
+    }
+}
