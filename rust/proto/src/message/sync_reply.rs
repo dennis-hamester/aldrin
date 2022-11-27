@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 
@@ -36,6 +36,12 @@ impl MessageOps for SyncReply {
 }
 
 impl Sealed for SyncReply {}
+
+impl From<SyncReply> for Message {
+    fn from(msg: SyncReply) -> Self {
+        Self::SyncReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

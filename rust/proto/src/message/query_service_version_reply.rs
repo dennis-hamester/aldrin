@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -74,6 +74,12 @@ impl MessageOps for QueryServiceVersionReply {
 }
 
 impl Sealed for QueryServiceVersionReply {}
+
+impl From<QueryServiceVersionReply> for Message {
+    fn from(msg: QueryServiceVersionReply) -> Self {
+        Self::QueryServiceVersionReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

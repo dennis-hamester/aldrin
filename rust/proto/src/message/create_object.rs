@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ObjectUuid;
 use bytes::BytesMut;
@@ -41,6 +41,12 @@ impl MessageOps for CreateObject {
 }
 
 impl Sealed for CreateObject {}
+
+impl From<CreateObject> for Message {
+    fn from(msg: CreateObject) -> Self {
+        Self::CreateObject(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

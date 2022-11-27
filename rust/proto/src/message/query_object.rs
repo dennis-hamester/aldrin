@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ObjectUuid;
 use bytes::BytesMut;
@@ -47,6 +47,12 @@ impl MessageOps for QueryObject {
 }
 
 impl Sealed for QueryObject {}
+
+impl From<QueryObject> for Message {
+    fn from(msg: QueryObject) -> Self {
+        Self::QueryObject(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

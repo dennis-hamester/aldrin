@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ChannelCookie;
 use bytes::BytesMut;
@@ -41,6 +41,12 @@ impl MessageOps for CreateChannelReply {
 }
 
 impl Sealed for CreateChannelReply {}
+
+impl From<CreateChannelReply> for Message {
+    fn from(msg: CreateChannelReply) -> Self {
+        Self::CreateChannelReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

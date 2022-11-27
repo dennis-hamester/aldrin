@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    ChannelEnd, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    ChannelEnd, Message, MessageKind, MessageOps, MessageSerializer,
+    MessageWithoutValueDeserializer,
 };
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
@@ -42,6 +43,12 @@ impl MessageOps for CreateChannel {
 }
 
 impl Sealed for CreateChannel {}
+
+impl From<CreateChannel> for Message {
+    fn from(msg: CreateChannel) -> Self {
+        Self::CreateChannel(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

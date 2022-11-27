@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+    Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    OptionKind,
 };
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
@@ -64,6 +65,12 @@ impl MessageOps for SubscribeEvent {
 }
 
 impl Sealed for SubscribeEvent {}
+
+impl From<SubscribeEvent> for Message {
+    fn from(msg: SubscribeEvent) -> Self {
+        Self::SubscribeEvent(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

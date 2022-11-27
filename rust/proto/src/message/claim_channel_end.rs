@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    ChannelEnd, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    ChannelEnd, Message, MessageKind, MessageOps, MessageSerializer,
+    MessageWithoutValueDeserializer,
 };
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ChannelCookie;
@@ -50,6 +51,12 @@ impl MessageOps for ClaimChannelEnd {
 }
 
 impl Sealed for ClaimChannelEnd {}
+
+impl From<ClaimChannelEnd> for Message {
+    fn from(msg: ClaimChannelEnd) -> Self {
+        Self::ClaimChannelEnd(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

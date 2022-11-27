@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ObjectCookie, ServiceCookie, ServiceUuid};
 use bytes::BytesMut;
@@ -97,6 +97,12 @@ impl MessageOps for QueryObjectReply {
 }
 
 impl Sealed for QueryObjectReply {}
+
+impl From<QueryObjectReply> for Message {
+    fn from(msg: QueryObjectReply) -> Self {
+        Self::QueryObjectReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

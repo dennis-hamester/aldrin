@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 
@@ -26,6 +26,12 @@ impl MessageOps for UnsubscribeObjects {
 }
 
 impl Sealed for UnsubscribeObjects {}
+
+impl From<UnsubscribeObjects> for Message {
+    fn from(msg: UnsubscribeObjects) -> Self {
+        Self::UnsubscribeObjects(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

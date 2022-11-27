@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
 use crate::value_serializer::Serialize;
@@ -72,6 +72,12 @@ impl MessageOps for CallFunction {
 }
 
 impl Sealed for CallFunction {}
+
+impl From<CallFunction> for Message {
+    fn from(msg: CallFunction) -> Self {
+        Self::CallFunction(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

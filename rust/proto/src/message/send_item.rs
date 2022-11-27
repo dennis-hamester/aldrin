@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ChannelCookie;
 use crate::value_serializer::Serialize;
@@ -54,6 +54,12 @@ impl MessageOps for SendItem {
 }
 
 impl Sealed for SendItem {}
+
+impl From<SendItem> for Message {
+    fn from(msg: SendItem) -> Self {
+        Self::SendItem(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

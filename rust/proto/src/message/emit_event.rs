@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
 use crate::value_serializer::Serialize;
@@ -66,6 +66,12 @@ impl MessageOps for EmitEvent {
 }
 
 impl Sealed for EmitEvent {}
+
+impl From<EmitEvent> for Message {
+    fn from(msg: EmitEvent) -> Self {
+        Self::EmitEvent(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

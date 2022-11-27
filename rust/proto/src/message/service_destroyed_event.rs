@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
 use bytes::BytesMut;
@@ -53,6 +53,12 @@ impl MessageOps for ServiceDestroyedEvent {
 }
 
 impl Sealed for ServiceDestroyedEvent {}
+
+impl From<ServiceDestroyedEvent> for Message {
+    fn from(msg: ServiceDestroyedEvent) -> Self {
+        Self::ServiceDestroyedEvent(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

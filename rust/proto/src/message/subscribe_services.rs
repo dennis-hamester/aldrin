@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+    Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    OptionKind,
 };
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
@@ -51,6 +52,12 @@ impl MessageOps for SubscribeServices {
 }
 
 impl Sealed for SubscribeServices {}
+
+impl From<SubscribeServices> for Message {
+    fn from(msg: SubscribeServices) -> Self {
+        Self::SubscribeServices(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

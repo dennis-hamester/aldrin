@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
@@ -192,6 +192,12 @@ impl MessageOps for CallFunctionReply {
 }
 
 impl Sealed for CallFunctionReply {}
+
+impl From<CallFunctionReply> for Message {
+    fn from(msg: CallFunctionReply) -> Self {
+        Self::CallFunctionReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

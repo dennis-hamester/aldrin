@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -49,6 +49,12 @@ impl MessageOps for DestroyChannelEndReply {
 }
 
 impl Sealed for DestroyChannelEndReply {}
+
+impl From<DestroyChannelEndReply> for Message {
+    fn from(msg: DestroyChannelEndReply) -> Self {
+        Self::DestroyChannelEndReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

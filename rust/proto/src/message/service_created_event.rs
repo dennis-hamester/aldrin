@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+    Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    OptionKind,
 };
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
@@ -73,6 +74,12 @@ impl MessageOps for ServiceCreatedEvent {
 }
 
 impl Sealed for ServiceCreatedEvent {}
+
+impl From<ServiceCreatedEvent> for Message {
+    fn from(msg: ServiceCreatedEvent) -> Self {
+        Self::ServiceCreatedEvent(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

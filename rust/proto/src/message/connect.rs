@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
@@ -53,6 +53,12 @@ impl MessageOps for Connect {
 }
 
 impl Sealed for Connect {}
+
+impl From<Connect> for Message {
+    fn from(msg: Connect) -> Self {
+        Self::Connect(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
 use bytes::BytesMut;
@@ -87,6 +87,12 @@ impl MessageOps for CreateServiceReply {
 }
 
 impl Sealed for CreateServiceReply {}
+
+impl From<CreateServiceReply> for Message {
+    fn from(msg: CreateServiceReply) -> Self {
+        Self::CreateServiceReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

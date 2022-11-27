@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
@@ -99,6 +99,12 @@ impl MessageOps for ConnectReply {
 }
 
 impl Sealed for ConnectReply {}
+
+impl From<ConnectReply> for Message {
+    fn from(msg: ConnectReply) -> Self {
+        Self::ConnectReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

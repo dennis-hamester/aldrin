@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -49,6 +49,12 @@ impl MessageOps for ClaimChannelEndReply {
 }
 
 impl Sealed for ClaimChannelEndReply {}
+
+impl From<ClaimChannelEndReply> for Message {
+    fn from(msg: ClaimChannelEndReply) -> Self {
+        Self::ClaimChannelEndReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

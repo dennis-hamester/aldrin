@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+    Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
+    OptionKind,
 };
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
@@ -51,6 +52,12 @@ impl MessageOps for SubscribeObjects {
 }
 
 impl Sealed for SubscribeObjects {}
+
+impl From<SubscribeObjects> for Message {
+    fn from(msg: SubscribeObjects) -> Self {
+        Self::SubscribeObjects(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

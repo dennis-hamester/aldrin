@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ObjectCookie;
 use bytes::BytesMut;
@@ -41,6 +41,12 @@ impl MessageOps for DestroyObject {
 }
 
 impl Sealed for DestroyObject {}
+
+impl From<DestroyObject> for Message {
+    fn from(msg: DestroyObject) -> Self {
+        Self::DestroyObject(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

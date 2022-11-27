@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -49,6 +49,12 @@ impl MessageOps for DestroyObjectReply {
 }
 
 impl Sealed for DestroyObjectReply {}
+
+impl From<DestroyObjectReply> for Message {
+    fn from(msg: DestroyObjectReply) -> Self {
+        Self::DestroyObjectReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

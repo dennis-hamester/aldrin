@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -48,6 +48,12 @@ impl MessageOps for SubscribeEventReply {
 }
 
 impl Sealed for SubscribeEventReply {}
+
+impl From<SubscribeEventReply> for Message {
+    fn from(msg: SubscribeEventReply) -> Self {
+        Self::SubscribeEventReply(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {

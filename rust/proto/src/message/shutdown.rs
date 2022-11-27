@@ -1,5 +1,5 @@
 use super::message_ops::Sealed;
-use super::{MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use bytes::BytesMut;
 
@@ -26,6 +26,12 @@ impl MessageOps for Shutdown {
 }
 
 impl Sealed for Shutdown {}
+
+impl From<Shutdown> for Message {
+    fn from(msg: Shutdown) -> Self {
+        Self::Shutdown(msg)
+    }
+}
 
 #[cfg(test)]
 mod test {
