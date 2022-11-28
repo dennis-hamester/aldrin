@@ -44,7 +44,7 @@ impl MessageOps for QueryServiceVersionReply {
             }
         }
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -89,7 +89,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [30, 1, 0, 2];
+        let serialized = [8, 0, 0, 0, 30, 1, 0, 2];
 
         let msg = QueryServiceVersionReply {
             serial: 1,
@@ -105,7 +105,7 @@ mod test {
 
     #[test]
     fn invalid_service() {
-        let serialized = [30, 1, 1];
+        let serialized = [7, 0, 0, 0, 30, 1, 1];
 
         let msg = QueryServiceVersionReply {
             serial: 1,

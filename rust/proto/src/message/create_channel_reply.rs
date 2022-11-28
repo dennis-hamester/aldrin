@@ -21,7 +21,7 @@ impl MessageOps for CreateChannelReply {
         serializer.put_varint_u32_le(self.serial);
         serializer.put_uuid(self.cookie.0);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -59,8 +59,8 @@ mod test {
     #[test]
     fn create_channel_reply() {
         let serialized = [
-            32, 1, 0x89, 0xe6, 0x24, 0x38, 0x29, 0x91, 0x48, 0xf8, 0xae, 0x1d, 0x7a, 0xd9, 0xdd,
-            0xcd, 0x7e, 0x72,
+            22, 0, 0, 0, 32, 1, 0x89, 0xe6, 0x24, 0x38, 0x29, 0x91, 0x48, 0xf8, 0xae, 0x1d, 0x7a,
+            0xd9, 0xdd, 0xcd, 0x7e, 0x72,
         ];
 
         let msg = CreateChannelReply {

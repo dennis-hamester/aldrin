@@ -18,7 +18,7 @@ impl MessageOps for SyncReply {
 
         serializer.put_varint_u32_le(self.serial);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -51,7 +51,7 @@ mod test {
 
     #[test]
     fn sync_reply() {
-        let serialized = [42, 1];
+        let serialized = [6, 0, 0, 0, 42, 1];
 
         let msg = SyncReply { serial: 1 };
         assert_serialize_eq(&msg, serialized);

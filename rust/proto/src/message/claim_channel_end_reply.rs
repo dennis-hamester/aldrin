@@ -29,7 +29,7 @@ impl MessageOps for ClaimChannelEndReply {
         serializer.put_varint_u32_le(self.serial);
         serializer.put_discriminant_u8(self.result);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -64,7 +64,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [37, 1, 0];
+        let serialized = [7, 0, 0, 0, 37, 1, 0];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -80,7 +80,7 @@ mod test {
 
     #[test]
     fn invalid_channel() {
-        let serialized = [37, 1, 1];
+        let serialized = [7, 0, 0, 0, 37, 1, 1];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -96,7 +96,7 @@ mod test {
 
     #[test]
     fn already_claimed() {
-        let serialized = [37, 1, 2];
+        let serialized = [7, 0, 0, 0, 37, 1, 2];
 
         let msg = ClaimChannelEndReply {
             serial: 1,

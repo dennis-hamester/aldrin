@@ -16,7 +16,7 @@ impl MessageOps for SubscribeServicesReply {
     fn serialize_message(self) -> Result<BytesMut, SerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::SubscribeServicesReply);
         serializer.put_varint_u32_le(self.serial);
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -50,7 +50,7 @@ mod test {
 
     #[test]
     fn subscribe_services_reply() {
-        let serialized = [17, 0];
+        let serialized = [6, 0, 0, 0, 17, 0];
 
         let msg = SubscribeServicesReply { serial: 0 };
         assert_serialize_eq(&msg, serialized);

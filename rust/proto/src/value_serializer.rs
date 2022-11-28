@@ -19,7 +19,7 @@ pub struct Serializer<'a, B: BufMut> {
 
 impl<'a> Serializer<'a, BytesMut> {
     pub fn with_message_header(buf: &'a mut BytesMut) -> Result<Self, SerializeError> {
-        let empty_header = [0, 0, 0, 0, 0];
+        let empty_header = [0, 0, 0, 0, 0, 0, 0, 0, 0];
         buf.try_put_slice(empty_header)?;
         Ok(Self::new(buf))
     }

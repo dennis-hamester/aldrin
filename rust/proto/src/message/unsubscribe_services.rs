@@ -12,7 +12,7 @@ impl MessageOps for UnsubscribeServices {
     }
 
     fn serialize_message(self) -> Result<BytesMut, SerializeError> {
-        Ok(MessageSerializer::without_value(MessageKind::UnsubscribeServices).finish())
+        MessageSerializer::without_value(MessageKind::UnsubscribeServices).finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -41,7 +41,7 @@ mod test {
 
     #[test]
     fn unsubscribe_services() {
-        let serialized = [18];
+        let serialized = [5, 0, 0, 0, 18];
 
         let msg = UnsubscribeServices;
         assert_serialize_eq(&msg, serialized);

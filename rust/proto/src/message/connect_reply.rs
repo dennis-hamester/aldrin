@@ -38,8 +38,7 @@ impl ConnectReply {
     fn value_buf(&self) -> &[u8] {
         match self {
             Self::Ok(value) | Self::Rejected(value) => {
-                debug_assert!(value.len() >= 6);
-                &value[5..]
+                MessageWithValueDeserializer::value_buf(value)
             }
 
             Self::VersionMismatch(_) => &[0],
@@ -58,21 +57,21 @@ impl MessageOps for ConnectReply {
                 let mut serializer =
                     MessageSerializer::with_value(value, MessageKind::ConnectReply)?;
                 serializer.put_discriminant_u8(ConnectReplyKind::Ok);
-                Ok(serializer.finish())
+                serializer.finish()
             }
 
             Self::VersionMismatch(version) => {
                 let mut serializer = MessageSerializer::with_empty_value(MessageKind::ConnectReply);
                 serializer.put_discriminant_u8(ConnectReplyKind::VersionMismatch);
                 serializer.put_varint_u32_le(version);
-                Ok(serializer.finish())
+                serializer.finish()
             }
 
             Self::Rejected(value) => {
                 let mut serializer =
                     MessageSerializer::with_value(value, MessageKind::ConnectReply)?;
                 serializer.put_discriminant_u8(ConnectReplyKind::Rejected);
-                Ok(serializer.finish())
+                serializer.finish()
             }
         }
     }
@@ -116,7 +115,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [1, 2, 0, 0, 0, 3, 4, 0];
+        let serialized = [12, 0, 0, 0, 1, 2, 0, 0, 0, 3, 4, 0];
         let value = 4u8;
 
         let msg = ConnectReply::ok_with_serialize_value(&value).unwrap();
@@ -130,7 +129,7 @@ mod test {
 
     #[test]
     fn version_mismatch() {
-        let serialized = [1, 1, 0, 0, 0, 0, 1, 2];
+        let serialized = [12, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 2];
 
         let msg = ConnectReply::VersionMismatch(2);
         assert_serialize_eq(&msg, serialized);
@@ -143,7 +142,7 @@ mod test {
 
     #[test]
     fn rejected() {
-        let serialized = [1, 2, 0, 0, 0, 3, 4, 2];
+        let serialized = [12, 0, 0, 0, 1, 2, 0, 0, 0, 3, 4, 2];
         let value = 4u8;
 
         let msg = ConnectReply::rejected_with_serialize_value(&value).unwrap();

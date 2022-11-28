@@ -29,7 +29,7 @@ impl MessageOps for DestroyServiceReply {
         serializer.put_varint_u32_le(self.serial);
         serializer.put_discriminant_u8(self.result);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -64,7 +64,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [15, 1, 0];
+        let serialized = [7, 0, 0, 0, 15, 1, 0];
 
         let msg = DestroyServiceReply {
             serial: 1,
@@ -80,7 +80,7 @@ mod test {
 
     #[test]
     fn invalid_service() {
-        let serialized = [15, 1, 1];
+        let serialized = [7, 0, 0, 0, 15, 1, 1];
 
         let msg = DestroyServiceReply {
             serial: 1,
@@ -96,7 +96,7 @@ mod test {
 
     #[test]
     fn foreign_object() {
-        let serialized = [15, 1, 2];
+        let serialized = [7, 0, 0, 0, 15, 1, 2];
 
         let msg = DestroyServiceReply {
             serial: 1,

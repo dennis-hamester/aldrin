@@ -58,8 +58,7 @@ impl CallFunctionReply {
     fn value_buf(&self) -> &[u8] {
         match self.result {
             CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => {
-                debug_assert!(value.len() >= 6);
-                &value[5..]
+                MessageWithValueDeserializer::value_buf(value)
             }
 
             CallFunctionResult::Aborted
@@ -126,7 +125,7 @@ impl MessageOps for CallFunctionReply {
             }
         };
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -209,7 +208,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [22, 2, 0, 0, 0, 3, 4, 1, 0];
+        let serialized = [13, 0, 0, 0, 22, 2, 0, 0, 0, 3, 4, 1, 0];
         let value = 4u8;
 
         let msg = CallFunctionReply::ok_with_serialize_value(1, &value).unwrap();
@@ -223,7 +222,7 @@ mod test {
 
     #[test]
     fn err() {
-        let serialized = [22, 2, 0, 0, 0, 3, 4, 1, 1];
+        let serialized = [13, 0, 0, 0, 22, 2, 0, 0, 0, 3, 4, 1, 1];
         let value = 4u8;
 
         let msg = CallFunctionReply::err_with_serialize_value(1, &value).unwrap();
@@ -237,7 +236,7 @@ mod test {
 
     #[test]
     fn aborted() {
-        let serialized = [22, 1, 0, 0, 0, 0, 1, 2];
+        let serialized = [12, 0, 0, 0, 22, 1, 0, 0, 0, 0, 1, 2];
 
         let msg = CallFunctionReply {
             serial: 1,
@@ -253,7 +252,7 @@ mod test {
 
     #[test]
     fn invalid_service() {
-        let serialized = [22, 1, 0, 0, 0, 0, 1, 3];
+        let serialized = [12, 0, 0, 0, 22, 1, 0, 0, 0, 0, 1, 3];
 
         let msg = CallFunctionReply {
             serial: 1,
@@ -269,7 +268,7 @@ mod test {
 
     #[test]
     fn invalid_function() {
-        let serialized = [22, 1, 0, 0, 0, 0, 1, 4];
+        let serialized = [12, 0, 0, 0, 22, 1, 0, 0, 0, 0, 1, 4];
 
         let msg = CallFunctionReply {
             serial: 1,
@@ -285,7 +284,7 @@ mod test {
 
     #[test]
     fn invalid_args() {
-        let serialized = [22, 1, 0, 0, 0, 0, 1, 5];
+        let serialized = [12, 0, 0, 0, 22, 1, 0, 0, 0, 0, 1, 5];
 
         let msg = CallFunctionReply {
             serial: 1,

@@ -23,7 +23,7 @@ impl MessageOps for QueryObject {
         serializer.put_uuid(self.uuid.0);
         serializer.put_bool(self.with_services);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -65,8 +65,8 @@ mod test {
     #[test]
     fn query_object() {
         let serialized = [
-            27, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76,
-            0x52, 0x3d, 0x1b, 0,
+            23, 0, 0, 0, 27, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37,
+            0x38, 0x76, 0x52, 0x3d, 0x1b, 0,
         ];
 
         let msg = QueryObject {

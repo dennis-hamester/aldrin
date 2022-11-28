@@ -20,8 +20,7 @@ impl Connect {
     }
 
     fn value_buf(&self) -> &[u8] {
-        debug_assert!(self.value.len() >= 6);
-        &self.value[5..]
+        MessageWithValueDeserializer::value_buf(&self.value)
     }
 }
 
@@ -35,7 +34,7 @@ impl MessageOps for Connect {
 
         serializer.put_varint_u32_le(self.version);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -68,7 +67,7 @@ mod test {
 
     #[test]
     fn connect() {
-        let serialized = [0, 2, 0, 0, 0, 3, 4, 1];
+        let serialized = [12, 0, 0, 0, 0, 2, 0, 0, 0, 3, 4, 1];
         let value = 4u8;
 
         let msg = Connect::with_serialize_value(1, &value).unwrap();

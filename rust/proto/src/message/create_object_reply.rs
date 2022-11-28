@@ -45,7 +45,7 @@ impl MessageOps for CreateObjectReply {
             }
         }
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -91,8 +91,8 @@ mod test {
     #[test]
     fn ok() {
         let serialized = [
-            4, 1, 0, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76,
-            0x52, 0x3d, 0x1b,
+            23, 0, 0, 0, 4, 1, 0, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37,
+            0x38, 0x76, 0x52, 0x3d, 0x1b,
         ];
 
         let msg = CreateObjectReply {
@@ -111,7 +111,7 @@ mod test {
 
     #[test]
     fn duplicate_object() {
-        let serialized = [4, 1, 1];
+        let serialized = [7, 0, 0, 0, 4, 1, 1];
 
         let msg = CreateObjectReply {
             serial: 1,

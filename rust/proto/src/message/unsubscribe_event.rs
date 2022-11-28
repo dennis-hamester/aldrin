@@ -21,7 +21,7 @@ impl MessageOps for UnsubscribeEvent {
         serializer.put_uuid(self.service_cookie.0);
         serializer.put_varint_u32_le(self.event);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -62,8 +62,8 @@ mod test {
     #[test]
     fn unsubscribe_event() {
         let serialized = [
-            25, 0x94, 0x5f, 0xc6, 0xe4, 0xe8, 0x9c, 0x49, 0x61, 0xb7, 0xbc, 0x4e, 0x0e, 0x84, 0x80,
-            0xdf, 0xad, 1,
+            22, 0, 0, 0, 25, 0x94, 0x5f, 0xc6, 0xe4, 0xe8, 0x9c, 0x49, 0x61, 0xb7, 0xbc, 0x4e,
+            0x0e, 0x84, 0x80, 0xdf, 0xad, 1,
         ];
 
         let msg = UnsubscribeEvent {

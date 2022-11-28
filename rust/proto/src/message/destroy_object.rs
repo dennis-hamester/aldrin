@@ -21,7 +21,7 @@ impl MessageOps for DestroyObject {
         serializer.put_varint_u32_le(self.serial);
         serializer.put_uuid(self.cookie.0);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -59,8 +59,8 @@ mod test {
     #[test]
     fn destroy_object() {
         let serialized = [
-            5, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76,
-            0x52, 0x3d, 0x1b,
+            22, 0, 0, 0, 5, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37,
+            0x38, 0x76, 0x52, 0x3d, 0x1b,
         ];
 
         let msg = DestroyObject {

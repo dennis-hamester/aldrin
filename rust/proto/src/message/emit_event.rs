@@ -27,8 +27,7 @@ impl EmitEvent {
     }
 
     fn value_buf(&self) -> &[u8] {
-        debug_assert!(self.value.len() >= 6);
-        &self.value[5..]
+        MessageWithValueDeserializer::value_buf(&self.value)
     }
 }
 
@@ -43,7 +42,7 @@ impl MessageOps for EmitEvent {
         serializer.put_uuid(self.service_cookie.0);
         serializer.put_varint_u32_le(self.event);
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -84,8 +83,8 @@ mod test {
     #[test]
     fn emit_event() {
         let serialized = [
-            26, 2, 0, 0, 0, 3, 4, 0x02, 0x6c, 0x31, 0x42, 0x53, 0x0b, 0x4d, 0x65, 0x85, 0x0d, 0xa2,
-            0x97, 0xdc, 0xc2, 0xfe, 0xcb, 1,
+            28, 0, 0, 0, 26, 2, 0, 0, 0, 3, 4, 0x02, 0x6c, 0x31, 0x42, 0x53, 0x0b, 0x4d, 0x65,
+            0x85, 0x0d, 0xa2, 0x97, 0xdc, 0xc2, 0xfe, 0xcb, 1,
         ];
         let value = 4u8;
 

@@ -12,7 +12,7 @@ impl MessageOps for Shutdown {
     }
 
     fn serialize_message(self) -> Result<BytesMut, SerializeError> {
-        Ok(MessageSerializer::without_value(MessageKind::Shutdown).finish())
+        MessageSerializer::without_value(MessageKind::Shutdown).finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -41,7 +41,7 @@ mod test {
 
     #[test]
     fn shutdown() {
-        let serialized = [2];
+        let serialized = [5, 0, 0, 0, 2];
 
         let msg = Shutdown;
         assert_serialize_eq(&msg, serialized);

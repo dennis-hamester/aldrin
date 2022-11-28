@@ -353,7 +353,11 @@ impl MessageOps for Message {
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
-        match buf.try_peek_discriminant_u8()? {
+        if buf.len() < 5 {
+            return Err(DeserializeError);
+        }
+
+        match buf[4].try_into().map_err(|_| DeserializeError)? {
             MessageKind::Connect => Connect::deserialize_message(buf).map(Self::Connect),
             MessageKind::ConnectReply => {
                 ConnectReply::deserialize_message(buf).map(Self::ConnectReply)
@@ -600,7 +604,10 @@ struct MessageSerializer {
 
 impl MessageSerializer {
     fn without_value(kind: MessageKind) -> Self {
-        let mut buf = BytesMut::new();
+        debug_assert!(!kind.has_value());
+
+        let header = [0, 0, 0, 0];
+        let mut buf = BytesMut::from(&header[..]);
         buf.put_u8(kind.into());
 
         Self { buf }
@@ -609,24 +616,25 @@ impl MessageSerializer {
     fn with_value(mut buf: BytesMut, kind: MessageKind) -> Result<Self, SerializeError> {
         debug_assert!(kind.has_value());
 
-        // 5 byte header + at least 1 byte value.
-        if buf.len() < 6 {
+        // 9 bytes for the header plus at least 1 byte for the value.
+        if buf.len() < 10 {
             return Err(SerializeError);
         }
 
-        let value_len = buf.len() - 5;
+        let value_len = buf.len() - 9;
         if value_len > u32::MAX as usize {
             return Err(SerializeError);
         }
 
-        buf[0] = kind.into();
-        buf[1..5].copy_from_slice(&(value_len as u32).to_le_bytes());
+        buf[4] = kind.into();
+        buf[5..9].copy_from_slice(&(value_len as u32).to_le_bytes());
 
         Ok(Self { buf })
     }
 
     fn with_empty_value(kind: MessageKind) -> Self {
-        Self::with_value(BytesMut::from(&[0, 1, 0, 0, 0, 0][..]), kind).unwrap()
+        let header_with_none_value = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        Self::with_value(BytesMut::from(&header_with_none_value[..]), kind).unwrap()
     }
 
     fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
@@ -645,8 +653,14 @@ impl MessageSerializer {
         self.buf.put_slice(uuid.as_ref());
     }
 
-    fn finish(self) -> BytesMut {
-        self.buf
+    fn finish(mut self) -> Result<BytesMut, SerializeError> {
+        let len = self.buf.len();
+        if len <= u32::MAX as usize {
+            self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());
+            Ok(self.buf)
+        } else {
+            Err(SerializeError)
+        }
     }
 }
 
@@ -656,11 +670,20 @@ struct MessageWithoutValueDeserializer {
 
 impl MessageWithoutValueDeserializer {
     fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
-        if buf.try_get_discriminant_u8::<MessageKind>()? == kind {
-            Ok(Self { buf })
-        } else {
-            Err(DeserializeError)
+        let buf_len = buf.len();
+
+        if buf_len < 5 {
+            return Err(DeserializeError);
         }
+
+        let len = buf.get_u32_le() as usize;
+        if buf_len != len {
+            return Err(DeserializeError);
+        }
+
+        buf.ensure_discriminant_u8(kind)?;
+
+        Ok(Self { buf })
     }
 
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
@@ -691,7 +714,7 @@ impl MessageWithoutValueDeserializer {
 }
 
 struct MessageWithValueDeserializer {
-    value: BytesMut,
+    header_and_value: BytesMut,
     msg: BytesMut,
 }
 
@@ -699,22 +722,30 @@ impl MessageWithValueDeserializer {
     fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
         debug_assert!(kind.has_value());
 
-        // 5 byte header + at least 1 byte value.
-        if buf.len() < 6 {
+        // 9 bytes for the header plus at least 1 byte for the value.
+        if buf.len() < 10 {
             return Err(DeserializeError);
         }
 
-        let mut header = &buf[..5];
-        header.ensure_discriminant_u8(kind)?;
-
-        let value_len = header.get_u32_le() as usize + 5;
-        debug_assert!(header.is_empty());
-        if (value_len < 6) || (buf.len() < value_len) {
+        let len = (&buf[..4]).get_u32_le() as usize;
+        if buf.len() != len {
             return Err(DeserializeError);
         }
 
-        let msg = buf.split_off(value_len);
-        Ok(Self { value: buf, msg })
+        if buf[4] != kind.into() {
+            return Err(DeserializeError);
+        }
+
+        let value_len = (&buf[5..9]).get_u32_le() as usize;
+        if value_len < 1 {
+            return Err(DeserializeError);
+        }
+
+        let msg = buf.split_off(9 + value_len);
+        Ok(Self {
+            header_and_value: buf,
+            msg,
+        })
     }
 
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
@@ -733,16 +764,9 @@ impl MessageWithValueDeserializer {
 
     fn finish(mut self) -> Result<BytesMut, DeserializeError> {
         if self.msg.is_empty() {
-            self.value.unsplit(self.msg);
-
-            // This is somewhat of a hack. Tests in this crate compare messages for equality and
-            // require the header to be zeroed.
-            #[cfg(test)]
-            {
-                self.value[0..5].fill(0);
-            }
-
-            Ok(self.value)
+            self.header_and_value.unsplit(self.msg);
+            self.header_and_value[0..9].fill(0);
+            Ok(self.header_and_value)
         } else {
             Err(DeserializeError)
         }
@@ -754,5 +778,9 @@ impl MessageWithValueDeserializer {
         } else {
             Err(DeserializeError)
         }
+    }
+
+    fn value_buf(buf: &[u8]) -> &[u8] {
+        &buf[9..]
     }
 }

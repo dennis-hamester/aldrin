@@ -30,7 +30,7 @@ impl MessageOps for SubscribeServices {
             }
         }
 
-        Ok(serializer.finish())
+        serializer.finish()
     }
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
@@ -67,7 +67,7 @@ mod test {
 
     #[test]
     fn no_serial() {
-        let serialized = [16, 0];
+        let serialized = [6, 0, 0, 0, 16, 0];
 
         let msg = SubscribeServices { serial: None };
         assert_serialize_eq(&msg, serialized);
@@ -80,7 +80,7 @@ mod test {
 
     #[test]
     fn serial() {
-        let serialized = [16, 1, 2];
+        let serialized = [7, 0, 0, 0, 16, 1, 2];
 
         let msg = SubscribeServices { serial: Some(2) };
         assert_serialize_eq(&msg, serialized);
