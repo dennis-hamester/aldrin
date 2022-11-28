@@ -6,7 +6,6 @@ members = [
     "rust/broker",
     "rust/channel",
     "rust/client",
-    "rust/codec",
     "rust/codegen",
     "rust/codegen-macros",
     "rust/conformance-test-broker",

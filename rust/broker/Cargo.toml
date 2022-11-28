@@ -44,14 +44,6 @@ path = "../channel"
 version = "0.1.0"
 path = "../client"
 
-[dev-dependencies.aldrin-codec]
-version = "0.1.0"
-path = "../codec"
-features = [
-    "json",
-    "tokio",
-]
-
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
 path = "../test"

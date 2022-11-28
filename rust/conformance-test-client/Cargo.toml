@@ -13,15 +13,6 @@ version = "0.1.0"
 path = "../client"
 default-features = false
 
-[dependencies.aldrin-codec]
-version = "0.1.0"
-path = "../codec"
-default-features = false
-features = [
-    "json",
-    "tokio",
-]
-
 [dependencies.aldrin-conformance-test-shared]
 version = "0.1.0"
 path = "../../conformance-test-shared"

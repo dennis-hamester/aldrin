@@ -7,15 +7,6 @@ license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.64.0"
 
-[dependencies.aldrin-codec]
-version = "0.1.0"
-path = "../rust/codec"
-default-features = false
-features = [
-    "json",
-    "tokio",
-]
-
 [dependencies.aldrin-conformance-test-shared]
 version = "0.1.0"
 path = "../conformance-test-shared"
