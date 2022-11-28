@@ -13,6 +13,8 @@ mod value_deserializer;
 mod value_serializer;
 
 pub mod message;
+#[cfg(feature = "tokio")]
+pub mod tokio;
 pub mod transport;
 
 pub use deserialize_key::DeserializeKey;

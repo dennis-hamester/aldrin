@@ -9,6 +9,7 @@ rust-version = "1.64.0"
 
 [features]
 new-v4-ids = ["uuid/v4"]
+tokio = ["dep:tokio"]
 
 [dependencies.bytes]
 version = "1.2.1"
@@ -20,6 +21,11 @@ default-features = false
 
 [dependencies.pin-project]
 version = "1.0.10"
+default-features = false
+
+[dependencies.tokio]
+optional = true
+version = "1.0.0"
 default-features = false
 
 [dependencies.uuid]

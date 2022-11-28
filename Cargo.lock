@@ -150,6 +150,7 @@ dependencies = [
  "bytes",
  "num_enum",
  "pin-project",
+ "tokio",
  "uuid",
 ]
 
