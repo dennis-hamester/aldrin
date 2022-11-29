@@ -29,7 +29,7 @@ impl MessageOps for SubscribeObjectsReply {
         Ok(Self { serial })
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
+    fn value_opt(&self) -> Option<&[u8]> {
         None
     }
 }

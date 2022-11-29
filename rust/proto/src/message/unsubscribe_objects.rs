@@ -20,7 +20,7 @@ impl MessageOps for UnsubscribeObjects {
         Ok(Self)
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
+    fn value_opt(&self) -> Option<&[u8]> {
         None
     }
 }

@@ -37,7 +37,7 @@ impl MessageOps for CreateChannel {
         Ok(Self { serial, claim })
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
+    fn value_opt(&self) -> Option<&[u8]> {
         None
     }
 }

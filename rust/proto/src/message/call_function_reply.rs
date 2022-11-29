@@ -55,7 +55,7 @@ impl CallFunctionReply {
         })
     }
 
-    fn value_buf(&self) -> &[u8] {
+    fn value(&self) -> &[u8] {
         match self.result {
             CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => {
                 MessageWithValueDeserializer::value_buf(value)
@@ -185,8 +185,8 @@ impl MessageOps for CallFunctionReply {
         }
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
-        Some(self.value_buf())
+    fn value_opt(&self) -> Option<&[u8]> {
+        Some(self.value())
     }
 }
 

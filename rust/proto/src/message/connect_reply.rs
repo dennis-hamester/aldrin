@@ -35,7 +35,7 @@ impl ConnectReply {
         Ok(Self::Rejected(value))
     }
 
-    fn value_buf(&self) -> &[u8] {
+    fn value(&self) -> &[u8] {
         match self {
             Self::Ok(value) | Self::Rejected(value) => {
                 MessageWithValueDeserializer::value_buf(value)
@@ -92,8 +92,8 @@ impl MessageOps for ConnectReply {
         }
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
-        Some(self.value_buf())
+    fn value_opt(&self) -> Option<&[u8]> {
+        Some(self.value())
     }
 }
 

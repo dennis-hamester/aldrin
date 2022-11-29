@@ -38,7 +38,7 @@ impl MessageOps for ChannelEndDestroyed {
         Ok(Self { cookie, end })
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
+    fn value_opt(&self) -> Option<&[u8]> {
         None
     }
 }

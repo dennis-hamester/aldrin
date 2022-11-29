@@ -42,7 +42,7 @@ impl MessageOps for SubscribeEventReply {
         Ok(Self { serial, result })
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
+    fn value_opt(&self) -> Option<&[u8]> {
         None
     }
 }

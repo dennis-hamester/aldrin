@@ -29,7 +29,7 @@ impl CallFunction {
         })
     }
 
-    fn value_buf(&self) -> &[u8] {
+    fn value(&self) -> &[u8] {
         MessageWithValueDeserializer::value_buf(&self.value)
     }
 }
@@ -65,8 +65,8 @@ impl MessageOps for CallFunction {
         })
     }
 
-    fn value_buf_opt(&self) -> Option<&[u8]> {
-        Some(self.value_buf())
+    fn value_opt(&self) -> Option<&[u8]> {
+        Some(self.value())
     }
 }
 
