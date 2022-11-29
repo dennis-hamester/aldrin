@@ -21,7 +21,7 @@ impl ItemReceived {
     }
 
     fn value(&self) -> &[u8] {
-        MessageWithValueDeserializer::value_buf(&self.value)
+        &self.value
     }
 }
 

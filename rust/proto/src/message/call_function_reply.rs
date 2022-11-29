@@ -57,9 +57,7 @@ impl CallFunctionReply {
 
     fn value(&self) -> &[u8] {
         match self.result {
-            CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => {
-                MessageWithValueDeserializer::value_buf(value)
-            }
+            CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => value,
 
             CallFunctionResult::Aborted
             | CallFunctionResult::InvalidService

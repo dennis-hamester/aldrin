@@ -42,6 +42,7 @@ where
     assert!(deserialized.kind().has_value());
     let mut value_buf = deserialized.value_opt().unwrap();
 
-    let deserialized = V::deserialize(Deserializer::new(&mut value_buf)).unwrap();
+    let deserializer = Deserializer::with_message_header(&mut value_buf).unwrap();
+    let deserialized = V::deserialize(deserializer).unwrap();
     assert_eq!(deserialized, *value);
 }

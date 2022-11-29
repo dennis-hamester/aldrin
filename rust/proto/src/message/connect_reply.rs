@@ -37,10 +37,7 @@ impl ConnectReply {
 
     fn value(&self) -> &[u8] {
         match self {
-            Self::Ok(value) | Self::Rejected(value) => {
-                MessageWithValueDeserializer::value_buf(value)
-            }
-
+            Self::Ok(value) | Self::Rejected(value) => value,
             Self::VersionMismatch(_) => &[0],
         }
     }

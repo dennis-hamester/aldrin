@@ -781,8 +781,4 @@ impl MessageWithValueDeserializer {
             Err(DeserializeError)
         }
     }
-
-    fn value_buf(buf: &[u8]) -> &[u8] {
-        &buf[9..]
-    }
 }
