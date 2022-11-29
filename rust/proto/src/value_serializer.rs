@@ -3,7 +3,7 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::SerializeKey;
 use crate::util::BufMutExt;
 use crate::value::ValueKind;
-use bytes::{BufMut, BytesMut};
+use bytes::BufMut;
 use std::fmt;
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -17,17 +17,15 @@ pub struct Serializer<'a, B: BufMut> {
     buf: &'a mut B,
 }
 
-impl<'a> Serializer<'a, BytesMut> {
-    pub fn with_message_header(buf: &'a mut BytesMut) -> Result<Self, SerializeError> {
-        let empty_header = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        buf.try_put_slice(empty_header)?;
-        Ok(Self::new(buf))
-    }
-}
-
 impl<'a, B: BufMut> Serializer<'a, B> {
     pub fn new(buf: &'a mut B) -> Self {
         Self { buf }
+    }
+
+    pub fn with_message_header(buf: &'a mut B) -> Result<Self, SerializeError> {
+        let empty_header = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        buf.try_put_slice(empty_header)?;
+        Ok(Self { buf })
     }
 
     pub fn serialize_none(self) -> Result<(), SerializeError> {
