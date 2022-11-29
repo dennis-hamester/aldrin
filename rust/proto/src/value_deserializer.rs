@@ -25,6 +25,11 @@ impl<'a, B: Buf> Deserializer<'a, B> {
         Self { buf }
     }
 
+    pub fn with_message_header(buf: &'a mut B) -> Result<Self, DeserializeError> {
+        buf.try_skip(9)?;
+        Ok(Self { buf })
+    }
+
     pub fn peek_value_kind(&self) -> Result<ValueKind, DeserializeError> {
         self.buf.try_peek_discriminant_u8()
     }
