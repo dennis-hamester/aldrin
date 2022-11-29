@@ -13,19 +13,22 @@ mod test;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
-use aldrin_proto::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelCookie, ChannelEnd,
-    ChannelEndClaimed, ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
+use aldrin_proto::message::{
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
+    ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
     DestroyChannelEndReply, DestroyChannelEndResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, ObjectCookie, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId,
-    ObjectUuid, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCookie,
-    ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid, SubscribeEvent,
+    ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
+    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    SendItem, ServiceCreatedEvent, ServiceDestroyedEvent, Shutdown, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
     SubscribeServices, SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent,
+    UnsubscribeObjects, UnsubscribeServices,
+};
+use aldrin_proto::{
+    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 use channel::Channel;
 use conn_state::ConnectionState;
@@ -345,7 +348,7 @@ impl Broker {
         };
 
         // Ignore errors here
-        send!(self, conn, Message::Shutdown(())).ok();
+        send!(self, conn, Message::Shutdown(Shutdown)).ok();
 
         for obj_cookie in conn.objects() {
             self.remove_object(state, obj_cookie);
@@ -380,11 +383,11 @@ impl Broker {
             Message::CreateObject(req) => self.create_object(state, id, req)?,
             Message::DestroyObject(req) => self.destroy_object(state, id, req)?,
             Message::SubscribeObjects(req) => self.subscribe_objects(id, req)?,
-            Message::UnsubscribeObjects(()) => self.unsubscribe_objects(id),
+            Message::UnsubscribeObjects(UnsubscribeObjects) => self.unsubscribe_objects(id),
             Message::CreateService(req) => self.create_service(state, id, req)?,
             Message::DestroyService(req) => self.destroy_service(state, id, req)?,
             Message::SubscribeServices(req) => self.subscribe_services(id, req)?,
-            Message::UnsubscribeServices(()) => self.unsubscribe_services(id),
+            Message::UnsubscribeServices(UnsubscribeServices) => self.unsubscribe_services(id),
             Message::CallFunction(req) => self.call_function(state, id, req)?,
             Message::CallFunctionReply(req) => self.call_function_reply(state, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
@@ -421,7 +424,7 @@ impl Broker {
             | Message::ItemReceived(_)
             | Message::SyncReply(_) => return Err(()),
 
-            Message::Shutdown(()) => unreachable!(), // Handled by connection.
+            Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }
 
         Ok(())
@@ -777,7 +780,7 @@ impl Broker {
                 serial,
                 service_cookie: req.service_cookie,
                 function: req.function,
-                args: req.args,
+                value: req.value,
             })
         );
 
@@ -1118,7 +1121,7 @@ impl Broker {
             })
         )?;
 
-        if result.is_ok() {
+        if result == DestroyChannelEndResult::Ok {
             self.remove_channel_end(state, id, req.cookie, req.end, claimed);
         }
 
@@ -1227,7 +1230,7 @@ impl Broker {
             receiver,
             Message::ItemReceived(ItemReceived {
                 cookie: req.cookie,
-                item: req.item,
+                value: req.value,
             })
         );
 

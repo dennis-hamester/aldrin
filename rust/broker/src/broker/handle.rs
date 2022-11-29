@@ -3,10 +3,9 @@ use super::BrokerShutdown;
 use super::BrokerStatistics;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_proto::{
-    AsyncTransport, AsyncTransportExt, ConnectReply, ConversionError, FromValue, IntoValue,
-    Message, Value,
-};
+use aldrin_proto::message::{ConnectReply, Message};
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_proto::{Deserialize, DeserializeError, Serialize, SerializedValue};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -41,7 +40,7 @@ impl BrokerHandle {
     /// polled to completion, much like the [`Broker`](crate::Broker) itself.
     ///
     /// The Aldrin protocol allows client and broker to exchange custom data during the
-    /// handshake. This function will ignore the client's data and send [`Value::None`] back. If you
+    /// handshake. This function will ignore the client's data and send `()` back. If you
     /// need to inspect the data and possibly reject some clients, then use
     /// [`begin_connect`](Self::begin_connect).
     ///
@@ -74,14 +73,14 @@ impl BrokerHandle {
     where
         T: AsyncTransport + Unpin,
     {
-        self.begin_connect(t).await?.accept(Value::None).await
+        self.begin_connect(t).await?.accept_serialize(&()).await
     }
 
     /// Begins establishing a new connection.
     ///
-    /// Unlike [`connect`](Self::connect), this function will no automatically establish a
+    /// Unlike [`connect`](Self::connect), this function will not automatically establish a
     /// connection. It will only receive the client's initial connection message. This allows you to
-    /// inspect the client's custom data and accept or reject client.
+    /// inspect the client's custom data and accept or reject the client.
     pub async fn begin_connect<T>(
         &mut self,
         mut t: T,
@@ -104,7 +103,7 @@ impl BrokerHandle {
             return Err(EstablishError::VersionMismatch(connect.version));
         }
 
-        Ok(PendingConnection::new(self.clone(), t, connect.data))
+        Ok(PendingConnection::new(self.clone(), t, connect.value))
     }
 
     /// Shuts down the broker.
@@ -255,7 +254,7 @@ impl BrokerHandle {
 /// A pending client connection, that hasn't been accepted or rejected yet.
 ///
 /// This type is acquired by [`BrokerHandle::begin_connect`]. It allows inspection of the [client's
-/// custom data](Self::take_client_data) and to [accept](Self::accept) or [reject](Self::reject) a
+/// custom data](Self::client_data) and to [accept](Self::accept) or [reject](Self::reject) a
 /// client.
 ///
 /// Dropping this type will simply also drop the transport. No message will be sent back to the
@@ -264,11 +263,11 @@ impl BrokerHandle {
 pub struct PendingConnection<T: AsyncTransport + Unpin> {
     handle: BrokerHandle,
     t: T,
-    client_data: Value,
+    client_data: SerializedValue,
 }
 
 impl<T: AsyncTransport + Unpin> PendingConnection<T> {
-    fn new(handle: BrokerHandle, t: T, client_data: Value) -> Self {
+    fn new(handle: BrokerHandle, t: T, client_data: SerializedValue) -> Self {
         Self {
             handle,
             t,
@@ -276,31 +275,26 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
         }
     }
 
-    /// Takes the client's data out and leaves [`Value::None`] in its place.
-    pub fn take_client_data(&mut self) -> Value {
-        self.client_data.take()
+    /// Returns the client's data.
+    pub fn client_data(&self) -> &SerializedValue {
+        &self.client_data
     }
 
-    /// Takes the client's data out and tries to convert it to type `D`.
-    ///
-    /// This function simply combines [`take_client_data`](Self::take_client_data) with
-    /// [`Value::convert`].
-    pub fn take_client_data_and_convert<D: FromValue>(&mut self) -> Result<D, ConversionError> {
-        self.take_client_data().convert()
+    /// Deserializes the client's data.
+    pub fn deserialize_client_data<D: Deserialize>(&self) -> Result<D, DeserializeError> {
+        self.client_data.deserialize()
     }
 
     /// Accepts a client and sends custom data back to it.
     ///
     /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
     /// like the [`Broker`](crate::Broker) itself.
-    pub async fn accept<D: IntoValue>(
+    pub async fn accept(
         mut self,
-        broker_data: D,
+        broker_data: SerializedValue,
     ) -> Result<Connection<T>, EstablishError<T::Error>> {
         self.t
-            .send_and_flush(Message::ConnectReply(ConnectReply::Ok(
-                broker_data.into_value(),
-            )))
+            .send_and_flush(Message::ConnectReply(ConnectReply::Ok(broker_data)))
             .await
             .map_err(EstablishError::Transport)?;
 
@@ -318,18 +312,37 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
         Ok(conn)
     }
 
+    /// Accepts a client and sends custom data back to it.
+    ///
+    /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
+    /// like the [`Broker`](crate::Broker) itself.
+    pub async fn accept_serialize<D: Serialize + ?Sized>(
+        self,
+        broker_data: &D,
+    ) -> Result<Connection<T>, EstablishError<T::Error>> {
+        let broker_data = SerializedValue::serialize(broker_data)?;
+        self.accept(broker_data).await
+    }
+
     /// Rejects a client and sends custom data back to it.
-    pub async fn reject<D: IntoValue>(
+    pub async fn reject(
         mut self,
-        broker_data: D,
+        broker_data: SerializedValue,
     ) -> Result<(), EstablishError<T::Error>> {
         self.t
-            .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(
-                broker_data.into_value(),
-            )))
+            .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(broker_data)))
             .await
             .map_err(EstablishError::Transport)?;
 
         Ok(())
+    }
+
+    /// Rejects a client and sends custom data back to it.
+    pub async fn reject_serialize<D: Serialize + ?Sized>(
+        self,
+        broker_data: &D,
+    ) -> Result<(), EstablishError<T::Error>> {
+        let broker_data = SerializedValue::serialize(broker_data)?;
+        self.reject(broker_data).await
     }
 }

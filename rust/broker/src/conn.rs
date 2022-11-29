@@ -3,7 +3,8 @@ mod event;
 mod handle;
 
 use crate::conn_id::ConnectionId;
-use aldrin_proto::{AsyncTransport, AsyncTransportExt, Message};
+use aldrin_proto::message::{Message, Shutdown};
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use futures_channel::mpsc::{Sender, UnboundedReceiver};
 use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};
@@ -72,8 +73,8 @@ where
 
         loop {
             match select(self.recv.next(), self.t.receive()).await {
-                Either::Left((Some(Message::Shutdown(())), _)) => {
-                    self.t.send_and_flush(Message::Shutdown(())).await?;
+                Either::Left((Some(Message::Shutdown(Shutdown)), _)) => {
+                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
                     self.drain_client_recv().await?;
                     return Ok(());
                 }
@@ -88,9 +89,9 @@ where
 
                 Either::Left((None, _)) => return Err(ConnectionError::UnexpectedBrokerShutdown),
 
-                Either::Right((Ok(Message::Shutdown(())), _)) => {
+                Either::Right((Ok(Message::Shutdown(Shutdown)), _)) => {
                     self.send_broker_shutdown(id).await?;
-                    self.t.send_and_flush(Message::Shutdown(())).await?;
+                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }
@@ -133,7 +134,7 @@ where
 
     async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
         loop {
-            if let Message::Shutdown(()) = self.t.receive().await? {
+            if let Message::Shutdown(Shutdown) = self.t.receive().await? {
                 return Ok(());
             }
         }

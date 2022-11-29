@@ -8,10 +8,6 @@
 //! serialization is used or some other means. These details are encapsulated in [`Connection`],
 //! which in turn communicates with the `Broker` through internal channels.
 //!
-//! The details of a `Connection` are further abstracted by the [`aldrin_proto::AsyncTransport`]
-//! trait. This crate does not define any implementations of that trait. The `aldrin-codec` crate
-//! however defines several transports that can be used here.
-//!
 //! Furthermore, this crate does not depend on any async runtime, such as e.g. Tokio. Neither the
 //! `Broker` nor `Connection` need to spawn additional tasks, nor perform any I/O on their
 //! own. Users of this crate have full control over what runtime to use (if any at all) and how to
@@ -20,8 +16,7 @@
 //! # Examples
 //!
 //! A typical use-case is to have a stand-alone broker application, which simply listens for new
-//! connections in an infinite loop. In this example, we'll be using Tokio and TCP/IP connections
-//! with JSON serialization implemented by the `aldrin-codec` crate.
+//! connections in an infinite loop. In this example, we'll be using Tokio and TCP/IP connections.
 //!
 //! ```
 //! use aldrin_broker::Broker;
@@ -71,7 +66,6 @@ mod conn;
 mod conn_id;
 mod serial_map;
 
-pub use aldrin_proto::{Bytes, ConversionError, FromValue, IntoValue, Value};
 #[cfg(feature = "statistics")]
 pub use broker::BrokerStatistics;
 pub use broker::{Broker, BrokerHandle, BrokerShutdown, PendingConnection};

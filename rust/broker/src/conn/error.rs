@@ -1,4 +1,5 @@
-use aldrin_proto::Message;
+use aldrin_proto::message::Message;
+use aldrin_proto::SerializeError;
 use std::error::Error;
 use std::fmt;
 
@@ -46,11 +47,14 @@ pub enum EstablishError<T> {
 
     /// The transport encountered an error.
     Transport(T),
+
+    /// A value failed to serialize.
+    Serialize(SerializeError),
 }
 
-impl<T> From<T> for EstablishError<T> {
-    fn from(e: T) -> Self {
-        EstablishError::Transport(e)
+impl<T> From<SerializeError> for EstablishError<T> {
+    fn from(e: SerializeError) -> Self {
+        EstablishError::Serialize(e)
     }
 }
 
@@ -68,6 +72,7 @@ where
             }
             EstablishError::BrokerShutdown => f.write_str("broker shutdown"),
             EstablishError::Transport(e) => e.fmt(f),
+            EstablishError::Serialize(e) => e.fmt(f),
         }
     }
 }

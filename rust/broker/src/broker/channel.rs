@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::{ChannelEnd, ClaimChannelEndResult, DestroyChannelEndResult};
+use aldrin_proto::message::{ChannelEnd, ClaimChannelEndResult, DestroyChannelEndResult};
 use std::mem;
 
 #[derive(Debug)]

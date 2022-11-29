@@ -1,4 +1,5 @@
-use aldrin_proto::{ChannelCookie, Message, ObjectCookie, ServiceCookie};
+use aldrin_proto::message::Message;
+use aldrin_proto::{ChannelCookie, ObjectCookie, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
