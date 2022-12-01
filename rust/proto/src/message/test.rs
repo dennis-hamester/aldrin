@@ -1,5 +1,5 @@
 use super::MessageOps;
-use crate::value_deserializer::{Deserialize, Deserializer};
+use crate::value_deserializer::Deserialize;
 use bytes::BytesMut;
 use std::fmt::Debug;
 
@@ -40,9 +40,8 @@ where
     let deserialized = assert_deserialize_eq(expected, serialized);
 
     assert!(deserialized.kind().has_value());
-    let mut value_buf = deserialized.value_opt().unwrap();
+    let serialized_value = deserialized.value().unwrap();
 
-    let deserializer = Deserializer::with_message_header(&mut value_buf).unwrap();
-    let deserialized = V::deserialize(deserializer).unwrap();
-    assert_eq!(deserialized, *value);
+    let deserialized_value: V = serialized_value.deserialize().unwrap();
+    assert_eq!(deserialized_value, *value);
 }

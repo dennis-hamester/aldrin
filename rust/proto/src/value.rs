@@ -6,7 +6,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::{Buf, BufMut};
+use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::hash::{BuildHasher, Hash};
@@ -63,6 +63,54 @@ pub enum ValueKind {
     Receiver = 42,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerializedValue {
+    buf: BytesMut,
+}
+
+impl SerializedValue {
+    /// Cheaply creates an empty `SerializedValue`.
+    pub fn empty() -> Self {
+        Self {
+            buf: BytesMut::new(),
+        }
+    }
+
+    pub fn serialize<T: Serialize + ?Sized>(value: &T) -> Result<Self, SerializeError> {
+        // 4 bytes message length + 1 byte message kind + 4 bytes value length.
+        let mut buf = BytesMut::zeroed(9);
+        let serializer = Serializer::new(&mut buf);
+        value.serialize(serializer)?;
+        Ok(Self { buf })
+    }
+
+    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
+        // 4 bytes message length + 1 byte message kind + 4 bytes value length.
+        let mut buf = &self.buf[9..];
+        let deserializer = Deserializer::new(&mut buf);
+
+        let res = T::deserialize(deserializer);
+
+        if res.is_ok() {
+            debug_assert!(buf.is_empty());
+        }
+
+        res
+    }
+
+    pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {
+        // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
+        // value.
+        debug_assert!(buf.len() >= 10);
+
+        Self { buf }
+    }
+
+    pub(crate) fn into_bytes_mut(self) -> BytesMut {
+        self.buf
+    }
+}
+
 /// Wrapper for `Vec<u8>` to enable `Serialize` and `Deserialize` specializations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bytes(pub Vec<u8>);
@@ -72,37 +120,37 @@ pub struct Bytes(pub Vec<u8>);
 pub struct BytesRef<'a>(pub &'a [u8]);
 
 impl<T: Serialize + ?Sized> Serialize for &T {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         (*self).serialize(serializer)
     }
 }
 
 impl<T: Serialize + ?Sized> Serialize for Box<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         (**self).serialize(serializer)
     }
 }
 
 impl<T: Deserialize> Deserialize for Box<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         T::deserialize(deserializer).map(Box::new)
     }
 }
 
 impl Serialize for () {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
 }
 
 impl Deserialize for () {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_none()
     }
 }
 
 impl<T: Serialize> Serialize for Option<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Some(value) => serializer.serialize_some(value),
             None => serializer.serialize_none(),
@@ -111,223 +159,223 @@ impl<T: Serialize> Serialize for Option<T> {
 }
 
 impl<T: Deserialize> Deserialize for Option<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_option()
     }
 }
 
 impl Serialize for bool {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bool(*self)
     }
 }
 
 impl Deserialize for bool {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_bool()
     }
 }
 
 impl Serialize for u8 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_u8(*self)
     }
 }
 
 impl Deserialize for u8 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_u8()
     }
 }
 
 impl Serialize for i8 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i8(*self)
     }
 }
 
 impl Deserialize for i8 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i8()
     }
 }
 
 impl Serialize for u16 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_u16(*self)
     }
 }
 
 impl Deserialize for u16 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_u16()
     }
 }
 
 impl Serialize for i16 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i16(*self)
     }
 }
 
 impl Deserialize for i16 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i16()
     }
 }
 
 impl Serialize for u32 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_u32(*self)
     }
 }
 
 impl Deserialize for u32 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_u32()
     }
 }
 
 impl Serialize for i32 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i32(*self)
     }
 }
 
 impl Deserialize for i32 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i32()
     }
 }
 
 impl Serialize for u64 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_u64(*self)
     }
 }
 
 impl Deserialize for u64 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_u64()
     }
 }
 
 impl Serialize for i64 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i64(*self)
     }
 }
 
 impl Deserialize for i64 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i64()
     }
 }
 
 impl Serialize for f32 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_f32(*self)
     }
 }
 
 impl Deserialize for f32 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_f32()
     }
 }
 
 impl Serialize for f64 {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_f64(*self)
     }
 }
 
 impl Deserialize for f64 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_f64()
     }
 }
 
 impl Serialize for str {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
     }
 }
 
 impl Serialize for String {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
     }
 }
 
 impl Deserialize for String {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_string()
     }
 }
 
 impl Serialize for Uuid {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(*self)
     }
 }
 
 impl Deserialize for Uuid {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid()
     }
 }
 
 impl<T: Serialize> Serialize for Vec<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
     }
 }
 
 impl<T: Deserialize> Deserialize for Vec<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new()
     }
 }
 
 impl<T: Serialize> Serialize for VecDeque<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
     }
 }
 
 impl<T: Deserialize> Deserialize for VecDeque<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new()
     }
 }
 
 impl<T: Serialize> Serialize for LinkedList<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
     }
 }
 
 impl<T: Deserialize> Deserialize for LinkedList<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new()
     }
 }
 
 impl<T: Serialize> Serialize for [T] {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
     }
 }
 
 impl<T: Serialize, const N: usize> Serialize for [T; N] {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
     }
 }
 
 impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_vec()?;
 
         if deserializer.remaining_elements() != N {
@@ -377,31 +425,31 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
 }
 
 impl Serialize for Bytes {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bytes(&self.0)
     }
 }
 
 impl Deserialize for Bytes {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_bytes_to_vec().map(Bytes)
     }
 }
 
 impl<'a> Serialize for BytesRef<'a> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bytes(self.0)
     }
 }
 
 impl Serialize for bytes::Bytes {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bytes(self)
     }
 }
 
 impl Deserialize for bytes::Bytes {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer
             .deserialize_bytes_to_vec()
             .map(bytes::Bytes::from)
@@ -409,13 +457,13 @@ impl Deserialize for bytes::Bytes {
 }
 
 impl Serialize for bytes::BytesMut {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bytes(self)
     }
 }
 
 impl Deserialize for bytes::BytesMut {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         // This is inefficient, but bytes doesn't currently offer a better alternative.
         let vec = deserializer.deserialize_bytes_to_vec()?;
         Ok(bytes::BytesMut::from(vec.as_slice()))
@@ -423,7 +471,7 @@ impl Deserialize for bytes::BytesMut {
 }
 
 impl<K: SerializeKey, V: Serialize, S> Serialize for HashMap<K, V, S> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_map_iter(self)
     }
 }
@@ -434,25 +482,25 @@ where
     V: Deserialize,
     S: BuildHasher + Default,
 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
     }
 }
 
 impl<K: SerializeKey, V: Serialize> Serialize for BTreeMap<K, V> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_map_iter(self)
     }
 }
 
 impl<K: DeserializeKey + Ord, V: Deserialize> Deserialize for BTreeMap<K, V> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
     }
 }
 
 impl<T: SerializeKey, S> Serialize for HashSet<T, S> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_set_iter(self)
     }
 }
@@ -462,19 +510,19 @@ where
     T: DeserializeKey + Eq + Hash,
     S: BuildHasher + Default,
 {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
     }
 }
 
 impl<T: SerializeKey> Serialize for BTreeSet<T> {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_set_iter(self)
     }
 }
 
 impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
     }
 }

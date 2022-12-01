@@ -1,7 +1,6 @@
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::{Buf, BufMut};
 use std::fmt;
 use uuid::Uuid;
 
@@ -31,13 +30,13 @@ impl ObjectId {
 }
 
 impl Serialize for ObjectId {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_object_id(*self)
     }
 }
 
 impl Deserialize for ObjectId {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_object_id()
     }
 }
@@ -66,13 +65,13 @@ impl ObjectUuid {
 }
 
 impl Serialize for ObjectUuid {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Deserialize for ObjectUuid {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
@@ -120,13 +119,13 @@ impl ObjectCookie {
 }
 
 impl Serialize for ObjectCookie {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Deserialize for ObjectCookie {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
@@ -183,13 +182,13 @@ impl ServiceId {
 }
 
 impl Serialize for ServiceId {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_service_id(*self)
     }
 }
 
 impl Deserialize for ServiceId {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_service_id()
     }
 }
@@ -218,13 +217,13 @@ impl ServiceUuid {
 }
 
 impl Serialize for ServiceUuid {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Deserialize for ServiceUuid {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
@@ -272,13 +271,13 @@ impl ServiceCookie {
 }
 
 impl Serialize for ServiceCookie {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Deserialize for ServiceCookie {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
@@ -324,13 +323,13 @@ impl ChannelCookie {
 }
 
 impl Serialize for ChannelCookie {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Deserialize for ChannelCookie {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }

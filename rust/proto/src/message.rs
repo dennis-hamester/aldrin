@@ -47,6 +47,7 @@ mod unsubscribe_services;
 
 use crate::error::{DeserializeError, SerializeError};
 use crate::util::{BufExt, BufMutExt};
+use crate::value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::{Buf, BufMut, BytesMut};
@@ -207,7 +208,7 @@ pub trait MessageOps: Sized + message_ops::Sealed {
     fn kind(&self) -> MessageKind;
     fn serialize_message(self) -> Result<BytesMut, SerializeError>;
     fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError>;
-    fn value_opt(&self) -> Option<&[u8]>;
+    fn value(&self) -> Option<&SerializedValue>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -481,51 +482,51 @@ impl MessageOps for Message {
         }
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
+    fn value(&self) -> Option<&SerializedValue> {
         match self {
-            Self::Connect(msg) => msg.value_opt(),
-            Self::ConnectReply(msg) => msg.value_opt(),
-            Self::Shutdown(msg) => msg.value_opt(),
-            Self::CreateObject(msg) => msg.value_opt(),
-            Self::CreateObjectReply(msg) => msg.value_opt(),
-            Self::DestroyObject(msg) => msg.value_opt(),
-            Self::DestroyObjectReply(msg) => msg.value_opt(),
-            Self::SubscribeObjects(msg) => msg.value_opt(),
-            Self::SubscribeObjectsReply(msg) => msg.value_opt(),
-            Self::UnsubscribeObjects(msg) => msg.value_opt(),
-            Self::ObjectCreatedEvent(msg) => msg.value_opt(),
-            Self::ObjectDestroyedEvent(msg) => msg.value_opt(),
-            Self::CreateService(msg) => msg.value_opt(),
-            Self::CreateServiceReply(msg) => msg.value_opt(),
-            Self::DestroyService(msg) => msg.value_opt(),
-            Self::DestroyServiceReply(msg) => msg.value_opt(),
-            Self::SubscribeServices(msg) => msg.value_opt(),
-            Self::SubscribeServicesReply(msg) => msg.value_opt(),
-            Self::UnsubscribeServices(msg) => msg.value_opt(),
-            Self::ServiceCreatedEvent(msg) => msg.value_opt(),
-            Self::ServiceDestroyedEvent(msg) => msg.value_opt(),
-            Self::CallFunction(msg) => msg.value_opt(),
-            Self::CallFunctionReply(msg) => msg.value_opt(),
-            Self::SubscribeEvent(msg) => msg.value_opt(),
-            Self::SubscribeEventReply(msg) => msg.value_opt(),
-            Self::UnsubscribeEvent(msg) => msg.value_opt(),
-            Self::EmitEvent(msg) => msg.value_opt(),
-            Self::QueryObject(msg) => msg.value_opt(),
-            Self::QueryObjectReply(msg) => msg.value_opt(),
-            Self::QueryServiceVersion(msg) => msg.value_opt(),
-            Self::QueryServiceVersionReply(msg) => msg.value_opt(),
-            Self::CreateChannel(msg) => msg.value_opt(),
-            Self::CreateChannelReply(msg) => msg.value_opt(),
-            Self::DestroyChannelEnd(msg) => msg.value_opt(),
-            Self::DestroyChannelEndReply(msg) => msg.value_opt(),
-            Self::ChannelEndDestroyed(msg) => msg.value_opt(),
-            Self::ClaimChannelEnd(msg) => msg.value_opt(),
-            Self::ClaimChannelEndReply(msg) => msg.value_opt(),
-            Self::ChannelEndClaimed(msg) => msg.value_opt(),
-            Self::SendItem(msg) => msg.value_opt(),
-            Self::ItemReceived(msg) => msg.value_opt(),
-            Self::Sync(msg) => msg.value_opt(),
-            Self::SyncReply(msg) => msg.value_opt(),
+            Self::Connect(msg) => msg.value(),
+            Self::ConnectReply(msg) => msg.value(),
+            Self::Shutdown(msg) => msg.value(),
+            Self::CreateObject(msg) => msg.value(),
+            Self::CreateObjectReply(msg) => msg.value(),
+            Self::DestroyObject(msg) => msg.value(),
+            Self::DestroyObjectReply(msg) => msg.value(),
+            Self::SubscribeObjects(msg) => msg.value(),
+            Self::SubscribeObjectsReply(msg) => msg.value(),
+            Self::UnsubscribeObjects(msg) => msg.value(),
+            Self::ObjectCreatedEvent(msg) => msg.value(),
+            Self::ObjectDestroyedEvent(msg) => msg.value(),
+            Self::CreateService(msg) => msg.value(),
+            Self::CreateServiceReply(msg) => msg.value(),
+            Self::DestroyService(msg) => msg.value(),
+            Self::DestroyServiceReply(msg) => msg.value(),
+            Self::SubscribeServices(msg) => msg.value(),
+            Self::SubscribeServicesReply(msg) => msg.value(),
+            Self::UnsubscribeServices(msg) => msg.value(),
+            Self::ServiceCreatedEvent(msg) => msg.value(),
+            Self::ServiceDestroyedEvent(msg) => msg.value(),
+            Self::CallFunction(msg) => msg.value(),
+            Self::CallFunctionReply(msg) => msg.value(),
+            Self::SubscribeEvent(msg) => msg.value(),
+            Self::SubscribeEventReply(msg) => msg.value(),
+            Self::UnsubscribeEvent(msg) => msg.value(),
+            Self::EmitEvent(msg) => msg.value(),
+            Self::QueryObject(msg) => msg.value(),
+            Self::QueryObjectReply(msg) => msg.value(),
+            Self::QueryServiceVersion(msg) => msg.value(),
+            Self::QueryServiceVersionReply(msg) => msg.value(),
+            Self::CreateChannel(msg) => msg.value(),
+            Self::CreateChannelReply(msg) => msg.value(),
+            Self::DestroyChannelEnd(msg) => msg.value(),
+            Self::DestroyChannelEndReply(msg) => msg.value(),
+            Self::ChannelEndDestroyed(msg) => msg.value(),
+            Self::ClaimChannelEnd(msg) => msg.value(),
+            Self::ClaimChannelEndReply(msg) => msg.value(),
+            Self::ChannelEndClaimed(msg) => msg.value(),
+            Self::SendItem(msg) => msg.value(),
+            Self::ItemReceived(msg) => msg.value(),
+            Self::Sync(msg) => msg.value(),
+            Self::SyncReply(msg) => msg.value(),
         }
     }
 }
@@ -564,7 +565,7 @@ impl ChannelEnd {
 }
 
 impl Serialize for ChannelEnd {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Self::Sender => serializer.serialize_enum(0, &()),
             Self::Receiver => serializer.serialize_enum(1, &()),
@@ -573,7 +574,7 @@ impl Serialize for ChannelEnd {
 }
 
 impl Deserialize for ChannelEnd {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.variant() {
@@ -591,15 +592,6 @@ pub enum OptionKind {
     Some = 1,
 }
 
-fn message_buf_with_serialize_value<T: Serialize + ?Sized>(
-    value: &T,
-) -> Result<BytesMut, SerializeError> {
-    let mut buf = BytesMut::new();
-    let serializer = Serializer::with_message_header(&mut buf)?;
-    value.serialize(serializer)?;
-    Ok(buf)
-}
-
 struct MessageSerializer {
     buf: BytesMut,
 }
@@ -608,17 +600,19 @@ impl MessageSerializer {
     fn without_value(kind: MessageKind) -> Self {
         debug_assert!(!kind.has_value());
 
-        let header = [0, 0, 0, 0];
-        let mut buf = BytesMut::from(&header[..]);
+        let mut buf = BytesMut::zeroed(4);
         buf.put_u8(kind.into());
 
         Self { buf }
     }
 
-    fn with_value(mut buf: BytesMut, kind: MessageKind) -> Result<Self, SerializeError> {
+    fn with_value(value: SerializedValue, kind: MessageKind) -> Result<Self, SerializeError> {
         debug_assert!(kind.has_value());
 
-        // 9 bytes for the header plus at least 1 byte for the value.
+        let mut buf = value.into_bytes_mut();
+
+        // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
+        // value.
         if buf.len() < 10 {
             return Err(SerializeError);
         }
@@ -634,9 +628,8 @@ impl MessageSerializer {
         Ok(Self { buf })
     }
 
-    fn with_empty_value(kind: MessageKind) -> Self {
-        let header_with_none_value = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        Self::with_value(BytesMut::from(&header_with_none_value[..]), kind).unwrap()
+    fn with_none_value(kind: MessageKind) -> Self {
+        Self::with_value(SerializedValue::serialize(&()).unwrap(), kind).unwrap()
     }
 
     fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
@@ -674,6 +667,7 @@ impl MessageWithoutValueDeserializer {
     fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
         let buf_len = buf.len();
 
+        // 4 bytes message length + 1 byte message kind.
         if buf_len < 5 {
             return Err(DeserializeError);
         }
@@ -724,13 +718,14 @@ impl MessageWithValueDeserializer {
     fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
         debug_assert!(kind.has_value());
 
-        // 9 bytes for the header plus at least 1 byte for the value.
+        // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
+        // value.
         if buf.len() < 10 {
             return Err(DeserializeError);
         }
 
-        let len = (&buf[..4]).get_u32_le() as usize;
-        if buf.len() != len {
+        let msg_len = (&buf[..4]).get_u32_le() as usize;
+        if buf.len() != msg_len {
             return Err(DeserializeError);
         }
 
@@ -764,11 +759,11 @@ impl MessageWithValueDeserializer {
         Ok(Uuid::from_bytes(bytes))
     }
 
-    fn finish(mut self) -> Result<BytesMut, DeserializeError> {
+    fn finish(mut self) -> Result<SerializedValue, DeserializeError> {
         if self.msg.is_empty() {
             self.header_and_value.unsplit(self.msg);
             self.header_and_value[0..9].fill(0);
-            Ok(self.header_and_value)
+            Ok(SerializedValue::from_bytes_mut(self.header_and_value))
         } else {
             Err(DeserializeError)
         }

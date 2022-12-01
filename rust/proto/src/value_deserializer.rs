@@ -5,29 +5,22 @@ use crate::ids::{
 };
 use crate::util::BufExt;
 use crate::value::ValueKind;
-use bytes::Buf;
 use std::iter;
 use std::marker::PhantomData;
-use std::mem;
 use uuid::Uuid;
 
 pub trait Deserialize: Sized {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError>;
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError>;
 }
 
 #[derive(Debug)]
-pub struct Deserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct Deserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
 }
 
-impl<'a, B: Buf> Deserializer<'a, B> {
-    pub fn new(buf: &'a mut B) -> Self {
+impl<'a, 'b> Deserializer<'a, 'b> {
+    pub(crate) fn new(buf: &'a mut &'b [u8]) -> Self {
         Self { buf }
-    }
-
-    pub fn with_message_header(buf: &'a mut B) -> Result<Self, DeserializeError> {
-        buf.try_skip(9)?;
-        Ok(Self { buf })
     }
 
     pub fn peek_value_kind(&self) -> Result<ValueKind, DeserializeError> {
@@ -39,77 +32,47 @@ impl<'a, B: Buf> Deserializer<'a, B> {
             ValueKind::None => Ok(()),
             ValueKind::Some => self.skip(),
             ValueKind::Bool | ValueKind::U8 | ValueKind::I8 => self.buf.try_skip(1),
-            ValueKind::U16 => self.buf.try_skip_varint_le::<{ mem::size_of::<u16>() }>(),
-            ValueKind::I16 => self.buf.try_skip_varint_le::<{ mem::size_of::<i16>() }>(),
-            ValueKind::U32 => self.buf.try_skip_varint_le::<{ mem::size_of::<u32>() }>(),
-            ValueKind::I32 => self.buf.try_skip_varint_le::<{ mem::size_of::<i32>() }>(),
-            ValueKind::U64 => self.buf.try_skip_varint_le::<{ mem::size_of::<u64>() }>(),
-            ValueKind::I64 => self.buf.try_skip_varint_le::<{ mem::size_of::<i64>() }>(),
-            ValueKind::F32 => self.buf.try_skip(mem::size_of::<f32>()),
-            ValueKind::F64 => self.buf.try_skip(mem::size_of::<f64>()),
+            ValueKind::U16 => self.buf.try_skip_varint_le::<2>(),
+            ValueKind::I16 => self.buf.try_skip_varint_le::<2>(),
+            ValueKind::U32 => self.buf.try_skip_varint_le::<4>(),
+            ValueKind::I32 => self.buf.try_skip_varint_le::<4>(),
+            ValueKind::U64 => self.buf.try_skip_varint_le::<8>(),
+            ValueKind::I64 => self.buf.try_skip_varint_le::<8>(),
+            ValueKind::F32 => self.buf.try_skip(4),
+            ValueKind::F64 => self.buf.try_skip(8),
             ValueKind::String => {
                 let len = self.buf.try_get_varint_u32_le()? as usize;
                 self.buf.try_skip(len)
             }
-            ValueKind::Uuid | ValueKind::Sender | ValueKind::Receiver => {
-                self.buf.try_skip(mem::size_of::<Uuid>())
-            }
-            ValueKind::ObjectId => self.buf.try_skip(2 * mem::size_of::<Uuid>()),
-            ValueKind::ServiceId => self.buf.try_skip(4 * mem::size_of::<Uuid>()),
+            ValueKind::Uuid | ValueKind::Sender | ValueKind::Receiver => self.buf.try_skip(16),
+            ValueKind::ObjectId => self.buf.try_skip(32),
+            ValueKind::ServiceId => self.buf.try_skip(64),
             ValueKind::Vec => VecDeserializer::new_without_value_kind(self.buf)?.skip(),
             ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U8Map => MapDeserializer::<_, u8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I8Map => MapDeserializer::<_, i8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U16Map => {
-                MapDeserializer::<_, u16>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I16Map => {
-                MapDeserializer::<_, i16>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::U32Map => {
-                MapDeserializer::<_, u32>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I32Map => {
-                MapDeserializer::<_, i32>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::U64Map => {
-                MapDeserializer::<_, u64>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I64Map => {
-                MapDeserializer::<_, i64>::new_without_value_kind(self.buf)?.skip()
-            }
+            ValueKind::U8Map => MapDeserializer::<u8>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I8Map => MapDeserializer::<i8>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U16Map => MapDeserializer::<u16>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I16Map => MapDeserializer::<i16>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U32Map => MapDeserializer::<u32>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I32Map => MapDeserializer::<i32>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U64Map => MapDeserializer::<u64>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I64Map => MapDeserializer::<i64>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::StringMap => {
-                MapDeserializer::<_, String>::new_without_value_kind(self.buf)?.skip()
+                MapDeserializer::<String>::new_without_value_kind(self.buf)?.skip()
             }
-            ValueKind::UuidMap => {
-                MapDeserializer::<_, Uuid>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::U8Set => SetDeserializer::<_, u8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I8Set => SetDeserializer::<_, i8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U16Set => {
-                SetDeserializer::<_, u16>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I16Set => {
-                SetDeserializer::<_, i16>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::U32Set => {
-                SetDeserializer::<_, u32>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I32Set => {
-                SetDeserializer::<_, i32>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::U64Set => {
-                SetDeserializer::<_, u64>::new_without_value_kind(self.buf)?.skip()
-            }
-            ValueKind::I64Set => {
-                SetDeserializer::<_, i64>::new_without_value_kind(self.buf)?.skip()
-            }
+            ValueKind::UuidMap => MapDeserializer::<Uuid>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U8Set => SetDeserializer::<u8>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I8Set => SetDeserializer::<i8>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U16Set => SetDeserializer::<u16>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I16Set => SetDeserializer::<i16>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U32Set => SetDeserializer::<u32>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I32Set => SetDeserializer::<i32>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::U64Set => SetDeserializer::<u64>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I64Set => SetDeserializer::<i64>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::StringSet => {
-                SetDeserializer::<_, String>::new_without_value_kind(self.buf)?.skip()
+                SetDeserializer::<String>::new_without_value_kind(self.buf)?.skip()
             }
-            ValueKind::UuidSet => {
-                SetDeserializer::<_, Uuid>::new_without_value_kind(self.buf)?.skip()
-            }
+            ValueKind::UuidSet => SetDeserializer::<Uuid>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::Struct => StructDeserializer::new_without_value_kind(self.buf)?.skip(),
             ValueKind::Enum => EnumDeserializer::new_without_value_kind(self.buf)?.skip(),
         }
@@ -237,7 +200,7 @@ impl<'a, B: Buf> Deserializer<'a, B> {
         ))
     }
 
-    pub fn deserialize_vec(self) -> Result<VecDeserializer<'a, B>, DeserializeError> {
+    pub fn deserialize_vec(self) -> Result<VecDeserializer<'a, 'b>, DeserializeError> {
         VecDeserializer::new(self.buf)
     }
 
@@ -259,7 +222,7 @@ impl<'a, B: Buf> Deserializer<'a, B> {
         Ok(vec)
     }
 
-    pub fn deserialize_bytes(self) -> Result<BytesDeserializer<'a, B>, DeserializeError> {
+    pub fn deserialize_bytes(self) -> Result<BytesDeserializer<'a, 'b>, DeserializeError> {
         BytesDeserializer::new(self.buf)
     }
 
@@ -269,7 +232,7 @@ impl<'a, B: Buf> Deserializer<'a, B> {
 
     pub fn deserialize_map<K: DeserializeKey>(
         self,
-    ) -> Result<MapDeserializer<'a, B, K>, DeserializeError> {
+    ) -> Result<MapDeserializer<'a, 'b, K>, DeserializeError> {
         MapDeserializer::new(self.buf)
     }
 
@@ -295,7 +258,7 @@ impl<'a, B: Buf> Deserializer<'a, B> {
 
     pub fn deserialize_set<T: DeserializeKey>(
         self,
-    ) -> Result<SetDeserializer<'a, B, T>, DeserializeError> {
+    ) -> Result<SetDeserializer<'a, 'b, T>, DeserializeError> {
         SetDeserializer::new(self.buf)
     }
 
@@ -317,11 +280,11 @@ impl<'a, B: Buf> Deserializer<'a, B> {
         Ok(set)
     }
 
-    pub fn deserialize_struct(self) -> Result<StructDeserializer<'a, B>, DeserializeError> {
+    pub fn deserialize_struct(self) -> Result<StructDeserializer<'a, 'b>, DeserializeError> {
         StructDeserializer::new(self.buf)
     }
 
-    pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, B>, DeserializeError> {
+    pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, 'b>, DeserializeError> {
         EnumDeserializer::new(self.buf)
     }
 
@@ -341,18 +304,18 @@ impl<'a, B: Buf> Deserializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct VecDeserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct VecDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
     num_elems: u32,
 }
 
-impl<'a, B: Buf> VecDeserializer<'a, B> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b> VecDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Vec)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let num_elems = buf.try_get_varint_u32_le()?;
         Ok(Self { buf, num_elems })
     }
@@ -365,7 +328,10 @@ impl<'a, B: Buf> VecDeserializer<'a, B> {
         self.num_elems > 0
     }
 
-    pub fn deserialize_element<T: Deserialize>(&mut self) -> Result<T, DeserializeError> {
+    pub fn deserialize_element<T>(&mut self) -> Result<T, DeserializeError>
+    where
+        T: Deserialize,
+    {
         if self.has_more_elements() {
             self.num_elems -= 1;
             T::deserialize(Deserializer::new(self.buf))
@@ -406,18 +372,18 @@ impl<'a, B: Buf> VecDeserializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct BytesDeserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct BytesDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
     len: u32,
 }
 
-impl<'a, B: Buf> BytesDeserializer<'a, B> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b> BytesDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Bytes)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let len = buf.try_get_varint_u32_le()?;
         Ok(Self { buf, len })
     }
@@ -450,19 +416,19 @@ impl<'a, B: Buf> BytesDeserializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct MapDeserializer<'a, B: Buf, K: DeserializeKey> {
-    buf: &'a mut B,
+pub struct MapDeserializer<'a, 'b, K: DeserializeKey> {
+    buf: &'a mut &'b [u8],
     num_elems: u32,
     _key: PhantomData<K>,
 }
 
-impl<'a, B: Buf, K: DeserializeKey> MapDeserializer<'a, B, K> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         K::deserialize_map_value_kind(buf)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let num_elems = buf.try_get_varint_u32_le()?;
 
         Ok(Self {
@@ -524,19 +490,19 @@ impl<'a, B: Buf, K: DeserializeKey> MapDeserializer<'a, B, K> {
 }
 
 #[derive(Debug)]
-pub struct SetDeserializer<'a, B: Buf, T: DeserializeKey> {
-    buf: &'a mut B,
+pub struct SetDeserializer<'a, 'b, T: DeserializeKey> {
+    buf: &'a mut &'b [u8],
     num_elems: u32,
     _key: PhantomData<T>,
 }
 
-impl<'a, B: Buf, T: DeserializeKey> SetDeserializer<'a, B, T> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         T::deserialize_set_value_kind(buf)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let num_elems = buf.try_get_varint_u32_le()?;
 
         Ok(Self {
@@ -594,18 +560,18 @@ impl<'a, B: Buf, T: DeserializeKey> SetDeserializer<'a, B, T> {
 }
 
 #[derive(Debug)]
-pub struct StructDeserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct StructDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
     num_fields: u32,
 }
 
-impl<'a, B: Buf> StructDeserializer<'a, B> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b> StructDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Struct)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let num_fields = buf.try_get_varint_u32_le()?;
         Ok(Self { buf, num_fields })
     }
@@ -618,7 +584,9 @@ impl<'a, B: Buf> StructDeserializer<'a, B> {
         self.num_fields > 0
     }
 
-    pub fn deserialize_field(&mut self) -> Result<FieldDeserializer<B>, DeserializeError> {
+    pub fn deserialize_field<'c>(
+        &'c mut self,
+    ) -> Result<FieldDeserializer<'c, 'b>, DeserializeError> {
         if self.has_more_fields() {
             self.num_fields -= 1;
             FieldDeserializer::new(self.buf)
@@ -637,13 +605,13 @@ impl<'a, B: Buf> StructDeserializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct FieldDeserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct FieldDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
     id: u32,
 }
 
-impl<'a, B: Buf> FieldDeserializer<'a, B> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b> FieldDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let id = buf.try_get_varint_u32_le()?;
         Ok(Self { buf, id })
     }
@@ -662,18 +630,18 @@ impl<'a, B: Buf> FieldDeserializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct EnumDeserializer<'a, B: Buf> {
-    buf: &'a mut B,
+pub struct EnumDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
     variant: u32,
 }
 
-impl<'a, B: Buf> EnumDeserializer<'a, B> {
-    fn new(buf: &'a mut B) -> Result<Self, DeserializeError> {
+impl<'a, 'b> EnumDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Enum)?;
         Self::new_without_value_kind(buf)
     }
 
-    fn new_without_value_kind(buf: &'a mut B) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         let variant = buf.try_get_varint_u32_le()?;
         Ok(Self { buf, variant })
     }

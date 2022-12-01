@@ -5,6 +5,7 @@ use super::{
 };
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ChannelCookie;
+use crate::value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -45,7 +46,7 @@ impl MessageOps for ClaimChannelEnd {
         })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
+    fn value(&self) -> Option<&SerializedValue> {
         None
     }
 }

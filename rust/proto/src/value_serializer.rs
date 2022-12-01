@@ -3,29 +3,23 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::SerializeKey;
 use crate::util::BufMutExt;
 use crate::value::ValueKind;
-use bytes::BufMut;
+use bytes::BytesMut;
 use std::fmt;
 use std::marker::PhantomData;
 use uuid::Uuid;
 
 pub trait Serialize {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError>;
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError>;
 }
 
 #[derive(Debug)]
-pub struct Serializer<'a, B: BufMut> {
-    buf: &'a mut B,
+pub struct Serializer<'a> {
+    buf: &'a mut BytesMut,
 }
 
-impl<'a, B: BufMut> Serializer<'a, B> {
-    pub fn new(buf: &'a mut B) -> Self {
+impl<'a> Serializer<'a> {
+    pub(crate) fn new(buf: &'a mut BytesMut) -> Self {
         Self { buf }
-    }
-
-    pub fn with_message_header(buf: &'a mut B) -> Result<Self, SerializeError> {
-        let empty_header = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        buf.try_put_slice(empty_header)?;
-        Ok(Self { buf })
     }
 
     pub fn serialize_none(self) -> Result<(), SerializeError> {
@@ -103,9 +97,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
         Ok(())
     }
 
-    pub fn serialize_string(self, value: impl AsRef<str>) -> Result<(), SerializeError> {
-        let value = value.as_ref();
-
+    pub fn serialize_string(self, value: &str) -> Result<(), SerializeError> {
         if value.len() <= u32::MAX as usize {
             self.buf.try_put_discriminant_u8(ValueKind::String)?;
             self.buf.try_put_varint_u32_le(value.len() as u32)?;
@@ -138,7 +130,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
         Ok(())
     }
 
-    pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a, B>, SerializeError> {
+    pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a>, SerializeError> {
         VecSerializer::new(self.buf, num_elems)
     }
 
@@ -158,9 +150,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
         serializer.finish()
     }
 
-    pub fn serialize_bytes(self, value: impl AsRef<[u8]>) -> Result<(), SerializeError> {
-        let value = value.as_ref();
-
+    pub fn serialize_bytes(self, value: &[u8]) -> Result<(), SerializeError> {
         if value.len() <= u32::MAX as usize {
             self.buf.try_put_discriminant_u8(ValueKind::Bytes)?;
             self.buf.try_put_varint_u32_le(value.len() as u32)?;
@@ -174,7 +164,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
     pub fn serialize_map<K: SerializeKey + ?Sized>(
         self,
         num_elems: usize,
-    ) -> Result<MapSerializer<'a, B, K>, SerializeError> {
+    ) -> Result<MapSerializer<'a, K>, SerializeError> {
         MapSerializer::new(self.buf, num_elems)
     }
 
@@ -198,7 +188,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
     pub fn serialize_set<T: SerializeKey + ?Sized>(
         self,
         num_elems: usize,
-    ) -> Result<SetSerializer<'a, B, T>, SerializeError> {
+    ) -> Result<SetSerializer<'a, T>, SerializeError> {
         SetSerializer::new(self.buf, num_elems)
     }
 
@@ -221,7 +211,7 @@ impl<'a, B: BufMut> Serializer<'a, B> {
     pub fn serialize_struct(
         self,
         num_fields: usize,
-    ) -> Result<StructSerializer<'a, B>, SerializeError> {
+    ) -> Result<StructSerializer<'a>, SerializeError> {
         StructSerializer::new(self.buf, num_fields)
     }
 
@@ -249,13 +239,13 @@ impl<'a, B: BufMut> Serializer<'a, B> {
 }
 
 #[derive(Debug)]
-pub struct VecSerializer<'a, B: BufMut> {
-    buf: &'a mut B,
+pub struct VecSerializer<'a> {
+    buf: &'a mut BytesMut,
     num_elems: usize,
 }
 
-impl<'a, B: BufMut> VecSerializer<'a, B> {
-    fn new(buf: &'a mut B, num_elems: usize) -> Result<Self, SerializeError> {
+impl<'a> VecSerializer<'a> {
+    fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             buf.try_put_discriminant_u8(ValueKind::Vec)?;
             buf.try_put_varint_u32_le(num_elems as u32)?;
@@ -295,14 +285,14 @@ impl<'a, B: BufMut> VecSerializer<'a, B> {
     }
 }
 
-pub struct MapSerializer<'a, B: BufMut, K: SerializeKey + ?Sized> {
-    buf: &'a mut B,
+pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
+    buf: &'a mut BytesMut,
     num_elems: usize,
     _key: PhantomData<K>,
 }
 
-impl<'a, B: BufMut, K: SerializeKey + ?Sized> MapSerializer<'a, B, K> {
-    fn new(mut buf: &'a mut B, num_elems: usize) -> Result<Self, SerializeError> {
+impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
+    fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             K::serialize_map_value_kind(&mut buf)?;
             buf.try_put_varint_u32_le(num_elems as u32)?;
@@ -349,7 +339,7 @@ impl<'a, B: BufMut, K: SerializeKey + ?Sized> MapSerializer<'a, B, K> {
     }
 }
 
-impl<'a, B: BufMut + fmt::Debug, K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'a, B, K> {
+impl<'a, K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'a, K> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("MapSerializer");
 
@@ -360,14 +350,14 @@ impl<'a, B: BufMut + fmt::Debug, K: SerializeKey + ?Sized> fmt::Debug for MapSer
     }
 }
 
-pub struct SetSerializer<'a, B: BufMut, T: SerializeKey + ?Sized> {
-    buf: &'a mut B,
+pub struct SetSerializer<'a, T: SerializeKey + ?Sized> {
+    buf: &'a mut BytesMut,
     num_elems: usize,
     _key: PhantomData<T>,
 }
 
-impl<'a, B: BufMut, T: SerializeKey + ?Sized> SetSerializer<'a, B, T> {
-    fn new(mut buf: &'a mut B, num_elems: usize) -> Result<Self, SerializeError> {
+impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
+    fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             T::serialize_set_value_kind(&mut buf)?;
             buf.try_put_varint_u32_le(num_elems as u32)?;
@@ -409,7 +399,7 @@ impl<'a, B: BufMut, T: SerializeKey + ?Sized> SetSerializer<'a, B, T> {
     }
 }
 
-impl<'a, B: BufMut + fmt::Debug, T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'a, B, T> {
+impl<'a, T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'a, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("SetSerializer");
 
@@ -421,13 +411,13 @@ impl<'a, B: BufMut + fmt::Debug, T: SerializeKey + ?Sized> fmt::Debug for SetSer
 }
 
 #[derive(Debug)]
-pub struct StructSerializer<'a, B: BufMut> {
-    buf: &'a mut B,
+pub struct StructSerializer<'a> {
+    buf: &'a mut BytesMut,
     num_fields: usize,
 }
 
-impl<'a, B: BufMut> StructSerializer<'a, B> {
-    fn new(buf: &'a mut B, num_fields: usize) -> Result<Self, SerializeError> {
+impl<'a> StructSerializer<'a> {
+    fn new(buf: &'a mut BytesMut, num_fields: usize) -> Result<Self, SerializeError> {
         if num_fields <= u32::MAX as usize {
             buf.try_put_discriminant_u8(ValueKind::Struct)?;
             buf.try_put_varint_u32_le(num_fields as u32)?;

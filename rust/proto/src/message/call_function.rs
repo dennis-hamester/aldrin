@@ -2,6 +2,7 @@ use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
+use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
@@ -10,7 +11,7 @@ pub struct CallFunction {
     pub serial: u32,
     pub service_cookie: ServiceCookie,
     pub function: u32,
-    pub value: BytesMut,
+    pub value: SerializedValue,
 }
 
 impl CallFunction {
@@ -20,17 +21,13 @@ impl CallFunction {
         function: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self {
             serial,
             service_cookie,
             function,
             value,
         })
-    }
-
-    fn value(&self) -> &[u8] {
-        &self.value
     }
 }
 
@@ -65,8 +62,8 @@ impl MessageOps for CallFunction {
         })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
-        Some(self.value())
+    fn value(&self) -> Option<&SerializedValue> {
+        Some(&self.value)
     }
 }
 

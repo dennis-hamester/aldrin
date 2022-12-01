@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -18,8 +19,8 @@ pub enum CallFunctionReplyKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CallFunctionResult {
-    Ok(BytesMut),
-    Err(BytesMut),
+    Ok(SerializedValue),
+    Err(SerializedValue),
     Aborted,
     InvalidService,
     InvalidFunction,
@@ -37,7 +38,7 @@ impl CallFunctionReply {
         serial: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self {
             serial,
             result: CallFunctionResult::Ok(value),
@@ -48,22 +49,11 @@ impl CallFunctionReply {
         serial: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self {
             serial,
             result: CallFunctionResult::Err(value),
         })
-    }
-
-    fn value(&self) -> &[u8] {
-        match self.result {
-            CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => value,
-
-            CallFunctionResult::Aborted
-            | CallFunctionResult::InvalidService
-            | CallFunctionResult::InvalidFunction
-            | CallFunctionResult::InvalidArgs => &[0],
-        }
     }
 }
 
@@ -92,7 +82,7 @@ impl MessageOps for CallFunctionReply {
 
             CallFunctionResult::Aborted => {
                 let mut serializer =
-                    MessageSerializer::with_empty_value(MessageKind::CallFunctionReply);
+                    MessageSerializer::with_none_value(MessageKind::CallFunctionReply);
                 serializer.put_varint_u32_le(self.serial);
                 serializer.put_discriminant_u8(CallFunctionReplyKind::Aborted);
                 serializer
@@ -100,7 +90,7 @@ impl MessageOps for CallFunctionReply {
 
             CallFunctionResult::InvalidService => {
                 let mut serializer =
-                    MessageSerializer::with_empty_value(MessageKind::CallFunctionReply);
+                    MessageSerializer::with_none_value(MessageKind::CallFunctionReply);
                 serializer.put_varint_u32_le(self.serial);
                 serializer.put_discriminant_u8(CallFunctionReplyKind::InvalidService);
                 serializer
@@ -108,7 +98,7 @@ impl MessageOps for CallFunctionReply {
 
             CallFunctionResult::InvalidFunction => {
                 let mut serializer =
-                    MessageSerializer::with_empty_value(MessageKind::CallFunctionReply);
+                    MessageSerializer::with_none_value(MessageKind::CallFunctionReply);
                 serializer.put_varint_u32_le(self.serial);
                 serializer.put_discriminant_u8(CallFunctionReplyKind::InvalidFunction);
                 serializer
@@ -116,7 +106,7 @@ impl MessageOps for CallFunctionReply {
 
             CallFunctionResult::InvalidArgs => {
                 let mut serializer =
-                    MessageSerializer::with_empty_value(MessageKind::CallFunctionReply);
+                    MessageSerializer::with_none_value(MessageKind::CallFunctionReply);
                 serializer.put_varint_u32_le(self.serial);
                 serializer.put_discriminant_u8(CallFunctionReplyKind::InvalidArgs);
                 serializer
@@ -183,8 +173,15 @@ impl MessageOps for CallFunctionReply {
         }
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
-        Some(self.value())
+    fn value(&self) -> Option<&SerializedValue> {
+        match self.result {
+            CallFunctionResult::Ok(ref value) | CallFunctionResult::Err(ref value) => Some(value),
+
+            CallFunctionResult::Aborted
+            | CallFunctionResult::InvalidService
+            | CallFunctionResult::InvalidFunction
+            | CallFunctionResult::InvalidArgs => None,
+        }
     }
 }
 

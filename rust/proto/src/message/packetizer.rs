@@ -129,7 +129,7 @@ mod test {
     }
 
     #[test]
-    fn space_capacity_mut() {
+    fn spare_capacity_mut() {
         fn write_slice(dst: &mut [MaybeUninit<u8>], src: &[u8]) {
             for (&src, dst) in src.iter().zip(dst) {
                 dst.write(src);

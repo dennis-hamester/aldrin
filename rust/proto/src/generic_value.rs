@@ -3,7 +3,6 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::{Buf, BufMut};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
@@ -111,7 +110,7 @@ impl Value {
 }
 
 impl Serialize for Value {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Self::None => serializer.serialize_none(),
             Self::Some(value) => serializer.serialize_some(value),
@@ -161,7 +160,7 @@ impl Serialize for Value {
 }
 
 impl Deserialize for Value {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         match deserializer.peek_value_kind()? {
             ValueKind::None => deserializer.deserialize_none().map(|_| Self::None),
             ValueKind::Some => deserializer.deserialize_some().map(Self::Some),
@@ -238,7 +237,7 @@ impl Deserialize for Value {
 pub struct Struct(pub HashMap<u32, Value>);
 
 impl Serialize for Struct {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let num_fields = self.0.values().filter(|v| !v.is_none()).count();
         let mut serializer = serializer.serialize_struct(num_fields)?;
 
@@ -253,7 +252,7 @@ impl Serialize for Struct {
 }
 
 impl Deserialize for Struct {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut value = HashMap::new();
@@ -283,13 +282,13 @@ impl Enum {
 }
 
 impl Serialize for Enum {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_enum(self.variant, &self.value)
     }
 }
 
 impl Deserialize for Enum {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
         let variant = deserializer.variant();
         let value = deserializer.deserialize()?;

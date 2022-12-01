@@ -1,13 +1,14 @@
 use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Connect {
     pub version: u32,
-    pub value: BytesMut,
+    pub value: SerializedValue,
 }
 
 impl Connect {
@@ -15,12 +16,8 @@ impl Connect {
         version: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self { version, value })
-    }
-
-    fn value(&self) -> &[u8] {
-        &self.value
     }
 }
 
@@ -46,8 +43,8 @@ impl MessageOps for Connect {
         Ok(Self { version, value })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
-        Some(self.value())
+    fn value(&self) -> Option<&SerializedValue> {
+        Some(&self.value)
     }
 }
 

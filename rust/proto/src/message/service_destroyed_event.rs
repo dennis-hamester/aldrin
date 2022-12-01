@@ -2,6 +2,7 @@ use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
+use crate::value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -47,7 +48,7 @@ impl MessageOps for ServiceDestroyedEvent {
         })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
+    fn value(&self) -> Option<&SerializedValue> {
         None
     }
 }

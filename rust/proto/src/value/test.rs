@@ -5,34 +5,31 @@ use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::message::ChannelEnd;
+use crate::value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::{Buf, BufMut};
+use bytes::BytesMut;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
 use std::{f32, f64};
 use uuid::uuid;
 
-fn serialize<T: Serialize>(value: &T) -> bytes::BytesMut {
-    let mut buf = bytes::BytesMut::new();
-    value.serialize(Serializer::new(&mut buf)).unwrap();
-    buf
-}
-
 fn assert_serialize_eq<T: Serialize + ?Sized, B: AsRef<[u8]>>(value: &T, expected: B) {
-    assert_eq!(serialize(&value)[..], *expected.as_ref());
+    let serialized_value = SerializedValue::serialize(value).unwrap().into_bytes_mut();
+    assert_eq!(serialized_value[9..], *expected.as_ref());
 }
 
 fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
     expected: &T,
     serialized: B,
 ) {
-    let mut buf = serialized.as_ref();
-    assert_eq!(
-        *expected,
-        T::deserialize(Deserializer::new(&mut buf)).unwrap()
-    );
-    assert_eq!(*buf, []);
+    let serialized_value = {
+        let mut buf = BytesMut::zeroed(9);
+        buf.extend_from_slice(serialized.as_ref());
+        SerializedValue::from_bytes_mut(buf)
+    };
+
+    assert_eq!(*expected, serialized_value.deserialize().unwrap());
 
     let mut buf = serialized.as_ref();
     Deserializer::new(&mut buf).skip().unwrap();
@@ -790,7 +787,7 @@ struct TestStruct {
 }
 
 impl Serialize for TestStruct {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(2)?;
         serializer
             .serialize_field(0, &self.a)?
@@ -800,7 +797,7 @@ impl Serialize for TestStruct {
 }
 
 impl Deserialize for TestStruct {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut a = None;
@@ -855,7 +852,7 @@ enum TestEnum {
 }
 
 impl Serialize for TestEnum {
-    fn serialize<B: BufMut>(&self, serializer: Serializer<B>) -> Result<(), SerializeError> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Self::A(value) => serializer.serialize_enum(0, value),
             Self::B(value) => serializer.serialize_enum(1, value),
@@ -864,7 +861,7 @@ impl Serialize for TestEnum {
 }
 
 impl Deserialize for TestEnum {
-    fn deserialize<B: Buf>(deserializer: Deserializer<B>) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
         match deserializer.variant() {
             0 => Ok(Self::A(deserializer.deserialize()?)),

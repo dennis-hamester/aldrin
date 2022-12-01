@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::SerializedValue;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -43,7 +44,7 @@ impl MessageOps for DestroyObjectReply {
         Ok(Self { serial, result })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
+    fn value(&self) -> Option<&SerializedValue> {
         None
     }
 }

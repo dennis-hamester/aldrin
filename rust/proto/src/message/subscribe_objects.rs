@@ -4,6 +4,7 @@ use super::{
     OptionKind,
 };
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -46,7 +47,7 @@ impl MessageOps for SubscribeObjects {
         Ok(Self { serial })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
+    fn value(&self) -> Option<&SerializedValue> {
         None
     }
 }

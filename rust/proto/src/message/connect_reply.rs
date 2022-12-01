@@ -1,6 +1,7 @@
 use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -15,31 +16,24 @@ pub enum ConnectReplyKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConnectReply {
-    Ok(BytesMut),
+    Ok(SerializedValue),
     VersionMismatch(u32),
-    Rejected(BytesMut),
+    Rejected(SerializedValue),
 }
 
 impl ConnectReply {
     pub fn ok_with_serialize_value<T: Serialize + ?Sized>(
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self::Ok(value))
     }
 
     pub fn rejected_with_serialize_value<T: Serialize + ?Sized>(
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self::Rejected(value))
-    }
-
-    fn value(&self) -> &[u8] {
-        match self {
-            Self::Ok(value) | Self::Rejected(value) => value,
-            Self::VersionMismatch(_) => &[0],
-        }
     }
 }
 
@@ -58,7 +52,7 @@ impl MessageOps for ConnectReply {
             }
 
             Self::VersionMismatch(version) => {
-                let mut serializer = MessageSerializer::with_empty_value(MessageKind::ConnectReply);
+                let mut serializer = MessageSerializer::with_none_value(MessageKind::ConnectReply);
                 serializer.put_discriminant_u8(ConnectReplyKind::VersionMismatch);
                 serializer.put_varint_u32_le(version);
                 serializer.finish()
@@ -89,8 +83,11 @@ impl MessageOps for ConnectReply {
         }
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
-        Some(self.value())
+    fn value(&self) -> Option<&SerializedValue> {
+        match self {
+            Self::Ok(value) | Self::Rejected(value) => Some(value),
+            Self::VersionMismatch(_) => None,
+        }
     }
 }
 

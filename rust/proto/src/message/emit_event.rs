@@ -2,6 +2,7 @@ use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceCookie;
+use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
@@ -9,7 +10,7 @@ use bytes::BytesMut;
 pub struct EmitEvent {
     pub service_cookie: ServiceCookie,
     pub event: u32,
-    pub value: BytesMut,
+    pub value: SerializedValue,
 }
 
 impl EmitEvent {
@@ -18,16 +19,12 @@ impl EmitEvent {
         event: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = super::message_buf_with_serialize_value(value)?;
+        let value = SerializedValue::serialize(value)?;
         Ok(Self {
             service_cookie,
             event,
             value,
         })
-    }
-
-    fn value(&self) -> &[u8] {
-        &self.value
     }
 }
 
@@ -59,8 +56,8 @@ impl MessageOps for EmitEvent {
         })
     }
 
-    fn value_opt(&self) -> Option<&[u8]> {
-        Some(self.value())
+    fn value(&self) -> Option<&SerializedValue> {
+        Some(&self.value)
     }
 }
 
