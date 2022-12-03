@@ -446,12 +446,12 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         self.num_elems > 0
     }
 
-    pub fn deserialize_element<V: Deserialize>(&mut self) -> Result<(K, V), DeserializeError> {
+    pub fn deserialize_element(
+        &mut self,
+    ) -> Result<ElementDeserializer<'_, 'b, K>, DeserializeError> {
         if self.has_more_elements() {
             self.num_elems -= 1;
-            let key = K::deserialize_key(self.buf)?;
-            let value = V::deserialize(Deserializer::new(self.buf))?;
-            Ok((key, value))
+            ElementDeserializer::new(self.buf)
         } else {
             Err(DeserializeError)
         }
@@ -463,7 +463,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         V: Deserialize,
     {
         while self.has_more_elements() {
-            let kv = self.deserialize_element()?;
+            let kv = self.deserialize_element()?.deserialize()?;
             map.extend(iter::once(kv));
         }
 
@@ -471,7 +471,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
     }
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
-        if self.num_elems > 0 {
+        if self.has_more_elements() {
             self.num_elems -= 1;
             K::skip(self.buf)?;
             Deserializer::new(self.buf).skip()
@@ -486,6 +486,32 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         }
 
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct ElementDeserializer<'a, 'b, K: DeserializeKey> {
+    buf: &'a mut &'b [u8],
+    key: K,
+}
+
+impl<'a, 'b, K: DeserializeKey> ElementDeserializer<'a, 'b, K> {
+    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+        let key = K::deserialize_key(buf)?;
+        Ok(Self { buf, key })
+    }
+
+    pub fn key(&self) -> &K {
+        &self.key
+    }
+
+    pub fn deserialize<T: Deserialize>(self) -> Result<(K, T), DeserializeError> {
+        let value = T::deserialize(Deserializer::new(self.buf))?;
+        Ok((self.key, value))
+    }
+
+    pub fn skip(self) -> Result<(), DeserializeError> {
+        Deserializer::new(self.buf).skip()
     }
 }
 
@@ -584,9 +610,7 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
         self.num_fields > 0
     }
 
-    pub fn deserialize_field<'c>(
-        &'c mut self,
-    ) -> Result<FieldDeserializer<'c, 'b>, DeserializeError> {
+    pub fn deserialize_field(&mut self) -> Result<FieldDeserializer<'_, 'b>, DeserializeError> {
         if self.has_more_fields() {
             self.num_fields -= 1;
             FieldDeserializer::new(self.buf)

@@ -26,8 +26,8 @@ pub use ids::{
 pub use serialize_key::SerializeKey;
 pub use value::{Bytes, BytesRef, SerializedValue, ValueKind};
 pub use value_deserializer::{
-    BytesDeserializer, Deserialize, Deserializer, EnumDeserializer, FieldDeserializer,
-    MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
+    BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,
+    FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
 };
 pub use value_serializer::{
     MapSerializer, Serialize, Serializer, SetSerializer, StructSerializer, VecSerializer,
