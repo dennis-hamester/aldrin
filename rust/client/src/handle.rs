@@ -8,10 +8,13 @@ use crate::events::{EventsId, EventsRequest};
 use crate::{
     Error, Events, Object, ObjectEvent, Objects, Service, ServiceEvent, Services, SubscribeMode,
 };
+use aldrin_proto::message::{
+    CallFunctionResult, ChannelEnd, DestroyObjectResult, QueryServiceVersionResult,
+    SubscribeEventResult,
+};
 use aldrin_proto::{
-    CallFunctionResult, ChannelCookie, ChannelEnd, DestroyObjectResult, FromValue, IntoValue,
-    ObjectCookie, ObjectId, ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId,
-    ServiceUuid, SubscribeEventResult, Value,
+    ChannelCookie, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue,
+    ServiceCookie, ServiceId, ServiceUuid,
 };
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
@@ -278,19 +281,20 @@ impl Handle {
         &self,
         service_id: ServiceId,
         function: u32,
-        args: Args,
+        args: &Args,
     ) -> Result<PendingFunctionResult<T, E>, Error>
     where
-        Args: IntoValue,
-        T: FromValue,
-        E: FromValue,
+        Args: Serialize + ?Sized,
+        T: Deserialize,
+        E: Deserialize,
     {
+        let value = SerializedValue::serialize(args)?;
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CallFunction(CallFunctionRequest {
                 service_cookie: service_id.cookie,
                 function,
-                args: args.into_value(),
+                value,
                 reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
@@ -328,14 +332,23 @@ impl Handle {
         &self,
         service_id: ServiceId,
         function: u32,
-        args: Args,
+        args: &Args,
     ) -> Result<PendingFunctionValue<T>, Error>
     where
-        Args: IntoValue,
-        T: FromValue,
+        Args: Serialize + ?Sized,
+        T: Deserialize,
     {
-        let reply = self.call_function(service_id, function, args)?;
-        Ok(PendingFunctionValue(reply))
+        let value = SerializedValue::serialize(args)?;
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::CallFunction(CallFunctionRequest {
+                service_cookie: service_id.cookie,
+                function,
+                value,
+                reply,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+        Ok(PendingFunctionValue::new(recv, service_id, function))
     }
 
     pub(crate) fn function_call_reply(
@@ -419,17 +432,16 @@ impl Handle {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn emit_event(
-        &self,
-        service_id: ServiceId,
-        event: u32,
-        args: impl IntoValue,
-    ) -> Result<(), Error> {
+    pub fn emit_event<T>(&self, service_id: ServiceId, event: u32, value: &T) -> Result<(), Error>
+    where
+        T: Serialize + ?Sized,
+    {
+        let value = SerializedValue::serialize(value)?;
         self.send
             .unbounded_send(HandleRequest::EmitEvent(EmitEventRequest {
                 service_cookie: service_id.cookie,
                 event,
-                args: args.into_value(),
+                value,
             }))
             .map_err(|_| Error::ClientShutdown)
     }
@@ -879,7 +891,7 @@ impl Handle {
         &self,
     ) -> Result<(PendingSender<T>, UnclaimedReceiver<T>), Error>
     where
-        T: IntoValue + FromValue,
+        T: Serialize + Deserialize,
     {
         let (reply, recv) = oneshot::channel();
         self.send
@@ -906,7 +918,7 @@ impl Handle {
         &self,
     ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error>
     where
-        T: IntoValue + FromValue,
+        T: Serialize + Deserialize,
     {
         let (reply, recv) = oneshot::channel();
         self.send
@@ -982,9 +994,13 @@ impl Handle {
         recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
-    pub(crate) fn send_item(&self, cookie: ChannelCookie, item: Value) -> Result<(), Error> {
+    pub(crate) fn send_item(
+        &self,
+        cookie: ChannelCookie,
+        value: SerializedValue,
+    ) -> Result<(), Error> {
         self.send
-            .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, item }))
+            .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, value }))
             .map_err(|_| Error::ClientShutdown)
     }
 
@@ -1088,14 +1104,22 @@ impl Drop for Handle {
 /// represents the success or failure ([`Error`]) on the protocol and client library level. The
 /// inner `Result<T, E>` represents the actual result of the function.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PendingFunctionResult<T = Value, E = Value> {
+pub struct PendingFunctionResult<T, E>
+where
+    T: Deserialize,
+    E: Deserialize,
+{
     recv: oneshot::Receiver<CallFunctionResult>,
     service_id: ServiceId,
     function: u32,
     _res: PhantomData<fn() -> (T, E)>,
 }
 
-impl<T, E> PendingFunctionResult<T, E> {
+impl<T, E> PendingFunctionResult<T, E>
+where
+    T: Deserialize,
+    E: Deserialize,
+{
     pub(crate) fn new(
         recv: oneshot::Receiver<CallFunctionResult>,
         service_id: ServiceId,
@@ -1110,7 +1134,11 @@ impl<T, E> PendingFunctionResult<T, E> {
     }
 }
 
-impl<T: FromValue, E: FromValue> Future for PendingFunctionResult<T, E> {
+impl<T, E> Future for PendingFunctionResult<T, E>
+where
+    T: Deserialize,
+    E: Deserialize,
+{
     type Output = Result<Result<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
@@ -1121,21 +1149,19 @@ impl<T: FromValue, E: FromValue> Future for PendingFunctionResult<T, E> {
         };
 
         Poll::Ready(match res {
-            CallFunctionResult::Ok(t) => match t.convert() {
+            CallFunctionResult::Ok(t) => match t.deserialize() {
                 Ok(t) => Ok(Ok(t)),
-                Err(e) => Err(InvalidFunctionResult {
+                Err(_) => Err(InvalidFunctionResult {
                     service_id: self.service_id,
                     function: self.function,
-                    result: Ok(e.0),
                 }
                 .into()),
             },
-            CallFunctionResult::Err(e) => match e.convert() {
+            CallFunctionResult::Err(e) => match e.deserialize() {
                 Ok(e) => Ok(Err(e)),
-                Err(e) => Err(InvalidFunctionResult {
+                Err(_) => Err(InvalidFunctionResult {
                     service_id: self.service_id,
                     function: self.function,
-                    result: Err(e.0),
                 }
                 .into()),
             },
@@ -1151,44 +1177,98 @@ impl<T: FromValue, E: FromValue> Future for PendingFunctionResult<T, E> {
     }
 }
 
-impl<T, E> fmt::Debug for PendingFunctionResult<T, E> {
+impl<T, E> fmt::Debug for PendingFunctionResult<T, E>
+where
+    T: Deserialize,
+    E: Deserialize,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("PendingFunctionResult")
             .field("recv", &self.recv)
             .field("service_id", &self.service_id)
             .field("function", &self.function)
-            .field("_res", &self._res)
             .finish()
     }
 }
 
 /// Future to await the result of an infallible function call.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PendingFunctionValue<T = Value>(PendingFunctionResult<T, Value>);
+pub struct PendingFunctionValue<T>
+where
+    T: Deserialize,
+{
+    recv: oneshot::Receiver<CallFunctionResult>,
+    service_id: ServiceId,
+    function: u32,
+    _res: PhantomData<fn() -> T>,
+}
 
-impl<T: FromValue> Future for PendingFunctionValue<T> {
-    type Output = Result<T, Error>;
-
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        match Pin::new(&mut self.0).poll(cx) {
-            Poll::Ready(res) => Poll::Ready(res?.map_err(|e| {
-                InvalidFunctionResult {
-                    service_id: self.0.service_id,
-                    function: self.0.function,
-                    result: Err(Some(e)),
-                }
-                .into()
-            })),
-
-            Poll::Pending => Poll::Pending,
+impl<T> PendingFunctionValue<T>
+where
+    T: Deserialize,
+{
+    pub(crate) fn new(
+        recv: oneshot::Receiver<CallFunctionResult>,
+        service_id: ServiceId,
+        function: u32,
+    ) -> Self {
+        PendingFunctionValue {
+            recv,
+            service_id,
+            function,
+            _res: PhantomData,
         }
     }
 }
 
-impl<T> fmt::Debug for PendingFunctionValue<T> {
+impl<T> Future for PendingFunctionValue<T>
+where
+    T: Deserialize,
+{
+    type Output = Result<T, Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        let res = match Pin::new(&mut self.recv).poll(cx) {
+            Poll::Ready(Ok(res)) => res,
+            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Pending => return Poll::Pending,
+        };
+
+        Poll::Ready(match res {
+            CallFunctionResult::Ok(t) => match t.deserialize() {
+                Ok(t) => Ok(t),
+                Err(_) => Err(InvalidFunctionResult {
+                    service_id: self.service_id,
+                    function: self.function,
+                }
+                .into()),
+            },
+            CallFunctionResult::Err(_) => Err(InvalidFunctionResult {
+                service_id: self.service_id,
+                function: self.function,
+            }
+            .into()),
+            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService(self.service_id)),
+            CallFunctionResult::InvalidFunction => {
+                Err(Error::InvalidFunction(self.service_id, self.function))
+            }
+            CallFunctionResult::InvalidArgs => {
+                Err(Error::InvalidArgs(self.service_id, self.function))
+            }
+        })
+    }
+}
+
+impl<T> fmt::Debug for PendingFunctionValue<T>
+where
+    T: Deserialize,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_tuple("PendingFunctionValue")
-            .field(&self.0)
+        f.debug_struct("PendingFunctionResult")
+            .field("recv", &self.recv)
+            .field("service_id", &self.service_id)
+            .field("function", &self.function)
             .finish()
     }
 }

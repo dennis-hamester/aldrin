@@ -4,10 +4,13 @@ use crate::channel::{
 };
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
+use aldrin_proto::message::{
+    CallFunctionResult, ChannelEnd, DestroyObjectResult, QueryServiceVersionResult,
+    SubscribeEventResult,
+};
 use aldrin_proto::{
-    CallFunctionResult, ChannelCookie, ChannelEnd, DestroyObjectResult, ObjectCookie, ObjectId,
-    ObjectUuid, QueryServiceVersionResult, ServiceCookie, ServiceId, ServiceUuid,
-    SubscribeEventResult, Value,
+    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, SerializedValue, ServiceCookie, ServiceId,
+    ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
 
@@ -81,7 +84,7 @@ pub(crate) struct SubscribeServicesRequest {
 pub(crate) struct CallFunctionRequest {
     pub service_cookie: ServiceCookie,
     pub function: u32,
-    pub args: Value,
+    pub value: SerializedValue,
     pub reply: oneshot::Sender<CallFunctionResult>,
 }
 
@@ -111,7 +114,7 @@ pub(crate) struct UnsubscribeEventRequest {
 pub(crate) struct EmitEventRequest {
     pub service_cookie: ServiceCookie,
     pub event: u32,
-    pub args: Value,
+    pub value: SerializedValue,
 }
 
 pub(crate) type QueryObjectRequestReply = Option<(
@@ -161,7 +164,7 @@ pub(crate) struct ClaimReceiverRequest {
 #[derive(Debug)]
 pub(crate) struct SendItemRequest {
     pub cookie: ChannelCookie,
-    pub item: Value,
+    pub value: SerializedValue,
 }
 
 pub(crate) type SyncClientRequest = oneshot::Sender<()>;

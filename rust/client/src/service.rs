@@ -2,7 +2,8 @@
 mod test;
 
 use crate::{Error, Handle};
-use aldrin_proto::{CallFunctionResult, IntoValue, ServiceId, Value};
+use aldrin_proto::message::CallFunctionResult;
+use aldrin_proto::{Serialize, SerializedValue, ServiceId};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::pin::Pin;
@@ -196,7 +197,7 @@ impl Stream for Service {
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
         Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
-            r.map(|req| FunctionCall::new(req.function, req.args, self.client.clone(), req.serial))
+            r.map(|req| FunctionCall::new(req.function, req.value, self.client.clone(), req.serial))
         })
     }
 }
@@ -219,14 +220,14 @@ pub struct FunctionCall {
     pub id: u32,
 
     /// Arguments passed to called function.
-    pub args: Value,
+    pub args: SerializedValue,
 
     /// Reply object, used to set the return value of the function call.
     pub reply: FunctionCallReply,
 }
 
 impl FunctionCall {
-    pub(crate) fn new(id: u32, args: Value, client: Handle, serial: u32) -> Self {
+    pub(crate) fn new(id: u32, args: SerializedValue, client: Handle, serial: u32) -> Self {
         FunctionCall {
             id,
             args,
@@ -257,27 +258,33 @@ impl FunctionCallReply {
     }
 
     /// Sets the function call's reply.
-    pub fn set(self, res: Result<impl IntoValue, impl IntoValue>) -> Result<(), Error> {
+    pub fn set<T, E>(self, res: Result<&T, &E>) -> Result<(), Error>
+    where
+        T: Serialize + ?Sized,
+        E: Serialize + ?Sized,
+    {
         match res {
-            Ok(arg) => self.ok(arg),
-            Err(arg) => self.err(arg),
+            Ok(value) => self.ok(value),
+            Err(value) => self.err(value),
         }
     }
 
     /// Signals that the function call was successful.
-    pub fn ok(mut self, arg: impl IntoValue) -> Result<(), Error> {
+    pub fn ok<T: Serialize + ?Sized>(mut self, value: &T) -> Result<(), Error> {
+        let res = CallFunctionResult::ok_with_serialize_value(value)?;
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Ok(arg.into_value()))
+            .function_call_reply(self.serial, res)
     }
 
     /// Signals that the function call has failed.
-    pub fn err(mut self, arg: impl IntoValue) -> Result<(), Error> {
+    pub fn err<T: Serialize + ?Sized>(mut self, value: &T) -> Result<(), Error> {
+        let res = CallFunctionResult::err_with_serialize_value(value)?;
         self.client
             .take()
             .unwrap()
-            .function_call_reply(self.serial, CallFunctionResult::Err(arg.into_value()))
+            .function_call_reply(self.serial, res)
     }
 
     /// Aborts the function call.
@@ -324,5 +331,5 @@ impl Drop for FunctionCallReply {
 pub(crate) struct RawFunctionCall {
     pub serial: u32,
     pub function: u32,
-    pub args: Value,
+    pub value: SerializedValue,
 }

@@ -15,20 +15,24 @@ use crate::handle::request::{
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
-use aldrin_proto::{
-    AsyncTransport, AsyncTransportExt, CallFunction, CallFunctionReply, CallFunctionResult,
-    ChannelCookie, ChannelEnd, ChannelEndClaimed, ChannelEndDestroyed, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, Connect, ConnectReply, CreateChannel,
-    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateServiceReply, CreateServiceResult, DestroyChannelEnd, DestroyChannelEndReply,
-    DestroyChannelEndResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
-    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, IntoValue, ItemReceived,
-    Message, ObjectCreatedEvent, ObjectDestroyedEvent, ObjectId, QueryObject, QueryObjectReply,
+use aldrin_proto::message::{
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
+    ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, Connect,
+    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
+    DestroyChannelEndReply, DestroyChannelEndResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    SendItem, ServiceCookie, ServiceCreatedEvent, ServiceDestroyedEvent, ServiceId, ServiceUuid,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync, SyncReply,
-    UnsubscribeEvent, Value,
+    SendItem, ServiceCreatedEvent, ServiceDestroyedEvent, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
+    SubscribeServices, SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent,
+    UnsubscribeObjects, UnsubscribeServices,
+};
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_proto::{
+    ChannelCookie, Deserialize, ObjectId, Serialize, SerializedValue, ServiceCookie, ServiceId,
+    ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -97,8 +101,8 @@ where
     /// Creates a client and connects to an Aldrin broker.
     ///
     /// If you need to send custom data to the broker, then use
-    /// [`connect_with_data`](Self::connect_with_data) instead. This function sends [`Value::None`]
-    /// and discards the broker's data.
+    /// [`connect_with_data`](Self::connect_with_data) instead. This function sends `()` and
+    /// discards the broker's data.
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
@@ -134,7 +138,7 @@ where
     /// # }
     /// ```
     pub async fn connect(t: T) -> Result<Self, ConnectError<T::Error>> {
-        let (client, _) = Self::connect_with_data(t, Value::None).await?;
+        let (client, _) = Self::connect_with_data(t, &()).await?;
         Ok(client)
     }
 
@@ -142,39 +146,16 @@ where
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aldrin_client::Client;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
-    /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin_channel::unbounded();
-    /// # tokio::spawn(async move { handle.connect(t2).await });
-    /// // Create an AsyncTransport for connecting to the broker.
-    /// // let async_transport = ...
-    ///
-    /// // Connect to the broker, sending some custom data.
-    /// let (client, data) = Client::connect_with_data(async_transport, "Hi!").await?;
-    ///
-    /// println!("Data the broker sent back: {:?}.", data);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn connect_with_data<D: IntoValue>(
+    pub async fn connect_with_data<D: Serialize + ?Sized>(
         mut t: T,
-        data: D,
-    ) -> Result<(Self, Value), ConnectError<T::Error>> {
-        t.send_and_flush(Message::Connect(Connect {
-            version: aldrin_proto::VERSION,
-            data: data.into_value(),
-        }))
-        .await?;
+        data: &D,
+    ) -> Result<(Self, SerializedValue), ConnectError<T::Error>> {
+        let connect = Connect::with_serialize_value(aldrin_proto::VERSION, data)?;
+        t.send_and_flush(Message::Connect(connect))
+            .await
+            .map_err(ConnectError::Transport)?;
 
-        let connect_reply = match t.receive().await? {
+        let connect_reply = match t.receive().await.map_err(ConnectError::Transport)? {
             Message::ConnectReply(connect_reply) => connect_reply,
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         };
@@ -215,6 +196,45 @@ where
         Ok((client, data))
     }
 
+    /// Creates a client and connects to an Aldrin broker. Allows to send and receive custom data.
+    ///
+    /// After creating a client, it must be continuously polled and run to completion with the
+    /// [`run`](Client::run) method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aldrin_client::Client;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let mut handle = broker.clone();
+    /// # let (async_transport, t2) = aldrin_channel::unbounded();
+    /// # tokio::spawn(async move { handle.connect(t2).await });
+    /// // Create an AsyncTransport for connecting to the broker.
+    /// // let async_transport = ...
+    ///
+    /// // Connect to the broker, sending some custom data.
+    /// let (client, data) = Client::connect_with_data(async_transport, "Hi!").await?;
+    ///
+    /// println!("Data the broker sent back: {:?}.", data);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn connect_with_data_and_deserialize<D1, D2>(
+        t: T,
+        data: &D1,
+    ) -> Result<(Self, D2), ConnectError<T::Error>>
+    where
+        D1: Serialize + ?Sized,
+        D2: Deserialize,
+    {
+        let (client, data) = Self::connect_with_data(t, data).await?;
+        let data = data.deserialize()?;
+        Ok((client, data))
+    }
+
     /// Returns a handle to the client.
     ///
     /// After creating the [`Client`], [`Handle`s](Handle) are the primary entry point for
@@ -243,8 +263,8 @@ where
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         loop {
             match select(self.t.receive(), self.recv.next()).await {
-                Either::Left((Ok(Message::Shutdown(())), _)) => {
-                    self.t.send_and_flush(Message::Shutdown(())).await?;
+                Either::Left((Ok(Message::Shutdown(Shutdown)), _)) => {
+                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
                     return Ok(());
                 }
 
@@ -262,14 +282,14 @@ where
             }
         }
 
-        self.t.send_and_flush(Message::Shutdown(())).await?;
+        self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
         self.drain_transport().await?;
         Ok(())
     }
 
     async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
         loop {
-            if let Message::Shutdown(()) = self.t.receive().await? {
+            if let Message::Shutdown(Shutdown) = self.t.receive().await? {
                 return Ok(());
             }
         }
@@ -308,11 +328,11 @@ where
             | Message::CreateObject(_)
             | Message::DestroyObject(_)
             | Message::SubscribeObjects(_)
-            | Message::UnsubscribeObjects(())
+            | Message::UnsubscribeObjects(UnsubscribeObjects)
             | Message::CreateService(_)
             | Message::DestroyService(_)
             | Message::SubscribeServices(_)
-            | Message::UnsubscribeServices(())
+            | Message::UnsubscribeServices(UnsubscribeServices)
             | Message::QueryObject(_)
             | Message::QueryServiceVersion(_)
             | Message::CreateChannel(_)
@@ -321,7 +341,7 @@ where
             | Message::SendItem(_)
             | Message::Sync(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
 
-            Message::Shutdown(()) => unreachable!(), // Handled in run.
+            Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }
 
         Ok(())
@@ -396,7 +416,9 @@ where
         }
 
         if self.object_events.is_empty() {
-            self.t.send(Message::UnsubscribeObjects(())).await?;
+            self.t
+                .send(Message::UnsubscribeObjects(UnsubscribeObjects))
+                .await?;
         }
 
         Ok(())
@@ -421,7 +443,9 @@ where
         }
 
         if self.object_events.is_empty() {
-            self.t.send(Message::UnsubscribeObjects(())).await?;
+            self.t
+                .send(Message::UnsubscribeObjects(UnsubscribeObjects))
+                .await?;
         }
 
         Ok(())
@@ -521,7 +545,9 @@ where
         }
 
         if self.service_events.is_empty() {
-            self.t.send(Message::UnsubscribeServices(())).await?;
+            self.t
+                .send(Message::UnsubscribeServices(UnsubscribeServices))
+                .await?;
         }
 
         Ok(())
@@ -550,7 +576,9 @@ where
             }
 
             if self.service_events.is_empty() {
-                self.t.send(Message::UnsubscribeServices(())).await?;
+                self.t
+                    .send(Message::UnsubscribeServices(UnsubscribeServices))
+                    .await?;
             }
         }
 
@@ -581,7 +609,7 @@ where
         let req = RawFunctionCall {
             serial: msg.serial,
             function: msg.function,
-            args: msg.args,
+            value: msg.value,
         };
 
         if send.unbounded_send(req).is_err() {
@@ -619,7 +647,7 @@ where
             };
 
         // || would short-circuit and changing the order would move msg.result out.
-        let mut err = msg.result.is_err();
+        let mut err = msg.result != SubscribeEventResult::Ok;
         err |= rep_send.send(msg.result).is_err();
         if err {
             self.subscriptions
@@ -659,7 +687,7 @@ where
                 .unbounded_send(EventsRequest::EmitEvent(
                     msg.service_cookie,
                     msg.event,
-                    msg.args.clone(),
+                    msg.value.clone(),
                 ))
                 .ok();
         }
@@ -943,7 +971,7 @@ where
 
     fn msg_item_received(&self, msg: ItemReceived) -> Result<(), RunError<T::Error>> {
         if let Some(ReceiverState::Established(send)) = self.receivers.get(&msg.cookie) {
-            send.unbounded_send(msg.item).ok();
+            send.unbounded_send(msg.value).ok();
             Ok(())
         } else {
             Err(RunError::UnexpectedMessageReceived(Message::ItemReceived(
@@ -1117,7 +1145,7 @@ where
                 serial,
                 service_cookie: req.service_cookie,
                 function: req.function,
-                args: req.args,
+                value: req.value,
             }))
             .await
             .map_err(Into::into)
@@ -1215,7 +1243,7 @@ where
             .send_and_flush(Message::EmitEvent(EmitEvent {
                 service_cookie: req.service_cookie,
                 event: req.event,
-                args: req.args,
+                value: req.value,
             }))
             .await
             .map_err(Into::into)
@@ -1347,7 +1375,7 @@ where
         self.t
             .send_and_flush(Message::SendItem(SendItem {
                 cookie: req.cookie,
-                item: req.item,
+                value: req.value,
             }))
             .await
             .map_err(Into::into)
@@ -1413,7 +1441,7 @@ enum SenderState {
 
 #[derive(Debug)]
 enum ReceiverState {
-    Pending(oneshot::Sender<mpsc::UnboundedReceiver<Value>>),
-    Established(mpsc::UnboundedSender<Value>),
+    Pending(oneshot::Sender<mpsc::UnboundedReceiver<SerializedValue>>),
+    Established(mpsc::UnboundedSender<SerializedValue>),
     SenderDestroyed,
 }

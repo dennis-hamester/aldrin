@@ -11,8 +11,9 @@
 //! instead.
 //!
 //! The first entry point is the [`Client`] and it's [`connect`](Client::connect)
-//! method. [`Client`]s are parameterized over an [`AsyncTransport`](aldrin_proto::AsyncTransport),
-//! which abstracts the low-level details of a transport, like e.g. TCP/IP.
+//! method. [`Client`]s are parameterized over an
+//! [`AsyncTransport`](aldrin_proto::transport::AsyncTransport), which abstracts the low-level
+//! details of a transport, like e.g. TCP/IP.
 //!
 //! After establishing a connection, the resulting [`Client`] must be continuously polled (through
 //! [`Client::run`]). One way to achieve this is to "spawn" it with an async runtime of your
@@ -77,10 +78,6 @@ pub mod codegen;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
-pub use aldrin_proto::{
-    Bytes, ConversionError, FromValue, IntoValue, ObjectCookie, ObjectId, ObjectUuid,
-    ServiceCookie, ServiceId, ServiceUuid, Value,
-};
 pub use channel::{
     PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,
     UnclaimedReceiver, UnclaimedSender,

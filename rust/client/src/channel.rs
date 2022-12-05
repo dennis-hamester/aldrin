@@ -3,7 +3,11 @@ mod test;
 
 use super::Handle;
 use crate::error::Error;
-use aldrin_proto::{ChannelCookie, ChannelEnd, ConversionError, FromValue, IntoValue, Value};
+use aldrin_proto::message::ChannelEnd;
+use aldrin_proto::{
+    ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
+    SerializedValue, Serializer,
+};
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
 use std::marker::PhantomData;
@@ -16,22 +20,18 @@ use std::task::{Context, Poll};
 /// returning them from function calls.
 ///
 /// When [creating a channel](Handle::create_channel_with_claimed_receiver) the resulting
-/// [`UnclaimedSender`] can be [unbound](UnclaimedSender::unbind) and converted to a [`Value`] with
-/// the [`IntoValue`] trait.
-///
-/// The other way to obtain an `UnboundSender` reverses the above process by converting [`Value`]
-/// back with the [`FromValue`] trait.
+/// [`UnclaimedSender`] can be [unbound](UnclaimedSender::unbind) and sent to another client.
 ///
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
 /// not bound to any client), it will not destroy the sending end of a channel. This is the main
 /// difference from `UnclaimedSender`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UnboundSender<T: IntoValue> {
+pub struct UnboundSender<T: Serialize + ?Sized> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: IntoValue> UnboundSender<T> {
+impl<T: Serialize + ?Sized> UnboundSender<T> {
     fn new(cookie: ChannelCookie) -> Self {
         Self {
             cookie,
@@ -101,18 +101,16 @@ impl<T: IntoValue> UnboundSender<T> {
     }
 }
 
-impl<T: IntoValue> IntoValue for UnboundSender<T> {
-    fn into_value(self) -> Value {
-        Value::Sender(self.cookie)
+impl<T: Serialize + ?Sized> Serialize for UnboundSender<T> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_sender(self.cookie);
+        Ok(())
     }
 }
 
-impl<T: IntoValue> FromValue for UnboundSender<T> {
-    fn from_value(v: Value) -> Result<Self, ConversionError> {
-        match v {
-            Value::Sender(cookie) => Ok(Self::new(cookie)),
-            _ => Err(ConversionError(Some(v))),
-        }
+impl<T: Serialize + ?Sized> Deserialize for UnboundSender<T> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_sender().map(Self::new)
     }
 }
 
@@ -122,15 +120,12 @@ impl<T: IntoValue> FromValue for UnboundSender<T> {
 /// identify the sending end of a channel in an unclaimed state. This sender is however bound to a
 /// client and can thus be claimed.
 #[derive(Debug)]
-pub struct UnclaimedSender<T: IntoValue> {
+pub struct UnclaimedSender<T: Serialize + ?Sized> {
     inner: UnclaimedSenderInner,
-
-    // This is only for the contravariance. We don't care about dropck because the Ts are converted
-    // to Values.
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: IntoValue> UnclaimedSender<T> {
+impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     pub(crate) fn new(inner: UnclaimedSenderInner) -> Self {
         Self {
             inner,
@@ -287,15 +282,12 @@ impl Drop for UnclaimedSenderInner {
 /// [`PendingSender`s](Self) are used to wait until some client has claimed the receiving end of the
 /// channel. This is done with the [`established`](Self::established) function.
 #[derive(Debug)]
-pub struct PendingSender<T: IntoValue> {
+pub struct PendingSender<T: Serialize + ?Sized> {
     inner: PendingSenderInner,
-
-    // This is only for the contravariance. We don't care about dropck because the Ts are converted
-    // to Values.
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: IntoValue> PendingSender<T> {
+impl<T: Serialize + ?Sized> PendingSender<T> {
     pub(crate) fn new(inner: PendingSenderInner) -> Self {
         Self {
             inner,
@@ -431,15 +423,12 @@ impl Drop for PendingSenderInner {
 /// This type of sender is obtained when a channel has been fully established, either by
 /// [`PendingSender::established`] or by [`UnclaimedSender::claim`].
 #[derive(Debug)]
-pub struct Sender<T: IntoValue> {
+pub struct Sender<T: Serialize + ?Sized> {
     inner: SenderInner,
-
-    // This is only for the contravariance. We don't care about dropck because the Ts are converted
-    // to Values.
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: IntoValue> Sender<T> {
+impl<T: Serialize + ?Sized> Sender<T> {
     pub(crate) fn new(inner: SenderInner) -> Self {
         Self {
             inner,
@@ -495,8 +484,8 @@ impl<T: IntoValue> Sender<T> {
     /// if this is called in an asynchronous context. This can even block a destruction notification
     /// from the receiver, such that `send` will never indicate an error. It is generally advised to
     /// yield back to the executer regularly.
-    pub fn send(&mut self, item: T) -> Result<(), Error> {
-        self.inner.send(item.into_value())
+    pub fn send(&mut self, item: &T) -> Result<(), Error> {
+        self.inner.send(item)
     }
 }
 
@@ -534,10 +523,11 @@ impl SenderInner {
             .await
     }
 
-    fn send(&mut self, item: Value) -> Result<(), Error> {
+    fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
         let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
 
-        state.client.send_item(self.cookie, item)?;
+        let value = SerializedValue::serialize(value)?;
+        state.client.send_item(self.cookie, value)?;
 
         match state.receiver_destroyed.try_recv() {
             Ok(None) => Ok(()),
@@ -562,22 +552,18 @@ impl Drop for SenderInner {
 /// returning them from function calls.
 ///
 /// When [creating a channel](Handle::create_channel_with_claimed_sender) the resulting
-/// [`UnclaimedReceiver`] can be [unbound](UnclaimedReceiver::unbind) and converted to a [`Value`]
-/// with the [`IntoValue`] trait.
-///
-/// The other way to obtain an `UnboundReceiver` reverses the above process by converting [`Value`]
-/// back with the [`FromValue`] trait.
+/// [`UnclaimedReceiver`] can be [unbound](UnclaimedReceiver::unbind) and sent to another client.
 ///
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
 /// not bound to any client), it will not destroy the receiving end of a channel. This is the main
 /// difference from `UnclaimedReceiver`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UnboundReceiver<T: FromValue> {
+pub struct UnboundReceiver<T: Deserialize> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: FromValue> UnboundReceiver<T> {
+impl<T: Deserialize> UnboundReceiver<T> {
     fn new(cookie: ChannelCookie) -> Self {
         Self {
             cookie,
@@ -648,18 +634,16 @@ impl<T: FromValue> UnboundReceiver<T> {
     }
 }
 
-impl<T: FromValue> IntoValue for UnboundReceiver<T> {
-    fn into_value(self) -> Value {
-        Value::Receiver(self.cookie)
+impl<T: Deserialize> Serialize for UnboundReceiver<T> {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_receiver(self.cookie);
+        Ok(())
     }
 }
 
-impl<T: FromValue> FromValue for UnboundReceiver<T> {
-    fn from_value(v: Value) -> Result<Self, ConversionError> {
-        match v {
-            Value::Receiver(cookie) => Ok(Self::new(cookie)),
-            _ => Err(ConversionError(Some(v))),
-        }
+impl<T: Deserialize> Deserialize for UnboundReceiver<T> {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_receiver().map(Self::new)
     }
 }
 
@@ -669,15 +653,12 @@ impl<T: FromValue> FromValue for UnboundReceiver<T> {
 /// identify the receiving end of a channel in an unclaimed state. This receiver is however bound to
 /// a client and can thus be claimed.
 #[derive(Debug)]
-pub struct UnclaimedReceiver<T: FromValue> {
+pub struct UnclaimedReceiver<T: Deserialize> {
     inner: UnclaimedReceiverInner,
-
-    // This is only for the covariance. We don't care about dropck because the Ts are produced on
-    // the fly from Values.
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: FromValue> UnclaimedReceiver<T> {
+impl<T: Deserialize> UnclaimedReceiver<T> {
     pub(crate) fn new(inner: UnclaimedReceiverInner) -> Self {
         Self {
             inner,
@@ -835,15 +816,12 @@ impl Drop for UnclaimedReceiverInner {
 /// [`PendingReceiver`s](Self) are used to wait until some client has claimed the sending end of the
 /// channel. This is done with the [`established`](Self::established) function.
 #[derive(Debug)]
-pub struct PendingReceiver<T: FromValue> {
+pub struct PendingReceiver<T: Deserialize> {
     inner: PendingReceiverInner,
-
-    // This is only for the covariance. We don't care about dropck because the Ts are produced on
-    // the fly from Values.
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: FromValue> PendingReceiver<T> {
+impl<T: Deserialize> PendingReceiver<T> {
     pub(crate) fn new(inner: PendingReceiverInner) -> Self {
         Self {
             inner,
@@ -904,14 +882,14 @@ pub(crate) struct PendingReceiverInner {
 #[derive(Debug)]
 struct PendingReceiverInnerState {
     client: Handle,
-    established: oneshot::Receiver<mpsc::UnboundedReceiver<Value>>,
+    established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
 }
 
 impl PendingReceiverInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        established: oneshot::Receiver<mpsc::UnboundedReceiver<Value>>,
+        established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
     ) -> Self {
         Self {
             cookie,
@@ -956,15 +934,12 @@ impl Drop for PendingReceiverInner {
 /// This type of receiver is obtained when a channel has been fully established, either by
 /// [`PendingReceiver::established`] or by [`UnclaimedReceiver::claim`].
 #[derive(Debug)]
-pub struct Receiver<T: FromValue> {
+pub struct Receiver<T: Deserialize> {
     inner: ReceiverInner,
-
-    // This is only for the covariance. We don't care about dropck because the Ts are produced on
-    // the fly from Values.
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: FromValue> Receiver<T> {
+impl<T: Deserialize> Receiver<T> {
     pub(crate) fn new(inner: ReceiverInner) -> Self {
         Self {
             inner,
@@ -981,13 +956,13 @@ impl<T: FromValue> Receiver<T> {
     }
 }
 
-impl<T: FromValue> Stream for Receiver<T> {
+impl<T: Deserialize> Stream for Receiver<T> {
     type Item = Result<T, Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         match Pin::new(&mut self.inner).poll_next(cx) {
-            Poll::Ready(Some(item)) => Poll::Ready(Some(
-                item.convert().map_err(|e| Error::InvalidItemReceived(e.0)),
+            Poll::Ready(Some(value)) => Poll::Ready(Some(
+                value.deserialize().map_err(|_| Error::InvalidItemReceived),
             )),
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
@@ -995,7 +970,7 @@ impl<T: FromValue> Stream for Receiver<T> {
     }
 }
 
-impl<T: FromValue> FusedStream for Receiver<T> {
+impl<T: Deserialize> FusedStream for Receiver<T> {
     fn is_terminated(&self) -> bool {
         self.inner.is_terminated()
     }
@@ -1010,14 +985,14 @@ pub(crate) struct ReceiverInner {
 #[derive(Debug)]
 struct ReceiverInnerState {
     client: Handle,
-    items: mpsc::UnboundedReceiver<Value>,
+    items: mpsc::UnboundedReceiver<SerializedValue>,
 }
 
 impl ReceiverInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        items: mpsc::UnboundedReceiver<Value>,
+        items: mpsc::UnboundedReceiver<SerializedValue>,
     ) -> Self {
         Self {
             cookie,
@@ -1044,9 +1019,9 @@ impl Drop for ReceiverInner {
 }
 
 impl Stream for ReceiverInner {
-    type Item = Value;
+    type Item = SerializedValue;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Value>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         match self.state.as_mut() {
             Some(state) => Pin::new(&mut state.items).poll_next(cx),
             None => Poll::Ready(None),

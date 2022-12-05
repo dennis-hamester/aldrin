@@ -1,6 +1,9 @@
 //! Error types.
 
-use aldrin_proto::{Message, ObjectId, ObjectUuid, ServiceId, ServiceUuid, Value};
+use aldrin_proto::message::Message;
+use aldrin_proto::{
+    DeserializeError, ObjectId, ObjectUuid, SerializeError, SerializedValue, ServiceId, ServiceUuid,
+};
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -24,12 +27,24 @@ pub enum ConnectError<T> {
     Transport(T),
 
     /// The broker rejected the connection.
-    Rejected(Value),
+    Rejected(SerializedValue),
+
+    /// A value failed to serialize.
+    Serialize(SerializeError),
+
+    /// A value failed to deserialize.
+    Deserialize(DeserializeError),
 }
 
-impl<T> From<T> for ConnectError<T> {
-    fn from(e: T) -> Self {
-        ConnectError::Transport(e)
+impl<T> From<SerializeError> for ConnectError<T> {
+    fn from(e: SerializeError) -> Self {
+        Self::Serialize(e)
+    }
+}
+
+impl<T> From<DeserializeError> for ConnectError<T> {
+    fn from(e: DeserializeError) -> Self {
+        Self::Deserialize(e)
     }
 }
 
@@ -47,6 +62,8 @@ where
             }
             ConnectError::Transport(e) => e.fmt(f),
             ConnectError::Rejected(_) => f.write_str("connection rejected"),
+            ConnectError::Serialize(e) => e.fmt(f),
+            ConnectError::Deserialize(e) => e.fmt(f),
         }
     }
 }
@@ -160,10 +177,17 @@ pub enum Error {
     /// - Trying to claim a channel which has been claimed by another client.
     ForeignChannel,
 
-    /// An item received on a channel failed to convert to the expected type.
-    ///
-    /// The offending [`Value`] will included, unless the partial conversion cannot be undone.
-    InvalidItemReceived(Option<Value>),
+    /// An item received on a channel failed to deserialize to the expected type.
+    InvalidItemReceived,
+
+    /// A value failed to serialize.
+    Serialize(SerializeError),
+}
+
+impl From<SerializeError> for Error {
+    fn from(e: SerializeError) -> Self {
+        Self::Serialize(e)
+    }
 }
 
 impl fmt::Display for Error {
@@ -195,7 +219,8 @@ impl fmt::Display for Error {
             Error::InvalidEventArguments(e) => e.fmt(f),
             Error::InvalidChannel => f.write_str("invalid channel"),
             Error::ForeignChannel => f.write_str("foreign channel"),
-            Error::InvalidItemReceived(_) => f.write_str("invalid item received"),
+            Error::InvalidItemReceived => f.write_str("invalid item received"),
+            Error::Serialize(e) => e.fmt(f),
         }
     }
 }
@@ -220,12 +245,6 @@ pub struct InvalidFunctionResult {
 
     /// Id of the function, that was called.
     pub function: u32,
-
-    /// The offending result, that was sent by the service.
-    ///
-    /// When encountering conversion errors, the original [`Value`] cannot always be recovered. This
-    /// is why both the ok and error values are wrapped in [`Option`s](Option).
-    pub result: Result<Option<Value>, Option<Value>>,
 }
 
 impl fmt::Display for InvalidFunctionResult {
@@ -255,9 +274,6 @@ pub struct InvalidFunctionCall {
 
     /// Id of the function, that was called.
     pub function: u32,
-
-    /// Arguments of the function call.
-    pub args: Option<Value>,
 }
 
 impl fmt::Display for InvalidFunctionCall {
@@ -287,9 +303,6 @@ pub struct InvalidEventArguments {
 
     /// Id of the event.
     pub event: u32,
-
-    /// Arguments of the event.
-    pub args: Option<Value>,
 }
 
 impl fmt::Display for InvalidEventArguments {

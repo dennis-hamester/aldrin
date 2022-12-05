@@ -2,7 +2,7 @@
 mod test;
 
 use super::{Error, Handle};
-use aldrin_proto::{ServiceCookie, ServiceId, Value};
+use aldrin_proto::{SerializedValue, ServiceCookie, ServiceId};
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};
@@ -209,22 +209,22 @@ pub struct Event {
     /// Id of the event.
     pub id: u32,
 
-    /// Arguments of the event.
-    pub args: Value,
+    /// Value of the event.
+    pub value: SerializedValue,
 }
 
 impl Event {
-    pub(crate) fn new(service_id: ServiceId, id: u32, args: Value) -> Self {
+    pub(crate) fn new(service_id: ServiceId, id: u32, value: SerializedValue) -> Self {
         Event {
             service_id,
             id,
-            args,
+            value,
         }
     }
 }
 
 #[derive(Debug)]
 pub(crate) enum EventsRequest {
-    EmitEvent(ServiceCookie, u32, Value),
+    EmitEvent(ServiceCookie, u32, SerializedValue),
     ServiceDestroyed(ServiceCookie),
 }
