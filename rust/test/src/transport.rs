@@ -1,5 +1,5 @@
 use aldrin_channel::{Bounded, Disconnected, Unbounded};
-use aldrin_proto::AsyncTransport;
+use aldrin_proto::transport::AsyncTransport;
 use std::fmt::Debug;
 
 /// Asynchronous transport used for connections between test brokers and clients.
