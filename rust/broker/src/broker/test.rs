@@ -1,6 +1,8 @@
 use crate::Broker;
-use aldrin_client::{Client, ObjectUuid, ServiceUuid};
-use aldrin_proto::{AsyncTransportExt, Connect, ConnectReply, Message, Value};
+use aldrin_client::Client;
+use aldrin_proto::message::{Connect, ConnectReply, Message};
+use aldrin_proto::transport::AsyncTransportExt;
+use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::future::{self, Either};
 use futures_util::stream::StreamExt;
@@ -19,15 +21,14 @@ async fn disconnect_during_function_call() {
 
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
-    mem::drop(
-        client2
-            .call_infallible_function::<(), ()>(svc.id(), 0, ())
-            .unwrap(),
-    );
+    let func_call = client2
+        .call_infallible_function::<(), ()>(svc.id(), 0, &())
+        .unwrap();
+    mem::drop(func_call);
     client2.join().await;
 
     let call = svc.next().await.unwrap();
-    call.reply.ok(()).unwrap();
+    call.reply.ok(&()).unwrap();
     client1.join().await;
 
     broker.join_idle().await
@@ -70,7 +71,7 @@ async fn drop_conn_before_function_call() {
     let res = time::timeout(
         Duration::from_millis(500),
         client2
-            .call_infallible_function::<(), ()>(svc.id(), 0, ())
+            .call_infallible_function::<(), ()>(svc.id(), 0, &())
             .unwrap(),
     )
     .await
@@ -87,19 +88,21 @@ async fn begin_connect_accept() {
 
     let (mut t1, t2) = aldrin_channel::unbounded();
 
-    t1.send_and_flush(Message::Connect(Connect {
-        version: aldrin_proto::VERSION,
-        data: Value::U32(0),
-    }))
+    t1.send_and_flush(Message::Connect(
+        Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
+    ))
     .await
     .unwrap();
 
-    let mut conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.take_client_data(), Value::U32(0));
+    let conn = handle.begin_connect(t2).await.unwrap();
+    assert_eq!(conn.deserialize_client_data(), Ok(0u32));
 
-    let _ = conn.accept(Value::U32(1)).await.unwrap();
-    let msg = t1.receive().await.unwrap();
-    assert_eq!(msg, Message::ConnectReply(ConnectReply::Ok(Value::U32(1))));
+    let _ = conn.accept_serialize(&1u32).await.unwrap();
+    let value = match t1.receive().await.unwrap() {
+        Message::ConnectReply(ConnectReply::Ok(value)) => value,
+        msg => panic!("invalid msg received {msg:?}"),
+    };
+    assert_eq!(value.deserialize(), Ok(1u32));
 
     handle.shutdown().await;
     join.await.unwrap();
@@ -113,22 +116,21 @@ async fn begin_connect_reject() {
 
     let (mut t1, t2) = aldrin_channel::unbounded();
 
-    t1.send_and_flush(Message::Connect(Connect {
-        version: aldrin_proto::VERSION,
-        data: Value::U32(0),
-    }))
+    t1.send_and_flush(Message::Connect(
+        Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
+    ))
     .await
     .unwrap();
 
-    let mut conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.take_client_data(), Value::U32(0));
+    let conn = handle.begin_connect(t2).await.unwrap();
+    assert_eq!(conn.deserialize_client_data(), Ok(0u32));
 
-    conn.reject(Value::U32(1)).await.unwrap();
-    let msg = t1.receive().await.unwrap();
-    assert_eq!(
-        msg,
-        Message::ConnectReply(ConnectReply::Rejected(Value::U32(1)))
-    );
+    conn.reject_serialize(&1u32).await.unwrap();
+    let value = match t1.receive().await.unwrap() {
+        Message::ConnectReply(ConnectReply::Rejected(value)) => value,
+        msg => panic!("invalid msg received {msg:?}"),
+    };
+    assert_eq!(value.deserialize(), Ok(1u32));
 
     handle.shutdown().await;
     join.await.unwrap();

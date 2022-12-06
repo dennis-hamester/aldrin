@@ -20,10 +20,7 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
-//! use aldrin_codec::TokioCodec;
-//! use aldrin_codec::filter::Noop;
-//! use aldrin_codec::packetizer::LengthPrefixed;
-//! use aldrin_codec::serializer::Json;
+//! use aldrin_proto::tokio::TokioTransport;
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;
@@ -43,12 +40,7 @@
 //!         let (socket, _) = listener.accept().await?;
 //!
 //!         // Create an AsyncTransport out of the socket:
-//!         let transport = TokioCodec::new(
-//!             socket,
-//!             LengthPrefixed::default(),
-//!             Noop,
-//!             Json::default(),
-//!         );
+//!         let transport = TokioTransport::new(socket);
 //!
 //!         // Add the connection and run it:
 //!         let connection = handle.connect(transport).await?;

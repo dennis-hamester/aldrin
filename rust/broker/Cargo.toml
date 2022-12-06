@@ -44,6 +44,11 @@ path = "../channel"
 version = "0.1.0"
 path = "../client"
 
+[dev-dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+features = ["tokio"]
+
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
 path = "../test"

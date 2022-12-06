@@ -1,4 +1,4 @@
-use aldrin_client::{ObjectUuid, ServiceUuid};
+use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::stream::StreamExt;
 
@@ -199,13 +199,13 @@ async fn function_calls() {
     assert_eq!(stats.functions_called, 0);
     assert_eq!(stats.functions_replied, 0);
 
-    // Call 2 function.
+    // Call 2 functions.
     let reply1 = client
-        .call_infallible_function::<(), ()>(svc.id(), 0, ())
+        .call_infallible_function::<(), ()>(svc.id(), 0, &())
         .unwrap();
     let call1 = svc.next().await.unwrap();
     let reply2 = client
-        .call_infallible_function::<(), ()>(svc.id(), 0, ())
+        .call_infallible_function::<(), ()>(svc.id(), 0, &())
         .unwrap();
     let call2 = svc.next().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
@@ -216,7 +216,7 @@ async fn function_calls() {
     assert_eq!(stats.functions_replied, 0);
 
     // Reply 1 function call.
-    call1.reply.ok(()).unwrap();
+    call1.reply.ok(&()).unwrap();
     reply1.await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
@@ -226,7 +226,7 @@ async fn function_calls() {
     assert_eq!(stats.functions_replied, 1);
 
     // Reply 1 function call.
-    call2.reply.ok(()).unwrap();
+    call2.reply.ok(&()).unwrap();
     reply2.await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
@@ -271,9 +271,9 @@ async fn events() {
     assert_eq!(stats.events_sent, 0);
 
     // Emit 3 events on 0.
-    client1.emit_event(svc.id(), 0, ()).unwrap();
-    client1.emit_event(svc.id(), 0, ()).unwrap();
-    client1.emit_event(svc.id(), 0, ()).unwrap();
+    client1.emit_event(svc.id(), 0, &()).unwrap();
+    client1.emit_event(svc.id(), 0, &()).unwrap();
+    client1.emit_event(svc.id(), 0, &()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 7);
@@ -283,9 +283,9 @@ async fn events() {
 
     // Emit 2 events on 0.
     // Emit 1 event on 1.
-    client1.emit_event(svc.id(), 0, ()).unwrap();
-    client1.emit_event(svc.id(), 0, ()).unwrap();
-    client1.emit_event(svc.id(), 1, ()).unwrap();
+    client1.emit_event(svc.id(), 0, &()).unwrap();
+    client1.emit_event(svc.id(), 0, &()).unwrap();
+    client1.emit_event(svc.id(), 1, &()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 5);
@@ -355,9 +355,9 @@ async fn channels() {
     // Claim 1 and send 3 items.
     let mut receiver1 = receiver1.claim().await.unwrap();
     let mut sender1 = sender1.established().await.unwrap();
-    sender1.send(()).unwrap();
-    sender1.send(()).unwrap();
-    sender1.send(()).unwrap();
+    sender1.send(&()).unwrap();
+    sender1.send(&()).unwrap();
+    sender1.send(&()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 6);
