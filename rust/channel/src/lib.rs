@@ -57,7 +57,8 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
-use aldrin_proto::{AsyncTransport, Message};
+use aldrin_proto::message::Message;
+use aldrin_proto::transport::AsyncTransport;
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use std::error::Error;
