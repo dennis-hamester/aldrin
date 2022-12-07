@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 pub trait Sealed {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError>;
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError>;
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError>;
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B);
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B);
 }
 
 pub trait SerializeKey: Sealed {}
@@ -17,11 +17,11 @@ impl<'a, T: Sealed + ?Sized> Sealed for &'a T {
         (*self).serialize_key(buf)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
         T::serialize_map_value_kind(buf)
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
         T::serialize_set_value_kind(buf)
     }
 }
@@ -33,12 +33,12 @@ impl Sealed for u8 {
         buf.try_put_u8(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U8Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U8Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U8Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U8Set).unwrap()
     }
 }
 
@@ -49,12 +49,12 @@ impl Sealed for i8 {
         buf.try_put_i8(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I8Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I8Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I8Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I8Set).unwrap()
     }
 }
 
@@ -65,12 +65,12 @@ impl Sealed for u16 {
         buf.try_put_varint_u16_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U16Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U16Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U16Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U16Set).unwrap()
     }
 }
 
@@ -81,12 +81,12 @@ impl Sealed for i16 {
         buf.try_put_varint_i16_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I16Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I16Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I16Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I16Set).unwrap()
     }
 }
 
@@ -97,12 +97,12 @@ impl Sealed for u32 {
         buf.try_put_varint_u32_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U32Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U32Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U32Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U32Set).unwrap()
     }
 }
 
@@ -113,12 +113,12 @@ impl Sealed for i32 {
         buf.try_put_varint_i32_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I32Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I32Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I32Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I32Set).unwrap()
     }
 }
 
@@ -129,12 +129,12 @@ impl Sealed for u64 {
         buf.try_put_varint_u64_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U64Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U64Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::U64Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::U64Set).unwrap()
     }
 }
 
@@ -145,12 +145,12 @@ impl Sealed for i64 {
         buf.try_put_varint_i64_le(*self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I64Map)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I64Map).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::I64Set)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::I64Set).unwrap()
     }
 }
 
@@ -167,12 +167,12 @@ impl Sealed for str {
         }
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::StringMap)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::StringMap).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::StringSet)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::StringSet).unwrap()
     }
 }
 
@@ -183,12 +183,12 @@ impl Sealed for String {
         self.as_str().serialize_key(buf)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        str::serialize_map_value_kind(buf)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        str::serialize_map_value_kind(buf);
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        str::serialize_set_value_kind(buf)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        str::serialize_set_value_kind(buf);
     }
 }
 
@@ -199,12 +199,12 @@ impl Sealed for Uuid {
         buf.try_put_slice(self)
     }
 
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::UuidMap)
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::UuidMap).unwrap()
     }
 
-    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) -> Result<(), SerializeError> {
-        buf.try_put_discriminant_u8(ValueKind::UuidSet)
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        buf.try_put_discriminant_u8(ValueKind::UuidSet).unwrap()
     }
 }
 

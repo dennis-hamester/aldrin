@@ -294,7 +294,7 @@ pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
 impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            K::serialize_map_value_kind(&mut buf)?;
+            K::serialize_map_value_kind(&mut buf);
             buf.try_put_varint_u32_le(num_elems as u32)?;
 
             Ok(Self {
@@ -359,7 +359,7 @@ pub struct SetSerializer<'a, T: SerializeKey + ?Sized> {
 impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            T::serialize_set_value_kind(&mut buf)?;
+            T::serialize_set_value_kind(&mut buf);
             buf.try_put_varint_u32_le(num_elems as u32)?;
 
             Ok(Self {
