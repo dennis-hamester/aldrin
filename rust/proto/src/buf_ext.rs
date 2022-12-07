@@ -1,103 +1,52 @@
 #[cfg(test)]
 mod test;
 
-use crate::error::{DeserializeError, SerializeError};
+use crate::error::DeserializeError;
 use bytes::{Buf, BufMut, Bytes};
 
 pub(crate) trait BufMutExt: BufMut {
-    fn try_put_discriminant_u8(
-        &mut self,
-        discriminant: impl Into<u8>,
-    ) -> Result<(), SerializeError> {
-        self.try_put_u8(discriminant.into())
+    fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
+        self.put_u8(discriminant.into())
     }
 
-    fn try_put_u8(&mut self, n: u8) -> Result<(), SerializeError> {
-        if self.remaining_mut() >= 1 {
-            self.put_u8(n);
-            Ok(())
-        } else {
-            Err(SerializeError)
-        }
+    fn put_varint_u16_le(&mut self, n: u16) {
+        self.put_varint_le(n.to_le_bytes());
     }
 
-    fn try_put_i8(&mut self, n: i8) -> Result<(), SerializeError> {
-        if self.remaining_mut() >= 1 {
-            self.put_i8(n);
-            Ok(())
-        } else {
-            Err(SerializeError)
-        }
+    fn put_varint_i16_le(&mut self, n: i16) {
+        self.put_varint_u16_le(zigzag_encode_i16(n));
     }
 
-    fn try_put_u32_le(&mut self, n: u32) -> Result<(), SerializeError> {
-        if self.remaining_mut() >= 4 {
-            self.put_u32_le(n);
-            Ok(())
-        } else {
-            Err(SerializeError)
-        }
+    fn put_varint_u32_le(&mut self, n: u32) {
+        self.put_varint_le(n.to_le_bytes());
     }
 
-    fn try_put_u64_le(&mut self, n: u64) -> Result<(), SerializeError> {
-        if self.remaining_mut() >= 8 {
-            self.put_u64_le(n);
-            Ok(())
-        } else {
-            Err(SerializeError)
-        }
+    fn put_varint_i32_le(&mut self, n: i32) {
+        self.put_varint_u32_le(zigzag_encode_i32(n));
     }
 
-    fn try_put_varint_u16_le(&mut self, n: u16) -> Result<(), SerializeError> {
-        self.try_put_varint_le(n.to_le_bytes())
+    fn put_varint_u64_le(&mut self, n: u64) {
+        self.put_varint_le(n.to_le_bytes());
     }
 
-    fn try_put_varint_i16_le(&mut self, n: i16) -> Result<(), SerializeError> {
-        self.try_put_varint_u16_le(zigzag_encode_i16(n))
+    fn put_varint_i64_le(&mut self, n: i64) {
+        self.put_varint_u64_le(zigzag_encode_i64(n));
     }
 
-    fn try_put_varint_u32_le(&mut self, n: u32) -> Result<(), SerializeError> {
-        self.try_put_varint_le(n.to_le_bytes())
-    }
-
-    fn try_put_varint_i32_le(&mut self, n: i32) -> Result<(), SerializeError> {
-        self.try_put_varint_u32_le(zigzag_encode_i32(n))
-    }
-
-    fn try_put_varint_u64_le(&mut self, n: u64) -> Result<(), SerializeError> {
-        self.try_put_varint_le(n.to_le_bytes())
-    }
-
-    fn try_put_varint_i64_le(&mut self, n: i64) -> Result<(), SerializeError> {
-        self.try_put_varint_u64_le(zigzag_encode_i64(n))
-    }
-
-    fn try_put_varint_le<const N: usize>(&mut self, bytes: [u8; N]) -> Result<(), SerializeError> {
+    fn put_varint_le<const N: usize>(&mut self, bytes: [u8; N]) {
         for (i, n) in bytes.into_iter().rev().enumerate().take(N - 1) {
             if n != 0 {
-                self.try_put_u8(255 - i as u8)?;
-                self.try_put_slice(&bytes[..N - i])?;
-                return Ok(());
+                self.put_u8(255 - i as u8);
+                self.put_slice(&bytes[..N - i]);
+                return;
             }
         }
 
         if bytes[0] > 255 - N as u8 {
-            self.try_put_u8(255 - N as u8 + 1)?;
+            self.put_u8(255 - N as u8 + 1);
         }
 
-        self.try_put_u8(bytes[0])?;
-        Ok(())
-    }
-
-    fn try_put_slice<T: AsRef<[u8]>>(&mut self, val: T) -> Result<(), SerializeError> {
-        let val = val.as_ref();
-
-        if self.remaining_mut() >= val.len() {
-            self.put_slice(val);
-            Ok(())
-        } else {
-            Err(SerializeError)
-        }
+        self.put_u8(bytes[0]);
     }
 }
 

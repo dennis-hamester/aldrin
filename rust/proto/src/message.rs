@@ -633,15 +633,15 @@ impl MessageSerializer {
     }
 
     fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
-        self.buf.try_put_u8(discriminant.into()).unwrap()
+        self.buf.put_discriminant_u8(discriminant);
     }
 
     fn put_bool(&mut self, v: bool) {
-        self.buf.try_put_u8(v as u8).unwrap();
+        self.buf.put_u8(v as u8);
     }
 
     fn put_varint_u32_le(&mut self, n: u32) {
-        self.buf.try_put_varint_u32_le(n).unwrap();
+        self.buf.put_varint_u32_le(n);
     }
 
     fn put_uuid(&mut self, uuid: Uuid) {
