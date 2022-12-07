@@ -93,7 +93,7 @@ impl<'a> Serializer<'a> {
             self.buf.put_slice(value.as_bytes());
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -143,7 +143,7 @@ impl<'a> Serializer<'a> {
             self.buf.put_slice(value);
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -235,7 +235,7 @@ impl<'a> VecSerializer<'a> {
             buf.put_varint_u32_le(num_elems as u32);
             Ok(Self { buf, num_elems })
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -256,7 +256,7 @@ impl<'a> VecSerializer<'a> {
             value.serialize(Serializer::new(self.buf))?;
             Ok(self)
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooManyElements)
         }
     }
 
@@ -264,7 +264,7 @@ impl<'a> VecSerializer<'a> {
         if self.num_elems == 0 {
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooFewElements)
         }
     }
 }
@@ -287,7 +287,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
                 _key: PhantomData,
             })
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -310,7 +310,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
             value.serialize(Serializer::new(self.buf))?;
             Ok(self)
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooManyElements)
         }
     }
 
@@ -318,7 +318,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
         if self.num_elems == 0 {
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooFewElements)
         }
     }
 }
@@ -352,7 +352,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
                 _key: PhantomData,
             })
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -370,7 +370,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
             value.serialize_key(self.buf)?;
             Ok(self)
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooManyElements)
         }
     }
 
@@ -378,7 +378,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
         if self.num_elems == 0 {
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooFewElements)
         }
     }
 }
@@ -407,7 +407,7 @@ impl<'a> StructSerializer<'a> {
             buf.put_varint_u32_le(num_fields as u32);
             Ok(Self { buf, num_fields })
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
@@ -430,7 +430,7 @@ impl<'a> StructSerializer<'a> {
             value.serialize(Serializer::new(self.buf))?;
             Ok(self)
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooManyElements)
         }
     }
 
@@ -438,7 +438,7 @@ impl<'a> StructSerializer<'a> {
         if self.num_fields == 0 {
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::TooFewElements)
         }
     }
 }

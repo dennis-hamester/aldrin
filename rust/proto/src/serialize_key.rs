@@ -171,7 +171,7 @@ impl Sealed for str {
             buf.put_slice(self.as_bytes());
             Ok(())
         } else {
-            Err(SerializeError)
+            Err(SerializeError::Overflow)
         }
     }
 
