@@ -139,7 +139,8 @@ impl<T: Deserialize> Deserialize for Box<T> {
 
 impl Serialize for () {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_none()
+        serializer.serialize_none();
+        Ok(())
     }
 }
 
@@ -152,9 +153,11 @@ impl Deserialize for () {
 impl<T: Serialize> Serialize for Option<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
-            Some(value) => serializer.serialize_some(value),
+            Some(value) => serializer.serialize_some(value)?,
             None => serializer.serialize_none(),
         }
+
+        Ok(())
     }
 }
 
@@ -166,7 +169,8 @@ impl<T: Deserialize> Deserialize for Option<T> {
 
 impl Serialize for bool {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bool(*self)
+        serializer.serialize_bool(*self);
+        Ok(())
     }
 }
 
@@ -178,7 +182,8 @@ impl Deserialize for bool {
 
 impl Serialize for u8 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u8(*self)
+        serializer.serialize_u8(*self);
+        Ok(())
     }
 }
 
@@ -190,7 +195,8 @@ impl Deserialize for u8 {
 
 impl Serialize for i8 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i8(*self)
+        serializer.serialize_i8(*self);
+        Ok(())
     }
 }
 
@@ -202,7 +208,8 @@ impl Deserialize for i8 {
 
 impl Serialize for u16 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u16(*self)
+        serializer.serialize_u16(*self);
+        Ok(())
     }
 }
 
@@ -214,7 +221,8 @@ impl Deserialize for u16 {
 
 impl Serialize for i16 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i16(*self)
+        serializer.serialize_i16(*self);
+        Ok(())
     }
 }
 
@@ -226,7 +234,8 @@ impl Deserialize for i16 {
 
 impl Serialize for u32 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u32(*self)
+        serializer.serialize_u32(*self);
+        Ok(())
     }
 }
 
@@ -238,7 +247,8 @@ impl Deserialize for u32 {
 
 impl Serialize for i32 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i32(*self)
+        serializer.serialize_i32(*self);
+        Ok(())
     }
 }
 
@@ -250,7 +260,8 @@ impl Deserialize for i32 {
 
 impl Serialize for u64 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u64(*self)
+        serializer.serialize_u64(*self);
+        Ok(())
     }
 }
 
@@ -262,7 +273,8 @@ impl Deserialize for u64 {
 
 impl Serialize for i64 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i64(*self)
+        serializer.serialize_i64(*self);
+        Ok(())
     }
 }
 
@@ -274,7 +286,8 @@ impl Deserialize for i64 {
 
 impl Serialize for f32 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_f32(*self)
+        serializer.serialize_f32(*self);
+        Ok(())
     }
 }
 
@@ -286,7 +299,8 @@ impl Deserialize for f32 {
 
 impl Serialize for f64 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_f64(*self)
+        serializer.serialize_f64(*self);
+        Ok(())
     }
 }
 
@@ -316,7 +330,8 @@ impl Deserialize for String {
 
 impl Serialize for Uuid {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(*self)
+        serializer.serialize_uuid(*self);
+        Ok(())
     }
 }
 

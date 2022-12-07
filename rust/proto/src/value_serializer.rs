@@ -22,9 +22,8 @@ impl<'a> Serializer<'a> {
         Self { buf }
     }
 
-    pub fn serialize_none(self) -> Result<(), SerializeError> {
+    pub fn serialize_none(self) {
         self.buf.put_discriminant_u8(ValueKind::None);
-        Ok(())
     }
 
     pub fn serialize_some<T: Serialize + ?Sized>(self, value: &T) -> Result<(), SerializeError> {
@@ -32,70 +31,59 @@ impl<'a> Serializer<'a> {
         value.serialize(self)
     }
 
-    pub fn serialize_bool(self, value: bool) -> Result<(), SerializeError> {
+    pub fn serialize_bool(self, value: bool) {
         self.buf.put_discriminant_u8(ValueKind::Bool);
         self.buf.put_u8(value.into());
-        Ok(())
     }
 
-    pub fn serialize_u8(self, value: u8) -> Result<(), SerializeError> {
+    pub fn serialize_u8(self, value: u8) {
         self.buf.put_discriminant_u8(ValueKind::U8);
         self.buf.put_u8(value);
-        Ok(())
     }
 
-    pub fn serialize_i8(self, value: i8) -> Result<(), SerializeError> {
+    pub fn serialize_i8(self, value: i8) {
         self.buf.put_discriminant_u8(ValueKind::I8);
         self.buf.put_i8(value);
-        Ok(())
     }
 
-    pub fn serialize_u16(self, value: u16) -> Result<(), SerializeError> {
+    pub fn serialize_u16(self, value: u16) {
         self.buf.put_discriminant_u8(ValueKind::U16);
         self.buf.put_varint_u16_le(value);
-        Ok(())
     }
 
-    pub fn serialize_i16(self, value: i16) -> Result<(), SerializeError> {
+    pub fn serialize_i16(self, value: i16) {
         self.buf.put_discriminant_u8(ValueKind::I16);
         self.buf.put_varint_i16_le(value);
-        Ok(())
     }
 
-    pub fn serialize_u32(self, value: u32) -> Result<(), SerializeError> {
+    pub fn serialize_u32(self, value: u32) {
         self.buf.put_discriminant_u8(ValueKind::U32);
         self.buf.put_varint_u32_le(value);
-        Ok(())
     }
 
-    pub fn serialize_i32(self, value: i32) -> Result<(), SerializeError> {
+    pub fn serialize_i32(self, value: i32) {
         self.buf.put_discriminant_u8(ValueKind::I32);
         self.buf.put_varint_i32_le(value);
-        Ok(())
     }
 
-    pub fn serialize_u64(self, value: u64) -> Result<(), SerializeError> {
+    pub fn serialize_u64(self, value: u64) {
         self.buf.put_discriminant_u8(ValueKind::U64);
         self.buf.put_varint_u64_le(value);
-        Ok(())
     }
 
-    pub fn serialize_i64(self, value: i64) -> Result<(), SerializeError> {
+    pub fn serialize_i64(self, value: i64) {
         self.buf.put_discriminant_u8(ValueKind::I64);
         self.buf.put_varint_i64_le(value);
-        Ok(())
     }
 
-    pub fn serialize_f32(self, value: f32) -> Result<(), SerializeError> {
+    pub fn serialize_f32(self, value: f32) {
         self.buf.put_discriminant_u8(ValueKind::F32);
         self.buf.put_u32_le(value.to_bits());
-        Ok(())
     }
 
-    pub fn serialize_f64(self, value: f64) -> Result<(), SerializeError> {
+    pub fn serialize_f64(self, value: f64) {
         self.buf.put_discriminant_u8(ValueKind::F64);
         self.buf.put_u64_le(value.to_bits());
-        Ok(())
     }
 
     pub fn serialize_string(self, value: &str) -> Result<(), SerializeError> {
@@ -109,26 +97,23 @@ impl<'a> Serializer<'a> {
         }
     }
 
-    pub fn serialize_uuid(self, value: Uuid) -> Result<(), SerializeError> {
+    pub fn serialize_uuid(self, value: Uuid) {
         self.buf.put_discriminant_u8(ValueKind::Uuid);
         self.buf.put_slice(value.as_bytes());
-        Ok(())
     }
 
-    pub fn serialize_object_id(self, value: ObjectId) -> Result<(), SerializeError> {
+    pub fn serialize_object_id(self, value: ObjectId) {
         self.buf.put_discriminant_u8(ValueKind::ObjectId);
         self.buf.put_slice(value.uuid.0.as_bytes());
         self.buf.put_slice(value.cookie.0.as_bytes());
-        Ok(())
     }
 
-    pub fn serialize_service_id(self, value: ServiceId) -> Result<(), SerializeError> {
+    pub fn serialize_service_id(self, value: ServiceId) {
         self.buf.put_discriminant_u8(ValueKind::ServiceId);
         self.buf.put_slice(value.object_id.uuid.0.as_bytes());
         self.buf.put_slice(value.object_id.cookie.0.as_bytes());
         self.buf.put_slice(value.uuid.0.as_bytes());
         self.buf.put_slice(value.cookie.0.as_bytes());
-        Ok(())
     }
 
     pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a>, SerializeError> {
@@ -226,16 +211,14 @@ impl<'a> Serializer<'a> {
         value.serialize(self)
     }
 
-    pub fn serialize_sender(self, value: ChannelCookie) -> Result<(), SerializeError> {
+    pub fn serialize_sender(self, value: ChannelCookie) {
         self.buf.put_discriminant_u8(ValueKind::Sender);
         self.buf.put_slice(value.0.as_bytes());
-        Ok(())
     }
 
-    pub fn serialize_receiver(self, value: ChannelCookie) -> Result<(), SerializeError> {
+    pub fn serialize_receiver(self, value: ChannelCookie) {
         self.buf.put_discriminant_u8(ValueKind::Receiver);
         self.buf.put_slice(value.0.as_bytes());
-        Ok(())
     }
 }
 
