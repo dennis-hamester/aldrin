@@ -1,9 +1,8 @@
 use super::message_ops::Sealed;
 use super::{
-    ChannelEnd, Message, MessageKind, MessageOps, MessageSerializer,
-    MessageWithoutValueDeserializer,
+    ChannelEnd, Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ChannelCookie;
 use crate::value::SerializedValue;
 use bytes::BytesMut;
@@ -19,7 +18,7 @@ impl MessageOps for ChannelEndDestroyed {
         MessageKind::ChannelEndDestroyed
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::ChannelEndDestroyed);
 
         serializer.put_uuid(self.cookie.0);
@@ -28,7 +27,7 @@ impl MessageOps for ChannelEndDestroyed {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithoutValueDeserializer::new(buf, MessageKind::ChannelEndDestroyed)?;
 

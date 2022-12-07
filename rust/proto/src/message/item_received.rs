@@ -1,6 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::error::SerializeError;
 use crate::ids::ChannelCookie;
 use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
@@ -27,7 +30,7 @@ impl MessageOps for ItemReceived {
         MessageKind::ItemReceived
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::with_value(self.value, MessageKind::ItemReceived)?;
 
         serializer.put_uuid(self.cookie.0);
@@ -35,7 +38,7 @@ impl MessageOps for ItemReceived {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer = MessageWithValueDeserializer::new(buf, MessageKind::ItemReceived)?;
 
         let cookie = deserializer.try_get_uuid().map(ChannelCookie)?;

@@ -1,6 +1,8 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
 use crate::value::SerializedValue;
 use bytes::BytesMut;
 
@@ -12,11 +14,11 @@ impl MessageOps for Shutdown {
         MessageKind::Shutdown
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         MessageSerializer::without_value(MessageKind::Shutdown).finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         MessageWithoutValueDeserializer::new(buf, MessageKind::Shutdown)?.finish()?;
         Ok(Self)
     }

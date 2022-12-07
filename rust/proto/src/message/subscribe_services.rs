@@ -1,9 +1,8 @@
 use super::message_ops::Sealed;
 use super::{
-    Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer,
-    OptionKind,
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
 };
-use crate::error::{DeserializeError, SerializeError};
 use crate::value::SerializedValue;
 use bytes::BytesMut;
 
@@ -17,7 +16,7 @@ impl MessageOps for SubscribeServices {
         MessageKind::SubscribeServices
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::SubscribeServices);
 
         match self.serial {
@@ -34,7 +33,7 @@ impl MessageOps for SubscribeServices {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithoutValueDeserializer::new(buf, MessageKind::SubscribeServices)?;
 

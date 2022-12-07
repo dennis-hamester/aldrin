@@ -1,6 +1,8 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
 use crate::value::SerializedValue;
 use bytes::BytesMut;
 
@@ -14,7 +16,7 @@ impl MessageOps for Sync {
         MessageKind::Sync
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::Sync);
 
         serializer.put_varint_u32_le(self.serial);
@@ -22,7 +24,7 @@ impl MessageOps for Sync {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer = MessageWithoutValueDeserializer::new(buf, MessageKind::Sync)?;
 
         let serial = deserializer.try_get_varint_u32_le()?;

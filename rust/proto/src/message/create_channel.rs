@@ -1,9 +1,8 @@
 use super::message_ops::Sealed;
 use super::{
-    ChannelEnd, Message, MessageKind, MessageOps, MessageSerializer,
-    MessageWithoutValueDeserializer,
+    ChannelEnd, Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::error::{DeserializeError, SerializeError};
 use crate::value::SerializedValue;
 use bytes::BytesMut;
 
@@ -18,7 +17,7 @@ impl MessageOps for CreateChannel {
         MessageKind::CreateChannel
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::CreateChannel);
 
         serializer.put_varint_u32_le(self.serial);
@@ -27,7 +26,7 @@ impl MessageOps for CreateChannel {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithoutValueDeserializer::new(buf, MessageKind::CreateChannel)?;
 

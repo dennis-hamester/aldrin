@@ -1,6 +1,8 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
 use crate::ids::{ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid};
 use crate::value::SerializedValue;
 use bytes::BytesMut;
@@ -15,7 +17,7 @@ impl MessageOps for ServiceDestroyedEvent {
         MessageKind::ServiceDestroyedEvent
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::ServiceDestroyedEvent);
 
         serializer.put_uuid(self.id.object_id.uuid.0);
@@ -26,7 +28,7 @@ impl MessageOps for ServiceDestroyedEvent {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithoutValueDeserializer::new(buf, MessageKind::ServiceDestroyedEvent)?;
 

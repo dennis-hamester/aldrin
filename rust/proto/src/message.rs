@@ -52,6 +52,8 @@ use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::{Buf, BufMut, BytesMut};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::error::Error;
+use std::fmt;
 use uuid::Uuid;
 
 pub use call_function::CallFunction;
@@ -200,14 +202,36 @@ impl MessageKind {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct MessageSerializeError;
+
+impl fmt::Display for MessageSerializeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("message serialization failed")
+    }
+}
+
+impl Error for MessageSerializeError {}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct MessageDeserializeError;
+
+impl fmt::Display for MessageDeserializeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("message deserialization failed")
+    }
+}
+
+impl Error for MessageDeserializeError {}
+
 mod message_ops {
     pub trait Sealed {}
 }
 
 pub trait MessageOps: Sized + message_ops::Sealed {
     fn kind(&self) -> MessageKind;
-    fn serialize_message(self) -> Result<BytesMut, SerializeError>;
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError>;
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError>;
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError>;
     fn value(&self) -> Option<&SerializedValue>;
 }
 
@@ -307,7 +331,7 @@ impl MessageOps for Message {
         }
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         match self {
             Self::Connect(msg) => msg.serialize_message(),
             Self::ConnectReply(msg) => msg.serialize_message(),
@@ -355,12 +379,12 @@ impl MessageOps for Message {
         }
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         if buf.len() < 5 {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
-        match buf[4].try_into().map_err(|_| DeserializeError)? {
+        match buf[4].try_into().map_err(|_| MessageDeserializeError)? {
             MessageKind::Connect => Connect::deserialize_message(buf).map(Self::Connect),
             MessageKind::ConnectReply => {
                 ConnectReply::deserialize_message(buf).map(Self::ConnectReply)
@@ -606,7 +630,10 @@ impl MessageSerializer {
         Self { buf }
     }
 
-    fn with_value(value: SerializedValue, kind: MessageKind) -> Result<Self, SerializeError> {
+    fn with_value(
+        value: SerializedValue,
+        kind: MessageKind,
+    ) -> Result<Self, MessageSerializeError> {
         debug_assert!(kind.has_value());
 
         let mut buf = value.into_bytes_mut();
@@ -614,12 +641,12 @@ impl MessageSerializer {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
         // value.
         if buf.len() < 10 {
-            return Err(SerializeError);
+            return Err(MessageSerializeError);
         }
 
         let value_len = buf.len() - 9;
         if value_len > u32::MAX as usize {
-            return Err(SerializeError);
+            return Err(MessageSerializeError);
         }
 
         buf[4] = kind.into();
@@ -648,13 +675,13 @@ impl MessageSerializer {
         self.buf.put_slice(uuid.as_ref());
     }
 
-    fn finish(mut self) -> Result<BytesMut, SerializeError> {
+    fn finish(mut self) -> Result<BytesMut, MessageSerializeError> {
         let len = self.buf.len();
         if len <= u32::MAX as usize {
             self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());
             Ok(self.buf)
         } else {
-            Err(SerializeError)
+            Err(MessageSerializeError)
         }
     }
 }
@@ -664,47 +691,57 @@ struct MessageWithoutValueDeserializer {
 }
 
 impl MessageWithoutValueDeserializer {
-    fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
+    fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, MessageDeserializeError> {
         let buf_len = buf.len();
 
         // 4 bytes message length + 1 byte message kind.
         if buf_len < 5 {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
         let len = buf.get_u32_le() as usize;
         if buf_len != len {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
-        buf.ensure_discriminant_u8(kind)?;
+        buf.ensure_discriminant_u8(kind)
+            .map_err(|DeserializeError| MessageDeserializeError)?;
 
         Ok(Self { buf })
     }
 
-    fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
-        self.buf.try_get_discriminant_u8()
+    fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
+        self.buf
+            .try_get_discriminant_u8()
+            .map_err(|DeserializeError| MessageDeserializeError)
     }
 
-    fn try_get_bool(&mut self) -> Result<bool, DeserializeError> {
-        self.buf.try_get_u8().map(|v| v != 0)
+    fn try_get_bool(&mut self) -> Result<bool, MessageDeserializeError> {
+        self.buf
+            .try_get_u8()
+            .map(|v| v != 0)
+            .map_err(|DeserializeError| MessageDeserializeError)
     }
 
-    fn try_get_varint_u32_le(&mut self) -> Result<u32, DeserializeError> {
-        self.buf.try_get_varint_u32_le()
+    fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+        self.buf
+            .try_get_varint_u32_le()
+            .map_err(|DeserializeError| MessageDeserializeError)
     }
 
-    fn try_get_uuid(&mut self) -> Result<Uuid, DeserializeError> {
+    fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = Default::default();
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|DeserializeError| MessageDeserializeError)?;
         Ok(Uuid::from_bytes(bytes))
     }
 
-    fn finish(self) -> Result<(), DeserializeError> {
+    fn finish(self) -> Result<(), MessageDeserializeError> {
         if self.buf.is_empty() {
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(MessageDeserializeError)
         }
     }
 }
@@ -715,27 +752,27 @@ struct MessageWithValueDeserializer {
 }
 
 impl MessageWithValueDeserializer {
-    fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, DeserializeError> {
+    fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, MessageDeserializeError> {
         debug_assert!(kind.has_value());
 
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
         // value.
         if buf.len() < 10 {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
         let msg_len = (&buf[..4]).get_u32_le() as usize;
         if buf.len() != msg_len {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
         if buf[4] != kind.into() {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
         let value_len = (&buf[5..9]).get_u32_le() as usize;
         if value_len < 1 {
-            return Err(DeserializeError);
+            return Err(MessageDeserializeError);
         }
 
         let msg = buf.split_off(9 + value_len);
@@ -745,35 +782,41 @@ impl MessageWithValueDeserializer {
         })
     }
 
-    fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
-        self.msg.try_get_discriminant_u8()
+    fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
+        self.msg
+            .try_get_discriminant_u8()
+            .map_err(|DeserializeError| MessageDeserializeError)
     }
 
-    fn try_get_varint_u32_le(&mut self) -> Result<u32, DeserializeError> {
-        self.msg.try_get_varint_u32_le()
+    fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+        self.msg
+            .try_get_varint_u32_le()
+            .map_err(|DeserializeError| MessageDeserializeError)
     }
 
-    fn try_get_uuid(&mut self) -> Result<Uuid, DeserializeError> {
+    fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = Default::default();
-        self.msg.try_copy_to_slice(&mut bytes)?;
+        self.msg
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|DeserializeError| MessageDeserializeError)?;
         Ok(Uuid::from_bytes(bytes))
     }
 
-    fn finish(mut self) -> Result<SerializedValue, DeserializeError> {
+    fn finish(mut self) -> Result<SerializedValue, MessageDeserializeError> {
         if self.msg.is_empty() {
             self.header_and_value.unsplit(self.msg);
             self.header_and_value[0..9].fill(0);
             Ok(SerializedValue::from_bytes_mut(self.header_and_value))
         } else {
-            Err(DeserializeError)
+            Err(MessageDeserializeError)
         }
     }
 
-    fn finish_discard_value(self) -> Result<(), DeserializeError> {
+    fn finish_discard_value(self) -> Result<(), MessageDeserializeError> {
         if self.msg.is_empty() {
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(MessageDeserializeError)
         }
     }
 }

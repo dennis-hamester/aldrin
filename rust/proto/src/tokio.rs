@@ -1,5 +1,6 @@
-use crate::error::{DeserializeError, SerializeError};
-use crate::message::{Message, MessageOps, Packetizer};
+use crate::message::{
+    Message, MessageDeserializeError, MessageOps, MessageSerializeError, Packetizer,
+};
 use crate::transport::AsyncTransport;
 use bytes::{Buf, BytesMut};
 use pin_project::pin_project;
@@ -125,8 +126,8 @@ where
 #[derive(Debug)]
 pub enum TokioTransportError {
     Io(IoError),
-    Serialize(SerializeError),
-    Deserialize(DeserializeError),
+    Serialize(MessageSerializeError),
+    Deserialize(MessageDeserializeError),
 }
 
 impl fmt::Display for TokioTransportError {

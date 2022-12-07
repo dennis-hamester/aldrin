@@ -1,6 +1,8 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithoutValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
 use crate::ids::ObjectCookie;
 use crate::value::SerializedValue;
 use bytes::BytesMut;
@@ -30,7 +32,7 @@ impl MessageOps for CreateObjectReply {
         MessageKind::CreateObjectReply
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let mut serializer = MessageSerializer::without_value(MessageKind::CreateObjectReply);
 
         serializer.put_varint_u32_le(self.serial);
@@ -49,7 +51,7 @@ impl MessageOps for CreateObjectReply {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithoutValueDeserializer::new(buf, MessageKind::CreateObjectReply)?;
 

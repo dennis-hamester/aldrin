@@ -1,6 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, MessageSerializer, MessageWithValueDeserializer};
-use crate::error::{DeserializeError, SerializeError};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::error::SerializeError;
 use crate::value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
@@ -62,7 +65,7 @@ impl MessageOps for CallFunctionReply {
         MessageKind::CallFunctionReply
     }
 
-    fn serialize_message(self) -> Result<BytesMut, SerializeError> {
+    fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
         let serializer = match self.result {
             CallFunctionResult::Ok(value) => {
                 let mut serializer =
@@ -116,7 +119,7 @@ impl MessageOps for CallFunctionReply {
         serializer.finish()
     }
 
-    fn deserialize_message(buf: BytesMut) -> Result<Self, DeserializeError> {
+    fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
             MessageWithValueDeserializer::new(buf, MessageKind::CallFunctionReply)?;
 
