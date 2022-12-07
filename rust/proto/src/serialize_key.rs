@@ -1,5 +1,5 @@
+use crate::buf_ext::BufMutExt;
 use crate::error::SerializeError;
-use crate::util::BufMutExt;
 use crate::value::ValueKind;
 use bytes::BufMut;
 use uuid::Uuid;

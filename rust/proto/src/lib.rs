@@ -2,12 +2,12 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+mod buf_ext;
 mod deserialize_key;
 mod error;
 mod generic_value;
 mod ids;
 mod serialize_key;
-mod util;
 mod value;
 mod value_deserializer;
 mod value_serializer;

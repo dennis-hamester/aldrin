@@ -1,5 +1,5 @@
+use crate::buf_ext::BufExt;
 use crate::error::DeserializeError;
-use crate::util::BufExt;
 use crate::value::ValueKind;
 use bytes::Buf;
 use std::mem;

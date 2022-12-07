@@ -1,9 +1,9 @@
+use crate::buf_ext::BufExt;
 use crate::deserialize_key::DeserializeKey;
 use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::util::BufExt;
 use crate::value::ValueKind;
 use std::iter;
 use std::marker::PhantomData;

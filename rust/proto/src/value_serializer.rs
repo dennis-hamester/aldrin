@@ -1,7 +1,7 @@
+use crate::buf_ext::BufMutExt;
 use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::SerializeKey;
-use crate::util::BufMutExt;
 use crate::value::ValueKind;
 use bytes::BytesMut;
 use std::fmt;
