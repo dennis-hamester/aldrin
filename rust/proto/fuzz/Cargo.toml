@@ -24,3 +24,15 @@ name = "message-deserialize"
 path = "fuzz_targets/message_deserialize.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "packetizer-extend-from-slice"
+path = "fuzz_targets/packetizer_extend_from_slice.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "packetizer-spare-capacity-mut"
+path = "fuzz_targets/packetizer_spare_capacity_mut.rs"
+test = false
+doc = false
