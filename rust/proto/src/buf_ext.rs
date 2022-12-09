@@ -52,7 +52,7 @@ pub(crate) trait BufMutExt: BufMut {
 
 impl<T: BufMut + ?Sized> BufMutExt for T {}
 
-pub(crate) trait BufExt: Buf {
+pub(crate) trait ValueBufExt: Buf {
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
         self.try_get_u8()?
             .try_into()
@@ -188,7 +188,7 @@ pub(crate) trait BufExt: Buf {
     }
 }
 
-impl<T: Buf + ?Sized> BufExt for T {}
+impl<T: Buf + ?Sized> ValueBufExt for T {}
 
 fn zigzag_encode_i16(n: i16) -> u16 {
     (n >> 15) as u16 ^ (n << 1) as u16

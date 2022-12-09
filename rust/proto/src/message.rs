@@ -45,7 +45,7 @@ mod unsubscribe_event;
 mod unsubscribe_objects;
 mod unsubscribe_services;
 
-use crate::buf_ext::{BufExt, BufMutExt};
+use crate::buf_ext::{BufMutExt, ValueBufExt};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};

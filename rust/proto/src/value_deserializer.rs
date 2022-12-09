@@ -1,4 +1,4 @@
-use crate::buf_ext::BufExt;
+use crate::buf_ext::ValueBufExt;
 use crate::deserialize_key::DeserializeKey;
 use crate::error::DeserializeError;
 use crate::ids::{

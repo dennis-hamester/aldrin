@@ -1,4 +1,4 @@
-use crate::buf_ext::BufExt;
+use crate::buf_ext::ValueBufExt;
 use crate::error::DeserializeError;
 use crate::value::ValueKind;
 use bytes::Buf;

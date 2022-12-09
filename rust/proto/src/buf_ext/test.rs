@@ -1,4 +1,4 @@
-use super::{BufExt, BufMutExt};
+use super::BufMutExt;
 use crate::error::DeserializeError;
 use crate::message::MessageKind;
 use crate::value::ValueKind;
@@ -226,7 +226,9 @@ fn try_put_varint_i64_le() {
 }
 
 #[test]
-fn try_get_discriminant_u8() {
+fn value_try_get_discriminant_u8() {
+    use super::ValueBufExt;
+
     let mut buf = &[ValueKind::U32.into()][..];
     assert_eq!(buf.try_get_discriminant_u8(), Ok(ValueKind::U32));
     assert_eq!(*buf, []);
@@ -249,7 +251,9 @@ fn try_get_discriminant_u8() {
 }
 
 #[test]
-fn try_peek_discriminant_u8() {
+fn value_try_peek_discriminant_u8() {
+    use super::ValueBufExt;
+
     let buf = &[ValueKind::U32.into()][..];
     assert_eq!(buf.try_peek_discriminant_u8(), Ok(ValueKind::U32));
 
@@ -273,7 +277,9 @@ fn try_peek_discriminant_u8() {
 }
 
 #[test]
-fn try_get_u8() {
+fn value_try_get_u8() {
+    use super::ValueBufExt;
+
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_u8(), Ok(0));
     assert_eq!(*buf, []);
@@ -284,7 +290,9 @@ fn try_get_u8() {
 }
 
 #[test]
-fn try_get_i8() {
+fn value_try_get_i8() {
+    use super::ValueBufExt;
+
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_i8(), Ok(0));
     assert_eq!(*buf, []);
@@ -303,7 +311,9 @@ fn try_get_i8() {
 }
 
 #[test]
-fn try_get_u32_le() {
+fn value_try_get_u32_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0x78, 0x56, 0x34, 0x12][..];
     assert_eq!(buf.try_get_u32_le(), Ok(0x12345678));
     assert_eq!(*buf, []);
@@ -313,7 +323,9 @@ fn try_get_u32_le() {
 }
 
 #[test]
-fn try_get_u64_le() {
+fn value_try_get_u64_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12][..];
     assert_eq!(buf.try_get_u64_le(), Ok(0x123456789abcdef0));
     assert_eq!(*buf, []);
@@ -323,7 +335,9 @@ fn try_get_u64_le() {
 }
 
 #[test]
-fn try_get_varint_u16_le() {
+fn value_try_get_varint_u16_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0x00][..];
     assert_eq!(buf.try_get_varint_u16_le(), Ok(0x0000));
     assert_eq!(*buf, []);
@@ -350,7 +364,9 @@ fn try_get_varint_u16_le() {
 }
 
 #[test]
-fn try_get_varint_i16_le() {
+fn value_try_get_varint_i16_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_varint_i16_le(), Ok(0));
     assert_eq!(*buf, []);
@@ -369,7 +385,9 @@ fn try_get_varint_i16_le() {
 }
 
 #[test]
-fn try_get_varint_u32_le() {
+fn value_try_get_varint_u32_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0x00][..];
     assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00000000));
     assert_eq!(*buf, []);
@@ -412,7 +430,9 @@ fn try_get_varint_u32_le() {
 }
 
 #[test]
-fn try_get_varint_i32_le() {
+fn value_try_get_varint_i32_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_varint_i32_le(), Ok(0));
     assert_eq!(*buf, []);
@@ -435,7 +455,9 @@ fn try_get_varint_i32_le() {
 }
 
 #[test]
-fn try_get_varint_u64_le() {
+fn value_try_get_varint_u64_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0x00][..];
     assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000000000000));
     assert_eq!(*buf, []);
@@ -510,7 +532,9 @@ fn try_get_varint_u64_le() {
 }
 
 #[test]
-fn try_get_varint_i64_le() {
+fn value_try_get_varint_i64_le() {
+    use super::ValueBufExt;
+
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_varint_i64_le(), Ok(0));
     assert_eq!(*buf, []);
@@ -533,7 +557,9 @@ fn try_get_varint_i64_le() {
 }
 
 #[test]
-fn try_copy_to_bytes() {
+fn value_try_copy_to_bytes() {
+    use super::ValueBufExt;
+
     let mut buf = &[1, 2, 3][..];
     assert_eq!(*buf.try_copy_to_bytes(3).unwrap(), [1, 2, 3]);
     assert_eq!(*buf, []);
@@ -550,7 +576,9 @@ fn try_copy_to_bytes() {
 }
 
 #[test]
-fn try_copy_to_slice() {
+fn value_try_copy_to_slice() {
+    use super::ValueBufExt;
+
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0];
     src.try_copy_to_slice(&mut dst).unwrap();
@@ -578,7 +606,9 @@ fn try_copy_to_slice() {
 }
 
 #[test]
-fn try_skip() {
+fn value_try_skip() {
+    use super::ValueBufExt;
+
     let mut buf = &[1, 2][..];
     buf.try_skip(0).unwrap();
     assert_eq!(*buf, [1, 2]);
