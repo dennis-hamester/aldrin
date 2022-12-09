@@ -45,7 +45,7 @@ mod unsubscribe_event;
 mod unsubscribe_objects;
 mod unsubscribe_services;
 
-use crate::buf_ext::{BufMutExt, ValueBufExt};
+use crate::buf_ext::{BufMutExt, MessageBufExt};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -710,36 +710,26 @@ impl MessageWithoutValueDeserializer {
             return Err(MessageDeserializeError);
         }
 
-        buf.ensure_discriminant_u8(kind)
-            .map_err(|_| MessageDeserializeError)?;
+        buf.ensure_discriminant_u8(kind)?;
 
         Ok(Self { buf })
     }
 
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
-        self.buf
-            .try_get_discriminant_u8()
-            .map_err(|_| MessageDeserializeError)
+        self.buf.try_get_discriminant_u8()
     }
 
     fn try_get_bool(&mut self) -> Result<bool, MessageDeserializeError> {
-        self.buf
-            .try_get_u8()
-            .map(|v| v != 0)
-            .map_err(|_| MessageDeserializeError)
+        self.buf.try_get_u8().map(|v| v != 0)
     }
 
     fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
-        self.buf
-            .try_get_varint_u32_le()
-            .map_err(|_| MessageDeserializeError)
+        self.buf.try_get_varint_u32_le()
     }
 
     fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
-        self.buf
-            .try_copy_to_slice(&mut bytes)
-            .map_err(|_| MessageDeserializeError)?;
+        self.buf.try_copy_to_slice(&mut bytes)?;
         Ok(Uuid::from_bytes(bytes))
     }
 
@@ -789,22 +779,16 @@ impl MessageWithValueDeserializer {
     }
 
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
-        self.msg
-            .try_get_discriminant_u8()
-            .map_err(|_| MessageDeserializeError)
+        self.msg.try_get_discriminant_u8()
     }
 
     fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
-        self.msg
-            .try_get_varint_u32_le()
-            .map_err(|_| MessageDeserializeError)
+        self.msg.try_get_varint_u32_le()
     }
 
     fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
-        self.msg
-            .try_copy_to_slice(&mut bytes)
-            .map_err(|_| MessageDeserializeError)?;
+        self.msg.try_copy_to_slice(&mut bytes)?;
         Ok(Uuid::from_bytes(bytes))
     }
 

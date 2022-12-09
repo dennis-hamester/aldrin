@@ -2,6 +2,7 @@
 mod test;
 
 use crate::error::DeserializeError;
+use crate::message::MessageDeserializeError;
 use bytes::{Buf, BufMut, Bytes};
 
 pub(crate) trait BufMutExt: BufMut {
@@ -189,6 +190,62 @@ pub(crate) trait ValueBufExt: Buf {
 }
 
 impl<T: Buf + ?Sized> ValueBufExt for T {}
+
+pub(crate) trait MessageBufExt: Buf {
+    fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
+        self.try_get_u8()?
+            .try_into()
+            .map_err(|_| MessageDeserializeError)
+    }
+
+    fn ensure_discriminant_u8<T: TryFrom<u8> + PartialEq>(
+        &mut self,
+        discriminant: T,
+    ) -> Result<(), MessageDeserializeError> {
+        if self.try_get_discriminant_u8::<T>()? == discriminant {
+            Ok(())
+        } else {
+            Err(MessageDeserializeError)
+        }
+    }
+
+    fn try_get_u8(&mut self) -> Result<u8, MessageDeserializeError> {
+        if self.remaining() >= 1 {
+            Ok(self.get_u8())
+        } else {
+            Err(MessageDeserializeError)
+        }
+    }
+
+    fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+        self.try_get_varint_le().map(u32::from_le_bytes)
+    }
+
+    fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], MessageDeserializeError> {
+        let mut bytes = [0; N];
+        let first = self.try_get_u8()?;
+
+        if first > 255 - N as u8 {
+            let num_bytes = first as usize + N - 255;
+            self.try_copy_to_slice(&mut bytes[..num_bytes])?;
+        } else {
+            bytes[0] = first;
+        }
+
+        Ok(bytes)
+    }
+
+    fn try_copy_to_slice(&mut self, dst: &mut [u8]) -> Result<(), MessageDeserializeError> {
+        if self.remaining() >= dst.len() {
+            self.copy_to_slice(dst);
+            Ok(())
+        } else {
+            Err(MessageDeserializeError)
+        }
+    }
+}
+
+impl<T: Buf + ?Sized> MessageBufExt for T {}
 
 fn zigzag_encode_i16(n: i16) -> u16 {
     (n >> 15) as u16 ^ (n << 1) as u16
