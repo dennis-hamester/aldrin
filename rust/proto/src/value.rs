@@ -441,7 +441,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
 
 impl Serialize for Bytes {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(&self.0)
+        serializer.serialize_byte_slice(&self.0)
     }
 }
 
@@ -453,13 +453,13 @@ impl Deserialize for Bytes {
 
 impl<'a> Serialize for BytesRef<'a> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(self.0)
+        serializer.serialize_byte_slice(self.0)
     }
 }
 
 impl Serialize for bytes::Bytes {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(self)
+        serializer.serialize_byte_slice(self)
     }
 }
 
@@ -473,7 +473,7 @@ impl Deserialize for bytes::Bytes {
 
 impl Serialize for bytes::BytesMut {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(self)
+        serializer.serialize_byte_slice(self)
     }
 }
 

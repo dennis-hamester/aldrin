@@ -136,15 +136,14 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_bytes(self, value: &[u8]) -> Result<(), SerializeError> {
-        if value.len() <= u32::MAX as usize {
-            self.buf.put_discriminant_u8(ValueKind::Bytes);
-            self.buf.put_varint_u32_le(value.len() as u32);
-            self.buf.put_slice(value);
-            Ok(())
-        } else {
-            Err(SerializeError::Overflow)
-        }
+    pub fn serialize_bytes(self, num_elems: usize) -> Result<BytesSerializer<'a>, SerializeError> {
+        BytesSerializer::new(self.buf, num_elems)
+    }
+
+    pub fn serialize_byte_slice(self, bytes: &[u8]) -> Result<(), SerializeError> {
+        let mut serializer = self.serialize_bytes(bytes.len())?;
+        serializer.serialize(bytes)?;
+        serializer.finish()
     }
 
     pub fn serialize_map<K: SerializeKey + ?Sized>(
@@ -254,6 +253,50 @@ impl<'a> VecSerializer<'a> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
             value.serialize(Serializer::new(self.buf))?;
+            Ok(self)
+        } else {
+            Err(SerializeError::TooManyElements)
+        }
+    }
+
+    pub fn finish(self) -> Result<(), SerializeError> {
+        if self.num_elems == 0 {
+            Ok(())
+        } else {
+            Err(SerializeError::TooFewElements)
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct BytesSerializer<'a> {
+    buf: &'a mut BytesMut,
+    num_elems: usize,
+}
+
+impl<'a> BytesSerializer<'a> {
+    fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
+        if num_elems <= u32::MAX as usize {
+            buf.put_discriminant_u8(ValueKind::Bytes);
+            buf.put_varint_u32_le(num_elems as u32);
+            Ok(Self { buf, num_elems })
+        } else {
+            Err(SerializeError::Overflow)
+        }
+    }
+
+    pub fn remaining_elements(&self) -> usize {
+        self.num_elems
+    }
+
+    pub fn requires_additional_elements(&self) -> bool {
+        self.num_elems > 0
+    }
+
+    pub fn serialize(&mut self, bytes: &[u8]) -> Result<&mut Self, SerializeError> {
+        if self.num_elems >= bytes.len() {
+            self.num_elems -= bytes.len();
+            self.buf.put_slice(bytes);
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)

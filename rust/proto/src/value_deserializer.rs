@@ -48,7 +48,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             ValueKind::ObjectId => self.buf.try_skip(32),
             ValueKind::ServiceId => self.buf.try_skip(64),
             ValueKind::Vec => VecDeserializer::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip_all(),
             ValueKind::U8Map => MapDeserializer::<u8>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::I8Map => MapDeserializer::<i8>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::U16Map => MapDeserializer::<u16>::new_without_value_kind(self.buf)?.skip(),
@@ -227,7 +227,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     }
 
     pub fn deserialize_bytes_to_vec(self) -> Result<Vec<u8>, DeserializeError> {
-        BytesDeserializer::new(self.buf)?.deserialize_to_vec()
+        BytesDeserializer::new(self.buf)?.deserialize_all_to_vec()
     }
 
     pub fn deserialize_map<K: DeserializeKey>(
@@ -396,22 +396,42 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
         self.len == 0
     }
 
-    pub fn deserialize(&mut self, mut dst: impl AsMut<[u8]>) -> Result<(), DeserializeError> {
-        let dst = dst.as_mut();
-
-        if dst.len() == self.len as usize {
-            self.buf.try_copy_to_slice(dst)
+    pub fn deserialize(&mut self, dst: &mut [u8]) -> Result<(), DeserializeError> {
+        if dst.len() <= self.len as usize {
+            self.buf.try_copy_to_slice(&mut *dst)?;
+            self.len -= dst.len() as u32;
+            Ok(())
         } else {
             Err(DeserializeError)
         }
     }
 
-    pub fn deserialize_to_vec(self) -> Result<Vec<u8>, DeserializeError> {
-        self.buf.try_copy_to_bytes(self.len as usize).map(Vec::from)
+    pub fn deserialize_to_vec(&mut self, len: usize) -> Result<Vec<u8>, DeserializeError> {
+        if self.len as usize >= len {
+            let bytes = self.buf.try_copy_to_bytes(self.len as usize)?;
+            self.len -= len as u32;
+            Ok(Vec::from(bytes))
+        } else {
+            Err(DeserializeError)
+        }
     }
 
-    pub fn skip(self) -> Result<(), DeserializeError> {
-        self.buf.try_skip(self.len as usize)
+    pub fn deserialize_all_to_vec(mut self) -> Result<Vec<u8>, DeserializeError> {
+        self.deserialize_to_vec(self.len as usize)
+    }
+
+    pub fn skip(&mut self, len: usize) -> Result<(), DeserializeError> {
+        if self.len as usize >= len {
+            self.buf.try_skip(len)?;
+            self.len -= len as u32;
+            Ok(())
+        } else {
+            Err(DeserializeError)
+        }
+    }
+
+    pub fn skip_all(mut self) -> Result<(), DeserializeError> {
+        self.skip(self.len as usize)
     }
 }
 

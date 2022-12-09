@@ -30,7 +30,8 @@ pub use value_deserializer::{
     FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
 };
 pub use value_serializer::{
-    MapSerializer, Serialize, Serializer, SetSerializer, StructSerializer, VecSerializer,
+    BytesSerializer, MapSerializer, Serialize, Serializer, SetSerializer, StructSerializer,
+    VecSerializer,
 };
 
 pub const VERSION: u32 = 12;

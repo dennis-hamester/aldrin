@@ -130,7 +130,7 @@ impl Serialize for Value {
             Self::ObjectId(value) => serializer.serialize_object_id(*value),
             Self::ServiceId(value) => serializer.serialize_service_id(*value),
             Self::Vec(value) => serializer.serialize_vec_iter(value)?,
-            Self::Bytes(value) => serializer.serialize_bytes(value)?,
+            Self::Bytes(value) => serializer.serialize_byte_slice(value)?,
             Self::U8Map(value) => serializer.serialize_map_iter(value)?,
             Self::I8Map(value) => serializer.serialize_map_iter(value)?,
             Self::U16Map(value) => serializer.serialize_map_iter(value)?,

@@ -463,6 +463,42 @@ fn test_bytes() {
 }
 
 #[test]
+fn test_bytes_partial_deserialize() {
+    #[derive(Debug, PartialEq)]
+    struct Parts([u8; 3], [u8; 2]);
+
+    impl Serialize for Parts {
+        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer = serializer.serialize_bytes(6)?;
+            serializer.serialize(&self.0)?;
+            serializer.serialize(&[3])?;
+            serializer.serialize(&self.1)?;
+            serializer.finish()
+        }
+    }
+
+    impl Deserialize for Parts {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let mut deserializer = deserializer.deserialize_bytes()?;
+
+            let mut a = <[u8; 3]>::default();
+            let mut b = <[u8; 2]>::default();
+
+            deserializer.deserialize(&mut a)?;
+            deserializer.skip(1)?;
+            deserializer.deserialize(&mut b)?;
+
+            Ok(Self(a, b))
+        }
+    }
+
+    let serialized = [18, 6, 0, 1, 2, 3, 4, 5];
+    let value = Parts([0, 1, 2], [4, 5]);
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
 fn test_u8_map() {
     let serialized1 = [19, 2, 0, 3, 1, 2, 3, 3];
     let serialized2 = [19, 2, 2, 3, 3, 0, 3, 1];
