@@ -8,6 +8,7 @@ use crate::value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CreateObject {
     pub serial: u32,
     pub uuid: ObjectUuid,

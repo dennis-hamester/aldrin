@@ -8,8 +8,18 @@ edition = "2021"
 rust-version = "1.64.0"
 
 [features]
+fuzzing = [
+    "dep:arbitrary",
+    "uuid/arbitrary",
+]
 new-v4-ids = ["uuid/v4"]
 tokio = ["dep:tokio"]
+
+[dependencies.arbitrary]
+optional = true
+version = "1.2.0"
+default-features = false
+features = ["derive"]
 
 [dependencies.bytes]
 version = "1.2.1"

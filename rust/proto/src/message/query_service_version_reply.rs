@@ -15,12 +15,14 @@ pub enum QueryServiceVersionReplyKind {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum QueryServiceVersionResult {
     Ok(u32),
     InvalidService,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct QueryServiceVersionReply {
     pub serial: u32,
     pub result: QueryServiceVersionResult,

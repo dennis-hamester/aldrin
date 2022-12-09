@@ -8,6 +8,7 @@ use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum ClaimChannelEndResult {
     Ok = 0,
@@ -16,6 +17,7 @@ pub enum ClaimChannelEndResult {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ClaimChannelEndReply {
     pub serial: u32,
     pub result: ClaimChannelEndResult,

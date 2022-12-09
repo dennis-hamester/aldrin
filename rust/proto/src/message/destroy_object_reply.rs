@@ -8,6 +8,7 @@ use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum DestroyObjectResult {
     Ok = 0,
@@ -16,6 +17,7 @@ pub enum DestroyObjectResult {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct DestroyObjectReply {
     pub serial: u32,
     pub result: DestroyObjectResult,

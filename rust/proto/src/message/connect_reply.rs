@@ -18,6 +18,7 @@ pub enum ConnectReplyKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum ConnectReply {
     Ok(SerializedValue),
     VersionMismatch(u32),

@@ -14,6 +14,7 @@ use uuid::Uuid;
 /// same [`ObjectUuid`], then the [`ObjectCookie`] and consequently the [`ObjectId`] will be
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ObjectId {
     /// UUID of the object.
     pub uuid: ObjectUuid,
@@ -47,6 +48,7 @@ impl Deserialize for ObjectId {
 /// [`ObjectUuid`s](Self) are chosen by the user when creating an object and must be unique among
 /// all objects on the bus.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ObjectUuid(pub Uuid);
 
@@ -102,6 +104,7 @@ impl fmt::Display for ObjectUuid {
 /// objects, created and destroyed over time with the same [`ObjectUuid`], can still be
 /// distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ObjectCookie(pub Uuid);
 
@@ -162,6 +165,7 @@ impl fmt::Display for ObjectCookie {
 /// same [`ServiceUuid`], then the [`ServiceCookie`] and consequently the [`ServiceId`] will be
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ServiceId {
     /// Id of the associated object.
     pub object_id: ObjectId,
@@ -202,6 +206,7 @@ impl Deserialize for ServiceId {
 /// [`ServiceUuid`s](Self) are chosen by the user when creating a service and must be unique among
 /// all services of an object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ServiceUuid(pub Uuid);
 
@@ -257,6 +262,7 @@ impl fmt::Display for ServiceUuid {
 /// services, created and destroyed over time with the same [`ServiceUuid`] and on the same object,
 /// can still be distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ServiceCookie(pub Uuid);
 
@@ -310,6 +316,7 @@ impl fmt::Display for ServiceCookie {
 ///
 /// [`ChannelCookie`s](Self) are chosen by the broker when creating a channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ChannelCookie(pub Uuid);
 

@@ -16,12 +16,14 @@ pub enum CreateObjectReplyKind {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum CreateObjectResult {
     Ok(ObjectCookie),
     DuplicateObject,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CreateObjectReply {
     pub serial: u32,
     pub result: CreateObjectResult,

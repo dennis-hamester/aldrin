@@ -7,6 +7,7 @@ use crate::value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CreateChannel {
     pub serial: u32,
     pub claim: ChannelEnd,

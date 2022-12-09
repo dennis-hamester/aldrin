@@ -10,6 +10,7 @@ use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum CallFunctionReplyKind {
     Ok = 0,
@@ -21,6 +22,7 @@ pub enum CallFunctionReplyKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum CallFunctionResult {
     Ok(SerializedValue),
     Err(SerializedValue),
@@ -31,6 +33,7 @@ pub enum CallFunctionResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CallFunctionReply {
     pub serial: u32,
     pub result: CallFunctionResult,

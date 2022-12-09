@@ -9,6 +9,7 @@ use uuid::Uuid;
 // Tests are in crate::value::test;
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum Value {
     None,
     Some(Box<Value>),
@@ -236,6 +237,7 @@ impl Deserialize for Value {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct Struct(pub HashMap<u32, Value>);
 
 impl Serialize for Struct {
@@ -272,6 +274,7 @@ impl Deserialize for Struct {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct Enum {
     pub variant: u32,
     pub value: Value,

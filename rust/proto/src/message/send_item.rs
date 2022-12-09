@@ -10,6 +10,7 @@ use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct SendItem {
     pub cookie: ChannelCookie,
     pub value: SerializedValue,

@@ -111,6 +111,19 @@ impl SerializedValue {
     }
 }
 
+#[cfg(feature = "fuzzing")]
+impl<'a> arbitrary::Arbitrary<'a> for SerializedValue {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        let len = u.arbitrary_len::<u8>()?;
+        let bytes = u.bytes(len)?;
+        if bytes.len() >= 10 {
+            Ok(Self::from_bytes_mut(bytes.into()))
+        } else {
+            Err(arbitrary::Error::NotEnoughData)
+        }
+    }
+}
+
 /// Wrapper for `Vec<u8>` to enable `Serialize` and `Deserialize` specializations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bytes(pub Vec<u8>);

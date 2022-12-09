@@ -8,6 +8,7 @@ use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum SubscribeEventResult {
     Ok = 0,
@@ -15,6 +16,7 @@ pub enum SubscribeEventResult {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct SubscribeEventReply {
     pub serial: u32,
     pub result: SubscribeEventResult,

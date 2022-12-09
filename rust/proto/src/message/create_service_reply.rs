@@ -18,6 +18,7 @@ pub enum CreateServiceReplyKind {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum CreateServiceResult {
     Ok(ServiceCookie),
     DuplicateService,
@@ -26,6 +27,7 @@ pub enum CreateServiceResult {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CreateServiceReply {
     pub serial: u32,
     pub result: CreateServiceResult,

@@ -18,6 +18,7 @@ pub enum QueryObjectReplyKind {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum QueryObjectResult {
     Cookie(ObjectCookie),
     Service {
@@ -29,6 +30,7 @@ pub enum QueryObjectResult {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct QueryObjectReply {
     pub serial: u32,
     pub result: QueryObjectResult,

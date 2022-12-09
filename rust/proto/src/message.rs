@@ -252,6 +252,7 @@ pub trait MessageOps: Sized + message_ops::Sealed {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
@@ -578,6 +579,7 @@ impl message_ops::Sealed for Message {}
 
 /// Sending or receiving end of a channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum ChannelEnd {
     /// Sending end of a channel.
