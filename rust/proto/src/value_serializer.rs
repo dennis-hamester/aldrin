@@ -224,7 +224,7 @@ impl<'a> Serializer<'a> {
 #[derive(Debug)]
 pub struct VecSerializer<'a> {
     buf: &'a mut BytesMut,
-    num_elems: usize,
+    num_elems: u32,
 }
 
 impl<'a> VecSerializer<'a> {
@@ -232,14 +232,17 @@ impl<'a> VecSerializer<'a> {
         if num_elems <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Vec);
             buf.put_varint_u32_le(num_elems as u32);
-            Ok(Self { buf, num_elems })
+            Ok(Self {
+                buf,
+                num_elems: num_elems as u32,
+            })
         } else {
             Err(SerializeError::Overflow)
         }
     }
 
     pub fn remaining_elements(&self) -> usize {
-        self.num_elems
+        self.num_elems as usize
     }
 
     pub fn requires_additional_elements(&self) -> bool {
@@ -271,7 +274,7 @@ impl<'a> VecSerializer<'a> {
 #[derive(Debug)]
 pub struct BytesSerializer<'a> {
     buf: &'a mut BytesMut,
-    num_elems: usize,
+    num_elems: u32,
 }
 
 impl<'a> BytesSerializer<'a> {
@@ -279,14 +282,17 @@ impl<'a> BytesSerializer<'a> {
         if num_elems <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Bytes);
             buf.put_varint_u32_le(num_elems as u32);
-            Ok(Self { buf, num_elems })
+            Ok(Self {
+                buf,
+                num_elems: num_elems as u32,
+            })
         } else {
             Err(SerializeError::Overflow)
         }
     }
 
     pub fn remaining_elements(&self) -> usize {
-        self.num_elems
+        self.num_elems as usize
     }
 
     pub fn requires_additional_elements(&self) -> bool {
@@ -294,8 +300,8 @@ impl<'a> BytesSerializer<'a> {
     }
 
     pub fn serialize(&mut self, bytes: &[u8]) -> Result<&mut Self, SerializeError> {
-        if self.num_elems >= bytes.len() {
-            self.num_elems -= bytes.len();
+        if self.num_elems as usize >= bytes.len() {
+            self.num_elems -= bytes.len() as u32;
             self.buf.put_slice(bytes);
             Ok(self)
         } else {
@@ -314,7 +320,7 @@ impl<'a> BytesSerializer<'a> {
 
 pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
     buf: &'a mut BytesMut,
-    num_elems: usize,
+    num_elems: u32,
     _key: PhantomData<K>,
 }
 
@@ -326,7 +332,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
 
             Ok(Self {
                 buf,
-                num_elems,
+                num_elems: num_elems as u32,
                 _key: PhantomData,
             })
         } else {
@@ -335,7 +341,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     }
 
     pub fn remaining_elements(&self) -> usize {
-        self.num_elems
+        self.num_elems as usize
     }
 
     pub fn requires_additional_elements(&self) -> bool {
@@ -379,7 +385,7 @@ impl<'a, K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'a, K> {
 
 pub struct SetSerializer<'a, T: SerializeKey + ?Sized> {
     buf: &'a mut BytesMut,
-    num_elems: usize,
+    num_elems: u32,
     _key: PhantomData<T>,
 }
 
@@ -391,7 +397,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
 
             Ok(Self {
                 buf,
-                num_elems,
+                num_elems: num_elems as u32,
                 _key: PhantomData,
             })
         } else {
@@ -400,7 +406,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     }
 
     pub fn remaining_elements(&self) -> usize {
-        self.num_elems
+        self.num_elems as usize
     }
 
     pub fn requires_additional_elements(&self) -> bool {
@@ -440,7 +446,7 @@ impl<'a, T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'a, T> {
 #[derive(Debug)]
 pub struct StructSerializer<'a> {
     buf: &'a mut BytesMut,
-    num_fields: usize,
+    num_fields: u32,
 }
 
 impl<'a> StructSerializer<'a> {
@@ -448,14 +454,17 @@ impl<'a> StructSerializer<'a> {
         if num_fields <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Struct);
             buf.put_varint_u32_le(num_fields as u32);
-            Ok(Self { buf, num_fields })
+            Ok(Self {
+                buf,
+                num_fields: num_fields as u32,
+            })
         } else {
             Err(SerializeError::Overflow)
         }
     }
 
     pub fn remaining_fields(&self) -> usize {
-        self.num_fields
+        self.num_fields as usize
     }
 
     pub fn requires_additional_fields(&self) -> bool {
