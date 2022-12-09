@@ -154,9 +154,7 @@ pub(crate) trait BufExt: Buf {
         }
     }
 
-    fn try_copy_to_slice(&mut self, mut dst: impl AsMut<[u8]>) -> Result<(), DeserializeError> {
-        let dst = dst.as_mut();
-
+    fn try_copy_to_slice(&mut self, dst: &mut [u8]) -> Result<(), DeserializeError> {
         if self.remaining() >= dst.len() {
             self.copy_to_slice(dst);
             Ok(())

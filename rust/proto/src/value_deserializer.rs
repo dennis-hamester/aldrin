@@ -159,14 +159,14 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_uuid(self) -> Result<Uuid, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Uuid)?;
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
         self.buf.try_copy_to_slice(&mut bytes)?;
         Ok(Uuid::from_bytes(bytes))
     }
 
     pub fn deserialize_object_id(self) -> Result<ObjectId, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::ObjectId)?;
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
 
         self.buf.try_copy_to_slice(&mut bytes)?;
         let uuid = ObjectUuid(Uuid::from_bytes(bytes));
@@ -179,7 +179,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_service_id(self) -> Result<ServiceId, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::ServiceId)?;
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
 
         self.buf.try_copy_to_slice(&mut bytes)?;
         let object_uuid = ObjectUuid(Uuid::from_bytes(bytes));
@@ -290,14 +290,14 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_sender(self) -> Result<ChannelCookie, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Sender)?;
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
         self.buf.try_copy_to_slice(&mut bytes)?;
         Ok(ChannelCookie(Uuid::from_bytes(bytes)))
     }
 
     pub fn deserialize_receiver(self) -> Result<ChannelCookie, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Receiver)?;
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
         self.buf.try_copy_to_slice(&mut bytes)?;
         Ok(ChannelCookie(Uuid::from_bytes(bytes)))
     }
@@ -398,7 +398,7 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
 
     pub fn deserialize(&mut self, dst: &mut [u8]) -> Result<(), DeserializeError> {
         if dst.len() <= self.len as usize {
-            self.buf.try_copy_to_slice(&mut *dst)?;
+            self.buf.try_copy_to_slice(dst)?;
             self.len -= dst.len() as u32;
             Ok(())
         } else {

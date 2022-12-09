@@ -199,7 +199,7 @@ impl DeserializeKey for String {}
 
 impl Sealed for Uuid {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
-        let mut bytes = Default::default();
+        let mut bytes = uuid::Bytes::default();
         buf.try_copy_to_slice(&mut bytes)?;
         Ok(Uuid::from_bytes(bytes))
     }
