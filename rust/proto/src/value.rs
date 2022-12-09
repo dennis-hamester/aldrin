@@ -91,8 +91,8 @@ impl SerializedValue {
 
         let res = T::deserialize(deserializer);
 
-        if res.is_ok() {
-            debug_assert!(buf.is_empty());
+        if res.is_ok() && !buf.is_empty() {
+            return Err(DeserializeError::TrailingData);
         }
 
         res

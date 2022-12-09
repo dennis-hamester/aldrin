@@ -220,11 +220,21 @@ impl fmt::Display for MessageSerializeError {
 impl Error for MessageSerializeError {}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MessageDeserializeError;
+pub enum MessageDeserializeError {
+    InvalidSerialization,
+    UnexpectedEoi,
+    UnexpectedMessage,
+    TrailingData,
+}
 
 impl fmt::Display for MessageDeserializeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("message deserialization failed")
+        match self {
+            Self::InvalidSerialization => f.write_str("invalid serialization"),
+            Self::UnexpectedEoi => f.write_str("unexpected end of input"),
+            Self::UnexpectedMessage => f.write_str("unexpected message type"),
+            Self::TrailingData => f.write_str("serialization contains trailing data"),
+        }
     }
 }
 
@@ -387,10 +397,13 @@ impl MessageOps for Message {
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         if buf.len() < 5 {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::UnexpectedEoi);
         }
 
-        match buf[4].try_into().map_err(|_| MessageDeserializeError)? {
+        match buf[4]
+            .try_into()
+            .map_err(|_| MessageDeserializeError::InvalidSerialization)?
+        {
             MessageKind::Connect => Connect::deserialize_message(buf).map(Self::Connect),
             MessageKind::ConnectReply => {
                 ConnectReply::deserialize_message(buf).map(Self::ConnectReply)
@@ -702,12 +715,12 @@ impl MessageWithoutValueDeserializer {
 
         // 4 bytes message length + 1 byte message kind.
         if buf_len < 5 {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::UnexpectedEoi);
         }
 
         let len = buf.get_u32_le() as usize;
         if buf_len != len {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::InvalidSerialization);
         }
 
         buf.ensure_discriminant_u8(kind)?;
@@ -737,7 +750,7 @@ impl MessageWithoutValueDeserializer {
         if self.buf.is_empty() {
             Ok(())
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::TrailingData)
         }
     }
 }
@@ -754,21 +767,21 @@ impl MessageWithValueDeserializer {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
         // value.
         if buf.len() < 10 {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::UnexpectedEoi);
         }
 
         let msg_len = (&buf[..4]).get_u32_le() as usize;
         if buf.len() != msg_len {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::InvalidSerialization);
         }
 
         if buf[4] != kind.into() {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::UnexpectedMessage);
         }
 
         let value_len = (&buf[5..9]).get_u32_le() as usize;
         if value_len < 1 {
-            return Err(MessageDeserializeError);
+            return Err(MessageDeserializeError::InvalidSerialization);
         }
 
         let msg = buf.split_off(9 + value_len);
@@ -798,7 +811,7 @@ impl MessageWithValueDeserializer {
             self.header_and_value[0..9].fill(0);
             Ok(SerializedValue::from_bytes_mut(self.header_and_value))
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::TrailingData)
         }
     }
 
@@ -806,7 +819,7 @@ impl MessageWithValueDeserializer {
         if self.msg.is_empty() {
             Ok(())
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::TrailingData)
         }
     }
 }

@@ -195,7 +195,7 @@ pub(crate) trait MessageBufExt: Buf {
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
         self.try_get_u8()?
             .try_into()
-            .map_err(|_| MessageDeserializeError)
+            .map_err(|_| MessageDeserializeError::InvalidSerialization)
     }
 
     fn ensure_discriminant_u8<T: TryFrom<u8> + PartialEq>(
@@ -205,7 +205,7 @@ pub(crate) trait MessageBufExt: Buf {
         if self.try_get_discriminant_u8::<T>()? == discriminant {
             Ok(())
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::UnexpectedMessage)
         }
     }
 
@@ -213,7 +213,7 @@ pub(crate) trait MessageBufExt: Buf {
         if self.remaining() >= 1 {
             Ok(self.get_u8())
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::UnexpectedEoi)
         }
     }
 
@@ -240,7 +240,7 @@ pub(crate) trait MessageBufExt: Buf {
             self.copy_to_slice(dst);
             Ok(())
         } else {
-            Err(MessageDeserializeError)
+            Err(MessageDeserializeError::UnexpectedEoi)
         }
     }
 }

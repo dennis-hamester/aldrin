@@ -640,7 +640,7 @@ fn message_try_get_discriminant_u8() {
     let mut buf = &[255][..];
     assert_eq!(
         buf.try_get_discriminant_u8::<ValueKind>(),
-        Err(MessageDeserializeError)
+        Err(MessageDeserializeError::InvalidSerialization)
     );
 }
 
@@ -728,7 +728,7 @@ fn message_try_copy_to_slice() {
     let mut dst = [0, 0, 0, 0];
     assert_eq!(
         src.try_copy_to_slice(&mut dst),
-        Err(MessageDeserializeError)
+        Err(MessageDeserializeError::UnexpectedEoi)
     );
 }
 

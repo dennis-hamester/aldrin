@@ -26,6 +26,7 @@ pub enum DeserializeError {
     UnexpectedEoi,
     UnexpectedValue,
     NoMoreElements,
+    TrailingData,
 }
 
 impl fmt::Display for DeserializeError {
@@ -35,6 +36,7 @@ impl fmt::Display for DeserializeError {
             Self::UnexpectedEoi => f.write_str("unexpected end of input"),
             Self::UnexpectedValue => f.write_str("unexpected value type"),
             Self::NoMoreElements => f.write_str("no more elements"),
+            Self::TrailingData => f.write_str("serialization contains trailing data"),
         }
     }
 }
