@@ -203,11 +203,17 @@ impl MessageKind {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MessageSerializeError;
+pub enum MessageSerializeError {
+    Overflow,
+    InvalidValue,
+}
 
 impl fmt::Display for MessageSerializeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("message serialization failed")
+        match self {
+            Self::Overflow => f.write_str("serialized message overflowed"),
+            Self::InvalidValue => f.write_str("invalid value"),
+        }
     }
 }
 
@@ -641,12 +647,12 @@ impl MessageSerializer {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
         // value.
         if buf.len() < 10 {
-            return Err(MessageSerializeError);
+            return Err(MessageSerializeError::InvalidValue);
         }
 
         let value_len = buf.len() - 9;
         if value_len > u32::MAX as usize {
-            return Err(MessageSerializeError);
+            return Err(MessageSerializeError::Overflow);
         }
 
         buf[4] = kind.into();
@@ -681,7 +687,7 @@ impl MessageSerializer {
             self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());
             Ok(self.buf)
         } else {
-            Err(MessageSerializeError)
+            Err(MessageSerializeError::Overflow)
         }
     }
 }
