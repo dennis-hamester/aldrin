@@ -394,7 +394,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
         let mut deserializer = deserializer.deserialize_vec()?;
 
         if deserializer.remaining_elements() != N {
-            return Err(DeserializeError);
+            return Err(DeserializeError::UnexpectedValue);
         }
 
         // SAFETY: This create an array of MaybeUninit<T>, which don't require initialization.
@@ -411,7 +411,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
                     num += 1;
                 }
 
-                Err(_) => {
+                Err(e) => {
                     for elem in &mut arr[..num] {
                         // SAFETY: The first num elements have been initialized.
                         unsafe {
@@ -419,7 +419,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
                         }
                     }
 
-                    return Err(DeserializeError);
+                    return Err(e);
                 }
             }
         }

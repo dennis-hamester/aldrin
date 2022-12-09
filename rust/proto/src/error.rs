@@ -21,11 +21,21 @@ impl fmt::Display for SerializeError {
 impl Error for SerializeError {}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct DeserializeError;
+pub enum DeserializeError {
+    InvalidSerialization,
+    UnexpectedEoi,
+    UnexpectedValue,
+    NoMoreElements,
+}
 
 impl fmt::Display for DeserializeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("value deserialization failed")
+        match self {
+            Self::InvalidSerialization => f.write_str("invalid serialization"),
+            Self::UnexpectedEoi => f.write_str("unexpected end of input"),
+            Self::UnexpectedValue => f.write_str("unexpected value type"),
+            Self::NoMoreElements => f.write_str("no more elements"),
+        }
     }
 }
 

@@ -91,7 +91,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         match self.buf.try_get_discriminant_u8()? {
             ValueKind::Some => T::deserialize(self).map(Some),
             ValueKind::None => Ok(None),
-            _ => Err(DeserializeError),
+            _ => Err(DeserializeError::UnexpectedValue),
         }
     }
 
@@ -154,7 +154,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         self.buf.ensure_discriminant_u8(ValueKind::String)?;
         let len = self.buf.try_get_varint_u32_le()? as usize;
         let bytes = self.buf.try_copy_to_bytes(len)?.into();
-        String::from_utf8(bytes).map_err(|_| DeserializeError)
+        String::from_utf8(bytes).map_err(|_| DeserializeError::InvalidSerialization)
     }
 
     pub fn deserialize_uuid(self) -> Result<Uuid, DeserializeError> {
@@ -336,7 +336,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
             self.num_elems -= 1;
             T::deserialize(Deserializer::new(self.buf))
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -358,7 +358,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
             self.num_elems -= 1;
             Deserializer::new(self.buf).skip()
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -402,7 +402,7 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
             self.len -= dst.len() as u32;
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -412,7 +412,7 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
             self.len -= len as u32;
             Ok(Vec::from(bytes))
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -426,7 +426,7 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
             self.len -= len as u32;
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -473,7 +473,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
             self.num_elems -= 1;
             ElementDeserializer::new(self.buf)
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -496,7 +496,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
             K::skip(self.buf)?;
             Deserializer::new(self.buf).skip()
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -571,7 +571,7 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
             self.num_elems -= 1;
             T::deserialize_key(self.buf)
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -592,7 +592,7 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
             self.num_elems -= 1;
             T::skip(self.buf)
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 
@@ -635,7 +635,7 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
             self.num_fields -= 1;
             FieldDeserializer::new(self.buf)
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::NoMoreElements)
         }
     }
 

@@ -238,13 +238,13 @@ fn try_get_discriminant_u8() {
     let mut buf = &[255][..];
     assert_eq!(
         buf.try_get_discriminant_u8::<ValueKind>(),
-        Err(DeserializeError)
+        Err(DeserializeError::InvalidSerialization)
     );
 
     let buf = &[][..];
     assert_eq!(
         buf.try_peek_discriminant_u8::<ValueKind>(),
-        Err(DeserializeError)
+        Err(DeserializeError::UnexpectedEoi)
     );
 }
 
@@ -262,13 +262,13 @@ fn try_peek_discriminant_u8() {
     let buf = &[255][..];
     assert_eq!(
         buf.try_peek_discriminant_u8::<ValueKind>(),
-        Err(DeserializeError)
+        Err(DeserializeError::InvalidSerialization)
     );
 
     let buf = &[][..];
     assert_eq!(
         buf.try_peek_discriminant_u8::<ValueKind>(),
-        Err(DeserializeError)
+        Err(DeserializeError::UnexpectedEoi)
     );
 }
 
@@ -309,7 +309,7 @@ fn try_get_u32_le() {
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0][..];
-    assert_eq!(buf.try_get_u32_le(), Err(DeserializeError));
+    assert_eq!(buf.try_get_u32_le(), Err(DeserializeError::UnexpectedEoi));
 }
 
 #[test]
@@ -319,7 +319,7 @@ fn try_get_u64_le() {
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0, 0, 0, 0, 0][..];
-    assert_eq!(buf.try_get_u64_le(), Err(DeserializeError));
+    assert_eq!(buf.try_get_u64_le(), Err(DeserializeError::UnexpectedEoi));
 }
 
 #[test]
@@ -543,7 +543,10 @@ fn try_copy_to_bytes() {
     assert_eq!(*buf, [3]);
 
     let mut buf = &[1, 2, 3][..];
-    assert!(buf.try_copy_to_bytes(4).is_err());
+    assert_eq!(
+        buf.try_copy_to_bytes(4),
+        Err(DeserializeError::UnexpectedEoi)
+    );
 }
 
 #[test]
@@ -568,7 +571,10 @@ fn try_copy_to_slice() {
 
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0, 0];
-    assert!(src.try_copy_to_slice(&mut dst).is_err());
+    assert_eq!(
+        src.try_copy_to_slice(&mut dst),
+        Err(DeserializeError::UnexpectedEoi)
+    );
 }
 
 #[test]
@@ -586,7 +592,7 @@ fn try_skip() {
     assert_eq!(*buf, []);
 
     let mut buf = &[1, 2][..];
-    assert!(buf.try_skip(3).is_err());
+    assert_eq!(buf.try_skip(3), Err(DeserializeError::UnexpectedEoi));
 }
 
 #[test]

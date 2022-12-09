@@ -178,7 +178,7 @@ impl Sealed for String {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
         let len = buf.try_get_varint_u32_le()? as usize;
         let bytes = buf.try_copy_to_bytes(len)?.into();
-        String::from_utf8(bytes).map_err(|_| DeserializeError)
+        String::from_utf8(bytes).map_err(|_| DeserializeError::InvalidSerialization)
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {

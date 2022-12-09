@@ -54,14 +54,18 @@ impl<T: BufMut + ?Sized> BufMutExt for T {}
 
 pub(crate) trait BufExt: Buf {
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
-        self.try_get_u8()?.try_into().map_err(|_| DeserializeError)
+        self.try_get_u8()?
+            .try_into()
+            .map_err(|_| DeserializeError::InvalidSerialization)
     }
 
     fn try_peek_discriminant_u8<T: TryFrom<u8>>(&self) -> Result<T, DeserializeError> {
         if self.remaining() >= 1 {
-            self.chunk()[0].try_into().map_err(|_| DeserializeError)
+            self.chunk()[0]
+                .try_into()
+                .map_err(|_| DeserializeError::InvalidSerialization)
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -72,7 +76,7 @@ pub(crate) trait BufExt: Buf {
         if self.try_get_discriminant_u8::<T>()? == discriminant {
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedValue)
         }
     }
 
@@ -80,7 +84,7 @@ pub(crate) trait BufExt: Buf {
         if self.remaining() >= 1 {
             Ok(self.get_u8())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -88,7 +92,7 @@ pub(crate) trait BufExt: Buf {
         if self.remaining() >= 1 {
             Ok(self.get_i8())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -96,7 +100,7 @@ pub(crate) trait BufExt: Buf {
         if self.remaining() >= 4 {
             Ok(self.get_u32_le())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -104,7 +108,7 @@ pub(crate) trait BufExt: Buf {
         if self.remaining() >= 8 {
             Ok(self.get_u64_le())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -150,7 +154,7 @@ pub(crate) trait BufExt: Buf {
         if self.remaining() >= len {
             Ok(self.copy_to_bytes(len))
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -159,7 +163,7 @@ pub(crate) trait BufExt: Buf {
             self.copy_to_slice(dst);
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -168,7 +172,7 @@ pub(crate) trait BufExt: Buf {
             self.advance(len);
             Ok(())
         } else {
-            Err(DeserializeError)
+            Err(DeserializeError::UnexpectedEoi)
         }
     }
 

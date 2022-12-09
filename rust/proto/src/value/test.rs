@@ -844,12 +844,12 @@ impl Deserialize for TestStruct {
             match deserializer.id() {
                 0 => a = Some(deserializer.deserialize()?),
                 1 => b = deserializer.deserialize()?,
-                _ => return Err(DeserializeError),
+                _ => return Err(DeserializeError::InvalidSerialization),
             }
         }
 
         Ok(Self {
-            a: a.ok_or(DeserializeError)?,
+            a: a.ok_or(DeserializeError::InvalidSerialization)?,
             b,
         })
     }
@@ -902,7 +902,7 @@ impl Deserialize for TestEnum {
         match deserializer.variant() {
             0 => Ok(Self::A(deserializer.deserialize()?)),
             1 => Ok(Self::B(deserializer.deserialize()?)),
-            _ => Err(DeserializeError),
+            _ => Err(DeserializeError::InvalidSerialization),
         }
     }
 }
