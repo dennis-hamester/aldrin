@@ -43,3 +43,15 @@ name = "packetizer-spare-capacity-mut"
 path = "fuzz_targets/packetizer_spare_capacity_mut.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "value-deserialize"
+path = "fuzz_targets/value_deserialize.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "value-serialize"
+path = "fuzz_targets/value_serialize.rs"
+test = false
+doc = false
