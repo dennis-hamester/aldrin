@@ -15,6 +15,7 @@ libfuzzer-sys = "0.4.5"
 
 [dependencies.aldrin-proto]
 path = ".."
+features = ["fuzzing"]
 
 [profile.release]
 debug = 1
@@ -22,6 +23,12 @@ debug = 1
 [[bin]]
 name = "message-deserialize"
 path = "fuzz_targets/message_deserialize.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "message-serialize"
+path = "fuzz_targets/message_serialize.rs"
 test = false
 doc = false
 
