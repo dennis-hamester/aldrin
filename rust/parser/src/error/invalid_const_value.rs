@@ -74,8 +74,7 @@ impl Diagnostic for InvalidConstValue {
         }
 
         fmt.help(format!(
-            "{} values must be in the range from {} to {}",
-            kind, min, max
+            "{kind} values must be in the range from {min} to {max}"
         ));
         fmt.format()
     }
