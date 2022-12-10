@@ -28,11 +28,12 @@ use std::task::{Context, Poll};
 /// Creating and destroying [`Service`s](Service):
 ///
 /// ```
-/// use aldrin_client::{Error, ObjectUuid, ServiceUuid};
+/// use aldrin_client::Error;
+/// use aldrin_proto::{ObjectUuid, ServiceUuid};
 /// use std::mem;
+/// use uuid::uuid;
 ///
-/// // f88f1706-9609-42a4-8796-4e7bb8c3ef24
-/// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0xf88f1706960942a487964e7bb8c3ef24);
+/// const SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("f88f1706-9609-42a4-8796-4e7bb8c3ef24"));
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -61,12 +62,12 @@ use std::task::{Context, Poll};
 /// service and how to emit events.
 ///
 /// ```
-/// use aldrin_client::{ObjectUuid, ServiceUuid};
+/// use aldrin_proto::{ObjectUuid, ServiceUuid};
 /// use futures::stream::StreamExt;
 /// use std::collections::HashSet;
+/// use uuid::uuid;
 ///
-/// // 91334d42-7045-4292-99dc-9fd89c5f104f
-/// const CHAT_UUID: ServiceUuid = ServiceUuid::from_u128(0x91334d427045429299dc9fd89c5f104f);
+/// const CHAT_UUID: ServiceUuid = ServiceUuid(uuid!("91334d42-7045-4292-99dc-9fd89c5f104f"));
 ///
 /// // Functions
 /// const SHUTDOWN: u32 = 1;
@@ -92,7 +93,7 @@ use std::task::{Context, Poll};
 /// // HashSet to keep track of users:
 /// let mut users = HashSet::new();
 ///
-/// # handle.call_function::<_, (), ()>(service.id(), SHUTDOWN, ())?;
+/// # handle.call_function::<_, (), ()>(service.id(), SHUTDOWN, &())?;
 /// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
 /// // which contains the function's id, the arguments, and a reply object.
 /// while let Some(func) = service.next().await {
@@ -100,38 +101,38 @@ use std::task::{Context, Poll};
 ///         SHUTDOWN => break,
 ///
 ///         JOIN_CHAT => {
-///             let name: String = func.args.convert()?;
+///             let name: String = func.args.deserialize()?;
 ///             if users.insert(name.clone()) {
 ///                 // Emit an event that a new user with the given name joined:
-///                 handle.emit_event(service_id, JOINED_CHAT, name)?;
+///                 handle.emit_event(service_id, JOINED_CHAT, &name)?;
 ///
-///                 func.reply.ok(())?;
+///                 func.reply.ok(&())?;
 ///             } else {
 ///                 // Signal that the name is already taken.
-///                 func.reply.err(())?;
+///                 func.reply.err(&())?;
 ///             }
 ///         }
 ///
 ///         LEAVE_CHAT => {
-///             let name: String = func.args.convert()?;
+///             let name: String = func.args.deserialize()?;
 ///             if users.remove(&name) {
 ///                 // Emit an event that a user with the given name left:
-///                 handle.emit_event(service_id, LEFT_CHAT, name)?;
+///                 handle.emit_event(service_id, LEFT_CHAT, &name)?;
 ///
-///                 func.reply.ok(())?;
+///                 func.reply.ok(&())?;
 ///             } else {
 ///                 // Signal that the name is not known.
-///                 func.reply.err(())?;
+///                 func.reply.err(&())?;
 ///             }
 ///         }
 ///
-///         LIST_USERS => func.reply.ok(users.clone())?,
+///         LIST_USERS => func.reply.ok(&users)?,
 ///
 ///         SEND_MESSAGE => {
 ///             // Broadcast the message:
-///             let message = func.args.convert()?;
-///             handle.emit_event(service_id, MESSAGE_SENT, message)?;
-///             func.reply.ok(())?;
+///             let message = func.args.deserialize()?;
+///             handle.emit_event(service_id, MESSAGE_SENT, &message)?;
+///             func.reply.ok(&())?;
 ///         }
 ///
 ///         _ => {}

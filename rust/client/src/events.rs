@@ -42,26 +42,26 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio_based::TestBroker::new();
 /// # let handle = broker.add_client().await;
-/// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+/// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
+/// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
 /// # let service_id = svc.id();
 /// let mut events = handle.events();
 ///
 /// events.subscribe(service_id, 1).await?;
 /// events.subscribe(service_id, 2).await?;
 ///
-/// # handle.emit_event(service_id, 1, 32u32)?;
+/// # handle.emit_event(service_id, 1, &32u32)?;
 /// while let Some(event) = events.next().await {
 ///     match event {
-///         Event { id: 1, args, .. } => {
-///             let arg: u32 = args.convert()?;
-///             println!("Event 1 with u32 arg {}.", arg);
+///         Event { id: 1, value, .. } => {
+///             let value: u32 = value.deserialize()?;
+///             println!("Event 1 with u32 value {value}.");
 ///             # handle.emit_event(service_id, 2, "Hello, world!")?;
 ///         }
 ///
-///         Event { id: 2, args, .. } => {
-///             let arg: String = args.convert()?;
-///             println!("Event 2 with string arg {}.", arg);
+///         Event { id: 2, value, .. } => {
+///             let value: String = value.deserialize()?;
+///             println!("Event 2 with string value {value}.");
 ///             # svc.destroy().await?;
 ///         }
 ///

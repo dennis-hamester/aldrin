@@ -28,8 +28,8 @@ use std::task::{Context, Poll};
 /// # let broker = aldrin_test::tokio_based::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// let mut services = handle.services(SubscribeMode::CurrentOnly)?;
-/// # let mut object = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-/// # object.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+/// # let mut object = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
+/// # object.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
 ///
 /// while let Some(event) = services.next().await {
 ///     match event {
@@ -50,19 +50,20 @@ use std::task::{Context, Poll};
 /// acquire its [`ServiceId`]:
 ///
 /// ```
-/// use aldrin_client::{ServiceEvent, ServiceUuid, SubscribeMode};
+/// use aldrin_client::{ServiceEvent, SubscribeMode};
+/// use aldrin_proto::ServiceUuid;
 /// use futures::future;
 /// use futures::stream::StreamExt;
+/// use uuid::uuid;
 ///
-/// // 6d92452b-0cbc-493f-b16b-9f4ce2474a2e
 /// const INTERESTING_SERVICE_UUID: ServiceUuid =
-///     ServiceUuid::from_u128(0x6d92452b0cbc493fb16b9f4ce2474a2e);
+///     ServiceUuid(uuid!("6d92452b-0cbc-493f-b16b-9f4ce2474a2e"));
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio_based::TestBroker::new();
 /// # let handle = broker.add_client().await;
-/// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+/// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
 /// # let svc = obj.create_service(INTERESTING_SERVICE_UUID, 0).await?;
 /// let mut services = handle.services(SubscribeMode::CurrentOnly)?;
 ///

@@ -100,10 +100,11 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{Error, ObjectUuid};
+    /// use aldrin_client::Error;
+    /// use aldrin_proto::ObjectUuid;
+    /// use uuid::uuid;
     ///
-    /// // 6173e119-8066-4776-989b-145a5f16ed4c
-    /// const OBJECT2_UUID: ObjectUuid = ObjectUuid::from_u128(0x6173e11980664776989b145a5f16ed4c);
+    /// const OBJECT2_UUID: ObjectUuid = ObjectUuid(uuid!("6173e119-8066-4776-989b-145a5f16ed4c"));
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -257,12 +258,12 @@ impl Handle {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_function::<_, u32, String>(service_id, 1, "1 + 2 = ?")?;
-    /// # svc.next().await.unwrap().reply.ok(3u32)?;
+    /// # svc.next().await.unwrap().reply.ok(&3u32)?;
     ///
     /// // Await the result. The `?` here checks for errors on the protocol level, such as a
     /// // intermediate shutdown, or whether the function call was aborted by the callee.
@@ -317,14 +318,14 @@ impl Handle {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
-    /// let result = handle.call_infallible_function(service_id, 1, "1 + 2 = ?")?;
-    /// # svc.next().await.unwrap().reply.ok(3u32)?;
+    /// let result = handle.call_infallible_function::<_, u32>(service_id, 1, "1 + 2 = ?")?;
+    /// # svc.next().await.unwrap().reply.ok(&3u32)?;
     ///
-    /// assert_eq!(3u32, result.await?);
+    /// assert_eq!(result.await?, 3);
     /// # Ok(())
     /// # }
     /// ```
@@ -424,8 +425,8 @@ impl Handle {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_client::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
     /// handle.emit_event(service_id, 1, "Hello, world!")?;
@@ -456,7 +457,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::ObjectUuid;
+    /// use aldrin_proto::ObjectUuid;
     /// use std::time::Duration;
     /// use tokio::time;
     ///
@@ -514,7 +515,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -617,12 +618,12 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
     /// use std::time::Duration;
     /// use tokio::time;
+    /// use uuid::uuid;
     ///
-    /// // 4d090fab-8614-43d1-8473-f29ff84ffc6b
-    /// const SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x4d090fab861443d18473f29ff84ffc6b);
+    /// const SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("4d090fab-8614-43d1-8473-f29ff84ffc6b"));
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -687,7 +688,7 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin_test::tokio_based::TestBroker;
-    /// use aldrin_client::ObjectUuid;
+    /// use aldrin_proto::ObjectUuid;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -741,7 +742,7 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin_test::tokio_based::TestBroker;
-    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
     /// use futures::stream::StreamExt;
     /// use std::collections::HashSet;
     ///
@@ -800,7 +801,7 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin_test::tokio_based::TestBroker;
-    /// use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -857,7 +858,7 @@ impl Handle {
     /// # let handle2 = broker.add_client().await;
     /// // Client 1 creates the channel. It then unbinds the receiver and makes it available to
     /// // client 2. This will typically happen by returning it from a function call.
-    /// let (sender, receiver) = handle1.create_channel_with_claimed_sender::<u32>().await?;
+    /// let (sender, receiver) = handle1.create_channel_with_claimed_sender().await?;
     /// let receiver = receiver.unbind();
     ///
     /// // Client 2 gets access to the receiver, and then binds and claims it.
@@ -867,9 +868,9 @@ impl Handle {
     /// let mut sender = sender.established().await?;
     ///
     /// // The channel is now fully established and client 1 can send items to client 2.
-    /// sender.send(1)?;
-    /// sender.send(2)?;
-    /// sender.send(3)?;
+    /// sender.send(&1)?;
+    /// sender.send(&2)?;
+    /// sender.send(&3)?;
     ///
     /// // Client 1 will destroy (or drop) the channel when it has nothing to send anymore.
     /// sender.destroy().await?;
@@ -1017,7 +1018,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::ObjectUuid;
+    /// use aldrin_proto::ObjectUuid;
     /// use std::mem;
     ///
     /// # #[tokio::main]
@@ -1055,7 +1056,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_client::{ObjectUuid, ServiceUuid};
+    /// # use aldrin_proto::{ObjectUuid, ServiceUuid};
     /// use std::mem;
     ///
     /// # #[tokio::main]

@@ -28,7 +28,7 @@ use std::task::{Context, Poll};
 /// # let broker = aldrin_test::tokio_based::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// let mut objects = handle.objects(SubscribeMode::CurrentOnly)?;
-/// # handle.create_object(aldrin_client::ObjectUuid::new_v4()).await?;
+/// # handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
 ///
 /// while let Some(event) = objects.next().await {
 ///     match event {
@@ -49,13 +49,14 @@ use std::task::{Context, Poll};
 /// its [`ObjectId`]:
 ///
 /// ```
-/// use aldrin_client::{ObjectEvent, ObjectUuid, SubscribeMode};
+/// use aldrin_client::{ObjectEvent, SubscribeMode};
+/// use aldrin_proto::ObjectUuid;
 /// use futures::future;
 /// use futures::stream::StreamExt;
+/// use uuid::uuid;
 ///
-/// // d434e9c8-6230-4fa6-b61c-1babbaa37a4f
 /// const INTERESTING_OBJECT_UUID: ObjectUuid =
-///     ObjectUuid::from_u128(0xd434e9c862304fa6b61c1babbaa37a4f);
+///     ObjectUuid(uuid!("d434e9c8-6230-4fa6-b61c-1babbaa37a4f"));
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

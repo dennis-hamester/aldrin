@@ -225,7 +225,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // The sender is unclaimed, while the receiver has been claimed automatically.
-    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver().await?;
     ///
     /// // Claim the sender.
     /// let mut sender = sender.claim().await?;
@@ -234,8 +234,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// let mut receiver = receiver.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send(1)?;
-    /// sender.send(2)?;
+    /// sender.send(&1)?;
+    /// sender.send(&2)?;
     /// assert_eq!(receiver.next().await, Some(Ok(1)));
     /// assert_eq!(receiver.next().await, Some(Ok(2)));
     /// # Ok(())
@@ -475,15 +475,15 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// let (sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
+    /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
     ///
     /// let mut receiver = receiver.claim().await?;
     /// let mut sender = sender.established().await?;
     ///
     /// // Send a couple of items and then destroy the sender.
-    /// sender.send(1)?;
-    /// sender.send(2)?;
-    /// sender.send(3)?;
+    /// sender.send(&1)?;
+    /// sender.send(&2)?;
+    /// sender.send(&3)?;
     /// sender.destroy().await?;
     ///
     /// // The receiver will receive all items followed by None.
@@ -791,7 +791,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // The receiver is unclaimed, while the sender has been claimed automatically.
-    /// let (sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
+    /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
     ///
     /// // Claim the receiver.
     /// let mut receiver = receiver.claim().await?;
@@ -800,8 +800,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// let mut sender = sender.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send(1)?;
-    /// sender.send(2)?;
+    /// sender.send(&1)?;
+    /// sender.send(&2)?;
     /// assert_eq!(receiver.next().await, Some(Ok(1)));
     /// assert_eq!(receiver.next().await, Some(Ok(2)));
     /// # Ok(())

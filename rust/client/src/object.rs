@@ -14,10 +14,10 @@ use aldrin_proto::{ObjectId, ServiceUuid};
 /// # Examples
 ///
 /// ```
-/// use aldrin_client::ObjectUuid;
+/// use aldrin_proto::ObjectUuid;
+/// use uuid::uuid;
 ///
-/// // 6173e119-8066-4776-989b-145a5f16ed4c
-/// const OBJECT2_UUID: ObjectUuid = ObjectUuid::from_u128(0x6173e11980664776989b145a5f16ed4c);
+/// const OBJECT2_UUID: ObjectUuid = ObjectUuid(uuid!("6173e119-8066-4776-989b-145a5f16ed4c"));
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -74,10 +74,11 @@ impl Object {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{Error, ObjectUuid, ServiceUuid};
+    /// use aldrin_client::Error;
+    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
+    /// use uuid::uuid;
     ///
-    /// // 800b47a1-3882-4601-9155-e18c654476cc
-    /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid::from_u128(0x800b47a1388246019155e18c654476cc);
+    /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("800b47a1-3882-4601-9155-e18c654476cc"));
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

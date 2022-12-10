@@ -1,4 +1,3 @@
-use aldrin_proto::Value;
 use aldrin_test::aldrin_client::Error;
 use aldrin_test::tokio_based::TestBroker;
 use futures::stream::{FusedStream, StreamExt};
@@ -127,27 +126,24 @@ async fn send_and_receive() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<Value>()
-        .await
-        .unwrap();
+    let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
 
     let mut receiver = receiver.claim().await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
-    sender.send(Value::U32(1)).unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(Value::U32(1))));
+    sender.send(&1).unwrap();
+    assert_eq!(receiver.next().await, Some(Ok(1)));
 
-    sender.send(Value::U32(2)).unwrap();
-    sender.send(Value::U32(3)).unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(Value::U32(2))));
-    assert_eq!(receiver.next().await, Some(Ok(Value::U32(3))));
+    sender.send(&2).unwrap();
+    sender.send(&3).unwrap();
+    assert_eq!(receiver.next().await, Some(Ok(2)));
+    assert_eq!(receiver.next().await, Some(Ok(3)));
 
-    sender.send(Value::U32(4)).unwrap();
-    sender.send(Value::U32(5)).unwrap();
+    sender.send(&4).unwrap();
+    sender.send(&5).unwrap();
     sender.destroy().await.unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(Value::U32(4))));
-    assert_eq!(receiver.next().await, Some(Ok(Value::U32(5))));
+    assert_eq!(receiver.next().await, Some(Ok(4)));
+    assert_eq!(receiver.next().await, Some(Ok(5)));
     assert_eq!(receiver.next().await, None);
     assert!(receiver.is_terminated());
 
@@ -175,7 +171,7 @@ async fn multiple_clients() {
         .unwrap();
     let mut sender = sender.established().await.unwrap();
 
-    sender.send("hello".to_owned()).unwrap();
+    sender.send(&"hello".to_owned()).unwrap();
     assert_eq!(receiver.next().await.unwrap().as_deref(), Ok("hello"));
 
     client1.join().await;
@@ -206,7 +202,7 @@ async fn send_error_when_receiver_is_destroyed() {
         tokio::select! {
             () = &mut timeout => panic!("timeout reached"),
             _ = interval.tick() => {
-                if sender.send(0).is_err() {
+                if sender.send(&0).is_err() {
                     break;
                 }
             }

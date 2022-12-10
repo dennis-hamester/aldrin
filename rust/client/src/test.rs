@@ -1,4 +1,4 @@
-use aldrin_test::aldrin_client::{ObjectUuid, ServiceUuid};
+use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use std::future::Future;
 use std::mem;
