@@ -19,9 +19,11 @@ async fn disconnect_during_function_call() {
 
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
-    let _ = client2
-        .call_infallible_function::<(), ()>(svc.id(), 0, ())
-        .unwrap();
+    mem::drop(
+        client2
+            .call_infallible_function::<(), ()>(svc.id(), 0, ())
+            .unwrap(),
+    );
     client2.join().await;
 
     let call = svc.next().await.unwrap();
