@@ -12,9 +12,9 @@ pub trait Sealed {
 
 pub trait SerializeKey: Sealed {}
 
-impl<'a, T: Sealed + ?Sized> Sealed for &'a T {
+impl<T: Sealed + ?Sized> Sealed for &T {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
-        (*self).serialize_key(buf)
+        (**self).serialize_key(buf)
     }
 
     fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
@@ -26,7 +26,23 @@ impl<'a, T: Sealed + ?Sized> Sealed for &'a T {
     }
 }
 
-impl<'a, T: SerializeKey + ?Sized> SerializeKey for &'a T {}
+impl<T: SerializeKey + ?Sized> SerializeKey for &T {}
+
+impl<T: Sealed + ?Sized> Sealed for &mut T {
+    fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
+        (**self).serialize_key(buf)
+    }
+
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        T::serialize_map_value_kind(buf)
+    }
+
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        T::serialize_set_value_kind(buf)
+    }
+}
+
+impl<T: SerializeKey + ?Sized> SerializeKey for &mut T {}
 
 impl Sealed for u8 {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
