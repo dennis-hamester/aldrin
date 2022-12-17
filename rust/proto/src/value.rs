@@ -134,7 +134,13 @@ pub struct BytesRef<'a>(pub &'a [u8]);
 
 impl<T: Serialize + ?Sized> Serialize for &T {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (*self).serialize(serializer)
+        (**self).serialize(serializer)
+    }
+}
+
+impl<T: Serialize + ?Sized> Serialize for &mut T {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        (**self).serialize(serializer)
     }
 }
 
