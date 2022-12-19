@@ -32,6 +32,20 @@ pub enum CallFunctionResult {
     InvalidArgs,
 }
 
+impl CallFunctionResult {
+    pub fn ok_with_serialize_value<T: Serialize + ?Sized>(
+        value: &T,
+    ) -> Result<Self, SerializeError> {
+        SerializedValue::serialize(value).map(Self::Ok)
+    }
+
+    pub fn err_with_serialize_value<T: Serialize + ?Sized>(
+        value: &T,
+    ) -> Result<Self, SerializeError> {
+        SerializedValue::serialize(value).map(Self::Err)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CallFunctionReply {
@@ -44,22 +58,16 @@ impl CallFunctionReply {
         serial: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self {
-            serial,
-            result: CallFunctionResult::Ok(value),
-        })
+        let result = CallFunctionResult::ok_with_serialize_value(value)?;
+        Ok(Self { serial, result })
     }
 
     pub fn err_with_serialize_value<T: Serialize + ?Sized>(
         serial: u32,
         value: &T,
     ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self {
-            serial,
-            result: CallFunctionResult::Err(value),
-        })
+        let result = CallFunctionResult::err_with_serialize_value(value)?;
+        Ok(Self { serial, result })
     }
 }
 
