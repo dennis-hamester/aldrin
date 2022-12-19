@@ -132,6 +132,16 @@ pub struct Bytes(pub Vec<u8>);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BytesRef<'a>(pub &'a [u8]);
 
+/// Empty value that deserializes from everything by skipping over it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Skip;
+
+impl Deserialize for Skip {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.skip().map(|_| Self)
+    }
+}
+
 impl<T: Serialize + ?Sized> Serialize for &T {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         (**self).serialize(serializer)
