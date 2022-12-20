@@ -14,6 +14,26 @@ pub trait Sealed: Sized {
 
 pub trait DeserializeKey: Sealed + Sized {}
 
+impl<T: DeserializeKey> Sealed for Box<T> {
+    fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
+        T::deserialize_key(buf).map(Box::new)
+    }
+
+    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
+        T::deserialize_map_value_kind(buf)
+    }
+
+    fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
+        T::deserialize_set_value_kind(buf)
+    }
+
+    fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
+        T::skip(buf)
+    }
+}
+
+impl<T: DeserializeKey> DeserializeKey for Box<T> {}
+
 impl Sealed for u8 {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
         buf.try_get_u8()

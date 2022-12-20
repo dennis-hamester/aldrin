@@ -44,6 +44,22 @@ impl<T: Sealed + ?Sized> Sealed for &mut T {
 
 impl<T: SerializeKey + ?Sized> SerializeKey for &mut T {}
 
+impl<T: Sealed + ?Sized> Sealed for Box<T> {
+    fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
+        (**self).serialize_key(buf)
+    }
+
+    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
+        T::serialize_map_value_kind(buf)
+    }
+
+    fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
+        T::serialize_set_value_kind(buf)
+    }
+}
+
+impl<T: SerializeKey + ?Sized> SerializeKey for Box<T> {}
+
 impl Sealed for u8 {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_u8(*self);
