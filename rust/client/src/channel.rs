@@ -99,6 +99,14 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     pub async fn claim(self, client: Handle) -> Result<Sender<T>, Error> {
         self.bind(client).claim().await
     }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Serialize + ?Sized>(self) -> UnboundSender<U> {
+        UnboundSender {
+            cookie: self.cookie,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T: Serialize + ?Sized> Serialize for UnboundSender<T> {
@@ -235,6 +243,14 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     pub async fn claim(self) -> Result<Sender<T>, Error> {
         self.inner.claim().await.map(Sender::new)
     }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Serialize + ?Sized>(self) -> UnclaimedSender<U> {
+        UnclaimedSender {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -359,6 +375,14 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// receiver has been destroyed instead of claimed.
     pub async fn established(self) -> Result<Sender<T>, Error> {
         self.inner.established().await.map(Sender::new)
+    }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Serialize + ?Sized>(self) -> PendingSender<U> {
+        PendingSender {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
     }
 }
 
@@ -486,6 +510,14 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// yield back to the executer regularly.
     pub fn send(&mut self, item: &T) -> Result<(), Error> {
         self.inner.send(item)
+    }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Serialize + ?Sized>(self) -> Sender<U> {
+        Sender {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
     }
 }
 
@@ -632,6 +664,14 @@ impl<T: Deserialize> UnboundReceiver<T> {
     pub async fn claim(self, client: Handle) -> Result<Receiver<T>, Error> {
         self.bind(client).claim().await
     }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Deserialize>(self) -> UnboundReceiver<U> {
+        UnboundReceiver {
+            cookie: self.cookie,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T: Deserialize> Serialize for UnboundReceiver<T> {
@@ -769,6 +809,14 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     pub async fn claim(self) -> Result<Receiver<T>, Error> {
         self.inner.claim().await.map(Receiver::new)
     }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Deserialize>(self) -> UnclaimedReceiver<U> {
+        UnclaimedReceiver {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -871,6 +919,14 @@ impl<T: Deserialize> PendingReceiver<T> {
     pub async fn established(self) -> Result<Receiver<T>, Error> {
         self.inner.established().await.map(Receiver::new)
     }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Deserialize>(self) -> PendingReceiver<U> {
+        PendingReceiver {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -953,6 +1009,14 @@ impl<T: Deserialize> Receiver<T> {
     /// [`Error::InvalidChannel`].
     pub async fn destroy(&mut self) -> Result<(), Error> {
         self.inner.destroy().await
+    }
+
+    /// Casts the item type to a different type.
+    pub fn cast<U: Deserialize>(self) -> Receiver<U> {
+        Receiver {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
     }
 }
 
