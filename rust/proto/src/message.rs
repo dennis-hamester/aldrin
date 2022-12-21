@@ -782,8 +782,12 @@ impl MessageWithValueDeserializer {
         }
 
         let value_len = (&buf[5..9]).get_u32_le() as usize;
+        let max_value_len = buf.len() - 9;
+
         if value_len < 1 {
             return Err(MessageDeserializeError::InvalidSerialization);
+        } else if value_len > max_value_len {
+            return Err(MessageDeserializeError::UnexpectedEoi);
         }
 
         let msg = buf.split_off(9 + value_len);

@@ -1,4 +1,4 @@
-use super::MessageOps;
+use super::{Message, MessageDeserializeError, MessageOps};
 use crate::value_deserializer::Deserialize;
 use bytes::BytesMut;
 use std::fmt::Debug;
@@ -44,4 +44,13 @@ where
 
     let deserialized_value: V = serialized_value.deserialize().unwrap();
     assert_eq!(deserialized_value, *value);
+}
+
+#[test]
+fn value_larger_than_buffer() {
+    let buf = BytesMut::from(&[11, 0, 0, 0, 0, 0, 105, 0, 0, 0, 5][..]);
+    assert_eq!(
+        Message::deserialize_message(buf),
+        Err(MessageDeserializeError::UnexpectedEoi)
+    );
 }
