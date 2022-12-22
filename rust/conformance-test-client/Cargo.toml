@@ -18,6 +18,12 @@ version = "0.1.0"
 path = "../../conformance-test-shared"
 default-features = false
 
+[dependencies.aldrin-proto]
+version = "0.1.0"
+path = "../proto"
+default-features = false
+features = ["tokio"]
+
 [dependencies.anyhow]
 version = "1.0.32"
 default-features = false

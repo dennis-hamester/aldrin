@@ -1,9 +1,6 @@
 use aldrin_client::{Client, Handle};
-use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NewlineTerminated;
-use aldrin_codec::serializer::Json;
-use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::client::ToClientMessage;
+use aldrin_proto::tokio::TokioTransport;
 use anyhow::{anyhow, Error, Result};
 use futures::future::{self, TryFutureExt};
 use futures::stream::{Stream, StreamExt, TryStreamExt};
@@ -25,12 +22,7 @@ struct ClientUnderTest {
 impl ClientUnderTest {
     async fn new(port: u16) -> Result<Self> {
         let stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).await?;
-        let transport = TokioCodec::new(
-            stream,
-            NewlineTerminated::new(),
-            Noop,
-            Json::with_pretty(false),
-        );
+        let transport = TokioTransport::new(stream);
         let client = Client::connect(transport).await?;
         let handle = client.handle().clone();
         let join = tokio::spawn(client.run().map_err(Error::from));
