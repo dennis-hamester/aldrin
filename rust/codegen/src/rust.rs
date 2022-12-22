@@ -94,6 +94,8 @@ impl<'a> RustGenerator<'a> {
     fn generate(mut self) -> Result<RustOutput, Error> {
         genln!(self, "#![allow(clippy::enum_variant_names)]");
         genln!(self, "#![allow(clippy::large_enum_variant)]");
+        genln!(self, "#![allow(clippy::match_single_binding)]");
+        genln!(self, "#![allow(clippy::type_complexity)]");
         genln!(self, "#![allow(dead_code)]");
         genln!(self, "#![allow(unused_mut)]");
         genln!(self, "#![allow(unused_variables)]");
@@ -186,7 +188,8 @@ impl<'a> RustGenerator<'a> {
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
         let builder_name = struct_builder_name(name);
-        let has_required_fields = fields.iter().any(ast::StructField::required);
+        let num_required_fields = fields.iter().filter(|&f| f.required()).count();
+        let has_required_fields = num_required_fields > 0;
 
         let derive_default = if has_required_fields { "" } else { ", Default" };
         genln!(self, "#[derive(Debug, Clone{}{})]", derive_default, attrs.additional_derives());
@@ -221,76 +224,92 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::ConversionError> {{");
-        genln!(self, "        let mut v = match v {{");
-        genln!(self, "            aldrin_client::Value::Struct(v) => v,");
-        genln!(self, "            _ => return Err(aldrin_client::ConversionError(Some(v))),");
-        genln!(self, "        }};");
-        genln!(self);
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin_client::codegen::aldrin_proto::Serializer) -> Result<(), aldrin_client::codegen::aldrin_proto::SerializeError> {{");
 
-        if !fields.is_empty() {
-            gen!(self, "        let mut res = (");
-            for _ in 0..fields.len() {
-                gen!(self, "None, ");
-            }
-            genln!(self, ");");
-
-            gen!(self, "        let is_err = ");
-            for (i, field) in fields.iter().enumerate() {
-                if i > 0 {
-                    gen!(self, " || ");
-                }
-
-                let field_id = field.id().value();
-                let is_required = if field.required() { "true" } else { "false" };
-                gen!(self, "!aldrin_client::codegen::get_struct_field(&mut v, {}, &mut res.{}, {})", field_id, i, is_required);
-            }
-            genln!(self, ";");
-            genln!(self);
-
-            genln!(self, "        if is_err {{");
-            for (i, field) in fields.iter().enumerate() {
-                let field_id = field.id().value();
-                genln!(self, "            if let Some(field) = res.{}.take() {{", i);
-                genln!(self, "                v.insert({}, aldrin_client::IntoValue::into_value(field));", field_id);
-                genln!(self, "            }}");
-                genln!(self);
-            }
-            genln!(self, "            return Err(aldrin_client::ConversionError(Some(aldrin_client::Value::Struct(v))));");
-            genln!(self, "        }}");
-            genln!(self);
+        let mut first = true;
+        gen!(self, "        let num_fields =");
+        if has_required_fields {
+            gen!(self, " {num_required_fields}");
+            first = false;
         }
-
-        genln!(self, "        Ok({} {{", name);
-        for (i, field) in fields.iter().enumerate() {
+        for field in fields {
             if field.required() {
-                genln!(self, "            {}: res.{}.unwrap(),", field.name().value(), i);
+                continue;
+            }
+
+            if !first {
+                gen!(self, " +");
             } else {
-                genln!(self, "            {}: res.{}.flatten(),", field.name().value(), i);
+                first = false;
+            }
+
+            gen!(self, " if self.{}.is_some() {{ 1 }} else {{ 0 }}", field.name().value());
+        }
+        if first {
+            gen!(self, " 0");
+        }
+        genln!(self, ";");
+        genln!(self, "        let mut serializer = serializer.serialize_struct(num_fields)?;");
+        if !fields.is_empty() {
+            genln!(self);
+        }
+
+        for field in fields {
+            if field.required() {
+                genln!(self, "        serializer.serialize_field({}, &self.{})?;", field.id().value(), field.name().value());
+            } else {
+                genln!(self, "        if let Some(value) = self.{}.as_ref() {{", field.name().value());
+                genln!(self, "            serializer.serialize_field({}, value)?;", field.id().value());
+                genln!(self, "        }}");
             }
         }
-        genln!(self, "        }})");
+        if !fields.is_empty() {
+            genln!(self);
+        }
 
+        genln!(self, "        serializer.finish()");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::IntoValue for {} {{", name);
-        genln!(self, "    fn into_value(self) -> aldrin_client::Value {{");
-        genln!(self, "        let mut v = std::collections::HashMap::new();");
-        for field in fields {
-            let field_name = field.name().value();
-            let field_id = field.id().value();
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin_client::codegen::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::codegen::aldrin_proto::DeserializeError> {{");
+        genln!(self, "        let mut deserializer = deserializer.deserialize_struct()?;");
+        genln!(self);
+
+        for (i, field) in fields.iter().enumerate() {
+            genln!(self, "        let mut field_{i}_{} = None;", field.name().value());
+        }
+        if !fields.is_empty() {
+            genln!(self);
+        }
+
+        genln!(self, "        while deserializer.has_more_fields() {{");
+        genln!(self, "            let deserializer = deserializer.deserialize_field()?;");
+        genln!(self);
+        genln!(self, "            match deserializer.id() {{");
+        for (i, field) in fields.iter().enumerate() {
             if field.required() {
-                genln!(self, "        v.insert({}, self.{}.into_value());", field_id, field_name);
+                genln!(self, "                {} => field_{i}_{} = deserializer.deserialize().map(Some)?,", field.id().value(), field.name().value());
             } else {
-                genln!(self, "        if let Some({0}) = self.{0} {{", field_name);
-                genln!(self, "            v.insert({}, {}.into_value());", field_id, field_name);
-                genln!(self, "        }}");
+                genln!(self, "                {} => field_{i}_{} = deserializer.deserialize()?,", field.id().value(), field.name().value());
             }
         }
-        genln!(self, "        aldrin_client::Value::Struct(v)");
+        genln!(self, "                _ => deserializer.skip()?,");
+        genln!(self, "            }}");
+        genln!(self, "        }}");
+
+        genln!(self);
+        genln!(self, "        Ok(Self {{");
+        for (i, field) in fields.iter().enumerate() {
+            if field.required() {
+                genln!(self, "            {name}: field_{i}_{name}.ok_or(aldrin_client::codegen::aldrin_proto::DeserializeError::InvalidSerialization)?,", name = field.name().value());
+            } else {
+                genln!(self, "            {name}: field_{i}_{name},", name = field.name().value());
+            }
+        }
+        genln!(self, "        }})");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
@@ -404,41 +423,34 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::FromValue for {} {{", name);
-        genln!(self, "    fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::ConversionError> {{");
-        genln!(self, "        let (var, val) = match v {{");
-        genln!(self, "            aldrin_client::Value::Enum {{ variant, value }} => (variant, *value),");
-        genln!(self, "            _ => return Err(aldrin_client::ConversionError(Some(v))),");
-        genln!(self, "        }};");
-        genln!(self);
-        genln!(self, "        match (var, val) {{");
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin_client::codegen::aldrin_proto::Serializer) -> Result<(), aldrin_client::codegen::aldrin_proto::SerializeError> {{");
+        genln!(self, "        match self {{");
         for var in vars {
-            let var_name = var.name().value();
-            let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            ({}, val) => Ok({}::{}(val.convert().map_err(|e| aldrin_client::ConversionError(e.0.map(|v| aldrin_client::Value::Enum {{ variant: var, value: Box::new(v) }})))?)),", id, name, var_name);
+                genln!(self, "            Self::{}(value) => serializer.serialize_enum({}, value),", var.name().value(), var.id().value());
             } else {
-                genln!(self, "            ({}, aldrin_client::Value::None) => Ok({}::{}),", id, name, var_name);
+                genln!(self, "            Self::{} => serializer.serialize_enum({}, &()),", var.name().value(), var.id().value());
             }
         }
-        genln!(self, "            (_, val) => Err(aldrin_client::ConversionError(Some(aldrin_client::Value::Enum {{ variant: var, value: Box::new(val) }}))),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::IntoValue for {} {{", name);
-        genln!(self, "    fn into_value(self) -> aldrin_client::Value {{");
-        genln!(self, "        match self {{");
+        genln!(self, "impl aldrin_client::codegen::aldrin_proto::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin_client::codegen::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::codegen::aldrin_proto::DeserializeError> {{");
+        genln!(self, "        let deserializer = deserializer.deserialize_enum()?;");
+        genln!(self);
+        genln!(self, "        match deserializer.variant() {{");
         for var in vars {
-            let var_name = var.name().value();
-            let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            {}::{}(v) => aldrin_client::Value::Enum {{ variant: {}, value: Box::new(v.into_value()) }},", name, var_name, id);
+                genln!(self, "            {} => deserializer.deserialize().map(Self::{}),", var.id().value(), var.name().value());
             } else {
-                genln!(self, "            {}::{} => aldrin_client::Value::Enum {{ variant: {}, value: Box::new(aldrin_client::Value::None) }},", name, var_name, id);
+                genln!(self, "            {} => deserializer.deserialize().map(|()| Self::{}),", var.id().value(), var.name().value());
             }
         }
+        genln!(self, "            _ => Err(aldrin_client::codegen::aldrin_proto::DeserializeError::InvalidSerialization),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -476,7 +488,7 @@ impl<'a> RustGenerator<'a> {
         let svc_version_const = service_version_const(svc);
         let svc_version = svc.version().value();
 
-        genln!(self, "pub const {}: aldrin_client::ServiceUuid = aldrin_client::ServiceUuid::from_u128({:#034x});", svc_uuid_const, svc_uuid.as_u128());
+        genln!(self, "pub const {}: aldrin_client::codegen::aldrin_proto::ServiceUuid = aldrin_client::codegen::aldrin_proto::ServiceUuid(aldrin_client::codegen::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
         genln!(self, "pub const {}: u32 = {};", svc_version_const, svc_version);
         genln!(self);
 
@@ -575,7 +587,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    client: aldrin_client::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::ServiceId,");
+        genln!(self, "    id: aldrin_client::codegen::aldrin_proto::ServiceId,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
         genln!(self, "    version: u32,");
@@ -583,16 +595,16 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", proxy_name);
-        genln!(self, "    pub async fn bind(client: aldrin_client::Handle, id: aldrin_client::ServiceId) -> Result<Self, aldrin_client::Error> {{");
+        genln!(self, "    pub async fn bind(client: aldrin_client::Handle, id: aldrin_client::codegen::aldrin_proto::ServiceId) -> Result<Self, aldrin_client::Error> {{");
         genln!(self, "        if id.uuid != {} {{", svc_uuid_const);
         genln!(self, "            return Err(aldrin_client::Error::InvalidService(id));");
         genln!(self, "        }}");
         genln!(self);
-        genln!(self, "        let version = client.query_service_version(id).await?.ok_or_else(|| aldrin_client::Error::InvalidService(id))?;");
+        genln!(self, "        let version = client.query_service_version(id).await?.ok_or(aldrin_client::Error::InvalidService(id))?;");
         genln!(self, "        Ok({} {{ client, id, version }})", proxy_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::codegen::aldrin_proto::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -614,7 +626,10 @@ impl<'a> RustGenerator<'a> {
             let id = func.id().value();
 
             let arg = if let Some(args) = func.args() {
-                format!(", arg: {}", function_args_type(svc_name, func_name, args))
+                format!(
+                    ", arg: {}",
+                    function_args_call_type(svc_name, func_name, args)
+                )
             } else {
                 String::new()
             };
@@ -629,17 +644,17 @@ impl<'a> RustGenerator<'a> {
                 let err = function_err_type(svc_name, func_name, err);
                 genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionResult<{}, {}>, aldrin_client::Error> {{", func_name, arg, ok, err);
                 if func.args().is_some() {
-                    genln!(self, "        self.client.call_function(self.id, {}, arg)", id);
+                    genln!(self, "        self.client.call_function(self.id, {}, &arg)", id);
                 } else {
-                    genln!(self, "        self.client.call_function(self.id, {}, ())", id);
+                    genln!(self, "        self.client.call_function(self.id, {}, &())", id);
                 }
                 genln!(self, "    }}");
             } else {
                 genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionValue<{}>, aldrin_client::Error> {{", func_name, arg, ok);
                 if func.args().is_some() {
-                    genln!(self, "        self.client.call_infallible_function(self.id, {}, arg)", id);
+                    genln!(self, "        self.client.call_infallible_function(self.id, {}, &arg)", id);
                 } else {
-                    genln!(self, "        self.client.call_infallible_function(self.id, {}, ())", id);
+                    genln!(self, "        self.client.call_infallible_function(self.id, {}, &())", id);
                 }
                 genln!(self, "    }}");
             }
@@ -663,12 +678,12 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    events: aldrin_client::Events,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::ServiceId,");
+        genln!(self, "    id: aldrin_client::codegen::aldrin_proto::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", events);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::codegen::aldrin_proto::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -743,27 +758,18 @@ impl<'a> RustGenerator<'a> {
             let variant = service_event_variant(ev_name);
 
             if ev.event_type().is_some() {
-                genln!(self, "                {} => match ev.args.convert() {{", id);
-                genln!(self, "                    Ok(args) => return std::task::Poll::Ready(Some(Ok({}::{}(args)))),", event, variant);
-                genln!(self, "                    Err(e) => return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
-                genln!(self, "                        service_id: self.id,");
-                genln!(self, "                        event: ev.id,");
-                genln!(self, "                        args: e.0,");
-                genln!(self, "                    }}))),");
-                genln!(self, "                }},");
+                genln!(self, "                {id} => if let Ok(value) = ev.value.deserialize() {{");
+                genln!(self, "                    return std::task::Poll::Ready(Some(Ok({event}::{variant}(value))));");
             } else {
-                genln!(self, "                {} => {{", id);
-                genln!(self, "                    if let aldrin_client::Value::None = ev.args {{");
-                genln!(self, "                        return std::task::Poll::Ready(Some(Ok({}::{})));", event, variant);
-                genln!(self, "                    }} else {{");
-                genln!(self, "                        return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
-                genln!(self, "                            service_id: self.id,");
-                genln!(self, "                            event: ev.id,");
-                genln!(self, "                            args: Some(ev.args),");
-                genln!(self, "                        }})));");
-                genln!(self, "                    }}");
-                genln!(self, "                }}");
+                genln!(self, "                {id} => if let Ok(()) = ev.value.deserialize() {{");
+                genln!(self, "                    return std::task::Poll::Ready(Some(Ok({event}::{variant})));");
             }
+            genln!(self, "                }} else {{");
+            genln!(self, "                    return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
+            genln!(self, "                        service_id: self.id,");
+            genln!(self, "                        event: ev.id,");
+            genln!(self, "                    }})))");
+            genln!(self, "                }}");
             genln!(self);
         }
 
@@ -826,7 +832,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        Ok({} {{ service }})", svc_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::codegen::aldrin_proto::ServiceId {{");
         genln!(self, "        self.service.id()");
         genln!(self, "    }}");
         genln!(self);
@@ -874,31 +880,19 @@ impl<'a> RustGenerator<'a> {
             let reply = function_reply(svc_name, func_name);
 
             if func.args().is_some() {
-                genln!(self, "            {} => match call.args.convert() {{", id);
-                genln!(self, "                Ok(args) => std::task::Poll::Ready(Some(Ok({}::{}(args, {}(call.reply))))),", functions, function, reply);
-                genln!(self, "                Err(e) => {{");
-                genln!(self, "                    call.reply.invalid_args().ok();");
-                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
-                genln!(self, "                        service_id: self.service.id(),");
-                genln!(self, "                        function: call.id,");
-                genln!(self, "                        args: e.0,");
-                genln!(self, "                    }})))");
-                genln!(self, "                }}");
-                genln!(self, "            }},");
+                genln!(self, "            {id} => if let Ok(args) = call.args.deserialize() {{");
+                genln!(self, "                std::task::Poll::Ready(Some(Ok({functions}::{function}(args, {reply}(call.reply)))))");
             } else {
-                genln!(self, "            {} => {{", id);
-                genln!(self, "                if let aldrin_client::Value::None = call.args {{");
-                genln!(self, "                    std::task::Poll::Ready(Some(Ok({}::{}({}(call.reply)))))", functions, function, reply);
-                genln!(self, "                }} else {{");
-                genln!(self, "                    call.reply.invalid_args().ok();");
-                genln!(self, "                    std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
-                genln!(self, "                        service_id: self.service.id(),");
-                genln!(self, "                        function: call.id,");
-                genln!(self, "                        args: Some(call.args),");
-                genln!(self, "                    }})))");
-                genln!(self, "                }}");
-                genln!(self, "            }}");
+                genln!(self, "            {id} => if let Ok(()) = call.args.deserialize() {{");
+                genln!(self, "                std::task::Poll::Ready(Some(Ok({functions}::{function}({reply}(call.reply)))))");
             }
+            genln!(self, "            }} else {{");
+            genln!(self, "                call.reply.invalid_args().ok();");
+            genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
+            genln!(self, "                    service_id: self.service.id(),");
+            genln!(self, "                    function: call.id,");
+            genln!(self, "                }})))");
+            genln!(self, "            }}");
             genln!(self);
         }
         genln!(self, "            _ => {{");
@@ -906,7 +900,6 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin_client::InvalidFunctionCall {{");
         genln!(self, "                    service_id: self.service.id(),");
         genln!(self, "                    function: call.id,");
-        genln!(self, "                    args: Some(call.args),");
         genln!(self, "                }})))");
         genln!(self, "            }}");
         genln!(self, "        }}");
@@ -960,25 +953,25 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "impl {} {{", reply);
             if let Some(ok) = func.ok() {
                 if let Some(err) = func.err() {
-                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_type(svc_name, func_name, ok), function_err_type(svc_name, func_name, err));
-                    genln!(self, "        self.0.set(res)");
+                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_call_type(svc_name, func_name, ok), function_err_call_type(svc_name, func_name, err));
+                    genln!(self, "        self.0.set(res.as_ref())");
                     genln!(self, "    }}");
                     genln!(self);
                 }
 
-                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_type(svc_name, func_name, ok));
-                genln!(self, "        self.0.ok(arg)");
+                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_call_type(svc_name, func_name, ok));
+                genln!(self, "        self.0.ok(&arg)");
                 genln!(self, "    }}");
             } else {
                 genln!(self, "    pub fn ok(self) -> Result<(), aldrin_client::Error> {{");
-                genln!(self, "        self.0.ok(())");
+                genln!(self, "        self.0.ok(&())");
                 genln!(self, "    }}");
             }
             genln!(self);
 
             if let Some(err) = func.err() {
-                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_type(svc_name, func_name, err));
-                genln!(self, "        self.0.err(arg)");
+                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_call_type(svc_name, func_name, err));
+                genln!(self, "        self.0.err(&arg)");
                 genln!(self, "    }}");
                 genln!(self);
             }
@@ -996,12 +989,12 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    client: aldrin_client::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::ServiceId,");
+        genln!(self, "    id: aldrin_client::codegen::aldrin_proto::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", event_emitter);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::codegen::aldrin_proto::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -1014,19 +1007,19 @@ impl<'a> RustGenerator<'a> {
             let id = ev.id().value();
 
             if let Some(ev_type) = ev.event_type() {
-                let var_type = event_variant_type(svc_name, ev_name, ev_type);
+                let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
                 if ev_type.optional() {
                     genln!(self, "    pub fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, arg)", id);
+                    genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
                     genln!(self, "    }}");
                 } else {
                     genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, arg)", id);
+                    genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
                     genln!(self, "    }}");
                 }
             } else {
                 genln!(self, "    pub fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
-                genln!(self, "        self.client.emit_event(self.id, {}, ())", id);
+                genln!(self, "        self.client.emit_event(self.id, {}, &())", id);
                 genln!(self, "    }}");
             }
 
@@ -1071,21 +1064,109 @@ fn type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "String".to_owned(),
         ast::TypeNameKind::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin_client::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => "aldrin_client::Value".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin_client::codegen::aldrin_proto::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => {
+            "aldrin_client::codegen::aldrin_proto::ServiceId".to_owned()
+        }
+        ast::TypeNameKind::Value => "aldrin_client::codegen::aldrin_proto::Value".to_owned(),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::Bytes".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
             _ => format!("Vec<{}>", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::Bytes".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin_client::codegen::aldrin_proto::Bytes".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),
             type_name(v)
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
-        ast::TypeNameKind::Sender(ty) => format!("aldrin_client::UnboundSender<{}>", type_name(ty)),
+        ast::TypeNameKind::Sender(ty) => {
+            format!("aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+        }
+        ast::TypeNameKind::Receiver(ty) => {
+            format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
+        }
+        ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
+        ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
+    }
+}
+
+fn call_type_name(ty: &ast::TypeName) -> String {
+    match ty.kind() {
+        ast::TypeNameKind::Bool => "bool".to_owned(),
+        ast::TypeNameKind::U8 => "u8".to_owned(),
+        ast::TypeNameKind::I8 => "i8".to_owned(),
+        ast::TypeNameKind::U16 => "u16".to_owned(),
+        ast::TypeNameKind::I16 => "i16".to_owned(),
+        ast::TypeNameKind::U32 => "u32".to_owned(),
+        ast::TypeNameKind::I32 => "i32".to_owned(),
+        ast::TypeNameKind::U64 => "u64".to_owned(),
+        ast::TypeNameKind::I64 => "i64".to_owned(),
+        ast::TypeNameKind::F32 => "f32".to_owned(),
+        ast::TypeNameKind::F64 => "f64".to_owned(),
+        ast::TypeNameKind::String => "&str".to_owned(),
+        ast::TypeNameKind::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin_client::codegen::aldrin_proto::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => {
+            "aldrin_client::codegen::aldrin_proto::ServiceId".to_owned()
+        }
+        ast::TypeNameKind::Value => "&aldrin_client::codegen::aldrin_proto::Value".to_owned(),
+        ast::TypeNameKind::Vec(ty) => match ty.kind() {
+            ast::TypeNameKind::U8 => "aldrin_client::codegen::aldrin_proto::BytesRef".to_owned(),
+            _ => format!("&[{}]", type_name(ty)),
+        },
+        ast::TypeNameKind::Bytes => "aldrin_client::codegen::aldrin_proto::BytesRef".to_owned(),
+        ast::TypeNameKind::Map(k, v) => format!(
+            "&std::collections::HashMap<{}, {}>",
+            key_type_name(k),
+            type_name(v)
+        ),
+        ast::TypeNameKind::Set(ty) => format!("&std::collections::HashSet<{}>", key_type_name(ty)),
+        ast::TypeNameKind::Sender(ty) => {
+            format!("&aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+        }
+        ast::TypeNameKind::Receiver(ty) => {
+            format!("&aldrin_client::UnboundReceiver<{}>", type_name(ty))
+        }
+        ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
+        ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
+    }
+}
+
+fn sender_type_name(ty: &ast::TypeName) -> String {
+    match ty.kind() {
+        ast::TypeNameKind::Bool => "bool".to_owned(),
+        ast::TypeNameKind::U8 => "u8".to_owned(),
+        ast::TypeNameKind::I8 => "i8".to_owned(),
+        ast::TypeNameKind::U16 => "u16".to_owned(),
+        ast::TypeNameKind::I16 => "i16".to_owned(),
+        ast::TypeNameKind::U32 => "u32".to_owned(),
+        ast::TypeNameKind::I32 => "i32".to_owned(),
+        ast::TypeNameKind::U64 => "u64".to_owned(),
+        ast::TypeNameKind::I64 => "i64".to_owned(),
+        ast::TypeNameKind::F32 => "f32".to_owned(),
+        ast::TypeNameKind::F64 => "f64".to_owned(),
+        ast::TypeNameKind::String => "str".to_owned(),
+        ast::TypeNameKind::Uuid => "aldrin_client::codegen::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin_client::codegen::aldrin_proto::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => {
+            "aldrin_client::codegen::aldrin_proto::ServiceId".to_owned()
+        }
+        ast::TypeNameKind::Value => "aldrin_client::codegen::aldrin_proto::Value".to_owned(),
+        ast::TypeNameKind::Vec(ty) => match ty.kind() {
+            ast::TypeNameKind::U8 => "aldrin_client::codegen::aldrin_proto::BytesRef".to_owned(),
+            _ => format!("[{}]", type_name(ty)),
+        },
+        ast::TypeNameKind::Bytes => "aldrin_client::codegen::aldrin_proto::BytesRef".to_owned(),
+        ast::TypeNameKind::Map(k, v) => format!(
+            "std::collections::HashMap<{}, {}>",
+            key_type_name(k),
+            type_name(v)
+        ),
+        ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
+        ast::TypeNameKind::Sender(ty) => {
+            format!("aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+        }
         ast::TypeNameKind::Receiver(ty) => {
             format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
         }
@@ -1170,6 +1251,29 @@ fn function_args_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart)
     }
 }
 
+fn function_args_call_type_name(
+    svc_name: &str,
+    func_name: &str,
+    part: &ast::FunctionPart,
+) -> String {
+    match part.part_type() {
+        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+            format!("&{svc_name}{}Args", func_name.to_upper_camel_case())
+        }
+    }
+}
+
+fn function_args_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
+    let name = function_args_call_type_name(svc_name, func_name, part);
+
+    if part.optional() {
+        format!("Option<{name}>")
+    } else {
+        name
+    }
+}
+
 fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
@@ -1189,6 +1293,25 @@ fn function_ok_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -
     }
 }
 
+fn function_ok_call_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
+    match part.part_type() {
+        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+            format!("&{svc_name}{}Ok", func_name.to_upper_camel_case())
+        }
+    }
+}
+
+fn function_ok_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
+    let name = function_ok_call_type_name(svc_name, func_name, part);
+
+    if part.optional() {
+        format!("Option<{name}>")
+    } else {
+        name
+    }
+}
+
 fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
@@ -1200,6 +1323,29 @@ fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionP
 
 fn function_err_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     let name = function_err_type_name(svc_name, func_name, part);
+
+    if part.optional() {
+        format!("Option<{name}>")
+    } else {
+        name
+    }
+}
+
+fn function_err_call_type_name(
+    svc_name: &str,
+    func_name: &str,
+    part: &ast::FunctionPart,
+) -> String {
+    match part.part_type() {
+        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+            format!("&{svc_name}{}Error", func_name.to_upper_camel_case())
+        }
+    }
+}
+
+fn function_err_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
+    let name = function_err_call_type_name(svc_name, func_name, part);
 
     if part.optional() {
         format!("Option<{name}>")
@@ -1233,6 +1379,15 @@ fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -
         ast::TypeNameOrInline::TypeName(ref ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Event", service_event_variant(ev_name))
+        }
+    }
+}
+
+fn event_variant_call_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -> String {
+    match ev_type.event_type() {
+        ast::TypeNameOrInline::TypeName(ref ty) => call_type_name(ty),
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+            format!("&{svc_name}{}Event", service_event_variant(ev_name))
         }
     }
 }
