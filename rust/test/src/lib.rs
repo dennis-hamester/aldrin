@@ -36,7 +36,8 @@
 //! The Rust code, implementing both the calculator service itself and the tests:
 //!
 //! ```
-//! use aldrin_client::{Handle, ObjectUuid};
+//! use aldrin_client::Handle;
+//! use aldrin_proto::ObjectUuid;
 //! use aldrin_test::TestBroker;
 //! use anyhow::Result;
 //! use futures::StreamExt;
@@ -67,13 +68,13 @@
 //!     let calc = CalculatorProxy::bind(client.clone(), service_id).await?;
 //!
 //!     // Perform a few tests:
-//!     assert_eq!(calc.add(CalculatorAddArgs { lhs: 1, rhs: 2 })?.await?.unwrap(), 3);
+//!     assert_eq!(calc.add(&CalculatorAddArgs { lhs: 1, rhs: 2 })?.await?.unwrap(), 3);
 //!     assert_eq!(
-//!         calc.add(CalculatorAddArgs { lhs: i32::MIN, rhs: i32::MAX })?.await?.unwrap(),
+//!         calc.add(&CalculatorAddArgs { lhs: i32::MIN, rhs: i32::MAX })?.await?.unwrap(),
 //!         -1,
 //!     );
-//!     assert!(calc.add(CalculatorAddArgs { lhs: i32::MAX, rhs: 1 })?.await?.is_err());
-//!     assert!(calc.add(CalculatorAddArgs { lhs: i32::MIN, rhs: -1 })?.await?.is_err());
+//!     assert!(calc.add(&CalculatorAddArgs { lhs: i32::MAX, rhs: 1 })?.await?.is_err());
+//!     assert!(calc.add(&CalculatorAddArgs { lhs: i32::MIN, rhs: -1 })?.await?.is_err());
 //!
 //!     // Shut everything down:
 //!     client.shutdown();
@@ -93,7 +94,7 @@
 //!     while let Some(CalculatorFunction::Add(args, reply)) = calc.next().await.transpose()? {
 //!         match args.lhs.checked_add(args.rhs) {
 //!             Some(res) => reply.ok(res)?,
-//!             None => reply.err(CalculatorAddError::Overflow)?,
+//!             None => reply.err(&CalculatorAddError::Overflow)?,
 //!         }
 //!     }
 //!
