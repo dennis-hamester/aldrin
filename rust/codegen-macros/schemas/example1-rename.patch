@@ -23,29 +23,21 @@
      }
  }
  
--impl aldrin_client::FromValue for MyStruct {
-+impl aldrin_client::FromValue for MyStructRenamed {
-     fn from_value(v: aldrin_client::Value) -> Result<Self, aldrin_client::ConversionError> {
-         let mut v = match v {
-             aldrin_client::Value::Struct(v) => v,
-@@ -42,14 +42,14 @@
-             return Err(aldrin_client::ConversionError(Some(aldrin_client::Value::Struct(v))));
-         }
- 
--        Ok(MyStruct {
-+        Ok(MyStructRenamed {
-             field1: res.0.flatten(),
-             field2: res.1.flatten(),
-         })
+-impl aldrin_client::codegen::aldrin_proto::Serialize for MyStruct {
++impl aldrin_client::codegen::aldrin_proto::Serialize for MyStructRenamed {
+     fn serialize(&self, serializer: aldrin_client::codegen::aldrin_proto::Serializer) -> Result<(), aldrin_client::codegen::aldrin_proto::SerializeError> {
+         let num_fields = if self.field1.is_some() { 1 } else { 0 } + if self.field2.is_some() { 1 } else { 0 };
+         let mut serializer = serializer.serialize_struct(num_fields)?;
+@@ -39,7 +39,7 @@
      }
  }
  
--impl aldrin_client::IntoValue for MyStruct {
-+impl aldrin_client::IntoValue for MyStructRenamed {
-     fn into_value(self) -> aldrin_client::Value {
-         let mut v = std::collections::HashMap::new();
-         if let Some(field1) = self.field1 {
-@@ -63,7 +63,7 @@
+-impl aldrin_client::codegen::aldrin_proto::Deserialize for MyStruct {
++impl aldrin_client::codegen::aldrin_proto::Deserialize for MyStructRenamed {
+     fn deserialize(deserializer: aldrin_client::codegen::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::codegen::aldrin_proto::DeserializeError> {
+         let mut deserializer = deserializer.deserialize_struct()?;
+ 
+@@ -64,7 +64,7 @@
  }
  
  #[derive(Debug, Clone, Default)]
@@ -54,7 +46,7 @@
      #[doc(hidden)]
      field1: Option<u32>,
  
-@@ -72,7 +72,7 @@
+@@ -73,7 +73,7 @@
  
  }
  
@@ -63,7 +55,7 @@
      pub fn new() -> Self {
          Default::default()
      }
-@@ -87,8 +87,8 @@
+@@ -88,8 +88,8 @@
          self
      }
  
