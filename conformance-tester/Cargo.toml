@@ -16,7 +16,10 @@ default-features = false
 version = "0.1.0"
 path = "../rust/proto"
 default-features = false
-features = ["new-v4-ids"]
+features = [
+    "new-v4-ids",
+    "tokio",
+]
 
 [dependencies.anyhow]
 version = "1.0.32"

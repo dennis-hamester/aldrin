@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::Message;
+use aldrin_proto::message::{Message, Shutdown};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "shutdown-by-client";
@@ -15,7 +15,7 @@ async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
     let mut client = broker.connect_client().await?;
 
     client
-        .send(Message::Shutdown(()))
+        .send(Message::Shutdown(Shutdown))
         .await
         .with_context(|| anyhow!("failed to send shutdown message"))?;
 
@@ -24,12 +24,9 @@ async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
         .await
         .with_context(|| anyhow!("failed to receive shutdown message"))?;
 
-    if let Message::Shutdown(()) = msg {
+    if let Message::Shutdown(Shutdown) = msg {
         Ok(())
     } else {
-        Err(anyhow!(
-            "expected connect message but received {}",
-            serde_json::to_string(&msg).unwrap()
-        ))
+        Err(anyhow!("expected connect message but received {msg:?}"))
     }
 }

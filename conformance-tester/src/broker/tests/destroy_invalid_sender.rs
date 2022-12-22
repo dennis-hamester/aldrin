@@ -1,6 +1,7 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::{ChannelCookie, ChannelEnd, DestroyChannelEndResult};
+use aldrin_proto::message::{ChannelEnd, DestroyChannelEndResult};
+use aldrin_proto::ChannelCookie;
 use anyhow::{anyhow, Result};
 
 const NAME: &str = "destroy-invalid-sender";
@@ -25,9 +26,8 @@ async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
         Ok(())
     } else {
         Err(anyhow!(
-            "destroy-channel-end-reply received with result {} but expected {}",
-            serde_json::to_string(&result).unwrap(),
-            serde_json::to_string(&DestroyChannelEndResult::InvalidChannel).unwrap()
+            "destroy-channel-end-reply received with result {result:?} but expected {:?}",
+            DestroyChannelEndResult::InvalidChannel,
         ))
     }
 }

@@ -1,6 +1,6 @@
 use super::{ClientTest, ClientUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::{Connect, ConnectReply, Message, Value};
+use aldrin_proto::message::{Connect, ConnectReply, Message};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "connect-version-mismatch";
@@ -17,11 +17,7 @@ async fn run(client: &mut ClientUnderTest) -> Result<()> {
         .await
         .with_context(|| anyhow!("failed to receive connect message"))?;
 
-    if let Message::Connect(Connect {
-        version,
-        data: Value::None,
-    }) = msg
-    {
+    if let Message::Connect(Connect { version, .. }) = msg {
         let version = version.wrapping_add(1);
         client
             .send_message(Message::ConnectReply(ConnectReply::VersionMismatch(
@@ -31,9 +27,6 @@ async fn run(client: &mut ClientUnderTest) -> Result<()> {
             .with_context(|| anyhow!("failed to send connect-reply message"))?;
         Ok(())
     } else {
-        Err(anyhow!(
-            "expected connect message but received {}",
-            serde_json::to_string(&msg).unwrap()
-        ))
+        Err(anyhow!("expected connect message but received {msg:?}"))
     }
 }

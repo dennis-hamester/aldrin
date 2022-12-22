@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::ChannelEnd;
+use aldrin_proto::message::ChannelEnd;
 use anyhow::Result;
 
 const NAME: &str = "create-channel-with-claimed-sender";

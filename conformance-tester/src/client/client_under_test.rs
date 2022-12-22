@@ -1,13 +1,10 @@
 use super::ClientRunArgs;
 use crate::test::RunError;
-use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NewlineTerminated;
-use aldrin_codec::serializer::Json;
-use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::client::ToClientMessage;
-use aldrin_proto::{
-    AsyncTransport, AsyncTransportExt, Connect, ConnectReply, Message, Value, VERSION,
-};
+use aldrin_proto::message::{Connect, ConnectReply, Message};
+use aldrin_proto::tokio::TokioTransport;
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_proto::VERSION;
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};
@@ -77,15 +74,7 @@ impl ClientUnderTest {
         .map_err(|e| e.context("client failed to connect"))?
         .0;
 
-        let transport = Box::new(
-            TokioCodec::new(
-                stream,
-                NewlineTerminated::new(),
-                Noop,
-                Json::with_pretty(false),
-            )
-            .map_err(Error::from),
-        );
+        let transport = Box::new(TokioTransport::new(stream).map_err(Error::from));
 
         Ok(ClientUnderTest {
             child,
@@ -128,10 +117,9 @@ impl ClientUnderTest {
 
         match msg {
             Message::Connect(Connect {
-                version: VERSION,
-                data: _,
+                version: VERSION, ..
             }) => {}
-            Message::Connect(Connect { version, data: _ }) => {
+            Message::Connect(Connect { version, .. }) => {
                 self.send_message(Message::ConnectReply(ConnectReply::VersionMismatch(
                     VERSION,
                 )))
@@ -143,17 +131,14 @@ impl ClientUnderTest {
                     version
                 ));
             }
-            _ => {
-                return Err(anyhow!(
-                    "expected connect message but received {}",
-                    serde_json::to_string(&msg).unwrap()
-                ))
-            }
+            _ => return Err(anyhow!("expected connect message but received {msg:?}")),
         }
 
-        self.send_message(Message::ConnectReply(ConnectReply::Ok(Value::None)))
-            .await
-            .with_context(|| anyhow!("failed to send connect-reply message"))?;
+        self.send_message(Message::ConnectReply(
+            ConnectReply::ok_with_serialize_value(&())?,
+        ))
+        .await
+        .with_context(|| anyhow!("failed to send connect-reply message"))?;
 
         Ok(())
     }

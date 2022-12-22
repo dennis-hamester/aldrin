@@ -1,14 +1,13 @@
 use super::BrokerRunArgs;
 use crate::test::RunError;
-use aldrin_codec::filter::Noop;
-use aldrin_codec::packetizer::NewlineTerminated;
-use aldrin_codec::serializer::Json;
-use aldrin_codec::TokioCodec;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
-use aldrin_proto::{
-    AsyncTransport, AsyncTransportExt, ChannelCookie, ChannelEnd, Connect, ConnectReply,
-    CreateChannel, DestroyChannelEnd, DestroyChannelEndResult, Message, Value, VERSION,
+use aldrin_proto::message::{
+    ChannelEnd, Connect, ConnectReply, CreateChannel, DestroyChannelEnd, DestroyChannelEndResult,
+    Message,
 };
+use aldrin_proto::tokio::TokioTransport;
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_proto::{ChannelCookie, VERSION};
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};
@@ -132,15 +131,7 @@ impl Client {
     async fn connect_impl(port: u16) -> Result<TransportBox> {
         let stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).await?;
 
-        Ok(Box::new(
-            TokioCodec::new(
-                stream,
-                NewlineTerminated::new(),
-                Noop,
-                Json::with_pretty(false),
-            )
-            .map_err(Error::from),
-        ))
+        Ok(Box::new(TokioTransport::new(stream).map_err(Error::from)))
     }
 
     async fn connect_and_handshake_impl(port: u16) -> Result<TransportBox> {
@@ -157,10 +148,10 @@ impl Client {
 
     async fn handshake_impl(transport: &mut TransportBox) -> Result<()> {
         transport
-            .send_and_flush(Message::Connect(Connect {
-                version: VERSION,
-                data: Value::None,
-            }))
+            .send_and_flush(Message::Connect(Connect::with_serialize_value(
+                VERSION,
+                &(),
+            )?))
             .await
             .with_context(|| anyhow!("failed to send connect message to broker"))?;
 
@@ -173,8 +164,7 @@ impl Client {
             Message::ConnectReply(connect_reply) => connect_reply,
             _ => {
                 return Err(anyhow!(
-                    "expected connect-reply message but received {}",
-                    serde_json::to_string(&msg).unwrap()
+                    "expected connect-reply message but received {msg:?}"
                 ))
             }
         };
@@ -230,8 +220,7 @@ impl Client {
             }
         } else {
             Err(anyhow!(
-                "expected create-channel-reply message but received {}",
-                serde_json::to_string(&msg).unwrap()
+                "expected create-channel-reply message but received {msg:?}"
             ))
         }
     }
@@ -267,8 +256,7 @@ impl Client {
             }
         } else {
             Err(anyhow!(
-                "expected destroy-channel-end-reply message but received {}",
-                serde_json::to_string(&msg).unwrap()
+                "expected destroy-channel-end-reply message but received {msg:?}"
             ))
         }
     }

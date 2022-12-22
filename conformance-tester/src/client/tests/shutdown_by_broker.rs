@@ -1,6 +1,6 @@
 use super::{ClientTest, ClientUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::Message;
+use aldrin_proto::message::{Message, Shutdown};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "shutdown-by-broker";
@@ -15,7 +15,7 @@ async fn run(client: &mut ClientUnderTest) -> Result<()> {
     client.connect().await?;
 
     client
-        .send_message(Message::Shutdown(()))
+        .send_message(Message::Shutdown(Shutdown))
         .await
         .with_context(|| anyhow!("failed to send shutdown message"))?;
 
@@ -25,10 +25,7 @@ async fn run(client: &mut ClientUnderTest) -> Result<()> {
         .with_context(|| anyhow!("failed to receive connect message"))?;
 
     match msg {
-        Message::Shutdown(()) => Ok(()),
-        _ => Err(anyhow!(
-            "expected connect message but received {}",
-            serde_json::to_string(&msg).unwrap()
-        )),
+        Message::Shutdown(Shutdown) => Ok(()),
+        _ => Err(anyhow!("expected connect message but received {msg:?}")),
     }
 }
