@@ -12,5 +12,6 @@ members = [
     "rust/conformance-test-client",
     "rust/parser",
     "rust/proto",
+    "rust/proto-macros",
     "rust/test",
 ]

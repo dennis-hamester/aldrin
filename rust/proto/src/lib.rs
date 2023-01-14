@@ -17,6 +17,8 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
+#[cfg(feature = "macros")]
+pub use aldrin_proto_macros::{Deserialize, Serialize};
 pub use deserialize_key::DeserializeKey;
 pub use error::{DeserializeError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};

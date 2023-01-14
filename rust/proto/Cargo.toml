@@ -12,8 +12,15 @@ fuzzing = [
     "dep:arbitrary",
     "uuid/arbitrary",
 ]
+macros = ["dep:aldrin-proto-macros"]
 new-v4-ids = ["uuid/v4"]
 tokio = ["dep:tokio"]
+
+[dependencies.aldrin-proto-macros]
+optional = true
+version = "0.1.0"
+path = "../proto-macros"
+default-features = false
 
 [dependencies.arbitrary]
 optional = true
