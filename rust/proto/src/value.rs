@@ -8,6 +8,7 @@ use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::hash::{BuildHasher, Hash};
 use std::mem::MaybeUninit;
@@ -568,5 +569,29 @@ impl<T: SerializeKey> Serialize for BTreeSet<T> {
 impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
+    }
+}
+
+impl<'a, T> Serialize for Cow<'a, T>
+where
+    T: Serialize + ToOwned + ?Sized + 'a,
+{
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        use std::borrow::Borrow;
+
+        match self {
+            Cow::Borrowed(borrowed) => borrowed.serialize(serializer),
+            Cow::Owned(owned) => owned.borrow().serialize(serializer),
+        }
+    }
+}
+
+impl<'a, T> Deserialize for Cow<'a, T>
+where
+    T: ToOwned + ?Sized + 'a,
+    T::Owned: Deserialize,
+{
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        T::Owned::deserialize(deserializer).map(Self::Owned)
     }
 }

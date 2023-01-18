@@ -9,6 +9,7 @@ use crate::value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
 use std::{f32, f64};
@@ -1092,6 +1093,19 @@ fn test_channel_end() {
         variant: ChannelEnd::Receiver as u32,
         value: Value::None,
     }));
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_cow() {
+    let serialized = [13, 4, b'a', b'b', b'c', b'd'];
+    let value = Cow::Borrowed("abcd");
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+
+    let serialized = [13, 4, b'a', b'b', b'c', b'd'];
+    let value = Cow::<str>::Owned("abcd".to_string());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
 }
