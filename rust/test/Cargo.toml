@@ -45,7 +45,7 @@ anyhow = "1.0.32"
 
 [dev-dependencies.aldrin-codegen-macros]
 version = "0.1.0"
-path = "../codegen-macros"
+path = "../../codegen-macros"
 
 [dev-dependencies.futures]
 version = "0.3.21"

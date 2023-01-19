@@ -12,13 +12,13 @@ proc-macro = true
 
 [dependencies.aldrin-codegen]
 version = "0.1.0"
-path = "../../codegen"
+path = "../codegen"
 default-features = false
 features = ["rust"]
 
 [dependencies.aldrin-parser]
 version = "0.1.0"
-path = "../parser"
+path = "../rust/parser"
 default-features = false
 
 [dependencies.proc-macro-error]
@@ -40,5 +40,5 @@ features = [
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../../client"
+path = "../client"
 features = ["codegen"]

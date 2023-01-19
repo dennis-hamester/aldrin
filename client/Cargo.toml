@@ -16,7 +16,7 @@ codegen = [
 [dependencies.aldrin-codegen-macros]
 optional = true
 version = "0.1.0"
-path = "../rust/codegen-macros"
+path = "../codegen-macros"
 default-features = false
 
 [dependencies.aldrin-proto]
