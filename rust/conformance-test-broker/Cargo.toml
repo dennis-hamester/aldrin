@@ -10,7 +10,7 @@ publish = false
 
 [dependencies.aldrin-broker]
 version = "0.1.0"
-path = "../broker"
+path = "../../broker"
 default-features = false
 
 [dependencies.aldrin-conformance-test-shared]

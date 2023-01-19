@@ -1,11 +1,11 @@
 [workspace]
 members = [
+    "broker",
     "conformance-test-shared",
     "conformance-tester",
     "gen",
     "proto",
     "proto-macros",
-    "rust/broker",
     "rust/channel",
     "rust/client",
     "rust/codegen",

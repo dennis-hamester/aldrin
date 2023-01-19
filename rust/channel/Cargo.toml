@@ -22,7 +22,7 @@ default-features = false
 
 [dev-dependencies.aldrin-broker]
 version = "0.1.0"
-path = "../broker"
+path = "../../broker"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"

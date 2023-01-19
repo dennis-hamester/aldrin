@@ -12,7 +12,7 @@ statistics = []
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 default-features = false
 features = ["new-v4-ids"]
 
@@ -38,20 +38,20 @@ anyhow = "1.0.32"
 
 [dev-dependencies.aldrin-channel]
 version = "0.1.0"
-path = "../channel"
+path = "../rust/channel"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../client"
+path = "../rust/client"
 
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 features = ["tokio"]
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
-path = "../test"
+path = "../rust/test"
 features = ["tokio"]
 
 [dev-dependencies.tokio]
