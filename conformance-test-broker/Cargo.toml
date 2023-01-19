@@ -10,17 +10,17 @@ publish = false
 
 [dependencies.aldrin-broker]
 version = "0.1.0"
-path = "../../broker"
+path = "../broker"
 default-features = false
 
 [dependencies.aldrin-conformance-test-shared]
 version = "0.1.0"
-path = "../../conformance-test-shared"
+path = "../conformance-test-shared"
 default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 default-features = false
 features = ["tokio"]
 
