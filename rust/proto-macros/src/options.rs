@@ -46,6 +46,11 @@ impl Options {
                 Ok(())
             }
 
+            NestedMeta::Meta(Meta::Path(path)) if path.is_ident("deny_unknown_fields") => {
+                deny_unknown_fields = true;
+                Ok(())
+            }
+
             _ => Err(Error::new_spanned(meta, "unknown attribute")),
         })?;
 
@@ -67,6 +72,10 @@ impl Options {
 
     pub fn de_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
         self.de_bounds.as_ref()
+    }
+
+    pub fn deny_unknown_fields(&self) -> bool {
+        self.deny_unknown_fields
     }
 }
 

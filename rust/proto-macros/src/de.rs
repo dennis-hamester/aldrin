@@ -100,6 +100,16 @@ fn gen_struct(
         }
     });
 
+    let match_wildcard = if options.deny_unknown_fields() {
+        quote::quote! {
+            return Err(#krate::DeserializeError::InvalidSerialization)
+        }
+    } else {
+        quote::quote! {
+            deserializer.skip()?
+        }
+    };
+
     let ok_expr = if named {
         let field_inits = fields.iter().map(|(field, _, field_ident)| {
             let ident = field.ident.as_ref().unwrap();
@@ -132,7 +142,7 @@ fn gen_struct(
 
             match deserializer.id() {
                 #(#match_arms)*
-                _ => deserializer.skip()?,
+                _ => #match_wildcard,
             }
         }
 

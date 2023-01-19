@@ -1,6 +1,8 @@
 mod de;
 mod options;
 mod ser;
+#[cfg(test)]
+mod test;
 
 use proc_macro::TokenStream;
 use syn::{DeriveInput, Error};
@@ -75,6 +77,13 @@ use syn::{DeriveInput, Error};
 /// where
 ///     T: ToOwned + ?Sized + 'a;
 /// ```
+///
+/// ## `deny_unknown_fields`
+///
+/// Use `#[aldrin(deny_unknown_fields)]` to make the `Deserialize` implementation of a struct return
+/// `Err(DeserializeError::InvalidSerialization)` when encountering an unknown field.
+///
+/// The default is to skip unknown fields.
 ///
 /// # Field and variant attributes
 ///
