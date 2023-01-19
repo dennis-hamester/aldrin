@@ -16,12 +16,12 @@ codegen = [
 [dependencies.aldrin-codegen-macros]
 optional = true
 version = "0.1.0"
-path = "../codegen-macros"
+path = "../rust/codegen-macros"
 default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 default-features = false
 features = ["new-v4-ids"]
 
@@ -45,11 +45,11 @@ features = ["v4"]
 
 [dev-dependencies.aldrin-channel]
 version = "0.1.0"
-path = "../../channel"
+path = "../channel"
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
-path = "../test"
+path = "../rust/test"
 features = ["tokio"]
 
 [dev-dependencies.futures]

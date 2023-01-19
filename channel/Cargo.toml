@@ -26,7 +26,7 @@ path = "../broker"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../rust/client"
+path = "../client"
 
 [dev-dependencies.futures]
 version = "0.3.21"

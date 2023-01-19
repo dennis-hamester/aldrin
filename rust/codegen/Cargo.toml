@@ -29,7 +29,7 @@ uuid = "1.1.2"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../client"
+path = "../../client"
 features = ["codegen"]
 
 [dev-dependencies.aldrin-proto]

@@ -42,7 +42,7 @@ path = "../channel"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../rust/client"
+path = "../client"
 
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"

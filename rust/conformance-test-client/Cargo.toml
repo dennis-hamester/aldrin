@@ -10,7 +10,7 @@ publish = false
 
 [dependencies.aldrin-client]
 version = "0.1.0"
-path = "../client"
+path = "../../client"
 default-features = false
 
 [dependencies.aldrin-conformance-test-shared]
