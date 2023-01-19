@@ -9,6 +9,7 @@ pub struct Options {
     krate: Path,
     ser_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     de_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    deny_unknown_fields: bool,
 }
 
 impl Options {
@@ -16,6 +17,7 @@ impl Options {
         let mut krate = None;
         let mut ser_bounds = None;
         let mut de_bounds = None;
+        let mut deny_unknown_fields = false;
 
         parse_nested_metas_with(attrs, |meta| match meta {
             NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("crate") => {
@@ -39,6 +41,11 @@ impl Options {
                 Ok(())
             }
 
+            NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("de_bounds") => {
+                deny_unknown_fields = true;
+                Ok(())
+            }
+
             _ => Err(Error::new_spanned(meta, "unknown attribute")),
         })?;
 
@@ -46,6 +53,7 @@ impl Options {
             krate: krate.unwrap_or_else(|| syn::parse_quote!(aldrin_proto)),
             ser_bounds,
             de_bounds,
+            deny_unknown_fields,
         })
     }
 
