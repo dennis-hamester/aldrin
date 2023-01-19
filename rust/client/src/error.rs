@@ -103,7 +103,7 @@ where
 impl<T: fmt::Debug + fmt::Display> StdError for RunError<T> {}
 
 /// Standard error type used for most functions.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// The client has shut down.
     ///
@@ -238,7 +238,7 @@ impl StdError for Error {}
 ///
 /// When using auto-generated code, this is typically an indication of an incompatible schema
 /// mismatch.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidFunctionResult {
     /// Id of the service, that was called.
     pub service_id: ServiceId,
@@ -267,7 +267,7 @@ impl StdError for InvalidFunctionResult {}
 /// An invalid function call was received.
 ///
 /// This error is typically an indication of an incompatible schema mismatch.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidFunctionCall {
     /// Id of the service, that was called.
     pub service_id: ServiceId,
@@ -296,7 +296,7 @@ impl StdError for InvalidFunctionCall {}
 /// An event was received with invalid arguments.
 ///
 /// This error is typically an indication of an incompatible schema mismatch.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidEventArguments {
     /// Id of the service, that emitted the event.
     pub service_id: ServiceId,
