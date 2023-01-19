@@ -73,6 +73,7 @@ mod services;
 #[cfg(test)]
 mod test;
 
+#[cfg(feature = "codegen")]
 #[doc(hidden)]
 pub mod codegen;
 
