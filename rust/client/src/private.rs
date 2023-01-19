@@ -1,4 +1,4 @@
-//! Re-exports and utilities for the code generator.
+//! Private module
 //!
 //! This module and its contents are not part of the public API.
 

@@ -75,7 +75,7 @@ mod test;
 
 #[cfg(feature = "codegen")]
 #[doc(hidden)]
-pub mod codegen;
+pub mod private;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
