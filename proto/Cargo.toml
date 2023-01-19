@@ -19,7 +19,7 @@ tokio = ["dep:tokio"]
 [dependencies.aldrin-proto-macros]
 optional = true
 version = "0.1.0"
-path = "../rust/proto-macros"
+path = "../proto-macros"
 default-features = false
 
 [dependencies.arbitrary]

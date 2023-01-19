@@ -31,5 +31,5 @@ features = [
 
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 features = ["macros"]
