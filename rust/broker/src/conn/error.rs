@@ -34,7 +34,7 @@ where
 impl<T> Error for ConnectionError<T> where T: fmt::Debug + fmt::Display {}
 
 /// Error while establishing a new connection.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EstablishError<T> {
     /// An unexpected message was received.
     UnexpectedMessageReceived(Message),
