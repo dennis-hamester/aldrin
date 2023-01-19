@@ -4,14 +4,6 @@ on:
   push:
     branches-ignore:
     - 'wip/**'
-    paths:
-    - '.github/workflows/rust.yaml'
-    - 'Cargo.lock'
-    - 'Cargo.toml'
-    - 'conformance-tester-shared/**'
-    - 'conformance-tester/**'
-    - 'gen/**'
-    - 'rust/**'
 
 jobs:
 
