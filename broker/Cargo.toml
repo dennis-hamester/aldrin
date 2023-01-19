@@ -38,7 +38,7 @@ anyhow = "1.0.32"
 
 [dev-dependencies.aldrin-channel]
 version = "0.1.0"
-path = "../rust/channel"
+path = "../channel"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"

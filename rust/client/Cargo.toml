@@ -45,7 +45,7 @@ features = ["v4"]
 
 [dev-dependencies.aldrin-channel]
 version = "0.1.0"
-path = "../channel"
+path = "../../channel"
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
