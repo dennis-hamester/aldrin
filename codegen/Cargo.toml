@@ -13,7 +13,7 @@ rust = []
 
 [dependencies.aldrin-parser]
 version = "0.1.0"
-path = "../parser"
+path = "../rust/parser"
 default-features = false
 
 [dependencies.diffy]
@@ -29,16 +29,16 @@ uuid = "1.1.2"
 
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
-path = "../../client"
+path = "../client"
 features = ["codegen"]
 
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
-path = "../test"
+path = "../rust/test"
 features = ["tokio"]
 
 [dev-dependencies.futures]

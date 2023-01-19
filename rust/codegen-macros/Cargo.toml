@@ -12,7 +12,7 @@ proc-macro = true
 
 [dependencies.aldrin-codegen]
 version = "0.1.0"
-path = "../codegen"
+path = "../../codegen"
 default-features = false
 features = ["rust"]
 

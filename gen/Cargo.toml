@@ -9,7 +9,7 @@ rust-version = "1.65.0"
 
 [dependencies.aldrin-codegen]
 version = "0.1.0"
-path = "../rust/codegen"
+path = "../codegen"
 default-features = false
 features = ["rust"]
 
