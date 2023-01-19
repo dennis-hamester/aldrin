@@ -32,6 +32,50 @@ use syn::{DeriveInput, Error};
 /// }
 /// ```
 ///
+/// ## `bounds`, `ser_bounds`, `de_bounds`
+///
+/// Per default, additional bounds `T: Serialize` and `T: Deserialize` are added for each type
+/// parameter `T`. Use `ser_bounds` and `de_bounds` to override or inhibit this.
+///
+/// `bounds` is a shorthand for setting `ser_bounds` and `de_bounds` simultaneously.
+///
+/// The attribute's value should be a string literal containing bounds as they would appear in a
+/// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
+/// attribute to an empty string will inhibit the default bounds.
+///
+/// The following example defines a newtype struct for [`Cow`](std::borrow::Cow). This fails to
+/// compile, because `Cow`'s `Deserialize` implementation requires `T::Owned: Deserialize`. The
+/// default bound `T: Deserialize` is wrong in this case.
+///
+/// ```compile_fail
+/// # use std::borrow::Cow;
+/// #[derive(aldrin_proto::Serialize, aldrin_proto::Deserialize)]
+/// struct MyStruct<'a, T>(Cow<'a, T>)
+/// where
+///     T: ToOwned + ?Sized + 'a;
+/// ```
+///
+/// ```text
+/// error[E0277]: the trait bound `<T as ToOwned>::Owned: Deserialize` is not satisfied
+///    --> src/lib.rs
+///     |
+/// 4   | #[derive(aldrin_proto::Serialize, aldrin_proto::Deserialize)]
+///     |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Deserialize` is not implemented for `<T as ToOwned>::Owned`
+///     |
+///     = note: required for `Cow<'_, T>` to implement `Deserialize`
+/// ```
+///
+/// The solution is to override the default bounds with `de_bounds`:
+///
+/// ```
+/// # use std::borrow::Cow;
+/// #[derive(aldrin_proto::Serialize, aldrin_proto::Deserialize)]
+/// #[aldrin(de_bounds = "T::Owned: aldrin_proto::Deserialize")]
+/// struct MyStruct<'a, T>(Cow<'a, T>)
+/// where
+///     T: ToOwned + ?Sized + 'a;
+/// ```
+///
 /// # Field and variant attributes
 ///
 /// ## `id`

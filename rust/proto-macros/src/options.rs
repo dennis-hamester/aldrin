@@ -1,19 +1,41 @@
 use std::fmt::Display;
 use std::str::FromStr;
 use syn::punctuated::Punctuated;
-use syn::{Attribute, Error, Lit, LitInt, LitStr, Meta, NestedMeta, Path, Result, Token};
+use syn::{
+    Attribute, Error, Lit, LitInt, LitStr, Meta, NestedMeta, Path, Result, Token, WherePredicate,
+};
 
 pub struct Options {
     krate: Path,
+    ser_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    de_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
 }
 
 impl Options {
     pub fn new(attrs: &[Attribute]) -> Result<Self> {
         let mut krate = None;
+        let mut ser_bounds = None;
+        let mut de_bounds = None;
 
         parse_nested_metas_with(attrs, |meta| match meta {
             NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("crate") => {
                 krate = Some(parse_lit_into_path(&nv.lit)?);
+                Ok(())
+            }
+
+            NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("bounds") => {
+                ser_bounds = Some(parse_lit_into_where_predicates(&nv.lit)?);
+                de_bounds = ser_bounds.clone();
+                Ok(())
+            }
+
+            NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("ser_bounds") => {
+                ser_bounds = Some(parse_lit_into_where_predicates(&nv.lit)?);
+                Ok(())
+            }
+
+            NestedMeta::Meta(Meta::NameValue(nv)) if nv.path.is_ident("de_bounds") => {
+                de_bounds = Some(parse_lit_into_where_predicates(&nv.lit)?);
                 Ok(())
             }
 
@@ -22,11 +44,21 @@ impl Options {
 
         Ok(Self {
             krate: krate.unwrap_or_else(|| syn::parse_quote!(aldrin_proto)),
+            ser_bounds,
+            de_bounds,
         })
     }
 
     pub fn krate(&self) -> &Path {
         &self.krate
+    }
+
+    pub fn ser_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
+        self.ser_bounds.as_ref()
+    }
+
+    pub fn de_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
+        self.de_bounds.as_ref()
     }
 }
 
@@ -111,4 +143,12 @@ where
 {
     let int = get_lit_int(lit)?;
     int.base10_parse()
+}
+
+fn parse_lit_into_where_predicates(lit: &Lit) -> Result<Punctuated<WherePredicate, Token![,]>> {
+    let string = get_lit_str(lit)?;
+    let parser = Punctuated::<WherePredicate, Token![,]>::parse_terminated;
+    string
+        .parse_with(parser)
+        .map_err(|e| Error::new_spanned(string, e))
 }

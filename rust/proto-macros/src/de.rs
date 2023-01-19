@@ -45,11 +45,19 @@ pub fn gen_deserialize(input: DeriveInput) -> Result<TokenStream> {
 fn add_trait_bounds(mut generics: Generics, options: &Options) -> Generics {
     let krate = options.krate();
 
-    for param in &mut generics.params {
-        if let GenericParam::Type(type_param) = param {
-            type_param
-                .bounds
-                .push(syn::parse_quote!(#krate::Deserialize));
+    let predicates = &mut generics
+        .where_clause
+        .get_or_insert_with(|| syn::parse_quote!(where))
+        .predicates;
+
+    if let Some(de_bounds) = options.de_bounds() {
+        predicates.extend(de_bounds.into_iter().cloned());
+    } else {
+        for param in &mut generics.params {
+            if let GenericParam::Type(type_param) = param {
+                let ident = &type_param.ident;
+                predicates.push(syn::parse_quote!(#ident: #krate::Deserialize));
+            }
         }
     }
 

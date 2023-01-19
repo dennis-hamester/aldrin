@@ -22,6 +22,7 @@ default-features = false
 version = "1.0.14"
 default-features = false
 features = [
+    "clone-impls",
     "derive",
     "parsing",
     "printing",
