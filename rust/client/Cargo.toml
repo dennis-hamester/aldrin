@@ -21,7 +21,7 @@ default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../proto"
+path = "../../proto"
 default-features = false
 features = ["new-v4-ids"]
 

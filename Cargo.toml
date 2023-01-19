@@ -3,6 +3,7 @@ members = [
     "conformance-test-shared",
     "conformance-tester",
     "gen",
+    "proto",
     "rust/broker",
     "rust/channel",
     "rust/client",
@@ -11,7 +12,6 @@ members = [
     "rust/conformance-test-broker",
     "rust/conformance-test-client",
     "rust/parser",
-    "rust/proto",
     "rust/proto-macros",
     "rust/test",
 ]

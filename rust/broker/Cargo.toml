@@ -12,7 +12,7 @@ statistics = []
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../proto"
+path = "../../proto"
 default-features = false
 features = ["new-v4-ids"]
 
@@ -46,7 +46,7 @@ path = "../client"
 
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../proto"
+path = "../../proto"
 features = ["tokio"]
 
 [dev-dependencies.aldrin-test]
