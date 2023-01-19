@@ -459,7 +459,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
 
         // SAFETY: Exactly num elements have been and num equals N.
         //
-        // It's impossible to transmute [MaybeUninit<T>; N] to [T; N] on 1.64.0 when T is a generic
+        // It's currently impossible to transmute [MaybeUninit<T>; N] to [T; N] when T is a generic
         // or N a const generic. See https://github.com/rust-lang/rust/issues/61956.
         let value = unsafe {
             (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[T; N]>)).assume_init_read()
