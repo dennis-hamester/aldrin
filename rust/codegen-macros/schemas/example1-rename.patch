@@ -1,13 +1,16 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -5,22 +5,22 @@
- 
- #[derive(Debug, Clone, Default)]
+@@ -9,7 +9,7 @@
+ #[derive(Debug, Clone, Default, aldrin_client::private::aldrin_proto::Serialize, aldrin_client::private::aldrin_proto::Deserialize)]
+ #[aldrin(crate = "aldrin_client::private::aldrin_proto")]
  #[non_exhaustive]
 -pub struct MyStruct {
 +pub struct MyStructRenamed {
+     #[aldrin(id = 1)]
      pub field1: Option<u32>,
-     pub field2: Option<u32>,
+ 
+@@ -18,18 +18,18 @@
+ 
  }
  
 -impl MyStruct {
@@ -23,30 +26,13 @@
      }
  }
  
--impl aldrin_client::private::aldrin_proto::Serialize for MyStruct {
-+impl aldrin_client::private::aldrin_proto::Serialize for MyStructRenamed {
-     fn serialize(&self, serializer: aldrin_client::private::aldrin_proto::Serializer) -> Result<(), aldrin_client::private::aldrin_proto::SerializeError> {
-         let num_fields = if self.field1.is_some() { 1 } else { 0 } + if self.field2.is_some() { 1 } else { 0 };
-         let mut serializer = serializer.serialize_struct(num_fields)?;
-@@ -39,7 +39,7 @@
-     }
- }
- 
--impl aldrin_client::private::aldrin_proto::Deserialize for MyStruct {
-+impl aldrin_client::private::aldrin_proto::Deserialize for MyStructRenamed {
-     fn deserialize(deserializer: aldrin_client::private::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::private::aldrin_proto::DeserializeError> {
-         let mut deserializer = deserializer.deserialize_struct()?;
- 
-@@ -64,7 +64,7 @@
- }
- 
  #[derive(Debug, Clone, Default)]
 -pub struct MyStructBuilder {
 +pub struct MyStructRenamedBuilder {
      #[doc(hidden)]
      field1: Option<u32>,
  
-@@ -73,7 +73,7 @@
+@@ -38,7 +38,7 @@
  
  }
  
@@ -55,7 +41,7 @@
      pub fn new() -> Self {
          Default::default()
      }
-@@ -88,8 +88,8 @@
+@@ -53,8 +53,8 @@
          self
      }
  

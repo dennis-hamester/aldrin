@@ -8,7 +8,10 @@ edition = "2021"
 rust-version = "1.65.0"
 
 [features]
-codegen = ["dep:aldrin-codegen-macros"]
+codegen = [
+    "aldrin-proto/macros",
+    "dep:aldrin-codegen-macros",
+]
 
 [dependencies.aldrin-codegen-macros]
 optional = true
