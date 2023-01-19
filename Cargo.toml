@@ -6,12 +6,12 @@ members = [
     "codegen",
     "codegen-macros",
     "conformance-test-broker",
+    "conformance-test-client",
     "conformance-test-shared",
     "conformance-tester",
     "gen",
     "proto",
     "proto-macros",
-    "rust/conformance-test-client",
     "rust/parser",
     "rust/test",
 ]
