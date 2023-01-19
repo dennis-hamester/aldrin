@@ -13,5 +13,5 @@ members = [
     "parser",
     "proto",
     "proto-macros",
-    "rust/test",
+    "test",
 ]

@@ -12,22 +12,22 @@ tokio = ["dep:tokio"]
 
 [dependencies.aldrin-broker]
 version = "0.1.0"
-path = "../../broker"
+path = "../broker"
 default-features = false
 
 [dependencies.aldrin-channel]
 version = "0.1.0"
-path = "../../channel"
+path = "../channel"
 default-features = false
 
 [dependencies.aldrin-client]
 version = "0.1.0"
-path = "../../client"
+path = "../client"
 default-features = false
 
 [dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../../proto"
+path = "../proto"
 default-features = false
 
 [dependencies.futures-util]
@@ -45,7 +45,7 @@ anyhow = "1.0.32"
 
 [dev-dependencies.aldrin-codegen-macros]
 version = "0.1.0"
-path = "../../codegen-macros"
+path = "../codegen-macros"
 
 [dev-dependencies.futures]
 version = "0.3.21"

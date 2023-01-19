@@ -51,7 +51,7 @@ features = ["tokio"]
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
-path = "../rust/test"
+path = "../test"
 features = ["tokio"]
 
 [dev-dependencies.tokio]
