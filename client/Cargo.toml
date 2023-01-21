@@ -3,7 +3,7 @@ name = "aldrin-client"
 description = "Client library of Aldrin, a lightweight and composable RPC framework."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 edition = "2021"
 rust-version = "1.65.0"
 
