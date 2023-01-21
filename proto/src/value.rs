@@ -64,7 +64,7 @@ pub enum ValueKind {
     Receiver = 42,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct SerializedValue {
     buf: BytesMut,
 }
@@ -112,6 +112,12 @@ impl AsRef<[u8]> for SerializedValue {
 impl From<SerializedValueRef<'_>> for SerializedValue {
     fn from(v: SerializedValueRef) -> Self {
         Self::serialize(&v).unwrap()
+    }
+}
+
+impl PartialEq for SerializedValue {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref() == other.as_ref()
     }
 }
 
