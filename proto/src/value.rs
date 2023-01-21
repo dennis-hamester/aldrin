@@ -121,6 +121,12 @@ impl PartialEq for SerializedValue {
     }
 }
 
+impl PartialEq<SerializedValueRef<'_>> for SerializedValue {
+    fn eq(&self, other: &SerializedValueRef) -> bool {
+        self.as_ref() == other.as_ref()
+    }
+}
+
 impl Serialize for SerializedValue {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         SerializedValueRef::from(self).serialize(serializer)
@@ -179,6 +185,12 @@ impl AsRef<[u8]> for SerializedValueRef<'_> {
 impl<'a> From<&'a SerializedValue> for SerializedValueRef<'a> {
     fn from(v: &'a SerializedValue) -> Self {
         Self::new(v.as_ref())
+    }
+}
+
+impl PartialEq<SerializedValue> for SerializedValueRef<'_> {
+    fn eq(&self, other: &SerializedValue) -> bool {
+        self.as_ref() == other.as_ref()
     }
 }
 
