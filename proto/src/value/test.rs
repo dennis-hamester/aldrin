@@ -30,11 +30,18 @@ fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
         SerializedValue::from_bytes_mut(buf)
     };
 
+    // Actual deserialization
     assert_eq!(*expected, serialized_value.deserialize().unwrap());
 
+    // skip
     let mut buf = serialized.as_ref();
     Deserializer::new(&mut buf).skip().unwrap();
     assert_eq!(*buf, []);
+
+    // len
+    let mut buf = serialized.as_ref();
+    let len = Deserializer::new(&mut buf).len().unwrap();
+    assert_eq!(len, buf.len());
 }
 
 #[test]
@@ -1108,4 +1115,83 @@ fn test_cow() {
     let value = Cow::<str>::Owned("abcd".to_string());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_serialized_value() {
+    #[derive(Debug, PartialEq, Eq)]
+    struct Type<T1, T2> {
+        field1: T1,
+        field2: T2,
+    }
+
+    impl<T1, T2> Serialize for Type<T1, T2>
+    where
+        T1: Serialize,
+        T2: Serialize,
+    {
+        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer = serializer.serialize_struct(2)?;
+            serializer.serialize_field(1, &self.field1)?;
+            serializer.serialize_field(2, &self.field2)?;
+            serializer.finish()
+        }
+    }
+
+    impl<T1, T2> Deserialize for Type<T1, T2>
+    where
+        T1: Deserialize,
+        T2: Deserialize,
+    {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let mut deserializer = deserializer.deserialize_struct()?;
+
+            let mut field1 = None;
+            let mut field2 = None;
+
+            while deserializer.has_more_fields() {
+                let deserializer = deserializer.deserialize_field()?;
+
+                match deserializer.id() {
+                    1 => field1 = deserializer.deserialize().map(Some)?,
+                    2 => field2 = deserializer.deserialize().map(Some)?,
+                    _ => deserializer.skip()?,
+                }
+            }
+
+            Ok(Self {
+                field1: field1.ok_or(DeserializeError::InvalidSerialization)?,
+                field2: field2.ok_or(DeserializeError::InvalidSerialization)?,
+            })
+        }
+    }
+
+    type Concrete = Type<i32, String>;
+    type Vague = Type<SerializedValue, SerializedValue>;
+
+    let concrete = Concrete {
+        field1: 0x1234,
+        field2: "0x1234".to_string(),
+    };
+
+    let vague = Vague {
+        field1: SerializedValue::serialize(&0x1234).unwrap(),
+        field2: SerializedValue::serialize("0x1234").unwrap(),
+    };
+
+    assert_eq!(
+        concrete,
+        SerializedValue::serialize(&vague)
+            .unwrap()
+            .deserialize()
+            .unwrap()
+    );
+
+    assert_eq!(
+        vague,
+        SerializedValue::serialize(&concrete)
+            .unwrap()
+            .deserialize()
+            .unwrap()
+    );
 }

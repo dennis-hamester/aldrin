@@ -4,7 +4,8 @@ use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::value::ValueKind;
+use crate::value::{SerializedValueRef, ValueKind};
+use bytes::Buf;
 use std::iter;
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -21,6 +22,23 @@ pub struct Deserializer<'a, 'b> {
 impl<'a, 'b> Deserializer<'a, 'b> {
     pub(crate) fn new(buf: &'a mut &'b [u8]) -> Self {
         Self { buf }
+    }
+
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> Result<usize, DeserializeError> {
+        let mut buf = *self.buf;
+        Deserializer::new(&mut buf).skip()?;
+
+        // Determine the length by computing how far `skip()` has advanced `buf` compared to the
+        // original buffer `*self.buf`.
+        Ok(buf.as_ptr() as usize - (*self.buf).as_ptr() as usize)
+    }
+
+    pub fn split_off_serialized_value(self) -> Result<SerializedValueRef<'b>, DeserializeError> {
+        let len = self.len()?;
+        let res = SerializedValueRef::new(&self.buf[..len]);
+        self.buf.advance(len);
+        Ok(res)
     }
 
     pub fn peek_value_kind(&self) -> Result<ValueKind, DeserializeError> {
