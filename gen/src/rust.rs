@@ -38,18 +38,6 @@ pub struct RustArgs {
     #[clap(long)]
     no_function_non_exhaustive: bool,
 
-    /// Format output with rustfmt.
-    ///
-    /// The formatting style can be customized with --rustfmt-toml.
-    #[clap(long)]
-    format: bool,
-
-    /// Path to rustfmt.toml.
-    ///
-    /// If this argument is not specified, standard rustfmt rules apply regarding its configuration.
-    #[clap(long)]
-    rustfmt_toml: Option<PathBuf>,
-
     /// Path to a patch to apply to the generated code.
     ///
     /// This argument can be specified multiple times to apply more than one patch.
@@ -86,8 +74,6 @@ pub fn run(args: RustArgs) -> Result<bool> {
     options.server = !args.common_gen_args.no_server;
 
     let mut rust_options = RustOptions::new();
-    rust_options.rustfmt = args.format;
-    rust_options.rustfmt_toml = args.rustfmt_toml.as_deref();
     for patch in &args.patch {
         rust_options.patches.push(patch);
     }

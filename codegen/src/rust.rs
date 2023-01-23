@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-use crate::error::{Error, SubprocessError};
+use crate::error::Error;
 use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
 use diffy::Patch;
@@ -10,13 +10,10 @@ use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct RustOptions<'a> {
-    pub rustfmt: bool,
-    pub rustfmt_toml: Option<&'a Path>,
     pub patches: Vec<&'a Path>,
     pub struct_builders: bool,
     pub struct_non_exhaustive: bool,
@@ -28,8 +25,6 @@ pub struct RustOptions<'a> {
 impl<'a> RustOptions<'a> {
     pub fn new() -> Self {
         RustOptions {
-            rustfmt: false,
-            rustfmt_toml: None,
             patches: Vec::new(),
             struct_builders: true,
             struct_non_exhaustive: true,
@@ -105,47 +100,7 @@ impl<'a> RustGenerator<'a> {
             self.patch(patch)?;
         }
 
-        if self.rust_options.rustfmt {
-            self.format()?;
-        }
-
         Ok(self.output)
-    }
-
-    fn format(&mut self) -> Result<(), Error> {
-        use std::io::Write;
-
-        let mut cmd = Command::new("rustfmt");
-        cmd.arg("--edition").arg("2018");
-        if let Some(rustfmt_toml) = self.rust_options.rustfmt_toml {
-            cmd.arg("--config-path").arg(rustfmt_toml);
-        }
-
-        let mut rustfmt = cmd
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-
-        rustfmt
-            .stdin
-            .as_mut()
-            .unwrap()
-            .write_all(self.output.module_content.as_bytes())?;
-
-        let rustfmt = rustfmt.wait_with_output()?;
-        if rustfmt.status.success() {
-            self.output.module_content =
-                String::from_utf8(rustfmt.stdout).expect("got invalid UTF-8 from rustfmt");
-            Ok(())
-        } else {
-            Err(SubprocessError {
-                command: "rustfmt".to_owned(),
-                code: rustfmt.status.code(),
-                stderr: String::from_utf8(rustfmt.stderr).ok(),
-            }
-            .into())
-        }
     }
 
     fn patch(&mut self, patch: &Path) -> Result<(), Error> {
