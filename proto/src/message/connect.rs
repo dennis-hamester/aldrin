@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithValueDeserializer,
 };
 use crate::error::SerializeError;
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 

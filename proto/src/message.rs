@@ -47,7 +47,7 @@ mod unsubscribe_services;
 
 use crate::buf_ext::{BufMutExt, MessageBufExt};
 use crate::error::{DeserializeError, SerializeError};
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::{Buf, BufMut, BytesMut};

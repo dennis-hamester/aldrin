@@ -8,6 +8,7 @@ mod error;
 mod generic_value;
 mod ids;
 mod serialize_key;
+mod serialized_value;
 mod value;
 mod value_deserializer;
 mod value_serializer;
@@ -26,7 +27,8 @@ pub use ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 pub use serialize_key::SerializeKey;
-pub use value::{ByteSlice, Bytes, SerializedValue, SerializedValueRef, ValueKind};
+pub use serialized_value::{SerializedValue, SerializedValueRef};
+pub use value::{ByteSlice, Bytes, ValueKind};
 pub use value_deserializer::{
     BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,
     FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,

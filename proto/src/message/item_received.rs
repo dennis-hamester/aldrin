@@ -5,7 +5,7 @@ use super::{
 };
 use crate::error::SerializeError;
 use crate::ids::ChannelCookie;
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 

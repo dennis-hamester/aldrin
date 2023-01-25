@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithoutValueDeserializer,
 };
 use crate::ids::ObjectCookie;
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 

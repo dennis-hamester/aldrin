@@ -4,7 +4,8 @@ use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::value::{SerializedValueRef, ValueKind};
+use crate::serialized_value::SerializedValueRef;
+use crate::value::ValueKind;
 use bytes::Buf;
 use std::iter;
 use std::marker::PhantomData;

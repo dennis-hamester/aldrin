@@ -5,7 +5,7 @@ use super::{
 };
 use crate::error::SerializeError;
 use crate::ids::ServiceCookie;
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 

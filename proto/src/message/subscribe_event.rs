@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
 };
 use crate::ids::ServiceCookie;
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

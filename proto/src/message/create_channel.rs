@@ -3,7 +3,7 @@ use super::{
     ChannelEnd, Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::value::SerializedValue;
+use crate::serialized_value::SerializedValue;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
