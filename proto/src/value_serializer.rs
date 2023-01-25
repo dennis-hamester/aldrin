@@ -2,7 +2,7 @@ use crate::buf_ext::BufMutExt;
 use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::SerializeKey;
-use crate::serialized_value::SerializedValueRef;
+use crate::serialized_value::SerializedValueSlice;
 use crate::value::ValueKind;
 use bytes::{BufMut, BytesMut};
 use std::fmt;
@@ -23,8 +23,8 @@ impl<'a> Serializer<'a> {
         Self { buf }
     }
 
-    pub fn copy_from_serialized_value(self, value: SerializedValueRef) {
-        self.buf.extend_from_slice(value.as_ref());
+    pub fn copy_from_serialized_value(self, value: &SerializedValueSlice) {
+        self.buf.extend_from_slice(value);
     }
 
     pub fn serialize_none(self) {

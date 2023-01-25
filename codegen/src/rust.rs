@@ -947,7 +947,7 @@ fn call_type_name(ty: &ast::TypeName) -> String {
             "aldrin_client::private::aldrin_proto::ServiceId".to_owned()
         }
         ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_proto::SerializedValueRef".to_owned()
+            "&aldrin_client::private::aldrin_proto::SerializedValueSlice".to_owned()
         }
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
             ast::TypeNameKind::U8 => "&aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
@@ -991,7 +991,7 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
             "aldrin_client::private::aldrin_proto::ServiceId".to_owned()
         }
         ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_proto::SerializedValue".to_owned()
+            "aldrin_client::private::aldrin_proto::SerializedValueSlice".to_owned()
         }
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
             ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),

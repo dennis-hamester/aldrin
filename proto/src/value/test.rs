@@ -5,10 +5,9 @@ use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::message::ChannelEnd;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::BytesMut;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
@@ -16,19 +15,15 @@ use std::{f32, f64};
 use uuid::uuid;
 
 fn assert_serialize_eq<T: Serialize + ?Sized, B: AsRef<[u8]>>(value: &T, expected: B) {
-    let serialized_value = SerializedValue::serialize(value).unwrap().into_bytes_mut();
-    assert_eq!(serialized_value[9..], *expected.as_ref());
+    let serialized_value = SerializedValue::serialize(value).unwrap();
+    assert_eq!(serialized_value, *expected.as_ref());
 }
 
 fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
     expected: &T,
     serialized: B,
 ) {
-    let serialized_value = {
-        let mut buf = BytesMut::zeroed(9);
-        buf.extend_from_slice(serialized.as_ref());
-        SerializedValue::from_bytes_mut(buf)
-    };
+    let serialized_value = SerializedValueSlice::new(&serialized);
 
     // Actual deserialization
     assert_eq!(*expected, serialized_value.deserialize().unwrap());

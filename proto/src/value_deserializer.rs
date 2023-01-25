@@ -4,7 +4,7 @@ use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::serialized_value::SerializedValueRef;
+use crate::serialized_value::SerializedValueSlice;
 use crate::value::ValueKind;
 use bytes::Buf;
 use std::iter;
@@ -35,9 +35,9 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         Ok(buf.as_ptr() as usize - (*self.buf).as_ptr() as usize)
     }
 
-    pub fn split_off_serialized_value(self) -> Result<SerializedValueRef<'b>, DeserializeError> {
+    pub fn split_off_serialized_value(self) -> Result<&'b SerializedValueSlice, DeserializeError> {
         let len = self.len()?;
-        let res = SerializedValueRef::new(&self.buf[..len]);
+        let res = SerializedValueSlice::new(&self.buf[..len]);
         self.buf.advance(len);
         Ok(res)
     }

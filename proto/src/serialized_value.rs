@@ -1,10 +1,12 @@
+#[cfg(test)]
+mod test;
+
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
-
-#[cfg(test)]
-mod test;
+use std::borrow::Borrow;
+use std::ops::Deref;
 
 #[derive(Debug, Clone, Eq)]
 pub struct SerializedValue {
@@ -27,10 +29,6 @@ impl SerializedValue {
         Ok(Self { buf })
     }
 
-    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
-        SerializedValueRef::from(self).deserialize()
-    }
-
     pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
         // value.
@@ -44,40 +42,68 @@ impl SerializedValue {
     }
 }
 
-impl AsRef<[u8]> for SerializedValue {
-    fn as_ref(&self) -> &[u8] {
+impl Deref for SerializedValue {
+    type Target = SerializedValueSlice;
+
+    fn deref(&self) -> &SerializedValueSlice {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length.
-        &self.buf[9..]
+        SerializedValueSlice::new(&self.buf[9..])
     }
 }
 
-impl From<SerializedValueRef<'_>> for SerializedValue {
-    fn from(v: SerializedValueRef) -> Self {
-        Self::serialize(&v).unwrap()
+impl AsRef<SerializedValueSlice> for SerializedValue {
+    fn as_ref(&self) -> &SerializedValueSlice {
+        self
+    }
+}
+
+impl Borrow<SerializedValueSlice> for SerializedValue {
+    fn borrow(&self) -> &SerializedValueSlice {
+        self
+    }
+}
+
+impl AsRef<[u8]> for SerializedValue {
+    fn as_ref(&self) -> &[u8] {
+        self
     }
 }
 
 impl PartialEq for SerializedValue {
     fn eq(&self, other: &Self) -> bool {
-        self.as_ref() == other.as_ref()
+        ***self == ***other
     }
 }
 
-impl PartialEq<SerializedValueRef<'_>> for SerializedValue {
-    fn eq(&self, other: &SerializedValueRef) -> bool {
-        self.as_ref() == other.as_ref()
+impl PartialEq<SerializedValueSlice> for SerializedValue {
+    fn eq(&self, other: &SerializedValueSlice) -> bool {
+        ***self == **other
+    }
+}
+
+impl PartialEq<[u8]> for SerializedValue {
+    fn eq(&self, other: &[u8]) -> bool {
+        ***self == *other
+    }
+}
+
+impl PartialEq<SerializedValue> for [u8] {
+    fn eq(&self, other: &SerializedValue) -> bool {
+        *self == ***other
     }
 }
 
 impl Serialize for SerializedValue {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        SerializedValueRef::from(self).serialize(serializer)
+        (**self).serialize(serializer)
     }
 }
 
 impl Deserialize for SerializedValue {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.split_off_serialized_value().map(Into::into)
+        deserializer
+            .split_off_serialized_value()
+            .map(ToOwned::to_owned)
     }
 }
 
@@ -94,18 +120,19 @@ impl<'a> arbitrary::Arbitrary<'a> for SerializedValue {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct SerializedValueRef<'a> {
-    buf: &'a [u8],
-}
+#[derive(Debug, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct SerializedValueSlice([u8]);
 
-impl<'a> SerializedValueRef<'a> {
-    pub(crate) fn new(buf: &'a [u8]) -> Self {
-        Self { buf }
+impl SerializedValueSlice {
+    pub(crate) fn new<T: AsRef<[u8]> + ?Sized>(buf: &T) -> &Self {
+        let self_ptr = buf.as_ref() as *const [u8] as *const Self;
+        // Safe because of repr(transparent).
+        unsafe { &*self_ptr }
     }
 
-    pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
-        let mut buf = self.buf;
+    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
+        let mut buf = &self.0;
         let deserializer = Deserializer::new(&mut buf);
 
         let res = T::deserialize(deserializer);
@@ -118,27 +145,49 @@ impl<'a> SerializedValueRef<'a> {
     }
 }
 
-impl AsRef<[u8]> for SerializedValueRef<'_> {
+impl Deref for SerializedValueSlice {
+    type Target = [u8];
+
+    fn deref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl AsRef<[u8]> for SerializedValueSlice {
     fn as_ref(&self) -> &[u8] {
-        self.buf
+        self
     }
 }
 
-impl<'a> From<&'a SerializedValue> for SerializedValueRef<'a> {
-    fn from(v: &'a SerializedValue) -> Self {
-        Self::new(v.as_ref())
+impl ToOwned for SerializedValueSlice {
+    type Owned = SerializedValue;
+
+    fn to_owned(&self) -> SerializedValue {
+        SerializedValue::serialize(self).unwrap()
     }
 }
 
-impl PartialEq<SerializedValue> for SerializedValueRef<'_> {
+impl PartialEq<SerializedValue> for SerializedValueSlice {
     fn eq(&self, other: &SerializedValue) -> bool {
-        self.as_ref() == other.as_ref()
+        **self == ***other
     }
 }
 
-impl Serialize for SerializedValueRef<'_> {
+impl PartialEq<[u8]> for SerializedValueSlice {
+    fn eq(&self, other: &[u8]) -> bool {
+        **self == *other
+    }
+}
+
+impl PartialEq<SerializedValueSlice> for [u8] {
+    fn eq(&self, other: &SerializedValueSlice) -> bool {
+        *self == **other
+    }
+}
+
+impl Serialize for SerializedValueSlice {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.copy_from_serialized_value(*self);
+        serializer.copy_from_serialized_value(self);
         Ok(())
     }
 }
