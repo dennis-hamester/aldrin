@@ -950,10 +950,10 @@ fn call_type_name(ty: &ast::TypeName) -> String {
             "aldrin_client::private::aldrin_proto::SerializedValueRef".to_owned()
         }
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::BytesRef".to_owned(),
+            ast::TypeNameKind::U8 => "&aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
             _ => format!("&[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_proto::BytesRef".to_owned(),
+        ast::TypeNameKind::Bytes => "&aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "&std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -994,10 +994,10 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
             "aldrin_client::private::aldrin_proto::SerializedValue".to_owned()
         }
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::BytesRef".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
             _ => format!("[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_proto::BytesRef".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),

@@ -1,4 +1,4 @@
-use super::{Bytes, BytesRef};
+use super::{ByteSlice, Bytes};
 use crate::error::{DeserializeError, SerializeError};
 use crate::generic_value::{Enum, Struct, Value};
 use crate::ids::{
@@ -454,7 +454,7 @@ fn test_vec() {
 #[test]
 fn test_bytes() {
     let serialized = [18, 3, 1, 2, 3];
-    let value1 = Bytes(vec![1, 2, 3]);
+    let value1 = Bytes::new([1, 2, 3]);
     assert_serialize_eq(&value1, serialized);
     assert_deserialize_eq(&value1, serialized);
     let value2 = Value::Bytes(value1.0.clone());
@@ -466,7 +466,7 @@ fn test_bytes() {
     let value4 = bytes::BytesMut::from_iter(value1.0.iter());
     assert_serialize_eq(&value4, serialized);
     assert_deserialize_eq(&value4, serialized);
-    let value5 = BytesRef(&[1, 2, 3]);
+    let value5 = ByteSlice::new(&[1, 2, 3]);
     assert_serialize_eq(&value5, serialized);
 }
 
@@ -1113,6 +1113,19 @@ fn test_cow() {
 
     let serialized = [13, 4, b'a', b'b', b'c', b'd'];
     let value = Cow::<str>::Owned("abcd".to_string());
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_cow_bytes() {
+    let serialized = [18, 3, 1, 2, 3];
+    let value = Cow::Borrowed(ByteSlice::new(&[1, 2, 3]));
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+
+    let serialized = [18, 3, 1, 2, 3];
+    let value = Cow::<ByteSlice>::Owned(vec![1, 2, 3].into());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
 }

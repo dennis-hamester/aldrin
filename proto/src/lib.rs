@@ -26,7 +26,7 @@ pub use ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 pub use serialize_key::SerializeKey;
-pub use value::{Bytes, BytesRef, SerializedValue, SerializedValueRef, ValueKind};
+pub use value::{ByteSlice, Bytes, SerializedValue, SerializedValueRef, ValueKind};
 pub use value_deserializer::{
     BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,
     FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
