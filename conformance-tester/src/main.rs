@@ -4,8 +4,7 @@ mod output;
 mod test;
 
 use anyhow::Result;
-use clap::Parser;
-use output::ColorChoice;
+use clap::{ColorChoice, Parser};
 use std::process;
 
 #[derive(Parser)]

@@ -1,10 +1,11 @@
 use crate::test::{RunError, Test};
 use anyhow::Result;
+use clap::ColorChoice;
 use once_cell::sync::Lazy;
 use std::cmp;
-use termcolor::{Color as TermColor, ColorSpec, StandardStream, WriteColor};
+use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
-fn style(fg: Option<TermColor>, bold: bool) -> ColorSpec {
+fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
     let mut spec = ColorSpec::new();
     spec.set_fg(fg);
     spec.set_bold(bold);
@@ -18,19 +19,12 @@ fn get_termwidth() -> usize {
 }
 
 static STYLE_REGULAR: Lazy<ColorSpec> = Lazy::new(|| style(None, false));
-static STYLE_TEST_NAME: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Blue), false));
-static STYLE_MESSAGE_TYPE: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Yellow), false));
-static STYLE_PASSED: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Green), true));
-static STYLE_FAILED: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), true));
-static STYLE_FAILED_DETAIL: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), false));
-static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Cyan), true));
-
-#[derive(Copy, Clone, clap::ValueEnum)]
-pub enum ColorChoice {
-    Auto,
-    Always,
-    Never,
-}
+static STYLE_TEST_NAME: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Blue), false));
+static STYLE_MESSAGE_TYPE: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Yellow), false));
+static STYLE_PASSED: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Green), true));
+static STYLE_FAILED: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Red), true));
+static STYLE_FAILED_DETAIL: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Red), false));
+static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan), true));
 
 pub fn make_output(color_choice: ColorChoice) -> Result<impl WriteColor> {
     let color_choice = match color_choice {
