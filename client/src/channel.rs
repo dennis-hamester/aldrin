@@ -558,13 +558,14 @@ impl SenderInner {
     fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
         let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
 
+        if let Ok(Some(())) | Err(_) = state.receiver_destroyed.try_recv() {
+            return Err(Error::InvalidChannel);
+        }
+
         let value = SerializedValue::serialize(value)?;
         state.client.send_item(self.cookie, value)?;
 
-        match state.receiver_destroyed.try_recv() {
-            Ok(None) => Ok(()),
-            Ok(Some(())) | Err(_) => Err(Error::InvalidChannel),
-        }
+        Ok(())
     }
 }
 
