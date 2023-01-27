@@ -23,7 +23,7 @@ use std::task::{Context, Poll};
 /// [`UnclaimedSender`] can be [unbound](UnclaimedSender::unbind) and sent to another client.
 ///
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
-/// not bound to any client), it will not destroy the sending end of a channel. This is the main
+/// not bound to any client), it will not close the sending end of a channel. This is the main
 /// difference from `UnclaimedSender`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct UnboundSender<T: Serialize + ?Sized> {
@@ -167,13 +167,13 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
         UnboundSender::new(self.inner.unbind())
     }
 
-    /// Destroys the sender without consuming it.
+    /// Closes the sender without consuming it.
     ///
-    /// This destroys the sender such that it cannot be claimed anymore by any client. When the
+    /// This closes the sender such that it cannot be claimed anymore by any client. When the
     /// receiver waits for the channel to become [established](PendingReceiver::established), an
     /// error will be returned.
     ///
-    /// After destroying a sender, any further function calls will return [`Error::InvalidChannel`].
+    /// After closing a sender, any further function calls will return [`Error::InvalidChannel`].
     ///
     /// # Examples
     ///
@@ -187,8 +187,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # let handle = broker.add_client().await;
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
     ///
-    /// // Destroy the sender.
-    /// sender.destroy().await?;
+    /// // Close the sender.
+    /// sender.close().await?;
     ///
     /// // For the receiver, an error will be returned when waiting for the channel to become
     /// // established.
@@ -196,8 +196,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// assert_eq!(err, Error::InvalidChannel);
     /// # Ok(())
     /// # }
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Claims the sender by its bound client.
@@ -211,8 +211,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     ///
     /// This function can fail in the following cases:
     /// - Some other client has already claimed the sender.
-    /// - Some other client has destroyed the sender.
-    /// - The receiver has been destroyed.
+    /// - Some other client has closed the sender.
+    /// - The receiver has been closed.
     ///
     /// # Examples
     ///
@@ -272,10 +272,10 @@ impl UnclaimedSenderInner {
         self.cookie
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Sender, false)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, false)
             .await
     }
 
@@ -288,7 +288,7 @@ impl UnclaimedSenderInner {
 impl Drop for UnclaimedSenderInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client.destroy_channel_end_now(self.cookie, ChannelEnd::Sender, false);
+            client.close_channel_end_now(self.cookie, ChannelEnd::Sender, false);
         }
     }
 }
@@ -311,15 +311,15 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
         }
     }
 
-    /// Destroys the sender without consuming it.
+    /// Closes the sender without consuming it.
     ///
-    /// When destroying a [`PendingSender`], it will no longer be possible to claim the receiver. If
-    /// it has already been claimed, then it will receive `None`, indicating that the channel has
-    /// been destroyed.
+    /// When closing a [`PendingSender`], it will no longer be possible to claim the receiver. If it
+    /// has already been claimed, then it will receive `None`, indicating that the channel has been
+    /// closed.
     ///
     /// # Examples
     ///
-    /// ## Destroying a sender while the receiver hasn't been claimed yet
+    /// ## Closing a sender while the receiver hasn't been claimed yet
     ///
     /// ```
     /// use aldrin_client::Error;
@@ -331,8 +331,8 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// # let handle = broker.add_client().await;
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
-    /// // Destroy the sender.
-    /// sender.destroy().await?;
+    /// // Close the sender.
+    /// sender.close().await?;
     ///
     /// // For the receiver, an error will be returned when trying to claim it.
     /// let err = receiver.claim().await.unwrap_err();
@@ -341,7 +341,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// # }
     /// ```
     ///
-    /// ## Destroying a sender while the receiver has already been claimed
+    /// ## Closing a sender while the receiver has already been claimed
     ///
     /// ```
     /// use aldrin_client::Error;
@@ -357,22 +357,22 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// // Claim the receiver.
     /// let mut receiver = receiver.claim().await?;
     ///
-    /// // Destroy the sender.
-    /// sender.destroy().await?;
+    /// // Close the sender.
+    /// sender.close().await?;
     ///
     /// // The receiver will receive None.
     /// assert_eq!(receiver.next().await, None);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Waits until the channel has been established.
     ///
     /// A channel is established when both ends have been claimed. An error is returned when the
-    /// receiver has been destroyed instead of claimed.
+    /// receiver has been closed instead of claimed.
     pub async fn established(self) -> Result<Sender<T>, Error> {
         self.inner.established().await.map(Sender::new)
     }
@@ -413,10 +413,10 @@ impl PendingSenderInner {
         }
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, true)
             .await
     }
 
@@ -427,7 +427,7 @@ impl PendingSenderInner {
         state
             .established
             .await
-            .map(|receiver_destroyed| SenderInner::new(self.cookie, client, receiver_destroyed))
+            .map(|receiver_closed| SenderInner::new(self.cookie, client, receiver_closed))
             .map_err(|_| Error::InvalidChannel)
     }
 }
@@ -437,7 +437,7 @@ impl Drop for PendingSenderInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .destroy_channel_end_now(self.cookie, ChannelEnd::Sender, true);
+                .close_channel_end_now(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -460,7 +460,7 @@ impl<T: Serialize + ?Sized> Sender<T> {
         }
     }
 
-    /// Destroys the sender without consuming it.
+    /// Closes the sender without consuming it.
     ///
     /// The will cause the receiving end to receive [`None`] after all other items have been
     /// received.
@@ -480,11 +480,11 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// let mut receiver = receiver.claim().await?;
     /// let mut sender = sender.established().await?;
     ///
-    /// // Send a couple of items and then destroy the sender.
+    /// // Send a couple of items and then close the sender.
     /// sender.send(&1)?;
     /// sender.send(&2)?;
     /// sender.send(&3)?;
-    /// sender.destroy().await?;
+    /// sender.close().await?;
     ///
     /// // The receiver will receive all items followed by None.
     /// assert_eq!(receiver.next().await, Some(Ok(1)));
@@ -494,18 +494,18 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Sends and item on the channel.
     ///
-    /// When the receiver is destroyed, then one of the following calls of this function will return
+    /// When the receiver is closed, then one of the following calls of this function will return
     /// [`Error::InvalidChannel`]. There is no guarantee as to when this will happen. All items sent
-    /// after the broker has acknowledged the receiver's destruction will be discarded.
+    /// after the broker has acknowledged the receiver's closing will be discarded.
     ///
     /// Note that this function is not `async`. Sending many items in a burst can thus block a task
-    /// if this is called in an asynchronous context. This can even block a destruction notification
+    /// if this is called in an asynchronous context. This can even block a closure notification
     /// from the receiver, such that `send` will never indicate an error. It is generally advised to
     /// yield back to the executer regularly.
     pub fn send(&mut self, item: &T) -> Result<(), Error> {
@@ -530,35 +530,35 @@ pub(crate) struct SenderInner {
 #[derive(Debug)]
 struct SenderInnerState {
     client: Handle,
-    receiver_destroyed: oneshot::Receiver<()>,
+    receiver_closed: oneshot::Receiver<()>,
 }
 
 impl SenderInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        receiver_destroyed: oneshot::Receiver<()>,
+        receiver_closed: oneshot::Receiver<()>,
     ) -> Self {
         Self {
             cookie,
             state: Some(SenderInnerState {
                 client,
-                receiver_destroyed,
+                receiver_closed,
             }),
         }
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, true)
             .await
     }
 
     fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
         let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
 
-        if let Ok(Some(())) | Err(_) = state.receiver_destroyed.try_recv() {
+        if let Ok(Some(())) | Err(_) = state.receiver_closed.try_recv() {
             return Err(Error::InvalidChannel);
         }
 
@@ -574,7 +574,7 @@ impl Drop for SenderInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .destroy_channel_end_now(self.cookie, ChannelEnd::Sender, true);
+                .close_channel_end_now(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -588,7 +588,7 @@ impl Drop for SenderInner {
 /// [`UnclaimedReceiver`] can be [unbound](UnclaimedReceiver::unbind) and sent to another client.
 ///
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
-/// not bound to any client), it will not destroy the receiving end of a channel. This is the main
+/// not bound to any client), it will not close the receiving end of a channel. This is the main
 /// difference from `UnclaimedReceiver`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct UnboundReceiver<T: Deserialize> {
@@ -733,14 +733,13 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
         UnboundReceiver::new(self.inner.unbind())
     }
 
-    /// Destroys the receiver without consuming it.
+    /// Closes the receiver without consuming it.
     ///
-    /// This destroys the receiver such that it cannot be claimed anymore by any client. When the
+    /// This closes the receiver such that it cannot be claimed anymore by any client. When the
     /// sender waits for the channel to become [established](PendingSender::established), an error
     /// will be returned.
     ///
-    /// After destroying a receiver, any further function calls will return
-    /// [`Error::InvalidChannel`].
+    /// After closing a receiver, any further function calls will return [`Error::InvalidChannel`].
     ///
     /// # Examples
     ///
@@ -754,8 +753,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # let handle = broker.add_client().await;
     /// let (sender, mut receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
-    /// // Destroy the receiver.
-    /// receiver.destroy().await?;
+    /// // Close the receiver.
+    /// receiver.close().await?;
     ///
     /// // For the sender, an error will be returned when waiting for the channel to become
     /// // established.
@@ -763,8 +762,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// assert_eq!(err, Error::InvalidChannel);
     /// # Ok(())
     /// # }
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Claims the receiver by its bound client.
@@ -778,8 +777,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     ///
     /// This function can fail in the following cases:
     /// - Some other client has already claimed the receiver.
-    /// - Some other client has destroyed the receiver.
-    /// - The sender has been destroyed.
+    /// - Some other client has closed the receiver.
+    /// - The sender has been closed.
     ///
     /// # Examples
     ///
@@ -839,10 +838,10 @@ impl UnclaimedReceiverInner {
         self.cookie
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, false)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, false)
             .await
     }
 
@@ -855,7 +854,7 @@ impl UnclaimedReceiverInner {
 impl Drop for UnclaimedReceiverInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client.destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, false);
+            client.close_channel_end_now(self.cookie, ChannelEnd::Receiver, false);
         }
     }
 }
@@ -878,17 +877,17 @@ impl<T: Deserialize> PendingReceiver<T> {
         }
     }
 
-    /// Destroys the receiver without consuming it.
+    /// Closes the receiver without consuming it.
     ///
-    /// When destroying a [`PendingReceiver`], it will no longer be possible to claim the sender.
+    /// When closing a [`PendingReceiver`], it will no longer be possible to claim the sender.
     ///
     /// When the sender has already been claimed, the situation is a little bit more
-    /// complicated. The sender is notified asynchronously about the receiver's destruction. It
-    /// will, sooner or later, receive an error when sending an item.
+    /// complicated. The sender is notified asynchronously about the receiver's closing. It will,
+    /// sooner or later, receive an error when sending an item.
     ///
     /// # Examples
     ///
-    /// ## Destroying a receiver while the sender hasn't been claimed yet
+    /// ## Closing a receiver while the sender hasn't been claimed yet
     ///
     /// ```
     /// use aldrin_client::Error;
@@ -900,8 +899,8 @@ impl<T: Deserialize> PendingReceiver<T> {
     /// # let handle = broker.add_client().await;
     /// let (sender, mut receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
     ///
-    /// // Destroy the receiver.
-    /// receiver.destroy().await?;
+    /// // Close the receiver.
+    /// receiver.close().await?;
     ///
     /// // For the sender, an error will be returned when trying to claim it.
     /// let err = sender.claim().await.unwrap_err();
@@ -909,14 +908,14 @@ impl<T: Deserialize> PendingReceiver<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Waits until the channel has been established.
     ///
     /// A channel is established when both ends have been claimed. An error is returned when the
-    /// sender has been destroyed instead of claimed.
+    /// sender has been closed instead of claimed.
     pub async fn established(self) -> Result<Receiver<T>, Error> {
         self.inner.established().await.map(Receiver::new)
     }
@@ -957,10 +956,10 @@ impl PendingReceiverInner {
         }
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
             .await
     }
 
@@ -981,7 +980,7 @@ impl Drop for PendingReceiverInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
+                .close_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }
@@ -1004,12 +1003,12 @@ impl<T: Deserialize> Receiver<T> {
         }
     }
 
-    /// Destroys the receiver without consuming it.
+    /// Closes the receiver without consuming it.
     ///
     /// The sender will be notified asynchronously and cause [`Sender::send`] to return
     /// [`Error::InvalidChannel`].
-    pub async fn destroy(&mut self) -> Result<(), Error> {
-        self.inner.destroy().await
+    pub async fn close(&mut self) -> Result<(), Error> {
+        self.inner.close().await
     }
 
     /// Casts the item type to a different type.
@@ -1065,10 +1064,10 @@ impl ReceiverInner {
         }
     }
 
-    async fn destroy(&mut self) -> Result<(), Error> {
+    async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .destroy_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
             .await
     }
 }
@@ -1078,7 +1077,7 @@ impl Drop for ReceiverInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .destroy_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
+                .close_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }

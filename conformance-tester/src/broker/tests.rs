@@ -1,9 +1,9 @@
+mod close_invalid_receiver;
+mod close_invalid_sender;
 mod connect_ok;
 mod connect_version_mismatch;
 mod create_channel_with_claimed_receiver;
 mod create_channel_with_claimed_sender;
-mod destroy_invalid_receiver;
-mod destroy_invalid_sender;
 mod shutdown_by_broker;
 mod shutdown_by_client;
 
@@ -16,12 +16,12 @@ use tokio::time::{self, Instant};
 
 pub fn make_tests() -> Vec<BrokerTest> {
     vec![
+        close_invalid_receiver::make_test(),
+        close_invalid_sender::make_test(),
         connect_ok::make_test(),
         connect_version_mismatch::make_test(),
         create_channel_with_claimed_receiver::make_test(),
         create_channel_with_claimed_sender::make_test(),
-        destroy_invalid_receiver::make_test(),
-        destroy_invalid_sender::make_test(),
         shutdown_by_broker::make_test(),
         shutdown_by_client::make_test(),
     ]

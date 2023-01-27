@@ -10,7 +10,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
-pub enum DestroyChannelEndResult {
+pub enum CloseChannelEndResult {
     Ok = 0,
     InvalidChannel = 1,
     ForeignChannel = 2,
@@ -18,18 +18,18 @@ pub enum DestroyChannelEndResult {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-pub struct DestroyChannelEndReply {
+pub struct CloseChannelEndReply {
     pub serial: u32,
-    pub result: DestroyChannelEndResult,
+    pub result: CloseChannelEndResult,
 }
 
-impl MessageOps for DestroyChannelEndReply {
+impl MessageOps for CloseChannelEndReply {
     fn kind(&self) -> MessageKind {
-        MessageKind::DestroyChannelEndReply
+        MessageKind::CloseChannelEndReply
     }
 
     fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
-        let mut serializer = MessageSerializer::without_value(MessageKind::DestroyChannelEndReply);
+        let mut serializer = MessageSerializer::without_value(MessageKind::CloseChannelEndReply);
 
         serializer.put_varint_u32_le(self.serial);
         serializer.put_discriminant_u8(self.result);
@@ -39,7 +39,7 @@ impl MessageOps for DestroyChannelEndReply {
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
-            MessageWithoutValueDeserializer::new(buf, MessageKind::DestroyChannelEndReply)?;
+            MessageWithoutValueDeserializer::new(buf, MessageKind::CloseChannelEndReply)?;
 
         let serial = deserializer.try_get_varint_u32_le()?;
         let result = deserializer.try_get_discriminant_u8()?;
@@ -53,11 +53,11 @@ impl MessageOps for DestroyChannelEndReply {
     }
 }
 
-impl Sealed for DestroyChannelEndReply {}
+impl Sealed for CloseChannelEndReply {}
 
-impl From<DestroyChannelEndReply> for Message {
-    fn from(msg: DestroyChannelEndReply) -> Self {
-        Self::DestroyChannelEndReply(msg)
+impl From<CloseChannelEndReply> for Message {
+    fn from(msg: CloseChannelEndReply) -> Self {
+        Self::CloseChannelEndReply(msg)
     }
 }
 
@@ -65,20 +65,20 @@ impl From<DestroyChannelEndReply> for Message {
 mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
-    use super::{DestroyChannelEndReply, DestroyChannelEndResult};
+    use super::{CloseChannelEndReply, CloseChannelEndResult};
 
     #[test]
     fn ok() {
         let serialized = [7, 0, 0, 0, 34, 1, 0];
 
-        let msg = DestroyChannelEndReply {
+        let msg = CloseChannelEndReply {
             serial: 1,
-            result: DestroyChannelEndResult::Ok,
+            result: CloseChannelEndResult::Ok,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 
-        let msg = Message::DestroyChannelEndReply(msg);
+        let msg = Message::CloseChannelEndReply(msg);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }
@@ -87,14 +87,14 @@ mod test {
     fn invalid_channel() {
         let serialized = [7, 0, 0, 0, 34, 1, 1];
 
-        let msg = DestroyChannelEndReply {
+        let msg = CloseChannelEndReply {
             serial: 1,
-            result: DestroyChannelEndResult::InvalidChannel,
+            result: CloseChannelEndResult::InvalidChannel,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 
-        let msg = Message::DestroyChannelEndReply(msg);
+        let msg = Message::CloseChannelEndReply(msg);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }
@@ -103,14 +103,14 @@ mod test {
     fn foreign_channel() {
         let serialized = [7, 0, 0, 0, 34, 1, 2];
 
-        let msg = DestroyChannelEndReply {
+        let msg = CloseChannelEndReply {
             serial: 1,
-            result: DestroyChannelEndResult::ForeignChannel,
+            result: CloseChannelEndResult::ForeignChannel,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 
-        let msg = Message::DestroyChannelEndReply(msg);
+        let msg = Message::CloseChannelEndReply(msg);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }

@@ -318,7 +318,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_channels, 0);
     assert_eq!(stats.channels_created, 0);
-    assert_eq!(stats.channels_destroyed, 0);
+    assert_eq!(stats.channels_closed, 0);
     assert_eq!(stats.items_sent, 0);
 
     // Create 1 channel.
@@ -331,11 +331,11 @@ async fn channels() {
     assert_eq!(stats.messages_received, 1);
     assert_eq!(stats.num_channels, 1);
     assert_eq!(stats.channels_created, 1);
-    assert_eq!(stats.channels_destroyed, 0);
+    assert_eq!(stats.channels_closed, 0);
     assert_eq!(stats.items_sent, 0);
 
-    // Create 2 channels and destroy 1.
-    sender.destroy().await.unwrap();
+    // Create 2 channels and close 1.
+    sender.close().await.unwrap();
     let (sender1, receiver1) = client1
         .create_channel_with_claimed_sender::<()>()
         .await
@@ -349,7 +349,7 @@ async fn channels() {
     assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.num_channels, 2);
     assert_eq!(stats.channels_created, 2);
-    assert_eq!(stats.channels_destroyed, 1);
+    assert_eq!(stats.channels_closed, 1);
     assert_eq!(stats.items_sent, 0);
 
     // Claim 1 and send 3 items.
@@ -364,19 +364,19 @@ async fn channels() {
     assert_eq!(stats.messages_received, 5);
     assert_eq!(stats.num_channels, 2);
     assert_eq!(stats.channels_created, 0);
-    assert_eq!(stats.channels_destroyed, 0);
+    assert_eq!(stats.channels_closed, 0);
     assert_eq!(stats.items_sent, 3);
 
-    // Destroy 2 channels.
-    sender1.destroy().await.unwrap();
-    receiver1.destroy().await.unwrap();
-    receiver2.destroy().await.unwrap();
+    // Close 2 channels.
+    sender1.close().await.unwrap();
+    receiver1.close().await.unwrap();
+    receiver2.close().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 4);
     assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.num_channels, 0);
     assert_eq!(stats.channels_created, 0);
-    assert_eq!(stats.channels_destroyed, 2);
+    assert_eq!(stats.channels_closed, 2);
     assert_eq!(stats.items_sent, 0);
 
     client1.join().await;

@@ -22,7 +22,7 @@ use futures_core::stream::{FusedStream, Stream};
 use futures_util::stream::StreamExt;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CreateObjectRequest, CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest,
+    CloseChannelEndRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
     DestroyServiceRequest, EmitEventRequest, HandleRequest, QueryObjectRequest,
     QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
     SubscribeServicesRequest, UnsubscribeEventRequest,
@@ -872,8 +872,8 @@ impl Handle {
     /// sender.send(&2)?;
     /// sender.send(&3)?;
     ///
-    /// // Client 1 will destroy (or drop) the channel when it has nothing to send anymore.
-    /// sender.destroy().await?;
+    /// // Client 1 will close (or drop) the channel when it has nothing to send anymore.
+    /// sender.close().await?;
     ///
     /// // Client 2 receives all values in order. The Result in the return values can indicate
     /// // conversion errors when an item isn't a u32.
@@ -881,10 +881,10 @@ impl Handle {
     /// assert_eq!(receiver.next().await, Some(Ok(2)));
     /// assert_eq!(receiver.next().await, Some(Ok(3)));
     ///
-    /// // Client 2 can observe that the sender has been destroyed by receiving None. It follows by
-    /// // also destroying (or dropping) the receiver.
+    /// // Client 2 can observe that the sender has been closed by receiving None. It follows by
+    /// // also closing (or dropping) the receiver.
     /// assert_eq!(receiver.next().await, None);
-    /// receiver.destroy().await?;
+    /// receiver.close().await?;
     /// # Ok(())
     /// # }
     /// ```
@@ -931,7 +931,7 @@ impl Handle {
         Ok((UnclaimedSender::new(sender), PendingReceiver::new(receiver)))
     }
 
-    pub(crate) async fn destroy_channel_end(
+    pub(crate) async fn close_channel_end(
         &self,
         cookie: ChannelCookie,
         end: ChannelEnd,
@@ -939,7 +939,7 @@ impl Handle {
     ) -> Result<(), Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(HandleRequest::DestroyChannelEnd(DestroyChannelEndRequest {
+            .unbounded_send(HandleRequest::CloseChannelEnd(CloseChannelEndRequest {
                 cookie,
                 end,
                 claimed,
@@ -950,7 +950,7 @@ impl Handle {
         recv.await.map_err(|_| Error::ClientShutdown)?
     }
 
-    pub(crate) fn destroy_channel_end_now(
+    pub(crate) fn close_channel_end_now(
         &self,
         cookie: ChannelCookie,
         end: ChannelEnd,
@@ -958,7 +958,7 @@ impl Handle {
     ) {
         let (reply, _) = oneshot::channel();
         self.send
-            .unbounded_send(HandleRequest::DestroyChannelEnd(DestroyChannelEndRequest {
+            .unbounded_send(HandleRequest::CloseChannelEnd(CloseChannelEndRequest {
                 cookie,
                 end,
                 claimed,

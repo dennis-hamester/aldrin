@@ -15,10 +15,10 @@ use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
-    DestroyChannelEndReply, DestroyChannelEndResult, DestroyObject, DestroyObjectReply,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
     ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
@@ -396,7 +396,7 @@ impl Broker {
             Message::QueryObject(req) => self.query_object(id, req)?,
             Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
             Message::CreateChannel(req) => self.create_channel(id, req)?,
-            Message::DestroyChannelEnd(req) => self.destroy_channel_end(state, id, req)?,
+            Message::CloseChannelEnd(req) => self.close_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
             Message::SendItem(req) => self.send_item(state, id, req),
             Message::Sync(req) => self.sync(id, req)?,
@@ -417,8 +417,8 @@ impl Broker {
             | Message::QueryObjectReply(_)
             | Message::QueryServiceVersionReply(_)
             | Message::CreateChannelReply(_)
-            | Message::DestroyChannelEndReply(_)
-            | Message::ChannelEndDestroyed(_)
+            | Message::CloseChannelEndReply(_)
+            | Message::ChannelEndClosed(_)
             | Message::ClaimChannelEndReply(_)
             | Message::ChannelEndClaimed(_)
             | Message::ItemReceived(_)
@@ -1085,11 +1085,11 @@ impl Broker {
         Ok(())
     }
 
-    fn destroy_channel_end(
+    fn close_channel_end(
         &mut self,
         state: &mut State,
         id: &ConnectionId,
-        req: DestroyChannelEnd,
+        req: CloseChannelEnd,
     ) -> Result<(), ()> {
         let conn = match self.conns.get(id) {
             Some(conn) => conn,
@@ -1102,26 +1102,26 @@ impl Broker {
                 send!(
                     self,
                     conn,
-                    Message::DestroyChannelEndReply(DestroyChannelEndReply {
+                    Message::CloseChannelEndReply(CloseChannelEndReply {
                         serial: req.serial,
-                        result: DestroyChannelEndResult::InvalidChannel,
+                        result: CloseChannelEndResult::InvalidChannel,
                     })
                 )?;
                 return Ok(());
             }
         };
 
-        let (result, claimed) = channel.check_destroy(id, req.end);
+        let (result, claimed) = channel.check_close(id, req.end);
         send!(
             self,
             conn,
-            Message::DestroyChannelEndReply(DestroyChannelEndReply {
+            Message::CloseChannelEndReply(CloseChannelEndReply {
                 serial: req.serial,
                 result,
             })
         )?;
 
-        if result == DestroyChannelEndResult::Ok {
+        if result == CloseChannelEndResult::Ok {
             self.remove_channel_end(state, id, req.cookie, req.end, claimed);
         }
 
@@ -1388,13 +1388,13 @@ impl Broker {
             }
         }
 
-        let remove = match channel.get_mut().destroy(end) {
+        let remove = match channel.get_mut().close(end) {
             Some(other_id) => match self.conns.get(other_id) {
                 Some(other) => {
                     let res = send!(
                         self,
                         other,
-                        Message::ChannelEndDestroyed(ChannelEndDestroyed { cookie, end })
+                        Message::ChannelEndClosed(ChannelEndClosed { cookie, end })
                     );
 
                     if res.is_err() {
@@ -1416,7 +1416,7 @@ impl Broker {
             #[cfg(feature = "statistics")]
             {
                 self.statistics.num_channels -= 1;
-                self.statistics.channels_destroyed += 1;
+                self.statistics.channels_closed += 1;
             }
         }
     }

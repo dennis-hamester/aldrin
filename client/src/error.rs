@@ -163,16 +163,16 @@ pub enum Error {
     /// An operation was performed on an invalid channel.
     ///
     /// This error happens in the following cases:
-    /// - Any use of a destroyed channel.
-    /// - Trying to claim a channel when the other end has been destroyed.
-    /// - When the other channel end gets destroyed while waiting for the channel to become
+    /// - Any use of a closed channel.
+    /// - Trying to claim a channel when the other end has been closed.
+    /// - When the other channel end gets closed while waiting for the channel to become
     ///   established.
     InvalidChannel,
 
     /// An operation was performed on a channel that belongs to a different client.
     ///
     /// This error happens in the following cases:
-    /// - Trying to destroy an unclaimed channel that has been claimed by a different client in the
+    /// - Trying to close an unclaimed channel that has been claimed by a different client in the
     ///   meantime.
     /// - Trying to claim a channel which has been claimed by another client.
     ForeignChannel,

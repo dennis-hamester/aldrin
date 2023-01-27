@@ -2,7 +2,7 @@ use super::BrokerRunArgs;
 use crate::test::RunError;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::message::{
-    ChannelEnd, Connect, ConnectReply, CreateChannel, DestroyChannelEnd, DestroyChannelEndResult,
+    ChannelEnd, CloseChannelEnd, CloseChannelEndResult, Connect, ConnectReply, CreateChannel,
     Message,
 };
 use aldrin_proto::tokio::TokioTransport;
@@ -225,38 +225,38 @@ impl Client {
         }
     }
 
-    pub async fn send_destroy_channel_end(
+    pub async fn send_close_channel_end(
         &mut self,
         serial: u32,
         cookie: ChannelCookie,
         end: ChannelEnd,
-    ) -> Result<DestroyChannelEndResult> {
-        self.send(Message::DestroyChannelEnd(DestroyChannelEnd {
+    ) -> Result<CloseChannelEndResult> {
+        self.send(Message::CloseChannelEnd(CloseChannelEnd {
             serial,
             cookie,
             end,
         }))
         .await
-        .with_context(|| anyhow!("failed to send destroy-channel-end message to broker"))?;
+        .with_context(|| anyhow!("failed to send close-channel-end message to broker"))?;
 
         let msg = self
             .receive()
             .await
-            .with_context(|| anyhow!("failed to receive destroy-channel-end-reply message"))?;
+            .with_context(|| anyhow!("failed to receive close-channel-end-reply message"))?;
 
-        if let Message::DestroyChannelEndReply(msg) = msg {
+        if let Message::CloseChannelEndReply(msg) = msg {
             if msg.serial == serial {
                 Ok(msg.result)
             } else {
                 Err(anyhow!(
-                    "destroy-channel-end-reply received with serial {} but expected {}",
+                    "close-channel-end-reply received with serial {} but expected {}",
                     msg.serial,
                     serial
                 ))
             }
         } else {
             Err(anyhow!(
-                "expected destroy-channel-end-reply message but received {msg:?}"
+                "expected close-channel-end-reply message but received {msg:?}"
             ))
         }
     }

@@ -6,8 +6,8 @@ use crate::error::{ConnectError, RunError};
 use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CreateClaimedReceiverRequest, CreateClaimedSenderRequest, CreateObjectRequest,
-    CreateServiceRequest, DestroyChannelEndRequest, DestroyObjectRequest, DestroyServiceRequest,
+    CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateClaimedSenderRequest,
+    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, QueryObjectRequest, QueryObjectRequestReply,
     QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
     SubscribeServicesRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeEventRequest,
@@ -17,10 +17,10 @@ use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndDestroyed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, Connect,
-    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyChannelEnd,
-    DestroyChannelEndReply, DestroyChannelEndResult, DestroyObject, DestroyObjectReply,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
     ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
@@ -87,7 +87,7 @@ where
     query_object: SerialMap<QueryObjectData>,
     query_service_version: SerialMap<oneshot::Sender<QueryServiceVersionResult>>,
     create_channel: SerialMap<CreateChannelData>,
-    destroy_channel_end: SerialMap<DestroyChannelEndRequest>,
+    close_channel_end: SerialMap<CloseChannelEndRequest>,
     claim_channel_end: SerialMap<ClaimChannelEndData>,
     senders: HashMap<ChannelCookie, SenderState>,
     receivers: HashMap<ChannelCookie, ReceiverState>,
@@ -186,7 +186,7 @@ where
             query_object: SerialMap::new(),
             query_service_version: SerialMap::new(),
             create_channel: SerialMap::new(),
-            destroy_channel_end: SerialMap::new(),
+            close_channel_end: SerialMap::new(),
             claim_channel_end: SerialMap::new(),
             senders: HashMap::new(),
             receivers: HashMap::new(),
@@ -316,8 +316,8 @@ where
             Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
             Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
-            Message::DestroyChannelEndReply(msg) => self.msg_destroy_channel_end_reply(msg)?,
-            Message::ChannelEndDestroyed(msg) => self.msg_channel_end_destroyed(msg)?,
+            Message::CloseChannelEndReply(msg) => self.msg_close_channel_end_reply(msg)?,
+            Message::ChannelEndClosed(msg) => self.msg_channel_end_closed(msg)?,
             Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
             Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
@@ -336,7 +336,7 @@ where
             | Message::QueryObject(_)
             | Message::QueryServiceVersion(_)
             | Message::CreateChannel(_)
-            | Message::DestroyChannelEnd(_)
+            | Message::CloseChannelEnd(_)
             | Message::ClaimChannelEnd(_)
             | Message::SendItem(_)
             | Message::Sync(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
@@ -784,15 +784,15 @@ where
         }
     }
 
-    fn msg_destroy_channel_end_reply(
+    fn msg_close_channel_end_reply(
         &mut self,
-        msg: DestroyChannelEndReply,
+        msg: CloseChannelEndReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.destroy_channel_end.remove(msg.serial) {
+        let req = match self.close_channel_end.remove(msg.serial) {
             Some(req) => req,
             None => {
                 return Err(RunError::UnexpectedMessageReceived(
-                    Message::DestroyChannelEndReply(msg),
+                    Message::CloseChannelEndReply(msg),
                 ))
             }
         };
@@ -812,30 +812,27 @@ where
         }
 
         let res = match msg.result {
-            DestroyChannelEndResult::Ok => Ok(()),
-            DestroyChannelEndResult::InvalidChannel => Err(Error::InvalidChannel),
-            DestroyChannelEndResult::ForeignChannel => Err(Error::ForeignChannel),
+            CloseChannelEndResult::Ok => Ok(()),
+            CloseChannelEndResult::InvalidChannel => Err(Error::InvalidChannel),
+            CloseChannelEndResult::ForeignChannel => Err(Error::ForeignChannel),
         };
 
         req.reply.send(res).ok();
         Ok(())
     }
 
-    fn msg_channel_end_destroyed(
-        &mut self,
-        msg: ChannelEndDestroyed,
-    ) -> Result<(), RunError<T::Error>> {
+    fn msg_channel_end_closed(&mut self, msg: ChannelEndClosed) -> Result<(), RunError<T::Error>> {
         match msg.end {
             ChannelEnd::Sender => {
                 let receiver = self
                     .receivers
                     .get_mut(&msg.cookie)
-                    .map(|receiver| mem::replace(receiver, ReceiverState::SenderDestroyed));
+                    .map(|receiver| mem::replace(receiver, ReceiverState::SenderClosed));
 
                 match receiver {
                     Some(ReceiverState::Pending(_)) | Some(ReceiverState::Established(_)) => Ok(()),
-                    Some(ReceiverState::SenderDestroyed) | None => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndDestroyed(msg)),
+                    Some(ReceiverState::SenderClosed) | None => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndClosed(msg)),
                     ),
                 }
             }
@@ -844,12 +841,12 @@ where
                 let sender = self
                     .senders
                     .get_mut(&msg.cookie)
-                    .map(|sender| mem::replace(sender, SenderState::ReceiverDestroyed));
+                    .map(|sender| mem::replace(sender, SenderState::ReceiverClosed));
 
                 match sender {
                     Some(SenderState::Pending(_)) | Some(SenderState::Established(_)) => Ok(()),
-                    Some(SenderState::ReceiverDestroyed) | None => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndDestroyed(msg)),
+                    Some(SenderState::ReceiverClosed) | None => Err(
+                        RunError::UnexpectedMessageReceived(Message::ChannelEndClosed(msg)),
                     ),
                 }
             }
@@ -937,7 +934,7 @@ where
                         Ok(())
                     }
 
-                    ReceiverState::Established(_) | ReceiverState::SenderDestroyed => Err(
+                    ReceiverState::Established(_) | ReceiverState::SenderClosed => Err(
                         RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
                     ),
                 }
@@ -961,7 +958,7 @@ where
                         Ok(())
                     }
 
-                    SenderState::Established(_) | SenderState::ReceiverDestroyed => Err(
+                    SenderState::Established(_) | SenderState::ReceiverClosed => Err(
                         RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
                     ),
                 }
@@ -1011,7 +1008,7 @@ where
             HandleRequest::CreateClaimedReceiver(req) => {
                 self.req_create_claimed_receiver(req).await?
             }
-            HandleRequest::DestroyChannelEnd(req) => self.req_destroy_channel_end(req).await?,
+            HandleRequest::CloseChannelEnd(req) => self.req_close_channel_end(req).await?,
             HandleRequest::ClaimSender(req) => self.req_claim_sender(req).await?,
             HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
             HandleRequest::SendItem(req) => self.req_send_item(req).await?,
@@ -1310,17 +1307,17 @@ where
             .map_err(Into::into)
     }
 
-    async fn req_destroy_channel_end(
+    async fn req_close_channel_end(
         &mut self,
-        req: DestroyChannelEndRequest,
+        req: CloseChannelEndRequest,
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.cookie;
         let end = req.end;
 
-        let serial = self.destroy_channel_end.insert(req);
+        let serial = self.close_channel_end.insert(req);
 
         self.t
-            .send_and_flush(Message::DestroyChannelEnd(DestroyChannelEnd {
+            .send_and_flush(Message::CloseChannelEnd(CloseChannelEnd {
                 serial,
                 cookie,
                 end,
@@ -1436,12 +1433,12 @@ enum ClaimChannelEndData {
 enum SenderState {
     Pending(oneshot::Sender<oneshot::Receiver<()>>),
     Established(oneshot::Sender<()>),
-    ReceiverDestroyed,
+    ReceiverClosed,
 }
 
 #[derive(Debug)]
 enum ReceiverState {
     Pending(oneshot::Sender<mpsc::UnboundedReceiver<SerializedValue>>),
     Established(mpsc::UnboundedSender<SerializedValue>),
-    SenderDestroyed,
+    SenderClosed,
 }

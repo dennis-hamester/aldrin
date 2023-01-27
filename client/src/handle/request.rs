@@ -34,7 +34,7 @@ pub(crate) enum HandleRequest {
     QueryServiceVersion(QueryServiceVersionRequest),
     CreateClaimedSender(CreateClaimedSenderRequest),
     CreateClaimedReceiver(CreateClaimedReceiverRequest),
-    DestroyChannelEnd(DestroyChannelEndRequest),
+    CloseChannelEnd(CloseChannelEndRequest),
     ClaimSender(ClaimSenderRequest),
     ClaimReceiver(ClaimReceiverRequest),
     SendItem(SendItemRequest),
@@ -142,7 +142,7 @@ pub(crate) type CreateClaimedReceiverRequest =
     oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>;
 
 #[derive(Debug)]
-pub(crate) struct DestroyChannelEndRequest {
+pub(crate) struct CloseChannelEndRequest {
     pub cookie: ChannelCookie,
     pub end: ChannelEnd,
     pub claimed: bool,

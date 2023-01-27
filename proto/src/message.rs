@@ -1,9 +1,11 @@
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
-mod channel_end_destroyed;
+mod channel_end_closed;
 mod claim_channel_end;
 mod claim_channel_end_reply;
+mod close_channel_end;
+mod close_channel_end_reply;
 mod connect;
 mod connect_reply;
 mod create_channel;
@@ -12,8 +14,6 @@ mod create_object;
 mod create_object_reply;
 mod create_service;
 mod create_service_reply;
-mod destroy_channel_end;
-mod destroy_channel_end_reply;
 mod destroy_object;
 mod destroy_object_reply;
 mod destroy_service;
@@ -59,9 +59,11 @@ use uuid::Uuid;
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionReplyKind, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
-pub use channel_end_destroyed::ChannelEndDestroyed;
+pub use channel_end_closed::ChannelEndClosed;
 pub use claim_channel_end::ClaimChannelEnd;
 pub use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
+pub use close_channel_end::CloseChannelEnd;
+pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
 pub use connect_reply::{ConnectReply, ConnectReplyKind};
 pub use create_channel::CreateChannel;
@@ -70,8 +72,6 @@ pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectReplyKind, CreateObjectResult};
 pub use create_service::CreateService;
 pub use create_service_reply::{CreateServiceReply, CreateServiceReplyKind, CreateServiceResult};
-pub use destroy_channel_end::DestroyChannelEnd;
-pub use destroy_channel_end_reply::{DestroyChannelEndReply, DestroyChannelEndResult};
 pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
@@ -139,9 +139,9 @@ pub enum MessageKind {
     QueryServiceVersionReply = 30,
     CreateChannel = 31,
     CreateChannelReply = 32,
-    DestroyChannelEnd = 33,
-    DestroyChannelEndReply = 34,
-    ChannelEndDestroyed = 35,
+    CloseChannelEnd = 33,
+    CloseChannelEndReply = 34,
+    ChannelEndClosed = 35,
     ClaimChannelEnd = 36,
     ClaimChannelEndReply = 37,
     ChannelEndClaimed = 38,
@@ -190,9 +190,9 @@ impl MessageKind {
             | Self::QueryServiceVersionReply
             | Self::CreateChannel
             | Self::CreateChannelReply
-            | Self::DestroyChannelEnd
-            | Self::DestroyChannelEndReply
-            | Self::ChannelEndDestroyed
+            | Self::CloseChannelEnd
+            | Self::CloseChannelEndReply
+            | Self::ChannelEndClosed
             | Self::ClaimChannelEnd
             | Self::ClaimChannelEndReply
             | Self::ChannelEndClaimed
@@ -287,9 +287,9 @@ pub enum Message {
     QueryServiceVersionReply(QueryServiceVersionReply),
     CreateChannel(CreateChannel),
     CreateChannelReply(CreateChannelReply),
-    DestroyChannelEnd(DestroyChannelEnd),
-    DestroyChannelEndReply(DestroyChannelEndReply),
-    ChannelEndDestroyed(ChannelEndDestroyed),
+    CloseChannelEnd(CloseChannelEnd),
+    CloseChannelEndReply(CloseChannelEndReply),
+    ChannelEndClosed(ChannelEndClosed),
     ClaimChannelEnd(ClaimChannelEnd),
     ClaimChannelEndReply(ClaimChannelEndReply),
     ChannelEndClaimed(ChannelEndClaimed),
@@ -335,9 +335,9 @@ impl MessageOps for Message {
             Self::QueryServiceVersionReply(_) => MessageKind::QueryServiceVersionReply,
             Self::CreateChannel(_) => MessageKind::CreateChannel,
             Self::CreateChannelReply(_) => MessageKind::CreateChannelReply,
-            Self::DestroyChannelEnd(_) => MessageKind::DestroyChannelEnd,
-            Self::DestroyChannelEndReply(_) => MessageKind::DestroyChannelEndReply,
-            Self::ChannelEndDestroyed(_) => MessageKind::ChannelEndDestroyed,
+            Self::CloseChannelEnd(_) => MessageKind::CloseChannelEnd,
+            Self::CloseChannelEndReply(_) => MessageKind::CloseChannelEndReply,
+            Self::ChannelEndClosed(_) => MessageKind::ChannelEndClosed,
             Self::ClaimChannelEnd(_) => MessageKind::ClaimChannelEnd,
             Self::ClaimChannelEndReply(_) => MessageKind::ClaimChannelEndReply,
             Self::ChannelEndClaimed(_) => MessageKind::ChannelEndClaimed,
@@ -383,9 +383,9 @@ impl MessageOps for Message {
             Self::QueryServiceVersionReply(msg) => msg.serialize_message(),
             Self::CreateChannel(msg) => msg.serialize_message(),
             Self::CreateChannelReply(msg) => msg.serialize_message(),
-            Self::DestroyChannelEnd(msg) => msg.serialize_message(),
-            Self::DestroyChannelEndReply(msg) => msg.serialize_message(),
-            Self::ChannelEndDestroyed(msg) => msg.serialize_message(),
+            Self::CloseChannelEnd(msg) => msg.serialize_message(),
+            Self::CloseChannelEndReply(msg) => msg.serialize_message(),
+            Self::ChannelEndClosed(msg) => msg.serialize_message(),
             Self::ClaimChannelEnd(msg) => msg.serialize_message(),
             Self::ClaimChannelEndReply(msg) => msg.serialize_message(),
             Self::ChannelEndClaimed(msg) => msg.serialize_message(),
@@ -499,14 +499,14 @@ impl MessageOps for Message {
             MessageKind::CreateChannelReply => {
                 CreateChannelReply::deserialize_message(buf).map(Self::CreateChannelReply)
             }
-            MessageKind::DestroyChannelEnd => {
-                DestroyChannelEnd::deserialize_message(buf).map(Self::DestroyChannelEnd)
+            MessageKind::CloseChannelEnd => {
+                CloseChannelEnd::deserialize_message(buf).map(Self::CloseChannelEnd)
             }
-            MessageKind::DestroyChannelEndReply => {
-                DestroyChannelEndReply::deserialize_message(buf).map(Self::DestroyChannelEndReply)
+            MessageKind::CloseChannelEndReply => {
+                CloseChannelEndReply::deserialize_message(buf).map(Self::CloseChannelEndReply)
             }
-            MessageKind::ChannelEndDestroyed => {
-                ChannelEndDestroyed::deserialize_message(buf).map(Self::ChannelEndDestroyed)
+            MessageKind::ChannelEndClosed => {
+                ChannelEndClosed::deserialize_message(buf).map(Self::ChannelEndClosed)
             }
             MessageKind::ClaimChannelEnd => {
                 ClaimChannelEnd::deserialize_message(buf).map(Self::ClaimChannelEnd)
@@ -561,9 +561,9 @@ impl MessageOps for Message {
             Self::QueryServiceVersionReply(msg) => msg.value(),
             Self::CreateChannel(msg) => msg.value(),
             Self::CreateChannelReply(msg) => msg.value(),
-            Self::DestroyChannelEnd(msg) => msg.value(),
-            Self::DestroyChannelEndReply(msg) => msg.value(),
-            Self::ChannelEndDestroyed(msg) => msg.value(),
+            Self::CloseChannelEnd(msg) => msg.value(),
+            Self::CloseChannelEndReply(msg) => msg.value(),
+            Self::ChannelEndClosed(msg) => msg.value(),
             Self::ClaimChannelEnd(msg) => msg.value(),
             Self::ClaimChannelEndReply(msg) => msg.value(),
             Self::ChannelEndClaimed(msg) => msg.value(),

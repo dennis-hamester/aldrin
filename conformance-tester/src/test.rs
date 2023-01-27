@@ -86,8 +86,8 @@ pub enum MessageType {
     Shutdown,
     CreateChannel,
     CreateChannelReply,
-    DestroyChannelEnd,
-    DestroyChannelEndReply,
+    CloseChannelEnd,
+    CloseChannelEndReply,
 }
 
 impl fmt::Display for MessageType {
@@ -98,8 +98,8 @@ impl fmt::Display for MessageType {
             Self::Shutdown => f.pad("shutdown"),
             Self::CreateChannel => f.pad("create-channel"),
             Self::CreateChannelReply => f.pad("create-channel-reply"),
-            Self::DestroyChannelEnd => f.pad("destroy-channel-end"),
-            Self::DestroyChannelEndReply => f.pad("destroy-channel-end-reply"),
+            Self::CloseChannelEnd => f.pad("close-channel-end"),
+            Self::CloseChannelEndReply => f.pad("close-channel-end-reply"),
         }
     }
 }
@@ -114,8 +114,8 @@ impl FromStr for MessageType {
             "shutdown" => Ok(Self::Shutdown),
             "create-channel" => Ok(Self::CreateChannel),
             "create-channel-reply" => Ok(Self::CreateChannelReply),
-            "destroy-channel-end" => Ok(Self::DestroyChannelEnd),
-            "destroy-channel-end-reply" => Ok(Self::DestroyChannelEndReply),
+            "close-channel-end" => Ok(Self::CloseChannelEnd),
+            "close-channel-end-reply" => Ok(Self::CloseChannelEndReply),
             _ => Err(anyhow!("invalid message")),
         }
     }

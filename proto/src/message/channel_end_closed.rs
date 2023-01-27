@@ -9,18 +9,18 @@ use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-pub struct ChannelEndDestroyed {
+pub struct ChannelEndClosed {
     pub cookie: ChannelCookie,
     pub end: ChannelEnd,
 }
 
-impl MessageOps for ChannelEndDestroyed {
+impl MessageOps for ChannelEndClosed {
     fn kind(&self) -> MessageKind {
-        MessageKind::ChannelEndDestroyed
+        MessageKind::ChannelEndClosed
     }
 
     fn serialize_message(self) -> Result<BytesMut, MessageSerializeError> {
-        let mut serializer = MessageSerializer::without_value(MessageKind::ChannelEndDestroyed);
+        let mut serializer = MessageSerializer::without_value(MessageKind::ChannelEndClosed);
 
         serializer.put_uuid(self.cookie.0);
         serializer.put_discriminant_u8(self.end);
@@ -30,7 +30,7 @@ impl MessageOps for ChannelEndDestroyed {
 
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError> {
         let mut deserializer =
-            MessageWithoutValueDeserializer::new(buf, MessageKind::ChannelEndDestroyed)?;
+            MessageWithoutValueDeserializer::new(buf, MessageKind::ChannelEndClosed)?;
 
         let cookie = deserializer.try_get_uuid().map(ChannelCookie)?;
         let end = deserializer.try_get_discriminant_u8()?;
@@ -44,11 +44,11 @@ impl MessageOps for ChannelEndDestroyed {
     }
 }
 
-impl Sealed for ChannelEndDestroyed {}
+impl Sealed for ChannelEndClosed {}
 
-impl From<ChannelEndDestroyed> for Message {
-    fn from(msg: ChannelEndDestroyed) -> Self {
-        Self::ChannelEndDestroyed(msg)
+impl From<ChannelEndClosed> for Message {
+    fn from(msg: ChannelEndClosed) -> Self {
+        Self::ChannelEndClosed(msg)
     }
 }
 
@@ -56,7 +56,7 @@ impl From<ChannelEndDestroyed> for Message {
 mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::{ChannelEnd, Message};
-    use super::ChannelEndDestroyed;
+    use super::ChannelEndClosed;
     use crate::ids::ChannelCookie;
     use uuid::uuid;
 
@@ -67,14 +67,14 @@ mod test {
             0xd9, 0xdd, 0xcd, 0x7e, 0x72, 0,
         ];
 
-        let msg = ChannelEndDestroyed {
+        let msg = ChannelEndClosed {
             cookie: ChannelCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
             end: ChannelEnd::Sender,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 
-        let msg = Message::ChannelEndDestroyed(msg);
+        let msg = Message::ChannelEndClosed(msg);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }
@@ -86,14 +86,14 @@ mod test {
             0xd9, 0xdd, 0xcd, 0x7e, 0x72, 1,
         ];
 
-        let msg = ChannelEndDestroyed {
+        let msg = ChannelEndClosed {
             cookie: ChannelCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
             end: ChannelEnd::Receiver,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 
-        let msg = Message::ChannelEndDestroyed(msg);
+        let msg = Message::ChannelEndClosed(msg);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }
