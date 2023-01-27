@@ -1,11 +1,11 @@
-use crate::Color;
 use aldrin_parser::diag::{Diagnostic, Formatted, Style};
 use aldrin_parser::Parsed;
+use clap::ColorChoice as ClapColorChoice;
 use once_cell::sync::Lazy;
 use std::io::{Result, Write};
-use termcolor::{Color as TermColor, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-fn style(fg: Option<TermColor>, bold: bool) -> ColorSpec {
+fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
     let mut spec = ColorSpec::new();
     spec.set_fg(fg);
     spec.set_bold(bold);
@@ -13,19 +13,19 @@ fn style(fg: Option<TermColor>, bold: bool) -> ColorSpec {
 }
 
 static STYLE_REGULAR: Lazy<ColorSpec> = Lazy::new(|| style(None, false));
-static STYLE_ERROR: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Red), true));
-static STYLE_WARNING: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Yellow), true));
-static STYLE_INFO: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Blue), true));
+static STYLE_ERROR: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Red), true));
+static STYLE_WARNING: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Yellow), true));
+static STYLE_INFO: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Blue), true));
 static STYLE_EMPHASIZED: Lazy<ColorSpec> = Lazy::new(|| style(None, true));
-static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Cyan), true));
-static STYLE_LINE_NUMBER: Lazy<ColorSpec> = Lazy::new(|| style(Some(TermColor::Cyan), true));
+static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan), true));
+static STYLE_LINE_NUMBER: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan), true));
 
-pub fn print_diagnostics(parsed: &Parsed, color: Color) -> Result<()> {
+pub fn print_diagnostics(parsed: &Parsed, color: ClapColorChoice) -> Result<()> {
     let color_choice = match color {
-        Color::Auto if atty::is(atty::Stream::Stderr) => ColorChoice::Auto,
-        Color::Auto => ColorChoice::Never,
-        Color::Always => ColorChoice::Always,
-        Color::Never => ColorChoice::Never,
+        ClapColorChoice::Auto if atty::is(atty::Stream::Stderr) => ColorChoice::Auto,
+        ClapColorChoice::Auto => ColorChoice::Never,
+        ClapColorChoice::Always => ColorChoice::Always,
+        ClapColorChoice::Never => ColorChoice::Never,
     };
 
     let mut stream = StandardStream::stderr(color_choice);

@@ -3,7 +3,7 @@ mod diag;
 mod rust;
 
 use anyhow::Result;
-use clap::{Parser, ValueEnum};
+use clap::{ColorChoice, Parser};
 use std::path::PathBuf;
 use std::process;
 
@@ -20,16 +20,9 @@ enum Args {
 #[derive(Parser)]
 pub struct CommonArgs {
     /// When to color output.
-    #[clap(long, default_value_t = Color::Auto)]
+    #[clap(long, default_value_t = ColorChoice::Auto)]
     #[arg(value_enum)]
-    color: Color,
-}
-
-#[derive(Copy, Clone, ValueEnum)]
-pub enum Color {
-    Auto,
-    Always,
-    Never,
+    color: ColorChoice,
 }
 
 #[derive(Parser)]
