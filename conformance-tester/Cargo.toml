@@ -26,10 +26,6 @@ version = "1.0.32"
 default-features = false
 features = ["std"]
 
-[dependencies.atty]
-version = "0.2.14"
-default-features = false
-
 [dependencies.clap]
 version = "4.1.4"
 default-features = false
@@ -46,6 +42,10 @@ features = [
 
 [dependencies.futures]
 version = "0.3.21"
+default-features = false
+
+[dependencies.is-terminal]
+version = "0.4.2"
 default-features = false
 
 [dependencies.num_cpus]

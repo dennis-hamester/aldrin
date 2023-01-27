@@ -1,8 +1,10 @@
 use crate::test::{RunError, Test};
 use anyhow::Result;
 use clap::ColorChoice;
+use is_terminal::IsTerminal;
 use once_cell::sync::Lazy;
 use std::cmp;
+use std::io;
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
 fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
@@ -28,7 +30,7 @@ static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan), 
 
 pub fn make_output(color_choice: ColorChoice) -> Result<impl WriteColor> {
     let color_choice = match color_choice {
-        ColorChoice::Auto if atty::is(atty::Stream::Stdout) => termcolor::ColorChoice::Auto,
+        ColorChoice::Auto if io::stdout().is_terminal() => termcolor::ColorChoice::Auto,
         ColorChoice::Auto | ColorChoice::Never => termcolor::ColorChoice::Never,
         ColorChoice::Always => termcolor::ColorChoice::Always,
     };

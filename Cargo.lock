@@ -88,9 +88,9 @@ dependencies = [
  "aldrin-conformance-test-shared",
  "aldrin-proto",
  "anyhow",
- "atty",
  "clap",
  "futures",
+ "is-terminal",
  "num_cpus",
  "once_cell",
  "serde_json",
@@ -177,17 +177,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29d47fbf90d5149a107494b15a7dc8d69b351be2db3bb9691740e88ec17fd880"
 dependencies = [
  "derive_arbitrary",
-]
-
-[[package]]
-name = "atty"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
-dependencies = [
- "hermit-abi 0.1.6",
- "libc",
- "winapi",
 ]
 
 [[package]]
