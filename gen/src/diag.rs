@@ -1,8 +1,9 @@
 use aldrin_parser::diag::{Diagnostic, Formatted, Style};
 use aldrin_parser::Parsed;
 use clap::ColorChoice as ClapColorChoice;
+use is_terminal::IsTerminal;
 use once_cell::sync::Lazy;
-use std::io::{Result, Write};
+use std::io::{self, Result, Write};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
@@ -22,7 +23,7 @@ static STYLE_LINE_NUMBER: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan)
 
 pub fn print_diagnostics(parsed: &Parsed, color: ClapColorChoice) -> Result<()> {
     let color_choice = match color {
-        ClapColorChoice::Auto if atty::is(atty::Stream::Stderr) => ColorChoice::Auto,
+        ClapColorChoice::Auto if io::stderr().is_terminal() => ColorChoice::Auto,
         ClapColorChoice::Auto => ColorChoice::Never,
         ClapColorChoice::Always => ColorChoice::Always,
         ClapColorChoice::Never => ColorChoice::Never,

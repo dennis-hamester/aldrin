@@ -107,8 +107,8 @@ dependencies = [
  "aldrin-codegen",
  "aldrin-parser",
  "anyhow",
- "atty",
  "clap",
+ "is-terminal",
  "once_cell",
  "termcolor",
 ]
