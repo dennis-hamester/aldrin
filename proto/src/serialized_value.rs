@@ -6,9 +6,10 @@ use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
 use std::borrow::Borrow;
+use std::fmt;
 use std::ops::Deref;
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Clone, Eq)]
 pub struct SerializedValue {
     buf: BytesMut,
 }
@@ -48,6 +49,16 @@ impl Deref for SerializedValue {
     fn deref(&self) -> &SerializedValueSlice {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length.
         SerializedValueSlice::new(&self.buf[9..])
+    }
+}
+
+// The default Debug implementation renders the bytes as ASCII or escape sequences, which isn't
+// particularly useful here.
+impl fmt::Debug for SerializedValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("SerializedValue")
+            .field("buf", &&*self.buf)
+            .finish()
     }
 }
 
