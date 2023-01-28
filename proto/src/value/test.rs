@@ -1,4 +1,4 @@
-use super::{ByteSlice, Bytes};
+use super::{ByteSlice, Bytes, Skip};
 use crate::error::{DeserializeError, SerializeError};
 use crate::generic_value::{Enum, Struct, Value};
 use crate::ids::{
@@ -32,6 +32,7 @@ fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
     let mut buf = serialized.as_ref();
     Deserializer::new(&mut buf).skip().unwrap();
     assert_eq!(*buf, []);
+    assert_eq!(serialized_value.deserialize(), Ok(Skip));
 
     // len
     let mut buf = serialized.as_ref();
