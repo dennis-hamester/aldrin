@@ -21,6 +21,12 @@ features = ["fuzzing"]
 debug = 1
 
 [[bin]]
+name = "deserialize-skip"
+path = "fuzz_targets/deserialize_skip.rs"
+test = false
+doc = false
+
+[[bin]]
 name = "message-deserialize"
 path = "fuzz_targets/message_deserialize.rs"
 test = false
