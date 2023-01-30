@@ -7,6 +7,7 @@ use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use uuid::Uuid;
@@ -36,7 +37,6 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 ///
 /// ```
 /// use aldrin_client::{Event, SubscribeMode};
-/// use futures::stream::StreamExt;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -51,7 +51,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// events.subscribe(service_id, 2).await?;
 ///
 /// # handle.emit_event(service_id, 1, &32u32)?;
-/// while let Some(event) = events.next().await {
+/// while let Some(event) = events.next_event().await {
 ///     match event {
 ///         Event { id: 1, value, .. } => {
 ///             let value: u32 = value.deserialize()?;
@@ -152,12 +152,9 @@ impl Events {
             Entry::Vacant(_) => Ok(false),
         }
     }
-}
 
-impl Stream for Events {
-    type Item = Event;
-
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Event>> {
+    /// Polls for the next event.
+    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<Event>> {
         loop {
             if self.subscriptions.is_empty() {
                 return Poll::Ready(None);
@@ -182,6 +179,19 @@ impl Stream for Events {
                 Poll::Pending => return Poll::Pending,
             }
         }
+    }
+
+    /// Returns the next event.
+    pub async fn next_event(&mut self) -> Option<Event> {
+        future::poll_fn(|cx| self.poll_next_event(cx)).await
+    }
+}
+
+impl Stream for Events {
+    type Item = Event;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Event>> {
+        self.poll_next_event(cx)
     }
 }
 

@@ -1,6 +1,6 @@
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
-use futures_util::stream::{FusedStream, StreamExt};
+use futures_util::stream::FusedStream;
 use std::time::Duration;
 use tokio::time;
 
@@ -18,7 +18,7 @@ async fn stop_on_client_shutdown() {
     client.shutdown();
     client.join().await;
 
-    let event = time::timeout(Duration::from_millis(100), events.next())
+    let event = time::timeout(Duration::from_millis(100), events.next_event())
         .await
         .unwrap();
     assert!(event.is_none());
@@ -39,7 +39,7 @@ async fn stop_on_broker_shutdown() {
     broker.shutdown().await;
     client.join().await;
 
-    let event = time::timeout(Duration::from_millis(100), events.next())
+    let event = time::timeout(Duration::from_millis(100), events.next_event())
         .await
         .unwrap();
     assert!(event.is_none());
