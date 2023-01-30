@@ -19,7 +19,6 @@ use aldrin_proto::{
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
 use futures_core::stream::{FusedStream, Stream};
-use futures_util::stream::StreamExt;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
@@ -28,6 +27,7 @@ use request::{
     SubscribeServicesRequest, UnsubscribeEventRequest,
 };
 use std::fmt;
+use std::future;
 use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -592,7 +592,7 @@ impl Handle {
             None => return Ok(None),
         };
 
-        while let Some(id) = services.next().await {
+        while let Some(id) = services.next_service_id().await {
             if id.uuid == service_uuid {
                 return Ok(Some(id));
             }
@@ -1281,13 +1281,25 @@ pub struct ObjectServices {
     recv: UnboundedReceiver<(ServiceUuid, ServiceCookie)>,
 }
 
+impl ObjectServices {
+    /// Polls for the next service id.
+    pub fn poll_next_service_id(&mut self, cx: &mut Context) -> Poll<Option<ServiceId>> {
+        Pin::new(&mut self.recv)
+            .poll_next(cx)
+            .map(|ids| ids.map(|(uuid, cookie)| ServiceId::new(self.object_id, uuid, cookie)))
+    }
+
+    /// Returns the next service id.
+    pub async fn next_service_id(&mut self) -> Option<ServiceId> {
+        future::poll_fn(|cx| self.poll_next_service_id(cx)).await
+    }
+}
+
 impl Stream for ObjectServices {
     type Item = ServiceId;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.recv)
-            .poll_next(cx)
-            .map(|ids| ids.map(|(uuid, cookie)| ServiceId::new(self.object_id, uuid, cookie)))
+        self.poll_next_service_id(cx)
     }
 }
 
