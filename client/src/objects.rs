@@ -1,6 +1,7 @@
 use aldrin_proto::ObjectId;
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -21,7 +22,6 @@ use std::task::{Context, Poll};
 /// # Examples
 /// ```
 /// use aldrin_client::{ObjectEvent, SubscribeMode};
-/// use futures::stream::StreamExt;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,7 +30,7 @@ use std::task::{Context, Poll};
 /// let mut objects = handle.objects(SubscribeMode::CurrentOnly)?;
 /// # handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
 ///
-/// while let Some(event) = objects.next().await {
+/// while let Some(event) = objects.next_event().await {
 ///     match event {
 ///         ObjectEvent::Created(object_id) => {
 ///             println!("Object created: {:?}.", object_id);
@@ -96,13 +96,23 @@ impl Objects {
     pub(crate) fn new(events: mpsc::UnboundedReceiver<ObjectEvent>) -> Self {
         Objects(events)
     }
+
+    /// Polls for the next event.
+    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<ObjectEvent>> {
+        Pin::new(&mut self.0).poll_next(cx)
+    }
+
+    /// Returns the next event.
+    pub async fn next_event(&mut self) -> Option<ObjectEvent> {
+        future::poll_fn(|cx| self.poll_next_event(cx)).await
+    }
 }
 
 impl Stream for Objects {
     type Item = ObjectEvent;
 
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<ObjectEvent>> {
-        Pin::new(&mut Pin::into_inner(self).0).poll_next(cx)
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<ObjectEvent>> {
+        self.poll_next_event(cx)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

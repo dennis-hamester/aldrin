@@ -488,7 +488,7 @@ impl Handle {
     pub async fn wait_for_object(&self, uuid: ObjectUuid) -> Result<ObjectId, Error> {
         let mut objects = self.objects(SubscribeMode::All)?;
 
-        while let Some(ev) = objects.next().await {
+        while let Some(ev) = objects.next_event().await {
             match ev {
                 ObjectEvent::Created(id) if id.uuid == uuid => return Ok(id),
                 _ => {}
