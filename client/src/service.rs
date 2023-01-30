@@ -6,6 +6,7 @@ use aldrin_proto::message::CallFunctionResult;
 use aldrin_proto::{Serialize, SerializedValue, ServiceId};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -63,7 +64,6 @@ use std::task::{Context, Poll};
 ///
 /// ```
 /// use aldrin_proto::{ObjectUuid, ServiceUuid};
-/// use futures::stream::StreamExt;
 /// use std::collections::HashSet;
 /// use uuid::uuid;
 ///
@@ -96,7 +96,7 @@ use std::task::{Context, Poll};
 /// # handle.call_function::<_, (), ()>(service.id(), SHUTDOWN, &())?;
 /// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
 /// // which contains the function's id, the arguments, and a reply object.
-/// while let Some(func) = service.next().await {
+/// while let Some(func) = service.next_function_call().await {
 ///     match func.id {
 ///         SHUTDOWN => break,
 ///
@@ -185,6 +185,18 @@ impl Service {
     pub async fn destroy(&self) -> Result<(), Error> {
         self.client.destroy_service(self.id).await
     }
+
+    /// Polls for the next function call.
+    pub fn poll_next_function_call(&mut self, cx: &mut Context) -> Poll<Option<FunctionCall>> {
+        Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
+            r.map(|req| FunctionCall::new(req.function, req.value, self.client.clone(), req.serial))
+        })
+    }
+
+    /// Returns the next function call.
+    pub async fn next_function_call(&mut self) -> Option<FunctionCall> {
+        future::poll_fn(|cx| self.poll_next_function_call(cx)).await
+    }
 }
 
 impl Drop for Service {
@@ -197,9 +209,7 @@ impl Stream for Service {
     type Item = FunctionCall;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<FunctionCall>> {
-        Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
-            r.map(|req| FunctionCall::new(req.function, req.value, self.client.clone(), req.serial))
-        })
+        self.poll_next_function_call(cx)
     }
 }
 

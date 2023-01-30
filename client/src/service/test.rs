@@ -1,7 +1,6 @@
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_core::stream::FusedStream;
-use futures_util::stream::StreamExt;
 
 #[tokio::test]
 async fn fused_stream_terminate_after_destroy() {
@@ -14,6 +13,6 @@ async fn fused_stream_terminate_after_destroy() {
     assert!(!svc.is_terminated());
     svc.destroy().await.unwrap();
     assert!(!svc.is_terminated());
-    assert!(svc.next().await.is_none());
+    assert!(svc.next_function_call().await.is_none());
     assert!(svc.is_terminated());
 }

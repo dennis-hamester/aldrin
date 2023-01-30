@@ -1,6 +1,5 @@
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
-use futures_util::stream::StreamExt;
 
 #[tokio::test]
 async fn timestamp_monotonicity() {
@@ -203,11 +202,11 @@ async fn function_calls() {
     let reply1 = client
         .call_infallible_function::<(), ()>(svc.id(), 0, &())
         .unwrap();
-    let call1 = svc.next().await.unwrap();
+    let call1 = svc.next_function_call().await.unwrap();
     let reply2 = client
         .call_infallible_function::<(), ()>(svc.id(), 0, &())
         .unwrap();
-    let call2 = svc.next().await.unwrap();
+    let call2 = svc.next_function_call().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 2);
     assert_eq!(stats.messages_received, 2);

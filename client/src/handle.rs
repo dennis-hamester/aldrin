@@ -252,7 +252,6 @@ impl Handle {
     ///
     /// ```
     /// use aldrin_proto::Value;
-    /// # use futures::stream::StreamExt;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -263,7 +262,7 @@ impl Handle {
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_function::<_, u32, String>(service_id, 1, "1 + 2 = ?")?;
-    /// # svc.next().await.unwrap().reply.ok(&3u32)?;
+    /// # svc.next_function_call().await.unwrap().reply.ok(&3u32)?;
     ///
     /// // Await the result. The `?` here checks for errors on the protocol level, such as a
     /// // intermediate shutdown, or whether the function call was aborted by the callee.
@@ -313,7 +312,6 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use futures::stream::StreamExt;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio_based::TestBroker::new();
@@ -323,7 +321,7 @@ impl Handle {
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_infallible_function::<_, u32>(service_id, 1, "1 + 2 = ?")?;
-    /// # svc.next().await.unwrap().reply.ok(&3u32)?;
+    /// # svc.next_function_call().await.unwrap().reply.ok(&3u32)?;
     ///
     /// assert_eq!(result.await?, 3);
     /// # Ok(())

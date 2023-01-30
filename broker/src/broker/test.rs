@@ -5,7 +5,6 @@ use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::future::{self, Either};
-use futures_util::stream::StreamExt;
 use std::future::Future;
 use std::mem;
 use std::time::Duration;
@@ -27,7 +26,7 @@ async fn disconnect_during_function_call() {
     mem::drop(func_call);
     client2.join().await;
 
-    let call = svc.next().await.unwrap();
+    let call = svc.next_function_call().await.unwrap();
     call.reply.ok(&()).unwrap();
     client1.join().await;
 
