@@ -10,6 +10,7 @@ use aldrin_proto::{
 };
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
+use std::future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -217,7 +218,6 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # Examples
     ///
     /// ```
-    /// use futures::StreamExt;
     /// # use aldrin_test::tokio_based::TestBroker;
     ///
     /// # #[tokio::main]
@@ -236,8 +236,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// // The channel is now fully established and items can be sent and received.
     /// sender.send(&1)?;
     /// sender.send(&2)?;
-    /// assert_eq!(receiver.next().await, Some(Ok(1)));
-    /// assert_eq!(receiver.next().await, Some(Ok(2)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
     /// # }
     pub async fn claim(self) -> Result<Sender<T>, Error> {
@@ -345,7 +345,6 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// use futures::StreamExt;
     /// # use aldrin_test::tokio_based::TestBroker;
     ///
     /// # #[tokio::main]
@@ -361,7 +360,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// sender.close().await?;
     ///
     /// // The receiver will receive None.
-    /// assert_eq!(receiver.next().await, None);
+    /// assert_eq!(receiver.next_item().await, Ok(None));
     /// # Ok(())
     /// # }
     /// ```
@@ -468,7 +467,6 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// # Examples
     ///
     /// ```
-    /// use futures::StreamExt;
     /// # use aldrin_test::tokio_based::TestBroker;
     ///
     /// # #[tokio::main]
@@ -487,10 +485,10 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// sender.close().await?;
     ///
     /// // The receiver will receive all items followed by None.
-    /// assert_eq!(receiver.next().await, Some(Ok(1)));
-    /// assert_eq!(receiver.next().await, Some(Ok(2)));
-    /// assert_eq!(receiver.next().await, Some(Ok(3)));
-    /// assert_eq!(receiver.next().await, None);
+    /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(3)));
+    /// assert_eq!(receiver.next_item().await, Ok(None));
     /// # Ok(())
     /// # }
     /// ```
@@ -783,7 +781,6 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use futures::StreamExt;
     /// # use aldrin_test::tokio_based::TestBroker;
     ///
     /// # #[tokio::main]
@@ -802,8 +799,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// // The channel is now fully established and items can be sent and received.
     /// sender.send(&1)?;
     /// sender.send(&2)?;
-    /// assert_eq!(receiver.next().await, Some(Ok(1)));
-    /// assert_eq!(receiver.next().await, Some(Ok(2)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
     /// # }
     pub async fn claim(self) -> Result<Receiver<T>, Error> {
@@ -1018,19 +1015,32 @@ impl<T: Deserialize> Receiver<T> {
             phantom: PhantomData,
         }
     }
+
+    /// Polls for the next item.
+    pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
+        match self.inner.poll_next_item(cx) {
+            Poll::Ready(Some(value)) => Poll::Ready(
+                value
+                    .deserialize()
+                    .map(Some)
+                    .map_err(|_| Error::InvalidItemReceived),
+            ),
+            Poll::Ready(None) => Poll::Ready(Ok(None)),
+            Poll::Pending => Poll::Pending,
+        }
+    }
+
+    /// Returns the next item.
+    pub async fn next_item(&mut self) -> Result<Option<T>, Error> {
+        future::poll_fn(|cx| self.poll_next_item(cx)).await
+    }
 }
 
 impl<T: Deserialize> Stream for Receiver<T> {
     type Item = Result<T, Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        match Pin::new(&mut self.inner).poll_next(cx) {
-            Poll::Ready(Some(value)) => Poll::Ready(Some(
-                value.deserialize().map_err(|_| Error::InvalidItemReceived),
-            )),
-            Poll::Ready(None) => Poll::Ready(None),
-            Poll::Pending => Poll::Pending,
-        }
+        self.poll_next_item(cx).map(Result::transpose)
     }
 }
 
@@ -1070,6 +1080,13 @@ impl ReceiverInner {
             .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
             .await
     }
+
+    fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Option<SerializedValue>> {
+        match self.state.as_mut() {
+            Some(state) => Pin::new(&mut state.items).poll_next(cx),
+            None => Poll::Ready(None),
+        }
+    }
 }
 
 impl Drop for ReceiverInner {
@@ -1086,10 +1103,7 @@ impl Stream for ReceiverInner {
     type Item = SerializedValue;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        match self.state.as_mut() {
-            Some(state) => Pin::new(&mut state.items).poll_next(cx),
-            None => Poll::Ready(None),
-        }
+        self.poll_next_item(cx)
     }
 }
 

@@ -847,7 +847,6 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin_test::tokio_based::TestBroker;
-    /// use futures::StreamExt;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -875,13 +874,13 @@ impl Handle {
     ///
     /// // Client 2 receives all values in order. The Result in the return values can indicate
     /// // conversion errors when an item isn't a u32.
-    /// assert_eq!(receiver.next().await, Some(Ok(1)));
-    /// assert_eq!(receiver.next().await, Some(Ok(2)));
-    /// assert_eq!(receiver.next().await, Some(Ok(3)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
+    /// assert_eq!(receiver.next_item().await, Ok(Some(3)));
     ///
     /// // Client 2 can observe that the sender has been closed by receiving None. It follows by
     /// // also closing (or dropping) the receiver.
-    /// assert_eq!(receiver.next().await, None);
+    /// assert_eq!(receiver.next_item().await, Ok(None));
     /// receiver.close().await?;
     /// # Ok(())
     /// # }

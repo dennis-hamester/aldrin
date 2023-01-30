@@ -1,6 +1,6 @@
 use aldrin_test::aldrin_client::Error;
 use aldrin_test::tokio_based::TestBroker;
-use futures::stream::{FusedStream, StreamExt};
+use futures::stream::FusedStream;
 use std::time::Duration;
 use tokio::time;
 
@@ -132,19 +132,19 @@ async fn send_and_receive() {
     let mut sender = sender.established().await.unwrap();
 
     sender.send(&1).unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(1)));
+    assert_eq!(receiver.next_item().await, Ok(Some(1)));
 
     sender.send(&2).unwrap();
     sender.send(&3).unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(2)));
-    assert_eq!(receiver.next().await, Some(Ok(3)));
+    assert_eq!(receiver.next_item().await, Ok(Some(2)));
+    assert_eq!(receiver.next_item().await, Ok(Some(3)));
 
     sender.send(&4).unwrap();
     sender.send(&5).unwrap();
     sender.close().await.unwrap();
-    assert_eq!(receiver.next().await, Some(Ok(4)));
-    assert_eq!(receiver.next().await, Some(Ok(5)));
-    assert_eq!(receiver.next().await, None);
+    assert_eq!(receiver.next_item().await, Ok(Some(4)));
+    assert_eq!(receiver.next_item().await, Ok(Some(5)));
+    assert_eq!(receiver.next_item().await, Ok(None));
     assert!(receiver.is_terminated());
 
     receiver.close().await.unwrap();
@@ -172,7 +172,7 @@ async fn multiple_clients() {
     let mut sender = sender.established().await.unwrap();
 
     sender.send(&"hello".to_owned()).unwrap();
-    assert_eq!(receiver.next().await.unwrap().as_deref(), Ok("hello"));
+    assert_eq!(receiver.next_item().await, Ok(Some("hello".to_string())));
 
     client1.join().await;
     client2.join().await;
