@@ -1,6 +1,7 @@
 use aldrin_proto::ServiceId;
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -21,7 +22,6 @@ use std::task::{Context, Poll};
 /// # Examples
 /// ```
 /// use aldrin_client::{ServiceEvent, SubscribeMode};
-/// use futures::stream::StreamExt;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +31,7 @@ use std::task::{Context, Poll};
 /// # let mut object = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
 /// # object.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
 ///
-/// while let Some(event) = services.next().await {
+/// while let Some(event) = services.next_event().await {
 ///     match event {
 ///         ServiceEvent::Created(service_id) => {
 ///             println!("Service created: {:?}.", service_id);
@@ -98,13 +98,23 @@ impl Services {
     pub(crate) fn new(events: mpsc::UnboundedReceiver<ServiceEvent>) -> Self {
         Services(events)
     }
+
+    /// Polls for the next event.
+    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<ServiceEvent>> {
+        Pin::new(&mut self.0).poll_next(cx)
+    }
+
+    /// Returns the next event.
+    pub async fn next_event(&mut self) -> Option<ServiceEvent> {
+        future::poll_fn(|cx| self.poll_next_event(cx)).await
+    }
 }
 
 impl Stream for Services {
     type Item = ServiceEvent;
 
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<ServiceEvent>> {
-        Pin::new(&mut Pin::into_inner(self).0).poll_next(cx)
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<ServiceEvent>> {
+        self.poll_next_event(cx)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

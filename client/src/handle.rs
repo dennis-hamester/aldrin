@@ -571,7 +571,7 @@ impl Handle {
     ) -> Result<Option<ServiceId>, Error> {
         let mut services = self.services(SubscribeMode::CurrentOnly)?;
 
-        while let Some(ev) = services.next().await {
+        while let Some(ev) = services.next_event().await {
             if let ServiceEvent::Created(id) = ev {
                 if id.uuid == service_uuid {
                     return Ok(Some(id));
@@ -660,7 +660,7 @@ impl Handle {
     ) -> Result<ServiceId, Error> {
         let mut services = self.services(SubscribeMode::All)?;
 
-        while let Some(ev) = services.next().await {
+        while let Some(ev) = services.next_event().await {
             let id = match ev {
                 ServiceEvent::Created(id) if id.uuid == service_uuid => id,
                 _ => continue,
