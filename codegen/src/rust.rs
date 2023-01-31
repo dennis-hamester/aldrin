@@ -548,6 +548,53 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
+        let event = service_event(svc_name);
+        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{event}>, aldrin_client::InvalidEventArguments>> {{");
+        genln!(self, "        loop {{");
+        genln!(self, "            let ev = match self.events.poll_next_event(cx) {{");
+        genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
+        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(Ok(None)),");
+        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
+        genln!(self, "            }};");
+        genln!(self);
+        genln!(self, "            match ev.id {{");
+        for item in svc.items() {
+            let ev = match item {
+                ast::ServiceItem::Event(ev) => ev,
+                _ => continue,
+            };
+
+            let ev_name = ev.name().value();
+            let id = ev.id().value();
+            let variant = service_event_variant(ev_name);
+
+            if ev.event_type().is_some() {
+                genln!(self, "                {id} => if let Ok(value) = ev.value.deserialize() {{");
+                genln!(self, "                    return std::task::Poll::Ready(Ok(Some({event}::{variant}(value))));");
+            } else {
+                genln!(self, "                {id} => if let Ok(()) = ev.value.deserialize() {{");
+                genln!(self, "                    return std::task::Poll::Ready(Ok(Some({event}::{variant})));");
+            }
+            genln!(self, "                }} else {{");
+            genln!(self, "                    return std::task::Poll::Ready(Err(aldrin_client::InvalidEventArguments {{");
+            genln!(self, "                        service_id: self.id,");
+            genln!(self, "                        event: ev.id,");
+            genln!(self, "                    }}))");
+            genln!(self, "                }}");
+            genln!(self);
+        }
+
+        genln!(self, "                _ => {{}}");
+        genln!(self, "            }}");
+        genln!(self, "        }}");
+        genln!(self, "    }}");
+        genln!(self);
+
+        genln!(self, "    pub async fn next_event(&mut self) -> Result<Option<{event}>, aldrin_client::InvalidEventArguments> {{");
+        genln!(self, "        std::future::poll_fn(|cx| self.poll_next_event(cx)).await");
+        genln!(self, "    }}");
+        genln!(self);
+
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
@@ -567,49 +614,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        let event = service_event(svc_name);
         genln!(self, "impl aldrin_client::private::futures_core::stream::Stream for {} {{", events);
         genln!(self, "    type Item = Result<{}, aldrin_client::InvalidEventArguments>;", event);
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        loop {{");
-        genln!(self, "            let ev = match std::pin::Pin::new(&mut self.events).poll_next(cx) {{");
-        genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
-        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
-        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
-        genln!(self, "            }};");
-        genln!(self);
-
-        genln!(self, "            match ev.id {{");
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-            let variant = service_event_variant(ev_name);
-
-            if ev.event_type().is_some() {
-                genln!(self, "                {id} => if let Ok(value) = ev.value.deserialize() {{");
-                genln!(self, "                    return std::task::Poll::Ready(Some(Ok({event}::{variant}(value))));");
-            } else {
-                genln!(self, "                {id} => if let Ok(()) = ev.value.deserialize() {{");
-                genln!(self, "                    return std::task::Poll::Ready(Some(Ok({event}::{variant})));");
-            }
-            genln!(self, "                }} else {{");
-            genln!(self, "                    return std::task::Poll::Ready(Some(Err(aldrin_client::InvalidEventArguments {{");
-            genln!(self, "                        service_id: self.id,");
-            genln!(self, "                        event: ev.id,");
-            genln!(self, "                    }})))");
-            genln!(self, "                }}");
-            genln!(self);
-        }
-
-        genln!(self, "                _ => {{}}");
-        genln!(self, "            }}");
-        genln!(self, "        }}");
+        genln!(self, "        self.poll_next_event(cx).map(std::result::Result::transpose)");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
