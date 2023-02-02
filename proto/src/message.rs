@@ -147,8 +147,8 @@ pub enum MessageKind {
     ChannelEndClaimed = 38,
     SendItem = 39,
     ItemReceived = 40,
-    Sync = 41,
-    SyncReply = 42,
+    Sync = 42,
+    SyncReply = 43,
 }
 
 impl MessageKind {
