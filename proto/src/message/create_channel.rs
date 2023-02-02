@@ -1,7 +1,7 @@
 use super::message_ops::Sealed;
 use super::{
-    ChannelEnd, Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
-    MessageSerializer, MessageWithoutValueDeserializer,
+    ChannelEnd, ChannelEndWithCapacity, Message, MessageDeserializeError, MessageKind, MessageOps,
+    MessageSerializeError, MessageSerializer, MessageWithoutValueDeserializer,
 };
 use crate::serialized_value::SerializedValue;
 use bytes::BytesMut;
@@ -10,7 +10,7 @@ use bytes::BytesMut;
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CreateChannel {
     pub serial: u32,
-    pub claim: ChannelEnd,
+    pub end: ChannelEndWithCapacity,
 }
 
 impl MessageOps for CreateChannel {
@@ -22,7 +22,14 @@ impl MessageOps for CreateChannel {
         let mut serializer = MessageSerializer::without_value(MessageKind::CreateChannel);
 
         serializer.put_varint_u32_le(self.serial);
-        serializer.put_discriminant_u8(self.claim);
+
+        match self.end {
+            ChannelEndWithCapacity::Sender => serializer.put_discriminant_u8(ChannelEnd::Sender),
+            ChannelEndWithCapacity::Receiver(capacity) => {
+                serializer.put_discriminant_u8(ChannelEnd::Receiver);
+                serializer.put_varint_u32_le(capacity);
+            }
+        }
 
         serializer.finish()
     }
@@ -32,10 +39,17 @@ impl MessageOps for CreateChannel {
             MessageWithoutValueDeserializer::new(buf, MessageKind::CreateChannel)?;
 
         let serial = deserializer.try_get_varint_u32_le()?;
-        let claim = deserializer.try_get_discriminant_u8()?;
+
+        let end = match deserializer.try_get_discriminant_u8()? {
+            ChannelEnd::Sender => ChannelEndWithCapacity::Sender,
+            ChannelEnd::Receiver => {
+                let capacity = deserializer.try_get_varint_u32_le()?;
+                ChannelEndWithCapacity::Receiver(capacity)
+            }
+        };
 
         deserializer.finish()?;
-        Ok(Self { serial, claim })
+        Ok(Self { serial, end })
     }
 
     fn value(&self) -> Option<&SerializedValue> {
@@ -54,7 +68,7 @@ impl From<CreateChannel> for Message {
 #[cfg(test)]
 mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
-    use super::super::{ChannelEnd, Message};
+    use super::super::{ChannelEndWithCapacity, Message};
     use super::CreateChannel;
 
     #[test]
@@ -63,7 +77,7 @@ mod test {
 
         let msg = CreateChannel {
             serial: 1,
-            claim: ChannelEnd::Sender,
+            end: ChannelEndWithCapacity::Sender,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
@@ -75,11 +89,11 @@ mod test {
 
     #[test]
     fn receiver() {
-        let serialized = [7, 0, 0, 0, 31, 1, 1];
+        let serialized = [8, 0, 0, 0, 31, 1, 1, 16];
 
         let msg = CreateChannel {
             serial: 1,
-            claim: ChannelEnd::Receiver,
+            end: ChannelEndWithCapacity::Receiver(16),
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);

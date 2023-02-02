@@ -17,17 +17,17 @@ use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
-    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    SendItem, ServiceCreatedEvent, ServiceDestroyedEvent, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
-    SubscribeServices, SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent,
-    UnsubscribeObjects, UnsubscribeServices,
+    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
+    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
+    ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
+    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
+    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
+    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
 };
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::{
@@ -1288,7 +1288,7 @@ where
         self.t
             .send_and_flush(Message::CreateChannel(CreateChannel {
                 serial,
-                claim: ChannelEnd::Sender,
+                end: ChannelEndWithCapacity::Sender,
             }))
             .await
             .map_err(Into::into)
@@ -1302,7 +1302,7 @@ where
         self.t
             .send_and_flush(Message::CreateChannel(CreateChannel {
                 serial,
-                claim: ChannelEnd::Receiver,
+                end: ChannelEndWithCapacity::Receiver(0),
             }))
             .await
             .map_err(Into::into)

@@ -620,6 +620,15 @@ impl ChannelEnd {
     }
 }
 
+impl From<ChannelEndWithCapacity> for ChannelEnd {
+    fn from(value: ChannelEndWithCapacity) -> Self {
+        match value {
+            ChannelEndWithCapacity::Sender => Self::Sender,
+            ChannelEndWithCapacity::Receiver(_) => Self::Receiver,
+        }
+    }
+}
+
 impl Serialize for ChannelEnd {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
@@ -639,6 +648,17 @@ impl Deserialize for ChannelEnd {
             _ => Err(DeserializeError::InvalidSerialization),
         }
     }
+}
+
+/// Sending or receiving end and capacity of a channel.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+pub enum ChannelEndWithCapacity {
+    /// Sending end of a channel.
+    Sender,
+
+    /// Receiving end of a channel and capacity.
+    Receiver(u32),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]

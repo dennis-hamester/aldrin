@@ -603,3 +603,31 @@ impl fmt::Display for ChannelEnd {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", tag = "end", deny_unknown_fields)]
+pub enum ChannelEndWithCapacity {
+    Sender,
+    Receiver { capacity: u32 },
+}
+
+impl From<aldrin_proto::message::ChannelEndWithCapacity> for ChannelEndWithCapacity {
+    fn from(end: aldrin_proto::message::ChannelEndWithCapacity) -> Self {
+        match end {
+            aldrin_proto::message::ChannelEndWithCapacity::Sender => Self::Sender,
+
+            aldrin_proto::message::ChannelEndWithCapacity::Receiver(capacity) => {
+                Self::Receiver { capacity }
+            }
+        }
+    }
+}
+
+impl From<ChannelEndWithCapacity> for aldrin_proto::message::ChannelEndWithCapacity {
+    fn from(end: ChannelEndWithCapacity) -> Self {
+        match end {
+            ChannelEndWithCapacity::Sender => Self::Sender,
+            ChannelEndWithCapacity::Receiver { capacity } => Self::Receiver(capacity),
+        }
+    }
+}

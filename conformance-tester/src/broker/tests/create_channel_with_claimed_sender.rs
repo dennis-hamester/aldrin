@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::message::ChannelEnd;
+use aldrin_proto::message::ChannelEndWithCapacity;
 use anyhow::Result;
 
 const NAME: &str = "create-channel-with-claimed-sender";
@@ -14,6 +14,8 @@ pub fn make_test() -> BrokerTest {
 
 async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
     let mut client = broker.connect_client().await?;
-    client.create_channel(0, ChannelEnd::Sender).await?;
+    client
+        .create_channel(0, ChannelEndWithCapacity::Sender)
+        .await?;
     Ok(())
 }

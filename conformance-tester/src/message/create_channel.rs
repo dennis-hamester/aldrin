@@ -1,4 +1,4 @@
-use super::ChannelEnd;
+use super::ChannelEndWithCapacity;
 use crate::context::Context;
 use crate::serial::Serial;
 use aldrin_proto::message;
@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "kebab-case")]
 pub struct CreateChannel {
     pub serial: Serial,
-    pub claim: ChannelEnd,
+
+    #[serde(flatten)]
+    pub end: ChannelEndWithCapacity,
 }
 
 impl CreateChannel {
@@ -18,12 +20,12 @@ impl CreateChannel {
 
         Ok(message::CreateChannel {
             serial,
-            claim: self.claim.into(),
+            end: self.end.into(),
         })
     }
 
     pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
-        let res = self.serial.matches(&other.serial, ctx)? && (self.claim == other.claim);
+        let res = self.serial.matches(&other.serial, ctx)? && (self.end == other.end);
 
         Ok(res)
     }
@@ -39,7 +41,7 @@ impl CreateChannel {
 
         Ok(Self {
             serial,
-            claim: self.claim,
+            end: self.end,
         })
     }
 }
@@ -50,7 +52,7 @@ impl TryFrom<message::CreateChannel> for CreateChannel {
     fn try_from(msg: message::CreateChannel) -> Result<Self> {
         Ok(Self {
             serial: msg.serial.into(),
-            claim: msg.claim.into(),
+            end: msg.end.into(),
         })
     }
 }

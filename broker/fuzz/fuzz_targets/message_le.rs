@@ -3,11 +3,11 @@ use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_proto::message::{
     AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
-    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
-    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
+    CloseChannelEndResult, Connect, ConnectReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, ObjectCreatedEvent,
     ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
@@ -1057,14 +1057,14 @@ impl UpdateContext for QueryServiceVersionReply {
 #[derive(Debug, Arbitrary)]
 pub struct CreateChannelLe {
     pub serial: SerialLe,
-    pub claim: ChannelEnd,
+    pub end: ChannelEndWithCapacity,
 }
 
 impl CreateChannelLe {
     pub fn to_proto(&self, ctx: &Context) -> CreateChannel {
         CreateChannel {
             serial: self.serial.get(ctx),
-            claim: self.claim,
+            end: self.end,
         }
     }
 }

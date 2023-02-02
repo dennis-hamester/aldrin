@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::message::{ChannelEnd, ChannelEndClosed, Message};
+use aldrin_proto::message::{ChannelEnd, ChannelEndClosed, ChannelEndWithCapacity, Message};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "send-item-to-unclaimed-receiver-closes-channel";
@@ -13,7 +13,9 @@ pub fn make_test() -> BrokerTest {
 
 async fn run(broker: &mut BrokerUnderTest) -> Result<()> {
     let mut client = broker.connect_client().await?;
-    let cookie = client.create_channel(0, ChannelEnd::Sender).await?;
+    let cookie = client
+        .create_channel(0, ChannelEndWithCapacity::Sender)
+        .await?;
 
     // Send an item even though the channel hasn't been established yet.
     client

@@ -79,7 +79,7 @@ impl Default for Packetizer {
 #[cfg(test)]
 mod test {
     use super::super::{
-        ChannelEnd, CreateChannel, Message, MessageOps, Shutdown, UnsubscribeServices,
+        ChannelEndWithCapacity, CreateChannel, Message, MessageOps, Shutdown, UnsubscribeServices,
     };
     use super::Packetizer;
     use bytes::Buf;
@@ -91,7 +91,7 @@ mod test {
         let msg2 = Message::UnsubscribeServices(UnsubscribeServices);
         let msg3 = Message::CreateChannel(CreateChannel {
             serial: 0,
-            claim: ChannelEnd::Sender,
+            end: ChannelEndWithCapacity::Sender,
         });
 
         let mut serialized = msg1.clone().serialize_message().unwrap();
@@ -140,7 +140,7 @@ mod test {
         let msg2 = Message::UnsubscribeServices(UnsubscribeServices);
         let msg3 = Message::CreateChannel(CreateChannel {
             serial: 0,
-            claim: ChannelEnd::Sender,
+            end: ChannelEndWithCapacity::Sender,
         });
 
         let mut serialized = msg1.clone().serialize_message().unwrap();

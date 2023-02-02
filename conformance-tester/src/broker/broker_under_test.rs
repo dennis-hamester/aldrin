@@ -2,8 +2,8 @@ use super::BrokerRunArgs;
 use crate::test::RunError;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::message::{
-    ChannelEnd, CloseChannelEnd, CloseChannelEndResult, Connect, ConnectReply, CreateChannel,
-    Message, SendItem,
+    ChannelEnd, ChannelEndWithCapacity, CloseChannelEnd, CloseChannelEndResult, Connect,
+    ConnectReply, CreateChannel, Message, SendItem,
 };
 use aldrin_proto::tokio::TokioTransport;
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
@@ -193,9 +193,9 @@ impl Client {
     pub async fn create_channel(
         &mut self,
         serial: u32,
-        claim: ChannelEnd,
+        end: ChannelEndWithCapacity,
     ) -> Result<ChannelCookie> {
-        self.send(Message::CreateChannel(CreateChannel { serial, claim }))
+        self.send(Message::CreateChannel(CreateChannel { serial, end }))
             .await
             .with_context(|| anyhow!("failed to send create-channel message to broker"))?;
 

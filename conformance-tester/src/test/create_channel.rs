@@ -1,7 +1,7 @@
 use super::{Receive, Send};
 use crate::client_id::ClientId;
 use crate::context::Context;
-use crate::message::{ChannelEnd, CreateChannel, CreateChannelReply, Message};
+use crate::message::{ChannelEndWithCapacity, CreateChannel, CreateChannelReply, Message};
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
 use anyhow::{anyhow, Context as _, Result};
@@ -15,7 +15,10 @@ pub struct CreateChannelStep {
     pub client: ClientId,
 
     pub serial: Option<Serial>,
-    pub claim: ChannelEnd,
+
+    #[serde(flatten)]
+    pub end: ChannelEndWithCapacity,
+
     pub cookie: UuidRef,
 }
 
@@ -33,7 +36,7 @@ impl CreateChannelStep {
             client: self.client.clone(),
             message: Message::CreateChannel(CreateChannel {
                 serial: serial.clone(),
-                claim: self.claim,
+                end: self.end,
             }),
         };
         send.run(ctx, timeout)

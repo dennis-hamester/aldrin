@@ -15,10 +15,10 @@ use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateChannel,
-    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
+    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
     ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
     QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
@@ -1077,13 +1077,13 @@ impl Broker {
 
         let cookie = ChannelCookie::new_v4();
 
-        let channel = match req.claim {
-            ChannelEnd::Sender => {
+        let channel = match req.end {
+            ChannelEndWithCapacity::Sender => {
                 conn.add_sender(cookie);
                 Channel::with_claimed_sender(id.clone())
             }
 
-            ChannelEnd::Receiver => {
+            ChannelEndWithCapacity::Receiver(_) => {
                 conn.add_receiver(cookie);
                 Channel::with_claimed_receiver(id.clone())
             }
