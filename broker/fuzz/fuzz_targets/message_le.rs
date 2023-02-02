@@ -2,18 +2,18 @@ use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_proto::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message as ProtoMessage, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject,
-    QueryObjectReply, QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, SendItem, ServiceCreatedEvent, ServiceDestroyedEvent, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeObjects,
-    SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync, SyncReply,
-    UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
+    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
+    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
+    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, ObjectCreatedEvent,
+    ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
+    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
+    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
+    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
 };
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -63,6 +63,7 @@ pub enum MessageLe {
     ChannelEndClaimed(ChannelEndClaimedLe),
     SendItem(SendItemLe),
     ItemReceived(ItemReceivedLe),
+    AddChannelCapacity(AddChannelCapacityLe),
     Sync(SyncLe),
     SyncReply(SyncReplyLe),
 }
@@ -111,6 +112,7 @@ impl MessageLe {
             Self::ChannelEndClaimed(msg) => msg.to_proto(ctx).into(),
             Self::SendItem(msg) => msg.to_proto(ctx).into(),
             Self::ItemReceived(msg) => msg.to_proto(ctx).into(),
+            Self::AddChannelCapacity(msg) => msg.to_proto(ctx).into(),
             Self::Sync(msg) => msg.to_proto(ctx).into(),
             Self::SyncReply(msg) => msg.to_proto(ctx).into(),
         }
@@ -165,6 +167,7 @@ impl UpdateContext for ProtoMessage {
             Self::ChannelEndClaimed(msg) => msg.update_context(ctx),
             Self::SendItem(msg) => msg.update_context(ctx),
             Self::ItemReceived(msg) => msg.update_context(ctx),
+            Self::AddChannelCapacity(msg) => msg.update_context(ctx),
             Self::Sync(msg) => msg.update_context(ctx),
             Self::SyncReply(msg) => msg.update_context(ctx),
         }
@@ -1299,6 +1302,27 @@ impl ItemReceivedLe {
 }
 
 impl UpdateContext for ItemReceived {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct AddChannelCapacityLe {
+    pub cookie: UuidLe,
+    pub capacity: u32,
+}
+
+impl AddChannelCapacityLe {
+    pub fn to_proto(&self, ctx: &Context) -> AddChannelCapacity {
+        AddChannelCapacity {
+            cookie: ChannelCookie(self.cookie.get(ctx)),
+            capacity: self.capacity,
+        }
+    }
+}
+
+impl UpdateContext for AddChannelCapacity {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_uuid(self.cookie.0);
     }

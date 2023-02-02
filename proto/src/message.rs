@@ -1,3 +1,4 @@
+mod add_channel_capacity;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -56,6 +57,7 @@ use std::error::Error;
 use std::fmt;
 use uuid::Uuid;
 
+pub use add_channel_capacity::AddChannelCapacity;
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionReplyKind, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
@@ -147,6 +149,7 @@ pub enum MessageKind {
     ChannelEndClaimed = 38,
     SendItem = 39,
     ItemReceived = 40,
+    AddChannelCapacity = 41,
     Sync = 42,
     SyncReply = 43,
 }
@@ -196,6 +199,7 @@ impl MessageKind {
             | Self::ClaimChannelEnd
             | Self::ClaimChannelEndReply
             | Self::ChannelEndClaimed
+            | Self::AddChannelCapacity
             | Self::Sync
             | Self::SyncReply => false,
         }
@@ -295,6 +299,7 @@ pub enum Message {
     ChannelEndClaimed(ChannelEndClaimed),
     SendItem(SendItem),
     ItemReceived(ItemReceived),
+    AddChannelCapacity(AddChannelCapacity),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -343,6 +348,7 @@ impl MessageOps for Message {
             Self::ChannelEndClaimed(_) => MessageKind::ChannelEndClaimed,
             Self::SendItem(_) => MessageKind::SendItem,
             Self::ItemReceived(_) => MessageKind::ItemReceived,
+            Self::AddChannelCapacity(_) => MessageKind::AddChannelCapacity,
             Self::Sync(_) => MessageKind::Sync,
             Self::SyncReply(_) => MessageKind::SyncReply,
         }
@@ -391,6 +397,7 @@ impl MessageOps for Message {
             Self::ChannelEndClaimed(msg) => msg.serialize_message(),
             Self::SendItem(msg) => msg.serialize_message(),
             Self::ItemReceived(msg) => msg.serialize_message(),
+            Self::AddChannelCapacity(msg) => msg.serialize_message(),
             Self::Sync(msg) => msg.serialize_message(),
             Self::SyncReply(msg) => msg.serialize_message(),
         }
@@ -521,6 +528,9 @@ impl MessageOps for Message {
             MessageKind::ItemReceived => {
                 ItemReceived::deserialize_message(buf).map(Self::ItemReceived)
             }
+            MessageKind::AddChannelCapacity => {
+                AddChannelCapacity::deserialize_message(buf).map(Self::AddChannelCapacity)
+            }
             MessageKind::Sync => Sync::deserialize_message(buf).map(Self::Sync),
             MessageKind::SyncReply => SyncReply::deserialize_message(buf).map(Self::SyncReply),
         }
@@ -569,6 +579,7 @@ impl MessageOps for Message {
             Self::ChannelEndClaimed(msg) => msg.value(),
             Self::SendItem(msg) => msg.value(),
             Self::ItemReceived(msg) => msg.value(),
+            Self::AddChannelCapacity(msg) => msg.value(),
             Self::Sync(msg) => msg.value(),
             Self::SyncReply(msg) => msg.value(),
         }

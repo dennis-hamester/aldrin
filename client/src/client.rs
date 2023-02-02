@@ -321,6 +321,7 @@ where
             Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
             Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
+            Message::AddChannelCapacity(_) => todo!(),
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
 
             Message::Connect(_)

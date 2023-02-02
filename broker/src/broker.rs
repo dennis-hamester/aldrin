@@ -398,6 +398,7 @@ impl Broker {
             Message::CreateChannel(req) => self.create_channel(id, req)?,
             Message::CloseChannelEnd(req) => self.close_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
+            Message::AddChannelCapacity(_) => todo!(),
             Message::SendItem(req) => self.send_item(state, id, req),
             Message::Sync(req) => self.sync(id, req)?,
 

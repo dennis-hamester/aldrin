@@ -1,3 +1,4 @@
+mod add_channel_capacity;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -48,6 +49,7 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub use add_channel_capacity::AddChannelCapacity;
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
@@ -136,6 +138,7 @@ pub enum Message {
     ChannelEndClaimed(ChannelEndClaimed),
     SendItem(SendItem),
     ItemReceived(ItemReceived),
+    AddChannelCapacity(AddChannelCapacity),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -218,6 +221,9 @@ impl Message {
             Self::ChannelEndClaimed(msg) => msg.to_proto(ctx).map(ProtoMessage::ChannelEndClaimed),
             Self::SendItem(msg) => msg.to_proto(ctx).map(ProtoMessage::SendItem),
             Self::ItemReceived(msg) => msg.to_proto(ctx).map(ProtoMessage::ItemReceived),
+            Self::AddChannelCapacity(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::AddChannelCapacity)
+            }
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -308,6 +314,9 @@ impl Message {
             }
             (Self::SendItem(msg), Self::SendItem(other)) => msg.matches(other, ctx),
             (Self::ItemReceived(msg), Self::ItemReceived(other)) => msg.matches(other, ctx),
+            (Self::AddChannelCapacity(msg), Self::AddChannelCapacity(other)) => {
+                msg.matches(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -421,6 +430,9 @@ impl Message {
             }
             (Self::SendItem(msg), Self::SendItem(other)) => msg.update_context(other, ctx),
             (Self::ItemReceived(msg), Self::ItemReceived(other)) => msg.update_context(other, ctx),
+            (Self::AddChannelCapacity(msg), Self::AddChannelCapacity(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -484,6 +496,7 @@ impl Message {
             Self::ChannelEndClaimed(msg) => msg.apply_context(ctx).map(Self::ChannelEndClaimed),
             Self::SendItem(msg) => msg.apply_context(ctx).map(Self::SendItem),
             Self::ItemReceived(msg) => msg.apply_context(ctx).map(Self::ItemReceived),
+            Self::AddChannelCapacity(msg) => msg.apply_context(ctx).map(Self::AddChannelCapacity),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -550,6 +563,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::ChannelEndClaimed(msg) => msg.try_into().map(Self::ChannelEndClaimed),
             ProtoMessage::SendItem(msg) => msg.try_into().map(Self::SendItem),
             ProtoMessage::ItemReceived(msg) => msg.try_into().map(Self::ItemReceived),
+            ProtoMessage::AddChannelCapacity(msg) => msg.try_into().map(Self::AddChannelCapacity),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
         }
