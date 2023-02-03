@@ -1,4 +1,4 @@
-use super::ChannelEnd;
+use super::ChannelEndWithCapacity;
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 pub struct ClaimChannelEnd {
     pub serial: Serial,
     pub cookie: UuidRef,
-    pub end: ChannelEnd,
+
+    #[serde(flatten)]
+    pub end: ChannelEndWithCapacity,
 }
 
 impl ClaimChannelEnd {

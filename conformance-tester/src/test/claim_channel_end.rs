@@ -2,8 +2,8 @@ use super::{Receive, Send};
 use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::{
-    ChannelEnd, ChannelEndClaimed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    Message,
+    ChannelEndClaimed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, Message,
 };
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
@@ -19,7 +19,9 @@ pub struct ClaimChannelEndStep {
 
     pub serial: Option<Serial>,
     pub cookie: UuidRef,
-    pub end: ChannelEnd,
+
+    #[serde(flatten)]
+    pub end: ChannelEndWithCapacity,
 
     #[serde(default = "default_true")]
     pub with_other: bool,
@@ -72,7 +74,7 @@ impl ClaimChannelEndStep {
                 client: other.clone(),
                 message: Message::ChannelEndClaimed(ChannelEndClaimed {
                     cookie: self.cookie.clone(),
-                    end: self.end,
+                    end: self.end.into(),
                 }),
             };
             receive.run(ctx, timeout).await.with_context(|| {

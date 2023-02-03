@@ -595,6 +595,15 @@ impl From<ChannelEnd> for aldrin_proto::message::ChannelEnd {
     }
 }
 
+impl From<ChannelEndWithCapacity> for ChannelEnd {
+    fn from(end: ChannelEndWithCapacity) -> Self {
+        match end {
+            ChannelEndWithCapacity::Sender => Self::Sender,
+            ChannelEndWithCapacity::Receiver { .. } => Self::Receiver,
+        }
+    }
+}
+
 impl fmt::Display for ChannelEnd {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -628,6 +637,15 @@ impl From<ChannelEndWithCapacity> for aldrin_proto::message::ChannelEndWithCapac
         match end {
             ChannelEndWithCapacity::Sender => Self::Sender,
             ChannelEndWithCapacity::Receiver { capacity } => Self::Receiver(capacity),
+        }
+    }
+}
+
+impl fmt::Display for ChannelEndWithCapacity {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Sender => f.pad("sender"),
+            Self::Receiver { .. } => f.pad("receiver"),
         }
     }
 }

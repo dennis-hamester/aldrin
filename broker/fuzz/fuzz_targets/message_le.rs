@@ -1189,7 +1189,7 @@ impl UpdateContext for ChannelEndClosed {
 pub struct ClaimChannelEndLe {
     pub serial: SerialLe,
     pub cookie: UuidLe,
-    pub end: ChannelEnd,
+    pub end: ChannelEndWithCapacity,
 }
 
 impl ClaimChannelEndLe {

@@ -1181,8 +1181,8 @@ impl Broker {
         match channel.claim(id, req.end) {
             Ok(other_id) => {
                 match req.end {
-                    ChannelEnd::Sender => conn.add_sender(req.cookie),
-                    ChannelEnd::Receiver => conn.add_receiver(req.cookie),
+                    ChannelEndWithCapacity::Sender => conn.add_sender(req.cookie),
+                    ChannelEndWithCapacity::Receiver(_) => conn.add_receiver(req.cookie),
                 }
 
                 let result = send!(
@@ -1201,7 +1201,7 @@ impl Broker {
                     other,
                     Message::ChannelEndClaimed(ChannelEndClaimed {
                         cookie: req.cookie,
-                        end: req.end,
+                        end: req.end.into(),
                     })
                 );
 

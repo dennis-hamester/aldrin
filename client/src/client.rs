@@ -1341,7 +1341,7 @@ where
             .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
                 serial,
                 cookie,
-                end: ChannelEnd::Sender,
+                end: ChannelEndWithCapacity::Sender,
             }))
             .await
             .map_err(Into::into)
@@ -1361,7 +1361,7 @@ where
             .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
                 serial,
                 cookie,
-                end: ChannelEnd::Receiver,
+                end: ChannelEndWithCapacity::Receiver(0),
             }))
             .await
             .map_err(Into::into)

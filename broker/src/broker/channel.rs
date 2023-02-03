@@ -1,5 +1,7 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::message::{ChannelEnd, ClaimChannelEndResult, CloseChannelEndResult};
+use aldrin_proto::message::{
+    ChannelEnd, ChannelEndWithCapacity, ClaimChannelEndResult, CloseChannelEndResult,
+};
 use std::mem;
 
 #[derive(Debug)]
@@ -73,11 +75,11 @@ impl Channel {
     pub fn claim(
         &mut self,
         conn_id: &ConnectionId,
-        end: ChannelEnd,
+        end: ChannelEndWithCapacity,
     ) -> Result<&ConnectionId, ClaimChannelEndResult> {
         let (owner, other) = match end {
-            ChannelEnd::Sender => (&mut self.sender, &self.receiver),
-            ChannelEnd::Receiver => (&mut self.receiver, &self.sender),
+            ChannelEndWithCapacity::Sender => (&mut self.sender, &self.receiver),
+            ChannelEndWithCapacity::Receiver(_) => (&mut self.receiver, &self.sender),
         };
 
         match (owner, other) {
