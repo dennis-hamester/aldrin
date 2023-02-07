@@ -69,10 +69,10 @@ pub struct BrokerStatistics {
     /// The number of functions replied.
     pub functions_replied: usize,
 
-    /// The number of events received by the Broker.
+    /// The number of events received by the broker.
     pub events_received: usize,
 
-    /// The number of events sent by the Broker.
+    /// The number of events sent by the broker.
     ///
     /// This number is different from [`events_received`](Self::events_received), because a single
     /// event may be sent out zero, one or multiple times, depending on the number of subscribers.
