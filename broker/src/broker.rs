@@ -30,7 +30,7 @@ use aldrin_proto::message::{
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use channel::Channel;
+use channel::{Channel, SendItemError};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
@@ -1200,14 +1200,22 @@ impl Broker {
     }
 
     fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) {
-        let channel = match self.channels.get(&req.cookie) {
-            Some(channel) => channel,
-            None => return,
+        let Some(channel) = self.channels.get(&req.cookie) else {
+            return;
         };
 
-        let receiver_id = match channel.check_send(id) {
-            (true, receiver_id) => receiver_id,
-            (false, _) => return,
+        let receiver_id = match channel.send_item(id) {
+            Ok(receiver_id) => receiver_id,
+            Err(SendItemError::InvalidSender) => return,
+
+            Err(SendItemError::NotEstablished) => {
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.items_sent += 1;
+                }
+
+                return;
+            }
         };
 
         #[cfg(feature = "statistics")]
@@ -1215,14 +1223,8 @@ impl Broker {
             self.statistics.items_sent += 1;
         }
 
-        let receiver_id = match receiver_id {
-            Some(receiver_id) => receiver_id,
-            None => return,
-        };
-
-        let receiver = match self.conns.get(receiver_id) {
-            Some(receiver) => receiver,
-            None => return,
+        let Some(receiver) = self.conns.get(receiver_id) else {
+            return;
         };
 
         let res = send!(

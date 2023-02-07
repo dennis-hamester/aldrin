@@ -104,19 +104,27 @@ impl Channel {
         }
     }
 
-    pub fn check_send(&self, conn_id: &ConnectionId) -> (bool, Option<&ConnectionId>) {
-        match &self.sender {
-            ChannelEndState::Claimed(sender) if *sender == *conn_id => {
-                if let ChannelEndState::Claimed(receiver) = &self.receiver {
-                    (true, Some(receiver))
-                } else {
-                    (true, None)
-                }
+    pub fn send_item(&self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
+        if let ChannelEndState::Claimed(ref sender) = self.sender {
+            if sender != conn_id {
+                return Err(SendItemError::InvalidSender);
             }
+        } else {
+            return Err(SendItemError::InvalidSender);
+        }
 
-            _ => (false, None),
+        if let ChannelEndState::Claimed(ref receiver) = self.receiver {
+            Ok(receiver)
+        } else {
+            Err(SendItemError::NotEstablished)
         }
     }
+}
+
+#[derive(Debug)]
+pub(crate) enum SendItemError {
+    InvalidSender,
+    NotEstablished,
 }
 
 #[derive(Debug)]
