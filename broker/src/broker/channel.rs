@@ -105,18 +105,19 @@ impl Channel {
     }
 
     pub fn send_item(&self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
-        if let ChannelEndState::Claimed(ref sender) = self.sender {
-            if sender != conn_id {
-                return Err(SendItemError::InvalidSender);
-            }
-        } else {
+        let ChannelEndState::Claimed(ref sender) = self.sender else {
+            return Err(SendItemError::InvalidSender);
+        };
+
+        if sender != conn_id {
             return Err(SendItemError::InvalidSender);
         }
 
-        if let ChannelEndState::Claimed(ref receiver) = self.receiver {
-            Ok(receiver)
-        } else {
-            Err(SendItemError::NotEstablished)
+        match self.receiver {
+            ChannelEndState::Claimed(ref receiver) => Ok(receiver),
+            ChannelEndState::Unclaimed | ChannelEndState::Closed => {
+                Err(SendItemError::NotEstablished)
+            }
         }
     }
 }
