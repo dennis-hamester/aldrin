@@ -1218,11 +1218,6 @@ impl Broker {
             }
         };
 
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.items_sent += 1;
-        }
-
         let Some(receiver) = self.conns.get(receiver_id) else {
             return;
         };
@@ -1238,6 +1233,11 @@ impl Broker {
 
         if res.is_err() {
             state.push_remove_conn(receiver_id.clone());
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.items_sent += 1;
         }
     }
 
