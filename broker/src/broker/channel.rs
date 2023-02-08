@@ -115,9 +115,8 @@ impl Channel {
 
         match self.receiver {
             ChannelEndState::Claimed(ref receiver) => Ok(receiver),
-            ChannelEndState::Unclaimed | ChannelEndState::Closed => {
-                Err(SendItemError::NotEstablished)
-            }
+            ChannelEndState::Unclaimed => Err(SendItemError::ReceiverUnclaimed),
+            ChannelEndState::Closed => Err(SendItemError::ReceiverClosed),
         }
     }
 }
@@ -125,7 +124,8 @@ impl Channel {
 #[derive(Debug)]
 pub(crate) enum SendItemError {
     InvalidSender,
-    NotEstablished,
+    ReceiverUnclaimed,
+    ReceiverClosed,
 }
 
 #[derive(Debug)]

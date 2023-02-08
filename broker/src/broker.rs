@@ -1206,9 +1206,9 @@ impl Broker {
 
         let receiver_id = match channel.send_item(id) {
             Ok(receiver_id) => receiver_id,
-            Err(SendItemError::InvalidSender) => return,
+            Err(SendItemError::InvalidSender) | Err(SendItemError::ReceiverUnclaimed) => return,
 
-            Err(SendItemError::NotEstablished) => {
+            Err(SendItemError::ReceiverClosed) => {
                 #[cfg(feature = "statistics")]
                 {
                     self.statistics.items_sent += 1;
