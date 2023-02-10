@@ -1206,7 +1206,12 @@ impl Broker {
 
         let receiver_id = match channel.send_item(id) {
             Ok(receiver_id) => receiver_id,
-            Err(SendItemError::InvalidSender) | Err(SendItemError::ReceiverUnclaimed) => return,
+            Err(SendItemError::InvalidSender) => return,
+
+            Err(SendItemError::ReceiverUnclaimed) => {
+                self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
+                return;
+            }
 
             Err(SendItemError::ReceiverClosed) => {
                 #[cfg(feature = "statistics")]

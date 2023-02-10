@@ -3,11 +3,11 @@ use crate::test::RunError;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::message::{
     ChannelEnd, CloseChannelEnd, CloseChannelEndResult, Connect, ConnectReply, CreateChannel,
-    Message,
+    Message, SendItem,
 };
 use aldrin_proto::tokio::TokioTransport;
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_proto::{ChannelCookie, VERSION};
+use aldrin_proto::{ChannelCookie, Serialize, VERSION};
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};
@@ -259,6 +259,18 @@ impl Client {
                 "expected close-channel-end-reply message but received {msg:?}"
             ))
         }
+    }
+
+    pub async fn send_item<T: Serialize + ?Sized>(
+        &mut self,
+        cookie: ChannelCookie,
+        value: &T,
+    ) -> Result<()> {
+        self.send(Message::SendItem(SendItem::with_serialize_value(
+            cookie, value,
+        )?))
+        .await
+        .with_context(|| anyhow!("failed to send close-channel-end message to broker"))
     }
 }
 

@@ -88,6 +88,7 @@ pub enum MessageType {
     CreateChannelReply,
     CloseChannelEnd,
     CloseChannelEndReply,
+    SendItem,
 }
 
 impl fmt::Display for MessageType {
@@ -100,6 +101,7 @@ impl fmt::Display for MessageType {
             Self::CreateChannelReply => f.pad("create-channel-reply"),
             Self::CloseChannelEnd => f.pad("close-channel-end"),
             Self::CloseChannelEndReply => f.pad("close-channel-end-reply"),
+            Self::SendItem => f.pad("send-item"),
         }
     }
 }
@@ -116,6 +118,7 @@ impl FromStr for MessageType {
             "create-channel-reply" => Ok(Self::CreateChannelReply),
             "close-channel-end" => Ok(Self::CloseChannelEnd),
             "close-channel-end-reply" => Ok(Self::CloseChannelEndReply),
+            "send-item" => Ok(Self::SendItem),
             _ => Err(anyhow!("invalid message")),
         }
     }
