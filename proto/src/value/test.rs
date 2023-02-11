@@ -875,14 +875,22 @@ fn test_struct() {
     assert_deserialize_eq(&value, serialized);
 
     let serialized = [39, 1, 0, 3, 4];
-    let value1 = Value::Struct(Struct(HashMap::from_iter([(0, Value::U8(4))])));
-    assert_serialize_eq(&value1, serialized);
-    assert_deserialize_eq(&value1, serialized);
-    let value2 = Value::Struct(Struct(HashMap::from_iter([
-        (0, Value::U8(4)),
-        (1, Value::None),
-    ])));
-    assert_serialize_eq(&value2, serialized);
+    let value = Value::Struct(Struct(HashMap::from_iter([(0, Value::U8(4))])));
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+
+    let serialized = [39, 1, 0, 1, 3, 4];
+    let value = Value::Struct(Struct(HashMap::from_iter([(
+        0,
+        Value::Some(Box::new(Value::U8(4))),
+    )])));
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+
+    let serialized = [39, 1, 0, 0];
+    let value = Value::Struct(Struct(HashMap::from_iter([(0, Value::None)])));
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
 }
 
 #[derive(Debug, PartialEq, Eq)]

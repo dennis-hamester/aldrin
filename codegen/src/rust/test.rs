@@ -1,8 +1,9 @@
 aldrin_client::generate!("test/constants.aldrin");
+aldrin_client::generate!("test/generic_struct.aldrin");
 aldrin_client::generate!("test/test1.aldrin");
 
 use aldrin_client::Error;
-use aldrin_proto::ObjectUuid;
+use aldrin_proto::{ObjectUuid, SerializedValue};
 use aldrin_test::tokio_based::TestBroker;
 use futures::StreamExt;
 use uuid::uuid;
@@ -62,4 +63,19 @@ fn constants() {
         constants::CONST_UUID,
         uuid!("5c368dc9-e6d3-4545-86d1-435fe3e771cc")
     );
+}
+
+#[test]
+fn generic_struct() {
+    let s1 = generic_struct::Struct {
+        field1: 1,
+        field2: None,
+    };
+
+    let s1_serialized = SerializedValue::serialize(&s1).unwrap();
+    let g: aldrin_proto::Struct = s1_serialized.deserialize().unwrap();
+    let g_serialized = SerializedValue::serialize(&g).unwrap();
+    let s2: generic_struct::Struct = g_serialized.deserialize().unwrap();
+
+    assert_eq!(s1, s2);
 }

@@ -1,0 +1,5 @@
+#[rust(impl_partial_eq, impl_eq)]
+struct Struct {
+    required field1 @ 1 = u32;
+    field2 @ 2 = u32;
+}

@@ -242,13 +242,10 @@ pub struct Struct(pub HashMap<u32, Value>);
 
 impl Serialize for Struct {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let num_fields = self.0.values().filter(|v| !v.is_none()).count();
-        let mut serializer = serializer.serialize_struct(num_fields)?;
+        let mut serializer = serializer.serialize_struct(self.0.len())?;
 
         for (&id, field) in &self.0 {
-            if !field.is_none() {
-                serializer.serialize_field(id, field)?;
-            }
+            serializer.serialize_field(id, field)?;
         }
 
         serializer.finish()
@@ -263,10 +260,8 @@ impl Deserialize for Struct {
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
             let id = deserializer.id();
-            let field: Value = deserializer.deserialize()?;
-            if !field.is_none() {
-                value.insert(id, field);
-            }
+            let field = deserializer.deserialize()?;
+            value.insert(id, field);
         }
 
         Ok(Self(value))
