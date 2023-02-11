@@ -1206,17 +1206,14 @@ impl Broker {
 
         let receiver_id = match channel.send_item(id) {
             Ok(receiver_id) => receiver_id,
-            Err(SendItemError::InvalidSender) => return,
-
-            Err(SendItemError::ReceiverUnclaimed) => {
-                self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
-                return;
-            }
-
-            Err(SendItemError::ReceiverClosed) => {
+            Err(e) => {
                 #[cfg(feature = "statistics")]
                 {
-                    self.statistics.items_sent += 1;
+                    self.statistics.items_dropped += 1;
+                }
+
+                if e == SendItemError::ReceiverUnclaimed {
+                    self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
                 }
 
                 return;
@@ -1236,13 +1233,18 @@ impl Broker {
             })
         );
 
-        if res.is_err() {
-            state.push_remove_conn(receiver_id.clone());
-        }
+        if res.is_ok() {
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.items_sent += 1;
+            }
+        } else {
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.items_dropped += 1;
+            }
 
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.items_sent += 1;
+            state.push_remove_conn(receiver_id.clone());
         }
     }
 

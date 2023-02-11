@@ -89,8 +89,11 @@ pub struct BrokerStatistics {
     /// The number of channels closed.
     pub channels_closed: usize,
 
-    /// The number of items sent on a channel.
+    /// The number of items sent successfully on a channel.
     pub items_sent: usize,
+
+    /// The number of items dropped a channel.
+    pub items_dropped: usize,
 }
 
 impl BrokerStatistics {
@@ -124,6 +127,7 @@ impl BrokerStatistics {
             channels_created: 0,
             channels_closed: 0,
             items_sent: 0,
+            items_dropped: 0,
         }
     }
 
@@ -151,6 +155,7 @@ impl BrokerStatistics {
         self.channels_created = 0;
         self.channels_closed = 0;
         self.items_sent = 0;
+        self.items_dropped = 0;
 
         res
     }

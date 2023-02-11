@@ -121,7 +121,7 @@ impl Channel {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum SendItemError {
     InvalidSender,
     ReceiverUnclaimed,
