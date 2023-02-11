@@ -5,6 +5,9 @@ on:
     branches-ignore:
     - 'wip/**'
 
+env:
+  CARGO_INCREMENTAL: 0
+
 jobs:
 
   ci:
