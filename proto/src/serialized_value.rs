@@ -25,7 +25,7 @@ impl SerializedValue {
     pub fn serialize<T: Serialize + ?Sized>(value: &T) -> Result<Self, SerializeError> {
         // 4 bytes message length + 1 byte message kind + 4 bytes value length.
         let mut buf = BytesMut::zeroed(9);
-        let serializer = Serializer::new(&mut buf);
+        let serializer = Serializer::new(&mut buf, 0)?;
         value.serialize(serializer)?;
         Ok(Self { buf })
     }
@@ -144,7 +144,7 @@ impl SerializedValueSlice {
 
     pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
         let mut buf = &self.0;
-        let deserializer = Deserializer::new(&mut buf);
+        let deserializer = Deserializer::new(&mut buf, 0)?;
 
         let res = T::deserialize(deserializer);
 

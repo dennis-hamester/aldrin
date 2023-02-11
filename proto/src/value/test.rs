@@ -30,13 +30,13 @@ fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
 
     // skip
     let mut buf = serialized.as_ref();
-    Deserializer::new(&mut buf).skip().unwrap();
+    Deserializer::new(&mut buf, 0).unwrap().skip().unwrap();
     assert_eq!(*buf, []);
     assert_eq!(serialized_value.deserialize(), Ok(Skip));
 
     // len
     let mut buf = serialized.as_ref();
-    let len = Deserializer::new(&mut buf).len().unwrap();
+    let len = Deserializer::new(&mut buf, 0).unwrap().len().unwrap();
     assert_eq!(len, buf.len());
 }
 
@@ -509,14 +509,18 @@ fn test_u8_map() {
 
     let value = HashMap::<u8, u8>::from_iter([(0, 1), (2, 3)]);
     let mut buf = bytes::BytesMut::new();
-    value.serialize(Serializer::new(&mut buf)).unwrap();
+    value
+        .serialize(Serializer::new(&mut buf, 0).unwrap())
+        .unwrap();
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
 
     let value = Value::U8Map(HashMap::from_iter([(0, Value::U8(1)), (2, Value::U8(3))]));
     let mut buf = bytes::BytesMut::new();
-    value.serialize(Serializer::new(&mut buf)).unwrap();
+    value
+        .serialize(Serializer::new(&mut buf, 0).unwrap())
+        .unwrap();
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
@@ -668,14 +672,18 @@ fn test_u8_set() {
 
     let value1 = HashSet::<_>::from_iter([3u8, 4]);
     let mut buf = bytes::BytesMut::new();
-    value1.serialize(Serializer::new(&mut buf)).unwrap();
+    value1
+        .serialize(Serializer::new(&mut buf, 0).unwrap())
+        .unwrap();
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value1, serialized1);
     assert_deserialize_eq(&value1, serialized2);
 
     let value2 = Value::U8Set(value1);
     let mut buf = bytes::BytesMut::new();
-    value2.serialize(Serializer::new(&mut buf)).unwrap();
+    value2
+        .serialize(Serializer::new(&mut buf, 0).unwrap())
+        .unwrap();
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value2, serialized1);
     assert_deserialize_eq(&value2, serialized2);
@@ -1132,4 +1140,31 @@ fn test_cow_bytes() {
     let value = Cow::<ByteSlice>::Owned(vec![1, 2, 3].into());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_serialize_too_deep() {
+    let value = Some(Some(Some(Some(Some(Some(Some(Some(Some(Some(Some(
+        Some(Some(Some(Some(Some(Some(Some(Some(Some(Some(Some(
+            Some(Some(Some(Some(Some(Some(Some(Some(Some(Some(0)))))))))),
+        ))))))))))),
+    )))))))))));
+
+    assert_eq!(
+        SerializedValue::serialize(&value),
+        Err(SerializeError::TooDeeplyNested)
+    );
+}
+
+#[test]
+fn test_deserialize_too_deep() {
+    let serialized = SerializedValueSlice::new(&[
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 0,
+    ]);
+
+    assert_eq!(
+        serialized.deserialize::<Value>(),
+        Err(DeserializeError::TooDeeplyNested)
+    );
 }

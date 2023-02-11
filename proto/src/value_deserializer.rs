@@ -6,6 +6,7 @@ use crate::ids::{
 };
 use crate::serialized_value::SerializedValueSlice;
 use crate::value::ValueKind;
+use crate::MAX_VALUE_DEPTH;
 use bytes::Buf;
 use std::iter;
 use std::marker::PhantomData;
@@ -18,17 +19,29 @@ pub trait Deserialize: Sized {
 #[derive(Debug)]
 pub struct Deserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
+    depth: u8,
 }
 
 impl<'a, 'b> Deserializer<'a, 'b> {
-    pub(crate) fn new(buf: &'a mut &'b [u8]) -> Self {
-        Self { buf }
+    pub(crate) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        let mut this = Self { buf, depth };
+        this.increment_depth()?;
+        Ok(this)
+    }
+
+    fn increment_depth(&mut self) -> Result<(), DeserializeError> {
+        self.depth += 1;
+        if self.depth <= MAX_VALUE_DEPTH {
+            Ok(())
+        } else {
+            Err(DeserializeError::TooDeeplyNested)
+        }
     }
 
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> Result<usize, DeserializeError> {
         let mut buf = *self.buf;
-        Deserializer::new(&mut buf).skip()?;
+        Deserializer::new(&mut buf, self.depth - 1)?.skip()?;
 
         // Determine the length by computing how far `skip()` has advanced `buf` compared to the
         // original buffer `*self.buf`.
@@ -66,20 +79,38 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             ValueKind::Uuid | ValueKind::Sender | ValueKind::Receiver => self.buf.try_skip(16),
             ValueKind::ObjectId => self.buf.try_skip(32),
             ValueKind::ServiceId => self.buf.try_skip(64),
-            ValueKind::Vec => VecDeserializer::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::Vec => VecDeserializer::new_without_value_kind(self.buf, self.depth)?.skip(),
             ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip_all(),
-            ValueKind::U8Map => MapDeserializer::<u8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I8Map => MapDeserializer::<i8>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U16Map => MapDeserializer::<u16>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I16Map => MapDeserializer::<i16>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U32Map => MapDeserializer::<u32>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I32Map => MapDeserializer::<i32>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::U64Map => MapDeserializer::<u64>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::I64Map => MapDeserializer::<i64>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::StringMap => {
-                MapDeserializer::<String>::new_without_value_kind(self.buf)?.skip()
+            ValueKind::U8Map => {
+                MapDeserializer::<u8>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
-            ValueKind::UuidMap => MapDeserializer::<Uuid>::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::I8Map => {
+                MapDeserializer::<i8>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::U16Map => {
+                MapDeserializer::<u16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::I16Map => {
+                MapDeserializer::<i16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::U32Map => {
+                MapDeserializer::<u32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::I32Map => {
+                MapDeserializer::<i32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::U64Map => {
+                MapDeserializer::<u64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::I64Map => {
+                MapDeserializer::<i64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::StringMap => {
+                MapDeserializer::<String>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::UuidMap => {
+                MapDeserializer::<Uuid>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
             ValueKind::U8Set => SetDeserializer::<u8>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::I8Set => SetDeserializer::<i8>::new_without_value_kind(self.buf)?.skip(),
             ValueKind::U16Set => SetDeserializer::<u16>::new_without_value_kind(self.buf)?.skip(),
@@ -92,8 +123,12 @@ impl<'a, 'b> Deserializer<'a, 'b> {
                 SetDeserializer::<String>::new_without_value_kind(self.buf)?.skip()
             }
             ValueKind::UuidSet => SetDeserializer::<Uuid>::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::Struct => StructDeserializer::new_without_value_kind(self.buf)?.skip(),
-            ValueKind::Enum => EnumDeserializer::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::Struct => {
+                StructDeserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+            ValueKind::Enum => {
+                EnumDeserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
         }
     }
 
@@ -101,12 +136,14 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         self.buf.ensure_discriminant_u8(ValueKind::None)
     }
 
-    pub fn deserialize_some<T: Deserialize>(self) -> Result<T, DeserializeError> {
+    pub fn deserialize_some<T: Deserialize>(mut self) -> Result<T, DeserializeError> {
+        self.increment_depth()?;
         self.buf.ensure_discriminant_u8(ValueKind::Some)?;
         T::deserialize(self)
     }
 
-    pub fn deserialize_option<T: Deserialize>(self) -> Result<Option<T>, DeserializeError> {
+    pub fn deserialize_option<T: Deserialize>(mut self) -> Result<Option<T>, DeserializeError> {
+        self.increment_depth()?;
         match self.buf.try_get_discriminant_u8()? {
             ValueKind::Some => T::deserialize(self).map(Some),
             ValueKind::None => Ok(None),
@@ -220,7 +257,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     }
 
     pub fn deserialize_vec(self) -> Result<VecDeserializer<'a, 'b>, DeserializeError> {
-        VecDeserializer::new(self.buf)
+        VecDeserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_vec_extend<V, T>(self, vec: &mut V) -> Result<(), DeserializeError>
@@ -252,7 +289,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     pub fn deserialize_map<K: DeserializeKey>(
         self,
     ) -> Result<MapDeserializer<'a, 'b, K>, DeserializeError> {
-        MapDeserializer::new(self.buf)
+        MapDeserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_map_extend<T, K, V>(self, map: &mut T) -> Result<(), DeserializeError>
@@ -261,7 +298,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         K: DeserializeKey,
         V: Deserialize,
     {
-        MapDeserializer::new(self.buf)?.deserialize_extend(map)
+        MapDeserializer::new(self.buf, self.depth)?.deserialize_extend(map)
     }
 
     pub fn deserialize_map_extend_new<T, K, V>(self) -> Result<T, DeserializeError>
@@ -271,7 +308,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         V: Deserialize,
     {
         let mut map = T::default();
-        MapDeserializer::new(self.buf)?.deserialize_extend(&mut map)?;
+        MapDeserializer::new(self.buf, self.depth)?.deserialize_extend(&mut map)?;
         Ok(map)
     }
 
@@ -300,11 +337,11 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     }
 
     pub fn deserialize_struct(self) -> Result<StructDeserializer<'a, 'b>, DeserializeError> {
-        StructDeserializer::new(self.buf)
+        StructDeserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, 'b>, DeserializeError> {
-        EnumDeserializer::new(self.buf)
+        EnumDeserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_sender(self) -> Result<ChannelCookie, DeserializeError> {
@@ -326,17 +363,22 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 pub struct VecDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     num_elems: u32,
+    depth: u8,
 }
 
 impl<'a, 'b> VecDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Vec)?;
-        Self::new_without_value_kind(buf)
+        Self::new_without_value_kind(buf, depth)
     }
 
-    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let num_elems = buf.try_get_varint_u32_le()?;
-        Ok(Self { buf, num_elems })
+        Ok(Self {
+            buf,
+            num_elems,
+            depth,
+        })
     }
 
     pub fn remaining_elements(&self) -> usize {
@@ -353,7 +395,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     {
         if self.has_more_elements() {
             self.num_elems -= 1;
-            T::deserialize(Deserializer::new(self.buf))
+            T::deserialize(Deserializer::new(self.buf, self.depth)?)
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -375,7 +417,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            Deserializer::new(self.buf).skip()
+            Deserializer::new(self.buf, self.depth)?.skip()
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -458,21 +500,23 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
 pub struct MapDeserializer<'a, 'b, K: DeserializeKey> {
     buf: &'a mut &'b [u8],
     num_elems: u32,
+    depth: u8,
     _key: PhantomData<K>,
 }
 
 impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         K::deserialize_map_value_kind(buf)?;
-        Self::new_without_value_kind(buf)
+        Self::new_without_value_kind(buf, depth)
     }
 
-    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let num_elems = buf.try_get_varint_u32_le()?;
 
         Ok(Self {
             buf,
             num_elems,
+            depth,
             _key: PhantomData,
         })
     }
@@ -490,7 +534,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
     ) -> Result<ElementDeserializer<'_, 'b, K>, DeserializeError> {
         if self.has_more_elements() {
             self.num_elems -= 1;
-            ElementDeserializer::new(self.buf)
+            ElementDeserializer::new(self.buf, self.depth)
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -513,7 +557,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         if self.has_more_elements() {
             self.num_elems -= 1;
             K::skip(self.buf)?;
-            Deserializer::new(self.buf).skip()
+            Deserializer::new(self.buf, self.depth)?.skip()
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -532,12 +576,13 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
 pub struct ElementDeserializer<'a, 'b, K: DeserializeKey> {
     buf: &'a mut &'b [u8],
     key: K,
+    depth: u8,
 }
 
 impl<'a, 'b, K: DeserializeKey> ElementDeserializer<'a, 'b, K> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let key = K::deserialize_key(buf)?;
-        Ok(Self { buf, key })
+        Ok(Self { buf, key, depth })
     }
 
     pub fn key(&self) -> &K {
@@ -545,12 +590,12 @@ impl<'a, 'b, K: DeserializeKey> ElementDeserializer<'a, 'b, K> {
     }
 
     pub fn deserialize<T: Deserialize>(self) -> Result<(K, T), DeserializeError> {
-        let value = T::deserialize(Deserializer::new(self.buf))?;
+        let value = T::deserialize(Deserializer::new(self.buf, self.depth)?)?;
         Ok((self.key, value))
     }
 
     pub fn skip(self) -> Result<(), DeserializeError> {
-        Deserializer::new(self.buf).skip()
+        Deserializer::new(self.buf, self.depth)?.skip()
     }
 }
 
@@ -628,17 +673,22 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
 pub struct StructDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     num_fields: u32,
+    depth: u8,
 }
 
 impl<'a, 'b> StructDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Struct)?;
-        Self::new_without_value_kind(buf)
+        Self::new_without_value_kind(buf, depth)
     }
 
-    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let num_fields = buf.try_get_varint_u32_le()?;
-        Ok(Self { buf, num_fields })
+        Ok(Self {
+            buf,
+            num_fields,
+            depth,
+        })
     }
 
     pub fn remaining_fields(&self) -> usize {
@@ -652,7 +702,7 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
     pub fn deserialize_field(&mut self) -> Result<FieldDeserializer<'_, 'b>, DeserializeError> {
         if self.has_more_fields() {
             self.num_fields -= 1;
-            FieldDeserializer::new(self.buf)
+            FieldDeserializer::new(self.buf, self.depth)
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -671,12 +721,13 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
 pub struct FieldDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     id: u32,
+    depth: u8,
 }
 
 impl<'a, 'b> FieldDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let id = buf.try_get_varint_u32_le()?;
-        Ok(Self { buf, id })
+        Ok(Self { buf, id, depth })
     }
 
     pub fn id(&self) -> u32 {
@@ -684,11 +735,11 @@ impl<'a, 'b> FieldDeserializer<'a, 'b> {
     }
 
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
-        T::deserialize(Deserializer::new(self.buf))
+        T::deserialize(Deserializer::new(self.buf, self.depth)?)
     }
 
     pub fn skip(self) -> Result<(), DeserializeError> {
-        Deserializer::new(self.buf).skip()
+        Deserializer::new(self.buf, self.depth)?.skip()
     }
 }
 
@@ -696,17 +747,22 @@ impl<'a, 'b> FieldDeserializer<'a, 'b> {
 pub struct EnumDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     variant: u32,
+    depth: u8,
 }
 
 impl<'a, 'b> EnumDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Enum)?;
-        Self::new_without_value_kind(buf)
+        Self::new_without_value_kind(buf, depth)
     }
 
-    fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         let variant = buf.try_get_varint_u32_le()?;
-        Ok(Self { buf, variant })
+        Ok(Self {
+            buf,
+            variant,
+            depth,
+        })
     }
 
     pub fn variant(&self) -> u32 {
@@ -714,10 +770,10 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
     }
 
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
-        T::deserialize(Deserializer::new(self.buf))
+        T::deserialize(Deserializer::new(self.buf, self.depth)?)
     }
 
     pub fn skip(self) -> Result<(), DeserializeError> {
-        Deserializer::new(self.buf).skip()
+        Deserializer::new(self.buf, self.depth)?.skip()
     }
 }

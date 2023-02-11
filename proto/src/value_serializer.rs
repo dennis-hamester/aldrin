@@ -4,6 +4,7 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::SerializeKey;
 use crate::serialized_value::SerializedValueSlice;
 use crate::value::ValueKind;
+use crate::MAX_VALUE_DEPTH;
 use bytes::{BufMut, BytesMut};
 use std::fmt;
 use std::marker::PhantomData;
@@ -16,11 +17,23 @@ pub trait Serialize {
 #[derive(Debug)]
 pub struct Serializer<'a> {
     buf: &'a mut BytesMut,
+    depth: u8,
 }
 
 impl<'a> Serializer<'a> {
-    pub(crate) fn new(buf: &'a mut BytesMut) -> Self {
-        Self { buf }
+    pub(crate) fn new(buf: &'a mut BytesMut, depth: u8) -> Result<Self, SerializeError> {
+        let mut this = Self { buf, depth };
+        this.increment_depth()?;
+        Ok(this)
+    }
+
+    fn increment_depth(&mut self) -> Result<(), SerializeError> {
+        self.depth += 1;
+        if self.depth <= MAX_VALUE_DEPTH {
+            Ok(())
+        } else {
+            Err(SerializeError::TooDeeplyNested)
+        }
     }
 
     pub fn copy_from_serialized_value(self, value: &SerializedValueSlice) {
@@ -31,7 +44,11 @@ impl<'a> Serializer<'a> {
         self.buf.put_discriminant_u8(ValueKind::None);
     }
 
-    pub fn serialize_some<T: Serialize + ?Sized>(self, value: &T) -> Result<(), SerializeError> {
+    pub fn serialize_some<T: Serialize + ?Sized>(
+        mut self,
+        value: &T,
+    ) -> Result<(), SerializeError> {
+        self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Some);
         value.serialize(self)
     }
@@ -122,7 +139,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a>, SerializeError> {
-        VecSerializer::new(self.buf, num_elems)
+        VecSerializer::new(self.buf, num_elems, self.depth)
     }
 
     pub fn serialize_vec_iter<T>(self, vec: T) -> Result<(), SerializeError>
@@ -155,7 +172,7 @@ impl<'a> Serializer<'a> {
         self,
         num_elems: usize,
     ) -> Result<MapSerializer<'a, K>, SerializeError> {
-        MapSerializer::new(self.buf, num_elems)
+        MapSerializer::new(self.buf, num_elems, self.depth)
     }
 
     pub fn serialize_map_iter<T, K, V>(self, map: T) -> Result<(), SerializeError>
@@ -202,14 +219,15 @@ impl<'a> Serializer<'a> {
         self,
         num_fields: usize,
     ) -> Result<StructSerializer<'a>, SerializeError> {
-        StructSerializer::new(self.buf, num_fields)
+        StructSerializer::new(self.buf, num_fields, self.depth)
     }
 
     pub fn serialize_enum<T: Serialize + ?Sized>(
-        self,
+        mut self,
         variant: u32,
         value: &T,
     ) -> Result<(), SerializeError> {
+        self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Enum);
         self.buf.put_varint_u32_le(variant);
         value.serialize(self)
@@ -230,16 +248,18 @@ impl<'a> Serializer<'a> {
 pub struct VecSerializer<'a> {
     buf: &'a mut BytesMut,
     num_elems: u32,
+    depth: u8,
 }
 
 impl<'a> VecSerializer<'a> {
-    fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
+    fn new(buf: &'a mut BytesMut, num_elems: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Vec);
             buf.put_varint_u32_le(num_elems as u32);
             Ok(Self {
                 buf,
                 num_elems: num_elems as u32,
+                depth,
             })
         } else {
             Err(SerializeError::Overflow)
@@ -260,7 +280,7 @@ impl<'a> VecSerializer<'a> {
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            value.serialize(Serializer::new(self.buf))?;
+            value.serialize(Serializer::new(self.buf, self.depth)?)?;
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -326,11 +346,12 @@ impl<'a> BytesSerializer<'a> {
 pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
     buf: &'a mut BytesMut,
     num_elems: u32,
+    depth: u8,
     _key: PhantomData<K>,
 }
 
 impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
-    fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
+    fn new(mut buf: &'a mut BytesMut, num_elems: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             K::serialize_map_value_kind(&mut buf);
             buf.put_varint_u32_le(num_elems as u32);
@@ -338,6 +359,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
             Ok(Self {
                 buf,
                 num_elems: num_elems as u32,
+                depth,
                 _key: PhantomData,
             })
         } else {
@@ -361,7 +383,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
             key.serialize_key(self.buf)?;
-            value.serialize(Serializer::new(self.buf))?;
+            value.serialize(Serializer::new(self.buf, self.depth)?)?;
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -452,16 +474,18 @@ impl<'a, T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'a, T> {
 pub struct StructSerializer<'a> {
     buf: &'a mut BytesMut,
     num_fields: u32,
+    depth: u8,
 }
 
 impl<'a> StructSerializer<'a> {
-    fn new(buf: &'a mut BytesMut, num_fields: usize) -> Result<Self, SerializeError> {
+    fn new(buf: &'a mut BytesMut, num_fields: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_fields <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Struct);
             buf.put_varint_u32_le(num_fields as u32);
             Ok(Self {
                 buf,
                 num_fields: num_fields as u32,
+                depth,
             })
         } else {
             Err(SerializeError::Overflow)
@@ -484,7 +508,7 @@ impl<'a> StructSerializer<'a> {
         if self.num_fields > 0 {
             self.num_fields -= 1;
             self.buf.put_varint_u32_le(id);
-            value.serialize(Serializer::new(self.buf))?;
+            value.serialize(Serializer::new(self.buf, self.depth)?)?;
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
