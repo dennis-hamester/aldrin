@@ -1083,9 +1083,9 @@ impl Broker {
                 Channel::with_claimed_sender(id.clone())
             }
 
-            ChannelEndWithCapacity::Receiver(_) => {
+            ChannelEndWithCapacity::Receiver(capacity) => {
                 conn.add_receiver(cookie);
-                Channel::with_claimed_receiver(id.clone())
+                Channel::with_claimed_receiver(id.clone(), capacity)
             }
         };
 

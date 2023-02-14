@@ -11,17 +11,17 @@ pub(crate) struct Channel {
 }
 
 impl Channel {
-    pub fn with_claimed_sender(conn_id: ConnectionId) -> Self {
+    pub fn with_claimed_sender(owner: ConnectionId) -> Self {
         Self {
-            sender: ChannelEndState::Claimed(conn_id),
+            sender: ChannelEndState::Claimed { owner, capacity: 0 },
             receiver: ChannelEndState::Unclaimed,
         }
     }
 
-    pub fn with_claimed_receiver(conn_id: ConnectionId) -> Self {
+    pub fn with_claimed_receiver(owner: ConnectionId, capacity: u32) -> Self {
         Self {
             sender: ChannelEndState::Unclaimed,
-            receiver: ChannelEndState::Claimed(conn_id),
+            receiver: ChannelEndState::Claimed { owner, capacity },
         }
     }
 
@@ -37,10 +37,10 @@ impl Channel {
 
         match state {
             ChannelEndState::Unclaimed => (CloseChannelEndResult::Ok, false),
-            ChannelEndState::Claimed(owner) if *owner == *conn_id => {
+            ChannelEndState::Claimed { owner, .. } if *owner == *conn_id => {
                 (CloseChannelEndResult::Ok, true)
             }
-            ChannelEndState::Claimed(_) => (CloseChannelEndResult::ForeignChannel, true),
+            ChannelEndState::Claimed { .. } => (CloseChannelEndResult::ForeignChannel, true),
             ChannelEndState::Closed => (CloseChannelEndResult::InvalidChannel, false),
         }
     }
@@ -57,17 +57,19 @@ impl Channel {
         // Decide whether to close the channel (both ends) completely, and whether to notify the
         // owner of the other end.
         match (owner, other) {
-            (ChannelEndState::Claimed(_), ChannelEndState::Unclaimed)
-            | (ChannelEndState::Claimed(_), ChannelEndState::Closed) => None,
+            (ChannelEndState::Claimed { .. }, ChannelEndState::Unclaimed)
+            | (ChannelEndState::Claimed { .. }, ChannelEndState::Closed) => None,
 
-            (ChannelEndState::Unclaimed, ChannelEndState::Claimed(other))
-            | (ChannelEndState::Claimed(_), ChannelEndState::Claimed(other)) => Some(other),
+            (ChannelEndState::Unclaimed, ChannelEndState::Claimed { owner: other, .. })
+            | (ChannelEndState::Claimed { .. }, ChannelEndState::Claimed { owner: other, .. }) => {
+                Some(other)
+            }
 
             // In all of these cases, it's illegal to call close.
             (ChannelEndState::Unclaimed, ChannelEndState::Unclaimed)
             | (ChannelEndState::Unclaimed, ChannelEndState::Closed)
             | (ChannelEndState::Closed, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Closed, ChannelEndState::Claimed(_))
+            | (ChannelEndState::Closed, ChannelEndState::Claimed { .. })
             | (ChannelEndState::Closed, ChannelEndState::Closed) => unreachable!(),
         }
     }
@@ -83,18 +85,27 @@ impl Channel {
         };
 
         match (owner, other) {
-            (owner @ ChannelEndState::Unclaimed, ChannelEndState::Claimed(other)) => {
-                *owner = ChannelEndState::Claimed(conn_id.clone());
+            (
+                owner @ ChannelEndState::Unclaimed,
+                ChannelEndState::Claimed {
+                    owner: other,
+                    capacity,
+                },
+            ) => {
+                *owner = ChannelEndState::Claimed {
+                    owner: conn_id.clone(),
+                    capacity: *capacity,
+                };
                 Ok(other)
             }
 
-            (ChannelEndState::Claimed(_), ChannelEndState::Unclaimed)
-            | (ChannelEndState::Claimed(_), ChannelEndState::Claimed(_))
-            | (ChannelEndState::Claimed(_), ChannelEndState::Closed) => {
+            (ChannelEndState::Claimed { .. }, ChannelEndState::Unclaimed)
+            | (ChannelEndState::Claimed { .. }, ChannelEndState::Claimed { .. })
+            | (ChannelEndState::Claimed { .. }, ChannelEndState::Closed) => {
                 Err(ClaimChannelEndResult::AlreadyClaimed)
             }
 
-            (ChannelEndState::Closed, ChannelEndState::Claimed(_)) => {
+            (ChannelEndState::Closed, ChannelEndState::Claimed { .. }) => {
                 Err(ClaimChannelEndResult::InvalidChannel)
             }
 
@@ -107,7 +118,7 @@ impl Channel {
     }
 
     pub fn send_item(&self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
-        let ChannelEndState::Claimed(ref sender) = self.sender else {
+        let ChannelEndState::Claimed { owner: ref sender, .. } = self.sender else {
             return Err(SendItemError::InvalidSender);
         };
 
@@ -116,7 +127,10 @@ impl Channel {
         }
 
         match self.receiver {
-            ChannelEndState::Claimed(ref receiver) => Ok(receiver),
+            ChannelEndState::Claimed {
+                owner: ref receiver,
+                ..
+            } => Ok(receiver),
             ChannelEndState::Unclaimed => Err(SendItemError::ReceiverUnclaimed),
             ChannelEndState::Closed => Err(SendItemError::ReceiverClosed),
         }
@@ -133,6 +147,6 @@ pub(crate) enum SendItemError {
 #[derive(Debug)]
 enum ChannelEndState {
     Unclaimed,
-    Claimed(ConnectionId),
+    Claimed { owner: ConnectionId, capacity: u32 },
     Closed,
 }
