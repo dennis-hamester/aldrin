@@ -74,7 +74,7 @@ impl ClaimChannelEndStep {
                 client: other.clone(),
                 message: Message::ChannelEndClaimed(ChannelEndClaimed {
                     cookie: self.cookie.clone(),
-                    end: self.end.into(),
+                    end: self.end,
                 }),
             };
             receive.run(ctx, timeout).await.with_context(|| {

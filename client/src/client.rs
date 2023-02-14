@@ -917,7 +917,7 @@ where
         msg: ChannelEndClaimed,
     ) -> Result<(), RunError<T::Error>> {
         match msg.end {
-            ChannelEnd::Sender => {
+            ChannelEndWithCapacity::Sender => {
                 let receiver = match self.receivers.get_mut(&msg.cookie) {
                     Some(receiver) => receiver,
                     None => {
@@ -941,7 +941,7 @@ where
                 }
             }
 
-            ChannelEnd::Receiver => {
+            ChannelEndWithCapacity::Receiver(_) => {
                 let sender = match self.senders.get_mut(&msg.cookie) {
                     Some(sender) => sender,
                     None => {

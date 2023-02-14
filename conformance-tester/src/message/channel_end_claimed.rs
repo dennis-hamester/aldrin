@@ -1,4 +1,4 @@
-use super::ChannelEnd;
+use super::ChannelEndWithCapacity;
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
 use aldrin_proto::message;
@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "kebab-case")]
 pub struct ChannelEndClaimed {
     pub cookie: UuidRef,
-    pub end: ChannelEnd,
+
+    #[serde(flatten)]
+    pub end: ChannelEndWithCapacity,
 }
 
 impl ChannelEndClaimed {

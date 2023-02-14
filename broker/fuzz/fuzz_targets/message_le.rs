@@ -1255,7 +1255,7 @@ impl UpdateContext for ClaimChannelEndReply {
 #[derive(Debug, Arbitrary)]
 pub struct ChannelEndClaimedLe {
     pub cookie: UuidLe,
-    pub end: ChannelEnd,
+    pub end: ChannelEndWithCapacity,
 }
 
 impl ChannelEndClaimedLe {

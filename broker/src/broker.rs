@@ -1201,7 +1201,7 @@ impl Broker {
                     other,
                     Message::ChannelEndClaimed(ChannelEndClaimed {
                         cookie: req.cookie,
-                        end: req.end.into(),
+                        end: req.end,
                     })
                 );
 
