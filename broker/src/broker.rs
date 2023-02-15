@@ -14,18 +14,18 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, ObjectCreatedEvent, ObjectDestroyedEvent, QueryObject, QueryObjectReply,
-    QueryObjectResult, QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    SendItem, ServiceCreatedEvent, ServiceDestroyedEvent, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply,
-    SubscribeServices, SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent,
-    UnsubscribeObjects, UnsubscribeServices,
+    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
+    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
+    CloseChannelEndResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
+    ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
+    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
+    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
+    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
 };
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -398,7 +398,7 @@ impl Broker {
             Message::CreateChannel(req) => self.create_channel(id, req)?,
             Message::CloseChannelEnd(req) => self.close_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
-            Message::AddChannelCapacity(_) => todo!(),
+            Message::AddChannelCapacity(req) => self.add_channel_capacity(state, id, req),
             Message::SendItem(req) => self.send_item(state, id, req),
             Message::Sync(req) => self.sync(id, req)?,
 
@@ -1227,6 +1227,38 @@ impl Broker {
                     result,
                 })
             ),
+        }
+    }
+
+    fn add_channel_capacity(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: AddChannelCapacity,
+    ) {
+        let Some(channel) = self.channels.get_mut(&req.cookie) else {
+            return;
+        };
+
+        let Some((sender_id, capacity)) = channel.add_capacity(id, req.capacity) else {
+            return;
+        };
+
+        let Some(sender) = self.conns.get(sender_id) else {
+            return;
+        };
+
+        let res = send!(
+            self,
+            sender,
+            Message::AddChannelCapacity(AddChannelCapacity {
+                cookie: req.cookie,
+                capacity,
+            })
+        );
+
+        if res.is_err() {
+            state.push_remove_conn(sender_id.clone());
         }
     }
 

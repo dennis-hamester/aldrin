@@ -4,6 +4,8 @@ use aldrin_proto::message::{
 };
 use std::mem;
 
+const LOW_CAPACITY: u32 = 4;
+
 #[derive(Debug)]
 pub(crate) struct Channel {
     sender: ChannelEndState,
@@ -133,6 +135,43 @@ impl Channel {
             } => Ok(receiver),
             ChannelEndState::Unclaimed => Err(SendItemError::ReceiverUnclaimed),
             ChannelEndState::Closed => Err(SendItemError::ReceiverClosed),
+        }
+    }
+
+    pub fn add_capacity(
+        &mut self,
+        conn_id: &ConnectionId,
+        capacity: u32,
+    ) -> Option<(&ConnectionId, u32)> {
+        if capacity == 0 {
+            return None;
+        }
+
+        let ChannelEndState::Claimed {
+            owner: ref receiver,
+            capacity: ref mut receiver_capacity,
+        } = self.receiver else {
+            return None;
+        };
+
+        if receiver != conn_id {
+            return None;
+        }
+
+        *receiver_capacity += capacity;
+
+        let ChannelEndState::Claimed {
+            owner: ref sender,
+            capacity: ref mut sender_capacity,
+        } = self.sender else {
+            return None;
+        };
+
+        if *sender_capacity <= LOW_CAPACITY {
+            *sender_capacity = *receiver_capacity;
+            Some((sender, *sender_capacity))
+        } else {
+            None
         }
     }
 }
