@@ -2,7 +2,7 @@ use super::{Receive, Send};
 use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::{
-    ChannelEndClaimed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ChannelEnd, ChannelEndClaimed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
     ClaimChannelEndResult, Message,
 };
 use crate::serial::Serial;
@@ -19,9 +19,8 @@ pub struct ClaimChannelEndStep {
 
     pub serial: Option<Serial>,
     pub cookie: UuidRef,
-
-    #[serde(flatten)]
-    pub end: ChannelEndWithCapacity,
+    pub end: ChannelEnd,
+    pub capacity: u32,
 
     #[serde(default = "default_true")]
     pub with_other: bool,
@@ -48,7 +47,12 @@ impl ClaimChannelEndStep {
             message: Message::ClaimChannelEnd(ClaimChannelEnd {
                 serial: serial.clone(),
                 cookie: self.cookie.clone(),
-                end: self.end,
+                end: match self.end {
+                    ChannelEnd::Sender => ChannelEndWithCapacity::Sender,
+                    ChannelEnd::Receiver => ChannelEndWithCapacity::Receiver {
+                        capacity: self.capacity,
+                    },
+                },
             }),
         };
         send.run(ctx, timeout)
@@ -59,7 +63,13 @@ impl ClaimChannelEndStep {
             client: self.client.clone(),
             message: Message::ClaimChannelEndReply(ClaimChannelEndReply {
                 serial,
-                result: ClaimChannelEndResult::Ok,
+                result: match self.end {
+                    ChannelEnd::Sender => ClaimChannelEndResult::SenderClaimed {
+                        capacity: self.capacity,
+                    },
+
+                    ChannelEnd::Receiver => ClaimChannelEndResult::ReceiverClaimed,
+                },
             }),
         };
         receive
@@ -74,7 +84,12 @@ impl ClaimChannelEndStep {
                 client: other.clone(),
                 message: Message::ChannelEndClaimed(ChannelEndClaimed {
                     cookie: self.cookie.clone(),
-                    end: self.end,
+                    end: match self.end {
+                        ChannelEnd::Sender => ChannelEndWithCapacity::Sender,
+                        ChannelEnd::Receiver => ChannelEndWithCapacity::Receiver {
+                            capacity: self.capacity,
+                        },
+                    },
                 }),
             };
             receive.run(ctx, timeout).await.with_context(|| {

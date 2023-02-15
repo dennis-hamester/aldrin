@@ -10,10 +10,20 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
+pub enum ClaimChannelEndReplyKind {
+    SenderClaimed = 0,
+    ReceiverClaimed = 1,
+    InvalidChannel = 2,
+    AlreadyClaimed = 3,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum ClaimChannelEndResult {
-    Ok = 0,
-    InvalidChannel = 1,
-    AlreadyClaimed = 2,
+    SenderClaimed(u32),
+    ReceiverClaimed,
+    InvalidChannel,
+    AlreadyClaimed,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -32,7 +42,22 @@ impl MessageOps for ClaimChannelEndReply {
         let mut serializer = MessageSerializer::without_value(MessageKind::ClaimChannelEndReply);
 
         serializer.put_varint_u32_le(self.serial);
-        serializer.put_discriminant_u8(self.result);
+
+        match self.result {
+            ClaimChannelEndResult::SenderClaimed(capacity) => {
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::SenderClaimed);
+                serializer.put_varint_u32_le(capacity);
+            }
+            ClaimChannelEndResult::ReceiverClaimed => {
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::ReceiverClaimed)
+            }
+            ClaimChannelEndResult::InvalidChannel => {
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::InvalidChannel)
+            }
+            ClaimChannelEndResult::AlreadyClaimed => {
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::AlreadyClaimed)
+            }
+        }
 
         serializer.finish()
     }
@@ -42,7 +67,16 @@ impl MessageOps for ClaimChannelEndReply {
             MessageWithoutValueDeserializer::new(buf, MessageKind::ClaimChannelEndReply)?;
 
         let serial = deserializer.try_get_varint_u32_le()?;
-        let result = deserializer.try_get_discriminant_u8()?;
+
+        let result = match deserializer.try_get_discriminant_u8()? {
+            ClaimChannelEndReplyKind::SenderClaimed => {
+                let capacity = deserializer.try_get_varint_u32_le()?;
+                ClaimChannelEndResult::SenderClaimed(capacity)
+            }
+            ClaimChannelEndReplyKind::ReceiverClaimed => ClaimChannelEndResult::ReceiverClaimed,
+            ClaimChannelEndReplyKind::InvalidChannel => ClaimChannelEndResult::InvalidChannel,
+            ClaimChannelEndReplyKind::AlreadyClaimed => ClaimChannelEndResult::AlreadyClaimed,
+        };
 
         deserializer.finish()?;
         Ok(Self { serial, result })
@@ -68,12 +102,28 @@ mod test {
     use super::{ClaimChannelEndReply, ClaimChannelEndResult};
 
     #[test]
-    fn ok() {
-        let serialized = [7, 0, 0, 0, 37, 1, 0];
+    fn sender_claimed() {
+        let serialized = [8, 0, 0, 0, 37, 1, 0, 2];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
-            result: ClaimChannelEndResult::Ok,
+            result: ClaimChannelEndResult::SenderClaimed(2),
+        };
+        assert_serialize_eq(&msg, serialized);
+        assert_deserialize_eq(&msg, serialized);
+
+        let msg = Message::ClaimChannelEndReply(msg);
+        assert_serialize_eq(&msg, serialized);
+        assert_deserialize_eq(&msg, serialized);
+    }
+
+    #[test]
+    fn receiver_claimed() {
+        let serialized = [7, 0, 0, 0, 37, 1, 1];
+
+        let msg = ClaimChannelEndReply {
+            serial: 1,
+            result: ClaimChannelEndResult::ReceiverClaimed,
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
@@ -85,7 +135,7 @@ mod test {
 
     #[test]
     fn invalid_channel() {
-        let serialized = [7, 0, 0, 0, 37, 1, 1];
+        let serialized = [7, 0, 0, 0, 37, 1, 2];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -101,7 +151,7 @@ mod test {
 
     #[test]
     fn already_claimed() {
-        let serialized = [7, 0, 0, 0, 37, 1, 2];
+        let serialized = [7, 0, 0, 0, 37, 1, 3];
 
         let msg = ClaimChannelEndReply {
             serial: 1,

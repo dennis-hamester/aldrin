@@ -1211,7 +1211,8 @@ impl UpdateContext for ClaimChannelEnd {
 
 #[derive(Debug, Arbitrary)]
 pub enum ClaimChannelEndResultLe {
-    Ok,
+    SenderClaimed(u32),
+    ReceiverClaimed,
     InvalidChannel,
     AlreadyClaimed,
 }
@@ -1219,7 +1220,8 @@ pub enum ClaimChannelEndResultLe {
 impl ClaimChannelEndResultLe {
     pub fn to_proto(&self, _ctx: &Context) -> ClaimChannelEndResult {
         match self {
-            Self::Ok => ClaimChannelEndResult::Ok,
+            Self::SenderClaimed(capacity) => ClaimChannelEndResult::SenderClaimed(*capacity),
+            Self::ReceiverClaimed => ClaimChannelEndResult::ReceiverClaimed,
             Self::InvalidChannel => ClaimChannelEndResult::InvalidChannel,
             Self::AlreadyClaimed => ClaimChannelEndResult::AlreadyClaimed,
         }

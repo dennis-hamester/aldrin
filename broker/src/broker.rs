@@ -1180,17 +1180,24 @@ impl Broker {
 
         match channel.claim(id, req.end) {
             Ok(other_id) => {
-                match req.end {
-                    ChannelEndWithCapacity::Sender => conn.add_sender(req.cookie),
-                    ChannelEndWithCapacity::Receiver(_) => conn.add_receiver(req.cookie),
-                }
+                let result = match req.end {
+                    ChannelEndWithCapacity::Sender => {
+                        conn.add_sender(req.cookie);
+                        ClaimChannelEndResult::SenderClaimed(0)
+                    }
+
+                    ChannelEndWithCapacity::Receiver(_) => {
+                        conn.add_receiver(req.cookie);
+                        ClaimChannelEndResult::ReceiverClaimed
+                    }
+                };
 
                 let result = send!(
                     self,
                     conn,
                     Message::ClaimChannelEndReply(ClaimChannelEndReply {
                         serial: req.serial,
-                        result: ClaimChannelEndResult::Ok,
+                        result,
                     })
                 );
 

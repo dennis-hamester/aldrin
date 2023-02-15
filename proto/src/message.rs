@@ -63,7 +63,9 @@ pub use call_function_reply::{CallFunctionReply, CallFunctionReplyKind, CallFunc
 pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
 pub use claim_channel_end::ClaimChannelEnd;
-pub use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
+pub use claim_channel_end_reply::{
+    ClaimChannelEndReply, ClaimChannelEndReplyKind, ClaimChannelEndResult,
+};
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;

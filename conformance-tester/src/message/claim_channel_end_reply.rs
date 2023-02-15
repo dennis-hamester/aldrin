@@ -58,7 +58,8 @@ impl TryFrom<message::ClaimChannelEndReply> for ClaimChannelEndReply {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
 pub enum ClaimChannelEndResult {
-    Ok,
+    SenderClaimed { capacity: u32 },
+    ReceiverClaimed,
     InvalidChannel,
     AlreadyClaimed,
 }
@@ -66,7 +67,11 @@ pub enum ClaimChannelEndResult {
 impl ClaimChannelEndResult {
     pub fn to_proto(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
         match self {
-            Self::Ok => Ok(message::ClaimChannelEndResult::Ok),
+            Self::SenderClaimed { capacity } => {
+                Ok(message::ClaimChannelEndResult::SenderClaimed(capacity))
+            }
+
+            Self::ReceiverClaimed => Ok(message::ClaimChannelEndResult::ReceiverClaimed),
             Self::InvalidChannel => Ok(message::ClaimChannelEndResult::InvalidChannel),
             Self::AlreadyClaimed => Ok(message::ClaimChannelEndResult::AlreadyClaimed),
         }
@@ -80,7 +85,11 @@ impl ClaimChannelEndResult {
 impl From<message::ClaimChannelEndResult> for ClaimChannelEndResult {
     fn from(res: message::ClaimChannelEndResult) -> Self {
         match res {
-            message::ClaimChannelEndResult::Ok => Self::Ok,
+            message::ClaimChannelEndResult::SenderClaimed(capacity) => {
+                Self::SenderClaimed { capacity }
+            }
+
+            message::ClaimChannelEndResult::ReceiverClaimed => Self::ReceiverClaimed,
             message::ClaimChannelEndResult::InvalidChannel => Self::InvalidChannel,
             message::ClaimChannelEndResult::AlreadyClaimed => Self::AlreadyClaimed,
         }

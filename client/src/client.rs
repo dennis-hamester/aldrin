@@ -869,7 +869,7 @@ where
 
         match req {
             ClaimChannelEndData::Sender(req) => match msg.result {
-                ClaimChannelEndResult::Ok => {
+                ClaimChannelEndResult::SenderClaimed(_) => {
                     let (send, recv) = oneshot::channel();
                     let dup = self
                         .senders
@@ -877,6 +877,12 @@ where
                     debug_assert!(dup.is_none());
                     let sender = SenderInner::new(req.cookie, self.handle.clone(), recv);
                     req.reply.send(Ok(sender)).ok();
+                }
+
+                ClaimChannelEndResult::ReceiverClaimed => {
+                    return Err(RunError::UnexpectedMessageReceived(
+                        Message::ClaimChannelEndReply(msg),
+                    ))
                 }
 
                 ClaimChannelEndResult::InvalidChannel => {
@@ -889,7 +895,13 @@ where
             },
 
             ClaimChannelEndData::Receiver(req) => match msg.result {
-                ClaimChannelEndResult::Ok => {
+                ClaimChannelEndResult::SenderClaimed(_) => {
+                    return Err(RunError::UnexpectedMessageReceived(
+                        Message::ClaimChannelEndReply(msg),
+                    ))
+                }
+
+                ClaimChannelEndResult::ReceiverClaimed => {
                     let (send, recv) = mpsc::unbounded();
                     let dup = self
                         .receivers
