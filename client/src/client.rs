@@ -16,12 +16,12 @@ use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
-    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
+    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
+    CloseChannelEndResult, Connect, ConnectReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
     ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
@@ -1025,6 +1025,7 @@ where
             HandleRequest::ClaimSender(req) => self.req_claim_sender(req).await?,
             HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
             HandleRequest::SendItem(req) => self.req_send_item(req).await?,
+            HandleRequest::AddChannelCapacity(req) => self.req_add_channel_capacity(req).await?,
             HandleRequest::SyncClient(req) => self.req_sync_client(req),
             HandleRequest::SyncBroker(req) => self.req_sync_broker(req).await?,
 
@@ -1387,6 +1388,18 @@ where
                 cookie: req.cookie,
                 value: req.value,
             }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_add_channel_capacity(
+        &mut self,
+        req: AddChannelCapacity,
+    ) -> Result<(), RunError<T::Error>> {
+        debug_assert!(self.receivers.contains_key(&req.cookie));
+
+        self.t
+            .send_and_flush(Message::AddChannelCapacity(req))
             .await
             .map_err(Into::into)
     }

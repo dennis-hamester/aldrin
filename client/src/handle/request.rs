@@ -5,8 +5,8 @@ use crate::channel::{
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
 use aldrin_proto::message::{
-    CallFunctionResult, ChannelEnd, DestroyObjectResult, QueryServiceVersionResult,
-    SubscribeEventResult,
+    AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
+    QueryServiceVersionResult, SubscribeEventResult,
 };
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, SerializedValue, ServiceCookie, ServiceId,
@@ -38,6 +38,7 @@ pub(crate) enum HandleRequest {
     ClaimSender(ClaimSenderRequest),
     ClaimReceiver(ClaimReceiverRequest),
     SendItem(SendItemRequest),
+    AddChannelCapacity(AddChannelCapacity),
     SyncClient(SyncClientRequest),
     SyncBroker(SyncBrokerRequest),
 }

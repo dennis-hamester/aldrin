@@ -9,8 +9,8 @@ use crate::{
     Error, Events, Object, ObjectEvent, Objects, Service, ServiceEvent, Services, SubscribeMode,
 };
 use aldrin_proto::message::{
-    CallFunctionResult, ChannelEnd, DestroyObjectResult, QueryServiceVersionResult,
-    SubscribeEventResult,
+    AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
+    QueryServiceVersionResult, SubscribeEventResult,
 };
 use aldrin_proto::{
     ChannelCookie, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue,
@@ -999,6 +999,19 @@ impl Handle {
     ) -> Result<(), Error> {
         self.send
             .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, value }))
+            .map_err(|_| Error::ClientShutdown)
+    }
+
+    pub(crate) fn add_channel_capacity(
+        &self,
+        cookie: ChannelCookie,
+        capacity: u32,
+    ) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::AddChannelCapacity(AddChannelCapacity {
+                cookie,
+                capacity,
+            }))
             .map_err(|_| Error::ClientShutdown)
     }
 
