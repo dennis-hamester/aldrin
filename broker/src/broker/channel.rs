@@ -1,7 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::message::{
-    ChannelEnd, ChannelEndWithCapacity, ClaimChannelEndResult, CloseChannelEndResult,
-};
+use aldrin_proto::message::{ChannelEnd, ClaimChannelEndResult, CloseChannelEndResult};
 use std::mem;
 
 const LOW_CAPACITY: u32 = 4;
@@ -76,47 +74,56 @@ impl Channel {
         }
     }
 
-    pub fn claim(
+    pub fn claim_sender(
         &mut self,
         conn_id: &ConnectionId,
-        end: ChannelEndWithCapacity,
-    ) -> Result<&ConnectionId, ClaimChannelEndResult> {
-        let (owner, other) = match end {
-            ChannelEndWithCapacity::Sender => (&mut self.sender, &self.receiver),
-            ChannelEndWithCapacity::Receiver(_) => (&mut self.receiver, &self.sender),
+    ) -> Result<(&ConnectionId, u32), ClaimChannelEndResult> {
+        match self.sender {
+            ChannelEndState::Unclaimed => {}
+            ChannelEndState::Claimed { .. } => return Err(ClaimChannelEndResult::AlreadyClaimed),
+            ChannelEndState::Closed => return Err(ClaimChannelEndResult::InvalidChannel),
+        }
+
+        let ChannelEndState::Claimed { owner: ref receiver, capacity } = self.receiver else {
+            // The channel is closed before.
+            unreachable!();
         };
 
-        match (owner, other) {
-            (
-                owner @ ChannelEndState::Unclaimed,
-                ChannelEndState::Claimed {
-                    owner: other,
-                    capacity,
-                },
-            ) => {
-                *owner = ChannelEndState::Claimed {
-                    owner: conn_id.clone(),
-                    capacity: *capacity,
-                };
-                Ok(other)
-            }
+        self.sender = ChannelEndState::Claimed {
+            owner: conn_id.clone(),
+            capacity,
+        };
 
-            (ChannelEndState::Claimed { .. }, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Claimed { .. }, ChannelEndState::Claimed { .. })
-            | (ChannelEndState::Claimed { .. }, ChannelEndState::Closed) => {
-                Err(ClaimChannelEndResult::AlreadyClaimed)
-            }
+        Ok((receiver, capacity))
+    }
 
-            (ChannelEndState::Closed, ChannelEndState::Claimed { .. }) => {
-                Err(ClaimChannelEndResult::InvalidChannel)
-            }
-
-            // The whole channel is closed before any of these cases can happen.
-            (ChannelEndState::Unclaimed, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Unclaimed, ChannelEndState::Closed)
-            | (ChannelEndState::Closed, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Closed, ChannelEndState::Closed) => unreachable!(),
+    pub fn claim_receiver(
+        &mut self,
+        conn_id: &ConnectionId,
+        capacity: u32,
+    ) -> Result<&ConnectionId, ClaimChannelEndResult> {
+        match self.receiver {
+            ChannelEndState::Unclaimed => {}
+            ChannelEndState::Claimed { .. } => return Err(ClaimChannelEndResult::AlreadyClaimed),
+            ChannelEndState::Closed => return Err(ClaimChannelEndResult::InvalidChannel),
         }
+
+        let ChannelEndState::Claimed {
+            owner: ref sender,
+            capacity: ref mut sender_capacity,
+        } = self.sender else {
+            // The channel is closed before.
+            unreachable!();
+        };
+
+        self.receiver = ChannelEndState::Claimed {
+            owner: conn_id.clone(),
+            capacity,
+        };
+
+        *sender_capacity = capacity;
+
+        Ok(sender)
     }
 
     pub fn send_item(&self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {

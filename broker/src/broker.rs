@@ -1165,6 +1165,7 @@ impl Broker {
 
         let channel = match self.channels.get_mut(&req.cookie) {
             Some(channel) => channel,
+
             None => {
                 send!(
                     self,
@@ -1174,24 +1175,29 @@ impl Broker {
                         result: ClaimChannelEndResult::InvalidChannel,
                     })
                 )?;
+
                 return Ok(());
             }
         };
 
-        match channel.claim(id, req.end) {
-            Ok(other_id) => {
-                let result = match req.end {
-                    ChannelEndWithCapacity::Sender => {
-                        conn.add_sender(req.cookie);
-                        ClaimChannelEndResult::SenderClaimed(0)
-                    }
+        let result = match req.end {
+            ChannelEndWithCapacity::Sender => {
+                channel.claim_sender(id).map(|(receiver, capacity)| {
+                    conn.add_sender(req.cookie);
+                    (receiver, ClaimChannelEndResult::SenderClaimed(capacity))
+                })
+            }
 
-                    ChannelEndWithCapacity::Receiver(_) => {
-                        conn.add_receiver(req.cookie);
-                        ClaimChannelEndResult::ReceiverClaimed
-                    }
-                };
+            ChannelEndWithCapacity::Receiver(capacity) => {
+                channel.claim_receiver(id, capacity).map(|sender| {
+                    conn.add_receiver(req.cookie);
+                    (sender, ClaimChannelEndResult::ReceiverClaimed)
+                })
+            }
+        };
 
+        match result {
+            Ok((other_id, result)) => {
                 let result = send!(
                     self,
                     conn,
