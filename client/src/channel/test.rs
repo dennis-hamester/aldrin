@@ -27,7 +27,7 @@ async fn create_and_close() {
 
     // UnclaimedSender & PendingReceiver
     let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     assert_eq!(receiver.close().await, Ok(())); // This also closes the unclaimed sender.
@@ -35,7 +35,7 @@ async fn create_and_close() {
 
     // UnclaimedSender & PendingReceiver
     let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     assert_eq!(sender.close().await, Ok(()));
@@ -61,7 +61,7 @@ async fn create_and_close() {
 
     // Sender & PendingReceiver
     let (sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
@@ -70,7 +70,7 @@ async fn create_and_close() {
 
     // Sender & PendingReceiver
     let (sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
@@ -99,7 +99,7 @@ async fn create_and_close() {
 
     // Sender & Receiver
     let (sender, receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
@@ -109,7 +109,7 @@ async fn create_and_close() {
 
     // Sender & Receiver
     let (sender, receiver) = client
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();

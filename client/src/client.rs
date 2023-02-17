@@ -767,7 +767,7 @@ where
                 Ok(())
             }
 
-            Some(CreateChannelData::Receiver(reply)) => {
+            Some(CreateChannelData::Receiver(req)) => {
                 let (send, recv) = oneshot::channel();
                 let sender = UnclaimedSenderInner::new(msg.cookie, self.handle.clone());
                 let receiver = PendingReceiverInner::new(msg.cookie, self.handle.clone(), recv);
@@ -775,7 +775,7 @@ where
                     .receivers
                     .insert(msg.cookie, ReceiverState::Pending(send));
                 debug_assert!(dup.is_none());
-                reply.send((sender, receiver)).ok();
+                req.reply.send((sender, receiver)).ok();
                 Ok(())
             }
 
@@ -1311,11 +1311,12 @@ where
         &mut self,
         req: CreateClaimedReceiverRequest,
     ) -> Result<(), RunError<T::Error>> {
+        let capacity = req.capacity;
         let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
         self.t
             .send_and_flush(Message::CreateChannel(CreateChannel {
                 serial,
-                end: ChannelEndWithCapacity::Receiver(0),
+                end: ChannelEndWithCapacity::Receiver(capacity),
             }))
             .await
             .map_err(Into::into)

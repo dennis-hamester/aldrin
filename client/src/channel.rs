@@ -54,7 +54,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     /// # let sender = sender.unbind();
     /// // Assume this sender has been returned from some function call.
     /// // let sender: UnboundSender<u32> = ...
@@ -87,7 +87,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     /// # let sender = sender.unbind();
     /// // Assume this sender has been returned from some function call.
     /// // let sender: UnboundSender<u32> = ...
@@ -157,7 +157,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // Create a channel with an unclaimed sender and a claimed receiver.
-    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     ///
     /// // Unbind the sender so that it can be sent to another client. This will typically happen by
     /// // returning it from a function call.
@@ -186,7 +186,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// let (mut sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// let (mut sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     ///
     /// // Close the sender.
     /// sender.close().await?;
@@ -225,7 +225,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // The sender is unclaimed, while the receiver has been claimed automatically.
-    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver().await?;
+    /// let (sender, receiver) = handle.create_channel_with_claimed_receiver(16).await?;
     ///
     /// // Claim the sender.
     /// let mut sender = sender.claim().await?;
@@ -894,7 +894,7 @@ impl<T: Deserialize> PendingReceiver<T> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// let (sender, mut receiver) = handle.create_channel_with_claimed_receiver::<u32>().await?;
+    /// let (sender, mut receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     ///
     /// // Close the receiver.
     /// receiver.close().await?;

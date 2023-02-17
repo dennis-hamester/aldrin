@@ -21,10 +21,11 @@ use futures_channel::oneshot;
 use futures_core::stream::{FusedStream, Stream};
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CloseChannelEndRequest, CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest,
-    DestroyServiceRequest, EmitEventRequest, HandleRequest, QueryObjectRequest,
-    QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, UnsubscribeEventRequest,
+    CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
+    CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
+    HandleRequest, QueryObjectRequest, QueryServiceVersionRequest, SendItemRequest,
+    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
+    UnsubscribeEventRequest,
 };
 use std::fmt;
 use std::future;
@@ -914,13 +915,16 @@ impl Handle {
     /// example.
     pub async fn create_channel_with_claimed_receiver<T>(
         &self,
+        capacity: u32,
     ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error>
     where
         T: Serialize + Deserialize,
     {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(HandleRequest::CreateClaimedReceiver(reply))
+            .unbounded_send(HandleRequest::CreateClaimedReceiver(
+                CreateClaimedReceiverRequest { capacity, reply },
+            ))
             .map_err(|_| Error::ClientShutdown)?;
 
         let (sender, receiver) = recv.await.map_err(|_| Error::ClientShutdown)?;

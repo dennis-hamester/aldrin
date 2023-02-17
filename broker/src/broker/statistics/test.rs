@@ -340,7 +340,7 @@ async fn channels() {
         .await
         .unwrap();
     let (_sender2, mut receiver2) = client1
-        .create_channel_with_claimed_receiver::<()>()
+        .create_channel_with_claimed_receiver::<()>(1)
         .await
         .unwrap();
     let stats = broker.take_statistics().await.unwrap();

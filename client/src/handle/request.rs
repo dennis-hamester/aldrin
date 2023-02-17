@@ -139,8 +139,11 @@ pub(crate) struct QueryServiceVersionRequest {
 pub(crate) type CreateClaimedSenderRequest =
     oneshot::Sender<(PendingSenderInner, UnclaimedReceiverInner)>;
 
-pub(crate) type CreateClaimedReceiverRequest =
-    oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>;
+#[derive(Debug)]
+pub(crate) struct CreateClaimedReceiverRequest {
+    pub capacity: u32,
+    pub reply: oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>,
+}
 
 #[derive(Debug)]
 pub(crate) struct CloseChannelEndRequest {
