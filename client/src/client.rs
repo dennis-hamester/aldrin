@@ -869,13 +869,13 @@ where
 
         match req {
             ClaimChannelEndData::Sender(req) => match msg.result {
-                ClaimChannelEndResult::SenderClaimed(_) => {
+                ClaimChannelEndResult::SenderClaimed(capacity) => {
                     let (send, recv) = oneshot::channel();
                     let dup = self
                         .senders
                         .insert(req.cookie, SenderState::Established(send));
                     debug_assert!(dup.is_none());
-                    let sender = SenderInner::new(req.cookie, self.handle.clone(), recv);
+                    let sender = SenderInner::new(req.cookie, self.handle.clone(), recv, capacity);
                     req.reply.send(Ok(sender)).ok();
                 }
 
@@ -953,7 +953,7 @@ where
                 }
             }
 
-            ChannelEndWithCapacity::Receiver(_) => {
+            ChannelEndWithCapacity::Receiver(capacity) => {
                 let sender = match self.senders.get_mut(&msg.cookie) {
                     Some(sender) => sender,
                     None => {
@@ -967,7 +967,7 @@ where
 
                 match mem::replace(sender, SenderState::Established(send)) {
                     SenderState::Pending(send) => {
-                        send.send(recv).ok();
+                        send.send((capacity, recv)).ok();
                         Ok(())
                     }
 
@@ -1458,7 +1458,7 @@ enum ClaimChannelEndData {
 
 #[derive(Debug)]
 enum SenderState {
-    Pending(oneshot::Sender<oneshot::Receiver<()>>),
+    Pending(oneshot::Sender<(u32, oneshot::Receiver<()>)>),
     Established(oneshot::Sender<()>),
     ReceiverClosed,
 }

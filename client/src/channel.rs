@@ -394,14 +394,14 @@ pub(crate) struct PendingSenderInner {
 #[derive(Debug)]
 struct PendingSenderInnerState {
     client: Handle,
-    established: oneshot::Receiver<oneshot::Receiver<()>>,
+    established: oneshot::Receiver<(u32, oneshot::Receiver<()>)>,
 }
 
 impl PendingSenderInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        established: oneshot::Receiver<oneshot::Receiver<()>>,
+        established: oneshot::Receiver<(u32, oneshot::Receiver<()>)>,
     ) -> Self {
         Self {
             cookie,
@@ -426,7 +426,9 @@ impl PendingSenderInner {
         state
             .established
             .await
-            .map(|receiver_closed| SenderInner::new(self.cookie, client, receiver_closed))
+            .map(|(capacity, receiver_closed)| {
+                SenderInner::new(self.cookie, client, receiver_closed, capacity)
+            })
             .map_err(|_| Error::InvalidChannel)
     }
 }
@@ -529,6 +531,7 @@ pub(crate) struct SenderInner {
 struct SenderInnerState {
     client: Handle,
     receiver_closed: oneshot::Receiver<()>,
+    capacity: u32,
 }
 
 impl SenderInner {
@@ -536,12 +539,14 @@ impl SenderInner {
         cookie: ChannelCookie,
         client: Handle,
         receiver_closed: oneshot::Receiver<()>,
+        capacity: u32,
     ) -> Self {
         Self {
             cookie,
             state: Some(SenderInnerState {
                 client,
                 receiver_closed,
+                capacity,
             }),
         }
     }
