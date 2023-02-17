@@ -134,3 +134,32 @@ async fn begin_connect_reject() {
     handle.shutdown().await;
     join.await.unwrap();
 }
+
+#[tokio::test]
+async fn only_owner_can_emit_events() {
+    let broker = TestBroker::new();
+
+    let mut client1 = broker.add_client().await;
+    let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+
+    let mut client2 = broker.add_client().await;
+    let mut events = client2.events();
+    events.subscribe(svc.id(), 0).await.unwrap();
+    client2.sync_broker().await.unwrap();
+
+    client1.emit_event(svc.id(), 0, &()).unwrap();
+    client1.sync_broker().await.unwrap();
+
+    client2.emit_event(svc.id(), 0, &()).unwrap();
+    client2.sync_broker().await.unwrap();
+
+    client1.shutdown();
+    client1.join().await;
+
+    client2.shutdown();
+    client2.join().await;
+
+    assert!(events.next_event().await.is_some());
+    assert!(events.next_event().await.is_none());
+}

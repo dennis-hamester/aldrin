@@ -392,7 +392,7 @@ impl Broker {
             Message::CallFunctionReply(req) => self.call_function_reply(state, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
-            Message::EmitEvent(req) => self.emit_event(state, req),
+            Message::EmitEvent(req) => self.emit_event(state, id, req),
             Message::QueryObject(req) => self.query_object(id, req)?,
             Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
             Message::CreateChannel(req) => self.create_channel(id, req)?,
@@ -927,7 +927,18 @@ impl Broker {
         }
     }
 
-    fn emit_event(&mut self, state: &mut State, req: EmitEvent) {
+    fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: EmitEvent) {
+        let Some(obj_uuid) = self.svc_uuids.get(&req.service_cookie)
+            .map(|(object_id, _, _)| object_id.uuid)
+        else {
+            return;
+        };
+
+        let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+        if obj.conn_id() != id {
+            return;
+        }
+
         for (conn_id, conn) in self.conns.iter() {
             if conn.is_subscribed_to(req.service_cookie, req.event) {
                 let msg = Message::EmitEvent(req.clone());
