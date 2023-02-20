@@ -394,14 +394,14 @@ pub(crate) struct PendingSenderInner {
 #[derive(Debug)]
 struct PendingSenderInnerState {
     client: Handle,
-    established: oneshot::Receiver<(u32, oneshot::Receiver<()>)>,
+    established: oneshot::Receiver<(u32, mpsc::UnboundedReceiver<u32>)>,
 }
 
 impl PendingSenderInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        established: oneshot::Receiver<(u32, oneshot::Receiver<()>)>,
+        established: oneshot::Receiver<(u32, mpsc::UnboundedReceiver<u32>)>,
     ) -> Self {
         Self {
             cookie,
@@ -426,8 +426,8 @@ impl PendingSenderInner {
         state
             .established
             .await
-            .map(|(capacity, receiver_closed)| {
-                SenderInner::new(self.cookie, client, receiver_closed, capacity)
+            .map(|(capacity, capacity_added)| {
+                SenderInner::new(self.cookie, client, capacity_added, capacity)
             })
             .map_err(|_| Error::InvalidChannel)
     }
@@ -530,7 +530,7 @@ pub(crate) struct SenderInner {
 #[derive(Debug)]
 struct SenderInnerState {
     client: Handle,
-    receiver_closed: oneshot::Receiver<()>,
+    capacity_added: mpsc::UnboundedReceiver<u32>,
     capacity: u32,
 }
 
@@ -538,14 +538,14 @@ impl SenderInner {
     pub(crate) fn new(
         cookie: ChannelCookie,
         client: Handle,
-        receiver_closed: oneshot::Receiver<()>,
+        capacity_added: mpsc::UnboundedReceiver<u32>,
         capacity: u32,
     ) -> Self {
         Self {
             cookie,
             state: Some(SenderInnerState {
                 client,
-                receiver_closed,
+                capacity_added,
                 capacity,
             }),
         }
@@ -561,7 +561,7 @@ impl SenderInner {
     fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
         let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
 
-        if let Ok(Some(())) | Err(_) = state.receiver_closed.try_recv() {
+        if let Ok(None) = state.capacity_added.try_next() {
             return Err(Error::InvalidChannel);
         }
 
