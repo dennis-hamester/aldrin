@@ -321,7 +321,7 @@ where
             Message::ClaimChannelEndReply(msg) => self.msg_claim_channel_end_reply(msg)?,
             Message::ChannelEndClaimed(msg) => self.msg_channel_end_claimed(msg)?,
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
-            Message::AddChannelCapacity(_) => todo!(),
+            Message::AddChannelCapacity(msg) => self.msg_add_channel_capacity(msg)?,
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
 
             Message::Connect(_)
@@ -987,6 +987,17 @@ where
             Err(RunError::UnexpectedMessageReceived(Message::ItemReceived(
                 msg,
             )))
+        }
+    }
+
+    fn msg_add_channel_capacity(&self, msg: AddChannelCapacity) -> Result<(), RunError<T::Error>> {
+        if let Some(SenderState::Established(send)) = self.senders.get(&msg.cookie) {
+            send.unbounded_send(msg.capacity).ok();
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(
+                Message::AddChannelCapacity(msg),
+            ))
         }
     }
 
