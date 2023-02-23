@@ -46,7 +46,7 @@ async fn create_and_close() {
         .create_channel_with_claimed_sender::<()>()
         .await
         .unwrap();
-    let mut receiver = receiver.claim().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
@@ -55,7 +55,7 @@ async fn create_and_close() {
         .create_channel_with_claimed_sender::<()>()
         .await
         .unwrap();
-    let mut receiver = receiver.claim().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
@@ -82,7 +82,7 @@ async fn create_and_close() {
         .create_channel_with_claimed_sender::<()>()
         .await
         .unwrap();
-    let mut receiver = receiver.claim().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
@@ -92,7 +92,7 @@ async fn create_and_close() {
         .create_channel_with_claimed_sender::<()>()
         .await
         .unwrap();
-    let mut receiver = receiver.claim().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
@@ -128,7 +128,7 @@ async fn send_and_receive() {
 
     let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
 
-    let mut receiver = receiver.claim().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
     sender.send(&1).unwrap();
@@ -166,7 +166,7 @@ async fn multiple_clients() {
 
     let mut receiver = receiver
         .unbind()
-        .claim(client2.handle.clone())
+        .claim(client2.handle.clone(), 16)
         .await
         .unwrap();
     let mut sender = sender.established().await.unwrap();
@@ -190,7 +190,7 @@ async fn send_error_when_receiver_is_closed() {
         .await
         .unwrap();
 
-    let mut receiver = receiver.unbind().claim(client2.clone()).await.unwrap();
+    let mut receiver = receiver.unbind().claim(client2.clone(), 16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
     receiver.close().await.unwrap();

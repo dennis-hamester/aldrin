@@ -1377,6 +1377,7 @@ where
         req: ClaimReceiverRequest,
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.cookie;
+        let capacity = req.capacity;
 
         let serial = self
             .claim_channel_end
@@ -1386,7 +1387,7 @@ where
             .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
                 serial,
                 cookie,
-                end: ChannelEndWithCapacity::Receiver(0),
+                end: ChannelEndWithCapacity::Receiver(capacity),
             }))
             .await
             .map_err(Into::into)

@@ -352,7 +352,7 @@ async fn channels() {
     assert_eq!(stats.items_sent, 0);
 
     // Claim 1 and send 3 items.
-    let mut receiver1 = receiver1.claim().await.unwrap();
+    let mut receiver1 = receiver1.claim(16).await.unwrap();
     let mut sender1 = sender1.established().await.unwrap();
     sender1.send(&()).unwrap();
     sender1.send(&()).unwrap();

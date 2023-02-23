@@ -162,6 +162,7 @@ pub(crate) struct ClaimSenderRequest {
 #[derive(Debug)]
 pub(crate) struct ClaimReceiverRequest {
     pub cookie: ChannelCookie,
+    pub capacity: u32,
     pub reply: oneshot::Sender<Result<ReceiverInner, Error>>,
 }
 

@@ -335,7 +335,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// sender.close().await?;
     ///
     /// // For the receiver, an error will be returned when trying to claim it.
-    /// let err = receiver.claim().await.unwrap_err();
+    /// let err = receiver.claim(16).await.unwrap_err();
     /// assert_eq!(err, Error::InvalidChannel);
     /// # Ok(())
     /// # }
@@ -354,7 +354,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
     /// // Claim the receiver.
-    /// let mut receiver = receiver.claim().await?;
+    /// let mut receiver = receiver.claim(16).await?;
     ///
     /// // Close the sender.
     /// sender.close().await?;
@@ -477,7 +477,7 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// # let handle = broker.add_client().await;
     /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
     ///
-    /// let mut receiver = receiver.claim().await?;
+    /// let mut receiver = receiver.claim(16).await?;
     /// let mut sender = sender.established().await?;
     ///
     /// // Send a couple of items and then close the sender.
@@ -631,7 +631,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// let receiver: UnclaimedReceiver<u32> = receiver.bind(handle.clone());
     ///
     /// // Afterwards, it can be claimed.
-    /// let receiver: Receiver<u32> = receiver.claim().await?;
+    /// let receiver: Receiver<u32> = receiver.claim(16).await?;
     /// # Ok(())
     /// # }
     pub fn bind(self, client: Handle) -> UnclaimedReceiver<T> {
@@ -662,11 +662,11 @@ impl<T: Deserialize> UnboundReceiver<T> {
     ///
     /// // Bind it to the local client and claim it, so that it can immediately be used. The
     /// // explicit type here is given only for the sake of the example.
-    /// let receiver: Receiver<u32> = receiver.claim(handle.clone()).await?;
+    /// let receiver: Receiver<u32> = receiver.claim(handle.clone(), 16).await?;
     /// # Ok(())
     /// # }
-    pub async fn claim(self, client: Handle) -> Result<Receiver<T>, Error> {
-        self.bind(client).claim().await
+    pub async fn claim(self, client: Handle, capacity: u32) -> Result<Receiver<T>, Error> {
+        self.bind(client).claim(capacity).await
     }
 
     /// Casts the item type to a different type.
@@ -796,7 +796,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
     ///
     /// // Claim the receiver.
-    /// let mut receiver = receiver.claim().await?;
+    /// let mut receiver = receiver.claim(16).await?;
     ///
     /// // This will now resolve immediately.
     /// let mut sender = sender.established().await?;
@@ -808,8 +808,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
     /// # }
-    pub async fn claim(self) -> Result<Receiver<T>, Error> {
-        self.inner.claim().await.map(Receiver::new)
+    pub async fn claim(self, capacity: u32) -> Result<Receiver<T>, Error> {
+        self.inner.claim(capacity).await.map(Receiver::new)
     }
 
     /// Casts the item type to a different type.
@@ -847,9 +847,9 @@ impl UnclaimedReceiverInner {
             .await
     }
 
-    async fn claim(mut self) -> Result<ReceiverInner, Error> {
+    async fn claim(mut self, capacity: u32) -> Result<ReceiverInner, Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
-        client.claim_receiver(self.cookie).await
+        client.claim_receiver(self.cookie, capacity).await
     }
 }
 

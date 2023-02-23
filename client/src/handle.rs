@@ -860,7 +860,7 @@ impl Handle {
     /// let receiver = receiver.unbind();
     ///
     /// // Client 2 gets access to the receiver, and then binds and claims it.
-    /// let mut receiver = receiver.claim(handle2.clone()).await?;
+    /// let mut receiver = receiver.claim(handle2.clone(), 16).await?;
     ///
     /// // Meanwhile, client 1 waits for the receiver to be claimed.
     /// let mut sender = sender.established().await?;
@@ -984,11 +984,13 @@ impl Handle {
     pub(crate) async fn claim_receiver(
         &self,
         cookie: ChannelCookie,
+        capacity: u32,
     ) -> Result<ReceiverInner, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::ClaimReceiver(ClaimReceiverRequest {
                 cookie,
+                capacity,
                 reply,
             }))
             .map_err(|_| Error::ClientShutdown)?;
