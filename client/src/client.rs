@@ -770,7 +770,8 @@ where
             Some(CreateChannelData::Receiver(req)) => {
                 let (send, recv) = oneshot::channel();
                 let sender = UnclaimedSenderInner::new(msg.cookie, self.handle.clone());
-                let receiver = PendingReceiverInner::new(msg.cookie, self.handle.clone(), recv);
+                let receiver =
+                    PendingReceiverInner::new(msg.cookie, self.handle.clone(), recv, req.capacity);
                 let dup = self
                     .receivers
                     .insert(msg.cookie, ReceiverState::Pending(send));
@@ -907,7 +908,8 @@ where
                         .receivers
                         .insert(req.cookie, ReceiverState::Established(send));
                     debug_assert!(dup.is_none());
-                    let receiver = ReceiverInner::new(req.cookie, self.handle.clone(), recv);
+                    let receiver =
+                        ReceiverInner::new(req.cookie, self.handle.clone(), recv, req.capacity);
                     req.reply.send(Ok(receiver)).ok();
                 }
 

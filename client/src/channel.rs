@@ -941,6 +941,7 @@ pub(crate) struct PendingReceiverInner {
 struct PendingReceiverInnerState {
     client: Handle,
     established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
+    max_capacity: u32,
 }
 
 impl PendingReceiverInner {
@@ -948,12 +949,14 @@ impl PendingReceiverInner {
         cookie: ChannelCookie,
         client: Handle,
         established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
+        max_capacity: u32,
     ) -> Self {
         Self {
             cookie,
             state: Some(PendingReceiverInnerState {
                 client,
                 established,
+                max_capacity,
             }),
         }
     }
@@ -972,7 +975,7 @@ impl PendingReceiverInner {
         state
             .established
             .await
-            .map(|items| ReceiverInner::new(self.cookie, client, items))
+            .map(|items| ReceiverInner::new(self.cookie, client, items, state.max_capacity))
             .map_err(|_| Error::InvalidChannel)
     }
 }
@@ -1065,6 +1068,8 @@ pub(crate) struct ReceiverInner {
 struct ReceiverInnerState {
     client: Handle,
     items: mpsc::UnboundedReceiver<SerializedValue>,
+    max_capacity: u32,
+    cur_capacity: u32,
 }
 
 impl ReceiverInner {
@@ -1072,10 +1077,16 @@ impl ReceiverInner {
         cookie: ChannelCookie,
         client: Handle,
         items: mpsc::UnboundedReceiver<SerializedValue>,
+        max_capacity: u32,
     ) -> Self {
         Self {
             cookie,
-            state: Some(ReceiverInnerState { client, items }),
+            state: Some(ReceiverInnerState {
+                client,
+                items,
+                max_capacity,
+                cur_capacity: max_capacity,
+            }),
         }
     }
 
