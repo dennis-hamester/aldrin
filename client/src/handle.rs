@@ -932,12 +932,12 @@ impl Handle {
         Ok((UnclaimedSender::new(sender), PendingReceiver::new(receiver)))
     }
 
-    pub(crate) async fn close_channel_end(
+    pub(crate) fn close_channel_end(
         &self,
         cookie: ChannelCookie,
         end: ChannelEnd,
         claimed: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<CloseChannelEndFuture, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CloseChannelEnd(CloseChannelEndRequest {
@@ -948,25 +948,7 @@ impl Handle {
             }))
             .map_err(|_| Error::ClientShutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
-    }
-
-    pub(crate) fn close_channel_end_now(
-        &self,
-        cookie: ChannelCookie,
-        end: ChannelEnd,
-        claimed: bool,
-    ) {
-        let (reply, _) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::CloseChannelEnd(CloseChannelEndRequest {
-                cookie,
-                end,
-                claimed,
-                reply,
-            }))
-            .map_err(|_| Error::ClientShutdown)
-            .ok();
+        Ok(CloseChannelEndFuture(recv))
     }
 
     pub(crate) async fn claim_sender(&self, cookie: ChannelCookie) -> Result<SenderInner, Error> {
@@ -1325,5 +1307,20 @@ impl Stream for ObjectServices {
 impl FusedStream for ObjectServices {
     fn is_terminated(&self) -> bool {
         self.recv.is_terminated()
+    }
+}
+
+pub(crate) struct CloseChannelEndFuture(oneshot::Receiver<Result<(), Error>>);
+
+impl Future for CloseChannelEndFuture {
+    type Output = Result<(), Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        match Pin::new(&mut self.0).poll(cx) {
+            Poll::Ready(Ok(Ok(()))) => Poll::Ready(Ok(())),
+            Poll::Ready(Ok(Err(e))) => Poll::Ready(Err(e)),
+            Poll::Ready(Err(oneshot::Canceled)) => Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }

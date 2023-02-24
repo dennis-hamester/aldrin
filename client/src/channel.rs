@@ -275,7 +275,7 @@ impl UnclaimedSenderInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, false)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, false)?
             .await
     }
 
@@ -288,7 +288,9 @@ impl UnclaimedSenderInner {
 impl Drop for UnclaimedSenderInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client.close_channel_end_now(self.cookie, ChannelEnd::Sender, false);
+            client
+                .close_channel_end(self.cookie, ChannelEnd::Sender, false)
+                .ok();
         }
     }
 }
@@ -415,7 +417,7 @@ impl PendingSenderInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
             .await
     }
 
@@ -438,7 +440,8 @@ impl Drop for PendingSenderInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .close_channel_end_now(self.cookie, ChannelEnd::Sender, true);
+                .close_channel_end(self.cookie, ChannelEnd::Sender, true)
+                .ok();
         }
     }
 }
@@ -554,7 +557,7 @@ impl SenderInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, true)
+            .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
             .await
     }
 
@@ -577,7 +580,8 @@ impl Drop for SenderInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .close_channel_end_now(self.cookie, ChannelEnd::Sender, true);
+                .close_channel_end(self.cookie, ChannelEnd::Sender, true)
+                .ok();
         }
     }
 }
@@ -843,7 +847,7 @@ impl UnclaimedReceiverInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.client.take().ok_or(Error::InvalidChannel)?;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, false)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, false)?
             .await
     }
 
@@ -856,7 +860,9 @@ impl UnclaimedReceiverInner {
 impl Drop for UnclaimedReceiverInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client.close_channel_end_now(self.cookie, ChannelEnd::Receiver, false);
+            client
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, false)
+                .ok();
         }
     }
 }
@@ -964,7 +970,7 @@ impl PendingReceiverInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
             .await
     }
 
@@ -985,7 +991,8 @@ impl Drop for PendingReceiverInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .close_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
+                .ok();
         }
     }
 }
@@ -1093,7 +1100,7 @@ impl ReceiverInner {
     async fn close(&mut self) -> Result<(), Error> {
         let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
         client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
+            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
             .await
     }
 
@@ -1110,7 +1117,8 @@ impl Drop for ReceiverInner {
         if let Some(state) = self.state.take() {
             state
                 .client
-                .close_channel_end_now(self.cookie, ChannelEnd::Receiver, true);
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
+                .ok();
         }
     }
 }
