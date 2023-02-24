@@ -12,6 +12,7 @@ use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::marker::PhantomData;
+use std::mem;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -527,14 +528,18 @@ impl<T: Serialize + ?Sized> Sender<T> {
 #[derive(Debug)]
 pub(crate) struct SenderInner {
     cookie: ChannelCookie,
-    state: Option<SenderInnerState>,
+    state: SenderInnerState,
 }
 
 #[derive(Debug)]
-struct SenderInnerState {
-    client: Handle,
-    capacity_added: mpsc::UnboundedReceiver<u32>,
-    capacity: u32,
+enum SenderInnerState {
+    Open {
+        client: Handle,
+        capacity_added: mpsc::UnboundedReceiver<u32>,
+        capacity: u32,
+    },
+
+    Closed,
 }
 
 impl SenderInner {
@@ -546,30 +551,42 @@ impl SenderInner {
     ) -> Self {
         Self {
             cookie,
-            state: Some(SenderInnerState {
+            state: SenderInnerState::Open {
                 client,
                 capacity_added,
                 capacity,
-            }),
+            },
         }
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
+        let SenderInnerState::Open { client, .. } =
+            mem::replace(&mut self.state, SenderInnerState::Closed)
+        else {
+            return Err(Error::InvalidChannel);
+        };
+
         client
             .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
             .await
     }
 
     fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
-        let state = self.state.as_mut().ok_or(Error::InvalidChannel)?;
+        let SenderInnerState::Open {
+            ref client,
+            ref mut capacity_added,
+            ..
+        } = self.state else {
+            return Err(Error::InvalidChannel);
+        };
 
-        if let Ok(None) = state.capacity_added.try_next() {
+        if let Ok(None) = capacity_added.try_next() {
+            self.state = SenderInnerState::Closed;
             return Err(Error::InvalidChannel);
         }
 
         let value = SerializedValue::serialize(value)?;
-        state.client.send_item(self.cookie, value)?;
+        client.send_item(self.cookie, value)?;
 
         Ok(())
     }
@@ -577,9 +594,10 @@ impl SenderInner {
 
 impl Drop for SenderInner {
     fn drop(&mut self) {
-        if let Some(state) = self.state.take() {
-            state
-                .client
+        if let SenderInnerState::Open { client, .. } =
+            mem::replace(&mut self.state, SenderInnerState::Closed)
+        {
+            client
                 .close_channel_end(self.cookie, ChannelEnd::Sender, true)
                 .ok();
         }
