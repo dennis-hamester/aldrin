@@ -15,7 +15,9 @@ async fn create_and_close() {
         .await
         .unwrap();
     assert_eq!(sender.close().await, Ok(())); // This also closes the unclaimed receiver.
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Err(Error::InvalidChannel));
+    assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & UnclaimedReceiver
     let (mut sender, mut receiver) = client
@@ -23,6 +25,8 @@ async fn create_and_close() {
         .await
         .unwrap();
     assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
     // UnclaimedSender & PendingReceiver
@@ -31,7 +35,9 @@ async fn create_and_close() {
         .await
         .unwrap();
     assert_eq!(receiver.close().await, Ok(())); // This also closes the unclaimed sender.
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Err(Error::InvalidChannel));
+    assert_eq!(sender.close().await, Ok(()));
 
     // UnclaimedSender & PendingReceiver
     let (mut sender, mut receiver) = client
@@ -39,6 +45,8 @@ async fn create_and_close() {
         .await
         .unwrap();
     assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & Receiver
@@ -48,6 +56,8 @@ async fn create_and_close() {
         .unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & Receiver
@@ -57,6 +67,8 @@ async fn create_and_close() {
         .unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
     // Sender & PendingReceiver
@@ -66,6 +78,8 @@ async fn create_and_close() {
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // Sender & PendingReceiver
@@ -75,6 +89,8 @@ async fn create_and_close() {
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
     // Sender & Receiver
@@ -85,6 +101,8 @@ async fn create_and_close() {
     let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // Sender & Receiver
@@ -95,6 +113,8 @@ async fn create_and_close() {
     let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
     // Sender & Receiver
@@ -105,6 +125,8 @@ async fn create_and_close() {
     let mut sender = sender.claim().await.unwrap();
     let mut receiver = receiver.established().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // Sender & Receiver
@@ -115,6 +137,8 @@ async fn create_and_close() {
     let mut sender = sender.claim().await.unwrap();
     let mut receiver = receiver.established().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(receiver.close().await, Ok(()));
+    assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
 
     client.join().await;

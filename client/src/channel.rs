@@ -274,7 +274,10 @@ impl UnclaimedSenderInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.client.take().ok_or(Error::InvalidChannel)?;
+        let Some(client) = self.client.take() else {
+            return Ok(());
+        };
+
         client
             .close_channel_end(self.cookie, ChannelEnd::Sender, false)?
             .await
@@ -416,8 +419,12 @@ impl PendingSenderInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        client
+        let Some(state) = self.state.take() else {
+            return Ok(());
+        };
+
+        state
+            .client
             .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
             .await
     }
@@ -563,7 +570,7 @@ impl SenderInner {
         let SenderInnerState::Open { client, .. } =
             mem::replace(&mut self.state, SenderInnerState::Closed)
         else {
-            return Err(Error::InvalidChannel);
+            return Ok(());
         };
 
         client
@@ -863,7 +870,10 @@ impl UnclaimedReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.client.take().ok_or(Error::InvalidChannel)?;
+        let Some(client) = self.client.take() else {
+            return Ok(());
+        };
+
         client
             .close_channel_end(self.cookie, ChannelEnd::Receiver, false)?
             .await
@@ -986,8 +996,12 @@ impl PendingReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        client
+        let Some(state) = self.state.take() else {
+            return Ok(());
+        };
+
+        state
+            .client
             .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
             .await
     }
@@ -1116,16 +1130,28 @@ impl ReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let client = self.state.take().ok_or(Error::InvalidChannel)?.client;
-        client
+        let Some(state) = self.state.take() else {
+            return Ok(());
+        };
+
+        state
+            .client
             .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
             .await
     }
 
     fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Option<SerializedValue>> {
-        match self.state.as_mut() {
-            Some(state) => Pin::new(&mut state.items).poll_next(cx),
-            None => Poll::Ready(None),
+        let Some(ref mut state) = self.state else {
+            return Poll::Ready(None);
+        };
+
+        match Pin::new(&mut state.items).poll_next(cx) {
+            Poll::Ready(Some(item)) => Poll::Ready(Some(item)),
+            Poll::Ready(None) => {
+                self.state = None;
+                Poll::Ready(None)
+            }
+            Poll::Pending => Poll::Pending,
         }
     }
 }
