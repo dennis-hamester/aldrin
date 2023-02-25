@@ -17,6 +17,8 @@ use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+const LOW_CAPACITY: u32 = 4;
+
 /// A sender that is not bound to any particular client.
 ///
 /// [`UnboundSender`s](Self) are used to transfer senders to some other client, typically by
@@ -1150,14 +1152,31 @@ impl ReceiverInner {
             return Poll::Ready(None);
         };
 
-        match Pin::new(&mut state.items).poll_next(cx) {
-            Poll::Ready(Some(item)) => Poll::Ready(Some(item)),
+        debug_assert!(state.cur_capacity > 0);
+        debug_assert!(state.cur_capacity <= state.max_capacity.get());
+
+        let item = match Pin::new(&mut state.items).poll_next(cx) {
+            Poll::Ready(Some(item)) => item,
             Poll::Ready(None) => {
                 self.state = None;
-                Poll::Ready(None)
+                return Poll::Ready(None);
             }
-            Poll::Pending => Poll::Pending,
+            Poll::Pending => return Poll::Pending,
+        };
+
+        state.cur_capacity -= 1;
+        if state.cur_capacity <= LOW_CAPACITY {
+            let diff = state.max_capacity.get() - state.cur_capacity;
+            debug_assert!(diff >= 1);
+
+            state.client.add_channel_capacity(self.cookie, diff).ok();
+            state.cur_capacity += diff;
         }
+
+        debug_assert!(state.cur_capacity > 0);
+        debug_assert!(state.cur_capacity <= state.max_capacity.get());
+
+        Poll::Ready(Some(item))
     }
 }
 
