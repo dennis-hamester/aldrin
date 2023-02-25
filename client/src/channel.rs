@@ -13,6 +13,7 @@ use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::marker::PhantomData;
 use std::mem;
+use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -674,6 +675,8 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// See [`UnclaimedReceiver::claim`] for explanation of the cases in which this function can
     /// fail.
     ///
+    /// A `capacity` of 0 is treated as if 1 was specificed instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -811,6 +814,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// - Some other client has already claimed the receiver.
     /// - Some other client has closed the receiver.
     /// - The sender has been closed.
+    ///
+    /// A `capacity` of 0 is treated as if 1 was specificed instead.
     ///
     /// # Examples
     ///
@@ -975,7 +980,7 @@ pub(crate) struct PendingReceiverInner {
 struct PendingReceiverInnerState {
     client: Handle,
     established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
-    max_capacity: u32,
+    max_capacity: NonZeroU32,
 }
 
 impl PendingReceiverInner {
@@ -983,7 +988,7 @@ impl PendingReceiverInner {
         cookie: ChannelCookie,
         client: Handle,
         established: oneshot::Receiver<mpsc::UnboundedReceiver<SerializedValue>>,
-        max_capacity: u32,
+        max_capacity: NonZeroU32,
     ) -> Self {
         Self {
             cookie,
@@ -1107,7 +1112,7 @@ pub(crate) struct ReceiverInner {
 struct ReceiverInnerState {
     client: Handle,
     items: mpsc::UnboundedReceiver<SerializedValue>,
-    max_capacity: u32,
+    max_capacity: NonZeroU32,
     cur_capacity: u32,
 }
 
@@ -1116,7 +1121,7 @@ impl ReceiverInner {
         cookie: ChannelCookie,
         client: Handle,
         items: mpsc::UnboundedReceiver<SerializedValue>,
-        max_capacity: u32,
+        max_capacity: NonZeroU32,
     ) -> Self {
         Self {
             cookie,
@@ -1124,7 +1129,7 @@ impl ReceiverInner {
                 client,
                 items,
                 max_capacity,
-                cur_capacity: max_capacity,
+                cur_capacity: max_capacity.get(),
             }),
         }
     }

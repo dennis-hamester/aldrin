@@ -1324,7 +1324,7 @@ where
         &mut self,
         req: CreateClaimedReceiverRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let capacity = req.capacity;
+        let capacity = req.capacity.get();
         let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
         self.t
             .send_and_flush(Message::CreateChannel(CreateChannel {
@@ -1379,7 +1379,7 @@ where
         req: ClaimReceiverRequest,
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.cookie;
-        let capacity = req.capacity;
+        let capacity = req.capacity.get();
 
         let serial = self
             .claim_channel_end

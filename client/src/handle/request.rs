@@ -13,6 +13,7 @@ use aldrin_proto::{
     ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
+use std::num::NonZeroU32;
 
 #[derive(Debug)]
 pub(crate) enum HandleRequest {
@@ -141,7 +142,7 @@ pub(crate) type CreateClaimedSenderRequest =
 
 #[derive(Debug)]
 pub(crate) struct CreateClaimedReceiverRequest {
-    pub capacity: u32,
+    pub capacity: NonZeroU32,
     pub reply: oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>,
 }
 
@@ -162,7 +163,7 @@ pub(crate) struct ClaimSenderRequest {
 #[derive(Debug)]
 pub(crate) struct ClaimReceiverRequest {
     pub cookie: ChannelCookie,
-    pub capacity: u32,
+    pub capacity: NonZeroU32,
     pub reply: oneshot::Sender<Result<ReceiverInner, Error>>,
 }
 

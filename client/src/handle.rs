@@ -31,6 +31,7 @@ use std::fmt;
 use std::future;
 use std::future::Future;
 use std::marker::PhantomData;
+use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -909,6 +910,8 @@ impl Handle {
     /// [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) to claim
     /// the sender instead.
     ///
+    /// A `capacity` of 0 is treated as if 1 was specificed instead.
+    ///
     /// # Examples
     ///
     /// See [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) for an
@@ -920,6 +923,8 @@ impl Handle {
     where
         T: Serialize + Deserialize,
     {
+        let capacity = NonZeroU32::new(capacity).unwrap_or(NonZeroU32::new(1).unwrap());
+
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateClaimedReceiver(
@@ -968,6 +973,8 @@ impl Handle {
         cookie: ChannelCookie,
         capacity: u32,
     ) -> Result<ReceiverInner, Error> {
+        let capacity = NonZeroU32::new(capacity).unwrap_or(NonZeroU32::new(1).unwrap());
+
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::ClaimReceiver(ClaimReceiverRequest {
