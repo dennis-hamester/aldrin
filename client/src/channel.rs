@@ -1231,6 +1231,14 @@ impl ReceiverInner {
 
         Poll::Ready(Some(item))
     }
+
+    fn is_terminated(&self) -> bool {
+        if let Some(ref state) = self.state {
+            state.items.is_terminated()
+        } else {
+            true
+        }
+    }
 }
 
 impl Drop for ReceiverInner {
@@ -1240,23 +1248,6 @@ impl Drop for ReceiverInner {
                 .client
                 .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
                 .ok();
-        }
-    }
-}
-
-impl Stream for ReceiverInner {
-    type Item = SerializedValue;
-
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        self.poll_next_item(cx)
-    }
-}
-
-impl FusedStream for ReceiverInner {
-    fn is_terminated(&self) -> bool {
-        match self.state.as_ref() {
-            Some(state) => state.items.is_terminated(),
-            None => true,
         }
     }
 }
