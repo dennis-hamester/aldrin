@@ -1269,7 +1269,7 @@ impl Broker {
     }
 
     fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) {
-        let Some(channel) = self.channels.get(&req.cookie) else {
+        let Some(channel) = self.channels.get_mut(&req.cookie) else {
             return;
         };
 
@@ -1281,8 +1281,17 @@ impl Broker {
                     self.statistics.items_dropped += 1;
                 }
 
-                if e == SendItemError::ReceiverUnclaimed {
-                    self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
+                match e {
+                    SendItemError::ReceiverUnclaimed => {
+                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
+                    }
+
+                    SendItemError::CapacityExhausted => {
+                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Sender, true);
+                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, true);
+                    }
+
+                    SendItemError::InvalidSender | SendItemError::ReceiverClosed => {}
                 }
 
                 return;

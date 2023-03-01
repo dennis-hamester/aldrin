@@ -126,8 +126,11 @@ impl Channel {
         Ok(sender)
     }
 
-    pub fn send_item(&self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
-        let ChannelEndState::Claimed { owner: ref sender, .. } = self.sender else {
+    pub fn send_item(&mut self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
+        let ChannelEndState::Claimed {
+            owner: ref sender,
+            capacity: ref mut sender_capacity,
+        } = self.sender else {
             return Err(SendItemError::InvalidSender);
         };
 
@@ -135,13 +138,23 @@ impl Channel {
             return Err(SendItemError::InvalidSender);
         }
 
-        match self.receiver {
+        let (receiver, receiver_capacity) = match self.receiver {
             ChannelEndState::Claimed {
                 owner: ref receiver,
+                capacity: ref mut receiver_capacity,
                 ..
-            } => Ok(receiver),
-            ChannelEndState::Unclaimed => Err(SendItemError::ReceiverUnclaimed),
-            ChannelEndState::Closed => Err(SendItemError::ReceiverClosed),
+            } => (receiver, receiver_capacity),
+            ChannelEndState::Unclaimed => return Err(SendItemError::ReceiverUnclaimed),
+            ChannelEndState::Closed => return Err(SendItemError::ReceiverClosed),
+        };
+
+        if *receiver_capacity > 0 {
+            debug_assert!(*sender_capacity > 0);
+            *sender_capacity -= 1;
+            *receiver_capacity -= 1;
+            Ok(receiver)
+        } else {
+            Err(SendItemError::CapacityExhausted)
         }
     }
 
@@ -175,8 +188,10 @@ impl Channel {
         };
 
         if *sender_capacity <= LOW_CAPACITY {
+            debug_assert!(*receiver_capacity > *sender_capacity);
+            let diff = *receiver_capacity - *sender_capacity;
             *sender_capacity = *receiver_capacity;
-            Some((sender, *sender_capacity))
+            Some((sender, diff))
         } else {
             None
         }
@@ -188,6 +203,7 @@ pub(crate) enum SendItemError {
     InvalidSender,
     ReceiverUnclaimed,
     ReceiverClosed,
+    CapacityExhausted,
 }
 
 #[derive(Debug)]
