@@ -12,6 +12,7 @@ codegen = [
     "aldrin-proto/macros",
     "dep:aldrin-codegen-macros",
 ]
+sink = ["dep:futures-sink"]
 
 [dependencies.aldrin-codegen-macros]
 optional = true
@@ -31,6 +32,11 @@ default-features = false
 features = ["std"]
 
 [dependencies.futures-core]
+version = "0.3.21"
+default-features = false
+
+[dependencies.futures-sink]
+optional = true
 version = "0.3.21"
 default-features = false
 

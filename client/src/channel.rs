@@ -548,6 +548,48 @@ impl<T: Serialize + ?Sized> Sender<T> {
     }
 }
 
+#[cfg(feature = "sink")]
+impl<T: Serialize + ?Sized> futures_sink::Sink<&T> for Sender<T> {
+    type Error = Error;
+
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.poll_send_ready(cx)
+    }
+
+    fn start_send(mut self: Pin<&mut Self>, item: &T) -> Result<(), Self::Error> {
+        self.start_send_item(item)
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_flush()
+    }
+
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        todo!()
+    }
+}
+
+#[cfg(feature = "sink")]
+impl<T: Serialize> futures_sink::Sink<T> for Sender<T> {
+    type Error = Error;
+
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.poll_send_ready(cx)
+    }
+
+    fn start_send(mut self: Pin<&mut Self>, item: T) -> Result<(), Self::Error> {
+        self.start_send_item(&item)
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_flush()
+    }
+
+    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_close(cx)
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct SenderInner {
     cookie: ChannelCookie,
@@ -643,6 +685,14 @@ impl SenderInner {
         *capacity -= 1;
 
         Ok(())
+    }
+
+    fn poll_flush(&self) -> Poll<Result<(), Error>> {
+        if let SenderInnerState::Open { .. } = self.state {
+            Poll::Ready(Ok(()))
+        } else {
+            Poll::Ready(Err(Error::InvalidChannel))
+        }
     }
 
     async fn close(&mut self) -> Result<(), Error> {

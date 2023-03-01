@@ -41,6 +41,7 @@ dependencies = [
  "futures",
  "futures-channel",
  "futures-core",
+ "futures-sink",
  "futures-util",
  "tokio",
  "uuid",
