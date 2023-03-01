@@ -277,13 +277,13 @@ impl UnclaimedSenderInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let Some(client) = self.client.take() else {
-            return Ok(());
-        };
-
-        client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, false)?
-            .await
+        if let Some(client) = self.client.take() {
+            client
+                .close_channel_end(self.cookie, ChannelEnd::Sender, false)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 
     async fn claim(mut self) -> Result<SenderInner, Error> {
@@ -422,14 +422,14 @@ impl PendingSenderInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let Some(state) = self.state.take() else {
-            return Ok(());
-        };
-
-        state
-            .client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
-            .await
+        if let Some(state) = self.state.take() {
+            state
+                .client
+                .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 
     async fn established(mut self) -> Result<SenderInner, Error> {
@@ -696,15 +696,15 @@ impl SenderInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let SenderInnerState::Open { client, .. } =
+        if let SenderInnerState::Open { client, .. } =
             mem::replace(&mut self.state, SenderInnerState::Closed)
-        else {
-            return Ok(());
-        };
-
-        client
-            .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
-            .await
+        {
+            client
+                .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -983,13 +983,13 @@ impl UnclaimedReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let Some(client) = self.client.take() else {
-            return Ok(());
-        };
-
-        client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, false)?
-            .await
+        if let Some(client) = self.client.take() {
+            client
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, false)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 
     async fn claim(mut self, capacity: u32) -> Result<ReceiverInner, Error> {
@@ -1109,14 +1109,14 @@ impl PendingReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let Some(state) = self.state.take() else {
-            return Ok(());
-        };
-
-        state
-            .client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
-            .await
+        if let Some(state) = self.state.take() {
+            state
+                .client
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 
     async fn established(mut self) -> Result<ReceiverInner, Error> {
@@ -1240,14 +1240,14 @@ impl ReceiverInner {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        let Some(state) = self.state.take() else {
-            return Ok(());
-        };
-
-        state
-            .client
-            .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
-            .await
+        if let Some(state) = self.state.take() {
+            state
+                .client
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)?
+                .await
+        } else {
+            Ok(())
+        }
     }
 
     fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Option<SerializedValue>> {
