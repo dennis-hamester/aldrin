@@ -1317,6 +1317,7 @@ impl FusedStream for ObjectServices {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct CloseChannelEndFuture(oneshot::Receiver<Result<(), Error>>);
 
 impl Future for CloseChannelEndFuture {

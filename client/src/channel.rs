@@ -3,6 +3,8 @@ mod test;
 
 use super::Handle;
 use crate::error::Error;
+#[cfg(feature = "sink")]
+use crate::handle::CloseChannelEndFuture;
 use aldrin_proto::message::ChannelEnd;
 use aldrin_proto::{
     ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
@@ -564,8 +566,8 @@ impl<T: Serialize + ?Sized> futures_sink::Sink<&T> for Sender<T> {
         self.inner.poll_flush()
     }
 
-    fn poll_close(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        todo!()
+    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_close(cx)
     }
 }
 
@@ -605,6 +607,9 @@ enum SenderInnerState {
     },
 
     Closed,
+
+    #[cfg(feature = "sink")]
+    Closing(CloseChannelEndFuture),
 }
 
 impl SenderInner {
@@ -687,12 +692,38 @@ impl SenderInner {
         Ok(())
     }
 
+    #[cfg(feature = "sink")]
     fn poll_flush(&self) -> Poll<Result<(), Error>> {
         if let SenderInnerState::Open { .. } = self.state {
             Poll::Ready(Ok(()))
         } else {
             Poll::Ready(Err(Error::InvalidChannel))
         }
+    }
+
+    #[cfg(feature = "sink")]
+    fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+        use std::future::Future;
+
+        let mut fut = match mem::replace(&mut self.state, SenderInnerState::Closed) {
+            SenderInnerState::Open { client, .. } => {
+                match client.close_channel_end(self.cookie, ChannelEnd::Sender, true) {
+                    Ok(fut) => fut,
+                    Err(e) => return Poll::Ready(Err(e)),
+                }
+            }
+
+            SenderInnerState::Closing(fut) => fut,
+            SenderInnerState::Closed => return Poll::Ready(Ok(())),
+        };
+
+        let res = Pin::new(&mut fut).poll(cx);
+
+        if res.is_pending() {
+            self.state = SenderInnerState::Closing(fut);
+        }
+
+        res
     }
 
     async fn close(&mut self) -> Result<(), Error> {
