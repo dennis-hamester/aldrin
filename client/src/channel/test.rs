@@ -237,3 +237,53 @@ async fn send_error_when_receiver_is_closed() {
     client2.join().await;
     broker.join().await;
 }
+
+#[cfg(feature = "sink")]
+#[tokio::test]
+async fn stream_sink_pipe() {
+    use aldrin_test::aldrin_client::{Handle, Receiver, Sender};
+    use futures::stream;
+    use futures::{SinkExt, TryStreamExt};
+
+    async fn create_channel(client: &Handle, capacity: u32) -> (Sender<u32>, Receiver<u32>) {
+        let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
+        let receiver = receiver.claim(capacity).await.unwrap();
+        let sender = sender.established().await.unwrap();
+        (sender, receiver)
+    }
+
+    let mut broker = TestBroker::new();
+    let mut client1 = broker.add_client().await;
+    let mut client2 = broker.add_client().await;
+
+    let (mut sender1, mut receiver1) = create_channel(&client1, 3).await;
+    let (mut sender2, receiver2) = create_channel(&client2, 7).await;
+
+    // Pipe receiver1 into sender2, so that items sent via sender1 are received via receiver2.
+    let pipe_join = tokio::spawn(async move { sender2.send_all(&mut receiver1).await });
+    let items_received = tokio::spawn(async move { receiver2.try_collect::<Vec<_>>().await });
+
+    let items_sent: Vec<_> = (0..128).collect();
+
+    sender1
+        .send_all(&mut stream::iter(items_sent.iter().map(Ok)))
+        .await
+        .unwrap();
+
+    // Closing sender1 will lead to this in order:
+    // - Close receiver1.
+    // - Cause the task of pipe_join to finish.
+    // - Close sender2.
+    // - Close receiver2.
+    // - Cause the task of items_received to finish.
+    sender1.close().await.unwrap();
+
+    pipe_join.await.unwrap().unwrap();
+    let items_received = items_received.await.unwrap().unwrap();
+
+    assert_eq!(items_sent, items_received);
+
+    client1.join().await;
+    client2.join().await;
+    broker.join().await;
+}
