@@ -238,8 +238,8 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// let mut receiver = receiver.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send(&1)?;
-    /// sender.send(&2)?;
+    /// sender.send_item(&1).await?;
+    /// sender.send_item(&2).await?;
     /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
     /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
@@ -475,6 +475,41 @@ impl<T: Serialize + ?Sized> Sender<T> {
         }
     }
 
+    /// Casts the item type to a different type.
+    pub fn cast<U: Serialize + ?Sized>(self) -> Sender<U> {
+        Sender {
+            inner: self.inner,
+            phantom: PhantomData,
+        }
+    }
+
+    /// Polls the channel for capacity to send at least 1 item.
+    pub fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+        self.inner.poll_send_ready(cx)
+    }
+
+    /// Waits until the channel has capacity to send at least 1 item.
+    pub async fn send_ready(&mut self) -> Result<(), Error> {
+        future::poll_fn(|cx| self.poll_send_ready(cx)).await
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This function panics if the channel doesn't have any capacity left. You must call either
+    /// [`send_ready`](Self::send_ready) or [`poll_send_ready`](Self::poll_send_ready) before to
+    /// ensure there is capacity.
+    pub fn start_send_item(&mut self, item: &T) -> Result<(), Error> {
+        self.inner.start_send_item(item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This function will wait until the channel has capacity to send at least 1 item.
+    pub async fn send_item(&mut self, item: &T) -> Result<(), Error> {
+        self.send_ready().await?;
+        self.start_send_item(item)
+    }
+
     /// Closes the sender without consuming it.
     ///
     /// The will cause the receiving end to receive [`None`] after all other items have been
@@ -495,9 +530,9 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// let mut sender = sender.established().await?;
     ///
     /// // Send a couple of items and then close the sender.
-    /// sender.send(&1)?;
-    /// sender.send(&2)?;
-    /// sender.send(&3)?;
+    /// sender.send_item(&1).await?;
+    /// sender.send_item(&2).await?;
+    /// sender.send_item(&3).await?;
     /// sender.close().await?;
     ///
     /// // The receiver will receive all items followed by None.
@@ -510,28 +545,6 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// ```
     pub async fn close(&mut self) -> Result<(), Error> {
         self.inner.close().await
-    }
-
-    /// Sends and item on the channel.
-    ///
-    /// When the receiver is closed, then one of the following calls of this function will return
-    /// [`Error::InvalidChannel`]. There is no guarantee as to when this will happen. All items sent
-    /// after the broker has acknowledged the receiver's closing will be discarded.
-    ///
-    /// Note that this function is not `async`. Sending many items in a burst can thus block a task
-    /// if this is called in an asynchronous context. This can even block a closure notification
-    /// from the receiver, such that `send` will never indicate an error. It is generally advised to
-    /// yield back to the executer regularly.
-    pub fn send(&mut self, item: &T) -> Result<(), Error> {
-        self.inner.send(item)
-    }
-
-    /// Casts the item type to a different type.
-    pub fn cast<U: Serialize + ?Sized>(self) -> Sender<U> {
-        Sender {
-            inner: self.inner,
-            phantom: PhantomData,
-        }
     }
 }
 
@@ -569,6 +582,69 @@ impl SenderInner {
         }
     }
 
+    fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+        let SenderInnerState::Open {
+            ref mut capacity_added,
+            ref mut capacity,
+            ..
+        } = self.state else {
+            return Poll::Ready(Err(Error::InvalidChannel));
+        };
+
+        if *capacity == 0 {
+            loop {
+                match Pin::new(&mut *capacity_added).poll_next(cx) {
+                    Poll::Ready(Some(added_capacity)) => *capacity += added_capacity,
+
+                    Poll::Ready(None) => {
+                        self.state = SenderInnerState::Closed;
+                        return Poll::Ready(Err(Error::InvalidChannel));
+                    }
+
+                    Poll::Pending => {
+                        if *capacity > 0 {
+                            break;
+                        } else {
+                            return Poll::Pending;
+                        }
+                    }
+                }
+            }
+        } else {
+            match capacity_added.try_next() {
+                Ok(Some(added_capacity)) => *capacity += added_capacity,
+
+                Ok(None) => {
+                    self.state = SenderInnerState::Closed;
+                    return Poll::Ready(Err(Error::InvalidChannel));
+                }
+
+                Err(_) => {}
+            }
+        }
+
+        Poll::Ready(Ok(()))
+    }
+
+    fn start_send_item<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
+        let SenderInnerState::Open {
+            ref client,
+            ref mut capacity,
+            ..
+        } = self.state else {
+            return Err(Error::InvalidChannel);
+        };
+
+        debug_assert!(*capacity > 0);
+
+        let value = SerializedValue::serialize(value)?;
+        client.send_item(self.cookie, value)?;
+
+        *capacity -= 1;
+
+        Ok(())
+    }
+
     async fn close(&mut self) -> Result<(), Error> {
         let SenderInnerState::Open { client, .. } =
             mem::replace(&mut self.state, SenderInnerState::Closed)
@@ -579,26 +655,6 @@ impl SenderInner {
         client
             .close_channel_end(self.cookie, ChannelEnd::Sender, true)?
             .await
-    }
-
-    fn send<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Error> {
-        let SenderInnerState::Open {
-            ref client,
-            ref mut capacity_added,
-            ..
-        } = self.state else {
-            return Err(Error::InvalidChannel);
-        };
-
-        if let Ok(None) = capacity_added.try_next() {
-            self.state = SenderInnerState::Closed;
-            return Err(Error::InvalidChannel);
-        }
-
-        let value = SerializedValue::serialize(value)?;
-        client.send_item(self.cookie, value)?;
-
-        Ok(())
     }
 }
 
@@ -838,8 +894,8 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// let mut sender = sender.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send(&1)?;
-    /// sender.send(&2)?;
+    /// sender.send_item(&1).await?;
+    /// sender.send_item(&2).await?;
     /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
     /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
@@ -1055,9 +1111,6 @@ impl<T: Deserialize> Receiver<T> {
     }
 
     /// Closes the receiver without consuming it.
-    ///
-    /// The sender will be notified asynchronously and cause [`Sender::send`] to return
-    /// [`Error::InvalidChannel`].
     pub async fn close(&mut self) -> Result<(), Error> {
         self.inner.close().await
     }

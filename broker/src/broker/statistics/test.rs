@@ -354,9 +354,9 @@ async fn channels() {
     // Claim 1 and send 3 items.
     let mut receiver1 = receiver1.claim(16).await.unwrap();
     let mut sender1 = sender1.established().await.unwrap();
-    sender1.send(&()).unwrap();
-    sender1.send(&()).unwrap();
-    sender1.send(&()).unwrap();
+    sender1.send_item(&()).await.unwrap();
+    sender1.send_item(&()).await.unwrap();
+    sender1.send_item(&()).await.unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 6);
