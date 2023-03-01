@@ -399,7 +399,7 @@ impl Broker {
             Message::CloseChannelEnd(req) => self.close_channel_end(state, id, req)?,
             Message::ClaimChannelEnd(req) => self.claim_channel_end(state, id, req)?,
             Message::AddChannelCapacity(req) => self.add_channel_capacity(state, id, req),
-            Message::SendItem(req) => self.send_item(state, id, req),
+            Message::SendItem(req) => self.send_item(state, id, req)?,
             Message::Sync(req) => self.sync(id, req)?,
 
             Message::Connect(_)
@@ -1268,13 +1268,17 @@ impl Broker {
         }
     }
 
-    fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) {
-        let Some(channel) = self.channels.get_mut(&req.cookie) else {
-            return;
+    fn send_item(&mut self, state: &mut State, id: &ConnectionId, req: SendItem) -> Result<(), ()> {
+        let Some(sender) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        let receiver_id = match channel.send_item(id) {
-            Ok(receiver_id) => receiver_id,
+        let Some(channel) = self.channels.get_mut(&req.cookie) else {
+            return Ok(());
+        };
+
+        let (receiver_id, add_capacity) = match channel.send_item(id) {
+            Ok(res) => res,
             Err(e) => {
                 #[cfg(feature = "statistics")]
                 {
@@ -1294,12 +1298,12 @@ impl Broker {
                     SendItemError::InvalidSender | SendItemError::ReceiverClosed => {}
                 }
 
-                return;
+                return Ok(());
             }
         };
 
         let Some(receiver) = self.conns.get(receiver_id) else {
-            return;
+            return Ok(());
         };
 
         let res = send!(
@@ -1323,6 +1327,19 @@ impl Broker {
             }
 
             state.push_remove_conn(receiver_id.clone());
+        }
+
+        if let Some(add_capacity) = add_capacity {
+            send!(
+                self,
+                sender,
+                Message::AddChannelCapacity(AddChannelCapacity {
+                    cookie: req.cookie,
+                    capacity: add_capacity,
+                })
+            )
+        } else {
+            Ok(())
         }
     }
 

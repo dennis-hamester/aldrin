@@ -126,7 +126,10 @@ impl Channel {
         Ok(sender)
     }
 
-    pub fn send_item(&mut self, conn_id: &ConnectionId) -> Result<&ConnectionId, SendItemError> {
+    pub fn send_item(
+        &mut self,
+        conn_id: &ConnectionId,
+    ) -> Result<(&ConnectionId, Option<u32>), SendItemError> {
         let ChannelEndState::Claimed {
             owner: ref sender,
             capacity: ref mut sender_capacity,
@@ -148,14 +151,24 @@ impl Channel {
             ChannelEndState::Closed => return Err(SendItemError::ReceiverClosed),
         };
 
-        if *receiver_capacity > 0 {
-            debug_assert!(*sender_capacity > 0);
-            *sender_capacity -= 1;
-            *receiver_capacity -= 1;
-            Ok(receiver)
-        } else {
-            Err(SendItemError::CapacityExhausted)
+        if *receiver_capacity == 0 {
+            return Err(SendItemError::CapacityExhausted);
         }
+
+        debug_assert!(*sender_capacity > 0);
+        *sender_capacity -= 1;
+        *receiver_capacity -= 1;
+
+        let add_capacity =
+            if (*sender_capacity <= LOW_CAPACITY) && (*receiver_capacity > *sender_capacity) {
+                let diff = *receiver_capacity - *sender_capacity;
+                *sender_capacity = *receiver_capacity;
+                Some(diff)
+            } else {
+                None
+            };
+
+        Ok((receiver, add_capacity))
     }
 
     pub fn add_capacity(
