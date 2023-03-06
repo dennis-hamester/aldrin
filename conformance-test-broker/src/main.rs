@@ -1,22 +1,18 @@
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
 use aldrin_proto::tokio::TokioTransport;
 use anyhow::{anyhow, Context, Error, Result};
-use futures::future;
-use futures::stream::{Stream, StreamExt, TryStreamExt};
+use std::io::{self, Read};
 use std::net::Ipv4Addr;
-use tokio::io;
+use std::thread;
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::oneshot::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
-use tokio_util::codec::{FramedRead, LinesCodec};
-
-type StdinBox = Box<dyn Stream<Item = Result<ToBrokerMessage>> + Unpin>;
 
 struct BrokerUnderTest {
     broker: BrokerHandle,
     join: JoinHandle<()>,
     listener: TcpListener,
-    stdin: StdinBox,
+    stdin_closed: Receiver<Result<()>>,
 }
 
 impl BrokerUnderTest {
@@ -30,26 +26,20 @@ impl BrokerUnderTest {
             .with_context(|| anyhow!("failed to get local tcp listener address"))?
             .port();
 
-        println!(
-            "{}",
-            serde_json::to_string(&FromBrokerMessage::Ready(FromBrokerReady { port })).unwrap()
-        );
+        println!("{port}");
 
         let broker = Broker::new();
         let handle = broker.handle().clone();
         let join = tokio::spawn(broker.run());
 
-        let stdin = Box::new(
-            FramedRead::new(io::stdin(), LinesCodec::new())
-                .map_err(Error::from)
-                .and_then(|line| future::ready(serde_json::from_str(&line).map_err(Error::from))),
-        );
+        let (sender, stdin_closed) = oneshot::channel();
+        thread::spawn(|| Self::wait_stdin_closed(sender));
 
         Ok(BrokerUnderTest {
             broker: handle,
             join,
             listener,
-            stdin,
+            stdin_closed,
         })
     }
 
@@ -57,7 +47,14 @@ impl BrokerUnderTest {
         loop {
             tokio::select! {
                 res = &mut self.join => {
-                    return res.with_context(|| anyhow!("failed to join broker task"));
+                    match res {
+                        Ok(()) => break Err(anyhow!("broker shut down unexpectedly")),
+                        Err(e) => {
+                            break Err(
+                                Error::new(e).context(anyhow!("broker shut down unexpectedly"))
+                            );
+                        }
+                    }
                 }
 
                 stream = self.listener.accept() => {
@@ -67,11 +64,18 @@ impl BrokerUnderTest {
                     tokio::spawn(Self::handle_new_connection(self.broker.clone(), stream));
                 }
 
-                msg = self.stdin.next() => {
-                    match msg {
-                        Some(msg) => self.handle_stdin_message(msg?).await,
-                        None => return Ok(()),
-                    }
+                res = &mut self.stdin_closed => {
+                    let res = match res {
+                        Ok(Ok(())) => Ok(()),
+                        Ok(Err(e)) => Err(e),
+                        Err(e) => Err(Error::new(e)
+                            .context(anyhow!("thread reading from stdin shut down unexpectedly"))),
+                    };
+
+                    self.broker.shutdown().await;
+                    self.join.await.ok();
+
+                    break res;
                 }
             }
         }
@@ -79,14 +83,39 @@ impl BrokerUnderTest {
 
     async fn handle_new_connection(mut broker: BrokerHandle, stream: TcpStream) -> Result<()> {
         let transport = TokioTransport::new(stream);
-        let conn = broker.connect(transport).await?;
-        tokio::spawn(conn.run());
-        Ok(())
+
+        let conn = broker
+            .connect(transport)
+            .await
+            .with_context(|| anyhow!("failed to connect client"))?;
+
+        conn.run()
+            .await
+            .with_context(|| anyhow!("connection closed unexpectedly"))
     }
 
-    async fn handle_stdin_message(&mut self, msg: ToBrokerMessage) {
-        match msg {
-            ToBrokerMessage::Shutdown(()) => self.broker.shutdown().await,
+    fn wait_stdin_closed(sender: Sender<Result<()>>) {
+        let mut stdin = io::stdin().lock();
+        let mut buf = [0; 64];
+
+        loop {
+            match stdin.read(&mut buf) {
+                Ok(0) => {
+                    sender.send(Ok(())).ok();
+                    break;
+                }
+
+                Ok(_) => {}
+
+                Err(e) => {
+                    sender
+                        .send(Err(
+                            Error::new(e).context(anyhow!("failed to read from stdin"))
+                        ))
+                        .ok();
+                    break;
+                }
+            }
         }
     }
 }
