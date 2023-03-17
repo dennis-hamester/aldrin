@@ -1,0 +1,43 @@
+[package]
+name = "aldrin-broker-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.6"
+
+[dependencies.aldrin-broker]
+path = "../../broker"
+features = ["statistics"]
+
+[dependencies.aldrin-channel]
+path = "../../channel"
+
+[dependencies.aldrin-proto]
+path = "../../proto"
+features = ["fuzzing"]
+
+[dependencies.arbitrary]
+version = "1.3.0"
+features = ["derive"]
+
+[dependencies.uuid]
+version = "1.3.0"
+features = ["arbitrary"]
+
+[profile.release]
+debug = 1
+debug-assertions = true
+overflow-checks = true
+
+[[bin]]
+name = "broker"
+path = "fuzz_targets/broker.rs"
+test = false
+doc = false
