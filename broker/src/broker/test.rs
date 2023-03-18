@@ -1,6 +1,11 @@
-use crate::Broker;
+use crate::{Broker, BrokerHandle};
+use aldrin_channel::Unbounded;
 use aldrin_client::Client;
-use aldrin_proto::message::{Connect, ConnectReply, Message};
+use aldrin_proto::message::{
+    CallFunction, CallFunctionReply, CallFunctionResult, Connect, ConnectReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    Message, Sync, SyncReply,
+};
 use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
@@ -162,4 +167,115 @@ async fn only_owner_can_emit_events() {
 
     assert!(events.next_event().await.is_some());
     assert!(events.next_event().await.is_none());
+}
+
+#[tokio::test]
+async fn wrong_client_replies_function_call() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
+        let (mut t1, t2) = aldrin_channel::unbounded();
+
+        t1.send(
+            Connect::with_serialize_value(aldrin_proto::VERSION, &())
+                .unwrap()
+                .into(),
+        )
+        .await
+        .unwrap();
+
+        let conn = broker.connect(t2).await.unwrap();
+
+        let Message::ConnectReply(ConnectReply::Ok(_)) = t1.receive().await.unwrap() else {
+            panic!();
+        };
+
+        tokio::spawn(conn.run());
+
+        t1
+    }
+
+    let mut client1 = connect_client(&mut handle).await;
+    let mut client2 = connect_client(&mut handle).await;
+
+    let object_uuid = ObjectUuid::new_v4();
+
+    client1
+        .send(Message::CreateObject(CreateObject {
+            serial: 0,
+            uuid: object_uuid,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateObjectReply(CreateObjectReply {
+        result: CreateObjectResult::Ok(object_cookie),
+        ..
+    }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
+
+    let service_uuid = ServiceUuid::new_v4();
+
+    client1
+        .send(Message::CreateService(CreateService {
+            serial: 0,
+            object_cookie,
+            uuid: service_uuid,
+            version: 0,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateServiceReply(CreateServiceReply {
+        result: CreateServiceResult::Ok(service_cookie),
+        ..
+    }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
+
+    client1
+        .send(Message::CallFunction(
+            CallFunction::with_serialize_value(0, service_cookie, 0, &()).unwrap(),
+        ))
+        .await
+        .unwrap();
+
+    let Message::CallFunction(CallFunction { serial, .. }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
+
+    // Here, client2 replies to the function call that client1 received.
+    client2
+        .send(Message::CallFunctionReply(
+            CallFunctionReply::err_with_serialize_value(serial, &()).unwrap(),
+        ))
+        .await
+        .unwrap();
+
+    // Sync client2 to make sure the CallFunctionReply has been processed by the broker.
+    client2
+        .send(Message::Sync(Sync { serial: 0 }))
+        .await
+        .unwrap();
+
+    let Message::SyncReply(SyncReply { .. }) = client2.receive().await.unwrap() else {
+        panic!();
+    };
+
+    client1
+        .send(Message::CallFunctionReply(
+            CallFunctionReply::ok_with_serialize_value(serial, &()).unwrap(),
+        ))
+        .await
+        .unwrap();
+
+    let Message::CallFunctionReply(CallFunctionReply {
+        result: CallFunctionResult::Ok(_),
+        ..
+    }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
 }

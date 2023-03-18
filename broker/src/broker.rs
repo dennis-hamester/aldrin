@@ -389,7 +389,7 @@ impl Broker {
             Message::SubscribeServices(req) => self.subscribe_services(id, req)?,
             Message::UnsubscribeServices(UnsubscribeServices) => self.unsubscribe_services(id),
             Message::CallFunction(req) => self.call_function(state, id, req)?,
-            Message::CallFunctionReply(req) => self.call_function_reply(state, req),
+            Message::CallFunctionReply(req) => self.call_function_reply(state, id, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
             Message::EmitEvent(req) => self.emit_event(state, id, req),
@@ -797,17 +797,29 @@ impl Broker {
         Ok(())
     }
 
-    fn call_function_reply(&mut self, state: &mut State, req: CallFunctionReply) {
-        let call = match self.function_calls.remove(req.serial) {
+    fn call_function_reply(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CallFunctionReply,
+    ) {
+        let call = match self.function_calls.get(req.serial) {
             Some(call) => call,
             None => return,
         };
+
+        let obj = self.objs.get(&call.callee_obj).expect("inconsistent state");
+        if obj.conn_id() != id {
+            return;
+        }
 
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_function_calls -= 1;
             self.statistics.functions_replied += 1;
         }
+
+        let call = self.function_calls.remove(req.serial).unwrap();
 
         let svc = self
             .svcs

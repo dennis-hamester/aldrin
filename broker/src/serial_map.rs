@@ -25,6 +25,10 @@ impl<T> SerialMap<T> {
         }
     }
 
+    pub fn get(&self, serial: u32) -> Option<&T> {
+        self.elems.get(&serial)
+    }
+
     pub fn remove(&mut self, serial: u32) -> Option<T> {
         self.elems.remove(&serial)
     }
