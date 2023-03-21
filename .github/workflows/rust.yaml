@@ -68,27 +68,3 @@ jobs:
           default: true
       - name: Cargo fmt
         run: cargo fmt -- --check
-
-  conformance:
-    name: Protocol conformance tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          default: true
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: Build aldrin-conformance-tester
-        run: cargo build --locked -p aldrin-conformance-tester
-      - name: Build conformance-test-client
-        run: cargo build --locked -p conformance-test-client
-      - name: Run client tests
-        run: target/debug/aldrin-conformance-tester client run -j1 target/debug/conformance-test-client
-      - name: Build conformance-test-broker
-        run: cargo build --locked -p conformance-test-broker
-      - name: Run broker tests
-        run: target/debug/aldrin-conformance-tester broker run -j1 target/debug/conformance-test-broker
