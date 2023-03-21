@@ -271,20 +271,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "conformance-test-client"
-version = "0.0.0"
-dependencies = [
- "aldrin-client",
- "aldrin-conformance-test-shared",
- "aldrin-proto",
- "anyhow",
- "futures",
- "serde_json",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
