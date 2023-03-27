@@ -137,7 +137,7 @@ dependencies = [
  "aldrin-proto",
  "proc-macro2",
  "quote",
- "syn 1.0.107",
+ "syn 2.0.10",
 ]
 
 [[package]]
