@@ -1,0 +1,26 @@
+{
+    "name": "connect-version-too-low",
+    "description": "Connect with a version that is too low",
+    "long-description": "A client connects unsucessfully with a protocol version that is too low.",
+    "message-types": [
+        "connect",
+        "connect-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "connect",
+            "version": 11,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "connect-reply",
+            "result": "version-mismatch",
+            "version": 12
+        }
+    ]
+}
