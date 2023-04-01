@@ -4,7 +4,8 @@
     "long-description": "A client connects and disconnects without sending any messages.",
     "steps": [
         {
-            "type": "connect"
+            "type": "connect",
+            "handshake": false
         },
         {
             "type": "remove-client"
