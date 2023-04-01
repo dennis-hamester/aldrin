@@ -1,0 +1,37 @@
+{
+    "name": "connect-and-shutdown",
+    "description": "Connect and shut down",
+    "long-description": "A client connects successfully and shuts down again.",
+    "message-types": [
+        "connect",
+        "connect-reply",
+        "shutdown"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "handshake": false,
+            "sync": false
+        },
+        {
+            "type": "send",
+            "message": "connect",
+            "version": 12,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "connect-reply",
+            "result": "ok",
+            "value-type": "none"
+        },
+        {
+            "type": "send",
+            "message": "shutdown"
+        },
+        {
+            "type": "receive",
+            "message": "shutdown"
+        }
+    ]
+}
