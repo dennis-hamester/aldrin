@@ -12,6 +12,18 @@ impl Message {
     pub fn to_proto(&self, _ctx: &Context) -> Result<ProtoMessage> {
         match *self {}
     }
+
+    pub fn matches(&self, _other: &Message, _ctx: &Context) -> Result<bool> {
+        todo!()
+    }
+
+    pub fn update_context(&self, _other: &Message, _ctx: &mut Context) -> Result<()> {
+        todo!()
+    }
+
+    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+        match *self {}
+    }
 }
 
 impl TryFrom<ProtoMessage> for Message {

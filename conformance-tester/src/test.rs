@@ -1,4 +1,5 @@
 mod connect_client;
+mod receive;
 mod remove_client;
 mod send;
 mod step;
@@ -17,6 +18,7 @@ use std::path::Path;
 use tokio::time::Instant;
 
 pub use connect_client::ConnectClient;
+pub use receive::Receive;
 pub use remove_client::RemoveClient;
 pub use send::Send;
 pub use step::Step;
