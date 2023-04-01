@@ -1,6 +1,7 @@
 mod connect_client;
 mod connection_closed;
 mod receive;
+mod receive_discard_until;
 mod remove_client;
 mod send;
 mod step;
@@ -22,6 +23,7 @@ use tokio::time::Instant;
 pub use connect_client::ConnectClient;
 pub use connection_closed::ConnectionClosed;
 pub use receive::Receive;
+pub use receive_discard_until::ReceiveDiscardUntil;
 pub use remove_client::RemoveClient;
 pub use send::Send;
 pub use step::Step;
