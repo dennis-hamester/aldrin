@@ -1,5 +1,6 @@
 mod connect;
 mod connect_reply;
+mod shutdown;
 mod sync;
 mod sync_reply;
 
@@ -11,6 +12,7 @@ use std::fmt;
 
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
+pub use shutdown::Shutdown;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 
@@ -19,6 +21,7 @@ pub use sync_reply::SyncReply;
 pub enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
+    Shutdown(Shutdown),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -28,6 +31,7 @@ impl Message {
         match self {
             Self::Connect(msg) => msg.to_proto(ctx).map(ProtoMessage::Connect),
             Self::ConnectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::ConnectReply),
+            Self::Shutdown(msg) => msg.to_proto(ctx).map(ProtoMessage::Shutdown),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -37,6 +41,7 @@ impl Message {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
+            (Self::Shutdown(msg), Self::Shutdown(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -47,6 +52,7 @@ impl Message {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
+            (Self::Shutdown(msg), Self::Shutdown(other)) => msg.update_context(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -57,6 +63,7 @@ impl Message {
         match self {
             Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
             Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
+            Self::Shutdown(msg) => msg.apply_context(ctx).map(Self::Shutdown),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -70,6 +77,7 @@ impl TryFrom<ProtoMessage> for Message {
         match msg {
             ProtoMessage::Connect(msg) => msg.try_into().map(Self::Connect),
             ProtoMessage::ConnectReply(msg) => msg.try_into().map(Self::ConnectReply),
+            ProtoMessage::Shutdown(msg) => msg.try_into().map(Self::Shutdown),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
