@@ -1,5 +1,6 @@
 mod connect_client;
 mod remove_client;
+mod send;
 mod step;
 
 use crate::broker::Broker;
@@ -17,6 +18,7 @@ use tokio::time::Instant;
 
 pub use connect_client::ConnectClient;
 pub use remove_client::RemoveClient;
+pub use send::Send;
 pub use step::Step;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {

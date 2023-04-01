@@ -1,3 +1,4 @@
+use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -6,6 +7,12 @@ use std::fmt;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
 pub enum Message {}
+
+impl Message {
+    pub fn to_proto(&self, _ctx: &Context) -> Result<ProtoMessage> {
+        match *self {}
+    }
+}
 
 impl TryFrom<ProtoMessage> for Message {
     type Error = Error;

@@ -1,4 +1,4 @@
-use super::{ConnectClient, RemoveClient};
+use super::{ConnectClient, RemoveClient, Send};
 use crate::broker::Broker;
 use crate::context::Context;
 use anyhow::Result;
@@ -10,6 +10,7 @@ use tokio::time::Instant;
 pub enum Step {
     Connect(ConnectClient),
     RemoveClient(RemoveClient),
+    Send(Send),
 }
 
 impl Step {
@@ -17,6 +18,7 @@ impl Step {
         match self {
             Self::Connect(step) => step.run(broker, ctx, timeout).await,
             Self::RemoveClient(step) => step.run(ctx, timeout).await,
+            Self::Send(step) => step.run(ctx, timeout).await,
         }
     }
 }
