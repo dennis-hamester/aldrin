@@ -3,6 +3,7 @@ mod receive;
 mod remove_client;
 mod send;
 mod step;
+mod sync;
 
 use crate::broker::Broker;
 use crate::context::Context;
@@ -22,6 +23,7 @@ pub use receive::Receive;
 pub use remove_client::RemoveClient;
 pub use send::Send;
 pub use step::Step;
+pub use sync::SyncStep;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     let sources = [

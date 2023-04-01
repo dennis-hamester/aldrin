@@ -1,4 +1,4 @@
-use super::{ConnectClient, Receive, RemoveClient, Send};
+use super::{ConnectClient, Receive, RemoveClient, Send, SyncStep};
 use crate::broker::Broker;
 use crate::context::Context;
 use anyhow::Result;
@@ -12,6 +12,7 @@ pub enum Step {
     RemoveClient(RemoveClient),
     Receive(Receive),
     Send(Send),
+    Sync(SyncStep),
 }
 
 impl Step {
@@ -21,6 +22,7 @@ impl Step {
             Self::RemoveClient(step) => step.run(ctx, timeout).await,
             Self::Receive(step) => step.run(ctx, timeout).await,
             Self::Send(step) => step.run(ctx, timeout).await,
+            Self::Sync(step) => step.run(ctx, timeout).await,
         }
     }
 }
