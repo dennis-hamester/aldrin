@@ -4,6 +4,7 @@ mod receive;
 mod receive_discard_until;
 mod remove_client;
 mod send;
+mod shutdown;
 mod step;
 mod sync;
 
@@ -26,6 +27,7 @@ pub use receive::Receive;
 pub use receive_discard_until::ReceiveDiscardUntil;
 pub use remove_client::RemoveClient;
 pub use send::Send;
+pub use shutdown::ShutdownStep;
 pub use step::Step;
 pub use sync::SyncStep;
 

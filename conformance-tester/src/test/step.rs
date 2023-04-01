@@ -1,5 +1,6 @@
 use super::{
-    ConnectClient, ConnectionClosed, Receive, ReceiveDiscardUntil, RemoveClient, Send, SyncStep,
+    ConnectClient, ConnectionClosed, Receive, ReceiveDiscardUntil, RemoveClient, Send,
+    ShutdownStep, SyncStep,
 };
 use crate::broker::Broker;
 use crate::context::Context;
@@ -12,6 +13,7 @@ use tokio::time::Instant;
 pub enum Step {
     Connect(ConnectClient),
     RemoveClient(RemoveClient),
+    Shutdown(ShutdownStep),
     Receive(Receive),
     ReceiveDiscardUntil(ReceiveDiscardUntil),
     Send(Send),
@@ -24,6 +26,7 @@ impl Step {
         match self {
             Self::Connect(step) => step.run(broker, ctx, timeout).await,
             Self::RemoveClient(step) => step.run(ctx, timeout).await,
+            Self::Shutdown(step) => step.run(ctx, timeout).await,
             Self::Receive(step) => step.run(ctx, timeout).await,
             Self::ReceiveDiscardUntil(step) => step.run(ctx, timeout).await,
             Self::Send(step) => step.run(ctx, timeout).await,
