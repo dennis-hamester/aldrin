@@ -1,0 +1,24 @@
+{
+    "name": "sync",
+    "description": "Synchronize with broker",
+    "long-description": "A client synchronizes with the broker.",
+    "message-types": [
+        "sync",
+        "sync-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "sync",
+            "serial": 0
+        },
+        {
+            "type": "receive",
+            "message": "sync-reply",
+            "serial": 0
+        }
+    ]
+}

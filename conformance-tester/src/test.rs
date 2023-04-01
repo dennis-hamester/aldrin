@@ -29,6 +29,7 @@ pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
         include_str!("../tests/connect-ok.json"),
         include_str!("../tests/connect-version-too-high.json"),
         include_str!("../tests/connect-version-too-low.json"),
+        include_str!("../tests/sync.json"),
     ];
 
     let mut tests: Vec<Test> = sources
