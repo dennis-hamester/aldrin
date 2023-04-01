@@ -1,4 +1,5 @@
 mod connect_client;
+mod remove_client;
 mod step;
 
 use crate::broker::Broker;
@@ -15,6 +16,7 @@ use std::path::Path;
 use tokio::time::Instant;
 
 pub use connect_client::ConnectClient;
+pub use remove_client::RemoveClient;
 pub use step::Step;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {

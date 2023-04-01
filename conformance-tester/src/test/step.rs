@@ -1,4 +1,4 @@
-use super::ConnectClient;
+use super::{ConnectClient, RemoveClient};
 use crate::broker::Broker;
 use crate::context::Context;
 use anyhow::Result;
@@ -9,12 +9,14 @@ use tokio::time::Instant;
 #[serde(rename_all = "kebab-case", tag = "type")]
 pub enum Step {
     Connect(ConnectClient),
+    RemoveClient(RemoveClient),
 }
 
 impl Step {
     pub async fn run(&self, broker: &Broker, ctx: &mut Context, timeout: Instant) -> Result<()> {
         match self {
             Self::Connect(step) => step.run(broker, ctx, timeout).await,
+            Self::RemoveClient(step) => step.run(ctx, timeout).await,
         }
     }
 }
