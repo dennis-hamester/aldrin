@@ -24,7 +24,10 @@ pub use send::Send;
 pub use step::Step;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
-    let sources = [include_str!("../tests/connect-and-disconnect.json")];
+    let sources = [
+        include_str!("../tests/connect-and-disconnect.json"),
+        include_str!("../tests/connect-ok.json"),
+    ];
 
     let mut tests: Vec<Test> = sources
         .into_iter()

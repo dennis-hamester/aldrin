@@ -1,0 +1,26 @@
+{
+    "name": "connect-ok",
+    "description": "Connect successfully",
+    "long-description": "A client connects successfully with the correct protocol version.",
+    "message-types": [
+        "connect",
+        "connect-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "connect",
+            "version": 12,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "connect-reply",
+            "result": "ok",
+            "value-type": "none"
+        }
+    ]
+}
