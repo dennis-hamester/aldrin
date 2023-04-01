@@ -12,7 +12,7 @@ use tokio::time::Instant;
 pub struct Broker {
     child: Child,
     stderr: JoinHandle<Vec<u8>>,
-    _port: u16,
+    port: u16,
 }
 
 impl Broker {
@@ -47,8 +47,12 @@ impl Broker {
         Ok(Self {
             child,
             stderr,
-            _port: port,
+            port,
         })
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
     }
 
     pub async fn shut_down(&mut self, timeout: Instant) -> Result<()> {
