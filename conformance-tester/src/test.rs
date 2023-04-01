@@ -1,4 +1,5 @@
 mod connect_client;
+mod connection_closed;
 mod receive;
 mod remove_client;
 mod send;
@@ -19,6 +20,7 @@ use std::path::Path;
 use tokio::time::Instant;
 
 pub use connect_client::ConnectClient;
+pub use connection_closed::ConnectionClosed;
 pub use receive::Receive;
 pub use remove_client::RemoveClient;
 pub use send::Send;
