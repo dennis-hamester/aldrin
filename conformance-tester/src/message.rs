@@ -1,4 +1,5 @@
 mod connect;
+mod connect_reply;
 
 use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
@@ -7,35 +8,43 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 pub use connect::Connect;
+pub use connect_reply::ConnectReply;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
 pub enum Message {
     Connect(Connect),
+    ConnectReply(ConnectReply),
 }
 
 impl Message {
     pub fn to_proto(&self, ctx: &Context) -> Result<ProtoMessage> {
         match self {
             Self::Connect(msg) => msg.to_proto(ctx).map(ProtoMessage::Connect),
+            Self::ConnectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::ConnectReply),
         }
     }
 
     pub fn matches(&self, other: &Message, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
+            (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
+            _ => Ok(false),
         }
     }
 
     pub fn update_context(&self, other: &Message, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
+            (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
+            _ => unreachable!(),
         }
     }
 
     pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
+            Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
         }
     }
 }
@@ -46,6 +55,7 @@ impl TryFrom<ProtoMessage> for Message {
     fn try_from(msg: ProtoMessage) -> Result<Self> {
         match msg {
             ProtoMessage::Connect(msg) => msg.try_into().map(Self::Connect),
+            ProtoMessage::ConnectReply(msg) => msg.try_into().map(Self::ConnectReply),
             _ => todo!(),
         }
     }
