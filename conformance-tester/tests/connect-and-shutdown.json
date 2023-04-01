@@ -11,7 +11,8 @@
         {
             "type": "connect",
             "handshake": false,
-            "sync": false
+            "sync": false,
+            "shutdown": false
         },
         {
             "type": "send",

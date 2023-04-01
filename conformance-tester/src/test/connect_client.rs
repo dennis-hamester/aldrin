@@ -20,6 +20,9 @@ pub struct ConnectClient {
 
     #[serde(default = "default_true")]
     pub sync: bool,
+
+    #[serde(default = "default_true")]
+    pub shutdown: bool,
 }
 
 fn default_true() -> bool {
@@ -34,7 +37,7 @@ impl ConnectClient {
     }
 
     async fn run_impl(&self, broker: &Broker, ctx: &mut Context, timeout: Instant) -> Result<()> {
-        let client = Client::connect(broker.port(), timeout, self.sync).await?;
+        let client = Client::connect(broker.port(), timeout, self.sync, self.shutdown).await?;
         ctx.set_client(self.client.clone(), client)?;
 
         if self.handshake {

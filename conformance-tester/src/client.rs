@@ -13,10 +13,11 @@ type TransportBox = Box<dyn AsyncTransport<Error = TokioTransportError> + Unpin 
 pub struct Client {
     transport: TransportBox,
     sync: bool,
+    shutdown: bool,
 }
 
 impl Client {
-    pub async fn connect(port: u16, timeout: Instant, sync: bool) -> Result<Self> {
+    pub async fn connect(port: u16, timeout: Instant, sync: bool, shutdown: bool) -> Result<Self> {
         let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, port);
 
         let stream = TcpStream::connect(addr)
@@ -26,11 +27,19 @@ impl Client {
             .with_context(|| anyhow!("failed to connect to broker at {}", addr))?;
 
         let transport = Box::new(TokioTransport::new(stream));
-        Ok(Self { transport, sync })
+        Ok(Self {
+            transport,
+            sync,
+            shutdown,
+        })
     }
 
     pub fn sync(&self) -> bool {
         self.sync
+    }
+
+    pub fn shutdown(&self) -> bool {
+        self.shutdown
     }
 
     pub async fn send(&mut self, msg: Message) -> Result<()> {

@@ -150,6 +150,21 @@ impl Test {
             })?;
         }
 
+        for client in &clients {
+            if !ctx.get_client(client).unwrap().shutdown() {
+                continue;
+            }
+
+            let shutdown = ShutdownStep {
+                client: client.clone(),
+            };
+
+            shutdown
+                .run(&mut ctx, timeout)
+                .await
+                .with_context(|| anyhow!("implicit final shutdown of client `{client}` failed"))?;
+        }
+
         Ok(())
     }
 }
