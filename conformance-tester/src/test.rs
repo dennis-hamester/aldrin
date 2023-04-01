@@ -126,6 +126,23 @@ impl Test {
                 .with_context(|| anyhow!("test failed at step {}", i + 1))?;
         }
 
+        let clients: Vec<_> = ctx.client_ids().cloned().collect();
+
+        for client in &clients {
+            if !ctx.get_client(client).unwrap().sync() {
+                continue;
+            }
+
+            let sync = SyncStep {
+                client: client.clone(),
+                serial: None,
+            };
+
+            sync.run(&mut ctx, timeout).await.with_context(|| {
+                anyhow!("implicit final synchronization of client `{client}` failed")
+            })?;
+        }
+
         Ok(())
     }
 }

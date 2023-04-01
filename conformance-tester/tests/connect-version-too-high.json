@@ -9,7 +9,8 @@
     "steps": [
         {
             "type": "connect",
-            "handshake": false
+            "handshake": false,
+            "sync": false
         },
         {
             "type": "send",
