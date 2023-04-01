@@ -1,5 +1,6 @@
 mod connect;
 mod connect_reply;
+mod sync;
 
 use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
@@ -9,12 +10,14 @@ use std::fmt;
 
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
+pub use sync::Sync;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
 pub enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
+    Sync(Sync),
 }
 
 impl Message {
@@ -22,6 +25,7 @@ impl Message {
         match self {
             Self::Connect(msg) => msg.to_proto(ctx).map(ProtoMessage::Connect),
             Self::ConnectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::ConnectReply),
+            Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
         }
     }
 
@@ -29,6 +33,7 @@ impl Message {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
+            (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -37,6 +42,7 @@ impl Message {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
+            (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
         }
     }
@@ -45,6 +51,7 @@ impl Message {
         match self {
             Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
             Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
+            Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
         }
     }
 }
@@ -56,6 +63,7 @@ impl TryFrom<ProtoMessage> for Message {
         match msg {
             ProtoMessage::Connect(msg) => msg.try_into().map(Self::Connect),
             ProtoMessage::ConnectReply(msg) => msg.try_into().map(Self::ConnectReply),
+            ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             _ => todo!(),
         }
     }

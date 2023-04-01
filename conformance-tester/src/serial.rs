@@ -1,4 +1,5 @@
-use anyhow::Result;
+use crate::context::Context;
+use anyhow::{anyhow, Result};
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
@@ -8,6 +9,50 @@ pub enum Serial {
     Const(u32),
     Get(String),
     Set(String),
+}
+
+impl Serial {
+    pub fn get(&self, ctx: &Context) -> Result<u32> {
+        match self {
+            Self::Const(serial) => Ok(*serial),
+            Self::Get(id) => ctx.get_serial(id),
+            Self::Set(_) => Err(anyhow!("cannot use a `set:` serial")),
+        }
+    }
+
+    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+        let s1 = match self {
+            Self::Const(s1) => *s1,
+            Self::Get(id) => ctx.get_serial(id)?,
+            Self::Set(_) => return Ok(true),
+        };
+
+        let Self::Const(s2) = other else {
+            unreachable!();
+        };
+
+        Ok(s1 == *s2)
+    }
+
+    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+        let Self::Set(id) = self else {
+            return Ok(());
+        };
+
+        let Self::Const(s) = other else {
+            unreachable!();
+        };
+
+        ctx.set_serial(id.clone(), *s)
+    }
+
+    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+        match self {
+            Self::Const(serial) => Ok(Self::Const(*serial)),
+            Self::Get(id) => ctx.get_serial(id).map(Self::Const),
+            Self::Set(id) => Ok(Self::Set(id.clone())),
+        }
+    }
 }
 
 impl Serialize for Serial {
