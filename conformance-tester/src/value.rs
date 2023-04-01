@@ -15,6 +15,16 @@ pub enum Value {
     },
 }
 
+impl Value {
+    pub fn matches(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::None, Self::None) | (Self::Ignore, _) | (_, Self::Ignore) => true,
+            (Self::I32(v1), Self::I32(v2)) => v1 == v2,
+            _ => false,
+        }
+    }
+}
+
 impl aldrin_proto::Serialize for Value {
     fn serialize(&self, serializer: aldrin_proto::Serializer) -> Result<(), SerializeError> {
         match self {

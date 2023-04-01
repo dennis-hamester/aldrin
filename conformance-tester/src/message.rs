@@ -1,36 +1,53 @@
+mod connect;
+
 use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub use connect::Connect;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
-pub enum Message {}
+pub enum Message {
+    Connect(Connect),
+}
 
 impl Message {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<ProtoMessage> {
-        match *self {}
+    pub fn to_proto(&self, ctx: &Context) -> Result<ProtoMessage> {
+        match self {
+            Self::Connect(msg) => msg.to_proto(ctx).map(ProtoMessage::Connect),
+        }
     }
 
-    pub fn matches(&self, _other: &Message, _ctx: &Context) -> Result<bool> {
-        todo!()
+    pub fn matches(&self, other: &Message, ctx: &Context) -> Result<bool> {
+        match (self, other) {
+            (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
+        }
     }
 
-    pub fn update_context(&self, _other: &Message, _ctx: &mut Context) -> Result<()> {
-        todo!()
+    pub fn update_context(&self, other: &Message, ctx: &mut Context) -> Result<()> {
+        match (self, other) {
+            (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
+        }
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        match *self {}
+    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+        match self {
+            Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
+        }
     }
 }
 
 impl TryFrom<ProtoMessage> for Message {
     type Error = Error;
 
-    fn try_from(_msg: ProtoMessage) -> Result<Self> {
-        todo!()
+    fn try_from(msg: ProtoMessage) -> Result<Self> {
+        match msg {
+            ProtoMessage::Connect(msg) => msg.try_into().map(Self::Connect),
+            _ => todo!(),
+        }
     }
 }
 
