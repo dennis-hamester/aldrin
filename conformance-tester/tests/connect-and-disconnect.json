@@ -1,0 +1,13 @@
+{
+    "name": "connect-and-disconnect",
+    "description": "Connect and disconnect without any messages",
+    "long-description": "A client connects and disconnects without sending any messages.",
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "remove-client"
+        }
+    ]
+}

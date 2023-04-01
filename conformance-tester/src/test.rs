@@ -20,7 +20,7 @@ pub use remove_client::RemoveClient;
 pub use step::Step;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
-    let sources = [];
+    let sources = [include_str!("../tests/connect-and-disconnect.json")];
 
     let mut tests: Vec<Test> = sources
         .into_iter()
