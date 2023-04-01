@@ -1,195 +1,115 @@
-use crate::output;
-use anyhow::{anyhow, Error, Result};
-use clap::Parser;
-use std::collections::VecDeque;
-use std::fmt;
-use std::future::Future;
-use std::pin::Pin;
-use std::str::FromStr;
-use termcolor::WriteColor;
-use tokio::runtime::Runtime;
-use tokio::task::JoinHandle;
+mod step;
 
-#[derive(Parser)]
-pub struct CommonRunArgs {
-    /// Maximum number of tests to run in parallel
-    ///
-    /// If unspecified, then the number of CPUs is used.
-    #[clap(short, long)]
-    jobs: Option<usize>,
+use crate::broker::Broker;
+use crate::context::Context;
+use crate::message_type::MessageType;
+use anyhow::{anyhow, Context as _, Result};
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use std::borrow::Cow;
+use std::collections::{BTreeMap, BTreeSet};
+use std::ffi::OsStr;
+use std::fs::{self, File};
+use std::path::Path;
+use tokio::time::Instant;
 
-    /// Filter tests by name
-    ///
-    /// Tests will be filtered by sub-string matches. If multiple filters are supplied, a test will
-    /// be selected if it matches at least one filter (logical or).
-    #[clap(short, long, number_of_values = 1)]
-    test: Vec<String>,
+pub use step::Step;
 
-    /// Filter tests by message
-    ///
-    /// If multiple messages are supplied, a test will be selected if it involves at least one of
-    /// the supplied messages.
-    ///
-    /// Valid messages are: connect, connect-reply and shutdown.
-    #[clap(short, long, number_of_values = 1)]
-    message: Vec<MessageType>,
-}
+pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
+    let sources = [];
 
-pub struct RunError {
-    pub error: Error,
-    pub stderr: Vec<u8>,
-}
+    let mut tests: Vec<Test> = sources
+        .into_iter()
+        .map(|src| {
+            serde_json::from_str(src)
+                .with_context(|| anyhow!("failed to parse built-in test:\n{src}"))
+                .unwrap()
+        })
+        .collect();
 
-impl RunError {
-    pub fn bare(err: impl Into<Error>) -> Self {
-        RunError {
-            error: err.into(),
-            stderr: Vec::new(),
-        }
-    }
+    tests.sort_unstable_by(|a, b| a.name.cmp(&b.name));
+    tests
+});
 
-    pub fn with_stderr(error: impl Into<Error>, stderr: Vec<u8>) -> Self {
-        RunError {
-            error: error.into(),
-            stderr,
-        }
-    }
-
-    pub fn context<C>(self, context: C) -> Self
-    where
-        C: fmt::Display + Send + Sync + 'static,
-    {
-        RunError {
-            error: self.error.context(context),
-            stderr: self.stderr,
-        }
-    }
-}
-
-pub type RunBox<Args> =
-    Box<dyn FnOnce(Args) -> Pin<Box<dyn Future<Output = Result<(), RunError>> + Send>>>;
-
-pub trait Test {
-    type Args;
-
-    fn name(&self) -> &'static str;
-    fn short(&self) -> &'static str;
-    fn long(&self) -> Option<&'static str>;
-    fn message_types(&self) -> &[MessageType];
-    fn run(&mut self) -> Option<RunBox<Self::Args>>;
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum MessageType {
-    Connect,
-    ConnectReply,
-    Shutdown,
-    CreateChannel,
-    CreateChannelReply,
-    CloseChannelEnd,
-    CloseChannelEndReply,
-    SendItem,
-}
-
-impl fmt::Display for MessageType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Connect => f.pad("connect"),
-            Self::ConnectReply => f.pad("connect-reply"),
-            Self::Shutdown => f.pad("shutdown"),
-            Self::CreateChannel => f.pad("create-channel"),
-            Self::CreateChannelReply => f.pad("create-channel-reply"),
-            Self::CloseChannelEnd => f.pad("close-channel-end"),
-            Self::CloseChannelEndReply => f.pad("close-channel-end-reply"),
-            Self::SendItem => f.pad("send-item"),
-        }
-    }
-}
-
-impl FromStr for MessageType {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "connect" => Ok(Self::Connect),
-            "connect-reply" => Ok(Self::ConnectReply),
-            "shutdown" => Ok(Self::Shutdown),
-            "create-channel" => Ok(Self::CreateChannel),
-            "create-channel-reply" => Ok(Self::CreateChannelReply),
-            "close-channel-end" => Ok(Self::CloseChannelEnd),
-            "close-channel-end-reply" => Ok(Self::CloseChannelEndReply),
-            "send-item" => Ok(Self::SendItem),
-            _ => Err(anyhow!("invalid message")),
-        }
-    }
-}
-
-pub fn run<W, A, I>(mut output: W, args: CommonRunArgs, test_args: A, tests: I) -> Result<bool>
-where
-    W: WriteColor,
-    I: IntoIterator,
-    I::Item: Test<Args = A>,
-    A: Clone,
-{
-    let jobs = match args.jobs {
-        Some(0) => 1,
-        Some(jobs) => jobs,
-        None => num_cpus::get(),
+pub fn get_tests(custom: Option<&Path>) -> Result<Cow<[Test]>> {
+    let Some(custom) = custom else {
+        return Ok(Cow::Borrowed(&*BUILT_IN_TESTS));
     };
 
-    let runtime = Runtime::new()?;
-    let mut queue = VecDeque::with_capacity(jobs);
-    let mut at_least_one = false;
-    let mut all_passed = true;
+    let metadata = fs::metadata(custom).with_context(|| {
+        anyhow!(
+            "failed to determine if `{}` is a file or directory",
+            custom.display()
+        )
+    })?;
 
-    for mut test in tests {
-        if !args.test.is_empty() {
-            let name = test.name();
-            if !args.test.iter().any(|t| name.contains(t)) {
+    if metadata.is_file() {
+        let file =
+            File::open(custom).with_context(|| anyhow!("failed to open `{}`", custom.display()))?;
+        let test: Test = serde_json::from_reader(file)
+            .with_context(|| anyhow!("failed to parse `{}`", custom.display()))?;
+
+        Ok(Cow::Owned(vec![test]))
+    } else {
+        let read_dir = fs::read_dir(custom)
+            .with_context(|| anyhow!("failed to read directory `{}`", custom.display()))?;
+
+        let mut tests = BTreeMap::new();
+        for entry in read_dir {
+            let Ok(entry) = entry else {
                 continue;
+            };
+
+            let path = entry.path();
+            if path.extension() != Some(OsStr::new("json")) {
+                continue;
+            }
+
+            let Ok(metadata) = fs::metadata(&path) else {
+                continue;
+            };
+
+            if !metadata.is_file() {
+                continue;
+            }
+
+            let file = File::open(&path)
+                .with_context(|| anyhow!("failed to open `{}`", path.display()))?;
+            let test: Test = serde_json::from_reader(file)
+                .with_context(|| anyhow!("failed to parse `{}`", path.display()))?;
+
+            if let Some(dup) = tests.insert(test.name.clone(), test) {
+                return Err(anyhow!("duplicate test name `{}`", dup.name));
             }
         }
 
-        if !args.message.is_empty() {
-            let message_types = test.message_types();
-            if !args.message.iter().any(|m| message_types.contains(m)) {
-                continue;
-            }
-        }
-
-        at_least_one = true;
-
-        if queue.len() >= jobs {
-            let (name, join) = queue.pop_front().unwrap();
-            all_passed &= report(&mut output, name, join, &runtime)?;
-        }
-
-        let run_box = test.run().unwrap();
-        let fut = run_box(test_args.clone());
-        let join = runtime.spawn(fut);
-        queue.push_back((test.name(), join));
+        Ok(Cow::Owned(tests.into_values().collect()))
     }
-
-    for (name, join) in queue {
-        all_passed &= report(&mut output, name, join, &runtime)?;
-    }
-
-    if !at_least_one {
-        println!("No test was selected by the supplied filters (-t,--test and -m,--message).");
-    }
-
-    Ok(all_passed)
 }
 
-fn report(
-    mut output: impl WriteColor,
-    name: &str,
-    join: JoinHandle<Result<(), RunError>>,
-    runtime: &Runtime,
-) -> Result<bool> {
-    output::prepare_report(&mut output, name)?;
-    let res = runtime.block_on(join)?;
-    let passed = res.is_ok();
-    output::finish_report(output, res)?;
-    Ok(passed)
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct Test {
+    pub name: String,
+    pub description: Option<String>,
+    pub long_description: Option<String>,
+
+    #[serde(default)]
+    pub message_types: BTreeSet<MessageType>,
+
+    pub steps: Vec<Step>,
+}
+
+impl Test {
+    pub async fn run(&self, broker: &Broker, timeout: Instant) -> Result<()> {
+        let mut ctx = Context::new();
+
+        for (i, step) in self.steps.iter().enumerate() {
+            step.run(broker, &mut ctx, timeout)
+                .await
+                .with_context(|| anyhow!("test failed at step {}", i + 1))?;
+        }
+
+        Ok(())
+    }
 }

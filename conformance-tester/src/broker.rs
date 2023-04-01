@@ -1,92 +1,78 @@
-mod broker_under_test;
-mod tests;
+use crate::util::FutureExt;
+use anyhow::{anyhow, Context, Error, Result};
+use std::ffi::OsStr;
+use std::process::Stdio;
+use std::time::Duration;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+use tokio::process::{Child, Command};
+use tokio::task::JoinHandle;
+use tokio::time::Instant;
 
-use crate::test::{CommonRunArgs, Test};
-use crate::{output, test};
-use anyhow::{anyhow, Result};
-use broker_under_test::BrokerUnderTest;
-use clap::Parser;
-use termcolor::WriteColor;
-
-#[derive(Parser)]
-pub enum Args {
-    /// Lists available broker tests.
-    List,
-
-    /// Describes a test in more detail.
-    Describe(DescribeArgs),
-
-    /// Runs broker tests.
-    Run(RunArgs),
+#[derive(Debug)]
+pub struct Broker {
+    child: Child,
+    stderr: JoinHandle<Vec<u8>>,
+    _port: u16,
 }
 
-#[derive(Parser)]
-#[clap(arg_required_else_help = true)]
-pub struct RunArgs {
-    #[clap(flatten)]
-    common: CommonRunArgs,
+impl Broker {
+    pub async fn new(broker: &OsStr, startup_timeout: Duration) -> Result<Self> {
+        let mut child = Command::new(broker)
+            .kill_on_drop(true)
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .with_context(|| anyhow!("failed to spawn broker process"))?;
 
-    #[clap(flatten)]
-    run_args: BrokerRunArgs,
-}
+        let mut port = String::new();
+        BufReader::new(child.stdout.take().unwrap())
+            .read_line(&mut port)
+            .timeout(startup_timeout)
+            .await
+            .map_err(|_| anyhow!("timeout while reading the port from broker's stdout"))?
+            .with_context(|| anyhow!("failed to read the port from broker's stdout"))?;
+        let port = port
+            .trim_end()
+            .parse()
+            .with_context(|| anyhow!("failed to parse the port from `{port}`"))?;
 
-#[derive(Clone, Parser)]
-pub struct BrokerRunArgs {
-    /// Path to the broker.
-    broker: String,
+        let mut stderr = child.stderr.take().unwrap();
+        let stderr = tokio::spawn(async move {
+            let mut buf = Vec::new();
+            stderr.read_to_end(&mut buf).await.ok();
+            buf
+        });
 
-    /// Timeout in milliseconds for a test
-    #[clap(long, default_value_t = 1000)]
-    timeout: u64,
-
-    /// Timeout in milliseconds for the broker to shut down.
-    ///
-    /// When a test fails, then the broker will be asked to shut down. If it fails to shut down
-    /// within the specified amount of time, then the process will be killed.
-    #[clap(long, default_value_t = 1000)]
-    shutdown_timeout: u64,
-}
-
-#[derive(Parser)]
-#[clap(arg_required_else_help = true)]
-pub struct DescribeArgs {
-    /// Name of the test to describe.
-    test: String,
-}
-
-pub fn run(output: impl WriteColor, args: Args) -> Result<bool> {
-    match args {
-        Args::List => {
-            list(output)?;
-            Ok(true)
-        }
-
-        Args::Describe(args) => {
-            describe(output, &args.test)?;
-            Ok(true)
-        }
-
-        Args::Run(args) => run_tests(output, args),
+        Ok(Self {
+            child,
+            stderr,
+            _port: port,
+        })
     }
-}
 
-fn list(output: impl WriteColor) -> Result<()> {
-    let tests = tests::make_tests();
-    output::list_tests(output, tests)?;
-    Ok(())
-}
+    pub async fn shut_down(&mut self, timeout: Instant) -> Result<()> {
+        match self.child.wait().timeout_at(timeout).await {
+            Ok(Ok(status)) => {
+                if status.success() {
+                    Ok(())
+                } else if let Some(code) = status.code() {
+                    Err(anyhow!("broker shut down with code {}", code))
+                } else {
+                    Err(anyhow!("broker didn't shut down successfully"))
+                }
+            }
 
-fn describe(output: impl WriteColor, test: &str) -> Result<()> {
-    let test = tests::make_tests()
-        .into_iter()
-        .find(|t| t.name() == test)
-        .ok_or_else(|| anyhow!("unknown broker test `{}`", test))?;
-    output::describe_test(output, test)?;
-    Ok(())
-}
+            Ok(Err(e)) => Err(Error::new(e).context(anyhow!("failed to shut down broker"))),
+            Err(_) => Err(anyhow!("timeout while shutting down broker")),
+        }
+    }
 
-fn run_tests(output: impl WriteColor, args: RunArgs) -> Result<bool> {
-    let tests = tests::make_tests();
-    let all_passed = test::run(output, args.common, args.run_args, tests)?;
-    Ok(all_passed)
+    pub async fn take_stderr(&mut self, timeout: Instant) -> Result<Vec<u8>> {
+        match (&mut self.stderr).timeout_at(timeout).await {
+            Ok(Ok(stderr)) => Ok(stderr),
+            Ok(Err(e)) => Err(Error::new(e).context(anyhow!("failed to capture stderr"))),
+            Err(_) => Err(anyhow!("timeout while capturing stderr")),
+        }
+    }
 }

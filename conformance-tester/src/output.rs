@@ -1,10 +1,13 @@
-use crate::test::{RunError, Test};
+use crate::run_error::RunError;
+use crate::test::Test;
+use crate::FilterArgs;
 use anyhow::Result;
 use clap::ColorChoice;
 use is_terminal::IsTerminal;
 use once_cell::sync::Lazy;
 use std::cmp;
 use std::io;
+use std::time::Duration;
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
 fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
@@ -40,60 +43,72 @@ pub fn make_output(color_choice: ColorChoice) -> Result<impl WriteColor> {
     Ok(stream)
 }
 
-pub fn list_tests<O, I>(mut output: O, tests: I) -> Result<()>
+pub fn list_tests<O>(args: FilterArgs, mut output: O, tests: &[Test]) -> Result<()>
 where
     O: WriteColor,
-    I: IntoIterator,
-    I::Item: Test,
 {
-    for test in tests {
+    for test in tests.iter().filter(|test| args.matches(test)) {
         output.set_color(&STYLE_TEST_NAME)?;
-        write!(output, "{}", test.name())?;
+        write!(output, "{}", test.name)?;
         output.set_color(&STYLE_REGULAR)?;
-        write!(output, ": {}", test.short())?;
 
-        write!(output, " [")?;
-
-        let mut first = true;
-        for message_type in test.message_types() {
-            if first {
-                first = false;
-            } else {
-                write!(output, ", ")?;
-            }
-
-            output.set_color(&STYLE_MESSAGE_TYPE)?;
-            write!(output, "{message_type}")?;
-            output.set_color(&STYLE_REGULAR)?;
+        if let Some(ref description) = test.description {
+            write!(output, ": {description}")?;
         }
 
-        writeln!(output, "]")?;
+        if !test.message_types.is_empty() {
+            write!(output, " [")?;
+
+            let mut first = true;
+            for message_type in &test.message_types {
+                if first {
+                    first = false;
+                } else {
+                    write!(output, ", ")?;
+                }
+
+                output.set_color(&STYLE_MESSAGE_TYPE)?;
+                write!(output, "{message_type}")?;
+                output.set_color(&STYLE_REGULAR)?;
+            }
+
+            write!(output, "]")?;
+        }
+
+        writeln!(output)?;
     }
 
     Ok(())
 }
 
-pub fn describe_test(mut output: impl WriteColor, test: impl Test) -> Result<()> {
+pub fn describe_test(mut output: impl WriteColor, test: &Test) -> Result<()> {
     output.set_color(&STYLE_TEST_NAME)?;
-    write!(output, "{}", test.name())?;
+    write!(output, "{}", test.name)?;
     output.set_color(&STYLE_REGULAR)?;
-    writeln!(output, ": {}", test.short())?;
 
-    writeln!(output)?;
-    writeln!(output, "Primarily tested message(s):")?;
-    for message_type in test.message_types() {
-        write!(output, "  - ")?;
-        output.set_color(&STYLE_MESSAGE_TYPE)?;
-        writeln!(output, "{message_type}")?;
-        output.set_color(&STYLE_REGULAR)?;
+    if let Some(ref description) = test.description {
+        writeln!(output, ": {}", description)?;
     }
 
-    writeln!(output)?;
-    let desc = test.long().unwrap_or("No description available.");
-    let termwidth = get_termwidth();
+    if let Some(long_description) = test.long_description.as_deref() {
+        writeln!(output)?;
+        writeln!(output, "Description:")?;
 
-    for line in textwrap::wrap(desc, termwidth - 4) {
-        writeln!(output, "  {line}")?;
+        let termwidth = get_termwidth();
+        for line in textwrap::wrap(long_description, termwidth - 4) {
+            writeln!(output, "  {line}")?;
+        }
+    }
+
+    if !test.message_types.is_empty() {
+        writeln!(output)?;
+        writeln!(output, "Primarily tested message(s):")?;
+        for message_type in &test.message_types {
+            write!(output, "  - ")?;
+            output.set_color(&STYLE_MESSAGE_TYPE)?;
+            writeln!(output, "{message_type}")?;
+            output.set_color(&STYLE_REGULAR)?;
+        }
     }
 
     Ok(())
@@ -118,12 +133,13 @@ fn print_seperator(mut output: impl WriteColor) -> Result<()> {
     Ok(())
 }
 
-pub fn finish_report(mut output: impl WriteColor, res: Result<(), RunError>) -> Result<()> {
+pub fn finish_report(mut output: impl WriteColor, res: Result<Duration, RunError>) -> Result<()> {
     let err = match res {
-        Ok(()) => {
+        Ok(dur) => {
             output.set_color(&STYLE_PASSED)?;
-            writeln!(output, "passed")?;
+            write!(output, "passed")?;
             output.set_color(&STYLE_REGULAR)?;
+            writeln!(output, " ({}ms)", dur.as_millis())?;
             return Ok(());
         }
 

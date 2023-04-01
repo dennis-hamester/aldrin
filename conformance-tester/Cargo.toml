@@ -1,25 +1,17 @@
 [package]
 name = "aldrin-conformance-tester"
-description = "Aldrin broker and client conformance tester"
+description = "Protocol conformance tester for Aldrin brokers"
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
 rust-version = "1.65.0"
 
-[dependencies.aldrin-conformance-test-shared]
-version = "0.1.0"
-path = "../conformance-test-shared"
-default-features = false
-
 [dependencies.aldrin-proto]
 version = "0.1.0"
 path = "../proto"
 default-features = false
-features = [
-    "new-v4-ids",
-    "tokio",
-]
+features = ["tokio"]
 
 [dependencies.anyhow]
 version = "1.0.32"
@@ -40,22 +32,19 @@ features = [
     "wrap_help",
 ]
 
-[dependencies.futures]
-version = "0.3.21"
-default-features = false
-
 [dependencies.is-terminal]
 version = "0.4.2"
-default-features = false
-
-[dependencies.num_cpus]
-version = "1.13.0"
 default-features = false
 
 [dependencies.once_cell]
 version = "1.4.0"
 default-features = false
 features = ["std"]
+
+[dependencies.serde]
+version = "1.0.104"
+default-features = false
+features = ["derive"]
 
 [dependencies.serde_json]
 version = "1.0.48"
@@ -82,7 +71,6 @@ features = [
     "time",
 ]
 
-[dependencies.tokio-util]
-version = "0.7.1"
+[dependencies.uuid]
+version = "1.2.1"
 default-features = false
-features = ["codec"]

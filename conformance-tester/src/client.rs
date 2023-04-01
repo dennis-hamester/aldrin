@@ -1,92 +1,49 @@
-mod client_under_test;
-mod tests;
+use crate::util::FutureExt;
+use aldrin_proto::message::Message;
+use aldrin_proto::tokio::{TokioTransport, TokioTransportError};
+use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
+use anyhow::{anyhow, Context, Error, Result};
+use std::io::ErrorKind;
+use std::net::{Ipv4Addr, SocketAddrV4};
+use tokio::net::TcpStream;
+use tokio::time::Instant;
 
-use crate::test::{CommonRunArgs, Test};
-use crate::{output, test};
-use anyhow::{anyhow, Result};
-use clap::Parser;
-use client_under_test::ClientUnderTest;
-use termcolor::WriteColor;
+type TransportBox = Box<dyn AsyncTransport<Error = TokioTransportError> + Unpin + Send + Sync>;
 
-#[derive(Parser)]
-pub enum Args {
-    /// Lists available client tests.
-    List,
-
-    /// Describes a test in more detail.
-    Describe(DescribeArgs),
-
-    /// Runs client tests.
-    Run(RunArgs),
+pub struct Client {
+    transport: TransportBox,
 }
 
-#[derive(Parser)]
-#[clap(arg_required_else_help = true)]
-pub struct RunArgs {
-    #[clap(flatten)]
-    common: CommonRunArgs,
+impl Client {
+    pub async fn connect(port: u16, timeout: Instant) -> Result<Self> {
+        let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, port);
 
-    #[clap(flatten)]
-    run_args: ClientRunArgs,
-}
+        let stream = TcpStream::connect(addr)
+            .timeout_at(timeout)
+            .await
+            .map_err(|_| anyhow!("timeout while connecting to broker at {}", addr))?
+            .with_context(|| anyhow!("failed to connect to broker at {}", addr))?;
 
-#[derive(Clone, Parser)]
-pub struct ClientRunArgs {
-    /// Path to the client.
-    client: String,
-
-    /// Timeout in milliseconds for a test.
-    #[clap(long, default_value_t = 1000)]
-    timeout: u64,
-
-    /// Timeout in milliseconds for the client to shut down.
-    ///
-    /// When a test fails, then the client will be asked to shut down. If it fails to shut down
-    /// within the specified amount of time, then the process will be killed.
-    #[clap(long, default_value_t = 1000)]
-    shutdown_timeout: u64,
-}
-
-#[derive(Parser)]
-#[clap(arg_required_else_help = true)]
-pub struct DescribeArgs {
-    /// Name of the test to describe.
-    test: String,
-}
-
-pub fn run(output: impl WriteColor, args: Args) -> Result<bool> {
-    match args {
-        Args::List => {
-            list(output)?;
-            Ok(true)
-        }
-
-        Args::Describe(args) => {
-            describe(output, &args.test)?;
-            Ok(true)
-        }
-
-        Args::Run(args) => run_tests(output, args),
+        let transport = Box::new(TokioTransport::new(stream));
+        Ok(Self { transport })
     }
-}
 
-fn list(output: impl WriteColor) -> Result<()> {
-    let tests = tests::make_tests();
-    output::list_tests(output, tests)?;
-    Ok(())
-}
+    pub async fn send(&mut self, msg: Message) -> Result<()> {
+        self.transport
+            .send_and_flush(msg)
+            .await
+            .map_err(Error::from)
+    }
 
-fn describe(output: impl WriteColor, test: &str) -> Result<()> {
-    let test = tests::make_tests()
-        .into_iter()
-        .find(|t| t.name() == test)
-        .ok_or_else(|| anyhow!("unknown client test `{}`", test))?;
-    output::describe_test(output, test)?;
-    Ok(())
-}
+    pub async fn receive(&mut self) -> Result<Message> {
+        self.transport.receive().await.map_err(Error::from)
+    }
 
-fn run_tests(output: impl WriteColor, args: RunArgs) -> Result<bool> {
-    let tests = tests::make_tests();
-    let all_passed = test::run(output, args.common, args.run_args, tests)?;
-    Ok(all_passed)
+    pub async fn expect_closed(&mut self) -> Result<(), Result<Message>> {
+        match self.transport.receive().await {
+            Ok(msg) => Err(Ok(msg)),
+            Err(TokioTransportError::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(()),
+            Err(e) => Err(Err(Error::from(e))),
+        }
+    }
 }
