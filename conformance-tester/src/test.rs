@@ -1,6 +1,7 @@
 mod connect_client;
 mod connection_closed;
 mod create_object;
+mod destroy_object;
 mod receive;
 mod receive_discard_until;
 mod remove_client;
@@ -25,6 +26,7 @@ use tokio::time::Instant;
 pub use connect_client::ConnectClient;
 pub use connection_closed::ConnectionClosed;
 pub use create_object::CreateObjectStep;
+pub use destroy_object::DestroyObjectStep;
 pub use receive::Receive;
 pub use receive_discard_until::ReceiveDiscardUntil;
 pub use remove_client::RemoveClient;
