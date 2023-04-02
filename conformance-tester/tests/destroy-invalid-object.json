@@ -1,0 +1,26 @@
+{
+    "name": "destroy-invalid-object",
+    "description": "Destroy an invalid object",
+    "long-description": "A client tries to destroy an invalid object.",
+    "message-types": [
+        "destroy-object",
+        "destroy-object-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "destroy-object",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-object-reply",
+            "serial": 0,
+            "result": "invalid-object"
+        }
+    ]
+}
