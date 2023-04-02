@@ -1,0 +1,31 @@
+{
+    "name": "create-object-duplicate",
+    "description": "Create a duplicate object",
+    "long-description": "A client tries to create a duplicate object.",
+    "message-types": [
+        "create-object",
+        "create-object-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "create-object",
+            "serial": 0,
+            "uuid": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "create-object-reply",
+            "serial": 0,
+            "result": "duplicate-object"
+        }
+    ]
+}
