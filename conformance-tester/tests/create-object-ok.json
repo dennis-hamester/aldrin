@@ -1,0 +1,27 @@
+{
+    "name": "create-object-ok",
+    "description": "Create an object",
+    "long-description": "A client successfully creates an object.",
+    "message-types": [
+        "create-object",
+        "create-object-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "create-object",
+            "serial": 0,
+            "uuid": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "create-object-reply",
+            "serial": 0,
+            "result": "ok",
+            "cookie": "set:cookie"
+        }
+    ]
+}
