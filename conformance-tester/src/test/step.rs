@@ -1,6 +1,6 @@
 use super::{
-    ConnectClient, ConnectionClosed, Receive, ReceiveDiscardUntil, RemoveClient, Send,
-    ShutdownStep, SyncStep,
+    ConnectClient, ConnectionClosed, CreateObjectStep, Receive, ReceiveDiscardUntil, RemoveClient,
+    Send, ShutdownStep, SyncStep,
 };
 use crate::broker::Broker;
 use crate::context::Context;
@@ -18,6 +18,7 @@ pub enum Step {
     ReceiveDiscardUntil(ReceiveDiscardUntil),
     Send(Send),
     ConnectionClosed(ConnectionClosed),
+    CreateObject(CreateObjectStep),
     Sync(SyncStep),
 }
 
@@ -31,6 +32,7 @@ impl Step {
             Self::ReceiveDiscardUntil(step) => step.run(ctx, timeout).await,
             Self::Send(step) => step.run(ctx, timeout).await,
             Self::ConnectionClosed(step) => step.run(ctx, timeout).await,
+            Self::CreateObject(step) => step.run(ctx, timeout).await,
             Self::Sync(step) => step.run(ctx, timeout).await,
         }
     }
