@@ -6,6 +6,7 @@ mod destroy_object;
 mod destroy_object_reply;
 mod shutdown;
 mod subscribe_objects;
+mod subscribe_objects_reply;
 mod sync;
 mod sync_reply;
 
@@ -23,6 +24,7 @@ pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use shutdown::Shutdown;
 pub use subscribe_objects::SubscribeObjects;
+pub use subscribe_objects_reply::SubscribeObjectsReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 
@@ -37,6 +39,7 @@ pub enum Message {
     DestroyObject(DestroyObject),
     DestroyObjectReply(DestroyObjectReply),
     SubscribeObjects(SubscribeObjects),
+    SubscribeObjectsReply(SubscribeObjectsReply),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -54,6 +57,9 @@ impl Message {
                 msg.to_proto(ctx).map(ProtoMessage::DestroyObjectReply)
             }
             Self::SubscribeObjects(msg) => msg.to_proto(ctx).map(ProtoMessage::SubscribeObjects),
+            Self::SubscribeObjectsReply(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::SubscribeObjectsReply)
+            }
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -73,6 +79,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::SubscribeObjects(msg), Self::SubscribeObjects(other)) => msg.matches(other, ctx),
+            (Self::SubscribeObjectsReply(msg), Self::SubscribeObjectsReply(other)) => {
+                msg.matches(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -97,6 +106,9 @@ impl Message {
             (Self::SubscribeObjects(msg), Self::SubscribeObjects(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::SubscribeObjectsReply(msg), Self::SubscribeObjectsReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -113,6 +125,9 @@ impl Message {
             Self::DestroyObject(msg) => msg.apply_context(ctx).map(Self::DestroyObject),
             Self::DestroyObjectReply(msg) => msg.apply_context(ctx).map(Self::DestroyObjectReply),
             Self::SubscribeObjects(msg) => msg.apply_context(ctx).map(Self::SubscribeObjects),
+            Self::SubscribeObjectsReply(msg) => {
+                msg.apply_context(ctx).map(Self::SubscribeObjectsReply)
+            }
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -132,6 +147,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::DestroyObject(msg) => msg.try_into().map(Self::DestroyObject),
             ProtoMessage::DestroyObjectReply(msg) => msg.try_into().map(Self::DestroyObjectReply),
             ProtoMessage::SubscribeObjects(msg) => msg.try_into().map(Self::SubscribeObjects),
+            ProtoMessage::SubscribeObjectsReply(msg) => {
+                msg.try_into().map(Self::SubscribeObjectsReply)
+            }
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
