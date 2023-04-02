@@ -1,0 +1,31 @@
+{
+    "name": "destroy-object-ok",
+    "description": "Destroy an object",
+    "long-description": "A client successfully destroys an object.",
+    "message-types": [
+        "destroy-object",
+        "destroy-object-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "destroy-object",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-object-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
