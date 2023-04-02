@@ -1,6 +1,7 @@
 mod connect;
 mod connect_reply;
 mod create_object;
+mod create_object_reply;
 mod shutdown;
 mod sync;
 mod sync_reply;
@@ -14,6 +15,7 @@ use std::fmt;
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
 pub use create_object::CreateObject;
+pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use shutdown::Shutdown;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
@@ -25,6 +27,7 @@ pub enum Message {
     ConnectReply(ConnectReply),
     Shutdown(Shutdown),
     CreateObject(CreateObject),
+    CreateObjectReply(CreateObjectReply),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -36,6 +39,7 @@ impl Message {
             Self::ConnectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::ConnectReply),
             Self::Shutdown(msg) => msg.to_proto(ctx).map(ProtoMessage::Shutdown),
             Self::CreateObject(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateObject),
+            Self::CreateObjectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateObjectReply),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -47,6 +51,9 @@ impl Message {
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
             (Self::Shutdown(msg), Self::Shutdown(other)) => msg.matches(other, ctx),
             (Self::CreateObject(msg), Self::CreateObject(other)) => msg.matches(other, ctx),
+            (Self::CreateObjectReply(msg), Self::CreateObjectReply(other)) => {
+                msg.matches(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -59,6 +66,9 @@ impl Message {
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
             (Self::Shutdown(msg), Self::Shutdown(other)) => msg.update_context(other, ctx),
             (Self::CreateObject(msg), Self::CreateObject(other)) => msg.update_context(other, ctx),
+            (Self::CreateObjectReply(msg), Self::CreateObjectReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -71,6 +81,7 @@ impl Message {
             Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
             Self::Shutdown(msg) => msg.apply_context(ctx).map(Self::Shutdown),
             Self::CreateObject(msg) => msg.apply_context(ctx).map(Self::CreateObject),
+            Self::CreateObjectReply(msg) => msg.apply_context(ctx).map(Self::CreateObjectReply),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -86,6 +97,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::ConnectReply(msg) => msg.try_into().map(Self::ConnectReply),
             ProtoMessage::Shutdown(msg) => msg.try_into().map(Self::Shutdown),
             ProtoMessage::CreateObject(msg) => msg.try_into().map(Self::CreateObject),
+            ProtoMessage::CreateObjectReply(msg) => msg.try_into().map(Self::CreateObjectReply),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
