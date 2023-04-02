@@ -1,0 +1,39 @@
+{
+    "name": "destroy-foreign-object",
+    "description": "Destroy a foreign object",
+    "long-description": "Client 1 creates an object, which client 2 tries to destroy.",
+    "message-types": [
+        "destroy-object",
+        "destroy-object-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "destroy-object",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "destroy-object-reply",
+            "serial": 0,
+            "result": "foreign-object"
+        }
+    ]
+}
