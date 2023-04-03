@@ -1,0 +1,30 @@
+{
+    "name": "subscribe-objects-create",
+    "description": "Subscribe to object events then create 1 object",
+    "long-description": "A client subscribes to object events and then creates 1 object.",
+    "message-types": [
+        "object-created-event",
+        "subscribe-objects",
+        "subscribe-objects-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "subscribe-objects"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "receive",
+            "message": "object-created-event",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "get:cookie"
+        }
+    ]
+}
