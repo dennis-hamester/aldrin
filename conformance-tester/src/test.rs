@@ -49,6 +49,7 @@ pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
         include_str!("../tests/destroy-foreign-object.json"),
         include_str!("../tests/destroy-invalid-object.json"),
         include_str!("../tests/destroy-object-ok.json"),
+        include_str!("../tests/enumerate-and-subscribe-objects.json"),
         include_str!("../tests/enumerate-objects-2.json"),
         include_str!("../tests/enumerate-objects-empty.json"),
         include_str!("../tests/subscribe-objects-create.json"),
