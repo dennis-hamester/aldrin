@@ -1,0 +1,40 @@
+{
+    "name": "create-service-duplicate",
+    "description": "Create a duplicate service",
+    "long-description": "A client tries to create a duplicate service.",
+    "message-types": [
+        "create-service",
+        "create-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "create-service",
+            "serial": 0,
+            "object-cookie": "get:object",
+            "uuid": "00000000-0000-0000-0000-000000000002",
+            "version": 0
+        },
+        {
+            "type": "receive",
+            "message": "create-service-reply",
+            "serial": 0,
+            "result": "duplicate-service"
+        }
+    ]
+}
