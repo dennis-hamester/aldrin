@@ -1,0 +1,38 @@
+{
+    "name": "destroy-service-ok",
+    "description": "Destroy a service",
+    "long-description": "A client creates a service and destroys it again.",
+    "message-types": [
+        "destroy-service",
+        "destroy-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "destroy-service",
+            "serial": 0,
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-service-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
