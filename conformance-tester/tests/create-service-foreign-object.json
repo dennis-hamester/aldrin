@@ -1,0 +1,41 @@
+{
+    "name": "create-service-foreign-object",
+    "description": "Create a service on a foreign object",
+    "long-description": "Client 1 creates an object and client 2 tries to create a service on it.",
+    "message-types": [
+        "create-service",
+        "create-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "create-service",
+            "serial": 0,
+            "object-cookie": "get:object",
+            "uuid": "00000000-0000-0000-0000-000000000002",
+            "version": 0
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "create-service-reply",
+            "serial": 0,
+            "result": "foreign-object"
+        }
+    ]
+}
