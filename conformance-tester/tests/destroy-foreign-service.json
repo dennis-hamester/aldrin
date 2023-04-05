@@ -1,0 +1,47 @@
+{
+    "name": "destroy-foreign-service",
+    "description": "Destroy a foreign service",
+    "long-description": "Client 1 creates a service and client 2 tries to destroy it.",
+    "message-types": [
+        "destroy-service",
+        "destroy-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "client": "client1",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "destroy-service",
+            "serial": 0,
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "destroy-service-reply",
+            "serial": 0,
+            "result": "foreign-object"
+        }
+    ]
+}
