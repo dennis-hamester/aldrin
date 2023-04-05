@@ -1,0 +1,28 @@
+{
+    "name": "create-service-invalid-object",
+    "description": "Create a service on an invalid object",
+    "long-description": "A client tries to create a service on an invalid object.",
+    "message-types": [
+        "create-service",
+        "create-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "create-service",
+            "serial": 0,
+            "object-cookie": "00000000-0000-0000-0000-000000000001",
+            "uuid": "00000000-0000-0000-0000-000000000002",
+            "version": 0
+        },
+        {
+            "type": "receive",
+            "message": "create-service-reply",
+            "serial": 0,
+            "result": "invalid-object"
+        }
+    ]
+}
