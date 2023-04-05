@@ -18,6 +18,7 @@ mod subscribe_services_reply;
 mod sync;
 mod sync_reply;
 mod unsubscribe_objects;
+mod unsubscribe_services;
 
 use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
@@ -45,6 +46,7 @@ pub use subscribe_services_reply::SubscribeServicesReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_objects::UnsubscribeObjects;
+pub use unsubscribe_services::UnsubscribeServices;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
@@ -67,6 +69,7 @@ pub enum Message {
     DestroyServiceReply(DestroyServiceReply),
     SubscribeServices(SubscribeServices),
     SubscribeServicesReply(SubscribeServicesReply),
+    UnsubscribeServices(UnsubscribeServices),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -107,6 +110,9 @@ impl Message {
             Self::SubscribeServices(msg) => msg.to_proto(ctx).map(ProtoMessage::SubscribeServices),
             Self::SubscribeServicesReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::SubscribeServicesReply)
+            }
+            Self::UnsubscribeServices(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::UnsubscribeServices)
             }
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
@@ -151,6 +157,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::SubscribeServicesReply(msg), Self::SubscribeServicesReply(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
@@ -207,6 +216,9 @@ impl Message {
             (Self::SubscribeServicesReply(msg), Self::SubscribeServicesReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -239,6 +251,7 @@ impl Message {
             Self::SubscribeServicesReply(msg) => {
                 msg.apply_context(ctx).map(Self::SubscribeServicesReply)
             }
+            Self::UnsubscribeServices(msg) => msg.apply_context(ctx).map(Self::UnsubscribeServices),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -274,6 +287,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::SubscribeServicesReply(msg) => {
                 msg.try_into().map(Self::SubscribeServicesReply)
             }
+            ProtoMessage::UnsubscribeServices(msg) => msg.try_into().map(Self::UnsubscribeServices),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
