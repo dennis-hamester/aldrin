@@ -1,6 +1,7 @@
 use super::{
     ConnectClient, ConnectionClosed, CreateObjectStep, CreateServiceStep, DestroyObjectStep,
-    Receive, ReceiveDiscardUntil, ReceiveUnordered, RemoveClient, Send, ShutdownStep, SyncStep,
+    DestroyServiceStep, Receive, ReceiveDiscardUntil, ReceiveUnordered, RemoveClient, Send,
+    ShutdownStep, SyncStep,
 };
 use crate::broker::Broker;
 use crate::context::Context;
@@ -22,6 +23,7 @@ pub enum Step {
     CreateObject(CreateObjectStep),
     DestroyObject(DestroyObjectStep),
     CreateService(CreateServiceStep),
+    DestroyService(DestroyServiceStep),
     Sync(SyncStep),
 }
 
@@ -39,6 +41,7 @@ impl Step {
             Self::CreateObject(step) => step.run(ctx, timeout).await,
             Self::DestroyObject(step) => step.run(ctx, timeout).await,
             Self::CreateService(step) => step.run(ctx, timeout).await,
+            Self::DestroyService(step) => step.run(ctx, timeout).await,
             Self::Sync(step) => step.run(ctx, timeout).await,
         }
     }
