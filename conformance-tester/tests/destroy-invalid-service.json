@@ -1,0 +1,26 @@
+{
+    "name": "destroy-invalid-service",
+    "description": "Destroy an invalid service",
+    "long-description": "A client tries to destroy an invalid service.",
+    "message-types": [
+        "destroy-service",
+        "destroy-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "destroy-service",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-service-reply",
+            "serial": 0,
+            "result": "invalid-service"
+        }
+    ]
+}
