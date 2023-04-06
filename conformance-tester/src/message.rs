@@ -10,6 +10,7 @@ mod destroy_service;
 mod destroy_service_reply;
 mod object_created_event;
 mod object_destroyed_event;
+mod service_created_event;
 mod shutdown;
 mod subscribe_objects;
 mod subscribe_objects_reply;
@@ -38,6 +39,7 @@ pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use object_created_event::ObjectCreatedEvent;
 pub use object_destroyed_event::ObjectDestroyedEvent;
+pub use service_created_event::ServiceCreatedEvent;
 pub use shutdown::Shutdown;
 pub use subscribe_objects::SubscribeObjects;
 pub use subscribe_objects_reply::SubscribeObjectsReply;
@@ -70,6 +72,7 @@ pub enum Message {
     SubscribeServices(SubscribeServices),
     SubscribeServicesReply(SubscribeServicesReply),
     UnsubscribeServices(UnsubscribeServices),
+    ServiceCreatedEvent(ServiceCreatedEvent),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -113,6 +116,9 @@ impl Message {
             }
             Self::UnsubscribeServices(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::UnsubscribeServices)
+            }
+            Self::ServiceCreatedEvent(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::ServiceCreatedEvent)
             }
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
@@ -160,6 +166,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::ServiceCreatedEvent(msg), Self::ServiceCreatedEvent(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
@@ -219,6 +228,9 @@ impl Message {
             (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::ServiceCreatedEvent(msg), Self::ServiceCreatedEvent(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -252,6 +264,7 @@ impl Message {
                 msg.apply_context(ctx).map(Self::SubscribeServicesReply)
             }
             Self::UnsubscribeServices(msg) => msg.apply_context(ctx).map(Self::UnsubscribeServices),
+            Self::ServiceCreatedEvent(msg) => msg.apply_context(ctx).map(Self::ServiceCreatedEvent),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -288,6 +301,7 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::SubscribeServicesReply)
             }
             ProtoMessage::UnsubscribeServices(msg) => msg.try_into().map(Self::UnsubscribeServices),
+            ProtoMessage::ServiceCreatedEvent(msg) => msg.try_into().map(Self::ServiceCreatedEvent),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
