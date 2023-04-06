@@ -1,0 +1,43 @@
+{
+    "name": "subscribe-services-destroy",
+    "description": "Subscribe to service events and destroy 1 service",
+    "long-description": "A client creates a service, subscribes to service events and then destroys the service again.",
+    "message-types": [
+        "service-destroyed-event",
+        "subscribe-services",
+        "subscribe-services-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-services"
+        },
+        {
+            "type": "destroy-service",
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "service-destroyed-event",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "get:service"
+        }
+    ]
+}
