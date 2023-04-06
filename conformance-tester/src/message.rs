@@ -1,4 +1,5 @@
 mod call_function;
+mod call_function_reply;
 mod connect;
 mod connect_reply;
 mod create_object;
@@ -30,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 pub use call_function::CallFunction;
+pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
 pub use create_object::CreateObject;
@@ -79,6 +81,7 @@ pub enum Message {
     ServiceCreatedEvent(ServiceCreatedEvent),
     ServiceDestroyedEvent(ServiceDestroyedEvent),
     CallFunction(CallFunction),
+    CallFunctionReply(CallFunctionReply),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -130,6 +133,7 @@ impl Message {
                 msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyedEvent)
             }
             Self::CallFunction(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunction),
+            Self::CallFunctionReply(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunctionReply),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -185,6 +189,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::CallFunction(msg), Self::CallFunction(other)) => msg.matches(other, ctx),
+            (Self::CallFunctionReply(msg), Self::CallFunctionReply(other)) => {
+                msg.matches(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -249,6 +256,9 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::CallFunction(msg), Self::CallFunction(other)) => msg.update_context(other, ctx),
+            (Self::CallFunctionReply(msg), Self::CallFunctionReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -287,6 +297,7 @@ impl Message {
                 msg.apply_context(ctx).map(Self::ServiceDestroyedEvent)
             }
             Self::CallFunction(msg) => msg.apply_context(ctx).map(Self::CallFunction),
+            Self::CallFunctionReply(msg) => msg.apply_context(ctx).map(Self::CallFunctionReply),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -328,6 +339,7 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::ServiceDestroyedEvent)
             }
             ProtoMessage::CallFunction(msg) => msg.try_into().map(Self::CallFunction),
+            ProtoMessage::CallFunctionReply(msg) => msg.try_into().map(Self::CallFunctionReply),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
