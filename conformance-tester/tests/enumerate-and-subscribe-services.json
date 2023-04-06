@@ -1,0 +1,59 @@
+{
+    "name": "enumerate-and-subscribe-services",
+    "description": "Enumerate 1 service, then destroy it",
+    "long-description": "A client creates a service and enumerates it. The service is then destroyed. The broker must keep the subscription active and notify about the service destruction.",
+    "message-types": [
+        "service-created-event",
+        "service-destroyed-event",
+        "subscribe-services",
+        "subscribe-services-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-services",
+            "serial": 0
+        },
+        {
+            "type": "receive",
+            "message": "service-created-event",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "get:service",
+            "serial": 0
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-services-reply",
+            "serial": 0
+        },
+        {
+            "type": "destroy-service",
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "service-destroyed-event",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "get:service"
+        }
+    ]
+}
