@@ -1,0 +1,54 @@
+{
+    "name": "call-invalid-function",
+    "description": "Call an invalid function",
+    "long-description": "A client calls a function on a service and replies that the function is invalid.",
+    "message-types": [
+        "call-function",
+        "call-function-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "call-function",
+            "serial": 0,
+            "service-cookie": "get:service",
+            "function": 0,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "call-function",
+            "serial": "set:call",
+            "service-cookie": "get:service",
+            "function": 0,
+            "value-type": "none"
+        },
+        {
+            "type": "send",
+            "message": "call-function-reply",
+            "serial": "get:call",
+            "result": "invalid-function"
+        },
+        {
+            "type": "receive",
+            "message": "call-function-reply",
+            "serial": 0,
+            "result": "invalid-function"
+        }
+    ]
+}
