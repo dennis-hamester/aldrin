@@ -1,0 +1,28 @@
+{
+    "name": "call-function-invalid-service",
+    "description": "Call a function on an invalid service",
+    "long-description": "A client calls a function on an invalid service.",
+    "message-types": [
+        "call-function",
+        "call-function-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "call-function",
+            "serial": 0,
+            "service-cookie": "00000000-0000-0000-0000-000000000001",
+            "function": 0,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "call-function-reply",
+            "serial": 0,
+            "result": "invalid-service"
+        }
+    ]
+}
