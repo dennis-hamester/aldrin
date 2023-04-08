@@ -1,0 +1,48 @@
+{
+    "name": "subscribe-event-ok",
+    "description": "Subscribe to an event",
+    "long-description": "A client subscribes to an event. The broker must forward the subscription back to the client.",
+    "message-types": [
+        "subscribe-event",
+        "subscribe-event-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-event",
+            "serial": 0,
+            "service-cookie": "get:service",
+            "event": 1
+        },
+        {
+            "type": "receive-unordered",
+            "messages": [
+                {
+                    "message": "subscribe-event",
+                    "service-cookie": "get:service",
+                    "event": 1
+                },
+                {
+                    "message": "subscribe-event-reply",
+                    "serial": 0,
+                    "result": "ok"
+                }
+            ]
+        }
+    ]
+}
