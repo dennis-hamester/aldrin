@@ -1,0 +1,27 @@
+{
+    "name": "subscribe-event-invalid-service",
+    "description": "Subscribe to an event of an invalid service",
+    "long-description": "A client tries to subscribe to an event of an invalid service. The broker must reject the request and not forward the subscription.",
+    "message-types": [
+        "subscribe-event",
+        "subscribe-event-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "subscribe-event",
+            "serial": 0,
+            "service-cookie": "00000000-0000-0000-0000-000000000001",
+            "event": 1
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-event-reply",
+            "serial": 0,
+            "result": "invalid-service"
+        }
+    ]
+}
