@@ -1,0 +1,40 @@
+{
+    "name": "emit-event-0-subscribers",
+    "description": "An event is emitted with no subscribers",
+    "long-description": "2 clients connect and 1 emits an event. None of the clients is subscribed to the event. The broker must not forward the event to any of the clients.",
+    "message-types": [
+        "emit-event"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "client": "client1",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "client": "client1",
+            "message": "emit-event",
+            "service-cookie": "get:service",
+            "event": 1,
+            "value-type": "none"
+        }
+    ]
+}
