@@ -13,6 +13,7 @@ mod shutdown;
 mod step;
 mod subscribe_event;
 mod sync;
+mod unsubscribe_event;
 
 use crate::broker::Broker;
 use crate::context::Context;
@@ -42,6 +43,7 @@ pub use shutdown::ShutdownStep;
 pub use step::Step;
 pub use subscribe_event::SubscribeEventStep;
 pub use sync::SyncStep;
+pub use unsubscribe_event::UnsubscribeEventStep;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     let sources = [
