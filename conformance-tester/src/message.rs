@@ -23,6 +23,7 @@ mod subscribe_services;
 mod subscribe_services_reply;
 mod sync;
 mod sync_reply;
+mod unsubscribe_event;
 mod unsubscribe_objects;
 mod unsubscribe_services;
 
@@ -57,6 +58,7 @@ pub use subscribe_services::SubscribeServices;
 pub use subscribe_services_reply::SubscribeServicesReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
+pub use unsubscribe_event::UnsubscribeEvent;
 pub use unsubscribe_objects::UnsubscribeObjects;
 pub use unsubscribe_services::UnsubscribeServices;
 
@@ -88,6 +90,7 @@ pub enum Message {
     CallFunctionReply(CallFunctionReply),
     SubscribeEvent(SubscribeEvent),
     SubscribeEventReply(SubscribeEventReply),
+    UnsubscribeEvent(UnsubscribeEvent),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -144,6 +147,7 @@ impl Message {
             Self::SubscribeEventReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::SubscribeEventReply)
             }
+            Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::UnsubscribeEvent),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -206,6 +210,7 @@ impl Message {
             (Self::SubscribeEventReply(msg), Self::SubscribeEventReply(other)) => {
                 msg.matches(other, ctx)
             }
+            (Self::UnsubscribeEvent(msg), Self::UnsubscribeEvent(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -279,6 +284,9 @@ impl Message {
             (Self::SubscribeEventReply(msg), Self::SubscribeEventReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::UnsubscribeEvent(msg), Self::UnsubscribeEvent(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -320,6 +328,7 @@ impl Message {
             Self::CallFunctionReply(msg) => msg.apply_context(ctx).map(Self::CallFunctionReply),
             Self::SubscribeEvent(msg) => msg.apply_context(ctx).map(Self::SubscribeEvent),
             Self::SubscribeEventReply(msg) => msg.apply_context(ctx).map(Self::SubscribeEventReply),
+            Self::UnsubscribeEvent(msg) => msg.apply_context(ctx).map(Self::UnsubscribeEvent),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -364,6 +373,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::CallFunctionReply(msg) => msg.try_into().map(Self::CallFunctionReply),
             ProtoMessage::SubscribeEvent(msg) => msg.try_into().map(Self::SubscribeEvent),
             ProtoMessage::SubscribeEventReply(msg) => msg.try_into().map(Self::SubscribeEventReply),
+            ProtoMessage::UnsubscribeEvent(msg) => msg.try_into().map(Self::UnsubscribeEvent),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
