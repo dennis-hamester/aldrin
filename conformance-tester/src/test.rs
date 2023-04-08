@@ -11,6 +11,7 @@ mod remove_client;
 mod send;
 mod shutdown;
 mod step;
+mod subscribe_event;
 mod sync;
 
 use crate::broker::Broker;
@@ -39,6 +40,7 @@ pub use remove_client::RemoveClient;
 pub use send::Send;
 pub use shutdown::ShutdownStep;
 pub use step::Step;
+pub use subscribe_event::SubscribeEventStep;
 pub use sync::SyncStep;
 
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
