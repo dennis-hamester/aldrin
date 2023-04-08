@@ -1,0 +1,53 @@
+{
+    "name": "emit-event-foreign-service",
+    "description": "Emit an event on a foreign service",
+    "long-description": "A client tries to emit an event on a foreign service. The broker must ignore the request.",
+    "message-types": [
+        "emit-event"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "client": "client1",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "subscribe-event",
+            "client": "client1",
+            "service-cookie": "get:service",
+            "event": 1
+        },
+        {
+            "type": "subscribe-event",
+            "client": "client2",
+            "service-cookie": "get:service",
+            "event": 1,
+            "with-owner": false
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "emit-event",
+            "service-cookie": "get:service",
+            "event": 1,
+            "value-type": "none"
+        }
+    ]
+}
