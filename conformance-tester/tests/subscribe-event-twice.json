@@ -1,0 +1,61 @@
+{
+    "name": "subscribe-event-twice",
+    "description": "Subscribe twice to the same event",
+    "long-description": "A client subscribes twice to the same event. The broker must forward only the first subscription back to the client.",
+    "message-types": [
+        "subscribe-event",
+        "subscribe-event-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-event",
+            "serial": 0,
+            "service-cookie": "get:service",
+            "event": 2
+        },
+        {
+            "type": "receive-unordered",
+            "messages": [
+                {
+                    "message": "subscribe-event",
+                    "service-cookie": "get:service",
+                    "event": 2
+                },
+                {
+                    "message": "subscribe-event-reply",
+                    "serial": 0,
+                    "result": "ok"
+                }
+            ]
+        },
+        {
+            "type": "send",
+            "message": "subscribe-event",
+            "serial": 1,
+            "service-cookie": "get:service",
+            "event": 2
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-event-reply",
+            "serial": 1,
+            "result": "ok"
+        }
+    ]
+}
