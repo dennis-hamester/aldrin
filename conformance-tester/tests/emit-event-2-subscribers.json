@@ -1,0 +1,69 @@
+{
+    "name": "emit-event-2-subscribers",
+    "description": "An event is emitted with 2 subscribers",
+    "long-description": "2 clients connect and 1 emits an event. Both clients are subscribed to the event. The broker must forward the event to both clients.",
+    "message-types": [
+        "emit-event"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "client": "client1",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "subscribe-event",
+            "client": "client1",
+            "service-cookie": "get:service",
+            "event": 1
+        },
+        {
+            "type": "subscribe-event",
+            "client": "client2",
+            "service-cookie": "get:service",
+            "event": 1,
+            "with-owner": false
+        },
+        {
+            "type": "send",
+            "client": "client1",
+            "message": "emit-event",
+            "service-cookie": "get:service",
+            "event": 1,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "client": "client1",
+            "message": "emit-event",
+            "service-cookie": "get:service",
+            "event": 1,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "emit-event",
+            "service-cookie": "get:service",
+            "event": 1,
+            "value-type": "none"
+        }
+    ]
+}
