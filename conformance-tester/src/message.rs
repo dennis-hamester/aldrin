@@ -2,6 +2,7 @@ mod call_function;
 mod call_function_reply;
 mod connect;
 mod connect_reply;
+mod create_channel;
 mod create_object;
 mod create_object_reply;
 mod create_service;
@@ -42,6 +43,7 @@ pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
+pub use create_channel::CreateChannel;
 pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
@@ -106,6 +108,7 @@ pub enum Message {
     QueryObjectReply(QueryObjectReply),
     QueryServiceVersion(QueryServiceVersion),
     QueryServiceVersionReply(QueryServiceVersionReply),
+    CreateChannel(CreateChannel),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -172,6 +175,7 @@ impl Message {
             Self::QueryServiceVersionReply(msg) => msg
                 .to_proto(ctx)
                 .map(ProtoMessage::QueryServiceVersionReply),
+            Self::CreateChannel(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateChannel),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -244,6 +248,7 @@ impl Message {
             (Self::QueryServiceVersionReply(msg), Self::QueryServiceVersionReply(other)) => {
                 msg.matches(other, ctx)
             }
+            (Self::CreateChannel(msg), Self::CreateChannel(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -331,6 +336,9 @@ impl Message {
             (Self::QueryServiceVersionReply(msg), Self::QueryServiceVersionReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::CreateChannel(msg), Self::CreateChannel(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -380,6 +388,7 @@ impl Message {
             Self::QueryServiceVersionReply(msg) => {
                 msg.apply_context(ctx).map(Self::QueryServiceVersionReply)
             }
+            Self::CreateChannel(msg) => msg.apply_context(ctx).map(Self::CreateChannel),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -432,6 +441,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::QueryServiceVersionReply(msg) => {
                 msg.try_into().map(Self::QueryServiceVersionReply)
             }
+            ProtoMessage::CreateChannel(msg) => msg.try_into().map(Self::CreateChannel),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
