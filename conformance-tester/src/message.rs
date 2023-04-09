@@ -13,6 +13,7 @@ mod destroy_service_reply;
 mod emit_event;
 mod object_created_event;
 mod object_destroyed_event;
+mod query_object;
 mod service_created_event;
 mod service_destroyed_event;
 mod shutdown;
@@ -49,6 +50,7 @@ pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_event::EmitEvent;
 pub use object_created_event::ObjectCreatedEvent;
 pub use object_destroyed_event::ObjectDestroyedEvent;
+pub use query_object::QueryObject;
 pub use service_created_event::ServiceCreatedEvent;
 pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
@@ -94,6 +96,7 @@ pub enum Message {
     SubscribeEventReply(SubscribeEventReply),
     UnsubscribeEvent(UnsubscribeEvent),
     EmitEvent(EmitEvent),
+    QueryObject(QueryObject),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -152,6 +155,7 @@ impl Message {
             }
             Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::UnsubscribeEvent),
             Self::EmitEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::EmitEvent),
+            Self::QueryObject(msg) => msg.to_proto(ctx).map(ProtoMessage::QueryObject),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -216,6 +220,7 @@ impl Message {
             }
             (Self::UnsubscribeEvent(msg), Self::UnsubscribeEvent(other)) => msg.matches(other, ctx),
             (Self::EmitEvent(msg), Self::EmitEvent(other)) => msg.matches(other, ctx),
+            (Self::QueryObject(msg), Self::QueryObject(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -293,6 +298,7 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::EmitEvent(msg), Self::EmitEvent(other)) => msg.update_context(other, ctx),
+            (Self::QueryObject(msg), Self::QueryObject(other)) => msg.update_context(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -336,6 +342,7 @@ impl Message {
             Self::SubscribeEventReply(msg) => msg.apply_context(ctx).map(Self::SubscribeEventReply),
             Self::UnsubscribeEvent(msg) => msg.apply_context(ctx).map(Self::UnsubscribeEvent),
             Self::EmitEvent(msg) => msg.apply_context(ctx).map(Self::EmitEvent),
+            Self::QueryObject(msg) => msg.apply_context(ctx).map(Self::QueryObject),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -382,6 +389,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::SubscribeEventReply(msg) => msg.try_into().map(Self::SubscribeEventReply),
             ProtoMessage::UnsubscribeEvent(msg) => msg.try_into().map(Self::UnsubscribeEvent),
             ProtoMessage::EmitEvent(msg) => msg.try_into().map(Self::EmitEvent),
+            ProtoMessage::QueryObject(msg) => msg.try_into().map(Self::QueryObject),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
