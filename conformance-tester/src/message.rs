@@ -19,6 +19,7 @@ mod destroy_object_reply;
 mod destroy_service;
 mod destroy_service_reply;
 mod emit_event;
+mod item_received;
 mod object_created_event;
 mod object_destroyed_event;
 mod query_object;
@@ -68,6 +69,7 @@ pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_event::EmitEvent;
+pub use item_received::ItemReceived;
 pub use object_created_event::ObjectCreatedEvent;
 pub use object_destroyed_event::ObjectDestroyedEvent;
 pub use query_object::QueryObject;
@@ -133,6 +135,7 @@ pub enum Message {
     ClaimChannelEndReply(ClaimChannelEndReply),
     ChannelEndClaimed(ChannelEndClaimed),
     SendItem(SendItem),
+    ItemReceived(ItemReceived),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -214,6 +217,7 @@ impl Message {
             }
             Self::ChannelEndClaimed(msg) => msg.to_proto(ctx).map(ProtoMessage::ChannelEndClaimed),
             Self::SendItem(msg) => msg.to_proto(ctx).map(ProtoMessage::SendItem),
+            Self::ItemReceived(msg) => msg.to_proto(ctx).map(ProtoMessage::ItemReceived),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -303,6 +307,7 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::SendItem(msg), Self::SendItem(other)) => msg.matches(other, ctx),
+            (Self::ItemReceived(msg), Self::ItemReceived(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -415,6 +420,7 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::SendItem(msg), Self::SendItem(other)) => msg.update_context(other, ctx),
+            (Self::ItemReceived(msg), Self::ItemReceived(other)) => msg.update_context(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -477,6 +483,7 @@ impl Message {
             }
             Self::ChannelEndClaimed(msg) => msg.apply_context(ctx).map(Self::ChannelEndClaimed),
             Self::SendItem(msg) => msg.apply_context(ctx).map(Self::SendItem),
+            Self::ItemReceived(msg) => msg.apply_context(ctx).map(Self::ItemReceived),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -542,9 +549,9 @@ impl TryFrom<ProtoMessage> for Message {
             }
             ProtoMessage::ChannelEndClaimed(msg) => msg.try_into().map(Self::ChannelEndClaimed),
             ProtoMessage::SendItem(msg) => msg.try_into().map(Self::SendItem),
+            ProtoMessage::ItemReceived(msg) => msg.try_into().map(Self::ItemReceived),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
-            _ => todo!(),
         }
     }
 }
