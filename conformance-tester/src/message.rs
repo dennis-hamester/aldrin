@@ -1,6 +1,7 @@
 mod call_function;
 mod call_function_reply;
 mod channel_end_closed;
+mod claim_channel_end;
 mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
@@ -46,6 +47,7 @@ use std::fmt;
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_closed::ChannelEndClosed;
+pub use claim_channel_end::ClaimChannelEnd;
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
@@ -121,6 +123,7 @@ pub enum Message {
     CloseChannelEnd(CloseChannelEnd),
     CloseChannelEndReply(CloseChannelEndReply),
     ChannelEndClosed(ChannelEndClosed),
+    ClaimChannelEnd(ClaimChannelEnd),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -196,6 +199,7 @@ impl Message {
                 msg.to_proto(ctx).map(ProtoMessage::CloseChannelEndReply)
             }
             Self::ChannelEndClosed(msg) => msg.to_proto(ctx).map(ProtoMessage::ChannelEndClosed),
+            Self::ClaimChannelEnd(msg) => msg.to_proto(ctx).map(ProtoMessage::ClaimChannelEnd),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -277,6 +281,7 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::ChannelEndClosed(msg), Self::ChannelEndClosed(other)) => msg.matches(other, ctx),
+            (Self::ClaimChannelEnd(msg), Self::ClaimChannelEnd(other)) => msg.matches(other, ctx),
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             _ => Ok(false),
@@ -379,6 +384,9 @@ impl Message {
             (Self::ChannelEndClosed(msg), Self::ChannelEndClosed(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::ClaimChannelEnd(msg), Self::ClaimChannelEnd(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -435,6 +443,7 @@ impl Message {
                 msg.apply_context(ctx).map(Self::CloseChannelEndReply)
             }
             Self::ChannelEndClosed(msg) => msg.apply_context(ctx).map(Self::ChannelEndClosed),
+            Self::ClaimChannelEnd(msg) => msg.apply_context(ctx).map(Self::ClaimChannelEnd),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -494,6 +503,7 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::CloseChannelEndReply)
             }
             ProtoMessage::ChannelEndClosed(msg) => msg.try_into().map(Self::ChannelEndClosed),
+            ProtoMessage::ClaimChannelEnd(msg) => msg.try_into().map(Self::ClaimChannelEnd),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
