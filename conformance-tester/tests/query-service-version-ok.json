@@ -1,0 +1,39 @@
+{
+    "name": "query-service-version-ok",
+    "description": "Query the version of a service",
+    "long-description": "A client queries the version of a service.",
+    "message-types": [
+        "query-service-version",
+        "query-service-version-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 1
+        },
+        {
+            "type": "send",
+            "message": "query-service-version",
+            "serial": 0,
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "query-service-version-reply",
+            "serial": 0,
+            "result": "ok",
+            "version": 1
+        }
+    ]
+}
