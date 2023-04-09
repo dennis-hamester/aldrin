@@ -1,3 +1,4 @@
+mod close_channel_end;
 mod connect_client;
 mod connection_closed;
 mod create_channel;
@@ -29,6 +30,7 @@ use std::fs::{self, File};
 use std::path::Path;
 use tokio::time::Instant;
 
+pub use close_channel_end::CloseChannelEndStep;
 pub use connect_client::ConnectClient;
 pub use connection_closed::ConnectionClosed;
 pub use create_channel::CreateChannelStep;
