@@ -16,6 +16,7 @@ mod object_destroyed_event;
 mod query_object;
 mod query_object_reply;
 mod query_service_version;
+mod query_service_version_reply;
 mod service_created_event;
 mod service_destroyed_event;
 mod shutdown;
@@ -55,6 +56,7 @@ pub use object_destroyed_event::ObjectDestroyedEvent;
 pub use query_object::QueryObject;
 pub use query_object_reply::{QueryObjectReply, QueryObjectResult};
 pub use query_service_version::QueryServiceVersion;
+pub use query_service_version_reply::{QueryServiceVersionReply, QueryServiceVersionResult};
 pub use service_created_event::ServiceCreatedEvent;
 pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
@@ -103,6 +105,7 @@ pub enum Message {
     QueryObject(QueryObject),
     QueryObjectReply(QueryObjectReply),
     QueryServiceVersion(QueryServiceVersion),
+    QueryServiceVersionReply(QueryServiceVersionReply),
     Sync(Sync),
     SyncReply(SyncReply),
 }
@@ -166,6 +169,9 @@ impl Message {
             Self::QueryServiceVersion(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::QueryServiceVersion)
             }
+            Self::QueryServiceVersionReply(msg) => msg
+                .to_proto(ctx)
+                .map(ProtoMessage::QueryServiceVersionReply),
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
         }
@@ -233,6 +239,9 @@ impl Message {
             (Self::QueryObject(msg), Self::QueryObject(other)) => msg.matches(other, ctx),
             (Self::QueryObjectReply(msg), Self::QueryObjectReply(other)) => msg.matches(other, ctx),
             (Self::QueryServiceVersion(msg), Self::QueryServiceVersion(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::QueryServiceVersionReply(msg), Self::QueryServiceVersionReply(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
@@ -319,6 +328,9 @@ impl Message {
             (Self::QueryServiceVersion(msg), Self::QueryServiceVersion(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::QueryServiceVersionReply(msg), Self::QueryServiceVersionReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
             _ => unreachable!(),
@@ -365,6 +377,9 @@ impl Message {
             Self::QueryObject(msg) => msg.apply_context(ctx).map(Self::QueryObject),
             Self::QueryObjectReply(msg) => msg.apply_context(ctx).map(Self::QueryObjectReply),
             Self::QueryServiceVersion(msg) => msg.apply_context(ctx).map(Self::QueryServiceVersion),
+            Self::QueryServiceVersionReply(msg) => {
+                msg.apply_context(ctx).map(Self::QueryServiceVersionReply)
+            }
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
         }
@@ -414,6 +429,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::QueryObject(msg) => msg.try_into().map(Self::QueryObject),
             ProtoMessage::QueryObjectReply(msg) => msg.try_into().map(Self::QueryObjectReply),
             ProtoMessage::QueryServiceVersion(msg) => msg.try_into().map(Self::QueryServiceVersion),
+            ProtoMessage::QueryServiceVersionReply(msg) => {
+                msg.try_into().map(Self::QueryServiceVersionReply)
+            }
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             _ => todo!(),
