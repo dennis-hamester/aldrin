@@ -1,0 +1,27 @@
+{
+    "name": "claim-invalid-sender",
+    "description": "Try to claim an invalid sender",
+    "long-description": "A client tries to claim an invalid sender",
+    "message-types": [
+        "claim-channel-end",
+        "claim-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        }
+    ]
+}
