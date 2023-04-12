@@ -1,0 +1,28 @@
+{
+    "name": "claim-invalid-receiver",
+    "description": "Try to claim an invalid receiver",
+    "long-description": "A client tries to claim an invalid receiver",
+    "message-types": [
+        "claim-channel-end",
+        "claim-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001",
+            "end": "receiver",
+            "capacity": 0
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        }
+    ]
+}
