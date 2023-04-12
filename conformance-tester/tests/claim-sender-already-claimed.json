@@ -1,0 +1,38 @@
+{
+    "name": "claim-sender-already-claimed",
+    "description": "Try to claim an already claimed sender",
+    "long-description": "A client creates a channel and claims both ends. The client then tries to claim the sender again.",
+    "message-types": [
+        "claim-channel-end",
+        "claim-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "already-claimed"
+        }
+    ]
+}
