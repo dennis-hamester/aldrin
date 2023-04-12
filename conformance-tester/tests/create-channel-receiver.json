@@ -1,0 +1,27 @@
+{
+    "name": "create-channel-receiver",
+    "description": "Create a channel with a claimed receiver",
+    "long-description": "A client creates a channel with the receiver already claimed",
+    "message-types": [
+        "create-channel",
+        "create-channel-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "create-channel",
+            "serial": 0,
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "receive",
+            "message": "create-channel-reply",
+            "serial": 0,
+            "cookie": "set:cookie"
+        }
+    ]
+}
