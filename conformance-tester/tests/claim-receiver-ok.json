@@ -1,0 +1,50 @@
+{
+    "name": "claim-receiver-ok",
+    "description": "Successfully claim a receiver",
+    "long-description": "Client 1 creates a channel with the sender already claimed. Client 2 then claims the receiver.",
+    "message-types": [
+        "channel-end-claimed",
+        "claim-channel-end",
+        "claim-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-channel",
+            "client": "client1",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "receiver-claimed"
+        },
+        {
+            "type": "receive",
+            "client": "client1",
+            "message": "channel-end-claimed",
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        }
+    ]
+}
