@@ -1,0 +1,57 @@
+{
+    "name": "close-receiver-with-sender-claimed",
+    "description": "Successfully close a receiver when the sender has been claimed",
+    "long-description": "Client 1 creates a channel with the receiver already claimed. Client 2 claims the sender. Client 1 then closes the receiver again. The broker must notify client 2 that the receiver has been closed.",
+    "message-types": [
+        "channel-end-closed",
+        "close-channel-end",
+        "close-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-channel",
+            "client": "client1",
+            "end": "receiver",
+            "capacity": 1,
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "client": "client2",
+            "cookie": "get:cookie",
+            "end": "sender",
+            "capacity": 1,
+            "other": "client1"
+        },
+        {
+            "type": "send",
+            "client": "client1",
+            "message": "close-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "receive",
+            "client": "client1",
+            "message": "close-channel-end-reply",
+            "serial": 0,
+            "result": "ok"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "channel-end-closed",
+            "cookie": "get:cookie",
+            "end": "receiver"
+        }
+    ]
+}
