@@ -1,0 +1,32 @@
+{
+    "name": "close-sender-ok",
+    "description": "Successfully close a sender when the receiver hasn't been claimed",
+    "long-description": "A client creates a channel with the sender already claimed. It then closes the sender again. The broker must not send a channel-end-closed message, because the receiver hasn't been claimed.",
+    "message-types": [
+        "close-channel-end",
+        "close-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "close-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "close-channel-end-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
