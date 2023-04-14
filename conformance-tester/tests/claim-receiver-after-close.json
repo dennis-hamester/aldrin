@@ -1,0 +1,44 @@
+{
+    "name": "claim-receiver-after-close",
+    "description": "Try to claim a receiver after it has been closed",
+    "long-description": "A client creates a channel and claims both ends. It closes the receiver and then tries to claim it again.",
+    "message-types": [
+        "claim-channel-end",
+        "claim-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "close-channel-end",
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        }
+    ]
+}
