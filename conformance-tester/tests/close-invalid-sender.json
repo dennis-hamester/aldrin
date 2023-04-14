@@ -1,0 +1,27 @@
+{
+    "name": "close-invalid-sender",
+    "description": "Try to close an invalid sender",
+    "long-description": "A client tries to close an invalid sender.",
+    "message-types": [
+        "close-channel-end",
+        "close-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "close-channel-end",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "close-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        }
+    ]
+}
