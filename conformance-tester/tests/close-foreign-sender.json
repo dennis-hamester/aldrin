@@ -1,0 +1,48 @@
+{
+    "name": "close-foreign-sender",
+    "description": "Try to close a foreign sender",
+    "long-description": "Client 1 create a channel with the sender already claimed. Client 2 claims the receiver and then tries to close the sender.",
+    "message-types": [
+        "close-channel-end",
+        "close-channel-end-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-channel",
+            "client": "client1",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "client": "client2",
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1,
+            "other": "client1"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "close-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "close-channel-end-reply",
+            "serial": 0,
+            "result": "foreign-channel"
+        }
+    ]
+}
