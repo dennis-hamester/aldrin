@@ -151,7 +151,8 @@ impl Channel {
             ChannelEndState::Closed => return Err(SendItemError::ReceiverClosed),
         };
 
-        if *receiver_capacity == 0 {
+        if *sender_capacity == 0 {
+            debug_assert!(*receiver_capacity == 0);
             return Err(SendItemError::CapacityExhausted);
         }
 

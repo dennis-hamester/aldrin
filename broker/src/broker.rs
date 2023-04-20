@@ -359,11 +359,11 @@ impl Broker {
         }
 
         for chann_cookie in conn.senders() {
-            self.remove_channel_end(state, id, chann_cookie, ChannelEnd::Sender, true);
+            self.remove_channel_end(state, chann_cookie, ChannelEnd::Sender, Some(id));
         }
 
         for chann_cookie in conn.receivers() {
-            self.remove_channel_end(state, id, chann_cookie, ChannelEnd::Receiver, true);
+            self.remove_channel_end(state, chann_cookie, ChannelEnd::Receiver, Some(id));
         }
 
         #[cfg(feature = "statistics")]
@@ -1146,7 +1146,8 @@ impl Broker {
         )?;
 
         if result == CloseChannelEndResult::Ok {
-            self.remove_channel_end(state, id, req.cookie, req.end, claimed);
+            let owner = if claimed { Some(id) } else { None };
+            self.remove_channel_end(state, req.cookie, req.end, owner);
         }
 
         Ok(())
@@ -1287,12 +1288,17 @@ impl Broker {
 
                 match e {
                     SendItemError::ReceiverUnclaimed => {
-                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, false);
+                        // The order matters here. The sender needs to get a notification that the
+                        // receiver was closed. But, if we closed the sender first, then this would
+                        // remove the whole channel because the receiver isn't claimed. In that
+                        // case, the closing the receiver afterwards would become a no-op. Hence,
+                        // close the receiver first.
+                        self.remove_channel_end(state, req.cookie, ChannelEnd::Receiver, None);
+                        self.remove_channel_end(state, req.cookie, ChannelEnd::Sender, Some(id));
                     }
 
                     SendItemError::CapacityExhausted => {
-                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Sender, true);
-                        self.remove_channel_end(state, id, req.cookie, ChannelEnd::Receiver, true);
+                        self.remove_channel_end(state, req.cookie, ChannelEnd::Sender, Some(id))
                     }
 
                     SendItemError::InvalidSender | SendItemError::ReceiverClosed => {}
@@ -1473,22 +1479,19 @@ impl Broker {
     fn remove_channel_end(
         &mut self,
         state: &mut State,
-        conn_id: &ConnectionId,
         cookie: ChannelCookie,
         end: ChannelEnd,
-        claimed: bool,
+        owner: Option<&ConnectionId>,
     ) {
         let mut channel = match self.channels.entry(cookie) {
             Entry::Occupied(channel) => channel,
             Entry::Vacant(_) => return,
         };
 
-        if claimed {
-            if let Some(conn) = self.conns.get_mut(conn_id) {
-                match end {
-                    ChannelEnd::Sender => conn.remove_sender(cookie),
-                    ChannelEnd::Receiver => conn.remove_receiver(cookie),
-                }
+        if let Some(conn) = owner.and_then(|conn_id| self.conns.get_mut(conn_id)) {
+            match end {
+                ChannelEnd::Sender => conn.remove_sender(cookie),
+                ChannelEnd::Receiver => conn.remove_receiver(cookie),
             }
         }
 
