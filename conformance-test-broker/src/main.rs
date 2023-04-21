@@ -98,25 +98,15 @@ impl BrokerUnderTest {
         let mut stdin = io::stdin().lock();
         let mut buf = [0; 64];
 
-        loop {
+        let res = loop {
             match stdin.read(&mut buf) {
-                Ok(0) => {
-                    sender.send(Ok(())).ok();
-                    break;
-                }
-
+                Ok(0) => break Ok(()),
                 Ok(_) => {}
-
-                Err(e) => {
-                    sender
-                        .send(Err(
-                            Error::new(e).context(anyhow!("failed to read from stdin"))
-                        ))
-                        .ok();
-                    break;
-                }
+                Err(e) => break Err(Error::new(e).context(anyhow!("failed to read from stdin"))),
             }
-        }
+        };
+
+        sender.send(res).ok();
     }
 }
 
