@@ -1,0 +1,62 @@
+{
+    "name": "send-item-without-capacity",
+    "description": "Send an item on a channel without capacity",
+    "long-description": "Client 1 creates a channel with the sender already claimed. Client 2 claims the receiver, but does not give any initial capacity. Client 1 then sends an item. The broker must close only the sender and inform client 2 about it. Client 2 closes the receiver to verify that the broker has kept it open.",
+    "message-types": [
+        "channel-end-closed",
+        "send-item"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-channel",
+            "client": "client1",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "client": "client2",
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 0,
+            "other": "client1"
+        },
+        {
+            "type": "send",
+            "client": "client1",
+            "message": "send-item",
+            "cookie": "get:cookie",
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "channel-end-closed",
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "close-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "close-channel-end-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
