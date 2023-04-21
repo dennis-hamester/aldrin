@@ -2,9 +2,12 @@ use crate::{Broker, BrokerHandle};
 use aldrin_channel::Unbounded;
 use aldrin_client::Client;
 use aldrin_proto::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, Connect, ConnectReply, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    Message, Sync, SyncReply,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
+    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
+    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem,
+    Sync, SyncReply,
 };
 use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::{ObjectUuid, ServiceUuid};
@@ -276,6 +279,123 @@ async fn wrong_client_replies_function_call() {
         result: CallFunctionResult::Ok(_),
         ..
     }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
+}
+
+#[tokio::test]
+async fn send_item_without_capacity() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
+        let (mut t1, t2) = aldrin_channel::unbounded();
+
+        t1.send(
+            Connect::with_serialize_value(aldrin_proto::VERSION, &())
+                .unwrap()
+                .into(),
+        )
+        .await
+        .unwrap();
+
+        let conn = broker.connect(t2).await.unwrap();
+
+        if !matches!(
+            t1.receive().await,
+            Ok(Message::ConnectReply(ConnectReply::Ok(_)))
+        ) {
+            panic!();
+        };
+
+        tokio::spawn(conn.run());
+
+        t1
+    }
+
+    let mut client1 = connect_client(&mut handle).await;
+    let mut client2 = connect_client(&mut handle).await;
+
+    client1
+        .send(Message::CreateChannel(CreateChannel {
+            serial: 0,
+            end: ChannelEndWithCapacity::Sender,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateChannelReply(CreateChannelReply {
+        serial: 0,
+        cookie,
+    }) = client1.receive().await.unwrap() else {
+        panic!();
+    };
+
+    client2
+        .send(Message::ClaimChannelEnd(ClaimChannelEnd {
+            serial: 0,
+            cookie,
+            end: ChannelEndWithCapacity::Receiver(0),
+        }))
+        .await
+        .unwrap();
+
+    if !matches!(
+        client2.receive().await,
+        Ok(Message::ClaimChannelEndReply(ClaimChannelEndReply {
+            serial: 0,
+            result: ClaimChannelEndResult::ReceiverClaimed,
+        })),
+    ) {
+        panic!();
+    };
+
+    if !matches!(
+        client1.receive().await,
+        Ok(Message::ChannelEndClaimed(ChannelEndClaimed {
+            cookie: cookie2,
+            end: ChannelEndWithCapacity::Receiver(0),
+        }))
+        if cookie == cookie2
+    ) {
+        panic!()
+    }
+
+    client1
+        .send(Message::SendItem(
+            SendItem::with_serialize_value(cookie, &()).unwrap(),
+        ))
+        .await
+        .unwrap();
+
+    if !matches!(
+        client2.receive().await,
+        Ok(Message::ChannelEndClosed(ChannelEndClosed {
+            cookie: cookie2,
+            end: ChannelEnd::Sender,
+        }))
+        if cookie == cookie2
+    ) {
+        panic!();
+    };
+
+    client2
+        .send(Message::CloseChannelEnd(CloseChannelEnd {
+            serial: 0,
+            cookie,
+            end: ChannelEnd::Receiver,
+        }))
+        .await
+        .unwrap();
+
+    if !matches!(
+        client2.receive().await,
+        Ok(Message::CloseChannelEndReply(CloseChannelEndReply {
+            serial: 0,
+            result: CloseChannelEndResult::Ok,
+        }))
+    ) {
         panic!();
     };
 }
