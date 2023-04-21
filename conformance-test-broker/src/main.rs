@@ -120,7 +120,7 @@ impl BrokerUnderTest {
     }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let broker = BrokerUnderTest::new().await?;
     broker.run().await?;

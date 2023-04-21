@@ -30,6 +30,6 @@ default-features = false
 features = [
     "macros",
     "net",
-    "rt-multi-thread",
+    "rt",
     "sync",
 ]
