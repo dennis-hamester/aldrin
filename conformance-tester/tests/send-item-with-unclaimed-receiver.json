@@ -1,0 +1,58 @@
+{
+    "name": "send-item-with-unclaimed-receiver",
+    "description": "Send an item while the receiver is not claimed",
+    "long-description": "A client creates a channel with the sender already claimed. The receiver is not claimed. The client then sends an item. The broker must close both ends of the channel and notify the client that the receiver has been closed. The client then tries to claim the receiver and close its sender to verify this.",
+    "message-types": [
+        "item-received",
+        "send-item"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "sender",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "send-item",
+            "cookie": "get:cookie",
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "message": "channel-end-closed",
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "receiver",
+            "capacity": 1
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        },
+        {
+            "type": "send",
+            "message": "close-channel-end",
+            "serial": 1,
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "close-channel-end-reply",
+            "serial": 1,
+            "result": "invalid-channel"
+        }
+    ]
+}
