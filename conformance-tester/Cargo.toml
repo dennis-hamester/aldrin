@@ -42,7 +42,7 @@ default-features = false
 features = ["std"]
 
 [dependencies.serde]
-version = "1.0.104"
+version = "1.0.160"
 default-features = false
 features = ["derive"]
 
