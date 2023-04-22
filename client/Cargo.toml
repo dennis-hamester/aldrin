@@ -63,7 +63,7 @@ version = "0.3.21"
 default-features = false
 
 [dev-dependencies.tokio]
-version = "1.0.0"
+version = "1.27.0"
 features = [
     "macros",
     "rt-multi-thread",

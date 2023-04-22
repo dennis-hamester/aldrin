@@ -61,7 +61,7 @@ default-features = false
 features = ["terminal_size"]
 
 [dependencies.tokio]
-version = "1.0.0"
+version = "1.27.0"
 default-features = false
 features = [
     "io-util",

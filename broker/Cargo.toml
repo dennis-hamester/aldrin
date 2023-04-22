@@ -55,7 +55,7 @@ path = "../test"
 features = ["tokio"]
 
 [dev-dependencies.tokio]
-version = "1.0.0"
+version = "1.27.0"
 features = [
     "macros",
     "net",
