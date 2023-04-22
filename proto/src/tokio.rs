@@ -16,20 +16,14 @@ const BACKPRESSURE_BOUNDARY: usize = INITIAL_CAPACITY;
 
 #[pin_project]
 #[derive(Debug)]
-pub struct TokioTransport<T>
-where
-    T: AsyncRead + AsyncWrite,
-{
+pub struct TokioTransport<T> {
     #[pin]
     io: T,
     packetizer: Packetizer,
     write_buf: BytesMut,
 }
 
-impl<T> TokioTransport<T>
-where
-    T: AsyncRead + AsyncWrite,
-{
+impl<T> TokioTransport<T> {
     pub fn new(io: T) -> Self {
         TokioTransport {
             io,
