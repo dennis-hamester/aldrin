@@ -3,7 +3,7 @@ use crate::message::{
 };
 use crate::transport::AsyncTransport;
 use bytes::{Buf, BytesMut};
-use pin_project::pin_project;
+use pin_project_lite::pin_project;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
@@ -14,13 +14,14 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 const INITIAL_CAPACITY: usize = 8 * 1024;
 const BACKPRESSURE_BOUNDARY: usize = INITIAL_CAPACITY;
 
-#[pin_project]
-#[derive(Debug)]
-pub struct TokioTransport<T> {
-    #[pin]
-    io: T,
-    packetizer: Packetizer,
-    write_buf: BytesMut,
+pin_project! {
+    #[derive(Debug)]
+    pub struct TokioTransport<T> {
+        #[pin]
+        io: T,
+        packetizer: Packetizer,
+        write_buf: BytesMut,
+    }
 }
 
 impl<T> TokioTransport<T> {

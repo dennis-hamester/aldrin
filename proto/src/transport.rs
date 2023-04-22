@@ -1,5 +1,5 @@
 use crate::message::Message;
-use pin_project::pin_project;
+use pin_project_lite::pin_project;
 use std::future::Future;
 use std::mem;
 use std::ops::DerefMut;
@@ -350,12 +350,13 @@ where
     }
 }
 
-#[pin_project]
-#[derive(Debug)]
-pub struct MapError<T, F> {
-    #[pin]
-    transport: T,
-    map_err: F,
+pin_project! {
+    #[derive(Debug)]
+    pub struct MapError<T, F> {
+        #[pin]
+        transport: T,
+        map_err: F,
+    }
 }
 
 impl<T, F, E> AsyncTransport for MapError<T, F>
