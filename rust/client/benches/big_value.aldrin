@@ -1,0 +1,55 @@
+struct BigValue {
+    none @ 1 = i32;
+    required bool_ @ 2 = bool;
+    required u8_ @ 3 = u8;
+    required i8_ @ 4 = i8;
+    required u16_ @ 5 = u16;
+    required i16_ @ 6 = i16;
+    required u32_ @ 7 = u32;
+    required i32_ @ 8 = i32;
+    required u64_ @ 9 = u64;
+    required i64_ @ 10 = i64;
+    required f32_ @ 11 = f32;
+    required f64_ @ 12 = f64;
+    required string @ 13 = string;
+    required uuid @ 14 = uuid;
+    required object_id @ 15 = object_id;
+    required service_id @ 16 = service_id;
+    required vec @ 17 = vec<i32>;
+    required bytes @ 18 = bytes;
+    required u8_map @ 19 = map<u8 -> i32>;
+    required i8_map @ 20 = map<i8 -> i32>;
+    required u16_map @ 21 = map<u16 -> i32>;
+    required i16_map @ 22 = map<i16 -> i32>;
+    required u32_map @ 23 = map<u32 -> i32>;
+    required i32_map @ 24 = map<i32 -> i32>;
+    required u64_map @ 25 = map<u64 -> i32>;
+    required i64_map @ 26 = map<i64 -> i32>;
+    required string_map @ 27 = map<string -> i32>;
+    required uuid_map @ 28 = map<uuid -> i32>;
+    required u8_set @ 29 = set<u8>;
+    required i8_set @ 30 = set<i8>;
+    required u16_set @ 31 = set<u16>;
+    required i16_set @ 32 = set<i16>;
+    required u32_set @ 33 = set<u32>;
+    required i32_set @ 34 = set<i32>;
+    required u64_set @ 35 = set<u64>;
+    required i64_set @ 36 = set<i64>;
+    required string_set @ 37 = set<string>;
+    required uuid_set @ 38 = set<uuid>;
+    required small_struct @ 39 = SmallStruct;
+    required small_enum @ 40 = SmallEnum;
+    required sender @ 41 = sender<i32>;
+    required receiver @ 42 = receiver<i32>;
+}
+
+struct SmallStruct {
+    none @ 1 = i32;
+    required bool_ @ 2 = bool;
+    required u8_ @ 3 = u8;
+    required i8_ @ 4 = i8;
+}
+
+enum SmallEnum {
+    Var @ 1 = SmallStruct;
+}

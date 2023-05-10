@@ -39,6 +39,7 @@ dependencies = [
  "aldrin-codegen-macros",
  "aldrin-proto",
  "aldrin-test",
+ "criterion",
  "futures",
  "futures-channel",
  "futures-core",
