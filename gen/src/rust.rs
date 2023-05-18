@@ -3,7 +3,7 @@ use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::Parser;
 use anyhow::{anyhow, Context, Result};
 use std::env;
-use std::fs::OpenOptions;
+use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -93,18 +93,19 @@ pub fn run(args: RustArgs) -> Result<bool> {
     let output = gen.generate_rust(&rust_options)?;
 
     let module_path = output_dir.join(format!("{}.rs", output.module_name));
-    let mut file = if args.common_gen_args.overwrite {
-        OpenOptions::new()
+    let file = if args.common_gen_args.overwrite {
+        File::options()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(&module_path)?
+            .open(&module_path)
     } else {
-        OpenOptions::new()
+        File::options()
             .create_new(true)
             .write(true)
-            .open(&module_path)?
+            .open(&module_path)
     };
+    let mut file = file.with_context(|| anyhow!("failed to open `{}`", module_path.display()))?;
 
     file.write_all(output.module_content.as_bytes())?;
     println!("File `{}` written.", module_path.display());
