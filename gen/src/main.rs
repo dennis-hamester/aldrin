@@ -38,9 +38,10 @@ pub struct CommonReadArgs {
 pub struct CommonGenArgs {
     /// Output directory.
     ///
-    /// Files in the output directory will not be overwritten unless --overwrite is specified.
+    /// The current working directory will be used if this is not specified. Files in the output
+    /// directory will not be overwritten unless --overwrite is specified.
     #[clap(short, long = "output")]
-    output_dir: PathBuf,
+    output_dir: Option<PathBuf>,
 
     /// Overwrite output files.
     #[clap(short = 'f', long)]

@@ -1,7 +1,8 @@
 use crate::{diag, CommonArgs, CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::Parser;
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
+use std::env;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
@@ -49,6 +50,13 @@ pub struct RustArgs {
 }
 
 pub fn run(args: RustArgs) -> Result<bool> {
+    let output_dir = match args.common_gen_args.output_dir {
+        Some(output_dir) => output_dir,
+        None => {
+            env::current_dir().with_context(|| anyhow!("failed to determine current directory"))?
+        }
+    };
+
     let mut parser = Parser::new();
 
     for include in args.common_read_args.include {
@@ -84,10 +92,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     let gen = Generator::new(&options, &parsed);
     let output = gen.generate_rust(&rust_options)?;
 
-    let module_path = args
-        .common_gen_args
-        .output_dir
-        .join(format!("{}.rs", output.module_name));
+    let module_path = output_dir.join(format!("{}.rs", output.module_name));
     let mut file = if args.common_gen_args.overwrite {
         OpenOptions::new()
             .create(true)
