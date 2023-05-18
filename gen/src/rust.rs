@@ -41,8 +41,6 @@ pub struct RustArgs {
     /// Path to a patch to apply to the generated code.
     ///
     /// This argument can be specified multiple times to apply more than one patch.
-    ///
-    /// If --format is used as well, the patch is applied before formatting the code.
     #[clap(short, long, number_of_values = 1)]
     patch: Vec<PathBuf>,
 
