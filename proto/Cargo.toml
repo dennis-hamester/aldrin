@@ -6,6 +6,7 @@ authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
 rust-version = "1.65.0"
+autobenches = false
 
 [features]
 fuzzing = [
@@ -15,6 +16,10 @@ fuzzing = [
 macros = ["dep:aldrin-proto-macros"]
 new-v4-ids = ["uuid/v4"]
 tokio = ["dep:tokio"]
+
+[[bench]]
+name = "benches"
+harness = false
 
 [dependencies.aldrin-proto-macros]
 optional = true
@@ -48,3 +53,9 @@ default-features = false
 [dependencies.uuid]
 version = "1.2.1"
 default-features = false
+
+[dev-dependencies]
+criterion = "0.5.0"
+
+[dev-dependencies.aldrin-proto-macros]
+path = "../proto-macros"
