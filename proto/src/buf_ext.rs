@@ -11,7 +11,22 @@ pub(crate) trait BufMutExt: BufMut {
     }
 
     fn put_varint_u16_le(&mut self, n: u16) {
-        self.put_varint_le(n.to_le_bytes());
+        const BOUND_0: u16 = 0xfe;
+        const BOUND_1: u16 = 0x100;
+        const MARK_1: u8 = 254;
+        const MARK_2: u8 = 255;
+
+        let bytes = n.to_le_bytes();
+
+        if n < BOUND_0 {
+            self.put_u8(bytes[0]);
+        } else if n < BOUND_1 {
+            self.put_u8(MARK_1);
+            self.put_u8(bytes[0]);
+        } else {
+            self.put_u8(MARK_2);
+            self.put_slice(&bytes);
+        }
     }
 
     fn put_varint_i16_le(&mut self, n: i16) {
@@ -19,7 +34,32 @@ pub(crate) trait BufMutExt: BufMut {
     }
 
     fn put_varint_u32_le(&mut self, n: u32) {
-        self.put_varint_le(n.to_le_bytes());
+        const BOUND_0: u32 = 0xfc;
+        const BOUND_1: u32 = 0x100;
+        const BOUND_2: u32 = 0x10000;
+        const BOUND_3: u32 = 0x1000000;
+        const MARK_1: u8 = 252;
+        const MARK_2: u8 = 253;
+        const MARK_3: u8 = 254;
+        const MARK_4: u8 = 255;
+
+        let bytes = n.to_le_bytes();
+
+        if n < BOUND_0 {
+            self.put_u8(bytes[0]);
+        } else if n < BOUND_1 {
+            self.put_u8(MARK_1);
+            self.put_u8(bytes[0]);
+        } else if n < BOUND_2 {
+            self.put_u8(MARK_2);
+            self.put_slice(&bytes[..2]);
+        } else if n < BOUND_3 {
+            self.put_u8(MARK_3);
+            self.put_slice(&bytes[..3]);
+        } else {
+            self.put_u8(MARK_4);
+            self.put_slice(&bytes);
+        }
     }
 
     fn put_varint_i32_le(&mut self, n: i32) {
@@ -27,27 +67,56 @@ pub(crate) trait BufMutExt: BufMut {
     }
 
     fn put_varint_u64_le(&mut self, n: u64) {
-        self.put_varint_le(n.to_le_bytes());
+        const BOUND_0: u64 = 0xf8;
+        const BOUND_1: u64 = 0x100;
+        const BOUND_2: u64 = 0x10000;
+        const BOUND_3: u64 = 0x1000000;
+        const BOUND_4: u64 = 0x100000000;
+        const BOUND_5: u64 = 0x10000000000;
+        const BOUND_6: u64 = 0x1000000000000;
+        const BOUND_7: u64 = 0x100000000000000;
+        const MARK_1: u8 = 248;
+        const MARK_2: u8 = 249;
+        const MARK_3: u8 = 250;
+        const MARK_4: u8 = 251;
+        const MARK_5: u8 = 252;
+        const MARK_6: u8 = 253;
+        const MARK_7: u8 = 254;
+        const MARK_8: u8 = 255;
+
+        let bytes = n.to_le_bytes();
+
+        if n < BOUND_0 {
+            self.put_u8(bytes[0]);
+        } else if n < BOUND_1 {
+            self.put_u8(MARK_1);
+            self.put_u8(bytes[0]);
+        } else if n < BOUND_2 {
+            self.put_u8(MARK_2);
+            self.put_slice(&bytes[..2]);
+        } else if n < BOUND_3 {
+            self.put_u8(MARK_3);
+            self.put_slice(&bytes[..3]);
+        } else if n < BOUND_4 {
+            self.put_u8(MARK_4);
+            self.put_slice(&bytes[..4]);
+        } else if n < BOUND_5 {
+            self.put_u8(MARK_5);
+            self.put_slice(&bytes[..5]);
+        } else if n < BOUND_6 {
+            self.put_u8(MARK_6);
+            self.put_slice(&bytes[..6]);
+        } else if n < BOUND_7 {
+            self.put_u8(MARK_7);
+            self.put_slice(&bytes[..7]);
+        } else {
+            self.put_u8(MARK_8);
+            self.put_slice(&bytes);
+        }
     }
 
     fn put_varint_i64_le(&mut self, n: i64) {
         self.put_varint_u64_le(zigzag_encode_i64(n));
-    }
-
-    fn put_varint_le<const N: usize>(&mut self, bytes: [u8; N]) {
-        for (i, n) in bytes.into_iter().rev().enumerate().take(N - 1) {
-            if n != 0 {
-                self.put_u8(255 - i as u8);
-                self.put_slice(&bytes[..N - i]);
-                return;
-            }
-        }
-
-        if bytes[0] > 255 - N as u8 {
-            self.put_u8(255 - N as u8 + 1);
-        }
-
-        self.put_u8(bytes[0]);
     }
 }
 
