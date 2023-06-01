@@ -166,6 +166,14 @@ pub(crate) trait ValueBufExt: Buf {
         }
     }
 
+    fn try_get_u16_le(&mut self) -> Result<u16, DeserializeError> {
+        if self.remaining() >= 2 {
+            Ok(self.get_u16_le())
+        } else {
+            Err(DeserializeError::UnexpectedEoi)
+        }
+    }
+
     fn try_get_u32_le(&mut self) -> Result<u32, DeserializeError> {
         if self.remaining() >= 4 {
             Ok(self.get_u32_le())
@@ -183,7 +191,19 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_get_varint_u16_le(&mut self) -> Result<u16, DeserializeError> {
-        self.try_get_varint_le().map(u16::from_le_bytes)
+        const MARK_1: u8 = 254;
+        const MARK_2: u8 = 255;
+
+        let first = self.try_get_u8()?;
+
+        if first < MARK_1 {
+            Ok(first as u16)
+        } else if first == MARK_1 {
+            self.try_get_u8().map(|v| v as u16)
+        } else {
+            debug_assert_eq!(first, MARK_2);
+            self.try_get_u16_le()
+        }
     }
 
     fn try_get_varint_i16_le(&mut self) -> Result<i16, DeserializeError> {
@@ -191,7 +211,27 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_get_varint_u32_le(&mut self) -> Result<u32, DeserializeError> {
-        self.try_get_varint_le().map(u32::from_le_bytes)
+        const MARK_1: u8 = 252;
+        const MARK_2: u8 = 253;
+        const MARK_3: u8 = 254;
+        const MARK_4: u8 = 255;
+
+        let first = self.try_get_u8()?;
+
+        if first < MARK_1 {
+            Ok(first as u32)
+        } else if first == MARK_1 {
+            self.try_get_u8().map(|v| v as u32)
+        } else if first == MARK_2 {
+            self.try_get_u16_le().map(|v| v as u32)
+        } else if first == MARK_3 {
+            let mut bytes = [0; 4];
+            self.try_copy_to_slice(&mut bytes[..3])?;
+            Ok(u32::from_le_bytes(bytes))
+        } else {
+            debug_assert_eq!(first, MARK_4);
+            self.try_get_u32_le()
+        }
     }
 
     fn try_get_varint_i32_le(&mut self) -> Result<i32, DeserializeError> {
@@ -199,25 +239,49 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_get_varint_u64_le(&mut self) -> Result<u64, DeserializeError> {
-        self.try_get_varint_le().map(u64::from_le_bytes)
+        const MARK_1: u8 = 248;
+        const MARK_2: u8 = 249;
+        const MARK_3: u8 = 250;
+        const MARK_4: u8 = 251;
+        const MARK_5: u8 = 252;
+        const MARK_6: u8 = 253;
+        const MARK_7: u8 = 254;
+        const MARK_8: u8 = 255;
+
+        let first = self.try_get_u8()?;
+
+        if first < MARK_1 {
+            Ok(first as u64)
+        } else if first == MARK_1 {
+            self.try_get_u8().map(|v| v as u64)
+        } else if first == MARK_2 {
+            self.try_get_u16_le().map(|v| v as u64)
+        } else if first == MARK_3 {
+            let mut bytes = [0; 8];
+            self.try_copy_to_slice(&mut bytes[..3])?;
+            Ok(u64::from_le_bytes(bytes))
+        } else if first == MARK_4 {
+            self.try_get_u32_le().map(|v| v as u64)
+        } else if first == MARK_5 {
+            let mut bytes = [0; 8];
+            self.try_copy_to_slice(&mut bytes[..5])?;
+            Ok(u64::from_le_bytes(bytes))
+        } else if first == MARK_6 {
+            let mut bytes = [0; 8];
+            self.try_copy_to_slice(&mut bytes[..6])?;
+            Ok(u64::from_le_bytes(bytes))
+        } else if first == MARK_7 {
+            let mut bytes = [0; 8];
+            self.try_copy_to_slice(&mut bytes[..7])?;
+            Ok(u64::from_le_bytes(bytes))
+        } else {
+            debug_assert_eq!(first, MARK_8);
+            self.try_get_u64_le()
+        }
     }
 
     fn try_get_varint_i64_le(&mut self) -> Result<i64, DeserializeError> {
         self.try_get_varint_u64_le().map(zigzag_decode_i64)
-    }
-
-    fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], DeserializeError> {
-        let mut bytes = [0; N];
-        let first = self.try_get_u8()?;
-
-        if first > 255 - N as u8 {
-            let num_bytes = first as usize + N - 255;
-            self.try_copy_to_slice(&mut bytes[..num_bytes])?;
-        } else {
-            bytes[0] = first;
-        }
-
-        Ok(bytes)
     }
 
     fn try_copy_to_bytes(&mut self, len: usize) -> Result<Bytes, DeserializeError> {
@@ -286,22 +350,44 @@ pub(crate) trait MessageBufExt: Buf {
         }
     }
 
-    fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
-        self.try_get_varint_le().map(u32::from_le_bytes)
+    fn try_get_u16_le(&mut self) -> Result<u16, MessageDeserializeError> {
+        if self.remaining() >= 2 {
+            Ok(self.get_u16_le())
+        } else {
+            Err(MessageDeserializeError::UnexpectedEoi)
+        }
     }
 
-    fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], MessageDeserializeError> {
-        let mut bytes = [0; N];
+    fn try_get_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+        if self.remaining() >= 4 {
+            Ok(self.get_u32_le())
+        } else {
+            Err(MessageDeserializeError::UnexpectedEoi)
+        }
+    }
+
+    fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+        const MARK_1: u8 = 252;
+        const MARK_2: u8 = 253;
+        const MARK_3: u8 = 254;
+        const MARK_4: u8 = 255;
+
         let first = self.try_get_u8()?;
 
-        if first > 255 - N as u8 {
-            let num_bytes = first as usize + N - 255;
-            self.try_copy_to_slice(&mut bytes[..num_bytes])?;
+        if first < MARK_1 {
+            Ok(first as u32)
+        } else if first == MARK_1 {
+            self.try_get_u8().map(|v| v as u32)
+        } else if first == MARK_2 {
+            self.try_get_u16_le().map(|v| v as u32)
+        } else if first == MARK_3 {
+            let mut bytes = [0; 4];
+            self.try_copy_to_slice(&mut bytes[..3])?;
+            Ok(u32::from_le_bytes(bytes))
         } else {
-            bytes[0] = first;
+            debug_assert_eq!(first, MARK_4);
+            self.try_get_u32_le()
         }
-
-        Ok(bytes)
     }
 
     fn try_copy_to_slice(&mut self, dst: &mut [u8]) -> Result<(), MessageDeserializeError> {
