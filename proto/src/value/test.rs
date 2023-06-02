@@ -710,7 +710,7 @@ fn test_i8_set() {
 
 #[test]
 fn test_u16_set() {
-    let serialized = [31, 1, 2];
+    let serialized = [31, 1, 2, 0];
     let value1 = HashSet::<_>::from_iter([2u16]);
     assert_serialize_eq(&value1, serialized);
     assert_deserialize_eq(&value1, serialized);
@@ -724,7 +724,7 @@ fn test_u16_set() {
 
 #[test]
 fn test_i16_set() {
-    let serialized = [32, 1, 2];
+    let serialized = [32, 1, 2, 0];
     let value1 = HashSet::<_>::from_iter([1i16]);
     assert_serialize_eq(&value1, serialized);
     assert_deserialize_eq(&value1, serialized);

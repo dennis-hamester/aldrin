@@ -16,52 +16,6 @@ fn put_discriminant_u8() {
 }
 
 #[test]
-fn put_varint_u16_le() {
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0x0000);
-    assert_eq!(*buf, [0x00]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0x00fd);
-    assert_eq!(*buf, [0xfd]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0x00fe);
-    assert_eq!(*buf, [254, 0xfe]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0x00ff);
-    assert_eq!(*buf, [254, 0xff]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0x0100);
-    assert_eq!(*buf, [255, 0x00, 0x01]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_u16_le(0xffff);
-    assert_eq!(*buf, [255, 0xff, 0xff]);
-}
-
-#[test]
-fn put_varint_i16_le() {
-    let mut buf = BytesMut::new();
-    buf.put_varint_i16_le(0);
-    assert_eq!(*buf, [0]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_i16_le(1);
-    assert_eq!(*buf, [2]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_i16_le(i16::MAX);
-    assert_eq!(*buf, [255, 254, 255]);
-
-    let mut buf = BytesMut::new();
-    buf.put_varint_i16_le(i16::MIN);
-    assert_eq!(*buf, [255, 255, 255]);
-}
-
-#[test]
 fn put_varint_u32_le() {
     let mut buf = BytesMut::new();
     buf.put_varint_u32_le(0x00000000);
@@ -332,56 +286,6 @@ fn value_try_get_u64_le() {
 
     let mut buf = &[0, 0, 0, 0, 0, 0, 0][..];
     assert_eq!(buf.try_get_u64_le(), Err(DeserializeError::UnexpectedEoi));
-}
-
-#[test]
-fn value_try_get_varint_u16_le() {
-    use super::ValueBufExt;
-
-    let mut buf = &[0x00][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0x0000));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[0xfd][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0x00fd));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[254, 0xfe][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0x00fe));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[254, 0xff][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0x00ff));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[255, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0x0100));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[255, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u16_le(), Ok(0xffff));
-    assert_eq!(*buf, []);
-}
-
-#[test]
-fn value_try_get_varint_i16_le() {
-    use super::ValueBufExt;
-
-    let mut buf = &[0][..];
-    assert_eq!(buf.try_get_varint_i16_le(), Ok(0));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[2][..];
-    assert_eq!(buf.try_get_varint_i16_le(), Ok(1));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[255, 254, 255][..];
-    assert_eq!(buf.try_get_varint_i16_le(), Ok(i16::MAX));
-    assert_eq!(*buf, []);
-
-    let mut buf = &[255, 255, 255][..];
-    assert_eq!(buf.try_get_varint_i16_le(), Ok(i16::MIN));
-    assert_eq!(*buf, []);
 }
 
 #[test]
@@ -730,26 +634,6 @@ fn message_try_copy_to_slice() {
         src.try_copy_to_slice(&mut dst),
         Err(MessageDeserializeError::UnexpectedEoi)
     );
-}
-
-#[test]
-fn zigzag_encode_i16() {
-    use super::zigzag_encode_i16;
-    assert_eq!(zigzag_encode_i16(0), 0);
-    assert_eq!(zigzag_encode_i16(1), 2);
-    assert_eq!(zigzag_encode_i16(-1), 1);
-    assert_eq!(zigzag_encode_i16(i16::MAX), u16::MAX - 1);
-    assert_eq!(zigzag_encode_i16(i16::MIN), u16::MAX);
-}
-
-#[test]
-fn zigzag_decode_i16() {
-    use super::zigzag_decode_i16;
-    assert_eq!(zigzag_decode_i16(0), 0);
-    assert_eq!(zigzag_decode_i16(1), -1);
-    assert_eq!(zigzag_decode_i16(2), 1);
-    assert_eq!(zigzag_decode_i16(u16::MAX), i16::MIN);
-    assert_eq!(zigzag_decode_i16(u16::MAX - 1), i16::MAX);
 }
 
 #[test]

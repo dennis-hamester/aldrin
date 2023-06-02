@@ -76,7 +76,7 @@ impl DeserializeKey for i8 {}
 
 impl Sealed for u16 {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
-        buf.try_get_varint_u16_le()
+        buf.try_get_u16_le()
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -96,7 +96,7 @@ impl DeserializeKey for u16 {}
 
 impl Sealed for i16 {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
-        buf.try_get_varint_i16_le()
+        buf.try_get_i16_le()
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {

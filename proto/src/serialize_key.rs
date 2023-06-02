@@ -96,7 +96,7 @@ impl SerializeKey for i8 {}
 
 impl Sealed for u16 {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
-        buf.put_varint_u16_le(*self);
+        buf.put_u16_le(*self);
         Ok(())
     }
 
@@ -113,7 +113,7 @@ impl SerializeKey for u16 {}
 
 impl Sealed for i16 {
     fn serialize_key<B: BufMut>(&self, buf: &mut B) -> Result<(), SerializeError> {
-        buf.put_varint_i16_le(*self);
+        buf.put_i16_le(*self);
         Ok(())
     }
 

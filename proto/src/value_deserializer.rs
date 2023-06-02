@@ -168,12 +168,12 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_u16(self) -> Result<u16, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::U16)?;
-        self.buf.try_get_varint_u16_le()
+        self.buf.try_get_u16_le()
     }
 
     pub fn deserialize_i16(self) -> Result<i16, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::I16)?;
-        self.buf.try_get_varint_i16_le()
+        self.buf.try_get_i16_le()
     }
 
     pub fn deserialize_u32(self) -> Result<u32, DeserializeError> {

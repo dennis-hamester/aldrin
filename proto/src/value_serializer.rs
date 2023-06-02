@@ -70,12 +70,12 @@ impl<'a> Serializer<'a> {
 
     pub fn serialize_u16(self, value: u16) {
         self.buf.put_discriminant_u8(ValueKind::U16);
-        self.buf.put_varint_u16_le(value);
+        self.buf.put_u16_le(value);
     }
 
     pub fn serialize_i16(self, value: i16) {
         self.buf.put_discriminant_u8(ValueKind::I16);
-        self.buf.put_varint_i16_le(value);
+        self.buf.put_i16_le(value);
     }
 
     pub fn serialize_u32(self, value: u32) {

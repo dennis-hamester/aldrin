@@ -10,29 +10,6 @@ pub(crate) trait BufMutExt: BufMut {
         self.put_u8(discriminant.into())
     }
 
-    fn put_varint_u16_le(&mut self, n: u16) {
-        const BOUND_0: u16 = 0xfe;
-        const BOUND_1: u16 = 0x100;
-        const MARK_1: u8 = 254;
-        const MARK_2: u8 = 255;
-
-        let bytes = n.to_le_bytes();
-
-        if n < BOUND_0 {
-            self.put_u8(bytes[0]);
-        } else if n < BOUND_1 {
-            self.put_u8(MARK_1);
-            self.put_u8(bytes[0]);
-        } else {
-            self.put_u8(MARK_2);
-            self.put_slice(&bytes);
-        }
-    }
-
-    fn put_varint_i16_le(&mut self, n: i16) {
-        self.put_varint_u16_le(zigzag_encode_i16(n));
-    }
-
     fn put_varint_u32_le(&mut self, n: u32) {
         const BOUND_0: u32 = 0xfc;
         const BOUND_1: u32 = 0x100;
@@ -174,6 +151,14 @@ pub(crate) trait ValueBufExt: Buf {
         }
     }
 
+    fn try_get_i16_le(&mut self) -> Result<i16, DeserializeError> {
+        if self.remaining() >= 2 {
+            Ok(self.get_i16_le())
+        } else {
+            Err(DeserializeError::UnexpectedEoi)
+        }
+    }
+
     fn try_get_u32_le(&mut self) -> Result<u32, DeserializeError> {
         if self.remaining() >= 4 {
             Ok(self.get_u32_le())
@@ -188,26 +173,6 @@ pub(crate) trait ValueBufExt: Buf {
         } else {
             Err(DeserializeError::UnexpectedEoi)
         }
-    }
-
-    fn try_get_varint_u16_le(&mut self) -> Result<u16, DeserializeError> {
-        const MARK_1: u8 = 254;
-        const MARK_2: u8 = 255;
-
-        let first = self.try_get_u8()?;
-
-        if first < MARK_1 {
-            Ok(first as u16)
-        } else if first == MARK_1 {
-            self.try_get_u8().map(|v| v as u16)
-        } else {
-            debug_assert_eq!(first, MARK_2);
-            self.try_get_u16_le()
-        }
-    }
-
-    fn try_get_varint_i16_le(&mut self) -> Result<i16, DeserializeError> {
-        self.try_get_varint_u16_le().map(zigzag_decode_i16)
     }
 
     fn try_get_varint_u32_le(&mut self) -> Result<u32, DeserializeError> {
@@ -401,14 +366,6 @@ pub(crate) trait MessageBufExt: Buf {
 }
 
 impl<T: Buf + ?Sized> MessageBufExt for T {}
-
-fn zigzag_encode_i16(n: i16) -> u16 {
-    (n >> 15) as u16 ^ (n << 1) as u16
-}
-
-fn zigzag_decode_i16(n: u16) -> i16 {
-    (n >> 1) as i16 ^ -((n & 1) as i16)
-}
 
 fn zigzag_encode_i32(n: i32) -> u32 {
     (n >> 31) as u32 ^ (n << 1) as u32
