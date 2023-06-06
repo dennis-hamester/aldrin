@@ -30,7 +30,7 @@ use aldrin_proto::message::{
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use channel::{Channel, SendItemError};
+use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
 use futures_util::stream::StreamExt;
@@ -1247,8 +1247,13 @@ impl Broker {
             return;
         };
 
-        let Some((sender_id, capacity)) = channel.add_capacity(id, req.capacity) else {
-            return;
+        let (sender_id, capacity) = match channel.add_capacity(id, req.capacity) {
+            Ok(Some((sender_id, capacity))) => (sender_id, capacity),
+            Ok(None) => return,
+            Err(AddCapacityError) => {
+                self.remove_channel_end(state, req.cookie, ChannelEnd::Receiver, Some(id));
+                return;
+            }
         };
 
         let Some(sender) = self.conns.get(sender_id) else {

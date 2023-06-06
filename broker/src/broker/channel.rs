@@ -176,38 +176,41 @@ impl Channel {
         &mut self,
         conn_id: &ConnectionId,
         capacity: u32,
-    ) -> Option<(&ConnectionId, u32)> {
+    ) -> Result<Option<(&ConnectionId, u32)>, AddCapacityError> {
         if capacity == 0 {
-            return None;
+            return Ok(None);
         }
 
         let ChannelEndState::Claimed {
             owner: ref receiver,
             capacity: ref mut receiver_capacity,
         } = self.receiver else {
-            return None;
+            return Ok(None);
         };
 
         if receiver != conn_id {
-            return None;
+            return Ok(None);
         }
 
-        *receiver_capacity += capacity;
+        match receiver_capacity.checked_add(capacity) {
+            Some(new_receiver_capacity) => *receiver_capacity = new_receiver_capacity,
+            None => return Err(AddCapacityError),
+        }
 
         let ChannelEndState::Claimed {
             owner: ref sender,
             capacity: ref mut sender_capacity,
         } = self.sender else {
-            return None;
+            return Ok(None);
         };
 
         if *sender_capacity <= LOW_CAPACITY {
             debug_assert!(*receiver_capacity > *sender_capacity);
             let diff = *receiver_capacity - *sender_capacity;
             *sender_capacity = *receiver_capacity;
-            Some((sender, diff))
+            Ok(Some((sender, diff)))
         } else {
-            None
+            Ok(None)
         }
     }
 }
@@ -219,6 +222,9 @@ pub(crate) enum SendItemError {
     ReceiverClosed,
     CapacityExhausted,
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct AddCapacityError;
 
 #[derive(Debug)]
 enum ChannelEndState {
