@@ -1,0 +1,51 @@
+{
+    "name": "channel-capacity-overflow-1",
+    "description": "Overflow the capacity of channel that has an unclaimed sender",
+    "long-description": "A client creates a channel with the receiver already claimed. The sender stays unclaimed. The receiver then overflows the capacity by exceeding the maximum. The broker must close the whole channel.",
+    "message-types": [
+        "add-channel-capacity"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "receiver",
+            "capacity": 4294967295,
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "add-channel-capacity",
+            "cookie": "get:cookie",
+            "capacity": 1
+        },
+        {
+            "type": "send",
+            "message": "claim-channel-end",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "end": "sender"
+        },
+        {
+            "type": "receive",
+            "message": "claim-channel-end-reply",
+            "serial": 0,
+            "result": "invalid-channel"
+        },
+        {
+            "type": "send",
+            "message": "close-channel-end",
+            "serial": 1,
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "receive",
+            "message": "close-channel-end-reply",
+            "serial": 1,
+            "result": "invalid-channel"
+        }
+    ]
+}

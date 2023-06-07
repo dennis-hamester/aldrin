@@ -1,0 +1,56 @@
+{
+    "name": "channel-capacity-overflow-2",
+    "description": "Overflow the capacity of channel",
+    "long-description": "A client creates a channel and claims both ends. It then overflows the capacity. The broker must close only the receiver.",
+    "message-types": [
+        "add-channel-capacity"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-channel",
+            "end": "receiver",
+            "capacity": 4294967295,
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "claim-channel-end",
+            "cookie": "get:cookie",
+            "end": "sender",
+            "capacity": 4294967295
+        },
+        {
+            "type": "send",
+            "message": "add-channel-capacity",
+            "cookie": "get:cookie",
+            "capacity": 1
+        },
+        {
+            "type": "receive",
+            "message": "channel-end-closed",
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "send",
+            "message": "close-channel-end",
+            "serial": 1,
+            "cookie": "get:cookie",
+            "end": "receiver"
+        },
+        {
+            "type": "receive",
+            "message": "close-channel-end-reply",
+            "serial": 1,
+            "result": "invalid-channel"
+        },
+        {
+            "type": "close-channel-end",
+            "cookie": "get:cookie",
+            "end": "sender",
+            "with-other": false
+        }
+    ]
+}

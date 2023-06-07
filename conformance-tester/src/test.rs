@@ -64,6 +64,8 @@ pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
         include_str!("../tests/call-function-ok.json"),
         include_str!("../tests/call-function.json"),
         include_str!("../tests/call-invalid-function.json"),
+        include_str!("../tests/channel-capacity-overflow-1.json"),
+        include_str!("../tests/channel-capacity-overflow-2.json"),
         include_str!("../tests/claim-invalid-receiver.json"),
         include_str!("../tests/claim-invalid-sender.json"),
         include_str!("../tests/claim-receiver-after-close.json"),
