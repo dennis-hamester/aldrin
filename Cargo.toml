@@ -13,3 +13,4 @@ members = [
     "proto-macros",
     "test",
 ]
+resolver = "2"
