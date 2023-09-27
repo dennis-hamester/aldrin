@@ -941,7 +941,9 @@ impl Broker {
     }
 
     fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: EmitEvent) {
-        let Some(obj_uuid) = self.svc_uuids.get(&req.service_cookie)
+        let Some(obj_uuid) = self
+            .svc_uuids
+            .get(&req.service_cookie)
             .map(|(object_id, _, _)| object_id.uuid)
         else {
             return;

@@ -84,7 +84,11 @@ impl Channel {
             ChannelEndState::Closed => return Err(ClaimChannelEndResult::InvalidChannel),
         }
 
-        let ChannelEndState::Claimed { owner: ref receiver, capacity } = self.receiver else {
+        let ChannelEndState::Claimed {
+            owner: ref receiver,
+            capacity,
+        } = self.receiver
+        else {
             // The channel is closed before.
             unreachable!();
         };
@@ -111,7 +115,8 @@ impl Channel {
         let ChannelEndState::Claimed {
             owner: ref sender,
             capacity: ref mut sender_capacity,
-        } = self.sender else {
+        } = self.sender
+        else {
             // The channel is closed before.
             unreachable!();
         };
@@ -133,7 +138,8 @@ impl Channel {
         let ChannelEndState::Claimed {
             owner: ref sender,
             capacity: ref mut sender_capacity,
-        } = self.sender else {
+        } = self.sender
+        else {
             return Err(SendItemError::InvalidSender);
         };
 
@@ -184,7 +190,8 @@ impl Channel {
         let ChannelEndState::Claimed {
             owner: ref receiver,
             capacity: ref mut receiver_capacity,
-        } = self.receiver else {
+        } = self.receiver
+        else {
             return Ok(None);
         };
 
@@ -200,7 +207,8 @@ impl Channel {
         let ChannelEndState::Claimed {
             owner: ref sender,
             capacity: ref mut sender_capacity,
-        } = self.sender else {
+        } = self.sender
+        else {
             return Ok(None);
         };
 

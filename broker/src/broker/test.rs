@@ -216,7 +216,8 @@ async fn wrong_client_replies_function_call() {
     let Message::CreateObjectReply(CreateObjectReply {
         result: CreateObjectResult::Ok(object_cookie),
         ..
-    }) = client1.receive().await.unwrap() else {
+    }) = client1.receive().await.unwrap()
+    else {
         panic!();
     };
 
@@ -235,7 +236,8 @@ async fn wrong_client_replies_function_call() {
     let Message::CreateServiceReply(CreateServiceReply {
         result: CreateServiceResult::Ok(service_cookie),
         ..
-    }) = client1.receive().await.unwrap() else {
+    }) = client1.receive().await.unwrap()
+    else {
         panic!();
     };
 
@@ -246,7 +248,8 @@ async fn wrong_client_replies_function_call() {
         .await
         .unwrap();
 
-    let Message::CallFunction(CallFunction { serial, .. }) = client1.receive().await.unwrap() else {
+    let Message::CallFunction(CallFunction { serial, .. }) = client1.receive().await.unwrap()
+    else {
         panic!();
     };
 
@@ -278,7 +281,8 @@ async fn wrong_client_replies_function_call() {
     let Message::CallFunctionReply(CallFunctionReply {
         result: CallFunctionResult::Ok(_),
         ..
-    }) = client1.receive().await.unwrap() else {
+    }) = client1.receive().await.unwrap()
+    else {
         panic!();
     };
 }
@@ -325,10 +329,9 @@ async fn send_item_without_capacity() {
         .await
         .unwrap();
 
-    let Message::CreateChannelReply(CreateChannelReply {
-        serial: 0,
-        cookie,
-    }) = client1.receive().await.unwrap() else {
+    let Message::CreateChannelReply(CreateChannelReply { serial: 0, cookie }) =
+        client1.receive().await.unwrap()
+    else {
         panic!();
     };
 

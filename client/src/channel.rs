@@ -634,7 +634,8 @@ impl SenderInner {
             ref mut capacity_added,
             ref mut capacity,
             ..
-        } = self.state else {
+        } = self.state
+        else {
             return Poll::Ready(Err(Error::InvalidChannel));
         };
 
@@ -678,7 +679,8 @@ impl SenderInner {
             ref client,
             ref mut capacity,
             ..
-        } = self.state else {
+        } = self.state
+        else {
             return Err(Error::InvalidChannel);
         };
 
