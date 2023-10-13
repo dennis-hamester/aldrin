@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
@@ -79,34 +78,6 @@ impl PartialEq for ConnectionId {
 }
 
 impl Eq for ConnectionId {}
-
-impl PartialOrd for ConnectionId {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.id().partial_cmp(&other.0.id())
-    }
-
-    fn lt(&self, other: &Self) -> bool {
-        self.0.id() < other.0.id()
-    }
-
-    fn le(&self, other: &Self) -> bool {
-        self.0.id() <= other.0.id()
-    }
-
-    fn gt(&self, other: &Self) -> bool {
-        self.0.id() > other.0.id()
-    }
-
-    fn ge(&self, other: &Self) -> bool {
-        self.0.id() >= other.0.id()
-    }
-}
-
-impl Ord for ConnectionId {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.0.id().cmp(&other.0.id())
-    }
-}
 
 impl Hash for ConnectionId {
     fn hash<H>(&self, state: &mut H)
