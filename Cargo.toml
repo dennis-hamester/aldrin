@@ -10,7 +10,6 @@ members = [
     "gen",
     "parser",
     "proto",
-    "proto-macros",
     "test",
 ]
 resolver = "2"

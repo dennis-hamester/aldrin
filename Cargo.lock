@@ -121,23 +121,12 @@ dependencies = [
 name = "aldrin-proto"
 version = "0.1.0"
 dependencies = [
- "aldrin-proto-macros",
  "arbitrary",
  "bytes",
  "num_enum",
  "pin-project-lite",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "aldrin-proto-macros"
-version = "0.1.0"
-dependencies = [
- "aldrin-proto",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
