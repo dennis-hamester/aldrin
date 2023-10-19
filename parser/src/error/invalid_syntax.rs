@@ -3,13 +3,13 @@ use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::grammar::Rule;
 use crate::{LineCol, Parsed, Position, Span};
 use std::borrow::Cow;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub struct InvalidSyntax {
     schema_name: String,
     pos: Position,
-    expected: HashSet<Expected>,
+    expected: BTreeSet<Expected>,
 }
 
 impl InvalidSyntax {
@@ -26,7 +26,7 @@ impl InvalidSyntax {
             ErrorVariant::CustomError { .. } => unreachable!(),
         };
 
-        let mut expected = HashSet::with_capacity(positives.len());
+        let mut expected = BTreeSet::new();
         for rule in positives {
             Expected::add(rule, &mut expected);
         }
@@ -42,7 +42,7 @@ impl InvalidSyntax {
         self.pos
     }
 
-    pub fn expected(&self) -> &HashSet<Expected> {
+    pub fn expected(&self) -> &BTreeSet<Expected> {
         &self.expected
     }
 }
@@ -138,7 +138,7 @@ pub enum Expected {
 }
 
 impl Expected {
-    fn add(rule: Rule, set: &mut HashSet<Self>) {
+    fn add(rule: Rule, set: &mut BTreeSet<Self>) {
         const CONST_VALUE: &[Expected] = &[
             Expected::Keyword("i16"),
             Expected::Keyword("i32"),
