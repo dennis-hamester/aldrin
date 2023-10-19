@@ -160,6 +160,7 @@ impl UnusedImport {
 
     fn visit_type_name(ty: &TypeName, schema_name: &SchemaName) -> bool {
         match ty.kind() {
+            TypeNameKind::Option(ty) => Self::visit_type_name(ty, schema_name),
             TypeNameKind::Vec(ty) => Self::visit_type_name(ty, schema_name),
             TypeNameKind::Map(_, ty) => Self::visit_type_name(ty, schema_name),
             TypeNameKind::Extern(schema, _) => schema.value() == schema_name.value(),

@@ -55,6 +55,7 @@ pub enum TypeNameKind {
     ObjectId,
     ServiceId,
     Value,
+    Option(Box<TypeName>),
     Vec(Box<TypeName>),
     Bytes,
     Map(KeyTypeName, Box<TypeName>),
@@ -84,6 +85,13 @@ impl TypeNameKind {
             Rule::kw_object_id => TypeNameKind::ObjectId,
             Rule::kw_service_id => TypeNameKind::ServiceId,
             Rule::kw_value => TypeNameKind::Value,
+            Rule::option_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip <.
+                let pair = pairs.next().unwrap();
+                TypeNameKind::Option(Box::new(TypeName::parse(pair)))
+            }
             Rule::vec_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -140,6 +148,7 @@ impl TypeNameKind {
 
     fn validate(&self, validate: &mut Validate) {
         match self {
+            TypeNameKind::Option(ty) => ty.validate(validate),
             TypeNameKind::Vec(ty) => ty.validate(validate),
             TypeNameKind::Map(_, ty) => ty.validate(validate),
             TypeNameKind::Intern(ty) => {

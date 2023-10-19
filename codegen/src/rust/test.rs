@@ -1,5 +1,6 @@
 aldrin_client::generate!("test/constants.aldrin");
 aldrin_client::generate!("test/generic_struct.aldrin");
+aldrin_client::generate!("test/options.aldrin");
 aldrin_client::generate!("test/test1.aldrin");
 
 use aldrin_client::Error;

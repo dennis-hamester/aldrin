@@ -1,0 +1,30 @@
+service Service1 {
+    uuid = b3a2b641-3f61-48aa-8ca3-ccd9ed26f078;
+    version = 0;
+
+    fn f1 @ 1 {
+        args = option<u8>;
+        ok = option<u8>;
+        err = option<u8>;
+    }
+
+    fn f2 @ 2 {
+        args = sender<option<u8>>;
+        ok = sender<option<u8>>;
+        err = sender<option<u8>>;
+    }
+
+    fn f3 @ 3 {
+        args = receiver<option<u8>>;
+        ok = receiver<option<u8>>;
+        err = receiver<option<u8>>;
+    }
+
+    event e1 @ 1 = option<u8>;
+}
+
+struct Struct1 {
+    f1 @ 1 = option<u8>;
+    f2 @ 2 = option<option<u8>>;
+    f3 @ 3 = option<map<u8 -> option<u8>>>;
+}
