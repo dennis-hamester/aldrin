@@ -42,8 +42,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     example1::MyStruct::builder()
-///         .set_field1(Some(12))
-///         .set_field2(Some(34))
+///         .field1(12)
+///         .field2(34)
 ///         .build();
 /// }
 /// ```
@@ -73,8 +73,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     schema::MyStruct::builder() // Note `schema` instead of `example1`.
-///         .set_field1(Some(12))
-///         .set_field2(Some(34))
+///         .field1(12)
+///         .field2(34)
 ///         .build();
 /// }
 /// ```
@@ -110,7 +110,7 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     example3::Foo::builder()
-///         .set_bar(Some(example4::Bar::builder().set_baz(Some(12)).build()))
+///         .bar(example4::Bar::builder().baz(12).build())
 ///         .build();
 /// }
 /// ```
@@ -141,8 +141,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     example1::MyStructRenamed::builder()
-///         .set_field1(Some(12))
-///         .set_field2(Some(34))
+///         .field1(12)
+///         .field2(34)
 ///         .build();
 /// }
 /// ```
@@ -159,8 +159,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// fn main() {
 ///     example1::MyStructRenamedAgain::builder()
-///         .set_field1(Some(12))
-///         .set_field2(Some(34))
+///         .field1(12)
+///         .field2(34)
 ///         .build();
 /// }
 /// ```

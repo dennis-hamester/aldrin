@@ -246,19 +246,11 @@ impl<'a> RustGenerator<'a> {
             genln!(self);
             for field in fields {
                 let field_name = field.name().value();
-                if field.required() {
-                    genln!(self, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", field_name, type_name(field.field_type()));
-                    genln!(self, "        self.{0} = Some({0});", field_name);
-                    genln!(self, "        self");
-                    genln!(self, "    }}");
-                    genln!(self);
-                } else {
-                    genln!(self, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", field_name, type_name(field.field_type()));
-                    genln!(self, "        self.{0} = {0};", field_name);
-                    genln!(self, "        self");
-                    genln!(self, "    }}");
-                    genln!(self);
-                }
+                genln!(self, "    pub fn {0}(mut self, {0}: {1}) -> Self {{", field_name, type_name(field.field_type()));
+                genln!(self, "        self.{0} = Some({0});", field_name);
+                genln!(self, "        self");
+                genln!(self, "    }}");
+                genln!(self);
             }
 
             if !has_required_fields {
