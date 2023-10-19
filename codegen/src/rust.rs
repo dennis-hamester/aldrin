@@ -151,9 +151,9 @@ impl<'a> RustGenerator<'a> {
         for field in fields {
             let field_name = field.name().value();
             if field.required() {
-                genln!(self, "    pub {}: {},", field_name, struct_field_type(name, field));
+                genln!(self, "    pub {}: {},", field_name, type_name(field.field_type()));
             } else {
-                genln!(self, "    pub {}: Option<{}>,", field_name, struct_field_type(name, field));
+                genln!(self, "    pub {}: Option<{}>,", field_name, type_name(field.field_type()));
             }
         }
         genln!(self, "}}");
@@ -233,7 +233,7 @@ impl<'a> RustGenerator<'a> {
             for field in fields {
                 let field_name = field.name().value();
                 genln!(self, "    #[doc(hidden)]");
-                genln!(self, "    {}: Option<{}>,", field_name, struct_field_type(name, field));
+                genln!(self, "    {}: Option<{}>,", field_name, type_name(field.field_type()));
                 genln!(self);
             }
             genln!(self, "}}");
@@ -247,13 +247,13 @@ impl<'a> RustGenerator<'a> {
             for field in fields {
                 let field_name = field.name().value();
                 if field.required() {
-                    genln!(self, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", field_name, struct_field_type(name, field));
+                    genln!(self, "    pub fn set_{0}(mut self, {0}: {1}) -> Self {{", field_name, type_name(field.field_type()));
                     genln!(self, "        self.{0} = Some({0});", field_name);
                     genln!(self, "        self");
                     genln!(self, "    }}");
                     genln!(self);
                 } else {
-                    genln!(self, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", field_name, struct_field_type(name, field));
+                    genln!(self, "    pub fn set_{0}(mut self, {0}: Option<{1}>) -> Self {{", field_name, type_name(field.field_type()));
                     genln!(self, "        self.{0} = {0};", field_name);
                     genln!(self, "        self");
                     genln!(self, "    }}");
@@ -286,23 +286,6 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "}}");
             genln!(self);
         }
-
-        for field in fields {
-            let field_name = field.name().value();
-            match field.field_type() {
-                ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                    &struct_inline_field_type(name, field_name),
-                    None,
-                    s.fields(),
-                ),
-                ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                    &struct_inline_field_type(name, field_name),
-                    None,
-                    e.variants(),
-                ),
-                ast::TypeNameOrInline::TypeName(_) => {}
-            }
-        }
     }
 
     fn enum_def(
@@ -323,7 +306,7 @@ impl<'a> RustGenerator<'a> {
         for var in vars {
             let var_name = var.name().value();
             if let Some(var_type) = var.variant_type() {
-                genln!(self, "    {}({}),", var_name, enum_variant_name(name, var_name, var_type));
+                genln!(self, "    {}({}),", var_name, type_name(var_type));
             } else {
                 genln!(self, "    {},", var_name);
             }
@@ -367,26 +350,6 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
-
-        for var in vars {
-            let var_type = match var.variant_type() {
-                Some(var_type) => var_type,
-                None => continue,
-            };
-
-            let var_name = var.name().value();
-            match var_type {
-                ast::TypeNameOrInline::Struct(s) => {
-                    self.struct_def(&enum_inline_variant_type(name, var_name), None, s.fields())
-                }
-                ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                    &enum_inline_variant_type(name, var_name),
-                    None,
-                    e.variants(),
-                ),
-                ast::TypeNameOrInline::TypeName(_) => {}
-            }
-        }
     }
 
     fn service_def(&mut self, svc: &ast::ServiceDef) {
@@ -1119,34 +1082,8 @@ fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
     }
 }
 
-fn struct_field_type(struct_name: &str, field: &ast::StructField) -> String {
-    match field.field_type() {
-        ast::TypeNameOrInline::TypeName(ref t) => type_name(t),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            struct_inline_field_type(struct_name, field.name().value())
-        }
-    }
-}
-
-fn struct_inline_field_type(struct_name: &str, field_name: &str) -> String {
-    format!("{struct_name}{}", field_name.to_upper_camel_case())
-}
-
 fn struct_builder_name(base: &str) -> String {
     format!("{base}Builder")
-}
-
-fn enum_variant_name(enum_name: &str, var_name: &str, var_type: &ast::TypeNameOrInline) -> String {
-    match var_type {
-        ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            enum_inline_variant_type(enum_name, var_name)
-        }
-    }
-}
-
-fn enum_inline_variant_type(enum_name: &str, var_name: &str) -> String {
-    format!("{enum_name}{var_name}")
 }
 
 fn service_uuid_const(svc: &ast::ServiceDef) -> String {

@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitPosInt, TypeNameOrInline};
+use super::{Attribute, Ident, LitPosInt, TypeName};
 use crate::error::{DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId};
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -150,7 +150,7 @@ pub struct StructField {
     req: bool,
     name: Ident,
     id: LitPosInt,
-    field_type: TypeNameOrInline,
+    field_type: TypeName,
 }
 
 impl StructField {
@@ -185,7 +185,7 @@ impl StructField {
         pairs.next().unwrap(); // Skip =.
 
         let pair = pairs.next().unwrap();
-        let field_type = TypeNameOrInline::parse(pair);
+        let field_type = TypeName::parse(pair);
 
         StructField {
             span,
@@ -220,7 +220,7 @@ impl StructField {
         &self.id
     }
 
-    pub fn field_type(&self) -> &TypeNameOrInline {
+    pub fn field_type(&self) -> &TypeName {
         &self.field_type
     }
 }

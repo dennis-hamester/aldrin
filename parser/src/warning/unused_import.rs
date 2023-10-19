@@ -57,7 +57,7 @@ impl UnusedImport {
     }
 
     fn visit_struct_field(field: &StructField, schema_name: &SchemaName) -> bool {
-        Self::visit_type_name_or_inline(field.field_type(), schema_name)
+        Self::visit_type_name(field.field_type(), schema_name)
     }
 
     fn visit_enum(enum_def: &EnumDef, schema_name: &SchemaName) -> bool {
@@ -75,7 +75,7 @@ impl UnusedImport {
 
     fn visit_enum_variant(var: &EnumVariant, schema_name: &SchemaName) -> bool {
         match var.variant_type() {
-            Some(var_type) => Self::visit_type_name_or_inline(var_type, schema_name),
+            Some(var_type) => Self::visit_type_name(var_type, schema_name),
             None => false,
         }
     }

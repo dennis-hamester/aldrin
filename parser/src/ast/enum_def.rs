@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitPosInt, TypeNameOrInline};
+use super::{Attribute, Ident, LitPosInt, TypeName};
 use crate::error::{DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId};
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -146,7 +146,7 @@ pub struct EnumVariant {
     span: Span,
     name: Ident,
     id: LitPosInt,
-    var_type: Option<TypeNameOrInline>,
+    var_type: Option<TypeName>,
 }
 
 impl EnumVariant {
@@ -169,7 +169,7 @@ impl EnumVariant {
         let var_type = match pair.as_rule() {
             Rule::tok_eq => {
                 let pair = pairs.next().unwrap();
-                Some(TypeNameOrInline::parse(pair))
+                Some(TypeName::parse(pair))
             }
             Rule::tok_term => None,
             _ => unreachable!(),
@@ -205,7 +205,7 @@ impl EnumVariant {
         &self.id
     }
 
-    pub fn variant_type(&self) -> Option<&TypeNameOrInline> {
+    pub fn variant_type(&self) -> Option<&TypeName> {
         self.var_type.as_ref()
     }
 }
