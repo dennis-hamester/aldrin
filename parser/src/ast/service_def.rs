@@ -247,7 +247,6 @@ impl FunctionDef {
 #[derive(Debug, Clone)]
 pub struct FunctionPart {
     span: Span,
-    opt: bool,
     part_type: TypeNameOrInline,
 }
 
@@ -266,27 +265,10 @@ impl FunctionPart {
         pairs.next().unwrap(); // Skip keyword.
         pairs.next().unwrap(); // Skip =.
 
-        let opt;
-        let part_type;
         let pair = pairs.next().unwrap();
-        match pair.as_rule() {
-            Rule::kw_optional => {
-                opt = true;
-                let pair = pairs.next().unwrap();
-                part_type = TypeNameOrInline::parse(pair);
-            }
-            Rule::type_name_or_inline => {
-                opt = false;
-                part_type = TypeNameOrInline::parse(pair);
-            }
-            _ => unreachable!(),
-        }
+        let part_type = TypeNameOrInline::parse(pair);
 
-        FunctionPart {
-            span,
-            opt,
-            part_type,
-        }
+        FunctionPart { span, part_type }
     }
 
     fn validate(&self, validate: &mut Validate) {
@@ -295,10 +277,6 @@ impl FunctionPart {
 
     pub fn span(&self) -> Span {
         self.span
-    }
-
-    pub fn optional(&self) -> bool {
-        self.opt
     }
 
     pub fn part_type(&self) -> &TypeNameOrInline {
@@ -311,7 +289,7 @@ pub struct EventDef {
     span: Span,
     name: Ident,
     id: LitPosInt,
-    event_type: Option<EventType>,
+    event_type: Option<TypeNameOrInline>,
 }
 
 impl EventDef {
@@ -336,7 +314,7 @@ impl EventDef {
         let event_type = match pair.as_rule() {
             Rule::tok_eq => {
                 let pair = pairs.next().unwrap();
-                Some(EventType::parse(pair))
+                Some(TypeNameOrInline::parse(pair))
             }
             Rule::tok_term => None,
             _ => unreachable!(),
@@ -371,62 +349,7 @@ impl EventDef {
         &self.id
     }
 
-    pub fn event_type(&self) -> Option<&EventType> {
+    pub fn event_type(&self) -> Option<&TypeNameOrInline> {
         self.event_type.as_ref()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct EventType {
-    span: Span,
-    opt: bool,
-    event_type: TypeNameOrInline,
-}
-
-impl EventType {
-    fn parse(pair: Pair<Rule>) -> Self {
-        assert_eq!(pair.as_rule(), Rule::event_type);
-
-        let span = Span::from_pair(&pair);
-
-        let mut pairs = pair.into_inner();
-
-        let opt;
-        let event_type;
-        let pair = pairs.next().unwrap();
-        match pair.as_rule() {
-            Rule::kw_optional => {
-                opt = true;
-                let pair = pairs.next().unwrap();
-                event_type = TypeNameOrInline::parse(pair);
-            }
-            Rule::type_name_or_inline => {
-                opt = false;
-                event_type = TypeNameOrInline::parse(pair);
-            }
-            _ => unreachable!(),
-        }
-
-        EventType {
-            span,
-            opt,
-            event_type,
-        }
-    }
-
-    fn validate(&self, validate: &mut Validate) {
-        self.event_type.validate(validate);
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
-    }
-
-    pub fn optional(&self) -> bool {
-        self.opt
-    }
-
-    pub fn event_type(&self) -> &TypeNameOrInline {
-        &self.event_type
     }
 }

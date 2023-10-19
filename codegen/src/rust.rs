@@ -323,12 +323,7 @@ impl<'a> RustGenerator<'a> {
         for var in vars {
             let var_name = var.name().value();
             if let Some(var_type) = var.variant_type() {
-                let ty = var_type.variant_type();
-                if var_type.optional() {
-                    genln!(self, "    {}(Option<{}>),", var_name, enum_variant_name(name, var_name, ty));
-                } else {
-                    genln!(self, "    {}({}),", var_name, enum_variant_name(name, var_name, ty));
-                }
+                genln!(self, "    {}({}),", var_name, enum_variant_name(name, var_name, var_type));
             } else {
                 genln!(self, "    {},", var_name);
             }
@@ -380,7 +375,7 @@ impl<'a> RustGenerator<'a> {
             };
 
             let var_name = var.name().value();
-            match var_type.variant_type() {
+            match var_type {
                 ast::TypeNameOrInline::Struct(s) => {
                     self.struct_def(&enum_inline_variant_type(name, var_name), None, s.fields())
                 }
@@ -474,7 +469,7 @@ impl<'a> RustGenerator<'a> {
                 ast::ServiceItem::Event(ev) => {
                     if let Some(ty) = ev.event_type() {
                         let ev_name = ev.name().value();
-                        match ty.event_type() {
+                        match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &event_variant_type(svc_name, ev_name, ty),
                                 None,
@@ -545,20 +540,20 @@ impl<'a> RustGenerator<'a> {
             let arg = if let Some(args) = func.args() {
                 format!(
                     ", arg: {}",
-                    function_args_call_type(svc_name, func_name, args)
+                    function_args_call_type_name(svc_name, func_name, args)
                 )
             } else {
                 String::new()
             };
 
             let ok = if let Some(ok) = func.ok() {
-                function_ok_type(svc_name, func_name, ok)
+                function_ok_type_name(svc_name, func_name, ok)
             } else {
                 "()".to_owned()
             };
 
             if let Some(err) = func.err() {
-                let err = function_err_type(svc_name, func_name, err);
+                let err = function_err_type_name(svc_name, func_name, err);
                 genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionResult<{}, {}>, aldrin_client::Error> {{", func_name, arg, ok, err);
                 if func.args().is_some() {
                     genln!(self, "        self.client.call_function(self.id, {}, &arg)", id);
@@ -726,11 +721,7 @@ impl<'a> RustGenerator<'a> {
             let ev_name = ev.name().value();
             let variant = service_event_variant(ev_name);
             if let Some(ev_type) = ev.event_type() {
-                if ev_type.optional() {
-                    genln!(self, "    {}(Option<{}>),", variant, event_variant_type(svc_name, ev_name, ev_type))
-                } else {
-                    genln!(self, "    {}({}),", variant, event_variant_type(svc_name, ev_name, ev_type))
-                }
+                genln!(self, "    {}({}),", variant, event_variant_type(svc_name, ev_name, ev_type))
             } else {
                 genln!(self, "    {},", variant);
             }
@@ -864,7 +855,7 @@ impl<'a> RustGenerator<'a> {
             let reply = function_reply(svc_name, func_name);
 
             if let Some(args) = func.args() {
-                let args_type = function_args_type(svc_name, func_name, args);
+                let args_type = function_args_type_name(svc_name, func_name, args);
                 genln!(self, "    {}({}, {}),", function, args_type, reply);
             } else {
                 genln!(self, "    {}({}),", function, reply);
@@ -888,13 +879,13 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "impl {} {{", reply);
             if let Some(ok) = func.ok() {
                 if let Some(err) = func.err() {
-                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_call_type(svc_name, func_name, ok), function_err_call_type(svc_name, func_name, err));
+                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_call_type_name(svc_name, func_name, ok), function_err_call_type_name(svc_name, func_name, err));
                     genln!(self, "        self.0.set(res.as_ref())");
                     genln!(self, "    }}");
                     genln!(self);
                 }
 
-                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_call_type(svc_name, func_name, ok));
+                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_call_type_name(svc_name, func_name, ok));
                 genln!(self, "        self.0.ok(&arg)");
                 genln!(self, "    }}");
             } else {
@@ -905,7 +896,7 @@ impl<'a> RustGenerator<'a> {
             genln!(self);
 
             if let Some(err) = func.err() {
-                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_call_type(svc_name, func_name, err));
+                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_call_type_name(svc_name, func_name, err));
                 genln!(self, "        self.0.err(&arg)");
                 genln!(self, "    }}");
                 genln!(self);
@@ -943,15 +934,9 @@ impl<'a> RustGenerator<'a> {
 
             if let Some(ev_type) = ev.event_type() {
                 let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
-                if ev_type.optional() {
-                    genln!(self, "    pub fn {}(&self, arg: Option<{}>) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
-                    genln!(self, "    }}");
-                } else {
-                    genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
-                    genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
-                    genln!(self, "    }}");
-                }
+                genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
+                genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
+                genln!(self, "    }}");
             } else {
                 genln!(self, "    pub fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
                 genln!(self, "        self.client.emit_event(self.id, {}, &())", id);
@@ -1185,16 +1170,6 @@ fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::Function
     }
 }
 
-fn function_args_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_args_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
-    }
-}
-
 fn function_args_call_type_name(
     svc_name: &str,
     func_name: &str,
@@ -1208,32 +1183,12 @@ fn function_args_call_type_name(
     }
 }
 
-fn function_args_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_args_call_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
-    }
-}
-
 fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
         }
-    }
-}
-
-fn function_ok_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_ok_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
     }
 }
 
@@ -1246,32 +1201,12 @@ fn function_ok_call_type_name(svc_name: &str, func_name: &str, part: &ast::Funct
     }
 }
 
-fn function_ok_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_ok_call_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
-    }
-}
-
 fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Error", func_name.to_upper_camel_case())
         }
-    }
-}
-
-fn function_err_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_err_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
     }
 }
 
@@ -1285,16 +1220,6 @@ fn function_err_call_type_name(
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("&{svc_name}{}Error", func_name.to_upper_camel_case())
         }
-    }
-}
-
-fn function_err_call_type(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    let name = function_err_call_type_name(svc_name, func_name, part);
-
-    if part.optional() {
-        format!("Option<{name}>")
-    } else {
-        name
     }
 }
 
@@ -1318,8 +1243,8 @@ fn unsubscribe_event(ev_name: &str) -> String {
     format!("unsubscribe_{ev_name}")
 }
 
-fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -> String {
-    match ev_type.event_type() {
+fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::TypeNameOrInline) -> String {
+    match ev_type {
         ast::TypeNameOrInline::TypeName(ref ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Event", service_event_variant(ev_name))
@@ -1327,8 +1252,12 @@ fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -
     }
 }
 
-fn event_variant_call_type(svc_name: &str, ev_name: &str, ev_type: &ast::EventType) -> String {
-    match ev_type.event_type() {
+fn event_variant_call_type(
+    svc_name: &str,
+    ev_name: &str,
+    ev_type: &ast::TypeNameOrInline,
+) -> String {
+    match ev_type {
         ast::TypeNameOrInline::TypeName(ref ty) => call_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("&{svc_name}{}Event", service_event_variant(ev_name))

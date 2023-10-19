@@ -146,7 +146,7 @@ pub struct EnumVariant {
     span: Span,
     name: Ident,
     id: LitPosInt,
-    var_type: Option<EnumVariantType>,
+    var_type: Option<TypeNameOrInline>,
 }
 
 impl EnumVariant {
@@ -169,7 +169,7 @@ impl EnumVariant {
         let var_type = match pair.as_rule() {
             Rule::tok_eq => {
                 let pair = pairs.next().unwrap();
-                Some(EnumVariantType::parse(pair))
+                Some(TypeNameOrInline::parse(pair))
             }
             Rule::tok_term => None,
             _ => unreachable!(),
@@ -205,62 +205,7 @@ impl EnumVariant {
         &self.id
     }
 
-    pub fn variant_type(&self) -> Option<&EnumVariantType> {
+    pub fn variant_type(&self) -> Option<&TypeNameOrInline> {
         self.var_type.as_ref()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct EnumVariantType {
-    span: Span,
-    opt: bool,
-    var_type: TypeNameOrInline,
-}
-
-impl EnumVariantType {
-    fn parse(pair: Pair<Rule>) -> Self {
-        assert_eq!(pair.as_rule(), Rule::enum_variant_type);
-
-        let span = Span::from_pair(&pair);
-
-        let mut pairs = pair.into_inner();
-
-        let opt;
-        let var_type;
-        let pair = pairs.next().unwrap();
-        match pair.as_rule() {
-            Rule::kw_optional => {
-                opt = true;
-                let pair = pairs.next().unwrap();
-                var_type = TypeNameOrInline::parse(pair);
-            }
-            Rule::type_name_or_inline => {
-                opt = false;
-                var_type = TypeNameOrInline::parse(pair);
-            }
-            _ => unreachable!(),
-        }
-
-        EnumVariantType {
-            span,
-            opt,
-            var_type,
-        }
-    }
-
-    fn validate(&self, validate: &mut Validate) {
-        self.var_type.validate(validate);
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
-    }
-
-    pub fn optional(&self) -> bool {
-        self.opt
-    }
-
-    pub fn variant_type(&self) -> &TypeNameOrInline {
-        &self.var_type
     }
 }

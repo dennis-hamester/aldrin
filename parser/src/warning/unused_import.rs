@@ -1,8 +1,8 @@
 use super::Warning;
 use crate::ast::{
-    Definition, EnumDef, EnumVariant, EnumVariantType, EventDef, EventType, FunctionDef,
-    FunctionPart, ImportStmt, InlineEnum, InlineStruct, SchemaName, ServiceDef, ServiceItem,
-    StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart, ImportStmt, InlineEnum,
+    InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef, StructField, TypeName,
+    TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
@@ -87,13 +87,9 @@ impl UnusedImport {
 
     fn visit_enum_variant(var: &EnumVariant, schema_name: &SchemaName) -> bool {
         match var.variant_type() {
-            Some(var_type) => Self::visit_enum_variant_type(var_type, schema_name),
+            Some(var_type) => Self::visit_type_name_or_inline(var_type, schema_name),
             None => false,
         }
-    }
-
-    fn visit_enum_variant_type(var_type: &EnumVariantType, schema_name: &SchemaName) -> bool {
-        Self::visit_type_name_or_inline(var_type.variant_type(), schema_name)
     }
 
     fn visit_service(service_def: &ServiceDef, schema_name: &SchemaName) -> bool {
@@ -141,13 +137,9 @@ impl UnusedImport {
 
     fn visit_event(ev: &EventDef, schema_name: &SchemaName) -> bool {
         match ev.event_type() {
-            Some(event_type) => Self::visit_event_type(event_type, schema_name),
+            Some(event_type) => Self::visit_type_name_or_inline(event_type, schema_name),
             None => false,
         }
-    }
-
-    fn visit_event_type(event_type: &EventType, schema_name: &SchemaName) -> bool {
-        Self::visit_type_name_or_inline(event_type.event_type(), schema_name)
     }
 
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {
