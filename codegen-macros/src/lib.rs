@@ -37,7 +37,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// dependency in your `Cargo.toml`.
 ///
 /// ```
-/// aldrin_codegen_macros::generate!("schemas/example1.aldrin");
+/// # use aldrin_codegen_macros::generate;
+/// generate!("schemas/example1.aldrin");
 ///
 /// fn main() {
 ///     example1::MyStruct::builder()
@@ -55,7 +56,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// ```
 /// mod schemas {
-///     aldrin_codegen_macros::generate!("schemas/example1.aldrin");
+///     # use aldrin_codegen_macros::generate;
+///     generate!("schemas/example1.aldrin");
 /// }
 /// ```
 ///
@@ -64,7 +66,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// ```
 /// mod schema {
-///     aldrin_codegen_macros::generate!("schemas/example1.aldrin");
+///     # use aldrin_codegen_macros::generate;
+///     generate!("schemas/example1.aldrin");
 ///     pub use example1::*;
 /// }
 ///
@@ -82,7 +85,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// them:
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example1.aldrin",
 ///     "schemas/example2.aldrin",
 /// }
@@ -97,7 +101,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// You can specify include directories with `include = "path"`:
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example3.aldrin",
 ///     "schemas/example4.aldrin",
 ///     include = "schemas",
@@ -128,7 +133,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// Patches can only be specified when generating code for a single schema.
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example1.aldrin",
 ///     patch = "schemas/example1-rename.patch",
 /// }
@@ -144,7 +150,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// Patches are applied in the order they are specified.
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example1.aldrin",
 ///     patch = "schemas/example1-rename.patch",
 ///     patch = "schemas/example1-rename-again.patch",
@@ -164,7 +171,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// be turned off by setting `struct_builders = false`.
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example1.aldrin",
 ///     struct_builders = false,
 /// }
@@ -190,7 +198,8 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// - `function_non_exhaustive = false`
 ///
 /// ```
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example1.aldrin",
 ///     struct_non_exhaustive = false,
 ///     enum_non_exhaustive = false,
@@ -217,14 +226,15 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// ```
 /// // Own schema
-/// aldrin_codegen_macros::generate! {
+/// # use aldrin_codegen_macros::generate;
+/// generate! {
 ///     "schemas/example5.aldrin",
 ///     include = "schemas/foreign",
 ///     warnings_as_errors = true,
 /// }
 ///
 /// // Foreign schema
-/// aldrin_codegen_macros::generate! {
+/// generate! {
 ///     "schemas/foreign/example6.aldrin",
 ///     suppress_warnings = true,
 /// }
