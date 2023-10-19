@@ -27,13 +27,10 @@ impl UnusedImport {
     }
 
     fn visit_schema(schema: &Schema, schema_name: &SchemaName) -> bool {
-        for def in schema.definitions() {
-            if Self::visit_def(def, schema_name) {
-                return true;
-            }
-        }
-
-        false
+        schema
+            .definitions()
+            .iter()
+            .any(|def| Self::visit_def(def, schema_name))
     }
 
     fn visit_def(def: &Definition, schema_name: &SchemaName) -> bool {
@@ -54,13 +51,9 @@ impl UnusedImport {
     }
 
     fn visit_struct_fields(fields: &[StructField], schema_name: &SchemaName) -> bool {
-        for field in fields {
-            if Self::visit_struct_field(field, schema_name) {
-                return true;
-            }
-        }
-
-        false
+        fields
+            .iter()
+            .any(|field| Self::visit_struct_field(field, schema_name))
     }
 
     fn visit_struct_field(field: &StructField, schema_name: &SchemaName) -> bool {
@@ -76,13 +69,8 @@ impl UnusedImport {
     }
 
     fn visit_enum_variants(vars: &[EnumVariant], schema_name: &SchemaName) -> bool {
-        for var in vars {
-            if Self::visit_enum_variant(var, schema_name) {
-                return true;
-            }
-        }
-
-        false
+        vars.iter()
+            .any(|var| Self::visit_enum_variant(var, schema_name))
     }
 
     fn visit_enum_variant(var: &EnumVariant, schema_name: &SchemaName) -> bool {
@@ -93,13 +81,10 @@ impl UnusedImport {
     }
 
     fn visit_service(service_def: &ServiceDef, schema_name: &SchemaName) -> bool {
-        for item in service_def.items() {
-            if Self::visit_service_item(item, schema_name) {
-                return true;
-            }
-        }
-
-        false
+        service_def
+            .items()
+            .iter()
+            .any(|item| Self::visit_service_item(item, schema_name))
     }
 
     fn visit_service_item(item: &ServiceItem, schema_name: &SchemaName) -> bool {
