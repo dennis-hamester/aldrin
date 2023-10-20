@@ -32,7 +32,8 @@ fn ui_test_impl(name: &str) {
     let mut schema_path = base_path.clone();
     schema_path.set_extension("aldrin");
 
-    let parser = Parser::new();
+    let mut parser = Parser::new();
+    parser.add_schema_path("test/ui");
     let parsed = parser.parse(schema_path);
 
     let mut expected = HashSet::new();
