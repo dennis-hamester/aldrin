@@ -137,11 +137,33 @@ impl UnusedImport {
 
     fn visit_type_name(ty: &TypeName, schema_name: &SchemaName) -> bool {
         match ty.kind() {
-            TypeNameKind::Option(ty) => Self::visit_type_name(ty, schema_name),
-            TypeNameKind::Vec(ty) => Self::visit_type_name(ty, schema_name),
-            TypeNameKind::Map(_, ty) => Self::visit_type_name(ty, schema_name),
+            TypeNameKind::Option(ty)
+            | TypeNameKind::Vec(ty)
+            | TypeNameKind::Map(_, ty)
+            | TypeNameKind::Sender(ty)
+            | TypeNameKind::Receiver(ty) => Self::visit_type_name(ty, schema_name),
+
             TypeNameKind::Extern(schema, _) => schema.value() == schema_name.value(),
-            _ => false,
+
+            TypeNameKind::Bool
+            | TypeNameKind::U8
+            | TypeNameKind::I8
+            | TypeNameKind::U16
+            | TypeNameKind::I16
+            | TypeNameKind::U32
+            | TypeNameKind::I32
+            | TypeNameKind::U64
+            | TypeNameKind::I64
+            | TypeNameKind::F32
+            | TypeNameKind::F64
+            | TypeNameKind::String
+            | TypeNameKind::Uuid
+            | TypeNameKind::ObjectId
+            | TypeNameKind::ServiceId
+            | TypeNameKind::Value
+            | TypeNameKind::Bytes
+            | TypeNameKind::Set(_)
+            | TypeNameKind::Intern(_) => false,
         }
     }
 

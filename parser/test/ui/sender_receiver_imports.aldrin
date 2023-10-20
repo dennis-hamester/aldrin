@@ -1,0 +1,7 @@
+import sender_receiver_imports_1;
+import sender_receiver_imports_2;
+
+struct S {
+    f1 @ 1 = sender<sender_receiver_imports_1::S>;
+    f2 @ 2 = receiver<sender_receiver_imports_2::S>;
+}
