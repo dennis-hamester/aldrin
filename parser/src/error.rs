@@ -20,6 +20,7 @@ mod invalid_syntax;
 mod io_error;
 mod keyword_as_ident;
 mod missing_import;
+mod recursive_type;
 mod type_not_found;
 
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
@@ -47,6 +48,7 @@ pub use invalid_syntax::{Expected, InvalidSyntax};
 pub use io_error::IoError;
 pub use keyword_as_ident::KeywordAsIdent;
 pub use missing_import::MissingImport;
+pub use recursive_type::{RecursiveEnum, RecursiveStruct};
 pub use type_not_found::TypeNotFound;
 
 #[derive(Debug)]
@@ -74,6 +76,8 @@ pub enum Error {
     IoError(IoError),
     KeywordAsIdent(KeywordAsIdent),
     MissingImport(MissingImport),
+    RecursiveEnum(RecursiveEnum),
+    RecursiveStruct(RecursiveStruct),
     TypeNotFound(TypeNotFound),
 }
 
@@ -106,6 +110,8 @@ impl Diagnostic for Error {
             Error::IoError(e) => e.schema_name(),
             Error::KeywordAsIdent(e) => e.schema_name(),
             Error::MissingImport(e) => e.schema_name(),
+            Error::RecursiveEnum(e) => e.schema_name(),
+            Error::RecursiveStruct(e) => e.schema_name(),
             Error::TypeNotFound(e) => e.schema_name(),
         }
     }
@@ -134,6 +140,8 @@ impl Diagnostic for Error {
             Error::IoError(e) => e.format(parsed),
             Error::KeywordAsIdent(e) => e.format(parsed),
             Error::MissingImport(e) => e.format(parsed),
+            Error::RecursiveEnum(e) => e.format(parsed),
+            Error::RecursiveStruct(e) => e.format(parsed),
             Error::TypeNotFound(e) => e.format(parsed),
         }
     }

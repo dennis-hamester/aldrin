@@ -1,0 +1,7 @@
+struct S {
+    f @ 1 = S;
+}
+
+enum E {
+    V @ 1 = E;
+}

@@ -1,5 +1,7 @@
 use super::{Attribute, Ident, LitPosInt, TypeName};
-use crate::error::{DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId};
+use crate::error::{
+    DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
+};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{NonCamelCaseStruct, NonSnakeCaseStructField};
@@ -62,6 +64,7 @@ impl StructDef {
             validate,
         );
         NonCamelCaseStruct::validate(self, validate);
+        RecursiveStruct::validate(self, validate);
 
         self.name.validate(validate);
         for field in &self.fields {

@@ -1,0 +1,7 @@
+error: recursive struct `S`
+  --> test/ui/recursive1.aldrin:1:8
+   |
+ 1 | struct S {
+   |        ^
+   |
+   = note: recursive structs are not supported

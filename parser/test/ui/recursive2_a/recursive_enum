@@ -1,0 +1,7 @@
+error: recursive enum `E`
+  --> test/ui/recursive2_b.aldrin:3:6
+   |
+ 3 | enum E {
+   |      ^
+   |
+   = note: recursive enums are not supported

@@ -1,0 +1,5 @@
+import recursive2_a;
+
+enum E {
+    V @ 1 = recursive2_a::S;
+}
