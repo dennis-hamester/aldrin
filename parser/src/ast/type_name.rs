@@ -148,17 +148,39 @@ impl TypeNameKind {
 
     fn validate(&self, validate: &mut Validate) {
         match self {
-            TypeNameKind::Option(ty) => ty.validate(validate),
-            TypeNameKind::Vec(ty) => ty.validate(validate),
-            TypeNameKind::Map(_, ty) => ty.validate(validate),
-            TypeNameKind::Intern(ty) => {
-                TypeNotFound::validate(ty, validate);
-            }
-            TypeNameKind::Extern(schema, ty) => {
+            Self::Option(ty)
+            | Self::Vec(ty)
+            | Self::Map(_, ty)
+            | Self::Sender(ty)
+            | Self::Receiver(ty) => ty.validate(validate),
+
+            Self::Extern(schema, ty) => {
                 MissingImport::validate(schema, validate);
                 ExternTypeNotFound::validate(schema, ty, validate);
             }
-            _ => {}
+
+            Self::Intern(ty) => {
+                TypeNotFound::validate(ty, validate);
+            }
+
+            Self::Bool
+            | Self::U8
+            | Self::I8
+            | Self::U16
+            | Self::I16
+            | Self::U32
+            | Self::I32
+            | Self::U64
+            | Self::I64
+            | Self::F32
+            | Self::F64
+            | Self::String
+            | Self::Uuid
+            | Self::ObjectId
+            | Self::ServiceId
+            | Self::Value
+            | Self::Bytes
+            | Self::Set(_) => {}
         }
     }
 }

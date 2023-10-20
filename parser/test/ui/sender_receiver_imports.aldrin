@@ -4,4 +4,8 @@ import sender_receiver_imports_2;
 struct S {
     f1 @ 1 = sender<sender_receiver_imports_1::S>;
     f2 @ 2 = receiver<sender_receiver_imports_2::S>;
+    f3 @ 3 = sender<sender_receiver_imports_3::S>;
+    f4 @ 4 = receiver<sender_receiver_imports_4::S>;
+    f5 @ 5 = sender<A>;
+    f6 @ 6 = receiver<B>;
 }
