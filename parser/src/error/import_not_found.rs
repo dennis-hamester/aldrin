@@ -3,7 +3,6 @@ use crate::ast::ImportStmt;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
-use std::env;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -72,14 +71,7 @@ impl Diagnostic for ImportNotFound {
         }
 
         for tried in &self.tried {
-            if tried.is_absolute() {
-                fmt.note(format!("tried `{}`", tried.display()));
-            } else if let Ok(mut absolute) = env::current_dir() {
-                absolute.push(tried);
-                fmt.note(format!("tried `{}`", absolute.display()));
-            } else {
-                fmt.note(format!("tried `{}`", tried.display()));
-            }
+            fmt.note(format!("tried `{}`", tried.display()));
         }
 
         if self.tried.is_empty() {
