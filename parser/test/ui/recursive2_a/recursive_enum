@@ -5,3 +5,4 @@ error: recursive enum `E`
    |      ^
    |
    = note: recursive enums are not supported
+   = help: use box<T> to break the recursion

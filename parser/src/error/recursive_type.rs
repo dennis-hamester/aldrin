@@ -45,7 +45,8 @@ impl Diagnostic for RecursiveStruct {
             fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
         }
 
-        fmt.note("recursive structs are not supported");
+        fmt.note("recursive structs are not supported")
+            .help("use box<T> to break the recursion");
         fmt.format()
     }
 }
@@ -97,7 +98,8 @@ impl Diagnostic for RecursiveEnum {
             fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
         }
 
-        fmt.note("recursive enums are not supported");
+        fmt.note("recursive enums are not supported")
+            .help("use box<T> to break the recursion");
         fmt.format()
     }
 }
@@ -238,6 +240,7 @@ impl<'a> Context<'a> {
             | TypeNameKind::ObjectId
             | TypeNameKind::ServiceId
             | TypeNameKind::Value
+            | TypeNameKind::Box(_)
             | TypeNameKind::Vec(_)
             | TypeNameKind::Bytes
             | TypeNameKind::Map(_, _)

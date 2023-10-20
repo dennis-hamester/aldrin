@@ -56,6 +56,7 @@ pub enum TypeNameKind {
     ServiceId,
     Value,
     Option(Box<TypeName>),
+    Box(Box<TypeName>),
     Vec(Box<TypeName>),
     Bytes,
     Map(KeyTypeName, Box<TypeName>),
@@ -85,6 +86,7 @@ impl TypeNameKind {
             Rule::kw_object_id => TypeNameKind::ObjectId,
             Rule::kw_service_id => TypeNameKind::ServiceId,
             Rule::kw_value => TypeNameKind::Value,
+
             Rule::option_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -92,6 +94,15 @@ impl TypeNameKind {
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Option(Box::new(TypeName::parse(pair)))
             }
+
+            Rule::box_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip <.
+                let pair = pairs.next().unwrap();
+                TypeNameKind::Box(Box::new(TypeName::parse(pair)))
+            }
+
             Rule::vec_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -99,7 +110,9 @@ impl TypeNameKind {
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Vec(Box::new(TypeName::parse(pair)))
             }
+
             Rule::kw_bytes => TypeNameKind::Bytes,
+
             Rule::map_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -112,6 +125,7 @@ impl TypeNameKind {
                     Box::new(TypeName::parse(type_pair)),
                 )
             }
+
             Rule::set_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -119,6 +133,7 @@ impl TypeNameKind {
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Set(KeyTypeName::parse(pair))
             }
+
             Rule::sender_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -126,6 +141,7 @@ impl TypeNameKind {
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Sender(Box::new(TypeName::parse(pair)))
             }
+
             Rule::receiver_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
@@ -133,6 +149,7 @@ impl TypeNameKind {
                 let pair = pairs.next().unwrap();
                 TypeNameKind::Receiver(Box::new(TypeName::parse(pair)))
             }
+
             Rule::external_type_name => {
                 let mut pairs = pair.into_inner();
                 let pair = pairs.next().unwrap();
@@ -141,7 +158,9 @@ impl TypeNameKind {
                 let ident = Ident::parse(pairs.next().unwrap());
                 TypeNameKind::Extern(schema_name, ident)
             }
+
             Rule::ident => TypeNameKind::Intern(Ident::parse(pair)),
+
             _ => unreachable!(),
         }
     }
@@ -149,6 +168,7 @@ impl TypeNameKind {
     fn validate(&self, validate: &mut Validate) {
         match self {
             Self::Option(ty)
+            | Self::Box(ty)
             | Self::Vec(ty)
             | Self::Map(_, ty)
             | Self::Sender(ty)

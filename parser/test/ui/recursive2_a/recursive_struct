@@ -5,3 +5,4 @@ error: recursive struct `S`
    |        ^
    |
    = note: recursive structs are not supported
+   = help: use box<T> to break the recursion

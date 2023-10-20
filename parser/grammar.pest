@@ -56,6 +56,7 @@ kw_bool = @{ "bool" }
 kw_f32 = @{ "f32" }
 kw_f64 = @{ "f64" }
 kw_value = @{ "value" }
+kw_box = @{ "box" }
 kw_vec = @{ "vec" }
 kw_bytes = @{ "bytes" }
 kw_map = @{ "map" }
@@ -73,6 +74,7 @@ ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 option_type = { kw_option ~ tok_ang_open ~ type_name ~ tok_ang_close }
+box_type = { kw_box ~ tok_ang_open ~ type_name ~ tok_ang_close }
 vec_type = { kw_vec ~ tok_ang_open ~ type_name ~ tok_ang_close }
 map_type = { kw_map ~ tok_ang_open ~ key_type_name ~ tok_arrow ~ type_name ~ tok_ang_close }
 set_type = { kw_set ~ tok_ang_open ~ key_type_name ~ tok_ang_close }
@@ -110,6 +112,7 @@ type_name = {
     | kw_service_id
     | kw_value
     | option_type
+    | box_type
     | vec_type
     | kw_bytes
     | map_type

@@ -138,6 +138,7 @@ impl UnusedImport {
     fn visit_type_name(ty: &TypeName, schema_name: &SchemaName) -> bool {
         match ty.kind() {
             TypeNameKind::Option(ty)
+            | TypeNameKind::Box(ty)
             | TypeNameKind::Vec(ty)
             | TypeNameKind::Map(_, ty)
             | TypeNameKind::Sender(ty)
