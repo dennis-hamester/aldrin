@@ -8,8 +8,6 @@ use std::collections::HashSet;
 pub(super) struct ConnectionState {
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
-    objects_subscribed: bool,
-    services_subscribed: bool,
 
     /// Map of active subscriptions made by this connection.
     subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
@@ -23,8 +21,6 @@ impl ConnectionState {
         ConnectionState {
             send,
             objects: HashSet::new(),
-            objects_subscribed: false,
-            services_subscribed: false,
             subscriptions: HashMap::new(),
             senders: HashSet::new(),
             receivers: HashSet::new(),
@@ -47,22 +43,6 @@ impl ConnectionState {
 
     pub fn send(&self, msg: Message) -> Result<(), ()> {
         self.send.unbounded_send(msg).map_err(|_| ())
-    }
-
-    pub fn set_objects_subscribed(&mut self, subscribed: bool) {
-        self.objects_subscribed = subscribed;
-    }
-
-    pub fn objects_subscribed(&self) -> bool {
-        self.objects_subscribed
-    }
-
-    pub fn set_services_subscribed(&mut self, subscribed: bool) {
-        self.services_subscribed = subscribed;
-    }
-
-    pub fn services_subscribed(&self) -> bool {
-        self.services_subscribed
     }
 
     pub fn add_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {

@@ -8,17 +8,11 @@ use aldrin_proto::message::{
     CloseChannelEndResult, Connect, ConnectReply, CreateChannel, CreateChannelReply, CreateObject,
     CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
     DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, ObjectCreatedEvent,
-    ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
-    ServiceDestroyed, ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
-    SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent, UnsubscribeObjects,
-    UnsubscribeServices,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_proto::{
-    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
-};
+use aldrin_proto::{ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
 use arbitrary::Arbitrary;
 
 #[derive(Debug, Arbitrary)]
@@ -30,28 +24,16 @@ pub enum MessageLe {
     CreateObjectReply(CreateObjectReplyLe),
     DestroyObject(DestroyObjectLe),
     DestroyObjectReply(DestroyObjectReplyLe),
-    SubscribeObjects(SubscribeObjectsLe),
-    SubscribeObjectsReply(SubscribeObjectsReplyLe),
-    UnsubscribeObjects(UnsubscribeObjectsLe),
-    ObjectCreatedEvent(ObjectCreatedEventLe),
-    ObjectDestroyedEvent(ObjectDestroyedEventLe),
     CreateService(CreateServiceLe),
     CreateServiceReply(CreateServiceReplyLe),
     DestroyService(DestroyServiceLe),
     DestroyServiceReply(DestroyServiceReplyLe),
-    SubscribeServices(SubscribeServicesLe),
-    SubscribeServicesReply(SubscribeServicesReplyLe),
-    UnsubscribeServices(UnsubscribeServicesLe),
-    ServiceCreatedEvent(ServiceCreatedEventLe),
-    ServiceDestroyedEvent(ServiceDestroyedEventLe),
     CallFunction(CallFunctionLe),
     CallFunctionReply(CallFunctionReplyLe),
     SubscribeEvent(SubscribeEventLe),
     SubscribeEventReply(SubscribeEventReplyLe),
     UnsubscribeEvent(UnsubscribeEventLe),
     EmitEvent(EmitEventLe),
-    QueryObject(QueryObjectLe),
-    QueryObjectReply(QueryObjectReplyLe),
     QueryServiceVersion(QueryServiceVersionLe),
     QueryServiceVersionReply(QueryServiceVersionReplyLe),
     CreateChannel(CreateChannelLe),
@@ -80,28 +62,16 @@ impl MessageLe {
             Self::CreateObjectReply(msg) => msg.to_proto(ctx).into(),
             Self::DestroyObject(msg) => msg.to_proto(ctx).into(),
             Self::DestroyObjectReply(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeObjects(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeObjectsReply(msg) => msg.to_proto(ctx).into(),
-            Self::UnsubscribeObjects(msg) => msg.to_proto(ctx).into(),
-            Self::ObjectCreatedEvent(msg) => msg.to_proto(ctx).into(),
-            Self::ObjectDestroyedEvent(msg) => msg.to_proto(ctx).into(),
             Self::CreateService(msg) => msg.to_proto(ctx).into(),
             Self::CreateServiceReply(msg) => msg.to_proto(ctx).into(),
             Self::DestroyService(msg) => msg.to_proto(ctx).into(),
             Self::DestroyServiceReply(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeServices(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeServicesReply(msg) => msg.to_proto(ctx).into(),
-            Self::UnsubscribeServices(msg) => msg.to_proto(ctx).into(),
-            Self::ServiceCreatedEvent(msg) => msg.to_proto(ctx).into(),
-            Self::ServiceDestroyedEvent(msg) => msg.to_proto(ctx).into(),
             Self::CallFunction(msg) => msg.to_proto(ctx).into(),
             Self::CallFunctionReply(msg) => msg.to_proto(ctx).into(),
             Self::SubscribeEvent(msg) => msg.to_proto(ctx).into(),
             Self::SubscribeEventReply(msg) => msg.to_proto(ctx).into(),
             Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).into(),
             Self::EmitEvent(msg) => msg.to_proto(ctx).into(),
-            Self::QueryObject(msg) => msg.to_proto(ctx).into(),
-            Self::QueryObjectReply(msg) => msg.to_proto(ctx).into(),
             Self::QueryServiceVersion(msg) => msg.to_proto(ctx).into(),
             Self::QueryServiceVersionReply(msg) => msg.to_proto(ctx).into(),
             Self::CreateChannel(msg) => msg.to_proto(ctx).into(),
@@ -136,28 +106,16 @@ impl UpdateContext for ProtoMessage {
             Self::CreateObjectReply(msg) => msg.update_context(ctx),
             Self::DestroyObject(msg) => msg.update_context(ctx),
             Self::DestroyObjectReply(msg) => msg.update_context(ctx),
-            Self::SubscribeObjects(msg) => msg.update_context(ctx),
-            Self::SubscribeObjectsReply(msg) => msg.update_context(ctx),
-            Self::UnsubscribeObjects(msg) => msg.update_context(ctx),
-            Self::ObjectCreatedEvent(msg) => msg.update_context(ctx),
-            Self::ObjectDestroyedEvent(msg) => msg.update_context(ctx),
             Self::CreateService(msg) => msg.update_context(ctx),
             Self::CreateServiceReply(msg) => msg.update_context(ctx),
             Self::DestroyService(msg) => msg.update_context(ctx),
             Self::DestroyServiceReply(msg) => msg.update_context(ctx),
-            Self::SubscribeServices(msg) => msg.update_context(ctx),
-            Self::SubscribeServicesReply(msg) => msg.update_context(ctx),
-            Self::UnsubscribeServices(msg) => msg.update_context(ctx),
-            Self::ServiceCreatedEvent(msg) => msg.update_context(ctx),
-            Self::ServiceDestroyedEvent(msg) => msg.update_context(ctx),
             Self::CallFunction(msg) => msg.update_context(ctx),
             Self::CallFunctionReply(msg) => msg.update_context(ctx),
             Self::SubscribeEvent(msg) => msg.update_context(ctx),
             Self::SubscribeEventReply(msg) => msg.update_context(ctx),
             Self::UnsubscribeEvent(msg) => msg.update_context(ctx),
             Self::EmitEvent(msg) => msg.update_context(ctx),
-            Self::QueryObject(msg) => msg.update_context(ctx),
-            Self::QueryObjectReply(msg) => msg.update_context(ctx),
             Self::QueryServiceVersion(msg) => msg.update_context(ctx),
             Self::QueryServiceVersionReply(msg) => msg.update_context(ctx),
             Self::CreateChannel(msg) => msg.update_context(ctx),
@@ -360,112 +318,6 @@ impl UpdateContext for DestroyObjectReply {
 }
 
 #[derive(Debug, Arbitrary)]
-pub struct SubscribeObjectsLe {
-    pub serial: Option<SerialLe>,
-}
-
-impl SubscribeObjectsLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeObjects {
-        SubscribeObjects {
-            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
-        }
-    }
-}
-
-impl UpdateContext for SubscribeObjects {
-    fn update_context(&self, ctx: &mut Context) {
-        if let Some(serial) = self.serial {
-            ctx.add_serial(serial);
-        }
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct SubscribeObjectsReplyLe {
-    pub serial: SerialLe,
-}
-
-impl SubscribeObjectsReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeObjectsReply {
-        SubscribeObjectsReply {
-            serial: self.serial.get(ctx),
-        }
-    }
-}
-
-impl UpdateContext for SubscribeObjectsReply {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_serial(self.serial);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct UnsubscribeObjectsLe;
-
-impl UnsubscribeObjectsLe {
-    pub fn to_proto(&self, _ctx: &Context) -> UnsubscribeObjects {
-        UnsubscribeObjects
-    }
-}
-
-impl UpdateContext for UnsubscribeObjects {
-    fn update_context(&self, _ctx: &mut Context) {}
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct ObjectCreatedEventLe {
-    pub uuid: UuidLe,
-    pub cookie: UuidLe,
-    pub serial: Option<SerialLe>,
-}
-
-impl ObjectCreatedEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> ObjectCreatedEvent {
-        ObjectCreatedEvent {
-            id: ObjectId {
-                uuid: ObjectUuid(self.uuid.get(ctx)),
-                cookie: ObjectCookie(self.cookie.get(ctx)),
-            },
-            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
-        }
-    }
-}
-
-impl UpdateContext for ObjectCreatedEvent {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_uuid(self.id.uuid.0);
-        ctx.add_uuid(self.id.cookie.0);
-        if let Some(serial) = self.serial {
-            ctx.add_serial(serial);
-        }
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct ObjectDestroyedEventLe {
-    pub uuid: UuidLe,
-    pub cookie: UuidLe,
-}
-
-impl ObjectDestroyedEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> ObjectDestroyedEvent {
-        ObjectDestroyedEvent {
-            id: ObjectId {
-                uuid: ObjectUuid(self.uuid.get(ctx)),
-                cookie: ObjectCookie(self.cookie.get(ctx)),
-            },
-        }
-    }
-}
-
-impl UpdateContext for ObjectDestroyedEvent {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_uuid(self.id.uuid.0);
-        ctx.add_uuid(self.id.cookie.0);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
 pub struct CreateServiceLe {
     pub serial: SerialLe,
     pub object_cookie: UuidLe,
@@ -603,128 +455,6 @@ impl UpdateContext for DestroyServiceReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct SubscribeServicesLe {
-    pub serial: Option<SerialLe>,
-}
-
-impl SubscribeServicesLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeServices {
-        SubscribeServices {
-            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
-        }
-    }
-}
-
-impl UpdateContext for SubscribeServices {
-    fn update_context(&self, ctx: &mut Context) {
-        if let Some(serial) = self.serial {
-            ctx.add_serial(serial);
-        }
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct SubscribeServicesReplyLe {
-    pub serial: SerialLe,
-}
-
-impl SubscribeServicesReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeServicesReply {
-        SubscribeServicesReply {
-            serial: self.serial.get(ctx),
-        }
-    }
-}
-
-impl UpdateContext for SubscribeServicesReply {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_serial(self.serial);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct UnsubscribeServicesLe;
-
-impl UnsubscribeServicesLe {
-    pub fn to_proto(&self, _ctx: &Context) -> UnsubscribeServices {
-        UnsubscribeServices
-    }
-}
-
-impl UpdateContext for UnsubscribeServices {
-    fn update_context(&self, _ctx: &mut Context) {}
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct ServiceCreatedEventLe {
-    pub object_uuid: UuidLe,
-    pub object_cookie: UuidLe,
-    pub service_uuid: UuidLe,
-    pub service_cookie: UuidLe,
-    pub serial: Option<SerialLe>,
-}
-
-impl ServiceCreatedEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> ServiceCreatedEvent {
-        ServiceCreatedEvent {
-            id: ServiceId {
-                object_id: ObjectId {
-                    uuid: ObjectUuid(self.object_uuid.get(ctx)),
-                    cookie: ObjectCookie(self.object_cookie.get(ctx)),
-                },
-                uuid: ServiceUuid(self.service_uuid.get(ctx)),
-                cookie: ServiceCookie(self.service_cookie.get(ctx)),
-            },
-            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
-        }
-    }
-}
-
-impl UpdateContext for ServiceCreatedEvent {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_uuid(self.id.object_id.uuid.0);
-        ctx.add_uuid(self.id.object_id.cookie.0);
-        ctx.add_uuid(self.id.uuid.0);
-        ctx.add_uuid(self.id.cookie.0);
-        if let Some(serial) = self.serial {
-            ctx.add_serial(serial);
-        }
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct ServiceDestroyedEventLe {
-    pub object_uuid: UuidLe,
-    pub object_cookie: UuidLe,
-    pub service_uuid: UuidLe,
-    pub service_cookie: UuidLe,
-}
-
-impl ServiceDestroyedEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> ServiceDestroyedEvent {
-        ServiceDestroyedEvent {
-            id: ServiceId {
-                object_id: ObjectId {
-                    uuid: ObjectUuid(self.object_uuid.get(ctx)),
-                    cookie: ObjectCookie(self.object_cookie.get(ctx)),
-                },
-                uuid: ServiceUuid(self.service_uuid.get(ctx)),
-                cookie: ServiceCookie(self.service_cookie.get(ctx)),
-            },
-        }
-    }
-}
-
-impl UpdateContext for ServiceDestroyedEvent {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_uuid(self.id.object_id.uuid.0);
-        ctx.add_uuid(self.id.object_id.cookie.0);
-        ctx.add_uuid(self.id.uuid.0);
-        ctx.add_uuid(self.id.cookie.0);
     }
 }
 
@@ -911,87 +641,6 @@ impl EmitEventLe {
 impl UpdateContext for EmitEvent {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_uuid(self.service_cookie.0);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct QueryObjectLe {
-    pub serial: SerialLe,
-    pub uuid: UuidLe,
-    pub with_services: bool,
-}
-
-impl QueryObjectLe {
-    pub fn to_proto(&self, ctx: &Context) -> QueryObject {
-        QueryObject {
-            serial: self.serial.get(ctx),
-            uuid: ObjectUuid(self.uuid.get(ctx)),
-            with_services: self.with_services,
-        }
-    }
-}
-
-impl UpdateContext for QueryObject {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_serial(self.serial);
-        ctx.add_uuid(self.uuid.0);
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub enum QueryObjectResultLe {
-    Cookie(UuidLe),
-    Service { uuid: UuidLe, cookie: UuidLe },
-    Done,
-    InvalidObject,
-}
-
-impl QueryObjectResultLe {
-    pub fn to_proto(&self, ctx: &Context) -> QueryObjectResult {
-        match self {
-            Self::Cookie(cookie) => QueryObjectResult::Cookie(ObjectCookie(cookie.get(ctx))),
-            Self::Service { uuid, cookie } => QueryObjectResult::Service {
-                uuid: ServiceUuid(uuid.get(ctx)),
-                cookie: ServiceCookie(cookie.get(ctx)),
-            },
-            Self::Done => QueryObjectResult::Done,
-            Self::InvalidObject => QueryObjectResult::InvalidObject,
-        }
-    }
-}
-
-impl UpdateContext for QueryObjectResult {
-    fn update_context(&self, ctx: &mut Context) {
-        match self {
-            Self::Cookie(cookie) => ctx.add_uuid(cookie.0),
-            Self::Service { uuid, cookie } => {
-                ctx.add_uuid(uuid.0);
-                ctx.add_uuid(cookie.0);
-            }
-            Self::Done | Self::InvalidObject => {}
-        }
-    }
-}
-
-#[derive(Debug, Arbitrary)]
-pub struct QueryObjectReplyLe {
-    pub serial: SerialLe,
-    pub result: QueryObjectResultLe,
-}
-
-impl QueryObjectReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> QueryObjectReply {
-        QueryObjectReply {
-            serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
-        }
-    }
-}
-
-impl UpdateContext for QueryObjectReply {
-    fn update_context(&self, ctx: &mut Context) {
-        ctx.add_serial(self.serial);
-        self.result.update_context(ctx);
     }
 }
 

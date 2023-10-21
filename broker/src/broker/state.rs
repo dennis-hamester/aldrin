@@ -1,16 +1,12 @@
 use crate::conn_id::ConnectionId;
 use aldrin_proto::message::CallFunctionResult;
-use aldrin_proto::{ObjectId, ServiceCookie, ServiceId};
+use aldrin_proto::ServiceCookie;
 
 #[derive(Debug)]
 pub(super) struct State {
     shutdown_now: bool,
     shutdown_idle: bool,
-    add_objs: Vec<ObjectId>,
     remove_conns: Vec<ConnectionId>,
-    remove_objs: Vec<ObjectId>,
-    add_svcs: Vec<ServiceId>,
-    remove_svcs: Vec<ServiceId>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
     services_destroyed: Vec<(ConnectionId, ServiceCookie)>,
     unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
@@ -21,11 +17,7 @@ impl State {
         State {
             shutdown_now: false,
             shutdown_idle: false,
-            add_objs: Vec::new(),
             remove_conns: Vec::new(),
-            remove_objs: Vec::new(),
-            add_svcs: Vec::new(),
-            remove_svcs: Vec::new(),
             remove_function_calls: Vec::new(),
             services_destroyed: Vec::new(),
             unsubscribe: Vec::new(),
@@ -49,22 +41,10 @@ impl State {
     }
 
     pub fn has_work_left(&self) -> bool {
-        !self.add_objs.is_empty()
-            || !self.remove_conns.is_empty()
-            || !self.remove_objs.is_empty()
-            || !self.add_svcs.is_empty()
-            || !self.remove_svcs.is_empty()
+        !self.remove_conns.is_empty()
             || !self.remove_function_calls.is_empty()
             || !self.services_destroyed.is_empty()
             || !self.unsubscribe.is_empty()
-    }
-
-    pub fn push_add_obj(&mut self, id: ObjectId) {
-        self.add_objs.push(id);
-    }
-
-    pub fn pop_add_obj(&mut self) -> Option<ObjectId> {
-        self.add_objs.pop()
     }
 
     pub fn push_remove_conn(&mut self, id: ConnectionId) {
@@ -80,30 +60,6 @@ impl State {
 
     pub fn pop_remove_conn(&mut self) -> Option<ConnectionId> {
         self.remove_conns.pop()
-    }
-
-    pub fn push_remove_obj(&mut self, id: ObjectId) {
-        self.remove_objs.push(id);
-    }
-
-    pub fn pop_remove_obj(&mut self) -> Option<ObjectId> {
-        self.remove_objs.pop()
-    }
-
-    pub fn push_add_svc(&mut self, id: ServiceId) {
-        self.add_svcs.push(id);
-    }
-
-    pub fn pop_add_svc(&mut self) -> Option<ServiceId> {
-        self.add_svcs.pop()
-    }
-
-    pub fn push_remove_svc(&mut self, id: ServiceId) {
-        self.remove_svcs.push(id);
-    }
-
-    pub fn pop_remove_svc(&mut self) -> Option<ServiceId> {
-        self.remove_svcs.pop()
     }
 
     pub fn push_remove_function_call(
