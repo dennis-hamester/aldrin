@@ -25,9 +25,10 @@ use aldrin_proto::message::{
     DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
     ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
-    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
-    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
-    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
+    ServiceDestroyed, ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent, UnsubscribeObjects,
+    UnsubscribeServices,
 };
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::{
@@ -323,6 +324,7 @@ where
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
             Message::AddChannelCapacity(msg) => self.msg_add_channel_capacity(msg)?,
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
+            Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -558,45 +560,23 @@ where
         &mut self,
         msg: ServiceDestroyedEvent,
     ) -> Result<(), RunError<T::Error>> {
+        let svc_ev = ServiceEvent::Destroyed(msg.id);
         let mut remove = Vec::new();
 
-        // A ServiceDestroyedEvent can also be sent, when we have active subscriptions on a
-        // service. If that is the sole reason for this event, then make sure not to send
-        // UnsubscribeServicesDestroyed below.
-        if !self.service_events.is_empty() {
-            let svc_ev = ServiceEvent::Destroyed(msg.id);
-
-            for (serial, req) in self.service_events.iter() {
-                if req.sender.unbounded_send(svc_ev).is_err() {
-                    remove.push(serial);
-                }
-            }
-
-            for serial in remove {
-                self.service_events.remove(serial);
-            }
-
-            if self.service_events.is_empty() {
-                self.t
-                    .send(Message::UnsubscribeServices(UnsubscribeServices))
-                    .await?;
+        for (serial, req) in self.service_events.iter() {
+            if req.sender.unbounded_send(svc_ev).is_err() {
+                remove.push(serial);
             }
         }
 
-        self.broker_subscriptions.remove(&msg.id.cookie);
+        for serial in remove {
+            self.service_events.remove(serial);
+        }
 
-        if let Some(ids) = self.subscriptions.remove(&msg.id.cookie) {
-            let mut dups = HashSet::new();
-            for (_, events_ids) in ids {
-                for (events_id, sender) in events_ids {
-                    if dups.insert(events_id) {
-                        // Should we close the channel in case of send errors?
-                        sender
-                            .unbounded_send(EventsRequest::ServiceDestroyed(msg.id.cookie))
-                            .ok();
-                    }
-                }
-            }
+        if self.service_events.is_empty() {
+            self.t
+                .send(Message::UnsubscribeServices(UnsubscribeServices))
+                .await?;
         }
 
         Ok(())
@@ -1011,6 +991,24 @@ where
 
         req.send(()).ok();
         Ok(())
+    }
+
+    fn msg_service_destroyed(&mut self, msg: ServiceDestroyed) {
+        let Some(ids) = self.subscriptions.remove(&msg.service_cookie) else {
+            return;
+        };
+
+        let mut dups = HashSet::new();
+        for (_, events_ids) in ids {
+            for (events_id, sender) in events_ids {
+                if dups.insert(events_id) {
+                    // Should we close the channel in case of send errors?
+                    sender
+                        .unbounded_send(EventsRequest::ServiceDestroyed(msg.service_cookie))
+                        .ok();
+                }
+            }
+        }
     }
 
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
