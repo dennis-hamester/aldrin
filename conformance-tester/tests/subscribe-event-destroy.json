@@ -1,10 +1,10 @@
 {
     "name": "subscribe-event-destroy",
     "description": "Subscribe to an event and destroy the service",
-    "long-description": "A client subscribes to an event and destroys the service. The broker must send a service-destroyed-event message.",
+    "long-description": "A client subscribes to an event and destroys the service. The broker must send a service-destroyed message.",
     "message-types": [
         "destroy-service",
-        "service-destroyed-event",
+        "service-destroyed",
         "subscribe-event"
     ],
     "steps": [
@@ -60,10 +60,7 @@
                     "result": "ok"
                 },
                 {
-                    "message": "service-destroyed-event",
-                    "object-uuid": "00000000-0000-0000-0000-000000000001",
-                    "object-cookie": "get:object",
-                    "service-uuid": "00000000-0000-0000-0000-000000000002",
+                    "message": "service-destroyed",
                     "service-cookie": "get:service"
                 }
             ]

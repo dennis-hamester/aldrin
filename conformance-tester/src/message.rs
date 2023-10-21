@@ -29,6 +29,7 @@ mod query_service_version;
 mod query_service_version_reply;
 mod send_item;
 mod service_created_event;
+mod service_destroyed;
 mod service_destroyed_event;
 mod shutdown;
 mod subscribe_event;
@@ -80,6 +81,7 @@ pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
 pub use send_item::SendItem;
 pub use service_created_event::ServiceCreatedEvent;
+pub use service_destroyed::ServiceDestroyed;
 pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
 pub use subscribe_event::SubscribeEvent;
@@ -141,6 +143,7 @@ pub enum Message {
     AddChannelCapacity(AddChannelCapacity),
     Sync(Sync),
     SyncReply(SyncReply),
+    ServiceDestroyed(ServiceDestroyed),
 }
 
 impl Message {
@@ -226,6 +229,7 @@ impl Message {
             }
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
+            Self::ServiceDestroyed(msg) => msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyed),
         }
     }
 
@@ -319,6 +323,7 @@ impl Message {
             }
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
+            (Self::ServiceDestroyed(msg), Self::ServiceDestroyed(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -435,6 +440,9 @@ impl Message {
             }
             (Self::Sync(msg), Self::Sync(other)) => msg.update_context(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.update_context(other, ctx),
+            (Self::ServiceDestroyed(msg), Self::ServiceDestroyed(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -499,6 +507,7 @@ impl Message {
             Self::AddChannelCapacity(msg) => msg.apply_context(ctx).map(Self::AddChannelCapacity),
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
+            Self::ServiceDestroyed(msg) => msg.apply_context(ctx).map(Self::ServiceDestroyed),
         }
     }
 }
@@ -566,6 +575,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::AddChannelCapacity(msg) => msg.try_into().map(Self::AddChannelCapacity),
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
+            ProtoMessage::ServiceDestroyed(msg) => msg.try_into().map(Self::ServiceDestroyed),
         }
     }
 }
