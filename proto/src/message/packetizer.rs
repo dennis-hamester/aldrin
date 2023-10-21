@@ -91,16 +91,21 @@ impl Default for Packetizer {
 #[cfg(test)]
 mod test {
     use super::super::{
-        ChannelEndWithCapacity, CreateChannel, Message, MessageOps, Shutdown, UnsubscribeServices,
+        ChannelEndWithCapacity, CreateChannel, CreateObject, Message, MessageOps, Shutdown,
     };
     use super::Packetizer;
+    use crate::ids::ObjectUuid;
     use bytes::Buf;
     use std::mem::MaybeUninit;
+    use uuid::uuid;
 
     #[test]
     fn extend_from_slice() {
         let msg1 = Message::Shutdown(Shutdown);
-        let msg2 = Message::UnsubscribeServices(UnsubscribeServices);
+        let msg2 = Message::CreateObject(CreateObject {
+            serial: 1,
+            uuid: ObjectUuid(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
+        });
         let msg3 = Message::CreateChannel(CreateChannel {
             serial: 0,
             end: ChannelEndWithCapacity::Sender,
@@ -113,7 +118,10 @@ mod test {
         serialized.extend_from_slice(&tmp);
         assert_eq!(
             serialized[..],
-            [5, 0, 0, 0, 2, 5, 0, 0, 0, 18, 7, 0, 0, 0, 31, 0, 0]
+            [
+                5, 0, 0, 0, 2, 22, 0, 0, 0, 3, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e,
+                0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 7, 0, 0, 0, 31, 0, 0,
+            ]
         );
 
         let mut packetizer = Packetizer::new();
@@ -123,8 +131,8 @@ mod test {
         serialized.advance(3);
         assert_eq!(packetizer.next_message(), None);
 
-        packetizer.extend_from_slice(&serialized[..8]);
-        serialized.advance(8);
+        packetizer.extend_from_slice(&serialized[..25]);
+        serialized.advance(25);
         let msg1_serialized = packetizer.next_message().unwrap();
         assert_eq!(Message::deserialize_message(msg1_serialized), Ok(msg1));
         let msg2_serialized = packetizer.next_message().unwrap();
@@ -149,7 +157,10 @@ mod test {
         }
 
         let msg1 = Message::Shutdown(Shutdown);
-        let msg2 = Message::UnsubscribeServices(UnsubscribeServices);
+        let msg2 = Message::CreateObject(CreateObject {
+            serial: 1,
+            uuid: ObjectUuid(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
+        });
         let msg3 = Message::CreateChannel(CreateChannel {
             serial: 0,
             end: ChannelEndWithCapacity::Sender,
@@ -162,7 +173,10 @@ mod test {
         serialized.extend_from_slice(&tmp);
         assert_eq!(
             serialized[..],
-            [5, 0, 0, 0, 2, 5, 0, 0, 0, 18, 7, 0, 0, 0, 31, 0, 0]
+            [
+                5, 0, 0, 0, 2, 22, 0, 0, 0, 3, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e,
+                0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 7, 0, 0, 0, 31, 0, 0,
+            ]
         );
 
         let mut packetizer = Packetizer::new();
@@ -175,11 +189,11 @@ mod test {
         serialized.advance(3);
         assert_eq!(packetizer.next_message(), None);
 
-        write_slice(packetizer.spare_capacity_mut(), &serialized[..8]);
+        write_slice(packetizer.spare_capacity_mut(), &serialized[..25]);
         unsafe {
-            packetizer.bytes_written(8);
+            packetizer.bytes_written(25);
         }
-        serialized.advance(8);
+        serialized.advance(25);
         let msg1_serialized = packetizer.next_message().unwrap();
         assert_eq!(Message::deserialize_message(msg1_serialized), Ok(msg1));
         let msg2_serialized = packetizer.next_message().unwrap();

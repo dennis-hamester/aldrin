@@ -21,31 +21,19 @@ mod destroy_service;
 mod destroy_service_reply;
 mod emit_event;
 mod item_received;
-mod object_created_event;
-mod object_destroyed_event;
 mod packetizer;
-mod query_object;
-mod query_object_reply;
 mod query_service_version;
 mod query_service_version_reply;
 mod send_item;
-mod service_created_event;
 mod service_destroyed;
-mod service_destroyed_event;
 mod shutdown;
 mod subscribe_event;
 mod subscribe_event_reply;
-mod subscribe_objects;
-mod subscribe_objects_reply;
-mod subscribe_services;
-mod subscribe_services_reply;
 mod sync;
 mod sync_reply;
 #[cfg(test)]
 mod test;
 mod unsubscribe_event;
-mod unsubscribe_objects;
-mod unsubscribe_services;
 
 use crate::buf_ext::{BufMutExt, MessageBufExt};
 use crate::error::{DeserializeError, SerializeError};
@@ -83,31 +71,19 @@ pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
-pub use object_created_event::ObjectCreatedEvent;
-pub use object_destroyed_event::ObjectDestroyedEvent;
 pub use packetizer::Packetizer;
-pub use query_object::QueryObject;
-pub use query_object_reply::{QueryObjectReply, QueryObjectReplyKind, QueryObjectResult};
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::{
     QueryServiceVersionReply, QueryServiceVersionReplyKind, QueryServiceVersionResult,
 };
 pub use send_item::SendItem;
-pub use service_created_event::ServiceCreatedEvent;
 pub use service_destroyed::ServiceDestroyed;
-pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
-pub use subscribe_objects::SubscribeObjects;
-pub use subscribe_objects_reply::SubscribeObjectsReply;
-pub use subscribe_services::SubscribeServices;
-pub use subscribe_services_reply::SubscribeServicesReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_event::UnsubscribeEvent;
-pub use unsubscribe_objects::UnsubscribeObjects;
-pub use unsubscribe_services::UnsubscribeServices;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
@@ -119,28 +95,16 @@ pub enum MessageKind {
     CreateObjectReply = 4,
     DestroyObject = 5,
     DestroyObjectReply = 6,
-    SubscribeObjects = 7,
-    SubscribeObjectsReply = 8,
-    UnsubscribeObjects = 9,
-    ObjectCreatedEvent = 10,
-    ObjectDestroyedEvent = 11,
     CreateService = 12,
     CreateServiceReply = 13,
     DestroyService = 14,
     DestroyServiceReply = 15,
-    SubscribeServices = 16,
-    SubscribeServicesReply = 17,
-    UnsubscribeServices = 18,
-    ServiceCreatedEvent = 19,
-    ServiceDestroyedEvent = 20,
     CallFunction = 21,
     CallFunctionReply = 22,
     SubscribeEvent = 23,
     SubscribeEventReply = 24,
     UnsubscribeEvent = 25,
     EmitEvent = 26,
-    QueryObject = 27,
-    QueryObjectReply = 28,
     QueryServiceVersion = 29,
     QueryServiceVersionReply = 30,
     CreateChannel = 31,
@@ -175,25 +139,13 @@ impl MessageKind {
             | Self::CreateObjectReply
             | Self::DestroyObject
             | Self::DestroyObjectReply
-            | Self::SubscribeObjects
-            | Self::SubscribeObjectsReply
-            | Self::UnsubscribeObjects
-            | Self::ObjectCreatedEvent
-            | Self::ObjectDestroyedEvent
             | Self::CreateService
             | Self::CreateServiceReply
             | Self::DestroyService
             | Self::DestroyServiceReply
-            | Self::SubscribeServices
-            | Self::SubscribeServicesReply
-            | Self::UnsubscribeServices
-            | Self::ServiceCreatedEvent
-            | Self::ServiceDestroyedEvent
             | Self::SubscribeEvent
             | Self::SubscribeEventReply
             | Self::UnsubscribeEvent
-            | Self::QueryObject
-            | Self::QueryObjectReply
             | Self::QueryServiceVersion
             | Self::QueryServiceVersionReply
             | Self::CreateChannel
@@ -271,28 +223,16 @@ pub enum Message {
     CreateObjectReply(CreateObjectReply),
     DestroyObject(DestroyObject),
     DestroyObjectReply(DestroyObjectReply),
-    SubscribeObjects(SubscribeObjects),
-    SubscribeObjectsReply(SubscribeObjectsReply),
-    UnsubscribeObjects(UnsubscribeObjects),
-    ObjectCreatedEvent(ObjectCreatedEvent),
-    ObjectDestroyedEvent(ObjectDestroyedEvent),
     CreateService(CreateService),
     CreateServiceReply(CreateServiceReply),
     DestroyService(DestroyService),
     DestroyServiceReply(DestroyServiceReply),
-    SubscribeServices(SubscribeServices),
-    SubscribeServicesReply(SubscribeServicesReply),
-    UnsubscribeServices(UnsubscribeServices),
-    ServiceCreatedEvent(ServiceCreatedEvent),
-    ServiceDestroyedEvent(ServiceDestroyedEvent),
     CallFunction(CallFunction),
     CallFunctionReply(CallFunctionReply),
     SubscribeEvent(SubscribeEvent),
     SubscribeEventReply(SubscribeEventReply),
     UnsubscribeEvent(UnsubscribeEvent),
     EmitEvent(EmitEvent),
-    QueryObject(QueryObject),
-    QueryObjectReply(QueryObjectReply),
     QueryServiceVersion(QueryServiceVersion),
     QueryServiceVersionReply(QueryServiceVersionReply),
     CreateChannel(CreateChannel),
@@ -321,28 +261,16 @@ impl MessageOps for Message {
             Self::CreateObjectReply(_) => MessageKind::CreateObjectReply,
             Self::DestroyObject(_) => MessageKind::DestroyObject,
             Self::DestroyObjectReply(_) => MessageKind::DestroyObjectReply,
-            Self::SubscribeObjects(_) => MessageKind::SubscribeObjects,
-            Self::SubscribeObjectsReply(_) => MessageKind::SubscribeObjectsReply,
-            Self::UnsubscribeObjects(_) => MessageKind::UnsubscribeObjects,
-            Self::ObjectCreatedEvent(_) => MessageKind::ObjectCreatedEvent,
-            Self::ObjectDestroyedEvent(_) => MessageKind::ObjectDestroyedEvent,
             Self::CreateService(_) => MessageKind::CreateService,
             Self::CreateServiceReply(_) => MessageKind::CreateServiceReply,
             Self::DestroyService(_) => MessageKind::DestroyService,
             Self::DestroyServiceReply(_) => MessageKind::DestroyServiceReply,
-            Self::SubscribeServices(_) => MessageKind::SubscribeServices,
-            Self::SubscribeServicesReply(_) => MessageKind::SubscribeServicesReply,
-            Self::UnsubscribeServices(_) => MessageKind::UnsubscribeServices,
-            Self::ServiceCreatedEvent(_) => MessageKind::ServiceCreatedEvent,
-            Self::ServiceDestroyedEvent(_) => MessageKind::ServiceDestroyedEvent,
             Self::CallFunction(_) => MessageKind::CallFunction,
             Self::CallFunctionReply(_) => MessageKind::CallFunctionReply,
             Self::SubscribeEvent(_) => MessageKind::SubscribeEvent,
             Self::SubscribeEventReply(_) => MessageKind::SubscribeEventReply,
             Self::UnsubscribeEvent(_) => MessageKind::UnsubscribeEvent,
             Self::EmitEvent(_) => MessageKind::EmitEvent,
-            Self::QueryObject(_) => MessageKind::QueryObject,
-            Self::QueryObjectReply(_) => MessageKind::QueryObjectReply,
             Self::QueryServiceVersion(_) => MessageKind::QueryServiceVersion,
             Self::QueryServiceVersionReply(_) => MessageKind::QueryServiceVersionReply,
             Self::CreateChannel(_) => MessageKind::CreateChannel,
@@ -371,28 +299,16 @@ impl MessageOps for Message {
             Self::CreateObjectReply(msg) => msg.serialize_message(),
             Self::DestroyObject(msg) => msg.serialize_message(),
             Self::DestroyObjectReply(msg) => msg.serialize_message(),
-            Self::SubscribeObjects(msg) => msg.serialize_message(),
-            Self::SubscribeObjectsReply(msg) => msg.serialize_message(),
-            Self::UnsubscribeObjects(msg) => msg.serialize_message(),
-            Self::ObjectCreatedEvent(msg) => msg.serialize_message(),
-            Self::ObjectDestroyedEvent(msg) => msg.serialize_message(),
             Self::CreateService(msg) => msg.serialize_message(),
             Self::CreateServiceReply(msg) => msg.serialize_message(),
             Self::DestroyService(msg) => msg.serialize_message(),
             Self::DestroyServiceReply(msg) => msg.serialize_message(),
-            Self::SubscribeServices(msg) => msg.serialize_message(),
-            Self::SubscribeServicesReply(msg) => msg.serialize_message(),
-            Self::UnsubscribeServices(msg) => msg.serialize_message(),
-            Self::ServiceCreatedEvent(msg) => msg.serialize_message(),
-            Self::ServiceDestroyedEvent(msg) => msg.serialize_message(),
             Self::CallFunction(msg) => msg.serialize_message(),
             Self::CallFunctionReply(msg) => msg.serialize_message(),
             Self::SubscribeEvent(msg) => msg.serialize_message(),
             Self::SubscribeEventReply(msg) => msg.serialize_message(),
             Self::UnsubscribeEvent(msg) => msg.serialize_message(),
             Self::EmitEvent(msg) => msg.serialize_message(),
-            Self::QueryObject(msg) => msg.serialize_message(),
-            Self::QueryObjectReply(msg) => msg.serialize_message(),
             Self::QueryServiceVersion(msg) => msg.serialize_message(),
             Self::QueryServiceVersionReply(msg) => msg.serialize_message(),
             Self::CreateChannel(msg) => msg.serialize_message(),
@@ -438,21 +354,6 @@ impl MessageOps for Message {
             MessageKind::DestroyObjectReply => {
                 DestroyObjectReply::deserialize_message(buf).map(Self::DestroyObjectReply)
             }
-            MessageKind::SubscribeObjects => {
-                SubscribeObjects::deserialize_message(buf).map(Self::SubscribeObjects)
-            }
-            MessageKind::SubscribeObjectsReply => {
-                SubscribeObjectsReply::deserialize_message(buf).map(Self::SubscribeObjectsReply)
-            }
-            MessageKind::UnsubscribeObjects => {
-                UnsubscribeObjects::deserialize_message(buf).map(Self::UnsubscribeObjects)
-            }
-            MessageKind::ObjectCreatedEvent => {
-                ObjectCreatedEvent::deserialize_message(buf).map(Self::ObjectCreatedEvent)
-            }
-            MessageKind::ObjectDestroyedEvent => {
-                ObjectDestroyedEvent::deserialize_message(buf).map(Self::ObjectDestroyedEvent)
-            }
             MessageKind::CreateService => {
                 CreateService::deserialize_message(buf).map(Self::CreateService)
             }
@@ -464,21 +365,6 @@ impl MessageOps for Message {
             }
             MessageKind::DestroyServiceReply => {
                 DestroyServiceReply::deserialize_message(buf).map(Self::DestroyServiceReply)
-            }
-            MessageKind::SubscribeServices => {
-                SubscribeServices::deserialize_message(buf).map(Self::SubscribeServices)
-            }
-            MessageKind::SubscribeServicesReply => {
-                SubscribeServicesReply::deserialize_message(buf).map(Self::SubscribeServicesReply)
-            }
-            MessageKind::UnsubscribeServices => {
-                UnsubscribeServices::deserialize_message(buf).map(Self::UnsubscribeServices)
-            }
-            MessageKind::ServiceCreatedEvent => {
-                ServiceCreatedEvent::deserialize_message(buf).map(Self::ServiceCreatedEvent)
-            }
-            MessageKind::ServiceDestroyedEvent => {
-                ServiceDestroyedEvent::deserialize_message(buf).map(Self::ServiceDestroyedEvent)
             }
             MessageKind::CallFunction => {
                 CallFunction::deserialize_message(buf).map(Self::CallFunction)
@@ -496,12 +382,6 @@ impl MessageOps for Message {
                 UnsubscribeEvent::deserialize_message(buf).map(Self::UnsubscribeEvent)
             }
             MessageKind::EmitEvent => EmitEvent::deserialize_message(buf).map(Self::EmitEvent),
-            MessageKind::QueryObject => {
-                QueryObject::deserialize_message(buf).map(Self::QueryObject)
-            }
-            MessageKind::QueryObjectReply => {
-                QueryObjectReply::deserialize_message(buf).map(Self::QueryObjectReply)
-            }
             MessageKind::QueryServiceVersion => {
                 QueryServiceVersion::deserialize_message(buf).map(Self::QueryServiceVersion)
             }
@@ -557,28 +437,16 @@ impl MessageOps for Message {
             Self::CreateObjectReply(msg) => msg.value(),
             Self::DestroyObject(msg) => msg.value(),
             Self::DestroyObjectReply(msg) => msg.value(),
-            Self::SubscribeObjects(msg) => msg.value(),
-            Self::SubscribeObjectsReply(msg) => msg.value(),
-            Self::UnsubscribeObjects(msg) => msg.value(),
-            Self::ObjectCreatedEvent(msg) => msg.value(),
-            Self::ObjectDestroyedEvent(msg) => msg.value(),
             Self::CreateService(msg) => msg.value(),
             Self::CreateServiceReply(msg) => msg.value(),
             Self::DestroyService(msg) => msg.value(),
             Self::DestroyServiceReply(msg) => msg.value(),
-            Self::SubscribeServices(msg) => msg.value(),
-            Self::SubscribeServicesReply(msg) => msg.value(),
-            Self::UnsubscribeServices(msg) => msg.value(),
-            Self::ServiceCreatedEvent(msg) => msg.value(),
-            Self::ServiceDestroyedEvent(msg) => msg.value(),
             Self::CallFunction(msg) => msg.value(),
             Self::CallFunctionReply(msg) => msg.value(),
             Self::SubscribeEvent(msg) => msg.value(),
             Self::SubscribeEventReply(msg) => msg.value(),
             Self::UnsubscribeEvent(msg) => msg.value(),
             Self::EmitEvent(msg) => msg.value(),
-            Self::QueryObject(msg) => msg.value(),
-            Self::QueryObjectReply(msg) => msg.value(),
             Self::QueryServiceVersion(msg) => msg.value(),
             Self::QueryServiceVersionReply(msg) => msg.value(),
             Self::CreateChannel(msg) => msg.value(),
@@ -728,10 +596,6 @@ impl MessageSerializer {
         self.buf.put_discriminant_u8(discriminant);
     }
 
-    fn put_bool(&mut self, v: bool) {
-        self.buf.put_u8(v as u8);
-    }
-
     fn put_varint_u32_le(&mut self, n: u32) {
         self.buf.put_varint_u32_le(n);
     }
@@ -776,10 +640,6 @@ impl MessageWithoutValueDeserializer {
 
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
         self.buf.try_get_discriminant_u8()
-    }
-
-    fn try_get_bool(&mut self) -> Result<bool, MessageDeserializeError> {
-        self.buf.try_get_u8().map(|v| v != 0)
     }
 
     fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
