@@ -30,6 +30,7 @@ mod query_service_version;
 mod query_service_version_reply;
 mod send_item;
 mod service_created_event;
+mod service_destroyed;
 mod service_destroyed_event;
 mod shutdown;
 mod subscribe_event;
@@ -93,6 +94,7 @@ pub use query_service_version_reply::{
 };
 pub use send_item::SendItem;
 pub use service_created_event::ServiceCreatedEvent;
+pub use service_destroyed::ServiceDestroyed;
 pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
 pub use subscribe_event::SubscribeEvent;
@@ -154,6 +156,7 @@ pub enum MessageKind {
     AddChannelCapacity = 41,
     Sync = 42,
     SyncReply = 43,
+    ServiceDestroyed = 44,
 }
 
 impl MessageKind {
@@ -203,7 +206,8 @@ impl MessageKind {
             | Self::ChannelEndClaimed
             | Self::AddChannelCapacity
             | Self::Sync
-            | Self::SyncReply => false,
+            | Self::SyncReply
+            | Self::ServiceDestroyed => false,
         }
     }
 }
@@ -304,6 +308,7 @@ pub enum Message {
     AddChannelCapacity(AddChannelCapacity),
     Sync(Sync),
     SyncReply(SyncReply),
+    ServiceDestroyed(ServiceDestroyed),
 }
 
 impl MessageOps for Message {
@@ -353,6 +358,7 @@ impl MessageOps for Message {
             Self::AddChannelCapacity(_) => MessageKind::AddChannelCapacity,
             Self::Sync(_) => MessageKind::Sync,
             Self::SyncReply(_) => MessageKind::SyncReply,
+            Self::ServiceDestroyed(_) => MessageKind::ServiceDestroyed,
         }
     }
 
@@ -402,6 +408,7 @@ impl MessageOps for Message {
             Self::AddChannelCapacity(msg) => msg.serialize_message(),
             Self::Sync(msg) => msg.serialize_message(),
             Self::SyncReply(msg) => msg.serialize_message(),
+            Self::ServiceDestroyed(msg) => msg.serialize_message(),
         }
     }
 
@@ -535,6 +542,9 @@ impl MessageOps for Message {
             }
             MessageKind::Sync => Sync::deserialize_message(buf).map(Self::Sync),
             MessageKind::SyncReply => SyncReply::deserialize_message(buf).map(Self::SyncReply),
+            MessageKind::ServiceDestroyed => {
+                ServiceDestroyed::deserialize_message(buf).map(Self::ServiceDestroyed)
+            }
         }
     }
 
@@ -584,6 +594,7 @@ impl MessageOps for Message {
             Self::AddChannelCapacity(msg) => msg.value(),
             Self::Sync(msg) => msg.value(),
             Self::SyncReply(msg) => msg.value(),
+            Self::ServiceDestroyed(msg) => msg.value(),
         }
     }
 }
