@@ -12,7 +12,7 @@ pub(super) struct State {
     add_svcs: Vec<ServiceId>,
     remove_svcs: Vec<ServiceId>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
-    remove_subscriptions: Vec<(ConnectionId, ServiceId)>,
+    services_destroyed: Vec<(ConnectionId, ServiceCookie)>,
     unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
 }
 
@@ -27,7 +27,7 @@ impl State {
             add_svcs: Vec::new(),
             remove_svcs: Vec::new(),
             remove_function_calls: Vec::new(),
-            remove_subscriptions: Vec::new(),
+            services_destroyed: Vec::new(),
             unsubscribe: Vec::new(),
         }
     }
@@ -55,7 +55,7 @@ impl State {
             || !self.add_svcs.is_empty()
             || !self.remove_svcs.is_empty()
             || !self.remove_function_calls.is_empty()
-            || !self.remove_subscriptions.is_empty()
+            || !self.services_destroyed.is_empty()
             || !self.unsubscribe.is_empty()
     }
 
@@ -119,12 +119,12 @@ impl State {
         self.remove_function_calls.pop()
     }
 
-    pub fn push_remove_subscriptions(&mut self, conn_id: ConnectionId, id: ServiceId) {
-        self.remove_subscriptions.push((conn_id, id));
+    pub fn push_services_destroyed(&mut self, conn_id: ConnectionId, svc_cookie: ServiceCookie) {
+        self.services_destroyed.push((conn_id, svc_cookie));
     }
 
-    pub fn pop_remove_subscriptions(&mut self) -> Option<(ConnectionId, ServiceId)> {
-        self.remove_subscriptions.pop()
+    pub fn pop_services_destroyed(&mut self) -> Option<(ConnectionId, ServiceCookie)> {
+        self.services_destroyed.pop()
     }
 
     pub fn push_unsubscribe(

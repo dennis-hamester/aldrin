@@ -11,9 +11,10 @@ use aldrin_proto::message::{
     DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, ObjectCreatedEvent,
     ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
-    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
-    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
-    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
+    ServiceDestroyed, ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent, UnsubscribeObjects,
+    UnsubscribeServices,
 };
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -66,6 +67,7 @@ pub enum MessageLe {
     AddChannelCapacity(AddChannelCapacityLe),
     Sync(SyncLe),
     SyncReply(SyncReplyLe),
+    ServiceDestroyed(ServiceDestroyedLe),
 }
 
 impl MessageLe {
@@ -115,6 +117,7 @@ impl MessageLe {
             Self::AddChannelCapacity(msg) => msg.to_proto(ctx).into(),
             Self::Sync(msg) => msg.to_proto(ctx).into(),
             Self::SyncReply(msg) => msg.to_proto(ctx).into(),
+            Self::ServiceDestroyed(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -170,6 +173,7 @@ impl UpdateContext for ProtoMessage {
             Self::AddChannelCapacity(msg) => msg.update_context(ctx),
             Self::Sync(msg) => msg.update_context(ctx),
             Self::SyncReply(msg) => msg.update_context(ctx),
+            Self::ServiceDestroyed(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1365,5 +1369,24 @@ impl SyncReplyLe {
 impl UpdateContext for SyncReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct ServiceDestroyedLe {
+    pub service_cookie: UuidLe,
+}
+
+impl ServiceDestroyedLe {
+    pub fn to_proto(&self, ctx: &Context) -> ServiceDestroyed {
+        ServiceDestroyed {
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for ServiceDestroyed {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.service_cookie.0);
     }
 }

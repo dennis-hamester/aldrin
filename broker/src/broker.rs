@@ -23,9 +23,10 @@ use aldrin_proto::message::{
     DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
     ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
-    ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
-    SubscribeObjects, SubscribeObjectsReply, SubscribeServices, SubscribeServicesReply, Sync,
-    SyncReply, UnsubscribeEvent, UnsubscribeObjects, UnsubscribeServices,
+    ServiceDestroyed, ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
+    SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent, UnsubscribeObjects,
+    UnsubscribeServices,
 };
 use aldrin_proto::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -297,12 +298,12 @@ impl Broker {
                 continue;
             }
 
-            if let Some((conn_id, id)) = state.pop_remove_subscriptions() {
+            if let Some((conn_id, service_cookie)) = state.pop_services_destroyed() {
                 let conn = match self.conns.get(&conn_id) {
                     Some(conn) => conn,
                     None => continue,
                 };
-                let msg = Message::ServiceDestroyedEvent(ServiceDestroyedEvent { id });
+                let msg = Message::ServiceDestroyed(ServiceDestroyed { service_cookie });
                 if let Err(()) = send!(self, conn, msg) {
                     state.push_remove_conn(conn_id);
                 }
@@ -423,7 +424,8 @@ impl Broker {
             | Message::ClaimChannelEndReply(_)
             | Message::ChannelEndClaimed(_)
             | Message::ItemReceived(_)
-            | Message::SyncReply(_) => return Err(()),
+            | Message::SyncReply(_)
+            | Message::ServiceDestroyed(_) => return Err(()),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }
@@ -1437,9 +1439,7 @@ impl Broker {
         for conn_id in svc.subscribed_conn_ids() {
             if let Some(conn) = self.conns.get_mut(conn_id) {
                 conn.remove_all_subscriptions(svc_cookie);
-                if !conn.services_subscribed() {
-                    state.push_remove_subscriptions(conn_id.clone(), id);
-                }
+                state.push_services_destroyed(conn_id.clone(), svc_cookie);
             }
         }
 
