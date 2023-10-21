@@ -21,28 +21,16 @@ mod destroy_service;
 mod destroy_service_reply;
 mod emit_event;
 mod item_received;
-mod object_created_event;
-mod object_destroyed_event;
-mod query_object;
-mod query_object_reply;
 mod query_service_version;
 mod query_service_version_reply;
 mod send_item;
-mod service_created_event;
 mod service_destroyed;
-mod service_destroyed_event;
 mod shutdown;
 mod subscribe_event;
 mod subscribe_event_reply;
-mod subscribe_objects;
-mod subscribe_objects_reply;
-mod subscribe_services;
-mod subscribe_services_reply;
 mod sync;
 mod sync_reply;
 mod unsubscribe_event;
-mod unsubscribe_objects;
-mod unsubscribe_services;
 
 use crate::context::Context;
 use aldrin_proto::message::Message as ProtoMessage;
@@ -73,28 +61,16 @@ pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
-pub use object_created_event::ObjectCreatedEvent;
-pub use object_destroyed_event::ObjectDestroyedEvent;
-pub use query_object::QueryObject;
-pub use query_object_reply::QueryObjectReply;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
 pub use send_item::SendItem;
-pub use service_created_event::ServiceCreatedEvent;
 pub use service_destroyed::ServiceDestroyed;
-pub use service_destroyed_event::ServiceDestroyedEvent;
 pub use shutdown::Shutdown;
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
-pub use subscribe_objects::SubscribeObjects;
-pub use subscribe_objects_reply::SubscribeObjectsReply;
-pub use subscribe_services::SubscribeServices;
-pub use subscribe_services_reply::SubscribeServicesReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_event::UnsubscribeEvent;
-pub use unsubscribe_objects::UnsubscribeObjects;
-pub use unsubscribe_services::UnsubscribeServices;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
@@ -106,28 +82,16 @@ pub enum Message {
     CreateObjectReply(CreateObjectReply),
     DestroyObject(DestroyObject),
     DestroyObjectReply(DestroyObjectReply),
-    SubscribeObjects(SubscribeObjects),
-    SubscribeObjectsReply(SubscribeObjectsReply),
-    UnsubscribeObjects(UnsubscribeObjects),
-    ObjectCreatedEvent(ObjectCreatedEvent),
-    ObjectDestroyedEvent(ObjectDestroyedEvent),
     CreateService(CreateService),
     CreateServiceReply(CreateServiceReply),
     DestroyService(DestroyService),
     DestroyServiceReply(DestroyServiceReply),
-    SubscribeServices(SubscribeServices),
-    SubscribeServicesReply(SubscribeServicesReply),
-    UnsubscribeServices(UnsubscribeServices),
-    ServiceCreatedEvent(ServiceCreatedEvent),
-    ServiceDestroyedEvent(ServiceDestroyedEvent),
     CallFunction(CallFunction),
     CallFunctionReply(CallFunctionReply),
     SubscribeEvent(SubscribeEvent),
     SubscribeEventReply(SubscribeEventReply),
     UnsubscribeEvent(UnsubscribeEvent),
     EmitEvent(EmitEvent),
-    QueryObject(QueryObject),
-    QueryObjectReply(QueryObjectReply),
     QueryServiceVersion(QueryServiceVersion),
     QueryServiceVersionReply(QueryServiceVersionReply),
     CreateChannel(CreateChannel),
@@ -158,19 +122,6 @@ impl Message {
             Self::DestroyObjectReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::DestroyObjectReply)
             }
-            Self::SubscribeObjects(msg) => msg.to_proto(ctx).map(ProtoMessage::SubscribeObjects),
-            Self::SubscribeObjectsReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::SubscribeObjectsReply)
-            }
-            Self::UnsubscribeObjects(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::UnsubscribeObjects)
-            }
-            Self::ObjectCreatedEvent(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ObjectCreatedEvent)
-            }
-            Self::ObjectDestroyedEvent(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ObjectDestroyedEvent)
-            }
             Self::CreateService(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateService),
             Self::CreateServiceReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::CreateServiceReply)
@@ -178,19 +129,6 @@ impl Message {
             Self::DestroyService(msg) => msg.to_proto(ctx).map(ProtoMessage::DestroyService),
             Self::DestroyServiceReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::DestroyServiceReply)
-            }
-            Self::SubscribeServices(msg) => msg.to_proto(ctx).map(ProtoMessage::SubscribeServices),
-            Self::SubscribeServicesReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::SubscribeServicesReply)
-            }
-            Self::UnsubscribeServices(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::UnsubscribeServices)
-            }
-            Self::ServiceCreatedEvent(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ServiceCreatedEvent)
-            }
-            Self::ServiceDestroyedEvent(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyedEvent)
             }
             Self::CallFunction(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunction),
             Self::CallFunctionReply(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunctionReply),
@@ -200,8 +138,6 @@ impl Message {
             }
             Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::UnsubscribeEvent),
             Self::EmitEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::EmitEvent),
-            Self::QueryObject(msg) => msg.to_proto(ctx).map(ProtoMessage::QueryObject),
-            Self::QueryObjectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::QueryObjectReply),
             Self::QueryServiceVersion(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::QueryServiceVersion)
             }
@@ -246,40 +182,12 @@ impl Message {
             (Self::DestroyObjectReply(msg), Self::DestroyObjectReply(other)) => {
                 msg.matches(other, ctx)
             }
-            (Self::SubscribeObjects(msg), Self::SubscribeObjects(other)) => msg.matches(other, ctx),
-            (Self::SubscribeObjectsReply(msg), Self::SubscribeObjectsReply(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::UnsubscribeObjects(msg), Self::UnsubscribeObjects(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::ObjectCreatedEvent(msg), Self::ObjectCreatedEvent(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::ObjectDestroyedEvent(msg), Self::ObjectDestroyedEvent(other)) => {
-                msg.matches(other, ctx)
-            }
             (Self::CreateService(msg), Self::CreateService(other)) => msg.matches(other, ctx),
             (Self::CreateServiceReply(msg), Self::CreateServiceReply(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::DestroyService(msg), Self::DestroyService(other)) => msg.matches(other, ctx),
             (Self::DestroyServiceReply(msg), Self::DestroyServiceReply(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::SubscribeServices(msg), Self::SubscribeServices(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::SubscribeServicesReply(msg), Self::SubscribeServicesReply(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::ServiceCreatedEvent(msg), Self::ServiceCreatedEvent(other)) => {
-                msg.matches(other, ctx)
-            }
-            (Self::ServiceDestroyedEvent(msg), Self::ServiceDestroyedEvent(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::CallFunction(msg), Self::CallFunction(other)) => msg.matches(other, ctx),
@@ -292,8 +200,6 @@ impl Message {
             }
             (Self::UnsubscribeEvent(msg), Self::UnsubscribeEvent(other)) => msg.matches(other, ctx),
             (Self::EmitEvent(msg), Self::EmitEvent(other)) => msg.matches(other, ctx),
-            (Self::QueryObject(msg), Self::QueryObject(other)) => msg.matches(other, ctx),
-            (Self::QueryObjectReply(msg), Self::QueryObjectReply(other)) => msg.matches(other, ctx),
             (Self::QueryServiceVersion(msg), Self::QueryServiceVersion(other)) => {
                 msg.matches(other, ctx)
             }
@@ -343,21 +249,6 @@ impl Message {
             (Self::DestroyObjectReply(msg), Self::DestroyObjectReply(other)) => {
                 msg.update_context(other, ctx)
             }
-            (Self::SubscribeObjects(msg), Self::SubscribeObjects(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::SubscribeObjectsReply(msg), Self::SubscribeObjectsReply(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::UnsubscribeObjects(msg), Self::UnsubscribeObjects(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::ObjectCreatedEvent(msg), Self::ObjectCreatedEvent(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::ObjectDestroyedEvent(msg), Self::ObjectDestroyedEvent(other)) => {
-                msg.update_context(other, ctx)
-            }
             (Self::CreateService(msg), Self::CreateService(other)) => {
                 msg.update_context(other, ctx)
             }
@@ -368,21 +259,6 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::DestroyServiceReply(msg), Self::DestroyServiceReply(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::SubscribeServices(msg), Self::SubscribeServices(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::SubscribeServicesReply(msg), Self::SubscribeServicesReply(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::UnsubscribeServices(msg), Self::UnsubscribeServices(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::ServiceCreatedEvent(msg), Self::ServiceCreatedEvent(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::ServiceDestroyedEvent(msg), Self::ServiceDestroyedEvent(other)) => {
                 msg.update_context(other, ctx)
             }
             (Self::CallFunction(msg), Self::CallFunction(other)) => msg.update_context(other, ctx),
@@ -399,10 +275,6 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::EmitEvent(msg), Self::EmitEvent(other)) => msg.update_context(other, ctx),
-            (Self::QueryObject(msg), Self::QueryObject(other)) => msg.update_context(other, ctx),
-            (Self::QueryObjectReply(msg), Self::QueryObjectReply(other)) => {
-                msg.update_context(other, ctx)
-            }
             (Self::QueryServiceVersion(msg), Self::QueryServiceVersion(other)) => {
                 msg.update_context(other, ctx)
             }
@@ -456,36 +328,16 @@ impl Message {
             Self::CreateObjectReply(msg) => msg.apply_context(ctx).map(Self::CreateObjectReply),
             Self::DestroyObject(msg) => msg.apply_context(ctx).map(Self::DestroyObject),
             Self::DestroyObjectReply(msg) => msg.apply_context(ctx).map(Self::DestroyObjectReply),
-            Self::SubscribeObjects(msg) => msg.apply_context(ctx).map(Self::SubscribeObjects),
-            Self::SubscribeObjectsReply(msg) => {
-                msg.apply_context(ctx).map(Self::SubscribeObjectsReply)
-            }
-            Self::UnsubscribeObjects(msg) => msg.apply_context(ctx).map(Self::UnsubscribeObjects),
-            Self::ObjectCreatedEvent(msg) => msg.apply_context(ctx).map(Self::ObjectCreatedEvent),
-            Self::ObjectDestroyedEvent(msg) => {
-                msg.apply_context(ctx).map(Self::ObjectDestroyedEvent)
-            }
             Self::CreateService(msg) => msg.apply_context(ctx).map(Self::CreateService),
             Self::CreateServiceReply(msg) => msg.apply_context(ctx).map(Self::CreateServiceReply),
             Self::DestroyService(msg) => msg.apply_context(ctx).map(Self::DestroyService),
             Self::DestroyServiceReply(msg) => msg.apply_context(ctx).map(Self::DestroyServiceReply),
-            Self::SubscribeServices(msg) => msg.apply_context(ctx).map(Self::SubscribeServices),
-            Self::SubscribeServicesReply(msg) => {
-                msg.apply_context(ctx).map(Self::SubscribeServicesReply)
-            }
-            Self::UnsubscribeServices(msg) => msg.apply_context(ctx).map(Self::UnsubscribeServices),
-            Self::ServiceCreatedEvent(msg) => msg.apply_context(ctx).map(Self::ServiceCreatedEvent),
-            Self::ServiceDestroyedEvent(msg) => {
-                msg.apply_context(ctx).map(Self::ServiceDestroyedEvent)
-            }
             Self::CallFunction(msg) => msg.apply_context(ctx).map(Self::CallFunction),
             Self::CallFunctionReply(msg) => msg.apply_context(ctx).map(Self::CallFunctionReply),
             Self::SubscribeEvent(msg) => msg.apply_context(ctx).map(Self::SubscribeEvent),
             Self::SubscribeEventReply(msg) => msg.apply_context(ctx).map(Self::SubscribeEventReply),
             Self::UnsubscribeEvent(msg) => msg.apply_context(ctx).map(Self::UnsubscribeEvent),
             Self::EmitEvent(msg) => msg.apply_context(ctx).map(Self::EmitEvent),
-            Self::QueryObject(msg) => msg.apply_context(ctx).map(Self::QueryObject),
-            Self::QueryObjectReply(msg) => msg.apply_context(ctx).map(Self::QueryObjectReply),
             Self::QueryServiceVersion(msg) => msg.apply_context(ctx).map(Self::QueryServiceVersion),
             Self::QueryServiceVersionReply(msg) => {
                 msg.apply_context(ctx).map(Self::QueryServiceVersionReply)
@@ -524,36 +376,16 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::CreateObjectReply(msg) => msg.try_into().map(Self::CreateObjectReply),
             ProtoMessage::DestroyObject(msg) => msg.try_into().map(Self::DestroyObject),
             ProtoMessage::DestroyObjectReply(msg) => msg.try_into().map(Self::DestroyObjectReply),
-            ProtoMessage::SubscribeObjects(msg) => msg.try_into().map(Self::SubscribeObjects),
-            ProtoMessage::SubscribeObjectsReply(msg) => {
-                msg.try_into().map(Self::SubscribeObjectsReply)
-            }
-            ProtoMessage::UnsubscribeObjects(msg) => msg.try_into().map(Self::UnsubscribeObjects),
-            ProtoMessage::ObjectCreatedEvent(msg) => msg.try_into().map(Self::ObjectCreatedEvent),
-            ProtoMessage::ObjectDestroyedEvent(msg) => {
-                msg.try_into().map(Self::ObjectDestroyedEvent)
-            }
             ProtoMessage::CreateService(msg) => msg.try_into().map(Self::CreateService),
             ProtoMessage::CreateServiceReply(msg) => msg.try_into().map(Self::CreateServiceReply),
             ProtoMessage::DestroyService(msg) => msg.try_into().map(Self::DestroyService),
             ProtoMessage::DestroyServiceReply(msg) => msg.try_into().map(Self::DestroyServiceReply),
-            ProtoMessage::SubscribeServices(msg) => msg.try_into().map(Self::SubscribeServices),
-            ProtoMessage::SubscribeServicesReply(msg) => {
-                msg.try_into().map(Self::SubscribeServicesReply)
-            }
-            ProtoMessage::UnsubscribeServices(msg) => msg.try_into().map(Self::UnsubscribeServices),
-            ProtoMessage::ServiceCreatedEvent(msg) => msg.try_into().map(Self::ServiceCreatedEvent),
-            ProtoMessage::ServiceDestroyedEvent(msg) => {
-                msg.try_into().map(Self::ServiceDestroyedEvent)
-            }
             ProtoMessage::CallFunction(msg) => msg.try_into().map(Self::CallFunction),
             ProtoMessage::CallFunctionReply(msg) => msg.try_into().map(Self::CallFunctionReply),
             ProtoMessage::SubscribeEvent(msg) => msg.try_into().map(Self::SubscribeEvent),
             ProtoMessage::SubscribeEventReply(msg) => msg.try_into().map(Self::SubscribeEventReply),
             ProtoMessage::UnsubscribeEvent(msg) => msg.try_into().map(Self::UnsubscribeEvent),
             ProtoMessage::EmitEvent(msg) => msg.try_into().map(Self::EmitEvent),
-            ProtoMessage::QueryObject(msg) => msg.try_into().map(Self::QueryObject),
-            ProtoMessage::QueryObjectReply(msg) => msg.try_into().map(Self::QueryObjectReply),
             ProtoMessage::QueryServiceVersion(msg) => msg.try_into().map(Self::QueryServiceVersion),
             ProtoMessage::QueryServiceVersionReply(msg) => {
                 msg.try_into().map(Self::QueryServiceVersionReply)
