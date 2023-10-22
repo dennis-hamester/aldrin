@@ -14,10 +14,6 @@ impl<T> SerialMap<T> {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.elems.is_empty()
-    }
-
     pub fn insert(&mut self, obj: T) -> u32 {
         loop {
             let serial = self.next;
@@ -31,17 +27,5 @@ impl<T> SerialMap<T> {
 
     pub fn remove(&mut self, serial: u32) -> Option<T> {
         self.elems.remove(&serial)
-    }
-
-    pub fn get(&mut self, serial: u32) -> Option<&T> {
-        self.elems.get(&serial)
-    }
-
-    pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
-        self.elems.get_mut(&serial)
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = (u32, &T)> {
-        self.elems.iter().map(|(&s, e)| (s, e))
     }
 }

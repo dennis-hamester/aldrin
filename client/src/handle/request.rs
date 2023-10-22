@@ -3,7 +3,7 @@ use crate::channel::{
     UnclaimedSenderInner,
 };
 use crate::events::{EventsId, EventsRequest};
-use crate::{Error, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
+use crate::{Error, Object, Service};
 use aldrin_proto::message::{
     AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
     QueryServiceVersionResult, SubscribeEventResult,
@@ -22,16 +22,13 @@ pub(crate) enum HandleRequest {
     Shutdown,
     CreateObject(CreateObjectRequest),
     DestroyObject(DestroyObjectRequest),
-    SubscribeObjects(SubscribeObjectsRequest),
     CreateService(CreateServiceRequest),
     DestroyService(DestroyServiceRequest),
-    SubscribeServices(SubscribeServicesRequest),
     CallFunction(CallFunctionRequest),
     CallFunctionReply(CallFunctionReplyRequest),
     SubscribeEvent(SubscribeEventRequest),
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
-    QueryObject(QueryObjectRequest),
     QueryServiceVersion(QueryServiceVersionRequest),
     CreateClaimedSender(CreateClaimedSenderRequest),
     CreateClaimedReceiver(CreateClaimedReceiverRequest),
@@ -57,12 +54,6 @@ pub(crate) struct DestroyObjectRequest {
 }
 
 #[derive(Debug)]
-pub(crate) struct SubscribeObjectsRequest {
-    pub mode: SubscribeMode,
-    pub sender: mpsc::UnboundedSender<ObjectEvent>,
-}
-
-#[derive(Debug)]
 pub(crate) struct CreateServiceRequest {
     pub object_id: ObjectId,
     pub service_uuid: ServiceUuid,
@@ -74,12 +65,6 @@ pub(crate) struct CreateServiceRequest {
 pub(crate) struct DestroyServiceRequest {
     pub id: ServiceId,
     pub reply: oneshot::Sender<Result<(), Error>>,
-}
-
-#[derive(Debug)]
-pub(crate) struct SubscribeServicesRequest {
-    pub mode: SubscribeMode,
-    pub sender: mpsc::UnboundedSender<ServiceEvent>,
 }
 
 #[derive(Debug)]
@@ -117,18 +102,6 @@ pub(crate) struct EmitEventRequest {
     pub service_cookie: ServiceCookie,
     pub event: u32,
     pub value: SerializedValue,
-}
-
-pub(crate) type QueryObjectRequestReply = Option<(
-    ObjectCookie,
-    Option<mpsc::UnboundedReceiver<(ServiceUuid, ServiceCookie)>>,
-)>;
-
-#[derive(Debug)]
-pub(crate) struct QueryObjectRequest {
-    pub object_uuid: ObjectUuid,
-    pub reply: oneshot::Sender<QueryObjectRequestReply>,
-    pub with_services: bool,
 }
 
 #[derive(Debug)]

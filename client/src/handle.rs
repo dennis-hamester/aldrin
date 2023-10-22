@@ -5,30 +5,25 @@ use crate::channel::{
 };
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
-use crate::{
-    Error, Events, Object, ObjectEvent, Objects, Service, ServiceEvent, Services, SubscribeMode,
-};
+use crate::{Error, Events, Object, Service};
 use aldrin_proto::message::{
     AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
     QueryServiceVersionResult, SubscribeEventResult,
 };
 use aldrin_proto::{
     ChannelCookie, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue,
-    ServiceCookie, ServiceId, ServiceUuid,
+    ServiceId, ServiceUuid,
 };
-use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
+use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
-use futures_core::stream::{FusedStream, Stream};
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
-    HandleRequest, QueryObjectRequest, QueryServiceVersionRequest, SendItemRequest,
-    SubscribeEventRequest, SubscribeObjectsRequest, SubscribeServicesRequest,
+    HandleRequest, QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest,
     UnsubscribeEventRequest,
 };
 use std::fmt;
-use std::future;
 use std::future::Future;
 use std::marker::PhantomData;
 use std::num::NonZeroU32;
@@ -165,24 +160,6 @@ impl Handle {
             .ok();
     }
 
-    /// Subscribes to a stream of object creation and destruction events.
-    ///
-    /// An [`Objects`] stream can be used to discover and track [`Object`s](Object) on the bus. The
-    /// `mode` parameter decides whether the stream will include only current, only new or all
-    /// [`Object`s](Object).
-    ///
-    /// See [`Objects`] for more information and usage examples.
-    pub fn objects(&self, mode: SubscribeMode) -> Result<Objects, Error> {
-        let (send, recv) = unbounded();
-        self.send
-            .unbounded_send(HandleRequest::SubscribeObjects(SubscribeObjectsRequest {
-                mode,
-                sender: send,
-            }))
-            .map_err(|_| Error::ClientShutdown)?;
-        Ok(Objects::new(recv))
-    }
-
     pub(crate) async fn create_service(
         &self,
         object_id: ObjectId,
@@ -222,24 +199,6 @@ impl Handle {
                 reply,
             }))
             .ok();
-    }
-
-    /// Subscribes to a stream of service creation and destruction events.
-    ///
-    /// A [`Services`] stream can be used to discover and track [`Service`s](Service) on the
-    /// bus. The `mode` parameter decides whether the stream will include only current, only new or
-    /// all [`Service`s](Service).
-    ///
-    /// See [`Services`] for more information and usage examples.
-    pub fn services(&self, mode: SubscribeMode) -> Result<Services, Error> {
-        let (sender, recv) = unbounded();
-        self.send
-            .unbounded_send(HandleRequest::SubscribeServices(SubscribeServicesRequest {
-                mode,
-                sender,
-            }))
-            .map_err(|_| Error::ClientShutdown)?;
-        Ok(Services::new(recv))
     }
 
     /// Calls a function on a service.
@@ -445,352 +404,6 @@ impl Handle {
                 value,
             }))
             .map_err(|_| Error::ClientShutdown)
-    }
-
-    /// Waits for an object on the bus.
-    ///
-    /// Waits for an [`Object`] with the [`ObjectUuid`] `uuid` and returns its [`ObjectId`]. This
-    /// function will wait indefinitely until the [`Object`] appears. Use
-    /// [`resolve_object`](Handle::resolve_object) search only the currently existing
-    /// [`Object`s](Object).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aldrin_proto::ObjectUuid;
-    /// use std::time::Duration;
-    /// use tokio::time;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// let object_uuid = ObjectUuid::new_v4();
-    ///
-    /// // Wait until an object the above UUID appears.
-    /// // Awaiting the future now would block indefinitely though.
-    /// let object_id = handle.wait_for_object(object_uuid);
-    ///
-    /// // Create the object:
-    /// let object = handle.create_object(object_uuid).await?;
-    ///
-    /// // Now the future will resolve:
-    /// let object_id = object_id.await?;
-    /// assert_eq!(object_id, object.id());
-    ///
-    /// let non_existent = time::timeout(
-    ///     Duration::from_millis(500),
-    ///     handle.wait_for_object(ObjectUuid::new_v4()),
-    /// )
-    /// .await;
-    /// assert!(non_existent.is_err());
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn wait_for_object(&self, uuid: ObjectUuid) -> Result<ObjectId, Error> {
-        let mut objects = self.objects(SubscribeMode::All)?;
-
-        while let Some(ev) = objects.next_event().await {
-            match ev {
-                ObjectEvent::Created(id) if id.uuid == uuid => return Ok(id),
-                _ => {}
-            }
-        }
-
-        Err(Error::ClientShutdown)
-    }
-
-    /// Finds an object with a specific service on the bus.
-    ///
-    /// Finds an [`Object`], which has a [`Service`] with UUID `service_uuid`. The [`ObjectUuid`]
-    /// can be optionally specified as well with `object_uuid`. If it is not specified, then it is
-    /// unspecified which [`Object`] the returned [`ServiceId`] belongs to, if any. This function
-    /// considers only [`Service`s](Service), which currently exist on the bus. Use
-    /// [`wait_for_service`](Handle::wait_for_service) to wait indefinitely for a [`Service`]
-    /// matching the criteria.
-    ///
-    /// If you need more control or even a stream of all [`Object`s](Object) implementing a
-    /// particular [`Service`], then use [`services`](Handle::services) instead.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// // Create an object and service:
-    /// let object_uuid = ObjectUuid::new_v4();
-    /// let object = handle.create_object(object_uuid).await?;
-    /// let service_uuid = ServiceUuid::new_v4();
-    /// let service = object.create_service(service_uuid, 1).await?;
-    ///
-    /// // Find a service without specifying an object UUID:
-    /// let service_id = handle
-    ///     .find_service(service_uuid, None)
-    ///     .await?
-    ///     .expect("service not found");
-    /// // It could be any object (and service cookie), but the service UUID will match:
-    /// assert_eq!(service_id.uuid, service.id().uuid);
-    ///
-    /// // Find a service on a specific object:
-    /// let service_id = handle
-    ///     .find_service(service_uuid, Some(object_uuid))
-    ///     .await?
-    ///     .expect("service not found");
-    /// // The service id will match:
-    /// assert_eq!(service_id, service.id());
-    ///
-    /// // Searching for a non-existent service yields None:
-    /// let non_existent = handle
-    ///     .find_service(ServiceUuid::new_v4(), Some(object_uuid))
-    ///     .await?;
-    /// assert!(non_existent.is_none());
-    /// let non_existent = handle
-    ///     .find_service(ServiceUuid::new_v4(), None)
-    ///     .await?;
-    /// assert!(non_existent.is_none());
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn find_service(
-        &self,
-        service_uuid: ServiceUuid,
-        object_uuid: Option<ObjectUuid>,
-    ) -> Result<Option<ServiceId>, Error> {
-        if let Some(object_uuid) = object_uuid {
-            self.find_object_service(object_uuid, service_uuid).await
-        } else {
-            self.find_any_service(service_uuid).await
-        }
-    }
-
-    async fn find_any_service(
-        &self,
-        service_uuid: ServiceUuid,
-    ) -> Result<Option<ServiceId>, Error> {
-        let mut services = self.services(SubscribeMode::CurrentOnly)?;
-
-        while let Some(ev) = services.next_event().await {
-            if let ServiceEvent::Created(id) = ev {
-                if id.uuid == service_uuid {
-                    return Ok(Some(id));
-                }
-            }
-        }
-
-        Ok(None)
-    }
-
-    async fn find_object_service(
-        &self,
-        object_uuid: ObjectUuid,
-        service_uuid: ServiceUuid,
-    ) -> Result<Option<ServiceId>, Error> {
-        let mut services = match self.query_object_services(object_uuid).await? {
-            Some((_, services)) => services,
-            None => return Ok(None),
-        };
-
-        while let Some(id) = services.next_service_id().await {
-            if id.uuid == service_uuid {
-                return Ok(Some(id));
-            }
-        }
-
-        Ok(None)
-    }
-
-    /// Waits for an object with a specific service on the bus.
-    ///
-    /// Waits for an [`Object`], which has a [`Service`] with UUID `service_uuid`. The
-    /// [`ObjectUuid`] can be optionally specified as well with `object_uuid`. If it is not
-    /// specified, then it is unspecified which [`Object`] the returned [`ServiceId`] belongs
-    /// to. This function will wait indefinitely until a matching [`Service`] appears. Use
-    /// [`find_service`](Handle::find_service) to search only the current [`Service`s](Service) on
-    /// the bus.
-    ///
-    /// If you need more control or even a stream of all [`Object`s](Object) implementing a
-    /// particular [`Service`], then use [`services`](Handle::services) instead.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
-    /// use std::time::Duration;
-    /// use tokio::time;
-    /// use uuid::uuid;
-    ///
-    /// const SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("4d090fab-8614-43d1-8473-f29ff84ffc6b"));
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// // Wait until a service with SERVICE_UUID appears.
-    /// // Awaiting the future now would block indefinitely though.
-    /// let service_id = handle.wait_for_service(SERVICE_UUID, None);
-    ///
-    /// // Create the object and service:
-    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// let service = object.create_service(SERVICE_UUID, 1).await?;
-    ///
-    /// // Now the future will resolve:
-    /// let service_id = service_id.await?;
-    /// // It could be any object (and service cookie), but the service UUID will match:
-    /// assert_eq!(service_id.uuid, SERVICE_UUID);
-    ///
-    /// // Wait for the service on our specific object:
-    /// let service_id = handle.wait_for_service(SERVICE_UUID, Some(object.id().uuid)).await?;
-    /// assert_eq!(service_id, service.id());
-    ///
-    /// let non_existent = time::timeout(
-    ///     Duration::from_millis(500),
-    ///     handle.wait_for_service(ServiceUuid::new_v4(), None),
-    /// )
-    /// .await;
-    /// assert!(non_existent.is_err());
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn wait_for_service(
-        &self,
-        service_uuid: ServiceUuid,
-        object_uuid: Option<ObjectUuid>,
-    ) -> Result<ServiceId, Error> {
-        let mut services = self.services(SubscribeMode::All)?;
-
-        while let Some(ev) = services.next_event().await {
-            let id = match ev {
-                ServiceEvent::Created(id) if id.uuid == service_uuid => id,
-                _ => continue,
-            };
-
-            if let Some(object_uuid) = object_uuid {
-                if id.object_id.uuid != object_uuid {
-                    continue;
-                }
-            }
-
-            return Ok(id);
-        }
-
-        Err(Error::ClientShutdown)
-    }
-
-    /// Resolves an object UUID to its full id.
-    ///
-    /// This method returns `None`, if the object identified by `object_uuid` doesn't exist.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
-    /// use aldrin_proto::ObjectUuid;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    ///
-    /// let object_id = object.id();
-    /// let object_uuid = object_id.uuid;
-    ///
-    /// let resolved = handle.resolve_object(object_uuid).await?;
-    /// assert_eq!(resolved, Some(object_id));
-    ///
-    /// let resolved = handle.resolve_object(ObjectUuid::new_v4()).await?;
-    /// assert_eq!(resolved, None);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn resolve_object(&self, object_uuid: ObjectUuid) -> Result<Option<ObjectId>, Error> {
-        let (rep_send, rep_recv) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::QueryObject(QueryObjectRequest {
-                object_uuid,
-                reply: rep_send,
-                with_services: false,
-            }))
-            .map_err(|_| Error::ClientShutdown)?;
-
-        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
-            Some((object_cookie, object_services)) => {
-                debug_assert!(object_services.is_none());
-                Ok(Some(ObjectId {
-                    uuid: object_uuid,
-                    cookie: object_cookie,
-                }))
-            }
-            None => Ok(None),
-        }
-    }
-
-    /// Queries the id and services of an object identified by a UUID.
-    ///
-    /// This returns the [`ObjectId`] as well as an [`ObjectServices`] stream of all
-    /// [`ServiceId`s](ServiceId) of the object identified by `uuid`. If `uuid` does not name a
-    /// valid object, then `None` is returned.
-    ///
-    /// Use [`resolve_object`](Handle::resolve_object) if you just need to resolve an [`ObjectUuid`]
-    /// to an [`ObjectId`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
-    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
-    /// use futures::stream::StreamExt;
-    /// use std::collections::HashSet;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// let service1 = object.create_service(ServiceUuid::new_v4(), 1).await?;
-    /// let service2 = object.create_service(ServiceUuid::new_v4(), 1).await?;
-    ///
-    /// let (object_id, object_services) = handle
-    ///     .query_object_services(object.id().uuid)
-    ///     .await?
-    ///     .unwrap();
-    /// assert_eq!(object_id, object.id());
-    ///
-    /// let mut service_ids: HashSet<_> = object_services.collect().await;
-    /// assert_eq!(service_ids.len(), 2);
-    /// assert!(service_ids.remove(&service1.id()));
-    /// assert!(service_ids.remove(&service2.id()));
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn query_object_services(
-        &self,
-        object_uuid: ObjectUuid,
-    ) -> Result<Option<(ObjectId, ObjectServices)>, Error> {
-        let (rep_send, rep_recv) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::QueryObject(QueryObjectRequest {
-                object_uuid,
-                reply: rep_send,
-                with_services: true,
-            }))
-            .map_err(|_| Error::ClientShutdown)?;
-
-        match rep_recv.await.map_err(|_| Error::ClientShutdown)? {
-            Some((object_cookie, object_services)) => {
-                let object_id = ObjectId {
-                    uuid: object_uuid,
-                    cookie: object_cookie,
-                };
-                let recv = object_services.unwrap();
-                Ok(Some((object_id, ObjectServices { object_id, recv })))
-            }
-            None => Ok(None),
-        }
     }
 
     /// Queries the version of a service.
@@ -1276,44 +889,6 @@ where
             .field("service_id", &self.service_id)
             .field("function", &self.function)
             .finish()
-    }
-}
-
-/// Stream of service ids of an object.
-///
-/// This stream is created with [`query_object_services`](Handle::query_object_services).
-#[derive(Debug)]
-#[must_use = "streams do nothing unless you poll them"]
-pub struct ObjectServices {
-    object_id: ObjectId,
-    recv: UnboundedReceiver<(ServiceUuid, ServiceCookie)>,
-}
-
-impl ObjectServices {
-    /// Polls for the next service id.
-    pub fn poll_next_service_id(&mut self, cx: &mut Context) -> Poll<Option<ServiceId>> {
-        Pin::new(&mut self.recv)
-            .poll_next(cx)
-            .map(|ids| ids.map(|(uuid, cookie)| ServiceId::new(self.object_id, uuid, cookie)))
-    }
-
-    /// Returns the next service id.
-    pub async fn next_service_id(&mut self) -> Option<ServiceId> {
-        future::poll_fn(|cx| self.poll_next_service_id(cx)).await
-    }
-}
-
-impl Stream for ObjectServices {
-    type Item = ServiceId;
-
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        self.poll_next_service_id(cx)
-    }
-}
-
-impl FusedStream for ObjectServices {
-    fn is_terminated(&self) -> bool {
-        self.recv.is_terminated()
     }
 }
 

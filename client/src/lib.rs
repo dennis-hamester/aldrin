@@ -66,10 +66,8 @@ mod error;
 mod events;
 mod handle;
 mod object;
-mod objects;
 mod serial_map;
 mod service;
-mod services;
 #[cfg(test)]
 mod test;
 
@@ -89,21 +87,6 @@ pub use error::{
     RunError,
 };
 pub use events::{Event, Events};
-pub use handle::{Handle, ObjectServices, PendingFunctionResult, PendingFunctionValue};
+pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
 pub use object::Object;
-pub use objects::{ObjectEvent, Objects};
 pub use service::{FunctionCall, FunctionCallReply, Service};
-pub use services::{ServiceEvent, Services};
-
-/// Mode of subscription for object and service creation events.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum SubscribeMode {
-    /// Receive events for all current and future objects or services.
-    All,
-
-    /// Receive events only for current objects or services.
-    CurrentOnly,
-
-    /// Receive events only for future objects or services.
-    NewOnly,
-}

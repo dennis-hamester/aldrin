@@ -8,13 +8,12 @@ use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateClaimedSenderRequest,
     CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, QueryObjectRequest, QueryObjectRequestReply,
-    QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest, SubscribeObjectsRequest,
-    SubscribeServicesRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeEventRequest,
+    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
+    SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
-use crate::{Error, Handle, Object, ObjectEvent, Service, ServiceEvent, SubscribeMode};
+use crate::{Error, Handle, Object, Service};
 use aldrin_proto::message::{
     AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
     ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
@@ -22,18 +21,13 @@ use aldrin_proto::message::{
     CloseChannelEndResult, Connect, ConnectReply, CreateChannel, CreateChannelReply, CreateObject,
     CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
     DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message, ObjectCreatedEvent,
-    ObjectDestroyedEvent, QueryObject, QueryObjectReply, QueryObjectResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceCreatedEvent,
-    ServiceDestroyed, ServiceDestroyedEvent, Shutdown, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, SubscribeObjects, SubscribeObjectsReply, SubscribeServices,
-    SubscribeServicesReply, Sync, SyncReply, UnsubscribeEvent, UnsubscribeObjects,
-    UnsubscribeServices,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::{
     ChannelCookie, Deserialize, ObjectId, Serialize, SerializedValue, ServiceCookie, ServiceId,
-    ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -71,10 +65,8 @@ where
     num_handles: usize,
     create_object: SerialMap<CreateObjectRequest>,
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
-    object_events: SerialMap<SubscribeObjectsRequest>,
     create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<DestroyServiceRequest>,
-    service_events: SerialMap<SubscribeServicesRequest>,
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawFunctionCall>>,
     subscribe_event: SerialMap<(
@@ -85,7 +77,6 @@ where
     )>,
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
-    query_object: SerialMap<QueryObjectData>,
     query_service_version: SerialMap<oneshot::Sender<QueryServiceVersionResult>>,
     create_channel: SerialMap<CreateChannelData>,
     close_channel_end: SerialMap<CloseChannelEndRequest>,
@@ -175,16 +166,13 @@ where
             num_handles: 1,
             create_object: SerialMap::new(),
             destroy_object: SerialMap::new(),
-            object_events: SerialMap::new(),
             create_service: SerialMap::new(),
             destroy_service: SerialMap::new(),
-            service_events: SerialMap::new(),
             function_calls: SerialMap::new(),
             services: HashMap::new(),
             subscribe_event: SerialMap::new(),
             subscriptions: HashMap::new(),
             broker_subscriptions: HashMap::new(),
-            query_object: SerialMap::new(),
             query_service_version: SerialMap::new(),
             create_channel: SerialMap::new(),
             close_channel_end: SerialMap::new(),
@@ -300,21 +288,14 @@ where
         match msg {
             Message::CreateObjectReply(msg) => self.msg_create_object_reply(msg)?,
             Message::DestroyObjectReply(msg) => self.msg_destroy_object_reply(msg),
-            Message::SubscribeObjectsReply(msg) => self.msg_subscribe_objects_reply(msg),
-            Message::ObjectCreatedEvent(msg) => self.msg_object_created_event(msg).await?,
-            Message::ObjectDestroyedEvent(msg) => self.msg_object_destroyed_event(msg).await?,
             Message::CreateServiceReply(msg) => self.msg_create_service_reply(msg)?,
             Message::DestroyServiceReply(msg) => self.msg_destroy_service_reply(msg),
-            Message::SubscribeServicesReply(msg) => self.msg_subscribe_services_reply(msg),
-            Message::ServiceCreatedEvent(msg) => self.msg_service_created_event(msg).await?,
-            Message::ServiceDestroyedEvent(msg) => self.msg_service_destroyed_event(msg).await?,
             Message::CallFunction(msg) => self.msg_call_function(msg).await?,
             Message::CallFunctionReply(msg) => self.msg_call_function_reply(msg),
             Message::SubscribeEvent(msg) => self.msg_subscribe_event(msg),
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
-            Message::QueryObjectReply(msg) => self.msg_query_object_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
             Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
             Message::CloseChannelEndReply(msg) => self.msg_close_channel_end_reply(msg)?,
@@ -330,13 +311,8 @@ where
             | Message::ConnectReply(_)
             | Message::CreateObject(_)
             | Message::DestroyObject(_)
-            | Message::SubscribeObjects(_)
-            | Message::UnsubscribeObjects(UnsubscribeObjects)
             | Message::CreateService(_)
             | Message::DestroyService(_)
-            | Message::SubscribeServices(_)
-            | Message::UnsubscribeServices(UnsubscribeServices)
-            | Message::QueryObject(_)
             | Message::QueryServiceVersion(_)
             | Message::CreateChannel(_)
             | Message::CloseChannelEnd(_)
@@ -379,79 +355,6 @@ where
         if let Some(send) = self.destroy_object.remove(msg.serial) {
             send.send(msg.result).ok();
         }
-    }
-
-    fn msg_subscribe_objects_reply(&mut self, msg: SubscribeObjectsReply) {
-        let req = match self.object_events.get(msg.serial) {
-            Some(req) => req,
-            None => return,
-        };
-
-        if req.mode == SubscribeMode::CurrentOnly {
-            self.object_events.remove(msg.serial);
-        }
-    }
-
-    async fn msg_object_created_event(
-        &mut self,
-        msg: ObjectCreatedEvent,
-    ) -> Result<(), RunError<T::Error>> {
-        let obj_ev = ObjectEvent::Created(msg.id);
-
-        if let Some(serial) = msg.serial {
-            if let Some(req) = self.object_events.get(serial) {
-                if req.sender.unbounded_send(obj_ev).is_err() {
-                    self.object_events.remove(serial);
-                }
-            }
-        } else {
-            let mut remove = Vec::new();
-
-            for (serial, req) in self.object_events.iter() {
-                if req.sender.unbounded_send(obj_ev).is_err() {
-                    remove.push(serial);
-                }
-            }
-
-            for serial in remove {
-                self.object_events.remove(serial);
-            }
-        }
-
-        if self.object_events.is_empty() {
-            self.t
-                .send(Message::UnsubscribeObjects(UnsubscribeObjects))
-                .await?;
-        }
-
-        Ok(())
-    }
-
-    async fn msg_object_destroyed_event(
-        &mut self,
-        msg: ObjectDestroyedEvent,
-    ) -> Result<(), RunError<T::Error>> {
-        let obj_ev = ObjectEvent::Destroyed(msg.id);
-
-        let mut remove = Vec::new();
-
-        for (serial, req) in self.object_events.iter() {
-            if req.sender.unbounded_send(obj_ev).is_err() {
-                remove.push(serial);
-            }
-        }
-
-        for serial in remove {
-            self.object_events.remove(serial);
-        }
-
-        if self.object_events.is_empty() {
-            self.t
-                .send(Message::UnsubscribeObjects(UnsubscribeObjects))
-                .await?;
-        }
-
-        Ok(())
     }
 
     fn msg_create_service_reply(
@@ -508,78 +411,6 @@ where
         };
 
         req.reply.send(reply).ok();
-    }
-
-    fn msg_subscribe_services_reply(&mut self, msg: SubscribeServicesReply) {
-        let req = match self.service_events.get(msg.serial) {
-            Some(req) => req,
-            None => return,
-        };
-
-        if req.mode == SubscribeMode::CurrentOnly {
-            self.service_events.remove(msg.serial);
-        }
-    }
-
-    async fn msg_service_created_event(
-        &mut self,
-        msg: ServiceCreatedEvent,
-    ) -> Result<(), RunError<T::Error>> {
-        let svc_ev = ServiceEvent::Created(msg.id);
-
-        if let Some(serial) = msg.serial {
-            if let Some(req) = self.service_events.get(serial) {
-                if req.sender.unbounded_send(svc_ev).is_err() {
-                    self.service_events.remove(serial);
-                }
-            }
-        } else {
-            let mut remove = Vec::new();
-
-            for (serial, req) in self.service_events.iter() {
-                if req.sender.unbounded_send(svc_ev).is_err() {
-                    remove.push(serial);
-                }
-            }
-
-            for serial in remove {
-                self.service_events.remove(serial);
-            }
-        }
-
-        if self.service_events.is_empty() {
-            self.t
-                .send(Message::UnsubscribeServices(UnsubscribeServices))
-                .await?;
-        }
-
-        Ok(())
-    }
-
-    async fn msg_service_destroyed_event(
-        &mut self,
-        msg: ServiceDestroyedEvent,
-    ) -> Result<(), RunError<T::Error>> {
-        let svc_ev = ServiceEvent::Destroyed(msg.id);
-        let mut remove = Vec::new();
-
-        for (serial, req) in self.service_events.iter() {
-            if req.sender.unbounded_send(svc_ev).is_err() {
-                remove.push(serial);
-            }
-        }
-
-        for serial in remove {
-            self.service_events.remove(serial);
-        }
-
-        if self.service_events.is_empty() {
-            self.t
-                .send(Message::UnsubscribeServices(UnsubscribeServices))
-                .await?;
-        }
-
-        Ok(())
     }
 
     async fn msg_call_function(&mut self, msg: CallFunction) -> Result<(), RunError<T::Error>> {
@@ -671,58 +502,6 @@ where
                     msg.value.clone(),
                 ))
                 .ok();
-        }
-    }
-
-    fn msg_query_object_reply(&mut self, msg: QueryObjectReply) -> Result<(), RunError<T::Error>> {
-        let data = match self.query_object.get_mut(msg.serial) {
-            Some(data) => data,
-            None => return Ok(()),
-        };
-
-        if let Some(id_reply) = data.id_reply.take() {
-            match msg.result {
-                QueryObjectResult::Cookie(cookie) => {
-                    if data.with_services {
-                        let (send, recv) = mpsc::unbounded();
-                        data.svc_reply = Some(send);
-                        id_reply.send(Some((cookie, Some(recv)))).ok();
-                    } else {
-                        id_reply.send(Some((cookie, None))).ok();
-                        self.query_object.remove(msg.serial);
-                    }
-                    Ok(())
-                }
-
-                QueryObjectResult::InvalidObject => {
-                    id_reply.send(None).ok();
-                    self.query_object.remove(msg.serial);
-                    Ok(())
-                }
-
-                _ => Err(RunError::UnexpectedMessageReceived(
-                    Message::QueryObjectReply(msg),
-                )),
-            }
-        } else if data.with_services {
-            match msg.result {
-                QueryObjectResult::Service { uuid, cookie } => {
-                    let svc_reply = data.svc_reply.as_ref().unwrap();
-                    svc_reply.unbounded_send((uuid, cookie)).ok();
-                    Ok(())
-                }
-
-                QueryObjectResult::Done => {
-                    self.query_object.remove(msg.serial);
-                    Ok(())
-                }
-
-                _ => Err(RunError::UnexpectedMessageReceived(
-                    Message::QueryObjectReply(msg),
-                )),
-            }
-        } else {
-            unreachable!()
         }
     }
 
@@ -1017,16 +796,13 @@ where
             HandleRequest::HandleDropped => self.req_handle_dropped(),
             HandleRequest::CreateObject(req) => self.req_create_object(req).await?,
             HandleRequest::DestroyObject(req) => self.req_destroy_object(req).await?,
-            HandleRequest::SubscribeObjects(req) => self.req_subscribe_objects(req).await?,
             HandleRequest::CreateService(req) => self.req_create_service(req).await?,
             HandleRequest::DestroyService(req) => self.req_destroy_service(req).await?,
-            HandleRequest::SubscribeServices(req) => self.req_subscribe_services(req).await?,
             HandleRequest::CallFunction(req) => self.req_call_function(req).await?,
             HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await?,
             HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
             HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
-            HandleRequest::QueryObject(req) => self.req_query_object(req).await?,
             HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await?,
             HandleRequest::CreateClaimedSender(req) => self.req_create_claimed_sender(req).await?,
             HandleRequest::CreateClaimedReceiver(req) => {
@@ -1082,28 +858,6 @@ where
             .map_err(Into::into)
     }
 
-    async fn req_subscribe_objects(
-        &mut self,
-        req: SubscribeObjectsRequest,
-    ) -> Result<(), RunError<T::Error>> {
-        let mode = req.mode;
-        let is_empty = self.object_events.is_empty();
-        let serial = self.object_events.insert(req);
-        let (send, serial) = match mode {
-            SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
-            SubscribeMode::NewOnly => (is_empty, None),
-        };
-
-        if send {
-            self.t
-                .send_and_flush(Message::SubscribeObjects(SubscribeObjects { serial }))
-                .await
-                .map_err(Into::into)
-        } else {
-            Ok(())
-        }
-    }
-
     async fn req_create_service(
         &mut self,
         req: CreateServiceRequest,
@@ -1133,28 +887,6 @@ where
             .send_and_flush(Message::DestroyService(DestroyService { serial, cookie }))
             .await
             .map_err(Into::into)
-    }
-
-    async fn req_subscribe_services(
-        &mut self,
-        req: SubscribeServicesRequest,
-    ) -> Result<(), RunError<T::Error>> {
-        let mode = req.mode;
-        let is_empty = self.service_events.is_empty();
-        let serial = self.service_events.insert(req);
-        let (send, serial) = match mode {
-            SubscribeMode::All | SubscribeMode::CurrentOnly => (true, Some(serial)),
-            SubscribeMode::NewOnly => (is_empty, None),
-        };
-
-        if send {
-            self.t
-                .send_and_flush(Message::SubscribeServices(SubscribeServices { serial }))
-                .await
-                .map_err(Into::into)
-        } else {
-            Ok(())
-        }
     }
 
     async fn req_call_function(
@@ -1266,25 +998,6 @@ where
                 service_cookie: req.service_cookie,
                 event: req.event,
                 value: req.value,
-            }))
-            .await
-            .map_err(Into::into)
-    }
-
-    async fn req_query_object(
-        &mut self,
-        req: QueryObjectRequest,
-    ) -> Result<(), RunError<T::Error>> {
-        let serial = self.query_object.insert(QueryObjectData {
-            id_reply: Some(req.reply),
-            with_services: req.with_services,
-            svc_reply: None,
-        });
-        self.t
-            .send_and_flush(Message::QueryObject(QueryObject {
-                serial,
-                uuid: req.object_uuid,
-                with_services: req.with_services,
             }))
             .await
             .map_err(Into::into)
@@ -1447,13 +1160,6 @@ where
     fn drop(&mut self) {
         self.shutdown_all_events();
     }
-}
-
-#[derive(Debug)]
-struct QueryObjectData {
-    id_reply: Option<oneshot::Sender<QueryObjectRequestReply>>,
-    with_services: bool,
-    svc_reply: Option<mpsc::UnboundedSender<(ServiceUuid, ServiceCookie)>>,
 }
 
 #[derive(Debug)]

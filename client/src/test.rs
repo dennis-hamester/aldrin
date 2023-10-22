@@ -55,7 +55,7 @@ async fn abort_create_object() {
     // again.
     time::sleep(Duration::from_millis(100)).await;
 
-    assert!(client.resolve_object(uuid).await.unwrap().is_none());
+    assert!(client.create_object(uuid).await.is_ok());
 }
 
 #[tokio::test]
@@ -74,11 +74,7 @@ async fn abort_create_service() {
     // again.
     time::sleep(Duration::from_millis(100)).await;
 
-    assert!(client
-        .find_service(uuid, Some(obj.id().uuid))
-        .await
-        .unwrap()
-        .is_none());
+    assert!(obj.create_service(uuid, 0).await.is_ok());
 }
 
 #[tokio::test]
