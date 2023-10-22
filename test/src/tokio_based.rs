@@ -15,7 +15,7 @@
 //! use anyhow::Result;
 //! use futures::StreamExt;
 //!
-//! aldrin_codegen_macros::generate!("examples/calculator.aldrin");
+//! aldrin_client::generate!("examples/calculator.aldrin");
 //!
 //! // Assume this is the #[test] (or #[tokio::test]) function.
 //! #[tokio::main]

@@ -136,7 +136,6 @@ dependencies = [
  "aldrin-broker",
  "aldrin-channel",
  "aldrin-client",
- "aldrin-codegen-macros",
  "aldrin-proto",
  "anyhow",
  "futures",
