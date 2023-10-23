@@ -68,7 +68,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [7, 0, 0, 0, 24, 1, 0];
+        let serialized = [7, 0, 0, 0, 14, 1, 0];
 
         let msg = SubscribeEventReply {
             serial: 1,
@@ -84,7 +84,7 @@ mod test {
 
     #[test]
     fn invalid_service() {
-        let serialized = [7, 0, 0, 0, 24, 1, 1];
+        let serialized = [7, 0, 0, 0, 14, 1, 1];
 
         let msg = SubscribeEventReply {
             serial: 1,

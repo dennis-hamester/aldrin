@@ -73,7 +73,7 @@ mod test {
 
     #[test]
     fn sender() {
-        let serialized = [7, 0, 0, 0, 31, 1, 0];
+        let serialized = [7, 0, 0, 0, 19, 1, 0];
 
         let msg = CreateChannel {
             serial: 1,
@@ -89,7 +89,7 @@ mod test {
 
     #[test]
     fn receiver() {
-        let serialized = [8, 0, 0, 0, 31, 1, 1, 16];
+        let serialized = [8, 0, 0, 0, 19, 1, 1, 16];
 
         let msg = CreateChannel {
             serial: 1,

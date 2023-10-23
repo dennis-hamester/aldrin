@@ -55,7 +55,7 @@ mod test {
 
     #[test]
     fn sync_reply() {
-        let serialized = [6, 0, 0, 0, 43, 1];
+        let serialized = [6, 0, 0, 0, 31, 1];
 
         let msg = SyncReply { serial: 1 };
         assert_serialize_eq(&msg, serialized);

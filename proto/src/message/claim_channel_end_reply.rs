@@ -103,7 +103,7 @@ mod test {
 
     #[test]
     fn sender_claimed() {
-        let serialized = [8, 0, 0, 0, 37, 1, 0, 2];
+        let serialized = [8, 0, 0, 0, 25, 1, 0, 2];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn receiver_claimed() {
-        let serialized = [7, 0, 0, 0, 37, 1, 1];
+        let serialized = [7, 0, 0, 0, 25, 1, 1];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -135,7 +135,7 @@ mod test {
 
     #[test]
     fn invalid_channel() {
-        let serialized = [7, 0, 0, 0, 37, 1, 2];
+        let serialized = [7, 0, 0, 0, 25, 1, 2];
 
         let msg = ClaimChannelEndReply {
             serial: 1,
@@ -151,7 +151,7 @@ mod test {
 
     #[test]
     fn already_claimed() {
-        let serialized = [7, 0, 0, 0, 37, 1, 3];
+        let serialized = [7, 0, 0, 0, 25, 1, 3];
 
         let msg = ClaimChannelEndReply {
             serial: 1,

@@ -110,8 +110,8 @@ mod test {
     #[test]
     fn ok() {
         let serialized = [
-            23, 0, 0, 0, 13, 1, 0, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf,
-            0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b,
+            23, 0, 0, 0, 8, 1, 0, 0xb7, 0xc3, 0xbe, 0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37,
+            0x38, 0x76, 0x52, 0x3d, 0x1b,
         ];
 
         let msg = CreateServiceReply {
@@ -130,7 +130,7 @@ mod test {
 
     #[test]
     fn duplicate_service() {
-        let serialized = [7, 0, 0, 0, 13, 1, 1];
+        let serialized = [7, 0, 0, 0, 8, 1, 1];
 
         let msg = CreateServiceReply {
             serial: 1,
@@ -146,7 +146,7 @@ mod test {
 
     #[test]
     fn invalid_object() {
-        let serialized = [7, 0, 0, 0, 13, 1, 2];
+        let serialized = [7, 0, 0, 0, 8, 1, 2];
 
         let msg = CreateServiceReply {
             serial: 1,
@@ -162,7 +162,7 @@ mod test {
 
     #[test]
     fn foreign_object() {
-        let serialized = [7, 0, 0, 0, 13, 1, 3];
+        let serialized = [7, 0, 0, 0, 8, 1, 3];
 
         let msg = CreateServiceReply {
             serial: 1,
