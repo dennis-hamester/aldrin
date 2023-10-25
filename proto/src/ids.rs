@@ -365,3 +365,44 @@ impl fmt::Display for ChannelCookie {
         self.0.fmt(f)
     }
 }
+
+/// Cookie of a bus listener.
+///
+/// [`BusListenerCookie`s](Self) are chosen by the broker when creating a bus listener.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[repr(transparent)]
+pub struct BusListenerCookie(pub Uuid);
+
+impl BusListenerCookie {
+    /// Creates a [`BusListenerCookie`] with a random v4 UUID.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin_proto::BusListenerCookie;
+    /// let bus_listener_cookie = BusListenerCookie::new_v4();
+    /// ```
+    #[cfg(feature = "new-v4-ids")]
+    pub fn new_v4() -> Self {
+        BusListenerCookie(Uuid::new_v4())
+    }
+}
+
+impl From<Uuid> for BusListenerCookie {
+    fn from(cookie: Uuid) -> Self {
+        Self(cookie)
+    }
+}
+
+impl From<BusListenerCookie> for Uuid {
+    fn from(cookie: BusListenerCookie) -> Self {
+        cookie.0
+    }
+}
+
+impl fmt::Display for BusListenerCookie {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}

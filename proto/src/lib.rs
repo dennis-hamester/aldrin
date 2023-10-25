@@ -22,7 +22,8 @@ pub use deserialize_key::DeserializeKey;
 pub use error::{DeserializeError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
-    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
+    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
+    ServiceUuid,
 };
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};

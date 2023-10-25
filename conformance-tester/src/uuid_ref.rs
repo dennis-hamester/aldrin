@@ -1,5 +1,7 @@
 use crate::context::Context;
-use aldrin_proto::{ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid};
+use aldrin_proto::{
+    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
+};
 use anyhow::{anyhow, Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -152,6 +154,12 @@ impl From<ServiceCookie> for UuidRef {
 
 impl From<ChannelCookie> for UuidRef {
     fn from(value: ChannelCookie) -> Self {
+        value.0.into()
+    }
+}
+
+impl From<BusListenerCookie> for UuidRef {
+    fn from(value: BusListenerCookie) -> Self {
         value.0.into()
     }
 }
