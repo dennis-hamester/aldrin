@@ -3,7 +3,7 @@ use super::{
     ChannelEnd, ChannelEndWithCapacity, Message, MessageDeserializeError, MessageKind, MessageOps,
     MessageSerializeError, MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -52,7 +52,7 @@ impl MessageOps for CreateChannel {
         Ok(Self { serial, end })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         None
     }
 }

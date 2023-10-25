@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithValueDeserializer,
 };
 use crate::error::SerializeError;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -87,7 +87,7 @@ impl MessageOps for ConnectReply {
         }
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         match self {
             Self::Ok(value) | Self::Rejected(value) => Some(value),
             Self::VersionMismatch(_) => None,

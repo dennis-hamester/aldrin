@@ -5,7 +5,7 @@ use super::{
 };
 use crate::error::SerializeError;
 use crate::ids::ServiceCookie;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
@@ -60,7 +60,7 @@ impl MessageOps for EmitEvent {
         })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         Some(&self.value)
     }
 }

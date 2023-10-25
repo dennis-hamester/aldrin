@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithValueDeserializer,
 };
 use crate::error::SerializeError;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_serializer::Serialize;
 use bytes::BytesMut;
 
@@ -47,7 +47,7 @@ impl MessageOps for Connect {
         Ok(Self { version, value })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         Some(&self.value)
     }
 }

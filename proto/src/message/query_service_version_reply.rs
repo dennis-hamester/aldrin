@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -73,7 +73,7 @@ impl MessageOps for QueryServiceVersionReply {
         Ok(Self { serial, result })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         None
     }
 }

@@ -37,7 +37,7 @@ mod unsubscribe_event;
 
 use crate::buf_ext::{BufMutExt, MessageBufExt};
 use crate::error::{DeserializeError, SerializeError};
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::{Buf, BufMut, BytesMut};
@@ -210,7 +210,7 @@ pub trait MessageOps: Sized + message_ops::Sealed {
     fn kind(&self) -> MessageKind;
     fn serialize_message(self) -> Result<BytesMut, MessageSerializeError>;
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError>;
-    fn value(&self) -> Option<&SerializedValue>;
+    fn value(&self) -> Option<&SerializedValueSlice>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -428,7 +428,7 @@ impl MessageOps for Message {
         }
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         match self {
             Self::Connect(msg) => msg.value(),
             Self::ConnectReply(msg) => msg.value(),

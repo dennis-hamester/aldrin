@@ -4,7 +4,7 @@ use super::{
     MessageSerializeError, MessageSerializer, MessageWithoutValueDeserializer,
 };
 use crate::ids::ChannelCookie;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -61,7 +61,7 @@ impl MessageOps for ClaimChannelEnd {
         })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         None
     }
 }

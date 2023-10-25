@@ -4,7 +4,7 @@ use super::{
     MessageSerializer, MessageWithoutValueDeserializer,
 };
 use crate::ids::ObjectCookie;
-use crate::serialized_value::SerializedValue;
+use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -72,7 +72,7 @@ impl MessageOps for CreateObjectReply {
         Ok(Self { serial, result })
     }
 
-    fn value(&self) -> Option<&SerializedValue> {
+    fn value(&self) -> Option<&SerializedValueSlice> {
         None
     }
 }
