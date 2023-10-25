@@ -343,6 +343,7 @@ impl Broker {
             Message::AddChannelCapacity(req) => self.add_channel_capacity(state, id, req),
             Message::SendItem(req) => self.send_item(state, id, req)?,
             Message::Sync(req) => self.sync(id, req)?,
+            Message::CreateBusListener(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

@@ -9,6 +9,7 @@ mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
 mod connect_reply;
+mod create_bus_listener;
 mod create_channel;
 mod create_channel_reply;
 mod create_object;
@@ -49,6 +50,7 @@ pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
+pub use create_bus_listener::CreateBusListener;
 pub use create_channel::CreateChannel;
 pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
@@ -108,6 +110,7 @@ pub enum Message {
     Sync(Sync),
     SyncReply(SyncReply),
     ServiceDestroyed(ServiceDestroyed),
+    CreateBusListener(CreateBusListener),
 }
 
 impl Message {
@@ -166,6 +169,7 @@ impl Message {
             Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
             Self::ServiceDestroyed(msg) => msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyed),
+            Self::CreateBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateBusListener),
         }
     }
 
@@ -230,6 +234,9 @@ impl Message {
             (Self::Sync(msg), Self::Sync(other)) => msg.matches(other, ctx),
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             (Self::ServiceDestroyed(msg), Self::ServiceDestroyed(other)) => msg.matches(other, ctx),
+            (Self::CreateBusListener(msg), Self::CreateBusListener(other)) => {
+                msg.matches(other, ctx)
+            }
             _ => Ok(false),
         }
     }
@@ -315,6 +322,9 @@ impl Message {
             (Self::ServiceDestroyed(msg), Self::ServiceDestroyed(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::CreateBusListener(msg), Self::CreateBusListener(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -360,6 +370,7 @@ impl Message {
             Self::Sync(msg) => msg.apply_context(ctx).map(Self::Sync),
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
             Self::ServiceDestroyed(msg) => msg.apply_context(ctx).map(Self::ServiceDestroyed),
+            Self::CreateBusListener(msg) => msg.apply_context(ctx).map(Self::CreateBusListener),
         }
     }
 }
@@ -408,6 +419,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::Sync(msg) => msg.try_into().map(Self::Sync),
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             ProtoMessage::ServiceDestroyed(msg) => msg.try_into().map(Self::ServiceDestroyed),
+            ProtoMessage::CreateBusListener(msg) => msg.try_into().map(Self::CreateBusListener),
         }
     }
 }

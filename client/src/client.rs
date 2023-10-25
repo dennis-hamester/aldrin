@@ -318,7 +318,10 @@ where
             | Message::CloseChannelEnd(_)
             | Message::ClaimChannelEnd(_)
             | Message::SendItem(_)
-            | Message::Sync(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::Sync(_)
+            | Message::CreateBusListener(_) => {
+                return Err(RunError::UnexpectedMessageReceived(msg))
+            }
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }

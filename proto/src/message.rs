@@ -9,6 +9,7 @@ mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
 mod connect_reply;
+mod create_bus_listener;
 mod create_channel;
 mod create_channel_reply;
 mod create_object;
@@ -57,6 +58,7 @@ pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
+pub use create_bus_listener::CreateBusListener;
 pub use create_channel::CreateChannel;
 pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
@@ -117,6 +119,7 @@ pub enum MessageKind {
     Sync = 30,
     SyncReply = 31,
     ServiceDestroyed = 32,
+    CreateBusListener = 33,
 }
 
 impl MessageKind {
@@ -155,7 +158,8 @@ impl MessageKind {
             | Self::AddChannelCapacity
             | Self::Sync
             | Self::SyncReply
-            | Self::ServiceDestroyed => false,
+            | Self::ServiceDestroyed
+            | Self::CreateBusListener => false,
         }
     }
 }
@@ -245,6 +249,7 @@ pub enum Message {
     Sync(Sync),
     SyncReply(SyncReply),
     ServiceDestroyed(ServiceDestroyed),
+    CreateBusListener(CreateBusListener),
 }
 
 impl MessageOps for Message {
@@ -283,6 +288,7 @@ impl MessageOps for Message {
             Self::Sync(_) => MessageKind::Sync,
             Self::SyncReply(_) => MessageKind::SyncReply,
             Self::ServiceDestroyed(_) => MessageKind::ServiceDestroyed,
+            Self::CreateBusListener(_) => MessageKind::CreateBusListener,
         }
     }
 
@@ -321,6 +327,7 @@ impl MessageOps for Message {
             Self::Sync(msg) => msg.serialize_message(),
             Self::SyncReply(msg) => msg.serialize_message(),
             Self::ServiceDestroyed(msg) => msg.serialize_message(),
+            Self::CreateBusListener(msg) => msg.serialize_message(),
         }
     }
 
@@ -421,6 +428,9 @@ impl MessageOps for Message {
             MessageKind::ServiceDestroyed => {
                 ServiceDestroyed::deserialize_message(buf).map(Self::ServiceDestroyed)
             }
+            MessageKind::CreateBusListener => {
+                CreateBusListener::deserialize_message(buf).map(Self::CreateBusListener)
+            }
         }
     }
 
@@ -459,6 +469,7 @@ impl MessageOps for Message {
             Self::Sync(msg) => msg.value(),
             Self::SyncReply(msg) => msg.value(),
             Self::ServiceDestroyed(msg) => msg.value(),
+            Self::CreateBusListener(msg) => msg.value(),
         }
     }
 }
