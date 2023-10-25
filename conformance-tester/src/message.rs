@@ -10,6 +10,7 @@ mod close_channel_end_reply;
 mod connect;
 mod connect_reply;
 mod create_bus_listener;
+mod create_bus_listener_reply;
 mod create_channel;
 mod create_channel_reply;
 mod create_object;
@@ -51,6 +52,7 @@ pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
 pub use connect_reply::ConnectReply;
 pub use create_bus_listener::CreateBusListener;
+pub use create_bus_listener_reply::CreateBusListenerReply;
 pub use create_channel::CreateChannel;
 pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
@@ -111,6 +113,7 @@ pub enum Message {
     SyncReply(SyncReply),
     ServiceDestroyed(ServiceDestroyed),
     CreateBusListener(CreateBusListener),
+    CreateBusListenerReply(CreateBusListenerReply),
 }
 
 impl Message {
@@ -170,6 +173,9 @@ impl Message {
             Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
             Self::ServiceDestroyed(msg) => msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyed),
             Self::CreateBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateBusListener),
+            Self::CreateBusListenerReply(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::CreateBusListenerReply)
+            }
         }
     }
 
@@ -235,6 +241,9 @@ impl Message {
             (Self::SyncReply(msg), Self::SyncReply(other)) => msg.matches(other, ctx),
             (Self::ServiceDestroyed(msg), Self::ServiceDestroyed(other)) => msg.matches(other, ctx),
             (Self::CreateBusListener(msg), Self::CreateBusListener(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::CreateBusListenerReply(msg), Self::CreateBusListenerReply(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -325,6 +334,9 @@ impl Message {
             (Self::CreateBusListener(msg), Self::CreateBusListener(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::CreateBusListenerReply(msg), Self::CreateBusListenerReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -371,6 +383,9 @@ impl Message {
             Self::SyncReply(msg) => msg.apply_context(ctx).map(Self::SyncReply),
             Self::ServiceDestroyed(msg) => msg.apply_context(ctx).map(Self::ServiceDestroyed),
             Self::CreateBusListener(msg) => msg.apply_context(ctx).map(Self::CreateBusListener),
+            Self::CreateBusListenerReply(msg) => {
+                msg.apply_context(ctx).map(Self::CreateBusListenerReply)
+            }
         }
     }
 }
@@ -420,6 +435,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::SyncReply(msg) => msg.try_into().map(Self::SyncReply),
             ProtoMessage::ServiceDestroyed(msg) => msg.try_into().map(Self::ServiceDestroyed),
             ProtoMessage::CreateBusListener(msg) => msg.try_into().map(Self::CreateBusListener),
+            ProtoMessage::CreateBusListenerReply(msg) => {
+                msg.try_into().map(Self::CreateBusListenerReply)
+            }
         }
     }
 }

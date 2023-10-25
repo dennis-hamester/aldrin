@@ -360,7 +360,8 @@ impl Broker {
             | Message::ChannelEndClaimed(_)
             | Message::ItemReceived(_)
             | Message::SyncReply(_)
-            | Message::ServiceDestroyed(_) => return Err(()),
+            | Message::ServiceDestroyed(_)
+            | Message::CreateBusListenerReply(_) => return Err(()),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }
