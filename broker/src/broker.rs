@@ -344,6 +344,7 @@ impl Broker {
             Message::SendItem(req) => self.send_item(state, id, req)?,
             Message::Sync(req) => self.sync(id, req)?,
             Message::CreateBusListener(_) => todo!(),
+            Message::DestroyBusListener(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

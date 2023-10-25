@@ -17,6 +17,7 @@ mod create_object;
 mod create_object_reply;
 mod create_service;
 mod create_service_reply;
+mod destroy_bus_listener;
 mod destroy_object;
 mod destroy_object_reply;
 mod destroy_service;
@@ -59,6 +60,7 @@ pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
 pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
+pub use destroy_bus_listener::DestroyBusListener;
 pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
@@ -114,6 +116,7 @@ pub enum Message {
     ServiceDestroyed(ServiceDestroyed),
     CreateBusListener(CreateBusListener),
     CreateBusListenerReply(CreateBusListenerReply),
+    DestroyBusListener(DestroyBusListener),
 }
 
 impl Message {
@@ -175,6 +178,9 @@ impl Message {
             Self::CreateBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateBusListener),
             Self::CreateBusListenerReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::CreateBusListenerReply)
+            }
+            Self::DestroyBusListener(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::DestroyBusListener)
             }
         }
     }
@@ -244,6 +250,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::CreateBusListenerReply(msg), Self::CreateBusListenerReply(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::DestroyBusListener(msg), Self::DestroyBusListener(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -337,6 +346,9 @@ impl Message {
             (Self::CreateBusListenerReply(msg), Self::CreateBusListenerReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::DestroyBusListener(msg), Self::DestroyBusListener(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -386,6 +398,7 @@ impl Message {
             Self::CreateBusListenerReply(msg) => {
                 msg.apply_context(ctx).map(Self::CreateBusListenerReply)
             }
+            Self::DestroyBusListener(msg) => msg.apply_context(ctx).map(Self::DestroyBusListener),
         }
     }
 }
@@ -438,6 +451,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::CreateBusListenerReply(msg) => {
                 msg.try_into().map(Self::CreateBusListenerReply)
             }
+            ProtoMessage::DestroyBusListener(msg) => msg.try_into().map(Self::DestroyBusListener),
         }
     }
 }

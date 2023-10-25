@@ -320,7 +320,8 @@ where
             | Message::ClaimChannelEnd(_)
             | Message::SendItem(_)
             | Message::Sync(_)
-            | Message::CreateBusListener(_) => {
+            | Message::CreateBusListener(_)
+            | Message::DestroyBusListener(_) => {
                 return Err(RunError::UnexpectedMessageReceived(msg))
             }
 
