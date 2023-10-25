@@ -2,6 +2,7 @@
 mod test;
 
 use crate::error::{DeserializeError, SerializeError};
+use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
@@ -140,6 +141,12 @@ impl SerializedValueSlice {
         let self_ptr = buf.as_ref() as *const [u8] as *const Self;
         // Safe because of repr(transparent).
         unsafe { &*self_ptr }
+    }
+
+    pub fn kind(&self) -> Result<ValueKind, DeserializeError> {
+        let mut buf = &self.0;
+        let deserializer = Deserializer::new(&mut buf, 0)?;
+        deserializer.peek_value_kind()
     }
 
     pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
