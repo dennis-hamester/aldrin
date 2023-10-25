@@ -9,7 +9,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum QueryServiceVersionReplyKind {
+enum QueryServiceVersionReplyKind {
     Ok = 0,
     InvalidService = 1,
 }

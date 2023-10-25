@@ -10,7 +10,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum CreateObjectReplyKind {
+enum CreateObjectReplyKind {
     Ok = 0,
     DuplicateObject = 1,
 }

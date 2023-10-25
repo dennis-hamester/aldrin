@@ -10,7 +10,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum CreateServiceReplyKind {
+enum CreateServiceReplyKind {
     Ok = 0,
     DuplicateService = 1,
     InvalidObject = 2,

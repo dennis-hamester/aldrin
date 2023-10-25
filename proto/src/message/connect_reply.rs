@@ -11,7 +11,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum ConnectReplyKind {
+enum ConnectReplyKind {
     Ok = 0,
     VersionMismatch = 1,
     Rejected = 2,

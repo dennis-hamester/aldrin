@@ -48,23 +48,21 @@ use uuid::Uuid;
 
 pub use add_channel_capacity::AddChannelCapacity;
 pub use call_function::CallFunction;
-pub use call_function_reply::{CallFunctionReply, CallFunctionReplyKind, CallFunctionResult};
+pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
 pub use claim_channel_end::ClaimChannelEnd;
-pub use claim_channel_end_reply::{
-    ClaimChannelEndReply, ClaimChannelEndReplyKind, ClaimChannelEndResult,
-};
+pub use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
-pub use connect_reply::{ConnectReply, ConnectReplyKind};
+pub use connect_reply::ConnectReply;
 pub use create_channel::CreateChannel;
 pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
-pub use create_object_reply::{CreateObjectReply, CreateObjectReplyKind, CreateObjectResult};
+pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
-pub use create_service_reply::{CreateServiceReply, CreateServiceReplyKind, CreateServiceResult};
+pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
 pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
@@ -73,9 +71,7 @@ pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
 pub use packetizer::Packetizer;
 pub use query_service_version::QueryServiceVersion;
-pub use query_service_version_reply::{
-    QueryServiceVersionReply, QueryServiceVersionReplyKind, QueryServiceVersionResult,
-};
+pub use query_service_version_reply::{QueryServiceVersionReply, QueryServiceVersionResult};
 pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
 pub use shutdown::Shutdown;
@@ -544,7 +540,7 @@ pub enum ChannelEndWithCapacity {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum OptionKind {
+enum OptionKind {
     None = 0,
     Some = 1,
 }
