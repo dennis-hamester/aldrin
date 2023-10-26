@@ -3,6 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod buf_ext;
+mod bus_listener;
 mod deserialize_key;
 mod error;
 mod generic_value;
@@ -18,6 +19,7 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
+pub use bus_listener::BusListenerScope;
 pub use deserialize_key::DeserializeKey;
 pub use error::{DeserializeError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
