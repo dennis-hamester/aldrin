@@ -323,7 +323,8 @@ where
             | Message::Sync(_)
             | Message::CreateBusListener(_)
             | Message::DestroyBusListener(_)
-            | Message::AddBusListenerFilter(_) => {
+            | Message::AddBusListenerFilter(_)
+            | Message::RemoveBusListenerFilter(_) => {
                 return Err(RunError::UnexpectedMessageReceived(msg))
             }
 

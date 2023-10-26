@@ -29,6 +29,7 @@ mod emit_event;
 mod item_received;
 mod query_service_version;
 mod query_service_version_reply;
+mod remove_bus_listener_filter;
 mod send_item;
 mod service_destroyed;
 mod shutdown;
@@ -74,6 +75,7 @@ pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
+pub use remove_bus_listener_filter::RemoveBusListenerFilter;
 pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
 pub use shutdown::Shutdown;
@@ -124,6 +126,7 @@ pub enum Message {
     DestroyBusListener(DestroyBusListener),
     DestroyBusListenerReply(DestroyBusListenerReply),
     AddBusListenerFilter(AddBusListenerFilter),
+    RemoveBusListenerFilter(RemoveBusListenerFilter),
 }
 
 impl Message {
@@ -194,6 +197,9 @@ impl Message {
             }
             Self::AddBusListenerFilter(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::AddBusListenerFilter)
+            }
+            Self::RemoveBusListenerFilter(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::RemoveBusListenerFilter)
             }
         }
     }
@@ -272,6 +278,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::AddBusListenerFilter(msg), Self::AddBusListenerFilter(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::RemoveBusListenerFilter(msg), Self::RemoveBusListenerFilter(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -374,6 +383,9 @@ impl Message {
             (Self::AddBusListenerFilter(msg), Self::AddBusListenerFilter(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::RemoveBusListenerFilter(msg), Self::RemoveBusListenerFilter(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -429,6 +441,9 @@ impl Message {
             }
             Self::AddBusListenerFilter(msg) => {
                 msg.apply_context(ctx).map(Self::AddBusListenerFilter)
+            }
+            Self::RemoveBusListenerFilter(msg) => {
+                msg.apply_context(ctx).map(Self::RemoveBusListenerFilter)
             }
         }
     }
@@ -488,6 +503,9 @@ impl TryFrom<ProtoMessage> for Message {
             }
             ProtoMessage::AddBusListenerFilter(msg) => {
                 msg.try_into().map(Self::AddBusListenerFilter)
+            }
+            ProtoMessage::RemoveBusListenerFilter(msg) => {
+                msg.try_into().map(Self::RemoveBusListenerFilter)
             }
         }
     }

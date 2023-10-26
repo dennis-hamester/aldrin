@@ -346,6 +346,7 @@ impl Broker {
             Message::CreateBusListener(_) => todo!(),
             Message::DestroyBusListener(_) => todo!(),
             Message::AddBusListenerFilter(_) => todo!(),
+            Message::RemoveBusListenerFilter(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
