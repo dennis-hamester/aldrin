@@ -43,17 +43,18 @@ mod sync_reply;
 mod test;
 mod unsubscribe_event;
 
-use crate::buf_ext::{BufMutExt, MessageBufExt};
+use crate::buf_ext::MessageBufExt;
 use crate::error::{DeserializeError, SerializeError};
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{Buf, BytesMut};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::error::Error;
 use std::fmt;
 use uuid::Uuid;
 
+pub use crate::message_serializer::MessageSerializeError;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_filter::{BusListenerFilter, BusListenerServiceFilter};
@@ -189,23 +190,6 @@ impl MessageKind {
         }
     }
 }
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MessageSerializeError {
-    Overflow,
-    InvalidValue,
-}
-
-impl fmt::Display for MessageSerializeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Overflow => f.write_str("serialized message overflowed"),
-            Self::InvalidValue => f.write_str("invalid value"),
-        }
-    }
-}
-
-impl Error for MessageSerializeError {}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MessageDeserializeError {
@@ -622,72 +606,6 @@ pub enum ChannelEndWithCapacity {
 enum OptionKind {
     None = 0,
     Some = 1,
-}
-
-struct MessageSerializer {
-    buf: BytesMut,
-}
-
-impl MessageSerializer {
-    fn without_value(kind: MessageKind) -> Self {
-        debug_assert!(!kind.has_value());
-
-        let mut buf = BytesMut::zeroed(4);
-        buf.put_u8(kind.into());
-
-        Self { buf }
-    }
-
-    fn with_value(
-        value: SerializedValue,
-        kind: MessageKind,
-    ) -> Result<Self, MessageSerializeError> {
-        debug_assert!(kind.has_value());
-
-        let mut buf = value.into_bytes_mut();
-
-        // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
-        // value.
-        if buf.len() < 10 {
-            return Err(MessageSerializeError::InvalidValue);
-        }
-
-        let value_len = buf.len() - 9;
-        if value_len > u32::MAX as usize {
-            return Err(MessageSerializeError::Overflow);
-        }
-
-        buf[4] = kind.into();
-        buf[5..9].copy_from_slice(&(value_len as u32).to_le_bytes());
-
-        Ok(Self { buf })
-    }
-
-    fn with_none_value(kind: MessageKind) -> Self {
-        Self::with_value(SerializedValue::serialize(&()).unwrap(), kind).unwrap()
-    }
-
-    fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
-        self.buf.put_discriminant_u8(discriminant);
-    }
-
-    fn put_varint_u32_le(&mut self, n: u32) {
-        self.buf.put_varint_u32_le(n);
-    }
-
-    fn put_uuid(&mut self, uuid: Uuid) {
-        self.buf.put_slice(uuid.as_ref());
-    }
-
-    fn finish(mut self) -> Result<BytesMut, MessageSerializeError> {
-        let len = self.buf.len();
-        if len <= u32::MAX as usize {
-            self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());
-            Ok(self.buf)
-        } else {
-            Err(MessageSerializeError::Overflow)
-        }
-    }
 }
 
 struct MessageWithoutValueDeserializer {

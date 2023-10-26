@@ -1,9 +1,10 @@
 use super::message_ops::Sealed;
 use super::{
     ChannelEnd, ChannelEndWithCapacity, Message, MessageDeserializeError, MessageKind, MessageOps,
-    MessageSerializeError, MessageSerializer, MessageWithoutValueDeserializer,
+    MessageWithoutValueDeserializer,
 };
 use crate::ids::ChannelCookie;
+use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 

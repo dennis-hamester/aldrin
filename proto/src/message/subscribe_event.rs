@@ -1,9 +1,10 @@
 use super::message_ops::Sealed;
 use super::{
-    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
-    MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageWithoutValueDeserializer,
+    OptionKind,
 };
 use crate::ids::ServiceCookie;
+use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 

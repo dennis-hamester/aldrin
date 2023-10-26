@@ -8,6 +8,7 @@ mod deserialize_key;
 mod error;
 mod generic_value;
 mod ids;
+mod message_serializer;
 mod serialize_key;
 mod serialized_value;
 mod value;

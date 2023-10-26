@@ -1,9 +1,9 @@
 use super::message_ops::Sealed;
 use super::{
-    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
-    MessageSerializer, MessageWithoutValueDeserializer,
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageWithoutValueDeserializer,
 };
 use crate::ids::ObjectUuid;
+use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 

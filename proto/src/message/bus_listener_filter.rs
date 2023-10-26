@@ -1,5 +1,6 @@
-use super::{MessageDeserializeError, MessageSerializer, MessageWithoutValueDeserializer};
+use super::{MessageDeserializeError, MessageWithoutValueDeserializer};
 use crate::ids::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
+use crate::message_serializer::MessageSerializer;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
