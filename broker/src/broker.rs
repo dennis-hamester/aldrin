@@ -345,6 +345,7 @@ impl Broker {
             Message::Sync(req) => self.sync(id, req)?,
             Message::CreateBusListener(_) => todo!(),
             Message::DestroyBusListener(_) => todo!(),
+            Message::AddBusListenerFilter(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

@@ -5,6 +5,7 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum MessageType {
+    AddBusListenerFilter,
     AddChannelCapacity,
     CallFunction,
     CallFunctionReply,
@@ -47,6 +48,7 @@ pub enum MessageType {
 impl fmt::Display for MessageType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Self::AddBusListenerFilter => f.pad("add-bus-listener-filter"),
             Self::AddChannelCapacity => f.pad("add-channel-capacity"),
             Self::CallFunction => f.pad("call-function"),
             Self::CallFunctionReply => f.pad("call-function-reply"),

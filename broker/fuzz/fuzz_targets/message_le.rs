@@ -2,17 +2,17 @@ use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
-    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
-    CloseChannelEndResult, Connect, ConnectReply, CreateBusListener, CreateBusListenerReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    AddBusListenerFilter, AddChannelCapacity, BusListenerFilter, BusListenerServiceFilter,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
+    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
+    ConnectReply, CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply,
+    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply,
+    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
@@ -58,6 +58,7 @@ pub enum MessageLe {
     CreateBusListenerReply(CreateBusListenerReplyLe),
     DestroyBusListener(DestroyBusListenerLe),
     DestroyBusListenerReply(DestroyBusListenerReplyLe),
+    AddBusListenerFilter(AddBusListenerFilterLe),
 }
 
 impl MessageLe {
@@ -100,6 +101,7 @@ impl MessageLe {
             Self::CreateBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::DestroyBusListener(msg) => msg.to_proto(ctx).into(),
             Self::DestroyBusListenerReply(msg) => msg.to_proto(ctx).into(),
+            Self::AddBusListenerFilter(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -148,6 +150,7 @@ impl UpdateContext for ProtoMessage {
             Self::CreateBusListenerReply(msg) => msg.update_context(ctx),
             Self::DestroyBusListener(msg) => msg.update_context(ctx),
             Self::DestroyBusListenerReply(msg) => msg.update_context(ctx),
+            Self::AddBusListenerFilter(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1157,5 +1160,93 @@ impl UpdateContext for DestroyBusListenerReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum BusListenerFilterLe {
+    AnyObject,
+    SpecificObject(UuidLe),
+    AnyObjectAnyService,
+    SpecificObjectAnyService(UuidLe),
+    AnyObjectSpecificService(UuidLe),
+    SpecificObjectSpecificService(UuidLe, UuidLe),
+}
+
+impl BusListenerFilterLe {
+    pub fn to_proto(&self, ctx: &Context) -> BusListenerFilter {
+        match self {
+            Self::AnyObject => BusListenerFilter::any_object(),
+            Self::SpecificObject(object) => BusListenerFilter::object(ObjectUuid(object.get(ctx))),
+            Self::AnyObjectAnyService => BusListenerFilter::any_service_any_object(),
+
+            Self::SpecificObjectAnyService(object) => {
+                BusListenerFilter::any_service_specific_object(ObjectUuid(object.get(ctx)))
+            }
+
+            Self::AnyObjectSpecificService(service) => {
+                BusListenerFilter::specific_service_any_object(ServiceUuid(service.get(ctx)))
+            }
+
+            Self::SpecificObjectSpecificService(object, service) => {
+                BusListenerFilter::specific_service_and_object(
+                    ServiceUuid(service.get(ctx)),
+                    ObjectUuid(object.get(ctx)),
+                )
+            }
+        }
+    }
+}
+
+impl UpdateContext for BusListenerFilter {
+    fn update_context(&self, ctx: &mut Context) {
+        match self {
+            BusListenerFilter::Object(None)
+            | BusListenerFilter::Service(BusListenerServiceFilter {
+                object: None,
+                service: None,
+            }) => {}
+
+            BusListenerFilter::Object(Some(object))
+            | BusListenerFilter::Service(BusListenerServiceFilter {
+                object: Some(object),
+                service: None,
+            }) => ctx.add_uuid(object.0),
+
+            BusListenerFilter::Service(BusListenerServiceFilter {
+                object: None,
+                service: Some(service),
+            }) => ctx.add_uuid(service.0),
+
+            BusListenerFilter::Service(BusListenerServiceFilter {
+                object: Some(object),
+                service: Some(service),
+            }) => {
+                ctx.add_uuid(object.0);
+                ctx.add_uuid(service.0);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct AddBusListenerFilterLe {
+    pub cookie: UuidLe,
+    pub filter: BusListenerFilterLe,
+}
+
+impl AddBusListenerFilterLe {
+    pub fn to_proto(&self, ctx: &Context) -> AddBusListenerFilter {
+        AddBusListenerFilter {
+            cookie: BusListenerCookie(self.cookie.get(ctx)),
+            filter: self.filter.to_proto(ctx),
+        }
+    }
+}
+
+impl UpdateContext for AddBusListenerFilter {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.cookie.0);
+        self.filter.update_context(ctx);
     }
 }

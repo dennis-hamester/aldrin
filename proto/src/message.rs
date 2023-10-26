@@ -1,4 +1,6 @@
+mod add_bus_listener_filter;
 mod add_channel_capacity;
+mod bus_listener_filter;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -50,7 +52,9 @@ use std::error::Error;
 use std::fmt;
 use uuid::Uuid;
 
+pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
+pub use bus_listener_filter::{BusListenerFilter, BusListenerServiceFilter};
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
@@ -129,6 +133,7 @@ pub enum MessageKind {
     CreateBusListenerReply = 34,
     DestroyBusListener = 35,
     DestroyBusListenerReply = 36,
+    AddBusListenerFilter = 37,
 }
 
 impl MessageKind {
@@ -171,7 +176,8 @@ impl MessageKind {
             | Self::CreateBusListener
             | Self::CreateBusListenerReply
             | Self::DestroyBusListener
-            | Self::DestroyBusListenerReply => false,
+            | Self::DestroyBusListenerReply
+            | Self::AddBusListenerFilter => false,
         }
     }
 }
@@ -265,6 +271,7 @@ pub enum Message {
     CreateBusListenerReply(CreateBusListenerReply),
     DestroyBusListener(DestroyBusListener),
     DestroyBusListenerReply(DestroyBusListenerReply),
+    AddBusListenerFilter(AddBusListenerFilter),
 }
 
 impl MessageOps for Message {
@@ -307,6 +314,7 @@ impl MessageOps for Message {
             Self::CreateBusListenerReply(_) => MessageKind::CreateBusListenerReply,
             Self::DestroyBusListener(_) => MessageKind::DestroyBusListener,
             Self::DestroyBusListenerReply(_) => MessageKind::DestroyBusListenerReply,
+            Self::AddBusListenerFilter(_) => MessageKind::AddBusListenerFilter,
         }
     }
 
@@ -349,6 +357,7 @@ impl MessageOps for Message {
             Self::CreateBusListenerReply(msg) => msg.serialize_message(),
             Self::DestroyBusListener(msg) => msg.serialize_message(),
             Self::DestroyBusListenerReply(msg) => msg.serialize_message(),
+            Self::AddBusListenerFilter(msg) => msg.serialize_message(),
         }
     }
 
@@ -461,6 +470,9 @@ impl MessageOps for Message {
             MessageKind::DestroyBusListenerReply => {
                 DestroyBusListenerReply::deserialize_message(buf).map(Self::DestroyBusListenerReply)
             }
+            MessageKind::AddBusListenerFilter => {
+                AddBusListenerFilter::deserialize_message(buf).map(Self::AddBusListenerFilter)
+            }
         }
     }
 
@@ -503,6 +515,7 @@ impl MessageOps for Message {
             Self::CreateBusListenerReply(msg) => msg.value(),
             Self::DestroyBusListener(msg) => msg.value(),
             Self::DestroyBusListenerReply(msg) => msg.value(),
+            Self::AddBusListenerFilter(msg) => msg.value(),
         }
     }
 }

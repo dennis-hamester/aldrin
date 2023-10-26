@@ -1,4 +1,6 @@
+mod add_bus_listener_filter;
 mod add_channel_capacity;
+mod bus_listener_filter;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -42,6 +44,7 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use call_function::CallFunction;
 pub use call_function_reply::CallFunctionReply;
@@ -120,6 +123,7 @@ pub enum Message {
     CreateBusListenerReply(CreateBusListenerReply),
     DestroyBusListener(DestroyBusListener),
     DestroyBusListenerReply(DestroyBusListenerReply),
+    AddBusListenerFilter(AddBusListenerFilter),
 }
 
 impl Message {
@@ -187,6 +191,9 @@ impl Message {
             }
             Self::DestroyBusListenerReply(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::DestroyBusListenerReply)
+            }
+            Self::AddBusListenerFilter(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::AddBusListenerFilter)
             }
         }
     }
@@ -262,6 +269,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::DestroyBusListenerReply(msg), Self::DestroyBusListenerReply(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::AddBusListenerFilter(msg), Self::AddBusListenerFilter(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -361,6 +371,9 @@ impl Message {
             (Self::DestroyBusListenerReply(msg), Self::DestroyBusListenerReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::AddBusListenerFilter(msg), Self::AddBusListenerFilter(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -413,6 +426,9 @@ impl Message {
             Self::DestroyBusListener(msg) => msg.apply_context(ctx).map(Self::DestroyBusListener),
             Self::DestroyBusListenerReply(msg) => {
                 msg.apply_context(ctx).map(Self::DestroyBusListenerReply)
+            }
+            Self::AddBusListenerFilter(msg) => {
+                msg.apply_context(ctx).map(Self::AddBusListenerFilter)
             }
         }
     }
@@ -469,6 +485,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::DestroyBusListener(msg) => msg.try_into().map(Self::DestroyBusListener),
             ProtoMessage::DestroyBusListenerReply(msg) => {
                 msg.try_into().map(Self::DestroyBusListenerReply)
+            }
+            ProtoMessage::AddBusListenerFilter(msg) => {
+                msg.try_into().map(Self::AddBusListenerFilter)
             }
         }
     }
