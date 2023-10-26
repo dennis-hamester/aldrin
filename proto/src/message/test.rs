@@ -1,4 +1,5 @@
-use super::{Message, MessageDeserializeError, MessageOps};
+use super::{Message, MessageOps};
+use crate::message_deserializer::MessageDeserializeError;
 use crate::value_deserializer::Deserialize;
 use bytes::BytesMut;
 use std::fmt::Debug;

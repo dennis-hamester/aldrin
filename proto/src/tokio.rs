@@ -1,4 +1,5 @@
-use crate::message::{Message, MessageDeserializeError, MessageOps, Packetizer};
+use crate::message::{Message, MessageOps, Packetizer};
+use crate::message_deserializer::MessageDeserializeError;
 use crate::message_serializer::MessageSerializeError;
 use crate::transport::AsyncTransport;
 use bytes::{Buf, BytesMut};

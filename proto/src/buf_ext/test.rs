@@ -1,6 +1,7 @@
 use super::BufMutExt;
 use crate::error::DeserializeError;
-use crate::message::{MessageDeserializeError, MessageKind};
+use crate::message::MessageKind;
+use crate::message_deserializer::MessageDeserializeError;
 use crate::value::ValueKind;
 use bytes::BytesMut;
 

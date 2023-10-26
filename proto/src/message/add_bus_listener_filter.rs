@@ -1,9 +1,8 @@
 use super::bus_listener_filter::BusListenerFilter;
 use super::message_ops::Sealed;
-use super::{
-    Message, MessageDeserializeError, MessageKind, MessageOps, MessageWithoutValueDeserializer,
-};
+use super::{Message, MessageKind, MessageOps};
 use crate::ids::BusListenerCookie;
+use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
