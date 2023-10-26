@@ -7,11 +7,12 @@ use aldrin_proto::message::{
     ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
     CloseChannelEndResult, Connect, ConnectReply, CreateBusListener, CreateBusListenerReply,
     CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
@@ -56,6 +57,7 @@ pub enum MessageLe {
     CreateBusListener(CreateBusListenerLe),
     CreateBusListenerReply(CreateBusListenerReplyLe),
     DestroyBusListener(DestroyBusListenerLe),
+    DestroyBusListenerReply(DestroyBusListenerReplyLe),
 }
 
 impl MessageLe {
@@ -97,6 +99,7 @@ impl MessageLe {
             Self::CreateBusListener(msg) => msg.to_proto(ctx).into(),
             Self::CreateBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::DestroyBusListener(msg) => msg.to_proto(ctx).into(),
+            Self::DestroyBusListenerReply(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -144,6 +147,7 @@ impl UpdateContext for ProtoMessage {
             Self::CreateBusListener(msg) => msg.update_context(ctx),
             Self::CreateBusListenerReply(msg) => msg.update_context(ctx),
             Self::DestroyBusListener(msg) => msg.update_context(ctx),
+            Self::DestroyBusListenerReply(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1112,5 +1116,46 @@ impl UpdateContext for DestroyBusListener {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         ctx.add_uuid(self.cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum DestroyBusListenerResultLe {
+    Ok,
+    InvalidBusListener,
+}
+
+impl DestroyBusListenerResultLe {
+    pub fn to_proto(&self, _ctx: &Context) -> DestroyBusListenerResult {
+        match self {
+            Self::Ok => DestroyBusListenerResult::Ok,
+            Self::InvalidBusListener => DestroyBusListenerResult::InvalidBusListener,
+        }
+    }
+}
+
+impl UpdateContext for DestroyBusListenerResult {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct DestroyBusListenerReplyLe {
+    pub serial: SerialLe,
+    pub result: DestroyBusListenerResultLe,
+}
+
+impl DestroyBusListenerReplyLe {
+    pub fn to_proto(&self, ctx: &Context) -> DestroyBusListenerReply {
+        DestroyBusListenerReply {
+            serial: self.serial.get(ctx),
+            result: self.result.to_proto(ctx),
+        }
+    }
+}
+
+impl UpdateContext for DestroyBusListenerReply {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        self.result.update_context(ctx);
     }
 }

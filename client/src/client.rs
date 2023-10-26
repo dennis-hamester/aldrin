@@ -307,6 +307,7 @@ where
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
             Message::CreateBusListenerReply(_) => todo!(),
+            Message::DestroyBusListenerReply(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
