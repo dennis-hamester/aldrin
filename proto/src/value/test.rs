@@ -1,10 +1,10 @@
 use super::{ByteSlice, Bytes, Skip};
+use crate::channel_end::ChannelEnd;
 use crate::error::{DeserializeError, SerializeError};
 use crate::generic_value::{Enum, Struct, Value};
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::message::ChannelEnd;
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};

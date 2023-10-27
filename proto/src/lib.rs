@@ -4,6 +4,7 @@
 
 mod buf_ext;
 mod bus_listener;
+mod channel_end;
 mod deserialize_key;
 mod error;
 mod generic_value;

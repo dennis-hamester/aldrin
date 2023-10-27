@@ -1,5 +1,6 @@
 use super::message_ops::Sealed;
-use super::{ChannelEnd, Message, MessageKind, MessageOps};
+use super::{Message, MessageKind, MessageOps};
+use crate::channel_end::ChannelEnd;
 use crate::ids::ChannelCookie;
 use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
@@ -61,8 +62,9 @@ impl From<CloseChannelEnd> for Message {
 #[cfg(test)]
 mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
-    use super::super::{ChannelEnd, Message};
+    use super::super::Message;
     use super::CloseChannelEnd;
+    use crate::channel_end::ChannelEnd;
     use crate::ids::ChannelCookie;
     use uuid::uuid;
 

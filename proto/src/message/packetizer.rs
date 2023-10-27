@@ -90,10 +90,9 @@ impl Default for Packetizer {
 
 #[cfg(test)]
 mod test {
-    use super::super::{
-        ChannelEndWithCapacity, CreateChannel, CreateObject, Message, MessageOps, Shutdown,
-    };
+    use super::super::{CreateChannel, CreateObject, Message, MessageOps, Shutdown};
     use super::Packetizer;
+    use crate::channel_end::ChannelEndWithCapacity;
     use crate::ids::ObjectUuid;
     use bytes::Buf;
     use std::mem::MaybeUninit;
