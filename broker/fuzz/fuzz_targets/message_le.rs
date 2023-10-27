@@ -1185,20 +1185,20 @@ impl BusListenerFilterLe {
         match self {
             Self::AnyObject => BusListenerFilter::any_object(),
             Self::SpecificObject(object) => BusListenerFilter::object(ObjectUuid(object.get(ctx))),
-            Self::AnyObjectAnyService => BusListenerFilter::any_service_any_object(),
+            Self::AnyObjectAnyService => BusListenerFilter::any_object_any_service(),
 
             Self::SpecificObjectAnyService(object) => {
-                BusListenerFilter::any_service_specific_object(ObjectUuid(object.get(ctx)))
+                BusListenerFilter::specific_object_any_service(ObjectUuid(object.get(ctx)))
             }
 
             Self::AnyObjectSpecificService(service) => {
-                BusListenerFilter::specific_service_any_object(ServiceUuid(service.get(ctx)))
+                BusListenerFilter::any_object_specific_service(ServiceUuid(service.get(ctx)))
             }
 
             Self::SpecificObjectSpecificService(object, service) => {
-                BusListenerFilter::specific_service_and_object(
-                    ServiceUuid(service.get(ctx)),
+                BusListenerFilter::specific_object_and_service(
                     ObjectUuid(object.get(ctx)),
+                    ServiceUuid(service.get(ctx)),
                 )
             }
         }

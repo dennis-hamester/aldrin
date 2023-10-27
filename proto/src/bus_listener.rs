@@ -32,24 +32,22 @@ impl BusListenerFilter {
         Self::Service(filter)
     }
 
-    pub fn any_service_any_object() -> Self {
-        Self::service(BusListenerServiceFilter::new())
+    pub fn any_object_any_service() -> Self {
+        Self::service(BusListenerServiceFilter::any())
     }
 
-    pub fn any_service_specific_object(object: ObjectUuid) -> Self {
-        Self::service(BusListenerServiceFilter::new().with_object(object))
+    pub fn specific_object_any_service(object: ObjectUuid) -> Self {
+        Self::service(BusListenerServiceFilter::with_object(object))
     }
 
-    pub fn specific_service_any_object(service: ServiceUuid) -> Self {
-        Self::service(BusListenerServiceFilter::new().with_service(service))
+    pub fn any_object_specific_service(service: ServiceUuid) -> Self {
+        Self::service(BusListenerServiceFilter::with_service(service))
     }
 
-    pub fn specific_service_and_object(service: ServiceUuid, object: ObjectUuid) -> Self {
-        Self::service(
-            BusListenerServiceFilter::new()
-                .with_object(object)
-                .with_service(service),
-        )
+    pub fn specific_object_and_service(object: ObjectUuid, service: ServiceUuid) -> Self {
+        Self::service(BusListenerServiceFilter::with_object_and_service(
+            object, service,
+        ))
     }
 
     pub fn matches_object(self, object: ObjectId) -> bool {
@@ -67,7 +65,7 @@ impl BusListenerFilter {
         }
     }
 
-    pub(super) fn serialize_into_message(self, serializer: &mut MessageSerializer) {
+    pub(crate) fn serialize_into_message(self, serializer: &mut MessageSerializer) {
         match self {
             Self::Object(None) => serializer.put_discriminant_u8(BusListenerFilterKind::AnyObject),
 
@@ -109,7 +107,7 @@ impl BusListenerFilter {
         }
     }
 
-    pub(super) fn deserialize_from_message(
+    pub(crate) fn deserialize_from_message(
         deserializer: &mut MessageWithoutValueDeserializer,
     ) -> Result<Self, MessageDeserializeError> {
         match deserializer.try_get_discriminant_u8()? {
@@ -120,22 +118,22 @@ impl BusListenerFilter {
                 Ok(Self::object(object))
             }
 
-            BusListenerFilterKind::AnyObjectAnyService => Ok(Self::any_service_any_object()),
+            BusListenerFilterKind::AnyObjectAnyService => Ok(Self::any_object_any_service()),
 
             BusListenerFilterKind::SpecificObjectAnyService => {
                 let object = deserializer.try_get_uuid().map(ObjectUuid)?;
-                Ok(Self::any_service_specific_object(object))
+                Ok(Self::specific_object_any_service(object))
             }
 
             BusListenerFilterKind::AnyObjectSpecificService => {
                 let service = deserializer.try_get_uuid().map(ServiceUuid)?;
-                Ok(Self::specific_service_any_object(service))
+                Ok(Self::any_object_specific_service(service))
             }
 
             BusListenerFilterKind::SpecificObjectSpecificService => {
                 let object = deserializer.try_get_uuid().map(ObjectUuid)?;
                 let service = deserializer.try_get_uuid().map(ServiceUuid)?;
-                Ok(Self::specific_service_and_object(service, object))
+                Ok(Self::specific_object_and_service(object, service))
             }
         }
     }
@@ -159,7 +157,7 @@ impl From<BusListenerServiceFilter> for BusListenerFilter {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct BusListenerServiceFilter {
     pub object: Option<ObjectUuid>,
@@ -167,20 +165,30 @@ pub struct BusListenerServiceFilter {
 }
 
 impl BusListenerServiceFilter {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn with_object(self, object: ObjectUuid) -> Self {
+    pub fn any() -> Self {
         Self {
-            object: Some(object),
-            service: self.service,
+            object: None,
+            service: None,
         }
     }
 
-    pub fn with_service(self, service: ServiceUuid) -> Self {
+    pub fn with_object(object: ObjectUuid) -> Self {
         Self {
-            object: self.object,
+            object: Some(object),
+            service: None,
+        }
+    }
+
+    pub fn with_service(service: ServiceUuid) -> Self {
+        Self {
+            object: None,
+            service: Some(service),
+        }
+    }
+
+    pub fn with_object_and_service(object: ObjectUuid, service: ServiceUuid) -> Self {
+        Self {
+            object: Some(object),
             service: Some(service),
         }
     }

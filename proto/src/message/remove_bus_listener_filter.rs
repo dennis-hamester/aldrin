@@ -111,7 +111,7 @@ mod test {
 
         let msg = RemoveBusListenerFilter {
             cookie: BusListenerCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
-            filter: BusListenerFilter::any_service_any_object(),
+            filter: BusListenerFilter::any_object_any_service(),
         };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
@@ -131,7 +131,7 @@ mod test {
 
         let msg = RemoveBusListenerFilter {
             cookie: BusListenerCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
-            filter: BusListenerFilter::any_service_specific_object(ObjectUuid(uuid!(
+            filter: BusListenerFilter::specific_object_any_service(ObjectUuid(uuid!(
                 "b7f4930e-a673-4b3d-9545-7887fa8bde3f"
             ))),
         };
@@ -153,7 +153,7 @@ mod test {
 
         let msg = RemoveBusListenerFilter {
             cookie: BusListenerCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
-            filter: BusListenerFilter::specific_service_any_object(ServiceUuid(uuid!(
+            filter: BusListenerFilter::any_object_specific_service(ServiceUuid(uuid!(
                 "b7f4930e-a673-4b3d-9545-7887fa8bde3f"
             ))),
         };
@@ -176,9 +176,9 @@ mod test {
 
         let msg = RemoveBusListenerFilter {
             cookie: BusListenerCookie(uuid!("89e62438-2991-48f8-ae1d-7ad9ddcd7e72")),
-            filter: BusListenerFilter::specific_service_and_object(
-                ServiceUuid(uuid!("b7f4930e-a673-4b3d-9545-7887fa8bde3f")),
+            filter: BusListenerFilter::specific_object_and_service(
                 ObjectUuid(uuid!("8a88cfe6-26ae-4c5a-8f70-5e11be41d25a")),
+                ServiceUuid(uuid!("b7f4930e-a673-4b3d-9545-7887fa8bde3f")),
             ),
         };
         assert_serialize_eq(&msg, serialized);

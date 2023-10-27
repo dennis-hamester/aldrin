@@ -25,12 +25,12 @@ impl BusListenerFilter {
                 Ok(message::BusListenerFilter::object(object))
             }
 
-            Self::AnyObjectAnyService => Ok(message::BusListenerFilter::any_service_any_object()),
+            Self::AnyObjectAnyService => Ok(message::BusListenerFilter::any_object_any_service()),
 
             Self::SpecificObjectAnyService { object } => {
                 let object = object.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::any_service_specific_object(
+                Ok(message::BusListenerFilter::specific_object_any_service(
                     object,
                 ))
             }
@@ -38,7 +38,7 @@ impl BusListenerFilter {
             Self::AnyObjectSpecificService { service } => {
                 let service = service.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::specific_service_any_object(
+                Ok(message::BusListenerFilter::any_object_specific_service(
                     service,
                 ))
             }
@@ -47,8 +47,8 @@ impl BusListenerFilter {
                 let object = object.get(ctx)?.into();
                 let service = service.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::specific_service_and_object(
-                    service, object,
+                Ok(message::BusListenerFilter::specific_object_and_service(
+                    object, service,
                 ))
             }
         }
