@@ -2,12 +2,12 @@ use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_proto::message::{
-    AddBusListenerFilter, AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult,
-    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply,
-    CloseChannelEndResult, Connect, ConnectReply, CreateBusListener, CreateBusListenerReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
+    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
+    CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
@@ -70,6 +70,7 @@ pub enum MessageLe {
     StopBusListener(StopBusListenerLe),
     StopBusListenerReply(StopBusListenerReplyLe),
     EmitBusEvent(EmitBusEventLe),
+    BusListenerCurrentFinished(BusListenerCurrentFinishedLe),
 }
 
 impl MessageLe {
@@ -120,6 +121,7 @@ impl MessageLe {
             Self::StopBusListener(msg) => msg.to_proto(ctx).into(),
             Self::StopBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::EmitBusEvent(msg) => msg.to_proto(ctx).into(),
+            Self::BusListenerCurrentFinished(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -176,6 +178,7 @@ impl UpdateContext for ProtoMessage {
             Self::StopBusListener(msg) => msg.update_context(ctx),
             Self::StopBusListenerReply(msg) => msg.update_context(ctx),
             Self::EmitBusEvent(msg) => msg.update_context(ctx),
+            Self::BusListenerCurrentFinished(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1577,5 +1580,24 @@ impl UpdateContext for EmitBusEvent {
                 ctx.add_uuid(service.cookie.0);
             }
         }
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct BusListenerCurrentFinishedLe {
+    pub cookie: UuidLe,
+}
+
+impl BusListenerCurrentFinishedLe {
+    pub fn to_proto(&self, ctx: &Context) -> BusListenerCurrentFinished {
+        BusListenerCurrentFinished {
+            cookie: BusListenerCookie(self.cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for BusListenerCurrentFinished {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.cookie.0);
     }
 }

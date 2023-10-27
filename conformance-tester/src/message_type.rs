@@ -7,6 +7,7 @@ use std::fmt;
 pub enum MessageType {
     AddBusListenerFilter,
     AddChannelCapacity,
+    BusListenerCurrentFinished,
     CallFunction,
     CallFunctionReply,
     ChannelEndClaimed,
@@ -57,6 +58,7 @@ impl fmt::Display for MessageType {
         match *self {
             Self::AddBusListenerFilter => f.pad("add-bus-listener-filter"),
             Self::AddChannelCapacity => f.pad("add-channel-capacity"),
+            Self::BusListenerCurrentFinished => f.pad("bus-listener-current-finished"),
             Self::CallFunction => f.pad("call-function"),
             Self::CallFunctionReply => f.pad("call-function-reply"),
             Self::ChannelEndClaimed => f.pad("channel-end-claimed"),

@@ -1,5 +1,6 @@
 mod add_bus_listener_filter;
 mod add_channel_capacity;
+mod bus_listener_current_finished;
 mod bus_listener_filter;
 mod call_function;
 mod call_function_reply;
@@ -53,6 +54,7 @@ use std::fmt;
 
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
+pub use bus_listener_current_finished::BusListenerCurrentFinished;
 pub use call_function::CallFunction;
 pub use call_function_reply::CallFunctionReply;
 pub use channel_end_claimed::ChannelEndClaimed;
@@ -145,6 +147,7 @@ pub enum Message {
     StopBusListener(StopBusListener),
     StopBusListenerReply(StopBusListenerReply),
     EmitBusEvent(EmitBusEvent),
+    BusListenerCurrentFinished(BusListenerCurrentFinished),
 }
 
 impl Message {
@@ -231,6 +234,9 @@ impl Message {
                 msg.to_proto(ctx).map(ProtoMessage::StopBusListenerReply)
             }
             Self::EmitBusEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::EmitBusEvent),
+            Self::BusListenerCurrentFinished(msg) => msg
+                .to_proto(ctx)
+                .map(ProtoMessage::BusListenerCurrentFinished),
         }
     }
 
@@ -325,6 +331,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::EmitBusEvent(msg), Self::EmitBusEvent(other)) => msg.matches(other, ctx),
+            (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
+                msg.matches(other, ctx)
+            }
             _ => Ok(false),
         }
     }
@@ -444,6 +453,9 @@ impl Message {
                 msg.update_context(other, ctx)
             }
             (Self::EmitBusEvent(msg), Self::EmitBusEvent(other)) => msg.update_context(other, ctx),
+            (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -515,6 +527,9 @@ impl Message {
                 msg.apply_context(ctx).map(Self::StopBusListenerReply)
             }
             Self::EmitBusEvent(msg) => msg.apply_context(ctx).map(Self::EmitBusEvent),
+            Self::BusListenerCurrentFinished(msg) => {
+                msg.apply_context(ctx).map(Self::BusListenerCurrentFinished)
+            }
         }
     }
 }
@@ -589,6 +604,9 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::StopBusListenerReply)
             }
             ProtoMessage::EmitBusEvent(msg) => msg.try_into().map(Self::EmitBusEvent),
+            ProtoMessage::BusListenerCurrentFinished(msg) => {
+                msg.try_into().map(Self::BusListenerCurrentFinished)
+            }
         }
     }
 }

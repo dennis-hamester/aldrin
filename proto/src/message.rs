@@ -1,5 +1,6 @@
 mod add_bus_listener_filter;
 mod add_channel_capacity;
+mod bus_listener_current_finished;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -55,6 +56,7 @@ pub use crate::message_deserializer::MessageDeserializeError;
 pub use crate::message_serializer::MessageSerializeError;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
+pub use bus_listener_current_finished::BusListenerCurrentFinished;
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
@@ -148,6 +150,7 @@ pub enum MessageKind {
     StopBusListener = 42,
     StopBusListenerReply = 43,
     EmitBusEvent = 44,
+    BusListenerCurrentFinished = 45,
 }
 
 impl MessageKind {
@@ -198,7 +201,8 @@ impl MessageKind {
             | Self::StartBusListenerReply
             | Self::StopBusListener
             | Self::StopBusListenerReply
-            | Self::EmitBusEvent => false,
+            | Self::EmitBusEvent
+            | Self::BusListenerCurrentFinished => false,
         }
     }
 }
@@ -262,6 +266,7 @@ pub enum Message {
     StopBusListener(StopBusListener),
     StopBusListenerReply(StopBusListenerReply),
     EmitBusEvent(EmitBusEvent),
+    BusListenerCurrentFinished(BusListenerCurrentFinished),
 }
 
 impl MessageOps for Message {
@@ -312,6 +317,7 @@ impl MessageOps for Message {
             Self::StopBusListener(_) => MessageKind::StopBusListener,
             Self::StopBusListenerReply(_) => MessageKind::StopBusListenerReply,
             Self::EmitBusEvent(_) => MessageKind::EmitBusEvent,
+            Self::BusListenerCurrentFinished(_) => MessageKind::BusListenerCurrentFinished,
         }
     }
 
@@ -362,6 +368,7 @@ impl MessageOps for Message {
             Self::StopBusListener(msg) => msg.serialize_message(),
             Self::StopBusListenerReply(msg) => msg.serialize_message(),
             Self::EmitBusEvent(msg) => msg.serialize_message(),
+            Self::BusListenerCurrentFinished(msg) => msg.serialize_message(),
         }
     }
 
@@ -498,6 +505,10 @@ impl MessageOps for Message {
             MessageKind::EmitBusEvent => {
                 EmitBusEvent::deserialize_message(buf).map(Self::EmitBusEvent)
             }
+            MessageKind::BusListenerCurrentFinished => {
+                BusListenerCurrentFinished::deserialize_message(buf)
+                    .map(Self::BusListenerCurrentFinished)
+            }
         }
     }
 
@@ -548,6 +559,7 @@ impl MessageOps for Message {
             Self::StopBusListener(msg) => msg.value(),
             Self::StopBusListenerReply(msg) => msg.value(),
             Self::EmitBusEvent(msg) => msg.value(),
+            Self::BusListenerCurrentFinished(msg) => msg.value(),
         }
     }
 }
