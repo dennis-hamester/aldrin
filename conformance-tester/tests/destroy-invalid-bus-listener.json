@@ -1,0 +1,26 @@
+{
+    "name": "destroy-invalid-bus-listener",
+    "description": "Try to destroy an invalid bus listener",
+    "long-description": "A client tries to destroy an invalid bus listener.",
+    "message-types": [
+        "destroy-bus-listener",
+        "destroy-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "destroy-bus-listener",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-bus-listener-reply",
+            "serial": 0,
+            "result": "invalid-bus-listener"
+        }
+    ]
+}
