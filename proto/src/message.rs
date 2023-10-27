@@ -1,6 +1,5 @@
 mod add_bus_listener_filter;
 mod add_channel_capacity;
-mod bus_listener_filter;
 mod call_function;
 mod call_function_reply;
 mod channel_end_claimed;
@@ -47,12 +46,12 @@ use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+pub use crate::bus_listener::{BusListenerFilter, BusListenerServiceFilter};
 pub use crate::channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use crate::message_deserializer::MessageDeserializeError;
 pub use crate::message_serializer::MessageSerializeError;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
-pub use bus_listener_filter::{BusListenerFilter, BusListenerServiceFilter};
 pub use call_function::CallFunction;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;

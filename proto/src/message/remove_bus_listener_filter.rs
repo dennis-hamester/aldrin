@@ -1,6 +1,6 @@
-use super::bus_listener_filter::BusListenerFilter;
 use super::message_ops::Sealed;
 use super::{Message, MessageKind, MessageOps};
+use crate::bus_listener::BusListenerFilter;
 use crate::ids::BusListenerCookie;
 use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
@@ -54,10 +54,10 @@ impl From<RemoveBusListenerFilter> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::bus_listener_filter::BusListenerFilter;
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
     use super::RemoveBusListenerFilter;
+    use crate::bus_listener::BusListenerFilter;
     use crate::ids::{BusListenerCookie, ObjectUuid, ServiceUuid};
     use uuid::uuid;
 
