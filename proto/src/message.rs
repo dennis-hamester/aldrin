@@ -25,6 +25,7 @@ mod destroy_object;
 mod destroy_object_reply;
 mod destroy_service;
 mod destroy_service_reply;
+mod emit_bus_event;
 mod emit_event;
 mod item_received;
 mod packetizer;
@@ -79,6 +80,7 @@ pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
+pub use emit_bus_event::EmitBusEvent;
 pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
 pub use packetizer::Packetizer;
@@ -145,6 +147,7 @@ pub enum MessageKind {
     StartBusListenerReply = 41,
     StopBusListener = 42,
     StopBusListenerReply = 43,
+    EmitBusEvent = 44,
 }
 
 impl MessageKind {
@@ -194,7 +197,8 @@ impl MessageKind {
             | Self::StartBusListener
             | Self::StartBusListenerReply
             | Self::StopBusListener
-            | Self::StopBusListenerReply => false,
+            | Self::StopBusListenerReply
+            | Self::EmitBusEvent => false,
         }
     }
 }
@@ -257,6 +261,7 @@ pub enum Message {
     StartBusListenerReply(StartBusListenerReply),
     StopBusListener(StopBusListener),
     StopBusListenerReply(StopBusListenerReply),
+    EmitBusEvent(EmitBusEvent),
 }
 
 impl MessageOps for Message {
@@ -306,6 +311,7 @@ impl MessageOps for Message {
             Self::StartBusListenerReply(_) => MessageKind::StartBusListenerReply,
             Self::StopBusListener(_) => MessageKind::StopBusListener,
             Self::StopBusListenerReply(_) => MessageKind::StopBusListenerReply,
+            Self::EmitBusEvent(_) => MessageKind::EmitBusEvent,
         }
     }
 
@@ -355,6 +361,7 @@ impl MessageOps for Message {
             Self::StartBusListenerReply(msg) => msg.serialize_message(),
             Self::StopBusListener(msg) => msg.serialize_message(),
             Self::StopBusListenerReply(msg) => msg.serialize_message(),
+            Self::EmitBusEvent(msg) => msg.serialize_message(),
         }
     }
 
@@ -488,6 +495,9 @@ impl MessageOps for Message {
             MessageKind::StopBusListenerReply => {
                 StopBusListenerReply::deserialize_message(buf).map(Self::StopBusListenerReply)
             }
+            MessageKind::EmitBusEvent => {
+                EmitBusEvent::deserialize_message(buf).map(Self::EmitBusEvent)
+            }
         }
     }
 
@@ -537,6 +547,7 @@ impl MessageOps for Message {
             Self::StartBusListenerReply(msg) => msg.value(),
             Self::StopBusListener(msg) => msg.value(),
             Self::StopBusListenerReply(msg) => msg.value(),
+            Self::EmitBusEvent(msg) => msg.value(),
         }
     }
 }

@@ -3,6 +3,15 @@ use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDe
 use crate::message_serializer::MessageSerializer;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+pub enum BusEvent {
+    ObjectCreated(ObjectId),
+    ObjectDestroyed(ObjectId),
+    ServiceCreated(ServiceId),
+    ServiceDestroyed(ServiceId),
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(u8)]

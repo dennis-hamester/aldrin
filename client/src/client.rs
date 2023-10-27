@@ -311,6 +311,7 @@ where
             Message::DestroyBusListenerReply(_) => todo!(),
             Message::StartBusListenerReply(_) => todo!(),
             Message::StopBusListenerReply(_) => todo!(),
+            Message::EmitBusEvent(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

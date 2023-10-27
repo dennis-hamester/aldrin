@@ -9,17 +9,17 @@ use aldrin_proto::message::{
     CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
     CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
+    EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
-    BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
-    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectUuid, ServiceCookie,
-    ServiceUuid,
+    BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
+    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
+    ServiceCookie, ServiceId, ServiceUuid,
 };
 use arbitrary::Arbitrary;
 
@@ -69,6 +69,7 @@ pub enum MessageLe {
     StartBusListenerReply(StartBusListenerReplyLe),
     StopBusListener(StopBusListenerLe),
     StopBusListenerReply(StopBusListenerReplyLe),
+    EmitBusEvent(EmitBusEventLe),
 }
 
 impl MessageLe {
@@ -118,6 +119,7 @@ impl MessageLe {
             Self::StartBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::StopBusListener(msg) => msg.to_proto(ctx).into(),
             Self::StopBusListenerReply(msg) => msg.to_proto(ctx).into(),
+            Self::EmitBusEvent(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -173,6 +175,7 @@ impl UpdateContext for ProtoMessage {
             Self::StartBusListenerReply(msg) => msg.update_context(ctx),
             Self::StopBusListener(msg) => msg.update_context(ctx),
             Self::StopBusListenerReply(msg) => msg.update_context(ctx),
+            Self::EmitBusEvent(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1443,5 +1446,136 @@ impl UpdateContext for StopBusListenerReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum EmitBusEventLe {
+    ObjectCreated {
+        cookie: Option<UuidLe>,
+        object_uuid: UuidLe,
+        object_cookie: UuidLe,
+    },
+
+    ObjectDestroyed {
+        cookie: Option<UuidLe>,
+        object_uuid: UuidLe,
+        object_cookie: UuidLe,
+    },
+
+    ServiceCreated {
+        cookie: Option<UuidLe>,
+        object_uuid: UuidLe,
+        object_cookie: UuidLe,
+        service_uuid: UuidLe,
+        service_cookie: UuidLe,
+    },
+
+    ServiceDestroyed {
+        cookie: Option<UuidLe>,
+        object_uuid: UuidLe,
+        object_cookie: UuidLe,
+        service_uuid: UuidLe,
+        service_cookie: UuidLe,
+    },
+}
+
+impl EmitBusEventLe {
+    pub fn to_proto(&self, ctx: &Context) -> EmitBusEvent {
+        match self {
+            Self::ObjectCreated {
+                cookie,
+                object_uuid,
+                object_cookie,
+            } => EmitBusEvent {
+                cookie: cookie.as_ref().map(|cookie| cookie.get(ctx).into()),
+                event: BusEvent::ObjectCreated(ObjectId::new(
+                    object_uuid.get(ctx).into(),
+                    object_cookie.get(ctx).into(),
+                )),
+            },
+
+            Self::ObjectDestroyed {
+                cookie,
+                object_uuid,
+                object_cookie,
+            } => EmitBusEvent {
+                cookie: cookie.as_ref().map(|cookie| cookie.get(ctx).into()),
+                event: BusEvent::ObjectDestroyed(ObjectId::new(
+                    object_uuid.get(ctx).into(),
+                    object_cookie.get(ctx).into(),
+                )),
+            },
+
+            Self::ServiceCreated {
+                cookie,
+                object_uuid,
+                object_cookie,
+                service_uuid,
+                service_cookie,
+            } => EmitBusEvent {
+                cookie: cookie.as_ref().map(|cookie| cookie.get(ctx).into()),
+                event: BusEvent::ServiceCreated(ServiceId::new(
+                    ObjectId::new(object_uuid.get(ctx).into(), object_cookie.get(ctx).into()),
+                    service_uuid.get(ctx).into(),
+                    service_cookie.get(ctx).into(),
+                )),
+            },
+
+            Self::ServiceDestroyed {
+                cookie,
+                object_uuid,
+                object_cookie,
+                service_uuid,
+                service_cookie,
+            } => EmitBusEvent {
+                cookie: cookie.as_ref().map(|cookie| cookie.get(ctx).into()),
+                event: BusEvent::ServiceDestroyed(ServiceId::new(
+                    ObjectId::new(object_uuid.get(ctx).into(), object_cookie.get(ctx).into()),
+                    service_uuid.get(ctx).into(),
+                    service_cookie.get(ctx).into(),
+                )),
+            },
+        }
+    }
+}
+
+impl UpdateContext for EmitBusEvent {
+    fn update_context(&self, ctx: &mut Context) {
+        match self {
+            EmitBusEvent {
+                cookie,
+                event: BusEvent::ObjectCreated(object),
+            }
+            | EmitBusEvent {
+                cookie,
+                event: BusEvent::ObjectDestroyed(object),
+            } => {
+                if let Some(cookie) = cookie {
+                    ctx.add_uuid(cookie.0);
+                }
+
+                ctx.add_uuid(object.uuid.0);
+                ctx.add_uuid(object.cookie.0);
+            }
+
+            EmitBusEvent {
+                cookie,
+                event: BusEvent::ServiceCreated(service),
+            }
+            | EmitBusEvent {
+                cookie,
+                event: BusEvent::ServiceDestroyed(service),
+            } => {
+                if let Some(cookie) = cookie {
+                    ctx.add_uuid(cookie.0);
+                }
+
+                ctx.add_uuid(service.object_id.uuid.0);
+                ctx.add_uuid(service.object_id.cookie.0);
+                ctx.add_uuid(service.uuid.0);
+                ctx.add_uuid(service.cookie.0);
+            }
+        }
     }
 }

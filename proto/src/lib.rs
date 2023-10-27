@@ -22,7 +22,7 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
-pub use bus_listener::{BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
+pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::DeserializeKey;
 pub use error::{DeserializeError, SerializeError};
