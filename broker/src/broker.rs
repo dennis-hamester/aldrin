@@ -15,16 +15,16 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    AddBusListenerFilter, AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult,
+    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
+    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
+    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
@@ -356,7 +356,7 @@ impl Broker {
             Message::Sync(req) => self.sync(id, req)?,
             Message::CreateBusListener(req) => self.create_bus_listener(id, req)?,
             Message::DestroyBusListener(req) => self.destroy_bus_listener(id, req)?,
-            Message::AddBusListenerFilter(_) => todo!(),
+            Message::AddBusListenerFilter(req) => self.add_bus_listener_filter(id, req),
             Message::RemoveBusListenerFilter(_) => todo!(),
             Message::ClearBusListenerFilters(_) => todo!(),
             Message::StartBusListener(_) => todo!(),
@@ -1252,6 +1252,14 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    fn add_bus_listener_filter(&mut self, id: &ConnectionId, req: AddBusListenerFilter) {
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
+            if bus_listener.conn_id() == id {
+                bus_listener.add_filter(req.filter);
+            }
+        }
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
