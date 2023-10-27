@@ -1,0 +1,25 @@
+{
+    "name": "create-bus-listener",
+    "description": "Create a bus listener",
+    "long-description": "A client creates a bus listener.",
+    "message-types": [
+        "create-bus-listener",
+        "create-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "create-bus-listener",
+            "serial": 0
+        },
+        {
+            "type": "receive",
+            "message": "create-bus-listener-reply",
+            "serial": 0,
+            "cookie": "set:cookie"
+        }
+    ]
+}
