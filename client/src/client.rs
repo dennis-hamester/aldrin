@@ -15,19 +15,20 @@ use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
-    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
-    CloseChannelEndResult, Connect, ConnectReply, CreateChannel, CreateChannelReply, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::{
-    ChannelCookie, Deserialize, ObjectId, Serialize, SerializedValue, ServiceCookie, ServiceId,
+    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId, Serialize,
+    SerializedValue, ServiceCookie, ServiceId,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};

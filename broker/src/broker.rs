@@ -14,17 +14,20 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd,
-    ChannelEndClaimed, ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply,
-    CloseChannelEndResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_proto::{ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceUuid};
+use aldrin_proto::{
+    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
+    ServiceCookie, ServiceUuid,
+};
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};

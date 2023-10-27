@@ -47,8 +47,6 @@ use crate::serialized_value::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-pub use crate::bus_listener::{BusListenerFilter, BusListenerServiceFilter};
-pub use crate::channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use crate::message_deserializer::MessageDeserializeError;
 pub use crate::message_serializer::MessageSerializeError;
 pub use add_bus_listener_filter::AddBusListenerFilter;

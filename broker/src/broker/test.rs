@@ -2,15 +2,14 @@ use crate::{Broker, BrokerHandle};
 use aldrin_channel::Unbounded;
 use aldrin_client::Client;
 use aldrin_proto::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
-    ConnectReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem,
-    Sync, SyncReply,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
+    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
+    CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, Message, SendItem, Sync, SyncReply,
 };
 use aldrin_proto::transport::AsyncTransportExt;
-use aldrin_proto::{ObjectUuid, ServiceUuid};
+use aldrin_proto::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 use futures_util::future::{self, Either};
 use std::future::Future;

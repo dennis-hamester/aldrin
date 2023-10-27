@@ -7,12 +7,12 @@ use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Events, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
-    QueryServiceVersionResult, SubscribeEventResult,
+    AddChannelCapacity, CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult,
+    SubscribeEventResult,
 };
 use aldrin_proto::{
-    ChannelCookie, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue,
-    ServiceId, ServiceUuid,
+    ChannelCookie, ChannelEnd, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize,
+    SerializedValue, ServiceId, ServiceUuid,
 };
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;

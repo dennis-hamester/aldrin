@@ -1,6 +1,5 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -16,40 +15,36 @@ pub enum BusListenerFilter {
 }
 
 impl BusListenerFilter {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::BusListenerFilter> {
+    pub fn to_proto(&self, ctx: &Context) -> Result<aldrin_proto::BusListenerFilter> {
         match self {
-            Self::AnyObject => Ok(message::BusListenerFilter::any_object()),
+            Self::AnyObject => Ok(aldrin_proto::BusListenerFilter::any_object()),
 
             Self::SpecificObject { object } => {
                 let object = object.get(ctx)?.into();
-                Ok(message::BusListenerFilter::object(object))
+                Ok(aldrin_proto::BusListenerFilter::object(object))
             }
 
-            Self::AnyObjectAnyService => Ok(message::BusListenerFilter::any_object_any_service()),
+            Self::AnyObjectAnyService => {
+                Ok(aldrin_proto::BusListenerFilter::any_object_any_service())
+            }
 
             Self::SpecificObjectAnyService { object } => {
                 let object = object.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::specific_object_any_service(
-                    object,
-                ))
+                Ok(aldrin_proto::BusListenerFilter::specific_object_any_service(object))
             }
 
             Self::AnyObjectSpecificService { service } => {
                 let service = service.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::any_object_specific_service(
-                    service,
-                ))
+                Ok(aldrin_proto::BusListenerFilter::any_object_specific_service(service))
             }
 
             Self::SpecificObjectSpecificService { object, service } => {
                 let object = object.get(ctx)?.into();
                 let service = service.get(ctx)?.into();
 
-                Ok(message::BusListenerFilter::specific_object_and_service(
-                    object, service,
-                ))
+                Ok(aldrin_proto::BusListenerFilter::specific_object_and_service(object, service))
             }
         }
     }
@@ -162,35 +157,35 @@ impl BusListenerFilter {
     }
 }
 
-impl From<message::BusListenerFilter> for BusListenerFilter {
-    fn from(filter: message::BusListenerFilter) -> Self {
+impl From<aldrin_proto::BusListenerFilter> for BusListenerFilter {
+    fn from(filter: aldrin_proto::BusListenerFilter) -> Self {
         match filter {
-            message::BusListenerFilter::Object(None) => Self::AnyObject,
+            aldrin_proto::BusListenerFilter::Object(None) => Self::AnyObject,
 
-            message::BusListenerFilter::Object(Some(object)) => Self::SpecificObject {
+            aldrin_proto::BusListenerFilter::Object(Some(object)) => Self::SpecificObject {
                 object: object.into(),
             },
 
-            message::BusListenerFilter::Service(message::BusListenerServiceFilter {
+            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
                 object: None,
                 service: None,
             }) => Self::AnyObjectAnyService,
 
-            message::BusListenerFilter::Service(message::BusListenerServiceFilter {
+            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
                 object: Some(object),
                 service: None,
             }) => Self::SpecificObjectAnyService {
                 object: object.into(),
             },
 
-            message::BusListenerFilter::Service(message::BusListenerServiceFilter {
+            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
                 object: None,
                 service: Some(service),
             }) => Self::AnyObjectSpecificService {
                 service: service.into(),
             },
 
-            message::BusListenerFilter::Service(message::BusListenerServiceFilter {
+            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
                 object: Some(object),
                 service: Some(service),
             }) => Self::SpecificObjectSpecificService {

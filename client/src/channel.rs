@@ -5,10 +5,9 @@ use super::Handle;
 use crate::error::Error;
 #[cfg(feature = "sink")]
 use crate::handle::CloseChannelEndFuture;
-use aldrin_proto::message::ChannelEnd;
 use aldrin_proto::{
-    ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
-    SerializedValue, Serializer,
+    ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer, Serialize,
+    SerializeError, SerializedValue, Serializer,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};

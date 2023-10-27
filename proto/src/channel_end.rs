@@ -20,7 +20,7 @@ impl ChannelEnd {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::message::ChannelEnd;
+    /// # use aldrin_proto::ChannelEnd;
     /// assert_eq!(ChannelEnd::Sender.other(), ChannelEnd::Receiver);
     /// assert_eq!(ChannelEnd::Receiver.other(), ChannelEnd::Sender);
     /// ```

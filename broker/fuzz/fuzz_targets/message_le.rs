@@ -2,9 +2,8 @@ use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_proto::message::{
-    AddBusListenerFilter, AddChannelCapacity, BusListenerFilter, BusListenerServiceFilter,
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
-    ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
+    AddBusListenerFilter, AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult,
+    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
     ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply,
     CloseChannelEndResult, Connect, ConnectReply, CreateBusListener, CreateBusListenerReply,
     CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
@@ -17,7 +16,8 @@ use aldrin_proto::message::{
     UnsubscribeEvent,
 };
 use aldrin_proto::{
-    BusListenerCookie, BusListenerScope, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie,
+    BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
+    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectUuid, ServiceCookie,
     ServiceUuid,
 };
 use arbitrary::Arbitrary;

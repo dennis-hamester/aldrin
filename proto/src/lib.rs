@@ -22,7 +22,8 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
-pub use bus_listener::BusListenerScope;
+pub use bus_listener::{BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
+pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::DeserializeKey;
 pub use error::{DeserializeError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};

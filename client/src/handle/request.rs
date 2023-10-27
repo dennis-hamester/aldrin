@@ -5,12 +5,12 @@ use crate::channel::{
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunctionResult, ChannelEnd, DestroyObjectResult,
-    QueryServiceVersionResult, SubscribeEventResult,
+    AddChannelCapacity, CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult,
+    SubscribeEventResult,
 };
 use aldrin_proto::{
-    ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, SerializedValue, ServiceCookie, ServiceId,
-    ServiceUuid,
+    ChannelCookie, ChannelEnd, ObjectCookie, ObjectId, ObjectUuid, SerializedValue, ServiceCookie,
+    ServiceId, ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;

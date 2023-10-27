@@ -546,16 +546,16 @@ pub enum ChannelEnd {
     Receiver,
 }
 
-impl From<aldrin_proto::message::ChannelEnd> for ChannelEnd {
-    fn from(end: aldrin_proto::message::ChannelEnd) -> Self {
+impl From<aldrin_proto::ChannelEnd> for ChannelEnd {
+    fn from(end: aldrin_proto::ChannelEnd) -> Self {
         match end {
-            aldrin_proto::message::ChannelEnd::Sender => Self::Sender,
-            aldrin_proto::message::ChannelEnd::Receiver => Self::Receiver,
+            aldrin_proto::ChannelEnd::Sender => Self::Sender,
+            aldrin_proto::ChannelEnd::Receiver => Self::Receiver,
         }
     }
 }
 
-impl From<ChannelEnd> for aldrin_proto::message::ChannelEnd {
+impl From<ChannelEnd> for aldrin_proto::ChannelEnd {
     fn from(end: ChannelEnd) -> Self {
         match end {
             ChannelEnd::Sender => Self::Sender,
@@ -580,19 +580,17 @@ pub enum ChannelEndWithCapacity {
     Receiver { capacity: u32 },
 }
 
-impl From<aldrin_proto::message::ChannelEndWithCapacity> for ChannelEndWithCapacity {
-    fn from(end: aldrin_proto::message::ChannelEndWithCapacity) -> Self {
+impl From<aldrin_proto::ChannelEndWithCapacity> for ChannelEndWithCapacity {
+    fn from(end: aldrin_proto::ChannelEndWithCapacity) -> Self {
         match end {
-            aldrin_proto::message::ChannelEndWithCapacity::Sender => Self::Sender,
+            aldrin_proto::ChannelEndWithCapacity::Sender => Self::Sender,
 
-            aldrin_proto::message::ChannelEndWithCapacity::Receiver(capacity) => {
-                Self::Receiver { capacity }
-            }
+            aldrin_proto::ChannelEndWithCapacity::Receiver(capacity) => Self::Receiver { capacity },
         }
     }
 }
 
-impl From<ChannelEndWithCapacity> for aldrin_proto::message::ChannelEndWithCapacity {
+impl From<ChannelEndWithCapacity> for aldrin_proto::ChannelEndWithCapacity {
     fn from(end: ChannelEndWithCapacity) -> Self {
         match end {
             ChannelEndWithCapacity::Sender => Self::Sender,
