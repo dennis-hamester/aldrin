@@ -1,0 +1,38 @@
+{
+    "name": "destroy-foreign-bus-listener",
+    "description": "Destroy a foreign bus listener",
+    "long-description": "Client 1 creates a bus listener, which client 2 tries to destroy.",
+    "message-types": [
+        "destroy-bus-listener",
+        "destroy-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-bus-listener",
+            "client": "client1",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "destroy-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "destroy-bus-listener-reply",
+            "serial": 0,
+            "result": "invalid-bus-listener"
+        }
+    ]
+}
