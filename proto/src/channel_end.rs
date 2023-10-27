@@ -1,6 +1,3 @@
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// Sending or receiving end of a channel.
@@ -40,27 +37,6 @@ impl From<ChannelEndWithCapacity> for ChannelEnd {
         match value {
             ChannelEndWithCapacity::Sender => Self::Sender,
             ChannelEndWithCapacity::Receiver(_) => Self::Receiver,
-        }
-    }
-}
-
-impl Serialize for ChannelEnd {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        match self {
-            Self::Sender => serializer.serialize_enum(0, &()),
-            Self::Receiver => serializer.serialize_enum(1, &()),
-        }
-    }
-}
-
-impl Deserialize for ChannelEnd {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let deserializer = deserializer.deserialize_enum()?;
-
-        match deserializer.variant() {
-            0 => deserializer.deserialize().map(|()| Self::Sender),
-            1 => deserializer.deserialize().map(|()| Self::Receiver),
-            _ => Err(DeserializeError::InvalidSerialization),
         }
     }
 }

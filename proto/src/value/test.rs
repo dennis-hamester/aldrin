@@ -1,5 +1,4 @@
 use super::{ByteSlice, Bytes, Skip};
-use crate::channel_end::ChannelEnd;
 use crate::error::{DeserializeError, SerializeError};
 use crate::generic_value::{Enum, Struct, Value};
 use crate::ids::{
@@ -1474,38 +1473,6 @@ fn test_channel_cookie() {
     ];
 
     let value = ChannelCookie(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
-    assert_serialize_eq(&value, serialized);
-    assert_deserialize_eq(&value, serialized);
-}
-
-#[test]
-fn test_channel_end_sender() {
-    let serialized = [40, 0, 0];
-
-    let value = ChannelEnd::Sender;
-    assert_serialize_eq(&value, serialized);
-    assert_deserialize_eq(&value, serialized);
-
-    let value = Value::Enum(Box::new(Enum {
-        variant: ChannelEnd::Sender as u32,
-        value: Value::None,
-    }));
-    assert_serialize_eq(&value, serialized);
-    assert_deserialize_eq(&value, serialized);
-}
-
-#[test]
-fn test_channel_end_receiver() {
-    let serialized = [40, 1, 0];
-
-    let value = ChannelEnd::Receiver;
-    assert_serialize_eq(&value, serialized);
-    assert_deserialize_eq(&value, serialized);
-
-    let value = Value::Enum(Box::new(Enum {
-        variant: ChannelEnd::Receiver as u32,
-        value: Value::None,
-    }));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
 }
