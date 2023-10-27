@@ -1,0 +1,30 @@
+{
+    "name": "destroy-bus-listener",
+    "description": "Successfully destroy a bus listener",
+    "long-description": "A client creates a bus listener and destroys it again.",
+    "message-types": [
+        "destroy-bus-listener",
+        "destroy-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "destroy-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "message": "destroy-bus-listener-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
