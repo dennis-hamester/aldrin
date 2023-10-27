@@ -23,8 +23,9 @@ use aldrin_proto::message::{
     DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
+    SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
@@ -357,7 +358,7 @@ impl Broker {
             Message::CreateBusListener(req) => self.create_bus_listener(id, req)?,
             Message::DestroyBusListener(req) => self.destroy_bus_listener(id, req)?,
             Message::AddBusListenerFilter(req) => self.add_bus_listener_filter(id, req),
-            Message::RemoveBusListenerFilter(_) => todo!(),
+            Message::RemoveBusListenerFilter(req) => self.remove_bus_listener_filter(id, req),
             Message::ClearBusListenerFilters(_) => todo!(),
             Message::StartBusListener(_) => todo!(),
             Message::StopBusListener(_) => todo!(),
@@ -1258,6 +1259,14 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.add_filter(req.filter);
+            }
+        }
+    }
+
+    fn remove_bus_listener_filter(&mut self, id: &ConnectionId, req: RemoveBusListenerFilter) {
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
+            if bus_listener.conn_id() == id {
+                bus_listener.remove_filter(req.filter);
             }
         }
     }
