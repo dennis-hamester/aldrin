@@ -1,8 +1,8 @@
 use super::{
     ClaimChannelEndStep, CloseChannel, CloseChannelEndStep, ConnectClient, ConnectionClosed,
     CreateBusListenerStep, CreateChannelStep, CreateObjectStep, CreateServiceStep,
-    DestroyObjectStep, DestroyServiceStep, Receive, ReceiveDiscardUntil, ReceiveUnordered,
-    RemoveClient, Send, SendItemStep, ShutdownStep, SubscribeEventStep, SyncStep,
+    DestroyBusListenerStep, DestroyObjectStep, DestroyServiceStep, Receive, ReceiveDiscardUntil,
+    ReceiveUnordered, RemoveClient, Send, SendItemStep, ShutdownStep, SubscribeEventStep, SyncStep,
     UnsubscribeEventStep,
 };
 use crate::broker::Broker;
@@ -35,6 +35,7 @@ pub enum Step {
     SendItem(SendItemStep),
     Sync(SyncStep),
     CreateBusListener(CreateBusListenerStep),
+    DestroyBusListener(DestroyBusListenerStep),
 }
 
 impl Step {
@@ -61,6 +62,7 @@ impl Step {
             Self::SendItem(step) => step.run(ctx, timeout).await,
             Self::Sync(step) => step.run(ctx, timeout).await,
             Self::CreateBusListener(step) => step.run(ctx, timeout).await,
+            Self::DestroyBusListener(step) => step.run(ctx, timeout).await,
         }
     }
 }

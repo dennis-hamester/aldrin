@@ -75,7 +75,7 @@ pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
 pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
 pub use destroy_bus_listener::DestroyBusListener;
-pub use destroy_bus_listener_reply::DestroyBusListenerReply;
+pub use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
 pub use destroy_object::DestroyObject;
 pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
 pub use destroy_service::DestroyService;
