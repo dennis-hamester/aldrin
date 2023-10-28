@@ -90,7 +90,7 @@ pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
 pub use shutdown::Shutdown;
 pub use start_bus_listener::StartBusListener;
-pub use start_bus_listener_reply::StartBusListenerReply;
+pub use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult};
 pub use stop_bus_listener::StopBusListener;
 pub use stop_bus_listener_reply::StopBusListenerReply;
 pub use subscribe_event::SubscribeEvent;
