@@ -74,6 +74,18 @@ impl BusListenerFilter {
         }
     }
 
+    pub fn matches_event(self, event: BusEvent) -> bool {
+        match event {
+            BusEvent::ObjectCreated(object) | BusEvent::ObjectDestroyed(object) => {
+                self.matches_object(object)
+            }
+
+            BusEvent::ServiceCreated(service) | BusEvent::ServiceDestroyed(service) => {
+                self.matches_service(service)
+            }
+        }
+    }
+
     pub(crate) fn serialize_into_message(self, serializer: &mut MessageSerializer) {
         match self {
             Self::Object(None) => serializer.put_discriminant_u8(BusListenerFilterKind::AnyObject),
