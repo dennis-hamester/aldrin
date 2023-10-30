@@ -72,10 +72,10 @@ async fn run_test(args: BrokerRunArgs, test: Test) -> Result<Duration, RunError>
     let start = Instant::now();
     let timeout = start + Duration::from_millis(args.timeout);
     let test_res = test.run(&broker, timeout).await;
-    let dur = start.elapsed();
 
     let shutdown_timeout = Instant::now() + Duration::from_millis(args.shutdown_timeout);
     let shutdown_res = broker.shut_down(shutdown_timeout).await;
+    let dur = start.elapsed();
 
     match test_res.and(shutdown_res) {
         Ok(()) => Ok(dur),
