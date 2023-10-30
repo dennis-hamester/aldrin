@@ -182,3 +182,38 @@ pub fn finish_report(mut output: impl WriteColor, res: Result<Duration, RunError
     writeln!(output)?;
     Ok(())
 }
+
+pub fn summary(mut output: impl WriteColor, passed: usize, total: usize) -> Result<()> {
+    writeln!(output)?;
+
+    output.set_color(&STYLE_TEST_NAME)?;
+    write!(output, "Summary")?;
+    output.set_color(&STYLE_REGULAR)?;
+    writeln!(output, ":")?;
+
+    print_seperator(&mut output)?;
+    if passed == total {
+        output.set_color(&STYLE_PASSED)?;
+        write!(output, "passed")?;
+        output.set_color(&STYLE_REGULAR)?;
+    } else {
+        write!(output, "passed")?;
+    }
+    writeln!(output, ": {} test(s)", passed)?;
+
+    print_seperator(&mut output)?;
+    if total != passed {
+        output.set_color(&STYLE_FAILED)?;
+        write!(output, "failed")?;
+        output.set_color(&STYLE_REGULAR)?;
+    } else {
+        write!(output, "failed")?;
+    }
+    writeln!(output, ": {} test(s)", total - passed)?;
+
+    print_seperator(&mut output)?;
+    writeln!(output, "total:  {} test(s)", total)?;
+
+    output.flush()?;
+    Ok(())
+}

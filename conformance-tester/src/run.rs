@@ -24,15 +24,19 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
 
     let runtime = Runtime::new()?;
     let mut queue: VecDeque<(String, _)> = VecDeque::with_capacity(jobs);
-    let mut at_least_one = false;
-    let mut all_passed = true;
+
+    let mut total = 0;
+    let mut passed = 0;
 
     for test in tests.into_iter().filter(|test| args.filter.matches(test)) {
-        at_least_one = true;
+        total += 1;
 
         if queue.len() >= jobs {
             let (name, join) = queue.pop_front().unwrap();
-            all_passed &= report(&mut output, &name, join, &runtime)?;
+
+            if report(&mut output, &name, join, &runtime)? {
+                passed += 1;
+            }
         }
 
         let args = args.broker.clone();
@@ -43,11 +47,14 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
     }
 
     for (name, join) in queue {
-        all_passed &= report(&mut output, &name, join, &runtime)?;
+        if report(&mut output, &name, join, &runtime)? {
+            passed += 1;
+        }
     }
 
-    if at_least_one {
-        Ok(all_passed)
+    if total > 0 {
+        output::summary(&mut output, passed, total)?;
+        Ok(passed == total)
     } else {
         println!("No test was selected by the supplied filters (-n,--name and -m,--message).");
         Ok(false)
