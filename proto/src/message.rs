@@ -37,6 +37,7 @@ mod shutdown;
 mod start_bus_listener;
 mod start_bus_listener_reply;
 mod stop_bus_listener;
+mod stop_bus_listener_reply;
 mod subscribe_event;
 mod subscribe_event_reply;
 mod sync;
@@ -90,6 +91,7 @@ pub use shutdown::Shutdown;
 pub use start_bus_listener::StartBusListener;
 pub use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult};
 pub use stop_bus_listener::StopBusListener;
+pub use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
 pub use sync::Sync;
@@ -142,6 +144,7 @@ pub enum MessageKind {
     StartBusListener = 40,
     StartBusListenerReply = 41,
     StopBusListener = 42,
+    StopBusListenerReply = 43,
 }
 
 impl MessageKind {
@@ -190,7 +193,8 @@ impl MessageKind {
             | Self::ClearBusListenerFilters
             | Self::StartBusListener
             | Self::StartBusListenerReply
-            | Self::StopBusListener => false,
+            | Self::StopBusListener
+            | Self::StopBusListenerReply => false,
         }
     }
 }
@@ -252,6 +256,7 @@ pub enum Message {
     StartBusListener(StartBusListener),
     StartBusListenerReply(StartBusListenerReply),
     StopBusListener(StopBusListener),
+    StopBusListenerReply(StopBusListenerReply),
 }
 
 impl MessageOps for Message {
@@ -300,6 +305,7 @@ impl MessageOps for Message {
             Self::StartBusListener(_) => MessageKind::StartBusListener,
             Self::StartBusListenerReply(_) => MessageKind::StartBusListenerReply,
             Self::StopBusListener(_) => MessageKind::StopBusListener,
+            Self::StopBusListenerReply(_) => MessageKind::StopBusListenerReply,
         }
     }
 
@@ -348,6 +354,7 @@ impl MessageOps for Message {
             Self::StartBusListener(msg) => msg.serialize_message(),
             Self::StartBusListenerReply(msg) => msg.serialize_message(),
             Self::StopBusListener(msg) => msg.serialize_message(),
+            Self::StopBusListenerReply(msg) => msg.serialize_message(),
         }
     }
 
@@ -478,6 +485,9 @@ impl MessageOps for Message {
             MessageKind::StopBusListener => {
                 StopBusListener::deserialize_message(buf).map(Self::StopBusListener)
             }
+            MessageKind::StopBusListenerReply => {
+                StopBusListenerReply::deserialize_message(buf).map(Self::StopBusListenerReply)
+            }
         }
     }
 
@@ -526,6 +536,7 @@ impl MessageOps for Message {
             Self::StartBusListener(msg) => msg.value(),
             Self::StartBusListenerReply(msg) => msg.value(),
             Self::StopBusListener(msg) => msg.value(),
+            Self::StopBusListenerReply(msg) => msg.value(),
         }
     }
 }

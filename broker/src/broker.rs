@@ -372,7 +372,8 @@ impl Broker {
             | Message::ServiceDestroyed(_)
             | Message::CreateBusListenerReply(_)
             | Message::DestroyBusListenerReply(_)
-            | Message::StartBusListenerReply(_) => return Err(()),
+            | Message::StartBusListenerReply(_)
+            | Message::StopBusListenerReply(_) => return Err(()),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }

@@ -13,7 +13,8 @@ use aldrin_proto::message::{
     ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
     StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -67,6 +68,7 @@ pub enum MessageLe {
     StartBusListener(StartBusListenerLe),
     StartBusListenerReply(StartBusListenerReplyLe),
     StopBusListener(StopBusListenerLe),
+    StopBusListenerReply(StopBusListenerReplyLe),
 }
 
 impl MessageLe {
@@ -115,6 +117,7 @@ impl MessageLe {
             Self::StartBusListener(msg) => msg.to_proto(ctx).into(),
             Self::StartBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::StopBusListener(msg) => msg.to_proto(ctx).into(),
+            Self::StopBusListenerReply(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -169,6 +172,7 @@ impl UpdateContext for ProtoMessage {
             Self::StartBusListener(msg) => msg.update_context(ctx),
             Self::StartBusListenerReply(msg) => msg.update_context(ctx),
             Self::StopBusListener(msg) => msg.update_context(ctx),
+            Self::StopBusListenerReply(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1396,5 +1400,48 @@ impl UpdateContext for StopBusListener {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         ctx.add_uuid(self.cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum StopBusListenerResultLe {
+    Ok,
+    InvalidBusListener,
+    NotStarted,
+}
+
+impl StopBusListenerResultLe {
+    pub fn to_proto(&self, _ctx: &Context) -> StopBusListenerResult {
+        match self {
+            Self::Ok => StopBusListenerResult::Ok,
+            Self::InvalidBusListener => StopBusListenerResult::InvalidBusListener,
+            Self::NotStarted => StopBusListenerResult::NotStarted,
+        }
+    }
+}
+
+impl UpdateContext for StopBusListenerResult {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct StopBusListenerReplyLe {
+    pub serial: SerialLe,
+    pub result: StopBusListenerResultLe,
+}
+
+impl StopBusListenerReplyLe {
+    pub fn to_proto(&self, ctx: &Context) -> StopBusListenerReply {
+        StopBusListenerReply {
+            serial: self.serial.get(ctx),
+            result: self.result.to_proto(ctx),
+        }
+    }
+}
+
+impl UpdateContext for StopBusListenerReply {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        self.result.update_context(ctx);
     }
 }
