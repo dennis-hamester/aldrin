@@ -35,6 +35,7 @@ mod send_item;
 mod service_destroyed;
 mod shutdown;
 mod start_bus_listener;
+mod start_bus_listener_reply;
 mod subscribe_event;
 mod subscribe_event_reply;
 mod sync;
@@ -86,6 +87,7 @@ pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
 pub use shutdown::Shutdown;
 pub use start_bus_listener::StartBusListener;
+pub use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult};
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
 pub use sync::Sync;
@@ -136,6 +138,7 @@ pub enum MessageKind {
     RemoveBusListenerFilter = 38,
     ClearBusListenerFilters = 39,
     StartBusListener = 40,
+    StartBusListenerReply = 41,
 }
 
 impl MessageKind {
@@ -182,7 +185,8 @@ impl MessageKind {
             | Self::AddBusListenerFilter
             | Self::RemoveBusListenerFilter
             | Self::ClearBusListenerFilters
-            | Self::StartBusListener => false,
+            | Self::StartBusListener
+            | Self::StartBusListenerReply => false,
         }
     }
 }
@@ -242,6 +246,7 @@ pub enum Message {
     RemoveBusListenerFilter(RemoveBusListenerFilter),
     ClearBusListenerFilters(ClearBusListenerFilters),
     StartBusListener(StartBusListener),
+    StartBusListenerReply(StartBusListenerReply),
 }
 
 impl MessageOps for Message {
@@ -288,6 +293,7 @@ impl MessageOps for Message {
             Self::RemoveBusListenerFilter(_) => MessageKind::RemoveBusListenerFilter,
             Self::ClearBusListenerFilters(_) => MessageKind::ClearBusListenerFilters,
             Self::StartBusListener(_) => MessageKind::StartBusListener,
+            Self::StartBusListenerReply(_) => MessageKind::StartBusListenerReply,
         }
     }
 
@@ -334,6 +340,7 @@ impl MessageOps for Message {
             Self::RemoveBusListenerFilter(msg) => msg.serialize_message(),
             Self::ClearBusListenerFilters(msg) => msg.serialize_message(),
             Self::StartBusListener(msg) => msg.serialize_message(),
+            Self::StartBusListenerReply(msg) => msg.serialize_message(),
         }
     }
 
@@ -458,6 +465,9 @@ impl MessageOps for Message {
             MessageKind::StartBusListener => {
                 StartBusListener::deserialize_message(buf).map(Self::StartBusListener)
             }
+            MessageKind::StartBusListenerReply => {
+                StartBusListenerReply::deserialize_message(buf).map(Self::StartBusListenerReply)
+            }
         }
     }
 
@@ -504,6 +514,7 @@ impl MessageOps for Message {
             Self::RemoveBusListenerFilter(msg) => msg.value(),
             Self::ClearBusListenerFilters(msg) => msg.value(),
             Self::StartBusListener(msg) => msg.value(),
+            Self::StartBusListenerReply(msg) => msg.value(),
         }
     }
 }

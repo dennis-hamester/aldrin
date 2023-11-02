@@ -35,6 +35,7 @@ mod send_item;
 mod service_destroyed;
 mod shutdown;
 mod start_bus_listener;
+mod start_bus_listener_reply;
 mod subscribe_event;
 mod subscribe_event_reply;
 mod sync;
@@ -83,6 +84,7 @@ pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
 pub use shutdown::Shutdown;
 pub use start_bus_listener::StartBusListener;
+pub use start_bus_listener_reply::StartBusListenerReply;
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
 pub use sync::Sync;
@@ -133,6 +135,7 @@ pub enum Message {
     RemoveBusListenerFilter(RemoveBusListenerFilter),
     ClearBusListenerFilters(ClearBusListenerFilters),
     StartBusListener(StartBusListener),
+    StartBusListenerReply(StartBusListenerReply),
 }
 
 impl Message {
@@ -211,6 +214,9 @@ impl Message {
                 msg.to_proto(ctx).map(ProtoMessage::ClearBusListenerFilters)
             }
             Self::StartBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::StartBusListener),
+            Self::StartBusListenerReply(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::StartBusListenerReply)
+            }
         }
     }
 
@@ -297,6 +303,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::StartBusListener(msg), Self::StartBusListener(other)) => msg.matches(other, ctx),
+            (Self::StartBusListenerReply(msg), Self::StartBusListenerReply(other)) => {
+                msg.matches(other, ctx)
+            }
             _ => Ok(false),
         }
     }
@@ -406,6 +415,9 @@ impl Message {
             (Self::StartBusListener(msg), Self::StartBusListener(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::StartBusListenerReply(msg), Self::StartBusListenerReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -469,6 +481,9 @@ impl Message {
                 msg.apply_context(ctx).map(Self::ClearBusListenerFilters)
             }
             Self::StartBusListener(msg) => msg.apply_context(ctx).map(Self::StartBusListener),
+            Self::StartBusListenerReply(msg) => {
+                msg.apply_context(ctx).map(Self::StartBusListenerReply)
+            }
         }
     }
 }
@@ -535,6 +550,9 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::ClearBusListenerFilters)
             }
             ProtoMessage::StartBusListener(msg) => msg.try_into().map(Self::StartBusListener),
+            ProtoMessage::StartBusListenerReply(msg) => {
+                msg.try_into().map(Self::StartBusListenerReply)
+            }
         }
     }
 }
