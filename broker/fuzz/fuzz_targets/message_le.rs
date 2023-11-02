@@ -13,10 +13,12 @@ use aldrin_proto::message::{
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
     ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    StartBusListener, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply,
+    UnsubscribeEvent,
 };
 use aldrin_proto::{
-    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
+    BusListenerCookie, BusListenerScope, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie,
+    ServiceUuid,
 };
 use arbitrary::Arbitrary;
 
@@ -62,6 +64,7 @@ pub enum MessageLe {
     AddBusListenerFilter(AddBusListenerFilterLe),
     RemoveBusListenerFilter(RemoveBusListenerFilterLe),
     ClearBusListenerFilters(ClearBusListenerFiltersLe),
+    StartBusListener(StartBusListenerLe),
 }
 
 impl MessageLe {
@@ -107,6 +110,7 @@ impl MessageLe {
             Self::AddBusListenerFilter(msg) => msg.to_proto(ctx).into(),
             Self::RemoveBusListenerFilter(msg) => msg.to_proto(ctx).into(),
             Self::ClearBusListenerFilters(msg) => msg.to_proto(ctx).into(),
+            Self::StartBusListener(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -158,6 +162,7 @@ impl UpdateContext for ProtoMessage {
             Self::AddBusListenerFilter(msg) => msg.update_context(ctx),
             Self::RemoveBusListenerFilter(msg) => msg.update_context(ctx),
             Self::ClearBusListenerFilters(msg) => msg.update_context(ctx),
+            Self::StartBusListener(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1295,6 +1300,30 @@ impl ClearBusListenerFiltersLe {
 
 impl UpdateContext for ClearBusListenerFilters {
     fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct StartBusListenerLe {
+    pub serial: SerialLe,
+    pub cookie: UuidLe,
+    pub scope: BusListenerScope,
+}
+
+impl StartBusListenerLe {
+    pub fn to_proto(&self, ctx: &Context) -> StartBusListener {
+        StartBusListener {
+            serial: self.serial.get(ctx),
+            cookie: BusListenerCookie(self.cookie.get(ctx)),
+            scope: self.scope,
+        }
+    }
+}
+
+impl UpdateContext for StartBusListener {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
         ctx.add_uuid(self.cookie.0);
     }
 }

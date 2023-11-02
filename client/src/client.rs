@@ -325,9 +325,8 @@ where
             | Message::DestroyBusListener(_)
             | Message::AddBusListenerFilter(_)
             | Message::RemoveBusListenerFilter(_)
-            | Message::ClearBusListenerFilters(_) => {
-                return Err(RunError::UnexpectedMessageReceived(msg))
-            }
+            | Message::ClearBusListenerFilters(_)
+            | Message::StartBusListener(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }
