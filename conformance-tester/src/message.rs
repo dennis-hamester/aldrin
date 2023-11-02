@@ -7,6 +7,7 @@ mod channel_end_claimed;
 mod channel_end_closed;
 mod claim_channel_end;
 mod claim_channel_end_reply;
+mod clear_bus_listener_filters;
 mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
@@ -53,6 +54,7 @@ pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
 pub use claim_channel_end::ClaimChannelEnd;
 pub use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
+pub use clear_bus_listener_filters::ClearBusListenerFilters;
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
@@ -127,6 +129,7 @@ pub enum Message {
     DestroyBusListenerReply(DestroyBusListenerReply),
     AddBusListenerFilter(AddBusListenerFilter),
     RemoveBusListenerFilter(RemoveBusListenerFilter),
+    ClearBusListenerFilters(ClearBusListenerFilters),
 }
 
 impl Message {
@@ -200,6 +203,9 @@ impl Message {
             }
             Self::RemoveBusListenerFilter(msg) => {
                 msg.to_proto(ctx).map(ProtoMessage::RemoveBusListenerFilter)
+            }
+            Self::ClearBusListenerFilters(msg) => {
+                msg.to_proto(ctx).map(ProtoMessage::ClearBusListenerFilters)
             }
         }
     }
@@ -281,6 +287,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::RemoveBusListenerFilter(msg), Self::RemoveBusListenerFilter(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::ClearBusListenerFilters(msg), Self::ClearBusListenerFilters(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -386,6 +395,9 @@ impl Message {
             (Self::RemoveBusListenerFilter(msg), Self::RemoveBusListenerFilter(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::ClearBusListenerFilters(msg), Self::ClearBusListenerFilters(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -444,6 +456,9 @@ impl Message {
             }
             Self::RemoveBusListenerFilter(msg) => {
                 msg.apply_context(ctx).map(Self::RemoveBusListenerFilter)
+            }
+            Self::ClearBusListenerFilters(msg) => {
+                msg.apply_context(ctx).map(Self::ClearBusListenerFilters)
             }
         }
     }
@@ -506,6 +521,9 @@ impl TryFrom<ProtoMessage> for Message {
             }
             ProtoMessage::RemoveBusListenerFilter(msg) => {
                 msg.try_into().map(Self::RemoveBusListenerFilter)
+            }
+            ProtoMessage::ClearBusListenerFilters(msg) => {
+                msg.try_into().map(Self::ClearBusListenerFilters)
             }
         }
     }

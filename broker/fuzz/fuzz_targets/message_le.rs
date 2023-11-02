@@ -5,15 +5,15 @@ use aldrin_proto::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerFilter, BusListenerServiceFilter,
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEnd, ChannelEndClaimed,
     ChannelEndClosed, ChannelEndWithCapacity, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
-    ConnectReply, CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply,
-    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply,
-    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
-    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply,
+    CloseChannelEndResult, Connect, ConnectReply, CreateBusListener, CreateBusListenerReply,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message as ProtoMessage, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
@@ -61,6 +61,7 @@ pub enum MessageLe {
     DestroyBusListenerReply(DestroyBusListenerReplyLe),
     AddBusListenerFilter(AddBusListenerFilterLe),
     RemoveBusListenerFilter(RemoveBusListenerFilterLe),
+    ClearBusListenerFilters(ClearBusListenerFiltersLe),
 }
 
 impl MessageLe {
@@ -105,6 +106,7 @@ impl MessageLe {
             Self::DestroyBusListenerReply(msg) => msg.to_proto(ctx).into(),
             Self::AddBusListenerFilter(msg) => msg.to_proto(ctx).into(),
             Self::RemoveBusListenerFilter(msg) => msg.to_proto(ctx).into(),
+            Self::ClearBusListenerFilters(msg) => msg.to_proto(ctx).into(),
         }
     }
 }
@@ -155,6 +157,7 @@ impl UpdateContext for ProtoMessage {
             Self::DestroyBusListenerReply(msg) => msg.update_context(ctx),
             Self::AddBusListenerFilter(msg) => msg.update_context(ctx),
             Self::RemoveBusListenerFilter(msg) => msg.update_context(ctx),
+            Self::ClearBusListenerFilters(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1274,5 +1277,24 @@ impl UpdateContext for RemoveBusListenerFilter {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_uuid(self.cookie.0);
         self.filter.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct ClearBusListenerFiltersLe {
+    pub cookie: UuidLe,
+}
+
+impl ClearBusListenerFiltersLe {
+    pub fn to_proto(&self, ctx: &Context) -> ClearBusListenerFilters {
+        ClearBusListenerFilters {
+            cookie: BusListenerCookie(self.cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for ClearBusListenerFilters {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.cookie.0);
     }
 }

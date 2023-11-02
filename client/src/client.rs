@@ -324,7 +324,8 @@ where
             | Message::CreateBusListener(_)
             | Message::DestroyBusListener(_)
             | Message::AddBusListenerFilter(_)
-            | Message::RemoveBusListenerFilter(_) => {
+            | Message::RemoveBusListenerFilter(_)
+            | Message::ClearBusListenerFilters(_) => {
                 return Err(RunError::UnexpectedMessageReceived(msg))
             }
 
