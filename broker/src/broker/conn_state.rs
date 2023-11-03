@@ -1,5 +1,5 @@
 use aldrin_proto::message::Message;
-use aldrin_proto::{ChannelCookie, ObjectCookie, ServiceCookie};
+use aldrin_proto::{BusListenerCookie, ChannelCookie, ObjectCookie, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
@@ -14,6 +14,7 @@ pub(super) struct ConnectionState {
 
     senders: HashSet<ChannelCookie>,
     receivers: HashSet<ChannelCookie>,
+    bus_listeners: HashSet<BusListenerCookie>,
 }
 
 impl ConnectionState {
@@ -24,6 +25,7 @@ impl ConnectionState {
             subscriptions: HashMap::new(),
             senders: HashSet::new(),
             receivers: HashSet::new(),
+            bus_listeners: HashSet::new(),
         }
     }
 
@@ -101,5 +103,19 @@ impl ConnectionState {
 
     pub fn receivers(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
         self.receivers.iter().copied()
+    }
+
+    pub fn add_bus_listener(&mut self, cookie: BusListenerCookie) {
+        let unique = self.bus_listeners.insert(cookie);
+        debug_assert!(unique);
+    }
+
+    pub fn remove_bus_listener(&mut self, cookie: BusListenerCookie) {
+        let contained = self.bus_listeners.remove(&cookie);
+        debug_assert!(contained);
+    }
+
+    pub fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> + '_ {
+        self.bus_listeners.iter().copied()
     }
 }

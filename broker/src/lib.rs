@@ -54,6 +54,7 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 
 mod broker;
+mod bus_listener;
 mod conn;
 mod conn_id;
 mod serial_map;

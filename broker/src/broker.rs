@@ -10,23 +10,24 @@ mod statistics;
 #[cfg(test)]
 mod test;
 
+use crate::bus_listener::BusListener;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
     AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
     ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateChannel,
-    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
-    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
-    ServiceCookie, ServiceUuid,
+    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
+    ObjectUuid, ServiceCookie, ServiceUuid,
 };
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
@@ -108,6 +109,7 @@ pub struct Broker {
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
     function_calls: SerialMap<PendingFunctionCall>,
     channels: HashMap<ChannelCookie, Channel>,
+    bus_listeners: HashMap<BusListenerCookie, BusListener>,
     #[cfg(feature = "statistics")]
     statistics: BrokerStatistics,
 }
@@ -130,6 +132,7 @@ impl Broker {
             svcs: HashMap::new(),
             function_calls: SerialMap::new(),
             channels: HashMap::new(),
+            bus_listeners: HashMap::new(),
             #[cfg(feature = "statistics")]
             statistics: BrokerStatistics::new(),
         }
@@ -300,6 +303,10 @@ impl Broker {
         // Ignore errors here
         send!(self, conn, Message::Shutdown(Shutdown)).ok();
 
+        for bus_listener_cookie in conn.bus_listeners() {
+            self.remove_bus_listener(bus_listener_cookie);
+        }
+
         for obj_cookie in conn.objects() {
             self.remove_object(state, obj_cookie);
         }
@@ -346,7 +353,7 @@ impl Broker {
             Message::AddChannelCapacity(req) => self.add_channel_capacity(state, id, req),
             Message::SendItem(req) => self.send_item(state, id, req)?,
             Message::Sync(req) => self.sync(id, req)?,
-            Message::CreateBusListener(_) => todo!(),
+            Message::CreateBusListener(req) => self.create_bus_listener(id, req)?,
             Message::DestroyBusListener(_) => todo!(),
             Message::AddBusListenerFilter(_) => todo!(),
             Message::RemoveBusListenerFilter(_) => todo!(),
@@ -1177,6 +1184,30 @@ impl Broker {
         )
     }
 
+    fn create_bus_listener(&mut self, id: &ConnectionId, req: CreateBusListener) -> Result<(), ()> {
+        let conn = match self.conns.get_mut(id) {
+            Some(conn) => conn,
+            None => return Ok(()),
+        };
+
+        let cookie = BusListenerCookie::new_v4();
+
+        send!(
+            self,
+            conn,
+            Message::CreateBusListenerReply(CreateBusListenerReply {
+                serial: req.serial,
+                cookie,
+            })
+        )?;
+
+        conn.add_bus_listener(cookie);
+        self.bus_listeners
+            .insert(cookie, BusListener::new(id.clone()));
+
+        Ok(())
+    }
+
     /// Removes the object `obj_cookie` and queues up events in `state`.
     ///
     /// This function will also remove all services owned by that object as well as everything
@@ -1334,6 +1365,16 @@ impl Broker {
                 self.statistics.num_channels -= 1;
                 self.statistics.channels_closed += 1;
             }
+        }
+    }
+
+    fn remove_bus_listener(&mut self, cookie: BusListenerCookie) {
+        let Some(bus_listener) = self.bus_listeners.remove(&cookie) else {
+            return;
+        };
+
+        if let Some(conn) = self.conns.get_mut(bus_listener.conn_id()) {
+            conn.remove_bus_listener(cookie);
         }
     }
 }
