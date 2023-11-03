@@ -19,11 +19,12 @@ use aldrin_proto::message::{
     ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
     CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
     CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
+    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
@@ -354,7 +355,7 @@ impl Broker {
             Message::SendItem(req) => self.send_item(state, id, req)?,
             Message::Sync(req) => self.sync(id, req)?,
             Message::CreateBusListener(req) => self.create_bus_listener(id, req)?,
-            Message::DestroyBusListener(_) => todo!(),
+            Message::DestroyBusListener(req) => self.destroy_bus_listener(id, req)?,
             Message::AddBusListenerFilter(_) => todo!(),
             Message::RemoveBusListenerFilter(_) => todo!(),
             Message::ClearBusListenerFilters(_) => todo!(),
@@ -1204,6 +1205,51 @@ impl Broker {
         conn.add_bus_listener(cookie);
         self.bus_listeners
             .insert(cookie, BusListener::new(id.clone()));
+
+        Ok(())
+    }
+
+    fn destroy_bus_listener(
+        &mut self,
+        id: &ConnectionId,
+        req: DestroyBusListener,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        let Some(bus_listener) = self.bus_listeners.get(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                    serial: req.serial,
+                    result: DestroyBusListenerResult::InvalidBusListener,
+                })
+            );
+        };
+
+        if bus_listener.conn_id() == id {
+            send!(
+                self,
+                conn,
+                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                    serial: req.serial,
+                    result: DestroyBusListenerResult::Ok,
+                })
+            )?;
+
+            self.remove_bus_listener(req.cookie);
+        } else {
+            send!(
+                self,
+                conn,
+                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                    serial: req.serial,
+                    result: DestroyBusListenerResult::InvalidBusListener,
+                })
+            )?;
+        }
 
         Ok(())
     }
