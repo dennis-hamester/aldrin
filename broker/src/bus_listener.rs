@@ -45,6 +45,10 @@ impl BusListener {
         }
     }
 
+    pub fn stop(&mut self) -> bool {
+        self.scope.take().is_some()
+    }
+
     pub fn matches_object(&self, object: ObjectId) -> bool {
         self.filters
             .iter()

@@ -25,8 +25,9 @@ use aldrin_proto::message::{
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
@@ -363,7 +364,7 @@ impl Broker {
             Message::RemoveBusListenerFilter(req) => self.remove_bus_listener_filter(id, req),
             Message::ClearBusListenerFilters(req) => self.clear_bus_listener_filters(id, req),
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
-            Message::StopBusListener(_) => todo!(),
+            Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1369,6 +1370,54 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    fn stop_bus_listener(&mut self, id: &ConnectionId, req: StopBusListener) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                Message::StopBusListenerReply(StopBusListenerReply {
+                    serial: req.serial,
+                    result: StopBusListenerResult::InvalidBusListener,
+                })
+            );
+        };
+
+        if bus_listener.conn_id() != id {
+            return send!(
+                self,
+                conn,
+                Message::StopBusListenerReply(StopBusListenerReply {
+                    serial: req.serial,
+                    result: StopBusListenerResult::InvalidBusListener,
+                })
+            );
+        }
+
+        if bus_listener.stop() {
+            send!(
+                self,
+                conn,
+                Message::StopBusListenerReply(StopBusListenerReply {
+                    serial: req.serial,
+                    result: StopBusListenerResult::Ok,
+                })
+            )
+        } else {
+            send!(
+                self,
+                conn,
+                Message::StopBusListenerReply(StopBusListenerReply {
+                    serial: req.serial,
+                    result: StopBusListenerResult::NotStarted,
+                })
+            )
+        }
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
