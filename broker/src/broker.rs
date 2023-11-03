@@ -15,21 +15,23 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
-    AddBusListenerFilter, AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult,
-    ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply,
-    CloseChannelEndResult, CreateBusListener, CreateBusListenerReply, CreateChannel,
-    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateServiceReply, CreateServiceResult, DestroyBusListener, DestroyBusListenerReply,
-    DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
-    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, ItemReceived, Message,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
+    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
+    CloseChannelEndReply, CloseChannelEndResult, CreateBusListener, CreateBusListenerReply,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
+    EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
-    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
-    ObjectUuid, ServiceCookie, ServiceUuid,
+    BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
+    ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
+    ServiceUuid,
 };
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
@@ -360,7 +362,7 @@ impl Broker {
             Message::AddBusListenerFilter(req) => self.add_bus_listener_filter(id, req),
             Message::RemoveBusListenerFilter(req) => self.remove_bus_listener_filter(id, req),
             Message::ClearBusListenerFilters(req) => self.clear_bus_listener_filters(id, req),
-            Message::StartBusListener(_) => todo!(),
+            Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(_) => todo!(),
 
             Message::Connect(_)
@@ -1277,6 +1279,96 @@ impl Broker {
                 bus_listener.clear_filters();
             }
         }
+    }
+
+    fn start_bus_listener(&mut self, id: &ConnectionId, req: StartBusListener) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                Message::StartBusListenerReply(StartBusListenerReply {
+                    serial: req.serial,
+                    result: StartBusListenerResult::InvalidBusListener,
+                })
+            );
+        };
+
+        if bus_listener.conn_id() != id {
+            return send!(
+                self,
+                conn,
+                Message::StartBusListenerReply(StartBusListenerReply {
+                    serial: req.serial,
+                    result: StartBusListenerResult::InvalidBusListener,
+                })
+            );
+        }
+
+        if !bus_listener.start(req.scope) {
+            return send!(
+                self,
+                conn,
+                Message::StartBusListenerReply(StartBusListenerReply {
+                    serial: req.serial,
+                    result: StartBusListenerResult::AlreadyStarted,
+                })
+            );
+        }
+
+        send!(
+            self,
+            conn,
+            Message::StartBusListenerReply(StartBusListenerReply {
+                serial: req.serial,
+                result: StartBusListenerResult::Ok,
+            })
+        )?;
+
+        if req.scope != BusListenerScope::New {
+            for (&cookie, &uuid) in &self.obj_uuids {
+                let object = ObjectId::new(uuid, cookie);
+
+                if bus_listener.matches_object(object) {
+                    send!(
+                        self,
+                        conn,
+                        Message::EmitBusEvent(EmitBusEvent {
+                            cookie: Some(req.cookie),
+                            event: BusEvent::ObjectCreated(object),
+                        })
+                    )?;
+                }
+            }
+
+            for (&service_cookie, &(object, service_uuid, _)) in &self.svc_uuids {
+                let service = ServiceId::new(object, service_uuid, service_cookie);
+
+                if bus_listener.matches_service(service) {
+                    send!(
+                        self,
+                        conn,
+                        Message::EmitBusEvent(EmitBusEvent {
+                            cookie: Some(req.cookie),
+                            event: BusEvent::ServiceCreated(service),
+                        })
+                    )?;
+                }
+            }
+
+            send!(
+                self,
+                conn,
+                Message::BusListenerCurrentFinished(BusListenerCurrentFinished {
+                    cookie: req.cookie,
+                })
+            )?;
+        }
+
+        Ok(())
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.

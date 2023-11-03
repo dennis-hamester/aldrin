@@ -1,11 +1,12 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::BusListenerFilter;
+use aldrin_proto::{BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(crate) struct BusListener {
     conn_id: ConnectionId,
     filters: HashSet<BusListenerFilter>,
+    scope: Option<BusListenerScope>,
 }
 
 impl BusListener {
@@ -13,6 +14,7 @@ impl BusListener {
         Self {
             conn_id,
             filters: HashSet::new(),
+            scope: None,
         }
     }
 
@@ -30,5 +32,30 @@ impl BusListener {
 
     pub fn clear_filters(&mut self) {
         self.filters.clear();
+    }
+
+    pub fn start(&mut self, scope: BusListenerScope) -> bool {
+        match self.scope {
+            Some(_) => false,
+
+            None => {
+                self.scope = Some(scope);
+                true
+            }
+        }
+    }
+
+    pub fn matches_object(&self, object: ObjectId) -> bool {
+        self.filters
+            .iter()
+            .copied()
+            .any(|filter| filter.matches_object(object))
+    }
+
+    pub fn matches_service(&self, service: ServiceId) -> bool {
+        self.filters
+            .iter()
+            .copied()
+            .any(|filter| filter.matches_service(service))
     }
 }
