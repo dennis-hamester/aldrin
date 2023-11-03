@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
 use aldrin_proto::message::CallFunctionResult;
-use aldrin_proto::ServiceCookie;
+use aldrin_proto::{ObjectId, ServiceCookie, ServiceId};
 
 #[derive(Debug)]
 pub(super) struct State {
@@ -10,6 +10,10 @@ pub(super) struct State {
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
     services_destroyed: Vec<(ConnectionId, ServiceCookie)>,
     unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
+    create_object: Vec<ObjectId>,
+    destroy_object: Vec<ObjectId>,
+    create_service: Vec<ServiceId>,
+    destroy_service: Vec<ServiceId>,
 }
 
 impl State {
@@ -21,6 +25,10 @@ impl State {
             remove_function_calls: Vec::new(),
             services_destroyed: Vec::new(),
             unsubscribe: Vec::new(),
+            create_object: Vec::new(),
+            destroy_object: Vec::new(),
+            create_service: Vec::new(),
+            destroy_service: Vec::new(),
         }
     }
 
@@ -45,6 +53,10 @@ impl State {
             || !self.remove_function_calls.is_empty()
             || !self.services_destroyed.is_empty()
             || !self.unsubscribe.is_empty()
+            || !self.create_object.is_empty()
+            || !self.destroy_object.is_empty()
+            || !self.create_service.is_empty()
+            || !self.destroy_service.is_empty()
     }
 
     pub fn push_remove_conn(&mut self, id: ConnectionId) {
@@ -94,5 +106,37 @@ impl State {
 
     pub fn pop_unsubscribe(&mut self) -> Option<(ConnectionId, ServiceCookie, u32)> {
         self.unsubscribe.pop()
+    }
+
+    pub fn push_create_object(&mut self, object: ObjectId) {
+        self.create_object.push(object);
+    }
+
+    pub fn pop_create_object(&mut self) -> Option<ObjectId> {
+        self.create_object.pop()
+    }
+
+    pub fn push_destroy_object(&mut self, object: ObjectId) {
+        self.destroy_object.push(object);
+    }
+
+    pub fn pop_destroy_object(&mut self) -> Option<ObjectId> {
+        self.destroy_object.pop()
+    }
+
+    pub fn push_create_service(&mut self, service: ServiceId) {
+        self.create_service.push(service);
+    }
+
+    pub fn pop_create_service(&mut self) -> Option<ServiceId> {
+        self.create_service.pop()
+    }
+
+    pub fn push_destroy_service(&mut self, service: ServiceId) {
+        self.destroy_service.push(service);
+    }
+
+    pub fn pop_destroy_service(&mut self) -> Option<ServiceId> {
+        self.destroy_service.pop()
     }
 }

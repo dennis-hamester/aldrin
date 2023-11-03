@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::{BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
+use aldrin_proto::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -61,5 +61,16 @@ impl BusListener {
             .iter()
             .copied()
             .any(|filter| filter.matches_service(service))
+    }
+
+    pub fn matches_new_event(&self, event: BusEvent) -> bool {
+        self.scope
+            .map(BusListenerScope::includes_new)
+            .unwrap_or(false)
+            && self
+                .filters
+                .iter()
+                .copied()
+                .any(|filter| filter.matches_event(event))
     }
 }

@@ -42,6 +42,7 @@ use object::Object;
 use service::Service;
 use state::State;
 use std::collections::hash_map::{Entry, HashMap};
+use std::collections::HashSet;
 
 pub use error::BrokerShutdown;
 pub use handle::{BrokerHandle, PendingConnection};
@@ -294,6 +295,26 @@ impl Broker {
                 continue;
             }
 
+            if let Some(object) = state.pop_create_object() {
+                self.emit_bus_event(state, BusEvent::ObjectCreated(object));
+                continue;
+            }
+
+            if let Some(service) = state.pop_create_service() {
+                self.emit_bus_event(state, BusEvent::ServiceCreated(service));
+                continue;
+            }
+
+            if let Some(service) = state.pop_destroy_service() {
+                self.emit_bus_event(state, BusEvent::ServiceDestroyed(service));
+                continue;
+            }
+
+            if let Some(object) = state.pop_destroy_object() {
+                self.emit_bus_event(state, BusEvent::ObjectDestroyed(object));
+                continue;
+            }
+
             debug_assert!(!state.has_work_left());
             break;
         }
@@ -342,9 +363,9 @@ impl Broker {
         msg: Message,
     ) -> Result<(), ()> {
         match msg {
-            Message::CreateObject(req) => self.create_object(id, req)?,
+            Message::CreateObject(req) => self.create_object(state, id, req)?,
             Message::DestroyObject(req) => self.destroy_object(state, id, req)?,
-            Message::CreateService(req) => self.create_service(id, req)?,
+            Message::CreateService(req) => self.create_service(state, id, req)?,
             Message::DestroyService(req) => self.destroy_service(state, id, req)?,
             Message::CallFunction(req) => self.call_function(state, id, req)?,
             Message::CallFunctionReply(req) => self.call_function_reply(state, id, req),
@@ -395,7 +416,12 @@ impl Broker {
         Ok(())
     }
 
-    fn create_object(&mut self, id: &ConnectionId, req: CreateObject) -> Result<(), ()> {
+    fn create_object(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CreateObject,
+    ) -> Result<(), ()> {
         let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -426,6 +452,7 @@ impl Broker {
                 debug_assert!(dup.is_none());
                 entry.insert(Object::new(id.clone()));
                 conn.add_object(cookie);
+                state.push_create_object(ObjectId::new(req.uuid, cookie));
 
                 #[cfg(feature = "statistics")]
                 {
@@ -488,7 +515,12 @@ impl Broker {
         Ok(())
     }
 
-    fn create_service(&mut self, id: &ConnectionId, req: CreateService) -> Result<(), ()> {
+    fn create_service(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CreateService,
+    ) -> Result<(), ()> {
         let conn = match self.conns.get(id) {
             Some(conn) => conn,
             None => return Ok(()),
@@ -551,6 +583,7 @@ impl Broker {
         debug_assert!(dup.is_none());
         entry.insert(Service::new());
         obj.add_service(svc_cookie);
+        state.push_create_service(ServiceId::new(object_id, req.uuid, svc_cookie));
 
         #[cfg(feature = "statistics")]
         {
@@ -1438,6 +1471,8 @@ impl Broker {
             conn.remove_object(obj_cookie);
         }
 
+        state.push_destroy_object(ObjectId::new(obj_uuid, obj_cookie));
+
         for svc_cookie in obj.services() {
             self.remove_service(state, svc_cookie);
         }
@@ -1468,6 +1503,8 @@ impl Broker {
         if let Some(obj) = self.objs.get_mut(&obj_id.uuid) {
             obj.remove_service(svc_cookie);
         }
+
+        state.push_destroy_service(ServiceId::new(obj_id, svc_uuid, svc_cookie));
 
         for serial in svc.function_calls() {
             let call = self
@@ -1587,6 +1624,42 @@ impl Broker {
 
         if let Some(conn) = self.conns.get_mut(bus_listener.conn_id()) {
             conn.remove_bus_listener(cookie);
+        }
+    }
+
+    fn emit_bus_event(&mut self, state: &mut State, event: BusEvent) {
+        let mut dups = HashSet::new();
+        let mut remove_conns = HashSet::new();
+
+        for bus_listener in self.bus_listeners.values() {
+            let conn_id = bus_listener.conn_id();
+
+            if !bus_listener.matches_new_event(event) || dups.contains(conn_id) {
+                continue;
+            }
+
+            dups.insert(conn_id);
+
+            let Some(conn) = self.conns.get(conn_id) else {
+                continue;
+            };
+
+            let res = send!(
+                self,
+                conn,
+                Message::EmitBusEvent(EmitBusEvent {
+                    cookie: None,
+                    event,
+                })
+            );
+
+            if res.is_err() {
+                remove_conns.insert(conn_id);
+            }
+        }
+
+        for conn_id in remove_conns {
+            state.push_remove_conn(conn_id.clone());
         }
     }
 }
