@@ -21,6 +21,16 @@ pub enum BusListenerScope {
     All = 2,
 }
 
+impl BusListenerScope {
+    pub fn includes_current(self) -> bool {
+        (self == Self::Current) || (self == Self::All)
+    }
+
+    pub fn includes_new(self) -> bool {
+        (self == Self::New) || (self == Self::All)
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum BusListenerFilter {
