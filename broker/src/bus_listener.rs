@@ -27,4 +27,8 @@ impl BusListener {
     pub fn remove_filter(&mut self, filter: BusListenerFilter) {
         self.filters.remove(&filter);
     }
+
+    pub fn clear_filters(&mut self) {
+        self.filters.clear();
+    }
 }

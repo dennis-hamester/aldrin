@@ -17,15 +17,15 @@ use crate::serial_map::SerialMap;
 use aldrin_proto::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult,
     ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply,
-    ClaimChannelEndResult, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
-    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply,
+    CloseChannelEndResult, CreateBusListener, CreateBusListenerReply, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateServiceReply, CreateServiceResult, DestroyBusListener, DestroyBusListenerReply,
+    DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
+    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent, ItemReceived, Message,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId,
@@ -359,7 +359,7 @@ impl Broker {
             Message::DestroyBusListener(req) => self.destroy_bus_listener(id, req)?,
             Message::AddBusListenerFilter(req) => self.add_bus_listener_filter(id, req),
             Message::RemoveBusListenerFilter(req) => self.remove_bus_listener_filter(id, req),
-            Message::ClearBusListenerFilters(_) => todo!(),
+            Message::ClearBusListenerFilters(req) => self.clear_bus_listener_filters(id, req),
             Message::StartBusListener(_) => todo!(),
             Message::StopBusListener(_) => todo!(),
 
@@ -1267,6 +1267,14 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.remove_filter(req.filter);
+            }
+        }
+    }
+
+    fn clear_bus_listener_filters(&mut self, id: &ConnectionId, req: ClearBusListenerFilters) {
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
+            if bus_listener.conn_id() == id {
+                bus_listener.clear_filters();
             }
         }
     }
