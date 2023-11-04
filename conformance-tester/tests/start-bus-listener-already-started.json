@@ -1,0 +1,36 @@
+{
+    "name": "start-bus-listener-already-started",
+    "description": "Try to start an already started bus listener",
+    "long-description": "A client creates a bus listener and tries to start it twice.",
+    "message-types": [
+        "start-bus-listener",
+        "start-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "start-bus-listener",
+            "cookie": "get:cookie",
+            "scope": "new"
+        },
+        {
+            "type": "send",
+            "message": "start-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "scope": "new"
+        },
+        {
+            "type": "receive",
+            "message": "start-bus-listener-reply",
+            "serial": 0,
+            "result": "already-started"
+        }
+    ]
+}
