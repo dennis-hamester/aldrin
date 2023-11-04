@@ -1,0 +1,30 @@
+{
+    "name": "stop-bus-listener-not-started-1",
+    "description": "Try to stop a newly created bus listener",
+    "long-description": "A client creates a bus listener then tries to stop it.",
+    "message-types": [
+        "stop-bus-listener",
+        "stop-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "message": "stop-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "message": "stop-bus-listener-reply",
+            "serial": 0,
+            "result": "not-started"
+        }
+    ]
+}
