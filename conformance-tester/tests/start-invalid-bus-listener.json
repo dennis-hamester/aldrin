@@ -1,0 +1,27 @@
+{
+    "name": "start-invalid-bus-listener",
+    "description": "Try to start an invalid bus listener",
+    "long-description": "A client tries to start an invalid bus listener.",
+    "message-types": [
+        "start-bus-listener",
+        "start-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "start-bus-listener",
+            "serial": 0,
+            "cookie": "00000000-0000-0000-0000-000000000001",
+            "scope": "new"
+        },
+        {
+            "type": "receive",
+            "message": "start-bus-listener-reply",
+            "serial": 0,
+            "result": "invalid-bus-listener"
+        }
+    ]
+}
