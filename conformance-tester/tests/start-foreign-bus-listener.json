@@ -1,0 +1,39 @@
+{
+    "name": "start-foreign-bus-listener",
+    "description": "Try to start a foreign bus listener",
+    "long-description": "One client creates a bus listener and another client tries to start it.",
+    "message-types": [
+        "start-bus-listener",
+        "start-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "create-bus-listener",
+            "client": "client1",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "start-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie",
+            "scope": "new"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "start-bus-listener-reply",
+            "serial": 0,
+            "result": "invalid-bus-listener"
+        }
+    ]
+}
