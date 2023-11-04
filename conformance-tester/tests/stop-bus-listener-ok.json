@@ -1,0 +1,35 @@
+{
+    "name": "stop-bus-listener-ok",
+    "description": "Successfully stop a bus listener",
+    "long-description": "A client creates a bus listener, starts it and then stops it again.",
+    "message-types": [
+        "stop-bus-listener",
+        "stop-bus-listener-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:cookie"
+        },
+        {
+            "type": "start-bus-listener",
+            "cookie": "get:cookie",
+            "scope": "new"
+        },
+        {
+            "type": "send",
+            "message": "stop-bus-listener",
+            "serial": 0,
+            "cookie": "get:cookie"
+        },
+        {
+            "type": "receive",
+            "message": "stop-bus-listener-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
