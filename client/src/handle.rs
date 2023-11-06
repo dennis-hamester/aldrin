@@ -1,5 +1,6 @@
 pub(crate) mod request;
 
+use crate::bus_listener::BusListener;
 use crate::channel::{
     PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
 };
@@ -699,6 +700,11 @@ impl Handle {
             .map_err(|_| Error::ClientShutdown)?;
 
         recv.await.map_err(|_| Error::ClientShutdown)
+    }
+
+    /// TODO
+    pub async fn create_bus_listener(&self) -> Result<BusListener, Error> {
+        todo!()
     }
 }
 

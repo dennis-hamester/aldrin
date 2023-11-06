@@ -60,6 +60,7 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
+mod bus_listener;
 mod channel;
 mod client;
 mod error;
@@ -77,6 +78,7 @@ pub mod private;
 
 #[cfg(feature = "codegen")]
 pub use aldrin_codegen_macros::generate;
+pub use bus_listener::BusListener;
 pub use channel::{
     PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,
     UnclaimedReceiver, UnclaimedSender,
