@@ -1,0 +1,103 @@
+{
+    "name": "one-bus-event-per-client",
+    "description": "Bus events are sent only once per client",
+    "long-description": "A client creates 2 bus listeners, adds filters for all objects and services to both, and starts them with the new scope. The client then creates an object and service and destroys them again. The respective bus events are received only once even though the client has 2 bus listeners that match all events.",
+    "message-types": [
+        "emit-bus-event"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:bus-listener-1"
+        },
+        {
+            "type": "send",
+            "message": "add-bus-listener-filter",
+            "cookie": "get:bus-listener-1",
+            "filter": "any-object"
+        },
+        {
+            "type": "send",
+            "message": "add-bus-listener-filter",
+            "cookie": "get:bus-listener-1",
+            "filter": "any-object-any-service"
+        },
+        {
+            "type": "start-bus-listener",
+            "cookie": "get:bus-listener-1",
+            "scope": "new"
+        },
+        {
+            "type": "create-bus-listener",
+            "cookie": "set:bus-listener-2"
+        },
+        {
+            "type": "send",
+            "message": "add-bus-listener-filter",
+            "cookie": "get:bus-listener-2",
+            "filter": "any-object"
+        },
+        {
+            "type": "send",
+            "message": "add-bus-listener-filter",
+            "cookie": "get:bus-listener-2",
+            "filter": "any-object-any-service"
+        },
+        {
+            "type": "start-bus-listener",
+            "cookie": "get:bus-listener-2",
+            "scope": "new"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "receive",
+            "message": "emit-bus-event",
+            "event": "object-created",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "receive",
+            "message": "emit-bus-event",
+            "event": "service-created",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "destroy-object",
+            "cookie": "get:object"
+        },
+        {
+            "type": "receive",
+            "message": "emit-bus-event",
+            "event": "service-destroyed",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "emit-bus-event",
+            "event": "object-destroyed",
+            "object-uuid": "00000000-0000-0000-0000-000000000001",
+            "object-cookie": "get:object"
+        }
+    ]
+}
