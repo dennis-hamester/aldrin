@@ -8,20 +8,22 @@ use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Events, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult,
-    SubscribeEventResult,
+    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
+    DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
+    RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
 use aldrin_proto::{
-    ChannelCookie, ChannelEnd, Deserialize, ObjectCookie, ObjectId, ObjectUuid, Serialize,
-    SerializedValue, ServiceId, ServiceUuid,
+    BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
+    ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue, ServiceId, ServiceUuid,
 };
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
-    CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
-    HandleRequest, QueryServiceVersionRequest, SendItemRequest, SubscribeEventRequest,
+    CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
+    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest,
     UnsubscribeEventRequest,
 };
 use std::fmt;
@@ -704,7 +706,117 @@ impl Handle {
 
     /// TODO
     pub async fn create_bus_listener(&self) -> Result<BusListener, Error> {
-        todo!()
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::CreateBusListener(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)
+    }
+
+    pub(crate) async fn destroy_bus_listener(
+        &self,
+        cookie: BusListenerCookie,
+    ) -> Result<(), Error> {
+        let (send, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::DestroyBusListener(
+                DestroyBusListenerRequest {
+                    cookie,
+                    reply: send,
+                },
+            ))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            DestroyBusListenerResult::Ok => Ok(()),
+            DestroyBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
+        }
+    }
+
+    pub(crate) fn destroy_bus_listener_now(&self, cookie: BusListenerCookie) {
+        let (reply, _) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::DestroyBusListener(
+                DestroyBusListenerRequest { cookie, reply },
+            ))
+            .ok();
+    }
+
+    pub(crate) fn add_bus_listener_filter(
+        &self,
+        cookie: BusListenerCookie,
+        filter: BusListenerFilter,
+    ) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::AddBusListenerFilter(AddBusListenerFilter {
+                cookie,
+                filter,
+            }))
+            .map_err(|_| Error::ClientShutdown)
+    }
+
+    pub(crate) fn remove_bus_listener_filter(
+        &self,
+        cookie: BusListenerCookie,
+        filter: BusListenerFilter,
+    ) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::RemoveBusListenerFilter(
+                RemoveBusListenerFilter { cookie, filter },
+            ))
+            .map_err(|_| Error::ClientShutdown)
+    }
+
+    pub(crate) fn clear_bus_listener_filters(
+        &self,
+        cookie: BusListenerCookie,
+    ) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::ClearBusListenerFilters(
+                ClearBusListenerFilters { cookie },
+            ))
+            .map_err(|_| Error::ClientShutdown)
+    }
+
+    pub(crate) async fn start_bus_listener(
+        &self,
+        cookie: BusListenerCookie,
+        scope: BusListenerScope,
+    ) -> Result<(), Error> {
+        let (send, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::StartBusListener(StartBusListenerRequest {
+                cookie,
+                scope,
+                reply: send,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            StartBusListenerResult::Ok => Ok(()),
+            StartBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
+            StartBusListenerResult::AlreadyStarted => Err(Error::BusListenerAlreadyStarted),
+        }
+    }
+
+    pub(crate) async fn stop_bus_listener(&self, cookie: BusListenerCookie) -> Result<(), Error> {
+        let (send, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::StopBusListener(StopBusListenerRequest {
+                cookie,
+                reply: send,
+            }))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        match reply {
+            StopBusListenerResult::Ok => Ok(()),
+            StopBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
+            StopBusListenerResult::NotStarted => Err(Error::BusListenerNotStarted),
+        }
     }
 }
 

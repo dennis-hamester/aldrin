@@ -1,3 +1,4 @@
+use crate::bus_listener::BusListener;
 use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
@@ -5,12 +6,13 @@ use crate::channel::{
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunctionResult, DestroyObjectResult, QueryServiceVersionResult,
-    SubscribeEventResult,
+    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
+    DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
+    RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
 use aldrin_proto::{
-    ChannelCookie, ChannelEnd, ObjectCookie, ObjectId, ObjectUuid, SerializedValue, ServiceCookie,
-    ServiceId, ServiceUuid,
+    BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
+    ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
@@ -39,6 +41,13 @@ pub(crate) enum HandleRequest {
     AddChannelCapacity(AddChannelCapacity),
     SyncClient(SyncClientRequest),
     SyncBroker(SyncBrokerRequest),
+    CreateBusListener(CreateBusListenerRequest),
+    DestroyBusListener(DestroyBusListenerRequest),
+    AddBusListenerFilter(AddBusListenerFilter),
+    RemoveBusListenerFilter(RemoveBusListenerFilter),
+    ClearBusListenerFilters(ClearBusListenerFilters),
+    StartBusListener(StartBusListenerRequest),
+    StopBusListener(StopBusListenerRequest),
 }
 
 #[derive(Debug)]
@@ -149,3 +158,24 @@ pub(crate) struct SendItemRequest {
 pub(crate) type SyncClientRequest = oneshot::Sender<()>;
 
 pub(crate) type SyncBrokerRequest = oneshot::Sender<()>;
+
+pub(crate) type CreateBusListenerRequest = oneshot::Sender<BusListener>;
+
+#[derive(Debug)]
+pub(crate) struct DestroyBusListenerRequest {
+    pub cookie: BusListenerCookie,
+    pub reply: oneshot::Sender<DestroyBusListenerResult>,
+}
+
+#[derive(Debug)]
+pub(crate) struct StartBusListenerRequest {
+    pub cookie: BusListenerCookie,
+    pub scope: BusListenerScope,
+    pub reply: oneshot::Sender<StartBusListenerResult>,
+}
+
+#[derive(Debug)]
+pub(crate) struct StopBusListenerRequest {
+    pub cookie: BusListenerCookie,
+    pub reply: oneshot::Sender<StopBusListenerResult>,
+}

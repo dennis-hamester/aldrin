@@ -182,6 +182,17 @@ pub enum Error {
 
     /// A value failed to serialize.
     Serialize(SerializeError),
+
+    /// An invalid bus listener was used.
+    ///
+    /// This typically means that the bus listener was already destroyed.
+    InvalidBusListener,
+
+    /// A bus listener was attempted to be started twice.
+    BusListenerAlreadyStarted,
+
+    /// A bus listener was attempted to be stopped while it isn't started.
+    BusListenerNotStarted,
 }
 
 impl From<SerializeError> for Error {
@@ -221,6 +232,9 @@ impl fmt::Display for Error {
             Error::ForeignChannel => f.write_str("foreign channel"),
             Error::InvalidItemReceived => f.write_str("invalid item received"),
             Error::Serialize(e) => e.fmt(f),
+            Error::InvalidBusListener => f.write_str("invalid bus listener"),
+            Error::BusListenerAlreadyStarted => f.write_str("bus listener already started"),
+            Error::BusListenerNotStarted => f.write_str("bus listener not started"),
         }
     }
 }

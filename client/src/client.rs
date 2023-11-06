@@ -1,3 +1,4 @@
+use crate::bus_listener::{BusListener, BusListenerHandle};
 use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
@@ -6,29 +7,35 @@ use crate::error::{ConnectError, RunError};
 use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateClaimedSenderRequest,
-    CreateObjectRequest, CreateServiceRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
-    SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeEventRequest,
+    CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
+    CreateClaimedSenderRequest, CreateObjectRequest, CreateServiceRequest,
+    DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
+    HandleRequest, QueryServiceVersionRequest, SendItemRequest, StartBusListenerRequest,
+    StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest,
+    UnsubscribeEventRequest,
 };
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
 use aldrin_proto::message::{
-    AddChannelCapacity, CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitEvent,
-    ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, SendItem, ServiceDestroyed, Shutdown, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
+    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
+    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
+    CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
+    EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_proto::{
-    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId, Serialize,
-    SerializedValue, ServiceCookie, ServiceId,
+    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
+    Serialize, SerializedValue, ServiceCookie, ServiceId,
 };
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -85,6 +92,11 @@ where
     senders: HashMap<ChannelCookie, SenderState>,
     receivers: HashMap<ChannelCookie, ReceiverState>,
     sync: SerialMap<SyncBrokerRequest>,
+    create_bus_listener: SerialMap<CreateBusListenerRequest>,
+    destroy_bus_listener: SerialMap<DestroyBusListenerRequest>,
+    start_bus_listener: SerialMap<StartBusListenerRequest>,
+    stop_bus_listener: SerialMap<StopBusListenerRequest>,
+    bus_listeners: HashMap<BusListenerCookie, BusListenerHandle>,
 }
 
 impl<T> Client<T>
@@ -181,6 +193,11 @@ where
             senders: HashMap::new(),
             receivers: HashMap::new(),
             sync: SerialMap::new(),
+            create_bus_listener: SerialMap::new(),
+            destroy_bus_listener: SerialMap::new(),
+            start_bus_listener: SerialMap::new(),
+            stop_bus_listener: SerialMap::new(),
+            bus_listeners: HashMap::new(),
         };
 
         Ok((client, data))
@@ -307,12 +324,14 @@ where
             Message::AddChannelCapacity(msg) => self.msg_add_channel_capacity(msg)?,
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
-            Message::CreateBusListenerReply(_) => todo!(),
-            Message::DestroyBusListenerReply(_) => todo!(),
-            Message::StartBusListenerReply(_) => todo!(),
-            Message::StopBusListenerReply(_) => todo!(),
-            Message::EmitBusEvent(_) => todo!(),
-            Message::BusListenerCurrentFinished(_) => todo!(),
+            Message::CreateBusListenerReply(msg) => self.msg_create_bus_listener_reply(msg)?,
+            Message::DestroyBusListenerReply(msg) => self.msg_destroy_bus_listener_reply(msg)?,
+            Message::StartBusListenerReply(msg) => self.msg_start_bus_listener_reply(msg)?,
+            Message::StopBusListenerReply(msg) => self.msg_stop_bus_listener_reply(msg)?,
+            Message::EmitBusEvent(msg) => self.msg_emit_bus_event(msg)?,
+            Message::BusListenerCurrentFinished(msg) => {
+                self.msg_bus_listener_current_finished(msg)?
+            }
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -804,6 +823,169 @@ where
         }
     }
 
+    fn msg_create_bus_listener_reply(
+        &mut self,
+        msg: CreateBusListenerReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let reply = match self.create_bus_listener.remove(msg.serial) {
+            Some(reply) => reply,
+
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::CreateBusListenerReply(msg),
+                ))
+            }
+        };
+
+        let (send, recv) = mpsc::unbounded();
+
+        let bus_listener = BusListener::new(msg.cookie, self.handle.clone(), recv);
+        reply.send(bus_listener).ok();
+
+        let bus_listener_handle = BusListenerHandle::new(send);
+        let dup = self.bus_listeners.insert(msg.cookie, bus_listener_handle);
+        assert!(dup.is_none());
+
+        Ok(())
+    }
+
+    fn msg_destroy_bus_listener_reply(
+        &mut self,
+        msg: DestroyBusListenerReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let req = match self.destroy_bus_listener.remove(msg.serial) {
+            Some(reply) => reply,
+
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::DestroyBusListenerReply(msg),
+                ))
+            }
+        };
+
+        if msg.result == DestroyBusListenerResult::Ok {
+            let contained = self.bus_listeners.remove(&req.cookie);
+            debug_assert!(contained.is_some());
+        }
+
+        req.reply.send(msg.result).ok();
+
+        Ok(())
+    }
+
+    fn msg_start_bus_listener_reply(
+        &mut self,
+        msg: StartBusListenerReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let req = match self.start_bus_listener.remove(msg.serial) {
+            Some(reply) => reply,
+
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::StartBusListenerReply(msg),
+                ))
+            }
+        };
+
+        if msg.result == StartBusListenerResult::Ok {
+            let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::StartBusListenerReply(msg),
+                ));
+            };
+
+            if bus_listener.start(req.scope) {
+                req.reply.send(msg.result).ok();
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(
+                    Message::StartBusListenerReply(msg),
+                ))
+            }
+        } else {
+            req.reply.send(msg.result).ok();
+            Ok(())
+        }
+    }
+
+    fn msg_stop_bus_listener_reply(
+        &mut self,
+        msg: StopBusListenerReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let req = match self.stop_bus_listener.remove(msg.serial) {
+            Some(reply) => reply,
+
+            None => {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::StopBusListenerReply(msg),
+                ))
+            }
+        };
+
+        if msg.result == StopBusListenerResult::Ok {
+            let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+                return Err(RunError::UnexpectedMessageReceived(
+                    Message::StopBusListenerReply(msg),
+                ));
+            };
+
+            if bus_listener.stop() {
+                req.reply.send(msg.result).ok();
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(
+                    Message::StopBusListenerReply(msg),
+                ))
+            }
+        } else {
+            req.reply.send(msg.result).ok();
+            Ok(())
+        }
+    }
+
+    fn msg_emit_bus_event(&self, msg: EmitBusEvent) -> Result<(), RunError<T::Error>> {
+        if let Some(cookie) = msg.cookie {
+            let Some(bus_listener) = self.bus_listeners.get(&cookie) else {
+                return Err(RunError::UnexpectedMessageReceived(Message::EmitBusEvent(
+                    msg,
+                )));
+            };
+
+            if bus_listener.emit_current(msg.event) {
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(Message::EmitBusEvent(
+                    msg,
+                )))
+            }
+        } else {
+            for bus_listener in self.bus_listeners.values() {
+                bus_listener.emit_new_if_matches(msg.event);
+            }
+
+            Ok(())
+        }
+    }
+
+    fn msg_bus_listener_current_finished(
+        &mut self,
+        msg: BusListenerCurrentFinished,
+    ) -> Result<(), RunError<T::Error>> {
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&msg.cookie) {
+            if bus_listener.current_finished() {
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(
+                    Message::BusListenerCurrentFinished(msg),
+                ))
+            }
+        } else {
+            Err(RunError::UnexpectedMessageReceived(
+                Message::BusListenerCurrentFinished(msg),
+            ))
+        }
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -829,6 +1011,19 @@ where
             HandleRequest::AddChannelCapacity(req) => self.req_add_channel_capacity(req).await?,
             HandleRequest::SyncClient(req) => self.req_sync_client(req),
             HandleRequest::SyncBroker(req) => self.req_sync_broker(req).await?,
+            HandleRequest::CreateBusListener(req) => self.req_create_bus_listener(req).await?,
+            HandleRequest::DestroyBusListener(req) => self.req_destroy_bus_listener(req).await?,
+            HandleRequest::AddBusListenerFilter(req) => {
+                self.req_add_bus_listener_filter(req).await?
+            }
+            HandleRequest::RemoveBusListenerFilter(req) => {
+                self.req_remove_bus_listener_filter(req).await?
+            }
+            HandleRequest::ClearBusListenerFilters(req) => {
+                self.req_clear_bus_listener_filters(req).await?
+            }
+            HandleRequest::StartBusListener(req) => self.req_start_bus_listener(req).await?,
+            HandleRequest::StopBusListener(req) => self.req_stop_bus_listener(req).await?,
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1152,6 +1347,109 @@ where
         let serial = self.sync.insert(req);
         self.t
             .send_and_flush(Message::Sync(Sync { serial }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_create_bus_listener(
+        &mut self,
+        req: CreateBusListenerRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let serial = self.create_bus_listener.insert(req);
+        self.t
+            .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_destroy_bus_listener(
+        &mut self,
+        req: DestroyBusListenerRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+        let serial = self.destroy_bus_listener.insert(req);
+        self.t
+            .send_and_flush(Message::DestroyBusListener(DestroyBusListener {
+                serial,
+                cookie,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_add_bus_listener_filter(
+        &mut self,
+        req: AddBusListenerFilter,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+            return Ok(());
+        };
+
+        self.t
+            .send_and_flush(Message::AddBusListenerFilter(req))
+            .await?;
+
+        bus_listener.add_filter(req.filter);
+        Ok(())
+    }
+
+    async fn req_remove_bus_listener_filter(
+        &mut self,
+        req: RemoveBusListenerFilter,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+            return Ok(());
+        };
+
+        self.t
+            .send_and_flush(Message::RemoveBusListenerFilter(req))
+            .await?;
+
+        bus_listener.remove_filter(req.filter);
+        Ok(())
+    }
+
+    async fn req_clear_bus_listener_filters(
+        &mut self,
+        req: ClearBusListenerFilters,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
+            return Ok(());
+        };
+
+        self.t
+            .send_and_flush(Message::ClearBusListenerFilters(req))
+            .await?;
+
+        bus_listener.clear_filters();
+        Ok(())
+    }
+
+    async fn req_start_bus_listener(
+        &mut self,
+        req: StartBusListenerRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+        let scope = req.scope;
+        let serial = self.start_bus_listener.insert(req);
+        self.t
+            .send_and_flush(Message::StartBusListener(StartBusListener {
+                serial,
+                cookie,
+                scope,
+            }))
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn req_stop_bus_listener(
+        &mut self,
+        req: StopBusListenerRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let cookie = req.cookie;
+        let serial = self.stop_bus_listener.insert(req);
+        self.t
+            .send_and_flush(Message::StopBusListener(StopBusListener { serial, cookie }))
             .await
             .map_err(Into::into)
     }
