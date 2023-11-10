@@ -1359,6 +1359,12 @@ impl Broker {
             );
         }
 
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_bus_listeners_active += 1;
+            self.statistics.bus_listeners_started += 1;
+        }
+
         send!(
             self,
             conn,
@@ -1439,6 +1445,12 @@ impl Broker {
         }
 
         if bus_listener.stop() {
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.num_bus_listeners_active -= 1;
+                self.statistics.bus_listeners_stopped += 1;
+            }
+
             send!(
                 self,
                 conn,
@@ -1636,6 +1648,11 @@ impl Broker {
         {
             self.statistics.bus_listeners_destroyed += 1;
             self.statistics.num_bus_listeners -= 1;
+
+            if bus_listener.is_started() {
+                self.statistics.num_bus_listeners_active -= 1;
+                self.statistics.bus_listeners_stopped += 1;
+            }
         }
     }
 

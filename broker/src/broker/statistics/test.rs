@@ -1,4 +1,4 @@
-use aldrin_proto::{ObjectUuid, ServiceUuid};
+use aldrin_proto::{BusListenerScope, ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 
 #[tokio::test]
@@ -423,6 +423,55 @@ async fn create_and_destroy_bus_listeners() {
     assert_eq!(stats.num_bus_listeners, 0);
     assert_eq!(stats.bus_listeners_created, 0);
     assert_eq!(stats.bus_listeners_destroyed, 1);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn start_and_stop_bus_listeners() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let mut bus_listener1 = client.create_bus_listener().await.unwrap();
+    let mut bus_listener2 = client.create_bus_listener().await.unwrap();
+    broker.take_statistics().await.unwrap();
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_bus_listeners_active, 0);
+    assert_eq!(stats.bus_listeners_started, 0);
+    assert_eq!(stats.bus_listeners_stopped, 0);
+
+    // Start 2 bus listeners.
+    bus_listener1.start(BusListenerScope::All).await.unwrap();
+    bus_listener2.start(BusListenerScope::All).await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 4);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_bus_listeners_active, 2);
+    assert_eq!(stats.bus_listeners_started, 2);
+    assert_eq!(stats.bus_listeners_stopped, 0);
+
+    // Stop 1 bus listener.
+    bus_listener1.stop().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_bus_listeners_active, 1);
+    assert_eq!(stats.bus_listeners_started, 0);
+    assert_eq!(stats.bus_listeners_stopped, 1);
+
+    // Stop 1 bus listener.
+    bus_listener2.stop().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_bus_listeners_active, 0);
+    assert_eq!(stats.bus_listeners_started, 0);
+    assert_eq!(stats.bus_listeners_stopped, 1);
 
     client.join().await;
     broker.join().await;

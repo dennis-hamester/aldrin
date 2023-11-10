@@ -103,6 +103,15 @@ pub struct BrokerStatistics {
 
     /// The number of bus listeners destroyed.
     pub bus_listeners_destroyed: usize,
+
+    /// The number of bus listeners that are active / have been started.
+    pub num_bus_listeners_active: usize,
+
+    /// The number of bus listeners started.
+    pub bus_listeners_started: usize,
+
+    /// The number of bus listeners stopped.
+    pub bus_listeners_stopped: usize,
 }
 
 impl BrokerStatistics {
@@ -140,6 +149,9 @@ impl BrokerStatistics {
             num_bus_listeners: 0,
             bus_listeners_created: 0,
             bus_listeners_destroyed: 0,
+            num_bus_listeners_active: 0,
+            bus_listeners_started: 0,
+            bus_listeners_stopped: 0,
         }
     }
 
@@ -170,6 +182,8 @@ impl BrokerStatistics {
         self.items_dropped = 0;
         self.bus_listeners_created = 0;
         self.bus_listeners_destroyed = 0;
+        self.bus_listeners_started = 0;
+        self.bus_listeners_stopped = 0;
 
         res
     }

@@ -73,4 +73,9 @@ impl BusListener {
                 .copied()
                 .any(|filter| filter.matches_event(event))
     }
+
+    #[cfg(feature = "statistics")]
+    pub fn is_started(&self) -> bool {
+        self.scope.is_some()
+    }
 }
