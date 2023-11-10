@@ -382,3 +382,48 @@ async fn channels() {
     client2.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn create_and_destroy_bus_listeners() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.num_bus_listeners, 0);
+    assert_eq!(stats.bus_listeners_created, 0);
+    assert_eq!(stats.bus_listeners_destroyed, 0);
+
+    // Create 2 bus listeners.
+    let mut bus_listener1 = client.create_bus_listener().await.unwrap();
+    let mut bus_listener2 = client.create_bus_listener().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.num_bus_listeners, 2);
+    assert_eq!(stats.bus_listeners_created, 2);
+    assert_eq!(stats.bus_listeners_destroyed, 0);
+
+    // Destroy 1 bus listener.
+    bus_listener1.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_bus_listeners, 1);
+    assert_eq!(stats.bus_listeners_created, 0);
+    assert_eq!(stats.bus_listeners_destroyed, 1);
+
+    // Destroy 1 bus listener.
+    bus_listener2.destroy().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 1);
+    assert_eq!(stats.num_bus_listeners, 0);
+    assert_eq!(stats.bus_listeners_created, 0);
+    assert_eq!(stats.bus_listeners_destroyed, 1);
+
+    client.join().await;
+    broker.join().await;
+}

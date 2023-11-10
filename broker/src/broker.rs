@@ -1239,6 +1239,12 @@ impl Broker {
             })
         )?;
 
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.bus_listeners_created += 1;
+            self.statistics.num_bus_listeners += 1;
+        }
+
         conn.add_bus_listener(cookie);
         self.bus_listeners
             .insert(cookie, BusListener::new(id.clone()));
@@ -1624,6 +1630,12 @@ impl Broker {
 
         if let Some(conn) = self.conns.get_mut(bus_listener.conn_id()) {
             conn.remove_bus_listener(cookie);
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.bus_listeners_destroyed += 1;
+            self.statistics.num_bus_listeners -= 1;
         }
     }
 

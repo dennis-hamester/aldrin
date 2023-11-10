@@ -94,6 +94,15 @@ pub struct BrokerStatistics {
 
     /// The number of items dropped a channel.
     pub items_dropped: usize,
+
+    /// The number of bus listeners.
+    pub num_bus_listeners: usize,
+
+    /// The number of bus listeners created.
+    pub bus_listeners_created: usize,
+
+    /// The number of bus listeners destroyed.
+    pub bus_listeners_destroyed: usize,
 }
 
 impl BrokerStatistics {
@@ -128,6 +137,9 @@ impl BrokerStatistics {
             channels_closed: 0,
             items_sent: 0,
             items_dropped: 0,
+            num_bus_listeners: 0,
+            bus_listeners_created: 0,
+            bus_listeners_destroyed: 0,
         }
     }
 
@@ -156,6 +168,8 @@ impl BrokerStatistics {
         self.channels_closed = 0;
         self.items_sent = 0;
         self.items_dropped = 0;
+        self.bus_listeners_created = 0;
+        self.bus_listeners_destroyed = 0;
 
         res
     }
