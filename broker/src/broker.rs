@@ -1402,6 +1402,11 @@ impl Broker {
                             event: BusEvent::ObjectCreated(object),
                         })
                     )?;
+
+                    #[cfg(feature = "statistics")]
+                    {
+                        self.statistics.bus_events_sent += 1;
+                    }
                 }
             }
 
@@ -1417,6 +1422,11 @@ impl Broker {
                             event: BusEvent::ServiceCreated(service),
                         })
                     )?;
+
+                    #[cfg(feature = "statistics")]
+                    {
+                        self.statistics.bus_events_sent += 1;
+                    }
                 }
             }
 
@@ -1697,7 +1707,12 @@ impl Broker {
                 })
             );
 
-            if res.is_err() {
+            if res.is_ok() {
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.bus_events_sent += 1;
+                }
+            } else {
                 remove_conns.insert(conn_id);
             }
         }

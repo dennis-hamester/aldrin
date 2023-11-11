@@ -121,6 +121,13 @@ pub struct BrokerStatistics {
 
     /// The number of bus listener filters cleared.
     pub bus_listener_filters_cleared: usize,
+
+    /// The number of bus events sent.
+    ///
+    /// When interpreting this statistic, take note that bus events are sent only once per client,
+    /// not per bus listener that matches it. Clients then dispatch bus events to individual bus
+    /// listeners.
+    pub bus_events_sent: usize,
 }
 
 impl BrokerStatistics {
@@ -164,6 +171,7 @@ impl BrokerStatistics {
             bus_listener_filters_added: 0,
             bus_listener_filters_removed: 0,
             bus_listener_filters_cleared: 0,
+            bus_events_sent: 0,
         }
     }
 
@@ -199,6 +207,7 @@ impl BrokerStatistics {
         self.bus_listener_filters_added = 0;
         self.bus_listener_filters_removed = 0;
         self.bus_listener_filters_cleared = 0;
+        self.bus_events_sent = 0;
 
         res
     }

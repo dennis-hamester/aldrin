@@ -540,3 +540,57 @@ async fn bus_listener_filters() {
     client.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn bus_events() {
+    let mut broker = TestBroker::new();
+    let mut client1 = broker.add_client().await;
+    let mut client2 = broker.add_client().await;
+
+    let mut bus_listener1 = client1.create_bus_listener().await.unwrap();
+    let mut bus_listener2 = client2.create_bus_listener().await.unwrap();
+    let mut bus_listener3 = client2.create_bus_listener().await.unwrap();
+    broker.take_statistics().await.unwrap();
+
+    // Initial state.
+    let obj1 = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let obj2 = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    bus_listener1
+        .add_filter(BusListenerFilter::any_object())
+        .unwrap();
+    bus_listener1.start(BusListenerScope::All).await.unwrap();
+    bus_listener2
+        .add_filter(BusListenerFilter::object(obj2.id().uuid))
+        .unwrap();
+    bus_listener2.start(BusListenerScope::New).await.unwrap();
+    bus_listener3
+        .add_filter(BusListenerFilter::object(obj2.id().uuid))
+        .unwrap();
+    bus_listener3.start(BusListenerScope::New).await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 8);
+    assert_eq!(stats.messages_received, 8);
+    assert_eq!(stats.bus_events_sent, 2);
+
+    // Destroy obj1.
+    obj1.destroy().await.unwrap();
+    client1.sync_broker().await.unwrap();
+    client2.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 4);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.bus_events_sent, 1);
+
+    // Destroy obj2.
+    obj2.destroy().await.unwrap();
+    client1.sync_broker().await.unwrap();
+    client2.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 5);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.bus_events_sent, 2);
+
+    client1.join().await;
+    client2.join().await;
+    broker.join().await;
+}
