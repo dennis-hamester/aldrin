@@ -112,6 +112,15 @@ pub struct BrokerStatistics {
 
     /// The number of bus listeners stopped.
     pub bus_listeners_stopped: usize,
+
+    /// The number of bus listener filters added.
+    pub bus_listener_filters_added: usize,
+
+    /// The number of bus listener filters removed.
+    pub bus_listener_filters_removed: usize,
+
+    /// The number of bus listener filters cleared.
+    pub bus_listener_filters_cleared: usize,
 }
 
 impl BrokerStatistics {
@@ -152,6 +161,9 @@ impl BrokerStatistics {
             num_bus_listeners_active: 0,
             bus_listeners_started: 0,
             bus_listeners_stopped: 0,
+            bus_listener_filters_added: 0,
+            bus_listener_filters_removed: 0,
+            bus_listener_filters_cleared: 0,
         }
     }
 
@@ -184,6 +196,9 @@ impl BrokerStatistics {
         self.bus_listeners_destroyed = 0;
         self.bus_listeners_started = 0;
         self.bus_listeners_stopped = 0;
+        self.bus_listener_filters_added = 0;
+        self.bus_listener_filters_removed = 0;
+        self.bus_listener_filters_cleared = 0;
 
         res
     }

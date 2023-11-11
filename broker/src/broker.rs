@@ -1301,6 +1301,11 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.add_filter(req.filter);
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.bus_listener_filters_added += 1;
+                }
             }
         }
     }
@@ -1309,6 +1314,11 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.remove_filter(req.filter);
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.bus_listener_filters_removed += 1;
+                }
             }
         }
     }
@@ -1317,6 +1327,11 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.clear_filters();
+
+                #[cfg(feature = "statistics")]
+                {
+                    self.statistics.bus_listener_filters_cleared += 1;
+                }
             }
         }
     }

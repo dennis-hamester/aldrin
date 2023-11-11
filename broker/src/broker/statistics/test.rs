@@ -1,4 +1,4 @@
-use aldrin_proto::{BusListenerScope, ObjectUuid, ServiceUuid};
+use aldrin_proto::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
 use aldrin_test::tokio_based::TestBroker;
 
 #[tokio::test]
@@ -472,6 +472,70 @@ async fn start_and_stop_bus_listeners() {
     assert_eq!(stats.num_bus_listeners_active, 0);
     assert_eq!(stats.bus_listeners_started, 0);
     assert_eq!(stats.bus_listeners_stopped, 1);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn bus_listener_filters() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+    let uuid = ObjectUuid::new_v4();
+
+    let mut bus_listener = client.create_bus_listener().await.unwrap();
+    broker.take_statistics().await.unwrap();
+
+    // Initial state.
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 0);
+    assert_eq!(stats.messages_received, 0);
+    assert_eq!(stats.bus_listener_filters_added, 0);
+    assert_eq!(stats.bus_listener_filters_removed, 0);
+    assert_eq!(stats.bus_listener_filters_cleared, 0);
+
+    // Add 3 filters.
+    bus_listener
+        .add_filter(BusListenerFilter::any_object())
+        .unwrap();
+    bus_listener
+        .add_filter(BusListenerFilter::any_object_any_service())
+        .unwrap();
+    bus_listener
+        .add_filter(BusListenerFilter::object(uuid))
+        .unwrap();
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 4);
+    assert_eq!(stats.bus_listener_filters_added, 3);
+    assert_eq!(stats.bus_listener_filters_removed, 0);
+    assert_eq!(stats.bus_listener_filters_cleared, 0);
+
+    // Remove 2 filters.
+    bus_listener
+        .remove_filter(BusListenerFilter::any_object())
+        .unwrap();
+    bus_listener
+        .remove_filter(BusListenerFilter::any_object_any_service())
+        .unwrap();
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 3);
+    assert_eq!(stats.bus_listener_filters_added, 0);
+    assert_eq!(stats.bus_listener_filters_removed, 2);
+    assert_eq!(stats.bus_listener_filters_cleared, 0);
+
+    // Clear filters.
+    bus_listener.clear_filters().unwrap();
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.bus_listener_filters_added, 0);
+    assert_eq!(stats.bus_listener_filters_removed, 0);
+    assert_eq!(stats.bus_listener_filters_cleared, 1);
 
     client.join().await;
     broker.join().await;
