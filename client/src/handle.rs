@@ -4,6 +4,7 @@ use crate::bus_listener::BusListener;
 use crate::channel::{
     PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
 };
+use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Events, Object, Service};
@@ -820,6 +821,11 @@ impl Handle {
             StopBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
             StopBusListenerResult::NotStarted => Err(Error::BusListenerNotStarted),
         }
+    }
+
+    /// Create a new `DiscovererBuilder`.
+    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key> {
+        Discoverer::builder(self)
     }
 }
 

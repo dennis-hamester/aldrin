@@ -63,6 +63,7 @@
 mod bus_listener;
 mod channel;
 mod client;
+mod discoverer;
 mod error;
 mod events;
 mod handle;
@@ -84,6 +85,7 @@ pub use channel::{
     UnclaimedReceiver, UnclaimedSender,
 };
 pub use client::Client;
+pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEvent, DiscovererEventKind};
 pub use error::{
     ConnectError, Error, InvalidEventArguments, InvalidFunctionCall, InvalidFunctionResult,
     RunError,
