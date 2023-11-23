@@ -37,7 +37,6 @@ name = "aldrin-codegen"
 version = "0.1.0"
 dependencies = [
  "aldrin",
- "aldrin-core",
  "aldrin-parser",
  "aldrin-test",
  "diffy",

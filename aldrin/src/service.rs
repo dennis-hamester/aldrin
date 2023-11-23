@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod test;
 
+use crate::core::message::CallFunctionResult;
+use crate::core::{Serialize, SerializedValue, ServiceId};
 use crate::{Error, Handle};
-use aldrin_core::message::CallFunctionResult;
-use aldrin_core::{Serialize, SerializedValue, ServiceId};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
@@ -30,7 +30,7 @@ use std::task::{Context, Poll};
 ///
 /// ```
 /// use aldrin::Error;
-/// use aldrin_core::{ObjectUuid, ServiceUuid};
+/// use aldrin::core::{ObjectUuid, ServiceUuid};
 /// use std::mem;
 /// use uuid::uuid;
 ///
@@ -63,7 +63,7 @@ use std::task::{Context, Poll};
 /// service and how to emit events.
 ///
 /// ```
-/// use aldrin_core::{ObjectUuid, ServiceUuid};
+/// use aldrin::core::{ObjectUuid, ServiceUuid};
 /// use std::collections::HashSet;
 /// use uuid::uuid;
 ///

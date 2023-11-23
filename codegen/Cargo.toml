@@ -32,10 +32,6 @@ version = "0.1.0"
 path = "../aldrin"
 features = ["codegen"]
 
-[dev-dependencies.aldrin-core]
-version = "0.1.0"
-path = "../core"
-
 [dev-dependencies.aldrin-test]
 version = "0.1.0"
 path = "../test"

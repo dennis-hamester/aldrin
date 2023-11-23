@@ -3,17 +3,17 @@ use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
 };
-use crate::events::{EventsId, EventsRequest};
-use crate::{Error, Object, Service};
-use aldrin_core::message::{
+use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
     RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
-use aldrin_core::{
+use crate::core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
     ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
+use crate::events::{EventsId, EventsRequest};
+use crate::{Error, Object, Service};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
 

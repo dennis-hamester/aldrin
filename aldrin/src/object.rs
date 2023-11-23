@@ -1,5 +1,5 @@
 use super::{Error, Handle, Service};
-use aldrin_core::{ObjectId, ServiceUuid};
+use crate::core::{ObjectId, ServiceUuid};
 
 /// Owned object on the bus.
 ///
@@ -14,7 +14,7 @@ use aldrin_core::{ObjectId, ServiceUuid};
 /// # Examples
 ///
 /// ```
-/// use aldrin_core::ObjectUuid;
+/// use aldrin::core::ObjectUuid;
 /// use uuid::uuid;
 ///
 /// const OBJECT2_UUID: ObjectUuid = ObjectUuid(uuid!("6173e119-8066-4776-989b-145a5f16ed4c"));
@@ -75,7 +75,7 @@ impl Object {
     ///
     /// ```
     /// use aldrin::Error;
-    /// use aldrin_core::{ObjectUuid, ServiceUuid};
+    /// use aldrin::core::{ObjectUuid, ServiceUuid};
     /// use uuid::uuid;
     ///
     /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("800b47a1-3882-4601-9155-e18c654476cc"));

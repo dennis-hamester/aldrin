@@ -3,21 +3,7 @@ use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
 };
-use crate::error::{ConnectError, RunError};
-use crate::events::{EventsId, EventsRequest};
-use crate::handle::request::{
-    CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
-    CreateClaimedSenderRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
-    HandleRequest, QueryServiceVersionRequest, SendItemRequest, StartBusListenerRequest,
-    StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest,
-    UnsubscribeEventRequest,
-};
-use crate::serial_map::SerialMap;
-use crate::service::RawFunctionCall;
-use crate::{Error, Handle, Object, Service};
-use aldrin_core::message::{
+use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -32,11 +18,25 @@ use aldrin_core::message::{
     StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_core::{
+use crate::core::transport::{AsyncTransport, AsyncTransportExt};
+use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     Serialize, SerializedValue, ServiceCookie, ServiceId,
 };
+use crate::error::{ConnectError, RunError};
+use crate::events::{EventsId, EventsRequest};
+use crate::handle::request::{
+    CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
+    CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
+    CreateClaimedSenderRequest, CreateObjectRequest, CreateServiceRequest,
+    DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
+    HandleRequest, QueryServiceVersionRequest, SendItemRequest, StartBusListenerRequest,
+    StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest,
+    UnsubscribeEventRequest,
+};
+use crate::serial_map::SerialMap;
+use crate::service::RawFunctionCall;
+use crate::{Error, Handle, Object, Service};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
@@ -121,7 +121,7 @@ where
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin_core::channel::unbounded();
+    /// # let (async_transport, t2) = aldrin::core::channel::unbounded();
     /// # let conn = tokio::spawn(async move { handle.connect(t2).await });
     /// // Create an AsyncTransport for connecting to the broker.
     /// // let async_transport = ...
@@ -155,7 +155,7 @@ where
         mut t: T,
         data: &D,
     ) -> Result<(Self, SerializedValue), ConnectError<T::Error>> {
-        let connect = Connect::with_serialize_value(aldrin_core::VERSION, data)?;
+        let connect = Connect::with_serialize_value(crate::core::VERSION, data)?;
         t.send_and_flush(Message::Connect(connect))
             .await
             .map_err(ConnectError::Transport)?;
@@ -217,7 +217,7 @@ where
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin_core::channel::unbounded();
+    /// # let (async_transport, t2) = aldrin::core::channel::unbounded();
     /// # tokio::spawn(async move { handle.connect(t2).await });
     /// // Create an AsyncTransport for connecting to the broker.
     /// // let async_transport = ...

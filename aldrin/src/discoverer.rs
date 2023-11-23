@@ -2,12 +2,12 @@
 mod test;
 
 use crate::bus_listener::BusListener;
-use crate::error::Error;
-use crate::handle::Handle;
-use aldrin_core::{
+use crate::core::{
     BusEvent, BusListenerFilter, BusListenerScope, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid,
 };
+use crate::error::Error;
+use crate::handle::Handle;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::future;
 use std::mem;
@@ -58,7 +58,7 @@ use std::task::{Context, Poll};
 ///
 /// ```
 /// # use aldrin::{Discoverer, DiscovererEventKind};
-/// # use aldrin_core::{ObjectUuid, ServiceUuid};
+/// # use aldrin::core::{ObjectUuid, ServiceUuid};
 /// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;
 /// # #[tokio::main]

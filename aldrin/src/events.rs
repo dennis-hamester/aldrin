@@ -2,7 +2,7 @@
 mod test;
 
 use super::{Error, Handle};
-use aldrin_core::{SerializedValue, ServiceCookie, ServiceId};
+use crate::core::{SerializedValue, ServiceCookie, ServiceId};
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};
@@ -42,8 +42,8 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
-/// # let obj = handle.create_object(aldrin_core::ObjectUuid::new_v4()).await?;
-/// # let mut svc = obj.create_service(aldrin_core::ServiceUuid::new_v4(), 0).await?;
+/// # let obj = handle.create_object(aldrin::core::ObjectUuid::new_v4()).await?;
+/// # let mut svc = obj.create_service(aldrin::core::ServiceUuid::new_v4(), 0).await?;
 /// # let service_id = svc.id();
 /// let mut events = handle.events();
 ///

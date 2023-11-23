@@ -2,13 +2,13 @@
 mod test;
 
 use super::Handle;
-use crate::error::Error;
-#[cfg(feature = "sink")]
-use crate::handle::CloseChannelEndFuture;
-use aldrin_core::{
+use crate::core::{
     ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer, Serialize,
     SerializeError, SerializedValue, Serializer,
 };
+use crate::error::Error;
+#[cfg(feature = "sink")]
+use crate::handle::CloseChannelEndFuture;
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
 use std::future;

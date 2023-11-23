@@ -1,7 +1,7 @@
 //! Error types.
 
-use aldrin_core::message::Message;
-use aldrin_core::{
+use crate::core::message::Message;
+use crate::core::{
     DeserializeError, ObjectId, ObjectUuid, SerializeError, SerializedValue, ServiceId, ServiceUuid,
 };
 use std::error::Error as StdError;
@@ -13,7 +13,7 @@ pub enum ConnectError<T> {
     /// The Aldrin protocol version differs between client and broker.
     ///
     /// The contained version is that of the broker. The version of the client is
-    /// [`aldrin_core::VERSION`].
+    /// [`crate::core::VERSION`].
     VersionMismatch(u32),
 
     /// An unexpected message was received.
