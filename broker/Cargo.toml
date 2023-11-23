@@ -38,10 +38,6 @@ features = ["sink"]
 [dev-dependencies]
 anyhow = "1.0.32"
 
-[dev-dependencies.aldrin-channel]
-version = "0.1.0"
-path = "../channel"
-
 [dev-dependencies.aldrin-client]
 version = "0.1.0"
 path = "../client"
@@ -49,7 +45,10 @@ path = "../client"
 [dev-dependencies.aldrin-proto]
 version = "0.1.0"
 path = "../proto"
-features = ["tokio"]
+features = [
+    "channel",
+    "tokio",
+]
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"

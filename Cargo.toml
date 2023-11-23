@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "broker",
-    "channel",
     "client",
     "codegen",
     "codegen-macros",

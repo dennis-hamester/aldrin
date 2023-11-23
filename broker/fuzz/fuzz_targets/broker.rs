@@ -7,7 +7,7 @@ mod serial_le;
 mod uuid_le;
 
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_channel::Unbounded;
+use aldrin_proto::channel::{self, Unbounded};
 use arbitrary::Arbitrary;
 use context::Context;
 use libfuzzer_sys::fuzz_target;
@@ -61,7 +61,7 @@ impl Fuzzer {
     }
 
     fn connect(&mut self) {
-        let (channel1, channel2) = aldrin_channel::unbounded();
+        let (channel1, channel2) = channel::unbounded();
 
         self.clients.push(Some(channel1));
 

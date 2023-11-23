@@ -48,9 +48,10 @@ version = "1.1.2"
 default-features = false
 features = ["v4"]
 
-[dev-dependencies.aldrin-channel]
+[dev-dependencies.aldrin-proto]
 version = "0.1.0"
-path = "../channel"
+path = "../proto"
+features = ["channel"]
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"

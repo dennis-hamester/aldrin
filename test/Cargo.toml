@@ -15,11 +15,6 @@ version = "0.1.0"
 path = "../broker"
 default-features = false
 
-[dependencies.aldrin-channel]
-version = "0.1.0"
-path = "../channel"
-default-features = false
-
 [dependencies.aldrin-client]
 version = "0.1.0"
 path = "../client"
@@ -29,6 +24,7 @@ default-features = false
 version = "0.1.0"
 path = "../proto"
 default-features = false
+features = ["channel"]
 
 [dependencies.futures-util]
 version = "0.3.21"

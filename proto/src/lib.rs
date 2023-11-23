@@ -17,6 +17,8 @@ mod value;
 mod value_deserializer;
 mod value_serializer;
 
+#[cfg(feature = "channel")]
+pub mod channel;
 pub mod message;
 #[cfg(feature = "tokio")]
 pub mod tokio;

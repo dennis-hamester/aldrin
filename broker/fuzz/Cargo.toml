@@ -16,12 +16,12 @@ libfuzzer-sys = "0.4.6"
 path = "../../broker"
 features = ["statistics"]
 
-[dependencies.aldrin-channel]
-path = "../../channel"
-
 [dependencies.aldrin-proto]
 path = "../../proto"
-features = ["fuzzing"]
+features = [
+    "channel",
+    "fuzzing",
+]
 
 [dependencies.arbitrary]
 version = "1.3.0"

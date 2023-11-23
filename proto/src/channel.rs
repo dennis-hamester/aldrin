@@ -1,4 +1,4 @@
-//! Channels-based Aldrin transports.
+//! Channels-based transports.
 //!
 //! Channels-based transports can be used to efficiently connect client and broker within the same
 //! process.
@@ -12,6 +12,7 @@
 //! ```
 //! use aldrin_broker::Broker;
 //! use aldrin_client::Client;
+//! use aldrin_proto::channel;
 //! use futures::future;
 //!
 //! #[tokio::main]
@@ -22,7 +23,7 @@
 //!     let broker_join = tokio::spawn(broker.run());
 //!
 //!     // Connect a client with the Bounded transport:
-//!     let (t1, t2) = aldrin_channel::bounded(16);
+//!     let (t1, t2) = channel::bounded(16);
 //!     let (connection1, client1) =
 //!         future::join(broker_handle.connect(t1), Client::connect(t2)).await;
 //!     let connection1 = connection1?;
@@ -32,7 +33,7 @@
 //!     let client1_join = tokio::spawn(client1.run());
 //!
 //!     // Connect a client with the Unbounded transport:
-//!     let (t1, t2) = aldrin_channel::unbounded();
+//!     let (t1, t2) = channel::unbounded();
 //!     let (connection2, client2) =
 //!         future::join(broker_handle.connect(t1), Client::connect(t2)).await;
 //!     let connection2 = connection2?;
@@ -53,12 +54,8 @@
 //! }
 //! ```
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rustdoc::broken_intra_doc_links)]
-
-use aldrin_proto::message::Message;
-use aldrin_proto::transport::AsyncTransport;
+use crate::message::Message;
+use crate::transport::AsyncTransport;
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
 use std::error::Error;

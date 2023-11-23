@@ -1,6 +1,6 @@
 use crate::{Broker, BrokerHandle};
-use aldrin_channel::Unbounded;
 use aldrin_client::Client;
+use aldrin_proto::channel::{self, Unbounded};
 use aldrin_proto::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
@@ -46,7 +46,7 @@ async fn drop_conn_before_function_call() {
 
     // Setup client1 manually, such that we can drop its connection future (conn1_fut) at the right
     // moment.
-    let (t1, t2) = aldrin_channel::unbounded();
+    let (t1, t2) = channel::unbounded();
     let client1_fut = Client::connect(t1);
     let conn1_fut = broker.connect(t2);
     let (client1_fut, conn1_fut) = future::join(client1_fut, conn1_fut).await;
@@ -92,7 +92,7 @@ async fn begin_connect_accept() {
     let mut handle = broker.handle().clone();
     let join = tokio::spawn(broker.run());
 
-    let (mut t1, t2) = aldrin_channel::unbounded();
+    let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
         Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
@@ -120,7 +120,7 @@ async fn begin_connect_reject() {
     let mut handle = broker.handle().clone();
     let join = tokio::spawn(broker.run());
 
-    let (mut t1, t2) = aldrin_channel::unbounded();
+    let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
         Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
@@ -178,7 +178,7 @@ async fn wrong_client_replies_function_call() {
     tokio::spawn(broker.run());
 
     async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-        let (mut t1, t2) = aldrin_channel::unbounded();
+        let (mut t1, t2) = channel::unbounded();
 
         t1.send(
             Connect::with_serialize_value(aldrin_proto::VERSION, &())
@@ -293,7 +293,7 @@ async fn send_item_without_capacity() {
     tokio::spawn(broker.run());
 
     async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-        let (mut t1, t2) = aldrin_channel::unbounded();
+        let (mut t1, t2) = channel::unbounded();
 
         t1.send(
             Connect::with_serialize_value(aldrin_proto::VERSION, &())

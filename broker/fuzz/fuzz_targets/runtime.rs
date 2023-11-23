@@ -1,4 +1,4 @@
-use aldrin_channel::Unbounded;
+use aldrin_proto::channel::Unbounded;
 use aldrin_proto::message::Message as ProtoMessage;
 use aldrin_proto::transport::AsyncTransport;
 use std::future::Future;
