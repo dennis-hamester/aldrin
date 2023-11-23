@@ -19,12 +19,12 @@ path = "../parser"
 default-features = false
 
 [dependencies.anyhow]
-version = "1.0.32"
+version = "1.0.75"
 default-features = false
 features = ["std"]
 
 [dependencies.clap]
-version = "4.2.4"
+version = "4.4.8"
 default-features = false
 features = [
     "color",
@@ -38,10 +38,10 @@ features = [
 ]
 
 [dependencies.once_cell]
-version = "1.4.0"
+version = "1.18.0"
 default-features = false
 features = ["std"]
 
 [dependencies.termcolor]
-version = "1.1.0"
+version = "1.4.0"
 default-features = false

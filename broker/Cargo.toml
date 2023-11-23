@@ -21,7 +21,7 @@ default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.futures-channel]
-version = "0.3.21"
+version = "0.3.29"
 default-features = false
 features = [
     "sink",
@@ -29,16 +29,16 @@ features = [
 ]
 
 [dependencies.futures-core]
-version = "0.3.21"
+version = "0.3.29"
 default-features = false
 
 [dependencies.futures-util]
-version = "0.3.21"
+version = "0.3.29"
 default-features = false
 features = ["sink"]
 
 [dev-dependencies]
-anyhow = "1.0.32"
+anyhow = "1.0.75"
 
 [dev-dependencies.aldrin]
 version = "0.1.0"
@@ -58,7 +58,7 @@ path = "../test"
 features = ["tokio"]
 
 [dev-dependencies.tokio]
-version = "1.27.0"
+version = "1.34.0"
 features = [
     "macros",
     "net",

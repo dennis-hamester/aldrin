@@ -10,8 +10,8 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-bytes = "1.3.0"
-libfuzzer-sys = "0.4.5"
+bytes = "1.5.0"
+libfuzzer-sys = "0.4.7"
 
 [dependencies.aldrin-core]
 path = ".."

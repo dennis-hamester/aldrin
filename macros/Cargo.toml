@@ -22,7 +22,7 @@ path = "../parser"
 default-features = false
 
 [dependencies.proc-macro-error]
-version = "1.0.3"
+version = "1.0.4"
 default-features = false
 
 [dependencies.proc-macro2]
@@ -30,7 +30,7 @@ version = "1.0.69"
 default-features = false
 
 [dependencies.syn]
-version = "2.0.10"
+version = "2.0.39"
 default-features = false
 features = [
     "parsing",

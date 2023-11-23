@@ -10,7 +10,7 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.4.6"
+libfuzzer-sys = "0.4.7"
 
 [dependencies.aldrin-broker]
 path = "../../broker"
@@ -24,11 +24,11 @@ path = "../../core"
 features = ["fuzzing"]
 
 [dependencies.arbitrary]
-version = "1.3.0"
+version = "1.3.2"
 features = ["derive"]
 
 [dependencies.uuid]
-version = "1.3.0"
+version = "1.6.1"
 features = ["arbitrary"]
 
 [profile.release]

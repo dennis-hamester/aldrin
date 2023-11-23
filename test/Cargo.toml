@@ -27,17 +27,17 @@ default-features = false
 features = ["channel"]
 
 [dependencies.futures-util]
-version = "0.3.21"
+version = "0.3.29"
 default-features = false
 
 [dependencies.tokio]
 optional = true
-version = "1.27.0"
+version = "1.34.0"
 default-features = false
 features = ["rt"]
 
 [dev-dependencies]
-anyhow = "1.0.32"
+anyhow = "1.0.75"
 
 [dev-dependencies.aldrin]
 version = "0.1.0"
@@ -45,11 +45,11 @@ path = "../aldrin"
 features = ["codegen"]
 
 [dev-dependencies.futures]
-version = "0.3.21"
+version = "0.3.29"
 default-features = false
 
 [dev-dependencies.tokio]
-version = "1.27.0"
+version = "1.34.0"
 features = [
     "macros",
     "rt-multi-thread",
