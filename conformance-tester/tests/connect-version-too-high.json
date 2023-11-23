@@ -16,14 +16,14 @@
         {
             "type": "send",
             "message": "connect",
-            "version": 14,
+            "version": 15,
             "value-type": "none"
         },
         {
             "type": "receive",
             "message": "connect-reply",
             "result": "version-mismatch",
-            "version": 13
+            "version": 14
         }
     ]
 }
