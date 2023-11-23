@@ -67,12 +67,10 @@ default-features = false
 features = ["v4"]
 
 [dev-dependencies.aldrin-core]
-version = "0.1.0"
 path = "../core"
 features = ["channel"]
 
 [dev-dependencies.aldrin-test]
-version = "0.1.0"
 path = "../test"
 features = ["tokio"]
 

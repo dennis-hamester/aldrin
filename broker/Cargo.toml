@@ -58,11 +58,9 @@ features = ["sink"]
 anyhow = "1.0.75"
 
 [dev-dependencies.aldrin]
-version = "0.1.0"
 path = "../aldrin"
 
 [dev-dependencies.aldrin-core]
-version = "0.1.0"
 path = "../core"
 features = [
     "channel",
@@ -70,7 +68,6 @@ features = [
 ]
 
 [dev-dependencies.aldrin-test]
-version = "0.1.0"
 path = "../test"
 features = ["tokio"]
 

@@ -45,12 +45,10 @@ default-features = false
 uuid = "1.6.1"
 
 [dev-dependencies.aldrin]
-version = "0.1.0"
 path = "../aldrin"
 features = ["codegen"]
 
 [dev-dependencies.aldrin-test]
-version = "0.1.0"
 path = "../test"
 features = ["tokio"]
 

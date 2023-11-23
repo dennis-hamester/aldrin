@@ -78,11 +78,9 @@ version = "1.6.1"
 default-features = false
 
 [dev-dependencies.aldrin]
-version = "0.1.0"
 path = "../aldrin"
 
 [dev-dependencies.aldrin-broker]
-version = "0.1.0"
 path = "../broker"
 
 [dev-dependencies.futures]
