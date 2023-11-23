@@ -6,8 +6,8 @@ mod runtime;
 mod serial_le;
 mod uuid_le;
 
+use aldrin_broker::core::channel::{self, Unbounded};
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_core::channel::{self, Unbounded};
 use arbitrary::Arbitrary;
 use context::Context;
 use libfuzzer_sys::fuzz_target;

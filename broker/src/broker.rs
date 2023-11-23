@@ -13,8 +13,7 @@ mod test;
 use crate::bus_listener::BusListener;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
-use crate::serial_map::SerialMap;
-use aldrin_core::message::{
+use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -29,11 +28,12 @@ use aldrin_core::message::{
     StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_core::{
+use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid,
 };
+use crate::serial_map::SerialMap;
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};

@@ -1,5 +1,5 @@
-use aldrin_core::message::Message;
-use aldrin_core::SerializeError;
+use crate::core::message::Message;
+use crate::core::SerializeError;
 use std::error::Error;
 use std::fmt;
 

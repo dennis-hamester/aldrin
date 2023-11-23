@@ -1,4 +1,4 @@
-use aldrin_core::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+use crate::core::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]

@@ -20,7 +20,7 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
-//! use aldrin_core::tokio::TokioTransport;
+//! use aldrin_broker::core::tokio::TokioTransport;
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;
@@ -59,6 +59,7 @@ mod conn;
 mod conn_id;
 mod serial_map;
 
+pub use aldrin_core as core;
 #[cfg(feature = "statistics")]
 pub use broker::BrokerStatistics;
 pub use broker::{Broker, BrokerHandle, BrokerShutdown, PendingConnection};

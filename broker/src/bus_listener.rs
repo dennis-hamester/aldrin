@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
+use crate::core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
 use std::collections::HashSet;
 
 #[derive(Debug)]

@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
-use aldrin_core::message::{
+use aldrin_broker::core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -16,7 +16,7 @@ use aldrin_core::message::{
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_core::{
+use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
     ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid,

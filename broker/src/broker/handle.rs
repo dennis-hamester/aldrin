@@ -3,9 +3,9 @@ use super::BrokerShutdown;
 use super::BrokerStatistics;
 use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
 use crate::conn_id::ConnectionIdManager;
-use aldrin_core::message::{ConnectReply, Message};
-use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_core::{Deserialize, DeserializeError, Serialize, SerializedValue};
+use crate::core::message::{ConnectReply, Message};
+use crate::core::transport::{AsyncTransport, AsyncTransportExt};
+use crate::core::{Deserialize, DeserializeError, Serialize, SerializedValue};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -54,7 +54,7 @@ impl BrokerHandle {
     /// // let t = ...
     ///
     /// # let mut broker_handle = TestBroker::new();
-    /// # let (t, t2) = aldrin_core::channel::unbounded();
+    /// # let (t, t2) = aldrin_broker::core::channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin::Client::connect(t2));
     /// // Establish a connection to the client:
     /// let connection = broker_handle.connect(t).await?;
@@ -93,9 +93,9 @@ impl BrokerHandle {
             msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
         };
 
-        if connect.version != aldrin_core::VERSION {
+        if connect.version != crate::core::VERSION {
             t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
-                aldrin_core::VERSION,
+                crate::core::VERSION,
             )))
             .await
             .ok();
@@ -184,7 +184,7 @@ impl BrokerHandle {
     /// // let t = ...
     ///
     /// # let mut broker_handle = TestBroker::new();
-    /// # let (t, t2) = aldrin_core::channel::unbounded();
+    /// # let (t, t2) = aldrin_broker::core::channel::unbounded();
     /// # let client_join = tokio::spawn(aldrin::Client::connect(t2));
     /// // Establish a connection to the client:
     /// let connection = broker_handle.connect(t).await?;

@@ -10,7 +10,9 @@ edition = "2021"
 rust-version = "1.70.0"
 
 [features]
+channel = ["aldrin-core/channel"]
 statistics = []
+tokio = ["aldrin-core/tokio"]
 
 [dependencies.aldrin-core]
 version = "0.1.0"
