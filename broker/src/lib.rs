@@ -20,7 +20,7 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
-//! use aldrin_proto::tokio::TokioTransport;
+//! use aldrin_core::tokio::TokioTransport;
 //! use anyhow::Result;
 //! use std::net::Ipv4Addr;
 //! use tokio::net::TcpListener;

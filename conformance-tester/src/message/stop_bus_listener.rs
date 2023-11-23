@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,7 @@ pub struct StopBusListener {
 }
 
 impl StopBusListener {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::StopBusListener> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::StopBusListener> {
         let serial = self.serial.get(ctx)?;
         let cookie = self.cookie.get(ctx)?.into();
 

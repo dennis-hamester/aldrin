@@ -1,7 +1,7 @@
 use super::bus_listener_filter::BusListenerFilter;
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,9 +15,9 @@ pub struct RemoveBusListenerFilter {
 }
 
 impl RemoveBusListenerFilter {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::RemoveBusListenerFilter> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::RemoveBusListenerFilter> {
         let cookie = self.cookie.get(ctx)?.into();
-        let filter = self.filter.to_proto(ctx)?;
+        let filter = self.filter.to_core(ctx)?;
 
         Ok(message::RemoveBusListenerFilter { cookie, filter })
     }

@@ -1,4 +1,4 @@
-use aldrin_proto::{DeserializeError, SerializeError, ValueKind};
+use aldrin_core::{DeserializeError, SerializeError, ValueKind};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "value-type", content = "value")]
@@ -25,8 +25,8 @@ impl Value {
     }
 }
 
-impl aldrin_proto::Serialize for Value {
-    fn serialize(&self, serializer: aldrin_proto::Serializer) -> Result<(), SerializeError> {
+impl aldrin_core::Serialize for Value {
+    fn serialize(&self, serializer: aldrin_core::Serializer) -> Result<(), SerializeError> {
         match self {
             Self::None | Self::Ignore => serializer.serialize_none(),
             Self::I32(value) => serializer.serialize_i32(*value),
@@ -37,8 +37,8 @@ impl aldrin_proto::Serialize for Value {
     }
 }
 
-impl aldrin_proto::Deserialize for Value {
-    fn deserialize(deserializer: aldrin_proto::Deserializer) -> Result<Self, DeserializeError> {
+impl aldrin_core::Deserialize for Value {
+    fn deserialize(deserializer: aldrin_core::Deserializer) -> Result<Self, DeserializeError> {
         match deserializer.peek_value_kind()? {
             ValueKind::None => deserializer.deserialize_none().map(|_| Self::None),
             ValueKind::I32 => deserializer.deserialize_i32().map(Self::I32),

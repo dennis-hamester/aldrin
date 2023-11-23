@@ -16,8 +16,8 @@ libfuzzer-sys = "0.4.6"
 path = "../../broker"
 features = ["statistics"]
 
-[dependencies.aldrin-proto]
-path = "../../proto"
+[dependencies.aldrin-core]
+path = "../../core"
 features = [
     "channel",
     "fuzzing",

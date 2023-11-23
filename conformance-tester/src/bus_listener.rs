@@ -8,17 +8,17 @@ pub enum BusListenerScope {
     All,
 }
 
-impl From<aldrin_proto::BusListenerScope> for BusListenerScope {
-    fn from(scope: aldrin_proto::BusListenerScope) -> Self {
+impl From<aldrin_core::BusListenerScope> for BusListenerScope {
+    fn from(scope: aldrin_core::BusListenerScope) -> Self {
         match scope {
-            aldrin_proto::BusListenerScope::Current => Self::Current,
-            aldrin_proto::BusListenerScope::New => Self::New,
-            aldrin_proto::BusListenerScope::All => Self::All,
+            aldrin_core::BusListenerScope::Current => Self::Current,
+            aldrin_core::BusListenerScope::New => Self::New,
+            aldrin_core::BusListenerScope::All => Self::All,
         }
     }
 }
 
-impl From<BusListenerScope> for aldrin_proto::BusListenerScope {
+impl From<BusListenerScope> for aldrin_core::BusListenerScope {
     fn from(scope: BusListenerScope) -> Self {
         match scope {
             BusListenerScope::Current => Self::Current,

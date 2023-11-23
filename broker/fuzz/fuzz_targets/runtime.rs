@@ -1,6 +1,6 @@
-use aldrin_proto::channel::Unbounded;
-use aldrin_proto::message::Message as ProtoMessage;
-use aldrin_proto::transport::AsyncTransport;
+use aldrin_core::channel::Unbounded;
+use aldrin_core::message::Message as ProtoMessage;
+use aldrin_core::transport::AsyncTransport;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};

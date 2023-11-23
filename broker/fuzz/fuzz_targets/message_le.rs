@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
-use aldrin_proto::message::{
+use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -16,7 +16,7 @@ use aldrin_proto::message::{
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_proto::{
+use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
     ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid,
@@ -74,54 +74,54 @@ pub enum MessageLe {
 }
 
 impl MessageLe {
-    pub fn to_proto(&self, ctx: &Context) -> ProtoMessage {
+    pub fn to_core(&self, ctx: &Context) -> ProtoMessage {
         match self {
-            Self::Connect(msg) => msg.to_proto(ctx).into(),
-            Self::ConnectReply(msg) => msg.to_proto(ctx).into(),
-            Self::Shutdown(msg) => msg.to_proto(ctx).into(),
-            Self::CreateObject(msg) => msg.to_proto(ctx).into(),
-            Self::CreateObjectReply(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyObject(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyObjectReply(msg) => msg.to_proto(ctx).into(),
-            Self::CreateService(msg) => msg.to_proto(ctx).into(),
-            Self::CreateServiceReply(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyService(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyServiceReply(msg) => msg.to_proto(ctx).into(),
-            Self::CallFunction(msg) => msg.to_proto(ctx).into(),
-            Self::CallFunctionReply(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeEvent(msg) => msg.to_proto(ctx).into(),
-            Self::SubscribeEventReply(msg) => msg.to_proto(ctx).into(),
-            Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).into(),
-            Self::EmitEvent(msg) => msg.to_proto(ctx).into(),
-            Self::QueryServiceVersion(msg) => msg.to_proto(ctx).into(),
-            Self::QueryServiceVersionReply(msg) => msg.to_proto(ctx).into(),
-            Self::CreateChannel(msg) => msg.to_proto(ctx).into(),
-            Self::CreateChannelReply(msg) => msg.to_proto(ctx).into(),
-            Self::CloseChannelEnd(msg) => msg.to_proto(ctx).into(),
-            Self::CloseChannelEndReply(msg) => msg.to_proto(ctx).into(),
-            Self::ChannelEndClosed(msg) => msg.to_proto(ctx).into(),
-            Self::ClaimChannelEnd(msg) => msg.to_proto(ctx).into(),
-            Self::ClaimChannelEndReply(msg) => msg.to_proto(ctx).into(),
-            Self::ChannelEndClaimed(msg) => msg.to_proto(ctx).into(),
-            Self::SendItem(msg) => msg.to_proto(ctx).into(),
-            Self::ItemReceived(msg) => msg.to_proto(ctx).into(),
-            Self::AddChannelCapacity(msg) => msg.to_proto(ctx).into(),
-            Self::Sync(msg) => msg.to_proto(ctx).into(),
-            Self::SyncReply(msg) => msg.to_proto(ctx).into(),
-            Self::ServiceDestroyed(msg) => msg.to_proto(ctx).into(),
-            Self::CreateBusListener(msg) => msg.to_proto(ctx).into(),
-            Self::CreateBusListenerReply(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyBusListener(msg) => msg.to_proto(ctx).into(),
-            Self::DestroyBusListenerReply(msg) => msg.to_proto(ctx).into(),
-            Self::AddBusListenerFilter(msg) => msg.to_proto(ctx).into(),
-            Self::RemoveBusListenerFilter(msg) => msg.to_proto(ctx).into(),
-            Self::ClearBusListenerFilters(msg) => msg.to_proto(ctx).into(),
-            Self::StartBusListener(msg) => msg.to_proto(ctx).into(),
-            Self::StartBusListenerReply(msg) => msg.to_proto(ctx).into(),
-            Self::StopBusListener(msg) => msg.to_proto(ctx).into(),
-            Self::StopBusListenerReply(msg) => msg.to_proto(ctx).into(),
-            Self::EmitBusEvent(msg) => msg.to_proto(ctx).into(),
-            Self::BusListenerCurrentFinished(msg) => msg.to_proto(ctx).into(),
+            Self::Connect(msg) => msg.to_core(ctx).into(),
+            Self::ConnectReply(msg) => msg.to_core(ctx).into(),
+            Self::Shutdown(msg) => msg.to_core(ctx).into(),
+            Self::CreateObject(msg) => msg.to_core(ctx).into(),
+            Self::CreateObjectReply(msg) => msg.to_core(ctx).into(),
+            Self::DestroyObject(msg) => msg.to_core(ctx).into(),
+            Self::DestroyObjectReply(msg) => msg.to_core(ctx).into(),
+            Self::CreateService(msg) => msg.to_core(ctx).into(),
+            Self::CreateServiceReply(msg) => msg.to_core(ctx).into(),
+            Self::DestroyService(msg) => msg.to_core(ctx).into(),
+            Self::DestroyServiceReply(msg) => msg.to_core(ctx).into(),
+            Self::CallFunction(msg) => msg.to_core(ctx).into(),
+            Self::CallFunctionReply(msg) => msg.to_core(ctx).into(),
+            Self::SubscribeEvent(msg) => msg.to_core(ctx).into(),
+            Self::SubscribeEventReply(msg) => msg.to_core(ctx).into(),
+            Self::UnsubscribeEvent(msg) => msg.to_core(ctx).into(),
+            Self::EmitEvent(msg) => msg.to_core(ctx).into(),
+            Self::QueryServiceVersion(msg) => msg.to_core(ctx).into(),
+            Self::QueryServiceVersionReply(msg) => msg.to_core(ctx).into(),
+            Self::CreateChannel(msg) => msg.to_core(ctx).into(),
+            Self::CreateChannelReply(msg) => msg.to_core(ctx).into(),
+            Self::CloseChannelEnd(msg) => msg.to_core(ctx).into(),
+            Self::CloseChannelEndReply(msg) => msg.to_core(ctx).into(),
+            Self::ChannelEndClosed(msg) => msg.to_core(ctx).into(),
+            Self::ClaimChannelEnd(msg) => msg.to_core(ctx).into(),
+            Self::ClaimChannelEndReply(msg) => msg.to_core(ctx).into(),
+            Self::ChannelEndClaimed(msg) => msg.to_core(ctx).into(),
+            Self::SendItem(msg) => msg.to_core(ctx).into(),
+            Self::ItemReceived(msg) => msg.to_core(ctx).into(),
+            Self::AddChannelCapacity(msg) => msg.to_core(ctx).into(),
+            Self::Sync(msg) => msg.to_core(ctx).into(),
+            Self::SyncReply(msg) => msg.to_core(ctx).into(),
+            Self::ServiceDestroyed(msg) => msg.to_core(ctx).into(),
+            Self::CreateBusListener(msg) => msg.to_core(ctx).into(),
+            Self::CreateBusListenerReply(msg) => msg.to_core(ctx).into(),
+            Self::DestroyBusListener(msg) => msg.to_core(ctx).into(),
+            Self::DestroyBusListenerReply(msg) => msg.to_core(ctx).into(),
+            Self::AddBusListenerFilter(msg) => msg.to_core(ctx).into(),
+            Self::RemoveBusListenerFilter(msg) => msg.to_core(ctx).into(),
+            Self::ClearBusListenerFilters(msg) => msg.to_core(ctx).into(),
+            Self::StartBusListener(msg) => msg.to_core(ctx).into(),
+            Self::StartBusListenerReply(msg) => msg.to_core(ctx).into(),
+            Self::StopBusListener(msg) => msg.to_core(ctx).into(),
+            Self::StopBusListenerReply(msg) => msg.to_core(ctx).into(),
+            Self::EmitBusEvent(msg) => msg.to_core(ctx).into(),
+            Self::BusListenerCurrentFinished(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -189,7 +189,7 @@ pub struct ConnectLe {
 }
 
 impl ConnectLe {
-    pub fn to_proto(&self, _ctx: &Context) -> Connect {
+    pub fn to_core(&self, _ctx: &Context) -> Connect {
         Connect::with_serialize_value(self.version as u32, &()).unwrap()
     }
 }
@@ -206,7 +206,7 @@ pub enum ConnectReplyLe {
 }
 
 impl ConnectReplyLe {
-    pub fn to_proto(&self, _ctx: &Context) -> ConnectReply {
+    pub fn to_core(&self, _ctx: &Context) -> ConnectReply {
         match self {
             Self::Ok => ConnectReply::ok_with_serialize_value(&()).unwrap(),
             Self::VersionMismatch(version) => ConnectReply::VersionMismatch(*version as u32),
@@ -223,7 +223,7 @@ impl UpdateContext for ConnectReply {
 pub struct ShutdownLe;
 
 impl ShutdownLe {
-    pub fn to_proto(&self, _ctx: &Context) -> Shutdown {
+    pub fn to_core(&self, _ctx: &Context) -> Shutdown {
         Shutdown
     }
 }
@@ -239,7 +239,7 @@ pub struct CreateObjectLe {
 }
 
 impl CreateObjectLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateObject {
+    pub fn to_core(&self, ctx: &Context) -> CreateObject {
         CreateObject {
             serial: self.serial.get(ctx),
             uuid: ObjectUuid(self.uuid.get(ctx)),
@@ -261,7 +261,7 @@ pub enum CreateObjectResultLe {
 }
 
 impl CreateObjectResultLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateObjectResult {
+    pub fn to_core(&self, ctx: &Context) -> CreateObjectResult {
         match self {
             Self::Ok(uuid) => CreateObjectResult::Ok(ObjectCookie(uuid.get(ctx))),
             Self::DuplicateObject => CreateObjectResult::DuplicateObject,
@@ -284,10 +284,10 @@ pub struct CreateObjectReplyLe {
 }
 
 impl CreateObjectReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateObjectReply {
+    pub fn to_core(&self, ctx: &Context) -> CreateObjectReply {
         CreateObjectReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -306,7 +306,7 @@ pub struct DestroyObjectLe {
 }
 
 impl DestroyObjectLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyObject {
+    pub fn to_core(&self, ctx: &Context) -> DestroyObject {
         DestroyObject {
             serial: self.serial.get(ctx),
             cookie: ObjectCookie(self.cookie.get(ctx)),
@@ -329,7 +329,7 @@ pub enum DestroyObjectResultLe {
 }
 
 impl DestroyObjectResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> DestroyObjectResult {
+    pub fn to_core(&self, _ctx: &Context) -> DestroyObjectResult {
         match self {
             Self::Ok => DestroyObjectResult::Ok,
             Self::InvalidObject => DestroyObjectResult::InvalidObject,
@@ -349,10 +349,10 @@ pub struct DestroyObjectReplyLe {
 }
 
 impl DestroyObjectReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyObjectReply {
+    pub fn to_core(&self, ctx: &Context) -> DestroyObjectReply {
         DestroyObjectReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -373,7 +373,7 @@ pub struct CreateServiceLe {
 }
 
 impl CreateServiceLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateService {
+    pub fn to_core(&self, ctx: &Context) -> CreateService {
         CreateService {
             serial: self.serial.get(ctx),
             object_cookie: ObjectCookie(self.object_cookie.get(ctx)),
@@ -400,7 +400,7 @@ pub enum CreateServiceResultLe {
 }
 
 impl CreateServiceResultLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateServiceResult {
+    pub fn to_core(&self, ctx: &Context) -> CreateServiceResult {
         match self {
             Self::Ok(uuid) => CreateServiceResult::Ok(ServiceCookie(uuid.get(ctx))),
             Self::DuplicateService => CreateServiceResult::DuplicateService,
@@ -425,10 +425,10 @@ pub struct CreateServiceReplyLe {
 }
 
 impl CreateServiceReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateServiceReply {
+    pub fn to_core(&self, ctx: &Context) -> CreateServiceReply {
         CreateServiceReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -447,7 +447,7 @@ pub struct DestroyServiceLe {
 }
 
 impl DestroyServiceLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyService {
+    pub fn to_core(&self, ctx: &Context) -> DestroyService {
         DestroyService {
             serial: self.serial.get(ctx),
             cookie: ServiceCookie(self.cookie.get(ctx)),
@@ -470,7 +470,7 @@ pub enum DestroyServiceResultLe {
 }
 
 impl DestroyServiceResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> DestroyServiceResult {
+    pub fn to_core(&self, _ctx: &Context) -> DestroyServiceResult {
         match self {
             Self::Ok => DestroyServiceResult::Ok,
             Self::InvalidService => DestroyServiceResult::InvalidService,
@@ -490,10 +490,10 @@ pub struct DestroyServiceReplyLe {
 }
 
 impl DestroyServiceReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyServiceReply {
+    pub fn to_core(&self, ctx: &Context) -> DestroyServiceReply {
         DestroyServiceReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -513,7 +513,7 @@ pub struct CallFunctionLe {
 }
 
 impl CallFunctionLe {
-    pub fn to_proto(&self, ctx: &Context) -> CallFunction {
+    pub fn to_core(&self, ctx: &Context) -> CallFunction {
         CallFunction::with_serialize_value(
             self.serial.get(ctx),
             ServiceCookie(self.service_cookie.get(ctx)),
@@ -542,7 +542,7 @@ pub enum CallFunctionResultLe {
 }
 
 impl CallFunctionResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> CallFunctionResult {
+    pub fn to_core(&self, _ctx: &Context) -> CallFunctionResult {
         match self {
             Self::Ok => CallFunctionResult::ok_with_serialize_value(&()).unwrap(),
             Self::Err => CallFunctionResult::err_with_serialize_value(&()).unwrap(),
@@ -565,10 +565,10 @@ pub struct CallFunctionReplyLe {
 }
 
 impl CallFunctionReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CallFunctionReply {
+    pub fn to_core(&self, ctx: &Context) -> CallFunctionReply {
         CallFunctionReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -588,7 +588,7 @@ pub struct SubscribeEventLe {
 }
 
 impl SubscribeEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeEvent {
+    pub fn to_core(&self, ctx: &Context) -> SubscribeEvent {
         SubscribeEvent {
             serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
             service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
@@ -613,7 +613,7 @@ pub enum SubscribeEventResultLe {
 }
 
 impl SubscribeEventResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> SubscribeEventResult {
+    pub fn to_core(&self, _ctx: &Context) -> SubscribeEventResult {
         match self {
             Self::Ok => SubscribeEventResult::Ok,
             Self::InvalidService => SubscribeEventResult::InvalidService,
@@ -632,10 +632,10 @@ pub struct SubscribeEventReplyLe {
 }
 
 impl SubscribeEventReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> SubscribeEventReply {
+    pub fn to_core(&self, ctx: &Context) -> SubscribeEventReply {
         SubscribeEventReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -654,7 +654,7 @@ pub struct UnsubscribeEventLe {
 }
 
 impl UnsubscribeEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> UnsubscribeEvent {
+    pub fn to_core(&self, ctx: &Context) -> UnsubscribeEvent {
         UnsubscribeEvent {
             service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
             event: self.event as u32,
@@ -675,7 +675,7 @@ pub struct EmitEventLe {
 }
 
 impl EmitEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> EmitEvent {
+    pub fn to_core(&self, ctx: &Context) -> EmitEvent {
         EmitEvent::with_serialize_value(
             ServiceCookie(self.service_cookie.get(ctx)),
             self.event as u32,
@@ -698,7 +698,7 @@ pub struct QueryServiceVersionLe {
 }
 
 impl QueryServiceVersionLe {
-    pub fn to_proto(&self, ctx: &Context) -> QueryServiceVersion {
+    pub fn to_core(&self, ctx: &Context) -> QueryServiceVersion {
         QueryServiceVersion {
             serial: self.serial.get(ctx),
             cookie: ServiceCookie(self.cookie.get(ctx)),
@@ -720,7 +720,7 @@ pub enum QueryServiceVersionResultLe {
 }
 
 impl QueryServiceVersionResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> QueryServiceVersionResult {
+    pub fn to_core(&self, _ctx: &Context) -> QueryServiceVersionResult {
         match self {
             Self::Ok(version) => QueryServiceVersionResult::Ok(*version as u32),
             Self::InvalidService => QueryServiceVersionResult::InvalidService,
@@ -739,10 +739,10 @@ pub struct QueryServiceVersionReplyLe {
 }
 
 impl QueryServiceVersionReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> QueryServiceVersionReply {
+    pub fn to_core(&self, ctx: &Context) -> QueryServiceVersionReply {
         QueryServiceVersionReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -761,7 +761,7 @@ pub struct CreateChannelLe {
 }
 
 impl CreateChannelLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateChannel {
+    pub fn to_core(&self, ctx: &Context) -> CreateChannel {
         CreateChannel {
             serial: self.serial.get(ctx),
             end: self.end,
@@ -782,7 +782,7 @@ pub struct CreateChannelReplyLe {
 }
 
 impl CreateChannelReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateChannelReply {
+    pub fn to_core(&self, ctx: &Context) -> CreateChannelReply {
         CreateChannelReply {
             serial: self.serial.get(ctx),
             cookie: ChannelCookie(self.cookie.get(ctx)),
@@ -805,7 +805,7 @@ pub struct CloseChannelEndLe {
 }
 
 impl CloseChannelEndLe {
-    pub fn to_proto(&self, ctx: &Context) -> CloseChannelEnd {
+    pub fn to_core(&self, ctx: &Context) -> CloseChannelEnd {
         CloseChannelEnd {
             serial: self.serial.get(ctx),
             cookie: ChannelCookie(self.cookie.get(ctx)),
@@ -829,7 +829,7 @@ pub enum CloseChannelEndResultLe {
 }
 
 impl CloseChannelEndResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> CloseChannelEndResult {
+    pub fn to_core(&self, _ctx: &Context) -> CloseChannelEndResult {
         match self {
             Self::Ok => CloseChannelEndResult::Ok,
             Self::InvalidChannel => CloseChannelEndResult::InvalidChannel,
@@ -849,10 +849,10 @@ pub struct CloseChannelEndReplyLe {
 }
 
 impl CloseChannelEndReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CloseChannelEndReply {
+    pub fn to_core(&self, ctx: &Context) -> CloseChannelEndReply {
         CloseChannelEndReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -871,7 +871,7 @@ pub struct ChannelEndClosedLe {
 }
 
 impl ChannelEndClosedLe {
-    pub fn to_proto(&self, ctx: &Context) -> ChannelEndClosed {
+    pub fn to_core(&self, ctx: &Context) -> ChannelEndClosed {
         ChannelEndClosed {
             cookie: ChannelCookie(self.cookie.get(ctx)),
             end: self.end,
@@ -893,7 +893,7 @@ pub struct ClaimChannelEndLe {
 }
 
 impl ClaimChannelEndLe {
-    pub fn to_proto(&self, ctx: &Context) -> ClaimChannelEnd {
+    pub fn to_core(&self, ctx: &Context) -> ClaimChannelEnd {
         ClaimChannelEnd {
             serial: self.serial.get(ctx),
             cookie: ChannelCookie(self.cookie.get(ctx)),
@@ -918,7 +918,7 @@ pub enum ClaimChannelEndResultLe {
 }
 
 impl ClaimChannelEndResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> ClaimChannelEndResult {
+    pub fn to_core(&self, _ctx: &Context) -> ClaimChannelEndResult {
         match self {
             Self::SenderClaimed(capacity) => ClaimChannelEndResult::SenderClaimed(*capacity),
             Self::ReceiverClaimed => ClaimChannelEndResult::ReceiverClaimed,
@@ -939,10 +939,10 @@ pub struct ClaimChannelEndReplyLe {
 }
 
 impl ClaimChannelEndReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> ClaimChannelEndReply {
+    pub fn to_core(&self, ctx: &Context) -> ClaimChannelEndReply {
         ClaimChannelEndReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -961,7 +961,7 @@ pub struct ChannelEndClaimedLe {
 }
 
 impl ChannelEndClaimedLe {
-    pub fn to_proto(&self, ctx: &Context) -> ChannelEndClaimed {
+    pub fn to_core(&self, ctx: &Context) -> ChannelEndClaimed {
         ChannelEndClaimed {
             cookie: ChannelCookie(self.cookie.get(ctx)),
             end: self.end,
@@ -981,7 +981,7 @@ pub struct SendItemLe {
 }
 
 impl SendItemLe {
-    pub fn to_proto(&self, ctx: &Context) -> SendItem {
+    pub fn to_core(&self, ctx: &Context) -> SendItem {
         SendItem::with_serialize_value(ChannelCookie(self.cookie.get(ctx)), &()).unwrap()
     }
 }
@@ -998,7 +998,7 @@ pub struct ItemReceivedLe {
 }
 
 impl ItemReceivedLe {
-    pub fn to_proto(&self, ctx: &Context) -> ItemReceived {
+    pub fn to_core(&self, ctx: &Context) -> ItemReceived {
         ItemReceived::with_serialize_value(ChannelCookie(self.cookie.get(ctx)), &()).unwrap()
     }
 }
@@ -1016,7 +1016,7 @@ pub struct AddChannelCapacityLe {
 }
 
 impl AddChannelCapacityLe {
-    pub fn to_proto(&self, ctx: &Context) -> AddChannelCapacity {
+    pub fn to_core(&self, ctx: &Context) -> AddChannelCapacity {
         AddChannelCapacity {
             cookie: ChannelCookie(self.cookie.get(ctx)),
             capacity: self.capacity,
@@ -1036,7 +1036,7 @@ pub struct SyncLe {
 }
 
 impl SyncLe {
-    pub fn to_proto(&self, ctx: &Context) -> Sync {
+    pub fn to_core(&self, ctx: &Context) -> Sync {
         Sync {
             serial: self.serial.get(ctx),
         }
@@ -1055,7 +1055,7 @@ pub struct SyncReplyLe {
 }
 
 impl SyncReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> SyncReply {
+    pub fn to_core(&self, ctx: &Context) -> SyncReply {
         SyncReply {
             serial: self.serial.get(ctx),
         }
@@ -1074,7 +1074,7 @@ pub struct ServiceDestroyedLe {
 }
 
 impl ServiceDestroyedLe {
-    pub fn to_proto(&self, ctx: &Context) -> ServiceDestroyed {
+    pub fn to_core(&self, ctx: &Context) -> ServiceDestroyed {
         ServiceDestroyed {
             service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
         }
@@ -1093,7 +1093,7 @@ pub struct CreateBusListenerLe {
 }
 
 impl CreateBusListenerLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateBusListener {
+    pub fn to_core(&self, ctx: &Context) -> CreateBusListener {
         CreateBusListener {
             serial: self.serial.get(ctx),
         }
@@ -1113,7 +1113,7 @@ pub struct CreateBusListenerReplyLe {
 }
 
 impl CreateBusListenerReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> CreateBusListenerReply {
+    pub fn to_core(&self, ctx: &Context) -> CreateBusListenerReply {
         CreateBusListenerReply {
             serial: self.serial.get(ctx),
             cookie: BusListenerCookie(self.cookie.get(ctx)),
@@ -1135,7 +1135,7 @@ pub struct DestroyBusListenerLe {
 }
 
 impl DestroyBusListenerLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyBusListener {
+    pub fn to_core(&self, ctx: &Context) -> DestroyBusListener {
         DestroyBusListener {
             serial: self.serial.get(ctx),
             cookie: BusListenerCookie(self.cookie.get(ctx)),
@@ -1157,7 +1157,7 @@ pub enum DestroyBusListenerResultLe {
 }
 
 impl DestroyBusListenerResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> DestroyBusListenerResult {
+    pub fn to_core(&self, _ctx: &Context) -> DestroyBusListenerResult {
         match self {
             Self::Ok => DestroyBusListenerResult::Ok,
             Self::InvalidBusListener => DestroyBusListenerResult::InvalidBusListener,
@@ -1176,10 +1176,10 @@ pub struct DestroyBusListenerReplyLe {
 }
 
 impl DestroyBusListenerReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> DestroyBusListenerReply {
+    pub fn to_core(&self, ctx: &Context) -> DestroyBusListenerReply {
         DestroyBusListenerReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -1202,7 +1202,7 @@ pub enum BusListenerFilterLe {
 }
 
 impl BusListenerFilterLe {
-    pub fn to_proto(&self, ctx: &Context) -> BusListenerFilter {
+    pub fn to_core(&self, ctx: &Context) -> BusListenerFilter {
         match self {
             Self::AnyObject => BusListenerFilter::any_object(),
             Self::SpecificObject(object) => BusListenerFilter::object(ObjectUuid(object.get(ctx))),
@@ -1264,10 +1264,10 @@ pub struct AddBusListenerFilterLe {
 }
 
 impl AddBusListenerFilterLe {
-    pub fn to_proto(&self, ctx: &Context) -> AddBusListenerFilter {
+    pub fn to_core(&self, ctx: &Context) -> AddBusListenerFilter {
         AddBusListenerFilter {
             cookie: BusListenerCookie(self.cookie.get(ctx)),
-            filter: self.filter.to_proto(ctx),
+            filter: self.filter.to_core(ctx),
         }
     }
 }
@@ -1286,10 +1286,10 @@ pub struct RemoveBusListenerFilterLe {
 }
 
 impl RemoveBusListenerFilterLe {
-    pub fn to_proto(&self, ctx: &Context) -> RemoveBusListenerFilter {
+    pub fn to_core(&self, ctx: &Context) -> RemoveBusListenerFilter {
         RemoveBusListenerFilter {
             cookie: BusListenerCookie(self.cookie.get(ctx)),
-            filter: self.filter.to_proto(ctx),
+            filter: self.filter.to_core(ctx),
         }
     }
 }
@@ -1307,7 +1307,7 @@ pub struct ClearBusListenerFiltersLe {
 }
 
 impl ClearBusListenerFiltersLe {
-    pub fn to_proto(&self, ctx: &Context) -> ClearBusListenerFilters {
+    pub fn to_core(&self, ctx: &Context) -> ClearBusListenerFilters {
         ClearBusListenerFilters {
             cookie: BusListenerCookie(self.cookie.get(ctx)),
         }
@@ -1328,7 +1328,7 @@ pub struct StartBusListenerLe {
 }
 
 impl StartBusListenerLe {
-    pub fn to_proto(&self, ctx: &Context) -> StartBusListener {
+    pub fn to_core(&self, ctx: &Context) -> StartBusListener {
         StartBusListener {
             serial: self.serial.get(ctx),
             cookie: BusListenerCookie(self.cookie.get(ctx)),
@@ -1352,7 +1352,7 @@ pub enum StartBusListenerResultLe {
 }
 
 impl StartBusListenerResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> StartBusListenerResult {
+    pub fn to_core(&self, _ctx: &Context) -> StartBusListenerResult {
         match self {
             Self::Ok => StartBusListenerResult::Ok,
             Self::InvalidBusListener => StartBusListenerResult::InvalidBusListener,
@@ -1372,10 +1372,10 @@ pub struct StartBusListenerReplyLe {
 }
 
 impl StartBusListenerReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> StartBusListenerReply {
+    pub fn to_core(&self, ctx: &Context) -> StartBusListenerReply {
         StartBusListenerReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -1394,7 +1394,7 @@ pub struct StopBusListenerLe {
 }
 
 impl StopBusListenerLe {
-    pub fn to_proto(&self, ctx: &Context) -> StopBusListener {
+    pub fn to_core(&self, ctx: &Context) -> StopBusListener {
         StopBusListener {
             serial: self.serial.get(ctx),
             cookie: BusListenerCookie(self.cookie.get(ctx)),
@@ -1417,7 +1417,7 @@ pub enum StopBusListenerResultLe {
 }
 
 impl StopBusListenerResultLe {
-    pub fn to_proto(&self, _ctx: &Context) -> StopBusListenerResult {
+    pub fn to_core(&self, _ctx: &Context) -> StopBusListenerResult {
         match self {
             Self::Ok => StopBusListenerResult::Ok,
             Self::InvalidBusListener => StopBusListenerResult::InvalidBusListener,
@@ -1437,10 +1437,10 @@ pub struct StopBusListenerReplyLe {
 }
 
 impl StopBusListenerReplyLe {
-    pub fn to_proto(&self, ctx: &Context) -> StopBusListenerReply {
+    pub fn to_core(&self, ctx: &Context) -> StopBusListenerReply {
         StopBusListenerReply {
             serial: self.serial.get(ctx),
-            result: self.result.to_proto(ctx),
+            result: self.result.to_core(ctx),
         }
     }
 }
@@ -1484,7 +1484,7 @@ pub enum EmitBusEventLe {
 }
 
 impl EmitBusEventLe {
-    pub fn to_proto(&self, ctx: &Context) -> EmitBusEvent {
+    pub fn to_core(&self, ctx: &Context) -> EmitBusEvent {
         match self {
             Self::ObjectCreated {
                 cookie,
@@ -1589,7 +1589,7 @@ pub struct BusListenerCurrentFinishedLe {
 }
 
 impl BusListenerCurrentFinishedLe {
-    pub fn to_proto(&self, ctx: &Context) -> BusListenerCurrentFinished {
+    pub fn to_core(&self, ctx: &Context) -> BusListenerCurrentFinished {
         BusListenerCurrentFinished {
             cookie: BusListenerCookie(self.cookie.get(ctx)),
         }

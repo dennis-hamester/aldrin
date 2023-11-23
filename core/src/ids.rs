@@ -58,7 +58,7 @@ impl ObjectUuid {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::ObjectUuid;
+    /// # use aldrin_core::ObjectUuid;
     /// let object_uuid = ObjectUuid::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]
@@ -114,7 +114,7 @@ impl ObjectCookie {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::ObjectCookie;
+    /// # use aldrin_core::ObjectCookie;
     /// let object_cookie = ObjectCookie::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]
@@ -216,7 +216,7 @@ impl ServiceUuid {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::ServiceUuid;
+    /// # use aldrin_core::ServiceUuid;
     /// let service_uuid = ServiceUuid::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]
@@ -272,7 +272,7 @@ impl ServiceCookie {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::ServiceCookie;
+    /// # use aldrin_core::ServiceCookie;
     /// let service_cookie = ServiceCookie::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]
@@ -326,7 +326,7 @@ impl ChannelCookie {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::ChannelCookie;
+    /// # use aldrin_core::ChannelCookie;
     /// let channel_cookie = ChannelCookie::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]
@@ -380,7 +380,7 @@ impl BusListenerCookie {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::BusListenerCookie;
+    /// # use aldrin_core::BusListenerCookie;
     /// let bus_listener_cookie = BusListenerCookie::new_v4();
     /// ```
     #[cfg(feature = "new-v4-ids")]

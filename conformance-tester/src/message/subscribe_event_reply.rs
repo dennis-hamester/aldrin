@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +14,9 @@ pub struct SubscribeEventReply {
 }
 
 impl SubscribeEventReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::SubscribeEventReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEventReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::SubscribeEventReply { serial, result })
     }
@@ -60,7 +60,7 @@ pub enum SubscribeEventResult {
 }
 
 impl SubscribeEventResult {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::SubscribeEventResult> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::SubscribeEventResult> {
         match self {
             Self::Ok => Ok(message::SubscribeEventResult::Ok),
             Self::InvalidService => Ok(message::SubscribeEventResult::InvalidService),

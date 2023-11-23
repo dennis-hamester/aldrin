@@ -12,7 +12,7 @@
 //!
 //! The first entry point is the [`Client`] and it's [`connect`](Client::connect)
 //! method. [`Client`]s are parameterized over an
-//! [`AsyncTransport`](aldrin_proto::transport::AsyncTransport), which abstracts the low-level
+//! [`AsyncTransport`](aldrin_core::transport::AsyncTransport), which abstracts the low-level
 //! details of a transport, like e.g. TCP/IP.
 //!
 //! After establishing a connection, the resulting [`Client`] must be continuously polled (through
@@ -33,7 +33,7 @@
 //! async fn main() -> Result<(), Box<dyn Error>> {
 //!     # let broker = aldrin_test::tokio::TestBroker::new();
 //!     # let mut handle = broker.clone();
-//!     # let (async_transport, t2) = aldrin_proto::channel::unbounded();
+//!     # let (async_transport, t2) = aldrin_core::channel::unbounded();
 //!     # let conn = tokio::spawn(async move { handle.connect(t2).await });
 //!     // Create an AsyncTransport for connecting to the broker.
 //!     // let async_transport = ...

@@ -1,7 +1,7 @@
 #![no_main]
 #![feature(maybe_uninit_write_slice)]
 
-use aldrin_proto::message::Packetizer;
+use aldrin_core::message::Packetizer;
 use libfuzzer_sys::fuzz_target;
 use std::mem::MaybeUninit;
 

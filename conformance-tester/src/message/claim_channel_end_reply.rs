@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +14,9 @@ pub struct ClaimChannelEndReply {
 }
 
 impl ClaimChannelEndReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::ClaimChannelEndReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::ClaimChannelEndReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::ClaimChannelEndReply { serial, result })
     }
@@ -65,7 +65,7 @@ pub enum ClaimChannelEndResult {
 }
 
 impl ClaimChannelEndResult {
-    pub fn to_proto(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
+    pub fn to_core(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
         match self {
             Self::SenderClaimed { capacity } => {
                 Ok(message::ClaimChannelEndResult::SenderClaimed(capacity))

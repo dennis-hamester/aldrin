@@ -1,7 +1,7 @@
 use super::ChannelEnd;
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,7 @@ pub struct ChannelEndClosed {
 }
 
 impl ChannelEndClosed {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::ChannelEndClosed> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::ChannelEndClosed> {
         let cookie = self.cookie.get(ctx)?.into();
 
         Ok(message::ChannelEndClosed {

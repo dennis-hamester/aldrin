@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
-use aldrin_proto::{BusEvent, BusListenerCookie, ObjectId, ServiceId};
+use aldrin_core::message;
+use aldrin_core::{BusEvent, BusListenerCookie, ObjectId, ServiceId};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +50,7 @@ pub enum EmitBusEvent {
 }
 
 impl EmitBusEvent {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::EmitBusEvent> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::EmitBusEvent> {
         match self {
             Self::ObjectCreated {
                 cookie,

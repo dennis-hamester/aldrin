@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_proto::ServiceCookie;
+use aldrin_core::ServiceCookie;
 use std::collections::HashSet;
 
 #[derive(Debug)]

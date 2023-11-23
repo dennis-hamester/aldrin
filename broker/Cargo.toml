@@ -12,9 +12,9 @@ rust-version = "1.70.0"
 [features]
 statistics = []
 
-[dependencies.aldrin-proto]
+[dependencies.aldrin-core]
 version = "0.1.0"
-path = "../proto"
+path = "../core"
 default-features = false
 features = ["new-v4-ids"]
 
@@ -42,9 +42,9 @@ anyhow = "1.0.32"
 version = "0.1.0"
 path = "../client"
 
-[dev-dependencies.aldrin-proto]
+[dev-dependencies.aldrin-core]
 version = "0.1.0"
-path = "../proto"
+path = "../core"
 features = [
     "channel",
     "tokio",

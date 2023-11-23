@@ -47,7 +47,7 @@ mod sync_reply;
 mod unsubscribe_event;
 
 use crate::context::Context;
-use aldrin_proto::message::Message as ProtoMessage;
+use aldrin_core::message::Message as ProtoMessage;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -151,91 +151,81 @@ pub enum Message {
 }
 
 impl Message {
-    pub fn to_proto(&self, ctx: &Context) -> Result<ProtoMessage> {
+    pub fn to_core(&self, ctx: &Context) -> Result<ProtoMessage> {
         match self {
-            Self::Connect(msg) => msg.to_proto(ctx).map(ProtoMessage::Connect),
-            Self::ConnectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::ConnectReply),
-            Self::Shutdown(msg) => msg.to_proto(ctx).map(ProtoMessage::Shutdown),
-            Self::CreateObject(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateObject),
-            Self::CreateObjectReply(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateObjectReply),
-            Self::DestroyObject(msg) => msg.to_proto(ctx).map(ProtoMessage::DestroyObject),
-            Self::DestroyObjectReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::DestroyObjectReply)
-            }
-            Self::CreateService(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateService),
-            Self::CreateServiceReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::CreateServiceReply)
-            }
-            Self::DestroyService(msg) => msg.to_proto(ctx).map(ProtoMessage::DestroyService),
+            Self::Connect(msg) => msg.to_core(ctx).map(ProtoMessage::Connect),
+            Self::ConnectReply(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply),
+            Self::Shutdown(msg) => msg.to_core(ctx).map(ProtoMessage::Shutdown),
+            Self::CreateObject(msg) => msg.to_core(ctx).map(ProtoMessage::CreateObject),
+            Self::CreateObjectReply(msg) => msg.to_core(ctx).map(ProtoMessage::CreateObjectReply),
+            Self::DestroyObject(msg) => msg.to_core(ctx).map(ProtoMessage::DestroyObject),
+            Self::DestroyObjectReply(msg) => msg.to_core(ctx).map(ProtoMessage::DestroyObjectReply),
+            Self::CreateService(msg) => msg.to_core(ctx).map(ProtoMessage::CreateService),
+            Self::CreateServiceReply(msg) => msg.to_core(ctx).map(ProtoMessage::CreateServiceReply),
+            Self::DestroyService(msg) => msg.to_core(ctx).map(ProtoMessage::DestroyService),
             Self::DestroyServiceReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::DestroyServiceReply)
+                msg.to_core(ctx).map(ProtoMessage::DestroyServiceReply)
             }
-            Self::CallFunction(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunction),
-            Self::CallFunctionReply(msg) => msg.to_proto(ctx).map(ProtoMessage::CallFunctionReply),
-            Self::SubscribeEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::SubscribeEvent),
+            Self::CallFunction(msg) => msg.to_core(ctx).map(ProtoMessage::CallFunction),
+            Self::CallFunctionReply(msg) => msg.to_core(ctx).map(ProtoMessage::CallFunctionReply),
+            Self::SubscribeEvent(msg) => msg.to_core(ctx).map(ProtoMessage::SubscribeEvent),
             Self::SubscribeEventReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::SubscribeEventReply)
+                msg.to_core(ctx).map(ProtoMessage::SubscribeEventReply)
             }
-            Self::UnsubscribeEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::UnsubscribeEvent),
-            Self::EmitEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::EmitEvent),
+            Self::UnsubscribeEvent(msg) => msg.to_core(ctx).map(ProtoMessage::UnsubscribeEvent),
+            Self::EmitEvent(msg) => msg.to_core(ctx).map(ProtoMessage::EmitEvent),
             Self::QueryServiceVersion(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::QueryServiceVersion)
+                msg.to_core(ctx).map(ProtoMessage::QueryServiceVersion)
             }
-            Self::QueryServiceVersionReply(msg) => msg
-                .to_proto(ctx)
-                .map(ProtoMessage::QueryServiceVersionReply),
-            Self::CreateChannel(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateChannel),
-            Self::CreateChannelReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::CreateChannelReply)
+            Self::QueryServiceVersionReply(msg) => {
+                msg.to_core(ctx).map(ProtoMessage::QueryServiceVersionReply)
             }
-            Self::CloseChannelEnd(msg) => msg.to_proto(ctx).map(ProtoMessage::CloseChannelEnd),
+            Self::CreateChannel(msg) => msg.to_core(ctx).map(ProtoMessage::CreateChannel),
+            Self::CreateChannelReply(msg) => msg.to_core(ctx).map(ProtoMessage::CreateChannelReply),
+            Self::CloseChannelEnd(msg) => msg.to_core(ctx).map(ProtoMessage::CloseChannelEnd),
             Self::CloseChannelEndReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::CloseChannelEndReply)
+                msg.to_core(ctx).map(ProtoMessage::CloseChannelEndReply)
             }
-            Self::ChannelEndClosed(msg) => msg.to_proto(ctx).map(ProtoMessage::ChannelEndClosed),
-            Self::ClaimChannelEnd(msg) => msg.to_proto(ctx).map(ProtoMessage::ClaimChannelEnd),
+            Self::ChannelEndClosed(msg) => msg.to_core(ctx).map(ProtoMessage::ChannelEndClosed),
+            Self::ClaimChannelEnd(msg) => msg.to_core(ctx).map(ProtoMessage::ClaimChannelEnd),
             Self::ClaimChannelEndReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ClaimChannelEndReply)
+                msg.to_core(ctx).map(ProtoMessage::ClaimChannelEndReply)
             }
-            Self::ChannelEndClaimed(msg) => msg.to_proto(ctx).map(ProtoMessage::ChannelEndClaimed),
-            Self::SendItem(msg) => msg.to_proto(ctx).map(ProtoMessage::SendItem),
-            Self::ItemReceived(msg) => msg.to_proto(ctx).map(ProtoMessage::ItemReceived),
-            Self::AddChannelCapacity(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::AddChannelCapacity)
-            }
-            Self::Sync(msg) => msg.to_proto(ctx).map(ProtoMessage::Sync),
-            Self::SyncReply(msg) => msg.to_proto(ctx).map(ProtoMessage::SyncReply),
-            Self::ServiceDestroyed(msg) => msg.to_proto(ctx).map(ProtoMessage::ServiceDestroyed),
-            Self::CreateBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::CreateBusListener),
+            Self::ChannelEndClaimed(msg) => msg.to_core(ctx).map(ProtoMessage::ChannelEndClaimed),
+            Self::SendItem(msg) => msg.to_core(ctx).map(ProtoMessage::SendItem),
+            Self::ItemReceived(msg) => msg.to_core(ctx).map(ProtoMessage::ItemReceived),
+            Self::AddChannelCapacity(msg) => msg.to_core(ctx).map(ProtoMessage::AddChannelCapacity),
+            Self::Sync(msg) => msg.to_core(ctx).map(ProtoMessage::Sync),
+            Self::SyncReply(msg) => msg.to_core(ctx).map(ProtoMessage::SyncReply),
+            Self::ServiceDestroyed(msg) => msg.to_core(ctx).map(ProtoMessage::ServiceDestroyed),
+            Self::CreateBusListener(msg) => msg.to_core(ctx).map(ProtoMessage::CreateBusListener),
             Self::CreateBusListenerReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::CreateBusListenerReply)
+                msg.to_core(ctx).map(ProtoMessage::CreateBusListenerReply)
             }
-            Self::DestroyBusListener(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::DestroyBusListener)
-            }
+            Self::DestroyBusListener(msg) => msg.to_core(ctx).map(ProtoMessage::DestroyBusListener),
             Self::DestroyBusListenerReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::DestroyBusListenerReply)
+                msg.to_core(ctx).map(ProtoMessage::DestroyBusListenerReply)
             }
             Self::AddBusListenerFilter(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::AddBusListenerFilter)
+                msg.to_core(ctx).map(ProtoMessage::AddBusListenerFilter)
             }
             Self::RemoveBusListenerFilter(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::RemoveBusListenerFilter)
+                msg.to_core(ctx).map(ProtoMessage::RemoveBusListenerFilter)
             }
             Self::ClearBusListenerFilters(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::ClearBusListenerFilters)
+                msg.to_core(ctx).map(ProtoMessage::ClearBusListenerFilters)
             }
-            Self::StartBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::StartBusListener),
+            Self::StartBusListener(msg) => msg.to_core(ctx).map(ProtoMessage::StartBusListener),
             Self::StartBusListenerReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::StartBusListenerReply)
+                msg.to_core(ctx).map(ProtoMessage::StartBusListenerReply)
             }
-            Self::StopBusListener(msg) => msg.to_proto(ctx).map(ProtoMessage::StopBusListener),
+            Self::StopBusListener(msg) => msg.to_core(ctx).map(ProtoMessage::StopBusListener),
             Self::StopBusListenerReply(msg) => {
-                msg.to_proto(ctx).map(ProtoMessage::StopBusListenerReply)
+                msg.to_core(ctx).map(ProtoMessage::StopBusListenerReply)
             }
-            Self::EmitBusEvent(msg) => msg.to_proto(ctx).map(ProtoMessage::EmitBusEvent),
+            Self::EmitBusEvent(msg) => msg.to_core(ctx).map(ProtoMessage::EmitBusEvent),
             Self::BusListenerCurrentFinished(msg) => msg
-                .to_proto(ctx)
+                .to_core(ctx)
                 .map(ProtoMessage::BusListenerCurrentFinished),
         }
     }
@@ -618,16 +608,16 @@ pub enum ChannelEnd {
     Receiver,
 }
 
-impl From<aldrin_proto::ChannelEnd> for ChannelEnd {
-    fn from(end: aldrin_proto::ChannelEnd) -> Self {
+impl From<aldrin_core::ChannelEnd> for ChannelEnd {
+    fn from(end: aldrin_core::ChannelEnd) -> Self {
         match end {
-            aldrin_proto::ChannelEnd::Sender => Self::Sender,
-            aldrin_proto::ChannelEnd::Receiver => Self::Receiver,
+            aldrin_core::ChannelEnd::Sender => Self::Sender,
+            aldrin_core::ChannelEnd::Receiver => Self::Receiver,
         }
     }
 }
 
-impl From<ChannelEnd> for aldrin_proto::ChannelEnd {
+impl From<ChannelEnd> for aldrin_core::ChannelEnd {
     fn from(end: ChannelEnd) -> Self {
         match end {
             ChannelEnd::Sender => Self::Sender,
@@ -652,17 +642,17 @@ pub enum ChannelEndWithCapacity {
     Receiver { capacity: u32 },
 }
 
-impl From<aldrin_proto::ChannelEndWithCapacity> for ChannelEndWithCapacity {
-    fn from(end: aldrin_proto::ChannelEndWithCapacity) -> Self {
+impl From<aldrin_core::ChannelEndWithCapacity> for ChannelEndWithCapacity {
+    fn from(end: aldrin_core::ChannelEndWithCapacity) -> Self {
         match end {
-            aldrin_proto::ChannelEndWithCapacity::Sender => Self::Sender,
+            aldrin_core::ChannelEndWithCapacity::Sender => Self::Sender,
 
-            aldrin_proto::ChannelEndWithCapacity::Receiver(capacity) => Self::Receiver { capacity },
+            aldrin_core::ChannelEndWithCapacity::Receiver(capacity) => Self::Receiver { capacity },
         }
     }
 }
 
-impl From<ChannelEndWithCapacity> for aldrin_proto::ChannelEndWithCapacity {
+impl From<ChannelEndWithCapacity> for aldrin_core::ChannelEndWithCapacity {
     fn from(end: ChannelEndWithCapacity) -> Self {
         match end {
             ChannelEndWithCapacity::Sender => Self::Sender,

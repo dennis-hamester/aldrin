@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::value::Value;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,9 +15,9 @@ pub struct CallFunctionReply {
 }
 
 impl CallFunctionReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::CallFunctionReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::CallFunctionReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::CallFunctionReply { serial, result })
     }
@@ -77,7 +77,7 @@ pub enum CallFunctionResult {
 }
 
 impl CallFunctionResult {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::CallFunctionResult> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::CallFunctionResult> {
         match self {
             Self::Ok { value } => message::CallFunctionResult::ok_with_serialize_value(value)
                 .with_context(|| anyhow!("failed to serialize value")),

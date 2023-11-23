@@ -1,5 +1,5 @@
 use crate::context::Context;
-use aldrin_proto::{
+use aldrin_core::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
 };
 use anyhow::{anyhow, Error, Result};

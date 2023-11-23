@@ -14,7 +14,7 @@ use crate::bus_listener::BusListener;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::serial_map::SerialMap;
-use aldrin_proto::message::{
+use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -29,7 +29,7 @@ use aldrin_proto::message::{
     StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_proto::{
+use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid,

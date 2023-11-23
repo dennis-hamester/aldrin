@@ -20,9 +20,9 @@ version = "0.1.0"
 path = "../client"
 default-features = false
 
-[dependencies.aldrin-proto]
+[dependencies.aldrin-core]
 version = "0.1.0"
-path = "../proto"
+path = "../core"
 default-features = false
 features = ["channel"]
 

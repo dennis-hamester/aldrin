@@ -7,7 +7,7 @@ name = "aldrin-broker"
 version = "0.1.0"
 dependencies = [
  "aldrin-client",
- "aldrin-proto",
+ "aldrin-core",
  "aldrin-test",
  "anyhow",
  "futures-channel",
@@ -20,8 +20,8 @@ dependencies = [
 name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
+ "aldrin-core",
  "aldrin-macros",
- "aldrin-proto",
  "aldrin-test",
  "futures",
  "futures-channel",
@@ -37,8 +37,8 @@ name = "aldrin-codegen"
 version = "0.1.0"
 dependencies = [
  "aldrin-client",
+ "aldrin-core",
  "aldrin-parser",
- "aldrin-proto",
  "aldrin-test",
  "diffy",
  "futures",
@@ -51,7 +51,7 @@ dependencies = [
 name = "aldrin-conformance-tester"
 version = "0.1.0"
 dependencies = [
- "aldrin-proto",
+ "aldrin-core",
  "anyhow",
  "bwrap",
  "clap",
@@ -60,6 +60,23 @@ dependencies = [
  "serde_json",
  "termcolor",
  "terminal_size",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "aldrin-core"
+version = "0.1.0"
+dependencies = [
+ "aldrin-broker",
+ "aldrin-client",
+ "arbitrary",
+ "bytes",
+ "futures",
+ "futures-channel",
+ "futures-core",
+ "num_enum",
+ "pin-project-lite",
  "tokio",
  "uuid",
 ]
@@ -102,29 +119,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "aldrin-proto"
-version = "0.1.0"
-dependencies = [
- "aldrin-broker",
- "aldrin-client",
- "arbitrary",
- "bytes",
- "futures",
- "futures-channel",
- "futures-core",
- "num_enum",
- "pin-project-lite",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "aldrin-test"
 version = "0.1.0"
 dependencies = [
  "aldrin-broker",
  "aldrin-client",
- "aldrin-proto",
+ "aldrin-core",
  "anyhow",
  "futures",
  "futures-util",
@@ -297,7 +297,7 @@ name = "conformance-test-broker"
 version = "0.0.0"
 dependencies = [
  "aldrin-broker",
- "aldrin-proto",
+ "aldrin-core",
  "anyhow",
  "tokio",
 ]

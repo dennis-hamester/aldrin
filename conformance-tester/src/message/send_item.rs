@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
 use crate::value::Value;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +15,7 @@ pub struct SendItem {
 }
 
 impl SendItem {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::SendItem> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::SendItem> {
         let cookie = self.cookie.get(ctx)?.into();
 
         message::SendItem::with_serialize_value(cookie, &self.value)

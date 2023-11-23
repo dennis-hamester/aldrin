@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,9 +15,9 @@ pub struct CreateObjectReply {
 }
 
 impl CreateObjectReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::CreateObjectReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateObjectReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::CreateObjectReply { serial, result })
     }
@@ -63,7 +63,7 @@ pub enum CreateObjectResult {
 }
 
 impl CreateObjectResult {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::CreateObjectResult> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateObjectResult> {
         match self {
             Self::Ok { cookie } => {
                 let cookie = cookie.get(ctx)?.into();

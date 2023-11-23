@@ -175,8 +175,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_proto::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_proto::Serializer) -> Result<(), aldrin_client::private::aldrin_proto::SerializeError> {{");
+        genln!(self, "impl aldrin_client::private::aldrin_core::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_core::Serializer) -> Result<(), aldrin_client::private::aldrin_core::SerializeError> {{");
         genln!(self, "        let mut serializer = serializer.serialize_struct({})?;", fields.len());
         genln!(self);
         for field in fields {
@@ -188,8 +188,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_proto::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::private::aldrin_proto::DeserializeError> {{");
+        genln!(self, "impl aldrin_client::private::aldrin_core::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_core::Deserializer) -> Result<Self, aldrin_client::private::aldrin_core::DeserializeError> {{");
         genln!(self, "        let mut deserializer = deserializer.deserialize_struct()?;");
         genln!(self);
         for field in fields {
@@ -217,7 +217,7 @@ impl<'a> RustGenerator<'a> {
         for field in fields {
             let field_name = field.name().value();
             if field.required() {
-                genln!(self, "            {field_name}: {field_name}.ok_or(aldrin_client::private::aldrin_proto::DeserializeError::InvalidSerialization)?,");
+                genln!(self, "            {field_name}: {field_name}.ok_or(aldrin_client::private::aldrin_core::DeserializeError::InvalidSerialization)?,");
             } else {
                 genln!(self, "            {field_name},");
             }
@@ -306,8 +306,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_proto::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_proto::Serializer) -> Result<(), aldrin_client::private::aldrin_proto::SerializeError> {{");
+        genln!(self, "impl aldrin_client::private::aldrin_core::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_core::Serializer) -> Result<(), aldrin_client::private::aldrin_core::SerializeError> {{");
         genln!(self, "        match self {{");
         for var in vars {
             let name = var.name().value();
@@ -323,8 +323,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_proto::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::private::aldrin_proto::DeserializeError> {{");
+        genln!(self, "impl aldrin_client::private::aldrin_core::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_core::Deserializer) -> Result<Self, aldrin_client::private::aldrin_core::DeserializeError> {{");
         genln!(self, "        let deserializer = deserializer.deserialize_enum()?;");
         genln!(self);
         genln!(self, "        match deserializer.variant() {{");
@@ -337,7 +337,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            {id} => deserializer.deserialize().map(|()| Self::{name}),");
             }
         }
-        genln!(self, "            _ => Err(aldrin_client::private::aldrin_proto::DeserializeError::InvalidSerialization),");
+        genln!(self, "            _ => Err(aldrin_client::private::aldrin_core::DeserializeError::InvalidSerialization),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -355,7 +355,7 @@ impl<'a> RustGenerator<'a> {
         let svc_version_const = service_version_const(svc);
         let svc_version = svc.version().value();
 
-        genln!(self, "pub const {}: aldrin_client::private::aldrin_proto::ServiceUuid = aldrin_client::private::aldrin_proto::ServiceUuid(aldrin_client::private::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
+        genln!(self, "pub const {}: aldrin_client::private::aldrin_core::ServiceUuid = aldrin_client::private::aldrin_core::ServiceUuid(aldrin_client::private::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
         genln!(self, "pub const {}: u32 = {};", svc_version_const, svc_version);
         genln!(self);
 
@@ -454,7 +454,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    client: aldrin_client::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_proto::ServiceId,");
+        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
         genln!(self, "    version: u32,");
@@ -462,7 +462,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", proxy_name);
-        genln!(self, "    pub async fn bind(client: aldrin_client::Handle, id: aldrin_client::private::aldrin_proto::ServiceId) -> Result<Self, aldrin_client::Error> {{");
+        genln!(self, "    pub async fn bind(client: aldrin_client::Handle, id: aldrin_client::private::aldrin_core::ServiceId) -> Result<Self, aldrin_client::Error> {{");
         genln!(self, "        if id.uuid != {} {{", svc_uuid_const);
         genln!(self, "            return Err(aldrin_client::Error::InvalidService(id));");
         genln!(self, "        }}");
@@ -471,7 +471,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        Ok({} {{ client, id, version }})", proxy_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_proto::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -545,12 +545,12 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    events: aldrin_client::Events,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_proto::ServiceId,");
+        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", events);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_proto::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -704,7 +704,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        Ok({} {{ service }})", svc_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_proto::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.service.id()");
         genln!(self, "    }}");
         genln!(self);
@@ -870,12 +870,12 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    client: aldrin_client::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_proto::ServiceId,");
+        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", event_emitter);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_proto::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -939,20 +939,18 @@ fn type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "String".to_owned(),
         ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_proto::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => {
-            "aldrin_client::private::aldrin_proto::ServiceId".to_owned()
-        }
+        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_proto::SerializedValue".to_owned()
+            "aldrin_client::private::aldrin_core::SerializedValue".to_owned()
         }
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
         ast::TypeNameKind::Box(ty) => format!("Box<{}>", type_name(ty)),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::Bytes".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_core::Bytes".to_owned(),
             _ => format!("Vec<{}>", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_proto::Bytes".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_core::Bytes".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -985,20 +983,18 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "&str".to_owned(),
         ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_proto::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => {
-            "aldrin_client::private::aldrin_proto::ServiceId".to_owned()
-        }
+        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => {
-            "&aldrin_client::private::aldrin_proto::SerializedValueSlice".to_owned()
+            "&aldrin_client::private::aldrin_core::SerializedValueSlice".to_owned()
         }
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", call_type_name(ty)),
         ast::TypeNameKind::Box(ty) => call_type_name(ty),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "&aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
+            ast::TypeNameKind::U8 => "&aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
             _ => format!("&[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "&aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
+        ast::TypeNameKind::Bytes => "&aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "&std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -1031,20 +1027,18 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "str".to_owned(),
         ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_proto::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => {
-            "aldrin_client::private::aldrin_proto::ServiceId".to_owned()
-        }
+        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_proto::SerializedValueSlice".to_owned()
+            "aldrin_client::private::aldrin_core::SerializedValueSlice".to_owned()
         }
         ast::TypeNameKind::Box(ty) => sender_type_name(ty),
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
             _ => format!("[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_proto::ByteSlice".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),

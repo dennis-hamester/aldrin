@@ -1,4 +1,4 @@
-use aldrin_proto::{ObjectUuid, ServiceUuid};
+use aldrin_core::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;
 

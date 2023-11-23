@@ -1,13 +1,13 @@
 use super::BrokerRunArgs;
 use crate::test::RunError;
 use aldrin_conformance_test_shared::broker::{FromBrokerMessage, FromBrokerReady, ToBrokerMessage};
-use aldrin_proto::message::{
+use aldrin_core::message::{
     ChannelEnd, ChannelEndWithCapacity, CloseChannelEnd, CloseChannelEndResult, Connect,
     ConnectReply, CreateChannel, Message, SendItem,
 };
-use aldrin_proto::tokio::TokioTransport;
-use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_proto::{ChannelCookie, Serialize, VERSION};
+use aldrin_core::tokio::TokioTransport;
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::{ChannelCookie, Serialize, VERSION};
 use anyhow::{anyhow, Context, Error, Result};
 use futures::future;
 use futures::sink::{Sink, SinkExt};

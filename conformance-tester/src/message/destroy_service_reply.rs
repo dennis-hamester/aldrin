@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +14,9 @@ pub struct DestroyServiceReply {
 }
 
 impl DestroyServiceReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::DestroyServiceReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::DestroyServiceReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::DestroyServiceReply { serial, result })
     }
@@ -61,7 +61,7 @@ pub enum DestroyServiceResult {
 }
 
 impl DestroyServiceResult {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::DestroyServiceResult> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::DestroyServiceResult> {
         match self {
             Self::Ok => Ok(message::DestroyServiceResult::Ok),
             Self::InvalidService => Ok(message::DestroyServiceResult::InvalidService),

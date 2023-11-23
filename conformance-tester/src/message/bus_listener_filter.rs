@@ -15,36 +15,42 @@ pub enum BusListenerFilter {
 }
 
 impl BusListenerFilter {
-    pub fn to_proto(&self, ctx: &Context) -> Result<aldrin_proto::BusListenerFilter> {
+    pub fn to_core(&self, ctx: &Context) -> Result<aldrin_core::BusListenerFilter> {
         match self {
-            Self::AnyObject => Ok(aldrin_proto::BusListenerFilter::any_object()),
+            Self::AnyObject => Ok(aldrin_core::BusListenerFilter::any_object()),
 
             Self::SpecificObject { object } => {
                 let object = object.get(ctx)?.into();
-                Ok(aldrin_proto::BusListenerFilter::object(object))
+                Ok(aldrin_core::BusListenerFilter::object(object))
             }
 
             Self::AnyObjectAnyService => {
-                Ok(aldrin_proto::BusListenerFilter::any_object_any_service())
+                Ok(aldrin_core::BusListenerFilter::any_object_any_service())
             }
 
             Self::SpecificObjectAnyService { object } => {
                 let object = object.get(ctx)?.into();
 
-                Ok(aldrin_proto::BusListenerFilter::specific_object_any_service(object))
+                Ok(aldrin_core::BusListenerFilter::specific_object_any_service(
+                    object,
+                ))
             }
 
             Self::AnyObjectSpecificService { service } => {
                 let service = service.get(ctx)?.into();
 
-                Ok(aldrin_proto::BusListenerFilter::any_object_specific_service(service))
+                Ok(aldrin_core::BusListenerFilter::any_object_specific_service(
+                    service,
+                ))
             }
 
             Self::SpecificObjectSpecificService { object, service } => {
                 let object = object.get(ctx)?.into();
                 let service = service.get(ctx)?.into();
 
-                Ok(aldrin_proto::BusListenerFilter::specific_object_and_service(object, service))
+                Ok(aldrin_core::BusListenerFilter::specific_object_and_service(
+                    object, service,
+                ))
             }
         }
     }
@@ -157,35 +163,35 @@ impl BusListenerFilter {
     }
 }
 
-impl From<aldrin_proto::BusListenerFilter> for BusListenerFilter {
-    fn from(filter: aldrin_proto::BusListenerFilter) -> Self {
+impl From<aldrin_core::BusListenerFilter> for BusListenerFilter {
+    fn from(filter: aldrin_core::BusListenerFilter) -> Self {
         match filter {
-            aldrin_proto::BusListenerFilter::Object(None) => Self::AnyObject,
+            aldrin_core::BusListenerFilter::Object(None) => Self::AnyObject,
 
-            aldrin_proto::BusListenerFilter::Object(Some(object)) => Self::SpecificObject {
+            aldrin_core::BusListenerFilter::Object(Some(object)) => Self::SpecificObject {
                 object: object.into(),
             },
 
-            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
+            aldrin_core::BusListenerFilter::Service(aldrin_core::BusListenerServiceFilter {
                 object: None,
                 service: None,
             }) => Self::AnyObjectAnyService,
 
-            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
+            aldrin_core::BusListenerFilter::Service(aldrin_core::BusListenerServiceFilter {
                 object: Some(object),
                 service: None,
             }) => Self::SpecificObjectAnyService {
                 object: object.into(),
             },
 
-            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
+            aldrin_core::BusListenerFilter::Service(aldrin_core::BusListenerServiceFilter {
                 object: None,
                 service: Some(service),
             }) => Self::AnyObjectSpecificService {
                 service: service.into(),
             },
 
-            aldrin_proto::BusListenerFilter::Service(aldrin_proto::BusListenerServiceFilter {
+            aldrin_core::BusListenerFilter::Service(aldrin_core::BusListenerServiceFilter {
                 object: Some(object),
                 service: Some(service),
             }) => Self::SpecificObjectSpecificService {

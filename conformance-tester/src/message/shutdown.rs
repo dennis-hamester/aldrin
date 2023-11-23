@@ -1,5 +1,5 @@
 use crate::context::Context;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct Shutdown;
 
 impl Shutdown {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::Shutdown> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::Shutdown> {
         Ok(message::Shutdown)
     }
 

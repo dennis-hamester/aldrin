@@ -1,4 +1,4 @@
-use aldrin_proto::{ObjectUuid, ServiceUuid};
+use aldrin_core::{ObjectUuid, ServiceUuid};
 use aldrin_test::aldrin_client::DiscovererEventKind;
 use aldrin_test::tokio::TestBroker;
 

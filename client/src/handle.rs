@@ -8,12 +8,12 @@ use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Events, Object, Service};
-use aldrin_proto::message::{
+use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
     RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
-use aldrin_proto::{
+use aldrin_core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
     ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue, ServiceId, ServiceUuid,
 };
@@ -53,7 +53,7 @@ use std::task::{Context, Poll};
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let mut handle = broker.clone();
-/// # let (async_transport, t2) = aldrin_proto::channel::unbounded();
+/// # let (async_transport, t2) = aldrin_core::channel::unbounded();
 /// # let conn = tokio::spawn(async move { handle.connect(t2).await });
 /// // Connect to the broker:
 /// let client = Client::connect(async_transport).await?;
@@ -102,7 +102,7 @@ impl Handle {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// use aldrin_proto::ObjectUuid;
+    /// use aldrin_core::ObjectUuid;
     /// use uuid::uuid;
     ///
     /// const OBJECT2_UUID: ObjectUuid = ObjectUuid(uuid!("6173e119-8066-4776-989b-145a5f16ed4c"));
@@ -216,14 +216,14 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::Value;
+    /// use aldrin_core::Value;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_core::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_core::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_function::<_, u32, String>(service_id, 1, "1 + 2 = ?")?;
@@ -281,8 +281,8 @@ impl Handle {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_core::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_core::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Call function 1 with "1 + 2 = ?" as the argument.
     /// let result = handle.call_infallible_function::<_, u32>(service_id, 1, "1 + 2 = ?")?;
@@ -388,8 +388,8 @@ impl Handle {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
+    /// # let obj = handle.create_object(aldrin_core::ObjectUuid::new_v4()).await?;
+    /// # let mut svc = obj.create_service(aldrin_core::ServiceUuid::new_v4(), 0).await?;
     /// # let service_id = svc.id();
     /// // Emit event 1 with argument "Hello, world!":
     /// handle.emit_event(service_id, 1, "Hello, world!")?;
@@ -418,7 +418,7 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin_test::tokio::TestBroker;
-    /// use aldrin_proto::{ObjectUuid, ServiceUuid};
+    /// use aldrin_core::{ObjectUuid, ServiceUuid};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -640,7 +640,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::ObjectUuid;
+    /// use aldrin_core::ObjectUuid;
     /// use std::mem;
     ///
     /// # #[tokio::main]
@@ -678,7 +678,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_proto::{ObjectUuid, ServiceUuid};
+    /// # use aldrin_core::{ObjectUuid, ServiceUuid};
     /// use std::mem;
     ///
     /// # #[tokio::main]

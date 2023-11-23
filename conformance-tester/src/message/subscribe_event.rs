@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ pub struct SubscribeEvent {
 }
 
 impl SubscribeEvent {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::SubscribeEvent> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEvent> {
         let serial = self.serial.as_ref().map(|s| s.get(ctx)).transpose()?;
         let service_cookie = self.service_cookie.get(ctx)?.into();
 

@@ -12,7 +12,7 @@
 //! ```
 //! use aldrin_broker::Broker;
 //! use aldrin_client::Client;
-//! use aldrin_proto::channel;
+//! use aldrin_core::channel;
 //! use futures::future;
 //!
 //! #[tokio::main]

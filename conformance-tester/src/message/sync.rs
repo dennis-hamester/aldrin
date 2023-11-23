@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ pub struct Sync {
 }
 
 impl Sync {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::Sync> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::Sync> {
         let serial = self.serial.get(ctx)?;
 
         Ok(message::Sync { serial })

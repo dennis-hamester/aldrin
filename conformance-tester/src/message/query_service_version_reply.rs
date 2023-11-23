@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +14,9 @@ pub struct QueryServiceVersionReply {
 }
 
 impl QueryServiceVersionReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::QueryServiceVersionReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceVersionReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::QueryServiceVersionReply { serial, result })
     }
@@ -61,7 +61,7 @@ pub enum QueryServiceVersionResult {
 }
 
 impl QueryServiceVersionResult {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::QueryServiceVersionResult> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::QueryServiceVersionResult> {
         match self {
             Self::Ok { version } => Ok(message::QueryServiceVersionResult::Ok(*version)),
             Self::InvalidService => Ok(message::QueryServiceVersionResult::InvalidService),

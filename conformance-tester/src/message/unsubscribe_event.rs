@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,7 @@ pub struct UnsubscribeEvent {
 }
 
 impl UnsubscribeEvent {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::UnsubscribeEvent> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::UnsubscribeEvent> {
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
         Ok(message::UnsubscribeEvent {

@@ -17,7 +17,7 @@ use crate::handle::request::{
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
-use aldrin_proto::message::{
+use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
@@ -32,8 +32,8 @@ use aldrin_proto::message::{
     StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use aldrin_proto::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_proto::{
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     Serialize, SerializedValue, ServiceCookie, ServiceId,
 };
@@ -121,7 +121,7 @@ where
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin_proto::channel::unbounded();
+    /// # let (async_transport, t2) = aldrin_core::channel::unbounded();
     /// # let conn = tokio::spawn(async move { handle.connect(t2).await });
     /// // Create an AsyncTransport for connecting to the broker.
     /// // let async_transport = ...
@@ -155,7 +155,7 @@ where
         mut t: T,
         data: &D,
     ) -> Result<(Self, SerializedValue), ConnectError<T::Error>> {
-        let connect = Connect::with_serialize_value(aldrin_proto::VERSION, data)?;
+        let connect = Connect::with_serialize_value(aldrin_core::VERSION, data)?;
         t.send_and_flush(Message::Connect(connect))
             .await
             .map_err(ConnectError::Transport)?;
@@ -217,7 +217,7 @@ where
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin_proto::channel::unbounded();
+    /// # let (async_transport, t2) = aldrin_core::channel::unbounded();
     /// # tokio::spawn(async move { handle.connect(t2).await });
     /// // Create an AsyncTransport for connecting to the broker.
     /// // let async_transport = ...

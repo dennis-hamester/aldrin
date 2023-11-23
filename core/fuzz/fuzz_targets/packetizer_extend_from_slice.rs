@@ -1,6 +1,6 @@
 #![no_main]
 
-use aldrin_proto::message::Packetizer;
+use aldrin_core::message::Packetizer;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: Vec<Vec<u8>>| {

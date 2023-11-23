@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::value::Value;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -22,7 +22,7 @@ pub enum ConnectReply {
 }
 
 impl ConnectReply {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::ConnectReply> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply> {
         match self {
             Self::Ok { value } => message::ConnectReply::ok_with_serialize_value(value)
                 .with_context(|| anyhow!("failed to serialize value")),

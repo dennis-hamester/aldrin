@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::value::Value;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,7 @@ pub struct Connect {
 }
 
 impl Connect {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::Connect> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::Connect> {
         message::Connect::with_serialize_value(self.version, &self.value)
             .with_context(|| anyhow!("failed to serialize value"))
     }

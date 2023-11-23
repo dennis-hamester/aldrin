@@ -19,7 +19,7 @@ pub mod tokio;
 
 use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
 use aldrin_client::{Client, Handle};
-use aldrin_proto::channel;
+use aldrin_core::channel;
 use futures_util::future;
 use std::ops::{Deref, DerefMut};
 
@@ -173,7 +173,7 @@ impl ClientBuilder {
 
     /// Uses a bounded channel as the transport between `Broker` and `Client`.
     ///
-    /// See [`aldrin_proto::channel::bounded`] for more information on the `fifo_size` parameter.
+    /// See [`aldrin_core::channel::bounded`] for more information on the `fifo_size` parameter.
     #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
     pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
         self.channel = Some(fifo_size);

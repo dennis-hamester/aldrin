@@ -1,5 +1,5 @@
 [package]
-name = "aldrin-proto"
+name = "aldrin-core"
 description = """
 Shared core components of Aldrin, a message bus for service-oriented RPC and interprocess
 communication.

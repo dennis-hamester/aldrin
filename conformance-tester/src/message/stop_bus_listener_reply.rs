@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +14,9 @@ pub struct StopBusListenerReply {
 }
 
 impl StopBusListenerReply {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::StopBusListenerReply> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::StopBusListenerReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_proto(ctx)?;
+        let result = self.result.to_core(ctx)?;
 
         Ok(message::StopBusListenerReply { serial, result })
     }
@@ -61,7 +61,7 @@ pub enum StopBusListenerResult {
 }
 
 impl StopBusListenerResult {
-    pub fn to_proto(&self, _ctx: &Context) -> Result<message::StopBusListenerResult> {
+    pub fn to_core(&self, _ctx: &Context) -> Result<message::StopBusListenerResult> {
         match self {
             Self::Ok => Ok(message::StopBusListenerResult::Ok),
             Self::InvalidBusListener => Ok(message::StopBusListenerResult::InvalidBusListener),

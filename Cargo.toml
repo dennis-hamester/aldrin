@@ -5,10 +5,10 @@ members = [
     "codegen",
     "conformance-test-broker",
     "conformance-tester",
+    "core",
     "gen",
     "macros",
     "parser",
-    "proto",
     "test",
 ]
 resolver = "2"

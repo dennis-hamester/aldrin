@@ -4,7 +4,7 @@ aldrin_client::generate!("test/options.aldrin");
 aldrin_client::generate!("test/test1.aldrin");
 
 use aldrin_client::Error;
-use aldrin_proto::{ObjectUuid, SerializedValue};
+use aldrin_core::{ObjectUuid, SerializedValue};
 use aldrin_test::tokio::TestBroker;
 use futures::StreamExt;
 use uuid::uuid;
@@ -74,7 +74,7 @@ fn generic_struct() {
     };
 
     let s1_serialized = SerializedValue::serialize(&s1).unwrap();
-    let g: aldrin_proto::Struct = s1_serialized.deserialize().unwrap();
+    let g: aldrin_core::Struct = s1_serialized.deserialize().unwrap();
     let g_serialized = SerializedValue::serialize(&g).unwrap();
     let s2: generic_struct::Struct = g_serialized.deserialize().unwrap();
 

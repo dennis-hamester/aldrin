@@ -1,5 +1,5 @@
 [package]
-name = "aldrin-proto-fuzz"
+name = "aldrin-core-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
@@ -13,7 +13,7 @@ cargo-fuzz = true
 bytes = "1.3.0"
 libfuzzer-sys = "0.4.5"
 
-[dependencies.aldrin-proto]
+[dependencies.aldrin-core]
 path = ".."
 features = ["fuzzing"]
 

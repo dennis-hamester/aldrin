@@ -1,5 +1,5 @@
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_proto::tokio::TokioTransport;
+use aldrin_core::tokio::TokioTransport;
 use anyhow::{anyhow, Context, Error, Result};
 use std::io::{self, Read};
 use std::net::Ipv4Addr;

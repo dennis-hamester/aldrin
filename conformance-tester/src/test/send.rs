@@ -24,7 +24,7 @@ impl Send {
     }
 
     async fn run_impl(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
-        let msg = self.message.to_proto(ctx)?;
+        let msg = self.message.to_core(ctx)?;
         let client = ctx.get_client_mut(&self.client)?;
 
         client

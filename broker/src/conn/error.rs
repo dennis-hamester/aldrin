@@ -1,5 +1,5 @@
-use aldrin_proto::message::Message;
-use aldrin_proto::SerializeError;
+use aldrin_core::message::Message;
+use aldrin_core::SerializeError;
 use std::error::Error;
 use std::fmt;
 

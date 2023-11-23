@@ -1,7 +1,7 @@
 use crate::conn_id::ConnectionId;
 #[cfg(feature = "statistics")]
 use crate::BrokerStatistics;
-use aldrin_proto::message::Message;
+use aldrin_core::message::Message;
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;

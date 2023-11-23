@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_proto::message;
+use aldrin_core::message;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ pub struct ServiceDestroyed {
 }
 
 impl ServiceDestroyed {
-    pub fn to_proto(&self, ctx: &Context) -> Result<message::ServiceDestroyed> {
+    pub fn to_core(&self, ctx: &Context) -> Result<message::ServiceDestroyed> {
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
         Ok(message::ServiceDestroyed { service_cookie })

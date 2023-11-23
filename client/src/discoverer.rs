@@ -4,7 +4,7 @@ mod test;
 use crate::bus_listener::BusListener;
 use crate::error::Error;
 use crate::handle::Handle;
-use aldrin_proto::{
+use aldrin_core::{
     BusEvent, BusListenerFilter, BusListenerScope, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid,
 };
@@ -58,7 +58,7 @@ use std::task::{Context, Poll};
 ///
 /// ```
 /// # use aldrin_client::{Discoverer, DiscovererEventKind};
-/// # use aldrin_proto::{ObjectUuid, ServiceUuid};
+/// # use aldrin_core::{ObjectUuid, ServiceUuid};
 /// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;
 /// # #[tokio::main]

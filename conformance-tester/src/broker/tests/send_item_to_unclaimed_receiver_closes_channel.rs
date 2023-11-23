@@ -1,6 +1,6 @@
 use super::{BrokerTest, BrokerUnderTest};
 use crate::test::MessageType;
-use aldrin_proto::message::{ChannelEnd, ChannelEndClosed, ChannelEndWithCapacity, Message};
+use aldrin_core::message::{ChannelEnd, ChannelEndClosed, ChannelEndWithCapacity, Message};
 use anyhow::{anyhow, Context, Result};
 
 const NAME: &str = "send-item-to-unclaimed-receiver-closes-channel";

@@ -7,7 +7,7 @@ mod serial_le;
 mod uuid_le;
 
 use aldrin_broker::{Broker, BrokerHandle};
-use aldrin_proto::channel::{self, Unbounded};
+use aldrin_core::channel::{self, Unbounded};
 use arbitrary::Arbitrary;
 use context::Context;
 use libfuzzer_sys::fuzz_target;
@@ -88,7 +88,7 @@ impl Fuzzer {
             return;
         };
 
-        let msg = msg.to_proto(&self.context);
+        let msg = msg.to_core(&self.context);
 
         if self.runtime.send(inner, msg).is_err() {
             *client = None;

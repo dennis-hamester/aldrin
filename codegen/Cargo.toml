@@ -32,9 +32,9 @@ version = "0.1.0"
 path = "../client"
 features = ["codegen"]
 
-[dev-dependencies.aldrin-proto]
+[dev-dependencies.aldrin-core]
 version = "0.1.0"
-path = "../proto"
+path = "../core"
 
 [dev-dependencies.aldrin-test]
 version = "0.1.0"

@@ -23,18 +23,18 @@
      }
  }
  
--impl aldrin_client::private::aldrin_proto::Serialize for MyStruct {
-+impl aldrin_client::private::aldrin_proto::Serialize for MyStructRenamed {
-     fn serialize(&self, serializer: aldrin_client::private::aldrin_proto::Serializer) -> Result<(), aldrin_client::private::aldrin_proto::SerializeError> {
+-impl aldrin_client::private::aldrin_core::Serialize for MyStruct {
++impl aldrin_client::private::aldrin_core::Serialize for MyStructRenamed {
+     fn serialize(&self, serializer: aldrin_client::private::aldrin_core::Serializer) -> Result<(), aldrin_client::private::aldrin_core::SerializeError> {
          let mut serializer = serializer.serialize_struct(2)?;
  
 @@ -34,7 +34,7 @@
      }
  }
  
--impl aldrin_client::private::aldrin_proto::Deserialize for MyStruct {
-+impl aldrin_client::private::aldrin_proto::Deserialize for MyStructRenamed {
-     fn deserialize(deserializer: aldrin_client::private::aldrin_proto::Deserializer) -> Result<Self, aldrin_client::private::aldrin_proto::DeserializeError> {
+-impl aldrin_client::private::aldrin_core::Deserialize for MyStruct {
++impl aldrin_client::private::aldrin_core::Deserialize for MyStructRenamed {
+     fn deserialize(deserializer: aldrin_client::private::aldrin_core::Deserializer) -> Result<Self, aldrin_client::private::aldrin_core::DeserializeError> {
          let mut deserializer = deserializer.deserialize_struct()?;
  
 @@ -59,7 +59,7 @@

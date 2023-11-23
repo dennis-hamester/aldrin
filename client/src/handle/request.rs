@@ -5,12 +5,12 @@ use crate::channel::{
 };
 use crate::events::{EventsId, EventsRequest};
 use crate::{Error, Object, Service};
-use aldrin_proto::message::{
+use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
     RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
-use aldrin_proto::{
+use aldrin_core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
     ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };

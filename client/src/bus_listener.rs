@@ -3,7 +3,7 @@ mod test;
 
 use crate::error::Error;
 use crate::handle::Handle;
-use aldrin_proto::{BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope};
+use aldrin_core::{BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope};
 use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::HashSet;
@@ -15,7 +15,7 @@ use std::task::{Context, Poll};
 ///
 /// `BusListener`s use [`BusListenerFilter`] to specify which objects and/or services to
 /// consider. It is possible to register interest in either a set of specific objects (based on
-/// their [`ObjectUuid`](aldrin_proto::ObjectUuid)), any object or no objects at all. The same
+/// their [`ObjectUuid`](aldrin_core::ObjectUuid)), any object or no objects at all. The same
 /// applies also to services. In all cases, filters match both creation and destruction events. It
 /// is not possible to limit a `BusListener` to just one type.
 ///
@@ -37,7 +37,7 @@ use std::task::{Context, Poll};
 /// ## Enumerating all current objects and services
 ///
 /// ```
-/// use aldrin_proto::{BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+/// use aldrin_core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
@@ -144,7 +144,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::{BusListenerFilter, ObjectUuid};
+    /// use aldrin_core::{BusListenerFilter, ObjectUuid};
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -181,7 +181,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::BusListenerFilter;
+    /// use aldrin_core::BusListenerFilter;
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -227,7 +227,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::BusListenerFilter;
+    /// use aldrin_core::BusListenerFilter;
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -253,7 +253,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::BusListenerFilter;
+    /// use aldrin_core::BusListenerFilter;
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -281,7 +281,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::BusListenerFilter;
+    /// use aldrin_core::BusListenerFilter;
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -309,7 +309,7 @@ impl BusListener {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_proto::BusListenerFilter;
+    /// use aldrin_core::BusListenerFilter;
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

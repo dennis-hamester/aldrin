@@ -1,15 +1,15 @@
 use crate::{Broker, BrokerHandle};
 use aldrin_client::Client;
-use aldrin_proto::channel::{self, Unbounded};
-use aldrin_proto::message::{
+use aldrin_core::channel::{self, Unbounded};
+use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
     CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateChannel,
     CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
     CreateServiceReply, CreateServiceResult, Message, SendItem, Sync, SyncReply,
 };
-use aldrin_proto::transport::AsyncTransportExt;
-use aldrin_proto::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ServiceUuid};
+use aldrin_core::transport::AsyncTransportExt;
+use aldrin_core::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
 use std::future::Future;
@@ -95,7 +95,7 @@ async fn begin_connect_accept() {
     let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
+        Connect::with_serialize_value(aldrin_core::VERSION, &0u32).unwrap(),
     ))
     .await
     .unwrap();
@@ -123,7 +123,7 @@ async fn begin_connect_reject() {
     let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(aldrin_proto::VERSION, &0u32).unwrap(),
+        Connect::with_serialize_value(aldrin_core::VERSION, &0u32).unwrap(),
     ))
     .await
     .unwrap();
@@ -181,7 +181,7 @@ async fn wrong_client_replies_function_call() {
         let (mut t1, t2) = channel::unbounded();
 
         t1.send(
-            Connect::with_serialize_value(aldrin_proto::VERSION, &())
+            Connect::with_serialize_value(aldrin_core::VERSION, &())
                 .unwrap()
                 .into(),
         )
@@ -296,7 +296,7 @@ async fn send_item_without_capacity() {
         let (mut t1, t2) = channel::unbounded();
 
         t1.send(
-            Connect::with_serialize_value(aldrin_proto::VERSION, &())
+            Connect::with_serialize_value(aldrin_core::VERSION, &())
                 .unwrap()
                 .into(),
         )
