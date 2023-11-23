@@ -3,9 +3,26 @@ name = "aldrin-parser"
 description = "Aldrin schema parser library."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
+repository = "https://github.com/dennis-hamester/aldrin"
 license = "MIT OR Apache-2.0"
 edition = "2021"
 rust-version = "1.70.0"
+categories = [
+    "asynchronous",
+    "network-programming",
+]
+keywords = [
+    "async",
+    "network",
+    "rpc",
+    "service",
+]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[package.metadata.playground]
+all-features = true
 
 [dependencies.heck]
 version = "0.4.1"
