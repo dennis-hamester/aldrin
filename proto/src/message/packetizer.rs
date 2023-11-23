@@ -23,6 +23,12 @@ impl Packetizer {
         self.buf.extend_from_slice(bytes.as_ref());
     }
 
+    /// Returns a slice of uninitialized bytes at the end of the internal buffer.
+    ///
+    /// This function, together with [`bytes_written`](Self::bytes_written), make it possible to
+    /// fill the packetizer without an intermediate buffer.
+    ///
+    /// The slice returned by this function is guaranteed to be non-empty.
     pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<u8>] {
         if let Some(len) = self.len {
             if self.buf.capacity() < len {
@@ -39,6 +45,12 @@ impl Packetizer {
         slice
     }
 
+    /// Asserts that the next `len` bytes have been initialized.
+    ///
+    /// # Safety
+    ///
+    /// You must ensure that prior to calling this function, at least `len` bytes of the slice
+    /// returned by [`spare_capacity_mut`](Self::spare_capacity_mut) have been initialized.
     pub unsafe fn bytes_written(&mut self, len: usize) {
         unsafe {
             self.buf.set_len(self.buf.len() + len);
