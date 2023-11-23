@@ -1,5 +1,5 @@
 use aldrin_proto::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
 async fn timestamp_monotonicity() {

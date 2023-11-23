@@ -40,7 +40,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
 /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;

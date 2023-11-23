@@ -10,7 +10,7 @@ use aldrin_proto::message::{
 };
 use aldrin_proto::transport::AsyncTransportExt;
 use aldrin_proto::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ServiceUuid};
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
 use std::future::Future;
 use std::mem;

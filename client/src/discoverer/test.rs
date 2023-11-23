@@ -1,6 +1,6 @@
 use aldrin_proto::{ObjectUuid, ServiceUuid};
 use aldrin_test::aldrin_client::DiscovererEventKind;
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
 async fn any_object_no_services() {

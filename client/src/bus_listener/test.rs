@@ -1,4 +1,4 @@
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
 async fn create_and_explicit_destroy() {

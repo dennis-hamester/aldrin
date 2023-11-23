@@ -54,7 +54,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// ```
     /// use aldrin_client::{UnclaimedSender, Sender};
     ///
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -87,7 +87,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// ```
     /// use aldrin_client::Sender;
     ///
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -156,7 +156,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -185,7 +185,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -223,7 +223,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -333,7 +333,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -355,7 +355,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -519,7 +519,7 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -786,7 +786,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// ```
     /// use aldrin_client::{Receiver, UnclaimedReceiver};
     ///
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -822,7 +822,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// ```
     /// use aldrin_client::Receiver;
     ///
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -891,7 +891,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = TestBroker::new();
@@ -920,7 +920,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -960,7 +960,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1072,7 +1072,7 @@ impl<T: Deserialize> PendingReceiver<T> {
     ///
     /// ```
     /// use aldrin_client::Error;
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

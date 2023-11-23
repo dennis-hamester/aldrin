@@ -5,7 +5,7 @@ aldrin_client::generate!("test/test1.aldrin");
 
 use aldrin_client::Error;
 use aldrin_proto::{ObjectUuid, SerializedValue};
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 use futures::StreamExt;
 use uuid::uuid;
 

@@ -1,5 +1,5 @@
 use aldrin_proto::{ObjectUuid, ServiceUuid};
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 use futures_util::stream::FusedStream;
 use std::time::Duration;
 use tokio::time;

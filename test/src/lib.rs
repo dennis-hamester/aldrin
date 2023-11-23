@@ -4,7 +4,7 @@
 //! multiple clients and is intended to be used in unit tests.
 //!
 //! If you are using Tokio, it is strongly recommended to enable this crate's `tokio` feature and
-//! use the types in the `tokio_based` module instead of the crate-level types.
+//! use the types in the `tokio` module instead of the crate-level types.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -15,7 +15,7 @@ mod test;
 mod transport;
 
 #[cfg(feature = "tokio")]
-pub mod tokio_based;
+pub mod tokio;
 
 use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
 use aldrin_client::{Client, Handle};

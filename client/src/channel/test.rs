@@ -1,5 +1,5 @@
 use aldrin_test::aldrin_client::Error;
-use aldrin_test::tokio_based::TestBroker;
+use aldrin_test::tokio::TestBroker;
 use futures::stream::FusedStream;
 use std::time::Duration;
 use tokio::time;

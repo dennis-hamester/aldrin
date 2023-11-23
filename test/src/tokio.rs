@@ -18,7 +18,7 @@ use tokio::task::JoinHandle;
 /// [`aldrin_broker::BrokerHandle`]. All method of [`BrokerHandle`] can be called on this type as
 /// well due to its [`Deref`] implementation.
 ///
-/// See the [`tokio_based` module documentation](self) for usage examples.
+/// See the [`tokio` module documentation](self) for usage examples.
 #[derive(Debug)]
 pub struct TestBroker {
     /// Handle to the broker.

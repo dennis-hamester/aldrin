@@ -47,7 +47,7 @@ impl BrokerHandle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// // Create an AsyncTransport to a new incoming connection:
@@ -177,7 +177,7 @@ impl BrokerHandle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// // Create an AsyncTransport to a new incoming connection:
@@ -221,7 +221,7 @@ impl BrokerHandle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let mut broker_handle = TestBroker::new();

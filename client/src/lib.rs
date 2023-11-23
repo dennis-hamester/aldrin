@@ -31,7 +31,7 @@
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn Error>> {
-//!     # let broker = aldrin_test::tokio_based::TestBroker::new();
+//!     # let broker = aldrin_test::tokio::TestBroker::new();
 //!     # let mut handle = broker.clone();
 //!     # let (async_transport, t2) = aldrin_channel::unbounded();
 //!     # let conn = tokio::spawn(async move { handle.connect(t2).await });

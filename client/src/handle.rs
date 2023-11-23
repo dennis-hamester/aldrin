@@ -51,7 +51,7 @@ use std::task::{Context, Poll};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let mut handle = broker.clone();
 /// # let (async_transport, t2) = aldrin_channel::unbounded();
 /// # let conn = tokio::spawn(async move { handle.connect(t2).await });
@@ -109,7 +109,7 @@ impl Handle {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // Create an object with a random UUID:
     /// let object1 = handle.create_object(ObjectUuid::new_v4()).await?;
@@ -220,7 +220,7 @@ impl Handle {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
     /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
@@ -279,7 +279,7 @@ impl Handle {
     /// ```
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
     /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
@@ -386,7 +386,7 @@ impl Handle {
     /// ```
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(aldrin_proto::ObjectUuid::new_v4()).await?;
     /// # let mut svc = obj.create_service(aldrin_proto::ServiceUuid::new_v4(), 0).await?;
@@ -417,7 +417,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     /// use aldrin_proto::{ObjectUuid, ServiceUuid};
     ///
     /// # #[tokio::main]
@@ -465,7 +465,7 @@ impl Handle {
     /// This example assumes that there are 2 clients, represented here by `handle1` and `handle2`.
     ///
     /// ```
-    /// # use aldrin_test::tokio_based::TestBroker;
+    /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -645,7 +645,7 @@ impl Handle {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     ///
@@ -683,7 +683,7 @@ impl Handle {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio_based::TestBroker::new();
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     /// # let service = obj.create_service(ServiceUuid::new_v4(), 0).await?;

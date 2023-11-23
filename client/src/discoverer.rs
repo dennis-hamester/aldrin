@@ -26,7 +26,7 @@ use std::task::{Context, Poll};
 ///
 /// ```
 /// # use aldrin_client::{Discoverer, DiscovererBuilder};
-/// # use aldrin_test::tokio_based::TestBroker;
+/// # use aldrin_test::tokio::TestBroker;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = TestBroker::new();
@@ -59,7 +59,7 @@ use std::task::{Context, Poll};
 /// ```
 /// # use aldrin_client::{Discoverer, DiscovererEventKind};
 /// # use aldrin_proto::{ObjectUuid, ServiceUuid};
-/// # use aldrin_test::tokio_based::TestBroker;
+/// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

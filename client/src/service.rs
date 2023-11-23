@@ -38,7 +38,7 @@ use std::task::{Context, Poll};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
 ///
@@ -83,7 +83,7 @@ use std::task::{Context, Poll};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio_based::TestBroker::new();
+/// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// // Create object and our chat service:
 /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
