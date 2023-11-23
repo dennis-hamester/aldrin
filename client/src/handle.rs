@@ -704,7 +704,10 @@ impl Handle {
         recv.await.map_err(|_| Error::ClientShutdown)
     }
 
-    /// TODO
+    /// Creates a new bus listener.
+    ///
+    /// Bus listeners enable monitoring the bus for events about the creation and destruction of
+    /// objects and services. See [`BusListener`] for more information and usage examples.
     pub async fn create_bus_listener(&self) -> Result<BusListener, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
