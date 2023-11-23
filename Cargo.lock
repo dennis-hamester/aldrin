@@ -3,21 +3,7 @@
 version = 3
 
 [[package]]
-name = "aldrin-broker"
-version = "0.1.0"
-dependencies = [
- "aldrin-client",
- "aldrin-core",
- "aldrin-test",
- "anyhow",
- "futures-channel",
- "futures-core",
- "futures-util",
- "tokio",
-]
-
-[[package]]
-name = "aldrin-client"
+name = "aldrin"
 version = "0.1.0"
 dependencies = [
  "aldrin-core",
@@ -33,10 +19,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "aldrin-broker"
+version = "0.1.0"
+dependencies = [
+ "aldrin",
+ "aldrin-core",
+ "aldrin-test",
+ "anyhow",
+ "futures-channel",
+ "futures-core",
+ "futures-util",
+ "tokio",
+]
+
+[[package]]
 name = "aldrin-codegen"
 version = "0.1.0"
 dependencies = [
- "aldrin-client",
+ "aldrin",
  "aldrin-core",
  "aldrin-parser",
  "aldrin-test",
@@ -68,8 +68,8 @@ dependencies = [
 name = "aldrin-core"
 version = "0.1.0"
 dependencies = [
+ "aldrin",
  "aldrin-broker",
- "aldrin-client",
  "arbitrary",
  "bytes",
  "futures",
@@ -97,7 +97,7 @@ dependencies = [
 name = "aldrin-macros"
 version = "0.1.0"
 dependencies = [
- "aldrin-client",
+ "aldrin",
  "aldrin-codegen",
  "aldrin-parser",
  "proc-macro-error",
@@ -122,8 +122,8 @@ dependencies = [
 name = "aldrin-test"
 version = "0.1.0"
 dependencies = [
+ "aldrin",
  "aldrin-broker",
- "aldrin-client",
  "aldrin-core",
  "anyhow",
  "futures",

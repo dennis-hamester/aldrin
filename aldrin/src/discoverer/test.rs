@@ -1,5 +1,5 @@
 use aldrin_core::{ObjectUuid, ServiceUuid};
-use aldrin_test::aldrin_client::DiscovererEventKind;
+use aldrin_test::aldrin::DiscovererEventKind;
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]

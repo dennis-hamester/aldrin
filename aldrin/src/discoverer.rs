@@ -25,7 +25,7 @@ use std::task::{Context, Poll};
 /// advance through a [`DiscovererBuilder`], which can be created directly from a [`Handle`]:
 ///
 /// ```
-/// # use aldrin_client::{Discoverer, DiscovererBuilder};
+/// # use aldrin::{Discoverer, DiscovererBuilder};
 /// # use aldrin_test::tokio::TestBroker;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -57,7 +57,7 @@ use std::task::{Context, Poll};
 /// service.
 ///
 /// ```
-/// # use aldrin_client::{Discoverer, DiscovererEventKind};
+/// # use aldrin::{Discoverer, DiscovererEventKind};
 /// # use aldrin_core::{ObjectUuid, ServiceUuid};
 /// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;

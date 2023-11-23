@@ -17,15 +17,15 @@ mod transport;
 #[cfg(feature = "tokio")]
 pub mod tokio;
 
+use aldrin::{Client, Handle};
 use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
-use aldrin_client::{Client, Handle};
 use aldrin_core::channel;
 use futures_util::future;
 use std::ops::{Deref, DerefMut};
 
-// For tests directly in aldrin_broker and aldrin_client.
+// For tests directly in aldrin_broker and aldrin.
 #[doc(hidden)]
-pub use {aldrin_broker, aldrin_client};
+pub use {aldrin, aldrin_broker};
 
 pub use transport::TestTransport;
 
@@ -192,7 +192,7 @@ impl ClientBuilder {
 /// both parts out and calling their respective `run` methods (see
 /// [`take_client`](Self::take_client) and [`take_connection`](Self::take_connection).
 ///
-/// [`TestClient`] dereferences to [`aldrin_client::Handle`] and thus all methods on [`Handle`] can
+/// [`TestClient`] dereferences to [`aldrin::Handle`] and thus all methods on [`Handle`] can
 /// be called on [`TestClient`] as well.
 #[derive(Debug)]
 pub struct TestClient {

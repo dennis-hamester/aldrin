@@ -38,7 +38,7 @@ features = [
     "proc-macro",
 ]
 
-[dev-dependencies.aldrin-client]
+[dev-dependencies.aldrin]
 version = "0.1.0"
-path = "../client"
+path = "../aldrin"
 features = ["codegen"]

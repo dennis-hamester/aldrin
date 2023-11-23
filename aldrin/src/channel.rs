@@ -52,7 +52,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{UnclaimedSender, Sender};
+    /// use aldrin::{UnclaimedSender, Sender};
     ///
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
@@ -85,7 +85,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Sender;
+    /// use aldrin::Sender;
     ///
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
@@ -184,7 +184,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
@@ -332,7 +332,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// ## Closing a sender while the receiver hasn't been claimed yet
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
@@ -354,7 +354,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     /// ## Closing a sender while the receiver has already been claimed
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
@@ -784,7 +784,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::{Receiver, UnclaimedReceiver};
+    /// use aldrin::{Receiver, UnclaimedReceiver};
     ///
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
@@ -820,7 +820,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Receiver;
+    /// use aldrin::Receiver;
     ///
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
@@ -919,7 +919,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]
@@ -1071,7 +1071,7 @@ impl<T: Deserialize> PendingReceiver<T> {
     /// ## Closing a receiver while the sender hasn't been claimed yet
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// # use aldrin_test::tokio::TestBroker;
     ///
     /// # #[tokio::main]

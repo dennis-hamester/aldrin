@@ -1,4 +1,4 @@
-use aldrin_test::aldrin_client::Error;
+use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures::stream::FusedStream;
 use std::time::Duration;
@@ -241,7 +241,7 @@ async fn send_error_when_receiver_is_closed() {
 #[cfg(feature = "sink")]
 #[tokio::test]
 async fn stream_sink_pipe() {
-    use aldrin_test::aldrin_client::{Handle, Receiver, Sender};
+    use aldrin_test::aldrin::{Handle, Receiver, Sender};
     use futures::stream;
     use futures::{SinkExt, TryStreamExt};
 

@@ -115,7 +115,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Client;
+    /// use aldrin::Client;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -211,7 +211,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Client;
+    /// use aldrin::Client;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

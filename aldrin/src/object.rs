@@ -74,7 +74,7 @@ impl Object {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// use aldrin_core::{ObjectUuid, ServiceUuid};
     /// use uuid::uuid;
     ///

@@ -175,8 +175,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_core::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_core::Serializer) -> Result<(), aldrin_client::private::aldrin_core::SerializeError> {{");
+        genln!(self, "impl aldrin::private::aldrin_core::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin::private::aldrin_core::Serializer) -> Result<(), aldrin::private::aldrin_core::SerializeError> {{");
         genln!(self, "        let mut serializer = serializer.serialize_struct({})?;", fields.len());
         genln!(self);
         for field in fields {
@@ -188,8 +188,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_core::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_core::Deserializer) -> Result<Self, aldrin_client::private::aldrin_core::DeserializeError> {{");
+        genln!(self, "impl aldrin::private::aldrin_core::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin::private::aldrin_core::Deserializer) -> Result<Self, aldrin::private::aldrin_core::DeserializeError> {{");
         genln!(self, "        let mut deserializer = deserializer.deserialize_struct()?;");
         genln!(self);
         for field in fields {
@@ -217,7 +217,7 @@ impl<'a> RustGenerator<'a> {
         for field in fields {
             let field_name = field.name().value();
             if field.required() {
-                genln!(self, "            {field_name}: {field_name}.ok_or(aldrin_client::private::aldrin_core::DeserializeError::InvalidSerialization)?,");
+                genln!(self, "            {field_name}: {field_name}.ok_or(aldrin::private::aldrin_core::DeserializeError::InvalidSerialization)?,");
             } else {
                 genln!(self, "            {field_name},");
             }
@@ -262,12 +262,12 @@ impl<'a> RustGenerator<'a> {
                 }
                 genln!(self, "        }}");
             } else {
-                genln!(self, "    pub fn build(self) -> Result<{}, aldrin_client::Error> {{", name);
+                genln!(self, "    pub fn build(self) -> Result<{}, aldrin::Error> {{", name);
                 genln!(self, "        Ok({} {{", name);
                 for field in fields {
                     let field_name = field.name().value();
                     if field.required() {
-                        genln!(self, "            {0}: self.{0}.ok_or(aldrin_client::Error::MissingRequiredField)?,", field_name);
+                        genln!(self, "            {0}: self.{0}.ok_or(aldrin::Error::MissingRequiredField)?,", field_name);
                     } else {
                         genln!(self, "            {0}: self.{0},", field_name);
                     }
@@ -306,8 +306,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_core::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin_client::private::aldrin_core::Serializer) -> Result<(), aldrin_client::private::aldrin_core::SerializeError> {{");
+        genln!(self, "impl aldrin::private::aldrin_core::Serialize for {name} {{");
+        genln!(self, "    fn serialize(&self, serializer: aldrin::private::aldrin_core::Serializer) -> Result<(), aldrin::private::aldrin_core::SerializeError> {{");
         genln!(self, "        match self {{");
         for var in vars {
             let name = var.name().value();
@@ -323,8 +323,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::aldrin_core::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin_client::private::aldrin_core::Deserializer) -> Result<Self, aldrin_client::private::aldrin_core::DeserializeError> {{");
+        genln!(self, "impl aldrin::private::aldrin_core::Deserialize for {name} {{");
+        genln!(self, "    fn deserialize(deserializer: aldrin::private::aldrin_core::Deserializer) -> Result<Self, aldrin::private::aldrin_core::DeserializeError> {{");
         genln!(self, "        let deserializer = deserializer.deserialize_enum()?;");
         genln!(self);
         genln!(self, "        match deserializer.variant() {{");
@@ -337,7 +337,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            {id} => deserializer.deserialize().map(|()| Self::{name}),");
             }
         }
-        genln!(self, "            _ => Err(aldrin_client::private::aldrin_core::DeserializeError::InvalidSerialization),");
+        genln!(self, "            _ => Err(aldrin::private::aldrin_core::DeserializeError::InvalidSerialization),");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -355,7 +355,7 @@ impl<'a> RustGenerator<'a> {
         let svc_version_const = service_version_const(svc);
         let svc_version = svc.version().value();
 
-        genln!(self, "pub const {}: aldrin_client::private::aldrin_core::ServiceUuid = aldrin_client::private::aldrin_core::ServiceUuid(aldrin_client::private::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
+        genln!(self, "pub const {}: aldrin::private::aldrin_core::ServiceUuid = aldrin::private::aldrin_core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
         genln!(self, "pub const {}: u32 = {};", svc_version_const, svc_version);
         genln!(self);
 
@@ -451,10 +451,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug, Clone)]");
         genln!(self, "pub struct {} {{", proxy_name);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    client: aldrin_client::Handle,");
+        genln!(self, "    client: aldrin::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
+        genln!(self, "    id: aldrin::private::aldrin_core::ServiceId,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
         genln!(self, "    version: u32,");
@@ -462,16 +462,16 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", proxy_name);
-        genln!(self, "    pub async fn bind(client: aldrin_client::Handle, id: aldrin_client::private::aldrin_core::ServiceId) -> Result<Self, aldrin_client::Error> {{");
+        genln!(self, "    pub async fn bind(client: aldrin::Handle, id: aldrin::private::aldrin_core::ServiceId) -> Result<Self, aldrin::Error> {{");
         genln!(self, "        if id.uuid != {} {{", svc_uuid_const);
-        genln!(self, "            return Err(aldrin_client::Error::InvalidService(id));");
+        genln!(self, "            return Err(aldrin::Error::InvalidService(id));");
         genln!(self, "        }}");
         genln!(self);
-        genln!(self, "        let version = client.query_service_version(id).await?.ok_or(aldrin_client::Error::InvalidService(id))?;");
+        genln!(self, "        let version = client.query_service_version(id).await?.ok_or(aldrin::Error::InvalidService(id))?;");
         genln!(self, "        Ok({} {{ client, id, version }})", proxy_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -479,7 +479,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.version");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn handle(&self) -> &aldrin_client::Handle {{");
+        genln!(self, "    pub fn handle(&self) -> &aldrin::Handle {{");
         genln!(self, "        &self.client");
         genln!(self, "    }}");
         genln!(self);
@@ -509,7 +509,7 @@ impl<'a> RustGenerator<'a> {
 
             if let Some(err) = func.err() {
                 let err = function_err_type_name(svc_name, func_name, err);
-                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionResult<{}, {}>, aldrin_client::Error> {{", func_name, arg, ok, err);
+                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin::PendingFunctionResult<{}, {}>, aldrin::Error> {{", func_name, arg, ok, err);
                 if func.args().is_some() {
                     genln!(self, "        self.client.call_function(self.id, {}, &arg)", id);
                 } else {
@@ -517,7 +517,7 @@ impl<'a> RustGenerator<'a> {
                 }
                 genln!(self, "    }}");
             } else {
-                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin_client::PendingFunctionValue<{}>, aldrin_client::Error> {{", func_name, arg, ok);
+                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin::PendingFunctionValue<{}>, aldrin::Error> {{", func_name, arg, ok);
                 if func.args().is_some() {
                     genln!(self, "        self.client.call_infallible_function(self.id, {}, &arg)", id);
                 } else {
@@ -542,20 +542,20 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", events);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    events: aldrin_client::Events,");
+        genln!(self, "    events: aldrin::Events,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
+        genln!(self, "    id: aldrin::private::aldrin_core::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", events);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub async fn subscribe_all(&mut self) -> Result<(), aldrin_client::Error> {{");
+        genln!(self, "    pub async fn subscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
@@ -568,7 +568,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub async fn unsubscribe_all(&mut self) -> Result<(), aldrin_client::Error> {{");
+        genln!(self, "    pub async fn unsubscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
@@ -582,7 +582,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         let event = service_event(svc_name);
-        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{event}>, aldrin_client::InvalidEventArguments>> {{");
+        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{event}>, aldrin::InvalidEventArguments>> {{");
         genln!(self, "        loop {{");
         genln!(self, "            let ev = match self.events.poll_next_event(cx) {{");
         genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
@@ -609,7 +609,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                    return std::task::Poll::Ready(Ok(Some({event}::{variant})));");
             }
             genln!(self, "                }} else {{");
-            genln!(self, "                    return std::task::Poll::Ready(Err(aldrin_client::InvalidEventArguments {{");
+            genln!(self, "                    return std::task::Poll::Ready(Err(aldrin::InvalidEventArguments {{");
             genln!(self, "                        service_id: self.id,");
             genln!(self, "                        event: ev.id,");
             genln!(self, "                    }}))");
@@ -623,7 +623,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub async fn next_event(&mut self) -> Result<Option<{event}>, aldrin_client::InvalidEventArguments> {{");
+        genln!(self, "    pub async fn next_event(&mut self) -> Result<Option<{event}>, aldrin::InvalidEventArguments> {{");
         genln!(self, "        std::future::poll_fn(|cx| self.poll_next_event(cx)).await");
         genln!(self, "    }}");
         genln!(self);
@@ -635,11 +635,11 @@ impl<'a> RustGenerator<'a> {
             };
             let ev_name = ev.name().value();
             let id = ev.id().value();
-            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin_client::Error> {{", subscribe_event(ev_name));
+            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", subscribe_event(ev_name));
             genln!(self, "        self.events.subscribe(self.id, {}).await", id);
             genln!(self, "    }}");
             genln!(self);
-            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin_client::Error> {{", unsubscribe_event(ev_name));
+            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", unsubscribe_event(ev_name));
             genln!(self, "        self.events.unsubscribe(self.id, {})", id);
             genln!(self, "    }}");
             genln!(self);
@@ -647,8 +647,8 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::futures_core::stream::Stream for {} {{", events);
-        genln!(self, "    type Item = Result<{}, aldrin_client::InvalidEventArguments>;", event);
+        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {} {{", events);
+        genln!(self, "    type Item = Result<{}, aldrin::InvalidEventArguments>;", event);
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        self.poll_next_event(cx).map(std::result::Result::transpose)");
@@ -656,7 +656,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::futures_core::stream::FusedStream for {} {{", events);
+        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {} {{", events);
         genln!(self, "    fn is_terminated(&self) -> bool {{");
         genln!(self, "        self.events.is_terminated()");
         genln!(self, "    }}");
@@ -694,17 +694,17 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", svc_name);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    service: aldrin_client::Service,");
+        genln!(self, "    service: aldrin::Service,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", svc_name);
-        genln!(self, "    pub async fn create(object: &aldrin_client::Object) -> Result<Self, aldrin_client::Error> {{");
+        genln!(self, "    pub async fn create(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
         genln!(self, "        let service = object.create_service({}, {}).await?;", svc_uuid_const, svc_version_const);
         genln!(self, "        Ok({} {{ service }})", svc_name);
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.service.id()");
         genln!(self, "    }}");
         genln!(self);
@@ -712,11 +712,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.service.version()");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn handle(&self) -> &aldrin_client::Handle {{");
+        genln!(self, "    pub fn handle(&self) -> &aldrin::Handle {{");
         genln!(self, "        self.service.handle()");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub async fn destroy(&mut self) -> Result<(), aldrin_client::Error> {{");
+        genln!(self, "    pub async fn destroy(&mut self) -> Result<(), aldrin::Error> {{");
         genln!(self, "        self.service.destroy().await");
         genln!(self, "    }}");
         genln!(self);
@@ -729,7 +729,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         let functions = service_functions(svc_name);
-        genln!(self, "    pub fn poll_next_function_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{functions}>, aldrin_client::InvalidFunctionCall>> {{");
+        genln!(self, "    pub fn poll_next_function_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{functions}>, aldrin::InvalidFunctionCall>> {{");
         genln!(self, "        let call = match self.service.poll_next_function_call(cx) {{");
         genln!(self, "            std::task::Poll::Ready(Some(call)) => call,");
         genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(Ok(None)),");
@@ -756,7 +756,7 @@ impl<'a> RustGenerator<'a> {
             }
             genln!(self, "            }} else {{");
             genln!(self, "                call.reply.invalid_args().ok();");
-            genln!(self, "                std::task::Poll::Ready(Err(aldrin_client::InvalidFunctionCall {{");
+            genln!(self, "                std::task::Poll::Ready(Err(aldrin::InvalidFunctionCall {{");
             genln!(self, "                    service_id: self.service.id(),");
             genln!(self, "                    function: call.id,");
             genln!(self, "                }}))");
@@ -765,7 +765,7 @@ impl<'a> RustGenerator<'a> {
         }
         genln!(self, "            _ => {{");
         genln!(self, "                call.reply.invalid_function().ok();");
-        genln!(self, "                std::task::Poll::Ready(Err(aldrin_client::InvalidFunctionCall {{");
+        genln!(self, "                std::task::Poll::Ready(Err(aldrin::InvalidFunctionCall {{");
         genln!(self, "                    service_id: self.service.id(),");
         genln!(self, "                    function: call.id,");
         genln!(self, "                }}))");
@@ -773,14 +773,14 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub async fn next_function_call(&mut self) -> Result<Option<{functions}>, aldrin_client::InvalidFunctionCall> {{");
+        genln!(self, "    pub async fn next_function_call(&mut self) -> Result<Option<{functions}>, aldrin::InvalidFunctionCall> {{");
         genln!(self, "        std::future::poll_fn(|cx| self.poll_next_function_call(cx)).await");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::futures_core::stream::Stream for {} {{", svc_name);
-        genln!(self, "    type Item = Result<{}, aldrin_client::InvalidFunctionCall>;", functions);
+        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {} {{", svc_name);
+        genln!(self, "    type Item = Result<{}, aldrin::InvalidFunctionCall>;", functions);
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        self.poll_next_function_call(cx).map(Result::transpose)");
@@ -788,7 +788,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin_client::private::futures_core::stream::FusedStream for {} {{", svc_name);
+        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {} {{", svc_name);
         genln!(self, "    fn is_terminated(&self) -> bool {{");
         genln!(self, "        self.service.is_terminated()");
         genln!(self, "    }}");
@@ -828,36 +828,36 @@ impl<'a> RustGenerator<'a> {
             let reply = function_reply(svc_name, func_name);
 
             genln!(self, "#[derive(Debug)]");
-            genln!(self, "pub struct {}(#[doc(hidden)] aldrin_client::FunctionCallReply);", reply);
+            genln!(self, "pub struct {}(#[doc(hidden)] aldrin::FunctionCallReply);", reply);
             genln!(self);
 
             genln!(self, "impl {} {{", reply);
             if let Some(ok) = func.ok() {
                 if let Some(err) = func.err() {
-                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin_client::Error> {{", function_ok_call_type_name(svc_name, func_name, ok), function_err_call_type_name(svc_name, func_name, err));
+                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin::Error> {{", function_ok_call_type_name(svc_name, func_name, ok), function_err_call_type_name(svc_name, func_name, err));
                     genln!(self, "        self.0.set(res.as_ref())");
                     genln!(self, "    }}");
                     genln!(self);
                 }
 
-                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_ok_call_type_name(svc_name, func_name, ok));
+                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin::Error> {{", function_ok_call_type_name(svc_name, func_name, ok));
                 genln!(self, "        self.0.ok(&arg)");
                 genln!(self, "    }}");
             } else {
-                genln!(self, "    pub fn ok(self) -> Result<(), aldrin_client::Error> {{");
+                genln!(self, "    pub fn ok(self) -> Result<(), aldrin::Error> {{");
                 genln!(self, "        self.0.ok(&())");
                 genln!(self, "    }}");
             }
             genln!(self);
 
             if let Some(err) = func.err() {
-                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin_client::Error> {{", function_err_call_type_name(svc_name, func_name, err));
+                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin::Error> {{", function_err_call_type_name(svc_name, func_name, err));
                 genln!(self, "        self.0.err(&arg)");
                 genln!(self, "    }}");
                 genln!(self);
             }
 
-            genln!(self, "    pub fn abort(self) -> Result<(), aldrin_client::Error> {{");
+            genln!(self, "    pub fn abort(self) -> Result<(), aldrin::Error> {{");
             genln!(self, "        self.0.abort()");
             genln!(self, "    }}");
             genln!(self, "}}");
@@ -867,15 +867,15 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug, Clone)]");
         genln!(self, "pub struct {} {{", event_emitter);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    client: aldrin_client::Handle,");
+        genln!(self, "    client: aldrin::Handle,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin_client::private::aldrin_core::ServiceId,");
+        genln!(self, "    id: aldrin::private::aldrin_core::ServiceId,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", event_emitter);
-        genln!(self, "    pub fn id(&self) -> aldrin_client::private::aldrin_core::ServiceId {{");
+        genln!(self, "    pub fn id(&self) -> aldrin::private::aldrin_core::ServiceId {{");
         genln!(self, "        self.id");
         genln!(self, "    }}");
         genln!(self);
@@ -889,11 +889,11 @@ impl<'a> RustGenerator<'a> {
 
             if let Some(ev_type) = ev.event_type() {
                 let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
-                genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin_client::Error> {{", ev_name, var_type);
+                genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin::Error> {{", ev_name, var_type);
                 genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
                 genln!(self, "    }}");
             } else {
-                genln!(self, "    pub fn {}(&self) -> Result<(), aldrin_client::Error> {{", ev_name);
+                genln!(self, "    pub fn {}(&self) -> Result<(), aldrin::Error> {{", ev_name);
                 genln!(self, "        self.client.emit_event(self.id, {}, &())", id);
                 genln!(self, "    }}");
             }
@@ -917,7 +917,7 @@ impl<'a> RustGenerator<'a> {
             ast::ConstValue::U64(v) => genln!(self, "pub const {}: u64 = {};", name, v.value()),
             ast::ConstValue::I64(v) => genln!(self, "pub const {}: i64 = {};", name, v.value()),
             ast::ConstValue::String(v) => genln!(self, "pub const {}: &str = \"{}\";", name, v.value()),
-            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin_client::private::uuid::Uuid = aldrin_client::private::uuid::uuid!(\"{}\");", name, v.value()),
+            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin::private::uuid::Uuid = aldrin::private::uuid::uuid!(\"{}\");", name, v.value()),
         };
 
         genln!(self);
@@ -938,19 +938,17 @@ fn type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F32 => "f32".to_owned(),
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "String".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_core::SerializedValue".to_owned()
-        }
+        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin::private::aldrin_core::ServiceId".to_owned(),
+        ast::TypeNameKind::Value => "aldrin::private::aldrin_core::SerializedValue".to_owned(),
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
         ast::TypeNameKind::Box(ty) => format!("Box<{}>", type_name(ty)),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_core::Bytes".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin::private::aldrin_core::Bytes".to_owned(),
             _ => format!("Vec<{}>", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_core::Bytes".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin::private::aldrin_core::Bytes".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -958,10 +956,10 @@ fn type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
+            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
@@ -982,19 +980,19 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F32 => "f32".to_owned(),
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "&str".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
+        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin::private::aldrin_core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => {
-            "&aldrin_client::private::aldrin_core::SerializedValueSlice".to_owned()
+            "&aldrin::private::aldrin_core::SerializedValueSlice".to_owned()
         }
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", call_type_name(ty)),
         ast::TypeNameKind::Box(ty) => call_type_name(ty),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "&aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
+            ast::TypeNameKind::U8 => "&aldrin::private::aldrin_core::ByteSlice".to_owned(),
             _ => format!("&[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "&aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
+        ast::TypeNameKind::Bytes => "&aldrin::private::aldrin_core::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "&std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -1002,10 +1000,10 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("&std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
+            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
@@ -1026,19 +1024,17 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::F32 => "f32".to_owned(),
         ast::TypeNameKind::F64 => "f64".to_owned(),
         ast::TypeNameKind::String => "str".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin_client::private::aldrin_core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin_client::private::aldrin_core::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => {
-            "aldrin_client::private::aldrin_core::SerializedValueSlice".to_owned()
-        }
+        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => "aldrin::private::aldrin_core::ObjectId".to_owned(),
+        ast::TypeNameKind::ServiceId => "aldrin::private::aldrin_core::ServiceId".to_owned(),
+        ast::TypeNameKind::Value => "aldrin::private::aldrin_core::SerializedValueSlice".to_owned(),
         ast::TypeNameKind::Box(ty) => sender_type_name(ty),
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
+            ast::TypeNameKind::U8 => "aldrin::private::aldrin_core::ByteSlice".to_owned(),
             _ => format!("[{}]", type_name(ty)),
         },
-        ast::TypeNameKind::Bytes => "aldrin_client::private::aldrin_core::ByteSlice".to_owned(),
+        ast::TypeNameKind::Bytes => "aldrin::private::aldrin_core::ByteSlice".to_owned(),
         ast::TypeNameKind::Map(k, v) => format!(
             "std::collections::HashMap<{}, {}>",
             key_type_name(k),
@@ -1046,10 +1042,10 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin_client::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin_client::UnboundReceiver<{}>", type_name(ty))
+            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
@@ -1067,7 +1063,7 @@ fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
         ast::KeyTypeNameKind::U64 => "u64",
         ast::KeyTypeNameKind::I64 => "i64",
         ast::KeyTypeNameKind::String => "String",
-        ast::KeyTypeNameKind::Uuid => "aldrin_client::private::uuid::Uuid",
+        ast::KeyTypeNameKind::Uuid => "aldrin::private::uuid::Uuid",
     }
 }
 

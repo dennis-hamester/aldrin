@@ -26,7 +26,7 @@
 //! # Examples
 //!
 //! ```
-//! use aldrin_client::Client;
+//! use aldrin::Client;
 //! use std::error::Error;
 //!
 //! #[tokio::main]

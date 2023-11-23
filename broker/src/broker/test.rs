@@ -1,5 +1,5 @@
 use crate::{Broker, BrokerHandle};
-use aldrin_client::Client;
+use aldrin::Client;
 use aldrin_core::channel::{self, Unbounded};
 use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,

@@ -6,8 +6,8 @@
 #[cfg(test)]
 mod test;
 
+use aldrin::{Handle, RunError};
 use aldrin_broker::{BrokerHandle, ConnectionError, ConnectionHandle};
-use aldrin_client::{Handle, RunError};
 use aldrin_core::channel::Disconnected;
 use std::ops::{Deref, DerefMut};
 use tokio::task::JoinHandle;
@@ -71,8 +71,8 @@ impl TestBroker {
     /// Creates a new `ClientBuilder`.
     ///
     /// Use of this function is recommended only if non-default settings are required for the
-    /// [`Client`](aldrin_client::Client) or its [`Connection`](aldrin_broker::Connection). A
-    /// default [`Client`](aldrin_client::Client) can be added directly with
+    /// [`Client`](aldrin::Client) or its [`Connection`](aldrin_broker::Connection). A
+    /// default [`Client`](aldrin::Client) can be added directly with
     /// [`add_client`](TestBroker::add_client).
     pub fn client_builder(&self) -> ClientBuilder {
         ClientBuilder::new(self.handle.clone())
@@ -80,7 +80,7 @@ impl TestBroker {
 
     /// Creates a default `Client`.
     ///
-    /// If you need more control over the [`Client`](aldrin_client::Client) and
+    /// If you need more control over the [`Client`](aldrin::Client) and
     /// [`Connection`](aldrin_broker::Connection) settings, then use
     /// [`client_builder`](TestBroker::client_builder) instead.
     pub async fn add_client(&self) -> TestClient {
@@ -110,7 +110,7 @@ impl DerefMut for TestBroker {
 
 /// Tokio-based builder struct for a new `Client`.
 ///
-/// A [`ClientBuilder`] allows for more control over how [`Client`](aldrin_client::Client) and
+/// A [`ClientBuilder`] allows for more control over how [`Client`](aldrin::Client) and
 /// [`Connection`](aldrin_broker::Connection) are setup, specifically what kind of channel is used
 /// as the transport. If you do not required any special settings, it is recommended to use
 /// [`TestBroker::add_client`] instead.
@@ -121,7 +121,7 @@ impl ClientBuilder {
     /// Creates a new `ClientBuilder`.
     ///
     /// The default [`ClientBuilder`] is configured to use an unbounded channel between
-    /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin_client::Client).
+    /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin::Client).
     pub fn new(broker: BrokerHandle) -> Self {
         ClientBuilder(crate::ClientBuilder::new(broker))
     }
@@ -162,7 +162,7 @@ impl ClientBuilder {
 /// [`TestBroker::add_client`], or alternatively with a [`ClientBuilder`] if more control over the
 /// settings is required.
 ///
-/// [`TestClient`] dereferences to [`aldrin_client::Handle`] and thus all methods on [`Handle`] can
+/// [`TestClient`] dereferences to [`aldrin::Handle`] and thus all methods on [`Handle`] can
 /// be called on [`TestClient`] as well.
 #[derive(Debug)]
 pub struct TestClient {

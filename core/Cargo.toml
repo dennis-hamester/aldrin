@@ -60,13 +60,13 @@ default-features = false
 version = "1.2.1"
 default-features = false
 
+[dev-dependencies.aldrin]
+version = "0.1.0"
+path = "../aldrin"
+
 [dev-dependencies.aldrin-broker]
 version = "0.1.0"
 path = "../broker"
-
-[dev-dependencies.aldrin-client]
-version = "0.1.0"
-path = "../client"
 
 [dev-dependencies.futures]
 version = "0.3.21"

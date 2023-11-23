@@ -38,9 +38,9 @@ features = ["sink"]
 [dev-dependencies]
 anyhow = "1.0.32"
 
-[dev-dependencies.aldrin-client]
+[dev-dependencies.aldrin]
 version = "0.1.0"
-path = "../client"
+path = "../aldrin"
 
 [dev-dependencies.aldrin-core]
 version = "0.1.0"

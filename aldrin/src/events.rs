@@ -36,7 +36,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # Examples
 ///
 /// ```
-/// use aldrin_client::Event;
+/// use aldrin::Event;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

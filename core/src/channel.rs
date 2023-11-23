@@ -11,7 +11,7 @@
 //!
 //! ```
 //! use aldrin_broker::Broker;
-//! use aldrin_client::Client;
+//! use aldrin::Client;
 //! use aldrin_core::channel;
 //! use futures::future;
 //!

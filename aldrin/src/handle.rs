@@ -47,7 +47,7 @@ use std::task::{Context, Poll};
 /// # Examples
 ///
 /// ```
-/// use aldrin_client::Client;
+/// use aldrin::Client;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -101,7 +101,7 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// use aldrin_client::Error;
+    /// use aldrin::Error;
     /// use aldrin_core::ObjectUuid;
     /// use uuid::uuid;
     ///

@@ -1,8 +1,6 @@
 [package]
-name = "aldrin-client"
-description = """
-Client library of Aldrin, a message bus for service-oriented RPC and interprocess communication.
-"""
+name = "aldrin"
+description = "Message bus for service-oriented RPC and interprocess communication."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"

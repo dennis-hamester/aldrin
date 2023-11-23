@@ -29,7 +29,7 @@ use std::task::{Context, Poll};
 /// Creating and destroying [`Service`s](Service):
 ///
 /// ```
-/// use aldrin_client::Error;
+/// use aldrin::Error;
 /// use aldrin_core::{ObjectUuid, ServiceUuid};
 /// use std::mem;
 /// use uuid::uuid;

@@ -1,9 +1,9 @@
-aldrin_client::generate!("test/constants.aldrin");
-aldrin_client::generate!("test/generic_struct.aldrin");
-aldrin_client::generate!("test/options.aldrin");
-aldrin_client::generate!("test/test1.aldrin");
+aldrin::generate!("test/constants.aldrin");
+aldrin::generate!("test/generic_struct.aldrin");
+aldrin::generate!("test/options.aldrin");
+aldrin::generate!("test/test1.aldrin");
 
-use aldrin_client::Error;
+use aldrin::Error;
 use aldrin_core::{ObjectUuid, SerializedValue};
 use aldrin_test::tokio::TestBroker;
 use futures::StreamExt;

@@ -27,9 +27,9 @@ default-features = false
 [dev-dependencies]
 uuid = "1.1.2"
 
-[dev-dependencies.aldrin-client]
+[dev-dependencies.aldrin]
 version = "0.1.0"
-path = "../client"
+path = "../aldrin"
 features = ["codegen"]
 
 [dev-dependencies.aldrin-core]
