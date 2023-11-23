@@ -1,6 +1,6 @@
 [package]
 name = "aldrin-conformance-tester"
-description = "Protocol conformance tester for Aldrin brokers"
+description = "Protocol conformance tester for Aldrin brokers."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"

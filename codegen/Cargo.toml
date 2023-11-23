@@ -1,6 +1,6 @@
 [package]
 name = "aldrin-codegen"
-description = "Aldrin code generator library"
+description = "Aldrin code generator library."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"

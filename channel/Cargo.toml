@@ -1,6 +1,6 @@
 [package]
 name = "aldrin-channel"
-description = "Channels-based Aldrin transports"
+description = "Aldrin transports based on in-process channels."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"

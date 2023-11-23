@@ -1,6 +1,6 @@
 [package]
 name = "conformance-test-broker"
-description = "Host for aldrin-broker conformance tests"
+description = "Host for aldrin-broker conformance tests."
 version = "0.0.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"
