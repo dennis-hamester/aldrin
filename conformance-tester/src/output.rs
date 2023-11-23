@@ -3,10 +3,9 @@ use crate::test::Test;
 use crate::FilterArgs;
 use anyhow::Result;
 use clap::ColorChoice;
-use is_terminal::IsTerminal;
 use once_cell::sync::Lazy;
 use std::cmp;
-use std::io;
+use std::io::{self, IsTerminal};
 use std::time::Duration;
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 

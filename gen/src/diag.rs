@@ -1,9 +1,8 @@
 use aldrin_parser::diag::{Diagnostic, Formatted, Style};
 use aldrin_parser::Parsed;
 use clap::ColorChoice as ClapColorChoice;
-use is_terminal::IsTerminal;
 use once_cell::sync::Lazy;
-use std::io::{self, Result, Write};
+use std::io::{self, IsTerminal, Result, Write};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
