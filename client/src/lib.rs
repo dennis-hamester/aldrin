@@ -78,7 +78,7 @@ mod test;
 pub mod private;
 
 #[cfg(feature = "codegen")]
-pub use aldrin_codegen_macros::generate;
+pub use aldrin_macros::generate;
 pub use bus_listener::BusListener;
 pub use channel::{
     PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,

@@ -10,13 +10,13 @@ edition = "2021"
 rust-version = "1.70.0"
 
 [features]
-codegen = ["dep:aldrin-codegen-macros"]
+codegen = ["dep:aldrin-macros"]
 sink = ["dep:futures-sink"]
 
-[dependencies.aldrin-codegen-macros]
+[dependencies.aldrin-macros]
 optional = true
 version = "0.1.0"
-path = "../codegen-macros"
+path = "../macros"
 default-features = false
 
 [dependencies.aldrin-proto]

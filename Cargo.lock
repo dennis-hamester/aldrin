@@ -20,7 +20,7 @@ dependencies = [
 name = "aldrin-client"
 version = "0.1.0"
 dependencies = [
- "aldrin-codegen-macros",
+ "aldrin-macros",
  "aldrin-proto",
  "aldrin-test",
  "futures",
@@ -45,18 +45,6 @@ dependencies = [
  "heck",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "aldrin-codegen-macros"
-version = "0.1.0"
-dependencies = [
- "aldrin-client",
- "aldrin-codegen",
- "aldrin-parser",
- "proc-macro-error",
- "proc-macro2",
- "syn",
 ]
 
 [[package]]
@@ -86,6 +74,18 @@ dependencies = [
  "clap",
  "once_cell",
  "termcolor",
+]
+
+[[package]]
+name = "aldrin-macros"
+version = "0.1.0"
+dependencies = [
+ "aldrin-client",
+ "aldrin-codegen",
+ "aldrin-parser",
+ "proc-macro-error",
+ "proc-macro2",
+ "syn",
 ]
 
 [[package]]

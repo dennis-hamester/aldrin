@@ -1,6 +1,6 @@
 [package]
-name = "aldrin-codegen-macros"
-description = "Aldrin code generator macros."
+name = "aldrin-macros"
+description = "Aldrin code generation macros."
 version = "0.1.0"
 authors = ["Aldrin Contributors"]
 license = "MIT OR Apache-2.0"
