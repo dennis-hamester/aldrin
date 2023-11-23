@@ -4,7 +4,6 @@ use crate::FilterArgs;
 use anyhow::Result;
 use clap::ColorChoice;
 use once_cell::sync::Lazy;
-use std::cmp;
 use std::io::{self, IsTerminal};
 use std::time::Duration;
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
@@ -18,8 +17,12 @@ fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
 
 fn get_termwidth() -> usize {
     const MIN_TERMWIDTH: usize = 20;
-    let termwidth = textwrap::termwidth();
-    cmp::max(termwidth, MIN_TERMWIDTH)
+    const DEFAULT_TERMWIDTH: usize = 80;
+
+    terminal_size::terminal_size()
+        .map(|(size, _)| size.0 as usize)
+        .unwrap_or(DEFAULT_TERMWIDTH)
+        .max(MIN_TERMWIDTH)
 }
 
 static STYLE_REGULAR: Lazy<ColorSpec> = Lazy::new(|| style(None, false));
@@ -94,9 +97,8 @@ pub fn describe_test(mut output: impl WriteColor, test: &Test) -> Result<()> {
         writeln!(output, "Description:")?;
 
         let termwidth = get_termwidth();
-        for line in textwrap::wrap(long_description, termwidth - 4) {
-            writeln!(output, "  {line}")?;
-        }
+        let long_description = bwrap::wrap_nobrk!(long_description, termwidth - 4, "  ");
+        writeln!(output, "  {}", long_description)?;
     }
 
     if !test.message_types.is_empty() {
