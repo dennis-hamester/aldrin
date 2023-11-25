@@ -6,6 +6,7 @@ members = [
     "conformance-test-broker",
     "conformance-tester",
     "core",
+    "examples/broker",
     "gen",
     "macros",
     "parser",
