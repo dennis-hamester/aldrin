@@ -118,6 +118,7 @@ impl<Key> Discoverer<Key> {
         client: &Handle,
         specific: Vec<SpecificObject<Key>>,
         any: Vec<AnyObject<Key>>,
+        current_only: bool,
     ) -> Result<Self, Error> {
         let mut bus_listener = client.create_bus_listener().await?;
 
@@ -152,7 +153,12 @@ impl<Key> Discoverer<Key> {
             pending_events: VecDeque::new(),
         };
 
-        this.start().await?;
+        if current_only {
+            this.start_current_only().await?;
+        } else {
+            this.start().await?;
+        }
+
         Ok(this)
     }
 
@@ -162,6 +168,17 @@ impl<Key> Discoverer<Key> {
     /// discoverer that isn't stopped.
     pub async fn start(&mut self) -> Result<(), Error> {
         self.bus_listener.start(BusListenerScope::All).await
+    }
+
+    /// Starts the discoverer and configures it to consider only current objects and services.
+    ///
+    /// Unlike [`start`](Self::start), the discoverer will consider only those objects and services
+    /// that exist already on the bus.
+    ///
+    /// `Discoverer`s are initially started already. This function fails if trying to start a
+    /// discoverer that isn't stopped.
+    pub async fn start_current_only(&mut self) -> Result<(), Error> {
+        self.bus_listener.start(BusListenerScope::Current).await
     }
 
     /// Stops the discoverer.
@@ -175,6 +192,15 @@ impl<Key> Discoverer<Key> {
     /// discoverer.
     pub async fn stop(&mut self) -> Result<(), Error> {
         self.bus_listener.stop().await
+    }
+
+    /// Indicates whether the discoverer can return more events.
+    ///
+    /// Discoverers can only finish if they are considering only current objects and services,
+    /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or started
+    /// with [`start_current_only`](Self::start_current_only`).
+    pub fn finished(&self) -> bool {
+        self.bus_listener.finished()
     }
 
     /// Poll the discoverer for an event.
@@ -287,7 +313,15 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
 
     /// Builds the discoverer with the configured set of objects.
     pub async fn build(self) -> Result<Discoverer<Key>, Error> {
-        Discoverer::new(self.client, self.specific, self.any).await
+        Discoverer::new(self.client, self.specific, self.any, false).await
+    }
+
+    /// Builds the discoverer and configures it to consider only current objects and services.
+    ///
+    /// Unlike [`build`](Self::build), the discoverer will consider only those objects and services
+    /// that exist already on the bus.
+    pub async fn build_current_only(self) -> Result<Discoverer<Key>, Error> {
+        Discoverer::new(self.client, self.specific, self.any, true).await
     }
 
     /// Add an object to the discoverer.
