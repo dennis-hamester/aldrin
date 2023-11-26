@@ -2,7 +2,8 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::fmt;
-use uuid::Uuid;
+use std::str::FromStr;
+use uuid::{Error as UuidError, Uuid};
 
 /// Id of an object.
 ///
@@ -95,6 +96,14 @@ impl From<ObjectUuid> for Uuid {
 impl fmt::Display for ObjectUuid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl FromStr for ObjectUuid {
+    type Err = UuidError;
+
+    fn from_str(s: &str) -> Result<Self, UuidError> {
+        s.parse().map(Self)
     }
 }
 
@@ -253,6 +262,14 @@ impl From<ServiceUuid> for Uuid {
 impl fmt::Display for ServiceUuid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl FromStr for ServiceUuid {
+    type Err = UuidError;
+
+    fn from_str(s: &str) -> Result<Self, UuidError> {
+        s.parse().map(Self)
     }
 }
 
