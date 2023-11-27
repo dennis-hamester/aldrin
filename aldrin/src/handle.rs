@@ -679,8 +679,6 @@ impl Handle {
     ///
     /// ```
     /// # use aldrin::core::{ObjectUuid, ServiceUuid};
-    /// use std::mem;
-    ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
