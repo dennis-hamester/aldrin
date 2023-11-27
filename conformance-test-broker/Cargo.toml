@@ -9,7 +9,7 @@ rust-version = "1.70.0"
 publish = false
 
 [dependencies.aldrin-broker]
-version = "0.1.0"
+version = "0.2.0"
 path = "../broker"
 default-features = false
 features = ["tokio"]

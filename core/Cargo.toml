@@ -4,7 +4,7 @@ description = """
 Shared core components of Aldrin, a message bus for service-oriented RPC and interprocess
 communication.
 """
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Aldrin Contributors"]
 repository = "https://github.com/dennis-hamester/aldrin"
 license = "MIT OR Apache-2.0"

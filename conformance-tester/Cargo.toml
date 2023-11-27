@@ -1,7 +1,7 @@
 [package]
 name = "aldrin-conformance-tester"
 description = "Protocol conformance tester for Aldrin brokers."
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Aldrin Contributors"]
 repository = "https://github.com/dennis-hamester/aldrin"
 license = "MIT OR Apache-2.0"
@@ -9,7 +9,7 @@ edition = "2021"
 rust-version = "1.70.0"
 
 [dependencies.aldrin-core]
-version = "0.1.0"
+version = "0.2.0"
 path = "../core"
 default-features = false
 features = ["tokio"]
