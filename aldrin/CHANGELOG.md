@@ -1,3 +1,9 @@
+# Unreleased
+
+- Add `Handle::find_object` as a convenience function for finding a single object with a specific
+  set of services.
+
+
 # 0.2.0 (November 27th, 2023)
 
 ## Added

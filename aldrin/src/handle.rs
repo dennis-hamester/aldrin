@@ -30,6 +30,7 @@ use request::{
 use std::fmt;
 use std::future::Future;
 use std::marker::PhantomData;
+use std::mem::MaybeUninit;
 use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -824,6 +825,106 @@ impl Handle {
     /// Create a new `DiscovererBuilder`.
     pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key> {
         Discoverer::builder(self)
+    }
+
+    /// Find an object with a specific set of services.
+    ///
+    /// If `object` is `None`, then any object that has all required services may be
+    /// returned. Repeated calls to this function can return different objects.
+    ///
+    /// This is a convenience function for using a [`Discoverer`] to find a single object among all
+    /// current objects on the bus.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let client = broker.add_client().await;
+    /// // Create an object and 2 services to find.
+    /// let obj = client.create_object(ObjectUuid::new_v4()).await?;
+    /// let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await?;
+    /// let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await?;
+    ///
+    /// // Find the object.
+    /// let (object_id, service_ids) = client
+    ///     .find_object(Some(obj.id().uuid), &[svc1.id().uuid, svc2.id().uuid])
+    ///     .await?
+    ///     .unwrap();
+    ///
+    /// assert_eq!(object_id, obj.id());
+    /// assert_eq!(service_ids[0], svc1.id());
+    /// assert_eq!(service_ids[1], svc2.id());
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Without specifying an `ObjectUuid`:
+    ///
+    /// ```
+    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let client = broker.add_client().await;
+    /// // Create 2 objects and sets of services to find.
+    /// let obj1 = client.create_object(ObjectUuid::new_v4()).await?;
+    /// let svc11 = obj1.create_service(ServiceUuid::new_v4(), 0).await?;
+    /// let svc12 = obj1.create_service(ServiceUuid::new_v4(), 0).await?;
+    ///
+    /// let obj2 = client.create_object(ObjectUuid::new_v4()).await?;
+    /// let svc21 = obj2.create_service(svc11.id().uuid, 0).await?;
+    /// let svc22 = obj2.create_service(svc12.id().uuid, 0).await?;
+    ///
+    /// // Find any one of the objects above.
+    /// let (object_id, service_ids) = client
+    ///     .find_object(None, &[svc11.id().uuid, svc12.id().uuid])
+    ///     .await?
+    ///     .unwrap();
+    ///
+    /// assert!((object_id == obj1.id()) || (object_id == obj2.id()));
+    /// assert!((service_ids[0] == svc11.id()) || (service_ids[0] == svc21.id()));
+    /// assert!((service_ids[1] == svc12.id()) || (service_ids[1] == svc22.id()));
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn find_object<const N: usize>(
+        &self,
+        object: Option<ObjectUuid>,
+        services: &[ServiceUuid; N],
+    ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
+        let mut discoverer = self
+            .create_discoverer()
+            .add_object((), object, services.iter().copied())
+            .build_current_only()
+            .await?;
+
+        let Some(event) = discoverer.next_event().await else {
+            return Ok(None);
+        };
+
+        // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
+        let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+
+        for (&uuid, id) in services.iter().zip(&mut ids) {
+            id.write(event.service_id(uuid));
+        }
+
+        // SAFETY: All N elements have been initialized in the loop above.
+        //
+        // In some future version of Rust, all this can be simplified; see:
+        // https://github.com/rust-lang/rust/issues/96097
+        // https://github.com/rust-lang/rust/issues/61956
+        let ids = unsafe {
+            (*(&MaybeUninit::new(ids) as *const _ as *const MaybeUninit<[ServiceId; N]>))
+                .assume_init_read()
+        };
+
+        Ok(Some((event.object_id(), ids)))
     }
 }
 
