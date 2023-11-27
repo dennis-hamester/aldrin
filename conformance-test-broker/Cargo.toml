@@ -12,11 +12,6 @@ publish = false
 version = "0.1.0"
 path = "../broker"
 default-features = false
-
-[dependencies.aldrin-core]
-version = "0.1.0"
-path = "../core"
-default-features = false
 features = ["tokio"]
 
 [dependencies.anyhow]

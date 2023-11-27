@@ -320,7 +320,6 @@ name = "conformance-test-broker"
 version = "0.0.0"
 dependencies = [
  "aldrin-broker",
- "aldrin-core",
  "anyhow",
  "tokio",
 ]
