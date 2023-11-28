@@ -5,6 +5,9 @@
 - Add `Handle::find_object` as a convenience function for finding a single object with a specific
   set of services.
 
+
+# 0.2.1 (November 28th, 2023)
+
 ## Fixed
 
 - Fix `Discoverer::finished` when no objects have been configured. It now correctly returns `true`
