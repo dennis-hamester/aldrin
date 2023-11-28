@@ -1,4 +1,4 @@
-# Unreleased
+# 0.2.1 (November 28th, 2023)
 
 ## Fixed
 
