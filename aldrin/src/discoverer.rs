@@ -200,7 +200,11 @@ impl<Key> Discoverer<Key> {
     /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or started
     /// with [`start_current_only`](Self::start_current_only`).
     pub fn finished(&self) -> bool {
-        self.bus_listener.finished()
+        if self.specific.is_empty() && self.any.is_empty() {
+            true
+        } else {
+            self.bus_listener.finished()
+        }
     }
 
     /// Poll the discoverer for an event.
