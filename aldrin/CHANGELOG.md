@@ -1,3 +1,11 @@
+# Unreleased
+
+## Fixed
+
+- Fix `Discoverer::finished` when no objects have been configured. It now correctly returns `true`
+  in this case, just like `next_event` returns `None`.
+
+
 # 0.2.0 (November 27th, 2023)
 
 ## Added
