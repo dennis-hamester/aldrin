@@ -1,0 +1,23 @@
+service Echo {
+    uuid = 8920965f-110a-42ec-915c-2a65a3c47d1f;
+    version = 1;
+
+    fn echo @ 1 {
+        args = string;
+        ok = string;
+
+        err = enum {
+            EmptyString @ 1;
+        }
+    }
+
+    fn echo_all @ 2 {
+        args = string;
+
+        err = enum {
+            EmptyString @ 1;
+        }
+    }
+
+    event echoed_to_all @ 1 = string;
+}

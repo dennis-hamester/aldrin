@@ -418,6 +418,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-echo"
+version = "0.1.0"
+dependencies = [
+ "aldrin",
+ "anyhow",
+ "clap",
+ "env_logger",
+ "log",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
