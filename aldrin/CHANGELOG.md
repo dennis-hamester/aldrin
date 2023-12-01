@@ -4,6 +4,8 @@
 
 - Add `Handle::find_object` as a convenience function for finding a single object with a specific
   set of services.
+- Add `LifetimeScope` and `Lifetime`. When awaited, `Lifetime`s will resolve when their associated
+  `LifetimeScope` is dropped.
 
 
 # 0.2.1 (November 28th, 2023)

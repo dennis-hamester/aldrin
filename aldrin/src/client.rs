@@ -28,12 +28,13 @@ use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
-    CreateClaimedSenderRequest, CreateObjectRequest, CreateServiceRequest,
-    DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest, EmitEventRequest,
-    HandleRequest, QueryServiceVersionRequest, SendItemRequest, StartBusListenerRequest,
-    StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest,
-    UnsubscribeEventRequest,
+    CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
+    CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
+    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
+    SyncClientRequest, UnsubscribeEventRequest,
 };
+use crate::lifetime::LifetimeListener;
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
@@ -92,7 +93,7 @@ where
     senders: HashMap<ChannelCookie, SenderState>,
     receivers: HashMap<ChannelCookie, ReceiverState>,
     sync: SerialMap<SyncBrokerRequest>,
-    create_bus_listener: SerialMap<CreateBusListenerRequest>,
+    create_bus_listener: SerialMap<CreateBusListenerData>,
     destroy_bus_listener: SerialMap<DestroyBusListenerRequest>,
     start_bus_listener: SerialMap<StartBusListenerRequest>,
     stop_bus_listener: SerialMap<StopBusListenerRequest>,
@@ -827,8 +828,8 @@ where
         &mut self,
         msg: CreateBusListenerReply,
     ) -> Result<(), RunError<T::Error>> {
-        let reply = match self.create_bus_listener.remove(msg.serial) {
-            Some(reply) => reply,
+        let data = match self.create_bus_listener.remove(msg.serial) {
+            Some(data) => data,
 
             None => {
                 return Err(RunError::UnexpectedMessageReceived(
@@ -839,8 +840,17 @@ where
 
         let (send, recv) = mpsc::unbounded();
 
-        let bus_listener = BusListener::new(msg.cookie, self.handle.clone(), recv);
-        reply.send(bus_listener).ok();
+        match data {
+            CreateBusListenerData::BusListener(reply) => {
+                let listener = BusListener::new(msg.cookie, self.handle.clone(), recv);
+                reply.send(listener).ok();
+            }
+
+            CreateBusListenerData::LifetimeListener(reply) => {
+                let listener = LifetimeListener::new(msg.cookie, self.handle.clone(), recv);
+                reply.send(listener).ok();
+            }
+        }
 
         let bus_listener_handle = BusListenerHandle::new(send);
         let dup = self.bus_listeners.insert(msg.cookie, bus_listener_handle);
@@ -1024,6 +1034,9 @@ where
             }
             HandleRequest::StartBusListener(req) => self.req_start_bus_listener(req).await?,
             HandleRequest::StopBusListener(req) => self.req_stop_bus_listener(req).await?,
+            HandleRequest::CreateLifetimeListener(req) => {
+                self.req_create_lifetime_listener(req).await?
+            }
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1355,7 +1368,9 @@ where
         &mut self,
         req: CreateBusListenerRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_bus_listener.insert(req);
+        let serial = self
+            .create_bus_listener
+            .insert(CreateBusListenerData::BusListener(req));
         self.t
             .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
             .await
@@ -1454,6 +1469,19 @@ where
             .map_err(Into::into)
     }
 
+    async fn req_create_lifetime_listener(
+        &mut self,
+        req: CreateLifetimeListenerRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let serial = self
+            .create_bus_listener
+            .insert(CreateBusListenerData::LifetimeListener(req));
+        self.t
+            .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
+            .await
+            .map_err(Into::into)
+    }
+
     fn shutdown_all_events(&self) {
         for by_service in self.subscriptions.values() {
             for by_function in by_service.values() {
@@ -1498,4 +1526,10 @@ enum ReceiverState {
     Pending(oneshot::Sender<mpsc::UnboundedReceiver<SerializedValue>>),
     Established(mpsc::UnboundedSender<SerializedValue>),
     SenderClosed,
+}
+
+#[derive(Debug)]
+enum CreateBusListenerData {
+    BusListener(CreateBusListenerRequest),
+    LifetimeListener(CreateLifetimeListenerRequest),
 }

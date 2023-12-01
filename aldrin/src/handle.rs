@@ -16,6 +16,7 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::InvalidFunctionResult;
 use crate::events::{EventsId, EventsRequest};
+use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
 use crate::{Error, Events, Object, Service};
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
@@ -925,6 +926,27 @@ impl Handle {
         };
 
         Ok(Some((event.object_id(), ids)))
+    }
+
+    /// Creates a new lifetime scope.
+    pub async fn create_lifetime_scope(&self) -> Result<LifetimeScope, Error> {
+        self.create_object(ObjectUuid::new_v4())
+            .await
+            .map(LifetimeScope::new)
+    }
+
+    pub(crate) async fn create_lifetime_listener(&self) -> Result<LifetimeListener, Error> {
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::CreateLifetimeListener(reply))
+            .map_err(|_| Error::ClientShutdown)?;
+
+        recv.await.map_err(|_| Error::ClientShutdown)
+    }
+
+    /// Create a [`Lifetime`] from an id.
+    pub async fn create_lifetime(&self, id: LifetimeId) -> Result<Lifetime, Error> {
+        Lifetime::create(self, id).await
     }
 }
 

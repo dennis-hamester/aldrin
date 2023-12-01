@@ -13,6 +13,7 @@ use crate::core::{
     ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::events::{EventsId, EventsRequest};
+use crate::lifetime::LifetimeListener;
 use crate::{Error, Object, Service};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
@@ -48,6 +49,7 @@ pub(crate) enum HandleRequest {
     ClearBusListenerFilters(ClearBusListenerFilters),
     StartBusListener(StartBusListenerRequest),
     StopBusListener(StopBusListenerRequest),
+    CreateLifetimeListener(CreateLifetimeListenerRequest),
 }
 
 #[derive(Debug)]
@@ -179,3 +181,5 @@ pub(crate) struct StopBusListenerRequest {
     pub cookie: BusListenerCookie,
     pub reply: oneshot::Sender<StopBusListenerResult>,
 }
+
+pub(crate) type CreateLifetimeListenerRequest = oneshot::Sender<LifetimeListener>;

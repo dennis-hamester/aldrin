@@ -4,6 +4,7 @@ use crate::core::message::Message;
 use crate::core::{
     DeserializeError, ObjectId, ObjectUuid, SerializeError, SerializedValue, ServiceId, ServiceUuid,
 };
+use crate::lifetime::LifetimeId;
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -193,6 +194,12 @@ pub enum Error {
 
     /// A bus listener was attempted to be stopped while it isn't started.
     BusListenerNotStarted,
+
+    /// An invalid lifetime scope was used.
+    ///
+    /// This can only happen why trying to [end a lifetime scope](crate::LifetimeScope::end), that
+    /// has already ended.
+    InvalidLifetime(LifetimeId),
 }
 
 impl From<SerializeError> for Error {
@@ -235,6 +242,9 @@ impl fmt::Display for Error {
             Error::InvalidBusListener => f.write_str("invalid bus listener"),
             Error::BusListenerAlreadyStarted => f.write_str("bus listener already started"),
             Error::BusListenerNotStarted => f.write_str("bus listener not started"),
+            Error::InvalidLifetime(id) => {
+                f.write_fmt(format_args!("invalid lifetime {}", id.0.uuid))
+            }
         }
     }
 }

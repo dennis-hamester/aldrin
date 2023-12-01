@@ -67,6 +67,7 @@ mod discoverer;
 mod error;
 mod events;
 mod handle;
+mod lifetime;
 mod object;
 mod serial_map;
 mod service;
@@ -93,5 +94,6 @@ pub use error::{
 };
 pub use events::{Event, Events};
 pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
+pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
 pub use service::{FunctionCall, FunctionCallReply, Service};
