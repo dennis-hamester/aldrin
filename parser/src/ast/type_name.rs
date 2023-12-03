@@ -63,6 +63,7 @@ pub enum TypeNameKind {
     Set(KeyTypeName),
     Sender(Box<TypeName>),
     Receiver(Box<TypeName>),
+    Lifetime,
     Extern(SchemaName, Ident),
     Intern(Ident),
 }
@@ -86,6 +87,7 @@ impl TypeNameKind {
             Rule::kw_object_id => TypeNameKind::ObjectId,
             Rule::kw_service_id => TypeNameKind::ServiceId,
             Rule::kw_value => TypeNameKind::Value,
+            Rule::kw_lifetime => TypeNameKind::Lifetime,
 
             Rule::option_type => {
                 let mut pairs = pair.into_inner();
@@ -200,7 +202,8 @@ impl TypeNameKind {
             | Self::ServiceId
             | Self::Value
             | Self::Bytes
-            | Self::Set(_) => {}
+            | Self::Set(_)
+            | Self::Lifetime => {}
         }
     }
 }

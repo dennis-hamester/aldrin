@@ -69,6 +69,7 @@ kw_ok = @{ "ok" }
 kw_err = @{ "err" }
 kw_sender = @{ "sender" }
 kw_receiver = @{ "receiver" }
+kw_lifetime = @{ "lifetime" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -119,6 +120,7 @@ type_name = {
     | set_type
     | sender_type
     | receiver_type
+    | kw_lifetime
     | external_type_name
     | ident
 }

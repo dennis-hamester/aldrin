@@ -170,6 +170,7 @@ impl Expected {
             Expected::Keyword("i32"),
             Expected::Keyword("i64"),
             Expected::Keyword("i8"),
+            Expected::Keyword("lifetime"),
             Expected::Keyword("map"),
             Expected::Keyword("object_id"),
             Expected::Keyword("option"),

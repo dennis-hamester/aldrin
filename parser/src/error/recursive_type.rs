@@ -246,7 +246,8 @@ impl<'a> Context<'a> {
             | TypeNameKind::Map(_, _)
             | TypeNameKind::Set(_)
             | TypeNameKind::Sender(_)
-            | TypeNameKind::Receiver(_) => false,
+            | TypeNameKind::Receiver(_)
+            | TypeNameKind::Lifetime => false,
         }
     }
 }

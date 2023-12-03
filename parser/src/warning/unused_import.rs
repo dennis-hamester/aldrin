@@ -164,6 +164,7 @@ impl UnusedImport {
             | TypeNameKind::Value
             | TypeNameKind::Bytes
             | TypeNameKind::Set(_)
+            | TypeNameKind::Lifetime
             | TypeNameKind::Intern(_) => false,
         }
     }
