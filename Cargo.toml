@@ -14,3 +14,20 @@ members = [
     "test",
 ]
 resolver = "2"
+
+[workspace.package]
+authors = ["Aldrin Contributors"]
+categories = [
+    "asynchronous",
+    "network-programming",
+]
+edition = "2021"
+keywords = [
+    "async",
+    "network",
+    "rpc",
+    "service",
+]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dennis-hamester/aldrin"
+rust-version = "1.70.0"

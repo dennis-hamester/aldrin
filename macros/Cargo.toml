@@ -2,21 +2,14 @@
 name = "aldrin-macros"
 description = "Aldrin code generation macros."
 version = "0.2.0"
-authors = ["Aldrin Contributors"]
-repository = "https://github.com/dennis-hamester/aldrin"
-license = "MIT OR Apache-2.0"
-edition = "2021"
-rust-version = "1.70.0"
-categories = [
-    "asynchronous",
-    "network-programming",
-]
-keywords = [
-    "async",
-    "network",
-    "rpc",
-    "service",
-]
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
