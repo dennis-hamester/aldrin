@@ -7,69 +7,42 @@ use crate::core::{
 use crate::lifetime::LifetimeId;
 use std::error::Error as StdError;
 use std::fmt;
+use thiserror::Error;
 
 /// Error when connecting to a broker.
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
 pub enum ConnectError<T> {
-    /// The Aldrin protocol version differs between client and broker.
+    /// The protocol version of the broker is incompatible.
     ///
     /// The contained version is that of the broker. The version of the client is
     /// [`crate::core::VERSION`].
-    VersionMismatch(u32),
+    #[error("incompatible protocol version {}", .0)]
+    IncompatibleVersion(u32),
 
     /// An unexpected message was received.
     ///
     /// This is usually an indication of a bug in the broker.
+    #[error("unexpected message received")]
     UnexpectedMessageReceived(Message),
 
     /// The transport returned an error.
     ///
     /// This error indicates some issue with the lower-level transport mechanism, e.g. an I/O error.
+    #[error(transparent)]
     Transport(T),
 
     /// The broker rejected the connection.
+    #[error("connection rejected")]
     Rejected(SerializedValue),
 
     /// A value failed to serialize.
-    Serialize(SerializeError),
+    #[error(transparent)]
+    Serialize(#[from] SerializeError),
 
     /// A value failed to deserialize.
-    Deserialize(DeserializeError),
+    #[error(transparent)]
+    Deserialize(#[from] DeserializeError),
 }
-
-impl<T> From<SerializeError> for ConnectError<T> {
-    fn from(e: SerializeError) -> Self {
-        Self::Serialize(e)
-    }
-}
-
-impl<T> From<DeserializeError> for ConnectError<T> {
-    fn from(e: DeserializeError) -> Self {
-        Self::Deserialize(e)
-    }
-}
-
-impl<T> fmt::Display for ConnectError<T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ConnectError::VersionMismatch(v) => {
-                f.write_fmt(format_args!("broker version {v} mismatch"))
-            }
-            ConnectError::UnexpectedMessageReceived(_) => {
-                f.write_str("unexpected message received")
-            }
-            ConnectError::Transport(e) => e.fmt(f),
-            ConnectError::Rejected(_) => f.write_str("connection rejected"),
-            ConnectError::Serialize(e) => e.fmt(f),
-            ConnectError::Deserialize(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<T: fmt::Debug + fmt::Display> StdError for ConnectError<T> {}
 
 /// Error while running a client.
 #[derive(Debug, Clone)]

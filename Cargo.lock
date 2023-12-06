@@ -38,6 +38,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "futures-util",
+ "thiserror",
  "tokio",
  "uuid",
 ]

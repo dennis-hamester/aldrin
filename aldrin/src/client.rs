@@ -168,7 +168,7 @@ where
 
         let data = match connect_reply {
             ConnectReply::Ok(data) => data,
-            ConnectReply::VersionMismatch(v) => return Err(ConnectError::VersionMismatch(v)),
+            ConnectReply::VersionMismatch(v) => return Err(ConnectError::IncompatibleVersion(v)),
             ConnectReply::Rejected(data) => return Err(ConnectError::Rejected(data)),
         };
 

@@ -1,5 +1,8 @@
 # Unreleased
 
+## Breaking
+ - Rename `ConnectError::VersionMismatch` to `ConnectError::IncompatibleVersion`.
+
 ## Added
 
 - Add `Handle::find_object` as a convenience function for finding a single object with a specific
