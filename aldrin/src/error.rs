@@ -45,36 +45,18 @@ pub enum ConnectError<T> {
 }
 
 /// Error while running a client.
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
 pub enum RunError<T> {
     /// An unexpected message was received.
+    #[error("unexpected message received")]
     UnexpectedMessageReceived(Message),
 
     /// The transport returned an error.
     ///
     /// This error indicates some issue with the lower-level transport mechanism, e.g. an I/O error.
-    Transport(T),
+    #[error(transparent)]
+    Transport(#[from] T),
 }
-
-impl<T> From<T> for RunError<T> {
-    fn from(e: T) -> Self {
-        RunError::Transport(e)
-    }
-}
-
-impl<T> fmt::Display for RunError<T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            RunError::UnexpectedMessageReceived(_) => f.write_str("unexpected message received"),
-            RunError::Transport(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<T: fmt::Debug + fmt::Display> StdError for RunError<T> {}
 
 /// Standard error type used for most functions.
 #[derive(Debug, Clone, PartialEq, Eq)]
