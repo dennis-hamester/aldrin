@@ -101,6 +101,7 @@ dependencies = [
  "futures-core",
  "num_enum",
  "pin-project-lite",
+ "thiserror",
  "tokio",
  "uuid",
 ]

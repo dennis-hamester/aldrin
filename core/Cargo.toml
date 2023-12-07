@@ -61,6 +61,10 @@ default-features = false
 version = "0.2.13"
 default-features = false
 
+[dependencies.thiserror]
+version = "1.0.50"
+default-features = false
+
 [dependencies.tokio]
 optional = true
 version = "1.34.0"
