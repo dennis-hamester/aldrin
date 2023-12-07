@@ -87,7 +87,7 @@ where
                     }
                 }
 
-                Either::Left((None, _)) => return Err(ConnectionError::UnexpectedBrokerShutdown),
+                Either::Left((None, _)) => return Err(ConnectionError::UnexpectedShutdown),
 
                 Either::Right((Ok(Message::Shutdown(Shutdown)), _)) => {
                     self.send_broker_shutdown(id).await?;
@@ -115,7 +115,7 @@ where
         self.send
             .send(ConnectionEvent::Message(id, msg))
             .await
-            .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
+            .map_err(|_| ConnectionError::UnexpectedShutdown)
     }
 
     async fn send_broker_shutdown(
@@ -125,7 +125,7 @@ where
         self.send
             .send(ConnectionEvent::ConnectionShutdown(id))
             .await
-            .map_err(|_| ConnectionError::UnexpectedBrokerShutdown)
+            .map_err(|_| ConnectionError::UnexpectedShutdown)
     }
 
     async fn drain_broker_recv(&mut self) {

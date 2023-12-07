@@ -1,80 +1,42 @@
 use crate::core::message::Message;
 use crate::core::SerializeError;
-use std::error::Error;
-use std::fmt;
+use thiserror::Error;
 
 /// Error of an active connection.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum ConnectionError<T> {
     /// The broker shut down unexpectedly.
-    UnexpectedBrokerShutdown,
+    #[error("broker shut down unexpectedly")]
+    UnexpectedShutdown,
 
     /// The transport encountered an error.
-    Transport(T),
+    #[error(transparent)]
+    Transport(#[from] T),
 }
-
-impl<T> From<T> for ConnectionError<T> {
-    fn from(e: T) -> Self {
-        ConnectionError::Transport(e)
-    }
-}
-
-impl<T> fmt::Display for ConnectionError<T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ConnectionError::UnexpectedBrokerShutdown => f.write_str("unexpected broker shutdown"),
-            ConnectionError::Transport(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<T> Error for ConnectionError<T> where T: fmt::Debug + fmt::Display {}
 
 /// Error while establishing a new connection.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum EstablishError<T> {
     /// An unexpected message was received.
+    #[error("unexpected message received")]
     UnexpectedMessageReceived(Message),
 
-    /// Protocol version mismatch between broker and client.
-    VersionMismatch(u32),
+    /// The protocol version of the client is incompatible.
+    ///
+    /// The contained version is that of the client. The version of the broker is
+    /// [`crate::core::VERSION`].
+    #[error("incompatible protocol version {}", .0)]
+    IncompatibleVersion(u32),
 
     /// The broker shut down.
-    BrokerShutdown,
+    #[error("broker shut down")]
+    Shutdown,
 
     /// The transport encountered an error.
+    #[error(transparent)]
     Transport(T),
 
     /// A value failed to serialize.
-    Serialize(SerializeError),
+    #[error(transparent)]
+    Serialize(#[from] SerializeError),
 }
-
-impl<T> From<SerializeError> for EstablishError<T> {
-    fn from(e: SerializeError) -> Self {
-        EstablishError::Serialize(e)
-    }
-}
-
-impl<T> fmt::Display for EstablishError<T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            EstablishError::UnexpectedMessageReceived(_) => {
-                f.write_str("unexpected message received")
-            }
-            EstablishError::VersionMismatch(v) => {
-                f.write_fmt(format_args!("client version {v} mismatch"))
-            }
-            EstablishError::BrokerShutdown => f.write_str("broker shutdown"),
-            EstablishError::Transport(e) => e.fmt(f),
-            EstablishError::Serialize(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<T> Error for EstablishError<T> where T: fmt::Debug + fmt::Display {}

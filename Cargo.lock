@@ -54,6 +54,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
+ "thiserror",
  "tokio",
 ]
 

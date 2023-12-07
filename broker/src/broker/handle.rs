@@ -102,7 +102,7 @@ impl BrokerHandle {
             .await
             .ok();
 
-            return Err(EstablishError::VersionMismatch(connect.version));
+            return Err(EstablishError::IncompatibleVersion(connect.version));
         }
 
         Ok(PendingConnection::new(self.clone(), t, connect.value))
@@ -307,7 +307,7 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
             .send
             .send(ConnectionEvent::NewConnection(id.clone(), send))
             .await
-            .map_err(|_| EstablishError::BrokerShutdown)?;
+            .map_err(|_| EstablishError::Shutdown)?;
 
         let conn = Connection::new(self.t, id, self.handle.send, recv);
 
