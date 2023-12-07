@@ -1,12 +1,7 @@
 //! Error types.
 
 use crate::core::message::Message;
-use crate::core::{
-    DeserializeError, ObjectId, ObjectUuid, SerializeError, SerializedValue, ServiceId, ServiceUuid,
-};
-use crate::lifetime::LifetimeId;
-use std::error::Error as StdError;
-use std::fmt;
+use crate::core::{DeserializeError, SerializeError, SerializedValue};
 use thiserror::Error;
 
 /// Error when connecting to a broker.
@@ -59,244 +54,208 @@ pub enum RunError<T> {
 }
 
 /// Standard error type used for most functions.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Error {
     /// The client has shut down.
-    ///
-    /// The client can shut down for various reasons, e.g. by explicitly calling
-    /// [`Handle::shutdown`](crate::Handle::shutdown), or when the broker has shut down. But also
-    /// errors will cause the client to shut down and all subsequent requests will return this
-    /// variant.
-    ClientShutdown,
+    #[error("client shut down")]
+    Shutdown,
 
     /// An object could not be created because its UUID exists already.
-    DuplicateObject(ObjectUuid),
+    #[error("duplicate object")]
+    DuplicateObject,
 
     /// An invalid object id was used.
     ///
-    /// This can happen either when trying to [destroy](crate::Object::destroy) an
-    /// [`Object`](crate::Object), which has already been destroyed, or when trying to
-    /// [create a service](crate::Object::create_service) on a destroyed object.
-    InvalidObject(ObjectId),
+    /// This typically indicates that the object was destroyed.
+    #[error("invalid object")]
+    InvalidObject,
 
     /// An service could not be created because its UUID exists already on the object.
-    DuplicateService(ObjectId, ServiceUuid),
+    #[error("duplicate service")]
+    DuplicateService,
 
     /// An invalid service id was used.
     ///
-    /// This typically happens when using a service, which has already been destroyed, either
-    /// [directly](super::Service::destroy), or indirectly, when the object is destroyed.
-    InvalidService(ServiceId),
+    /// This typically indicates that the service or owning object was destroyed.
+    #[error("invalid service")]
+    InvalidService,
 
-    /// An invalid service function was called.
+    /// An invalid function was called.
     ///
-    /// This variant is only ever returned by auto-generated code, when a non-existent function has
-    /// been called on a service.
-    InvalidFunction(ServiceId, u32),
+    /// This can indicate a schema mismatch.
+    #[error(transparent)]
+    InvalidFunction(#[from] InvalidFunction),
 
-    /// A service function was called with invalid arguments.
+    /// Invalid arguments were supplied to a function or event.
     ///
-    /// This variant is only ever returned by auto-generated code.
-    InvalidArgs(ServiceId, u32),
+    /// This can indicate a schema mismatch.
+    #[error(transparent)]
+    InvalidArguments(#[from] InvalidArguments),
 
-    /// A service function has been aborted by the callee.
-    FunctionCallAborted,
+    /// A call was aborted.
+    #[error("call aborted")]
+    CallAborted,
 
-    /// A struct could not be created because of missing required fields.
+    /// A field that is required for some type is missing.
+    #[error(transparent)]
+    RequiredFieldMissing(#[from] RequiredFieldMissing),
+
+    /// An invalid reply was received for a call.
     ///
-    /// This variant is only ever returned by auto-generated code.
-    MissingRequiredField,
+    /// This can indicate a schema mismatch.
+    #[error(transparent)]
+    InvalidReply(#[from] InvalidReply),
 
-    /// A function call was replied to with an invalid result.
-    InvalidFunctionResult(InvalidFunctionResult),
-
-    /// An invalid function call was received.
-    InvalidFunctionCall(InvalidFunctionCall),
-
-    /// An event was received with invalid arguments.
-    InvalidEventArguments(InvalidEventArguments),
-
-    /// An operation was performed on an invalid channel.
-    ///
-    /// This error happens in the following cases:
-    /// - Any use of a closed channel.
-    /// - Trying to claim a channel when the other end has been closed.
-    /// - When the other channel end gets closed while waiting for the channel to become
-    ///   established.
+    /// An invalid channel was used.
+    #[error("invalid channel")]
     InvalidChannel,
 
-    /// An operation was performed on a channel that belongs to a different client.
+    /// An invalid item was received on a channel.
     ///
-    /// This error happens in the following cases:
-    /// - Trying to close an unclaimed channel that has been claimed by a different client in the
-    ///   meantime.
-    /// - Trying to claim a channel which has been claimed by another client.
-    ForeignChannel,
+    /// This can indicate a schema mismatch.
+    #[error(transparent)]
+    InvalidItem(#[from] InvalidItem),
 
-    /// An item received on a channel failed to deserialize to the expected type.
-    InvalidItemReceived,
-
-    /// A value failed to serialize.
-    Serialize(SerializeError),
-
-    /// An invalid bus listener was used.
-    ///
-    /// This typically means that the bus listener was already destroyed.
+    /// An invalid bus was used.
+    #[error("invalid bus listener")]
     InvalidBusListener,
 
-    /// A bus listener was attempted to be started twice.
+    /// A bus listener was started, that is already started.
+    #[error("bus listener already started")]
     BusListenerAlreadyStarted,
 
-    /// A bus listener was attempted to be stopped while it isn't started.
+    /// A bus listener was stopped, that is already stopped.
+    #[error("bus listener not started")]
     BusListenerNotStarted,
 
-    /// An invalid lifetime scope was used.
-    ///
-    /// This can only happen why trying to [end a lifetime scope](crate::LifetimeScope::end), that
-    /// has already ended.
-    InvalidLifetime(LifetimeId),
+    /// An invalid lifetime was used.
+    #[error("invalid lifetime")]
+    InvalidLifetime,
+
+    /// A value failed to serialized.
+    #[error(transparent)]
+    Serialize(#[from] SerializeError),
 }
 
-impl From<SerializeError> for Error {
-    fn from(e: SerializeError) -> Self {
-        Self::Serialize(e)
+impl Error {
+    /// Creates a new `InvalidFunction` error.
+    pub fn invalid_function(function: u32) -> Self {
+        Self::InvalidFunction(InvalidFunction::new(function))
+    }
+
+    /// Creates a new `InvalidArguments` error.
+    pub fn invalid_arguments(id: u32, source: Option<DeserializeError>) -> Self {
+        Self::InvalidArguments(InvalidArguments::new(id, source))
+    }
+
+    /// Creates a new `RequiredFieldMissing` error.
+    pub fn required_field_missing(field: u32) -> Self {
+        Self::RequiredFieldMissing(RequiredFieldMissing::new(field))
+    }
+
+    /// Creates a new `InvalidReply` error.
+    pub fn invalid_reply(source: DeserializeError) -> Self {
+        Self::InvalidReply(InvalidReply::new(source))
+    }
+
+    /// Creates a new `InvalidItem` error.
+    pub fn invalid_item(source: DeserializeError) -> Self {
+        Self::InvalidItem(InvalidItem::new(source))
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::ClientShutdown => f.write_str("client shutdown"),
-            Error::DuplicateObject(uuid) => f.write_fmt(format_args!("duplicate object {uuid}")),
-            Error::InvalidObject(id) => f.write_fmt(format_args!("invalid object {}", id.uuid)),
-            Error::DuplicateService(obj_id, uuid) => f.write_fmt(format_args!(
-                "duplicate service {} for object {}",
-                uuid, obj_id.uuid,
-            )),
-            Error::InvalidService(id) => f.write_fmt(format_args!(
-                "invalid service {} for object {}",
-                id.uuid, id.object_id.uuid,
-            )),
-            Error::InvalidFunction(id, func) => f.write_fmt(format_args!(
-                "invalid function {} of service {} and object {}",
-                func, id.uuid, id.object_id.uuid,
-            )),
-            Error::InvalidArgs(id, func) => f.write_fmt(format_args!(
-                "invalid args for function {} of service {} and object {}",
-                func, id.uuid, id.object_id.uuid,
-            )),
-            Error::FunctionCallAborted => f.write_str("function call aborted"),
-            Error::MissingRequiredField => f.write_str("required field missing"),
-            Error::InvalidFunctionResult(e) => e.fmt(f),
-            Error::InvalidFunctionCall(e) => e.fmt(f),
-            Error::InvalidEventArguments(e) => e.fmt(f),
-            Error::InvalidChannel => f.write_str("invalid channel"),
-            Error::ForeignChannel => f.write_str("foreign channel"),
-            Error::InvalidItemReceived => f.write_str("invalid item received"),
-            Error::Serialize(e) => e.fmt(f),
-            Error::InvalidBusListener => f.write_str("invalid bus listener"),
-            Error::BusListenerAlreadyStarted => f.write_str("bus listener already started"),
-            Error::BusListenerNotStarted => f.write_str("bus listener not started"),
-            Error::InvalidLifetime(id) => {
-                f.write_fmt(format_args!("invalid lifetime {}", id.0.uuid))
-            }
-        }
-    }
-}
-
-impl StdError for Error {}
-
-/// A function call was replied to with an invalid result.
+/// An invalid function was called.
 ///
-/// For fallible functions invoked via [`Handle::call_function`](crate::Handle::call_function), this
-/// error occurs when the result is not convertible to either `T` or `E` (see
-/// [`PendingFunctionResult`](crate::PendingFunctionResult)). For infallible function invoked via
-/// [`Handle::call_infallible_function`](crate::Handle::call_infallible_function), this error occurs
-/// when the result is not convertible to `T` or when it indicates an error (see
-/// [`PendingFunctionValue`](crate::PendingFunctionValue)).
+/// This can indicate a schema mismatch.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("invalid function {} called", .function)]
+pub struct InvalidFunction {
+    function: u32,
+}
+
+impl InvalidFunction {
+    /// Creates a new `InvalidFunction` error.
+    pub fn new(function: u32) -> Self {
+        Self { function }
+    }
+
+    /// Returns the id of the invalid function.
+    pub fn function(self) -> u32 {
+        self.function
+    }
+}
+
+/// Invalid arguments were supplied to a function or event.
 ///
-/// When using auto-generated code, this is typically an indication of an incompatible schema
-/// mismatch.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidFunctionResult {
-    /// Id of the service, that was called.
-    pub service_id: ServiceId,
-
-    /// Id of the function, that was called.
-    pub function: u32,
+/// This can indicate a schema mismatch.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("invalid arguments for function or event {}", .id)]
+pub struct InvalidArguments {
+    id: u32,
+    source: Option<DeserializeError>,
 }
 
-impl fmt::Display for InvalidFunctionResult {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!(
-            "function {} of service {} returned an invalid result",
-            self.function, self.service_id.uuid,
-        ))
+impl InvalidArguments {
+    /// Creates a new `InvalidArguments` error.
+    pub fn new(id: u32, source: Option<DeserializeError>) -> Self {
+        Self { id, source }
+    }
+
+    /// Returns the id of the function or event.
+    pub fn id(self) -> u32 {
+        self.id
     }
 }
 
-impl From<InvalidFunctionResult> for Error {
-    fn from(e: InvalidFunctionResult) -> Self {
-        Error::InvalidFunctionResult(e)
+/// A field that is required for some type is missing.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("required field {} missing", .field)]
+pub struct RequiredFieldMissing {
+    field: u32,
+}
+
+impl RequiredFieldMissing {
+    /// Creates a new `RequiredFieldMissing` error.
+    pub fn new(field: u32) -> Self {
+        Self { field }
+    }
+
+    /// Returns the id of the field that is missing.
+    pub fn field(self) -> u32 {
+        self.field
     }
 }
 
-impl StdError for InvalidFunctionResult {}
-
-/// An invalid function call was received.
+/// An invalid reply was received for a call.
 ///
-/// This error is typically an indication of an incompatible schema mismatch.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidFunctionCall {
-    /// Id of the service, that was called.
-    pub service_id: ServiceId,
-
-    /// Id of the function, that was called.
-    pub function: u32,
+/// This can indicate a schema mismatch.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("invalid reply")]
+pub struct InvalidReply {
+    #[from]
+    source: DeserializeError,
 }
 
-impl fmt::Display for InvalidFunctionCall {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!(
-            "service {} called with invalid function {} or arguments",
-            self.service_id.uuid, self.function,
-        ))
+impl InvalidReply {
+    /// Creates a new `InvalidReply` error.
+    pub fn new(source: DeserializeError) -> Self {
+        Self { source }
     }
 }
 
-impl From<InvalidFunctionCall> for Error {
-    fn from(e: InvalidFunctionCall) -> Self {
-        Error::InvalidFunctionCall(e)
-    }
-}
-
-impl StdError for InvalidFunctionCall {}
-
-/// An event was received with invalid arguments.
+/// An invalid item was received on a channel.
 ///
-/// This error is typically an indication of an incompatible schema mismatch.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidEventArguments {
-    /// Id of the service, that emitted the event.
-    pub service_id: ServiceId,
-
-    /// Id of the event.
-    pub event: u32,
+/// This can indicate a schema mismatch.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("invalid item")]
+pub struct InvalidItem {
+    #[from]
+    source: DeserializeError,
 }
 
-impl fmt::Display for InvalidEventArguments {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!(
-            "service {} emitted event {} with invalid arguments",
-            self.service_id.uuid, self.event,
-        ))
+impl InvalidItem {
+    /// Creates a new `InvalidItem` error.
+    pub fn new(source: DeserializeError) -> Self {
+        Self { source }
     }
 }
-
-impl From<InvalidEventArguments> for Error {
-    fn from(e: InvalidEventArguments) -> Self {
-        Error::InvalidEventArguments(e)
-    }
-}
-
-impl StdError for InvalidEventArguments {}

@@ -46,7 +46,7 @@ async fn end_twice() {
 
     let scope = client.create_lifetime_scope().await.unwrap();
     assert_eq!(scope.end().await, Ok(()));
-    assert_eq!(scope.end().await, Err(Error::InvalidLifetime(scope.id())));
+    assert_eq!(scope.end().await, Err(Error::InvalidLifetime));
 
     client.join().await;
     broker.join().await;

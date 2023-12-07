@@ -92,7 +92,7 @@ impl Object {
     /// // Trying to create the same service on the same object again will cause an error:
     /// assert_eq!(
     ///     object.create_service(MY_SERVICE_UUID, 0).await.unwrap_err(),
-    ///     Error::DuplicateService(object.id(), MY_SERVICE_UUID),
+    ///     Error::DuplicateService,
     /// );
     /// # Ok(())
     /// # }

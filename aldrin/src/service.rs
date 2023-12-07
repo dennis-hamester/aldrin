@@ -54,7 +54,7 @@ use std::task::{Context, Poll};
 /// let service = object.create_service(SERVICE_UUID, 1).await?;
 /// let service_id = service.id();
 /// mem::drop(object);
-/// assert_eq!(service.destroy().await, Err(Error::InvalidService(service_id)));
+/// assert_eq!(service.destroy().await, Err(Error::InvalidService));
 /// # Ok(())
 /// # }
 /// ```

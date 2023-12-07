@@ -11,13 +11,16 @@ use crate::core::message::{
 };
 use crate::core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
-    ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue, ServiceId, ServiceUuid,
+    DeserializeError, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue, ServiceId,
+    ServiceUuid,
 };
 use crate::discoverer::{Discoverer, DiscovererBuilder};
-use crate::error::InvalidFunctionResult;
+use crate::error::Error;
+use crate::events::Events;
 use crate::events::{EventsId, EventsRequest};
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::{Error, Events, Object, Service};
+use crate::object::Object;
+use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
 use request::{
@@ -90,7 +93,7 @@ impl Handle {
     ///
     /// If the [`Client`](crate::Client) has already shut down (due to any reason), this function
     /// will not treat that as an error. This is different than most other functions, which would
-    /// return [`Error::ClientShutdown`] instead.
+    /// return [`Error::Shutdown`] instead.
     pub fn shutdown(&self) {
         self.send.unbounded_send(HandleRequest::Shutdown).ok();
     }
@@ -122,7 +125,7 @@ impl Handle {
     /// // Using the same UUID again will cause an error:
     /// assert_eq!(
     ///     handle.create_object(OBJECT2_UUID).await.unwrap_err(),
-    ///     Error::DuplicateObject(OBJECT2_UUID)
+    ///     Error::DuplicateObject,
     /// );
     /// # Ok(())
     /// # }
@@ -134,9 +137,9 @@ impl Handle {
                 uuid,
                 reply: send,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     pub(crate) async fn destroy_object(&self, id: ObjectId) -> Result<(), Error> {
@@ -146,12 +149,12 @@ impl Handle {
                 cookie: id.cookie,
                 reply: send,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let reply = recv.await.map_err(|_| Error::Shutdown)?;
         match reply {
             DestroyObjectResult::Ok => Ok(()),
-            DestroyObjectResult::InvalidObject => Err(Error::InvalidObject(id)),
+            DestroyObjectResult::InvalidObject => Err(Error::InvalidObject),
             DestroyObjectResult::ForeignObject => unreachable!(),
         }
     }
@@ -180,9 +183,9 @@ impl Handle {
                 version,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     pub(crate) async fn destroy_service(&self, id: ServiceId) -> Result<(), Error> {
@@ -192,9 +195,9 @@ impl Handle {
                 id,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     pub(crate) fn destroy_service_now(&self, id: ServiceId) {
@@ -264,14 +267,14 @@ impl Handle {
                 value,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
         Ok(PendingFunctionResult::new(recv, service_id, function))
     }
 
     /// Calls an infallible function on a service.
     ///
     /// Use this method if the called function is guaranteed to never fail. If this is not true, and
-    /// the function fails, then [`Error::InvalidFunctionResult`] will be returned.
+    /// the function fails, then [`Error::InvalidReply`] will be returned.
     ///
     /// The returned value of type [`PendingFunctionValue`] is a future which will resolve to the
     /// value of the function call.
@@ -313,7 +316,7 @@ impl Handle {
                 value,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
         Ok(PendingFunctionValue::new(recv, service_id, function))
     }
 
@@ -327,7 +330,7 @@ impl Handle {
                 serial,
                 result,
             }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     /// Creates an Events object used to subscribe to service events.
@@ -353,11 +356,11 @@ impl Handle {
                 sender,
                 reply: rep_send,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
-        let reply = rep_recv.await.map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
+        let reply = rep_recv.await.map_err(|_| Error::Shutdown)?;
         match reply {
             SubscribeEventResult::Ok => Ok(()),
-            SubscribeEventResult::InvalidService => Err(Error::InvalidService(service_id)),
+            SubscribeEventResult::InvalidService => Err(Error::InvalidService),
         }
     }
 
@@ -373,7 +376,7 @@ impl Handle {
                 service_cookie: service_id.cookie,
                 id,
             }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     /// Emits an events to subscribed clients.
@@ -409,7 +412,7 @@ impl Handle {
                 event,
                 value,
             }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     /// Queries the version of a service.
@@ -447,9 +450,9 @@ impl Handle {
                     reply,
                 },
             ))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        match recv.await.map_err(|_| Error::ClientShutdown)? {
+        match recv.await.map_err(|_| Error::Shutdown)? {
             QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
             QueryServiceVersionResult::InvalidService => Ok(None),
         }
@@ -515,9 +518,9 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateClaimedSender(reply))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let (sender, receiver) = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let (sender, receiver) = recv.await.map_err(|_| Error::Shutdown)?;
 
         Ok((PendingSender::new(sender), UnclaimedReceiver::new(receiver)))
     }
@@ -549,9 +552,9 @@ impl Handle {
             .unbounded_send(HandleRequest::CreateClaimedReceiver(
                 CreateClaimedReceiverRequest { capacity, reply },
             ))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let (sender, receiver) = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let (sender, receiver) = recv.await.map_err(|_| Error::Shutdown)?;
 
         Ok((UnclaimedSender::new(sender), PendingReceiver::new(receiver)))
     }
@@ -570,7 +573,7 @@ impl Handle {
                 claimed,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
         Ok(CloseChannelEndFuture(recv))
     }
@@ -582,9 +585,9 @@ impl Handle {
                 cookie,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     pub(crate) async fn claim_receiver(
@@ -601,9 +604,9 @@ impl Handle {
                 capacity,
                 reply,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)?
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     pub(crate) fn send_item(
@@ -613,7 +616,7 @@ impl Handle {
     ) -> Result<(), Error> {
         self.send
             .unbounded_send(HandleRequest::SendItem(SendItemRequest { cookie, value }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     pub(crate) fn add_channel_capacity(
@@ -626,7 +629,7 @@ impl Handle {
                 cookie,
                 capacity,
             }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     /// Synchronizes with the client.
@@ -663,9 +666,9 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SyncClient(reply))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     /// Synchronizes with the broker.
@@ -700,9 +703,9 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SyncBroker(reply))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     /// Creates a new bus listener.
@@ -713,9 +716,9 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateBusListener(reply))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     pub(crate) async fn destroy_bus_listener(
@@ -730,9 +733,9 @@ impl Handle {
                     reply: send,
                 },
             ))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let reply = recv.await.map_err(|_| Error::Shutdown)?;
         match reply {
             DestroyBusListenerResult::Ok => Ok(()),
             DestroyBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
@@ -758,7 +761,7 @@ impl Handle {
                 cookie,
                 filter,
             }))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     pub(crate) fn remove_bus_listener_filter(
@@ -770,7 +773,7 @@ impl Handle {
             .unbounded_send(HandleRequest::RemoveBusListenerFilter(
                 RemoveBusListenerFilter { cookie, filter },
             ))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     pub(crate) fn clear_bus_listener_filters(
@@ -781,7 +784,7 @@ impl Handle {
             .unbounded_send(HandleRequest::ClearBusListenerFilters(
                 ClearBusListenerFilters { cookie },
             ))
-            .map_err(|_| Error::ClientShutdown)
+            .map_err(|_| Error::Shutdown)
     }
 
     pub(crate) async fn start_bus_listener(
@@ -796,9 +799,9 @@ impl Handle {
                 scope,
                 reply: send,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let reply = recv.await.map_err(|_| Error::Shutdown)?;
         match reply {
             StartBusListenerResult::Ok => Ok(()),
             StartBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
@@ -813,9 +816,9 @@ impl Handle {
                 cookie,
                 reply: send,
             }))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        let reply = recv.await.map_err(|_| Error::ClientShutdown)?;
+        let reply = recv.await.map_err(|_| Error::Shutdown)?;
         match reply {
             StopBusListenerResult::Ok => Ok(()),
             StopBusListenerResult::InvalidBusListener => Err(Error::InvalidBusListener),
@@ -939,9 +942,9 @@ impl Handle {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateLifetimeListener(reply))
-            .map_err(|_| Error::ClientShutdown)?;
+            .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::ClientShutdown)
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     /// Create a [`Lifetime`] from an id.
@@ -1011,35 +1014,23 @@ where
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let res = match Pin::new(&mut self.recv).poll(cx) {
             Poll::Ready(Ok(res)) => res,
-            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::Shutdown)),
             Poll::Pending => return Poll::Pending,
         };
 
         Poll::Ready(match res {
             CallFunctionResult::Ok(t) => match t.deserialize() {
                 Ok(t) => Ok(Ok(t)),
-                Err(_) => Err(InvalidFunctionResult {
-                    service_id: self.service_id,
-                    function: self.function,
-                }
-                .into()),
+                Err(e) => Err(Error::invalid_reply(e)),
             },
             CallFunctionResult::Err(e) => match e.deserialize() {
                 Ok(e) => Ok(Err(e)),
-                Err(_) => Err(InvalidFunctionResult {
-                    service_id: self.service_id,
-                    function: self.function,
-                }
-                .into()),
+                Err(e) => Err(Error::invalid_reply(e)),
             },
-            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
-            CallFunctionResult::InvalidService => Err(Error::InvalidService(self.service_id)),
-            CallFunctionResult::InvalidFunction => {
-                Err(Error::InvalidFunction(self.service_id, self.function))
-            }
-            CallFunctionResult::InvalidArgs => {
-                Err(Error::InvalidArgs(self.service_id, self.function))
-            }
+            CallFunctionResult::Aborted => Err(Error::CallAborted),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService),
+            CallFunctionResult::InvalidFunction => Err(Error::invalid_function(self.function)),
+            CallFunctionResult::InvalidArgs => Err(Error::invalid_arguments(self.function, None)),
         })
     }
 }
@@ -1097,32 +1088,22 @@ where
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let res = match Pin::new(&mut self.recv).poll(cx) {
             Poll::Ready(Ok(res)) => res,
-            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Ready(Err(_)) => return Poll::Ready(Err(Error::Shutdown)),
             Poll::Pending => return Poll::Pending,
         };
 
         Poll::Ready(match res {
             CallFunctionResult::Ok(t) => match t.deserialize() {
                 Ok(t) => Ok(t),
-                Err(_) => Err(InvalidFunctionResult {
-                    service_id: self.service_id,
-                    function: self.function,
-                }
-                .into()),
+                Err(e) => Err(Error::invalid_reply(e)),
             },
-            CallFunctionResult::Err(_) => Err(InvalidFunctionResult {
-                service_id: self.service_id,
-                function: self.function,
+            CallFunctionResult::Err(_) => {
+                Err(Error::invalid_reply(DeserializeError::UnexpectedValue))
             }
-            .into()),
-            CallFunctionResult::Aborted => Err(Error::FunctionCallAborted),
-            CallFunctionResult::InvalidService => Err(Error::InvalidService(self.service_id)),
-            CallFunctionResult::InvalidFunction => {
-                Err(Error::InvalidFunction(self.service_id, self.function))
-            }
-            CallFunctionResult::InvalidArgs => {
-                Err(Error::InvalidArgs(self.service_id, self.function))
-            }
+            CallFunctionResult::Aborted => Err(Error::CallAborted),
+            CallFunctionResult::InvalidService => Err(Error::InvalidService),
+            CallFunctionResult::InvalidFunction => Err(Error::invalid_function(self.function)),
+            CallFunctionResult::InvalidArgs => Err(Error::invalid_arguments(self.function, None)),
         })
     }
 }
@@ -1150,7 +1131,7 @@ impl Future for CloseChannelEndFuture {
         match Pin::new(&mut self.0).poll(cx) {
             Poll::Ready(Ok(Ok(()))) => Poll::Ready(Ok(())),
             Poll::Ready(Ok(Err(e))) => Poll::Ready(Err(e)),
-            Poll::Ready(Err(oneshot::Canceled)) => Poll::Ready(Err(Error::ClientShutdown)),
+            Poll::Ready(Err(oneshot::Canceled)) => Poll::Ready(Err(Error::Shutdown)),
             Poll::Pending => Poll::Pending,
         }
     }

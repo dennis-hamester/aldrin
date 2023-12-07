@@ -87,8 +87,8 @@ impl LifetimeScope {
     /// If the scope has already ended, [`Error::InvalidLifetime`] is returned.
     pub async fn end(&self) -> Result<(), Error> {
         self.object.destroy().await.map_err(|e| {
-            if let Error::InvalidObject(id) = e {
-                Error::InvalidLifetime(LifetimeId(id))
+            if e == Error::InvalidObject {
+                Error::InvalidLifetime
             } else {
                 e
             }

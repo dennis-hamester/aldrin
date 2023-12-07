@@ -23,13 +23,13 @@ async fn auto_reply_with_invalid_args() {
         .call_infallible_function::<u32, ()>(id, 1, &0)
         .unwrap()
         .await;
-    assert_eq!(res, Err(Error::InvalidArgs(id, 1)));
+    assert_eq!(res, Err(Error::invalid_arguments(1, None)));
 
     let res = client
         .call_infallible_function::<(), ()>(id, 2, &())
         .unwrap()
         .await;
-    assert_eq!(res, Err(Error::InvalidArgs(id, 2)));
+    assert_eq!(res, Err(Error::invalid_arguments(2, None)));
 }
 
 #[tokio::test]
@@ -46,7 +46,7 @@ async fn auto_reply_with_invalid_function() {
         .call_infallible_function::<(), ()>(id, 3, &())
         .unwrap()
         .await;
-    assert_eq!(res, Err(Error::InvalidFunction(id, 3)));
+    assert_eq!(res, Err(Error::invalid_function(3)));
 }
 
 #[test]

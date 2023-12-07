@@ -64,7 +64,6 @@ mod bus_listener;
 mod channel;
 mod client;
 mod discoverer;
-mod error;
 mod events;
 mod handle;
 mod lifetime;
@@ -74,6 +73,7 @@ mod service;
 #[cfg(test)]
 mod test;
 
+pub mod error;
 #[cfg(feature = "codegen")]
 #[doc(hidden)]
 pub mod private;
@@ -88,10 +88,7 @@ pub use channel::{
 };
 pub use client::Client;
 pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEvent, DiscovererEventKind};
-pub use error::{
-    ConnectError, Error, InvalidEventArguments, InvalidFunctionCall, InvalidFunctionResult,
-    RunError,
-};
+pub use error::Error;
 pub use events::{Event, Events};
 pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};

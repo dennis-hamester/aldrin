@@ -378,7 +378,7 @@ where
                 ObjectId::new(req.uuid, cookie),
                 self.handle.clone(),
             )),
-            CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject(req.uuid)),
+            CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject),
         };
 
         req.reply.send(reply).ok();
@@ -416,10 +416,8 @@ where
                     function_calls,
                 ))
             }
-            CreateServiceResult::DuplicateService => {
-                Err(Error::DuplicateService(req.object_id, req.service_uuid))
-            }
-            CreateServiceResult::InvalidObject => Err(Error::InvalidObject(req.object_id)),
+            CreateServiceResult::DuplicateService => Err(Error::DuplicateService),
+            CreateServiceResult::InvalidObject => Err(Error::InvalidObject),
             CreateServiceResult::ForeignObject => unreachable!(),
         };
 
@@ -440,7 +438,7 @@ where
                 self.broker_subscriptions.remove(&req.id.cookie);
                 Ok(())
             }
-            DestroyServiceResult::InvalidService => Err(Error::InvalidService(req.id)),
+            DestroyServiceResult::InvalidService => Err(Error::InvalidService),
             DestroyServiceResult::ForeignObject => unreachable!(),
         };
 
@@ -608,8 +606,9 @@ where
 
         let res = match msg.result {
             CloseChannelEndResult::Ok => Ok(()),
-            CloseChannelEndResult::InvalidChannel => Err(Error::InvalidChannel),
-            CloseChannelEndResult::ForeignChannel => Err(Error::ForeignChannel),
+            CloseChannelEndResult::InvalidChannel | CloseChannelEndResult::ForeignChannel => {
+                Err(Error::InvalidChannel)
+            }
         };
 
         req.reply.send(res).ok();
@@ -679,12 +678,8 @@ where
                     ))
                 }
 
-                ClaimChannelEndResult::InvalidChannel => {
+                ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
                     req.reply.send(Err(Error::InvalidChannel)).ok();
-                }
-
-                ClaimChannelEndResult::AlreadyClaimed => {
-                    req.reply.send(Err(Error::ForeignChannel)).ok();
                 }
             },
 
@@ -706,12 +701,8 @@ where
                     req.reply.send(Ok(receiver)).ok();
                 }
 
-                ClaimChannelEndResult::InvalidChannel => {
+                ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
                     req.reply.send(Err(Error::InvalidChannel)).ok();
-                }
-
-                ClaimChannelEndResult::AlreadyClaimed => {
-                    req.reply.send(Err(Error::ForeignChannel)).ok();
                 }
             },
         }

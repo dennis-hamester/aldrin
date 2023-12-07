@@ -1208,12 +1208,9 @@ impl<T: Deserialize> Receiver<T> {
     /// Polls for the next item.
     pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
         match self.inner.poll_next_item(cx) {
-            Poll::Ready(Some(value)) => Poll::Ready(
-                value
-                    .deserialize()
-                    .map(Some)
-                    .map_err(|_| Error::InvalidItemReceived),
-            ),
+            Poll::Ready(Some(value)) => {
+                Poll::Ready(value.deserialize().map(Some).map_err(Error::invalid_item))
+            }
             Poll::Ready(None) => Poll::Ready(Ok(None)),
             Poll::Pending => Poll::Pending,
         }
