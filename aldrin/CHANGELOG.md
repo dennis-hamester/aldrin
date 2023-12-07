@@ -5,6 +5,8 @@
  - `Error` has been redone with now fewer variants and a much smaller size. It now caries contextual
    information only when that would be inconvenient to get in typical use-cases.
  - All error types except `Error` are now in an `error` module.
+ - `Handle::query_service_version` now returns `Result<u32, Error>` instead of
+   `Result<Option<u32>, Error>`. `Error::InvalidService` is returned in place of `Ok(None)`.
 
 ## Added
 

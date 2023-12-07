@@ -468,7 +468,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "            return Err(aldrin::Error::InvalidService);");
         genln!(self, "        }}");
         genln!(self);
-        genln!(self, "        let version = client.query_service_version(id).await?.ok_or(aldrin::Error::InvalidService)?;");
+        genln!(self, "        let version = client.query_service_version(id).await?;");
         genln!(self, "        Ok({} {{ client, id, version }})", proxy_name);
         genln!(self, "    }}");
         genln!(self);

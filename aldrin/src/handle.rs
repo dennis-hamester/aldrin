@@ -417,13 +417,12 @@ impl Handle {
 
     /// Queries the version of a service.
     ///
-    /// If `service_id` does not name a valid service, then `None` is returned.
-    ///
     /// # Examples
     ///
     /// ```
     /// # use aldrin_test::tokio::TestBroker;
     /// use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// use aldrin::Error;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -432,16 +431,16 @@ impl Handle {
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
     /// let service = object.create_service(ServiceUuid::new_v4(), 2).await?;
     ///
-    /// let version = handle.query_service_version(service.id()).await?;
-    /// assert_eq!(version, Some(2));
+    /// let version = handle.query_service_version(service.id()).await;
+    /// assert_eq!(version, Ok(2));
     ///
     /// service.destroy().await?;
-    /// let version = handle.query_service_version(service.id()).await?;
-    /// assert_eq!(version, None);
+    /// let version = handle.query_service_version(service.id()).await;
+    /// assert_eq!(version, Err(Error::InvalidService));
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn query_service_version(&self, service_id: ServiceId) -> Result<Option<u32>, Error> {
+    pub async fn query_service_version(&self, service_id: ServiceId) -> Result<u32, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::QueryServiceVersion(
@@ -453,8 +452,8 @@ impl Handle {
             .map_err(|_| Error::Shutdown)?;
 
         match recv.await.map_err(|_| Error::Shutdown)? {
-            QueryServiceVersionResult::Ok(version) => Ok(Some(version)),
-            QueryServiceVersionResult::InvalidService => Ok(None),
+            QueryServiceVersionResult::Ok(version) => Ok(version),
+            QueryServiceVersionResult::InvalidService => Err(Error::InvalidService),
         }
     }
 
