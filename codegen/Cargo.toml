@@ -34,6 +34,10 @@ default-features = false
 version = "0.4.1"
 default-features = false
 
+[dependencies.thiserror]
+version = "1.0.50"
+default-features = false
+
 [dev-dependencies]
 uuid = "1.6.1"
 

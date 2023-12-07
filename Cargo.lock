@@ -68,6 +68,7 @@ dependencies = [
  "diffy",
  "futures",
  "heck",
+ "thiserror",
  "tokio",
  "uuid",
 ]
