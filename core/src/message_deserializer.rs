@@ -2,8 +2,7 @@ use crate::buf_ext::MessageBufExt;
 use crate::message::MessageKind;
 use crate::serialized_value::SerializedValue;
 use bytes::{Buf, BytesMut};
-use std::error::Error;
-use std::fmt;
+use thiserror::Error;
 use uuid::Uuid;
 
 pub(crate) struct MessageWithoutValueDeserializer {
@@ -129,23 +128,17 @@ impl MessageWithValueDeserializer {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MessageDeserializeError {
+    #[error("invalid serialization")]
     InvalidSerialization,
+
+    #[error("unexpected end of input")]
     UnexpectedEoi,
+
+    #[error("unexpected message type")]
     UnexpectedMessage,
+
+    #[error("serialization contains trailing data")]
     TrailingData,
 }
-
-impl fmt::Display for MessageDeserializeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::InvalidSerialization => f.write_str("invalid serialization"),
-            Self::UnexpectedEoi => f.write_str("unexpected end of input"),
-            Self::UnexpectedMessage => f.write_str("unexpected message type"),
-            Self::TrailingData => f.write_str("serialization contains trailing data"),
-        }
-    }
-}
-
-impl Error for MessageDeserializeError {}

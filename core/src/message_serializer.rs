@@ -2,8 +2,7 @@ use crate::buf_ext::BufMutExt;
 use crate::message::MessageKind;
 use crate::serialized_value::SerializedValue;
 use bytes::{BufMut, BytesMut};
-use std::error::Error;
-use std::fmt;
+use thiserror::Error;
 use uuid::Uuid;
 
 pub(crate) struct MessageSerializer {
@@ -72,19 +71,11 @@ impl MessageSerializer {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MessageSerializeError {
+    #[error("serialized message overflowed")]
     Overflow,
+
+    #[error("invalid value")]
     InvalidValue,
 }
-
-impl fmt::Display for MessageSerializeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Overflow => f.write_str("serialized message overflowed"),
-            Self::InvalidValue => f.write_str("invalid value"),
-        }
-    }
-}
-
-impl Error for MessageSerializeError {}
