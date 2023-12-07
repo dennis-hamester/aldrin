@@ -5,7 +5,9 @@ use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError}
 use crate::conn_id::ConnectionIdManager;
 use crate::core::message::{ConnectReply, Message};
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
-use crate::core::{Deserialize, DeserializeError, Serialize, SerializedValue};
+use crate::core::{
+    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice,
+};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -276,7 +278,7 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     }
 
     /// Returns the client's data.
-    pub fn client_data(&self) -> &SerializedValue {
+    pub fn client_data(&self) -> &SerializedValueSlice {
         &self.client_data
     }
 
