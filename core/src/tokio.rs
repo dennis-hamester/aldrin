@@ -4,11 +4,10 @@ use crate::message_serializer::MessageSerializeError;
 use crate::transport::AsyncTransport;
 use bytes::{Buf, BytesMut};
 use pin_project_lite::pin_project;
-use std::error::Error as StdError;
-use std::fmt;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use thiserror::Error;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 const INITIAL_CAPACITY: usize = 8 * 1024;
@@ -118,21 +117,14 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum TokioTransportError {
-    Io(IoError),
-    Serialize(MessageSerializeError),
-    Deserialize(MessageDeserializeError),
-}
+    #[error(transparent)]
+    Io(#[from] IoError),
 
-impl fmt::Display for TokioTransportError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TokioTransportError::Io(e) => e.fmt(f),
-            TokioTransportError::Serialize(e) => e.fmt(f),
-            TokioTransportError::Deserialize(e) => e.fmt(f),
-        }
-    }
-}
+    #[error(transparent)]
+    Serialize(#[from] MessageSerializeError),
 
-impl StdError for TokioTransportError {}
+    #[error(transparent)]
+    Deserialize(#[from] MessageDeserializeError),
+}
