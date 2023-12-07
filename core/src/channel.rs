@@ -58,10 +58,9 @@ use crate::message::Message;
 use crate::transport::AsyncTransport;
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
-use std::error::Error;
-use std::fmt;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use thiserror::Error;
 
 /// Creates a pair of bounded channel transports.
 ///
@@ -94,16 +93,9 @@ impl Bounded {
 }
 
 /// Error type when using channels as a transport.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("disconnected")]
 pub struct Disconnected;
-
-impl fmt::Display for Disconnected {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("disconnected")
-    }
-}
-
-impl Error for Disconnected {}
 
 impl AsyncTransport for Bounded {
     type Error = Disconnected;
