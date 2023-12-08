@@ -17,6 +17,7 @@ This version still connects to brokers using protocol version 14.
 - Implement `Default` for `LifetimeId`.
 - Add `Handle::version()`, which returns the protocol version that was negotiated with the broker.
 - Add `low_level::Event::new()`.
+- Add `EventListener::is_finished()`.
 
 ### Changed
 

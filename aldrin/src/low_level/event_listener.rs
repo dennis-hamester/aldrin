@@ -194,6 +194,14 @@ impl EventListener {
     pub async fn next_event(&mut self) -> Option<Event> {
         future::poll_fn(|cx| self.poll_next_event(cx)).await
     }
+
+    /// Indicates whether no more events can be expected.
+    ///
+    /// When `is_finished` returns `true`, then [`next_event`](Self::next_event) is guaranteed to
+    /// return `None`.
+    pub fn is_finished(&self) -> bool {
+        self.subscriptions.is_empty() || self.recv.is_terminated()
+    }
 }
 
 impl Stream for EventListener {
@@ -206,7 +214,7 @@ impl Stream for EventListener {
 
 impl FusedStream for EventListener {
     fn is_terminated(&self) -> bool {
-        self.recv.is_terminated()
+        self.is_finished()
     }
 }
 
