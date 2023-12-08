@@ -24,6 +24,7 @@ This version still connects to brokers using protocol version 14.
 - `Object::create_service()` now takes a `impl Into<ServiceUuid>`.
 - Remove the version number in the `ConnectError::IncompatibleVersion` error.
 - Move `Event` to the `low_level` module.
+- Move `Events` to the `low_level` module.
 
 ## [0.3.0] - 2024-01-18
 

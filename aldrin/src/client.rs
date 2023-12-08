@@ -24,7 +24,6 @@ use crate::core::{
     Serialize, SerializedValue, ServiceCookie, ServiceId,
 };
 use crate::error::{ConnectError, RunError};
-use crate::events::{EventsId, EventsRequest};
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
@@ -35,6 +34,7 @@ use crate::handle::request::{
     SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::lifetime::LifetimeListener;
+use crate::low_level::{EventsId, EventsRequest};
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
