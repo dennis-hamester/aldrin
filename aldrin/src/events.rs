@@ -3,6 +3,7 @@ mod test;
 
 use super::{Error, Handle};
 use crate::core::{SerializedValue, ServiceCookie, ServiceId};
+use crate::low_level::Event;
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};
@@ -36,7 +37,7 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # Examples
 ///
 /// ```
-/// use aldrin::Event;
+/// use aldrin::low_level::Event;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -211,29 +212,6 @@ pub(crate) struct EventsId(Uuid);
 impl EventsId {
     pub fn new() -> Self {
         EventsId(Uuid::new_v4())
-    }
-}
-
-/// Event emitted by a service.
-#[derive(Debug, Clone)]
-pub struct Event {
-    /// Id of the service, which emitted the event.
-    pub service_id: ServiceId,
-
-    /// Id of the event.
-    pub id: u32,
-
-    /// Value of the event.
-    pub value: SerializedValue,
-}
-
-impl Event {
-    pub(crate) fn new(service_id: ServiceId, id: u32, value: SerializedValue) -> Self {
-        Event {
-            service_id,
-            id,
-            value,
-        }
     }
 }
 

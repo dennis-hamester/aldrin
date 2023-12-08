@@ -90,7 +90,7 @@ pub use channel::{
 pub use client::Client;
 pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEvent, DiscovererEventKind};
 pub use error::Error;
-pub use events::{Event, Events};
+pub use events::Events;
 pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
