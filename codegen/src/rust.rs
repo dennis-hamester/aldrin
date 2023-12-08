@@ -543,7 +543,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", events);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    events: aldrin::Events,");
+        genln!(self, "    events: aldrin::low_level::Events,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
         genln!(self, "    id: aldrin::core::ServiceId,");

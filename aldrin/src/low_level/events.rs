@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod test;
 
-use super::{Error, Handle};
 use crate::core::{SerializedValue, ServiceCookie, ServiceId};
+use crate::handle::Handle;
 use crate::low_level::Event;
+use crate::Error;
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{Entry, HashMap};

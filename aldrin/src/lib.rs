@@ -64,7 +64,6 @@ mod bus_listener;
 mod channel;
 mod client;
 mod discoverer;
-mod events;
 mod handle;
 mod lifetime;
 mod object;
@@ -90,7 +89,6 @@ pub use channel::{
 pub use client::Client;
 pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEvent, DiscovererEventKind};
 pub use error::Error;
-pub use events::Events;
 pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;

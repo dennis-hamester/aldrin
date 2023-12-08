@@ -16,9 +16,8 @@ use crate::core::{
 };
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
-use crate::events::Events;
-use crate::events::{EventsId, EventsRequest};
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
+use crate::low_level::{Events, EventsId, EventsRequest};
 use crate::object::Object;
 use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
