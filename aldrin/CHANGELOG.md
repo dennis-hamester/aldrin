@@ -16,12 +16,14 @@ This version still connects to brokers using protocol version 14.
 - Add `NIL` and `is_nil()` to `LifetimeId`.
 - Implement `Default` for `LifetimeId`.
 - Add `Handle::version()`, which returns the protocol version that was negotiated with the broker.
+- Add `low_level::Event::new()`.
 
 ### Changed
 
 - `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
 - `Object::create_service()` now takes a `impl Into<ServiceUuid>`.
 - Remove the version number in the `ConnectError::IncompatibleVersion` error.
+- Move `Event` to the `low_level` module.
 
 ## [0.3.0] - 2024-01-18
 
