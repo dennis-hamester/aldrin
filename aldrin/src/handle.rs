@@ -17,7 +17,7 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{Events, EventsId, EventsRequest};
+use crate::low_level::{EventListener, EventListenerId, EventListenerRequest};
 use crate::object::Object;
 use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
@@ -332,24 +332,22 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    /// Creates an Events object used to subscribe to service events.
-    ///
-    /// See [`Events`] for more information and usage examples.
-    pub fn events(&self) -> Events {
-        Events::new(self.clone())
+    /// Creates a new [`EventListener`].
+    pub fn create_event_listener(&self) -> EventListener {
+        EventListener::new(self.clone())
     }
 
     pub(crate) async fn subscribe_event(
         &self,
-        events_id: EventsId,
+        listener_id: EventListenerId,
         service_id: ServiceId,
         id: u32,
-        sender: UnboundedSender<EventsRequest>,
+        sender: UnboundedSender<EventListenerRequest>,
     ) -> Result<(), Error> {
         let (rep_send, rep_recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SubscribeEvent(SubscribeEventRequest {
-                events_id,
+                listener_id,
                 service_cookie: service_id.cookie,
                 id,
                 sender,
@@ -365,13 +363,13 @@ impl Handle {
 
     pub(crate) fn unsubscribe_event(
         &self,
-        events_id: EventsId,
+        listener_id: EventListenerId,
         service_id: ServiceId,
         id: u32,
     ) -> Result<(), Error> {
         self.send
             .unbounded_send(HandleRequest::UnsubscribeEvent(UnsubscribeEventRequest {
-                events_id,
+                listener_id,
                 service_cookie: service_id.cookie,
                 id,
             }))
@@ -382,8 +380,6 @@ impl Handle {
     ///
     /// The event with the id `event` of the service identified by `service_id` will be emitted with
     /// the arguments `args` to all subscribed clients.
-    ///
-    /// Use [`Handle::events`] to subscribe to events.
     ///
     /// # Examples
     ///

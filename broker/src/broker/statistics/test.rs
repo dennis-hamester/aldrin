@@ -255,12 +255,12 @@ async fn events() {
     let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     let mut client2 = broker.add_client().await;
-    let mut events2 = client2.events();
-    events2.subscribe(svc.id(), 0).await.unwrap();
+    let mut event_listener2 = client2.create_event_listener();
+    event_listener2.subscribe(svc.id(), 0).await.unwrap();
 
     let mut client3 = broker.add_client().await;
-    let mut events3 = client3.events();
-    events3.subscribe(svc.id(), 0).await.unwrap();
+    let mut event_listener3 = client3.create_event_listener();
+    event_listener3.subscribe(svc.id(), 0).await.unwrap();
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();

@@ -34,7 +34,7 @@ use crate::handle::request::{
     SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventsId, EventsRequest};
+use crate::low_level::{EventListenerId, EventListenerRequest};
 use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
@@ -45,7 +45,8 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
 
-type Subscriptions = HashMap<u32, HashMap<EventsId, mpsc::UnboundedSender<EventsRequest>>>;
+type Subscriptions =
+    HashMap<u32, HashMap<EventListenerId, mpsc::UnboundedSender<EventListenerRequest>>>;
 
 /// Aldrin client used to connect to a broker.
 ///
@@ -79,7 +80,7 @@ where
     function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawFunctionCall>>,
     subscribe_event: SerialMap<(
-        EventsId,
+        EventListenerId,
         ServiceCookie,
         u32,
         oneshot::Sender<SubscribeEventResult>,
@@ -488,7 +489,7 @@ where
     }
 
     fn msg_subscribe_event_reply(&mut self, msg: SubscribeEventReply) {
-        let (events_id, service_cookie, id, rep_send) =
+        let (listener_id, service_cookie, id, rep_send) =
             match self.subscribe_event.remove(msg.serial) {
                 Some(req) => req,
                 None => return,
@@ -503,7 +504,7 @@ where
                 .or_default()
                 .entry(id)
                 .or_default()
-                .remove(&events_id);
+                .remove(&listener_id);
         }
     }
 
@@ -532,7 +533,7 @@ where
         for sender in senders.values_mut() {
             // Should we close the channel in case of send errors?
             sender
-                .unbounded_send(EventsRequest::EmitEvent(
+                .unbounded_send(EventListenerRequest::EmitEvent(
                     msg.service_cookie,
                     msg.event,
                     msg.value.clone(),
@@ -808,11 +809,11 @@ where
 
         let mut dups = HashSet::new();
         for (_, events_ids) in ids {
-            for (events_id, sender) in events_ids {
-                if dups.insert(events_id) {
+            for (listener_id, sender) in events_ids {
+                if dups.insert(listener_id) {
                     // Should we close the channel in case of send errors?
                     sender
-                        .unbounded_send(EventsRequest::ServiceDestroyed(msg.service_cookie))
+                        .unbounded_send(EventListenerRequest::ServiceDestroyed(msg.service_cookie))
                         .ok();
                 }
             }
@@ -1146,11 +1147,11 @@ where
             .entry(req.id)
             .or_default();
         let send_req = subs.is_empty();
-        let duplicate = subs.insert(req.events_id, req.sender).is_some();
+        let duplicate = subs.insert(req.listener_id, req.sender).is_some();
 
         if send_req {
             let serial = Some(self.subscribe_event.insert((
-                req.events_id,
+                req.listener_id,
                 req.service_cookie,
                 req.id,
                 req.reply,
@@ -1166,7 +1167,7 @@ where
                 .map_err(Into::into)
         } else {
             if req.reply.send(SubscribeEventResult::Ok).is_err() && !duplicate {
-                subs.remove(&req.events_id);
+                subs.remove(&req.listener_id);
             }
 
             Ok(())
@@ -1187,7 +1188,7 @@ where
             Entry::Vacant(_) => return Ok(()),
         };
 
-        if ids.get_mut().remove(&req.events_id).is_none() {
+        if ids.get_mut().remove(&req.listener_id).is_none() {
             return Ok(());
         }
 

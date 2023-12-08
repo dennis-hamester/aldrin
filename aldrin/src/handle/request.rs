@@ -13,7 +13,7 @@ use crate::core::{
     ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventsId, EventsRequest};
+use crate::low_level::{EventListenerId, EventListenerRequest};
 use crate::{Error, Object, Service};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
@@ -94,16 +94,16 @@ pub(crate) struct CallFunctionReplyRequest {
 
 #[derive(Debug)]
 pub(crate) struct SubscribeEventRequest {
-    pub events_id: EventsId,
+    pub listener_id: EventListenerId,
     pub service_cookie: ServiceCookie,
     pub id: u32,
-    pub sender: mpsc::UnboundedSender<EventsRequest>,
+    pub sender: mpsc::UnboundedSender<EventListenerRequest>,
     pub reply: oneshot::Sender<SubscribeEventResult>,
 }
 
 #[derive(Debug)]
 pub(crate) struct UnsubscribeEventRequest {
-    pub events_id: EventsId,
+    pub listener_id: EventListenerId,
     pub service_cookie: ServiceCookie,
     pub id: u32,
 }
