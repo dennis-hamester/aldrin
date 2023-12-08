@@ -2,7 +2,7 @@
 
 ## Breaking
 
-- The return type of `PendingConnection::client_data` is changed from `&SerializedValue` to
+- The return type of `PendingConnection::client_data()` is changed from `&SerializedValue` to
   `&SerializedValueSlice`.
 - Rename `ConnectionError::UnexpectedBrokerShutdown` to `UnexpectedShutdown`.
 - Rename `EstablishError::VersionMismatch` to `IncompatibleVersion`.
