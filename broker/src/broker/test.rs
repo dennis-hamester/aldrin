@@ -229,8 +229,8 @@ async fn only_owner_can_emit_events() {
     let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     let mut client2 = broker.add_client().await;
-    let mut events = client2.events();
-    events.subscribe(svc.id(), 0).await.unwrap();
+    let mut event_listener = client2.create_event_listener();
+    event_listener.subscribe(svc.id(), 0).await.unwrap();
     client2.sync_broker().await.unwrap();
 
     client1.emit_event(svc.id(), 0, &()).unwrap();
@@ -245,8 +245,8 @@ async fn only_owner_can_emit_events() {
     client2.shutdown();
     client2.join().await;
 
-    assert!(events.next_event().await.is_some());
-    assert!(events.next_event().await.is_none());
+    assert!(event_listener.next_event().await.is_some());
+    assert!(event_listener.next_event().await.is_none());
 }
 
 #[tokio::test]

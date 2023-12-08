@@ -16,11 +16,11 @@ use uuid::Uuid;
 
 type Subscriptions = (ServiceId, HashSet<u32>);
 
-/// Manages subscriptions to service events.
+/// Listens to events from services.
 ///
-/// This type is created by [`Handle::events`]. Events can be [`subscribe`d](Events::subscribe) and
-/// [`unsubscribe`d](Events::unsubscribe). After subscribing to events, this type should be polled
-/// through its implementation of [`Stream`].
+/// Events can be [`subscribe`d](EventListener::subscribe) and
+/// [`unsubscribe`d](EventListener::unsubscribe). After subscribing to events, this type should be
+/// polled through its implementation of [`Stream`].
 ///
 /// Subscriptions can be removed implicitly, e.g. when a [`Service`](crate::Service) has been
 /// destroyed.  When there are no subscriptions left (or when none have been made in the first
@@ -29,8 +29,9 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// When the [`Client`](crate::Client) shuts down, all subscriptions are removed and
 /// [`Stream::poll_next`] will return `None` as well.
 ///
-/// [`Events`] holds an internal [`Handle`] and will thus prevent the [`Client`](crate::Client) from
-/// shutting down automatically. The [`Handle`] is only released when [`Events`] is dropped.
+/// [`EventListener`] holds an internal [`Handle`] and will thus prevent the
+/// [`Client`](crate::Client) from shutting down automatically. The [`Handle`] is only released when
+/// [`EventListener`] is dropped.
 ///
 /// This is low-level type. You should generally use the auto-generated event streams instead, which
 /// do not require knowledge of event ids and provide better ergonomics for event arguments.
@@ -43,22 +44,22 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
-/// # let handle = broker.add_client().await;
-/// # let obj = handle.create_object(aldrin::core::ObjectUuid::new_v4()).await?;
+/// # let client = broker.add_client().await;
+/// # let obj = client.create_object(aldrin::core::ObjectUuid::new_v4()).await?;
 /// # let mut svc = obj.create_service(aldrin::core::ServiceUuid::new_v4(), 0).await?;
 /// # let service_id = svc.id();
-/// let mut events = handle.events();
+/// let mut event_listener = client.create_event_listener();
 ///
-/// events.subscribe(service_id, 1).await?;
-/// events.subscribe(service_id, 2).await?;
+/// event_listener.subscribe(service_id, 1).await?;
+/// event_listener.subscribe(service_id, 2).await?;
 ///
-/// # handle.emit_event(service_id, 1, &32u32)?;
-/// while let Some(event) = events.next_event().await {
+/// # client.emit_event(service_id, 1, &32u32)?;
+/// while let Some(event) = event_listener.next_event().await {
 ///     match event {
 ///         Event { id: 1, value, .. } => {
 ///             let value: u32 = value.deserialize()?;
 ///             println!("Event 1 with u32 value {value}.");
-///             # handle.emit_event(service_id, 2, "Hello, world!")?;
+///             # client.emit_event(service_id, 2, "Hello, world!")?;
 ///         }
 ///
 ///         Event { id: 2, value, .. } => {
@@ -75,19 +76,21 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// ```
 #[derive(Debug)]
 #[must_use = "streams do nothing unless you poll them"]
-pub struct Events {
-    id: EventsId,
+pub struct EventListener {
+    id: EventListenerId,
     client: Handle,
-    recv: UnboundedReceiver<EventsRequest>,
-    send: UnboundedSender<EventsRequest>,
+    recv: UnboundedReceiver<EventListenerRequest>,
+    send: UnboundedSender<EventListenerRequest>,
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
 }
 
-impl Events {
-    pub(crate) fn new(client: Handle) -> Self {
+impl EventListener {
+    /// Creates a new [`EventListener`].
+    pub fn new(client: Handle) -> Self {
         let (send, recv) = unbounded();
-        Events {
-            id: EventsId::new(),
+
+        Self {
+            id: EventListenerId::new(),
             client,
             recv,
             send,
@@ -163,7 +166,7 @@ impl Events {
             }
 
             match Pin::new(&mut self.recv).poll_next(cx) {
-                Poll::Ready(Some(EventsRequest::EmitEvent(service_cookie, event, args))) => {
+                Poll::Ready(Some(EventListenerRequest::EmitEvent(service_cookie, event, args))) => {
                     if let Some(service_id) = self
                         .subscriptions
                         .get(&service_cookie)
@@ -173,7 +176,7 @@ impl Events {
                     }
                 }
 
-                Poll::Ready(Some(EventsRequest::ServiceDestroyed(service_cookie))) => {
+                Poll::Ready(Some(EventListenerRequest::ServiceDestroyed(service_cookie))) => {
                     self.subscriptions.remove(&service_cookie);
                 }
 
@@ -193,7 +196,7 @@ impl Events {
     }
 }
 
-impl Stream for Events {
+impl Stream for EventListener {
     type Item = Event;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Event>> {
@@ -201,23 +204,23 @@ impl Stream for Events {
     }
 }
 
-impl FusedStream for Events {
+impl FusedStream for EventListener {
     fn is_terminated(&self) -> bool {
         self.recv.is_terminated()
     }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct EventsId(Uuid);
+pub(crate) struct EventListenerId(Uuid);
 
-impl EventsId {
+impl EventListenerId {
     pub fn new() -> Self {
-        EventsId(Uuid::new_v4())
+        EventListenerId(Uuid::new_v4())
     }
 }
 
 #[derive(Debug)]
-pub(crate) enum EventsRequest {
+pub(crate) enum EventListenerRequest {
     EmitEvent(ServiceCookie, u32, SerializedValue),
     ServiceDestroyed(ServiceCookie),
 }

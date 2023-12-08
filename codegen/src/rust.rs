@@ -533,7 +533,7 @@ impl<'a> RustGenerator<'a> {
         let events = service_events(svc_name);
         genln!(self, "    pub fn events(&self) -> {} {{", events);
         genln!(self, "        {} {{", events);
-        genln!(self, "            events: self.client.events(),");
+        genln!(self, "            events: self.client.create_event_listener(),");
         genln!(self, "            id: self.id,");
         genln!(self, "        }}");
         genln!(self, "    }}");
@@ -543,7 +543,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", events);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    events: aldrin::low_level::Events,");
+        genln!(self, "    events: aldrin::low_level::EventListener,");
         genln!(self);
         genln!(self, "    #[doc(hidden)]");
         genln!(self, "    id: aldrin::core::ServiceId,");
