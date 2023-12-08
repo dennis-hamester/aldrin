@@ -175,7 +175,11 @@ impl Events {
                     self.subscriptions.remove(&service_cookie);
                 }
 
-                Poll::Ready(None) => return Poll::Ready(None),
+                Poll::Ready(None) => {
+                    self.subscriptions.clear();
+                    return Poll::Ready(None);
+                }
+
                 Poll::Pending => return Poll::Pending,
             }
         }
