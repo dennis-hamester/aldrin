@@ -203,7 +203,7 @@ impl<Key> Discoverer<Key> {
         if self.specific.is_empty() && self.any.is_empty() {
             true
         } else {
-            self.bus_listener.finished()
+            self.bus_listener.is_finished()
         }
     }
 
