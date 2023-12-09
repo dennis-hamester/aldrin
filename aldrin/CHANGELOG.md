@@ -27,6 +27,7 @@ This version still connects to brokers using protocol version 14.
 - Move `Event` to the `low_level` module.
 - Rename `Events` to `EventListener` and move it to the `low_level` module.
 - Rename `BusListener::finished()` to `is_finished()`.
+- Rename `Discoverer::finished()` to `is_finished()`.
 
 ## [0.3.0] - 2024-01-18
 

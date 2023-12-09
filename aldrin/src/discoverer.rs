@@ -199,7 +199,7 @@ impl<Key> Discoverer<Key> {
     /// Discoverers can only finish if they are considering only current objects and services,
     /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or started
     /// with [`start_current_only`](Self::start_current_only`).
-    pub fn finished(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         if self.specific.is_empty() && self.any.is_empty() {
             true
         } else {
