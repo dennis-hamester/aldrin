@@ -18,6 +18,8 @@ This version still connects to brokers using protocol version 14.
 - Add `Handle::version()`, which returns the protocol version that was negotiated with the broker.
 - Add `low_level::Event::new()`.
 - Add `EventListener::is_finished()`.
+- Add `low_level::Proxy`, which acts as a new basis for generated proxy types. It handles function
+  calls and events.
 
 ### Changed
 
