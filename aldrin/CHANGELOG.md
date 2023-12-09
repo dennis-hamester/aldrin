@@ -26,6 +26,7 @@ This version still connects to brokers using protocol version 14.
 - Remove the version number in the `ConnectError::IncompatibleVersion` error.
 - Move `Event` to the `low_level` module.
 - Rename `Events` to `EventListener` and move it to the `low_level` module.
+- Rename `BusListener::finished()` to `is_finished()`.
 
 ## [0.3.0] - 2024-01-18
 

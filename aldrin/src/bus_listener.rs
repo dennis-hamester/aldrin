@@ -77,7 +77,7 @@ use std::task::{Context, Poll};
 ///     # num += 1;
 /// }
 /// # assert_eq!(num, 4);
-/// # assert!(bus_listener.finished());
+/// # assert!(bus_listener.is_finished());
 /// # Ok(())
 /// # }
 /// ```
@@ -374,7 +374,7 @@ impl BusListener {
     ///
     /// Bus listeners can only ever finish if they are stopped or if their scope is
     /// [`BusListenerScope::Current`] and all events have been emitted.
-    pub fn finished(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         self.events.is_terminated()
             || (!self.includes_new()
                 && (self.pending_started == 0)
@@ -385,7 +385,7 @@ impl BusListener {
     /// Polls the bus listener for an event.
     pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<BusEvent>> {
         loop {
-            if self.finished() {
+            if self.is_finished() {
                 break Poll::Ready(None);
             }
 
@@ -442,7 +442,7 @@ impl Stream for BusListener {
 
 impl FusedStream for BusListener {
     fn is_terminated(&self) -> bool {
-        self.finished()
+        self.is_finished()
     }
 }
 
