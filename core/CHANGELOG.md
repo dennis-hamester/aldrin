@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Implement `Serialize` and `Deserialize` for `Result`.
+- Implement `Serialize` and `Deserialize` for `std::convert::Infallible`.
 
 ## [0.3.0] - 2024-01-18
 

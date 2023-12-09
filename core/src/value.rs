@@ -9,6 +9,7 @@ use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::borrow::{Borrow, Cow};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
+use std::convert::Infallible;
 use std::hash::{BuildHasher, Hash};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
@@ -676,5 +677,17 @@ where
             1 => deserializer.deserialize().map(Err),
             _ => Err(DeserializeError::InvalidSerialization),
         }
+    }
+}
+
+impl Serialize for Infallible {
+    fn serialize(&self, _serializer: Serializer) -> Result<(), SerializeError> {
+        match *self {}
+    }
+}
+
+impl Deserialize for Infallible {
+    fn deserialize(_deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        Err(DeserializeError::UnexpectedValue)
     }
 }

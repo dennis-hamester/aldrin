@@ -9,6 +9,7 @@ use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
+use std::convert::Infallible;
 use std::fmt::Debug;
 use std::{f32, f64};
 use uuid::uuid;
@@ -1547,4 +1548,11 @@ fn test_result_err() {
     let value = Result::<u8, u8>::Err(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_infallible() {
+    let serialized = SerializedValue::serialize(&()).unwrap();
+    let res = serialized.deserialize::<Infallible>();
+    assert_eq!(res, Err(DeserializeError::UnexpectedValue));
 }
