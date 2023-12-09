@@ -4,8 +4,10 @@
 
 mod event;
 mod event_listener;
+mod proxy;
 
 pub(crate) use event_listener::{EventListenerId, EventListenerRequest};
 
 pub use event::Event;
 pub use event_listener::EventListener;
+pub use proxy::Proxy;

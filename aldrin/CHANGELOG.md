@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `low_level::Event::new()`.
 - Add `EventListener::is_finished()`.
+- Add `low_level::Proxy`, which acts as a new basis for generated proxy types. It handles function
 
 ### Changed
 

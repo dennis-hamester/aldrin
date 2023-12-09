@@ -17,7 +17,7 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{EventListener, EventListenerId, EventListenerRequest};
+use crate::low_level::{EventListener, EventListenerId, EventListenerRequest, Proxy};
 use crate::object::Object;
 use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
@@ -1032,6 +1032,11 @@ impl Handle {
     /// Returns the protocol version that was negotiated with the broker.
     pub async fn version(&self) -> Result<ProtocolVersion, Error> {
         Ok(ProtocolVersion::V1_14)
+    }
+
+    /// Creates a new proxy to a service.
+    pub async fn create_proxy(&self, id: ServiceId) -> Result<Proxy, Error> {
+        Proxy::new(self.clone(), id).await
     }
 }
 
