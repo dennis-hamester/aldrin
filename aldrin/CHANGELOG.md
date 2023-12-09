@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move `Event` to the `low_level` module.
 - Rename `Events` to `EventListener` and move it to the `low_level` module.
 - Rename `BusListener::finished()` to `is_finished()`.
+- Rename `Discoverer::finished()` to `is_finished()`.
 
 ## [0.4.0] - 2024-03-21
 
