@@ -365,10 +365,10 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
     pub fn specific(
         self,
         key: Key,
-        object: ObjectUuid,
+        object: impl Into<ObjectUuid>,
         services: impl IntoIterator<Item = ServiceUuid>,
     ) -> Self {
-        self.object(key, Some(object), services)
+        self.object(key, Some(object.into()), services)
     }
 }
 
