@@ -77,7 +77,7 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<DestroyServiceRequest>,
-    function_calls: SerialMap<oneshot::Sender<CallFunctionResult>>,
+    function_calls: SerialMap<oneshot::Sender<Result<CallFunctionResult, Error>>>,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawFunctionCall>>,
     subscribe_event: SerialMap<(
         EventListenerId,
@@ -478,7 +478,8 @@ where
             .function_calls
             .remove(msg.serial)
             .expect("inconsistent state");
-        send.send(msg.result).ok();
+
+        let _ = send.send(Ok(msg.result));
     }
 
     fn msg_subscribe_event(&mut self, msg: SubscribeEvent) {

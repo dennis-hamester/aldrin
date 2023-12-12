@@ -1,7 +1,8 @@
 use super::{Event, EventListener};
-use crate::core::{Deserialize, Serialize, ServiceId};
+use crate::core::{Serialize, ServiceId};
 use crate::error::Error;
-use crate::handle::{Handle, PendingFunctionResult};
+use crate::handle::Handle;
+use crate::reply::Reply;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::pin::Pin;
@@ -45,17 +46,11 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call_function<Args, T, E>(
-        &self,
-        function: u32,
-        args: &Args,
-    ) -> Result<PendingFunctionResult<T, E>, Error>
+    pub fn call<Args, T, E>(&self, function: u32, args: &Args) -> Reply<T, E>
     where
         Args: Serialize + ?Sized,
-        T: Deserialize,
-        E: Deserialize,
     {
-        self.client.call_function(self.id, function, args)
+        self.client.call(self.id, function, args)
     }
 
     /// Subscribes to an event.

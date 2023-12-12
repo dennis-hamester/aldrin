@@ -10,6 +10,7 @@ use crate::core::message::{
 use crate::core::transport::AsyncTransportExt;
 use crate::core::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, ServiceUuid};
 use crate::{Broker, BrokerHandle};
+use aldrin::low_level::Proxy;
 use aldrin::Client;
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
@@ -28,10 +29,9 @@ async fn disconnect_during_function_call() {
 
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
-    let func_call = client2
-        .call_infallible_function::<(), ()>(svc.id(), 0, &())
-        .unwrap();
-    mem::drop(func_call);
+    let proxy = Proxy::new(client2.clone(), svc.id()).await.unwrap();
+    let reply = proxy.call::<_, (), ()>(0, &());
+    mem::drop(reply);
     client2.join().await;
 
     let call = svc.next_function_call().await.unwrap();
@@ -75,14 +75,10 @@ async fn drop_conn_before_function_call() {
     mem::drop(conn1_fut);
 
     // Calling a function on conn1 must not deadlock, but be immediately replied to with an error.
-    let res = time::timeout(
-        Duration::from_millis(500),
-        client2
-            .call_infallible_function::<(), ()>(svc.id(), 0, &())
-            .unwrap(),
-    )
-    .await
-    .unwrap();
+    let proxy = Proxy::new(client2.clone(), svc.id()).await.unwrap();
+    let res = time::timeout(Duration::from_millis(500), proxy.call::<_, (), ()>(0, &()))
+        .await
+        .unwrap();
 
     assert!(res.is_err());
 }
@@ -442,28 +438,26 @@ async fn calls_from_multiple_clients() {
     let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     let mut client2 = broker.add_client().await;
-    let reply = client2
-        .call_infallible_function::<_, ()>(svc.id(), 0, &())
-        .unwrap();
+    let proxy = client2.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call::<_, (), ()>(0, &());
     svc.next_function_call()
         .await
         .unwrap()
         .reply
         .ok(&())
         .unwrap();
-    reply.await.unwrap();
+    reply.await.unwrap().unwrap();
 
     let mut client3 = broker.add_client().await;
-    let reply = client3
-        .call_infallible_function::<_, ()>(svc.id(), 0, &())
-        .unwrap();
+    let proxy = client3.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call::<_, (), ()>(0, &());
     svc.next_function_call()
         .await
         .unwrap()
         .reply
         .ok(&())
         .unwrap();
-    reply.await.unwrap();
+    reply.await.unwrap().unwrap();
 
     client1.join().await;
     client2.join().await;
