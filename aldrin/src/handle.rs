@@ -902,7 +902,7 @@ impl Handle {
     ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
         let mut discoverer = self
             .create_discoverer()
-            .add_object((), object, services.iter().copied())
+            .object((), object, services.iter().copied())
             .build_current_only()
             .await?;
 

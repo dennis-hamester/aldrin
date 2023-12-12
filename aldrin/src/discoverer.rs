@@ -43,9 +43,9 @@ use std::task::{Context, Poll};
 /// ```
 ///
 /// When configuring objects, you must choose whether the `Discoverer` matches only on a specific
-/// [`ObjectUuid`] or not. Set an `ObjectUuid` when you are looking for a singleton on the bus. Do
-/// not set an `ObjectUuid` when you are looking for potentially multiple objects with the same set
-/// of services.
+/// [`ObjectUuid`] or not. Set an `ObjectUuid` when you are looking for a single specific object on
+/// the bus. Do not set an `ObjectUuid` when you are looking for potentially multiple objects with
+/// the same set of services.
 ///
 /// You can configure arbitrarily many objects. To help distinguish them when events are emitted,
 /// the `Discoverer` associates each object with a key. [`DiscovererEvent`s](DiscovererEvent) then
@@ -70,8 +70,8 @@ use std::task::{Context, Poll};
 /// const SERVICE_UUID_2: ServiceUuid = ServiceUuid(uuid!("5456b1f9-5c2e-46b0-b0d7-bad82cbc957b"));
 ///
 /// let mut discoverer = Discoverer::builder(&handle)
-///     .add_object(1, Some(OBJECT_UUID), [SERVICE_UUID_1, SERVICE_UUID_2])
-///     .add_object(2, None, [SERVICE_UUID_1])
+///     .specific(1, OBJECT_UUID, [SERVICE_UUID_1, SERVICE_UUID_2])
+///     .any(2, [SERVICE_UUID_1])
 ///     .build()
 ///     .await?;
 ///
@@ -336,7 +336,7 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
     ///
     /// When specifying an [`ObjectUuid`], the discoverer will match only on that UUID. Otherwise,
     /// the discoverer will emit events for every object that matches the set of services.
-    pub fn add_object(
+    pub fn object(
         mut self,
         key: Key,
         object: Option<ObjectUuid>,
@@ -350,6 +350,25 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
         }
 
         self
+    }
+
+    /// Registers interest in any object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `object(key, None, services)`.
+    pub fn any(self, key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
+        self.object(key, None, services)
+    }
+
+    /// Registers interest in a specific object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `object(key, Some(object), services)`.
+    pub fn specific(
+        self,
+        key: Key,
+        object: ObjectUuid,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Self {
+        self.object(key, Some(object), services)
     }
 }
 
@@ -654,7 +673,7 @@ impl<'a, Key> DiscovererEvent<'a, Key> {
     /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
     ///
     /// This function will also panic if `uuid` is not one of the UUIDs specified when
-    /// [`add_object`](DiscovererBuilder::add_object) was called.
+    /// [`object`](DiscovererBuilder::object) was called.
     pub fn service_id(&self, uuid: ServiceUuid) -> ServiceId {
         assert_eq!(self.kind, DiscovererEventKind::Created);
 

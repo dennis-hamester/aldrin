@@ -7,6 +7,7 @@
 - All error types except `Error` are now in an `error` module.
 - `Handle::query_service_version()` now returns `Result<u32, Error>` instead of
   `Result<Option<u32>, Error>`. `Error::InvalidService` is returned in place of `Ok(None)`.
+- Rename `DiscovererBuilder::add_object()` to `object()`.
 
 ## Added
 
@@ -14,6 +15,8 @@
   set of services.
 - Add `LifetimeScope` and `Lifetime`. When awaited, `Lifetime`s will resolve when their associated
   `LifetimeScope` is dropped.
+- Add `DiscovererBuilder::any()` and `DiscovererBuilder::specific()`. Both are shorthands for
+  calling `DiscovererBuilder::object()` with or without an `ObjectUuid`.
 
 
 # 0.2.1 (November 28th, 2023)

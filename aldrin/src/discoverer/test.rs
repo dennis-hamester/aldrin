@@ -9,7 +9,7 @@ async fn any_object_no_services() {
 
     let mut discoverer = client
         .create_discoverer()
-        .add_object(0, None, None)
+        .any(0, None)
         .build()
         .await
         .unwrap();
@@ -47,7 +47,7 @@ async fn specific_object_no_services() {
 
     let mut discoverer = client
         .create_discoverer()
-        .add_object(0, Some(obj.id().uuid), None)
+        .specific(0, obj.id().uuid, None)
         .build()
         .await
         .unwrap();
@@ -84,7 +84,7 @@ async fn specific_object() {
 
     let mut discoverer = client
         .create_discoverer()
-        .add_object(0, Some(obj.id().uuid), [svc1.id().uuid, svc2.id().uuid])
+        .specific(0, obj.id().uuid, [svc1.id().uuid, svc2.id().uuid])
         .build()
         .await
         .unwrap();
@@ -123,7 +123,7 @@ async fn any_object() {
 
     let mut discoverer = client
         .create_discoverer()
-        .add_object(0, None, [svc1.id().uuid, svc2.id().uuid])
+        .any(0, [svc1.id().uuid, svc2.id().uuid])
         .build()
         .await
         .unwrap();
@@ -194,7 +194,7 @@ async fn current_only() {
 
     let mut discoverer = client
         .create_discoverer()
-        .add_object(0, None, [svc1.id().uuid, svc2.id().uuid])
+        .any(0, [svc1.id().uuid, svc2.id().uuid])
         .build_current_only()
         .await
         .unwrap();

@@ -177,7 +177,7 @@ async fn list(bus: &Handle) -> Result<()> {
     // services. Every call to `add_object` registers interest in one type of object.
     let mut discoverer = bus
         .create_discoverer()
-        .add_object((), None, [ECHO_UUID])
+        .any((), [ECHO_UUID])
         .build_current_only()
         .await?;
 
