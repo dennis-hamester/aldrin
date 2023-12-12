@@ -449,39 +449,37 @@ impl<'a> RustGenerator<'a> {
         let proxy_name = service_proxy_name(svc_name);
         let svc_uuid_const = service_uuid_const(svc);
 
-        genln!(self, "#[derive(Debug, Clone)]");
+        genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", proxy_name);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    client: aldrin::Handle,");
-        genln!(self);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin::core::ServiceId,");
-        genln!(self);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    version: u32,");
+        genln!(self, "    inner: aldrin::low_level::Proxy,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", proxy_name);
-        genln!(self, "    pub async fn bind(client: aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        if id.uuid != {} {{", svc_uuid_const);
+        genln!(self, "    pub async fn new(client: aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
+        genln!(self, "        if id.uuid != {svc_uuid_const} {{");
         genln!(self, "            return Err(aldrin::Error::InvalidService);");
         genln!(self, "        }}");
         genln!(self);
-        genln!(self, "        let version = client.query_service_version(id).await?;");
-        genln!(self, "        Ok({} {{ client, id, version }})", proxy_name);
+        genln!(self, "        let inner = aldrin::low_level::Proxy::new(client, id).await?;");
+        genln!(self, "        Ok(Self {{ inner }})");
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn into_low_level(self) -> aldrin::low_level::Proxy {{");
+        genln!(self, "        self.inner");
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
+        genln!(self, "        self.inner.client()");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.id");
+        genln!(self, "        self.inner.id()");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub fn version(&self) -> u32 {{");
-        genln!(self, "        self.version");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn handle(&self) -> &aldrin::Handle {{");
-        genln!(self, "        &self.client");
+        genln!(self, "        self.inner.version()");
         genln!(self, "    }}");
         genln!(self);
 
@@ -490,71 +488,40 @@ impl<'a> RustGenerator<'a> {
                 ast::ServiceItem::Function(func) => func,
                 _ => continue,
             };
+
             let func_name = func.name().value();
             let id = func.id().value();
 
-            let arg = if let Some(args) = func.args() {
-                format!(
-                    ", arg: {}",
-                    function_args_call_type_name(svc_name, func_name, args)
-                )
-            } else {
-                String::new()
-            };
+            let arg = func
+                .args()
+                .map(|args| {
+                    format!(
+                        ", arg: {}",
+                        function_args_call_type_name(svc_name, func_name, args)
+                    )
+                })
+                .unwrap_or_default();
 
-            let ok = if let Some(ok) = func.ok() {
-                function_ok_type_name(svc_name, func_name, ok)
-            } else {
-                "()".to_owned()
-            };
+            let ok = func
+                .ok()
+                .map(|ok| function_ok_type_name(svc_name, func_name, ok))
+                .unwrap_or_else(|| "()".to_string());
 
-            if let Some(err) = func.err() {
-                let err = function_err_type_name(svc_name, func_name, err);
-                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin::PendingFunctionResult<{}, {}>, aldrin::Error> {{", func_name, arg, ok, err);
-                if func.args().is_some() {
-                    genln!(self, "        self.client.call_function(self.id, {}, &arg)", id);
-                } else {
-                    genln!(self, "        self.client.call_function(self.id, {}, &())", id);
-                }
-                genln!(self, "    }}");
+            let err = func
+                .err()
+                .map(|err| function_err_type_name(svc_name, func_name, err))
+                .unwrap_or_else(|| "std::convert::Infallible".to_string());
+
+            genln!(self, "    pub fn {func_name}(&self{arg}) -> aldrin::Reply<{ok}, {err}> {{");
+            if func.args().is_some() {
+                genln!(self, "        self.inner.call({id}, &arg)");
             } else {
-                genln!(self, "    pub fn {}(&self{}) -> Result<aldrin::PendingFunctionValue<{}>, aldrin::Error> {{", func_name, arg, ok);
-                if func.args().is_some() {
-                    genln!(self, "        self.client.call_infallible_function(self.id, {}, &arg)", id);
-                } else {
-                    genln!(self, "        self.client.call_infallible_function(self.id, {}, &())", id);
-                }
-                genln!(self, "    }}");
+                genln!(self, "        self.inner.call({id}, &())");
             }
+            genln!(self, "    }}");
 
             genln!(self);
         }
-
-        let events = service_events(svc_name);
-        genln!(self, "    pub fn events(&self) -> {} {{", events);
-        genln!(self, "        {} {{", events);
-        genln!(self, "            events: self.client.create_event_listener(),");
-        genln!(self, "            id: self.id,");
-        genln!(self, "        }}");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "#[derive(Debug)]");
-        genln!(self, "pub struct {} {{", events);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    events: aldrin::low_level::EventListener,");
-        genln!(self);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin::core::ServiceId,");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl {} {{", events);
-        genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.id");
-        genln!(self, "    }}");
-        genln!(self);
 
         genln!(self, "    pub async fn subscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
         for item in svc.items() {
@@ -569,26 +536,46 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub async fn unsubscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
+        genln!(self, "    pub fn unsubscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
                 _ => continue,
             };
             let ev_name = ev.name().value();
-            genln!(self, "        self.{}().await?;", unsubscribe_event(ev_name));
+            genln!(self, "        self.{}()?;", unsubscribe_event(ev_name));
         }
         genln!(self, "        Ok(())");
         genln!(self, "    }}");
         genln!(self);
 
+        for item in svc.items() {
+            let ev = match item {
+                ast::ServiceItem::Event(ev) => ev,
+                _ => continue,
+            };
+
+            let ev_name = ev.name().value();
+            let id = ev.id().value();
+
+            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", subscribe_event(ev_name));
+            genln!(self, "        self.inner.subscribe_event({id}).await");
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    pub fn {}(&mut self) -> Result<bool, aldrin::Error> {{", unsubscribe_event(ev_name));
+            genln!(self, "        self.inner.unsubscribe_event({id})");
+            genln!(self, "    }}");
+            genln!(self);
+        }
+
         let event = service_event(svc_name);
         genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{event}>, aldrin::Error>> {{");
         genln!(self, "        loop {{");
-        genln!(self, "            let ev = match self.events.poll_next_event(cx) {{");
+        genln!(self, "            let ev = match self.inner.poll_next_event(cx) {{");
         genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
-        genln!(self, "                std::task::Poll::Ready(None) => return std::task::Poll::Ready(Ok(None)),");
-        genln!(self, "                std::task::Poll::Pending => return std::task::Poll::Pending,");
+        genln!(self, "                std::task::Poll::Ready(None) => break std::task::Poll::Ready(Ok(None)),");
+        genln!(self, "                std::task::Poll::Pending => break std::task::Poll::Pending,");
         genln!(self, "            }};");
         genln!(self);
         genln!(self, "            match ev.id {{");
@@ -604,18 +591,14 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "                {id} => match ev.value.deserialize() {{");
             if ev.event_type().is_some() {
-                genln!(self, "                    Ok(value) => return std::task::Poll::Ready(Ok(Some({event}::{variant}(value)))),");
+                genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Ok(Some({event}::{variant}(value)))),");
             } else {
-                genln!(self, "                    Ok(()) => return std::task::Poll::Ready(Ok(Some({event}::{variant}))),");
+                genln!(self, "                    Ok(()) => break std::task::Poll::Ready(Ok(Some({event}::{variant}))),");
             }
-            genln!(self, "                    Err(e) => return std::task::Poll::Ready(Err(aldrin::Error::invalid_arguments(");
-            genln!(self, "                        ev.id,");
-            genln!(self, "                        Some(e),");
-            genln!(self, "                    ))),");
+            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Err(aldrin::Error::invalid_arguments(ev.id, Some(e)))),");
             genln!(self, "                }}");
             genln!(self);
         }
-
         genln!(self, "                _ => {{}}");
         genln!(self, "            }}");
         genln!(self, "        }}");
@@ -625,29 +608,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    pub async fn next_event(&mut self) -> Result<Option<{event}>, aldrin::Error> {{");
         genln!(self, "        std::future::poll_fn(|cx| self.poll_next_event(cx)).await");
         genln!(self, "    }}");
-        genln!(self);
-
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", subscribe_event(ev_name));
-            genln!(self, "        self.events.subscribe(self.id, {}).await", id);
-            genln!(self, "    }}");
-            genln!(self);
-            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", unsubscribe_event(ev_name));
-            genln!(self, "        self.events.unsubscribe(self.id, {})", id);
-            genln!(self, "    }}");
-            genln!(self);
-        }
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {} {{", events);
-        genln!(self, "    type Item = Result<{}, aldrin::Error>;", event);
+        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {proxy_name} {{");
+        genln!(self, "    type Item = Result<{event}, aldrin::Error>;");
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
         genln!(self, "        self.poll_next_event(cx).map(std::result::Result::transpose)");
@@ -655,9 +620,9 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {} {{", events);
+        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {proxy_name} {{");
         genln!(self, "    fn is_terminated(&self) -> bool {{");
-        genln!(self, "        self.events.is_terminated()");
+        genln!(self, "        self.inner.events_finished()");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
@@ -1152,10 +1117,6 @@ fn function_err_call_type_name(
             format!("&{svc_name}{}Error", func_name.to_upper_camel_case())
         }
     }
-}
-
-fn service_events(svc_name: &str) -> String {
-    format!("{svc_name}Events")
 }
 
 fn service_event(svc_name: &str) -> String {

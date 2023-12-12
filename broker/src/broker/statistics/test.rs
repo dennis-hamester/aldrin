@@ -1,4 +1,5 @@
 use crate::core::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+use aldrin::low_level::Proxy;
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
@@ -189,23 +190,20 @@ async fn function_calls() {
     let mut client = broker.add_client().await;
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 2);
-    assert_eq!(stats.messages_received, 2);
+    assert_eq!(stats.messages_sent, 3);
+    assert_eq!(stats.messages_received, 3);
     assert_eq!(stats.num_function_calls, 0);
     assert_eq!(stats.functions_called, 0);
     assert_eq!(stats.functions_replied, 0);
 
     // Call 2 functions.
-    let reply1 = client
-        .call_infallible_function::<(), ()>(svc.id(), 0, &())
-        .unwrap();
+    let reply1 = proxy.call::<_, (), ()>(0, &());
     let call1 = svc.next_function_call().await.unwrap();
-    let reply2 = client
-        .call_infallible_function::<(), ()>(svc.id(), 0, &())
-        .unwrap();
+    let reply2 = proxy.call::<_, (), ()>(0, &());
     let call2 = svc.next_function_call().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 2);
@@ -216,7 +214,7 @@ async fn function_calls() {
 
     // Reply 1 function call.
     call1.reply.ok(&()).unwrap();
-    reply1.await.unwrap();
+    reply1.await.unwrap().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
     assert_eq!(stats.messages_received, 1);
@@ -226,7 +224,7 @@ async fn function_calls() {
 
     // Reply 1 function call.
     call2.reply.ok(&()).unwrap();
-    reply2.await.unwrap();
+    reply2.await.unwrap().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent, 1);
     assert_eq!(stats.messages_received, 1);

@@ -201,13 +201,13 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
     log::info!("Calling echo(\"{}\") on {}.", args.echo, echo.id().uuid);
 
-    // This is what a function call in Aldrin looks like on the client's side. Errors can happen
-    // before and after sending the request to the broker. Both `?`s handle errors on the protocol
-    // level, such as when e.g. the server shuts down during any of these calls. The `match` then
-    // operates on the reply from the echo server (`Result<String, EchoEchoError>`).
-    match echo.echo(&args.echo)?.await? {
+    // This is what a function call in Aldrin looks like on the client's side. The `?` handles
+    // errors on the protocol level, such as when e.g. the server shuts down during any of these
+    // calls. The `match` then operates on the reply from the echo server (`Result<String,
+    // EchoEchoError>`).
+    match echo.echo(&args.echo).await? {
         Ok(reply) => {
-            log::info!("Server replied with: {reply}");
+            log::info!("Server replied with: \"{reply}\".");
             Ok(())
         }
 
@@ -222,28 +222,26 @@ async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     // This is just like `echo` above, except that the server returns no data. Instead, it will emit
     // an event with the value we sent. The event can be seen by having another instance of this
     // example running with the `listen` subcommand.
-    match echo.echo_all(&args.echo)?.await? {
+    match echo.echo_all(&args.echo).await? {
         Ok(()) => Ok(()),
         Err(EchoEchoAllError::EmptyString) => Err(anyhow!("empty string")),
     }
 }
 
 async fn listen(bus: &Handle, args: Listen) -> Result<()> {
-    let echo = get_echo(bus, args.server).await?;
+    let mut echo = get_echo(bus, args.server).await?;
 
-    // Events are delivered through the type `EchoEvents` that is part of the generated
-    // code. Specific events need to be subscribed to, or else the broker will not forward them to
-    // this client. In fact, when there are no subscribers to an event at all, they will not even be
-    // sent to the broker in the first place. As the name suggests, `subscribe_all` will subscribe
-    // to all events of the Echo service.
-    let mut events = echo.events();
-    events.subscribe_all().await?;
+    // Events need to be subscribed to, or else the broker will not forward them to this client. In
+    // fact, when there are no subscribers to an event at all, they will not even be sent to the
+    // broker in the first place. As the name suggests, `subscribe_all` will subscribe to all events
+    // of the Echo service.
+    echo.subscribe_all().await?;
 
     log::info!("Listen to events from {}.", echo.id().uuid);
 
     loop {
         let event = tokio::select! {
-            event = events.next_event() => {
+            event = echo.next_event() => {
                 match event {
                     Ok(Some(event)) => event,
 
@@ -282,6 +280,6 @@ async fn get_echo(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<EchoP
         .await?
         .ok_or_else(|| anyhow!("echo server not found"))?;
 
-    let echo = EchoProxy::bind(bus.clone(), service_id).await?;
+    let echo = EchoProxy::new(bus.clone(), service_id).await?;
     Ok(echo)
 }

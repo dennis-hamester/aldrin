@@ -7,6 +7,7 @@ aldrin::generate!("test/test1.aldrin");
 aldrin::generate!("test/unit.aldrin");
 
 use aldrin::core::{ObjectUuid, SerializedValue};
+use aldrin::low_level::Proxy;
 use aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures::StreamExt;
@@ -19,19 +20,13 @@ async fn auto_reply_with_invalid_args() {
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let mut svc = test1::Test1::create(&obj).await.unwrap();
-    let id = svc.id();
+    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = client
-        .call_infallible_function::<u32, ()>(id, 1, &0)
-        .unwrap()
-        .await;
+    let res = proxy.call::<_, u32, ()>(1, &0).await;
     assert_eq!(res, Err(Error::invalid_arguments(1, None)));
 
-    let res = client
-        .call_infallible_function::<(), ()>(id, 2, &())
-        .unwrap()
-        .await;
+    let res = proxy.call::<_, (), ()>(2, &()).await;
     assert_eq!(res, Err(Error::invalid_arguments(2, None)));
 }
 
@@ -42,13 +37,10 @@ async fn auto_reply_with_invalid_function() {
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let mut svc = test1::Test1::create(&obj).await.unwrap();
-    let id = svc.id();
+    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = client
-        .call_infallible_function::<(), ()>(id, 3, &())
-        .unwrap()
-        .await;
+    let res = proxy.call::<_, (), ()>(3, &()).await;
     assert_eq!(res, Err(Error::invalid_function(3)));
 }
 

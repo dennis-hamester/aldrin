@@ -83,7 +83,7 @@ pub(crate) struct CallFunctionRequest {
     pub service_cookie: ServiceCookie,
     pub function: u32,
     pub value: SerializedValue,
-    pub reply: oneshot::Sender<CallFunctionResult>,
+    pub reply: oneshot::Sender<Result<CallFunctionResult, Error>>,
 }
 
 #[derive(Debug)]

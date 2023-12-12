@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support built-in type `result`.
 
+### Changed
+
+- Adapt to client-side changes of the main `aldrin` crate. `Reply<T, E>` replaces
+  `PendingFunctionResult<T, E>` and `PendingFunctionValue<T>`. Event subscription is now part of the
+  proxy type. The previous `Events` type has been removed.
+
 ## [0.3.0] - 2024-01-18
 
 ### Added

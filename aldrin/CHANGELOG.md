@@ -20,6 +20,8 @@ This version still connects to brokers using protocol version 14.
 - Add `EventListener::is_finished()`.
 - Add `low_level::Proxy`, which acts as a new basis for generated proxy types. It handles function
   calls and events.
+- Add `Reply<T, E>`, which replaces both `PendingFunctionResult<T, E>` and
+  `PendingFunctionValue<T>`.
 
 ### Changed
 
@@ -30,6 +32,8 @@ This version still connects to brokers using protocol version 14.
 - Rename `Events` to `EventListener` and move it to the `low_level` module.
 - Rename `BusListener::finished()` to `is_finished()`.
 - Rename `Discoverer::finished()` to `is_finished()`.
+- `Reply<T, E>` replaces both `PendingFunctionResult<T, E>` and `PendingFunctionValue<T>`.
+- Remove `Handle::call_function()`. Calls can now only be made through `low_level::Proxy::call()`.
 
 ## [0.3.0] - 2024-01-18
 
