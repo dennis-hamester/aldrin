@@ -945,10 +945,10 @@ impl Handle {
     /// This is a shorthand for calling `find_object(Some(object), services)`.
     pub async fn find_specific_object<const N: usize>(
         &self,
-        object: ObjectUuid,
+        object: impl Into<ObjectUuid>,
         services: &[ServiceUuid; N],
     ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
-        self.find_object(Some(object), services).await
+        self.find_object(Some(object.into()), services).await
     }
 
     /// Creates a new lifetime scope.
