@@ -268,7 +268,7 @@ impl Handle {
                 reply,
             }))
             .map_err(|_| Error::Shutdown)?;
-        Ok(PendingFunctionResult::new(recv, service_id, function))
+        Ok(PendingFunctionResult::new(recv, function))
     }
 
     /// Calls an infallible function on a service.
@@ -317,7 +317,7 @@ impl Handle {
                 reply,
             }))
             .map_err(|_| Error::Shutdown)?;
-        Ok(PendingFunctionValue::new(recv, service_id, function))
+        Ok(PendingFunctionValue::new(recv, function))
     }
 
     pub(crate) fn function_call_reply(
@@ -1062,7 +1062,6 @@ where
     E: Deserialize,
 {
     recv: oneshot::Receiver<CallFunctionResult>,
-    service_id: ServiceId,
     function: u32,
     _res: PhantomData<fn() -> (T, E)>,
 }
@@ -1072,14 +1071,9 @@ where
     T: Deserialize,
     E: Deserialize,
 {
-    pub(crate) fn new(
-        recv: oneshot::Receiver<CallFunctionResult>,
-        service_id: ServiceId,
-        function: u32,
-    ) -> Self {
+    pub(crate) fn new(recv: oneshot::Receiver<CallFunctionResult>, function: u32) -> Self {
         PendingFunctionResult {
             recv,
-            service_id,
             function,
             _res: PhantomData,
         }
@@ -1125,7 +1119,6 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("PendingFunctionResult")
             .field("recv", &self.recv)
-            .field("service_id", &self.service_id)
             .field("function", &self.function)
             .finish()
     }
@@ -1138,7 +1131,6 @@ where
     T: Deserialize,
 {
     recv: oneshot::Receiver<CallFunctionResult>,
-    service_id: ServiceId,
     function: u32,
     _res: PhantomData<fn() -> T>,
 }
@@ -1147,14 +1139,9 @@ impl<T> PendingFunctionValue<T>
 where
     T: Deserialize,
 {
-    pub(crate) fn new(
-        recv: oneshot::Receiver<CallFunctionResult>,
-        service_id: ServiceId,
-        function: u32,
-    ) -> Self {
+    pub(crate) fn new(recv: oneshot::Receiver<CallFunctionResult>, function: u32) -> Self {
         PendingFunctionValue {
             recv,
-            service_id,
             function,
             _res: PhantomData,
         }
@@ -1197,7 +1184,6 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("PendingFunctionResult")
             .field("recv", &self.recv)
-            .field("service_id", &self.service_id)
             .field("function", &self.function)
             .finish()
     }
