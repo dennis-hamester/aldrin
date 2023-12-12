@@ -67,6 +67,7 @@ mod discoverer;
 mod handle;
 mod lifetime;
 mod object;
+mod reply;
 mod serial_map;
 mod service;
 #[cfg(test)]
@@ -92,4 +93,5 @@ pub use error::Error;
 pub use handle::{Handle, PendingFunctionResult, PendingFunctionValue};
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
+pub use reply::Reply;
 pub use service::{FunctionCall, FunctionCallReply, Service};
