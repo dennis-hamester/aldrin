@@ -47,7 +47,7 @@ impl Context {
             .ok_or_else(|| anyhow!("unknown client `{id}`"))
     }
 
-    pub fn client_ids(&self) -> impl Iterator<Item = &ClientId> + ExactSizeIterator {
+    pub fn client_ids(&self) -> impl ExactSizeIterator<Item = &ClientId> {
         self.clients.keys()
     }
 
