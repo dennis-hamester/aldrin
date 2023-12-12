@@ -930,6 +930,27 @@ impl Handle {
         Ok(Some((event.object_id(), ids)))
     }
 
+    /// Finds any object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `find_object(None, services)`.
+    pub async fn find_any_object<const N: usize>(
+        &self,
+        services: &[ServiceUuid; N],
+    ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
+        self.find_object(None, services).await
+    }
+
+    /// Finds a specific object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `find_object(Some(object), services)`.
+    pub async fn find_specific_object<const N: usize>(
+        &self,
+        object: ObjectUuid,
+        services: &[ServiceUuid; N],
+    ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
+        self.find_object(Some(object), services).await
+    }
+
     /// Creates a new lifetime scope.
     pub async fn create_lifetime_scope(&self) -> Result<LifetimeScope, Error> {
         self.create_object(ObjectUuid::new_v4())

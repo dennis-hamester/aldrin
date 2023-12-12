@@ -17,6 +17,7 @@
   `LifetimeScope` is dropped.
 - Add `DiscovererBuilder::any()` and `DiscovererBuilder::specific()`. Both are shorthands for
   calling `DiscovererBuilder::object()` with or without an `ObjectUuid`.
+- Add `Handle::find_any_object()` and `Handle::find_any_object()`.
 
 
 # 0.2.1 (November 28th, 2023)
