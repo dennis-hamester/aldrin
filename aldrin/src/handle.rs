@@ -887,7 +887,7 @@ impl Handle {
     pub async fn create_lifetime_scope(&self) -> Result<LifetimeScope, Error> {
         self.create_object(ObjectUuid::new_v4())
             .await
-            .map(LifetimeScope::new)
+            .map(LifetimeScope::new_impl)
     }
 
     pub(crate) async fn create_lifetime_listener(&self) -> Result<LifetimeListener, Error> {
