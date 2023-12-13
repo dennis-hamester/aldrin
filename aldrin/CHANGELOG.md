@@ -24,6 +24,7 @@ This version still connects to brokers using protocol version 14.
 - Add `Reply<T, E>`, which replaces both `PendingFunctionResult<T, E>` and
   `PendingFunctionValue<T>`.
 - Add `Promise` and `low_level::Promise`.
+- Add `low_level::Call`.
 
 ### Changed
 
