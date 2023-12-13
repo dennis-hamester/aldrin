@@ -25,6 +25,7 @@ This version still connects to brokers using protocol version 14.
   `PendingFunctionValue<T>`.
 - Add `Promise` and `low_level::Promise`.
 - Add `low_level::Call`.
+- Add `low_level::Service`.
 
 ### Changed
 
