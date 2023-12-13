@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `BusListener::new()`.
 - Add `Discoverer::client()`.
 
+### Fixed
+
+- Events are now unsubscribed when `low_level::EventListener` is dropped.
+
 ### Changed
 
 - Move `Event` to the `low_level` module.
