@@ -209,6 +209,16 @@ impl EventListener {
     }
 }
 
+impl Drop for EventListener {
+    fn drop(&mut self) {
+        for (service_id, events) in self.subscriptions.values() {
+            for &event in events {
+                let _ = self.client.unsubscribe_event(self.id, *service_id, event);
+            }
+        }
+    }
+}
+
 impl Stream for EventListener {
     type Item = Event;
 

@@ -31,6 +31,10 @@ This version still connects to brokers using protocol version 14.
 - Add `BusListener::new()`.
 - Add `Discoverer::client()`.
 
+### Fixed
+
+- Events are now unsubscribed when `low_level::EventListener` is dropped.
+
 ### Changed
 
 - `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
