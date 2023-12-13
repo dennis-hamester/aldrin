@@ -12,7 +12,7 @@ pub struct Promise {
 }
 
 impl Promise {
-    pub(crate) fn _new(client: Handle, serial: u32) -> Self {
+    pub(crate) fn new(client: Handle, serial: u32) -> Self {
         Self {
             client: Some(client),
             serial,
