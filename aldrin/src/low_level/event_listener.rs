@@ -56,15 +56,15 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # svc.emit_event(1, &32u32)?;
 /// while let Some(event) = event_listener.next_event().await {
 ///     match event {
-///         Event { id: 1, value, .. } => {
-///             let value: u32 = value.deserialize()?;
-///             println!("Event 1 with u32 value {value}.");
+///         Event { id: 1, args, .. } => {
+///             let args: u32 = args.deserialize()?;
+///             println!("Event 1 with u32 value {args}.");
 ///             # svc.emit_event(2, "Hello, world!")?;
 ///         }
 ///
-///         Event { id: 2, value, .. } => {
-///             let value: String = value.deserialize()?;
-///             println!("Event 2 with string value {value}.");
+///         Event { id: 2, args, .. } => {
+///             let args: String = args.deserialize()?;
+///             println!("Event 2 with string value {args}.");
 ///             # svc.destroy().await?;
 ///         }
 ///
