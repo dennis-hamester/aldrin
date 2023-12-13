@@ -94,7 +94,12 @@ pub struct BusListener {
 }
 
 impl BusListener {
-    pub(crate) fn new(
+    /// Creates a new bus listener.
+    pub async fn new(client: &Handle) -> Result<Self, Error> {
+        client.create_bus_listener().await
+    }
+
+    pub(crate) fn new_impl(
         cookie: BusListenerCookie,
         client: Handle,
         events: UnboundedReceiver<BusListenerEvent>,
