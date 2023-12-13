@@ -2,6 +2,7 @@ use crate::core::message::CallFunctionResult;
 use crate::core::Serialize;
 use crate::error::Error;
 use crate::handle::Handle;
+use crate::Promise as HlPromise;
 
 /// Replies to a pending call.
 #[derive(Debug)]
@@ -16,6 +17,11 @@ impl Promise {
             client: Some(client),
             serial,
         }
+    }
+
+    /// Casts the promise to a specific set of result types.
+    pub fn cast<T: ?Sized, E: ?Sized>(self) -> crate::promise::Promise<T, E> {
+        HlPromise::new(self)
     }
 
     /// Sets the call's reply.
