@@ -78,7 +78,7 @@ impl LifetimeScope {
     }
 
     /// Returns a handle to the client that was used to create the scope.
-    pub fn handle(&self) -> &Handle {
+    pub fn client(&self) -> &Handle {
         self.object.client()
     }
 

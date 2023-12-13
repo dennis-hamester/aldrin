@@ -47,6 +47,7 @@ This version still connects to brokers using protocol version 14.
 - Remove `Handle::query_service_version()`.
 - Rename `Object::handle()` to `client()`.
 - Rename `BusListener::handle()` to `client()`.
+- Rename `LifetimeScope::handle()` to `client()`.
 
 ## [0.3.0] - 2024-01-18
 
