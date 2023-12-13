@@ -901,7 +901,7 @@ impl Handle {
 
     /// Create a [`Lifetime`] from an id.
     pub async fn create_lifetime(&self, id: LifetimeId) -> Result<Lifetime, Error> {
-        Lifetime::create(self, id).await
+        Lifetime::new(self, id).await
     }
 
     /// Returns the protocol version that was negotiated with the broker.
