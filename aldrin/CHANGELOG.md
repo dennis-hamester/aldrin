@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `low_level::Service::emit_event()`.
 - Remove `Handle::query_service_version()`.
 - Rename `Object::handle()` to `client()`.
+- Rename `BusListener::handle()` to `client()`.
 
 ## [0.4.0] - 2024-03-21
 

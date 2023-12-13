@@ -117,7 +117,7 @@ impl BusListener {
     }
 
     /// Returns a handle to the client that was used to create the bus listener.
-    pub fn handle(&self) -> &Handle {
+    pub fn client(&self) -> &Handle {
         &self.client
     }
 
