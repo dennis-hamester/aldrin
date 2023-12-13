@@ -9,17 +9,17 @@ pub struct Event {
     /// Id of the event.
     pub id: u32,
 
-    /// Value of the event.
-    pub value: SerializedValue,
+    /// Arguments to the event.
+    pub args: SerializedValue,
 }
 
 impl Event {
     /// Creates a new event.
-    pub fn new(service_id: ServiceId, id: u32, value: SerializedValue) -> Self {
+    pub fn new(service_id: ServiceId, id: u32, args: SerializedValue) -> Self {
         Event {
             service_id,
             id,
-            value,
+            args,
         }
     }
 }

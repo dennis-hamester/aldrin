@@ -589,7 +589,7 @@ impl<'a> RustGenerator<'a> {
             let id = ev.id().value();
             let variant = service_event_variant(ev_name);
 
-            genln!(self, "                {id} => match ev.value.deserialize() {{");
+            genln!(self, "                {id} => match ev.args.deserialize() {{");
             if ev.event_type().is_some() {
                 genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Ok(Some({event}::{variant}(value)))),");
             } else {
