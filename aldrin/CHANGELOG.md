@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `Handle::call_function()`. Calls can now only be made through `low_level::Proxy::call()`.
 - Remove `Handle::emit_event()`. Event can now only be emitted through
   `low_level::Service::emit_event()`.
+- Remove `Handle::query_service_version()`.
 
 ## [0.4.0] - 2024-03-21
 

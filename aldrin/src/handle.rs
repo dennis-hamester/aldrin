@@ -310,32 +310,7 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    /// Queries the version of a service.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aldrin_test::tokio::TestBroker;
-    /// use aldrin::core::{ObjectUuid, ServiceUuid};
-    /// use aldrin::Error;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// let service = object.create_service(ServiceUuid::new_v4(), 2).await?;
-    ///
-    /// let version = handle.query_service_version(service.id()).await;
-    /// assert_eq!(version, Ok(2));
-    ///
-    /// service.destroy().await?;
-    /// let version = handle.query_service_version(service.id()).await;
-    /// assert_eq!(version, Err(Error::InvalidService));
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn query_service_version(&self, service_id: ServiceId) -> Result<u32, Error> {
+    pub(crate) async fn query_service_version(&self, service_id: ServiceId) -> Result<u32, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::QueryServiceVersion(
