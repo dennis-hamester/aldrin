@@ -2,6 +2,7 @@
 //!
 //! The types in this module are primarily intended for use by the code generator.
 
+mod call;
 mod event;
 mod event_listener;
 mod promise;
@@ -10,6 +11,7 @@ mod reply;
 
 pub(crate) use event_listener::{EventListenerId, EventListenerRequest};
 
+pub use call::Call;
 pub use event::Event;
 pub use event_listener::EventListener;
 pub use promise::Promise;
