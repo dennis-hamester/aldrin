@@ -34,8 +34,8 @@ async fn disconnect_during_function_call() {
     mem::drop(reply);
     client2.join().await;
 
-    let call = svc.next_function_call().await.unwrap();
-    call.reply.ok(&()).unwrap();
+    let call = svc.next_call().await.unwrap();
+    call.promise.ok(&()).unwrap();
     client1.join().await;
 
     broker.join_idle().await
@@ -214,35 +214,6 @@ async fn begin_connect_2_reject() {
 
     handle.shutdown().await;
     join.await.unwrap();
-}
-
-#[tokio::test]
-async fn only_owner_can_emit_events() {
-    let broker = TestBroker::new();
-
-    let mut client1 = broker.add_client().await;
-    let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-
-    let mut client2 = broker.add_client().await;
-    let mut event_listener = client2.create_event_listener();
-    event_listener.subscribe(svc.id(), 0).await.unwrap();
-    client2.sync_broker().await.unwrap();
-
-    client1.emit_event(svc.id(), 0, &()).unwrap();
-    client1.sync_broker().await.unwrap();
-
-    client2.emit_event(svc.id(), 0, &()).unwrap();
-    client2.sync_broker().await.unwrap();
-
-    client1.shutdown();
-    client1.join().await;
-
-    client2.shutdown();
-    client2.join().await;
-
-    assert!(event_listener.next_event().await.is_some());
-    assert!(event_listener.next_event().await.is_none());
 }
 
 #[tokio::test]
@@ -440,23 +411,13 @@ async fn calls_from_multiple_clients() {
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
     let reply = proxy.call(0, &());
-    svc.next_function_call()
-        .await
-        .unwrap()
-        .reply
-        .ok(&())
-        .unwrap();
+    svc.next_call().await.unwrap().promise.done().unwrap();
     reply.await.unwrap().unwrap();
 
     let mut client3 = broker.add_client().await;
     let proxy = client3.create_proxy(svc.id()).await.unwrap();
     let reply = proxy.call(0, &());
-    svc.next_function_call()
-        .await
-        .unwrap()
-        .reply
-        .ok(&())
-        .unwrap();
+    svc.next_call().await.unwrap().promise.done().unwrap();
     reply.await.unwrap().unwrap();
 
     client1.join().await;

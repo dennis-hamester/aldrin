@@ -13,8 +13,8 @@ use crate::core::{
     ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventListenerId, EventListenerRequest};
-use crate::{Error, Object, Service};
+use crate::low_level::{EventListenerId, EventListenerRequest, Service};
+use crate::{Error, Object};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
 

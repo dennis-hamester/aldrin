@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `Discoverer::finished()` to `is_finished()`.
 - `Reply<T, E>` replaces both `PendingFunctionResult<T, E>` and `PendingFunctionValue<T>`.
 - Remove `Handle::call_function()`. Calls can now only be made through `low_level::Proxy::call()`.
+- Remove `Handle::emit_event()`. Event can now only be emitted through
+  `low_level::Service::emit_event()`.
 
 ## [0.4.0] - 2024-03-21
 

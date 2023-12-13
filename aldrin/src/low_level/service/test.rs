@@ -13,6 +13,6 @@ async fn fused_stream_terminate_after_destroy() {
     assert!(!svc.is_terminated());
     svc.destroy().await.unwrap();
     assert!(!svc.is_terminated());
-    assert!(svc.next_function_call().await.is_none());
+    assert!(svc.next_call().await.is_none());
     assert!(svc.is_terminated());
 }

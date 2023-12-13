@@ -22,9 +22,9 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// [`unsubscribe`d](EventListener::unsubscribe). After subscribing to events, this type should be
 /// polled through its implementation of [`Stream`].
 ///
-/// Subscriptions can be removed implicitly, e.g. when a [`Service`](crate::Service) has been
-/// destroyed.  When there are no subscriptions left (or when none have been made in the first
-/// place) [`Stream::poll_next`] will return `None`.
+/// Subscriptions can be removed implicitly, e.g. when a service has been destroyed. When there are
+/// no subscriptions left (or when none have been made in the first place) [`Stream::poll_next`]
+/// will return `None`.
 ///
 /// When the [`Client`](crate::Client) shuts down, all subscriptions are removed and
 /// [`Stream::poll_next`] will return `None` as well.
@@ -53,13 +53,13 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// event_listener.subscribe(service_id, 1).await?;
 /// event_listener.subscribe(service_id, 2).await?;
 ///
-/// # client.emit_event(service_id, 1, &32u32)?;
+/// # svc.emit_event(1, &32u32)?;
 /// while let Some(event) = event_listener.next_event().await {
 ///     match event {
 ///         Event { id: 1, value, .. } => {
 ///             let value: u32 = value.deserialize()?;
 ///             println!("Event 1 with u32 value {value}.");
-///             # client.emit_event(service_id, 2, "Hello, world!")?;
+///             # svc.emit_event(2, "Hello, world!")?;
 ///         }
 ///
 ///         Event { id: 2, value, .. } => {

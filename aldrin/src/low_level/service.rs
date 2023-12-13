@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use super::Call;
 use crate::core::{Serialize, SerializedValue, ServiceId, ServiceUuid};
 use crate::error::Error;
@@ -20,8 +23,22 @@ pub struct Service {
 
 impl Service {
     /// Creates a new service.
-    pub async fn new(_object: &Object, _uuid: ServiceUuid, _version: u32) -> Result<Self, Error> {
-        todo!()
+    pub async fn new(object: &Object, uuid: ServiceUuid, version: u32) -> Result<Self, Error> {
+        object.create_service(uuid, version).await
+    }
+
+    pub(crate) fn new_impl(
+        id: ServiceId,
+        version: u32,
+        client: Handle,
+        calls: UnboundedReceiver<RawCall>,
+    ) -> Self {
+        Self {
+            id,
+            version,
+            client,
+            calls,
+        }
     }
 
     /// Returns the id of the service.
@@ -72,6 +89,12 @@ impl Service {
         T: Serialize + ?Sized,
     {
         self.client.emit_event(self.id, event, args)
+    }
+}
+
+impl Drop for Service {
+    fn drop(&mut self) {
+        self.client.destroy_service_now(self.id);
     }
 }
 
