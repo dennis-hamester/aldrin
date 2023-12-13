@@ -113,7 +113,7 @@ impl LifetimeId {
 
     /// Bind the id to a client and create a `Lifetime`.
     pub async fn bind(self, handle: &Handle) -> Result<Lifetime, Error> {
-        Lifetime::create(handle, self).await
+        Lifetime::new(handle, self).await
     }
 
     /// Checks if the id is nil (all zeros).
@@ -158,7 +158,7 @@ pub struct Lifetime {
 
 impl Lifetime {
     /// Create a `Lifetime` from an id.
-    pub async fn create(handle: &Handle, id: LifetimeId) -> Result<Self, Error> {
+    pub async fn new(handle: &Handle, id: LifetimeId) -> Result<Self, Error> {
         let listener = handle.create_lifetime_listener().await?;
         listener.start(id.0.uuid).await?;
 
