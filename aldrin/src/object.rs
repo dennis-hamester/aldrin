@@ -1,5 +1,5 @@
 use super::{Error, Handle};
-use crate::core::{ObjectId, ServiceUuid};
+use crate::core::{ObjectId, ObjectUuid, ServiceUuid};
 use crate::low_level::Service;
 
 /// Owned object on the bus.
@@ -46,7 +46,12 @@ pub struct Object {
 }
 
 impl Object {
-    pub(crate) fn new(id: ObjectId, client: Handle) -> Self {
+    /// Creates a new object.
+    pub async fn new(client: &Handle, uuid: impl Into<ObjectUuid>) -> Result<Self, Error> {
+        client.create_object(uuid).await
+    }
+
+    pub(crate) fn new_impl(id: ObjectId, client: Handle) -> Self {
         Object { id, client }
     }
 

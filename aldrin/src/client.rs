@@ -378,7 +378,7 @@ where
         };
 
         let reply = match msg.result {
-            CreateObjectResult::Ok(cookie) => Ok(Object::new(
+            CreateObjectResult::Ok(cookie) => Ok(Object::new_impl(
                 ObjectId::new(req.uuid, cookie),
                 self.handle.clone(),
             )),
