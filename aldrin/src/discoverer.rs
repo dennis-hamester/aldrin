@@ -162,6 +162,11 @@ impl<Key> Discoverer<Key> {
         Ok(this)
     }
 
+    /// Returns a handle to the client that was used to create the discoverer.
+    pub fn client(&self) -> &Handle {
+        self.bus_listener.client()
+    }
+
     /// Starts the discoverer after it has been stopped.
     ///
     /// `Discoverer`s are initially started already. This function fails if trying to start a
