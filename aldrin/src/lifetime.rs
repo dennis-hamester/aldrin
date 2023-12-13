@@ -63,13 +63,13 @@ pub struct LifetimeScope {
 }
 
 impl LifetimeScope {
-    pub(crate) fn new(object: Object) -> Self {
-        LifetimeScope { object }
+    /// Creates a new scope.
+    pub async fn new(handle: &Handle) -> Result<Self, Error> {
+        handle.create_lifetime_scope().await
     }
 
-    /// Creates a new scope.
-    pub async fn create(handle: &Handle) -> Result<Self, Error> {
-        handle.create_lifetime_scope().await
+    pub(crate) fn new_impl(object: Object) -> Self {
+        LifetimeScope { object }
     }
 
     /// Return the scope's id.
