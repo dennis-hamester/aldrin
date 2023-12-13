@@ -61,7 +61,7 @@ impl Object {
     }
 
     /// Returns a handle to the client that was used to create the object.
-    pub fn handle(&self) -> &Handle {
+    pub fn client(&self) -> &Handle {
         &self.client
     }
 

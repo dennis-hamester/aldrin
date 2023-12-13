@@ -79,7 +79,7 @@ impl LifetimeScope {
 
     /// Returns a handle to the client that was used to create the scope.
     pub fn handle(&self) -> &Handle {
-        self.object.handle()
+        self.object.client()
     }
 
     /// Ends the scope.

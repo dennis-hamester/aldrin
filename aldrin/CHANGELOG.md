@@ -42,6 +42,7 @@ This version still connects to brokers using protocol version 14.
 - Remove `Handle::emit_event()`. Event can now only be emitted through
   `low_level::Service::emit_event()`.
 - Remove `Handle::query_service_version()`.
+- Rename `Object::handle()` to `client()`.
 
 ## [0.3.0] - 2024-01-18
 
