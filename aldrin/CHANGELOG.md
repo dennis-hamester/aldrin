@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `low_level::Call`.
 - Add `low_level::Service`.
 - Add `Object::new()`.
+- Add `low_level::EventListener::client()`.
 
 ### Changed
 
