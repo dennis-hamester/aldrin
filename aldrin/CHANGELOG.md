@@ -45,6 +45,7 @@ This version still connects to brokers using protocol version 14.
   `low_level::Service::emit_event()`.
 - Remove `Handle::query_service_version()`.
 - Rename `Object::handle()` to `client()`.
+- Rename `BusListener::handle()` to `client()`.
 
 ## [0.3.0] - 2024-01-18
 
