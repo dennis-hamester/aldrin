@@ -34,9 +34,8 @@ use crate::handle::request::{
     SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventListenerId, EventListenerRequest};
+use crate::low_level::{EventListenerId, EventListenerRequest, RawCall};
 use crate::serial_map::SerialMap;
-use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
@@ -78,7 +77,7 @@ where
     create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<DestroyServiceRequest>,
     function_calls: SerialMap<oneshot::Sender<Result<CallFunctionResult, Error>>>,
-    services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawFunctionCall>>,
+    services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawCall>>,
     subscribe_event: SerialMap<(
         EventListenerId,
         ServiceCookie,
@@ -455,10 +454,10 @@ where
             .services
             .get_mut(&msg.service_cookie)
             .expect("inconsistent state");
-        let req = RawFunctionCall {
+        let req = RawCall {
             serial: msg.serial,
             function: msg.function,
-            value: msg.value,
+            args: msg.value,
         };
 
         if send.unbounded_send(req).is_err() {
