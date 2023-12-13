@@ -40,6 +40,7 @@ This version still connects to brokers using protocol version 14.
 - Remove `Handle::call_function()`. Calls can now only be made through `low_level::Proxy::call()`.
 - Remove `Handle::emit_event()`. Event can now only be emitted through
   `low_level::Service::emit_event()`.
+- Remove `Handle::query_service_version()`.
 
 ## [0.3.0] - 2024-01-18
 
