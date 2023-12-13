@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Object::new()`.
 - Add `low_level::EventListener::client()`.
 - Add `BusListener::new()`.
+- Add `Discoverer::client()`.
 
 ### Changed
 
