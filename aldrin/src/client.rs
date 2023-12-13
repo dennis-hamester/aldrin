@@ -838,7 +838,7 @@ where
 
         match data {
             CreateBusListenerData::BusListener(reply) => {
-                let listener = BusListener::new(msg.cookie, self.handle.clone(), recv);
+                let listener = BusListener::new_impl(msg.cookie, self.handle.clone(), recv);
                 reply.send(listener).ok();
             }
 
