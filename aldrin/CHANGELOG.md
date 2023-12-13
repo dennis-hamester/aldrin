@@ -38,6 +38,8 @@ This version still connects to brokers using protocol version 14.
 - Rename `Discoverer::finished()` to `is_finished()`.
 - `Reply<T, E>` replaces both `PendingFunctionResult<T, E>` and `PendingFunctionValue<T>`.
 - Remove `Handle::call_function()`. Calls can now only be made through `low_level::Proxy::call()`.
+- Remove `Handle::emit_event()`. Event can now only be emitted through
+  `low_level::Service::emit_event()`.
 
 ## [0.3.0] - 2024-01-18
 

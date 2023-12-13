@@ -34,9 +34,9 @@ use crate::handle::request::{
     SyncClientRequest, UnsubscribeEventRequest,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventListenerId, EventListenerRequest, RawCall};
+use crate::low_level::{EventListenerId, EventListenerRequest, RawCall, Service};
 use crate::serial_map::SerialMap;
-use crate::{Error, Handle, Object, Service};
+use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
 use futures_util::future::{select, Either};
 use futures_util::stream::StreamExt;
@@ -413,7 +413,7 @@ where
                 let (send, function_calls) = mpsc::unbounded();
                 let dup = self.services.insert(cookie, send);
                 debug_assert!(dup.is_none());
-                Ok(Service::new(
+                Ok(Service::new_impl(
                     ServiceId::new(req.object_id, req.service_uuid, cookie),
                     req.version,
                     self.handle.clone(),

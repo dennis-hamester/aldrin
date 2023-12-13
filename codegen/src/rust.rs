@@ -653,105 +653,117 @@ impl<'a> RustGenerator<'a> {
         let svc_name = svc.name().value();
         let svc_uuid_const = service_uuid_const(svc);
         let svc_version_const = service_version_const(svc);
-        let event_emitter = event_emitter(svc_name);
 
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", svc_name);
         genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    service: aldrin::Service,");
+        genln!(self, "    inner: aldrin::low_level::Service,");
         genln!(self, "}}");
         genln!(self);
 
         genln!(self, "impl {} {{", svc_name);
-        genln!(self, "    pub async fn create(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        let service = object.create_service({}, {}).await?;", svc_uuid_const, svc_version_const);
-        genln!(self, "        Ok({} {{ service }})", svc_name);
+        genln!(self, "    pub async fn new(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
+        genln!(self, "        let inner = object.create_service({}, {}).await?;", svc_uuid_const, svc_version_const);
+        genln!(self, "        Ok({} {{ inner }})", svc_name);
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn into_low_level(self) -> aldrin::low_level::Service {{");
+        genln!(self, "        self.inner");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.service.id()");
+        genln!(self, "        self.inner.id()");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub fn version(&self) -> u32 {{");
-        genln!(self, "        self.service.version()");
+        genln!(self, "        self.inner.version()");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub fn handle(&self) -> &aldrin::Handle {{");
-        genln!(self, "        self.service.handle()");
+        genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
+        genln!(self, "        self.inner.client()");
         genln!(self, "    }}");
         genln!(self);
         genln!(self, "    pub async fn destroy(&mut self) -> Result<(), aldrin::Error> {{");
-        genln!(self, "        self.service.destroy().await");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn event_emitter(&self) -> {} {{", event_emitter);
-        genln!(self, "        {}EventEmitter {{", svc_name);
-        genln!(self, "            client: self.service.handle().clone(),");
-        genln!(self, "            id: self.service.id(),");
-        genln!(self, "        }}");
+        genln!(self, "        self.inner.destroy().await");
         genln!(self, "    }}");
         genln!(self);
 
+        for item in svc.items() {
+            let ev = match item {
+                ast::ServiceItem::Event(ev) => ev,
+                _ => continue,
+            };
+            let ev_name = ev.name().value();
+            let id = ev.id().value();
+
+            if let Some(ev_type) = ev.event_type() {
+                let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
+                genln!(self, "    pub fn {ev_name}(&self, arg: {var_type}) -> Result<(), aldrin::Error> {{");
+                genln!(self, "        self.inner.emit_event({id}, &arg)");
+                genln!(self, "    }}");
+            } else {
+                genln!(self, "    pub fn {ev_name}(&self) -> Result<(), aldrin::Error> {{");
+                genln!(self, "        self.inner.emit_event({id}, &())");
+                genln!(self, "    }}");
+            }
+
+            genln!(self);
+        }
+
         let functions = service_functions(svc_name);
-        genln!(self, "    pub fn poll_next_function_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{functions}>, aldrin::Error>> {{");
-        genln!(self, "        let call = match self.service.poll_next_function_call(cx) {{");
+        genln!(self, "    pub fn poll_next_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{functions}>, aldrin::Error>> {{");
+        genln!(self, "        let call = match self.inner.poll_next_call(cx) {{");
         genln!(self, "            std::task::Poll::Ready(Some(call)) => call,");
         genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(Ok(None)),");
         genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
         genln!(self, "        }};");
         genln!(self);
-        genln!(self, "        match call.id {{");
+        genln!(self, "        match call.function {{");
         for item in svc.items() {
             let func = match item {
                 ast::ServiceItem::Function(func) => func,
                 _ => continue,
             };
+
             let func_name = func.name().value();
             let id = func.id().value();
             let function = service_function_variant(func_name);
-            let reply = function_reply(svc_name, func_name);
 
-            genln!(self, "            {id} => match call.args.deserialize() {{");
+            genln!(self, "            {id} => match call.deserialize_and_cast() {{");
             if func.args().is_some() {
-                genln!(self, "                Ok(args) => std::task::Poll::Ready(Ok(Some({functions}::{function}(args, {reply}(call.reply))))),");
+                genln!(self, "                Ok((args, promise)) => std::task::Poll::Ready(Ok(Some({functions}::{function}(args, promise)))),");
             } else {
-                genln!(self, "                Ok(()) => std::task::Poll::Ready(Ok(Some({functions}::{function}({reply}(call.reply))))),");
+                genln!(self, "                Ok(((), promise)) => std::task::Poll::Ready(Ok(Some({functions}::{function}(promise)))),");
             }
-            genln!(self, "                Err(e) => {{");
-            genln!(self, "                    call.reply.invalid_args().ok();");
-            genln!(self, "                    std::task::Poll::Ready(Err(aldrin::Error::invalid_arguments(");
-            genln!(self, "                        call.id,");
-            genln!(self, "                        Some(e),");
-            genln!(self, "                    )))");
-            genln!(self, "                }}");
+            genln!(self, "                Err(e) => std::task::Poll::Ready(Err(e)),");
             genln!(self, "            }}");
             genln!(self);
         }
         genln!(self, "            _ => {{");
-        genln!(self, "                call.reply.invalid_function().ok();");
-        genln!(self, "                std::task::Poll::Ready(Err(aldrin::Error::invalid_function(call.id)))");
+        genln!(self, "                let _ = call.promise.invalid_function();");
+        genln!(self, "                std::task::Poll::Ready(Err(aldrin::Error::invalid_function(call.function)))");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub async fn next_function_call(&mut self) -> Result<Option<{functions}>, aldrin::Error> {{");
-        genln!(self, "        std::future::poll_fn(|cx| self.poll_next_function_call(cx)).await");
+        genln!(self, "    pub async fn next_call(&mut self) -> Result<Option<{functions}>, aldrin::Error> {{");
+        genln!(self, "        std::future::poll_fn(|cx| self.poll_next_call(cx)).await");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {} {{", svc_name);
-        genln!(self, "    type Item = Result<{}, aldrin::Error>;", functions);
+        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {svc_name} {{");
+        genln!(self, "    type Item = Result<{functions}, aldrin::Error>;");
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        self.poll_next_function_call(cx).map(Result::transpose)");
+        genln!(self, "        self.poll_next_call(cx).map(Result::transpose)");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {} {{", svc_name);
+        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {svc_name} {{");
         genln!(self, "    fn is_terminated(&self) -> bool {{");
-        genln!(self, "        self.service.is_terminated()");
+        genln!(self, "        self.inner.is_terminated()");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
@@ -766,102 +778,27 @@ impl<'a> RustGenerator<'a> {
                 ast::ServiceItem::Function(func) => func,
                 _ => continue,
             };
+
             let func_name = item.name().value();
             let function = service_function_variant(func_name);
-            let reply = function_reply(svc_name, func_name);
+
+            let ok = func
+                .ok()
+                .map(|ok| function_ok_promise_type_name(svc_name, func_name, ok))
+                .unwrap_or_else(|| "()".to_owned());
+
+            let err = func
+                .err()
+                .map(|err| function_err_promise_type_name(svc_name, func_name, err))
+                .unwrap_or_else(|| "std::convert::Infallible".to_owned());
 
             if let Some(args) = func.args() {
                 let args_type = function_args_type_name(svc_name, func_name, args);
-                genln!(self, "    {}({}, {}),", function, args_type, reply);
+                genln!(self, "    {function}({args_type}, aldrin::Promise<{ok}, {err}>),");
             } else {
-                genln!(self, "    {}({}),", function, reply);
+                genln!(self, "    {function}(aldrin::Promise<{ok}, {err}>),");
             }
         }
-        genln!(self, "}}");
-        genln!(self);
-
-        for item in svc.items() {
-            let func = match item {
-                ast::ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-            let func_name = item.name().value();
-            let reply = function_reply(svc_name, func_name);
-
-            genln!(self, "#[derive(Debug)]");
-            genln!(self, "pub struct {}(#[doc(hidden)] aldrin::FunctionCallReply);", reply);
-            genln!(self);
-
-            genln!(self, "impl {} {{", reply);
-            if let Some(ok) = func.ok() {
-                if let Some(err) = func.err() {
-                    genln!(self, "    pub fn set(self, res: Result<{}, {}>) -> Result<(), aldrin::Error> {{", function_ok_call_type_name(svc_name, func_name, ok), function_err_call_type_name(svc_name, func_name, err));
-                    genln!(self, "        self.0.set(res.as_ref())");
-                    genln!(self, "    }}");
-                    genln!(self);
-                }
-
-                genln!(self, "    pub fn ok(self, arg: {}) -> Result<(), aldrin::Error> {{", function_ok_call_type_name(svc_name, func_name, ok));
-                genln!(self, "        self.0.ok(&arg)");
-                genln!(self, "    }}");
-            } else {
-                genln!(self, "    pub fn ok(self) -> Result<(), aldrin::Error> {{");
-                genln!(self, "        self.0.ok(&())");
-                genln!(self, "    }}");
-            }
-            genln!(self);
-
-            if let Some(err) = func.err() {
-                genln!(self, "    pub fn err(self, arg: {}) -> Result<(), aldrin::Error> {{", function_err_call_type_name(svc_name, func_name, err));
-                genln!(self, "        self.0.err(&arg)");
-                genln!(self, "    }}");
-                genln!(self);
-            }
-
-            genln!(self, "    pub fn abort(self) -> Result<(), aldrin::Error> {{");
-            genln!(self, "        self.0.abort()");
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
-        }
-
-        genln!(self, "#[derive(Debug, Clone)]");
-        genln!(self, "pub struct {} {{", event_emitter);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    client: aldrin::Handle,");
-        genln!(self);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    id: aldrin::core::ServiceId,");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl {} {{", event_emitter);
-        genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.id");
-        genln!(self, "    }}");
-        genln!(self);
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-
-            if let Some(ev_type) = ev.event_type() {
-                let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
-                genln!(self, "    pub fn {}(&self, arg: {}) -> Result<(), aldrin::Error> {{", ev_name, var_type);
-                genln!(self, "        self.client.emit_event(self.id, {}, &arg)", id);
-                genln!(self, "    }}");
-            } else {
-                genln!(self, "    pub fn {}(&self) -> Result<(), aldrin::Error> {{", ev_name);
-                genln!(self, "        self.client.emit_event(self.id, {}, &())", id);
-                genln!(self, "    }}");
-            }
-
-            genln!(self);
-        }
-
         genln!(self, "}}");
         genln!(self);
     }
@@ -917,7 +854,7 @@ fn type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
@@ -932,7 +869,7 @@ fn type_name(ty: &ast::TypeName) -> String {
     }
 }
 
-fn call_type_name(ty: &ast::TypeName) -> String {
+fn unsized_ref_type_name(ty: &ast::TypeName) -> String {
     match ty.kind() {
         ast::TypeNameKind::Bool => "bool".to_owned(),
         ast::TypeNameKind::U8 => "u8".to_owned(),
@@ -950,8 +887,8 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::ObjectId => "aldrin::core::ObjectId".to_owned(),
         ast::TypeNameKind::ServiceId => "aldrin::core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => "&aldrin::core::SerializedValueSlice".to_owned(),
-        ast::TypeNameKind::Option(ty) => format!("Option<{}>", call_type_name(ty)),
-        ast::TypeNameKind::Box(ty) => call_type_name(ty),
+        ast::TypeNameKind::Option(ty) => format!("Option<{}>", unsized_ref_type_name(ty)),
+        ast::TypeNameKind::Box(ty) => unsized_ref_type_name(ty),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
             ast::TypeNameKind::U8 => "&aldrin::core::ByteSlice".to_owned(),
             _ => format!("&[{}]", type_name(ty)),
@@ -964,7 +901,7 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("&std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
@@ -972,14 +909,18 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
         ast::TypeNameKind::Unit => "()".to_owned(),
         ast::TypeNameKind::Result(ok, err) => {
-            format!("Result<{}, {}>", call_type_name(ok), call_type_name(err))
+            format!(
+                "Result<{}, {}>",
+                unsized_ref_type_name(ok),
+                unsized_ref_type_name(err)
+            )
         }
         ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
     }
 }
 
-fn sender_type_name(ty: &ast::TypeName) -> String {
+fn unsized_type_name(ty: &ast::TypeName) -> String {
     match ty.kind() {
         ast::TypeNameKind::Bool => "bool".to_owned(),
         ast::TypeNameKind::U8 => "u8".to_owned(),
@@ -997,7 +938,7 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         ast::TypeNameKind::ObjectId => "aldrin::core::ObjectId".to_owned(),
         ast::TypeNameKind::ServiceId => "aldrin::core::ServiceId".to_owned(),
         ast::TypeNameKind::Value => "aldrin::core::SerializedValueSlice".to_owned(),
-        ast::TypeNameKind::Box(ty) => sender_type_name(ty),
+        ast::TypeNameKind::Box(ty) => unsized_type_name(ty),
         ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
         ast::TypeNameKind::Vec(ty) => match ty.kind() {
             ast::TypeNameKind::U8 => "aldrin::core::ByteSlice".to_owned(),
@@ -1011,7 +952,7 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", sender_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
@@ -1072,7 +1013,7 @@ fn function_args_call_type_name(
     part: &ast::FunctionPart,
 ) -> String {
     match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::TypeName(ty) => unsized_ref_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("&{svc_name}{}Args", func_name.to_upper_camel_case())
         }
@@ -1088,11 +1029,15 @@ fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPa
     }
 }
 
-fn function_ok_call_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
+fn function_ok_promise_type_name(
+    svc_name: &str,
+    func_name: &str,
+    part: &ast::FunctionPart,
+) -> String {
     match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::TypeName(ty) => unsized_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("&{svc_name}{}Ok", func_name.to_upper_camel_case())
+            format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
         }
     }
 }
@@ -1106,15 +1051,15 @@ fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionP
     }
 }
 
-fn function_err_call_type_name(
+fn function_err_promise_type_name(
     svc_name: &str,
     func_name: &str,
     part: &ast::FunctionPart,
 ) -> String {
     match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => call_type_name(ty),
+        ast::TypeNameOrInline::TypeName(ty) => unsized_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("&{svc_name}{}Error", func_name.to_upper_camel_case())
+            format!("{svc_name}{}Error", func_name.to_upper_camel_case())
         }
     }
 }
@@ -1150,15 +1095,11 @@ fn event_variant_call_type(
     ev_type: &ast::TypeNameOrInline,
 ) -> String {
     match ev_type {
-        ast::TypeNameOrInline::TypeName(ref ty) => call_type_name(ty),
+        ast::TypeNameOrInline::TypeName(ref ty) => unsized_ref_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("&{svc_name}{}Event", service_event_variant(ev_name))
         }
     }
-}
-
-fn event_emitter(svc_name: &str) -> String {
-    format!("{svc_name}EventEmitter")
 }
 
 fn service_functions(svc_name: &str) -> String {
@@ -1167,10 +1108,6 @@ fn service_functions(svc_name: &str) -> String {
 
 fn service_function_variant(func_name: &str) -> String {
     func_name.to_upper_camel_case()
-}
-
-fn function_reply(svc_name: &str, func_name: &str) -> String {
-    format!("{svc_name}{}Reply", func_name.to_upper_camel_case())
 }
 
 struct RustAttributes {

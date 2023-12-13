@@ -70,7 +70,6 @@ mod object;
 mod promise;
 mod reply;
 mod serial_map;
-mod service;
 #[cfg(test)]
 mod test;
 
@@ -96,4 +95,3 @@ pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
 pub use promise::Promise;
 pub use reply::Reply;
-pub use service::{FunctionCall, FunctionCallReply, Service};

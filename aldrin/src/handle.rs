@@ -17,9 +17,10 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{EventListener, EventListenerId, EventListenerRequest, Proxy, Reply};
+use crate::low_level::{
+    EventListener, EventListenerId, EventListenerRequest, Proxy, Reply, Service,
+};
 use crate::object::Object;
-use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
 use request::{
@@ -290,27 +291,12 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    /// Emits an events to subscribed clients.
-    ///
-    /// The event with the id `event` of the service identified by `service_id` will be emitted with
-    /// the arguments `args` to all subscribed clients.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
-    /// # let handle = broker.add_client().await;
-    /// # let obj = handle.create_object(aldrin::core::ObjectUuid::new_v4()).await?;
-    /// # let mut svc = obj.create_service(aldrin::core::ServiceUuid::new_v4(), 0).await?;
-    /// # let service_id = svc.id();
-    /// // Emit event 1 with argument "Hello, world!":
-    /// handle.emit_event(service_id, 1, "Hello, world!")?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn emit_event<T>(&self, service_id: ServiceId, event: u32, value: &T) -> Result<(), Error>
+    pub(crate) fn emit_event<T>(
+        &self,
+        service_id: ServiceId,
+        event: u32,
+        value: &T,
+    ) -> Result<(), Error>
     where
         T: Serialize + ?Sized,
     {
@@ -599,7 +585,7 @@ impl Handle {
     /// # let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     /// # let service = obj.create_service(ServiceUuid::new_v4(), 0).await?;
     ///
-    /// handle.emit_event(service.id(), 0, "Hi!")?;
+    /// service.emit_event(0, "Hi!")?;
     ///
     /// // Synchronize with the broker to ensure that the event has actually been processed.
     /// handle.sync_broker().await?;

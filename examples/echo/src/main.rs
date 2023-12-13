@@ -102,8 +102,7 @@ async fn main() -> Result<()> {
 
 async fn server(bus: &Handle) -> Result<()> {
     let object = bus.create_object(ObjectUuid::new_v4()).await?;
-    let mut echo = Echo::create(&object).await?;
-    let events = echo.event_emitter();
+    let mut echo = Echo::new(&object).await?;
 
     log::info!("Starting echo server {}.", object.id().uuid);
 
@@ -111,7 +110,7 @@ async fn server(bus: &Handle) -> Result<()> {
         let function = tokio::select! {
             // Services are essentially asynchronous streams of incoming function calls. They also
             // implement the `Stream` trait from the `future` crate, which is however not used here.
-            function = echo.next_function_call() => {
+            function = echo.next_call() => {
                 match function {
                     Ok(Some(function)) => function,
 
@@ -135,37 +134,37 @@ async fn server(bus: &Handle) -> Result<()> {
         };
 
         // `EchoFunction` is a generated enum, that has one variant for each defined
-        // function. Function arguments (if any) and a reply object are contained in each
+        // function. Function arguments (if any) and a promise object are contained in each
         // variant. Aldrin does not impose any restrictions on when the reply is sent. If
-        // e.g. processing the function call takes some time, then it is fine to hang onto the reply
-        // object until then. If the reply object is dropped, then the caller will be notified that
-        // the call has been aborted.
+        // e.g. processing the function call takes some time, then it is fine to hang onto the
+        // promise object until then. If the promise object is dropped, then the caller will be
+        // notified that the call has been aborted.
         match function {
-            EchoFunction::Echo(echo, reply) => {
-                log::info!("echo(\"{echo}\") called.");
+            EchoFunction::Echo(args, promise) => {
+                log::info!("echo(\"{args}\") called.");
 
-                if !echo.is_empty() {
+                if !args.is_empty() {
                     // Here, we echo the same value back to the caller.
-                    reply.ok(&echo)?;
+                    promise.ok(&args)?;
                 } else {
-                    reply.err(&EchoEchoError::EmptyString)?;
+                    promise.err(&EchoEchoError::EmptyString)?;
                 }
             }
 
-            EchoFunction::EchoAll(echo, reply) => {
-                log::info!("echo_all(\"{echo}\") called.");
+            EchoFunction::EchoAll(args, promise) => {
+                log::info!("echo_all(\"{args}\") called.");
 
-                if !echo.is_empty() {
+                if !args.is_empty() {
                     // This emits an event to all subscribed clients. If there is no such client,
                     // then the event will not even be sent to the broker. In any case, the event
                     // will be sent at most once. The broker then dispatches it further to other
                     // clients.
-                    events.echoed_to_all(&echo)?;
+                    echo.echoed_to_all(&args)?;
 
                     // No value is sent back to the caller.
-                    reply.ok()?;
+                    promise.done()?;
                 } else {
-                    reply.err(&EchoEchoAllError::EmptyString)?;
+                    promise.err(&EchoEchoAllError::EmptyString)?;
                 }
             }
         }

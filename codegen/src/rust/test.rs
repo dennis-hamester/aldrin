@@ -19,7 +19,7 @@ async fn auto_reply_with_invalid_args() {
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = test1::Test1::create(&obj).await.unwrap();
+    let mut svc = test1::Test1::new(&obj).await.unwrap();
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
@@ -36,7 +36,7 @@ async fn auto_reply_with_invalid_function() {
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = test1::Test1::create(&obj).await.unwrap();
+    let mut svc = test1::Test1::new(&obj).await.unwrap();
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
