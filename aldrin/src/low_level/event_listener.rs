@@ -98,6 +98,11 @@ impl EventListener {
         }
     }
 
+    /// Returns a handle to the client that was used to create the event listener.
+    pub fn client(&self) -> &Handle {
+        &self.client
+    }
+
     /// Subscribes to an event.
     ///
     /// This function returns `true`, if the event `id` of service `service_id` was not already
