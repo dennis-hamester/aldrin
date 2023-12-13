@@ -4,6 +4,7 @@
 
 mod event;
 mod event_listener;
+mod promise;
 mod proxy;
 mod reply;
 
@@ -11,5 +12,6 @@ pub(crate) use event_listener::{EventListenerId, EventListenerRequest};
 
 pub use event::Event;
 pub use event_listener::EventListener;
+pub use promise::Promise;
 pub use proxy::Proxy;
 pub use reply::Reply;

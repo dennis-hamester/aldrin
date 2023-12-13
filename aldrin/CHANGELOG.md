@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `low_level::Reply`.
 - Add `Reply<T, E>`, which replaces both `PendingFunctionResult<T, E>` and
   `PendingFunctionValue<T>`.
+- Add `low_level::Promise`.
 
 ### Changed
 
