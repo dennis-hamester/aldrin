@@ -11,6 +11,7 @@ mod reply;
 mod service;
 
 pub(crate) use event_listener::{EventListenerId, EventListenerRequest};
+pub(crate) use service::RawCall;
 
 pub use call::Call;
 pub use event::Event;

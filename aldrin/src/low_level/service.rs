@@ -1,9 +1,8 @@
 use super::Call;
-use crate::core::{Serialize, ServiceId, ServiceUuid};
+use crate::core::{Serialize, SerializedValue, ServiceId, ServiceUuid};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::object::Object;
-use crate::service::RawFunctionCall;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
@@ -16,7 +15,7 @@ pub struct Service {
     id: ServiceId,
     version: u32,
     client: Handle,
-    calls: UnboundedReceiver<RawFunctionCall>,
+    calls: UnboundedReceiver<RawCall>,
 }
 
 impl Service {
@@ -54,7 +53,7 @@ impl Service {
                 self.client.clone(),
                 call.serial,
                 call.function,
-                call.value,
+                call.args,
             ))),
 
             Poll::Ready(None) => Poll::Ready(None),
@@ -88,4 +87,11 @@ impl FusedStream for Service {
     fn is_terminated(&self) -> bool {
         self.calls.is_terminated()
     }
+}
+
+#[derive(Debug)]
+pub(crate) struct RawCall {
+    pub serial: u32,
+    pub function: u32,
+    pub args: SerializedValue,
 }

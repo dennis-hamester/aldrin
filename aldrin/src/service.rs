@@ -3,6 +3,7 @@ mod test;
 
 use crate::core::message::CallFunctionResult;
 use crate::core::{Serialize, SerializedValue, ServiceId};
+use crate::low_level::RawCall;
 use crate::{Error, Handle};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
@@ -146,7 +147,7 @@ pub struct Service {
     id: ServiceId,
     version: u32,
     client: Handle,
-    function_calls: UnboundedReceiver<RawFunctionCall>,
+    function_calls: UnboundedReceiver<RawCall>,
 }
 
 impl Service {
@@ -154,7 +155,7 @@ impl Service {
         id: ServiceId,
         version: u32,
         client: Handle,
-        function_calls: UnboundedReceiver<RawFunctionCall>,
+        function_calls: UnboundedReceiver<RawCall>,
     ) -> Self {
         Service {
             id,
@@ -189,7 +190,7 @@ impl Service {
     /// Polls for the next function call.
     pub fn poll_next_function_call(&mut self, cx: &mut Context) -> Poll<Option<FunctionCall>> {
         Pin::new(&mut self.function_calls).poll_next(cx).map(|r| {
-            r.map(|req| FunctionCall::new(req.function, req.value, self.client.clone(), req.serial))
+            r.map(|req| FunctionCall::new(req.function, req.args, self.client.clone(), req.serial))
         })
     }
 
@@ -336,11 +337,4 @@ impl Drop for FunctionCallReply {
                 .ok();
         }
     }
-}
-
-#[derive(Debug)]
-pub(crate) struct RawFunctionCall {
-    pub serial: u32,
-    pub function: u32,
-    pub value: SerializedValue,
 }
