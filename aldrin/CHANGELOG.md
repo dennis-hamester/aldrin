@@ -54,6 +54,8 @@ This version still connects to brokers using protocol version 14.
 - Rename `LifetimeScope::handle()` to `client()`.
 - Rename `LifetimeScope::create()` to `new()`.
 - Rename `Lifetime::create()` to `new()`.
+- `Discoverer`s can only be restarted now, not stopped. `stop()` has been removed. `start()` and
+  `start_current_only()` have been replaced by `restart()` and `restart_current_only()`.
 
 ## [0.3.0] - 2024-01-18
 
