@@ -95,8 +95,6 @@ use std::task::{Context, Poll};
 /// assert_eq!(ev.service_id(SERVICE_UUID_1), svc1.id());
 /// assert_eq!(ev.service_id(SERVICE_UUID_2), svc2.id());
 ///
-/// # discoverer.stop().await?;
-/// # assert!(discoverer.next_event().await.is_none());
 /// # Ok(())
 /// # }
 /// ```
@@ -154,9 +152,9 @@ impl<Key> Discoverer<Key> {
         };
 
         if current_only {
-            this.start_current_only().await?;
+            this.bus_listener.start(BusListenerScope::Current).await?;
         } else {
-            this.start().await?;
+            this.bus_listener.start(BusListenerScope::All).await?;
         }
 
         Ok(this)
@@ -167,43 +165,48 @@ impl<Key> Discoverer<Key> {
         self.bus_listener.client()
     }
 
-    /// Starts the discoverer after it has been stopped.
-    ///
-    /// `Discoverer`s are initially started already. This function fails if trying to start a
-    /// discoverer that isn't stopped.
-    pub async fn start(&mut self) -> Result<(), Error> {
-        self.bus_listener.start(BusListenerScope::All).await
+    async fn stop(&mut self) -> Result<(), Error> {
+        self.bus_listener.stop().await?;
+        while self.next_event().await.is_some() {}
+
+        for specific in &mut self.specific {
+            specific.reset();
+        }
+
+        for any in &mut self.any {
+            any.reset();
+        }
+
+        self.pending_events.clear();
+        Ok(())
     }
 
-    /// Starts the discoverer and configures it to consider only current objects and services.
+    /// Restarts the discoverer.
     ///
-    /// Unlike [`start`](Self::start), the discoverer will consider only those objects and services
-    /// that exist already on the bus.
-    ///
-    /// `Discoverer`s are initially started already. This function fails if trying to start a
-    /// discoverer that isn't stopped.
-    pub async fn start_current_only(&mut self) -> Result<(), Error> {
-        self.bus_listener.start(BusListenerScope::Current).await
+    /// All pending events will be discarded. The discoverer will be configured to consider all
+    /// objects and services on the bus, as if it was built again with [`DiscovererBuilder::build`].
+    pub async fn restart(&mut self) -> Result<(), Error> {
+        self.stop().await?;
+        self.bus_listener.start(BusListenerScope::All).await?;
+        Ok(())
     }
 
-    /// Stops the discoverer.
+    /// Restarts the discoverer and configures it to consider only current objects and services.
     ///
-    /// `Discoverer`s always begin started. Stopping a discoverer will cause
-    /// [`next_event`](Self::next_event) to return `None` after all enqueued events have been
-    /// drained.
-    ///
-    /// Be very careful with function, as the discoverer might miss events from the broker and its
-    /// internal state might become invalid. There should normally not be any reason to stop a
-    /// discoverer.
-    pub async fn stop(&mut self) -> Result<(), Error> {
-        self.bus_listener.stop().await
+    /// All pending events will be discarded. The discoverer will be configured to consider only
+    /// current objects and services on the bus, as if it was built again with
+    /// [`DiscovererBuilder::build_current_only`].
+    pub async fn restart_current_only(&mut self) -> Result<(), Error> {
+        self.stop().await?;
+        self.bus_listener.start(BusListenerScope::Current).await?;
+        Ok(())
     }
 
     /// Indicates whether the discoverer can return more events.
     ///
     /// Discoverers can only finish if they are considering only current objects and services,
-    /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or started
-    /// with [`start_current_only`](Self::start_current_only`).
+    /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or restarted
+    /// with [`restart_current_only`](Self::restart_current_only`).
     pub fn is_finished(&self) -> bool {
         if self.specific.is_empty() && self.any.is_empty() {
             true
@@ -420,6 +423,15 @@ impl<Key> SpecificObject<Key> {
         ))
     }
 
+    fn reset(&mut self) {
+        self.cookie = None;
+        self.created = false;
+
+        for cookie in self.services.values_mut() {
+            *cookie = None;
+        }
+    }
+
     fn handle_bus_event(&mut self, event: BusEvent) -> Option<(DiscovererEventKind, ObjectId)> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
@@ -545,6 +557,14 @@ impl<Key> AnyObject<Key> {
             service,
             cookies.service,
         ))
+    }
+
+    fn reset(&mut self) {
+        self.created.clear();
+
+        for cookies in self.services.values_mut() {
+            cookies.clear();
+        }
     }
 
     fn handle_bus_event(&mut self, event: BusEvent) -> Option<(DiscovererEventKind, ObjectId)> {
