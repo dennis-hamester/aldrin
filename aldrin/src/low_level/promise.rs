@@ -19,6 +19,11 @@ impl Promise {
         }
     }
 
+    /// Returns a handle to the client that was used to create the promise.
+    pub fn client(&self) -> &Handle {
+        self.client.as_ref().unwrap()
+    }
+
     /// Casts the promise to a specific set of result types.
     pub fn cast<T: ?Sized, E: ?Sized>(self) -> crate::promise::Promise<T, E> {
         HlPromise::new(self)
