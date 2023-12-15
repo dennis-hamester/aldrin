@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `BusListener::new()`.
 - Add `Discoverer::client()`.
 - Add `Lifetime::client()`.
+- Add `client()` getters to `PendingSender`, `PendingReceiver`, `UnclaimedSender` and
+  `UnclaimedReceiver`.
 
 ### Fixed
 
