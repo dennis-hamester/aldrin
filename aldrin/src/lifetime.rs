@@ -64,8 +64,8 @@ pub struct LifetimeScope {
 
 impl LifetimeScope {
     /// Creates a new scope.
-    pub async fn new(handle: &Handle) -> Result<Self, Error> {
-        handle.create_lifetime_scope().await
+    pub async fn new(client: &Handle) -> Result<Self, Error> {
+        client.create_lifetime_scope().await
     }
 
     pub(crate) fn new_impl(object: Object) -> Self {
@@ -112,8 +112,8 @@ impl LifetimeId {
     pub const NIL: Self = Self(ObjectId::NIL);
 
     /// Bind the id to a client and create a `Lifetime`.
-    pub async fn bind(self, handle: &Handle) -> Result<Lifetime, Error> {
-        Lifetime::new(handle, self).await
+    pub async fn bind(self, client: &Handle) -> Result<Lifetime, Error> {
+        Lifetime::new(client, self).await
     }
 
     /// Checks if the id is nil (all zeros).
@@ -158,8 +158,8 @@ pub struct Lifetime {
 
 impl Lifetime {
     /// Create a `Lifetime` from an id.
-    pub async fn new(handle: &Handle, id: LifetimeId) -> Result<Self, Error> {
-        let listener = handle.create_lifetime_listener().await?;
+    pub async fn new(client: &Handle, id: LifetimeId) -> Result<Self, Error> {
+        let listener = client.create_lifetime_listener().await?;
         listener.start(id.0.uuid).await?;
 
         Ok(Self {
