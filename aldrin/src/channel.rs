@@ -147,6 +147,13 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
         }
     }
 
+    /// Returns a handle to the client that was used to create the sender.
+    ///
+    /// `None` will be returned if the sender is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
+    }
+
     /// Unbinds the sender from its client.
     ///
     /// When creating a channel, one end will already be claimed while the other end won't. In order
@@ -272,6 +279,10 @@ impl UnclaimedSenderInner {
         }
     }
 
+    fn client(&self) -> Option<&Handle> {
+        self.client.as_ref()
+    }
+
     fn unbind(mut self) -> ChannelCookie {
         self.client = None;
         self.cookie
@@ -319,6 +330,13 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns a handle to the client that was used to create the sender.
+    ///
+    /// `None` will be returned if the sender is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
     }
 
     /// Closes the sender without consuming it.
@@ -420,6 +438,10 @@ impl PendingSenderInner {
                 established,
             }),
         }
+    }
+
+    fn client(&self) -> Option<&Handle> {
+        self.state.as_ref().map(|state| &state.client)
     }
 
     async fn close(&mut self) -> Result<(), Error> {
@@ -929,6 +951,13 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
         }
     }
 
+    /// Returns a handle to the client that was used to create the receiver.
+    ///
+    /// `None` will be returned if the receiver is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
+    }
+
     /// Unbinds the receiver from its client.
     ///
     /// When creating a channel, one end will already be claimed while the other end won't. In order
@@ -1056,6 +1085,10 @@ impl UnclaimedReceiverInner {
         }
     }
 
+    fn client(&self) -> Option<&Handle> {
+        self.client.as_ref()
+    }
+
     fn unbind(mut self) -> ChannelCookie {
         self.client = None;
         self.cookie
@@ -1103,6 +1136,13 @@ impl<T: Deserialize> PendingReceiver<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns a handle to the client that was used to create the receiver.
+    ///
+    /// `None` will be returned if the receiver is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
     }
 
     /// Closes the receiver without consuming it.
@@ -1185,6 +1225,10 @@ impl PendingReceiverInner {
                 max_capacity,
             }),
         }
+    }
+
+    fn client(&self) -> Option<&Handle> {
+        self.state.as_ref().map(|state| &state.client)
     }
 
     async fn close(&mut self) -> Result<(), Error> {
