@@ -30,6 +30,7 @@ This version still connects to brokers using protocol version 14.
 - Add `low_level::EventListener::client()`.
 - Add `BusListener::new()`.
 - Add `Discoverer::client()`.
+- Add `Lifetime::client()`.
 
 ### Fixed
 

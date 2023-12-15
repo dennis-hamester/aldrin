@@ -169,6 +169,14 @@ impl Lifetime {
         })
     }
 
+    /// Returns a handle to the client that was used to create the lifetime.
+    ///
+    /// `None` will be returned after [`poll_ended`](Self::poll_ended) or [`ended`](Self::ended) has
+    /// resolved.
+    pub fn client(&self) -> Option<&Handle> {
+        self.listener.as_ref().map(LifetimeListener::client)
+    }
+
     /// Poll whether the associated scope has ended.
     pub fn poll_ended(&mut self, cx: &mut Context) -> Poll<()> {
         let Some(ref mut listener) = self.listener else {
@@ -273,6 +281,10 @@ impl LifetimeListener {
             .await?;
 
         Ok(())
+    }
+
+    fn client(&self) -> &Handle {
+        &self.client
     }
 
     fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<BusListenerEvent>> {
