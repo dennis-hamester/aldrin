@@ -25,6 +25,11 @@ impl Call {
         }
     }
 
+    /// Returns a handle to the client that was used to create the call.
+    pub fn client(&self) -> &Handle {
+        self.promise.client()
+    }
+
     /// Deserializes arguments and casts the promise to a specific set of result types.
     pub fn deserialize_and_cast<Args, T, E>(
         self,
