@@ -1,5 +1,6 @@
 use crate::core::Serialize;
 use crate::error::Error;
+use crate::handle::Handle;
 use crate::low_level::Promise as LlPromise;
 use std::fmt;
 use std::marker::PhantomData;
@@ -16,6 +17,11 @@ impl<T: ?Sized, E: ?Sized> Promise<T, E> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns a handle to the client that was used to create the promise.
+    pub fn client(&self) -> &Handle {
+        self.inner.client()
     }
 
     /// Casts the promise to a different result type.
