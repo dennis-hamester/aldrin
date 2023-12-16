@@ -33,6 +33,7 @@ This version still connects to brokers using protocol version 14.
 - Add `Lifetime::client()`.
 - Add `client()` getters to `PendingSender`, `PendingReceiver`, `UnclaimedSender` and
   `UnclaimedReceiver`.
+- Add `DiscovererEvent` as a variant of `DiscovererEventRef` that doesn't borrow the discoverer.
 
 ### Fixed
 
