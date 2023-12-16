@@ -103,14 +103,22 @@ impl Serialize for LifetimeScope {
 }
 
 /// Id of a scope's lifetime.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[repr(transparent)]
 pub struct LifetimeId(pub ObjectId);
 
 impl LifetimeId {
+    /// Nil `LifetimeId` (all zeros).
+    pub const NIL: Self = Self(ObjectId::NIL);
+
     /// Bind the id to a client and create a `Lifetime`.
     pub async fn bind(self, handle: &Handle) -> Result<Lifetime, Error> {
         Lifetime::create(handle, self).await
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 

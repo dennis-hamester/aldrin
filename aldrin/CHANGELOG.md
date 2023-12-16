@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `Handle::wait_for_object()`, `Handle::wait_for_any_object()` and
   `Handle::wait_for_specific_object()`.
+- Add `NIL` and `is_nil()` to `LifetimeId`.
+- Implement `Default` for `LifetimeId`.
 
 ## [0.3.0] - 2024-01-18
 
