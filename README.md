@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/aldrin)](https://crates.io/crates/aldrin)
 ![Crates.io](https://img.shields.io/crates/l/aldrin)
-![Build status](https://github.com/dennis-hamester/aldrin/actions/workflows/rust.yaml/badge.svg)
+![Build status](https://github.com/dennis-hamester/aldrin/actions/workflows/ci.yaml/badge.svg)
 
 Aldrin is a message bus for service-oriented RPC and general interprocess communication.
 
