@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `Serialize` and `Deserialize` for `Result`.
 - Implement `Serialize` and `Deserialize` for `std::convert::Infallible`.
+- Add `NIL` and `is_nil()` to all id types.
+- Implement `Default` for all id types.
 
 ## [0.3.0] - 2024-01-18
 

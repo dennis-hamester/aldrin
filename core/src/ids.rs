@@ -14,7 +14,7 @@ use uuid::{Error as UuidError, Uuid};
 /// It is important to point out, that when an object is destroyed and later created again with the
 /// same [`ObjectUuid`], then the [`ObjectCookie`] and consequently the [`ObjectId`] will be
 /// different.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ObjectId {
     /// UUID of the object.
@@ -25,9 +25,17 @@ pub struct ObjectId {
 }
 
 impl ObjectId {
+    /// Nil `ObjectId` (all zeros).
+    pub const NIL: Self = Self::new(ObjectUuid::NIL, ObjectCookie::NIL);
+
     /// Creates a new [`ObjectId`] from an [`ObjectUuid`] and [`ObjectCookie`].
     pub const fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
         ObjectId { uuid, cookie }
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.uuid.is_nil() && self.cookie.is_nil()
     }
 }
 
@@ -48,12 +56,15 @@ impl Deserialize for ObjectId {
 ///
 /// [`ObjectUuid`s](Self) are chosen by the user when creating an object and must be unique among
 /// all objects on the bus.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ObjectUuid(pub Uuid);
 
 impl ObjectUuid {
+    /// Nil `ObjectUuid` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates an [`ObjectUuid`] with a random v4 UUID.
     ///
     /// # Examples
@@ -64,7 +75,12 @@ impl ObjectUuid {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        ObjectUuid(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
@@ -112,12 +128,15 @@ impl FromStr for ObjectUuid {
 /// [`ObjectCookie`s](Self) are chosen by the broker when creating an object. They ensure that
 /// objects, created and destroyed over time with the same [`ObjectUuid`], can still be
 /// distinguished.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ObjectCookie(pub Uuid);
 
 impl ObjectCookie {
+    /// Nil `ObjectCookie` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates an [`ObjectCookie`] with a random v4 UUID.
     ///
     /// # Examples
@@ -128,7 +147,12 @@ impl ObjectCookie {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        ObjectCookie(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
@@ -173,7 +197,7 @@ impl fmt::Display for ObjectCookie {
 /// It is important to point out, that when a service is destroyed and later created again with the
 /// same [`ServiceUuid`], then the [`ServiceCookie`] and consequently the [`ServiceId`] will be
 /// different.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ServiceId {
     /// Id of the associated object.
@@ -187,6 +211,9 @@ pub struct ServiceId {
 }
 
 impl ServiceId {
+    /// Nil `ServiceId` (all zeros).
+    pub const NIL: Self = Self::new(ObjectId::NIL, ServiceUuid::NIL, ServiceCookie::NIL);
+
     /// Creates a new [`ServiceId`] from an [`ObjectId`], a [`ServiceUuid`] and a [`ServiceCookie`].
     pub const fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
         ServiceId {
@@ -194,6 +221,11 @@ impl ServiceId {
             uuid,
             cookie,
         }
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.object_id.is_nil() && self.uuid.is_nil() && self.cookie.is_nil()
     }
 }
 
@@ -214,12 +246,15 @@ impl Deserialize for ServiceId {
 ///
 /// [`ServiceUuid`s](Self) are chosen by the user when creating a service and must be unique among
 /// all services of an object.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ServiceUuid(pub Uuid);
 
 impl ServiceUuid {
+    /// Nil `ServiceUuid` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates a [`ServiceUuid`] with a random v4 UUID.
     ///
     /// # Examples
@@ -230,7 +265,12 @@ impl ServiceUuid {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        ServiceUuid(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
@@ -278,12 +318,15 @@ impl FromStr for ServiceUuid {
 /// [`ServiceCookie`s](Self) are chosen by the broker when creating a service. They ensure that
 /// services, created and destroyed over time with the same [`ServiceUuid`] and on the same object,
 /// can still be distinguished.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ServiceCookie(pub Uuid);
 
 impl ServiceCookie {
+    /// Nil `ServiceCookie` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates a [`ServiceCookie`] with a random v4 UUID.
     ///
     /// # Examples
@@ -294,7 +337,12 @@ impl ServiceCookie {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        ServiceCookie(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
@@ -332,12 +380,15 @@ impl fmt::Display for ServiceCookie {
 /// Cookie of a channel.
 ///
 /// [`ChannelCookie`s](Self) are chosen by the broker when creating a channel.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct ChannelCookie(pub Uuid);
 
 impl ChannelCookie {
+    /// Nil `ChannelCookie` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates a [`ChannelCookie`] with a random v4 UUID.
     ///
     /// # Examples
@@ -348,7 +399,12 @@ impl ChannelCookie {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        ChannelCookie(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
@@ -386,12 +442,15 @@ impl fmt::Display for ChannelCookie {
 /// Cookie of a bus listener.
 ///
 /// [`BusListenerCookie`s](Self) are chosen by the broker when creating a bus listener.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[repr(transparent)]
 pub struct BusListenerCookie(pub Uuid);
 
 impl BusListenerCookie {
+    /// Nil `BusListenerCookie` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
     /// Creates a [`BusListenerCookie`] with a random v4 UUID.
     ///
     /// # Examples
@@ -402,7 +461,12 @@ impl BusListenerCookie {
     /// ```
     #[cfg(feature = "new-v4-ids")]
     pub fn new_v4() -> Self {
-        BusListenerCookie(Uuid::new_v4())
+        Self(Uuid::new_v4())
+    }
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
     }
 }
 
