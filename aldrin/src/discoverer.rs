@@ -11,6 +11,7 @@ use crate::handle::Handle;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::future;
 use std::mem;
+use std::mem::MaybeUninit;
 use std::task::{Context, Poll};
 
 /// Discovers objects with multiple services on the bus.
@@ -265,7 +266,7 @@ impl<Key> Discoverer<Key> {
         }
     }
 
-    /// Await an event from the discoverer.
+    /// Awaits an event from the discoverer.
     pub async fn next_event_ref(&mut self) -> Option<DiscovererEventRef<'_, Key>> {
         future::poll_fn(|cx| match self.poll_next_event_ref(cx) {
             // SAFETY: Extend the lifetime in the event such that it borrows the Discoverer
@@ -303,6 +304,38 @@ impl<Key> Discoverer<Key> {
             ObjectType::Specific => self.specific[index].service_cookie(service),
             ObjectType::Any => self.any[index].service_cookie(object, service),
         }
+    }
+
+    fn for_each_service<F>(&self, object_type: ObjectType, index: usize, object: ObjectUuid, f: F)
+    where
+        F: FnMut(ServiceUuid, ServiceCookie),
+    {
+        match object_type {
+            ObjectType::Specific => self.specific[index].for_each_service(f),
+            ObjectType::Any => self.any[index].for_each_service(object, f),
+        }
+    }
+}
+
+impl<Key> Discoverer<Key>
+where
+    Key: Clone,
+{
+    /// Poll the discoverer for an event.
+    pub fn poll_next_event<const N: usize>(
+        &mut self,
+        cx: &mut Context,
+    ) -> Poll<Option<DiscovererEvent<Key, N>>> {
+        match self.poll_next_event_ref(cx) {
+            Poll::Ready(Some(ev)) => Poll::Ready(Some(ev.into())),
+            Poll::Ready(None) => Poll::Ready(None),
+            Poll::Pending => Poll::Pending,
+        }
+    }
+
+    /// Awaits an event from the discoverer.
+    pub async fn next_event<const N: usize>(&mut self) -> Option<DiscovererEvent<Key, N>> {
+        future::poll_fn(|cx| self.poll_next_event(cx)).await
     }
 }
 
@@ -425,6 +458,16 @@ impl<Key> SpecificObject<Key> {
 
         for cookie in self.services.values_mut() {
             *cookie = None;
+        }
+    }
+
+    fn for_each_service<F>(&self, mut f: F)
+    where
+        F: FnMut(ServiceUuid, ServiceCookie),
+    {
+        for (uuid, cookie) in &self.services {
+            let cookie = cookie.expect("invalid UUID");
+            f(*uuid, cookie);
         }
     }
 
@@ -557,6 +600,16 @@ impl<Key> AnyObject<Key> {
         }
     }
 
+    fn for_each_service<F>(&self, object: ObjectUuid, mut f: F)
+    where
+        F: FnMut(ServiceUuid, ServiceCookie),
+    {
+        for (uuid, services) in &self.services {
+            let cookie = services.get(&object).expect("invalid UUID");
+            f(*uuid, *cookie);
+        }
+    }
+
     fn handle_bus_event(&mut self, event: BusEvent) -> Option<(DiscovererEventKind, ObjectId)> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
@@ -673,6 +726,114 @@ impl<'a, Key> DiscovererEventRef<'a, Key> {
             .expect("invalid UUID");
 
         ServiceId::new(self.object_id, uuid, cookie)
+    }
+}
+
+/// Event emitted by `Discoverer`s.
+///
+/// This is a variant of [`DiscovererEventRef`] that doesn't borrow the discoverer. However it
+/// requires specifying the maximum number of service ids as a compile-time constant `N`.
+#[derive(Debug, Copy, Clone)]
+pub struct DiscovererEvent<Key, const N: usize> {
+    kind: DiscovererEventKind,
+    key: Key,
+    object_id: ObjectId,
+    services: Option<[(ServiceUuid, ServiceCookie); N]>,
+}
+
+impl<Key, const N: usize> DiscovererEvent<Key, N> {
+    /// Specifies whether the object was created or destroyed.
+    pub fn kind(&self) -> DiscovererEventKind {
+        self.kind
+    }
+
+    /// Returns a references to the key associated with this object.
+    pub fn key(&self) -> &Key {
+        &self.key
+    }
+
+    /// Returns the object ID that prompted this event.
+    pub fn object_id(&self) -> ObjectId {
+        self.object_id
+    }
+
+    /// Returns a service ID that is owned by this event's object.
+    ///
+    /// This function can only be called for those events that are emitted when an object is created
+    /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
+    ///
+    /// This function will also panic if `uuid` is not one of the UUIDs specified when
+    /// [`object`](DiscovererBuilder::object) was called.
+    pub fn service_id(&self, uuid: ServiceUuid) -> ServiceId {
+        let services = self
+            .services
+            .as_ref()
+            .expect("service_id can only be called for Created events");
+
+        let (uuid, cookie) = services
+            .iter()
+            .find(|(svc_uuid, _)| *svc_uuid == uuid)
+            .expect("invalid UUID");
+
+        ServiceId::new(self.object_id, *uuid, *cookie)
+    }
+}
+
+impl<Key, const N: usize> From<DiscovererEventRef<'_, Key>> for DiscovererEvent<Key, N>
+where
+    Key: Clone,
+{
+    fn from(ev: DiscovererEventRef<'_, Key>) -> Self {
+        if ev.kind() == DiscovererEventKind::Destroyed {
+            return Self {
+                kind: DiscovererEventKind::Destroyed,
+                key: ev.key().clone(),
+                object_id: ev.object_id,
+                services: None,
+            };
+        }
+
+        // SAFETY: This creates an array of MaybeUninit, which don't require initialization.
+        let mut services: [MaybeUninit<(ServiceUuid, ServiceCookie)>; N] =
+            unsafe { MaybeUninit::uninit().assume_init() };
+
+        let mut num = 0;
+
+        // After this, exactly num elements have been initialized.
+        ev.discoverer.for_each_service(
+            ev.object_type,
+            ev.index,
+            ev.object_id.uuid,
+            |uuid, cookie| {
+                if num < N {
+                    services[num].write((uuid, cookie));
+                    num += 1;
+                }
+            },
+        );
+
+        // Initialize the remaining N-num elements (if any).
+        services[num..].iter_mut().for_each(|service| {
+            service.write(Default::default());
+        });
+
+        // SAFETY: All N elements have been initialized in the 2 loops above.
+        //
+        // In some future version of Rust, all this can be simplified; see:
+        // https://github.com/rust-lang/rust/issues/96097
+        // https://github.com/rust-lang/rust/issues/61956
+        let services = unsafe {
+            (*(&MaybeUninit::new(services) as *const _
+                as *const MaybeUninit<[(ServiceUuid, ServiceCookie); N]>))
+                .assume_init_read()
+        };
+
+        Self {
+            kind: DiscovererEventKind::Created,
+            key: ev.key().clone(),
+            object_id: ev.object_id,
+            services: Some(services),
+        }
     }
 }
 

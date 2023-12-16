@@ -1,5 +1,5 @@
 use crate::core::{ObjectUuid, ServiceUuid};
-use aldrin_test::aldrin::DiscovererEventKind;
+use aldrin_test::aldrin::{DiscovererEvent, DiscovererEventKind};
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
@@ -21,10 +21,18 @@ async fn any_object_no_services() {
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -53,10 +61,18 @@ async fn specific_object_no_services() {
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -88,10 +104,20 @@ async fn specific_object() {
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
     assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -123,10 +149,20 @@ async fn any_object() {
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
     assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -142,10 +178,20 @@ async fn any_object() {
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
     assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -194,6 +240,12 @@ async fn current_only() {
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
     assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
 
     assert!(discoverer.next_event_ref().await.is_none());
     assert!(discoverer.is_finished());
@@ -223,11 +275,21 @@ async fn restart_any() {
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
 
     discoverer.restart().await.unwrap();
 
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -258,11 +320,21 @@ async fn restart_specific() {
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
 
     discoverer.restart().await.unwrap();
 
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
@@ -302,6 +374,11 @@ async fn restart_current_only_any() {
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
     assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
 
     client.join().await;
     broker.join().await;
@@ -334,6 +411,11 @@ async fn restart_current_only_specific() {
 
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event_ref().await.unwrap();
+    assert_eq!(ev.kind(), DiscovererEventKind::Created);
+    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.object_id(), obj.id());
+    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    let ev = DiscovererEvent::<_, 10>::from(ev);
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
     assert_eq!(*ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
