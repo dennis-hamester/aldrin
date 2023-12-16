@@ -776,7 +776,7 @@ impl Handle {
             .build_current_only()
             .await?;
 
-        let Some(event) = discoverer.next_event().await else {
+        let Some(event) = discoverer.next_event_ref().await else {
             return Ok(None);
         };
 
@@ -838,7 +838,7 @@ impl Handle {
             .build()
             .await?;
 
-        let Some(event) = discoverer.next_event().await else {
+        let Some(event) = discoverer.next_event_ref().await else {
             return Err(Error::Shutdown);
         };
 
