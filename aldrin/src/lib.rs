@@ -88,7 +88,7 @@ pub use channel::{
     UnclaimedReceiver, UnclaimedSender,
 };
 pub use client::Client;
-pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEvent, DiscovererEventKind};
+pub use discoverer::{Discoverer, DiscovererBuilder, DiscovererEventKind, DiscovererEventRef};
 pub use error::Error;
 pub use handle::Handle;
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};

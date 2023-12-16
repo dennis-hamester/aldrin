@@ -59,6 +59,7 @@ This version still connects to brokers using protocol version 14.
 - Rename `Lifetime::create()` to `new()`.
 - `Discoverer`s can only be restarted now, not stopped. `stop()` has been removed. `start()` and
   `start_current_only()` have been replaced by `restart()` and `restart_current_only()`.
+- Rename `DiscovererEvent` to `DiscovererEventRef`.
 
 ## [0.3.0] - 2024-01-18
 

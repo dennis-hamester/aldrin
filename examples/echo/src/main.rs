@@ -184,7 +184,7 @@ async fn list(bus: &Handle) -> Result<()> {
 
     // The discoverer will emit events for every object it has found on the bus that matches the
     // criteria. Through the event, we can get the object's ID and the relevant service IDs.
-    while let Some(event) = discoverer.next_event().await {
+    while let Some(event) = discoverer.next_event_ref().await {
         log::info!("Found echo server {}.", event.object_id().uuid);
         found = true;
     }
