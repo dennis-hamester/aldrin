@@ -292,16 +292,16 @@ impl<Key> Discoverer<Key> {
         }
     }
 
-    fn service_id(
+    fn service_cookie(
         &self,
         object_type: ObjectType,
         index: usize,
         object: ObjectUuid,
         service: ServiceUuid,
-    ) -> Option<ServiceId> {
+    ) -> Option<ServiceCookie> {
         match object_type {
-            ObjectType::Specific => self.specific[index].service_id(service),
-            ObjectType::Any => self.any[index].service_id(object, service),
+            ObjectType::Specific => self.specific[index].service_cookie(service),
+            ObjectType::Any => self.any[index].service_cookie(object, service),
         }
     }
 }
@@ -415,15 +415,8 @@ impl<Key> SpecificObject<Key> {
         self.services.keys().copied()
     }
 
-    fn service_id(&self, uuid: ServiceUuid) -> Option<ServiceId> {
-        let service_cookie = (*self.services.get(&uuid)?)?;
-        let object_cookie = self.cookie?;
-
-        Some(ServiceId::new(
-            ObjectId::new(self.uuid, object_cookie),
-            uuid,
-            service_cookie,
-        ))
+    fn service_cookie(&self, uuid: ServiceUuid) -> Option<ServiceCookie> {
+        self.services.get(&uuid).copied().flatten()
     }
 
     fn reset(&mut self) {
@@ -528,7 +521,7 @@ impl<Key> SpecificObject<Key> {
 #[derive(Debug)]
 struct AnyObject<Key> {
     key: Key,
-    services: HashMap<ServiceUuid, HashMap<ObjectUuid, AnyObjectCookies>>,
+    services: HashMap<ServiceUuid, HashMap<ObjectUuid, ServiceCookie>>,
     created: HashSet<ObjectId>,
 }
 
@@ -552,14 +545,8 @@ impl<Key> AnyObject<Key> {
         self.services.keys().copied()
     }
 
-    fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
-        let cookies = self.services.get(&service)?.get(&object)?;
-
-        Some(ServiceId::new(
-            ObjectId::new(object, cookies.object),
-            service,
-            cookies.service,
-        ))
+    fn service_cookie(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceCookie> {
+        self.services.get(&service)?.get(&object).copied()
     }
 
     fn reset(&mut self) {
@@ -599,7 +586,7 @@ impl<Key> AnyObject<Key> {
 
     fn service_created(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
         let service = self.services.get_mut(&id.uuid)?;
-        let dup = service.insert(id.object_id.uuid, AnyObjectCookies::new(id));
+        let dup = service.insert(id.object_id.uuid, id.cookie);
         debug_assert!(dup.is_none());
 
         if self
@@ -624,21 +611,6 @@ impl<Key> AnyObject<Key> {
             Some((DiscovererEventKind::Destroyed, id.object_id))
         } else {
             None
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-struct AnyObjectCookies {
-    object: ObjectCookie,
-    service: ServiceCookie,
-}
-
-impl AnyObjectCookies {
-    fn new(id: ServiceId) -> Self {
-        Self {
-            object: id.object_id.cookie,
-            service: id.cookie,
         }
     }
 }
@@ -695,15 +667,12 @@ impl<'a, Key> DiscovererEventRef<'a, Key> {
     pub fn service_id(&self, uuid: ServiceUuid) -> ServiceId {
         assert_eq!(self.kind, DiscovererEventKind::Created);
 
-        let id = self
+        let cookie = self
             .discoverer
-            .service_id(self.object_type, self.index, self.object_id.uuid, uuid)
+            .service_cookie(self.object_type, self.index, self.object_id.uuid, uuid)
             .expect("invalid UUID");
 
-        debug_assert_eq!(id.uuid, uuid);
-        debug_assert_eq!(id.object_id, self.object_id);
-
-        id
+        ServiceId::new(self.object_id, uuid, cookie)
     }
 }
 
