@@ -8,10 +8,13 @@ use crate::core::{
 };
 use crate::error::Error;
 use crate::handle::Handle;
+use futures_core::stream::{FusedStream, Stream};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::future;
 use std::mem;
 use std::mem::MaybeUninit;
+use std::ops::{Deref, DerefMut};
+use std::pin::Pin;
 use std::task::{Context, Poll};
 
 /// Discovers objects with multiple services on the bus.
@@ -164,6 +167,11 @@ impl<Key> Discoverer<Key> {
     /// Returns a handle to the client that was used to create the discoverer.
     pub fn client(&self) -> &Handle {
         self.bus_listener.client()
+    }
+
+    /// Turns the discoverer into a [`Stream`].
+    pub fn into_stream<const N: usize>(self) -> DiscovererStream<Key, N> {
+        DiscovererStream::new(self)
     }
 
     async fn stop(&mut self) -> Result<(), Error> {
@@ -336,6 +344,54 @@ where
     /// Awaits an event from the discoverer.
     pub async fn next_event<const N: usize>(&mut self) -> Option<DiscovererEvent<Key, N>> {
         future::poll_fn(|cx| self.poll_next_event(cx)).await
+    }
+}
+
+impl<Key> Unpin for Discoverer<Key> {}
+
+/// Stream adapter for [`Discoverer`].
+#[derive(Debug)]
+pub struct DiscovererStream<Key, const N: usize> {
+    inner: Discoverer<Key>,
+}
+
+impl<Key, const N: usize> DiscovererStream<Key, N> {
+    fn new(inner: Discoverer<Key>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<Key, const N: usize> Deref for DiscovererStream<Key, N> {
+    type Target = Discoverer<Key>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<Key, const N: usize> DerefMut for DiscovererStream<Key, N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
+impl<Key, const N: usize> Stream for DiscovererStream<Key, N>
+where
+    Key: Clone,
+{
+    type Item = DiscovererEvent<Key, N>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        self.poll_next_event(cx)
+    }
+}
+
+impl<Key, const N: usize> FusedStream for DiscovererStream<Key, N>
+where
+    Key: Clone,
+{
+    fn is_terminated(&self) -> bool {
+        self.is_finished()
     }
 }
 
