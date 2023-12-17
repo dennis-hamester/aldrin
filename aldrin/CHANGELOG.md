@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `client()` getters to `PendingSender`, `PendingReceiver`, `UnclaimedSender` and
   `UnclaimedReceiver`.
 - Add `DiscovererEvent` as a variant of `DiscovererEventRef` that doesn't borrow the discoverer.
+- Add `DiscovererStream`.
 
 ### Fixed
 
