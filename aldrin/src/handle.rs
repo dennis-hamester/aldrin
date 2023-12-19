@@ -951,6 +951,68 @@ impl Handle {
         self.find_object(Some(object.into()), services).await
     }
 
+    /// Waits for an object with a specific set of services.
+    ///
+    /// If `object` is `None`, then any object that has all required services may be
+    /// returned. Repeated calls to this function can return different objects.
+    ///
+    /// This is a convenience function for using a [`Discoverer`] to find a single object.
+    pub async fn wait_for_object<const N: usize>(
+        &self,
+        object: Option<ObjectUuid>,
+        services: &[ServiceUuid; N],
+    ) -> Result<(ObjectId, [ServiceId; N]), Error> {
+        let mut discoverer = self
+            .create_discoverer()
+            .object((), object, services.iter().copied())
+            .build()
+            .await?;
+
+        let Some(event) = discoverer.next_event().await else {
+            return Err(Error::Shutdown);
+        };
+
+        // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
+        let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+
+        for (&uuid, id) in services.iter().zip(&mut ids) {
+            id.write(event.service_id(uuid));
+        }
+
+        // SAFETY: All N elements have been initialized in the loop above.
+        //
+        // In some future version of Rust, all this can be simplified; see:
+        // https://github.com/rust-lang/rust/issues/96097
+        // https://github.com/rust-lang/rust/issues/61956
+        let ids = unsafe {
+            (*(&MaybeUninit::new(ids) as *const _ as *const MaybeUninit<[ServiceId; N]>))
+                .assume_init_read()
+        };
+
+        Ok((event.object_id(), ids))
+    }
+
+    /// Wait for any object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `wait_for_object(None, services)`.
+    pub async fn wait_for_any_object<const N: usize>(
+        &self,
+        services: &[ServiceUuid; N],
+    ) -> Result<(ObjectId, [ServiceId; N]), Error> {
+        self.wait_for_object(None, services).await
+    }
+
+    /// Wait for a specific object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `wait_for_object(Some(object), services)`.
+    pub async fn wait_for_specific_object<const N: usize>(
+        &self,
+        object: impl Into<ObjectUuid>,
+        services: &[ServiceUuid; N],
+    ) -> Result<(ObjectId, [ServiceId; N]), Error> {
+        self.wait_for_object(Some(object.into()), services).await
+    }
+
     /// Creates a new lifetime scope.
     pub async fn create_lifetime_scope(&self) -> Result<LifetimeScope, Error> {
         self.create_object(ObjectUuid::new_v4())
