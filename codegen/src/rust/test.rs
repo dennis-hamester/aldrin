@@ -1,5 +1,6 @@
 aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
+aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
 aldrin::generate!("test/test1.aldrin");
 
@@ -79,4 +80,26 @@ fn generic_struct() {
     let s2: generic_struct::Struct = g_serialized.deserialize().unwrap();
 
     assert_eq!(s1, s2);
+}
+
+#[test]
+fn old_as_new() {
+    let old = old_new::Old { f1: 1 };
+    let old_serialized = SerializedValue::serialize(&old).unwrap();
+    let new: old_new::New = old_serialized.deserialize().unwrap();
+    assert_eq!(new.f1, 1);
+    assert_eq!(new.f2, None);
+}
+
+#[test]
+fn new_as_old() {
+    let new = old_new::New { f1: 1, f2: None };
+    let new_serialized = SerializedValue::serialize(&new).unwrap();
+    let old: old_new::Old = new_serialized.deserialize().unwrap();
+    assert_eq!(old.f1, 1);
+
+    let new = old_new::New { f1: 1, f2: Some(2) };
+    let new_serialized = SerializedValue::serialize(&new).unwrap();
+    let old: old_new::Old = new_serialized.deserialize().unwrap();
+    assert_eq!(old.f1, 1);
 }

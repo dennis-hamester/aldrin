@@ -209,7 +209,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "                {id} => {name} = deserializer.deserialize()?,");
             }
         }
-        genln!(self, "                _ => {{}}");
+        genln!(self, "                _ => deserializer.skip()?,");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self);
