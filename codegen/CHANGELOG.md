@@ -9,6 +9,9 @@
 
 - Support `lifetime` built-in type. It resolves to `aldrin::LifetimeId` in all cases.
 
+
+# 0.2.1 (December 20th, 2023)
+
 ## Fixed
 
 - Fix skipping over unknown fields when deserializing a struct.
