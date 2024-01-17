@@ -468,9 +468,7 @@ impl<Key> SpecificObject<Key> {
 
         debug_assert_eq!(self.cookie, Some(id.object_id.cookie));
 
-        let Some(service) = self.services.get_mut(&id.uuid) else {
-            return None;
-        };
+        let service = self.services.get_mut(&id.uuid)?;
 
         debug_assert!(service.is_none());
         debug_assert!(!self.created);
@@ -492,9 +490,7 @@ impl<Key> SpecificObject<Key> {
 
         debug_assert_eq!(self.cookie, Some(id.object_id.cookie));
 
-        let Some(service) = self.services.get_mut(&id.uuid) else {
-            return None;
-        };
+        let service = self.services.get_mut(&id.uuid)?;
 
         debug_assert_eq!(*service, Some(id.cookie));
 
@@ -574,10 +570,7 @@ impl<Key> AnyObject<Key> {
     }
 
     fn service_created(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
-        let Some(service) = self.services.get_mut(&id.uuid) else {
-            return None;
-        };
-
+        let service = self.services.get_mut(&id.uuid)?;
         let dup = service.insert(id.object_id.uuid, AnyObjectCookies::new(id));
         debug_assert!(dup.is_none());
 
@@ -595,10 +588,7 @@ impl<Key> AnyObject<Key> {
     }
 
     fn service_destroyed(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
-        let Some(service) = self.services.get_mut(&id.uuid) else {
-            return None;
-        };
-
+        let service = self.services.get_mut(&id.uuid)?;
         let cookies = service.remove(&id.object_id.uuid);
         debug_assert!(cookies.is_some());
 
