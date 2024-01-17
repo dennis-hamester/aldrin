@@ -547,6 +547,21 @@ impl<T: Serialize + ?Sized> Sender<T> {
     pub async fn close(&mut self) -> Result<(), Error> {
         self.inner.close().await
     }
+
+    /// Returns `true` if the channel is closed.
+    pub fn is_closed(&self) -> bool {
+        self.inner.is_closed()
+    }
+
+    /// Polls whether the channel is closed.
+    pub fn poll_closed(&mut self, cx: &mut Context) -> Poll<()> {
+        self.inner.poll_closed(cx)
+    }
+
+    /// Completes when the channel is closed.
+    pub async fn closed(&mut self) {
+        future::poll_fn(|cx| self.poll_closed(cx)).await
+    }
 }
 
 #[cfg(feature = "sink")]
@@ -736,6 +751,38 @@ impl SenderInner {
                 .await
         } else {
             Ok(())
+        }
+    }
+
+    fn is_closed(&self) -> bool {
+        matches!(self.state, SenderInnerState::Closed)
+    }
+
+    fn poll_closed(&mut self, cx: &mut Context) -> Poll<()> {
+        let (capacity_added, capacity) = match self.state {
+            SenderInnerState::Open {
+                ref mut capacity_added,
+                ref mut capacity,
+                ..
+            } => (capacity_added, capacity),
+
+            SenderInnerState::Closed => return Poll::Ready(()),
+
+            #[cfg(feature = "sink")]
+            SenderInnerState::Closing(_) => return self.poll_close(cx).map(|_| ()),
+        };
+
+        loop {
+            match Pin::new(&mut *capacity_added).poll_next(cx) {
+                Poll::Ready(Some(added_capacity)) => *capacity += added_capacity,
+
+                Poll::Ready(None) => {
+                    self.state = SenderInnerState::Closed;
+                    break Poll::Ready(());
+                }
+
+                Poll::Pending => break Poll::Pending,
+            }
         }
     }
 }

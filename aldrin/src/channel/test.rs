@@ -1,6 +1,7 @@
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures::stream::FusedStream;
+use std::mem;
 use std::time::Duration;
 use tokio::time;
 
@@ -285,5 +286,93 @@ async fn stream_sink_pipe() {
 
     client1.join().await;
     client2.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn sender_closed() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client
+        .create_channel_with_claimed_sender::<u32>()
+        .await
+        .unwrap();
+
+    let mut receiver = receiver.claim(16).await.unwrap();
+    let mut sender = sender.established().await.unwrap();
+
+    assert!(!sender.is_closed());
+
+    receiver.close().await.unwrap();
+    sender.closed().await;
+    assert!(sender.is_closed());
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn sender_closed_implicit() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client
+        .create_channel_with_claimed_sender::<u32>()
+        .await
+        .unwrap();
+
+    let receiver = receiver.claim(16).await.unwrap();
+    let mut sender = sender.established().await.unwrap();
+
+    assert!(!sender.is_closed());
+
+    mem::drop(receiver);
+    sender.closed().await;
+    assert!(sender.is_closed());
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[cfg(feature = "sink")]
+#[tokio::test]
+async fn sender_closed_drives_poll_close() {
+    use futures::Sink;
+    use std::pin::Pin;
+
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client
+        .create_channel_with_claimed_sender::<u32>()
+        .await
+        .unwrap();
+
+    let _receiver = receiver.claim(16).await.unwrap();
+    let mut sender = sender.established().await.unwrap();
+
+    assert!(!sender.is_closed());
+
+    assert_eq!(
+        futures::future::poll_immediate(std::future::poll_fn(|cx| {
+            Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
+        }))
+        .await,
+        None,
+    );
+
+    sender.closed().await;
+    assert!(sender.is_closed());
+
+    assert_eq!(
+        futures::future::poll_immediate(std::future::poll_fn(|cx| {
+            Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
+        }))
+        .await,
+        Some(Ok(())),
+    );
+
+    client.join().await;
     broker.join().await;
 }

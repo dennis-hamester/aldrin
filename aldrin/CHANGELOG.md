@@ -18,6 +18,8 @@
 - Add `DiscovererBuilder::any()` and `DiscovererBuilder::specific()`. Both are shorthands for
   calling `DiscovererBuilder::object()` with or without an `ObjectUuid`.
 - Add `Handle::find_any_object()` and `Handle::find_any_object()`.
+- Add functions to `Sender` for waiting for the channel to be closed: `is_closed()`, `poll_closed()`
+  and `closed()`.
 
 
 # 0.2.1 (November 28th, 2023)
