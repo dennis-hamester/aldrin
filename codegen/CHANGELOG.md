@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support `lifetime` built-in type. It resolves to `aldrin::LifetimeId` in all cases.
+- Support `unit` built-in type. It resolves to `()` in all cases.
 
 ### Breaking
 

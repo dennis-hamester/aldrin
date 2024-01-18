@@ -1,0 +1,24 @@
+struct S1 {
+    f1 @ 1 = unit;
+    f2 @ 2 = vec<unit>;
+    f3 @ 3 = map<u8 -> unit>;
+    f4 @ 4 = sender<unit>;
+    f5 @ 5 = receiver<unit>;
+}
+
+enum E1 {
+    V1 @ 1 = unit;
+}
+
+service Svc1 {
+    uuid = 7bc2cf96-7895-4b4c-a4eb-25a5ae4e0ef4;
+    version = 1;
+
+    fn func1 @ 1 {
+        args = unit;
+        ok = unit;
+        err = unit;
+    }
+
+    event ev1 @ 1 = unit;
+}

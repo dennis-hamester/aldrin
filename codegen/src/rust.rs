@@ -958,6 +958,7 @@ fn type_name(ty: &ast::TypeName) -> String {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
+        ast::TypeNameKind::Unit => "()".to_owned(),
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }
@@ -1001,6 +1002,7 @@ fn call_type_name(ty: &ast::TypeName) -> String {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
+        ast::TypeNameKind::Unit => "()".to_owned(),
         ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
     }
@@ -1044,6 +1046,7 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
+        ast::TypeNameKind::Unit => "()".to_owned(),
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }

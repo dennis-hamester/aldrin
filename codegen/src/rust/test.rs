@@ -3,6 +3,7 @@ aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
 aldrin::generate!("test/test1.aldrin");
+aldrin::generate!("test/unit.aldrin");
 
 use aldrin::core::{ObjectUuid, SerializedValue};
 use aldrin::Error;

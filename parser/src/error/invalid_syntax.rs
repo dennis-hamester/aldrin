@@ -183,6 +183,7 @@ impl Expected {
             Expected::Keyword("u32"),
             Expected::Keyword("u64"),
             Expected::Keyword("u8"),
+            Expected::Keyword("unit"),
             Expected::Keyword("uuid"),
             Expected::Keyword("value"),
             Expected::Keyword("vec"),
