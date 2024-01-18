@@ -2,6 +2,7 @@ aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
+aldrin::generate!("test/result.aldrin");
 aldrin::generate!("test/test1.aldrin");
 aldrin::generate!("test/unit.aldrin");
 

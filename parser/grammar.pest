@@ -71,6 +71,7 @@ kw_sender = @{ "sender" }
 kw_receiver = @{ "receiver" }
 kw_lifetime = @{ "lifetime" }
 kw_unit = @{ "unit" }
+kw_result = @{ "result" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -83,6 +84,7 @@ set_type = { kw_set ~ tok_ang_open ~ key_type_name ~ tok_ang_close }
 sender_type = { kw_sender ~ tok_ang_open ~ type_name ~ tok_ang_close }
 receiver_type = { kw_receiver ~ tok_ang_open ~ type_name ~ tok_ang_close }
 external_type_name = { schema_name ~ tok_scope ~ ident }
+result_type = { kw_result ~ tok_ang_open ~ type_name ~ tok_comma ~ type_name ~ tok_ang_close }
 
 key_type_name = {
     kw_u8
@@ -123,6 +125,7 @@ type_name = {
     | receiver_type
     | kw_lifetime
     | kw_unit
+    | result_type
     | external_type_name
     | ident
 }

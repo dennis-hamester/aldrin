@@ -65,6 +65,7 @@ pub enum TypeNameKind {
     Receiver(Box<TypeName>),
     Lifetime,
     Unit,
+    Result(Box<TypeName>, Box<TypeName>),
     Extern(SchemaName, Ident),
     Intern(Ident),
 }
@@ -154,6 +155,19 @@ impl TypeNameKind {
                 TypeNameKind::Receiver(Box::new(TypeName::parse(pair)))
             }
 
+            Rule::result_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip <.
+                let ok_pair = pairs.next().unwrap();
+                pairs.next().unwrap(); // Skip ,.
+                let err_pair = pairs.next().unwrap();
+                TypeNameKind::Result(
+                    Box::new(TypeName::parse(ok_pair)),
+                    Box::new(TypeName::parse(err_pair)),
+                )
+            }
+
             Rule::external_type_name => {
                 let mut pairs = pair.into_inner();
                 let pair = pairs.next().unwrap();
@@ -177,6 +191,11 @@ impl TypeNameKind {
             | Self::Map(_, ty)
             | Self::Sender(ty)
             | Self::Receiver(ty) => ty.validate(validate),
+
+            Self::Result(ok, err) => {
+                ok.validate(validate);
+                err.validate(validate);
+            }
 
             Self::Extern(schema, ty) => {
                 MissingImport::validate(schema, validate);

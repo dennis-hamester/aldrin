@@ -1,0 +1,24 @@
+struct S1 {
+    f1 @ 1 = result<string, u8>;
+    f2 @ 2 = vec<result<string, u8>>;
+    f3 @ 3 = map<u8 -> result<string, u8>>;
+    f4 @ 4 = sender<result<string, u8>>;
+    f5 @ 5 = receiver<result<string, u8>>;
+}
+
+enum E1 {
+    V1 @ 1 = result<string, u8>;
+}
+
+service Svc1 {
+    uuid = 7bc2cf96-7895-4b4c-a4eb-25a5ae4e0ef4;
+    version = 1;
+
+    fn func1 @ 1 {
+        args = result<string, u8>;
+        ok = result<string, u8>;
+        err = result<string, u8>;
+    }
+
+    event ev1 @ 1 = result<string, u8>;
+}

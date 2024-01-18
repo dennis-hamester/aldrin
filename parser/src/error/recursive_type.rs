@@ -217,6 +217,7 @@ impl<'a> Context<'a> {
     fn visit_type_name(self, type_name: &TypeName) -> bool {
         match type_name.kind() {
             TypeNameKind::Option(type_name) => self.visit_type_name(type_name),
+            TypeNameKind::Result(ok, err) => self.visit_type_name(ok) || self.visit_type_name(err),
 
             TypeNameKind::Extern(schema_name, ident) => {
                 self.visit_external_type(schema_name.value(), ident)

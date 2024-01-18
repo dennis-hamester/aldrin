@@ -175,6 +175,7 @@ impl Expected {
             Expected::Keyword("object_id"),
             Expected::Keyword("option"),
             Expected::Keyword("receiver"),
+            Expected::Keyword("result"),
             Expected::Keyword("sender"),
             Expected::Keyword("service_id"),
             Expected::Keyword("set"),

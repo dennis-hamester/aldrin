@@ -959,6 +959,9 @@ fn type_name(ty: &ast::TypeName) -> String {
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
         ast::TypeNameKind::Unit => "()".to_owned(),
+        ast::TypeNameKind::Result(ok, err) => {
+            format!("Result<{}, {}>", type_name(ok), type_name(err))
+        }
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }
@@ -1003,6 +1006,9 @@ fn call_type_name(ty: &ast::TypeName) -> String {
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
         ast::TypeNameKind::Unit => "()".to_owned(),
+        ast::TypeNameKind::Result(ok, err) => {
+            format!("Result<{}, {}>", call_type_name(ok), call_type_name(err))
+        }
         ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
     }
@@ -1047,6 +1053,9 @@ fn sender_type_name(ty: &ast::TypeName) -> String {
         }
         ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
         ast::TypeNameKind::Unit => "()".to_owned(),
+        ast::TypeNameKind::Result(ok, err) => {
+            format!("Result<{}, {}>", type_name(ok), type_name(err))
+        }
         ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
         ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }

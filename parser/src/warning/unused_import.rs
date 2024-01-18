@@ -144,6 +144,10 @@ impl UnusedImport {
             | TypeNameKind::Sender(ty)
             | TypeNameKind::Receiver(ty) => Self::visit_type_name(ty, schema_name),
 
+            TypeNameKind::Result(ok, err) => {
+                Self::visit_type_name(ok, schema_name) || Self::visit_type_name(err, schema_name)
+            }
+
             TypeNameKind::Extern(schema, _) => schema.value() == schema_name.value(),
 
             TypeNameKind::Bool
