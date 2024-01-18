@@ -1,7 +1,7 @@
 [package]
 name = "aldrin-test"
 description = "Utilities for Aldrin server and client tests."
-version = "0.2.0"
+version = "0.3.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -21,17 +21,17 @@ all-features = true
 tokio = ["dep:tokio"]
 
 [dependencies.aldrin]
-version = "0.2.0"
+version = "0.3.0"
 path = "../aldrin"
 default-features = false
 
 [dependencies.aldrin-broker]
-version = "0.2.0"
+version = "0.3.0"
 path = "../broker"
 default-features = false
 
 [dependencies.aldrin-core]
-version = "0.2.0"
+version = "0.3.0"
 path = "../core"
 default-features = false
 features = ["channel"]

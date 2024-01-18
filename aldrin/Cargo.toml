@@ -1,7 +1,7 @@
 [package]
 name = "aldrin"
 description = "Message bus for service-oriented RPC and interprocess communication."
-version = "0.2.0"
+version = "0.3.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -25,14 +25,14 @@ sink = ["dep:futures-sink"]
 tokio = ["aldrin-core/tokio"]
 
 [dependencies.aldrin-core]
-version = "0.2.0"
+version = "0.3.0"
 path = "../core"
 default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.aldrin-macros]
 optional = true
-version = "0.2.0"
+version = "0.3.0"
 path = "../macros"
 default-features = false
 

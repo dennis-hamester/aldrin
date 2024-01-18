@@ -1,7 +1,7 @@
 [package]
 name = "aldrin-macros"
 description = "Aldrin code generation macros."
-version = "0.2.0"
+version = "0.3.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -21,13 +21,13 @@ all-features = true
 proc-macro = true
 
 [dependencies.aldrin-codegen]
-version = "0.2.0"
+version = "0.3.0"
 path = "../codegen"
 default-features = false
 features = ["rust"]
 
 [dependencies.aldrin-parser]
-version = "0.2.0"
+version = "0.3.0"
 path = "../parser"
 default-features = false
 
