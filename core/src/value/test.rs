@@ -1532,3 +1532,19 @@ fn test_deserialize_too_deep() {
         Err(DeserializeError::TooDeeplyNested)
     );
 }
+
+#[test]
+fn test_result_ok() {
+    let serialized = [40, 0, 3, 1];
+    let value = Result::<u8, u8>::Ok(1);
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+}
+
+#[test]
+fn test_result_err() {
+    let serialized = [40, 1, 3, 1];
+    let value = Result::<u8, u8>::Err(1);
+    assert_serialize_eq(&value, serialized);
+    assert_deserialize_eq(&value, serialized);
+}

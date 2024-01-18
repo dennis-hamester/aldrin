@@ -649,3 +649,32 @@ where
         T::Owned::deserialize(deserializer).map(Self::Owned)
     }
 }
+
+impl<T, E> Serialize for Result<T, E>
+where
+    T: Serialize,
+    E: Serialize,
+{
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        match self {
+            Ok(ok) => serializer.serialize_enum(0, ok),
+            Err(err) => serializer.serialize_enum(1, err),
+        }
+    }
+}
+
+impl<T, E> Deserialize for Result<T, E>
+where
+    T: Deserialize,
+    E: Deserialize,
+{
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        let deserializer = deserializer.deserialize_enum()?;
+
+        match deserializer.variant() {
+            0 => deserializer.deserialize().map(Ok),
+            1 => deserializer.deserialize().map(Err),
+            _ => Err(DeserializeError::InvalidSerialization),
+        }
+    }
+}
