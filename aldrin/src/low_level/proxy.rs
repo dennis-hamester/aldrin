@@ -1,8 +1,8 @@
+use super::Reply;
 use super::{Event, EventListener};
 use crate::core::{Serialize, ServiceId};
 use crate::error::Error;
 use crate::handle::Handle;
-use crate::reply::Reply;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::pin::Pin;
@@ -46,7 +46,7 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call<Args, T, E>(&self, function: u32, args: &Args) -> Reply<T, E>
+    pub fn call<Args>(&self, function: u32, args: &Args) -> Reply
     where
         Args: Serialize + ?Sized,
     {

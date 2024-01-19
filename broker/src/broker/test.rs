@@ -30,7 +30,7 @@ async fn disconnect_during_function_call() {
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
     let proxy = Proxy::new(client2.clone(), svc.id()).await.unwrap();
-    let reply = proxy.call::<_, (), ()>(0, &());
+    let reply = proxy.call(0, &());
     mem::drop(reply);
     client2.join().await;
 
@@ -76,7 +76,7 @@ async fn drop_conn_before_function_call() {
 
     // Calling a function on conn1 must not deadlock, but be immediately replied to with an error.
     let proxy = Proxy::new(client2.clone(), svc.id()).await.unwrap();
-    let res = time::timeout(Duration::from_millis(500), proxy.call::<_, (), ()>(0, &()))
+    let res = time::timeout(Duration::from_millis(500), proxy.call(0, &()))
         .await
         .unwrap();
 
@@ -439,7 +439,7 @@ async fn calls_from_multiple_clients() {
 
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call::<_, (), ()>(0, &());
+    let reply = proxy.call(0, &());
     svc.next_function_call()
         .await
         .unwrap()
@@ -450,7 +450,7 @@ async fn calls_from_multiple_clients() {
 
     let mut client3 = broker.add_client().await;
     let proxy = client3.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call::<_, (), ()>(0, &());
+    let reply = proxy.call(0, &());
     svc.next_function_call()
         .await
         .unwrap()

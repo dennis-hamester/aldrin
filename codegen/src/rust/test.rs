@@ -23,10 +23,10 @@ async fn auto_reply_with_invalid_args() {
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = proxy.call::<_, u32, ()>(1, &0).await;
+    let res = proxy.call(1, &0).await;
     assert_eq!(res, Err(Error::invalid_arguments(1, None)));
 
-    let res = proxy.call::<_, (), ()>(2, &()).await;
+    let res = proxy.call(2, &()).await;
     assert_eq!(res, Err(Error::invalid_arguments(2, None)));
 }
 
@@ -40,7 +40,7 @@ async fn auto_reply_with_invalid_function() {
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = proxy.call::<_, (), ()>(3, &()).await;
+    let res = proxy.call(3, &()).await;
     assert_eq!(res, Err(Error::invalid_function(3)));
 }
 
