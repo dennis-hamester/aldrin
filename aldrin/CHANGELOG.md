@@ -20,6 +20,7 @@ This version still connects to brokers using protocol version 14.
 - Add `EventListener::is_finished()`.
 - Add `low_level::Proxy`, which acts as a new basis for generated proxy types. It handles function
   calls and events.
+- Add `low_level::Reply`.
 - Add `Reply<T, E>`, which replaces both `PendingFunctionResult<T, E>` and
   `PendingFunctionValue<T>`.
 

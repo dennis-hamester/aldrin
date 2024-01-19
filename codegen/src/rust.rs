@@ -514,9 +514,9 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "    pub fn {func_name}(&self{arg}) -> aldrin::Reply<{ok}, {err}> {{");
             if func.args().is_some() {
-                genln!(self, "        self.inner.call({id}, &arg)");
+                genln!(self, "        self.inner.call({id}, &arg).cast()");
             } else {
-                genln!(self, "        self.inner.call({id}, &())");
+                genln!(self, "        self.inner.call({id}, &()).cast()");
             }
             genln!(self, "    }}");
 

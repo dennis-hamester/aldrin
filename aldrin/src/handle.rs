@@ -17,9 +17,8 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{EventListener, EventListenerId, EventListenerRequest, Proxy};
+use crate::low_level::{EventListener, EventListenerId, EventListenerRequest, Proxy, Reply};
 use crate::object::Object;
-use crate::reply::Reply;
 use crate::service::Service;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
@@ -208,7 +207,7 @@ impl Handle {
             .ok();
     }
 
-    pub(crate) fn call<Args, T, E>(&self, id: ServiceId, function: u32, args: &Args) -> Reply<T, E>
+    pub(crate) fn call<Args>(&self, id: ServiceId, function: u32, args: &Args) -> Reply
     where
         Args: Serialize + ?Sized,
     {

@@ -93,7 +93,7 @@ use std::task::{Context, Poll};
 /// // HashSet to keep track of users:
 /// let mut users = HashSet::new();
 ///
-/// # aldrin::low_level::Proxy::new(handle.clone(), service.id()).await.unwrap().call::<_, (), ()>(SHUTDOWN, &());
+/// # aldrin::low_level::Proxy::new(handle.clone(), service.id()).await.unwrap().call(SHUTDOWN, &());
 /// // Iterate (asynchronously) over incoming function calls. `func` is of type `FunctionCall`,
 /// // which contains the function's id, the arguments, and a reply object.
 /// while let Some(func) = service.next_function_call().await {
