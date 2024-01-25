@@ -97,8 +97,14 @@ impl Object {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn create_service(&self, uuid: ServiceUuid, version: u32) -> Result<Service, Error> {
-        self.client.create_service(self.id, uuid, version).await
+    pub async fn create_service(
+        &self,
+        uuid: impl Into<ServiceUuid>,
+        version: u32,
+    ) -> Result<Service, Error> {
+        self.client
+            .create_service(self.id, uuid.into(), version)
+            .await
     }
 }
 

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
+- `Object::create_service()` now takes a `impl Into<ServiceUuid>`.
 
 ## [0.3.0] - 2024-01-18
 
