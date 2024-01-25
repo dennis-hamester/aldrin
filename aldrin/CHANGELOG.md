@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `NIL` and `is_nil()` to `LifetimeId`.
 - Implement `Default` for `LifetimeId`.
 
+### Changed
+- `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
+
 ## [0.3.0] - 2024-01-18
 
 ### Added

@@ -130,11 +130,11 @@ impl Handle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn create_object(&self, uuid: ObjectUuid) -> Result<Object, Error> {
+    pub async fn create_object(&self, uuid: impl Into<ObjectUuid>) -> Result<Object, Error> {
         let (send, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateObject(CreateObjectRequest {
-                uuid,
+                uuid: uuid.into(),
                 reply: send,
             }))
             .map_err(|_| Error::Shutdown)?;
