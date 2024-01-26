@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `NIL` and `is_nil()` to all id types.
 - Implement `Default` for all id types.
 
+### Changed
+
+- Rename `ConnectReply::VersionMismatch` to `IncompatibleVersion`.
+
 ## [0.3.0] - 2024-01-18
 
 - Bump for Aldrin 0.3.0 release.

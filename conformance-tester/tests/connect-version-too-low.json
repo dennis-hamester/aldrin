@@ -22,7 +22,7 @@
         {
             "type": "receive",
             "message": "connect-reply",
-            "result": "version-mismatch",
+            "result": "incompatible-version",
             "version": 14
         }
     ]

@@ -12,7 +12,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[repr(u8)]
 enum ConnectReplyKind {
     Ok = 0,
-    VersionMismatch = 1,
+    IncompatibleVersion = 1,
     Rejected = 2,
 }
 
@@ -20,7 +20,7 @@ enum ConnectReplyKind {
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub enum ConnectReply {
     Ok(SerializedValue),
-    VersionMismatch(u32),
+    IncompatibleVersion(u32),
     Rejected(SerializedValue),
 }
 
@@ -54,9 +54,9 @@ impl MessageOps for ConnectReply {
                 serializer.finish()
             }
 
-            Self::VersionMismatch(version) => {
+            Self::IncompatibleVersion(version) => {
                 let mut serializer = MessageSerializer::with_none_value(MessageKind::ConnectReply);
-                serializer.put_discriminant_u8(ConnectReplyKind::VersionMismatch);
+                serializer.put_discriminant_u8(ConnectReplyKind::IncompatibleVersion);
                 serializer.put_varint_u32_le(version);
                 serializer.finish()
             }
@@ -76,10 +76,10 @@ impl MessageOps for ConnectReply {
         match deserializer.try_get_discriminant_u8()? {
             ConnectReplyKind::Ok => deserializer.finish().map(Self::Ok),
 
-            ConnectReplyKind::VersionMismatch => {
+            ConnectReplyKind::IncompatibleVersion => {
                 let version = deserializer.try_get_varint_u32_le()?;
                 deserializer.finish_discard_value()?;
-                Ok(Self::VersionMismatch(version))
+                Ok(Self::IncompatibleVersion(version))
             }
 
             ConnectReplyKind::Rejected => deserializer.finish().map(Self::Rejected),
@@ -89,7 +89,7 @@ impl MessageOps for ConnectReply {
     fn value(&self) -> Option<&SerializedValueSlice> {
         match self {
             Self::Ok(value) | Self::Rejected(value) => Some(value),
-            Self::VersionMismatch(_) => None,
+            Self::IncompatibleVersion(_) => None,
         }
     }
 }
@@ -128,7 +128,7 @@ mod test {
     fn version_mismatch() {
         let serialized = [12, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 2];
 
-        let msg = ConnectReply::VersionMismatch(2);
+        let msg = ConnectReply::IncompatibleVersion(2);
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
 

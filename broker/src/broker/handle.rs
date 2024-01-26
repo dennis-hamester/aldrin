@@ -96,7 +96,7 @@ impl BrokerHandle {
         };
 
         if connect.version != crate::core::VERSION {
-            t.send_and_flush(Message::ConnectReply(ConnectReply::VersionMismatch(
+            t.send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(
                 crate::core::VERSION,
             )))
             .await

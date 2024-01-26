@@ -12,7 +12,7 @@ pub enum ConnectReply {
         value: Value,
     },
 
-    VersionMismatch {
+    IncompatibleVersion {
         version: u32,
     },
 
@@ -27,8 +27,8 @@ impl ConnectReply {
             Self::Ok { value } => message::ConnectReply::ok_with_serialize_value(value)
                 .with_context(|| anyhow!("failed to serialize value")),
 
-            Self::VersionMismatch { version } => {
-                Ok(message::ConnectReply::VersionMismatch(*version))
+            Self::IncompatibleVersion { version } => {
+                Ok(message::ConnectReply::IncompatibleVersion(*version))
             }
 
             Self::Rejected { value } => message::ConnectReply::rejected_with_serialize_value(value)
@@ -41,8 +41,8 @@ impl ConnectReply {
             (Self::Ok { value: value1 }, Self::Ok { value: value2 }) => Ok(value1.matches(value2)),
 
             (
-                Self::VersionMismatch { version: version1 },
-                Self::VersionMismatch { version: version2 },
+                Self::IncompatibleVersion { version: version1 },
+                Self::IncompatibleVersion { version: version2 },
             ) => Ok(version1 == version2),
 
             (Self::Rejected { value: value1 }, Self::Rejected { value: value2 }) => {
@@ -75,8 +75,8 @@ impl TryFrom<message::ConnectReply> for ConnectReply {
                 Ok(Self::Ok { value })
             }
 
-            message::ConnectReply::VersionMismatch(version) => {
-                Ok(Self::VersionMismatch { version })
+            message::ConnectReply::IncompatibleVersion(version) => {
+                Ok(Self::IncompatibleVersion { version })
             }
 
             message::ConnectReply::Rejected(value) => {

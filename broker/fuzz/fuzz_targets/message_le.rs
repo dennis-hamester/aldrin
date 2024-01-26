@@ -201,7 +201,7 @@ impl UpdateContext for Connect {
 #[derive(Debug, Arbitrary)]
 pub enum ConnectReplyLe {
     Ok,
-    VersionMismatch(u8),
+    IncompatibleVersion(u8),
     Rejected,
 }
 
@@ -209,7 +209,9 @@ impl ConnectReplyLe {
     pub fn to_core(&self, _ctx: &Context) -> ConnectReply {
         match self {
             Self::Ok => ConnectReply::ok_with_serialize_value(&()).unwrap(),
-            Self::VersionMismatch(version) => ConnectReply::VersionMismatch(*version as u32),
+            Self::IncompatibleVersion(version) => {
+                ConnectReply::IncompatibleVersion(*version as u32)
+            }
             Self::Rejected => ConnectReply::rejected_with_serialize_value(&()).unwrap(),
         }
     }
