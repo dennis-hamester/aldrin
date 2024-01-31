@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `Default` for `LifetimeId`.
 
 ### Changed
+
 - `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
 - `Object::create_service()` now takes a `impl Into<ServiceUuid>`.
+- Remove the version number in the `ConnectError::IncompatibleVersion` error.
 
 ## [0.3.0] - 2024-01-18
 

@@ -8,11 +8,8 @@ use thiserror::Error;
 #[derive(Error, Debug, Clone)]
 pub enum ConnectError<T> {
     /// The protocol version of the broker is incompatible.
-    ///
-    /// The contained version is that of the broker. The version of the client is
-    /// [`crate::core::VERSION`].
-    #[error("incompatible protocol version {}", .0)]
-    IncompatibleVersion(u32),
+    #[error("incompatible protocol version")]
+    IncompatibleVersion,
 
     /// An unexpected message was received.
     ///
