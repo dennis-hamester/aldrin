@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remove the version number in the `EstablishError::IncompatibleVersion` error.
+- `BrokerHandle` and `PendingConnection` are adapted to support the new protocol handshake.
 
 ### Fixed
 

@@ -1,5 +1,5 @@
 use crate::core::message::Message;
-use crate::core::SerializeError;
+use crate::core::{DeserializeError, SerializeError};
 use thiserror::Error;
 
 /// Error of an active connection.
@@ -36,4 +36,8 @@ pub enum EstablishError<T> {
     /// A value failed to serialize.
     #[error(transparent)]
     Serialize(#[from] SerializeError),
+
+    /// A value failed to deserialize.
+    #[error(transparent)]
+    Deserialize(#[from] DeserializeError),
 }
