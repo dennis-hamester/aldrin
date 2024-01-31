@@ -22,11 +22,8 @@ pub enum EstablishError<T> {
     UnexpectedMessageReceived(Message),
 
     /// The protocol version of the client is incompatible.
-    ///
-    /// The contained version is that of the client. The version of the broker is
-    /// [`crate::core::VERSION`].
-    #[error("incompatible protocol version {}", .0)]
-    IncompatibleVersion(u32),
+    #[error("incompatible protocol version")]
+    IncompatibleVersion,
 
     /// The broker shut down.
     #[error("broker shut down")]

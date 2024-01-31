@@ -102,7 +102,7 @@ impl BrokerHandle {
             .await
             .ok();
 
-            return Err(EstablishError::IncompatibleVersion(connect.version));
+            return Err(EstablishError::IncompatibleVersion);
         }
 
         Ok(PendingConnection::new(self.clone(), t, connect.value))

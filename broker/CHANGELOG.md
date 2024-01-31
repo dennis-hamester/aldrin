@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Remove the version number in the `EstablishError::IncompatibleVersion` error.
+
 ### Fixed
 
 - Shut down a connection immediately when an invalid message is received.
