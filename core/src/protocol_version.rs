@@ -10,8 +10,9 @@ pub struct ProtocolVersion {
 impl ProtocolVersion {
     pub const MAJOR: u32 = 1;
     pub const V1_14: Self = Self { minor: Minor::V14 };
+    pub const V1_15: Self = Self { minor: Minor::V15 };
     pub const MIN: Self = Self::V1_14;
-    pub const MAX: Self = Self::V1_14;
+    pub const MAX: Self = Self::V1_15;
 
     pub const fn new(major: u32, minor: u32) -> Result<Self, ProtocolVersionError> {
         if major != Self::MAJOR {
@@ -22,6 +23,7 @@ impl ProtocolVersion {
 
         match minor {
             14 => Ok(Self { minor: Minor::V14 }),
+            15 => Ok(Self { minor: Minor::V15 }),
 
             _ => Err(ProtocolVersionError {
                 kind: ProtocolVersionErrorKind::InvalidMinor,
@@ -41,6 +43,7 @@ impl ProtocolVersion {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum Minor {
     V14 = 14,
+    V15 = 15,
 }
 
 impl fmt::Display for ProtocolVersion {
@@ -68,13 +71,18 @@ mod test {
     #[test]
     fn parse_protocol_version() {
         assert_eq!("1.14".parse(), Ok(ProtocolVersion::V1_14));
+        assert_eq!("1.15".parse(), Ok(ProtocolVersion::V1_15));
 
         assert_eq!(
             "0.14".parse::<ProtocolVersion>(),
             Err(ProtocolVersionErrorKind::InvalidMajor.into())
         );
         assert_eq!(
-            "1.15".parse::<ProtocolVersion>(),
+            "1.0".parse::<ProtocolVersion>(),
+            Err(ProtocolVersionErrorKind::InvalidMinor.into())
+        );
+        assert_eq!(
+            "1.4294967295".parse::<ProtocolVersion>(),
             Err(ProtocolVersionErrorKind::InvalidMinor.into())
         );
 

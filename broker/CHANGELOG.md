@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Support protocol version 15.
+
 ### Changed
 
 - Remove the version number in the `EstablishError::IncompatibleVersion` error.

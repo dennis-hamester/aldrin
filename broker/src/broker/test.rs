@@ -128,7 +128,7 @@ async fn begin_connect_2_accept() {
     t1.send_and_flush(Message::Connect2(
         Connect2::with_serialize_data(
             ProtocolVersion::V1_14.major(),
-            ProtocolVersion::V1_14.minor(),
+            ProtocolVersion::V1_15.minor(),
             &data,
         )
         .unwrap(),
@@ -146,7 +146,7 @@ async fn begin_connect_2_accept() {
     };
     assert_eq!(
         msg.result,
-        ConnectResult::Ok(ProtocolVersion::V1_14.minor())
+        ConnectResult::Ok(ProtocolVersion::V1_15.minor())
     );
     let data = msg.deserialize_connect_data().unwrap();
     assert_eq!(data.deserialize_user(), Some(Ok(1u32)));
@@ -196,7 +196,7 @@ async fn begin_connect_2_reject() {
     t1.send_and_flush(Message::Connect2(
         Connect2::with_serialize_data(
             ProtocolVersion::V1_14.major(),
-            ProtocolVersion::V1_14.minor(),
+            ProtocolVersion::V1_15.minor(),
             &data,
         )
         .unwrap(),

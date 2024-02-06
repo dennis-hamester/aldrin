@@ -16,7 +16,7 @@
         {
             "type": "send",
             "message": "connect",
-            "version": 13,
+            "version": 0,
             "value-type": "none"
         },
         {

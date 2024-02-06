@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This version still connects to brokers using protocol version 14.
+
 ### Added
 
 - Add `Handle::wait_for_object()`, `Handle::wait_for_any_object()` and
