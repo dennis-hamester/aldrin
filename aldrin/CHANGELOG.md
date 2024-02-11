@@ -15,6 +15,7 @@ This version still connects to brokers using protocol version 14.
   `Handle::wait_for_specific_object()`.
 - Add `NIL` and `is_nil()` to `LifetimeId`.
 - Implement `Default` for `LifetimeId`.
+- Add `Handle::version()`, which returns the protocol version that was negotiated with the broker.
 
 ### Changed
 

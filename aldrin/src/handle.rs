@@ -11,8 +11,8 @@ use crate::core::message::{
 };
 use crate::core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
-    DeserializeError, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializedValue, ServiceId,
-    ServiceUuid,
+    DeserializeError, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize,
+    SerializedValue, ServiceId, ServiceUuid,
 };
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
@@ -1032,6 +1032,11 @@ impl Handle {
     /// Create a [`Lifetime`] from an id.
     pub async fn create_lifetime(&self, id: LifetimeId) -> Result<Lifetime, Error> {
         Lifetime::create(self, id).await
+    }
+
+    /// Returns the protocol version that was negotiated with the broker.
+    pub async fn version(&self) -> Result<ProtocolVersion, Error> {
+        Ok(ProtocolVersion::V1_14)
     }
 }
 
