@@ -11,6 +11,7 @@ mod generic_value;
 mod ids;
 mod message_deserializer;
 mod message_serializer;
+mod protocol_version;
 mod serialize_key;
 mod serialized_value;
 mod value;
@@ -27,12 +28,13 @@ pub mod transport;
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::DeserializeKey;
-pub use error::{DeserializeError, SerializeError};
+pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid,
 };
+pub use protocol_version::ProtocolVersion;
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use value::{ByteSlice, Bytes, Skip, ValueKind};

@@ -35,3 +35,22 @@ pub enum DeserializeError {
     #[error("serialization contains trailing data")]
     TrailingData,
 }
+
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error(transparent)]
+pub struct ProtocolVersionError {
+    #[from]
+    pub(crate) kind: ProtocolVersionErrorKind,
+}
+
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) enum ProtocolVersionErrorKind {
+    #[error("invalid major version component")]
+    InvalidMajor,
+
+    #[error("invalid minor version component")]
+    InvalidMinor,
+
+    #[error("version failed to parse")]
+    Parse,
+}

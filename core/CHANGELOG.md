@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `Serialize` and `Deserialize` for `std::convert::Infallible`.
 - Add `NIL` and `is_nil()` to all id types.
 - Implement `Default` for all id types.
+- Add type `ProtocolVersion`.
 
 ### Changed
 
