@@ -11,7 +11,9 @@ mod clear_bus_listener_filters;
 mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
+mod connect2;
 mod connect_reply;
+mod connect_reply2;
 mod create_bus_listener;
 mod create_bus_listener_reply;
 mod create_channel;
@@ -67,7 +69,9 @@ pub use clear_bus_listener_filters::ClearBusListenerFilters;
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
+pub use connect2::{Connect2, ConnectData};
 pub use connect_reply::ConnectReply;
+pub use connect_reply2::{ConnectReply2, ConnectReplyData, ConnectResult};
 pub use create_bus_listener::CreateBusListener;
 pub use create_bus_listener_reply::CreateBusListenerReply;
 pub use create_channel::CreateChannel;
@@ -151,6 +155,8 @@ pub enum MessageKind {
     StopBusListenerReply = 43,
     EmitBusEvent = 44,
     BusListenerCurrentFinished = 45,
+    Connect2 = 46,
+    ConnectReply2 = 47,
 }
 
 impl MessageKind {
@@ -162,7 +168,9 @@ impl MessageKind {
             | Self::CallFunctionReply
             | Self::EmitEvent
             | Self::SendItem
-            | Self::ItemReceived => true,
+            | Self::ItemReceived
+            | Self::Connect2
+            | Self::ConnectReply2 => true,
 
             Self::Shutdown
             | Self::CreateObject
@@ -267,6 +275,8 @@ pub enum Message {
     StopBusListenerReply(StopBusListenerReply),
     EmitBusEvent(EmitBusEvent),
     BusListenerCurrentFinished(BusListenerCurrentFinished),
+    Connect2(Connect2),
+    ConnectReply2(ConnectReply2),
 }
 
 impl MessageOps for Message {
@@ -318,6 +328,8 @@ impl MessageOps for Message {
             Self::StopBusListenerReply(_) => MessageKind::StopBusListenerReply,
             Self::EmitBusEvent(_) => MessageKind::EmitBusEvent,
             Self::BusListenerCurrentFinished(_) => MessageKind::BusListenerCurrentFinished,
+            Self::Connect2(_) => MessageKind::Connect2,
+            Self::ConnectReply2(_) => MessageKind::ConnectReply2,
         }
     }
 
@@ -369,6 +381,8 @@ impl MessageOps for Message {
             Self::StopBusListenerReply(msg) => msg.serialize_message(),
             Self::EmitBusEvent(msg) => msg.serialize_message(),
             Self::BusListenerCurrentFinished(msg) => msg.serialize_message(),
+            Self::Connect2(msg) => msg.serialize_message(),
+            Self::ConnectReply2(msg) => msg.serialize_message(),
         }
     }
 
@@ -509,6 +523,10 @@ impl MessageOps for Message {
                 BusListenerCurrentFinished::deserialize_message(buf)
                     .map(Self::BusListenerCurrentFinished)
             }
+            MessageKind::Connect2 => Connect2::deserialize_message(buf).map(Self::Connect2),
+            MessageKind::ConnectReply2 => {
+                ConnectReply2::deserialize_message(buf).map(Self::ConnectReply2)
+            }
         }
     }
 
@@ -560,6 +578,8 @@ impl MessageOps for Message {
             Self::StopBusListenerReply(msg) => msg.value(),
             Self::EmitBusEvent(msg) => msg.value(),
             Self::BusListenerCurrentFinished(msg) => msg.value(),
+            Self::Connect2(msg) => msg.value(),
+            Self::ConnectReply2(msg) => msg.value(),
         }
     }
 }

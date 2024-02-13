@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `NIL` and `is_nil()` to all id types.
 - Implement `Default` for all id types.
 - Add type `ProtocolVersion`.
+- Define new connection messages `Connect2` and `ConnectReply2`, that will allow future protocol
+  extensions to be backward-compatible.
 
 ### Changed
 

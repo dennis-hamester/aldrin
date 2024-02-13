@@ -12,7 +12,9 @@ mod clear_bus_listener_filters;
 mod close_channel_end;
 mod close_channel_end_reply;
 mod connect;
+mod connect2;
 mod connect_reply;
+mod connect_reply2;
 mod create_bus_listener;
 mod create_bus_listener_reply;
 mod create_channel;
@@ -65,7 +67,9 @@ pub use clear_bus_listener_filters::ClearBusListenerFilters;
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
+pub use connect2::Connect2;
 pub use connect_reply::ConnectReply;
+pub use connect_reply2::ConnectReply2;
 pub use create_bus_listener::CreateBusListener;
 pub use create_bus_listener_reply::CreateBusListenerReply;
 pub use create_channel::CreateChannel;
@@ -148,6 +152,8 @@ pub enum Message {
     StopBusListenerReply(StopBusListenerReply),
     EmitBusEvent(EmitBusEvent),
     BusListenerCurrentFinished(BusListenerCurrentFinished),
+    Connect2(Connect2),
+    ConnectReply2(ConnectReply2),
 }
 
 impl Message {
@@ -227,6 +233,8 @@ impl Message {
             Self::BusListenerCurrentFinished(msg) => msg
                 .to_core(ctx)
                 .map(ProtoMessage::BusListenerCurrentFinished),
+            Self::Connect2(msg) => msg.to_core(ctx).map(ProtoMessage::Connect2),
+            Self::ConnectReply2(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply2),
         }
     }
 
@@ -324,6 +332,8 @@ impl Message {
             (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
                 msg.matches(other, ctx)
             }
+            (Self::Connect2(msg), Self::Connect2(other)) => msg.matches(other, ctx),
+            (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -446,6 +456,10 @@ impl Message {
             (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::Connect2(msg), Self::Connect2(other)) => msg.update_context(other, ctx),
+            (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -520,6 +534,8 @@ impl Message {
             Self::BusListenerCurrentFinished(msg) => {
                 msg.apply_context(ctx).map(Self::BusListenerCurrentFinished)
             }
+            Self::Connect2(msg) => msg.apply_context(ctx).map(Self::Connect2),
+            Self::ConnectReply2(msg) => msg.apply_context(ctx).map(Self::ConnectReply2),
         }
     }
 }
@@ -597,6 +613,8 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::BusListenerCurrentFinished(msg) => {
                 msg.try_into().map(Self::BusListenerCurrentFinished)
             }
+            ProtoMessage::Connect2(msg) => msg.try_into().map(Self::Connect2),
+            ProtoMessage::ConnectReply2(msg) => msg.try_into().map(Self::ConnectReply2),
         }
     }
 }

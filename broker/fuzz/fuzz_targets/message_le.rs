@@ -5,9 +5,10 @@ use aldrin_broker::core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData, ConnectReply,
+    ConnectReply2, ConnectReplyData, ConnectResult, CreateBusListener, CreateBusListenerReply,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
@@ -19,7 +20,7 @@ use aldrin_broker::core::message::{
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
     ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
-    ServiceCookie, ServiceId, ServiceUuid,
+    SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use arbitrary::Arbitrary;
 
@@ -71,6 +72,8 @@ pub enum MessageLe {
     StopBusListenerReply(StopBusListenerReplyLe),
     EmitBusEvent(EmitBusEventLe),
     BusListenerCurrentFinished(BusListenerCurrentFinishedLe),
+    Connect2(Connect2Le),
+    ConnectReply2(ConnectReply2Le),
 }
 
 impl MessageLe {
@@ -122,6 +125,8 @@ impl MessageLe {
             Self::StopBusListenerReply(msg) => msg.to_core(ctx).into(),
             Self::EmitBusEvent(msg) => msg.to_core(ctx).into(),
             Self::BusListenerCurrentFinished(msg) => msg.to_core(ctx).into(),
+            Self::Connect2(msg) => msg.to_core(ctx).into(),
+            Self::ConnectReply2(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -179,6 +184,8 @@ impl UpdateContext for ProtoMessage {
             Self::StopBusListenerReply(msg) => msg.update_context(ctx),
             Self::EmitBusEvent(msg) => msg.update_context(ctx),
             Self::BusListenerCurrentFinished(msg) => msg.update_context(ctx),
+            Self::Connect2(msg) => msg.update_context(ctx),
+            Self::ConnectReply2(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1601,5 +1608,60 @@ impl BusListenerCurrentFinishedLe {
 impl UpdateContext for BusListenerCurrentFinished {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_uuid(self.cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct Connect2Le {
+    pub major_version: u8,
+    pub minor_version: u8,
+}
+
+impl Connect2Le {
+    pub fn to_core(&self, _ctx: &Context) -> Connect2 {
+        Connect2 {
+            major_version: self.major_version as u32,
+            minor_version: self.minor_version as u32,
+            value: SerializedValue::serialize(&ConnectData::new()).unwrap(),
+        }
+    }
+}
+
+impl UpdateContext for Connect2 {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct ConnectReply2Le {
+    pub result: ConnectResultLe,
+}
+
+impl ConnectReply2Le {
+    pub fn to_core(&self, ctx: &Context) -> ConnectReply2 {
+        ConnectReply2 {
+            result: self.result.to_core(ctx),
+            value: SerializedValue::serialize(&ConnectReplyData::new()).unwrap(),
+        }
+    }
+}
+
+impl UpdateContext for ConnectReply2 {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum ConnectResultLe {
+    Ok(u8),
+    Rejected,
+    IncompatibleVersion,
+}
+
+impl ConnectResultLe {
+    pub fn to_core(&self, _ctx: &Context) -> ConnectResult {
+        match self {
+            Self::Ok(version) => ConnectResult::Ok(*version as u32),
+            Self::Rejected => ConnectResult::Rejected,
+            Self::IncompatibleVersion => ConnectResult::IncompatibleVersion,
+        }
     }
 }
