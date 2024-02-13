@@ -156,7 +156,7 @@ where
         mut t: T,
         data: &D,
     ) -> Result<(Self, SerializedValue), ConnectError<T::Error>> {
-        let connect = Connect::with_serialize_value(crate::core::VERSION, data)?;
+        let connect = Connect::with_serialize_value(14, data)?;
         t.send_and_flush(Message::Connect(connect))
             .await
             .map_err(ConnectError::Transport)?;

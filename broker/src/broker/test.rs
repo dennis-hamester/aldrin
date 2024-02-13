@@ -95,7 +95,7 @@ async fn begin_connect_accept() {
     let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(crate::core::VERSION, &0u32).unwrap(),
+        Connect::with_serialize_value(14, &0u32).unwrap(),
     ))
     .await
     .unwrap();
@@ -123,7 +123,7 @@ async fn begin_connect_reject() {
     let (mut t1, t2) = channel::unbounded();
 
     t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(crate::core::VERSION, &0u32).unwrap(),
+        Connect::with_serialize_value(14, &0u32).unwrap(),
     ))
     .await
     .unwrap();
@@ -180,13 +180,9 @@ async fn wrong_client_replies_function_call() {
     async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
         let (mut t1, t2) = channel::unbounded();
 
-        t1.send(
-            Connect::with_serialize_value(crate::core::VERSION, &())
-                .unwrap()
-                .into(),
-        )
-        .await
-        .unwrap();
+        t1.send(Connect::with_serialize_value(14, &()).unwrap().into())
+            .await
+            .unwrap();
 
         let conn = broker.connect(t2).await.unwrap();
 
@@ -295,13 +291,9 @@ async fn send_item_without_capacity() {
     async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
         let (mut t1, t2) = channel::unbounded();
 
-        t1.send(
-            Connect::with_serialize_value(crate::core::VERSION, &())
-                .unwrap()
-                .into(),
-        )
-        .await
-        .unwrap();
+        t1.send(Connect::with_serialize_value(14, &()).unwrap().into())
+            .await
+            .unwrap();
 
         let conn = broker.connect(t2).await.unwrap();
 

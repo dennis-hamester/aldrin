@@ -44,7 +44,7 @@ impl ConnectClient {
             let send = Send {
                 client: self.client.clone(),
                 message: Message::Connect(Connect {
-                    version: aldrin_core::VERSION,
+                    version: 14,
                     value: Value::None,
                 }),
             };

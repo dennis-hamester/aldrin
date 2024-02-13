@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rename `ConnectReply::VersionMismatch` to `IncompatibleVersion`.
+- Remove `VERSION` constant. Use the associated constants `MIN` and `MAX` of `ProtocolVersion`
+  instead.
 
 ## [0.3.0] - 2024-01-18
 

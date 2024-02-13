@@ -95,12 +95,10 @@ impl BrokerHandle {
             msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
         };
 
-        if connect.version != crate::core::VERSION {
-            t.send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(
-                crate::core::VERSION,
-            )))
-            .await
-            .ok();
+        if connect.version != 14 {
+            t.send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(14)))
+                .await
+                .ok();
 
             return Err(EstablishError::IncompatibleVersion);
         }

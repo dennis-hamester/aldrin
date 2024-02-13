@@ -48,5 +48,3 @@ pub use value_serializer::{
 };
 
 const MAX_VALUE_DEPTH: u8 = 32;
-
-pub const VERSION: u32 = 14;
