@@ -56,7 +56,10 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
         output::summary(&mut output, passed, total)?;
         Ok(passed == total)
     } else {
-        println!("No test was selected by the supplied filters (-n,--name and -m,--message).");
+        println!(
+            "No test was selected by the supplied filters \
+                  (-n,--name, -m,--message and -p,--version)."
+        );
         Ok(false)
     }
 }

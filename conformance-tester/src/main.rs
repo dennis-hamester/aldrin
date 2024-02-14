@@ -14,6 +14,7 @@ mod util;
 mod uuid_ref;
 mod value;
 
+use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Result};
 use clap::{ColorChoice, Parser};
 use message_type::MessageType;
@@ -48,6 +49,10 @@ pub struct FilterArgs {
     /// Select only tests with one of the specified messages.
     #[clap(short, long)]
     message: Vec<MessageType>,
+
+    /// Select only tests that require at most the specified protocol version.
+    #[clap(short = 'p', long, default_value_t = ProtocolVersion::V1_15)]
+    version: ProtocolVersion,
 }
 
 impl FilterArgs {
