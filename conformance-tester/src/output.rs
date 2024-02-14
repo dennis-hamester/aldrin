@@ -101,6 +101,9 @@ pub fn describe_test(mut output: impl WriteColor, test: &Test) -> Result<()> {
         writeln!(output, "  {}", long_description)?;
     }
 
+    writeln!(output)?;
+    writeln!(output, "Minimum protocol version: {}", test.version)?;
+
     if !test.message_types.is_empty() {
         writeln!(output)?;
         writeln!(output, "Primarily tested message(s):")?;

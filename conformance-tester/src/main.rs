@@ -57,13 +57,14 @@ pub struct FilterArgs {
 
 impl FilterArgs {
     fn matches(&self, test: &Test) -> bool {
-        (!self.name.is_empty() && self.name.iter().any(|name| test.name == *name))
+        ((!self.name.is_empty() && self.name.iter().any(|name| test.name == *name))
             || (!self.message.is_empty()
                 && self
                     .message
                     .iter()
                     .any(|msg| test.message_types.contains(msg)))
-            || (self.name.is_empty() && self.message.is_empty())
+            || (self.name.is_empty() && self.message.is_empty()))
+            && (self.version >= test.version)
     }
 }
 
