@@ -7,25 +7,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
 pub enum ConnectReply {
-    Ok {
-        #[serde(flatten)]
-        value: Value,
-    },
-
-    IncompatibleVersion {
-        version: u32,
-    },
-
-    Rejected {
-        value: Value,
-    },
+    Ok,
+    IncompatibleVersion { version: u32 },
+    Rejected { value: Value },
 }
 
 impl ConnectReply {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply> {
         match self {
-            Self::Ok { value } => message::ConnectReply::ok_with_serialize_value(value)
-                .with_context(|| anyhow!("failed to serialize value")),
+            Self::Ok => Ok(message::ConnectReply::ok_with_serialize_value(&()).unwrap()),
 
             Self::IncompatibleVersion { version } => {
                 Ok(message::ConnectReply::IncompatibleVersion(*version))
@@ -38,7 +28,7 @@ impl ConnectReply {
 
     pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         match (self, other) {
-            (Self::Ok { value: value1 }, Self::Ok { value: value2 }) => Ok(value1.matches(value2)),
+            (Self::Ok, Self::Ok) => Ok(true),
 
             (
                 Self::IncompatibleVersion { version: version1 },
@@ -67,13 +57,7 @@ impl TryFrom<message::ConnectReply> for ConnectReply {
 
     fn try_from(msg: message::ConnectReply) -> Result<Self> {
         match msg {
-            message::ConnectReply::Ok(value) => {
-                let value = value
-                    .deserialize()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?;
-
-                Ok(Self::Ok { value })
-            }
+            message::ConnectReply::Ok(_) => Ok(Self::Ok),
 
             message::ConnectReply::IncompatibleVersion(version) => {
                 Ok(Self::IncompatibleVersion { version })

@@ -22,8 +22,7 @@
         {
             "type": "receive",
             "message": "connect-reply",
-            "result": "ok",
-            "value-type": "none"
+            "result": "ok"
         },
         {
             "type": "send",

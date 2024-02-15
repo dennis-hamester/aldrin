@@ -4,7 +4,6 @@ use crate::client::Client;
 use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::{Connect, ConnectReply, Message};
-use crate::value::Value;
 use anyhow::{anyhow, Context as _, Result};
 use serde::Deserialize;
 use tokio::time::Instant;
@@ -51,9 +50,7 @@ impl ConnectClient {
 
             let receive = Receive {
                 client: self.client.clone(),
-                message: Message::ConnectReply(ConnectReply::Ok {
-                    value: Value::Ignore,
-                }),
+                message: Message::ConnectReply(ConnectReply::Ok),
             };
             receive
                 .run(ctx, timeout)
