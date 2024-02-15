@@ -43,10 +43,7 @@ impl ConnectClient {
         if self.handshake {
             let send = Send {
                 client: self.client.clone(),
-                message: Message::Connect(Connect {
-                    version: 14,
-                    value: Value::None,
-                }),
+                message: Message::Connect(Connect { version: 14 }),
             };
             send.run(ctx, timeout)
                 .await
