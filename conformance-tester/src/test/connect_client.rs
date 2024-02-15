@@ -3,7 +3,8 @@ use crate::broker::Broker;
 use crate::client::Client;
 use crate::client_id::ClientId;
 use crate::context::Context;
-use crate::message::{Connect, ConnectReply, Message};
+use crate::message::{Connect, Connect2, ConnectReply, ConnectReply2, ConnectResult, Message};
+use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Context as _, Result};
 use serde::Deserialize;
 use tokio::time::Instant;
@@ -40,23 +41,65 @@ impl ConnectClient {
         ctx.set_client(self.client.clone(), client)?;
 
         if self.handshake {
-            let send = Send {
-                client: self.client.clone(),
-                message: Message::Connect(Connect { version: 14 }),
-            };
-            send.run(ctx, timeout)
-                .await
-                .with_context(|| anyhow!("failed to send connect message"))?;
+            let version = ctx.version();
 
-            let receive = Receive {
-                client: self.client.clone(),
-                message: Message::ConnectReply(ConnectReply::Ok),
-            };
-            receive
-                .run(ctx, timeout)
-                .await
-                .with_context(|| anyhow!("failed to receive connect-reply message"))?;
+            if version == ProtocolVersion::V1_14 {
+                self.connect(ctx, timeout).await?;
+            } else {
+                self.connect2(ctx, timeout).await?;
+            }
         }
+
+        Ok(())
+    }
+
+    async fn connect(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+        let send = Send {
+            client: self.client.clone(),
+            message: Message::Connect(Connect { version: 14 }),
+        };
+        send.run(ctx, timeout)
+            .await
+            .with_context(|| anyhow!("failed to send connect message"))?;
+
+        let receive = Receive {
+            client: self.client.clone(),
+            message: Message::ConnectReply(ConnectReply::Ok),
+        };
+        receive
+            .run(ctx, timeout)
+            .await
+            .with_context(|| anyhow!("failed to receive connect-reply message"))?;
+
+        Ok(())
+    }
+
+    async fn connect2(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+        let version = ctx.version();
+
+        let send = Send {
+            client: self.client.clone(),
+            message: Message::Connect2(Connect2 {
+                major_version: version.major(),
+                minor_version: version.minor(),
+            }),
+        };
+        send.run(ctx, timeout)
+            .await
+            .with_context(|| anyhow!("failed to send connect2 message"))?;
+
+        let receive = Receive {
+            client: self.client.clone(),
+            message: Message::ConnectReply2(ConnectReply2 {
+                result: ConnectResult::Ok {
+                    minor_version: version.minor(),
+                },
+            }),
+        };
+        receive
+            .run(ctx, timeout)
+            .await
+            .with_context(|| anyhow!("failed to receive connect-reply2 message"))?;
 
         Ok(())
     }

@@ -3,6 +3,7 @@ use crate::output;
 use crate::run_error::RunError;
 use crate::test::Test;
 use crate::{BrokerRunArgs, RunArgs};
+use aldrin_core::ProtocolVersion;
 use anyhow::Result;
 use std::collections::VecDeque;
 use std::num::NonZeroUsize;
@@ -39,9 +40,10 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
             }
         }
 
+        let version = args.filter.version;
         let args = args.broker.clone();
         let name = test.name.clone();
-        let join = runtime.spawn(run_test(args, test));
+        let join = runtime.spawn(run_test(args, test, version));
 
         queue.push_back((name, join));
     }
@@ -64,7 +66,11 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
     }
 }
 
-async fn run_test(args: BrokerRunArgs, test: Test) -> Result<Duration, RunError> {
+async fn run_test(
+    args: BrokerRunArgs,
+    test: Test,
+    version: ProtocolVersion,
+) -> Result<Duration, RunError> {
     let mut broker = Broker::new(
         args.broker.as_os_str(),
         Duration::from_millis(args.startup_timeout),
@@ -74,7 +80,7 @@ async fn run_test(args: BrokerRunArgs, test: Test) -> Result<Duration, RunError>
 
     let start = Instant::now();
     let timeout = start + Duration::from_millis(args.timeout);
-    let test_res = test.run(&broker, timeout).await;
+    let test_res = test.run(&broker, timeout, version).await;
 
     let shutdown_timeout = Instant::now() + Duration::from_millis(args.shutdown_timeout);
     let shutdown_res = broker.shut_down(shutdown_timeout).await;

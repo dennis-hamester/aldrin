@@ -1,5 +1,6 @@
 use crate::client::Client;
 use crate::client_id::ClientId;
+use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -8,15 +9,17 @@ pub struct Context {
     clients: HashMap<ClientId, Client>,
     serials: HashMap<String, u32>,
     uuids: HashMap<String, Uuid>,
+    version: ProtocolVersion,
 }
 
 impl Context {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(version: ProtocolVersion) -> Self {
         Self {
             clients: HashMap::new(),
             serials: HashMap::new(),
             uuids: HashMap::new(),
+            version,
         }
     }
 
@@ -79,5 +82,9 @@ impl Context {
         } else {
             Err(anyhow!("UUID `{id}` exists already"))
         }
+    }
+
+    pub fn version(&self) -> ProtocolVersion {
+        self.version
     }
 }

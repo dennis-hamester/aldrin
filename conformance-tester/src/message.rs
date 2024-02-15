@@ -69,7 +69,7 @@ pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
 pub use connect2::Connect2;
 pub use connect_reply::ConnectReply;
-pub use connect_reply2::ConnectReply2;
+pub use connect_reply2::{ConnectReply2, ConnectResult};
 pub use create_bus_listener::CreateBusListener;
 pub use create_bus_listener_reply::CreateBusListenerReply;
 pub use create_channel::CreateChannel;

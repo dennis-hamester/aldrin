@@ -231,8 +231,13 @@ pub struct Test {
 }
 
 impl Test {
-    pub async fn run(&self, broker: &Broker, timeout: Instant) -> Result<()> {
-        let mut ctx = Context::new();
+    pub async fn run(
+        &self,
+        broker: &Broker,
+        timeout: Instant,
+        version: ProtocolVersion,
+    ) -> Result<()> {
+        let mut ctx = Context::new(version);
 
         for (i, step) in self.steps.iter().enumerate() {
             step.run(broker, &mut ctx, timeout)
