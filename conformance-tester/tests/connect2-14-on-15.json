@@ -1,0 +1,28 @@
+{
+    "name": "connect2-14-on-15",
+    "description": "Connect with version 1.14 using the new handshake",
+    "long-description": "A client connects successfully with protocol version 1.14 using the new handshake.",
+    "version": "1.15",
+    "message-types": [
+        "connect2",
+        "connect-reply2"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "handshake": false
+        },
+        {
+            "type": "send",
+            "message": "connect2",
+            "major-version": 1,
+            "minor-version": 14
+        },
+        {
+            "type": "receive",
+            "message": "connect-reply2",
+            "result": "ok",
+            "minor-version": 14
+        }
+    ]
+}

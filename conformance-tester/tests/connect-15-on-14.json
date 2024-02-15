@@ -1,0 +1,28 @@
+{
+    "name": "connect-15-on-14",
+    "description": "Connect with version 1.15 using the old handshake",
+    "long-description": "A client tries to connect with protocol version 1.15 using the old handshake that is only valid for 1.14.",
+    "message-types": [
+        "connect",
+        "connect-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "handshake": false,
+            "sync": false,
+            "shutdown": false
+        },
+        {
+            "type": "send",
+            "message": "connect",
+            "version": 15
+        },
+        {
+            "type": "receive",
+            "message": "connect-reply",
+            "result": "incompatible-version",
+            "version": 14
+        }
+    ]
+}
