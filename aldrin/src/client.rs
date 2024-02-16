@@ -366,6 +366,7 @@ where
             Message::BusListenerCurrentFinished(msg) => {
                 self.msg_bus_listener_current_finished(msg)?
             }
+            Message::AbortFunctionCall(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

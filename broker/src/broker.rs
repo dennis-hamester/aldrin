@@ -387,6 +387,7 @@ impl Broker {
             Message::ClearBusListenerFilters(req) => self.clear_bus_listener_filters(id, req),
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
+            Message::AbortFunctionCall(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

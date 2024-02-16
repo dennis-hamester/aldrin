@@ -1,3 +1,4 @@
+mod abort_function_call;
 mod add_bus_listener_filter;
 mod add_channel_capacity;
 mod bus_listener_current_finished;
@@ -54,6 +55,7 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub use abort_function_call::AbortFunctionCall;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_current_finished::BusListenerCurrentFinished;
@@ -154,6 +156,7 @@ pub enum Message {
     BusListenerCurrentFinished(BusListenerCurrentFinished),
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
+    AbortFunctionCall(AbortFunctionCall),
 }
 
 impl Message {
@@ -235,6 +238,7 @@ impl Message {
                 .map(ProtoMessage::BusListenerCurrentFinished),
             Self::Connect2(msg) => msg.to_core(ctx).map(ProtoMessage::Connect2),
             Self::ConnectReply2(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply2),
+            Self::AbortFunctionCall(msg) => msg.to_core(ctx).map(ProtoMessage::AbortFunctionCall),
         }
     }
 
@@ -334,6 +338,9 @@ impl Message {
             }
             (Self::Connect2(msg), Self::Connect2(other)) => msg.matches(other, ctx),
             (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => msg.matches(other, ctx),
+            (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
+                msg.matches(other, ctx)
+            }
             _ => Ok(false),
         }
     }
@@ -460,6 +467,9 @@ impl Message {
             (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -536,6 +546,7 @@ impl Message {
             }
             Self::Connect2(msg) => msg.apply_context(ctx).map(Self::Connect2),
             Self::ConnectReply2(msg) => msg.apply_context(ctx).map(Self::ConnectReply2),
+            Self::AbortFunctionCall(msg) => msg.apply_context(ctx).map(Self::AbortFunctionCall),
         }
     }
 }
@@ -615,6 +626,7 @@ impl TryFrom<ProtoMessage> for Message {
             }
             ProtoMessage::Connect2(msg) => msg.try_into().map(Self::Connect2),
             ProtoMessage::ConnectReply2(msg) => msg.try_into().map(Self::ConnectReply2),
+            ProtoMessage::AbortFunctionCall(msg) => msg.try_into().map(Self::AbortFunctionCall),
         }
     }
 }
