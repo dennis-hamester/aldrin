@@ -2,13 +2,13 @@ use crate::context::Context;
 use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_broker::core::message::{
-    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
-    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData, ConnectReply,
-    ConnectReply2, ConnectReplyData, ConnectResult, CreateBusListener, CreateBusListenerReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
+    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData,
+    ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message as ProtoMessage, QueryServiceVersion,
@@ -74,6 +74,7 @@ pub enum MessageLe {
     BusListenerCurrentFinished(BusListenerCurrentFinishedLe),
     Connect2(Connect2Le),
     ConnectReply2(ConnectReply2Le),
+    AbortFunctionCall(AbortFunctionCallLe),
 }
 
 impl MessageLe {
@@ -127,6 +128,7 @@ impl MessageLe {
             Self::BusListenerCurrentFinished(msg) => msg.to_core(ctx).into(),
             Self::Connect2(msg) => msg.to_core(ctx).into(),
             Self::ConnectReply2(msg) => msg.to_core(ctx).into(),
+            Self::AbortFunctionCall(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -186,6 +188,7 @@ impl UpdateContext for ProtoMessage {
             Self::BusListenerCurrentFinished(msg) => msg.update_context(ctx),
             Self::Connect2(msg) => msg.update_context(ctx),
             Self::ConnectReply2(msg) => msg.update_context(ctx),
+            Self::AbortFunctionCall(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1663,5 +1666,24 @@ impl ConnectResultLe {
             Self::Rejected => ConnectResult::Rejected,
             Self::IncompatibleVersion => ConnectResult::IncompatibleVersion,
         }
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct AbortFunctionCallLe {
+    pub serial: SerialLe,
+}
+
+impl AbortFunctionCallLe {
+    pub fn to_core(&self, ctx: &Context) -> AbortFunctionCall {
+        AbortFunctionCall {
+            serial: self.serial.get(ctx),
+        }
+    }
+}
+
+impl UpdateContext for AbortFunctionCall {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
     }
 }

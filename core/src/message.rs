@@ -1,3 +1,4 @@
+mod abort_function_call;
 mod add_bus_listener_filter;
 mod add_channel_capacity;
 mod bus_listener_current_finished;
@@ -56,6 +57,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub use crate::message_deserializer::MessageDeserializeError;
 pub use crate::message_serializer::MessageSerializeError;
+pub use abort_function_call::AbortFunctionCall;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_current_finished::BusListenerCurrentFinished;
@@ -157,6 +159,7 @@ pub enum MessageKind {
     BusListenerCurrentFinished = 45,
     Connect2 = 46,
     ConnectReply2 = 47,
+    AbortFunctionCall = 48,
 }
 
 impl MessageKind {
@@ -210,7 +213,8 @@ impl MessageKind {
             | Self::StopBusListener
             | Self::StopBusListenerReply
             | Self::EmitBusEvent
-            | Self::BusListenerCurrentFinished => false,
+            | Self::BusListenerCurrentFinished
+            | Self::AbortFunctionCall => false,
         }
     }
 }
@@ -277,6 +281,7 @@ pub enum Message {
     BusListenerCurrentFinished(BusListenerCurrentFinished),
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
+    AbortFunctionCall(AbortFunctionCall),
 }
 
 impl MessageOps for Message {
@@ -330,6 +335,7 @@ impl MessageOps for Message {
             Self::BusListenerCurrentFinished(_) => MessageKind::BusListenerCurrentFinished,
             Self::Connect2(_) => MessageKind::Connect2,
             Self::ConnectReply2(_) => MessageKind::ConnectReply2,
+            Self::AbortFunctionCall(_) => MessageKind::AbortFunctionCall,
         }
     }
 
@@ -383,6 +389,7 @@ impl MessageOps for Message {
             Self::BusListenerCurrentFinished(msg) => msg.serialize_message(),
             Self::Connect2(msg) => msg.serialize_message(),
             Self::ConnectReply2(msg) => msg.serialize_message(),
+            Self::AbortFunctionCall(msg) => msg.serialize_message(),
         }
     }
 
@@ -527,6 +534,9 @@ impl MessageOps for Message {
             MessageKind::ConnectReply2 => {
                 ConnectReply2::deserialize_message(buf).map(Self::ConnectReply2)
             }
+            MessageKind::AbortFunctionCall => {
+                AbortFunctionCall::deserialize_message(buf).map(Self::AbortFunctionCall)
+            }
         }
     }
 
@@ -580,6 +590,7 @@ impl MessageOps for Message {
             Self::BusListenerCurrentFinished(msg) => msg.value(),
             Self::Connect2(msg) => msg.value(),
             Self::ConnectReply2(msg) => msg.value(),
+            Self::AbortFunctionCall(msg) => msg.value(),
         }
     }
 }
