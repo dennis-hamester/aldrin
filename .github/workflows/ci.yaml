@@ -33,6 +33,7 @@ jobs:
       - name: Cargo test
         run: cargo test --locked --all-features
       - name: Cargo clippy
+        if: ${{ matrix.rust == 'stable' }}
         run: cargo clippy --locked --all-features --tests
 
   doc:
