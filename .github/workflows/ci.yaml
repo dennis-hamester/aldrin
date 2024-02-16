@@ -18,6 +18,7 @@ jobs:
       matrix:
         rust:
           - stable
+          - beta
           - 1.70.0
     steps:
       - name: Checkout
