@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-This version still connects to brokers using protocol version 14.
-
 ### Added
 
 - Add `Handle::wait_for_object()`, `Handle::wait_for_any_object()` and
@@ -42,6 +40,7 @@ This version still connects to brokers using protocol version 14.
 
 ### Changed
 
+- Support protocol version 1.15. Brokers that implement only 1.14 are no longer supported.
 - `Handle::create_object()` now takes a `impl Into<ObjectUuid>`.
 - `Object::create_service()` now takes a `impl Into<ServiceUuid>`.
 - Remove the version number in the `ConnectError::IncompatibleVersion` error.
