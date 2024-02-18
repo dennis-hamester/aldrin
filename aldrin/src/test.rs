@@ -1,4 +1,5 @@
 use crate::core::{ObjectUuid, ServiceUuid};
+use aldrin_test::aldrin::low_level::Proxy;
 use aldrin_test::tokio::TestBroker;
 use std::future::Future;
 use std::mem;
@@ -114,4 +115,22 @@ async fn transport_error_after_client_shutdown() {
     // Client future must complete with an error.
     let res = join.await.unwrap();
     assert!(res.is_err());
+}
+
+#[tokio::test]
+async fn abort_function_call() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
+
+    let reply = proxy.call(0, &());
+    let _call = svc.next_call().await.unwrap();
+
+    mem::drop(reply);
+
+    client.join().await;
+    broker.join().await;
 }

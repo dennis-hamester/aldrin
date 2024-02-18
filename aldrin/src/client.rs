@@ -6,14 +6,14 @@ use crate::channel::{
     UnclaimedSenderInner,
 };
 use crate::core::message::{
-    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
-    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData, ConnectResult,
-    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
+    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData,
+    ConnectResult, CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply,
+    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply,
+    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
@@ -26,6 +26,7 @@ use crate::core::{
     ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
 };
 use crate::error::{ConnectError, RunError};
+use crate::function_call_map::FunctionCallMap;
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
@@ -81,7 +82,7 @@ where
     destroy_object: SerialMap<oneshot::Sender<DestroyObjectResult>>,
     create_service: SerialMap<CreateServiceRequest>,
     destroy_service: SerialMap<DestroyServiceRequest>,
-    function_calls: SerialMap<oneshot::Sender<Result<CallFunctionResult, Error>>>,
+    function_calls: FunctionCallMap,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawCall>>,
     subscribe_event: SerialMap<(
         EventListenerId,
@@ -209,7 +210,7 @@ where
             destroy_object: SerialMap::new(),
             create_service: SerialMap::new(),
             destroy_service: SerialMap::new(),
-            function_calls: SerialMap::new(),
+            function_calls: FunctionCallMap::new(),
             services: HashMap::new(),
             subscribe_event: SerialMap::new(),
             subscriptions: HashMap::new(),
@@ -306,7 +307,7 @@ where
     /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         loop {
-            match self.select.select(&mut self.t, &mut self.recv).await {
+            match self.select().await {
                 Selected::Transport(Ok(Message::Shutdown(Shutdown))) => {
                     self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
                     return Ok(());
@@ -316,6 +317,7 @@ where
                 Selected::Transport(Err(e)) => return Err(e.into()),
                 Selected::Handle(HandleRequest::Shutdown) => break,
                 Selected::Handle(req) => self.handle_request(req).await?,
+                Selected::AbortFunctionCall(serial) => self.abort_function_call(serial).await?,
             }
 
             if self.num_handles == 1 {
@@ -326,6 +328,12 @@ where
         self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
         self.drain_transport().await?;
         Ok(())
+    }
+
+    async fn select(&mut self) -> Selected<T> {
+        self.select
+            .select(&mut self.t, &mut self.recv, &mut self.function_calls)
+            .await
     }
 
     async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
@@ -505,12 +513,9 @@ where
     }
 
     fn msg_call_function_reply(&mut self, msg: CallFunctionReply) {
-        let send = self
-            .function_calls
-            .remove(msg.serial)
-            .expect("inconsistent state");
-
-        let _ = send.send(Ok(msg.result));
+        if let Some(send) = self.function_calls.remove(msg.serial) {
+            let _ = send.send(Ok(msg.result));
+        }
     }
 
     fn msg_subscribe_event(&mut self, msg: SubscribeEvent) {
@@ -1511,6 +1516,18 @@ where
             .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
             .await
             .map_err(Into::into)
+    }
+
+    async fn abort_function_call(&mut self, serial: u32) -> Result<(), RunError<T::Error>> {
+        self.function_calls.abort(serial);
+
+        if self.protocol_version >= ProtocolVersion::V1_16 {
+            self.t
+                .send_and_flush(Message::AbortFunctionCall(AbortFunctionCall { serial }))
+                .await?;
+        }
+
+        Ok(())
     }
 
     fn shutdown_all_events(&self) {

@@ -64,6 +64,7 @@ mod bus_listener;
 mod channel;
 mod client;
 mod discoverer;
+mod function_call_map;
 mod handle;
 mod lifetime;
 mod object;
