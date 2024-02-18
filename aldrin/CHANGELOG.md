@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `UnclaimedReceiver`.
 - Add `DiscovererEvent` as a variant of `DiscovererEventRef` that doesn't borrow the discoverer.
 - Add `DiscovererStream`.
+- Add `Reply::abort()` and `low_level::Reply::abort()`.
 
 ### Fixed
 
