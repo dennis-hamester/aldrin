@@ -1,3 +1,5 @@
+mod select;
+
 use crate::bus_listener::{BusListener, BusListenerHandle};
 use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
@@ -38,8 +40,7 @@ use crate::low_level::{EventListenerId, EventListenerRequest, RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
-use futures_util::future::{select, Either};
-use futures_util::stream::StreamExt;
+use select::{Select, Selected};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
@@ -70,6 +71,7 @@ pub struct Client<T>
 where
     T: AsyncTransport + Unpin,
 {
+    select: Select,
     t: T,
     protocol_version: ProtocolVersion,
     recv: mpsc::UnboundedReceiver<HandleRequest>,
@@ -197,6 +199,7 @@ where
 
         let (send, recv) = mpsc::unbounded();
         let client = Client {
+            select: Select::new(),
             t,
             protocol_version,
             recv,
@@ -303,19 +306,16 @@ where
     /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         loop {
-            match select(self.t.receive(), self.recv.next()).await {
-                Either::Left((Ok(Message::Shutdown(Shutdown)), _)) => {
+            match self.select.select(&mut self.t, &mut self.recv).await {
+                Selected::Transport(Ok(Message::Shutdown(Shutdown))) => {
                     self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
                     return Ok(());
                 }
 
-                Either::Left((Ok(msg), _)) => self.handle_message(msg).await?,
-                Either::Left((Err(e), _)) => return Err(e.into()),
-                Either::Right((Some(HandleRequest::Shutdown), _)) => break,
-                Either::Right((Some(req), _)) => self.handle_request(req).await?,
-
-                // Unreachable, because Client holds a sender.
-                Either::Right((None, _)) => unreachable!(),
+                Selected::Transport(Ok(msg)) => self.handle_message(msg).await?,
+                Selected::Transport(Err(e)) => return Err(e.into()),
+                Selected::Handle(HandleRequest::Shutdown) => break,
+                Selected::Handle(req) => self.handle_request(req).await?,
             }
 
             if self.num_handles == 1 {
