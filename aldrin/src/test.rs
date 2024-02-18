@@ -129,7 +129,7 @@ async fn abort_function_call() {
     let reply = proxy.call(0, &());
     let _call = svc.next_call().await.unwrap();
 
-    mem::drop(reply);
+    reply.abort();
 
     client.join().await;
     broker.join().await;

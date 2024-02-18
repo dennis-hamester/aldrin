@@ -24,6 +24,11 @@ impl Reply {
     pub fn cast<T, E>(self) -> crate::reply::Reply<T, E> {
         HlReply::new(self)
     }
+
+    /// Aborts the call and signals that there is no longer interest in the reply.
+    ///
+    /// This function is equivalent to dropping the `Reply`.
+    pub fn abort(self) {}
 }
 
 impl Future for Reply {

@@ -31,6 +31,13 @@ impl<T, E> Reply<T, E> {
     pub fn into_low_level(self) -> crate::low_level::Reply {
         self.inner
     }
+
+    /// Aborts the call and signals that there is no longer interest in the reply.
+    ///
+    /// This function is equivalent to dropping the `Reply`.
+    pub fn abort(self) {
+        self.inner.abort();
+    }
 }
 
 impl<T: Deserialize, E: Deserialize> Future for Reply<T, E> {
