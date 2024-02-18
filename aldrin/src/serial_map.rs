@@ -28,4 +28,12 @@ impl<T> SerialMap<T> {
     pub fn remove(&mut self, serial: u32) -> Option<T> {
         self.elems.remove(&serial)
     }
+
+    pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
+        self.elems.get_mut(&serial)
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (u32, &mut T)> {
+        self.elems.iter_mut().map(|(&serial, elem)| (serial, elem))
+    }
 }
