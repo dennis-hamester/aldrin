@@ -906,7 +906,12 @@ impl Handle {
 
     /// Returns the protocol version that was negotiated with the broker.
     pub async fn version(&self) -> Result<ProtocolVersion, Error> {
-        Ok(ProtocolVersion::V1_14)
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::GetProtocolVersion(reply))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     /// Creates a new proxy to a service.

@@ -25,7 +25,7 @@ pub enum ConnectError<T> {
 
     /// The broker rejected the connection.
     #[error("connection rejected")]
-    Rejected(SerializedValue),
+    Rejected(Option<SerializedValue>),
 
     /// A value failed to serialize.
     #[error(transparent)]

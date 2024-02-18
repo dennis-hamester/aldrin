@@ -7,21 +7,21 @@ use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
     CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
     ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect, ConnectReply, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData, ConnectResult,
+    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
-    Serialize, SerializedValue, ServiceCookie, ServiceId,
+    ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
 };
 use crate::error::{ConnectError, RunError};
 use crate::handle::request::{
@@ -47,6 +47,8 @@ use std::mem;
 type Subscriptions =
     HashMap<u32, HashMap<EventListenerId, mpsc::UnboundedSender<EventListenerRequest>>>;
 
+const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_15;
+
 /// Aldrin client used to connect to a broker.
 ///
 /// This is the first entry point to `aldrin-client`. A [`Client`] is used to establish a connection
@@ -69,6 +71,7 @@ where
     T: AsyncTransport + Unpin,
 {
     t: T,
+    protocol_version: ProtocolVersion,
     recv: mpsc::UnboundedReceiver<HandleRequest>,
     handle: Handle,
     num_handles: usize,
@@ -144,7 +147,7 @@ where
     /// # }
     /// ```
     pub async fn connect(t: T) -> Result<Self, ConnectError<T::Error>> {
-        let (client, _) = Self::connect_with_data(t, &()).await?;
+        let (client, _) = Self::connect_with_data::<()>(t, None).await?;
         Ok(client)
     }
 
@@ -154,29 +157,48 @@ where
     /// [`run`](Client::run) method.
     pub async fn connect_with_data<D: Serialize + ?Sized>(
         mut t: T,
-        data: &D,
-    ) -> Result<(Self, SerializedValue), ConnectError<T::Error>> {
-        let connect = Connect::with_serialize_value(14, data)?;
-        t.send_and_flush(Message::Connect(connect))
+        data: Option<&D>,
+    ) -> Result<(Self, Option<SerializedValue>), ConnectError<T::Error>> {
+        let mut connect_data = ConnectData::new();
+
+        if let Some(data) = data {
+            connect_data.serialize_user(data)?;
+        }
+
+        let connect = Connect2::with_serialize_data(
+            PROTOCOL_VERSION.major(),
+            PROTOCOL_VERSION.minor(),
+            &connect_data,
+        )?;
+
+        t.send_and_flush(Message::Connect2(connect))
             .await
             .map_err(ConnectError::Transport)?;
 
         let connect_reply = match t.receive().await.map_err(ConnectError::Transport)? {
-            Message::ConnectReply(connect_reply) => connect_reply,
+            Message::ConnectReply2(connect_reply) => connect_reply,
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         };
 
-        let data = match connect_reply {
-            ConnectReply::Ok(data) => data,
-            ConnectReply::IncompatibleVersion(_) => {
-                return Err(ConnectError::IncompatibleVersion);
-            }
-            ConnectReply::Rejected(data) => return Err(ConnectError::Rejected(data)),
+        let connect_reply_data = connect_reply.deserialize_connect_data()?;
+
+        let minor_version = match connect_reply.result {
+            ConnectResult::Ok(minor_version) => minor_version,
+            ConnectResult::Rejected => return Err(ConnectError::Rejected(connect_reply_data.user)),
+            ConnectResult::IncompatibleVersion => return Err(ConnectError::IncompatibleVersion),
         };
+
+        let protocol_version = ProtocolVersion::new(PROTOCOL_VERSION.major(), minor_version)
+            .map_err(|_| ConnectError::IncompatibleVersion)?;
+
+        if protocol_version > PROTOCOL_VERSION {
+            return Err(ConnectError::IncompatibleVersion);
+        }
 
         let (send, recv) = mpsc::unbounded();
         let client = Client {
             t,
+            protocol_version,
             recv,
             handle: Handle::new(send),
             num_handles: 1,
@@ -203,7 +225,7 @@ where
             bus_listeners: HashMap::new(),
         };
 
-        Ok((client, data))
+        Ok((client, connect_reply_data.user))
     }
 
     /// Creates a client and connects to an Aldrin broker. Allows to send and receive custom data.
@@ -226,7 +248,7 @@ where
     /// // let async_transport = ...
     ///
     /// // Connect to the broker, sending some custom data.
-    /// let (client, data) = Client::connect_with_data(async_transport, "Hi!").await?;
+    /// let (client, data) = Client::connect_with_data(async_transport, Some("Hi!")).await?;
     ///
     /// println!("Data the broker sent back: {:?}.", data);
     /// # Ok(())
@@ -234,14 +256,18 @@ where
     /// ```
     pub async fn connect_with_data_and_deserialize<D1, D2>(
         t: T,
-        data: &D1,
-    ) -> Result<(Self, D2), ConnectError<T::Error>>
+        data: Option<&D1>,
+    ) -> Result<(Self, Option<D2>), ConnectError<T::Error>>
     where
         D1: Serialize + ?Sized,
         D2: Deserialize,
     {
         let (client, data) = Self::connect_with_data(t, data).await?;
-        let data = data.deserialize()?;
+        let data = data
+            .as_deref()
+            .map(SerializedValueSlice::deserialize)
+            .transpose()?;
+
         Ok((client, data))
     }
 
@@ -253,6 +279,11 @@ where
     /// When the last [`Handle`] is dropped, the [`Client`] will automatically shut down.
     pub fn handle(&self) -> &Handle {
         &self.handle
+    }
+
+    /// Returns the protocol version that was negotiated with the broker.
+    pub fn protocol_version(self) -> ProtocolVersion {
+        self.protocol_version
     }
 
     /// Runs the client until it shuts down.
@@ -1032,6 +1063,9 @@ where
             HandleRequest::StopBusListener(req) => self.req_stop_bus_listener(req).await?,
             HandleRequest::CreateLifetimeListener(req) => {
                 self.req_create_lifetime_listener(req).await?
+            }
+            HandleRequest::GetProtocolVersion(req) => {
+                let _ = req.send(self.protocol_version);
             }
 
             // Handled in Client::run()

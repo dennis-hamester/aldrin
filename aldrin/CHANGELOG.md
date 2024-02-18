@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Support protocol version 1.15. Brokers that implement only 1.14 are no longer supported.
 - Move `Event` to the `low_level` module.
 - Rename `Events` to `EventListener` and move it to the `low_level` module.
 - Rename `BusListener::finished()` to `is_finished()`.

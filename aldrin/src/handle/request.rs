@@ -10,7 +10,7 @@ use crate::core::message::{
 };
 use crate::core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
-    ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
+    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{EventListenerId, EventListenerRequest, Service};
@@ -50,6 +50,7 @@ pub(crate) enum HandleRequest {
     StartBusListener(StartBusListenerRequest),
     StopBusListener(StopBusListenerRequest),
     CreateLifetimeListener(CreateLifetimeListenerRequest),
+    GetProtocolVersion(GetProtocolVersionRequest),
 }
 
 #[derive(Debug)]
@@ -183,3 +184,5 @@ pub(crate) struct StopBusListenerRequest {
 }
 
 pub(crate) type CreateLifetimeListenerRequest = oneshot::Sender<LifetimeListener>;
+
+pub(crate) type GetProtocolVersionRequest = oneshot::Sender<ProtocolVersion>;
