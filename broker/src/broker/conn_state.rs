@@ -1,11 +1,12 @@
 use crate::core::message::Message;
-use crate::core::{BusListenerCookie, ChannelCookie, ObjectCookie, ServiceCookie};
+use crate::core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
+    _protocol_version: ProtocolVersion,
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
 
@@ -18,8 +19,9 @@ pub(super) struct ConnectionState {
 }
 
 impl ConnectionState {
-    pub fn new(send: UnboundedSender<Message>) -> Self {
+    pub fn new(protocol_version: ProtocolVersion, send: UnboundedSender<Message>) -> Self {
         ConnectionState {
+            _protocol_version: protocol_version,
             send,
             objects: HashSet::new(),
             subscriptions: HashMap::new(),
@@ -27,6 +29,10 @@ impl ConnectionState {
             receivers: HashSet::new(),
             bus_listeners: HashSet::new(),
         }
+    }
+
+    pub fn _protocol_version(&self) -> ProtocolVersion {
+        self._protocol_version
     }
 
     pub fn add_object(&mut self, cookie: ObjectCookie) {

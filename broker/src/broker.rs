@@ -191,8 +191,10 @@ impl Broker {
 
     fn handle_event(&mut self, state: &mut State, ev: ConnectionEvent) {
         match ev {
-            ConnectionEvent::NewConnection(id, sender) => {
-                let dup = self.conns.insert(id, ConnectionState::new(sender));
+            ConnectionEvent::NewConnection(id, protocol_version, sender) => {
+                let dup = self
+                    .conns
+                    .insert(id, ConnectionState::new(protocol_version, sender));
                 debug_assert!(dup.is_none());
 
                 #[cfg(feature = "statistics")]

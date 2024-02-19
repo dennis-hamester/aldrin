@@ -371,7 +371,11 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
 
         self.handle
             .send
-            .send(ConnectionEvent::NewConnection(id.clone(), send))
+            .send(ConnectionEvent::NewConnection(
+                id.clone(),
+                self.version,
+                send,
+            ))
             .await
             .map_err(|_| EstablishError::Shutdown)?;
 
