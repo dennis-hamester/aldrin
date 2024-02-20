@@ -280,10 +280,11 @@ impl Broker {
             }
 
             if let Some((serial, conn_id, result)) = state.pop_remove_function_call() {
-                let conn = match self.conns.get(&conn_id) {
-                    Some(conn) => conn,
-                    None => continue,
+                let Some(conn) = self.conns.get_mut(&conn_id) else {
+                    continue;
                 };
+
+                conn.remove_call(serial);
 
                 let res = send!(
                     self,
@@ -656,7 +657,7 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
+        let conn = match self.conns.get_mut(id) {
             Some(conn) => conn,
             None => return Ok(()),
         };
@@ -679,7 +680,6 @@ impl Broker {
             Some(obj) => obj.conn_id(),
             None => panic!("inconsistent state"),
         };
-        let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
 
         let serial = self.function_calls.insert(PendingFunctionCall {
             caller_serial: req.serial,
@@ -688,10 +688,14 @@ impl Broker {
             callee_svc: svc_uuid,
         });
 
-        match self.svcs.get_mut(&(obj_uuid, svc_uuid)) {
-            Some(svc) => svc.add_function_call(serial),
-            None => panic!("inconsistent state"),
-        }
+        conn.add_call(serial);
+
+        let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
+
+        self.svcs
+            .get_mut(&(obj_uuid, svc_uuid))
+            .expect("inconsistent state")
+            .add_function_call(serial);
 
         let res = send!(
             self,
@@ -747,10 +751,11 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(req.serial);
 
-        let conn = match self.conns.get(&call.caller_conn_id) {
-            Some(conn) => conn,
-            None => return,
+        let Some(conn) = self.conns.get_mut(&call.caller_conn_id) else {
+            return;
         };
+
+        conn.remove_call(req.serial);
 
         if send!(
             self,
