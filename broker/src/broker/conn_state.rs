@@ -16,6 +16,7 @@ pub(super) struct ConnectionState {
     senders: HashSet<ChannelCookie>,
     receivers: HashSet<ChannelCookie>,
     bus_listeners: HashSet<BusListenerCookie>,
+    calls: HashSet<u32>,
 }
 
 impl ConnectionState {
@@ -28,6 +29,7 @@ impl ConnectionState {
             senders: HashSet::new(),
             receivers: HashSet::new(),
             bus_listeners: HashSet::new(),
+            calls: HashSet::new(),
         }
     }
 
@@ -123,5 +125,15 @@ impl ConnectionState {
 
     pub fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> + '_ {
         self.bus_listeners.iter().copied()
+    }
+
+    pub fn add_call(&mut self, callee_serial: u32) {
+        let unique = self.calls.insert(callee_serial);
+        debug_assert!(unique);
+    }
+
+    pub fn remove_call(&mut self, callee_serial: u32) {
+        let contained = self.calls.remove(&callee_serial);
+        debug_assert!(contained);
     }
 }
