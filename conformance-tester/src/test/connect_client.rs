@@ -4,6 +4,7 @@ use crate::client::Client;
 use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::{Connect, Connect2, ConnectReply, ConnectReply2, ConnectResult, Message};
+use crate::protocol_version_serde;
 use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Context as _, Result};
 use serde::Deserialize;
@@ -14,6 +15,12 @@ use tokio::time::Instant;
 pub struct ConnectClient {
     #[serde(default)]
     pub client: ClientId,
+
+    #[serde(
+        deserialize_with = "protocol_version_serde::deserialize_option",
+        default
+    )]
+    pub version: Option<ProtocolVersion>,
 
     #[serde(default = "default_true")]
     pub handshake: bool,
@@ -41,12 +48,12 @@ impl ConnectClient {
         ctx.set_client(self.client.clone(), client)?;
 
         if self.handshake {
-            let version = ctx.version();
+            let version = self.version.unwrap_or_else(|| ctx.version());
 
             if version == ProtocolVersion::V1_14 {
                 self.connect(ctx, timeout).await?;
             } else {
-                self.connect2(ctx, timeout).await?;
+                self.connect2(ctx, timeout, version).await?;
             }
         }
 
@@ -74,9 +81,12 @@ impl ConnectClient {
         Ok(())
     }
 
-    async fn connect2(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
-        let version = ctx.version();
-
+    async fn connect2(
+        &self,
+        ctx: &mut Context,
+        timeout: Instant,
+        version: ProtocolVersion,
+    ) -> Result<()> {
         let send = Send {
             client: self.client.clone(),
             message: Message::Connect2(Connect2 {
