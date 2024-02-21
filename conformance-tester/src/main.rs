@@ -51,7 +51,7 @@ pub struct FilterArgs {
     message: Vec<MessageType>,
 
     /// Select only tests that require at most the specified protocol version.
-    #[clap(short = 'p', long, default_value_t = ProtocolVersion::V1_15)]
+    #[clap(short = 'p', long, default_value_t = ProtocolVersion::V1_16)]
     version: ProtocolVersion,
 }
 
