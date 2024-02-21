@@ -14,6 +14,7 @@ pub(super) struct State {
     destroy_object: Vec<ObjectId>,
     create_service: Vec<ServiceId>,
     destroy_service: Vec<ServiceId>,
+    abort_function_calls: Vec<(u32, ConnectionId)>,
 }
 
 impl State {
@@ -29,6 +30,7 @@ impl State {
             destroy_object: Vec::new(),
             create_service: Vec::new(),
             destroy_service: Vec::new(),
+            abort_function_calls: Vec::new(),
         }
     }
 
@@ -57,6 +59,7 @@ impl State {
             || !self.destroy_object.is_empty()
             || !self.create_service.is_empty()
             || !self.destroy_service.is_empty()
+            || !self.abort_function_calls.is_empty()
     }
 
     pub fn push_remove_conn(&mut self, id: ConnectionId, send_shutdown: bool) {
@@ -138,5 +141,13 @@ impl State {
 
     pub fn pop_destroy_service(&mut self) -> Option<ServiceId> {
         self.destroy_service.pop()
+    }
+
+    pub fn push_abort_function_call(&mut self, callee_serial: u32, callee_id: ConnectionId) {
+        self.abort_function_calls.push((callee_serial, callee_id));
+    }
+
+    pub fn pop_abort_function_call(&mut self) -> Option<(u32, ConnectionId)> {
+        self.abort_function_calls.pop()
     }
 }
