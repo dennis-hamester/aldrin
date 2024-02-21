@@ -1,3 +1,4 @@
+use crate::conn_id::ConnectionId;
 use crate::core::message::Message;
 use crate::core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
@@ -6,7 +7,7 @@ use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
-    _protocol_version: ProtocolVersion,
+    protocol_version: ProtocolVersion,
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
 
@@ -16,25 +17,25 @@ pub(super) struct ConnectionState {
     senders: HashSet<ChannelCookie>,
     receivers: HashSet<ChannelCookie>,
     bus_listeners: HashSet<BusListenerCookie>,
-    calls: HashSet<u32>,
+    calls: HashMap<u32, (u32, ConnectionId)>,
 }
 
 impl ConnectionState {
     pub fn new(protocol_version: ProtocolVersion, send: UnboundedSender<Message>) -> Self {
         ConnectionState {
-            _protocol_version: protocol_version,
+            protocol_version,
             send,
             objects: HashSet::new(),
             subscriptions: HashMap::new(),
             senders: HashSet::new(),
             receivers: HashSet::new(),
             bus_listeners: HashSet::new(),
-            calls: HashSet::new(),
+            calls: HashMap::new(),
         }
     }
 
-    pub fn _protocol_version(&self) -> ProtocolVersion {
-        self._protocol_version
+    pub fn protocol_version(&self) -> ProtocolVersion {
+        self.protocol_version
     }
 
     pub fn add_object(&mut self, cookie: ObjectCookie) {
@@ -127,13 +128,36 @@ impl ConnectionState {
         self.bus_listeners.iter().copied()
     }
 
-    pub fn add_call(&mut self, callee_serial: u32) {
-        let unique = self.calls.insert(callee_serial);
-        debug_assert!(unique);
+    pub fn add_call(
+        &mut self,
+        caller_serial: u32,
+        callee_serial: u32,
+        callee_id: ConnectionId,
+    ) -> bool {
+        match self.calls.entry(caller_serial) {
+            Entry::Occupied(_) => false,
+
+            Entry::Vacant(entry) => {
+                entry.insert((callee_serial, callee_id));
+                true
+            }
+        }
     }
 
-    pub fn remove_call(&mut self, callee_serial: u32) {
-        let contained = self.calls.remove(&callee_serial);
-        debug_assert!(contained);
+    pub fn remove_call(&mut self, caller_serial: u32) {
+        let call = self.calls.remove(&caller_serial);
+        debug_assert!(call.is_some());
+    }
+
+    pub fn call_data(&self, caller_serial: u32) -> Option<(u32, &ConnectionId)> {
+        self.calls
+            .get(&caller_serial)
+            .map(|(callee_serial, callee_id)| (*callee_serial, callee_id))
+    }
+
+    pub fn calls(&self) -> impl Iterator<Item = (u32, &ConnectionId)> {
+        self.calls
+            .values()
+            .map(|(callee_serial, callee_id)| (*callee_serial, callee_id))
     }
 }

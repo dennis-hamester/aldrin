@@ -1,4 +1,4 @@
-use crate::core::channel::{self, Unbounded};
+use crate::core::channel::{self, Disconnected, Unbounded};
 use crate::core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
@@ -8,7 +8,9 @@ use crate::core::message::{
     Sync, SyncReply,
 };
 use crate::core::transport::AsyncTransportExt;
-use crate::core::{ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, ServiceUuid};
+use crate::core::{
+    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
+};
 use crate::{Broker, BrokerHandle};
 use aldrin::low_level::Proxy;
 use aldrin::Client;
@@ -426,8 +428,82 @@ async fn calls_from_multiple_clients() {
     broker.join().await;
 }
 
+#[tokio::test]
+async fn duplicate_call_serial() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut client = connect_client(&mut handle).await;
+
+    let object_uuid = ObjectUuid::new_v4();
+
+    client
+        .send(Message::CreateObject(CreateObject {
+            serial: 0,
+            uuid: object_uuid,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateObjectReply(CreateObjectReply {
+        result: CreateObjectResult::Ok(object_cookie),
+        ..
+    }) = client.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    let service_uuid = ServiceUuid::new_v4();
+
+    client
+        .send(Message::CreateService(CreateService {
+            serial: 0,
+            object_cookie,
+            uuid: service_uuid,
+            version: 0,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateServiceReply(CreateServiceReply {
+        result: CreateServiceResult::Ok(service_cookie),
+        ..
+    }) = client.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    client
+        .send(Message::CallFunction(CallFunction {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            value: SerializedValue::serialize(&()).unwrap(),
+        }))
+        .await
+        .unwrap();
+
+    assert!(matches!(
+        client.receive().await.unwrap(),
+        Message::CallFunction(_)
+    ));
+
+    client
+        .send(Message::CallFunction(CallFunction {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            value: SerializedValue::serialize(&()).unwrap(),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(client.receive().await, Err(Disconnected));
+}
+
 async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-    const VERSION: ProtocolVersion = ProtocolVersion::V1_15;
+    const VERSION: ProtocolVersion = ProtocolVersion::V1_16;
 
     let (mut t1, t2) = channel::unbounded();
 

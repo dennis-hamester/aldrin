@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support protocol version 15.
+- Support protocol versions 1.15 and 1.16.
+- Support aborting calls from the caller's side.
 
 ### Changed
 

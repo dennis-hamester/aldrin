@@ -14,12 +14,12 @@ use crate::bus_listener::BusListener;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::core::message::{
-    AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished, CallFunction,
-    CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed, ClaimChannelEnd,
-    ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, CreateBusListener, CreateBusListenerReply,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
+    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
+    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
@@ -30,8 +30,8 @@ use crate::core::message::{
 };
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
-    ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
-    ServiceUuid,
+    ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, ServiceCookie,
+    ServiceId, ServiceUuid,
 };
 use crate::serial_map::SerialMap;
 use channel::{AddCapacityError, Channel, SendItemError};
@@ -318,6 +318,11 @@ impl Broker {
                 continue;
             }
 
+            if let Some((callee_serial, callee_id)) = state.pop_abort_function_call() {
+                self.abort_call(state, callee_serial, callee_id);
+                continue;
+            }
+
             debug_assert!(!state.has_work_left());
             break;
         }
@@ -351,6 +356,10 @@ impl Broker {
 
         for chann_cookie in conn.receivers() {
             self.remove_channel_end(state, chann_cookie, ChannelEnd::Receiver, Some(id));
+        }
+
+        for (callee_serial, callee_id) in conn.calls() {
+            state.push_abort_function_call(callee_serial, callee_id.clone());
         }
 
         #[cfg(feature = "statistics")]
@@ -390,7 +399,7 @@ impl Broker {
             Message::ClearBusListenerFilters(req) => self.clear_bus_listener_filters(id, req),
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
-            Message::AbortFunctionCall(_) => todo!(),
+            Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -686,9 +695,13 @@ impl Broker {
             caller_conn_id: id.clone(),
             callee_obj: obj_uuid,
             callee_svc: svc_uuid,
+            aborted: false,
         });
 
-        conn.add_call(serial);
+        if !conn.add_call(req.serial, serial, callee_id.clone()) {
+            self.function_calls.remove(serial);
+            return Err(());
+        }
 
         let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
 
@@ -751,11 +764,15 @@ impl Broker {
             .expect("inconsistent state");
         svc.remove_function_call(req.serial);
 
+        if call.aborted {
+            return;
+        }
+
         let Some(conn) = self.conns.get_mut(&call.caller_conn_id) else {
             return;
         };
 
-        conn.remove_call(req.serial);
+        conn.remove_call(call.caller_serial);
 
         if send!(
             self,
@@ -1507,6 +1524,28 @@ impl Broker {
         }
     }
 
+    fn abort_function_call(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: AbortFunctionCall,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_16 {
+            return Err(());
+        }
+
+        let Some((callee_serial, callee_id)) = conn.call_data(req.serial) else {
+            return Ok(());
+        };
+
+        state.push_abort_function_call(callee_serial, callee_id.clone());
+        Ok(())
+    }
+
     /// Removes the object `obj_cookie` and queues up events in `state`.
     ///
     /// This function will also remove all services owned by that object as well as everything
@@ -1730,6 +1769,51 @@ impl Broker {
 
         state.push_remove_conns(remove_conns.into_iter().map(|id| (id.clone(), false)));
     }
+
+    fn abort_call(&mut self, state: &mut State, callee_serial: u32, callee_id: ConnectionId) {
+        let Some(call) = self.function_calls.get_mut(callee_serial) else {
+            return;
+        };
+
+        if call.aborted {
+            return;
+        }
+
+        call.aborted = true;
+
+        if let Some(conn) = self.conns.get(&callee_id) {
+            if conn.protocol_version() >= ProtocolVersion::V1_16 {
+                let res = send!(
+                    self,
+                    conn,
+                    Message::AbortFunctionCall(AbortFunctionCall {
+                        serial: callee_serial,
+                    })
+                );
+
+                if res.is_err() {
+                    state.push_remove_conn(callee_id, false);
+                }
+            }
+        }
+
+        if let Some(conn) = self.conns.get_mut(&call.caller_conn_id) {
+            conn.remove_call(call.caller_serial);
+
+            let res = send!(
+                self,
+                conn,
+                Message::CallFunctionReply(CallFunctionReply {
+                    serial: call.caller_serial,
+                    result: CallFunctionResult::Aborted,
+                })
+            );
+
+            if res.is_err() {
+                state.push_remove_conn(call.caller_conn_id.clone(), false);
+            }
+        }
+    }
 }
 
 impl Default for Broker {
@@ -1744,4 +1828,5 @@ struct PendingFunctionCall {
     caller_conn_id: ConnectionId,
     callee_obj: ObjectUuid,
     callee_svc: ServiceUuid,
+    aborted: bool,
 }
