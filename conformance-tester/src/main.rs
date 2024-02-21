@@ -6,6 +6,7 @@ mod context;
 mod message;
 mod message_type;
 mod output;
+mod protocol_version_serde;
 mod run;
 mod run_error;
 mod serial;
