@@ -27,15 +27,14 @@ mod unsubscribe_event;
 use crate::broker::Broker;
 use crate::context::Context;
 use crate::message_type::MessageType;
+use crate::protocol_version_serde;
 use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Context as _, Result};
 use once_cell::sync::Lazy;
-use serde::de::{Error, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
-use std::fmt;
 use std::fs::{self, File};
 use std::path::Path;
 use tokio::time::Instant;
@@ -228,7 +227,10 @@ pub struct Test {
     #[serde(default)]
     pub message_types: BTreeSet<MessageType>,
 
-    #[serde(deserialize_with = "deserialize_version", default = "default_version")]
+    #[serde(
+        deserialize_with = "protocol_version_serde::deserialize",
+        default = "default_version"
+    )]
     pub version: ProtocolVersion,
 
     pub steps: Vec<Step>,
@@ -283,31 +285,6 @@ impl Test {
 
         Ok(())
     }
-}
-
-fn deserialize_version<'de, D>(deserializer: D) -> Result<ProtocolVersion, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct VersionVisitor;
-
-    impl<'de> Visitor<'de> for VersionVisitor {
-        type Value = ProtocolVersion;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            write!(formatter, "a protocol version of the form MAJOR.MINOR")
-        }
-
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            v.parse()
-                .map_err(|_| Error::invalid_value(Unexpected::Str(v), &Self))
-        }
-    }
-
-    deserializer.deserialize_string(VersionVisitor)
 }
 
 const fn default_version() -> ProtocolVersion {
