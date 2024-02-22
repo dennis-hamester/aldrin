@@ -203,12 +203,12 @@ impl Broker {
             }
 
             ConnectionEvent::ConnectionShutdown(id) => {
-                state.push_remove_conn(id);
+                state.push_remove_conn(id, false);
             }
 
             ConnectionEvent::Message(id, msg) => {
                 if let Err(()) = self.handle_message(state, &id, msg) {
-                    state.push_remove_conn(id);
+                    state.push_remove_conn(id, false);
                 }
 
                 #[cfg(feature = "statistics")]
@@ -218,7 +218,7 @@ impl Broker {
             }
 
             ConnectionEvent::ShutdownBroker => {
-                state.push_remove_conns(self.conns.keys().cloned());
+                state.push_remove_conns(self.conns.keys().cloned().map(|id| (id, true)));
                 state.set_shutdown_now();
             }
 
@@ -227,7 +227,7 @@ impl Broker {
             }
 
             ConnectionEvent::ShutdownConnection(id) => {
-                state.push_remove_conn(id);
+                state.push_remove_conn(id, true);
             }
 
             #[cfg(feature = "statistics")]
@@ -245,8 +245,8 @@ impl Broker {
             // Then, handle all "add" events before "remove" events. Otherwise we might announce new
             // objects and services, which have previously been declared destroyed.
 
-            if let Some(conn) = state.pop_remove_conn() {
-                self.shutdown_connection(state, &conn);
+            if let Some((conn_id, send_shutdown)) = state.pop_remove_conn() {
+                self.shutdown_connection(state, &conn_id, send_shutdown);
                 continue;
             }
 
@@ -260,7 +260,7 @@ impl Broker {
                     event,
                 });
                 if let Err(()) = send!(self, conn, msg) {
-                    state.push_remove_conn(conn_id);
+                    state.push_remove_conn(conn_id, false);
                 }
                 continue;
             }
@@ -272,7 +272,7 @@ impl Broker {
                 };
                 let msg = Message::ServiceDestroyed(ServiceDestroyed { service_cookie });
                 if let Err(()) = send!(self, conn, msg) {
-                    state.push_remove_conn(conn_id);
+                    state.push_remove_conn(conn_id, false);
                 }
                 continue;
             }
@@ -290,7 +290,7 @@ impl Broker {
                 );
 
                 if res.is_err() {
-                    state.push_remove_conn(conn_id);
+                    state.push_remove_conn(conn_id, false);
                 }
                 continue;
             }
@@ -320,14 +320,15 @@ impl Broker {
         }
     }
 
-    fn shutdown_connection(&mut self, state: &mut State, id: &ConnectionId) {
-        let conn = match self.conns.remove(id) {
-            Some(conn) => conn,
-            None => return,
+    fn shutdown_connection(&mut self, state: &mut State, id: &ConnectionId, send_shutdown: bool) {
+        let Some(conn) = self.conns.remove(id) else {
+            return;
         };
 
-        // Ignore errors here
-        send!(self, conn, Message::Shutdown(Shutdown)).ok();
+        if send_shutdown {
+            // Ignore errors here.
+            let _ = send!(self, conn, Message::Shutdown(Shutdown));
+        }
 
         for bus_listener_cookie in conn.bus_listeners() {
             self.remove_bus_listener(bus_listener_cookie);
@@ -699,7 +700,7 @@ impl Broker {
         );
 
         if res.is_err() {
-            state.push_remove_conn(callee_id.clone());
+            state.push_remove_conn(callee_id.clone(), false);
         }
 
         #[cfg(feature = "statistics")]
@@ -756,7 +757,7 @@ impl Broker {
         )
         .is_err()
         {
-            state.push_remove_conn(call.caller_conn_id);
+            state.push_remove_conn(call.caller_conn_id, false);
         }
     }
 
@@ -848,7 +849,7 @@ impl Broker {
             let conn = self.conns.get(conn_id).expect("inconsistent state");
             let msg = Message::UnsubscribeEvent(req);
             if let Err(()) = send!(self, conn, msg) {
-                state.push_remove_conn(conn_id.clone());
+                state.push_remove_conn(conn_id.clone(), false);
             }
         }
     }
@@ -871,7 +872,7 @@ impl Broker {
             if conn.is_subscribed_to(req.service_cookie, req.event) {
                 let msg = Message::EmitEvent(req.clone());
                 if let Err(()) = send!(self, conn, msg) {
-                    state.push_remove_conn(conn_id.clone());
+                    state.push_remove_conn(conn_id.clone(), false);
                 }
 
                 #[cfg(feature = "statistics")]
@@ -1075,7 +1076,7 @@ impl Broker {
                 );
 
                 if other_result.is_err() {
-                    state.push_remove_conn(other_id.clone());
+                    state.push_remove_conn(other_id.clone(), false);
                 }
 
                 result
@@ -1125,7 +1126,7 @@ impl Broker {
         );
 
         if res.is_err() {
-            state.push_remove_conn(sender_id.clone());
+            state.push_remove_conn(sender_id.clone(), false);
         }
     }
 
@@ -1192,7 +1193,7 @@ impl Broker {
                 self.statistics.items_dropped += 1;
             }
 
-            state.push_remove_conn(receiver_id.clone());
+            state.push_remove_conn(receiver_id.clone(), false);
         }
 
         if let Some(add_capacity) = add_capacity {
@@ -1637,7 +1638,7 @@ impl Broker {
                     );
 
                     if res.is_err() {
-                        state.push_remove_conn(other_id.clone());
+                        state.push_remove_conn(other_id.clone(), false);
                     }
 
                     false
@@ -1717,9 +1718,7 @@ impl Broker {
             }
         }
 
-        for conn_id in remove_conns {
-            state.push_remove_conn(conn_id.clone());
-        }
+        state.push_remove_conns(remove_conns.into_iter().map(|id| (id.clone(), false)));
     }
 }
 

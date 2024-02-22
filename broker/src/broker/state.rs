@@ -6,7 +6,7 @@ use crate::core::{ObjectId, ServiceCookie, ServiceId};
 pub(super) struct State {
     shutdown_now: bool,
     shutdown_idle: bool,
-    remove_conns: Vec<ConnectionId>,
+    remove_conns: Vec<(ConnectionId, bool)>,
     remove_function_calls: Vec<(u32, ConnectionId, CallFunctionResult)>,
     services_destroyed: Vec<(ConnectionId, ServiceCookie)>,
     unsubscribe: Vec<(ConnectionId, ServiceCookie, u32)>,
@@ -59,18 +59,18 @@ impl State {
             || !self.destroy_service.is_empty()
     }
 
-    pub fn push_remove_conn(&mut self, id: ConnectionId) {
-        self.remove_conns.push(id);
+    pub fn push_remove_conn(&mut self, id: ConnectionId, send_shutdown: bool) {
+        self.remove_conns.push((id, send_shutdown));
     }
 
     pub fn push_remove_conns<I>(&mut self, ids: I)
     where
-        I: IntoIterator<Item = ConnectionId>,
+        I: IntoIterator<Item = (ConnectionId, bool)>,
     {
         self.remove_conns.extend(ids);
     }
 
-    pub fn pop_remove_conn(&mut self) -> Option<ConnectionId> {
+    pub fn pop_remove_conn(&mut self) -> Option<(ConnectionId, bool)> {
         self.remove_conns.pop()
     }
 

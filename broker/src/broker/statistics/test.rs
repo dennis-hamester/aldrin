@@ -45,7 +45,7 @@ async fn connections() {
     let mut client2 = broker.add_client().await;
     let mut client3 = broker.add_client().await;
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 1);
+    assert_eq!(stats.messages_sent, 0);
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 2);
     assert_eq!(stats.connections_added, 2);
@@ -55,7 +55,7 @@ async fn connections() {
     client2.join().await;
     client3.join().await;
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent, 2);
+    assert_eq!(stats.messages_sent, 0);
     assert_eq!(stats.messages_received, 0);
     assert_eq!(stats.num_connections, 0);
     assert_eq!(stats.connections_added, 0);

@@ -21,16 +21,14 @@ pub struct BrokerStatistics {
 
     /// Number of messages sent by the broker.
     ///
-    /// This number is not perfectly accurate. It does not cover messages sent during the handshake
-    /// with a new connection and messages sent under certain shutdown scenarios. Overall, only very
-    /// few messages are missed.
+    /// This number is not perfectly accurate. It does not cover most messages during the connection
+    /// setup and shutdown. Overall, only very few messages are missed.
     pub messages_sent: usize,
 
     /// Number of messages received from connections.
     ///
-    /// This number is not perfectly accurate. It does not cover messages received during the
-    /// handshake with a new connection and messages received under certain shutdown scenarios.
-    /// Overall, only very few messages are missed.
+    /// This number is not perfectly accurate. It does not cover most messages during the connection
+    /// setup and shutdown. Overall, only very few messages are missed.
     pub messages_received: usize,
 
     /// The number of current connections.
