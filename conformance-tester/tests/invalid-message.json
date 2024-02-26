@@ -1,0 +1,20 @@
+{
+    "name": "invalid-message",
+    "description": "Send an invalid message",
+    "long-description": "A client sends an invalid message. The broker must immediately close the connection.",
+    "steps": [
+        {
+            "type": "connect",
+            "sync": false,
+            "shutdown": false
+        },
+        {
+            "type": "send",
+            "message": "sync-reply",
+            "serial": 0
+        },
+        {
+            "type": "connection-closed"
+        }
+    ]
+}
