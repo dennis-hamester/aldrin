@@ -68,6 +68,7 @@ pub use unsubscribe_event::UnsubscribeEventStep;
 pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     let sources = [
         include_str!("../tests/abort-call-1.json"),
+        include_str!("../tests/abort-call-2.json"),
         include_str!("../tests/abort-call-old-version.json"),
         include_str!("../tests/call-function-aborted.json"),
         include_str!("../tests/call-function-err.json"),
