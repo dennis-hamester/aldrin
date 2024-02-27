@@ -1,0 +1,19 @@
+{
+    "name": "abort-invalid-call",
+    "description": "Try to abort an invalid call",
+    "long-description": "A client tries to abort an invalid call. The broker must ignore the request.",
+    "version": "1.16",
+    "message-types": [
+        "abort-function-call"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "abort-function-call",
+            "serial": 0
+        }
+    ]
+}
