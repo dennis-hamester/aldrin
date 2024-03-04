@@ -127,9 +127,35 @@ async fn abort_function_call() {
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
 
     let reply = proxy.call(0, &());
-    let _call = svc.next_call().await.unwrap();
+    let mut promise = svc.next_call().await.unwrap().promise;
 
+    assert!(!promise.is_aborted());
     reply.abort();
+    promise.aborted().await;
+    assert!(promise.is_aborted());
+    promise.aborted().await;
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn reply_aborted_call() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
+
+    let reply = proxy.call(0, &());
+    let mut promise = svc.next_call().await.unwrap().promise;
+
+    assert!(!promise.is_aborted());
+    reply.abort();
+    promise.aborted().await;
+    assert!(promise.is_aborted());
+    promise.done().unwrap();
 
     client.join().await;
     broker.join().await;

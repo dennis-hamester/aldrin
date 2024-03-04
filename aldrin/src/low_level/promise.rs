@@ -3,18 +3,25 @@ use crate::core::Serialize;
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::Promise as HlPromise;
+use futures_channel::oneshot::Receiver;
+use futures_core::FusedFuture;
+use std::future::{self, Future};
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 /// Replies to a pending call.
 #[derive(Debug)]
 pub struct Promise {
     client: Option<Handle>,
+    aborted: Receiver<()>,
     serial: u32,
 }
 
 impl Promise {
-    pub(crate) fn new(client: Handle, serial: u32) -> Self {
+    pub(crate) fn new(client: Handle, aborted: Receiver<()>, serial: u32) -> Self {
         Self {
             client: Some(client),
+            aborted,
             serial,
         }
     }
@@ -101,6 +108,29 @@ impl Promise {
             .take()
             .unwrap()
             .function_call_reply(self.serial, CallFunctionResult::InvalidArgs)
+    }
+
+    /// Returns whether the call was aborted by the caller.
+    pub fn is_aborted(&mut self) -> bool {
+        if self.aborted.is_terminated() {
+            true
+        } else {
+            !matches!(self.aborted.try_recv(), Ok(None))
+        }
+    }
+
+    /// Polls whether the call was aborted by the caller.
+    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+        if self.aborted.is_terminated() {
+            Poll::Ready(())
+        } else {
+            Pin::new(&mut self.aborted).poll(cx).map(|_| ())
+        }
+    }
+
+    /// Resolves if the call was aborted by the caller.
+    pub async fn aborted(&mut self) {
+        future::poll_fn(|cx| self.poll_aborted(cx)).await
     }
 }
 

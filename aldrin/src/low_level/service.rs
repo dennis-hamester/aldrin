@@ -7,6 +7,7 @@ use crate::error::Error;
 use crate::handle::Handle;
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedReceiver;
+use futures_channel::oneshot::Receiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::pin::Pin;
@@ -68,6 +69,7 @@ impl Service {
         match Pin::new(&mut self.calls).poll_next(cx) {
             Poll::Ready(Some(call)) => Poll::Ready(Some(Call::new(
                 self.client.clone(),
+                call.aborted,
                 call.serial,
                 call.function,
                 call.args,
@@ -117,4 +119,5 @@ pub(crate) struct RawCall {
     pub serial: u32,
     pub function: u32,
     pub args: SerializedValue,
+    pub aborted: Receiver<()>,
 }

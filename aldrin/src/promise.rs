@@ -4,6 +4,7 @@ use crate::handle::Handle;
 use crate::low_level::Promise as LlPromise;
 use std::fmt;
 use std::marker::PhantomData;
+use std::task::{Context, Poll};
 
 /// Replies to a pending call.
 pub struct Promise<T: ?Sized, E: ?Sized> {
@@ -49,6 +50,21 @@ impl<T: ?Sized, E: ?Sized> Promise<T, E> {
     /// Signals that invalid arguments were passed to the function.
     pub fn invalid_args(self) -> Result<(), Error> {
         self.inner.invalid_args()
+    }
+
+    /// Returns whether the call was aborted by the caller.
+    pub fn is_aborted(&mut self) -> bool {
+        self.inner.is_aborted()
+    }
+
+    /// Polls whether the call was aborted by the caller.
+    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+        self.inner.poll_aborted(cx)
+    }
+
+    /// Resolves if the call was aborted by the caller.
+    pub async fn aborted(&mut self) {
+        self.inner.aborted().await
     }
 }
 
