@@ -2,6 +2,7 @@ use super::Promise;
 use crate::core::{Deserialize, SerializedValue};
 use crate::error::Error;
 use crate::handle::Handle;
+use futures_channel::oneshot::Receiver;
 
 /// Pending call.
 #[derive(Debug)]
@@ -17,11 +18,17 @@ pub struct Call {
 }
 
 impl Call {
-    pub(crate) fn new(client: Handle, serial: u32, function: u32, args: SerializedValue) -> Self {
+    pub(crate) fn new(
+        client: Handle,
+        aborted: Receiver<()>,
+        serial: u32,
+        function: u32,
+        args: SerializedValue,
+    ) -> Self {
         Self {
             function,
             args,
-            promise: Promise::new(client, serial),
+            promise: Promise::new(client, aborted, serial),
         }
     }
 

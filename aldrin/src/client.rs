@@ -104,6 +104,7 @@ where
     start_bus_listener: SerialMap<StartBusListenerRequest>,
     stop_bus_listener: SerialMap<StopBusListenerRequest>,
     bus_listeners: HashMap<BusListenerCookie, BusListenerHandle>,
+    abort_call_handles: HashMap<u32, oneshot::Sender<()>>,
 }
 
 impl<T> Client<T>
@@ -227,6 +228,7 @@ where
             start_bus_listener: SerialMap::new(),
             stop_bus_listener: SerialMap::new(),
             bus_listeners: HashMap::new(),
+            abort_call_handles: HashMap::new(),
         };
 
         Ok((client, connect_reply_data.user))
@@ -374,7 +376,7 @@ where
             Message::BusListenerCurrentFinished(msg) => {
                 self.msg_bus_listener_current_finished(msg)?
             }
-            Message::AbortFunctionCall(_) => {}
+            Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -494,13 +496,20 @@ where
             .services
             .get_mut(&msg.service_cookie)
             .expect("inconsistent state");
+
+        let (abort_send, abort_recv) = oneshot::channel();
+
         let req = RawCall {
             serial: msg.serial,
             function: msg.function,
             args: msg.value,
+            aborted: abort_recv,
         };
 
-        if send.unbounded_send(req).is_err() {
+        if send.unbounded_send(req).is_ok() {
+            let dup = self.abort_call_handles.insert(msg.serial, abort_send);
+            assert!(dup.is_none());
+        } else {
             self.t
                 .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
                     serial: msg.serial,
@@ -1029,6 +1038,18 @@ where
         }
     }
 
+    fn msg_abort_function_call(
+        &mut self,
+        msg: AbortFunctionCall,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_16 {
+            self.abort_call_handles.remove(&msg.serial);
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -1167,6 +1188,8 @@ where
         &mut self,
         req: CallFunctionReplyRequest,
     ) -> Result<(), RunError<T::Error>> {
+        self.abort_call_handles.remove(&req.serial);
+
         self.t
             .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
                 serial: req.serial,
