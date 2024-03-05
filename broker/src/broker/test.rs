@@ -401,3 +401,41 @@ async fn send_item_without_capacity() {
         panic!();
     };
 }
+
+#[tokio::test]
+async fn calls_from_multiple_clients() {
+    let mut broker = TestBroker::new();
+
+    let mut client1 = broker.add_client().await;
+    let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+
+    let mut client2 = broker.add_client().await;
+    let reply = client2
+        .call_infallible_function::<_, ()>(svc.id(), 0, &())
+        .unwrap();
+    svc.next_function_call()
+        .await
+        .unwrap()
+        .reply
+        .ok(&())
+        .unwrap();
+    reply.await.unwrap();
+
+    let mut client3 = broker.add_client().await;
+    let reply = client3
+        .call_infallible_function::<_, ()>(svc.id(), 0, &())
+        .unwrap();
+    svc.next_function_call()
+        .await
+        .unwrap()
+        .reply
+        .ok(&())
+        .unwrap();
+    reply.await.unwrap();
+
+    client1.join().await;
+    client2.join().await;
+    client3.join().await;
+    broker.join().await;
+}
