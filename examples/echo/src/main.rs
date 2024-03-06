@@ -112,18 +112,18 @@ async fn server(bus: &Handle) -> Result<()> {
             // implement the `Stream` trait from the `future` crate, which is however not used here.
             function = echo.next_call() => {
                 match function {
-                    Ok(Some(function)) => function,
-
-                    // `None` is returned when the service is destroyed or when the connection to
-                    // the broker shuts down.
-                    Ok(None) => return Err(anyhow!("broker shut down")),
+                    Some(Ok(function)) => function,
 
                     // Function calls can be invalid either because their ID is unknown or because
                     // the arguments to the call failed to deserialize.
-                    Err(e) => {
+                    Some(Err(e)) => {
                         log::error!("Received an invalid function call: {e}.");
                         continue;
                     }
+
+                    // `None` is returned when the service is destroyed or when the connection to
+                    // the broker shuts down.
+                    None => return Err(anyhow!("broker shut down")),
                 }
             }
 
@@ -242,18 +242,18 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
         let event = tokio::select! {
             event = echo.next_event() => {
                 match event {
-                    Ok(Some(event)) => event,
-
-                    // Happens when either the service is destroyed or the connection to the broker
-                    // shuts down.
-                    Ok(None) => break Ok(()),
+                    Some(Ok(event)) => event,
 
                     // As with functions, events can be invalid, either because they have an unknown
                     // ID or because their associated value failed to deserialize.
-                    Err(e) => {
+                    Some(Err(e)) => {
                         log::error!("Received an invalid event: {e}.");
                         continue;
                     }
+
+                    // Happens when either the service is destroyed or the connection to the broker
+                    // shuts down.
+                    None => break Ok(()),
                 }
             }
 
