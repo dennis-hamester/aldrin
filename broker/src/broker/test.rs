@@ -255,24 +255,6 @@ async fn wrong_client_replies_function_call() {
     let mut handle = broker.handle().clone();
     tokio::spawn(broker.run());
 
-    async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-        let (mut t1, t2) = channel::unbounded();
-
-        t1.send(Connect::with_serialize_value(14, &()).unwrap().into())
-            .await
-            .unwrap();
-
-        let conn = broker.connect(t2).await.unwrap();
-
-        let Message::ConnectReply(ConnectReply::Ok(_)) = t1.receive().await.unwrap() else {
-            panic!();
-        };
-
-        tokio::spawn(conn.run());
-
-        t1
-    }
-
     let mut client1 = connect_client(&mut handle).await;
     let mut client2 = connect_client(&mut handle).await;
 
@@ -365,27 +347,6 @@ async fn send_item_without_capacity() {
     let broker = Broker::new();
     let mut handle = broker.handle().clone();
     tokio::spawn(broker.run());
-
-    async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-        let (mut t1, t2) = channel::unbounded();
-
-        t1.send(Connect::with_serialize_value(14, &()).unwrap().into())
-            .await
-            .unwrap();
-
-        let conn = broker.connect(t2).await.unwrap();
-
-        if !matches!(
-            t1.receive().await,
-            Ok(Message::ConnectReply(ConnectReply::Ok(_)))
-        ) {
-            panic!();
-        };
-
-        tokio::spawn(conn.run());
-
-        t1
-    }
 
     let mut client1 = connect_client(&mut handle).await;
     let mut client2 = connect_client(&mut handle).await;
@@ -508,4 +469,29 @@ async fn calls_from_multiple_clients() {
     client2.join().await;
     client3.join().await;
     broker.join().await;
+}
+
+async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
+    const VERSION: ProtocolVersion = ProtocolVersion::V1_15;
+
+    let (mut t1, t2) = channel::unbounded();
+
+    t1.send(
+        Connect2::with_serialize_data(VERSION.major(), VERSION.minor(), &ConnectData::new())
+            .unwrap()
+            .into(),
+    )
+    .await
+    .unwrap();
+
+    let conn = broker.connect(t2).await.unwrap();
+
+    let Message::ConnectReply2(reply) = t1.receive().await.unwrap() else {
+        panic!("expected connect-reply2");
+    };
+
+    assert_eq!(reply.result, ConnectResult::Ok(VERSION.minor()));
+
+    tokio::spawn(conn.run());
+    t1
 }
