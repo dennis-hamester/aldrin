@@ -570,11 +570,11 @@ impl<'a> RustGenerator<'a> {
         }
 
         let event = service_event(svc_name);
-        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{event}>, aldrin::Error>> {{");
+        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Option<Result<{event}, aldrin::Error>>> {{");
         genln!(self, "        loop {{");
         genln!(self, "            let ev = match self.inner.poll_next_event(cx) {{");
         genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
-        genln!(self, "                std::task::Poll::Ready(None) => break std::task::Poll::Ready(Ok(None)),");
+        genln!(self, "                std::task::Poll::Ready(None) => break std::task::Poll::Ready(None),");
         genln!(self, "                std::task::Poll::Pending => break std::task::Poll::Pending,");
         genln!(self, "            }};");
         genln!(self);
@@ -591,11 +591,11 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "                {id} => match ev.args.deserialize() {{");
             if ev.event_type().is_some() {
-                genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Ok(Some({event}::{variant}(value)))),");
+                genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Some(Ok({event}::{variant}(value)))),");
             } else {
-                genln!(self, "                    Ok(()) => break std::task::Poll::Ready(Ok(Some({event}::{variant}))),");
+                genln!(self, "                    Ok(()) => break std::task::Poll::Ready(Some(Ok({event}::{variant}))),");
             }
-            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Err(aldrin::Error::invalid_arguments(ev.id, Some(e)))),");
+            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_arguments(ev.id, Some(e))))),");
             genln!(self, "                }}");
             genln!(self);
         }
@@ -605,7 +605,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub async fn next_event(&mut self) -> Result<Option<{event}>, aldrin::Error> {{");
+        genln!(self, "    pub async fn next_event(&mut self) -> Option<Result<{event}, aldrin::Error>> {{");
         genln!(self, "        std::future::poll_fn(|cx| self.poll_next_event(cx)).await");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -615,7 +615,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    type Item = Result<{event}, aldrin::Error>;");
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        self.poll_next_event(cx).map(std::result::Result::transpose)");
+        genln!(self, "        self.poll_next_event(cx)");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
@@ -711,10 +711,10 @@ impl<'a> RustGenerator<'a> {
         }
 
         let functions = service_functions(svc_name);
-        genln!(self, "    pub fn poll_next_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Result<Option<{functions}>, aldrin::Error>> {{");
+        genln!(self, "    pub fn poll_next_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Option<Result<{functions}, aldrin::Error>>> {{");
         genln!(self, "        let call = match self.inner.poll_next_call(cx) {{");
         genln!(self, "            std::task::Poll::Ready(Some(call)) => call,");
-        genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(Ok(None)),");
+        genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
         genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
         genln!(self, "        }};");
         genln!(self);
@@ -731,22 +731,22 @@ impl<'a> RustGenerator<'a> {
 
             genln!(self, "            {id} => match call.deserialize_and_cast() {{");
             if func.args().is_some() {
-                genln!(self, "                Ok((args, promise)) => std::task::Poll::Ready(Ok(Some({functions}::{function}(args, promise)))),");
+                genln!(self, "                Ok((args, promise)) => std::task::Poll::Ready(Some(Ok({functions}::{function}(args, promise)))),");
             } else {
-                genln!(self, "                Ok(((), promise)) => std::task::Poll::Ready(Ok(Some({functions}::{function}(promise)))),");
+                genln!(self, "                Ok(((), promise)) => std::task::Poll::Ready(Some(Ok({functions}::{function}(promise)))),");
             }
-            genln!(self, "                Err(e) => std::task::Poll::Ready(Err(e)),");
+            genln!(self, "                Err(e) => std::task::Poll::Ready(Some(Err(e))),");
             genln!(self, "            }}");
             genln!(self);
         }
         genln!(self, "            _ => {{");
         genln!(self, "                let _ = call.promise.invalid_function();");
-        genln!(self, "                std::task::Poll::Ready(Err(aldrin::Error::invalid_function(call.function)))");
+        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_function(call.function))))");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub async fn next_call(&mut self) -> Result<Option<{functions}>, aldrin::Error> {{");
+        genln!(self, "    pub async fn next_call(&mut self) -> Option<Result<{functions}, aldrin::Error>> {{");
         genln!(self, "        std::future::poll_fn(|cx| self.poll_next_call(cx)).await");
         genln!(self, "    }}");
         genln!(self, "}}");
@@ -756,7 +756,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    type Item = Result<{functions}, aldrin::Error>;");
         genln!(self);
         genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        self.poll_next_call(cx).map(Result::transpose)");
+        genln!(self, "        self.poll_next_call(cx)");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
