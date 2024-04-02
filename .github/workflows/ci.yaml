@@ -76,3 +76,18 @@ jobs:
         run: cargo build --locked -p conformance-test-broker
       - name: Run conformance tests
         run: target/debug/aldrin-conformance-tester run -j1 target/debug/conformance-test-broker
+
+  cargo-deny:
+    name: Check cargo-deny
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check ${{ matrix.checks }}
