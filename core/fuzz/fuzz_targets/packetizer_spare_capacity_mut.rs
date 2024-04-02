@@ -16,7 +16,11 @@ fuzz_target!(|data: Vec<Vec<u8>>| {
             let dst = packetizer.spare_capacity_mut();
             let to_write = rem.min(dst.len());
 
-            MaybeUninit::write_slice(&mut dst[..to_write], &data[len - rem..len - rem + to_write]);
+            MaybeUninit::copy_from_slice(
+                &mut dst[..to_write],
+                &data[len - rem..len - rem + to_write],
+            );
+
             rem -= to_write;
             unsafe {
                 packetizer.bytes_written(to_write);
