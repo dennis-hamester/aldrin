@@ -99,7 +99,8 @@ impl BrokerUnderTest {
         let mut buf = [0; 64];
 
         let res = loop {
-            match stdin.read(&mut buf) {
+            let len = stdin.read(&mut buf);
+            match len {
                 Ok(0) => break Ok(()),
                 Ok(_) => {}
                 Err(e) => break Err(Error::new(e).context(anyhow!("failed to read from stdin"))),
