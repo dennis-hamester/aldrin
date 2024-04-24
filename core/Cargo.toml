@@ -29,6 +29,7 @@ fuzzing = [
     "dep:arbitrary",
     "uuid/arbitrary",
 ]
+introspection = ["uuid/v5"]
 new-v4-ids = ["uuid/v4"]
 tokio = ["dep:tokio"]
 
