@@ -502,12 +502,12 @@ impl<'a> StructSerializer<'a> {
 
     pub fn serialize_field<T: Serialize + ?Sized>(
         &mut self,
-        id: u32,
+        id: impl Into<u32>,
         value: &T,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_fields > 0 {
             self.num_fields -= 1;
-            self.buf.put_varint_u32_le(id);
+            self.buf.put_varint_u32_le(id.into());
             value.serialize(Serializer::new(self.buf, self.depth)?)?;
             Ok(self)
         } else {

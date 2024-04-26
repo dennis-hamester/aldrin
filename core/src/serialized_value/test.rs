@@ -18,8 +18,8 @@ fn concrete_vs_vague() {
     {
         fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct(2)?;
-            serializer.serialize_field(1, &self.field1)?;
-            serializer.serialize_field(2, &self.field2)?;
+            serializer.serialize_field(1u32, &self.field1)?;
+            serializer.serialize_field(2u32, &self.field2)?;
             serializer.finish()
         }
     }

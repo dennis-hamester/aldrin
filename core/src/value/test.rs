@@ -1205,8 +1205,8 @@ impl Serialize for TestStruct {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(2)?;
         serializer
-            .serialize_field(0, &self.a)?
-            .serialize_field(1, &self.b)?;
+            .serialize_field(0u32, &self.a)?
+            .serialize_field(1u32, &self.b)?;
         serializer.finish()
     }
 }

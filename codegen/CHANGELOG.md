@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   proxy type. The previous `Events` type has been removed.
 - `next_event()` and `next_call()` now return `Option<Result<_, Error>>`, which matches what the
   `aldrin` crate does.
+- Adapt to changes of the `aldrin-core` crate.
 
 ## [0.4.0] - 2024-03-21
 

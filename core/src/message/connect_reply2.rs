@@ -33,10 +33,16 @@ impl ConnectReplyData {
     }
 }
 
+#[derive(IntoPrimitive, TryFromPrimitive)]
+#[repr(u32)]
+enum ConnectReplyDataField {
+    User = 0,
+}
+
 impl Serialize for ConnectReplyData {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(1)?;
-        serializer.serialize_field(0, &self.user)?;
+        serializer.serialize_field(ConnectReplyDataField::User, &self.user)?;
         serializer.finish()
     }
 }
@@ -50,9 +56,13 @@ impl Deserialize for ConnectReplyData {
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
 
-            match deserializer.id() {
-                0 => user = deserializer.deserialize()?,
-                _ => deserializer.skip()?,
+            let Ok(field) = deserializer.id().try_into() else {
+                deserializer.skip()?;
+                continue;
+            };
+
+            match field {
+                ConnectReplyDataField::User => user = deserializer.deserialize()?,
             }
         }
 

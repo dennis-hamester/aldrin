@@ -180,7 +180,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        let mut serializer = serializer.serialize_struct({})?;", fields.len());
         genln!(self);
         for field in fields {
-            genln!(self, "        serializer.serialize_field({}, &self.{})?;", field.id().value(), field.name().value());
+            genln!(self, "        serializer.serialize_field({}u32, &self.{})?;", field.id().value(), field.name().value());
         }
         genln!(self);
         genln!(self, "        serializer.finish()");

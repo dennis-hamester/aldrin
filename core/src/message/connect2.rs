@@ -7,6 +7,7 @@ use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
@@ -32,10 +33,16 @@ impl ConnectData {
     }
 }
 
+#[derive(IntoPrimitive, TryFromPrimitive)]
+#[repr(u32)]
+enum ConnectDataField {
+    User = 0,
+}
+
 impl Serialize for ConnectData {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(1)?;
-        serializer.serialize_field(0, &self.user)?;
+        serializer.serialize_field(ConnectDataField::User, &self.user)?;
         serializer.finish()
     }
 }
@@ -49,9 +56,13 @@ impl Deserialize for ConnectData {
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
 
-            match deserializer.id() {
-                0 => user = deserializer.deserialize()?,
-                _ => deserializer.skip()?,
+            let Ok(field) = deserializer.id().try_into() else {
+                deserializer.skip()?;
+                continue;
+            };
+
+            match field {
+                ConnectDataField::User => user = deserializer.deserialize()?,
             }
         }
 
