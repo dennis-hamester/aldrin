@@ -29,6 +29,9 @@ pub enum DeserializeError {
     #[error("no more elements")]
     NoMoreElements,
 
+    #[error("more elements remain")]
+    MoreElementsRemain,
+
     #[error("too deeply nested")]
     TooDeeplyNested,
 

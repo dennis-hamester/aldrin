@@ -66,7 +66,7 @@ impl Deserialize for ConnectReplyData {
             }
         }
 
-        Ok(Self { user })
+        deserializer.finish(Self { user })
     }
 }
 

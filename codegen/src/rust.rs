@@ -213,7 +213,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self);
-        genln!(self, "        Ok(Self {{");
+        genln!(self, "        deserializer.finish_with(|| Ok(Self {{");
         for field in fields {
             let field_name = field.name().value();
             if field.required() {
@@ -222,7 +222,7 @@ impl<'a> RustGenerator<'a> {
                 genln!(self, "            {field_name},");
             }
         }
-        genln!(self, "        }})");
+        genln!(self, "        }}))");
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);

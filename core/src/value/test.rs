@@ -1227,9 +1227,11 @@ impl Deserialize for TestStruct {
             }
         }
 
-        Ok(Self {
-            a: a.ok_or(DeserializeError::InvalidSerialization)?,
-            b,
+        deserializer.finish_with(|| {
+            Ok(Self {
+                a: a.ok_or(DeserializeError::InvalidSerialization)?,
+                b,
+            })
         })
     }
 }

@@ -9,9 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `DeserializeError::MoreElementsRemain`.
 - Add `FieldDeserializer::try_id()`.
 - Add `EnumDeserializer::try_variant()`.
 - Add `StructDeserializer::deserialize_specific_field()`.
+- Add `VecDeserializer::finish()`, `finish_with()`, `skip_and_finish()` and
+  `skip_and_finish_with()`.
+- Add `BytesDeserializer::finish()`, `finish_with()`, `skip_and_finish()` and
+  `skip_and_finish_with()`.
+- Add `MapDeserializer::finish()`, `finish_with()`, `skip_and_finish()` and
+  `skip_and_finish_with()`.
+- Add `SetDeserializer::finish()`, `finish_with()`, `skip_and_finish()` and
+  `skip_and_finish_with()`.
+- Add `StructDeserializer::finish()`, `finish_with()`, `skip_and_finish()` and
+  `skip_and_finish_with()`.
 
 ### Changed
 

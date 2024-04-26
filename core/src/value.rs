@@ -540,7 +540,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
             (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[T; N]>)).assume_init_read()
         };
 
-        Ok(value)
+        deserializer.finish(value)
     }
 }
 

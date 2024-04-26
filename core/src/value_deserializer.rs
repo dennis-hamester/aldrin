@@ -427,6 +427,38 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
 
         Ok(())
     }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        if self.is_empty() {
+            Ok(t)
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        if self.is_empty() {
+            f()
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        self.skip()?;
+        f()
+    }
 }
 
 #[derive(Debug)]
@@ -490,6 +522,38 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
 
     pub fn skip_all(mut self) -> Result<(), DeserializeError> {
         self.skip(self.len as usize)
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        if self.is_empty() {
+            Ok(t)
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        if self.is_empty() {
+            f()
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip_all()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        self.skip_all()?;
+        f()
     }
 }
 
@@ -566,6 +630,38 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         }
 
         Ok(())
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        if self.is_empty() {
+            Ok(t)
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        if self.is_empty() {
+            f()
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        self.skip()?;
+        f()
     }
 }
 
@@ -664,6 +760,38 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
 
         Ok(())
     }
+
+    pub fn finish<T2>(self, t: T2) -> Result<T2, DeserializeError> {
+        if self.is_empty() {
+            Ok(t)
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn finish_with<T2, F>(self, f: F) -> Result<T2, DeserializeError>
+    where
+        F: FnOnce() -> Result<T2, DeserializeError>,
+    {
+        if self.is_empty() {
+            f()
+        } else {
+            Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn skip_and_finish<T2>(self, t: T2) -> Result<T2, DeserializeError> {
+        self.skip()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T2, F>(self, f: F) -> Result<T2, DeserializeError>
+    where
+        F: FnOnce() -> Result<T2, DeserializeError>,
+    {
+        self.skip()?;
+        f()
+    }
 }
 
 #[derive(Debug)]
@@ -724,6 +852,38 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
         }
 
         Ok(())
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        if self.has_more_fields() {
+            Err(DeserializeError::MoreElementsRemain)
+        } else {
+            Ok(t)
+        }
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        if self.has_more_fields() {
+            Err(DeserializeError::MoreElementsRemain)
+        } else {
+            f()
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        self.skip()?;
+        f()
     }
 }
 

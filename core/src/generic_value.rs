@@ -264,7 +264,7 @@ impl Deserialize for Struct {
             value.insert(id, field);
         }
 
-        Ok(Self(value))
+        deserializer.finish(Self(value))
     }
 }
 
