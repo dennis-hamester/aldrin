@@ -362,7 +362,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 #[derive(Debug)]
 pub struct VecDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
-    num_elems: u32,
+    len: u32,
     depth: u8,
 }
 
@@ -373,31 +373,28 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     }
 
     fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        let num_elems = buf.try_get_varint_u32_le()?;
-        Ok(Self {
-            buf,
-            num_elems,
-            depth,
-        })
+        let len = buf.try_get_varint_u32_le()?;
+
+        Ok(Self { buf, len, depth })
     }
 
-    pub fn remaining_elements(&self) -> usize {
-        self.num_elems as usize
+    pub fn len(&self) -> usize {
+        self.len as usize
     }
 
-    pub fn has_more_elements(&self) -> bool {
-        self.num_elems > 0
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     pub fn deserialize_element<T>(&mut self) -> Result<T, DeserializeError>
     where
         T: Deserialize,
     {
-        if self.has_more_elements() {
-            self.num_elems -= 1;
-            T::deserialize(Deserializer::new(self.buf, self.depth)?)
-        } else {
+        if self.is_empty() {
             Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
+            T::deserialize(Deserializer::new(self.buf, self.depth)?)
         }
     }
 
@@ -406,7 +403,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
         V: Extend<T>,
         T: Deserialize,
     {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             let elem = self.deserialize_element()?;
             vec.extend(iter::once(elem));
         }
@@ -415,16 +412,16 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     }
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
-        if self.num_elems > 0 {
-            self.num_elems -= 1;
-            Deserializer::new(self.buf, self.depth)?.skip()
-        } else {
+        if self.is_empty() {
             Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
+            Deserializer::new(self.buf, self.depth)?.skip()
         }
     }
 
     pub fn skip(mut self) -> Result<(), DeserializeError> {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             self.skip_element()?;
         }
 
@@ -499,7 +496,7 @@ impl<'a, 'b> BytesDeserializer<'a, 'b> {
 #[derive(Debug)]
 pub struct MapDeserializer<'a, 'b, K: DeserializeKey> {
     buf: &'a mut &'b [u8],
-    num_elems: u32,
+    len: u32,
     depth: u8,
     _key: PhantomData<K>,
 }
@@ -511,32 +508,32 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
     }
 
     fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        let num_elems = buf.try_get_varint_u32_le()?;
+        let len = buf.try_get_varint_u32_le()?;
 
         Ok(Self {
             buf,
-            num_elems,
+            len,
             depth,
             _key: PhantomData,
         })
     }
 
-    pub fn remaining_elements(&self) -> usize {
-        self.num_elems as usize
+    pub fn len(&self) -> usize {
+        self.len as usize
     }
 
-    pub fn has_more_elements(&self) -> bool {
-        self.num_elems > 0
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     pub fn deserialize_element(
         &mut self,
     ) -> Result<ElementDeserializer<'_, 'b, K>, DeserializeError> {
-        if self.has_more_elements() {
-            self.num_elems -= 1;
-            ElementDeserializer::new(self.buf, self.depth)
-        } else {
+        if self.is_empty() {
             Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
+            ElementDeserializer::new(self.buf, self.depth)
         }
     }
 
@@ -545,7 +542,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
         T: Extend<(K, V)>,
         V: Deserialize,
     {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             let kv = self.deserialize_element()?.deserialize()?;
             map.extend(iter::once(kv));
         }
@@ -554,17 +551,17 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
     }
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
-        if self.has_more_elements() {
-            self.num_elems -= 1;
+        if self.is_empty() {
+            Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
             K::skip(self.buf)?;
             Deserializer::new(self.buf, self.depth)?.skip()
-        } else {
-            Err(DeserializeError::NoMoreElements)
         }
     }
 
     pub fn skip(mut self) -> Result<(), DeserializeError> {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             self.skip_element()?;
         }
 
@@ -602,7 +599,7 @@ impl<'a, 'b, K: DeserializeKey> ElementDeserializer<'a, 'b, K> {
 #[derive(Debug)]
 pub struct SetDeserializer<'a, 'b, T: DeserializeKey> {
     buf: &'a mut &'b [u8],
-    num_elems: u32,
+    len: u32,
     _key: PhantomData<T>,
 }
 
@@ -613,29 +610,29 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
     }
 
     fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
-        let num_elems = buf.try_get_varint_u32_le()?;
+        let len = buf.try_get_varint_u32_le()?;
 
         Ok(Self {
             buf,
-            num_elems,
+            len,
             _key: PhantomData,
         })
     }
 
-    pub fn remaining_elements(&self) -> usize {
-        self.num_elems as usize
+    pub fn len(&self) -> usize {
+        self.len as usize
     }
 
-    pub fn has_more_elements(&self) -> bool {
-        self.num_elems > 0
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     pub fn deserialize_element(&mut self) -> Result<T, DeserializeError> {
-        if self.has_more_elements() {
-            self.num_elems -= 1;
-            T::deserialize_key(self.buf)
-        } else {
+        if self.is_empty() {
             Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
+            T::deserialize_key(self.buf)
         }
     }
 
@@ -643,7 +640,7 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
     where
         S: Extend<T>,
     {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             let kv = self.deserialize_element()?;
             set.extend(iter::once(kv));
         }
@@ -652,16 +649,16 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
     }
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
-        if self.num_elems > 0 {
-            self.num_elems -= 1;
-            T::skip(self.buf)
-        } else {
+        if self.is_empty() {
             Err(DeserializeError::NoMoreElements)
+        } else {
+            self.len -= 1;
+            T::skip(self.buf)
         }
     }
 
     pub fn skip(mut self) -> Result<(), DeserializeError> {
-        while self.has_more_elements() {
+        while !self.is_empty() {
             self.skip_element()?;
         }
 

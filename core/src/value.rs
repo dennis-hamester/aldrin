@@ -498,7 +498,7 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_vec()?;
 
-        if deserializer.remaining_elements() != N {
+        if deserializer.len() != N {
             return Err(DeserializeError::UnexpectedValue);
         }
 
