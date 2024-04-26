@@ -679,12 +679,7 @@ where
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        let variant = deserializer
-            .variant()
-            .try_into()
-            .map_err(|_| DeserializeError::InvalidSerialization)?;
-
-        match variant {
+        match deserializer.try_variant()? {
             ResultVariant::Ok => deserializer.deserialize().map(Ok),
             ResultVariant::Err => deserializer.deserialize().map(Err),
         }

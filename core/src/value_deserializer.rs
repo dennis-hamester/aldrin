@@ -775,6 +775,12 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
         self.variant
     }
 
+    pub fn try_variant<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
+        self.variant
+            .try_into()
+            .map_err(|_| DeserializeError::InvalidSerialization)
+    }
+
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
         T::deserialize(Deserializer::new(self.buf, self.depth)?)
     }
