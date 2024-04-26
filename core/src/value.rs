@@ -651,6 +651,13 @@ where
     }
 }
 
+#[derive(IntoPrimitive, TryFromPrimitive)]
+#[repr(u32)]
+enum ResultVariant {
+    Ok = 0,
+    Err = 1,
+}
+
 impl<T, E> Serialize for Result<T, E>
 where
     T: Serialize,
@@ -658,8 +665,8 @@ where
 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
-            Ok(ok) => serializer.serialize_enum(0, ok),
-            Err(err) => serializer.serialize_enum(1, err),
+            Ok(ok) => serializer.serialize_enum(ResultVariant::Ok, ok),
+            Err(err) => serializer.serialize_enum(ResultVariant::Err, err),
         }
     }
 }
@@ -672,10 +679,14 @@ where
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        match deserializer.variant() {
-            0 => deserializer.deserialize().map(Ok),
-            1 => deserializer.deserialize().map(Err),
-            _ => Err(DeserializeError::InvalidSerialization),
+        let variant = deserializer
+            .variant()
+            .try_into()
+            .map_err(|_| DeserializeError::InvalidSerialization)?;
+
+        match variant {
+            ResultVariant::Ok => deserializer.deserialize().map(Ok),
+            ResultVariant::Err => deserializer.deserialize().map(Err),
         }
     }
 }

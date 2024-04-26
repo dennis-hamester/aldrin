@@ -224,12 +224,12 @@ impl<'a> Serializer<'a> {
 
     pub fn serialize_enum<T: Serialize + ?Sized>(
         mut self,
-        variant: u32,
+        variant: impl Into<u32>,
         value: &T,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Enum);
-        self.buf.put_varint_u32_le(variant);
+        self.buf.put_varint_u32_le(variant.into());
         value.serialize(self)
     }
 

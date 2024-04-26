@@ -314,9 +314,9 @@ impl<'a> RustGenerator<'a> {
             let name = var.name().value();
             let id = var.id().value();
             if var.variant_type().is_some() {
-                genln!(self, "            Self::{name}(v) => serializer.serialize_enum({id}, v),");
+                genln!(self, "            Self::{name}(v) => serializer.serialize_enum({id}u32, v),");
             } else {
-                genln!(self, "            Self::{name} => serializer.serialize_enum({id}, &()),");
+                genln!(self, "            Self::{name} => serializer.serialize_enum({id}u32, &()),");
             }
         }
         genln!(self, "        }}");

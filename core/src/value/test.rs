@@ -1289,8 +1289,8 @@ enum TestEnum {
 impl Serialize for TestEnum {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
-            Self::A(value) => serializer.serialize_enum(0, value),
-            Self::B(value) => serializer.serialize_enum(1, value),
+            Self::A(value) => serializer.serialize_enum(0u32, value),
+            Self::B(value) => serializer.serialize_enum(1u32, value),
         }
     }
 }

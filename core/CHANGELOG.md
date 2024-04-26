@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump protocol version to 16.
 - `StructSerializer::serialize_field()` takes `id` now as `impl Into<u32>`.
+- `Serializer::serialize_enum()` takes `variant` now as `impl Into<u32>`.
 
 ## [0.4.0] - 2024-03-21
 
