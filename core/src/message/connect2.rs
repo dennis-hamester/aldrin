@@ -56,7 +56,7 @@ impl Deserialize for ConnectData {
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
 
-            let Ok(field) = deserializer.id().try_into() else {
+            let Ok(field) = deserializer.try_id() else {
                 deserializer.skip()?;
                 continue;
             };

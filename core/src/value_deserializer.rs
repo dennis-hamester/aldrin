@@ -734,6 +734,12 @@ impl<'a, 'b> FieldDeserializer<'a, 'b> {
         self.id
     }
 
+    pub fn try_id<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
+        self.id
+            .try_into()
+            .map_err(|_| DeserializeError::InvalidSerialization)
+    }
+
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
         T::deserialize(Deserializer::new(self.buf, self.depth)?)
     }
