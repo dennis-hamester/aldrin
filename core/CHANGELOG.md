@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `FieldDeserializer::try_id()`.
 - Add `EnumDeserializer::try_variant()`.
+- Add `StructDeserializer::deserialize_specific_field()`.
 
 ### Changed
 

@@ -708,6 +708,19 @@ impl<'a, 'b> StructDeserializer<'a, 'b> {
         }
     }
 
+    pub fn deserialize_specific_field<T: Deserialize>(
+        &mut self,
+        id: impl Into<u32>,
+    ) -> Result<T, DeserializeError> {
+        let field = self.deserialize_field()?;
+
+        if field.id() == id.into() {
+            field.deserialize()
+        } else {
+            Err(DeserializeError::InvalidSerialization)
+        }
+    }
+
     pub fn skip(mut self) -> Result<(), DeserializeError> {
         while self.has_more_fields() {
             self.deserialize_field()?.skip()?;
