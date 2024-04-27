@@ -50,4 +50,7 @@ features = [
 
 [dev-dependencies.aldrin]
 path = "../aldrin"
-features = ["codegen"]
+features = [
+    "codegen",
+    "introspection",
+]
