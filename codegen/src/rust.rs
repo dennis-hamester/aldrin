@@ -279,6 +279,63 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "}}");
             genln!(self);
         }
+
+        if self.options.introspection {
+            let schema_name = self.schema.name();
+
+            let mut fields = fields.iter().collect::<Vec<_>>();
+            fields.sort_unstable_by(|a, b| {
+                let a = a.id().value().parse::<u32>().unwrap();
+                let b = b.id().value().parse::<u32>().unwrap();
+                a.cmp(&b)
+            });
+
+            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
+            genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
+            genln!(self);
+
+            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
+            genln!(self, "        static INTROSPECTION: std::sync::OnceLock<aldrin::core::introspection::Introspection> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        INTROSPECTION.get_or_init(|| {{");
+            genln!(self, "            aldrin::core::introspection::Introspection::builder::<Self>()");
+            for field in &fields {
+                self.gen_add_type(field.field_type(), schema_name);
+            }
+            genln!(self, "                .finish()");
+            genln!(self, "        }})");
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
+            genln!(self, "        static LAYOUT: std::sync::OnceLock<aldrin::core::introspection::Layout> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        LAYOUT.get_or_init(|| {{");
+            genln!(self, "            aldrin::core::introspection::Struct::builder(\"{}\")", name);
+            for field in &fields {
+                genln!(self, "                .field({}, \"{}\", {}, {})", field.id().value(), field.name().value(), field.required(), type_ref(field.field_type(), schema_name));
+            }
+            genln!(self, "                .finish()");
+            genln!(self, "                .into()");
+            genln!(self, "        }})");
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
+            for field in &fields {
+                self.gen_insert_type(field.field_type());
+            }
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
+            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::introspection::TypeId> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::introspection::TypeId::compute::<Self>)");
+            genln!(self, "    }}");
+            genln!(self, "}}");
+            genln!(self);
+        }
     }
 
     fn enum_def(
@@ -815,6 +872,96 @@ impl<'a> RustGenerator<'a> {
 
         genln!(self);
     }
+
+    fn gen_add_type(&mut self, ty: &ast::TypeName, schema: &str) {
+        match ty.kind() {
+            ast::TypeNameKind::Option(ty)
+            | ast::TypeNameKind::Box(ty)
+            | ast::TypeNameKind::Vec(ty)
+            | ast::TypeNameKind::Map(_, ty)
+            | ast::TypeNameKind::Sender(ty)
+            | ast::TypeNameKind::Receiver(ty) => self.gen_add_type(ty, schema),
+
+            ast::TypeNameKind::Result(ok, err) => {
+                self.gen_add_type(ok, schema);
+                self.gen_add_type(err, schema);
+            }
+
+            ast::TypeNameKind::Extern(m, ty) => {
+                genln!(self, "                .add_type::<super::{schema}::{ty}>(\"{schema}::{ty}\")", schema = m.value(), ty = ty.value());
+            }
+
+            ast::TypeNameKind::Intern(ty) => {
+                genln!(self, "                .add_type::<{ty}>(\"{schema}::{ty}\")", ty = ty.value());
+            }
+
+            ast::TypeNameKind::Bool
+            | ast::TypeNameKind::U8
+            | ast::TypeNameKind::I8
+            | ast::TypeNameKind::U16
+            | ast::TypeNameKind::I16
+            | ast::TypeNameKind::U32
+            | ast::TypeNameKind::I32
+            | ast::TypeNameKind::U64
+            | ast::TypeNameKind::I64
+            | ast::TypeNameKind::F32
+            | ast::TypeNameKind::F64
+            | ast::TypeNameKind::String
+            | ast::TypeNameKind::Uuid
+            | ast::TypeNameKind::ObjectId
+            | ast::TypeNameKind::ServiceId
+            | ast::TypeNameKind::Value
+            | ast::TypeNameKind::Bytes
+            | ast::TypeNameKind::Set(_)
+            | ast::TypeNameKind::Lifetime
+            | ast::TypeNameKind::Unit => {}
+        }
+    }
+
+    fn gen_insert_type(&mut self, ty: &ast::TypeName) {
+        match ty.kind() {
+            ast::TypeNameKind::Option(ty)
+            | ast::TypeNameKind::Box(ty)
+            | ast::TypeNameKind::Vec(ty)
+            | ast::TypeNameKind::Map(_, ty)
+            | ast::TypeNameKind::Sender(ty)
+            | ast::TypeNameKind::Receiver(ty) => self.gen_insert_type(ty),
+
+            ast::TypeNameKind::Result(ok, err) => {
+                self.gen_insert_type(ok);
+                self.gen_insert_type(err);
+            }
+
+            ast::TypeNameKind::Extern(m, ty) => {
+                genln!(self, "        types.insert::<super::{}::{}>();", m.value(), ty.value());
+            }
+
+            ast::TypeNameKind::Intern(ty) => {
+                genln!(self, "        types.insert::<{}>();", ty.value());
+            }
+
+            ast::TypeNameKind::Bool
+            | ast::TypeNameKind::U8
+            | ast::TypeNameKind::I8
+            | ast::TypeNameKind::U16
+            | ast::TypeNameKind::I16
+            | ast::TypeNameKind::U32
+            | ast::TypeNameKind::I32
+            | ast::TypeNameKind::U64
+            | ast::TypeNameKind::I64
+            | ast::TypeNameKind::F32
+            | ast::TypeNameKind::F64
+            | ast::TypeNameKind::String
+            | ast::TypeNameKind::Uuid
+            | ast::TypeNameKind::ObjectId
+            | ast::TypeNameKind::ServiceId
+            | ast::TypeNameKind::Value
+            | ast::TypeNameKind::Bytes
+            | ast::TypeNameKind::Set(_)
+            | ast::TypeNameKind::Lifetime
+            | ast::TypeNameKind::Unit => {}
+        }
+    }
 }
 
 fn type_name(ty: &ast::TypeName) -> String {
@@ -974,6 +1121,97 @@ fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
         ast::KeyTypeNameKind::I64 => "i64",
         ast::KeyTypeNameKind::String => "String",
         ast::KeyTypeNameKind::Uuid => "aldrin::private::uuid::Uuid",
+    }
+}
+
+fn type_ref(ty: &ast::TypeName, schema: &str) -> String {
+    match ty.kind() {
+        ast::TypeNameKind::Bool => "aldrin::core::introspection::BuiltInType::Bool".to_owned(),
+        ast::TypeNameKind::U8 => "aldrin::core::introspection::BuiltInType::U8".to_owned(),
+        ast::TypeNameKind::I8 => "aldrin::core::introspection::BuiltInType::I8".to_owned(),
+        ast::TypeNameKind::U16 => "aldrin::core::introspection::BuiltInType::U16".to_owned(),
+        ast::TypeNameKind::I16 => "aldrin::core::introspection::BuiltInType::I16".to_owned(),
+        ast::TypeNameKind::U32 => "aldrin::core::introspection::BuiltInType::U32".to_owned(),
+        ast::TypeNameKind::I32 => "aldrin::core::introspection::BuiltInType::I32".to_owned(),
+        ast::TypeNameKind::U64 => "aldrin::core::introspection::BuiltInType::U64".to_owned(),
+        ast::TypeNameKind::I64 => "aldrin::core::introspection::BuiltInType::I64".to_owned(),
+        ast::TypeNameKind::F32 => "aldrin::core::introspection::BuiltInType::F32".to_owned(),
+        ast::TypeNameKind::F64 => "aldrin::core::introspection::BuiltInType::F64".to_owned(),
+        ast::TypeNameKind::String => "aldrin::core::introspection::BuiltInType::String".to_owned(),
+        ast::TypeNameKind::Uuid => "aldrin::core::introspection::BuiltInType::Uuid".to_owned(),
+        ast::TypeNameKind::ObjectId => {
+            "aldrin::core::introspection::BuiltInType::ObjectId".to_owned()
+        }
+        ast::TypeNameKind::ServiceId => {
+            "aldrin::core::introspection::BuiltInType::ServiceId".to_owned()
+        }
+        ast::TypeNameKind::Value => "aldrin::core::introspection::BuiltInType::Value".to_owned(),
+        ast::TypeNameKind::Box(ty) => format!(
+            "aldrin::core::introspection::BuiltInType::Box(Box::new({}.into()))",
+            type_ref(ty, schema)
+        ),
+        ast::TypeNameKind::Option(ty) => format!(
+            "aldrin::core::introspection::BuiltInType::Option(Box::new({}.into()))",
+            type_ref(ty, schema)
+        ),
+        ast::TypeNameKind::Vec(ty) => format!(
+            "aldrin::core::introspection::BuiltInType::Vec(Box::new({}.into()))",
+            type_ref(ty, schema)
+        ),
+        ast::TypeNameKind::Bytes => "aldrin::core::introspection::BuiltInType::Bytes".to_owned(),
+        ast::TypeNameKind::Map(k, v) => format!(
+            "aldrin::core::introspection::BuiltInType::Map(Box::new(aldrin::core::introspection::MapType::new({}, {})))",
+            key_type_ref(k),
+            type_ref(v, schema),
+        ),
+        ast::TypeNameKind::Set(ty) => {
+            format!(
+                "aldrin::core::introspection::BuiltInType::Set({})",
+                key_type_ref(ty)
+            )
+        }
+        ast::TypeNameKind::Sender(ty) => format!(
+            "aldrin::core::introspection::BuiltInType::Sender(Box::new({}.into()))",
+            type_ref(ty, schema)
+        ),
+        ast::TypeNameKind::Receiver(ty) => format!(
+            "aldrin::core::introspection::BuiltInType::Receiver(Box::new({}.into()))",
+            type_ref(ty, schema)
+        ),
+        ast::TypeNameKind::Lifetime => {
+            "aldrin::core::introspection::BuiltInType::Lifetime".to_owned()
+        }
+        ast::TypeNameKind::Unit => "aldrin::core::introspection::BuiltInType::Unit".to_owned(),
+        ast::TypeNameKind::Result(ok, err) => format!(
+            "aldrin::core::introspection::ResultType::new({}, {})",
+            type_ref(ok, schema),
+            type_ref(err, schema)
+        ),
+        ast::TypeNameKind::Extern(m, ty) => format!(
+            "aldrin::core::introspection::TypeRef::custom(\"{}::{}\")",
+            m.value(),
+            ty.value()
+        ),
+        ast::TypeNameKind::Intern(ty) => format!(
+            "aldrin::core::introspection::TypeRef::custom(\"{}::{}\")",
+            schema,
+            ty.value()
+        ),
+    }
+}
+
+fn key_type_ref(ty: &ast::KeyTypeName) -> &'static str {
+    match ty.kind() {
+        ast::KeyTypeNameKind::U8 => "aldrin::core::introspection::KeyType::U8",
+        ast::KeyTypeNameKind::I8 => "aldrin::core::introspection::KeyType::I8",
+        ast::KeyTypeNameKind::U16 => "aldrin::core::introspection::KeyType::U16",
+        ast::KeyTypeNameKind::I16 => "aldrin::core::introspection::KeyType::I16",
+        ast::KeyTypeNameKind::U32 => "aldrin::core::introspection::KeyType::U32",
+        ast::KeyTypeNameKind::I32 => "aldrin::core::introspection::KeyType::I32",
+        ast::KeyTypeNameKind::U64 => "aldrin::core::introspection::KeyType::U64",
+        ast::KeyTypeNameKind::I64 => "aldrin::core::introspection::KeyType::I64",
+        ast::KeyTypeNameKind::String => "aldrin::core::introspection::KeyType::String",
+        ast::KeyTypeNameKind::Uuid => "aldrin::core::introspection::KeyType::Uuid",
     }
 }
 
