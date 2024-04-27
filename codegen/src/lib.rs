@@ -43,6 +43,7 @@ impl<'a> Generator<'a> {
 pub struct Options {
     pub client: bool,
     pub server: bool,
+    pub introspection: bool,
 }
 
 impl Options {
@@ -50,6 +51,7 @@ impl Options {
         Options {
             client: true,
             server: true,
+            introspection: false,
         }
     }
 }
