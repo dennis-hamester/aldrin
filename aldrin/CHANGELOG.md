@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `UnboundSender::new()` and `UnboundReceiver::new()` to create channels directly from
   `ChannelCookie`s.
 - Add `client()` getters to `Sender` and `Receiver`.
+- Add `introspection` Cargo feature to enable introspection support.
 
 ## [0.6.0] - 2024-06-07
 
