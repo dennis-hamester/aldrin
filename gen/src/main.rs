@@ -56,6 +56,10 @@ struct CommonGenArgs {
     /// Skip generating server-side code for services.
     #[clap(long)]
     no_server: bool,
+
+    /// Generate introspection for all services and types.
+    #[clap(long)]
+    introspection: bool,
 }
 
 fn main() -> Result<()> {
