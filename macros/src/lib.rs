@@ -208,6 +208,19 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// }
 /// ```
 ///
+/// # Enabling introspection
+///
+/// To enable introspection support, pass `introspection = true` to the macro. This additionally
+/// requires enabling the `introspection` Cargo feature of the `aldrin` crate.
+///
+/// ```
+/// # use aldrin_macros::generate;
+/// generate! {
+///     "schemas/example1.aldrin",
+///     introspection = true,
+/// }
+/// ```
+///
 /// # Errors and warnings
 ///
 /// Any errors and warnings from the schemas will be shown as part of the regular compiler
@@ -398,6 +411,8 @@ impl Parse for Args {
                 args.event_non_exhaustive = input.parse::<LitBool>()?.value;
             } else if opt == "function_non_exhaustive" {
                 args.function_non_exhaustive = input.parse::<LitBool>()?.value;
+            } else if opt == "introspection" {
+                args.options.introspection = input.parse::<LitBool>()?.value;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
