@@ -75,6 +75,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     let mut options = Options::new();
     options.client = !args.common_gen_args.no_client;
     options.server = !args.common_gen_args.no_server;
+    options.introspection = args.common_gen_args.introspection;
 
     let mut rust_options = RustOptions::new();
     for patch in &args.patch {
