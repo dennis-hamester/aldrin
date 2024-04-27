@@ -400,6 +400,72 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
+
+        if self.options.introspection {
+            let schema_name = self.schema.name();
+
+            let mut vars = vars.iter().collect::<Vec<_>>();
+            vars.sort_unstable_by(|a, b| {
+                let a = a.id().value().parse::<u32>().unwrap();
+                let b = b.id().value().parse::<u32>().unwrap();
+                a.cmp(&b)
+            });
+
+            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
+            genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
+            genln!(self);
+
+            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
+            genln!(self, "        static INTROSPECTION: std::sync::OnceLock<aldrin::core::introspection::Introspection> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        INTROSPECTION.get_or_init(|| {{");
+            genln!(self, "            aldrin::core::introspection::Introspection::builder::<Self>()");
+            for var in &vars {
+                if let Some(var_type) = var.variant_type() {
+                    self.gen_add_type(var_type, schema_name);
+                }
+            }
+            genln!(self, "                .finish()");
+            genln!(self, "        }})");
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
+            genln!(self, "        static LAYOUT: std::sync::OnceLock<aldrin::core::introspection::Layout> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        LAYOUT.get_or_init(|| {{");
+            genln!(self, "            aldrin::core::introspection::Enum::builder(\"{}\")", name);
+            for var in &vars {
+                genln!(self, "                .variant({}, \"{}\", |v| v", var.id().value(), var.name().value());
+                if let Some(var_type) = var.variant_type() {
+                    genln!(self, "                    .data({})", type_ref(var_type, schema_name));
+                }
+                genln!(self, "                    .finish()");
+                genln!(self, "                )");
+            }
+            genln!(self, "                .finish()");
+            genln!(self, "                .into()");
+            genln!(self, "        }})");
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
+            for var in &vars {
+                if let Some(var_type) = var.variant_type() {
+                    self.gen_insert_type(var_type);
+                }
+            }
+            genln!(self, "    }}");
+            genln!(self);
+
+            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
+            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::introspection::TypeId> = std::sync::OnceLock::new();");
+            genln!(self);
+            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::introspection::TypeId::compute::<Self>)");
+            genln!(self, "    }}");
+            genln!(self, "}}");
+            genln!(self);
+        }
     }
 
     fn service_def(&mut self, svc: &ast::ServiceDef) {
