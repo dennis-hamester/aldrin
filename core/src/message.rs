@@ -33,6 +33,7 @@ mod emit_bus_event;
 mod emit_event;
 mod item_received;
 mod packetizer;
+mod query_introspection;
 mod query_service_version;
 mod query_service_version_reply;
 mod remove_bus_listener_filter;
@@ -92,6 +93,7 @@ pub use emit_bus_event::EmitBusEvent;
 pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
 pub use packetizer::Packetizer;
+pub use query_introspection::QueryIntrospection;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::{QueryServiceVersionReply, QueryServiceVersionResult};
 pub use remove_bus_listener_filter::RemoveBusListenerFilter;
@@ -160,6 +162,7 @@ pub enum MessageKind {
     Connect2 = 46,
     ConnectReply2 = 47,
     AbortFunctionCall = 48,
+    QueryIntrospection = 49,
 }
 
 impl MessageKind {
@@ -214,7 +217,8 @@ impl MessageKind {
             | Self::StopBusListenerReply
             | Self::EmitBusEvent
             | Self::BusListenerCurrentFinished
-            | Self::AbortFunctionCall => false,
+            | Self::AbortFunctionCall
+            | Self::QueryIntrospection => false,
         }
     }
 }
@@ -282,6 +286,7 @@ pub enum Message {
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
     AbortFunctionCall(AbortFunctionCall),
+    QueryIntrospection(QueryIntrospection),
 }
 
 impl MessageOps for Message {
@@ -336,6 +341,7 @@ impl MessageOps for Message {
             Self::Connect2(_) => MessageKind::Connect2,
             Self::ConnectReply2(_) => MessageKind::ConnectReply2,
             Self::AbortFunctionCall(_) => MessageKind::AbortFunctionCall,
+            Self::QueryIntrospection(_) => MessageKind::QueryIntrospection,
         }
     }
 
@@ -390,6 +396,7 @@ impl MessageOps for Message {
             Self::Connect2(msg) => msg.serialize_message(),
             Self::ConnectReply2(msg) => msg.serialize_message(),
             Self::AbortFunctionCall(msg) => msg.serialize_message(),
+            Self::QueryIntrospection(msg) => msg.serialize_message(),
         }
     }
 
@@ -537,6 +544,9 @@ impl MessageOps for Message {
             MessageKind::AbortFunctionCall => {
                 AbortFunctionCall::deserialize_message(buf).map(Self::AbortFunctionCall)
             }
+            MessageKind::QueryIntrospection => {
+                QueryIntrospection::deserialize_message(buf).map(Self::QueryIntrospection)
+            }
         }
     }
 
@@ -591,6 +601,7 @@ impl MessageOps for Message {
             Self::Connect2(msg) => msg.value(),
             Self::ConnectReply2(msg) => msg.value(),
             Self::AbortFunctionCall(msg) => msg.value(),
+            Self::QueryIntrospection(msg) => msg.value(),
         }
     }
 }

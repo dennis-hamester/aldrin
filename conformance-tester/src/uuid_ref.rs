@@ -1,6 +1,6 @@
 use crate::context::Context;
 use aldrin_core::{
-    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid,
+    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectUuid, ServiceCookie, ServiceUuid, TypeId,
 };
 use anyhow::{anyhow, Error, Result};
 use serde::{Deserialize, Serialize};
@@ -160,6 +160,12 @@ impl From<ChannelCookie> for UuidRef {
 
 impl From<BusListenerCookie> for UuidRef {
     fn from(value: BusListenerCookie) -> Self {
+        value.0.into()
+    }
+}
+
+impl From<TypeId> for UuidRef {
+    fn from(value: TypeId) -> Self {
         value.0.into()
     }
 }
