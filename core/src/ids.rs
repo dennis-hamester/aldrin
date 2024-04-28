@@ -487,3 +487,58 @@ impl fmt::Display for BusListenerCookie {
         self.0.fmt(f)
     }
 }
+
+/// Introspection type ID of a service, struct or enum.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[repr(transparent)]
+pub struct TypeId(pub Uuid);
+
+impl TypeId {
+    /// Nil `TypeId` (all zeros).
+    pub const NIL: Self = Self(Uuid::nil());
+
+    /// Checks if the id is nil (all zeros).
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
+    }
+}
+
+impl Serialize for TypeId {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0);
+        Ok(())
+    }
+}
+
+impl Deserialize for TypeId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl From<Uuid> for TypeId {
+    fn from(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+}
+
+impl From<TypeId> for Uuid {
+    fn from(id: TypeId) -> Self {
+        id.0
+    }
+}
+
+impl fmt::Display for TypeId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl FromStr for TypeId {
+    type Err = UuidError;
+
+    fn from_str(s: &str) -> Result<Self, UuidError> {
+        s.parse().map(Self)
+    }
+}

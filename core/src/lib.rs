@@ -34,7 +34,7 @@ pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
-    ServiceUuid,
+    ServiceUuid, TypeId,
 };
 pub use protocol_version::ProtocolVersion;
 pub use serialize_key::SerializeKey;
