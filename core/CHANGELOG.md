@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bump protocol version to 1.17.
 - `AsyncTransportExt` now takes `impl Into<Message>` in `send()`, `send_and_flush()` and
   `send_start_unpin()`.
 - Enable the `std` feature of `uuid`.
