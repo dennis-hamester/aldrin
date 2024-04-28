@@ -12,8 +12,9 @@ impl ProtocolVersion {
     pub const V1_14: Self = Self { minor: Minor::V14 };
     pub const V1_15: Self = Self { minor: Minor::V15 };
     pub const V1_16: Self = Self { minor: Minor::V16 };
+    pub const V1_17: Self = Self { minor: Minor::V17 };
     pub const MIN: Self = Self::V1_14;
-    pub const MAX: Self = Self::V1_16;
+    pub const MAX: Self = Self::V1_17;
 
     pub const fn new(major: u32, minor: u32) -> Result<Self, ProtocolVersionError> {
         if major != Self::MAJOR {
@@ -26,6 +27,7 @@ impl ProtocolVersion {
             14 => Ok(Self { minor: Minor::V14 }),
             15 => Ok(Self { minor: Minor::V15 }),
             16 => Ok(Self { minor: Minor::V16 }),
+            17 => Ok(Self { minor: Minor::V17 }),
 
             _ => Err(ProtocolVersionError {
                 kind: ProtocolVersionErrorKind::InvalidMinor,
@@ -47,6 +49,7 @@ enum Minor {
     V14 = 14,
     V15 = 15,
     V16 = 16,
+    V17 = 17,
 }
 
 impl fmt::Display for ProtocolVersion {
@@ -76,6 +79,16 @@ mod test {
         assert_eq!("1.14".parse(), Ok(ProtocolVersion::V1_14));
         assert_eq!("1.15".parse(), Ok(ProtocolVersion::V1_15));
         assert_eq!("1.16".parse(), Ok(ProtocolVersion::V1_16));
+        assert_eq!("1.17".parse(), Ok(ProtocolVersion::V1_17));
+
+        assert_eq!(
+            "1.13".parse::<ProtocolVersion>(),
+            Err(ProtocolVersionErrorKind::InvalidMinor.into())
+        );
+        assert_eq!(
+            "1.18".parse::<ProtocolVersion>(),
+            Err(ProtocolVersionErrorKind::InvalidMinor.into())
+        );
 
         assert_eq!(
             "0.14".parse::<ProtocolVersion>(),
