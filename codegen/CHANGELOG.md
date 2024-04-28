@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `next_event()` and `next_call()` now return `Option<Result<_, Error>>`, which matches what the
   `aldrin` crate does.
 - Adapt to changes of the `aldrin-core` crate.
+- Change `UUID` and `VERSION` constants for services and proxies to associated constants.
 
 ## [0.4.0] - 2024-03-21
 

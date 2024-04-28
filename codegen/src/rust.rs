@@ -5,7 +5,7 @@ use crate::error::Error;
 use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
 use diffy::Patch;
-use heck::{ToShoutySnakeCase, ToUpperCamelCase};
+use heck::ToUpperCamelCase;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
@@ -351,14 +351,6 @@ impl<'a> RustGenerator<'a> {
         }
 
         let svc_name = svc.name().value();
-        let svc_uuid_const = service_uuid_const(svc);
-        let svc_uuid = svc.uuid().value();
-        let svc_version_const = service_version_const(svc);
-        let svc_version = svc.version().value();
-
-        genln!(self, "pub const {}: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc_uuid_const, svc_uuid);
-        genln!(self, "pub const {}: u32 = {};", svc_version_const, svc_version);
-        genln!(self);
 
         if self.options.client {
             self.service_def_client(svc);
@@ -447,7 +439,6 @@ impl<'a> RustGenerator<'a> {
     fn service_def_client(&mut self, svc: &ast::ServiceDef) {
         let svc_name = svc.name().value();
         let proxy_name = service_proxy_name(svc_name);
-        let svc_uuid_const = service_uuid_const(svc);
 
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", proxy_name);
@@ -457,8 +448,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", proxy_name);
+        genln!(self, "    pub const UUID: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
+        genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
+        genln!(self);
         genln!(self, "    pub async fn new(client: aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        if id.uuid != {svc_uuid_const} {{");
+        genln!(self, "        if id.uuid != Self::UUID {{");
         genln!(self, "            return Err(aldrin::Error::InvalidService);");
         genln!(self, "        }}");
         genln!(self);
@@ -651,8 +645,6 @@ impl<'a> RustGenerator<'a> {
 
     fn service_def_server(&mut self, svc: &ast::ServiceDef) {
         let svc_name = svc.name().value();
-        let svc_uuid_const = service_uuid_const(svc);
-        let svc_version_const = service_version_const(svc);
 
         genln!(self, "#[derive(Debug)]");
         genln!(self, "pub struct {} {{", svc_name);
@@ -662,8 +654,11 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "impl {} {{", svc_name);
+        genln!(self, "    pub const UUID: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
+        genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
+        genln!(self);
         genln!(self, "    pub async fn new(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        let inner = object.create_service({}, {}).await?;", svc_uuid_const, svc_version_const);
+        genln!(self, "        let inner = object.create_service(Self::UUID, Self::VERSION).await?;");
         genln!(self, "        Ok({} {{ inner }})", svc_name);
         genln!(self, "    }}");
         genln!(self);
@@ -984,14 +979,6 @@ fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
 
 fn struct_builder_name(base: &str) -> String {
     format!("{base}Builder")
-}
-
-fn service_uuid_const(svc: &ast::ServiceDef) -> String {
-    format!("{}_UUID", svc.name().value().to_shouty_snake_case())
-}
-
-fn service_version_const(svc: &ast::ServiceDef) -> String {
-    format!("{}_VERSION", svc.name().value().to_shouty_snake_case())
 }
 
 fn service_proxy_name(svc_name: &str) -> String {

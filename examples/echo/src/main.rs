@@ -3,7 +3,7 @@ use aldrin::core::ObjectUuid;
 use aldrin::{Client, Handle};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use echo::{Echo, EchoEchoAllError, EchoEchoError, EchoEvent, EchoFunction, EchoProxy, ECHO_UUID};
+use echo::{Echo, EchoEchoAllError, EchoEchoError, EchoEvent, EchoFunction, EchoProxy};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tokio::net::TcpStream;
 use tokio::signal;
@@ -176,7 +176,7 @@ async fn list(bus: &Handle) -> Result<()> {
     // services. Every call to `add_object` registers interest in one type of object.
     let mut discoverer = bus
         .create_discoverer()
-        .any((), [ECHO_UUID])
+        .any((), [EchoProxy::UUID])
         .build_current_only()
         .await?;
 
@@ -275,7 +275,7 @@ async fn get_echo(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<EchoP
     // Echo service. The `find_object` function is a convenience wrapper for `Discoverer`, which is
     // more concise when looking for a single object as a one-shot operation.
     let (_, [service_id]) = bus
-        .find_object(object_uuid, &[ECHO_UUID])
+        .find_object(object_uuid, &[EchoProxy::UUID])
         .await?
         .ok_or_else(|| anyhow!("echo server not found"))?;
 
