@@ -15,6 +15,7 @@ mod types;
 mod variant;
 
 use crate::error::{DeserializeError, SerializeError};
+use crate::ids::TypeId;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -32,7 +33,6 @@ pub use map_type::MapType;
 pub use result_type::ResultType;
 pub use service::{Service, ServiceBuilder};
 pub use struct_ty::{Struct, StructBuilder};
-pub use type_id::TypeId;
 pub use type_ref::TypeRef;
 pub use types::Types;
 pub use variant::{Variant, VariantBuilder};

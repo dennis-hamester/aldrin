@@ -1,23 +1,12 @@
 use super::{Introspectable, Layout, Types};
-use crate::error::{DeserializeError, SerializeError};
+use crate::error::SerializeError;
+use crate::ids::TypeId;
 use crate::serialized_value::SerializedValue;
-use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::Uuid;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TypeId(pub Uuid);
-
 impl TypeId {
-    /// Nil `TypeId` (all zeros).
-    pub const NIL: Self = Self(Uuid::nil());
-
-    /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
-        self.0.is_nil()
-    }
-
     pub fn compute<T: Introspectable>() -> Self {
         let layout = T::layout();
 
@@ -34,19 +23,6 @@ impl TypeId {
             SerializedValue::serialize(&compute).expect("failed to serialize introspection");
 
         Self(Uuid::new_v5(&layout.namespace(), &serialized))
-    }
-}
-
-impl Serialize for TypeId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
-        Ok(())
-    }
-}
-
-impl Deserialize for TypeId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_uuid().map(Self)
     }
 }
 

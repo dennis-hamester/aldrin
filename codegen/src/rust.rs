@@ -328,10 +328,10 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::introspection::TypeId> = std::sync::OnceLock::new();");
+            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
+            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
             genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::introspection::TypeId::compute::<Self>)");
+            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -458,10 +458,10 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::introspection::TypeId> = std::sync::OnceLock::new();");
+            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
+            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
             genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::introspection::TypeId::compute::<Self>)");
+            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -686,10 +686,10 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::introspection::TypeId> = std::sync::OnceLock::new();");
+            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
+            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
             genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::introspection::TypeId::compute::<Self>)");
+            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -997,7 +997,7 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
+            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
             genln!(self, "        {}Introspection::type_id()", svc_name);
             genln!(self, "    }}");
             genln!(self, "}}");
@@ -1179,7 +1179,7 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::introspection::TypeId {{");
+            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
             genln!(self, "        {}Introspection::type_id()", svc_name);
             genln!(self, "    }}");
             genln!(self, "}}");
