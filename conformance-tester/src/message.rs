@@ -33,6 +33,7 @@ mod destroy_service_reply;
 mod emit_bus_event;
 mod emit_event;
 mod item_received;
+mod query_introspection;
 mod query_service_version;
 mod query_service_version_reply;
 mod remove_bus_listener_filter;
@@ -89,6 +90,7 @@ pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_bus_event::EmitBusEvent;
 pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
+pub use query_introspection::QueryIntrospection;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
 pub use remove_bus_listener_filter::RemoveBusListenerFilter;
@@ -157,6 +159,7 @@ pub enum Message {
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
     AbortFunctionCall(AbortFunctionCall),
+    QueryIntrospection(QueryIntrospection),
 }
 
 impl Message {
@@ -239,6 +242,7 @@ impl Message {
             Self::Connect2(msg) => msg.to_core(ctx).map(ProtoMessage::Connect2),
             Self::ConnectReply2(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply2),
             Self::AbortFunctionCall(msg) => msg.to_core(ctx).map(ProtoMessage::AbortFunctionCall),
+            Self::QueryIntrospection(msg) => msg.to_core(ctx).map(ProtoMessage::QueryIntrospection),
         }
     }
 
@@ -339,6 +343,9 @@ impl Message {
             (Self::Connect2(msg), Self::Connect2(other)) => msg.matches(other, ctx),
             (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => msg.matches(other, ctx),
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -470,6 +477,9 @@ impl Message {
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -547,6 +557,7 @@ impl Message {
             Self::Connect2(msg) => msg.apply_context(ctx).map(Self::Connect2),
             Self::ConnectReply2(msg) => msg.apply_context(ctx).map(Self::ConnectReply2),
             Self::AbortFunctionCall(msg) => msg.apply_context(ctx).map(Self::AbortFunctionCall),
+            Self::QueryIntrospection(msg) => msg.apply_context(ctx).map(Self::QueryIntrospection),
         }
     }
 }
@@ -627,6 +638,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::Connect2(msg) => msg.try_into().map(Self::Connect2),
             ProtoMessage::ConnectReply2(msg) => msg.try_into().map(Self::ConnectReply2),
             ProtoMessage::AbortFunctionCall(msg) => msg.try_into().map(Self::AbortFunctionCall),
+            ProtoMessage::QueryIntrospection(msg) => msg.try_into().map(Self::QueryIntrospection),
         }
     }
 }
