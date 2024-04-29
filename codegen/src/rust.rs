@@ -520,6 +520,7 @@ impl<'a> RustGenerator<'a> {
                 a.cmp(&b)
             });
 
+            genln!(self, "#[doc(hidden)]");
             genln!(self, "struct {}Introspection;", svc_name);
             genln!(self);
 
