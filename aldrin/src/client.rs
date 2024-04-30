@@ -378,6 +378,7 @@ where
             }
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(_) => todo!(),
+            Message::QueryIntrospectionReply(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

@@ -398,6 +398,7 @@ impl Broker {
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
             Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
             Message::QueryIntrospection(_) => todo!(),
+            Message::QueryIntrospectionReply(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
