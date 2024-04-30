@@ -11,11 +11,12 @@ use aldrin_broker::core::message::{
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message as ProtoMessage, QueryIntrospection, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    EmitEvent, ItemReceived, Message as ProtoMessage, QueryIntrospection, QueryIntrospectionReply,
+    QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -76,6 +77,7 @@ pub enum MessageLe {
     ConnectReply2(ConnectReply2Le),
     AbortFunctionCall(AbortFunctionCallLe),
     QueryIntrospection(QueryIntrospectionLe),
+    QueryIntrospectionReply(QueryIntrospectionReplyLe),
 }
 
 impl MessageLe {
@@ -131,6 +133,7 @@ impl MessageLe {
             Self::ConnectReply2(msg) => msg.to_core(ctx).into(),
             Self::AbortFunctionCall(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospection(msg) => msg.to_core(ctx).into(),
+            Self::QueryIntrospectionReply(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -192,6 +195,7 @@ impl UpdateContext for ProtoMessage {
             Self::ConnectReply2(msg) => msg.update_context(ctx),
             Self::AbortFunctionCall(msg) => msg.update_context(ctx),
             Self::QueryIntrospection(msg) => msg.update_context(ctx),
+            Self::QueryIntrospectionReply(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1710,5 +1714,46 @@ impl UpdateContext for QueryIntrospection {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         ctx.add_uuid(self.type_id.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum QueryIntrospectionResultLe {
+    Ok,
+    Unavailable,
+}
+
+impl QueryIntrospectionResultLe {
+    pub fn to_core(&self, _ctx: &Context) -> QueryIntrospectionResult {
+        match self {
+            Self::Ok => QueryIntrospectionResult::Ok(SerializedValue::serialize(&()).unwrap()),
+            Self::Unavailable => QueryIntrospectionResult::Unavailable,
+        }
+    }
+}
+
+impl UpdateContext for QueryIntrospectionResult {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct QueryIntrospectionReplyLe {
+    pub serial: SerialLe,
+    pub result: QueryIntrospectionResultLe,
+}
+
+impl QueryIntrospectionReplyLe {
+    pub fn to_core(&self, ctx: &Context) -> QueryIntrospectionReply {
+        QueryIntrospectionReply {
+            serial: self.serial.get(ctx),
+            result: self.result.to_core(ctx),
+        }
+    }
+}
+
+impl UpdateContext for QueryIntrospectionReply {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        self.result.update_context(ctx);
     }
 }
