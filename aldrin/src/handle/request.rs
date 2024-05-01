@@ -10,6 +10,8 @@ use crate::core::message::{
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
     RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
+#[cfg(feature = "introspection")]
+use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
     ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
@@ -18,6 +20,8 @@ use crate::lifetime::LifetimeListener;
 use crate::low_level::{EventListenerId, EventListenerRequest, Service};
 use crate::{Error, Object};
 use futures_channel::{mpsc, oneshot};
+#[cfg(feature = "introspection")]
+use std::borrow::Cow;
 use std::num::NonZeroU32;
 
 #[derive(Debug)]
@@ -55,6 +59,8 @@ pub(crate) enum HandleRequest {
     GetProtocolVersion(GetProtocolVersionRequest),
     #[cfg(feature = "introspection")]
     RegisterIntrospection(&'static Introspection),
+    #[cfg(feature = "introspection")]
+    QueryIntrospection(QueryIntrospectionRequest),
 }
 
 #[derive(Debug)]
@@ -190,3 +196,10 @@ pub(crate) struct StopBusListenerRequest {
 pub(crate) type CreateLifetimeListenerRequest = oneshot::Sender<LifetimeListener>;
 
 pub(crate) type GetProtocolVersionRequest = oneshot::Sender<ProtocolVersion>;
+
+#[cfg(feature = "introspection")]
+#[derive(Debug)]
+pub(crate) struct QueryIntrospectionRequest {
+    pub type_id: TypeId,
+    pub reply: oneshot::Sender<Option<Cow<'static, Introspection>>>,
+}
