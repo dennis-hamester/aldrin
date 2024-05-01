@@ -3,6 +3,8 @@ use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
 };
+#[cfg(feature = "introspection")]
+use crate::core::introspection::Introspection;
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
@@ -51,6 +53,8 @@ pub(crate) enum HandleRequest {
     StopBusListener(StopBusListenerRequest),
     CreateLifetimeListener(CreateLifetimeListenerRequest),
     GetProtocolVersion(GetProtocolVersionRequest),
+    #[cfg(feature = "introspection")]
+    RegisterIntrospection(&'static Introspection),
 }
 
 #[derive(Debug)]
