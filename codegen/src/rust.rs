@@ -96,6 +96,17 @@ impl<'a> RustGenerator<'a> {
             self.definition(def);
         }
 
+        if self.options.introspection {
+            genln!(self, "pub fn register_introspection(handle: &aldrin::Handle) -> Result<(), aldrin::Error> {{");
+
+            for def in self.schema.definitions() {
+                self.register_introspection(def);
+            }
+
+            genln!(self, "    Ok(())");
+            genln!(self, "}}");
+        }
+
         for patch in &self.rust_options.patches {
             self.patch(patch)?;
         }
@@ -1293,6 +1304,71 @@ impl<'a> RustGenerator<'a> {
             | ast::TypeNameKind::Set(_)
             | ast::TypeNameKind::Lifetime
             | ast::TypeNameKind::Unit => {}
+        }
+    }
+
+    fn register_introspection(&mut self, def: &ast::Definition) {
+        match def {
+            ast::Definition::Struct(d) => {
+                genln!(self, "    handle.register_introspection::<{}>()?;", d.name().value())
+            }
+
+            ast::Definition::Enum(e) => {
+                genln!(self, "    handle.register_introspection::<{}>()?;", e.name().value())
+            }
+
+            ast::Definition::Service(s) => self.register_service_introspection(s),
+            ast::Definition::Const(_) => {}
+        }
+    }
+
+    fn register_service_introspection(&mut self, svc: &ast::ServiceDef) {
+        let svc_name = svc.name().value();
+
+        genln!(self, "    handle.register_introspection::<{svc_name}Introspection>()?;");
+
+        for item in svc.items() {
+            match item {
+                ast::ServiceItem::Function(func) => {
+                    let func_name = func.name().value();
+
+                    if let Some(args) = func.args() {
+                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
+                            args.part_type()
+                        {
+                            let name = function_args_type_name(svc_name, func_name, args);
+                            genln!(self, "    handle.register_introspection::<{name}>()?;");
+                        }
+                    }
+
+                    if let Some(ok) = func.ok() {
+                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
+                            ok.part_type()
+                        {
+                            let name = function_ok_type_name(svc_name, func_name, ok);
+                            genln!(self, "    handle.register_introspection::<{name}>()?;");
+                        }
+                    }
+
+                    if let Some(err) = func.err() {
+                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
+                            err.part_type()
+                        {
+                            let name = function_err_type_name(svc_name, func_name, err);
+                            genln!(self, "    handle.register_introspection::<{name}>()?;");
+                        }
+                    }
+                }
+
+                ast::ServiceItem::Event(ev) => {
+                    if let Some(ty @ ast::TypeNameOrInline::Struct(_))
+                    | Some(ty @ ast::TypeNameOrInline::Enum(_)) = ev.event_type()
+                    {
+                        let name = event_variant_type(svc_name, ev.name().value(), ty);
+                        genln!(self, "    handle.register_introspection::<{name}>()?;");
+                    }
+                }
+            }
         }
     }
 }
