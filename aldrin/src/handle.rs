@@ -4,6 +4,8 @@ use crate::bus_listener::BusListener;
 use crate::channel::{
     PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
 };
+#[cfg(feature = "introspection")]
+use crate::core::introspection::Introspectable;
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
@@ -930,6 +932,16 @@ impl Handle {
     /// Creates a new proxy to a service.
     pub async fn create_proxy(&self, id: ServiceId) -> Result<Proxy, Error> {
         Proxy::new(self.clone(), id).await
+    }
+
+    /// Registers an introspectable type with the client.
+    ///
+    /// Registered types are made available to be queried by other clients.
+    #[cfg(feature = "introspection")]
+    pub fn register_introspection<T: Introspectable>(&self) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::RegisterIntrospection(T::introspection()))
+            .map_err(|_| Error::Shutdown)
     }
 }
 

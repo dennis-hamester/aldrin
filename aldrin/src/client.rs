@@ -5,6 +5,8 @@ use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
     UnclaimedSenderInner,
 };
+#[cfg(feature = "introspection")]
+use crate::core::introspection::Introspection;
 use crate::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
@@ -21,6 +23,8 @@ use crate::core::message::{
     SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
+#[cfg(feature = "introspection")]
+use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
@@ -105,6 +109,8 @@ where
     stop_bus_listener: SerialMap<StopBusListenerRequest>,
     bus_listeners: HashMap<BusListenerCookie, BusListenerHandle>,
     abort_call_handles: HashMap<u32, oneshot::Sender<()>>,
+    #[cfg(feature = "introspection")]
+    introspection: HashMap<TypeId, &'static Introspection>,
 }
 
 impl<T> Client<T>
@@ -229,6 +235,8 @@ where
             stop_bus_listener: SerialMap::new(),
             bus_listeners: HashMap::new(),
             abort_call_handles: HashMap::new(),
+            #[cfg(feature = "introspection")]
+            introspection: HashMap::new(),
         };
 
         Ok((client, connect_reply_data.user))
@@ -1016,6 +1024,11 @@ where
             }
             HandleRequest::GetProtocolVersion(req) => {
                 let _ = req.send(self.protocol_version);
+            }
+            #[cfg(feature = "introspection")]
+            HandleRequest::RegisterIntrospection(introspection) => {
+                self.introspection
+                    .insert(introspection.type_id(), introspection);
             }
 
             // Handled in Client::run()
