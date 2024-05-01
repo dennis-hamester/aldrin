@@ -5,12 +5,14 @@ use crate::channel::{
     PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
 };
 #[cfg(feature = "introspection")]
-use crate::core::introspection::Introspectable;
+use crate::core::introspection::{Introspectable, Introspection};
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
     RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
 };
+#[cfg(feature = "introspection")]
+use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
     ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
@@ -25,6 +27,8 @@ use crate::low_level::{
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
+#[cfg(feature = "introspection")]
+use request::QueryIntrospectionRequest;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
@@ -33,6 +37,8 @@ use request::{
     StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest,
     UnsubscribeEventRequest,
 };
+#[cfg(feature = "introspection")]
+use std::borrow::Cow;
 use std::future::Future;
 use std::hash::Hash;
 use std::mem::MaybeUninit;
@@ -942,6 +948,22 @@ impl Handle {
         self.send
             .unbounded_send(HandleRequest::RegisterIntrospection(T::introspection()))
             .map_err(|_| Error::Shutdown)
+    }
+
+    /// Queries the introspection for a type.
+    #[cfg(feature = "introspection")]
+    pub async fn query_introspection(
+        &self,
+        type_id: TypeId,
+    ) -> Result<Option<Cow<'static, Introspection>>, Error> {
+        let (reply, recv) = oneshot::channel();
+        self.send
+            .unbounded_send(HandleRequest::QueryIntrospection(
+                QueryIntrospectionRequest { type_id, reply },
+            ))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)
     }
 }
 

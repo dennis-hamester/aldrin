@@ -31,6 +31,8 @@ use crate::core::{
 };
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
+#[cfg(feature = "introspection")]
+use crate::handle::request::QueryIntrospectionRequest;
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
@@ -46,6 +48,8 @@ use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
 use select::{Select, Selected};
+#[cfg(feature = "introspection")]
+use std::borrow::Cow;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
@@ -1030,6 +1034,8 @@ where
                 self.introspection
                     .insert(introspection.type_id(), introspection);
             }
+            #[cfg(feature = "introspection")]
+            HandleRequest::QueryIntrospection(req) => self.req_query_introspection(req),
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1475,6 +1481,17 @@ where
             .send_and_flush(CreateBusListener { serial })
             .await
             .map_err(Into::into)
+    }
+
+    #[cfg(feature = "introspection")]
+    fn req_query_introspection(&self, req: QueryIntrospectionRequest) {
+        if let Some(introspection) = self.introspection.get(&req.type_id) {
+            let _ = req.reply.send(Some(Cow::Borrowed(introspection)));
+        } else if self.protocol_version >= ProtocolVersion::V1_17 {
+            todo!()
+        } else {
+            let _ = req.reply.send(None);
+        }
     }
 
     async fn abort_function_call(&mut self, serial: u32) -> Result<(), RunError<T::Error>> {
