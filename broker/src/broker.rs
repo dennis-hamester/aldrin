@@ -22,11 +22,12 @@ use crate::core::message::{
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
+    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
+    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
+    SyncReply, UnsubscribeEvent,
 };
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
@@ -397,8 +398,8 @@ impl Broker {
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
             Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
-            Message::QueryIntrospection(_) => todo!(),
-            Message::QueryIntrospectionReply(_) => todo!(),
+            Message::QueryIntrospection(req) => self.query_introspection(id, req)?,
+            Message::QueryIntrospectionReply(req) => self.query_introspection_reply(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1417,6 +1418,59 @@ impl Broker {
 
         state.push_abort_function_call(callee_serial, callee_id.clone());
         Ok(())
+    }
+
+    #[cfg(feature = "introspection")]
+    fn query_introspection(
+        &mut self,
+        _id: &ConnectionId,
+        _req: QueryIntrospection,
+    ) -> Result<(), ()> {
+        todo!()
+    }
+
+    #[cfg(not(feature = "introspection"))]
+    fn query_introspection(
+        &mut self,
+        id: &ConnectionId,
+        req: QueryIntrospection,
+    ) -> Result<(), ()> {
+        use crate::core::message::QueryIntrospectionResult;
+
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
+        send!(
+            self,
+            conn,
+            QueryIntrospectionReply {
+                serial: req.serial,
+                result: QueryIntrospectionResult::Unavailable,
+            },
+        )
+    }
+
+    #[cfg(feature = "introspection")]
+    fn query_introspection_reply(
+        &mut self,
+        _id: &ConnectionId,
+        _req: QueryIntrospectionReply,
+    ) -> Result<(), ()> {
+        todo!()
+    }
+
+    #[cfg(not(feature = "introspection"))]
+    fn query_introspection_reply(
+        &mut self,
+        _id: &ConnectionId,
+        _req: QueryIntrospectionReply,
+    ) -> Result<(), ()> {
+        Err(())
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
