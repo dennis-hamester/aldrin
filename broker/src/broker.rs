@@ -1423,9 +1423,17 @@ impl Broker {
     #[cfg(feature = "introspection")]
     fn query_introspection(
         &mut self,
-        _id: &ConnectionId,
+        id: &ConnectionId,
         _req: QueryIntrospection,
     ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
         todo!()
     }
 
@@ -1458,9 +1466,17 @@ impl Broker {
     #[cfg(feature = "introspection")]
     fn query_introspection_reply(
         &mut self,
-        _id: &ConnectionId,
+        id: &ConnectionId,
         _req: QueryIntrospectionReply,
     ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
         todo!()
     }
 
