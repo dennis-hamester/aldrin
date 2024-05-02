@@ -116,6 +116,8 @@ where
     abort_call_handles: HashMap<u32, oneshot::Sender<()>>,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
+    #[cfg(feature = "introspection")]
+    query_introspection: SerialMap<QueryIntrospectionRequest>,
 }
 
 impl<T> Client<T>
@@ -242,6 +244,8 @@ where
             abort_call_handles: HashMap::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
+            #[cfg(feature = "introspection")]
+            query_introspection: SerialMap::new(),
         };
 
         Ok((client, connect_reply_data.user))
@@ -1084,7 +1088,7 @@ where
                     .insert(introspection.type_id(), introspection);
             }
             #[cfg(feature = "introspection")]
-            HandleRequest::QueryIntrospection(req) => self.req_query_introspection(req),
+            HandleRequest::QueryIntrospection(req) => self.req_query_introspection(req).await?,
 
             // Handled in Client::run()
             HandleRequest::Shutdown => unreachable!(),
@@ -1533,13 +1537,24 @@ where
     }
 
     #[cfg(feature = "introspection")]
-    fn req_query_introspection(&self, req: QueryIntrospectionRequest) {
+    async fn req_query_introspection(
+        &mut self,
+        req: QueryIntrospectionRequest,
+    ) -> Result<(), RunError<T::Error>> {
         if let Some(introspection) = self.introspection.get(&req.type_id) {
             let _ = req.reply.send(Some(Cow::Borrowed(introspection)));
+            Ok(())
         } else if self.protocol_version >= ProtocolVersion::V1_17 {
-            todo!()
+            let type_id = req.type_id;
+            let serial = self.query_introspection.insert(req);
+
+            self.t
+                .send_and_flush(QueryIntrospection { serial, type_id })
+                .await
+                .map_err(Into::into)
         } else {
             let _ = req.reply.send(None);
+            Ok(())
         }
     }
 
