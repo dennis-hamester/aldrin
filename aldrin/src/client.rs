@@ -16,11 +16,12 @@ use crate::core::message::{
     CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply,
     CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
     DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
+    QueryIntrospectionReply, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -389,8 +390,8 @@ where
                 self.msg_bus_listener_current_finished(msg)?
             }
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
-            Message::QueryIntrospection(_) => todo!(),
-            Message::QueryIntrospectionReply(_) => todo!(),
+            Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
+            Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -983,6 +984,54 @@ where
         } else {
             Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
+    }
+
+    #[cfg(feature = "introspection")]
+    async fn msg_query_introspection(
+        &mut self,
+        msg: QueryIntrospection,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_17 {
+            todo!()
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
+    #[cfg(not(feature = "introspection"))]
+    async fn msg_query_introspection(
+        &mut self,
+        msg: QueryIntrospection,
+    ) -> Result<(), RunError<T::Error>> {
+        use crate::core::message::QueryIntrospectionResult;
+
+        self.t
+            .send_and_flush(QueryIntrospectionReply {
+                serial: msg.serial,
+                result: QueryIntrospectionResult::Unavailable,
+            })
+            .await
+            .map_err(Into::into)
+    }
+
+    #[cfg(feature = "introspection")]
+    fn msg_query_introspection_reply(
+        &mut self,
+        msg: QueryIntrospectionReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_17 {
+            todo!()
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
+    #[cfg(not(feature = "introspection"))]
+    fn msg_query_introspection_reply(
+        &mut self,
+        msg: QueryIntrospectionReply,
+    ) -> Result<(), RunError<T::Error>> {
+        Err(RunError::UnexpectedMessageReceived(msg.into()))
     }
 
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
