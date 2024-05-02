@@ -21,6 +21,7 @@ all-features = true
 
 [features]
 channel = ["aldrin-core/channel"]
+introspection = ["aldrin-core/introspection"]
 statistics = []
 tokio = ["aldrin-core/tokio"]
 
