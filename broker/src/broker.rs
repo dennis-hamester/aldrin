@@ -24,10 +24,10 @@ use crate::core::message::{
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
     QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    RegisterIntrospection, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
@@ -398,7 +398,7 @@ impl Broker {
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
             Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
-            Message::RegisterIntrospection(_) => todo!(),
+            Message::RegisterIntrospection(req) => self.register_introspection(id, req)?,
             Message::QueryIntrospection(req) => self.query_introspection(id, req)?,
             Message::QueryIntrospectionReply(req) => self.query_introspection_reply(id, req)?,
 
@@ -1419,6 +1419,40 @@ impl Broker {
 
         state.push_abort_function_call(callee_serial, callee_id.clone());
         Ok(())
+    }
+
+    #[cfg(feature = "introspection")]
+    fn register_introspection(
+        &self,
+        id: &ConnectionId,
+        _req: RegisterIntrospection,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
+        todo!()
+    }
+
+    #[cfg(not(feature = "introspection"))]
+    fn register_introspection(
+        &self,
+        id: &ConnectionId,
+        _req: RegisterIntrospection,
+    ) -> Result<(), ()> {
+        if let Some(conn) = self.conns.get(id) {
+            if conn.protocol_version() >= ProtocolVersion::V1_17 {
+                Ok(())
+            } else {
+                Err(())
+            }
+        } else {
+            Ok(())
+        }
     }
 
     #[cfg(feature = "introspection")]
