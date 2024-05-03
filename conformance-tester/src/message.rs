@@ -37,6 +37,7 @@ mod query_introspection;
 mod query_introspection_reply;
 mod query_service_version;
 mod query_service_version_reply;
+mod register_introspection;
 mod remove_bus_listener_filter;
 mod send_item;
 mod service_destroyed;
@@ -95,6 +96,7 @@ pub use query_introspection::QueryIntrospection;
 pub use query_introspection_reply::QueryIntrospectionReply;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
+pub use register_introspection::RegisterIntrospection;
 pub use remove_bus_listener_filter::RemoveBusListenerFilter;
 pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
@@ -161,6 +163,7 @@ pub enum Message {
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
     AbortFunctionCall(AbortFunctionCall),
+    RegisterIntrospection(RegisterIntrospection),
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
 }
@@ -245,6 +248,9 @@ impl Message {
             Self::Connect2(msg) => msg.to_core(ctx).map(ProtoMessage::Connect2),
             Self::ConnectReply2(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply2),
             Self::AbortFunctionCall(msg) => msg.to_core(ctx).map(ProtoMessage::AbortFunctionCall),
+            Self::RegisterIntrospection(msg) => {
+                msg.to_core(ctx).map(ProtoMessage::RegisterIntrospection)
+            }
             Self::QueryIntrospection(msg) => msg.to_core(ctx).map(ProtoMessage::QueryIntrospection),
             Self::QueryIntrospectionReply(msg) => {
                 msg.to_core(ctx).map(ProtoMessage::QueryIntrospectionReply)
@@ -349,6 +355,9 @@ impl Message {
             (Self::Connect2(msg), Self::Connect2(other)) => msg.matches(other, ctx),
             (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => msg.matches(other, ctx),
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::RegisterIntrospection(msg), Self::RegisterIntrospection(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
@@ -486,6 +495,9 @@ impl Message {
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::RegisterIntrospection(msg), Self::RegisterIntrospection(other)) => {
+                msg.update_context(other, ctx)
+            }
             (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
                 msg.update_context(other, ctx)
             }
@@ -569,6 +581,9 @@ impl Message {
             Self::Connect2(msg) => msg.apply_context(ctx).map(Self::Connect2),
             Self::ConnectReply2(msg) => msg.apply_context(ctx).map(Self::ConnectReply2),
             Self::AbortFunctionCall(msg) => msg.apply_context(ctx).map(Self::AbortFunctionCall),
+            Self::RegisterIntrospection(msg) => {
+                msg.apply_context(ctx).map(Self::RegisterIntrospection)
+            }
             Self::QueryIntrospection(msg) => msg.apply_context(ctx).map(Self::QueryIntrospection),
             Self::QueryIntrospectionReply(msg) => {
                 msg.apply_context(ctx).map(Self::QueryIntrospectionReply)
@@ -653,6 +668,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::Connect2(msg) => msg.try_into().map(Self::Connect2),
             ProtoMessage::ConnectReply2(msg) => msg.try_into().map(Self::ConnectReply2),
             ProtoMessage::AbortFunctionCall(msg) => msg.try_into().map(Self::AbortFunctionCall),
+            ProtoMessage::RegisterIntrospection(msg) => {
+                msg.try_into().map(Self::RegisterIntrospection)
+            }
             ProtoMessage::QueryIntrospection(msg) => msg.try_into().map(Self::QueryIntrospection),
             ProtoMessage::QueryIntrospectionReply(msg) => {
                 msg.try_into().map(Self::QueryIntrospectionReply)

@@ -136,7 +136,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [13, 0, 0, 0, 50, 2, 0, 0, 0, 3, 4, 1, 0];
+        let serialized = [13, 0, 0, 0, 51, 2, 0, 0, 0, 3, 4, 1, 0];
         let value = 4u8;
 
         let msg = QueryIntrospectionReply {
@@ -153,7 +153,7 @@ mod test {
 
     #[test]
     fn unavailable() {
-        let serialized = [12, 0, 0, 0, 50, 1, 0, 0, 0, 0, 1, 1];
+        let serialized = [12, 0, 0, 0, 51, 1, 0, 0, 0, 0, 1, 1];
 
         let msg = QueryIntrospectionReply {
             serial: 1,
