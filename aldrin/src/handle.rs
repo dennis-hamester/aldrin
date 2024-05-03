@@ -950,6 +950,14 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
+    /// Submits all registered introspectable types to the broker.
+    #[cfg(feature = "introspection")]
+    pub fn submit_introspection(&self) -> Result<(), Error> {
+        self.send
+            .unbounded_send(HandleRequest::SubmitIntrospection)
+            .map_err(|_| Error::Shutdown)
+    }
+
     /// Queries the introspection for a type.
     #[cfg(feature = "introspection")]
     pub async fn query_introspection(
