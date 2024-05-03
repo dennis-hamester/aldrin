@@ -37,6 +37,7 @@ mod query_introspection;
 mod query_introspection_reply;
 mod query_service_version;
 mod query_service_version_reply;
+mod register_introspection;
 mod remove_bus_listener_filter;
 mod send_item;
 mod service_destroyed;
@@ -98,6 +99,7 @@ pub use query_introspection::QueryIntrospection;
 pub use query_introspection_reply::{QueryIntrospectionReply, QueryIntrospectionResult};
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::{QueryServiceVersionReply, QueryServiceVersionResult};
+pub use register_introspection::RegisterIntrospection;
 pub use remove_bus_listener_filter::RemoveBusListenerFilter;
 pub use send_item::SendItem;
 pub use service_destroyed::ServiceDestroyed;
@@ -164,8 +166,9 @@ pub enum MessageKind {
     Connect2 = 46,
     ConnectReply2 = 47,
     AbortFunctionCall = 48,
-    QueryIntrospection = 49,
-    QueryIntrospectionReply = 50,
+    RegisterIntrospection = 49,
+    QueryIntrospection = 50,
+    QueryIntrospectionReply = 51,
 }
 
 impl MessageKind {
@@ -180,6 +183,7 @@ impl MessageKind {
             | Self::ItemReceived
             | Self::Connect2
             | Self::ConnectReply2
+            | Self::RegisterIntrospection
             | Self::QueryIntrospectionReply => true,
 
             Self::Shutdown
@@ -290,6 +294,7 @@ pub enum Message {
     Connect2(Connect2),
     ConnectReply2(ConnectReply2),
     AbortFunctionCall(AbortFunctionCall),
+    RegisterIntrospection(RegisterIntrospection),
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
 }
@@ -346,6 +351,7 @@ impl MessageOps for Message {
             Self::Connect2(_) => MessageKind::Connect2,
             Self::ConnectReply2(_) => MessageKind::ConnectReply2,
             Self::AbortFunctionCall(_) => MessageKind::AbortFunctionCall,
+            Self::RegisterIntrospection(_) => MessageKind::RegisterIntrospection,
             Self::QueryIntrospection(_) => MessageKind::QueryIntrospection,
             Self::QueryIntrospectionReply(_) => MessageKind::QueryIntrospectionReply,
         }
@@ -402,6 +408,7 @@ impl MessageOps for Message {
             Self::Connect2(msg) => msg.serialize_message(),
             Self::ConnectReply2(msg) => msg.serialize_message(),
             Self::AbortFunctionCall(msg) => msg.serialize_message(),
+            Self::RegisterIntrospection(msg) => msg.serialize_message(),
             Self::QueryIntrospection(msg) => msg.serialize_message(),
             Self::QueryIntrospectionReply(msg) => msg.serialize_message(),
         }
@@ -551,6 +558,9 @@ impl MessageOps for Message {
             MessageKind::AbortFunctionCall => {
                 AbortFunctionCall::deserialize_message(buf).map(Self::AbortFunctionCall)
             }
+            MessageKind::RegisterIntrospection => {
+                RegisterIntrospection::deserialize_message(buf).map(Self::RegisterIntrospection)
+            }
             MessageKind::QueryIntrospection => {
                 QueryIntrospection::deserialize_message(buf).map(Self::QueryIntrospection)
             }
@@ -611,6 +621,7 @@ impl MessageOps for Message {
             Self::Connect2(msg) => msg.value(),
             Self::ConnectReply2(msg) => msg.value(),
             Self::AbortFunctionCall(msg) => msg.value(),
+            Self::RegisterIntrospection(msg) => msg.value(),
             Self::QueryIntrospection(msg) => msg.value(),
             Self::QueryIntrospectionReply(msg) => msg.value(),
         }

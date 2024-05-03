@@ -417,7 +417,10 @@ where
             | Message::StartBusListener(_)
             | Message::StopBusListener(_)
             | Message::Connect2(_)
-            | Message::ConnectReply2(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::ConnectReply2(_)
+            | Message::RegisterIntrospection(_) => {
+                return Err(RunError::UnexpectedMessageReceived(msg))
+            }
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }

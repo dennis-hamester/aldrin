@@ -13,10 +13,10 @@ use aldrin_broker::core::message::{
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message as ProtoMessage, QueryIntrospection, QueryIntrospectionReply,
     QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -24,6 +24,7 @@ use aldrin_broker::core::{
     SerializedValue, ServiceCookie, ServiceId, ServiceUuid, TypeId,
 };
 use arbitrary::Arbitrary;
+use std::collections::HashSet;
 
 #[derive(Debug, Arbitrary)]
 pub enum MessageLe {
@@ -76,6 +77,7 @@ pub enum MessageLe {
     Connect2(Connect2Le),
     ConnectReply2(ConnectReply2Le),
     AbortFunctionCall(AbortFunctionCallLe),
+    RegisterIntrospection(RegisterIntrospectionLe),
     QueryIntrospection(QueryIntrospectionLe),
     QueryIntrospectionReply(QueryIntrospectionReplyLe),
 }
@@ -132,6 +134,7 @@ impl MessageLe {
             Self::Connect2(msg) => msg.to_core(ctx).into(),
             Self::ConnectReply2(msg) => msg.to_core(ctx).into(),
             Self::AbortFunctionCall(msg) => msg.to_core(ctx).into(),
+            Self::RegisterIntrospection(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospection(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospectionReply(msg) => msg.to_core(ctx).into(),
         }
@@ -194,6 +197,7 @@ impl UpdateContext for ProtoMessage {
             Self::Connect2(msg) => msg.update_context(ctx),
             Self::ConnectReply2(msg) => msg.update_context(ctx),
             Self::AbortFunctionCall(msg) => msg.update_context(ctx),
+            Self::RegisterIntrospection(msg) => msg.update_context(ctx),
             Self::QueryIntrospection(msg) => msg.update_context(ctx),
             Self::QueryIntrospectionReply(msg) => msg.update_context(ctx),
         }
@@ -1692,6 +1696,42 @@ impl AbortFunctionCallLe {
 impl UpdateContext for AbortFunctionCall {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum RegisterIntrospectionLe {
+    TypeIds(Vec<UuidLe>),
+    Random(SerializedValue),
+}
+
+impl RegisterIntrospectionLe {
+    pub fn to_core(&self, ctx: &Context) -> RegisterIntrospection {
+        match self {
+            Self::TypeIds(type_ids) => {
+                let type_ids = type_ids.iter().map(|id| id.get(ctx).into()).collect();
+
+                RegisterIntrospection::with_serialize_type_ids(&type_ids)
+                    .or_else(|_| RegisterIntrospection::with_serialize_type_ids(&HashSet::new()))
+                    .unwrap()
+            }
+
+            Self::Random(value) => RegisterIntrospection {
+                value: value.clone(),
+            },
+        }
+    }
+}
+
+impl UpdateContext for RegisterIntrospection {
+    fn update_context(&self, ctx: &mut Context) {
+        let Ok(type_ids) = self.deserialize_type_ids() else {
+            return;
+        };
+
+        for type_id in type_ids {
+            ctx.add_uuid(type_id.0);
+        }
     }
 }
 
