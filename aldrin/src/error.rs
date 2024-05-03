@@ -48,6 +48,10 @@ pub enum RunError<T> {
     /// This error indicates some issue with the lower-level transport mechanism, e.g. an I/O error.
     #[error(transparent)]
     Transport(#[from] T),
+
+    /// A value failed to serialize.
+    #[error(transparent)]
+    Serialize(SerializeError),
 }
 
 /// Standard error type used for most functions.

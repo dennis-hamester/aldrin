@@ -1091,6 +1091,8 @@ where
                     .insert(introspection.type_id(), introspection);
             }
             #[cfg(feature = "introspection")]
+            HandleRequest::SubmitIntrospection => self.req_submit_introspection().await?,
+            #[cfg(feature = "introspection")]
             HandleRequest::QueryIntrospection(req) => self.req_query_introspection(req).await?,
 
             // Handled in Client::run()
@@ -1537,6 +1539,25 @@ where
             .send_and_flush(CreateBusListener { serial })
             .await
             .map_err(Into::into)
+    }
+
+    #[cfg(feature = "introspection")]
+    async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {
+        use crate::core::message::RegisterIntrospection;
+
+        if (self.protocol_version >= ProtocolVersion::V1_17) && !self.introspection.is_empty() {
+            let type_ids = self.introspection.keys().copied().collect();
+
+            let register_introspection = RegisterIntrospection::with_serialize_type_ids(&type_ids)
+                .map_err(RunError::Serialize)?;
+
+            self.t
+                .send_and_flush(register_introspection)
+                .await
+                .map_err(Into::into)
+        } else {
+            Ok(())
+        }
     }
 
     #[cfg(feature = "introspection")]

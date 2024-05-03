@@ -60,6 +60,8 @@ pub(crate) enum HandleRequest {
     #[cfg(feature = "introspection")]
     RegisterIntrospection(&'static Introspection),
     #[cfg(feature = "introspection")]
+    SubmitIntrospection,
+    #[cfg(feature = "introspection")]
     QueryIntrospection(QueryIntrospectionRequest),
 }
 
