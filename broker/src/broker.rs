@@ -34,6 +34,8 @@ use crate::core::{
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, ServiceCookie,
     ServiceId, ServiceUuid,
 };
+#[cfg(feature = "introspection")]
+use crate::introspection_database::IntrospectionDatabase;
 use crate::serial_map::SerialMap;
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
@@ -119,6 +121,8 @@ pub struct Broker {
     bus_listeners: HashMap<BusListenerCookie, BusListener>,
     #[cfg(feature = "statistics")]
     statistics: BrokerStatistics,
+    #[cfg(feature = "introspection")]
+    introspection: IntrospectionDatabase,
 }
 
 impl Broker {
@@ -142,6 +146,8 @@ impl Broker {
             bus_listeners: HashMap::new(),
             #[cfg(feature = "statistics")]
             statistics: BrokerStatistics::new(),
+            #[cfg(feature = "introspection")]
+            introspection: IntrospectionDatabase::new(),
         }
     }
 
@@ -365,6 +371,9 @@ impl Broker {
         {
             self.statistics.num_connections = self.statistics.num_connections.saturating_sub(1);
         }
+
+        #[cfg(feature = "introspection")]
+        self.introspection.remove_conn(id);
     }
 
     fn handle_message(
@@ -1423,9 +1432,9 @@ impl Broker {
 
     #[cfg(feature = "introspection")]
     fn register_introspection(
-        &self,
+        &mut self,
         id: &ConnectionId,
-        _req: RegisterIntrospection,
+        req: RegisterIntrospection,
     ) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -1435,7 +1444,12 @@ impl Broker {
             return Err(());
         }
 
-        todo!()
+        if let Ok(type_ids) = req.deserialize_type_ids() {
+            self.introspection.register(&type_ids, id);
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     #[cfg(not(feature = "introspection"))]

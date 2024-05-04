@@ -57,6 +57,8 @@ mod broker;
 mod bus_listener;
 mod conn;
 mod conn_id;
+#[cfg(feature = "introspection")]
+mod introspection_database;
 mod serial_map;
 
 pub use aldrin_core as core;
