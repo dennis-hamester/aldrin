@@ -20,8 +20,6 @@ use crate::lifetime::LifetimeListener;
 use crate::low_level::{EventListenerId, EventListenerRequest, Service};
 use crate::{Error, Object};
 use futures_channel::{mpsc, oneshot};
-#[cfg(feature = "introspection")]
-use std::borrow::Cow;
 use std::num::NonZeroU32;
 
 #[derive(Debug)]
@@ -203,5 +201,12 @@ pub(crate) type GetProtocolVersionRequest = oneshot::Sender<ProtocolVersion>;
 #[derive(Debug)]
 pub(crate) struct QueryIntrospectionRequest {
     pub type_id: TypeId,
-    pub reply: oneshot::Sender<Option<Cow<'static, Introspection>>>,
+    pub reply: oneshot::Sender<Option<IntrospectionQueryResult>>,
+}
+
+#[cfg(feature = "introspection")]
+#[derive(Debug)]
+pub(crate) enum IntrospectionQueryResult {
+    Local(&'static Introspection),
+    Serialized(SerializedValue),
 }

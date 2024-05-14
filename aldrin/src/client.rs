@@ -17,11 +17,11 @@ use crate::core::message::{
     CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
     DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
-    QueryIntrospectionReply, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -32,8 +32,6 @@ use crate::core::{
 };
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
-#[cfg(feature = "introspection")]
-use crate::handle::request::QueryIntrospectionRequest;
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
@@ -43,14 +41,14 @@ use crate::handle::request::{
     StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
     SyncClientRequest, UnsubscribeEventRequest,
 };
+#[cfg(feature = "introspection")]
+use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{EventListenerId, EventListenerRequest, RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
 use select::{Select, Selected};
-#[cfg(feature = "introspection")]
-use std::borrow::Cow;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
@@ -999,7 +997,17 @@ where
         msg: QueryIntrospection,
     ) -> Result<(), RunError<T::Error>> {
         if self.protocol_version >= ProtocolVersion::V1_17 {
-            todo!()
+            let reply = if let Some(introspection) = self.introspection.get(&msg.type_id) {
+                QueryIntrospectionReply::ok_with_serialize_introspection(msg.serial, introspection)
+                    .map_err(RunError::Serialize)?
+            } else {
+                QueryIntrospectionReply {
+                    serial: msg.serial,
+                    result: QueryIntrospectionResult::Unavailable,
+                }
+            };
+
+            self.t.send_and_flush(reply).await.map_err(Into::into)
         } else {
             Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
@@ -1010,8 +1018,6 @@ where
         &mut self,
         msg: QueryIntrospection,
     ) -> Result<(), RunError<T::Error>> {
-        use crate::core::message::QueryIntrospectionResult;
-
         self.t
             .send_and_flush(QueryIntrospectionReply {
                 serial: msg.serial,
@@ -1026,11 +1032,27 @@ where
         &mut self,
         msg: QueryIntrospectionReply,
     ) -> Result<(), RunError<T::Error>> {
-        if self.protocol_version >= ProtocolVersion::V1_17 {
-            todo!()
-        } else {
-            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        if self.protocol_version < ProtocolVersion::V1_17 {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         }
+
+        let Some(req) = self.query_introspection.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
+        };
+
+        match msg.result {
+            QueryIntrospectionResult::Ok(introspection) => {
+                let _ = req
+                    .reply
+                    .send(Some(IntrospectionQueryResult::Serialized(introspection)));
+            }
+
+            QueryIntrospectionResult::Unavailable => {
+                let _ = req.reply.send(None);
+            }
+        }
+
+        Ok(())
     }
 
     #[cfg(not(feature = "introspection"))]
@@ -1566,7 +1588,9 @@ where
         req: QueryIntrospectionRequest,
     ) -> Result<(), RunError<T::Error>> {
         if let Some(introspection) = self.introspection.get(&req.type_id) {
-            let _ = req.reply.send(Some(Cow::Borrowed(introspection)));
+            let _ = req
+                .reply
+                .send(Some(IntrospectionQueryResult::Local(introspection)));
             Ok(())
         } else if self.protocol_version >= ProtocolVersion::V1_17 {
             let type_id = req.type_id;
