@@ -27,8 +27,6 @@ use crate::low_level::{
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
-#[cfg(feature = "introspection")]
-use request::QueryIntrospectionRequest;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
@@ -37,6 +35,8 @@ use request::{
     StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest,
     UnsubscribeEventRequest,
 };
+#[cfg(feature = "introspection")]
+use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 #[cfg(feature = "introspection")]
 use std::borrow::Cow;
 use std::future::Future;
@@ -971,7 +971,18 @@ impl Handle {
             ))
             .map_err(|_| Error::Shutdown)?;
 
-        recv.await.map_err(|_| Error::Shutdown)
+        match recv.await {
+            Ok(Some(IntrospectionQueryResult::Local(introspection))) => {
+                Ok(Some(Cow::Borrowed(introspection)))
+            }
+
+            Ok(Some(IntrospectionQueryResult::Serialized(introspection))) => {
+                Ok(introspection.deserialize().ok().map(Cow::Owned))
+            }
+
+            Ok(None) => Ok(None),
+            Err(_) => Err(Error::Shutdown),
+        }
     }
 }
 
