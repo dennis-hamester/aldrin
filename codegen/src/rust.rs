@@ -20,6 +20,7 @@ pub struct RustOptions<'a> {
     pub enum_non_exhaustive: bool,
     pub event_non_exhaustive: bool,
     pub function_non_exhaustive: bool,
+    pub introspection_if: Option<&'a str>,
 }
 
 impl<'a> RustOptions<'a> {
@@ -31,6 +32,7 @@ impl<'a> RustOptions<'a> {
             enum_non_exhaustive: true,
             event_non_exhaustive: true,
             function_non_exhaustive: true,
+            introspection_if: None,
         }
     }
 }
@@ -97,6 +99,10 @@ impl<'a> RustGenerator<'a> {
         }
 
         if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "pub fn register_introspection(handle: &aldrin::Handle) -> Result<(), aldrin::Error> {{");
 
             for def in self.schema.definitions() {
@@ -301,6 +307,10 @@ impl<'a> RustGenerator<'a> {
                 a.cmp(&b)
             });
 
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
             genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
             genln!(self);
@@ -422,6 +432,10 @@ impl<'a> RustGenerator<'a> {
                 a.cmp(&b)
             });
 
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
             genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
             genln!(self);
@@ -531,9 +545,17 @@ impl<'a> RustGenerator<'a> {
                 a.cmp(&b)
             });
 
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "#[doc(hidden)]");
             genln!(self, "struct {}Introspection;", svc_name);
             genln!(self);
+
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {}Introspection {{", svc_name);
             genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
@@ -990,6 +1012,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", proxy_name);
             genln!(self, "    const SCHEMA: &'static str = {}Introspection::SCHEMA;", svc_name);
             genln!(self);
@@ -1172,6 +1198,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", svc_name);
             genln!(self, "    const SCHEMA: &'static str = {}Introspection::SCHEMA;", svc_name);
             genln!(self);
