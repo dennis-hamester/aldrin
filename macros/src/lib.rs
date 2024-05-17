@@ -221,6 +221,18 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// }
 /// ```
 ///
+/// It is also possible to conditionally enable introspection based on some Cargo feature by setting
+/// `introspection_if`. This implies setting `introspection = true`. The following example will have
+/// introspection code generated, but guards of the form `#[cfg(feature = "introspection")]` added.
+///
+/// ```
+/// # use aldrin_macros::generate;
+/// generate! {
+///     "schemas/example1.aldrin",
+///     introspection_if = "introspection",
+/// }
+/// ```
+///
 /// # Errors and warnings
 ///
 /// Any errors and warnings from the schemas will be shown as part of the regular compiler
@@ -302,6 +314,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
         rust_options.enum_non_exhaustive = args.enum_non_exhaustive;
         rust_options.event_non_exhaustive = args.event_non_exhaustive;
         rust_options.function_non_exhaustive = args.function_non_exhaustive;
+        rust_options.introspection_if = args.introspection_if.as_deref();
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
@@ -351,6 +364,7 @@ struct Args {
     enum_non_exhaustive: bool,
     event_non_exhaustive: bool,
     function_non_exhaustive: bool,
+    introspection_if: Option<String>,
 }
 
 impl Parse for Args {
@@ -368,6 +382,7 @@ impl Parse for Args {
             enum_non_exhaustive: true,
             event_non_exhaustive: true,
             function_non_exhaustive: true,
+            introspection_if: None,
         };
 
         // Additional schemas
@@ -413,6 +428,10 @@ impl Parse for Args {
                 args.function_non_exhaustive = input.parse::<LitBool>()?.value;
             } else if opt == "introspection" {
                 args.options.introspection = input.parse::<LitBool>()?.value;
+            } else if opt == "introspection_if" {
+                let lit_str = input.parse::<LitStr>()?;
+                args.introspection_if = Some(lit_str.value());
+                args.options.introspection = true;
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
