@@ -12,7 +12,7 @@ const BUS_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST),
 
 // The generated code can be inspected using rustdoc. Just run
 // `cargo doc --document-private-items --open` and look at the `echo` module.
-aldrin::generate!("src/echo.aldrin");
+aldrin::generate!("src/echo.aldrin", introspection_if = "introspection");
 
 /// Echo example.
 #[derive(Parser)]
@@ -85,6 +85,12 @@ async fn main() -> Result<()> {
         .with_context(|| anyhow!("failed to connect to broker at {}", args.bus))?;
     let handle = client.handle().clone();
     let join = tokio::spawn(client.run());
+
+    #[cfg(feature = "introspection")]
+    {
+        echo::register_introspection(&handle)?;
+        handle.submit_introspection()?;
+    }
 
     match args.cmd {
         Command::Server => server(&handle).await?,
