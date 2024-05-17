@@ -15,7 +15,7 @@ use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
 
 const PROTOCOL_VERSION_MIN: ProtocolVersion = ProtocolVersion::V1_14;
-const PROTOCOL_VERSION_MAX: ProtocolVersion = ProtocolVersion::V1_16;
+const PROTOCOL_VERSION_MAX: ProtocolVersion = ProtocolVersion::V1_17;
 
 /// Handle of an active broker.
 ///
@@ -463,7 +463,11 @@ mod test {
         );
         assert_eq!(
             select_protocol_version(1, 17, true),
-            Some(ProtocolVersion::V1_16)
+            Some(ProtocolVersion::V1_17)
+        );
+        assert_eq!(
+            select_protocol_version(1, 18, true),
+            Some(ProtocolVersion::V1_17)
         );
         assert_eq!(select_protocol_version(1, 13, true), None);
         assert_eq!(select_protocol_version(2, 0, true), None);

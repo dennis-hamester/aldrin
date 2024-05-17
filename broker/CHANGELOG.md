@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Support protocol version 1.17.
+- Support introspection.
+
 ### Changed
 
 - `Statistics` no longer contains any `pub` fields. Instead, getters have been added for the
