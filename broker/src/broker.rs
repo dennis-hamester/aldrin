@@ -23,19 +23,23 @@ use crate::core::message::{
     DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
     DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
     EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    RegisterIntrospection, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
-    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
-    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
+#[cfg(feature = "introspection")]
+use crate::core::TypeId;
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, ServiceCookie,
     ServiceId, ServiceUuid,
 };
 #[cfg(feature = "introspection")]
-use crate::introspection_database::IntrospectionDatabase;
+use crate::introspection_database::{
+    IntrospectionDatabase, IntrospectionQueryResult, RemoveConnResult,
+};
 use crate::serial_map::SerialMap;
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
@@ -123,6 +127,8 @@ pub struct Broker {
     statistics: BrokerStatistics,
     #[cfg(feature = "introspection")]
     introspection: IntrospectionDatabase,
+    #[cfg(feature = "introspection")]
+    query_introspection: SerialMap<TypeId>,
 }
 
 impl Broker {
@@ -148,6 +154,8 @@ impl Broker {
             statistics: BrokerStatistics::new(),
             #[cfg(feature = "introspection")]
             introspection: IntrospectionDatabase::new(),
+            #[cfg(feature = "introspection")]
+            query_introspection: SerialMap::new(),
         }
     }
 
@@ -373,7 +381,7 @@ impl Broker {
         }
 
         #[cfg(feature = "introspection")]
-        self.introspection.remove_conn(id);
+        self.remove_introspection_conn(state, id);
     }
 
     fn handle_message(
@@ -408,8 +416,10 @@ impl Broker {
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
             Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
             Message::RegisterIntrospection(req) => self.register_introspection(id, req)?,
-            Message::QueryIntrospection(req) => self.query_introspection(id, req)?,
-            Message::QueryIntrospectionReply(req) => self.query_introspection_reply(id, req)?,
+            Message::QueryIntrospection(req) => self.query_introspection(state, id, req)?,
+            Message::QueryIntrospectionReply(req) => {
+                self.query_introspection_reply(state, id, req)?
+            }
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1472,8 +1482,9 @@ impl Broker {
     #[cfg(feature = "introspection")]
     fn query_introspection(
         &mut self,
+        state: &mut State,
         id: &ConnectionId,
-        _req: QueryIntrospection,
+        req: QueryIntrospection,
     ) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -1483,17 +1494,55 @@ impl Broker {
             return Err(());
         }
 
-        todo!()
+        let Some(entry) = self.introspection.get_mut(req.type_id) else {
+            return send!(
+                self,
+                conn,
+                QueryIntrospectionReply {
+                    serial: req.serial,
+                    result: QueryIntrospectionResult::Unavailable,
+                },
+            );
+        };
+
+        if let Some(introspection) = entry.introspection() {
+            send!(
+                self,
+                conn,
+                QueryIntrospectionReply {
+                    serial: req.serial,
+                    result: QueryIntrospectionResult::Ok(introspection.clone()),
+                },
+            )
+        } else {
+            entry.add_pending(id.clone(), req.serial);
+
+            if entry.queried().is_none() {
+                let serial = self.query_introspection.insert(req.type_id);
+                let conn_id = entry.query_random_conn(serial);
+                let conn = self.conns.get(conn_id).expect("inconsistent state");
+
+                let msg = QueryIntrospection {
+                    serial,
+                    type_id: req.type_id,
+                };
+
+                if send!(self, conn, msg).is_err() {
+                    state.push_remove_conn(conn_id.clone(), false);
+                }
+            }
+
+            Ok(())
+        }
     }
 
     #[cfg(not(feature = "introspection"))]
     fn query_introspection(
         &mut self,
+        _state: &mut State,
         id: &ConnectionId,
         req: QueryIntrospection,
     ) -> Result<(), ()> {
-        use crate::core::message::QueryIntrospectionResult;
-
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
         };
@@ -1515,8 +1564,9 @@ impl Broker {
     #[cfg(feature = "introspection")]
     fn query_introspection_reply(
         &mut self,
+        state: &mut State,
         id: &ConnectionId,
-        _req: QueryIntrospectionReply,
+        req: QueryIntrospectionReply,
     ) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -1526,12 +1576,77 @@ impl Broker {
             return Err(());
         }
 
-        todo!()
+        let serial = req.serial;
+
+        let Some(&type_id) = self.query_introspection.get(serial) else {
+            return Err(());
+        };
+
+        let Some(res) = self.introspection.query_replied(type_id, id, req) else {
+            return Err(());
+        };
+
+        self.query_introspection.remove(serial);
+
+        match res {
+            IntrospectionQueryResult::Available {
+                introspection,
+                pending,
+            } => {
+                for pending in pending {
+                    let conn = self
+                        .conns
+                        .get(&pending.conn_id)
+                        .expect("inconsistent state");
+
+                    let msg = QueryIntrospectionReply {
+                        serial: pending.serial,
+                        result: QueryIntrospectionResult::Ok(introspection.clone()),
+                    };
+
+                    if send!(self, conn, msg).is_err() {
+                        state.push_remove_conn(pending.conn_id, false);
+                    }
+                }
+            }
+
+            IntrospectionQueryResult::Unavailable(pending) => {
+                for pending in pending {
+                    let conn = self
+                        .conns
+                        .get(&pending.conn_id)
+                        .expect("inconsistent state");
+
+                    let msg = QueryIntrospectionReply {
+                        serial: pending.serial,
+                        result: QueryIntrospectionResult::Unavailable,
+                    };
+
+                    if send!(self, conn, msg).is_err() {
+                        state.push_remove_conn(pending.conn_id, false);
+                    }
+                }
+            }
+
+            IntrospectionQueryResult::Continue(entry) => {
+                let serial = self.query_introspection.insert(type_id);
+                let conn_id = entry.query_random_conn(serial);
+                let conn = self.conns.get(conn_id).expect("inconsistent state");
+                let msg = QueryIntrospection { serial, type_id };
+
+                if send!(self, conn, msg).is_err() {
+                    state.push_remove_conn(conn_id.clone(), false);
+                }
+            }
+        }
+
+        Ok(())
     }
 
     #[cfg(not(feature = "introspection"))]
     fn query_introspection_reply(
         &mut self,
+        _state: &mut State,
         _id: &ConnectionId,
         _req: QueryIntrospectionReply,
     ) -> Result<(), ()> {
@@ -1786,6 +1901,55 @@ impl Broker {
 
             if res.is_err() {
                 state.push_remove_conn(call.caller_conn_id.clone(), false);
+            }
+        }
+    }
+
+    #[cfg(feature = "introspection")]
+    fn remove_introspection_conn(&mut self, state: &mut State, conn_id: &ConnectionId) {
+        let remove_conn = self.introspection.remove_conn(conn_id);
+
+        for remove_conn in remove_conn {
+            self.query_introspection
+                .remove(remove_conn.serial)
+                .expect("inconsistent state");
+
+            match remove_conn.result {
+                RemoveConnResult::Unavailable(pending) => {
+                    for pending in pending {
+                        let Some(conn) = self.conns.get(&pending.conn_id) else {
+                            continue;
+                        };
+
+                        let res = send!(
+                            self,
+                            conn,
+                            QueryIntrospectionReply {
+                                serial: pending.serial,
+                                result: QueryIntrospectionResult::Unavailable,
+                            },
+                        );
+
+                        if res.is_err() {
+                            state.push_remove_conn(pending.conn_id, false);
+                        }
+                    }
+                }
+
+                RemoveConnResult::Continue(type_id) => {
+                    let Some(entry) = self.introspection.get_mut(type_id) else {
+                        continue;
+                    };
+
+                    let serial = self.query_introspection.insert(type_id);
+                    let conn_id = entry.query_random_conn(serial);
+                    let conn = self.conns.get(conn_id).expect("inconsistent state");
+                    let msg = QueryIntrospection { serial, type_id };
+
+                    if send!(self, conn, msg).is_err() {
+                        state.push_remove_conn(conn_id.clone(), false);
+                    }
+                }
             }
         }
     }
