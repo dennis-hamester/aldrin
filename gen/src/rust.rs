@@ -42,6 +42,10 @@ pub struct RustArgs {
     #[clap(short, long, number_of_values = 1)]
     patch: Vec<PathBuf>,
 
+    /// Guard introspection code by the specified Cargo feature.
+    #[clap(long, requires = "introspection", value_name = "FEATURE")]
+    introspection_if: Option<String>,
+
     /// Path to an Aldrin schema file.
     schema: PathBuf,
 }
@@ -86,6 +90,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     rust_options.enum_non_exhaustive = !args.no_enum_non_exhaustive;
     rust_options.event_non_exhaustive = !args.no_event_non_exhaustive;
     rust_options.function_non_exhaustive = !args.no_function_non_exhaustive;
+    rust_options.introspection_if = args.introspection_if.as_deref();
 
     let gen = Generator::new(&options, &parsed);
     let output = gen.generate_rust(&rust_options)?;
