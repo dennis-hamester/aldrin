@@ -5,6 +5,7 @@ edition = "2021"
 publish = false
 
 [features]
+introspection = ["aldrin-broker/introspection"]
 statistics = ["aldrin-broker/statistics"]
 
 [dependencies]
