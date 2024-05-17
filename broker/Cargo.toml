@@ -21,7 +21,10 @@ all-features = true
 
 [features]
 channel = ["aldrin-core/channel"]
-introspection = ["aldrin-core/introspection"]
+introspection = [
+    "aldrin-core/introspection",
+    "dep:rand",
+]
 statistics = []
 tokio = ["aldrin-core/tokio"]
 
@@ -47,6 +50,15 @@ default-features = false
 version = "0.3.29"
 default-features = false
 features = ["sink"]
+
+[dependencies.rand]
+optional = true
+version = "0.8.5"
+default-features = false
+features = [
+    "std",
+    "std_rng",
+]
 
 [dependencies.thiserror]
 version = "1.0.50"
