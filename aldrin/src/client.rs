@@ -56,7 +56,7 @@ use std::mem;
 type Subscriptions =
     HashMap<u32, HashMap<EventListenerId, mpsc::UnboundedSender<EventListenerRequest>>>;
 
-const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_16;
+const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_17;
 
 /// Aldrin client used to connect to a broker.
 ///
