@@ -9,3 +9,4 @@ All examples listed in the [client](#client) section below require a broker to c
 ## Client
 
 - [echo](echo/): An echo server and client, that also supports broadcast.
+- [introspect](introspect/): Queries introspection of services and types on a bus.
