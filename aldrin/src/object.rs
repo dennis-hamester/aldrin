@@ -1,5 +1,5 @@
 use super::{Error, Handle};
-use crate::core::{ObjectId, ObjectUuid, ServiceUuid};
+use crate::core::{ObjectId, ObjectUuid, ServiceInfo, ServiceUuid};
 use crate::low_level::Service;
 
 /// Owned object on the bus.
@@ -81,7 +81,7 @@ impl Object {
     ///
     /// ```
     /// use aldrin::Error;
-    /// use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
     /// use uuid::uuid;
     ///
     /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("800b47a1-3882-4601-9155-e18c654476cc"));
@@ -93,11 +93,12 @@ impl Object {
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
     ///
     /// // Create a service:
-    /// let service = object.create_service(MY_SERVICE_UUID, 0).await?;
+    /// let info = ServiceInfo::new(0);
+    /// let service = object.create_service(MY_SERVICE_UUID, info).await?;
     ///
     /// // Trying to create the same service on the same object again will cause an error:
     /// assert_eq!(
-    ///     object.create_service(MY_SERVICE_UUID, 0).await.unwrap_err(),
+    ///     object.create_service(MY_SERVICE_UUID, info).await.unwrap_err(),
     ///     Error::DuplicateService,
     /// );
     /// # Ok(())
@@ -106,11 +107,9 @@ impl Object {
     pub async fn create_service(
         &self,
         uuid: impl Into<ServiceUuid>,
-        version: u32,
+        info: ServiceInfo,
     ) -> Result<Service, Error> {
-        self.client
-            .create_service(self.id, uuid.into(), version)
-            .await
+        self.client.create_service(self.id, uuid.into(), info).await
     }
 }
 

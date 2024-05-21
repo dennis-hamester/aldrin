@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 use aldrin_test::aldrin::low_level::Service;
 use aldrin_test::aldrin::{Discoverer, DiscovererEvent, DiscovererEventKind, Object};
 use aldrin_test::tokio::TestBroker;
@@ -160,8 +160,15 @@ async fn specific_object() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut discoverer = client
         .create_discoverer()
@@ -190,8 +197,15 @@ async fn any_object() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut discoverer = client
         .create_discoverer()
@@ -210,8 +224,9 @@ async fn any_object() {
     test_destroyed(&discoverer, ev, 0, &obj, Some(&svc1), Some(&svc2));
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc1 = obj.create_service(svc1.id().uuid, 0).await.unwrap();
-    let svc2 = obj.create_service(svc2.id().uuid, 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc1 = obj.create_service(svc1.id().uuid, info).await.unwrap();
+    let svc2 = obj.create_service(svc2.id().uuid, info).await.unwrap();
 
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event().await.unwrap();
@@ -249,8 +264,15 @@ async fn current_only() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut discoverer = client
         .create_discoverer()
@@ -260,8 +282,15 @@ async fn current_only() {
         .unwrap();
 
     let _obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let _svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let _svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let _svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let _svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     assert!(!discoverer.is_finished());
     let ev = discoverer.next_event().await.unwrap();
@@ -280,7 +309,11 @@ async fn restart_any() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut discoverer = client
         .create_discoverer()
@@ -311,7 +344,11 @@ async fn restart_specific() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut discoverer = client
         .create_discoverer()
@@ -351,7 +388,8 @@ async fn restart_current_only_any() {
         .unwrap();
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(uuid, 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(uuid, info).await.unwrap();
 
     assert!(!discoverer.is_finished());
     assert!(discoverer.next_event().await.is_none());
@@ -386,7 +424,8 @@ async fn restart_current_only_specific() {
         .unwrap();
 
     let obj = client.create_object(obj_uuid).await.unwrap();
-    let svc = obj.create_service(svc_uuid, 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(svc_uuid, info).await.unwrap();
 
     assert!(!discoverer.is_finished());
     assert!(discoverer.next_event().await.is_none());

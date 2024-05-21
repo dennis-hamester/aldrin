@@ -37,17 +37,20 @@ use std::task::{Context, Poll};
 /// ## Enumerating all current objects and services
 ///
 /// ```
-/// use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+/// use aldrin::core::{
+///     BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceInfo, ServiceUuid,
+/// };
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 ///
 /// // Create a few objects and services.
+/// let info = ServiceInfo::new(0);
 /// let obj1 = handle.create_object(ObjectUuid::new_v4()).await?;
-/// let service1 = obj1.create_service(ServiceUuid::new_v4(), 0).await?;
+/// let service1 = obj1.create_service(ServiceUuid::new_v4(), info).await?;
 /// let obj2 = handle.create_object(ObjectUuid::new_v4()).await?;
-/// let service2 = obj2.create_service(ServiceUuid::new_v4(), 0).await?;
+/// let service2 = obj2.create_service(ServiceUuid::new_v4(), info).await?;
 ///
 /// // Create a bus listener.
 /// let mut bus_listener = handle.create_bus_listener().await?;

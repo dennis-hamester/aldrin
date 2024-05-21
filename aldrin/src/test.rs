@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 use aldrin_test::aldrin::low_level::Proxy;
 use aldrin_test::tokio::TestBroker;
 use std::future::Future;
@@ -66,7 +66,8 @@ async fn abort_create_service() {
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
     let uuid = ServiceUuid::new_v4();
-    let fut = obj.create_service(uuid, 0);
+    let info = ServiceInfo::new(0);
+    let fut = obj.create_service(uuid, info);
 
     // This assumes that polling the future once is enough to create the service.
     PollOnce(Box::pin(fut)).await;
@@ -75,7 +76,7 @@ async fn abort_create_service() {
     // again.
     time::sleep(Duration::from_millis(100)).await;
 
-    assert!(obj.create_service(uuid, 0).await.is_ok());
+    assert!(obj.create_service(uuid, info).await.is_ok());
 }
 
 #[tokio::test]
@@ -123,7 +124,11 @@ async fn abort_function_call() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
 
     let reply = proxy.call(0, &());
@@ -145,7 +150,11 @@ async fn reply_aborted_call() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
 
     let reply = proxy.call(0, &());

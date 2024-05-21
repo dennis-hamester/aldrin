@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;
 
@@ -8,7 +8,11 @@ async fn fused_stream_terminate_after_destroy() {
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     assert!(!svc.is_terminated());
     svc.destroy().await.unwrap();

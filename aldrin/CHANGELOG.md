@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Support protocol version 1.17.
+- `Object::create_service()` and `low_level::Service::new()` now take a `ServiceInfo` instead of
+  just a version. This allows specifying the `TypeId` of the service for introspection.
 
 ## [0.6.0] - 2024-06-07
 

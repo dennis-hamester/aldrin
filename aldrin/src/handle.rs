@@ -16,7 +16,7 @@ use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
     ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
-    ServiceUuid,
+    ServiceInfo, ServiceUuid,
 };
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
@@ -181,14 +181,14 @@ impl Handle {
         &self,
         object_id: ObjectId,
         service_uuid: ServiceUuid,
-        version: u32,
+        info: ServiceInfo,
     ) -> Result<Service, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateService(CreateServiceRequest {
                 object_id,
                 service_uuid,
-                version,
+                info,
                 reply,
             }))
             .map_err(|_| Error::Shutdown)?;
@@ -563,13 +563,13 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let obj = handle.create_object(ObjectUuid::new_v4()).await?;
-    /// # let service = obj.create_service(ServiceUuid::new_v4(), 0).await?;
+    /// # let service = obj.create_service(ServiceUuid::new_v4(), ServiceInfo::new(0)).await?;
     ///
     /// service.emit_event(0, "Hi!")?;
     ///
@@ -724,15 +724,16 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let client = broker.add_client().await;
     /// // Create an object and 2 services to find.
     /// let obj = client.create_object(ObjectUuid::new_v4()).await?;
-    /// let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await?;
-    /// let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await?;
+    /// let info = ServiceInfo::new(0);
+    /// let svc1 = obj.create_service(ServiceUuid::new_v4(), info).await?;
+    /// let svc2 = obj.create_service(ServiceUuid::new_v4(), info).await?;
     ///
     /// // Find the object.
     /// let (object_id, service_ids) = client
@@ -751,19 +752,20 @@ impl Handle {
     /// Without specifying an `ObjectUuid`:
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
     /// # let client = broker.add_client().await;
     /// // Create 2 objects and sets of services to find.
     /// let obj1 = client.create_object(ObjectUuid::new_v4()).await?;
-    /// let svc11 = obj1.create_service(ServiceUuid::new_v4(), 0).await?;
-    /// let svc12 = obj1.create_service(ServiceUuid::new_v4(), 0).await?;
+    /// let info = ServiceInfo::new(0);
+    /// let svc11 = obj1.create_service(ServiceUuid::new_v4(), info).await?;
+    /// let svc12 = obj1.create_service(ServiceUuid::new_v4(), info).await?;
     ///
     /// let obj2 = client.create_object(ObjectUuid::new_v4()).await?;
-    /// let svc21 = obj2.create_service(svc11.id().uuid, 0).await?;
-    /// let svc22 = obj2.create_service(svc12.id().uuid, 0).await?;
+    /// let svc21 = obj2.create_service(svc11.id().uuid, info).await?;
+    /// let svc22 = obj2.create_service(svc12.id().uuid, info).await?;
     ///
     /// // Find any one of the objects above.
     /// let (object_id, service_ids) = client

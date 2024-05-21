@@ -2,7 +2,7 @@
 mod test;
 
 use super::Call;
-use crate::core::{Serialize, SerializedValue, ServiceId, ServiceUuid};
+use crate::core::{Serialize, SerializedValue, ServiceId, ServiceInfo, ServiceUuid};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::object::Object;
@@ -17,26 +17,26 @@ use std::task::{Context, Poll};
 #[derive(Debug)]
 pub struct Service {
     id: ServiceId,
-    version: u32,
+    info: ServiceInfo,
     client: Handle,
     calls: UnboundedReceiver<RawCall>,
 }
 
 impl Service {
     /// Creates a new service.
-    pub async fn new(object: &Object, uuid: ServiceUuid, version: u32) -> Result<Self, Error> {
-        object.create_service(uuid, version).await
+    pub async fn new(object: &Object, uuid: ServiceUuid, info: ServiceInfo) -> Result<Self, Error> {
+        object.create_service(uuid, info).await
     }
 
     pub(crate) fn new_impl(
         id: ServiceId,
-        version: u32,
+        info: ServiceInfo,
         client: Handle,
         calls: UnboundedReceiver<RawCall>,
     ) -> Self {
         Self {
             id,
-            version,
+            info,
             client,
             calls,
         }
@@ -49,7 +49,7 @@ impl Service {
 
     /// Returns the version of the service.
     pub fn version(&self) -> u32 {
-        self.version
+        self.info.version
     }
 
     /// Returns a handle to the client that was used to create the service.

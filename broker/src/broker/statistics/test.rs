@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 use aldrin::low_level::Proxy;
 use aldrin_test::tokio::TestBroker;
 
@@ -121,9 +121,19 @@ async fn services() {
 
     // Create 1 object with 3 services.
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc1 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
-    let svc3 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let svc3 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 4);
     assert_eq!(stats.messages_received(), 4);
@@ -159,7 +169,11 @@ async fn function_calls() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
     let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
 
     // Initial state.
@@ -205,7 +219,11 @@ async fn events() {
 
     let mut client1 = broker.add_client().await;
     let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut client2 = broker.add_client().await;
     let mut event_listener2 = client2.create_event_listener();
