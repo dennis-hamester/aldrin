@@ -1,10 +1,11 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, ServiceInfo};
+use super::{Message, MessageKind, MessageOps};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ObjectCookie, ServiceUuid};
 use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
+use crate::service_info::ServiceInfo;
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -86,9 +87,10 @@ impl From<CreateService2> for Message {
 #[cfg(test)]
 mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
-    use super::super::{Message, ServiceInfo};
+    use super::super::Message;
     use super::CreateService2;
     use crate::ids::{ObjectCookie, ServiceUuid, TypeId};
+    use crate::service_info::ServiceInfo;
     use uuid::uuid;
 
     #[test]

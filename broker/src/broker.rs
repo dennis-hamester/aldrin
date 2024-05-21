@@ -25,7 +25,7 @@ use crate::core::message::{
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
     QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
     StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
     StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
     SyncReply, UnsubscribeEvent,
@@ -35,7 +35,7 @@ use crate::core::TypeId;
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, ServiceCookie,
-    ServiceId, ServiceUuid,
+    ServiceId, ServiceInfo, ServiceUuid,
 };
 #[cfg(feature = "introspection")]
 use crate::introspection_database::{
