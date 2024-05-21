@@ -19,15 +19,16 @@ use crate::core::message::{
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
     CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
     CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
-    QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener, StartBusListenerReply,
-    StartBusListenerResult, StopBusListener, StopBusListenerReply, StopBusListenerResult,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
+    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
+    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener,
+    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
+    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
+    SyncReply, UnsubscribeEvent,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -420,7 +421,7 @@ impl Broker {
             Message::QueryIntrospectionReply(req) => {
                 self.query_introspection_reply(state, id, req)?
             }
-            Message::CreateService2(_) => todo!(),
+            Message::CreateService2(req) => self.create_service2(state, id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1647,6 +1648,85 @@ impl Broker {
         _req: QueryIntrospectionReply,
     ) -> Result<(), ()> {
         Err(())
+    }
+
+    fn create_service2(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CreateService2,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
+        let Some(&obj_uuid) = self.obj_uuids.get(&req.object_cookie) else {
+            return send!(
+                self,
+                conn,
+                CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::InvalidObject,
+                },
+            );
+        };
+
+        let Entry::Vacant(entry) = self.svcs.entry((obj_uuid, req.uuid)) else {
+            return send!(
+                self,
+                conn,
+                CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::DuplicateService,
+                },
+            );
+        };
+
+        let obj = self.objs.get_mut(&obj_uuid).expect("inconsistent state");
+        if obj.conn_id() != id {
+            return send!(
+                self,
+                conn,
+                CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::ForeignObject,
+                },
+            );
+        }
+
+        let Ok(info) = req.deserialize_info() else {
+            return Err(());
+        };
+
+        let svc_cookie = ServiceCookie::new_v4();
+        send!(
+            self,
+            conn,
+            CreateServiceReply {
+                serial: req.serial,
+                result: CreateServiceResult::Ok(svc_cookie),
+            },
+        )?;
+
+        let object_id = ObjectId::new(obj_uuid, req.object_cookie);
+        let dup = self
+            .svc_uuids
+            .insert(svc_cookie, (object_id, req.uuid, info));
+        debug_assert!(dup.is_none());
+        entry.insert(Service::new());
+        obj.add_service(svc_cookie);
+        state.push_create_service(ServiceId::new(object_id, req.uuid, svc_cookie));
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_services = self.statistics.num_services.saturating_add(1);
+        }
+
+        Ok(())
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
