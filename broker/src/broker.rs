@@ -25,9 +25,9 @@ use crate::core::message::{
     EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
     QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener, StartBusListenerReply,
+    StartBusListenerResult, StopBusListener, StopBusListenerReply, StopBusListenerResult,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -118,7 +118,7 @@ pub struct Broker {
     conns: HashMap<ConnectionId, ConnectionState>,
     obj_uuids: HashMap<ObjectCookie, ObjectUuid>,
     objs: HashMap<ObjectUuid, Object>,
-    svc_uuids: HashMap<ServiceCookie, (ObjectId, ServiceUuid, u32)>,
+    svc_uuids: HashMap<ServiceCookie, (ObjectId, ServiceUuid, ServiceInfo)>,
     svcs: HashMap<(ObjectUuid, ServiceUuid), Service>,
     function_calls: SerialMap<PendingFunctionCall>,
     channels: HashMap<ChannelCookie, Channel>,
@@ -604,9 +604,10 @@ impl Broker {
         )?;
 
         let object_id = ObjectId::new(obj_uuid, req.object_cookie);
+        let info = ServiceInfo::new(req.version);
         let dup = self
             .svc_uuids
-            .insert(svc_cookie, (object_id, req.uuid, req.version));
+            .insert(svc_cookie, (object_id, req.uuid, info));
         debug_assert!(dup.is_none());
         entry.insert(Service::new());
         obj.add_service(svc_cookie);
@@ -898,25 +899,19 @@ impl Broker {
             return Ok(());
         };
 
-        if let Some(&(_, _, version)) = self.svc_uuids.get(&req.cookie) {
-            send!(
-                self,
-                conn,
-                QueryServiceVersionReply {
-                    serial: req.serial,
-                    result: QueryServiceVersionResult::Ok(version),
-                },
-            )
-        } else {
-            send!(
-                self,
-                conn,
-                QueryServiceVersionReply {
-                    serial: req.serial,
-                    result: QueryServiceVersionResult::InvalidService,
-                },
-            )
-        }
+        let reply = match self.svc_uuids.get(&req.cookie) {
+            Some(&(_, _, info)) => QueryServiceVersionReply {
+                serial: req.serial,
+                result: QueryServiceVersionResult::Ok(info.version),
+            },
+
+            None => QueryServiceVersionReply {
+                serial: req.serial,
+                result: QueryServiceVersionResult::InvalidService,
+            },
+        };
+
+        send!(self, conn, reply)
     }
 
     fn create_channel(&mut self, id: &ConnectionId, req: CreateChannel) -> Result<(), ()> {
