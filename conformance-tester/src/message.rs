@@ -55,8 +55,8 @@ mod unsubscribe_event;
 
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_core::message::{Message as ProtoMessage, ServiceInfo as CoreServiceInfo};
-use aldrin_core::TypeId;
+use aldrin_core::message::Message as ProtoMessage;
+use aldrin_core::{ServiceInfo as CoreServiceInfo, TypeId};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;

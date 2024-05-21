@@ -14,7 +14,7 @@ use aldrin_broker::core::message::{
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message as ProtoMessage,
     QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
     StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
     StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
     SyncReply, UnsubscribeEvent,
@@ -22,7 +22,7 @@ use aldrin_broker::core::message::{
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
     ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
-    SerializedValue, ServiceCookie, ServiceId, ServiceUuid, TypeId,
+    SerializedValue, ServiceCookie, ServiceId, ServiceInfo, ServiceUuid, TypeId,
 };
 use arbitrary::Arbitrary;
 use std::collections::HashSet;
