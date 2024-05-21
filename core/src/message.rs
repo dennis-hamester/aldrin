@@ -22,6 +22,7 @@ mod create_channel_reply;
 mod create_object;
 mod create_object_reply;
 mod create_service;
+mod create_service2;
 mod create_service_reply;
 mod destroy_bus_listener;
 mod destroy_bus_listener_reply;
@@ -88,6 +89,7 @@ pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
+pub use create_service2::CreateService2;
 pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
 pub use destroy_bus_listener::DestroyBusListener;
 pub use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
@@ -173,6 +175,7 @@ pub enum MessageKind {
     RegisterIntrospection = 49,
     QueryIntrospection = 50,
     QueryIntrospectionReply = 51,
+    CreateService2 = 52,
 }
 
 impl MessageKind {
@@ -188,7 +191,8 @@ impl MessageKind {
             | Self::Connect2
             | Self::ConnectReply2
             | Self::RegisterIntrospection
-            | Self::QueryIntrospectionReply => true,
+            | Self::QueryIntrospectionReply
+            | Self::CreateService2 => true,
 
             Self::Shutdown
             | Self::CreateObject
@@ -301,6 +305,7 @@ pub enum Message {
     RegisterIntrospection(RegisterIntrospection),
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
+    CreateService2(CreateService2),
 }
 
 impl MessageOps for Message {
@@ -358,6 +363,7 @@ impl MessageOps for Message {
             Self::RegisterIntrospection(_) => MessageKind::RegisterIntrospection,
             Self::QueryIntrospection(_) => MessageKind::QueryIntrospection,
             Self::QueryIntrospectionReply(_) => MessageKind::QueryIntrospectionReply,
+            Self::CreateService2(_) => MessageKind::CreateService2,
         }
     }
 
@@ -415,6 +421,7 @@ impl MessageOps for Message {
             Self::RegisterIntrospection(msg) => msg.serialize_message(),
             Self::QueryIntrospection(msg) => msg.serialize_message(),
             Self::QueryIntrospectionReply(msg) => msg.serialize_message(),
+            Self::CreateService2(msg) => msg.serialize_message(),
         }
     }
 
@@ -571,6 +578,9 @@ impl MessageOps for Message {
             MessageKind::QueryIntrospectionReply => {
                 QueryIntrospectionReply::deserialize_message(buf).map(Self::QueryIntrospectionReply)
             }
+            MessageKind::CreateService2 => {
+                CreateService2::deserialize_message(buf).map(Self::CreateService2)
+            }
         }
     }
 
@@ -628,6 +638,7 @@ impl MessageOps for Message {
             Self::RegisterIntrospection(msg) => msg.value(),
             Self::QueryIntrospection(msg) => msg.value(),
             Self::QueryIntrospectionReply(msg) => msg.value(),
+            Self::CreateService2(msg) => msg.value(),
         }
     }
 }

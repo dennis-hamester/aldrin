@@ -420,6 +420,7 @@ impl Broker {
             Message::QueryIntrospectionReply(req) => {
                 self.query_introspection_reply(state, id, req)?
             }
+            Message::CreateService2(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

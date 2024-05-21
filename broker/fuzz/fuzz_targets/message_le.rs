@@ -8,15 +8,16 @@ use aldrin_broker::core::message::{
     CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData,
     ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, CreateBusListener,
     CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message as ProtoMessage, QueryIntrospection, QueryIntrospectionReply,
-    QueryIntrospectionResult, QueryServiceVersion, QueryServiceVersionReply,
-    QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
+    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message as ProtoMessage,
+    QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, ServiceInfo, Shutdown, StartBusListener,
+    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
+    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
+    SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -80,6 +81,7 @@ pub enum MessageLe {
     RegisterIntrospection(RegisterIntrospectionLe),
     QueryIntrospection(QueryIntrospectionLe),
     QueryIntrospectionReply(QueryIntrospectionReplyLe),
+    CreateService2(CreateService2Le),
 }
 
 impl MessageLe {
@@ -137,6 +139,7 @@ impl MessageLe {
             Self::RegisterIntrospection(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospection(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospectionReply(msg) => msg.to_core(ctx).into(),
+            Self::CreateService2(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -200,6 +203,7 @@ impl UpdateContext for ProtoMessage {
             Self::RegisterIntrospection(msg) => msg.update_context(ctx),
             Self::QueryIntrospection(msg) => msg.update_context(ctx),
             Self::QueryIntrospectionReply(msg) => msg.update_context(ctx),
+            Self::CreateService2(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1795,5 +1799,71 @@ impl UpdateContext for QueryIntrospectionReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum ServiceInfoLe {
+    Valid {
+        version: u8,
+        type_id: Option<UuidLe>,
+    },
+
+    Invalid,
+}
+
+impl ServiceInfoLe {
+    fn serialize(&self, ctx: &Context) -> SerializedValue {
+        match self {
+            Self::Valid { version, type_id } => {
+                let info = ServiceInfo {
+                    version: *version as u32,
+                    type_id: type_id.as_ref().map(|id| id.get(ctx)).map(TypeId),
+                };
+
+                SerializedValue::serialize(&info).unwrap()
+            }
+
+            Self::Invalid => SerializedValue::serialize(&()).unwrap(),
+        }
+    }
+}
+
+impl UpdateContext for ServiceInfo {
+    fn update_context(&self, ctx: &mut Context) {
+        if let Some(type_id) = self.type_id {
+            ctx.add_uuid(type_id.0);
+        }
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct CreateService2Le {
+    pub serial: SerialLe,
+    pub object_cookie: UuidLe,
+    pub uuid: UuidLe,
+    pub info: ServiceInfoLe,
+}
+
+impl CreateService2Le {
+    pub fn to_core(&self, ctx: &Context) -> CreateService2 {
+        CreateService2 {
+            serial: self.serial.get(ctx),
+            object_cookie: ObjectCookie(self.object_cookie.get(ctx)),
+            uuid: ServiceUuid(self.uuid.get(ctx)),
+            value: self.info.serialize(ctx),
+        }
+    }
+}
+
+impl UpdateContext for CreateService2 {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        ctx.add_uuid(self.object_cookie.0);
+        ctx.add_uuid(self.uuid.0);
+
+        if let Ok(info) = self.deserialize_info() {
+            info.update_context(ctx);
+        }
     }
 }

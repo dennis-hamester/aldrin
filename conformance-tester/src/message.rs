@@ -23,6 +23,7 @@ mod create_channel_reply;
 mod create_object;
 mod create_object_reply;
 mod create_service;
+mod create_service2;
 mod create_service_reply;
 mod destroy_bus_listener;
 mod destroy_bus_listener_reply;
@@ -53,7 +54,9 @@ mod sync_reply;
 mod unsubscribe_event;
 
 use crate::context::Context;
-use aldrin_core::message::Message as ProtoMessage;
+use crate::uuid_ref::UuidRef;
+use aldrin_core::message::{Message as ProtoMessage, ServiceInfo as CoreServiceInfo};
+use aldrin_core::TypeId;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -82,6 +85,7 @@ pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
+pub use create_service2::CreateService2;
 pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
 pub use destroy_bus_listener::DestroyBusListener;
 pub use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
@@ -166,6 +170,7 @@ pub enum Message {
     RegisterIntrospection(RegisterIntrospection),
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
+    CreateService2(CreateService2),
 }
 
 impl Message {
@@ -255,6 +260,7 @@ impl Message {
             Self::QueryIntrospectionReply(msg) => {
                 msg.to_core(ctx).map(ProtoMessage::QueryIntrospectionReply)
             }
+            Self::CreateService2(msg) => msg.to_core(ctx).map(ProtoMessage::CreateService2),
         }
     }
 
@@ -366,6 +372,7 @@ impl Message {
             (Self::QueryIntrospectionReply(msg), Self::QueryIntrospectionReply(other)) => {
                 msg.matches(other, ctx)
             }
+            (Self::CreateService2(msg), Self::CreateService2(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -504,6 +511,9 @@ impl Message {
             (Self::QueryIntrospectionReply(msg), Self::QueryIntrospectionReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::CreateService2(msg), Self::CreateService2(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -588,6 +598,7 @@ impl Message {
             Self::QueryIntrospectionReply(msg) => {
                 msg.apply_context(ctx).map(Self::QueryIntrospectionReply)
             }
+            Self::CreateService2(msg) => msg.apply_context(ctx).map(Self::CreateService2),
         }
     }
 }
@@ -675,6 +686,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::QueryIntrospectionReply(msg) => {
                 msg.try_into().map(Self::QueryIntrospectionReply)
             }
+            ProtoMessage::CreateService2(msg) => msg.try_into().map(Self::CreateService2),
         }
     }
 }
@@ -744,6 +756,69 @@ impl fmt::Display for ChannelEndWithCapacity {
         match self {
             Self::Sender => f.pad("sender"),
             Self::Receiver { .. } => f.pad("receiver"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct ServiceInfo {
+    pub version: u32,
+    pub type_id: Option<UuidRef>,
+}
+
+impl ServiceInfo {
+    pub fn to_core(&self, ctx: &Context) -> Result<CoreServiceInfo> {
+        let type_id = self
+            .type_id
+            .as_ref()
+            .map(|id| id.get(ctx))
+            .transpose()?
+            .map(TypeId);
+
+        Ok(CoreServiceInfo {
+            version: self.version,
+            type_id,
+        })
+    }
+
+    fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+        let res = match (self.type_id.as_ref(), other.type_id.as_ref()) {
+            (Some(type_id), Some(other)) => type_id.matches(other, ctx)?,
+            (None, None) => true,
+            _ => false,
+        };
+
+        Ok(res && (self.version == other.version))
+    }
+
+    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+        if let (Some(type_id), Some(other)) = (self.type_id.as_ref(), other.type_id.as_ref()) {
+            type_id.update_context(other, ctx)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+        let type_id = self
+            .type_id
+            .as_ref()
+            .map(|id| id.apply_context(ctx))
+            .transpose()?;
+
+        Ok(Self {
+            version: self.version,
+            type_id,
+        })
+    }
+}
+
+impl From<CoreServiceInfo> for ServiceInfo {
+    fn from(info: CoreServiceInfo) -> Self {
+        Self {
+            version: info.version,
+            type_id: info.type_id.map(Into::into),
         }
     }
 }
