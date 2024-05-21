@@ -9,7 +9,8 @@ use crate::core::message::{
 };
 use crate::core::transport::AsyncTransportExt;
 use crate::core::{
-    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
+    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceInfo,
+    ServiceUuid,
 };
 use crate::{Broker, BrokerHandle};
 use aldrin::low_level::Proxy;
@@ -27,7 +28,11 @@ async fn disconnect_during_function_call() {
 
     let mut client1 = broker.add_client().await;
     let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
@@ -70,7 +75,8 @@ async fn drop_conn_before_function_call() {
     let obj = client1.create_object(ObjectUuid::new_v4());
     let obj = select_first(obj, &mut conn1_fut).await.unwrap();
 
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0);
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(ServiceUuid::new_v4(), info);
     let svc = select_first(svc, &mut conn1_fut).await.unwrap();
 
     // This will cause all subsequent sends in the broker to fail.
@@ -404,7 +410,11 @@ async fn calls_from_multiple_clients() {
 
     let mut client1 = broker.add_client().await;
     let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let mut svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
@@ -528,7 +538,11 @@ async fn destroy_service_after_abort() {
 
     let mut client1 = broker.add_client().await;
     let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();

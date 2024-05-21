@@ -13,15 +13,16 @@ use crate::core::message::{
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
     CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData,
     ConnectResult, CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply,
-    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply,
-    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
-    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
-    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateService2,
+    CreateServiceReply, CreateServiceResult, DestroyBusListener, DestroyBusListenerReply,
+    DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
+    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent, EmitEvent,
+    ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
+    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
+    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
+    SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -468,7 +469,7 @@ where
 
                 Ok(Service::new_impl(
                     ServiceId::new(req.object_id, req.service_uuid, cookie),
-                    req.version,
+                    req.info,
                     self.handle.clone(),
                     function_calls,
                 ))
@@ -1166,18 +1167,29 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let object_cookie = req.object_id.cookie;
         let uuid = req.service_uuid;
-        let version = req.version;
-        let serial = self.create_service.insert(req);
 
-        self.t
-            .send_and_flush(CreateService {
-                serial,
-                object_cookie,
-                uuid,
-                version,
-            })
-            .await
-            .map_err(Into::into)
+        if self.protocol_version >= ProtocolVersion::V1_17 {
+            let info = req.info;
+            let serial = self.create_service.insert(req);
+
+            let msg = CreateService2::with_serialize_info(serial, object_cookie, uuid, &info)
+                .map_err(RunError::Serialize)?;
+
+            self.t.send_and_flush(msg).await.map_err(Into::into)
+        } else {
+            let version = req.info.version;
+            let serial = self.create_service.insert(req);
+
+            self.t
+                .send_and_flush(CreateService {
+                    serial,
+                    object_cookie,
+                    uuid,
+                    version,
+                })
+                .await
+                .map_err(Into::into)
+        }
     }
 
     async fn req_destroy_service(

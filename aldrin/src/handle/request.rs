@@ -14,7 +14,8 @@ use crate::core::message::{
 use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
-    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
+    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceInfo,
+    ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{EventListenerId, EventListenerRequest, Service};
@@ -79,7 +80,7 @@ pub(crate) struct DestroyObjectRequest {
 pub(crate) struct CreateServiceRequest {
     pub object_id: ObjectId,
     pub service_uuid: ServiceUuid,
-    pub version: u32,
+    pub info: ServiceInfo,
     pub reply: oneshot::Sender<Result<Service, Error>>,
 }
 

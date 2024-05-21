@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::FusedStream;
 use std::time::Duration;
@@ -10,7 +10,11 @@ async fn stop_on_client_shutdown() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut events = client.create_event_listener();
     events.subscribe(svc.id(), 0).await.unwrap();
@@ -31,7 +35,11 @@ async fn stop_on_broker_shutdown() {
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
 
     let mut events = client.create_event_listener();
     events.subscribe(svc.id(), 0).await.unwrap();

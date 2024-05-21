@@ -62,7 +62,7 @@ use std::{future, option};
 ///
 /// ```
 /// # use aldrin::{Discoverer, DiscovererEventKind};
-/// # use aldrin::core::{ObjectUuid, ServiceUuid};
+/// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
 /// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;
 /// # #[tokio::main]
@@ -80,7 +80,8 @@ use std::{future, option};
 ///     .await?;
 ///
 /// let mut obj = handle.create_object(OBJECT_UUID).await?;
-/// let svc1 = obj.create_service(SERVICE_UUID_1, 0).await?;
+/// let info = ServiceInfo::new(0);
+/// let svc1 = obj.create_service(SERVICE_UUID_1, info).await?;
 ///
 /// // At this point, `obj` satisfies the requirements of the object configured with the key 2.
 /// let ev = discoverer.next_event().await.unwrap();
@@ -89,7 +90,7 @@ use std::{future, option};
 /// assert_eq!(ev.object_id(), obj.id());
 /// assert_eq!(ev.service_id(&discoverer, SERVICE_UUID_1), svc1.id());
 ///
-/// let svc2 = obj.create_service(SERVICE_UUID_2, 0).await?;
+/// let svc2 = obj.create_service(SERVICE_UUID_2, info).await?;
 ///
 /// // Now `obj` completes the requirements the object configured with the key 1.
 /// let ev = discoverer.next_event().await.unwrap();
