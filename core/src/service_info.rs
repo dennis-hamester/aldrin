@@ -11,7 +11,7 @@ enum ServiceInfoField {
     TypeId = 1,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ServiceInfo {
     pub version: u32,
     pub type_id: Option<TypeId>,
