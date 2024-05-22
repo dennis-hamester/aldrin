@@ -422,6 +422,7 @@ impl Broker {
                 self.query_introspection_reply(state, id, req)?
             }
             Message::CreateService2(req) => self.create_service2(state, id, req)?,
+            Message::QueryServiceInfo(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

@@ -12,12 +12,12 @@ use aldrin_broker::core::message::{
     DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message as ProtoMessage,
-    QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    RegisterIntrospection, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -82,6 +82,7 @@ pub enum MessageLe {
     QueryIntrospection(QueryIntrospectionLe),
     QueryIntrospectionReply(QueryIntrospectionReplyLe),
     CreateService2(CreateService2Le),
+    QueryServiceInfo(QueryServiceInfoLe),
 }
 
 impl MessageLe {
@@ -140,6 +141,7 @@ impl MessageLe {
             Self::QueryIntrospection(msg) => msg.to_core(ctx).into(),
             Self::QueryIntrospectionReply(msg) => msg.to_core(ctx).into(),
             Self::CreateService2(msg) => msg.to_core(ctx).into(),
+            Self::QueryServiceInfo(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -204,6 +206,7 @@ impl UpdateContext for ProtoMessage {
             Self::QueryIntrospection(msg) => msg.update_context(ctx),
             Self::QueryIntrospectionReply(msg) => msg.update_context(ctx),
             Self::CreateService2(msg) => msg.update_context(ctx),
+            Self::QueryServiceInfo(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1865,5 +1868,27 @@ impl UpdateContext for CreateService2 {
         if let Ok(info) = self.deserialize_info() {
             info.update_context(ctx);
         }
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct QueryServiceInfoLe {
+    pub serial: SerialLe,
+    pub cookie: UuidLe,
+}
+
+impl QueryServiceInfoLe {
+    pub fn to_core(&self, ctx: &Context) -> QueryServiceInfo {
+        QueryServiceInfo {
+            serial: self.serial.get(ctx),
+            cookie: ServiceCookie(self.cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for QueryServiceInfo {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        ctx.add_uuid(self.cookie.0);
     }
 }

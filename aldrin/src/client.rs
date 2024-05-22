@@ -418,7 +418,8 @@ where
             | Message::Connect2(_)
             | Message::ConnectReply2(_)
             | Message::RegisterIntrospection(_)
-            | Message::CreateService2(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::CreateService2(_)
+            | Message::QueryServiceInfo(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }
