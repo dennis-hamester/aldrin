@@ -395,6 +395,7 @@ where
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
+            Message::QueryServiceInfoReply(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
