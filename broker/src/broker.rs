@@ -1604,11 +1604,14 @@ impl Broker {
                 .function_calls
                 .remove(serial)
                 .expect("inconsistent state");
-            state.push_remove_function_call(
-                call.caller_serial,
-                call.caller_conn_id,
-                CallFunctionResult::InvalidService,
-            );
+
+            if !call.aborted {
+                state.push_remove_function_call(
+                    call.caller_serial,
+                    call.caller_conn_id,
+                    CallFunctionResult::InvalidService,
+                );
+            }
         }
 
         for conn_id in svc.subscribed_conn_ids() {

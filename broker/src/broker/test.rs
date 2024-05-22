@@ -526,3 +526,23 @@ async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
     tokio::spawn(conn.run());
     t1
 }
+
+#[tokio::test]
+async fn destroy_service_after_abort() {
+    let mut broker = TestBroker::new();
+
+    let mut client1 = broker.add_client().await;
+    let obj = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
+
+    let mut client2 = broker.add_client().await;
+    let proxy = client2.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    reply.abort();
+    svc.destroy().await.unwrap();
+
+    client1.join().await;
+    client2.join().await;
+    broker.join().await;
+}
