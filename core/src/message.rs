@@ -36,6 +36,7 @@ mod item_received;
 mod packetizer;
 mod query_introspection;
 mod query_introspection_reply;
+mod query_service_info;
 mod query_service_version;
 mod query_service_version_reply;
 mod register_introspection;
@@ -99,6 +100,7 @@ pub use item_received::ItemReceived;
 pub use packetizer::Packetizer;
 pub use query_introspection::QueryIntrospection;
 pub use query_introspection_reply::{QueryIntrospectionReply, QueryIntrospectionResult};
+pub use query_service_info::QueryServiceInfo;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::{QueryServiceVersionReply, QueryServiceVersionResult};
 pub use register_introspection::RegisterIntrospection;
@@ -172,6 +174,7 @@ pub enum MessageKind {
     QueryIntrospection = 50,
     QueryIntrospectionReply = 51,
     CreateService2 = 52,
+    QueryServiceInfo = 53,
 }
 
 impl MessageKind {
@@ -230,7 +233,8 @@ impl MessageKind {
             | Self::EmitBusEvent
             | Self::BusListenerCurrentFinished
             | Self::AbortFunctionCall
-            | Self::QueryIntrospection => false,
+            | Self::QueryIntrospection
+            | Self::QueryServiceInfo => false,
         }
     }
 }
@@ -302,6 +306,7 @@ pub enum Message {
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
     CreateService2(CreateService2),
+    QueryServiceInfo(QueryServiceInfo),
 }
 
 impl MessageOps for Message {
@@ -360,6 +365,7 @@ impl MessageOps for Message {
             Self::QueryIntrospection(_) => MessageKind::QueryIntrospection,
             Self::QueryIntrospectionReply(_) => MessageKind::QueryIntrospectionReply,
             Self::CreateService2(_) => MessageKind::CreateService2,
+            Self::QueryServiceInfo(_) => MessageKind::QueryServiceInfo,
         }
     }
 
@@ -418,6 +424,7 @@ impl MessageOps for Message {
             Self::QueryIntrospection(msg) => msg.serialize_message(),
             Self::QueryIntrospectionReply(msg) => msg.serialize_message(),
             Self::CreateService2(msg) => msg.serialize_message(),
+            Self::QueryServiceInfo(msg) => msg.serialize_message(),
         }
     }
 
@@ -577,6 +584,9 @@ impl MessageOps for Message {
             MessageKind::CreateService2 => {
                 CreateService2::deserialize_message(buf).map(Self::CreateService2)
             }
+            MessageKind::QueryServiceInfo => {
+                QueryServiceInfo::deserialize_message(buf).map(Self::QueryServiceInfo)
+            }
         }
     }
 
@@ -635,6 +645,7 @@ impl MessageOps for Message {
             Self::QueryIntrospection(msg) => msg.value(),
             Self::QueryIntrospectionReply(msg) => msg.value(),
             Self::CreateService2(msg) => msg.value(),
+            Self::QueryServiceInfo(msg) => msg.value(),
         }
     }
 }

@@ -36,6 +36,7 @@ mod emit_event;
 mod item_received;
 mod query_introspection;
 mod query_introspection_reply;
+mod query_service_info;
 mod query_service_version;
 mod query_service_version_reply;
 mod register_introspection;
@@ -98,6 +99,7 @@ pub use emit_event::EmitEvent;
 pub use item_received::ItemReceived;
 pub use query_introspection::QueryIntrospection;
 pub use query_introspection_reply::QueryIntrospectionReply;
+pub use query_service_info::QueryServiceInfo;
 pub use query_service_version::QueryServiceVersion;
 pub use query_service_version_reply::QueryServiceVersionReply;
 pub use register_introspection::RegisterIntrospection;
@@ -171,6 +173,7 @@ pub enum Message {
     QueryIntrospection(QueryIntrospection),
     QueryIntrospectionReply(QueryIntrospectionReply),
     CreateService2(CreateService2),
+    QueryServiceInfo(QueryServiceInfo),
 }
 
 impl Message {
@@ -261,6 +264,7 @@ impl Message {
                 msg.to_core(ctx).map(ProtoMessage::QueryIntrospectionReply)
             }
             Self::CreateService2(msg) => msg.to_core(ctx).map(ProtoMessage::CreateService2),
+            Self::QueryServiceInfo(msg) => msg.to_core(ctx).map(ProtoMessage::QueryServiceInfo),
         }
     }
 
@@ -373,6 +377,7 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::CreateService2(msg), Self::CreateService2(other)) => msg.matches(other, ctx),
+            (Self::QueryServiceInfo(msg), Self::QueryServiceInfo(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -514,6 +519,9 @@ impl Message {
             (Self::CreateService2(msg), Self::CreateService2(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::QueryServiceInfo(msg), Self::QueryServiceInfo(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -599,6 +607,7 @@ impl Message {
                 msg.apply_context(ctx).map(Self::QueryIntrospectionReply)
             }
             Self::CreateService2(msg) => msg.apply_context(ctx).map(Self::CreateService2),
+            Self::QueryServiceInfo(msg) => msg.apply_context(ctx).map(Self::QueryServiceInfo),
         }
     }
 }
@@ -687,6 +696,7 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::QueryIntrospectionReply)
             }
             ProtoMessage::CreateService2(msg) => msg.try_into().map(Self::CreateService2),
+            ProtoMessage::QueryServiceInfo(msg) => msg.try_into().map(Self::QueryServiceInfo),
         }
     }
 }
