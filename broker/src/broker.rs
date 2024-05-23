@@ -23,12 +23,12 @@ use crate::core::message::{
     DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
     DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
-    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RegisterIntrospection,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply,
+    QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -422,7 +422,7 @@ impl Broker {
                 self.query_introspection_reply(state, id, req)?
             }
             Message::CreateService2(req) => self.create_service2(state, id, req)?,
-            Message::QueryServiceInfo(_) => todo!(),
+            Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1729,6 +1729,28 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    fn query_service_info(&mut self, id: &ConnectionId, req: QueryServiceInfo) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_17 {
+            return Err(());
+        }
+
+        let reply = match self.svc_uuids.get(&req.cookie) {
+            Some(&(_, _, info)) => QueryServiceInfoReply::ok_with_serialize_info(req.serial, info)
+                .expect("failed to serialize ServiceInfo"),
+
+            None => QueryServiceInfoReply {
+                serial: req.serial,
+                result: QueryServiceInfoResult::InvalidService,
+            },
+        };
+
+        send!(self, conn, reply)
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.
