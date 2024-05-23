@@ -1,9 +1,13 @@
 use super::Reply;
 use super::{Event, EventListener};
+#[cfg(feature = "introspection")]
+use crate::core::introspection::Introspection;
 use crate::core::{Serialize, ServiceId, ServiceInfo, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
+#[cfg(feature = "introspection")]
+use std::borrow::Cow;
 use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -48,6 +52,15 @@ impl Proxy {
     /// Returns the type ID of the proxy's service, if it is known.
     pub fn type_id(&self) -> Option<TypeId> {
         self.info.type_id
+    }
+
+    /// Queries the introspection for the proxy's service.
+    #[cfg(feature = "introspection")]
+    pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
+        match self.info.type_id {
+            Some(type_id) => self.client.query_introspection(type_id).await,
+            None => Ok(None),
+        }
     }
 
     /// Calls a function on the service.
