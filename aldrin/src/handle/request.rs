@@ -7,8 +7,8 @@ use crate::channel::{
 use crate::core::introspection::Introspection;
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
-    DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
-    RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
+    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
+    StopBusListenerResult, SubscribeEventResult,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -37,7 +37,7 @@ pub(crate) enum HandleRequest {
     SubscribeEvent(SubscribeEventRequest),
     UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
-    QueryServiceVersion(QueryServiceVersionRequest),
+    QueryServiceInfo(QueryServiceInfoRequest),
     CreateClaimedSender(CreateClaimedSenderRequest),
     CreateClaimedReceiver(CreateClaimedReceiverRequest),
     CloseChannelEnd(CloseChannelEndRequest),
@@ -128,9 +128,9 @@ pub(crate) struct EmitEventRequest {
 }
 
 #[derive(Debug)]
-pub(crate) struct QueryServiceVersionRequest {
+pub(crate) struct QueryServiceInfoRequest {
     pub cookie: ServiceCookie,
-    pub reply: oneshot::Sender<QueryServiceVersionResult>,
+    pub reply: oneshot::Sender<Result<ServiceInfo, Error>>,
 }
 
 pub(crate) type CreateClaimedSenderRequest =

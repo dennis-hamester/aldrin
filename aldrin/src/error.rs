@@ -52,6 +52,10 @@ pub enum RunError<T> {
     /// A value failed to serialize.
     #[error(transparent)]
     Serialize(SerializeError),
+
+    /// A value failed to deserialize.
+    #[error(transparent)]
+    Deserialize(DeserializeError),
 }
 
 /// Standard error type used for most functions.
