@@ -3,6 +3,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TypeRef {
@@ -39,6 +40,15 @@ impl Deserialize for TypeRef {
         match deserializer.try_variant()? {
             TypeRefVariant::BuiltIn => deserializer.deserialize().map(Self::BuiltIn),
             TypeRefVariant::Custom => deserializer.deserialize().map(Self::Custom),
+        }
+    }
+}
+
+impl fmt::Display for TypeRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::BuiltIn(inner) => inner.fmt(f),
+            Self::Custom(inner) => inner.fmt(f),
         }
     }
 }

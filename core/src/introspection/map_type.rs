@@ -3,6 +3,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MapType {
@@ -65,5 +66,11 @@ impl From<MapType> for BuiltInType {
 impl From<MapType> for TypeRef {
     fn from(t: MapType) -> Self {
         Self::BuiltIn(t.into())
+    }
+}
+
+impl fmt::Display for MapType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "map<{} -> {}>", self.key, self.value)
     }
 }
