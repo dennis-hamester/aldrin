@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `RunError::Serialize` and `Deserialize` variants.
 - Support introspection.
 - Add `low_level::Proxy::type_id()`.
+- Add `low_level::Proxy::query_introspection()`.
 
 ### Changed
 
