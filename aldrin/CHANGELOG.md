@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ChannelCookie`s.
 - Add `client()` getters to `Sender` and `Receiver`.
 - Add `introspection` Cargo feature to enable introspection support.
-- Add `RunError::Serialize` variant.
+- Add `RunError::Serialize` and `Deserialize` variants.
 - Support introspection.
 
 ### Changed

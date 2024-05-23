@@ -1,6 +1,6 @@
 use super::Reply;
 use super::{Event, EventListener};
-use crate::core::{Serialize, ServiceId};
+use crate::core::{Serialize, ServiceId, ServiceInfo};
 use crate::error::Error;
 use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
@@ -13,19 +13,19 @@ use std::task::{Context, Poll};
 pub struct Proxy {
     client: Handle,
     id: ServiceId,
-    version: u32,
+    info: ServiceInfo,
     events: Option<EventListener>,
 }
 
 impl Proxy {
     /// Creates a new proxy to a service.
     pub async fn new(client: Handle, id: ServiceId) -> Result<Self, Error> {
-        let version = client.query_service_version(id).await?;
+        let info = client.query_service_info(id).await?;
 
         Ok(Self {
             client,
             id,
-            version,
+            info,
             events: None,
         })
     }
@@ -42,7 +42,7 @@ impl Proxy {
 
     /// Returns the version of the proxy's service.
     pub fn version(&self) -> u32 {
-        self.version
+        self.info.version
     }
 
     /// Calls a function on the service.

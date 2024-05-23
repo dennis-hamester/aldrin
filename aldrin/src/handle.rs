@@ -8,8 +8,8 @@ use crate::channel::{
 use crate::core::introspection::{Introspectable, Introspection};
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
-    DestroyBusListenerResult, DestroyObjectResult, QueryServiceVersionResult,
-    RemoveBusListenerFilter, StartBusListenerResult, StopBusListenerResult, SubscribeEventResult,
+    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
+    StopBusListenerResult, SubscribeEventResult,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -31,7 +31,7 @@ use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
+    EmitEventRequest, HandleRequest, QueryServiceInfoRequest, SendItemRequest,
     StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest,
     UnsubscribeEventRequest,
 };
@@ -321,21 +321,19 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    pub(crate) async fn query_service_version(&self, service_id: ServiceId) -> Result<u32, Error> {
+    pub(crate) async fn query_service_info(
+        &self,
+        service_id: ServiceId,
+    ) -> Result<ServiceInfo, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
-            .unbounded_send(HandleRequest::QueryServiceVersion(
-                QueryServiceVersionRequest {
-                    cookie: service_id.cookie,
-                    reply,
-                },
-            ))
+            .unbounded_send(HandleRequest::QueryServiceInfo(QueryServiceInfoRequest {
+                cookie: service_id.cookie,
+                reply,
+            }))
             .map_err(|_| Error::Shutdown)?;
 
-        match recv.await.map_err(|_| Error::Shutdown)? {
-            QueryServiceVersionResult::Ok(version) => Ok(version),
-            QueryServiceVersionResult::InvalidService => Err(Error::InvalidService),
-        }
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     /// Creates a channel and automatically claims the sender.

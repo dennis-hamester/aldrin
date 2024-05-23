@@ -18,11 +18,11 @@ use crate::core::message::{
     DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
     DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent, EmitEvent,
     ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult, Sync,
-    SyncReply, UnsubscribeEvent,
+    QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -30,6 +30,7 @@ use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
+    ServiceInfo,
 };
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
@@ -38,7 +39,7 @@ use crate::handle::request::{
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, QueryServiceVersionRequest, SendItemRequest,
+    EmitEventRequest, HandleRequest, QueryServiceInfoRequest, SendItemRequest,
     StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
     SyncClientRequest, UnsubscribeEventRequest,
 };
@@ -100,7 +101,7 @@ where
     )>,
     subscriptions: HashMap<ServiceCookie, Subscriptions>,
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
-    query_service_version: SerialMap<oneshot::Sender<QueryServiceVersionResult>>,
+    query_service_info: SerialMap<oneshot::Sender<Result<ServiceInfo, Error>>>,
     create_channel: SerialMap<CreateChannelData>,
     close_channel_end: SerialMap<CloseChannelEndRequest>,
     claim_channel_end: SerialMap<ClaimChannelEndData>,
@@ -228,7 +229,7 @@ where
             subscribe_event: SerialMap::new(),
             subscriptions: HashMap::new(),
             broker_subscriptions: HashMap::new(),
-            query_service_version: SerialMap::new(),
+            query_service_info: SerialMap::new(),
             create_channel: SerialMap::new(),
             close_channel_end: SerialMap::new(),
             claim_channel_end: SerialMap::new(),
@@ -374,7 +375,7 @@ where
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
-            Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg),
+            Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg)?,
             Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
             Message::CloseChannelEndReply(msg) => self.msg_close_channel_end_reply(msg)?,
             Message::ChannelEndClosed(msg) => self.msg_channel_end_closed(msg)?,
@@ -395,7 +396,7 @@ where
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
-            Message::QueryServiceInfoReply(_) => todo!(),
+            Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -600,9 +601,25 @@ where
         }
     }
 
-    fn msg_query_service_version_reply(&mut self, msg: QueryServiceVersionReply) {
-        if let Some(send) = self.query_service_version.remove(msg.serial) {
-            let _ = send.send(msg.result);
+    fn msg_query_service_version_reply(
+        &mut self,
+        msg: QueryServiceVersionReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version < ProtocolVersion::V1_17 {
+            if let Some(send) = self.query_service_info.remove(msg.serial) {
+                let res = match msg.result {
+                    QueryServiceVersionResult::Ok(version) => Ok(ServiceInfo::new(version)),
+                    QueryServiceVersionResult::InvalidService => Err(Error::InvalidService),
+                };
+
+                let _ = send.send(res);
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
+            }
+        } else {
+            // On version >= 1.17, this library never sends QueryServiceVersion.
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
     }
 
@@ -1065,6 +1082,31 @@ where
         Err(RunError::UnexpectedMessageReceived(msg.into()))
     }
 
+    fn msg_query_service_info_reply(
+        &mut self,
+        msg: QueryServiceInfoReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_17 {
+            if let Some(send) = self.query_service_info.remove(msg.serial) {
+                let res = match msg.result {
+                    QueryServiceInfoResult::Ok(value) => {
+                        Ok(value.deserialize().map_err(RunError::Deserialize)?)
+                    }
+
+                    QueryServiceInfoResult::InvalidService => Err(Error::InvalidService),
+                };
+
+                let _ = send.send(res);
+                Ok(())
+            } else {
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
+            }
+        } else {
+            // On version < 1.17, this library never sends QueryServiceInfo.
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -1078,7 +1120,7 @@ where
             HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
             HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
-            HandleRequest::QueryServiceVersion(req) => self.req_query_service_version(req).await?,
+            HandleRequest::QueryServiceInfo(req) => self.req_query_service_info(req).await?,
             HandleRequest::CreateClaimedSender(req) => self.req_create_claimed_sender(req).await?,
             HandleRequest::CreateClaimedReceiver(req) => {
                 self.req_create_claimed_receiver(req).await?
@@ -1323,19 +1365,29 @@ where
             .map_err(Into::into)
     }
 
-    async fn req_query_service_version(
+    async fn req_query_service_info(
         &mut self,
-        req: QueryServiceVersionRequest,
+        req: QueryServiceInfoRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.query_service_version.insert(req.reply);
+        let serial = self.query_service_info.insert(req.reply);
 
-        self.t
-            .send_and_flush(QueryServiceVersion {
-                serial,
-                cookie: req.cookie,
-            })
-            .await
-            .map_err(Into::into)
+        if self.protocol_version >= ProtocolVersion::V1_17 {
+            self.t
+                .send_and_flush(QueryServiceInfo {
+                    serial,
+                    cookie: req.cookie,
+                })
+                .await
+                .map_err(Into::into)
+        } else {
+            self.t
+                .send_and_flush(QueryServiceVersion {
+                    serial,
+                    cookie: req.cookie,
+                })
+                .await
+                .map_err(Into::into)
+        }
     }
 
     async fn req_create_claimed_sender(
