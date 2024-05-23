@@ -1216,7 +1216,7 @@ where
             let info = req.info;
             let serial = self.create_service.insert(req);
 
-            let msg = CreateService2::with_serialize_info(serial, object_cookie, uuid, &info)
+            let msg = CreateService2::with_serialize_info(serial, object_cookie, uuid, info)
                 .map_err(RunError::Serialize)?;
 
             self.t.send_and_flush(msg).await.map_err(Into::into)
