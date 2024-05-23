@@ -3,6 +3,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResultType {
@@ -65,5 +66,11 @@ impl From<ResultType> for BuiltInType {
 impl From<ResultType> for TypeRef {
     fn from(t: ResultType) -> Self {
         Self::BuiltIn(t.into())
+    }
+}
+
+impl fmt::Display for ResultType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "result<{}, {}>", self.ok, self.err)
     }
 }
