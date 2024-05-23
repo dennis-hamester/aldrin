@@ -66,6 +66,10 @@ impl Introspection {
         &self.layout
     }
 
+    pub fn inner_types(&self) -> &BTreeMap<String, TypeId> {
+        &self.type_ids
+    }
+
     pub fn resolve_type(&self, name: impl AsRef<str>) -> Option<TypeId> {
         self.type_ids.get(name.as_ref()).copied()
     }
