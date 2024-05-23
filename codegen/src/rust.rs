@@ -850,6 +850,17 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
+        if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
+            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<std::borrow::Cow<'static, aldrin::core::introspection::Introspection>>, aldrin::Error> {{");
+            genln!(self, "        self.inner.query_introspection().await");
+            genln!(self, "    }}");
+            genln!(self);
+        }
+
         for item in svc.items() {
             let func = match item {
                 ast::ServiceItem::Function(func) => func,

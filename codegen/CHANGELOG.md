@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `introspection_if` to `RustOptions`.
 - Support generating introspection.
 - Add `type_id()` to proxies.
+- Add `query_introspection()` to proxies.
 
 ## [0.6.0] - 2024-06-07
 
