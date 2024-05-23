@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `introspection` Cargo feature to enable introspection support.
 - Add `RunError::Serialize` and `Deserialize` variants.
 - Support introspection.
+- Add `low_level::Proxy::type_id()`.
 
 ### Changed
 

@@ -1,6 +1,6 @@
 use super::Reply;
 use super::{Event, EventListener};
-use crate::core::{Serialize, ServiceId, ServiceInfo};
+use crate::core::{Serialize, ServiceId, ServiceInfo, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
@@ -43,6 +43,11 @@ impl Proxy {
     /// Returns the version of the proxy's service.
     pub fn version(&self) -> u32 {
         self.info.version
+    }
+
+    /// Returns the type ID of the proxy's service, if it is known.
+    pub fn type_id(&self) -> Option<TypeId> {
+        self.info.type_id
     }
 
     /// Calls a function on the service.
