@@ -30,11 +30,18 @@ jobs:
           components: clippy
       - name: Cache
         uses: Swatinem/rust-cache@v2
-      - name: Cargo check
+      - name: Cargo check (no default features)
+        run: cargo check --locked --no-default-features --tests
+      - name: Cargo check (all features)
         run: cargo check --locked --all-features --tests
-      - name: Cargo test
+      - name: Cargo test (no default features)
+        run: cargo test --locked --no-default-features
+      - name: Cargo test (all features)
         run: cargo test --locked --all-features
-      - name: Cargo clippy
+      - name: Cargo clippy (no default features)
+        if: ${{ matrix.rust == 'stable' }}
+        run: cargo clippy --locked --no-default-features --tests
+      - name: Cargo clippy (all features)
         if: ${{ matrix.rust == 'stable' }}
         run: cargo clippy --locked --all-features --tests
 
@@ -48,7 +55,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
         uses: Swatinem/rust-cache@v2
-      - name: Cargo doc
+      - name: Cargo doc (no default features)
+        run: cargo doc --locked --no-default-features --no-deps
+      - name: Cargo doc (all features)
         run: cargo doc --locked --all-features --no-deps
 
   style:
