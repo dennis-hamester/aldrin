@@ -1,3 +1,4 @@
+#[cfg(feature = "introspection")]
 use aldrin::core::introspection::{Enum, Introspection, Layout, Service, Struct};
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
@@ -115,6 +116,7 @@ async fn list(bus: &Handle) -> Result<()> {
 
             println!("|- Service {}", service_id.uuid);
 
+            #[cfg(feature = "introspection")]
             if let Some(introspection) = proxy.query_introspection().await? {
                 println!(
                     "|    Name:    {}::{}",
@@ -124,6 +126,9 @@ async fn list(bus: &Handle) -> Result<()> {
             } else {
                 println!("|    Name:    N/A");
             }
+
+            #[cfg(not(feature = "introspection"))]
+            println!("|    Name:    N/A");
 
             if let Some(type_id) = proxy.type_id() {
                 println!("|    Type ID: {}", type_id);
@@ -138,6 +143,7 @@ async fn list(bus: &Handle) -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "introspection")]
 async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
     let mut pending = vec![type_id];
     let mut available = BTreeMap::new();
@@ -203,6 +209,15 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
     Ok(())
 }
 
+#[cfg(not(feature = "introspection"))]
+async fn query_full(_bus: &Handle, type_id: TypeId) -> Result<()> {
+    println!("Unavailable type IDs:");
+    println!("|- {type_id}");
+
+    Ok(())
+}
+
+#[cfg(feature = "introspection")]
 async fn query(bus: &Handle, type_id: TypeId) -> Result<()> {
     let Some(introspection) = bus.query_introspection(type_id).await? else {
         println!("No introspection available for {type_id}.");
@@ -228,6 +243,13 @@ async fn query(bus: &Handle, type_id: TypeId) -> Result<()> {
     Ok(())
 }
 
+#[cfg(not(feature = "introspection"))]
+async fn query(_bus: &Handle, type_id: TypeId) -> Result<()> {
+    println!("No introspection available for {type_id}.");
+    Ok(())
+}
+
+#[cfg(feature = "introspection")]
 fn print_service(service: &Service, introspection: &Introspection) {
     println!("service {}::{} {{", introspection.schema(), service.name());
     println!("    uuid = {};", service.uuid());
@@ -284,6 +306,7 @@ fn print_service(service: &Service, introspection: &Introspection) {
     println!("}}");
 }
 
+#[cfg(feature = "introspection")]
 fn print_struct(struct_: &Struct, introspection: &Introspection) {
     println!("struct {}::{} {{", introspection.schema(), struct_.name());
 
@@ -303,6 +326,7 @@ fn print_struct(struct_: &Struct, introspection: &Introspection) {
     println!("}}");
 }
 
+#[cfg(feature = "introspection")]
 fn print_enum(enum_: &Enum, introspection: &Introspection) {
     println!("enum {}::{} {{", introspection.schema(), enum_.name());
 
