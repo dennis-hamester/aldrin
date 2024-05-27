@@ -1,19 +1,32 @@
 use crate::run_error::RunError;
 use crate::test::Test;
 use crate::FilterArgs;
+use anstream::{print, println};
+use anstyle::{AnsiColor, Color, Style};
 use anyhow::Result;
-use clap::ColorChoice;
-use once_cell::sync::Lazy;
-use std::io::{self, IsTerminal};
+use std::io::Write;
 use std::time::Duration;
-use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
-fn style(fg: Option<Color>, bold: bool) -> ColorSpec {
-    let mut spec = ColorSpec::new();
-    spec.set_fg(fg);
-    spec.set_bold(bold);
-    spec
+const fn style(fg: Option<AnsiColor>, bold: bool) -> Style {
+    let mut style = Style::new();
+
+    if let Some(fg) = fg {
+        style = style.fg_color(Some(Color::Ansi(fg)));
+    }
+
+    if bold {
+        style = style.bold();
+    }
+
+    style
 }
+
+const STYLE_TEST_NAME: Style = style(Some(AnsiColor::Blue), false);
+const STYLE_MESSAGE_TYPE: Style = style(Some(AnsiColor::Yellow), false);
+const STYLE_PASSED: Style = style(Some(AnsiColor::Green), true);
+const STYLE_FAILED: Style = style(Some(AnsiColor::Red), true);
+const STYLE_FAILED_DETAIL: Style = style(Some(AnsiColor::Red), false);
+const STYLE_SEPARATOR: Style = style(Some(AnsiColor::Cyan), true);
 
 fn get_termwidth() -> usize {
     const MIN_TERMWIDTH: usize = 20;
@@ -25,199 +38,142 @@ fn get_termwidth() -> usize {
         .max(MIN_TERMWIDTH)
 }
 
-static STYLE_REGULAR: Lazy<ColorSpec> = Lazy::new(|| style(None, false));
-static STYLE_TEST_NAME: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Blue), false));
-static STYLE_MESSAGE_TYPE: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Yellow), false));
-static STYLE_PASSED: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Green), true));
-static STYLE_FAILED: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Red), true));
-static STYLE_FAILED_DETAIL: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Red), false));
-static STYLE_SEPARATOR: Lazy<ColorSpec> = Lazy::new(|| style(Some(Color::Cyan), true));
-
-pub fn make_output(color_choice: ColorChoice) -> Result<impl WriteColor> {
-    let color_choice = match color_choice {
-        ColorChoice::Auto if io::stdout().is_terminal() => termcolor::ColorChoice::Auto,
-        ColorChoice::Auto | ColorChoice::Never => termcolor::ColorChoice::Never,
-        ColorChoice::Always => termcolor::ColorChoice::Always,
-    };
-
-    let mut stream = StandardStream::stdout(color_choice);
-    stream.reset()?;
-    Ok(stream)
-}
-
-pub fn list_tests<O>(args: FilterArgs, mut output: O, tests: &[Test]) -> Result<()>
-where
-    O: WriteColor,
-{
+pub fn list_tests(args: FilterArgs, tests: &[Test]) {
     for test in tests.iter().filter(|test| args.matches(test)) {
-        output.set_color(&STYLE_TEST_NAME)?;
-        write!(output, "{}", test.name)?;
-        output.set_color(&STYLE_REGULAR)?;
+        print!("{style}{}{style:#}", test.name, style = STYLE_TEST_NAME);
 
         if let Some(ref description) = test.description {
-            write!(output, ": {description}")?;
+            print!(": {description}");
         }
 
         if !test.message_types.is_empty() {
-            write!(output, " [")?;
+            print!(" [");
 
             let mut first = true;
             for message_type in &test.message_types {
                 if first {
                     first = false;
                 } else {
-                    write!(output, ", ")?;
+                    print!(", ");
                 }
 
-                output.set_color(&STYLE_MESSAGE_TYPE)?;
-                write!(output, "{message_type}")?;
-                output.set_color(&STYLE_REGULAR)?;
+                print!("{style}{message_type}{style:#}", style = STYLE_MESSAGE_TYPE);
             }
 
-            write!(output, "]")?;
+            print!("]");
         }
 
-        writeln!(output)?;
+        println!();
     }
-
-    Ok(())
 }
 
-pub fn describe_test(mut output: impl WriteColor, test: &Test) -> Result<()> {
-    output.set_color(&STYLE_TEST_NAME)?;
-    write!(output, "{}", test.name)?;
-    output.set_color(&STYLE_REGULAR)?;
+pub fn describe_test(test: &Test) {
+    print!("{style}{}{style:#}", test.name, style = STYLE_TEST_NAME);
 
     if let Some(ref description) = test.description {
-        writeln!(output, ": {}", description)?;
+        println!(": {}", description);
     }
 
     if let Some(long_description) = test.long_description.as_deref() {
-        writeln!(output)?;
-        writeln!(output, "Description:")?;
+        println!();
+        println!("Description:");
 
         let termwidth = get_termwidth();
         let long_description = bwrap::wrap_nobrk!(long_description, termwidth - 4, "  ");
-        writeln!(output, "  {}", long_description)?;
+        println!("  {}", long_description);
     }
 
-    writeln!(output)?;
-    writeln!(output, "Minimum protocol version: {}", test.version)?;
+    println!();
+    println!("Minimum protocol version: {}", test.version);
 
     if !test.message_types.is_empty() {
-        writeln!(output)?;
-        writeln!(output, "Primarily tested message(s):")?;
+        println!();
+        println!("Primarily tested message(s):");
+
         for message_type in &test.message_types {
-            write!(output, "  - ")?;
-            output.set_color(&STYLE_MESSAGE_TYPE)?;
-            writeln!(output, "{message_type}")?;
-            output.set_color(&STYLE_REGULAR)?;
+            println!(
+                "  - {style}{message_type}{style:#}",
+                style = STYLE_MESSAGE_TYPE,
+            );
         }
     }
-
-    Ok(())
 }
 
-pub fn prepare_report(mut output: impl WriteColor, name: &str) -> Result<()> {
-    output.set_color(&STYLE_TEST_NAME)?;
-    write!(output, "{name}")?;
-
-    output.set_color(&STYLE_REGULAR)?;
-    write!(output, " ... ")?;
-
-    output.flush()?;
-    Ok(())
+pub fn prepare_report(name: &str) {
+    print!("{style}{name}{style:#} ... ", style = STYLE_TEST_NAME);
+    let _ = anstream::stdout().flush();
 }
 
-fn print_seperator(mut output: impl WriteColor) -> Result<()> {
-    output.set_color(&STYLE_SEPARATOR)?;
-    write!(output, "|")?;
-    output.set_color(&STYLE_REGULAR)?;
-    write!(output, " ")?;
-    Ok(())
+fn print_seperator() {
+    print!("{style}|{style:#} ", style = STYLE_SEPARATOR);
 }
 
-pub fn finish_report(mut output: impl WriteColor, res: Result<Duration, RunError>) -> Result<()> {
+pub fn finish_report(res: Result<Duration, RunError>) {
     let err = match res {
         Ok(dur) => {
-            output.set_color(&STYLE_PASSED)?;
-            write!(output, "passed")?;
-            output.set_color(&STYLE_REGULAR)?;
-            writeln!(output, " ({}ms)", dur.as_millis())?;
-            return Ok(());
+            println!(
+                "{style}passed{style:#} ({}ms)",
+                dur.as_millis(),
+                style = STYLE_PASSED,
+            );
+
+            return;
         }
 
         Err(e) => e,
     };
 
-    output.set_color(&STYLE_FAILED)?;
-    writeln!(output, "failed")?;
+    println!("{style}failed{style:#}", style = STYLE_FAILED);
 
-    print_seperator(&mut output)?;
-    output.set_color(&STYLE_FAILED_DETAIL)?;
-    write!(output, "Error")?;
-    output.set_color(&STYLE_REGULAR)?;
-    write!(output, ": ")?;
+    print_seperator();
+    print!("{style}Error{style:#}: ", style = STYLE_FAILED_DETAIL);
 
     let error = format!("{:?}", err.error);
     for (i, line) in error.lines().enumerate() {
         if i > 0 {
-            print_seperator(&mut output)?;
+            print_seperator();
         }
 
-        writeln!(output, "{line}")?;
+        println!("{line}");
     }
 
     if !err.stderr.is_empty() {
-        print_seperator(&mut output)?;
-        writeln!(output)?;
+        print_seperator();
+        println!();
 
-        print_seperator(&mut output)?;
-        write!(output, "Child's stderr")?;
-        writeln!(output, ":")?;
+        print_seperator();
+        println!("Child's stderr:");
 
         let stderr = String::from_utf8_lossy(&err.stderr);
         for line in stderr.lines() {
-            print_seperator(&mut output)?;
-            writeln!(output, "    {line}")?;
+            print_seperator();
+            println!("    {line}");
         }
     }
 
-    writeln!(output)?;
-    Ok(())
+    println!();
 }
 
-pub fn summary(mut output: impl WriteColor, passed: usize, total: usize) -> Result<()> {
-    writeln!(output)?;
+pub fn summary(passed: usize, total: usize) {
+    println!();
+    println!("{style}Summary{style:#}:", style = STYLE_TEST_NAME);
 
-    output.set_color(&STYLE_TEST_NAME)?;
-    write!(output, "Summary")?;
-    output.set_color(&STYLE_REGULAR)?;
-    writeln!(output, ":")?;
-
-    print_seperator(&mut output)?;
+    print_seperator();
     if passed == total {
-        output.set_color(&STYLE_PASSED)?;
-        write!(output, "passed")?;
-        output.set_color(&STYLE_REGULAR)?;
+        print!("{style}passed{style:#}", style = STYLE_PASSED);
     } else {
-        write!(output, "passed")?;
+        print!("passed");
     }
-    writeln!(output, ": {} test(s)", passed)?;
+    println!(": {passed} test(s)");
 
-    print_seperator(&mut output)?;
+    print_seperator();
     if total != passed {
-        output.set_color(&STYLE_FAILED)?;
-        write!(output, "failed")?;
-        output.set_color(&STYLE_REGULAR)?;
+        print!("{style}failed{style:#}", style = STYLE_FAILED);
     } else {
-        write!(output, "failed")?;
+        print!("failed");
     }
-    writeln!(output, ": {} test(s)", total - passed)?;
+    println!(": {} test(s)", total - passed);
 
-    print_seperator(&mut output)?;
-    writeln!(output, "total:  {} test(s)", total)?;
-
-    output.flush()?;
-    Ok(())
+    print_seperator();
+    println!("total:  {} test(s)", total);
 }

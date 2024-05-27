@@ -78,13 +78,15 @@ name = "aldrin-conformance-tester"
 version = "0.4.0"
 dependencies = [
  "aldrin-core",
+ "anstream",
+ "anstyle",
  "anyhow",
  "bwrap",
  "clap",
+ "colorchoice-clap",
  "once_cell",
  "serde",
  "serde_json",
- "termcolor",
  "terminal_size",
  "tokio",
  "uuid",

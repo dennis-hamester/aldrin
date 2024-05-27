@@ -17,7 +17,8 @@ mod value;
 
 use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Result};
-use clap::{ColorChoice, Parser};
+use clap::Parser;
+use colorchoice_clap::Color;
 use message_type::MessageType;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -26,10 +27,8 @@ use test::Test;
 #[derive(Parser)]
 #[clap(version, about)]
 struct Args {
-    /// When to color output.
-    #[clap(long, default_value_t = ColorChoice::Auto)]
-    #[arg(value_enum)]
-    color: ColorChoice,
+    #[clap(flatten)]
+    color: Color,
 
     /// Path to tests to use instead of the built-in ones.
     ///
@@ -126,12 +125,12 @@ enum Command {
 
 fn main() -> Result<ExitCode> {
     let args = Args::parse();
-    let output = output::make_output(args.color)?;
+    args.color.write_global();
     let tests = test::get_tests(args.tests.as_deref())?;
 
     match args.command {
         Command::List(args) => {
-            output::list_tests(args, output, &tests)?;
+            output::list_tests(args, &tests);
             Ok(ExitCode::SUCCESS)
         }
 
@@ -140,12 +139,12 @@ fn main() -> Result<ExitCode> {
                 .iter()
                 .find(|test| test.name == args.test)
                 .ok_or_else(|| anyhow!("test `{}` not found", args.test))?;
-            output::describe_test(output, test)?;
+            output::describe_test(test);
             Ok(ExitCode::SUCCESS)
         }
 
         Command::Run(args) => {
-            if run::run(args, output, tests.into_owned())? {
+            if run::run(args, tests.into_owned())? {
                 Ok(ExitCode::SUCCESS)
             } else {
                 Ok(ExitCode::FAILURE)

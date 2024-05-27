@@ -9,12 +9,11 @@ use std::collections::VecDeque;
 use std::num::NonZeroUsize;
 use std::thread;
 use std::time::Duration;
-use termcolor::WriteColor;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Result<bool> {
+pub fn run(args: RunArgs, tests: Vec<Test>) -> Result<bool> {
     let jobs = match args.jobs {
         Some(0) => 1,
         Some(jobs) => jobs,
@@ -35,7 +34,7 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
         if queue.len() >= jobs {
             let (name, join) = queue.pop_front().unwrap();
 
-            if report(&mut output, &name, join, &runtime)? {
+            if report(&name, join, &runtime)? {
                 passed += 1;
             }
         }
@@ -49,13 +48,13 @@ pub fn run(args: RunArgs, mut output: impl WriteColor, tests: Vec<Test>) -> Resu
     }
 
     for (name, join) in queue {
-        if report(&mut output, &name, join, &runtime)? {
+        if report(&name, join, &runtime)? {
             passed += 1;
         }
     }
 
     if total > 0 {
-        output::summary(&mut output, passed, total)?;
+        output::summary(passed, total);
         Ok(passed == total)
     } else {
         println!(
@@ -100,14 +99,13 @@ async fn run_test(
 }
 
 fn report(
-    mut output: impl WriteColor,
     name: &str,
     join: JoinHandle<Result<Duration, RunError>>,
     runtime: &Runtime,
 ) -> Result<bool> {
-    output::prepare_report(&mut output, name)?;
+    output::prepare_report(name);
     let res = runtime.block_on(join)?;
     let passed = res.is_ok();
-    output::finish_report(output, res)?;
+    output::finish_report(res);
     Ok(passed)
 }
