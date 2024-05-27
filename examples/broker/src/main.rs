@@ -20,9 +20,7 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-
-    log::info!("Starting broker on {}.", args.bind);
+    println!("Starting broker on {}.", args.bind);
 
     // The Broker created further below does by itself not deal with listening for new
     // connections. The application that hosts the broker has to do that via some means. Here, we
@@ -52,25 +50,25 @@ async fn main() -> Result<()> {
             Ok(new_conn) => new_conn,
 
             Err(e) => {
-                log::error!("Failed to accept new connection: {}.", e);
+                println!("Failed to accept new connection: {}.", e);
                 continue;
             }
         };
 
         // New connections are handled in a new task, so as to not block this loop.
-        log::info!("New connection from {}.", addr);
+        println!("New connection from {}.", addr);
         let handle = handle.clone();
         tokio::spawn(async move {
             match handle_connection(handle, stream).await {
-                Ok(()) => log::info!("Connection from {} shut down.", addr),
-                Err(e) => log::error!("Error on connection from {}: {:#}", addr, e),
+                Ok(()) => println!("Connection from {} shut down.", addr),
+                Err(e) => println!("Error on connection from {}: {:#}", addr, e),
             }
         });
     }
 
     // The broker can be shut down cleanly. This will notify all clients as well. The broker's task
     // will join once all connections have been shut down.
-    log::info!("Shutting down broker.");
+    println!("Shutting down broker.");
     handle.shutdown().await;
     join.await
         .with_context(|| anyhow!("failed to join broker task"))?;

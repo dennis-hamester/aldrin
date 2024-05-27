@@ -67,9 +67,8 @@ struct Listen {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    log::info!("Connection to broker at {}.", args.bus);
+    println!("Connection to broker at {}.", args.bus);
 
     let stream = TcpStream::connect(&args.bus)
         .await
@@ -90,7 +89,7 @@ async fn main() -> Result<()> {
         Command::Listen(args) => listen(&handle, args).await?,
     }
 
-    log::info!("Shutting down connection to the broker.");
+    println!("Shutting down connection to the broker.");
 
     handle.shutdown();
     join.await
@@ -104,7 +103,7 @@ async fn server(bus: &Handle) -> Result<()> {
     let object = bus.create_object(ObjectUuid::new_v4()).await?;
     let mut echo = Echo::new(&object).await?;
 
-    log::info!("Starting echo server {}.", object.id().uuid);
+    println!("Starting echo server {}.", object.id().uuid);
 
     loop {
         let function = tokio::select! {
@@ -117,7 +116,7 @@ async fn server(bus: &Handle) -> Result<()> {
                     // Function calls can be invalid either because their ID is unknown or because
                     // the arguments to the call failed to deserialize.
                     Some(Err(e)) => {
-                        log::error!("Received an invalid function call: {e}.");
+                        println!("Received an invalid function call: {e}.");
                         continue;
                     }
 
@@ -141,7 +140,7 @@ async fn server(bus: &Handle) -> Result<()> {
         // notified that the call has been aborted.
         match function {
             EchoFunction::Echo(args, promise) => {
-                log::info!("echo(\"{args}\") called.");
+                println!("echo(\"{args}\") called.");
 
                 if !args.is_empty() {
                     // Here, we echo the same value back to the caller.
@@ -152,7 +151,7 @@ async fn server(bus: &Handle) -> Result<()> {
             }
 
             EchoFunction::EchoAll(args, promise) => {
-                log::info!("echo_all(\"{args}\") called.");
+                println!("echo_all(\"{args}\") called.");
 
                 if !args.is_empty() {
                     // This emits an event to all subscribed clients. If there is no such client,
@@ -185,12 +184,12 @@ async fn list(bus: &Handle) -> Result<()> {
     // The discoverer will emit events for every object it has found on the bus that matches the
     // criteria. Through the event, we can get the object's ID and the relevant service IDs.
     while let Some(event) = discoverer.next_event_ref().await {
-        log::info!("Found echo server {}.", event.object_id().uuid);
+        println!("Found echo server {}.", event.object_id().uuid);
         found = true;
     }
 
     if !found {
-        log::warn!("No echo servers found.");
+        println!("No echo servers found.");
     }
 
     Ok(())
@@ -198,7 +197,7 @@ async fn list(bus: &Handle) -> Result<()> {
 
 async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
-    log::info!("Calling echo(\"{}\") on {}.", args.echo, echo.id().uuid);
+    println!("Calling echo(\"{}\") on {}.", args.echo, echo.id().uuid);
 
     // This is what a function call in Aldrin looks like on the client's side. The `?` handles
     // errors on the protocol level, such as when e.g. the server shuts down during any of these
@@ -206,7 +205,7 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
     // EchoEchoError>`).
     match echo.echo(&args.echo).await? {
         Ok(reply) => {
-            log::info!("Server replied with: \"{reply}\".");
+            println!("Server replied with: \"{reply}\".");
             Ok(())
         }
 
@@ -216,7 +215,7 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
 
 async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
-    log::info!("Calling echo_all(\"{}\") on {}.", args.echo, echo.id().uuid);
+    println!("Calling echo_all(\"{}\") on {}.", args.echo, echo.id().uuid);
 
     // This is just like `echo` above, except that the server returns no data. Instead, it will emit
     // an event with the value we sent. The event can be seen by having another instance of this
@@ -236,7 +235,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
     // of the Echo service.
     echo.subscribe_all().await?;
 
-    log::info!("Listen to events from {}.", echo.id().uuid);
+    println!("Listen to events from {}.", echo.id().uuid);
 
     loop {
         let event = tokio::select! {
@@ -247,7 +246,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
                     // As with functions, events can be invalid, either because they have an unknown
                     // ID or because their associated value failed to deserialize.
                     Some(Err(e)) => {
-                        log::error!("Received an invalid event: {e}.");
+                        println!("Received an invalid event: {e}.");
                         continue;
                     }
 
@@ -265,7 +264,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
 
         // `EchoEvent` is a generated enum that has one variant for each event.
         match event {
-            EchoEvent::EchoedToAll(echo) => log::info!("Received event: EchoedToAll(\"{echo}\")."),
+            EchoEvent::EchoedToAll(echo) => println!("Received event: EchoedToAll(\"{echo}\")."),
         }
     }
 }
