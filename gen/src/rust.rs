@@ -1,4 +1,4 @@
-use crate::{diag, CommonArgs, CommonGenArgs, CommonReadArgs};
+use crate::{diag, CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::Parser;
 use anyhow::{anyhow, Context, Result};
@@ -10,9 +10,6 @@ use std::path::PathBuf;
 #[derive(clap::Parser)]
 #[clap(arg_required_else_help = true)]
 pub struct RustArgs {
-    #[clap(flatten)]
-    common_args: CommonArgs,
-
     #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
@@ -64,7 +61,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     }
 
     let parsed = parser.parse(args.schema);
-    diag::print_diagnostics(&parsed, args.common_args.color)?;
+    diag::print_diagnostics(&parsed);
 
     if parsed.errors().is_empty() {
         if !parsed.warnings().is_empty() || !parsed.other_warnings().is_empty() {

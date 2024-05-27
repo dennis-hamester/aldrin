@@ -1,4 +1,4 @@
-use crate::{diag, CommonArgs, CommonReadArgs};
+use crate::{diag, CommonReadArgs};
 use aldrin_parser::Parser;
 use anyhow::Result;
 use std::path::PathBuf;
@@ -6,9 +6,6 @@ use std::path::PathBuf;
 #[derive(clap::Parser)]
 #[clap(arg_required_else_help = true)]
 pub struct CheckArgs {
-    #[clap(flatten)]
-    common_args: CommonArgs,
-
     #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
@@ -37,7 +34,7 @@ pub fn run(args: CheckArgs) -> Result<bool> {
         }
 
         let parsed = parser.parse(schema);
-        diag::print_diagnostics(&parsed, args.common_args.color)?;
+        diag::print_diagnostics(&parsed);
 
         if parsed.errors().is_empty() {
             if parsed.warnings().is_empty() && parsed.other_warnings().is_empty() {

@@ -22,6 +22,15 @@ version = "0.4.0"
 path = "../parser"
 default-features = false
 
+[dependencies.anstream]
+version = "0.6.14"
+default-features = false
+features = ["auto"]
+
+[dependencies.anstyle]
+version = "1.0.7"
+default-features = false
+
 [dependencies.anyhow]
 version = "1.0.75"
 default-features = false
@@ -41,11 +50,6 @@ features = [
     "wrap_help",
 ]
 
-[dependencies.once_cell]
-version = "1.18.0"
-default-features = false
-features = ["std"]
-
-[dependencies.termcolor]
-version = "1.4.0"
+[dependencies.colorchoice-clap]
+version = "1.0.4"
 default-features = false
