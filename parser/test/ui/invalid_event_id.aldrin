@@ -1,0 +1,6 @@
+service InvalidEventId {
+    uuid = 2e7cf1c9-4abc-48ac-9fbc-c70fef0ae423;
+    version = 1;
+
+    event invalid_event_id @ 4294967296;
+}

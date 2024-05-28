@@ -1,6 +1,6 @@
 use super::{Ident, LitPosInt, LitUuid, TypeNameOrInline};
 use crate::error::{
-    DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidFunctionId,
+    DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceUuid, InvalidServiceVersion,
 };
 use crate::grammar::Rule;
@@ -331,6 +331,7 @@ impl EventDef {
 
     fn validate(&self, validate: &mut Validate) {
         NonSnakeCaseEvent::validate(self, validate);
+        InvalidEventId::validate(self, validate);
 
         self.name.validate(validate);
         if let Some(ref event_type) = self.event_type {
