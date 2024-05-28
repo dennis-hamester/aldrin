@@ -1,0 +1,6 @@
+service InvalidFunctionId {
+    uuid = 2e7cf1c9-4abc-48ac-9fbc-c70fef0ae423;
+    version = 1;
+
+    fn invalid_function_id @ 4294967296;
+}

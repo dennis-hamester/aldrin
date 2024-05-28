@@ -1,7 +1,7 @@
 use super::{Ident, LitPosInt, LitUuid, TypeNameOrInline};
 use crate::error::{
-    DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidServiceUuid,
-    InvalidServiceVersion,
+    DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidFunctionId,
+    InvalidServiceUuid, InvalidServiceVersion,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -203,6 +203,7 @@ impl FunctionDef {
 
     fn validate(&self, validate: &mut Validate) {
         NonSnakeCaseFunction::validate(self, validate);
+        InvalidFunctionId::validate(self, validate);
 
         self.name.validate(validate);
 

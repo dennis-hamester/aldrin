@@ -12,6 +12,7 @@ mod extern_type_not_found;
 mod import_not_found;
 mod invalid_const_value;
 mod invalid_enum_variant_id;
+mod invalid_function_id;
 mod invalid_schema_name;
 mod invalid_service_uuid;
 mod invalid_service_version;
@@ -40,6 +41,7 @@ pub use extern_type_not_found::ExternTypeNotFound;
 pub use import_not_found::ImportNotFound;
 pub use invalid_const_value::InvalidConstValue;
 pub use invalid_enum_variant_id::InvalidEnumVariantId;
+pub use invalid_function_id::InvalidFunctionId;
 pub use invalid_schema_name::InvalidSchemaName;
 pub use invalid_service_uuid::InvalidServiceUuid;
 pub use invalid_service_version::InvalidServiceVersion;
@@ -68,6 +70,7 @@ pub enum Error {
     ImportNotFound(ImportNotFound),
     InvalidConstValue(InvalidConstValue),
     InvalidEnumVariantId(InvalidEnumVariantId),
+    InvalidFunctionId(InvalidFunctionId),
     InvalidSchemaName(InvalidSchemaName),
     InvalidServiceUuid(InvalidServiceUuid),
     InvalidServiceVersion(InvalidServiceVersion),
@@ -102,6 +105,7 @@ impl Diagnostic for Error {
             Error::ImportNotFound(e) => e.schema_name(),
             Error::InvalidConstValue(e) => e.schema_name(),
             Error::InvalidEnumVariantId(e) => e.schema_name(),
+            Error::InvalidFunctionId(e) => e.schema_name(),
             Error::InvalidSchemaName(e) => e.schema_name(),
             Error::InvalidServiceUuid(e) => e.schema_name(),
             Error::InvalidServiceVersion(e) => e.schema_name(),
@@ -132,6 +136,7 @@ impl Diagnostic for Error {
             Error::ImportNotFound(e) => e.format(parsed),
             Error::InvalidConstValue(e) => e.format(parsed),
             Error::InvalidEnumVariantId(e) => e.format(parsed),
+            Error::InvalidFunctionId(e) => e.format(parsed),
             Error::InvalidSchemaName(e) => e.format(parsed),
             Error::InvalidServiceUuid(e) => e.format(parsed),
             Error::InvalidServiceVersion(e) => e.format(parsed),
