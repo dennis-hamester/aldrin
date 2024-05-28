@@ -53,9 +53,9 @@ const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_16;
 
 /// Aldrin client used to connect to a broker.
 ///
-/// This is the first entry point to `aldrin-client`. A [`Client`] is used to establish a connection
-/// to an Aldrin broker. Afterwards, it should be turned into a [`Future`](std::future::Future) with
-/// the [`run`](Client::run) method, which must then be continuously polled and run to completion.
+/// This is the first entry point to Aldrin. A [`Client`] is used to establish a connection to an
+/// Aldrin broker. Afterwards, it should be turned into a [`Future`](std::future::Future) with the
+/// [`run`](Client::run) method, which must then be continuously polled and run to completion.
 ///
 /// All interaction with a [`Client`] happens asynchronously through one or more
 /// [`Handle`s](Handle), which must be acquired with [`Client::handle`] before calling
