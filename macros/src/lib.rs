@@ -33,7 +33,7 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 /// `CARGO_MANIFEST_DIR` environment variable). Building without Cargo currently supports only
 /// absolute paths.
 ///
-/// The generated code depends only the `aldrin-client` crate. Make sure you have it specified as a
+/// The generated code depends only the `aldrin` crate. Make sure you have it specified as a
 /// dependency in your `Cargo.toml`.
 ///
 /// ```
