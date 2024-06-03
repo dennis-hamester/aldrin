@@ -32,6 +32,7 @@ use request::{
     UnsubscribeEventRequest,
 };
 use std::future::Future;
+use std::hash::Hash;
 use std::mem::MaybeUninit;
 use std::num::NonZeroU32;
 use std::pin::Pin;
@@ -696,7 +697,10 @@ impl Handle {
     }
 
     /// Create a new `DiscovererBuilder`.
-    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key> {
+    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key>
+    where
+        Key: Copy + Eq + Hash,
+    {
         Discoverer::builder(self)
     }
 
@@ -776,15 +780,19 @@ impl Handle {
             .build_current_only()
             .await?;
 
-        let Some(event) = discoverer.next_event_ref().await else {
+        let Some(event) = discoverer.next_event().await else {
             return Ok(None);
         };
+
+        if let Some(object) = object {
+            debug_assert_eq!(event.object_id().uuid, object);
+        }
 
         // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
         let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
         for (&uuid, id) in services.iter().zip(&mut ids) {
-            id.write(event.service_id(uuid));
+            id.write(event.service_id(&discoverer, uuid));
         }
 
         // SAFETY: All N elements have been initialized in the loop above.
@@ -838,15 +846,19 @@ impl Handle {
             .build()
             .await?;
 
-        let Some(event) = discoverer.next_event_ref().await else {
+        let Some(event) = discoverer.next_event().await else {
             return Err(Error::Shutdown);
         };
+
+        if let Some(object) = object {
+            debug_assert_eq!(event.object_id().uuid, object);
+        }
 
         // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
         let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
         for (&uuid, id) in services.iter().zip(&mut ids) {
-            id.write(event.service_id(uuid));
+            id.write(event.service_id(&discoverer, uuid));
         }
 
         // SAFETY: All N elements have been initialized in the loop above.

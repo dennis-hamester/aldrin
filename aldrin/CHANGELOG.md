@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `Discoverer::object_id()` and `service_id()` can be used to query known objects and
+  services. Previously, this was only possible through the short-lived events.
+
+### Changed
+
+- The `Discoverer` has been reworked to hopefully improve its ergonomics and usefulness.
+- `DiscovererEventRef` has been removed and the remaining `DiscovererEvent` does not borrow the
+  `Discoverer`.
+- The generic `Key` parameter of `Discoverer` is now required to implement `Copy`, `Eq` and `Hash`.
+
 ## [0.5.0] - 2024-05-29
 
 ### Added

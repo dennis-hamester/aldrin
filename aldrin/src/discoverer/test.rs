@@ -1,5 +1,5 @@
 use crate::core::{ObjectUuid, ServiceUuid};
-use aldrin_test::aldrin::{DiscovererEvent, DiscovererEventKind};
+use aldrin_test::aldrin::DiscovererEventKind;
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]
@@ -17,24 +17,16 @@ async fn any_object_no_services() {
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     client.join().await;
@@ -57,24 +49,16 @@ async fn specific_object_no_services() {
         .unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     client.join().await;
@@ -98,28 +82,18 @@ async fn specific_object() {
         .unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    assert_eq!(ev.service_id(&discoverer, svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(&discoverer, svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     client.join().await;
@@ -143,28 +117,18 @@ async fn any_object() {
         .unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    assert_eq!(ev.service_id(&discoverer, svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(&discoverer, svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -172,28 +136,18 @@ async fn any_object() {
     let svc2 = obj.create_service(svc2.id().uuid, 0).await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    assert_eq!(ev.service_id(&discoverer, svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(&discoverer, svc2.id().uuid), svc2.id());
 
     obj.destroy().await.unwrap();
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Destroyed);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
 
     client.join().await;
@@ -206,7 +160,7 @@ async fn empty() {
     let mut client = broker.add_client().await;
 
     let mut discoverer = client.create_discoverer::<()>().build().await.unwrap();
-    assert!(discoverer.next_event_ref().await.is_none());
+    assert!(discoverer.next_event().await.is_none());
     assert!(discoverer.is_finished());
 
     client.join().await;
@@ -234,20 +188,14 @@ async fn current_only() {
     let _svc2 = obj.create_service(ServiceUuid::new_v4(), 0).await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc1.id().uuid), svc1.id());
-    assert_eq!(ev.service_id(svc2.id().uuid), svc2.id());
+    assert_eq!(ev.service_id(&discoverer, svc1.id().uuid), svc1.id());
+    assert_eq!(ev.service_id(&discoverer, svc2.id().uuid), svc2.id());
 
-    assert!(discoverer.next_event_ref().await.is_none());
+    assert!(discoverer.next_event().await.is_none());
     assert!(discoverer.is_finished());
 
     client.join().await;
@@ -270,30 +218,20 @@ async fn restart_any() {
         .unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     discoverer.restart().await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     client.join().await;
     broker.join().await;
@@ -315,30 +253,20 @@ async fn restart_specific() {
         .unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     discoverer.restart().await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     client.join().await;
     broker.join().await;
@@ -362,23 +290,18 @@ async fn restart_current_only_any() {
     let svc = obj.create_service(uuid, 0).await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await;
+    let ev = discoverer.next_event().await;
     assert!(ev.is_none());
     assert!(discoverer.is_finished());
 
     discoverer.restart_current_only().await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     client.join().await;
     broker.join().await;
@@ -403,23 +326,18 @@ async fn restart_current_only_specific() {
     let svc = obj.create_service(svc_uuid, 0).await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await;
+    let ev = discoverer.next_event().await;
     assert!(ev.is_none());
     assert!(discoverer.is_finished());
 
     discoverer.restart_current_only().await.unwrap();
 
     assert!(!discoverer.is_finished());
-    let ev = discoverer.next_event_ref().await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
     assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
+    assert_eq!(ev.key(), 0);
     assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
-    let ev = DiscovererEvent::<_, 10>::from(ev);
-    assert_eq!(ev.kind(), DiscovererEventKind::Created);
-    assert_eq!(*ev.key(), 0);
-    assert_eq!(ev.object_id(), obj.id());
-    assert_eq!(ev.service_id(svc.id().uuid), svc.id());
+    assert_eq!(ev.service_id(&discoverer, svc.id().uuid), svc.id());
 
     client.join().await;
     broker.join().await;

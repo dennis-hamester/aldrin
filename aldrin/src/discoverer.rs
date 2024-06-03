@@ -9,11 +9,9 @@ use crate::core::{
 use crate::error::Error;
 use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::future;
-use std::mem;
-use std::mem::MaybeUninit;
-use std::ops::{Deref, DerefMut};
+use std::hash::Hash;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -52,8 +50,8 @@ use std::task::{Context, Poll};
 /// the same set of services.
 ///
 /// You can configure arbitrarily many objects. To help distinguish them when events are emitted,
-/// the `Discoverer` associates each object with a key. [`DiscovererEventRef`s](DiscovererEventRef)
-/// then give access to the key they are related to. Good candidates for keys are either integers or
+/// the `Discoverer` associates each object with a key. [`DiscovererEvent`s](DiscovererEvent) then
+/// give access to the key they are related to. Good candidates for keys are either integers or
 /// custom `enum`s.
 ///
 /// In the following example, a discoverer is configured for 2 different kinds of objects. One
@@ -83,110 +81,79 @@ use std::task::{Context, Poll};
 /// let svc1 = obj.create_service(SERVICE_UUID_1, 0).await?;
 ///
 /// // At this point, `obj` satisfies the requirements of the object configured with the key 2.
-/// let ev = discoverer.next_event_ref().await.unwrap();
-/// assert_eq!(*ev.key(), 2);
+/// let ev = discoverer.next_event().await.unwrap();
+/// assert_eq!(ev.key(), 2);
 /// assert_eq!(ev.kind(), DiscovererEventKind::Created);
 /// assert_eq!(ev.object_id(), obj.id());
-/// assert_eq!(ev.service_id(SERVICE_UUID_1), svc1.id());
+/// assert_eq!(ev.service_id(&discoverer, SERVICE_UUID_1), svc1.id());
 ///
 /// let svc2 = obj.create_service(SERVICE_UUID_2, 0).await?;
 ///
 /// // Now `obj` completes the requirements the object configured with the key 1.
-/// let ev = discoverer.next_event_ref().await.unwrap();
-/// assert_eq!(*ev.key(), 1);
+/// let ev = discoverer.next_event().await.unwrap();
+/// assert_eq!(ev.key(), 1);
 /// assert_eq!(ev.kind(), DiscovererEventKind::Created);
 /// assert_eq!(ev.object_id(), obj.id());
-/// assert_eq!(ev.service_id(SERVICE_UUID_1), svc1.id());
-/// assert_eq!(ev.service_id(SERVICE_UUID_2), svc2.id());
+/// assert_eq!(ev.service_id(&discoverer, SERVICE_UUID_1), svc1.id());
+/// assert_eq!(ev.service_id(&discoverer, SERVICE_UUID_2), svc2.id());
 ///
 /// # Ok(())
 /// # }
 /// ```
 #[derive(Debug)]
 pub struct Discoverer<Key> {
-    bus_listener: BusListener,
-    specific: Vec<SpecificObject<Key>>,
-    any: Vec<AnyObject<Key>>,
-    pending_events: VecDeque<PendingEvent>,
+    listener: BusListener,
+    entries: HashMap<Key, Entry<Key>>,
+    events: VecDeque<DiscovererEvent<Key>>,
 }
 
-impl<Key> Discoverer<Key> {
+impl<Key> Discoverer<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    async fn new(
+        client: &Handle,
+        entries: HashMap<Key, Entry<Key>>,
+        current_only: bool,
+    ) -> Result<Self, Error> {
+        let mut listener = client.create_bus_listener().await?;
+
+        for entry in entries.values() {
+            entry.add_filter(&mut listener)?;
+        }
+
+        if current_only {
+            listener.start(BusListenerScope::Current).await?;
+        } else {
+            listener.start(BusListenerScope::All).await?;
+        }
+
+        Ok(Self {
+            listener,
+            entries,
+            events: VecDeque::new(),
+        })
+    }
+
     /// Create a builder for a `Discoverer`.
     pub fn builder(client: &Handle) -> DiscovererBuilder<Key> {
         DiscovererBuilder::new(client)
     }
 
-    async fn new(
-        client: &Handle,
-        specific: Vec<SpecificObject<Key>>,
-        any: Vec<AnyObject<Key>>,
-        current_only: bool,
-    ) -> Result<Self, Error> {
-        let mut bus_listener = client.create_bus_listener().await?;
-
-        for specific in &specific {
-            bus_listener.add_filter(BusListenerFilter::object(specific.uuid()))?;
-
-            for service in specific.services() {
-                bus_listener.add_filter(BusListenerFilter::specific_object_and_service(
-                    specific.uuid(),
-                    service,
-                ))?;
-            }
-        }
-
-        for any in &any {
-            let mut empty = true;
-
-            for service in any.services() {
-                bus_listener.add_filter(BusListenerFilter::any_object_specific_service(service))?;
-                empty = false;
-            }
-
-            if empty {
-                bus_listener.add_filter(BusListenerFilter::any_object())?;
-            }
-        }
-
-        let mut this = Self {
-            bus_listener,
-            specific,
-            any,
-            pending_events: VecDeque::new(),
-        };
-
-        if current_only {
-            this.bus_listener.start(BusListenerScope::Current).await?;
-        } else {
-            this.bus_listener.start(BusListenerScope::All).await?;
-        }
-
-        Ok(this)
-    }
-
     /// Returns a handle to the client that was used to create the discoverer.
     pub fn client(&self) -> &Handle {
-        self.bus_listener.client()
-    }
-
-    /// Turns the discoverer into a [`Stream`].
-    pub fn into_stream<const N: usize>(self) -> DiscovererStream<Key, N> {
-        DiscovererStream::new(self)
+        self.listener.client()
     }
 
     async fn stop(&mut self) -> Result<(), Error> {
-        self.bus_listener.stop().await?;
-        while self.next_event_ref().await.is_some() {}
+        self.listener.stop().await?;
+        while self.next_event().await.is_some() {}
 
-        for specific in &mut self.specific {
-            specific.reset();
+        for entry in self.entries.values_mut() {
+            entry.reset();
         }
 
-        for any in &mut self.any {
-            any.reset();
-        }
-
-        self.pending_events.clear();
+        self.events.clear();
         Ok(())
     }
 
@@ -196,7 +163,7 @@ impl<Key> Discoverer<Key> {
     /// objects and services on the bus, as if it was built again with [`DiscovererBuilder::build`].
     pub async fn restart(&mut self) -> Result<(), Error> {
         self.stop().await?;
-        self.bus_listener.start(BusListenerScope::All).await?;
+        self.listener.start(BusListenerScope::All).await?;
         Ok(())
     }
 
@@ -207,7 +174,7 @@ impl<Key> Discoverer<Key> {
     /// [`DiscovererBuilder::build_current_only`].
     pub async fn restart_current_only(&mut self) -> Result<(), Error> {
         self.stop().await?;
-        self.bus_listener.start(BusListenerScope::Current).await?;
+        self.listener.start(BusListenerScope::Current).await?;
         Ok(())
     }
 
@@ -217,178 +184,77 @@ impl<Key> Discoverer<Key> {
     /// i.e. built with [`build_current_only`](DiscovererBuilder::build_current_only) or restarted
     /// with [`restart_current_only`](Self::restart_current_only`).
     pub fn is_finished(&self) -> bool {
-        if self.specific.is_empty() && self.any.is_empty() {
-            true
-        } else {
-            self.bus_listener.is_finished()
-        }
+        self.entries.is_empty() || self.listener.is_finished()
     }
 
-    /// Poll the discoverer for an event.
-    pub fn poll_next_event_ref(
-        &mut self,
-        cx: &mut Context,
-    ) -> Poll<Option<DiscovererEventRef<'_, Key>>> {
-        if self.specific.is_empty() && self.any.is_empty() {
+    /// Queries a specific object ID.
+    pub fn object_id(&self, key: Key, object: ObjectUuid) -> Option<ObjectId> {
+        self.entries
+            .get(&key)
+            .expect("invalid key")
+            .object_id(object)
+    }
+
+    /// Queries a specific service ID.
+    pub fn service_id(
+        &self,
+        key: Key,
+        object: ObjectUuid,
+        service: ServiceUuid,
+    ) -> Option<ServiceId> {
+        self.entries
+            .get(&key)
+            .expect("invalid key")
+            .service_id(object, service)
+    }
+
+    /// Polls the discoverer for an event.
+    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<DiscovererEvent<Key>>> {
+        if self.entries.is_empty() {
             return Poll::Ready(None);
         }
 
         loop {
-            if let Some(event) = self.pending_events.pop_front() {
-                return Poll::Ready(Some(DiscovererEventRef::new(
-                    self,
-                    event.object_type,
-                    event.index,
-                    event.kind,
-                    event.object_id,
-                )));
+            if let Some(event) = self.events.pop_front() {
+                return Poll::Ready(Some(event));
             }
 
-            let event = match self.bus_listener.poll_next_event(cx) {
+            let event = match self.listener.poll_next_event(cx) {
                 Poll::Ready(Some(event)) => event,
                 Poll::Ready(None) => return Poll::Ready(None),
                 Poll::Pending => return Poll::Pending,
             };
 
-            for (i, specific) in self.specific.iter_mut().enumerate() {
-                if let Some((kind, object_id)) = specific.handle_bus_event(event) {
-                    self.pending_events.push_back(PendingEvent::new(
-                        ObjectType::Specific,
-                        i,
-                        kind,
-                        object_id,
-                    ));
-                }
-            }
-
-            for (i, any) in self.any.iter_mut().enumerate() {
-                if let Some((kind, object_id)) = any.handle_bus_event(event) {
-                    self.pending_events.push_back(PendingEvent::new(
-                        ObjectType::Any,
-                        i,
-                        kind,
-                        object_id,
-                    ));
+            for entry in self.entries.values_mut() {
+                if let Some(event) = entry.handle_event(event) {
+                    self.events.push_back(event);
                 }
             }
         }
     }
 
     /// Awaits an event from the discoverer.
-    pub async fn next_event_ref(&mut self) -> Option<DiscovererEventRef<'_, Key>> {
-        future::poll_fn(|cx| match self.poll_next_event_ref(cx) {
-            // SAFETY: Extend the lifetime in the event such that it borrows the Discoverer
-            // directly, instead of this closure. This cannot lead to multiple mutable borrows,
-            // because (1) the PollFn is dropped after the await point in this function, and (2) the
-            // future generated by this async fn panics if polled again after completion.
-            Poll::Ready(Some(event)) => unsafe {
-                Poll::Ready(Some(mem::transmute::<
-                    DiscovererEventRef<'_, Key>,
-                    DiscovererEventRef<'_, Key>,
-                >(event)))
-            },
-
-            Poll::Ready(None) => Poll::Ready(None),
-            Poll::Pending => Poll::Pending,
-        })
-        .await
-    }
-
-    fn key(&self, object_type: ObjectType, index: usize) -> &Key {
-        match object_type {
-            ObjectType::Specific => self.specific[index].key(),
-            ObjectType::Any => self.any[index].key(),
-        }
-    }
-
-    fn service_cookie(
-        &self,
-        object_type: ObjectType,
-        index: usize,
-        object: ObjectUuid,
-        service: ServiceUuid,
-    ) -> Option<ServiceCookie> {
-        match object_type {
-            ObjectType::Specific => self.specific[index].service_cookie(service),
-            ObjectType::Any => self.any[index].service_cookie(object, service),
-        }
-    }
-
-    fn for_each_service<F>(&self, object_type: ObjectType, index: usize, object: ObjectUuid, f: F)
-    where
-        F: FnMut(ServiceUuid, ServiceCookie),
-    {
-        match object_type {
-            ObjectType::Specific => self.specific[index].for_each_service(f),
-            ObjectType::Any => self.any[index].for_each_service(object, f),
-        }
-    }
-}
-
-impl<Key> Discoverer<Key>
-where
-    Key: Clone,
-{
-    /// Poll the discoverer for an event.
-    pub fn poll_next_event<const N: usize>(
-        &mut self,
-        cx: &mut Context,
-    ) -> Poll<Option<DiscovererEvent<Key, N>>> {
-        match self.poll_next_event_ref(cx) {
-            Poll::Ready(Some(ev)) => Poll::Ready(Some(ev.into())),
-            Poll::Ready(None) => Poll::Ready(None),
-            Poll::Pending => Poll::Pending,
-        }
-    }
-
-    /// Awaits an event from the discoverer.
-    pub async fn next_event<const N: usize>(&mut self) -> Option<DiscovererEvent<Key, N>> {
+    pub async fn next_event(&mut self) -> Option<DiscovererEvent<Key>> {
         future::poll_fn(|cx| self.poll_next_event(cx)).await
     }
 }
 
 impl<Key> Unpin for Discoverer<Key> {}
 
-/// Stream adapter for [`Discoverer`].
-#[derive(Debug)]
-pub struct DiscovererStream<Key, const N: usize> {
-    inner: Discoverer<Key>,
-}
-
-impl<Key, const N: usize> DiscovererStream<Key, N> {
-    fn new(inner: Discoverer<Key>) -> Self {
-        Self { inner }
-    }
-}
-
-impl<Key, const N: usize> Deref for DiscovererStream<Key, N> {
-    type Target = Discoverer<Key>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl<Key, const N: usize> DerefMut for DiscovererStream<Key, N> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
-}
-
-impl<Key, const N: usize> Stream for DiscovererStream<Key, N>
+impl<Key> Stream for Discoverer<Key>
 where
-    Key: Clone,
+    Key: Copy + Eq + Hash,
 {
-    type Item = DiscovererEvent<Key, N>;
+    type Item = DiscovererEvent<Key>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         self.poll_next_event(cx)
     }
 }
 
-impl<Key, const N: usize> FusedStream for DiscovererStream<Key, N>
+impl<Key> FusedStream for Discoverer<Key>
 where
-    Key: Clone,
+    Key: Copy + Eq + Hash,
 {
     fn is_terminated(&self) -> bool {
         self.is_finished()
@@ -401,23 +267,24 @@ where
 #[derive(Debug)]
 pub struct DiscovererBuilder<'a, Key> {
     client: &'a Handle,
-    specific: Vec<SpecificObject<Key>>,
-    any: Vec<AnyObject<Key>>,
+    entries: HashMap<Key, Entry<Key>>,
 }
 
-impl<'a, Key> DiscovererBuilder<'a, Key> {
+impl<'a, Key> DiscovererBuilder<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
     /// Creates a new `DiscovererBuilder`.
     pub fn new(client: &'a Handle) -> Self {
         Self {
             client,
-            specific: Vec::new(),
-            any: Vec::new(),
+            entries: HashMap::new(),
         }
     }
 
     /// Builds the discoverer with the configured set of objects.
     pub async fn build(self) -> Result<Discoverer<Key>, Error> {
-        Discoverer::new(self.client, self.specific, self.any, false).await
+        Discoverer::new(self.client, self.entries, false).await
     }
 
     /// Builds the discoverer and configures it to consider only current objects and services.
@@ -425,29 +292,42 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
     /// Unlike [`build`](Self::build), the discoverer will consider only those objects and services
     /// that exist already on the bus.
     pub async fn build_current_only(self) -> Result<Discoverer<Key>, Error> {
-        Discoverer::new(self.client, self.specific, self.any, true).await
+        Discoverer::new(self.client, self.entries, true).await
     }
 
     /// Add an object to the discoverer.
     ///
     /// The `key` is an arbitrary value that can later be queried again on
-    /// [`DiscovererEventRef`s](DiscovererEventRef). It can be used to distinguish events when more
-    /// than one object has been added.
+    /// [`DiscovererEvent`s](DiscovererEvent). It can be used to distinguish events when more than
+    /// one object has been added.
     ///
     /// When specifying an [`ObjectUuid`], the discoverer will match only on that UUID. Otherwise,
     /// the discoverer will emit events for every object that matches the set of services.
     pub fn object(
-        mut self,
+        self,
         key: Key,
         object: Option<ObjectUuid>,
         services: impl IntoIterator<Item = ServiceUuid>,
     ) -> Self {
-        if let Some(object) = object {
-            self.specific
-                .push(SpecificObject::new(key, object, services));
-        } else {
-            self.any.push(AnyObject::new(key, services));
+        match object {
+            Some(object) => self.specific(key, object, services),
+            None => self.any(key, services),
         }
+    }
+
+    /// Registers interest in a specific object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `object(key, Some(object), services)`.
+    pub fn specific(
+        mut self,
+        key: Key,
+        object: impl Into<ObjectUuid>,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Self {
+        self.entries.insert(
+            key,
+            SpecificObject::new(key, object.into(), services).into(),
+        );
 
         self
     }
@@ -455,57 +335,115 @@ impl<'a, Key> DiscovererBuilder<'a, Key> {
     /// Registers interest in any object implementing a set of services.
     ///
     /// This is a shorthand for calling `object(key, None, services)`.
-    pub fn any(self, key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
-        self.object(key, None, services)
+    pub fn any(mut self, key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
+        self.entries
+            .insert(key, AnyObject::new(key, services).into());
+
+        self
+    }
+}
+
+#[derive(Debug)]
+struct Entry<Key> {
+    inner: EntryInner<Key>,
+}
+
+impl<Key> Entry<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.add_filter(listener),
+            EntryInner::Any(ref any) => any.add_filter(listener),
+        }
     }
 
-    /// Registers interest in a specific object implementing a set of services.
-    ///
-    /// This is a shorthand for calling `object(key, Some(object), services)`.
-    pub fn specific(
-        self,
-        key: Key,
-        object: impl Into<ObjectUuid>,
-        services: impl IntoIterator<Item = ServiceUuid>,
-    ) -> Self {
-        self.object(key, Some(object.into()), services)
+    fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
+        match self.inner {
+            EntryInner::Specific(ref mut specific) => specific.handle_event(event),
+            EntryInner::Any(ref mut any) => any.handle_event(event),
+        }
     }
+
+    fn reset(&mut self) {
+        match self.inner {
+            EntryInner::Specific(ref mut specific) => specific.reset(),
+            EntryInner::Any(ref mut any) => any.reset(),
+        }
+    }
+
+    fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.object_id(),
+            EntryInner::Any(ref any) => any.object_id(object),
+        }
+    }
+
+    fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.service_id(service),
+            EntryInner::Any(ref any) => any.service_id(object, service),
+        }
+    }
+}
+
+impl<Key> From<SpecificObject<Key>> for Entry<Key> {
+    fn from(o: SpecificObject<Key>) -> Self {
+        Self {
+            inner: EntryInner::Specific(o),
+        }
+    }
+}
+
+impl<Key> From<AnyObject<Key>> for Entry<Key> {
+    fn from(o: AnyObject<Key>) -> Self {
+        Self {
+            inner: EntryInner::Any(o),
+        }
+    }
+}
+
+#[derive(Debug)]
+enum EntryInner<Key> {
+    Specific(SpecificObject<Key>),
+    Any(AnyObject<Key>),
 }
 
 #[derive(Debug)]
 struct SpecificObject<Key> {
     key: Key,
-    uuid: ObjectUuid,
+    object: ObjectUuid,
     cookie: Option<ObjectCookie>,
     services: HashMap<ServiceUuid, Option<ServiceCookie>>,
     created: bool,
 }
 
-impl<Key> SpecificObject<Key> {
-    fn new(key: Key, uuid: ObjectUuid, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
+impl<Key> SpecificObject<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(key: Key, object: ObjectUuid, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
         Self {
             key,
-            uuid,
+            object,
             cookie: None,
-            services: services.into_iter().map(|uuid| (uuid, None)).collect(),
+            services: services.into_iter().map(|s| (s, None)).collect(),
             created: false,
         }
     }
 
-    fn key(&self) -> &Key {
-        &self.key
-    }
+    fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
+        listener.add_filter(BusListenerFilter::object(self.object))?;
 
-    fn uuid(&self) -> ObjectUuid {
-        self.uuid
-    }
+        for service in self.services.keys() {
+            listener.add_filter(BusListenerFilter::specific_object_and_service(
+                self.object,
+                *service,
+            ))?;
+        }
 
-    fn services(&self) -> impl Iterator<Item = ServiceUuid> + '_ {
-        self.services.keys().copied()
-    }
-
-    fn service_cookie(&self, uuid: ServiceUuid) -> Option<ServiceCookie> {
-        self.services.get(&uuid).copied().flatten()
+        Ok(())
     }
 
     fn reset(&mut self) {
@@ -517,17 +455,25 @@ impl<Key> SpecificObject<Key> {
         }
     }
 
-    fn for_each_service<F>(&self, mut f: F)
-    where
-        F: FnMut(ServiceUuid, ServiceCookie),
-    {
-        for (uuid, cookie) in &self.services {
-            let cookie = cookie.expect("invalid UUID");
-            f(*uuid, cookie);
+    fn object_id(&self) -> Option<ObjectId> {
+        if self.created {
+            Some(ObjectId::new(self.object, self.cookie.unwrap()))
+        } else {
+            None
         }
     }
 
-    fn handle_bus_event(&mut self, event: BusEvent) -> Option<(DiscovererEventKind, ObjectId)> {
+    fn service_id(&self, service: ServiceUuid) -> Option<ServiceId> {
+        self.object_id().map(|object_id| {
+            ServiceId::new(
+                object_id,
+                service,
+                self.services.get(&service).expect("invalid UUID").unwrap(),
+            )
+        })
+    }
+
+    fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
             BusEvent::ObjectDestroyed(id) => self.object_destroyed(id),
@@ -536,8 +482,8 @@ impl<Key> SpecificObject<Key> {
         }
     }
 
-    fn object_created(&mut self, id: ObjectId) -> Option<(DiscovererEventKind, ObjectId)> {
-        if id.uuid != self.uuid {
+    fn object_created(&mut self, id: ObjectId) -> Option<DiscovererEvent<Key>> {
+        if id.uuid != self.object {
             return None;
         }
 
@@ -549,14 +495,19 @@ impl<Key> SpecificObject<Key> {
 
         if self.services.is_empty() {
             self.created = true;
-            Some((DiscovererEventKind::Created, id))
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Created,
+                id,
+            ))
         } else {
             None
         }
     }
 
-    fn object_destroyed(&mut self, id: ObjectId) -> Option<(DiscovererEventKind, ObjectId)> {
-        if id.uuid != self.uuid {
+    fn object_destroyed(&mut self, id: ObjectId) -> Option<DiscovererEvent<Key>> {
+        if id.uuid != self.object {
             return None;
         }
 
@@ -567,14 +518,19 @@ impl<Key> SpecificObject<Key> {
 
         if self.created {
             self.created = false;
-            Some((DiscovererEventKind::Destroyed, id))
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Destroyed,
+                id,
+            ))
         } else {
             None
         }
     }
 
-    fn service_created(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
-        if id.object_id.uuid != self.uuid {
+    fn service_created(&mut self, id: ServiceId) -> Option<DiscovererEvent<Key>> {
+        if id.object_id.uuid != self.object {
             return None;
         }
 
@@ -589,14 +545,19 @@ impl<Key> SpecificObject<Key> {
 
         if self.services.values().all(Option::is_some) {
             self.created = true;
-            Some((DiscovererEventKind::Created, id.object_id))
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Created,
+                id.object_id,
+            ))
         } else {
             None
         }
     }
 
-    fn service_destroyed(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
-        if id.object_id.uuid != self.uuid {
+    fn service_destroyed(&mut self, id: ServiceId) -> Option<DiscovererEvent<Key>> {
+        if id.object_id.uuid != self.object {
             return None;
         }
 
@@ -605,12 +566,16 @@ impl<Key> SpecificObject<Key> {
         let service = self.services.get_mut(&id.uuid)?;
 
         debug_assert_eq!(*service, Some(id.cookie));
-
         *service = None;
 
         if self.created {
             self.created = false;
-            Some((DiscovererEventKind::Destroyed, id.object_id))
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Destroyed,
+                id.object_id,
+            ))
         } else {
             None
         }
@@ -621,31 +586,31 @@ impl<Key> SpecificObject<Key> {
 struct AnyObject<Key> {
     key: Key,
     services: HashMap<ServiceUuid, HashMap<ObjectUuid, ServiceCookie>>,
-    created: HashSet<ObjectId>,
+    created: HashMap<ObjectUuid, ObjectCookie>,
 }
 
-impl<Key> AnyObject<Key> {
+impl<Key> AnyObject<Key>
+where
+    Key: Copy + Eq + Hash,
+{
     fn new(key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
         Self {
             key,
-            services: services
-                .into_iter()
-                .map(|uuid| (uuid, HashMap::new()))
-                .collect(),
-            created: HashSet::new(),
+            services: services.into_iter().map(|s| (s, HashMap::new())).collect(),
+            created: HashMap::new(),
         }
     }
 
-    fn key(&self) -> &Key {
-        &self.key
-    }
+    fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
+        if self.services.is_empty() {
+            listener.add_filter(BusListenerFilter::any_object())?;
+        } else {
+            for service in self.services.keys() {
+                listener.add_filter(BusListenerFilter::any_object_specific_service(*service))?;
+            }
+        }
 
-    fn services(&self) -> impl Iterator<Item = ServiceUuid> + '_ {
-        self.services.keys().copied()
-    }
-
-    fn service_cookie(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceCookie> {
-        self.services.get(&service)?.get(&object).copied()
+        Ok(())
     }
 
     fn reset(&mut self) {
@@ -656,17 +621,28 @@ impl<Key> AnyObject<Key> {
         }
     }
 
-    fn for_each_service<F>(&self, object: ObjectUuid, mut f: F)
-    where
-        F: FnMut(ServiceUuid, ServiceCookie),
-    {
-        for (uuid, services) in &self.services {
-            let cookie = services.get(&object).expect("invalid UUID");
-            f(*uuid, *cookie);
-        }
+    fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+        self.created
+            .get(&object)
+            .map(|&cookie| ObjectId::new(object, cookie))
     }
 
-    fn handle_bus_event(&mut self, event: BusEvent) -> Option<(DiscovererEventKind, ObjectId)> {
+    fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+        self.object_id(object).map(|object_id| {
+            ServiceId::new(
+                object_id,
+                service,
+                *self
+                    .services
+                    .get(&service)
+                    .expect("invalid UUID")
+                    .get(&object)
+                    .unwrap(),
+            )
+        })
+    }
+
+    fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
             BusEvent::ObjectDestroyed(id) => self.object_destroyed(id),
@@ -675,220 +651,73 @@ impl<Key> AnyObject<Key> {
         }
     }
 
-    fn object_created(&mut self, id: ObjectId) -> Option<(DiscovererEventKind, ObjectId)> {
+    fn object_created(&mut self, id: ObjectId) -> Option<DiscovererEvent<Key>> {
         if self.services.is_empty() {
-            let inserted = self.created.insert(id);
-            debug_assert!(inserted);
-            Some((DiscovererEventKind::Created, id))
+            let dup = self.created.insert(id.uuid, id.cookie);
+            debug_assert_eq!(dup, None);
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Created,
+                id,
+            ))
         } else {
             None
         }
     }
 
-    fn object_destroyed(&mut self, id: ObjectId) -> Option<(DiscovererEventKind, ObjectId)> {
-        if self.created.remove(&id) {
-            Some((DiscovererEventKind::Destroyed, id))
+    fn object_destroyed(&mut self, id: ObjectId) -> Option<DiscovererEvent<Key>> {
+        if let Some(cookie) = self.created.remove(&id.uuid) {
+            debug_assert_eq!(cookie, id.cookie);
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Destroyed,
+                id,
+            ))
         } else {
             None
         }
     }
 
-    fn service_created(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
+    fn service_created(&mut self, id: ServiceId) -> Option<DiscovererEvent<Key>> {
         let service = self.services.get_mut(&id.uuid)?;
         let dup = service.insert(id.object_id.uuid, id.cookie);
-        debug_assert!(dup.is_none());
+        debug_assert_eq!(dup, None);
 
         if self
             .services
             .values()
             .all(|c| c.contains_key(&id.object_id.uuid))
         {
-            let inserted = self.created.insert(id.object_id);
-            debug_assert!(inserted);
-            Some((DiscovererEventKind::Created, id.object_id))
+            let dup = self.created.insert(id.object_id.uuid, id.object_id.cookie);
+            debug_assert_eq!(dup, None);
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Created,
+                id.object_id,
+            ))
         } else {
             None
         }
     }
 
-    fn service_destroyed(&mut self, id: ServiceId) -> Option<(DiscovererEventKind, ObjectId)> {
+    fn service_destroyed(&mut self, id: ServiceId) -> Option<DiscovererEvent<Key>> {
         let service = self.services.get_mut(&id.uuid)?;
-        let cookies = service.remove(&id.object_id.uuid);
-        debug_assert!(cookies.is_some());
+        let cookie = service.remove(&id.object_id.uuid);
+        debug_assert_eq!(cookie, Some(id.cookie));
 
-        if self.created.remove(&id.object_id) {
-            Some((DiscovererEventKind::Destroyed, id.object_id))
+        if let Some(cookie) = self.created.remove(&id.object_id.uuid) {
+            debug_assert_eq!(cookie, id.object_id.cookie);
+
+            Some(DiscovererEvent::new(
+                self.key,
+                DiscovererEventKind::Destroyed,
+                id.object_id,
+            ))
         } else {
             None
-        }
-    }
-}
-
-/// Event emitted by `Discoverer`s.
-#[derive(Debug)]
-pub struct DiscovererEventRef<'a, Key> {
-    discoverer: &'a Discoverer<Key>,
-    object_type: ObjectType,
-    index: usize,
-    kind: DiscovererEventKind,
-    object_id: ObjectId,
-}
-
-impl<'a, Key> DiscovererEventRef<'a, Key> {
-    fn new(
-        discoverer: &'a Discoverer<Key>,
-        object_type: ObjectType,
-        index: usize,
-        kind: DiscovererEventKind,
-        object_id: ObjectId,
-    ) -> Self {
-        Self {
-            discoverer,
-            object_type,
-            index,
-            kind,
-            object_id,
-        }
-    }
-
-    /// Specifies whether the object was created or destroyed.
-    pub fn kind(&self) -> DiscovererEventKind {
-        self.kind
-    }
-
-    /// Returns a references to the key associated with this object.
-    pub fn key(&self) -> &Key {
-        self.discoverer.key(self.object_type, self.index)
-    }
-
-    /// Returns the object ID that prompted this event.
-    pub fn object_id(&self) -> ObjectId {
-        self.object_id
-    }
-
-    /// Returns a service ID that is owned by this event's object.
-    ///
-    /// This function can only be called for those events that are emitted when an object is created
-    /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
-    ///
-    /// This function will also panic if `uuid` is not one of the UUIDs specified when
-    /// [`object`](DiscovererBuilder::object) was called.
-    pub fn service_id(&self, uuid: ServiceUuid) -> ServiceId {
-        assert_eq!(self.kind, DiscovererEventKind::Created);
-
-        let cookie = self
-            .discoverer
-            .service_cookie(self.object_type, self.index, self.object_id.uuid, uuid)
-            .expect("invalid UUID");
-
-        ServiceId::new(self.object_id, uuid, cookie)
-    }
-}
-
-/// Event emitted by `Discoverer`s.
-///
-/// This is a variant of [`DiscovererEventRef`] that doesn't borrow the discoverer. However it
-/// requires specifying the maximum number of service ids as a compile-time constant `N`.
-#[derive(Debug, Copy, Clone)]
-pub struct DiscovererEvent<Key, const N: usize> {
-    kind: DiscovererEventKind,
-    key: Key,
-    object_id: ObjectId,
-    services: Option<[(ServiceUuid, ServiceCookie); N]>,
-}
-
-impl<Key, const N: usize> DiscovererEvent<Key, N> {
-    /// Specifies whether the object was created or destroyed.
-    pub fn kind(&self) -> DiscovererEventKind {
-        self.kind
-    }
-
-    /// Returns a references to the key associated with this object.
-    pub fn key(&self) -> &Key {
-        &self.key
-    }
-
-    /// Returns the object ID that prompted this event.
-    pub fn object_id(&self) -> ObjectId {
-        self.object_id
-    }
-
-    /// Returns a service ID that is owned by this event's object.
-    ///
-    /// This function can only be called for those events that are emitted when an object is created
-    /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
-    ///
-    /// This function will also panic if `uuid` is not one of the UUIDs specified when
-    /// [`object`](DiscovererBuilder::object) was called.
-    pub fn service_id(&self, uuid: ServiceUuid) -> ServiceId {
-        let services = self
-            .services
-            .as_ref()
-            .expect("service_id can only be called for Created events");
-
-        let (uuid, cookie) = services
-            .iter()
-            .find(|(svc_uuid, _)| *svc_uuid == uuid)
-            .expect("invalid UUID");
-
-        ServiceId::new(self.object_id, *uuid, *cookie)
-    }
-}
-
-impl<Key, const N: usize> From<DiscovererEventRef<'_, Key>> for DiscovererEvent<Key, N>
-where
-    Key: Clone,
-{
-    fn from(ev: DiscovererEventRef<'_, Key>) -> Self {
-        if ev.kind() == DiscovererEventKind::Destroyed {
-            return Self {
-                kind: DiscovererEventKind::Destroyed,
-                key: ev.key().clone(),
-                object_id: ev.object_id,
-                services: None,
-            };
-        }
-
-        // SAFETY: This creates an array of MaybeUninit, which don't require initialization.
-        let mut services: [MaybeUninit<(ServiceUuid, ServiceCookie)>; N] =
-            unsafe { MaybeUninit::uninit().assume_init() };
-
-        let mut num = 0;
-
-        // After this, exactly num elements have been initialized.
-        ev.discoverer.for_each_service(
-            ev.object_type,
-            ev.index,
-            ev.object_id.uuid,
-            |uuid, cookie| {
-                if num < N {
-                    services[num].write((uuid, cookie));
-                    num += 1;
-                }
-            },
-        );
-
-        // Initialize the remaining N-num elements (if any).
-        services[num..].iter_mut().for_each(|service| {
-            service.write(Default::default());
-        });
-
-        // SAFETY: All N elements have been initialized in the 2 loops above.
-        //
-        // In some future version of Rust, all this can be simplified; see:
-        // https://github.com/rust-lang/rust/issues/96097
-        // https://github.com/rust-lang/rust/issues/61956
-        let services = unsafe {
-            (*(&MaybeUninit::new(services) as *const _
-                as *const MaybeUninit<[(ServiceUuid, ServiceCookie); N]>))
-                .assume_init_read()
-        };
-
-        Self {
-            kind: DiscovererEventKind::Created,
-            key: ev.key().clone(),
-            object_id: ev.object_id,
-            services: Some(services),
         }
     }
 }
@@ -903,32 +732,49 @@ pub enum DiscovererEventKind {
     Destroyed,
 }
 
+/// Event emitted by `Discoverer`s.
 #[derive(Debug, Copy, Clone)]
-enum ObjectType {
-    Specific,
-    Any,
-}
-
-#[derive(Debug)]
-struct PendingEvent {
-    object_type: ObjectType,
-    index: usize,
+pub struct DiscovererEvent<Key> {
+    key: Key,
     kind: DiscovererEventKind,
-    object_id: ObjectId,
+    object: ObjectId,
 }
 
-impl PendingEvent {
-    fn new(
-        object_type: ObjectType,
-        index: usize,
-        kind: DiscovererEventKind,
-        object_id: ObjectId,
-    ) -> Self {
-        Self {
-            object_type,
-            index,
-            kind,
-            object_id,
-        }
+impl<Key> DiscovererEvent<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(key: Key, kind: DiscovererEventKind, object: ObjectId) -> Self {
+        Self { key, kind, object }
+    }
+
+    /// Returns the key associated with this object.
+    pub fn key(self) -> Key {
+        self.key
+    }
+
+    /// Specifies whether the object was created or destroyed.
+    pub fn kind(self) -> DiscovererEventKind {
+        self.kind
+    }
+
+    /// Returns the object ID that prompted this event.
+    pub fn object_id(self) -> ObjectId {
+        self.object
+    }
+
+    /// Returns a service ID that is owned by this event's object.
+    ///
+    /// This function can only be called for those events that are emitted when an object is created
+    /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
+    ///
+    /// This function will also panic if `service` is not one of the UUIDs specified when
+    /// [`object`](DiscovererBuilder::object) was called.
+    pub fn service_id(self, discoverer: &Discoverer<Key>, service: ServiceUuid) -> ServiceId {
+        assert_eq!(self.kind, DiscovererEventKind::Created);
+
+        discoverer
+            .service_id(self.key, self.object.uuid, service)
+            .unwrap()
     }
 }
