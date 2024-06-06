@@ -103,7 +103,7 @@ use std::task::{Context, Poll};
 #[derive(Debug)]
 pub struct Discoverer<Key> {
     listener: BusListener,
-    entries: HashMap<Key, Entry<Key>>,
+    entries: HashMap<Key, DiscovererEntry<Key>>,
     events: VecDeque<DiscovererEvent<Key>>,
 }
 
@@ -113,7 +113,7 @@ where
 {
     async fn new(
         client: &Handle,
-        entries: HashMap<Key, Entry<Key>>,
+        entries: HashMap<Key, DiscovererEntry<Key>>,
         current_only: bool,
     ) -> Result<Self, Error> {
         let mut listener = client.create_bus_listener().await?;
@@ -208,6 +208,15 @@ where
             .service_id(object, service)
     }
 
+    /// Returns an entry of the `Discoverer`.
+    ///
+    /// Entries are directly associated with the keys and correspond to the
+    /// [`object`](DiscovererBuilder::object), [`specific`](DiscovererBuilder::specific) and
+    /// [`any`](DiscovererBuilder::any) calls on the [`DiscovererBuilder`].
+    pub fn entry(&self, key: Key) -> Option<&DiscovererEntry<Key>> {
+        self.entries.get(&key)
+    }
+
     /// Polls the discoverer for an event.
     pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<DiscovererEvent<Key>>> {
         if self.entries.is_empty() {
@@ -267,7 +276,7 @@ where
 #[derive(Debug)]
 pub struct DiscovererBuilder<'a, Key> {
     client: &'a Handle,
-    entries: HashMap<Key, Entry<Key>>,
+    entries: HashMap<Key, DiscovererEntry<Key>>,
 }
 
 impl<'a, Key> DiscovererBuilder<'a, Key>
@@ -343,12 +352,13 @@ where
     }
 }
 
+/// Entry of a `Discoverer`.
 #[derive(Debug)]
-struct Entry<Key> {
+pub struct DiscovererEntry<Key> {
     inner: EntryInner<Key>,
 }
 
-impl<Key> Entry<Key>
+impl<Key> DiscovererEntry<Key>
 where
     Key: Copy + Eq + Hash,
 {
@@ -373,14 +383,24 @@ where
         }
     }
 
-    fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+    /// Returns the entries key.
+    pub fn key(&self) -> Key {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.key(),
+            EntryInner::Any(ref any) => any.key(),
+        }
+    }
+
+    /// Queries the `ObjectId` of an existing object.
+    pub fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
         match self.inner {
             EntryInner::Specific(ref specific) => specific.object_id(),
             EntryInner::Any(ref any) => any.object_id(object),
         }
     }
 
-    fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+    /// Queries a `ServiceId` of an existing object.
+    pub fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
         match self.inner {
             EntryInner::Specific(ref specific) => specific.service_id(service),
             EntryInner::Any(ref any) => any.service_id(object, service),
@@ -388,7 +408,7 @@ where
     }
 }
 
-impl<Key> From<SpecificObject<Key>> for Entry<Key> {
+impl<Key> From<SpecificObject<Key>> for DiscovererEntry<Key> {
     fn from(o: SpecificObject<Key>) -> Self {
         Self {
             inner: EntryInner::Specific(o),
@@ -396,7 +416,7 @@ impl<Key> From<SpecificObject<Key>> for Entry<Key> {
     }
 }
 
-impl<Key> From<AnyObject<Key>> for Entry<Key> {
+impl<Key> From<AnyObject<Key>> for DiscovererEntry<Key> {
     fn from(o: AnyObject<Key>) -> Self {
         Self {
             inner: EntryInner::Any(o),
@@ -453,6 +473,10 @@ where
         for cookie in self.services.values_mut() {
             *cookie = None;
         }
+    }
+
+    fn key(&self) -> Key {
+        self.key
     }
 
     fn object_id(&self) -> Option<ObjectId> {
@@ -619,6 +643,10 @@ where
         for cookies in self.services.values_mut() {
             cookies.clear();
         }
+    }
+
+    fn key(&self) -> Key {
+        self.key
     }
 
     fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
