@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   services. Previously, this was only possible through the short-lived events.
 - `Discoverer::entry()` can be used to query objects and services that correspond to one specific
   key.
+- `Discoverer`s and `DiscovererEntry`s can be iterated over, yielding `DiscovererIterEntry`s for
+  each currently known object.
 
 ### Changed
 

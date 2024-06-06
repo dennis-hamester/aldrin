@@ -9,11 +9,13 @@ use crate::core::{
 use crate::error::Error;
 use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
-use std::collections::{HashMap, VecDeque};
-use std::future;
+use std::collections::hash_map::{self, HashMap};
+use std::collections::VecDeque;
 use std::hash::Hash;
+use std::iter::{FlatMap, FusedIterator};
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{future, option};
 
 /// Discovers objects with multiple services on the bus.
 ///
@@ -217,6 +219,16 @@ where
         self.entries.get(&key)
     }
 
+    /// Returns an iterator over all found objects.
+    pub fn iter(&self) -> DiscovererIter<Key> {
+        DiscovererIter::new(self.entries.values().flat_map(DiscovererEntry::iter))
+    }
+
+    /// Returns an iterator over all found objects corresponding to a specific key.
+    pub fn entry_iter(&self, key: Key) -> Option<DiscovererEntryIter<Key>> {
+        self.entry(key).map(DiscovererEntry::iter)
+    }
+
     /// Polls the discoverer for an event.
     pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<DiscovererEvent<Key>>> {
         if self.entries.is_empty() {
@@ -267,6 +279,18 @@ where
 {
     fn is_terminated(&self) -> bool {
         self.is_finished()
+    }
+}
+
+impl<'a, Key> IntoIterator for &'a Discoverer<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type IntoIter = DiscovererIter<'a, Key>;
+    type Item = DiscovererIterEntry<'a, Key>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
@@ -352,6 +376,47 @@ where
     }
 }
 
+type DiscovererIterInner<'a, Key> = FlatMap<
+    hash_map::Values<'a, Key, DiscovererEntry<Key>>,
+    DiscovererEntryIter<'a, Key>,
+    fn(&'a DiscovererEntry<Key>) -> DiscovererEntryIter<'a, Key>,
+>;
+
+/// Iterator over all found objects of a [`Discoverer`].
+#[derive(Debug, Clone)]
+pub struct DiscovererIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    inner: DiscovererIterInner<'a, Key>,
+}
+
+impl<'a, Key> DiscovererIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(inner: DiscovererIterInner<'a, Key>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<'a, Key> Iterator for DiscovererIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type Item = DiscovererIterEntry<'a, Key>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'a, Key> FusedIterator for DiscovererIter<'a, Key> where Key: Copy + Eq + Hash {}
+
 /// Entry of a `Discoverer`.
 #[derive(Debug)]
 pub struct DiscovererEntry<Key> {
@@ -406,6 +471,26 @@ where
             EntryInner::Any(ref any) => any.service_id(object, service),
         }
     }
+
+    /// Returns an iterator over all found objects corresponding to this entry.
+    pub fn iter(&self) -> DiscovererEntryIter<Key> {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.iter().into(),
+            EntryInner::Any(ref any) => any.iter().into(),
+        }
+    }
+}
+
+impl<'a, Key> IntoIterator for &'a DiscovererEntry<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type IntoIter = DiscovererEntryIter<'a, Key>;
+    type Item = DiscovererIterEntry<'a, Key>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 
 impl<Key> From<SpecificObject<Key>> for DiscovererEntry<Key> {
@@ -428,6 +513,120 @@ impl<Key> From<AnyObject<Key>> for DiscovererEntry<Key> {
 enum EntryInner<Key> {
     Specific(SpecificObject<Key>),
     Any(AnyObject<Key>),
+}
+
+/// Iterator over all found objects corresponding to a specific key.
+#[derive(Debug, Clone)]
+pub struct DiscovererEntryIter<'a, Key> {
+    inner: EntryIterInner<'a, Key>,
+}
+
+impl<'a, Key> Iterator for DiscovererEntryIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type Item = DiscovererIterEntry<'a, Key>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.inner {
+            EntryIterInner::Specific(ref mut specific) => specific.next().map(Into::into),
+            EntryIterInner::Any(ref mut any) => any.next().map(Into::into),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self.inner {
+            EntryIterInner::Specific(ref specific) => specific.size_hint(),
+            EntryIterInner::Any(ref any) => any.size_hint(),
+        }
+    }
+}
+
+impl<'a, Key> FusedIterator for DiscovererEntryIter<'a, Key> where Key: Copy + Eq + Hash {}
+
+impl<'a, Key> From<SpecificObjectIter<'a, Key>> for DiscovererEntryIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn from(specific: SpecificObjectIter<'a, Key>) -> Self {
+        Self {
+            inner: EntryIterInner::Specific(specific),
+        }
+    }
+}
+
+impl<'a, Key> From<AnyObjectIter<'a, Key>> for DiscovererEntryIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn from(any: AnyObjectIter<'a, Key>) -> Self {
+        Self {
+            inner: EntryIterInner::Any(any),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum EntryIterInner<'a, Key> {
+    Specific(SpecificObjectIter<'a, Key>),
+    Any(AnyObjectIter<'a, Key>),
+}
+
+/// Item type when iterating over a [`Discoverer`] or [`DiscovererEntry`].
+#[derive(Debug, Copy, Clone)]
+pub struct DiscovererIterEntry<'a, Key> {
+    inner: IterEntryInner<'a, Key>,
+}
+
+impl<'a, Key> DiscovererIterEntry<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    /// Returns the key corresponding to the object.
+    pub fn key(self) -> Key {
+        match self.inner {
+            IterEntryInner::Specific(specific) => specific.key(),
+            IterEntryInner::Any(any) => any.key(),
+        }
+    }
+
+    /// Returns the object's ID.
+    pub fn object_id(self) -> ObjectId {
+        match self.inner {
+            IterEntryInner::Specific(specific) => specific.object_id(),
+            IterEntryInner::Any(any) => any.object_id(),
+        }
+    }
+
+    /// Returns one of the object's service IDs.
+    pub fn service_id(self, service: ServiceUuid) -> ServiceId {
+        match self.inner {
+            IterEntryInner::Specific(specific) => specific.service_id(service),
+            IterEntryInner::Any(any) => any.service_id(service),
+        }
+    }
+}
+
+impl<'a, Key> From<SpecificObjectIterEntry<'a, Key>> for DiscovererIterEntry<'a, Key> {
+    fn from(specific: SpecificObjectIterEntry<'a, Key>) -> Self {
+        Self {
+            inner: IterEntryInner::Specific(specific),
+        }
+    }
+}
+
+impl<'a, Key> From<AnyObjectIterEntry<'a, Key>> for DiscovererIterEntry<'a, Key> {
+    fn from(any: AnyObjectIterEntry<'a, Key>) -> Self {
+        Self {
+            inner: IterEntryInner::Any(any),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+enum IterEntryInner<'a, Key> {
+    Specific(SpecificObjectIterEntry<'a, Key>),
+    Any(AnyObjectIterEntry<'a, Key>),
 }
 
 #[derive(Debug)]
@@ -495,6 +694,14 @@ where
                 self.services.get(&service).expect("invalid UUID").unwrap(),
             )
         })
+    }
+
+    fn iter(&self) -> SpecificObjectIter<Key> {
+        if self.created {
+            SpecificObjectIter::new(Some(SpecificObjectIterEntry::new(self)))
+        } else {
+            SpecificObjectIter::new(None)
+        }
     }
 
     fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
@@ -606,6 +813,63 @@ where
     }
 }
 
+#[derive(Debug, Clone)]
+struct SpecificObjectIter<'a, Key> {
+    next: option::IntoIter<SpecificObjectIterEntry<'a, Key>>,
+}
+
+impl<'a, Key> SpecificObjectIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(next: Option<SpecificObjectIterEntry<'a, Key>>) -> Self {
+        Self {
+            next: next.into_iter(),
+        }
+    }
+}
+
+impl<'a, Key> Iterator for SpecificObjectIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type Item = SpecificObjectIterEntry<'a, Key>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.next.size_hint()
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct SpecificObjectIterEntry<'a, Key> {
+    object: &'a SpecificObject<Key>,
+}
+
+impl<'a, Key> SpecificObjectIterEntry<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(object: &'a SpecificObject<Key>) -> Self {
+        Self { object }
+    }
+
+    fn key(self) -> Key {
+        self.object.key()
+    }
+
+    fn object_id(self) -> ObjectId {
+        self.object.object_id().unwrap()
+    }
+
+    fn service_id(self, service: ServiceUuid) -> ServiceId {
+        self.object.service_id(service).unwrap()
+    }
+}
+
 #[derive(Debug)]
 struct AnyObject<Key> {
     key: Key,
@@ -668,6 +932,10 @@ where
                     .unwrap(),
             )
         })
+    }
+
+    fn iter(&self) -> AnyObjectIter<Key> {
+        AnyObjectIter::new(self, self.created.iter())
     }
 
     fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
@@ -750,6 +1018,73 @@ where
     }
 }
 
+#[derive(Debug, Clone)]
+struct AnyObjectIter<'a, Key> {
+    object: &'a AnyObject<Key>,
+    inner: hash_map::Iter<'a, ObjectUuid, ObjectCookie>,
+}
+
+impl<'a, Key> AnyObjectIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(
+        object: &'a AnyObject<Key>,
+        inner: hash_map::Iter<'a, ObjectUuid, ObjectCookie>,
+    ) -> Self {
+        Self { object, inner }
+    }
+}
+
+impl<'a, Key> Iterator for AnyObjectIter<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type Item = AnyObjectIterEntry<'a, Key>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner
+            .next()
+            .map(|(uuid, cookie)| AnyObjectIterEntry::new(self.object, *uuid, *cookie))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct AnyObjectIterEntry<'a, Key> {
+    object: &'a AnyObject<Key>,
+    object_id: ObjectId,
+}
+
+impl<'a, Key> AnyObjectIterEntry<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(object: &'a AnyObject<Key>, uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
+        Self {
+            object,
+            object_id: ObjectId::new(uuid, cookie),
+        }
+    }
+
+    fn key(self) -> Key {
+        self.object.key()
+    }
+
+    fn object_id(self) -> ObjectId {
+        self.object_id
+    }
+
+    fn service_id(self, service: ServiceUuid) -> ServiceId {
+        self.object
+            .service_id(self.object_id.uuid, service)
+            .unwrap()
+    }
+}
+
 /// Specifies whether an object was created or destroyed.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum DiscovererEventKind {
@@ -804,5 +1139,14 @@ where
         discoverer
             .service_id(self.key, self.object.uuid, service)
             .unwrap()
+    }
+}
+
+impl<Key> From<DiscovererIterEntry<'_, Key>> for DiscovererEvent<Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn from(entry: DiscovererIterEntry<Key>) -> Self {
+        Self::new(entry.key(), DiscovererEventKind::Created, entry.object_id())
     }
 }

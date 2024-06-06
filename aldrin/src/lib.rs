@@ -90,7 +90,8 @@ pub use channel::{
 };
 pub use client::Client;
 pub use discoverer::{
-    Discoverer, DiscovererBuilder, DiscovererEntry, DiscovererEvent, DiscovererEventKind,
+    Discoverer, DiscovererBuilder, DiscovererEntry, DiscovererEntryIter, DiscovererEvent,
+    DiscovererEventKind, DiscovererIter, DiscovererIterEntry,
 };
 pub use error::Error;
 pub use handle::Handle;

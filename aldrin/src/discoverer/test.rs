@@ -23,6 +23,16 @@ fn test_created<Key>(
     assert_eq!(entry.key(), key);
     assert_eq!(entry.object_id(object.id().uuid), Some(object.id()));
 
+    let mut iter = discoverer.iter();
+    let iter_entry1 = iter.next().unwrap();
+    assert_eq!(iter_entry1.key(), key);
+    assert_eq!(iter_entry1.object_id(), object.id());
+
+    let mut entry_iter = entry.iter();
+    let iter_entry2 = entry_iter.next().unwrap();
+    assert_eq!(iter_entry2.key(), key);
+    assert_eq!(iter_entry2.object_id(), object.id());
+
     if let Some(service1) = service1 {
         assert_eq!(
             event.service_id(discoverer, service1.id().uuid),
@@ -33,6 +43,9 @@ fn test_created<Key>(
             entry.service_id(object.id().uuid, service1.id().uuid),
             Some(service1.id())
         );
+
+        assert_eq!(iter_entry1.service_id(service1.id().uuid), service1.id());
+        assert_eq!(iter_entry2.service_id(service1.id().uuid), service1.id());
     }
 
     if let Some(service2) = service2 {
@@ -45,7 +58,13 @@ fn test_created<Key>(
             entry.service_id(object.id().uuid, service2.id().uuid),
             Some(service2.id())
         );
+
+        assert_eq!(iter_entry1.service_id(service2.id().uuid), service2.id());
+        assert_eq!(iter_entry2.service_id(service2.id().uuid), service2.id());
     }
+
+    assert!(iter.next().is_none());
+    assert!(entry_iter.next().is_none());
 }
 
 fn test_destroyed<Key>(
@@ -65,6 +84,9 @@ fn test_destroyed<Key>(
     let entry = discoverer.entry(key).unwrap();
     assert_eq!(entry.key(), key);
     assert_eq!(entry.object_id(object.id().uuid), None);
+
+    assert!(discoverer.iter().next().is_none());
+    assert!(entry.iter().next().is_none());
 
     if let Some(service1) = service1 {
         assert_eq!(entry.service_id(object.id().uuid, service1.id().uuid), None);
@@ -214,6 +236,8 @@ async fn empty() {
     assert!(discoverer.next_event().await.is_none());
     assert!(discoverer.is_finished());
     assert!(discoverer.entry(()).is_none());
+    assert!(discoverer.iter().next().is_none());
+    assert!(discoverer.entry_iter(()).is_none());
 
     client.join().await;
     broker.join().await;
