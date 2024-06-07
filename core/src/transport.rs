@@ -367,26 +367,22 @@ where
     type Error = E;
 
     fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
-        let mut this = self.project();
-        this.transport.receive_poll(cx).map_err(&mut this.map_err)
+        let this = self.project();
+        this.transport.receive_poll(cx).map_err(this.map_err)
     }
 
     fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let mut this = self.project();
-        this.transport
-            .send_poll_ready(cx)
-            .map_err(&mut this.map_err)
+        let this = self.project();
+        this.transport.send_poll_ready(cx).map_err(this.map_err)
     }
 
     fn send_start(self: Pin<&mut Self>, msg: Message) -> Result<(), Self::Error> {
-        let mut this = self.project();
-        this.transport.send_start(msg).map_err(&mut this.map_err)
+        let this = self.project();
+        this.transport.send_start(msg).map_err(this.map_err)
     }
 
     fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
-        let mut this = self.project();
-        this.transport
-            .send_poll_flush(cx)
-            .map_err(&mut this.map_err)
+        let this = self.project();
+        this.transport.send_poll_flush(cx).map_err(this.map_err)
     }
 }
