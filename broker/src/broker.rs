@@ -1735,7 +1735,10 @@ impl Broker {
     }
 
     fn emit_bus_event(&mut self, state: &mut State, event: BusEvent) {
+        #[allow(clippy::mutable_key_type)]
         let mut dups = HashSet::new();
+
+        #[allow(clippy::mutable_key_type)]
         let mut remove_conns = HashSet::new();
 
         for bus_listener in self.bus_listeners.values() {
