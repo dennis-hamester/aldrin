@@ -35,13 +35,11 @@ impl BusListener {
     }
 
     pub fn start(&mut self, scope: BusListenerScope) -> bool {
-        match self.scope {
-            Some(_) => false,
-
-            None => {
-                self.scope = Some(scope);
-                true
-            }
+        if self.scope.is_none() {
+            self.scope = Some(scope);
+            true
+        } else {
+            false
         }
     }
 

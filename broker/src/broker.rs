@@ -52,8 +52,8 @@ pub use statistics::BrokerStatistics;
 const FIFO_SIZE: usize = 32;
 
 macro_rules! send {
-    ($self:expr, $conn:expr, $msg:expr) => {{
-        let res = $conn.send($msg);
+    ($self:expr, $conn:expr, $msg:expr $(,)?) => {{
+        let res = $conn.send($msg.into());
 
         #[cfg(feature = "statistics")]
         {
@@ -209,7 +209,7 @@ impl Broker {
             }
 
             ConnectionEvent::Message(id, msg) => {
-                if let Err(()) = self.handle_message(state, &id, msg) {
+                if self.handle_message(state, &id, msg).is_err() {
                     state.push_remove_conn(id, false);
                 }
 
@@ -253,29 +253,31 @@ impl Broker {
             }
 
             if let Some((conn_id, service_cookie, event)) = state.pop_unsubscribe() {
-                let conn = match self.conns.get(&conn_id) {
-                    Some(conn) => conn,
-                    None => continue,
+                let Some(conn) = self.conns.get(&conn_id) else {
+                    continue;
                 };
-                let msg = Message::UnsubscribeEvent(UnsubscribeEvent {
+
+                let msg = UnsubscribeEvent {
                     service_cookie,
                     event,
-                });
-                if let Err(()) = send!(self, conn, msg) {
+                };
+
+                if send!(self, conn, msg).is_err() {
                     state.push_remove_conn(conn_id, false);
                 }
+
                 continue;
             }
 
             if let Some((conn_id, service_cookie)) = state.pop_services_destroyed() {
-                let conn = match self.conns.get(&conn_id) {
-                    Some(conn) => conn,
-                    None => continue,
+                let Some(conn) = self.conns.get(&conn_id) else {
+                    continue;
                 };
-                let msg = Message::ServiceDestroyed(ServiceDestroyed { service_cookie });
-                if let Err(()) = send!(self, conn, msg) {
+
+                if send!(self, conn, ServiceDestroyed { service_cookie }).is_err() {
                     state.push_remove_conn(conn_id, false);
                 }
+
                 continue;
             }
 
@@ -286,15 +288,10 @@ impl Broker {
 
                 conn.remove_call(serial);
 
-                let res = send!(
-                    self,
-                    conn,
-                    Message::CallFunctionReply(CallFunctionReply { serial, result })
-                );
-
-                if res.is_err() {
+                if send!(self, conn, CallFunctionReply { serial, result }).is_err() {
                     state.push_remove_conn(conn_id, false);
                 }
+
                 continue;
             }
 
@@ -335,7 +332,7 @@ impl Broker {
 
         if send_shutdown {
             // Ignore errors here.
-            let _ = send!(self, conn, Message::Shutdown(Shutdown));
+            let _ = send!(self, conn, Shutdown);
         }
 
         for bus_listener_cookie in conn.bus_listeners() {
@@ -438,30 +435,30 @@ impl Broker {
         id: &ConnectionId,
         req: CreateObject,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
         match self.objs.entry(req.uuid) {
             Entry::Occupied(_) => send!(
                 self,
                 conn,
-                Message::CreateObjectReply(CreateObjectReply {
+                CreateObjectReply {
                     serial: req.serial,
                     result: CreateObjectResult::DuplicateObject,
-                })
+                },
             ),
 
             Entry::Vacant(entry) => {
                 let cookie = ObjectCookie::new_v4();
+
                 send!(
                     self,
                     conn,
-                    Message::CreateObjectReply(CreateObjectReply {
+                    CreateObjectReply {
                         serial: req.serial,
                         result: CreateObjectResult::Ok(cookie),
-                    })
+                    },
                 )?;
 
                 let dup = self.obj_uuids.insert(cookie, req.uuid);
@@ -487,44 +484,41 @@ impl Broker {
         id: &ConnectionId,
         req: DestroyObject,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        let obj_uuid = match self.obj_uuids.get(&req.cookie) {
-            Some(obj_uuid) => *obj_uuid,
-            None => {
-                return send!(
-                    self,
-                    conn,
-                    Message::DestroyObjectReply(DestroyObjectReply {
-                        serial: req.serial,
-                        result: DestroyObjectResult::InvalidObject,
-                    })
-                );
-            }
+        let Some(&obj_uuid) = self.obj_uuids.get(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                DestroyObjectReply {
+                    serial: req.serial,
+                    result: DestroyObjectResult::InvalidObject,
+                },
+            );
         };
 
         let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+
         if obj.conn_id() != id {
             return send!(
                 self,
                 conn,
-                Message::DestroyObjectReply(DestroyObjectReply {
+                DestroyObjectReply {
                     serial: req.serial,
                     result: DestroyObjectResult::ForeignObject,
-                })
+                },
             );
         }
 
         send!(
             self,
             conn,
-            Message::DestroyObjectReply(DestroyObjectReply {
+            DestroyObjectReply {
                 serial: req.serial,
                 result: DestroyObjectResult::Ok,
-            })
+            },
         )?;
 
         self.remove_object(state, req.cookie);
@@ -537,37 +531,30 @@ impl Broker {
         id: &ConnectionId,
         req: CreateService,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        let obj_uuid = match self.obj_uuids.get(&req.object_cookie) {
-            Some(&obj_uuid) => obj_uuid,
-            None => {
-                return send!(
-                    self,
-                    conn,
-                    Message::CreateServiceReply(CreateServiceReply {
-                        serial: req.serial,
-                        result: CreateServiceResult::InvalidObject,
-                    })
-                );
-            }
+        let Some(&obj_uuid) = self.obj_uuids.get(&req.object_cookie) else {
+            return send!(
+                self,
+                conn,
+                CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::InvalidObject,
+                },
+            );
         };
 
-        let entry = match self.svcs.entry((obj_uuid, req.uuid)) {
-            Entry::Vacant(entry) => entry,
-            Entry::Occupied(_) => {
-                return send!(
-                    self,
-                    conn,
-                    Message::CreateServiceReply(CreateServiceReply {
-                        serial: req.serial,
-                        result: CreateServiceResult::DuplicateService,
-                    })
-                );
-            }
+        let Entry::Vacant(entry) = self.svcs.entry((obj_uuid, req.uuid)) else {
+            return send!(
+                self,
+                conn,
+                CreateServiceReply {
+                    serial: req.serial,
+                    result: CreateServiceResult::DuplicateService,
+                },
+            );
         };
 
         let obj = self.objs.get_mut(&obj_uuid).expect("inconsistent state");
@@ -575,21 +562,22 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::CreateServiceReply(CreateServiceReply {
+                CreateServiceReply {
                     serial: req.serial,
                     result: CreateServiceResult::ForeignObject,
-                })
+                },
             );
         }
 
         let svc_cookie = ServiceCookie::new_v4();
+
         send!(
             self,
             conn,
-            Message::CreateServiceReply(CreateServiceReply {
+            CreateServiceReply {
                 serial: req.serial,
                 result: CreateServiceResult::Ok(svc_cookie),
-            })
+            },
         )?;
 
         let object_id = ObjectId::new(obj_uuid, req.object_cookie);
@@ -616,44 +604,40 @@ impl Broker {
         id: &ConnectionId,
         req: DestroyService,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        let obj_uuid = match self.svc_uuids.get(&req.cookie) {
-            Some(ids) => ids.0.uuid,
-            None => {
-                return send!(
-                    self,
-                    conn,
-                    Message::DestroyServiceReply(DestroyServiceReply {
-                        serial: req.serial,
-                        result: DestroyServiceResult::InvalidService,
-                    })
-                );
-            }
+        let Some(ids) = self.svc_uuids.get(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                DestroyServiceReply {
+                    serial: req.serial,
+                    result: DestroyServiceResult::InvalidService,
+                },
+            );
         };
 
-        let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+        let obj = self.objs.get(&ids.0.uuid).expect("inconsistent state");
         if obj.conn_id() != id {
             return send!(
                 self,
                 conn,
-                Message::DestroyServiceReply(DestroyServiceReply {
+                DestroyServiceReply {
                     serial: req.serial,
                     result: DestroyServiceResult::ForeignObject,
-                })
+                },
             );
         }
 
         send!(
             self,
             conn,
-            Message::DestroyServiceReply(DestroyServiceReply {
+            DestroyServiceReply {
                 serial: req.serial,
                 result: DestroyServiceResult::Ok,
-            })
+            },
         )?;
 
         self.remove_service(state, req.cookie);
@@ -666,34 +650,31 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
-        let (obj_uuid, svc_uuid) = match self.svc_uuids.get(&req.service_cookie) {
-            Some(ids) => (ids.0.uuid, ids.1),
-            None => {
-                return send!(
-                    self,
-                    conn,
-                    Message::CallFunctionReply(CallFunctionReply {
-                        serial: req.serial,
-                        result: CallFunctionResult::InvalidService,
-                    })
-                );
-            }
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) else {
+            return send!(
+                self,
+                conn,
+                CallFunctionReply {
+                    serial: req.serial,
+                    result: CallFunctionResult::InvalidService,
+                },
+            );
         };
 
-        let callee_id = match self.objs.get(&obj_uuid) {
-            Some(obj) => obj.conn_id(),
-            None => panic!("inconsistent state"),
-        };
+        let callee_id = self
+            .objs
+            .get(&obj_id.uuid)
+            .expect("inconsistent state")
+            .conn_id();
 
         let serial = self.function_calls.insert(PendingFunctionCall {
             caller_serial: req.serial,
             caller_conn_id: id.clone(),
-            callee_obj: obj_uuid,
+            callee_obj: obj_id.uuid,
             callee_svc: svc_uuid,
             aborted: false,
         });
@@ -706,19 +687,19 @@ impl Broker {
         let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
 
         self.svcs
-            .get_mut(&(obj_uuid, svc_uuid))
+            .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state")
             .add_function_call(serial);
 
         let res = send!(
             self,
             callee_conn,
-            Message::CallFunction(CallFunction {
+            CallFunction {
                 serial,
                 service_cookie: req.service_cookie,
                 function: req.function,
                 value: req.value,
-            })
+            },
         );
 
         if res.is_err() {
@@ -740,9 +721,8 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunctionReply,
     ) {
-        let call = match self.function_calls.get(req.serial) {
-            Some(call) => call,
-            None => return,
+        let Some(call) = self.function_calls.get(req.serial) else {
+            return;
         };
 
         let obj = self.objs.get(&call.callee_obj).expect("inconsistent state");
@@ -762,6 +742,7 @@ impl Broker {
             .svcs
             .get_mut(&(call.callee_obj, call.callee_svc))
             .expect("inconsistent state");
+
         svc.remove_function_call(req.serial);
 
         if call.aborted {
@@ -774,78 +755,73 @@ impl Broker {
 
         conn.remove_call(call.caller_serial);
 
-        if send!(
+        let res = send!(
             self,
             conn,
-            Message::CallFunctionReply(CallFunctionReply {
+            CallFunctionReply {
                 serial: call.caller_serial,
                 result: req.result,
-            })
-        )
-        .is_err()
-        {
+            },
+        );
+
+        if res.is_err() {
             state.push_remove_conn(call.caller_conn_id, false);
         }
     }
 
     fn subscribe_event(&mut self, id: &ConnectionId, req: SubscribeEvent) -> Result<(), ()> {
-        let serial = match req.serial {
-            Some(serial) => serial,
-            None => return Err(()),
+        let Some(serial) = req.serial else {
+            return Err(());
         };
 
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
-        let (obj_uuid, svc_uuid) = match self.svc_uuids.get(&req.service_cookie) {
-            Some(ids) => (ids.0.uuid, ids.1),
-            None => {
-                return send!(
-                    self,
-                    conn,
-                    Message::SubscribeEventReply(SubscribeEventReply {
-                        serial,
-                        result: SubscribeEventResult::InvalidService,
-                    })
-                );
-            }
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) else {
+            return send!(
+                self,
+                conn,
+                SubscribeEventReply {
+                    serial,
+                    result: SubscribeEventResult::InvalidService,
+                },
+            );
         };
 
         send!(
             self,
             conn,
-            Message::SubscribeEventReply(SubscribeEventReply {
+            SubscribeEventReply {
                 serial,
                 result: SubscribeEventResult::Ok,
-            })
+            },
         )?;
 
         conn.add_subscription(req.service_cookie, req.event);
         let send_req = self
             .svcs
-            .get_mut(&(obj_uuid, svc_uuid))
+            .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state")
             .add_subscription(req.event, id.clone());
 
         if send_req {
             let target_conn_id = self
                 .objs
-                .get_mut(&obj_uuid)
+                .get_mut(&obj_id.uuid)
                 .expect("inconsistent state")
                 .conn_id();
+
             if let Some(target_conn) = self.conns.get(target_conn_id) {
-                send!(
+                let _ = send!(
                     self,
                     target_conn,
-                    Message::SubscribeEvent(SubscribeEvent {
+                    SubscribeEvent {
                         serial: None,
                         service_cookie: req.service_cookie,
                         event: req.event,
-                    })
-                )
-                .ok();
+                    },
+                );
             }
         }
 
@@ -853,29 +829,28 @@ impl Broker {
     }
 
     fn unsubscribe_event(&mut self, state: &mut State, id: &ConnectionId, req: UnsubscribeEvent) {
-        let (obj_uuid, svc_uuid) = match self.svc_uuids.get(&req.service_cookie) {
-            Some(ids) => (ids.0.uuid, ids.1),
-            None => return,
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) else {
+            return;
         };
+
         let svc = self
             .svcs
-            .get_mut(&(obj_uuid, svc_uuid))
+            .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state");
 
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return,
+        let Some(conn) = self.conns.get_mut(id) else {
+            return;
         };
 
         conn.remove_subscription(req.service_cookie, req.event);
         let send_unsubscribe = svc.remove_subscription(req.event, id);
 
         if send_unsubscribe {
-            let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+            let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
             let conn_id = obj.conn_id();
             let conn = self.conns.get(conn_id).expect("inconsistent state");
-            let msg = Message::UnsubscribeEvent(req);
-            if let Err(()) = send!(self, conn, msg) {
+
+            if send!(self, conn, req).is_err() {
                 state.push_remove_conn(conn_id.clone(), false);
             }
         }
@@ -897,8 +872,9 @@ impl Broker {
 
         for (conn_id, conn) in self.conns.iter() {
             if conn.is_subscribed_to(req.service_cookie, req.event) {
-                let msg = Message::EmitEvent(req.clone());
-                if let Err(()) = send!(self, conn, msg) {
+                // False positive: Clippy doesn't consider the #[cfg(...)] below.
+                #[allow(clippy::collapsible_if)]
+                if send!(self, conn, req.clone()).is_err() {
                     state.push_remove_conn(conn_id.clone(), false);
                 }
 
@@ -920,42 +896,34 @@ impl Broker {
         id: &ConnectionId,
         req: QueryServiceVersion,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        match self.svc_uuids.get(&req.cookie) {
-            Some(&(_, _, version)) => {
-                send!(
-                    self,
-                    conn,
-                    Message::QueryServiceVersionReply(QueryServiceVersionReply {
-                        serial: req.serial,
-                        result: QueryServiceVersionResult::Ok(version),
-                    })
-                )?;
-            }
-
-            None => {
-                send!(
-                    self,
-                    conn,
-                    Message::QueryServiceVersionReply(QueryServiceVersionReply {
-                        serial: req.serial,
-                        result: QueryServiceVersionResult::InvalidService,
-                    })
-                )?;
-            }
+        if let Some(&(_, _, version)) = self.svc_uuids.get(&req.cookie) {
+            send!(
+                self,
+                conn,
+                QueryServiceVersionReply {
+                    serial: req.serial,
+                    result: QueryServiceVersionResult::Ok(version),
+                },
+            )
+        } else {
+            send!(
+                self,
+                conn,
+                QueryServiceVersionReply {
+                    serial: req.serial,
+                    result: QueryServiceVersionResult::InvalidService,
+                },
+            )
         }
-
-        Ok(())
     }
 
     fn create_channel(&mut self, id: &ConnectionId, req: CreateChannel) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
         let cookie = ChannelCookie::new_v4();
@@ -977,10 +945,10 @@ impl Broker {
         send!(
             self,
             conn,
-            Message::CreateChannelReply(CreateChannelReply {
+            CreateChannelReply {
                 serial: req.serial,
                 cookie,
-            })
+            },
         )?;
 
         #[cfg(feature = "statistics")]
@@ -998,34 +966,30 @@ impl Broker {
         id: &ConnectionId,
         req: CloseChannelEnd,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        let channel = match self.channels.get(&req.cookie) {
-            Some(channel) => channel,
-            None => {
-                send!(
-                    self,
-                    conn,
-                    Message::CloseChannelEndReply(CloseChannelEndReply {
-                        serial: req.serial,
-                        result: CloseChannelEndResult::InvalidChannel,
-                    })
-                )?;
-                return Ok(());
-            }
+        let Some(channel) = self.channels.get(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                CloseChannelEndReply {
+                    serial: req.serial,
+                    result: CloseChannelEndResult::InvalidChannel,
+                },
+            );
         };
 
         let (result, claimed) = channel.check_close(id, req.end);
+
         send!(
             self,
             conn,
-            Message::CloseChannelEndReply(CloseChannelEndReply {
+            CloseChannelEndReply {
                 serial: req.serial,
                 result,
-            })
+            },
         )?;
 
         if result == CloseChannelEndResult::Ok {
@@ -1042,26 +1006,19 @@ impl Broker {
         id: &ConnectionId,
         req: ClaimChannelEnd,
     ) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
-        let channel = match self.channels.get_mut(&req.cookie) {
-            Some(channel) => channel,
-
-            None => {
-                send!(
-                    self,
-                    conn,
-                    Message::ClaimChannelEndReply(ClaimChannelEndReply {
-                        serial: req.serial,
-                        result: ClaimChannelEndResult::InvalidChannel,
-                    })
-                )?;
-
-                return Ok(());
-            }
+        let Some(channel) = self.channels.get_mut(&req.cookie) else {
+            return send!(
+                self,
+                conn,
+                ClaimChannelEndReply {
+                    serial: req.serial,
+                    result: ClaimChannelEndResult::InvalidChannel,
+                },
+            );
         };
 
         let result = match req.end {
@@ -1085,10 +1042,10 @@ impl Broker {
                 let result = send!(
                     self,
                     conn,
-                    Message::ClaimChannelEndReply(ClaimChannelEndReply {
+                    ClaimChannelEndReply {
                         serial: req.serial,
                         result,
-                    })
+                    },
                 );
 
                 let other = self.conns.get_mut(other_id).expect("inconsistent state");
@@ -1096,10 +1053,10 @@ impl Broker {
                 let other_result = send!(
                     self,
                     other,
-                    Message::ChannelEndClaimed(ChannelEndClaimed {
+                    ChannelEndClaimed {
                         cookie: req.cookie,
                         end: req.end,
-                    })
+                    },
                 );
 
                 if other_result.is_err() {
@@ -1112,10 +1069,10 @@ impl Broker {
             Err(result) => send!(
                 self,
                 conn,
-                Message::ClaimChannelEndReply(ClaimChannelEndReply {
+                ClaimChannelEndReply {
                     serial: req.serial,
                     result,
-                })
+                },
             ),
         }
     }
@@ -1133,6 +1090,7 @@ impl Broker {
         let (sender_id, capacity) = match channel.add_capacity(id, req.capacity) {
             Ok(Some((sender_id, capacity))) => (sender_id, capacity),
             Ok(None) => return,
+
             Err(AddCapacityError) => {
                 self.remove_channel_end(state, req.cookie, ChannelEnd::Receiver, Some(id));
                 return;
@@ -1146,10 +1104,10 @@ impl Broker {
         let res = send!(
             self,
             sender,
-            Message::AddChannelCapacity(AddChannelCapacity {
+            AddChannelCapacity {
                 cookie: req.cookie,
                 capacity,
-            })
+            },
         );
 
         if res.is_err() {
@@ -1168,6 +1126,7 @@ impl Broker {
 
         let (receiver_id, add_capacity) = match channel.send_item(id) {
             Ok(res) => res,
+
             Err(e) => {
                 #[cfg(feature = "statistics")]
                 {
@@ -1203,10 +1162,10 @@ impl Broker {
         let res = send!(
             self,
             receiver,
-            Message::ItemReceived(ItemReceived {
+            ItemReceived {
                 cookie: req.cookie,
                 value: req.value,
-            })
+            },
         );
 
         if res.is_ok() {
@@ -1227,10 +1186,10 @@ impl Broker {
             send!(
                 self,
                 sender,
-                Message::AddChannelCapacity(AddChannelCapacity {
+                AddChannelCapacity {
                     cookie: req.cookie,
                     capacity: add_capacity,
-                })
+                },
             )
         } else {
             Ok(())
@@ -1238,22 +1197,16 @@ impl Broker {
     }
 
     fn sync(&mut self, id: &ConnectionId, req: Sync) -> Result<(), ()> {
-        let conn = match self.conns.get(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
         };
 
-        send!(
-            self,
-            conn,
-            Message::SyncReply(SyncReply { serial: req.serial })
-        )
+        send!(self, conn, SyncReply { serial: req.serial })
     }
 
     fn create_bus_listener(&mut self, id: &ConnectionId, req: CreateBusListener) -> Result<(), ()> {
-        let conn = match self.conns.get_mut(id) {
-            Some(conn) => conn,
-            None => return Ok(()),
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
         };
 
         let cookie = BusListenerCookie::new_v4();
@@ -1261,10 +1214,10 @@ impl Broker {
         send!(
             self,
             conn,
-            Message::CreateBusListenerReply(CreateBusListenerReply {
+            CreateBusListenerReply {
                 serial: req.serial,
                 cookie,
-            })
+            },
         )?;
 
         #[cfg(feature = "statistics")]
@@ -1293,10 +1246,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                DestroyBusListenerReply {
                     serial: req.serial,
                     result: DestroyBusListenerResult::InvalidBusListener,
-                })
+                },
             );
         };
 
@@ -1304,10 +1257,10 @@ impl Broker {
             send!(
                 self,
                 conn,
-                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                DestroyBusListenerReply {
                     serial: req.serial,
                     result: DestroyBusListenerResult::Ok,
-                })
+                },
             )?;
 
             self.remove_bus_listener(req.cookie);
@@ -1315,10 +1268,10 @@ impl Broker {
             send!(
                 self,
                 conn,
-                Message::DestroyBusListenerReply(DestroyBusListenerReply {
+                DestroyBusListenerReply {
                     serial: req.serial,
                     result: DestroyBusListenerResult::InvalidBusListener,
-                })
+                },
             )?;
         }
 
@@ -1373,10 +1326,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::StartBusListenerReply(StartBusListenerReply {
+                StartBusListenerReply {
                     serial: req.serial,
                     result: StartBusListenerResult::InvalidBusListener,
-                })
+                },
             );
         };
 
@@ -1384,10 +1337,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::StartBusListenerReply(StartBusListenerReply {
+                StartBusListenerReply {
                     serial: req.serial,
                     result: StartBusListenerResult::InvalidBusListener,
-                })
+                },
             );
         }
 
@@ -1395,10 +1348,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::StartBusListenerReply(StartBusListenerReply {
+                StartBusListenerReply {
                     serial: req.serial,
                     result: StartBusListenerResult::AlreadyStarted,
-                })
+                },
             );
         }
 
@@ -1411,10 +1364,10 @@ impl Broker {
         send!(
             self,
             conn,
-            Message::StartBusListenerReply(StartBusListenerReply {
+            StartBusListenerReply {
                 serial: req.serial,
                 result: StartBusListenerResult::Ok,
-            })
+            },
         )?;
 
         if req.scope != BusListenerScope::New {
@@ -1425,10 +1378,10 @@ impl Broker {
                     send!(
                         self,
                         conn,
-                        Message::EmitBusEvent(EmitBusEvent {
+                        EmitBusEvent {
                             cookie: Some(req.cookie),
                             event: BusEvent::ObjectCreated(object),
-                        })
+                        },
                     )?;
 
                     #[cfg(feature = "statistics")]
@@ -1445,10 +1398,10 @@ impl Broker {
                     send!(
                         self,
                         conn,
-                        Message::EmitBusEvent(EmitBusEvent {
+                        EmitBusEvent {
                             cookie: Some(req.cookie),
                             event: BusEvent::ServiceCreated(service),
-                        })
+                        },
                     )?;
 
                     #[cfg(feature = "statistics")]
@@ -1461,9 +1414,7 @@ impl Broker {
             send!(
                 self,
                 conn,
-                Message::BusListenerCurrentFinished(BusListenerCurrentFinished {
-                    cookie: req.cookie,
-                })
+                BusListenerCurrentFinished { cookie: req.cookie },
             )?;
         }
 
@@ -1479,10 +1430,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::StopBusListenerReply(StopBusListenerReply {
+                StopBusListenerReply {
                     serial: req.serial,
                     result: StopBusListenerResult::InvalidBusListener,
-                })
+                },
             );
         };
 
@@ -1490,10 +1441,10 @@ impl Broker {
             return send!(
                 self,
                 conn,
-                Message::StopBusListenerReply(StopBusListenerReply {
+                StopBusListenerReply {
                     serial: req.serial,
                     result: StopBusListenerResult::InvalidBusListener,
-                })
+                },
             );
         }
 
@@ -1507,19 +1458,19 @@ impl Broker {
             send!(
                 self,
                 conn,
-                Message::StopBusListenerReply(StopBusListenerReply {
+                StopBusListenerReply {
                     serial: req.serial,
                     result: StopBusListenerResult::Ok,
-                })
+                },
             )
         } else {
             send!(
                 self,
                 conn,
-                Message::StopBusListenerReply(StopBusListenerReply {
+                StopBusListenerReply {
                     serial: req.serial,
                     result: StopBusListenerResult::NotStarted,
-                })
+                },
             )
         }
     }
@@ -1551,9 +1502,8 @@ impl Broker {
     /// This function will also remove all services owned by that object as well as everything
     /// related (e.g. pending function calls). It is safe to call with an invalid `obj_cookie`.
     fn remove_object(&mut self, state: &mut State, obj_cookie: ObjectCookie) {
-        let obj_uuid = match self.obj_uuids.remove(&obj_cookie) {
-            Some(obj_uuid) => obj_uuid,
-            None => return,
+        let Some(obj_uuid) = self.obj_uuids.remove(&obj_cookie) else {
+            return;
         };
 
         let obj = self.objs.remove(&obj_uuid).expect("inconsistent state");
@@ -1582,9 +1532,8 @@ impl Broker {
     /// This function will also remove everything related to `svc_cookie`, e.g. pending function
     /// calls. It is safe to call with an invalid `svc_cookie`.
     fn remove_service(&mut self, state: &mut State, svc_cookie: ServiceCookie) {
-        let (obj_id, svc_uuid, _) = match self.svc_uuids.remove(&svc_cookie) {
-            Some(ids) => ids,
-            None => return,
+        let Some((obj_id, svc_uuid, _)) = self.svc_uuids.remove(&svc_cookie) else {
+            return;
         };
 
         let svc = self
@@ -1639,9 +1588,8 @@ impl Broker {
         svc_cookie: ServiceCookie,
         event: u32,
     ) {
-        let (obj_uuid, svc_uuid) = match self.svc_uuids.get(&svc_cookie) {
-            Some(ids) => (ids.0.uuid, ids.1),
-            None => return,
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&svc_cookie) else {
+            return;
         };
 
         // The connection might already have been removed.
@@ -1651,10 +1599,11 @@ impl Broker {
 
         let svc = self
             .svcs
-            .get_mut(&(obj_uuid, svc_uuid))
+            .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state");
+
         if svc.remove_subscription(event, conn_id) {
-            let obj = self.objs.get(&obj_uuid).expect("inconsistent state");
+            let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
             state.push_unsubscribe(obj.conn_id().clone(), svc_cookie, event);
         }
     }
@@ -1668,9 +1617,8 @@ impl Broker {
         end: ChannelEnd,
         owner: Option<&ConnectionId>,
     ) {
-        let mut channel = match self.channels.entry(cookie) {
-            Entry::Occupied(channel) => channel,
-            Entry::Vacant(_) => return,
+        let Entry::Occupied(mut channel) = self.channels.entry(cookie) else {
+            return;
         };
 
         if let Some(conn) = owner.and_then(|conn_id| self.conns.get_mut(conn_id)) {
@@ -1683,13 +1631,7 @@ impl Broker {
         let remove = match channel.get_mut().close(end) {
             Some(other_id) => match self.conns.get(other_id) {
                 Some(other) => {
-                    let res = send!(
-                        self,
-                        other,
-                        Message::ChannelEndClosed(ChannelEndClosed { cookie, end })
-                    );
-
-                    if res.is_err() {
+                    if send!(self, other, ChannelEndClosed { cookie, end }).is_err() {
                         state.push_remove_conn(other_id.clone(), false);
                     }
 
@@ -1757,10 +1699,10 @@ impl Broker {
             let res = send!(
                 self,
                 conn,
-                Message::EmitBusEvent(EmitBusEvent {
+                EmitBusEvent {
                     cookie: None,
                     event,
-                })
+                },
             );
 
             if res.is_ok() {
@@ -1792,9 +1734,9 @@ impl Broker {
                 let res = send!(
                     self,
                     conn,
-                    Message::AbortFunctionCall(AbortFunctionCall {
+                    AbortFunctionCall {
                         serial: callee_serial,
-                    })
+                    },
                 );
 
                 if res.is_err() {
@@ -1809,10 +1751,10 @@ impl Broker {
             let res = send!(
                 self,
                 conn,
-                Message::CallFunctionReply(CallFunctionReply {
+                CallFunctionReply {
                     serial: call.caller_serial,
                     result: CallFunctionResult::Aborted,
-                })
+                },
             );
 
             if res.is_err() {
