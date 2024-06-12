@@ -169,13 +169,13 @@ pub trait AsyncTransportExt: AsyncTransport {
         Receive(self)
     }
 
-    fn send(&mut self, msg: Message) -> Send<Self>
+    fn send(&mut self, msg: impl Into<Message>) -> Send<Self>
     where
         Self: Unpin,
     {
         Send {
             t: self,
-            msg: Some(msg),
+            msg: Some(msg.into()),
         }
     }
 
@@ -186,7 +186,7 @@ pub trait AsyncTransportExt: AsyncTransport {
         Flush(self)
     }
 
-    fn send_and_flush(&mut self, msg: Message) -> SendFlush<Self>
+    fn send_and_flush(&mut self, msg: impl Into<Message>) -> SendFlush<Self>
     where
         Self: Unpin,
     {
@@ -207,11 +207,11 @@ pub trait AsyncTransportExt: AsyncTransport {
         Pin::new(self).send_poll_ready(cx)
     }
 
-    fn send_start_unpin(&mut self, msg: Message) -> Result<(), Self::Error>
+    fn send_start_unpin(&mut self, msg: impl Into<Message>) -> Result<(), Self::Error>
     where
         Self: Unpin,
     {
-        Pin::new(self).send_start(msg)
+        Pin::new(self).send_start(msg.into())
     }
 
     fn send_poll_flush_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>

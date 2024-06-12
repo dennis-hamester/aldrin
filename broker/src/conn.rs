@@ -74,7 +74,7 @@ where
         loop {
             match select(self.recv.next(), self.t.receive()).await {
                 Either::Left((Some(Message::Shutdown(Shutdown)), _)) => {
-                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
+                    self.t.send_and_flush(Shutdown).await?;
                     self.drain_client_recv().await?;
                     return Ok(());
                 }
@@ -91,7 +91,7 @@ where
 
                 Either::Right((Ok(Message::Shutdown(Shutdown)), _)) => {
                     self.send_broker_shutdown(id).await?;
-                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
+                    self.t.send_and_flush(Shutdown).await?;
                     self.drain_broker_recv().await;
                     return Ok(());
                 }

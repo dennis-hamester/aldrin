@@ -93,11 +93,9 @@ async fn begin_connect_accept() {
 
     let (mut t1, t2) = channel::unbounded();
 
-    t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(14, &0u32).unwrap(),
-    ))
-    .await
-    .unwrap();
+    t1.send_and_flush(Connect::with_serialize_value(14, &0u32).unwrap())
+        .await
+        .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
     assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
@@ -123,14 +121,14 @@ async fn begin_connect_2_accept() {
 
     let mut data = ConnectData::new();
     data.serialize_user(&0u32).unwrap();
-    t1.send_and_flush(Message::Connect2(
+    t1.send_and_flush(
         Connect2::with_serialize_data(
             ProtocolVersion::V1_14.major(),
             ProtocolVersion::V1_15.minor(),
             &data,
         )
         .unwrap(),
-    ))
+    )
     .await
     .unwrap();
 
@@ -161,11 +159,9 @@ async fn begin_connect_reject() {
 
     let (mut t1, t2) = channel::unbounded();
 
-    t1.send_and_flush(Message::Connect(
-        Connect::with_serialize_value(14, &0u32).unwrap(),
-    ))
-    .await
-    .unwrap();
+    t1.send_and_flush(Connect::with_serialize_value(14, &0u32).unwrap())
+        .await
+        .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
     assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
@@ -191,14 +187,14 @@ async fn begin_connect_2_reject() {
 
     let mut data = ConnectData::new();
     data.serialize_user(&0u32).unwrap();
-    t1.send_and_flush(Message::Connect2(
+    t1.send_and_flush(
         Connect2::with_serialize_data(
             ProtocolVersion::V1_14.major(),
             ProtocolVersion::V1_15.minor(),
             &data,
         )
         .unwrap(),
-    ))
+    )
     .await
     .unwrap();
 
@@ -509,8 +505,7 @@ async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
 
     t1.send(
         Connect2::with_serialize_data(VERSION.major(), VERSION.minor(), &ConnectData::new())
-            .unwrap()
-            .into(),
+            .unwrap(),
     )
     .await
     .unwrap();
