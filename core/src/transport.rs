@@ -162,14 +162,14 @@ where
 }
 
 pub trait AsyncTransportExt: AsyncTransport {
-    fn receive(&mut self) -> Receive<'_, Self>
+    fn receive(&mut self) -> Receive<Self>
     where
         Self: Unpin,
     {
         Receive(self)
     }
 
-    fn send(&mut self, msg: Message) -> Send<'_, Self>
+    fn send(&mut self, msg: Message) -> Send<Self>
     where
         Self: Unpin,
     {
@@ -179,14 +179,14 @@ pub trait AsyncTransportExt: AsyncTransport {
         }
     }
 
-    fn flush(&mut self) -> Flush<'_, Self>
+    fn flush(&mut self) -> Flush<Self>
     where
         Self: Unpin,
     {
         Flush(self)
     }
 
-    fn send_and_flush(&mut self, msg: Message) -> SendFlush<'_, Self>
+    fn send_and_flush(&mut self, msg: Message) -> SendFlush<Self>
     where
         Self: Unpin,
     {
