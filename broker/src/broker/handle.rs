@@ -266,12 +266,12 @@ impl BrokerHandle {
     /// let statistics = broker_handle.take_statistics().await?;
     ///
     /// // Calculate the duration over which the statistics were measured.
-    /// let time_diff = statistics.end - statistics.start;
+    /// let time_diff = statistics.end() - statistics.start();
     ///
-    /// println!("The current number of connections is {}.", statistics.num_connections);
+    /// println!("The current number of connections is {}.", statistics.num_connections());
     /// println!(
     ///     "{} connections were added within the last {} seconds.",
-    ///     statistics.connections_added,
+    ///     statistics.connections_added(),
     ///     time_diff.as_secs_f32()
     /// );
     /// # Ok(())
