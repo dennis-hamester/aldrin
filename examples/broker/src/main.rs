@@ -3,10 +3,13 @@ use aldrin_broker::{Broker, BrokerHandle};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::signal;
+use tokio::time;
 
 const BIND_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9999);
+const STATISTICS_INTERVAL: Duration = Duration::from_secs(60);
 
 /// Aldrin broker for the examples.
 #[derive(Parser)]
@@ -34,6 +37,7 @@ async fn main() -> Result<()> {
     let broker = Broker::new();
     let mut handle = broker.handle().clone();
     let join = tokio::spawn(broker.run());
+    let mut statistics = time::interval(STATISTICS_INTERVAL);
 
     loop {
         // Accept new connections, but also enable clean shut downs when pressing CTRL-C.
@@ -43,6 +47,27 @@ async fn main() -> Result<()> {
             signal = signal::ctrl_c() => {
                 signal.with_context(|| anyhow!("failed to listen for CTRL-C"))?;
                 break;
+            }
+
+            _ = statistics.tick() => {
+                #[cfg(feature = "statistics")]
+                {
+                    let statistics = handle.take_statistics().await?;
+                    let duration = (statistics.end() - statistics.start()).as_secs();
+
+                    println!();
+                    println!("Statistics for the last {} second(s):", duration);
+                    println!(" - Messages sent: {}", statistics.messages_sent());
+                    println!(" - Messages received: {}", statistics.messages_received());
+                    println!(" - Connections: {}", statistics.num_connections());
+                    println!(" - Objects: {}", statistics.num_objects());
+                    println!(" - Services: {}", statistics.num_services());
+                    println!(" - Channels: {}", statistics.num_channels());
+                    println!(" - Bus listeners: {}", statistics.num_bus_listeners());
+                    println!();
+                }
+
+                continue;
             }
         };
 

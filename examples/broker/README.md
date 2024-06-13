@@ -8,6 +8,8 @@ machine. If you want to test Aldrin across multiple machines, then pass e.g. `0.
 argument to the broker. Other examples accept a `--bus` argument that allows them connect to brokers
 on other machines.
 
+When the `statistics` feature is enabled, the broker will print various statistics once per minute.
+
 ```
 Aldrin broker for the examples
 

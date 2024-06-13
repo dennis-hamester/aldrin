@@ -4,6 +4,9 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
+[features]
+statistics = ["aldrin-broker/statistics"]
+
 [dependencies]
 anyhow = "1.0.75"
 
@@ -22,4 +25,5 @@ features = [
     "net",
     "rt-multi-thread",
     "signal",
+    "time",
 ]
