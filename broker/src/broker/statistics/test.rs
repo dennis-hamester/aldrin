@@ -1,4 +1,4 @@
-use crate::core::{BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceUuid};
 use aldrin::low_level::Proxy;
 use aldrin_test::tokio::TestBroker;
 
@@ -29,8 +29,6 @@ async fn connections() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_connections(), 0);
-    assert_eq!(stats.connections_added(), 0);
-    assert_eq!(stats.connections_shut_down(), 0);
 
     // Add 1 client.
     let mut client1 = broker.add_client().await;
@@ -38,8 +36,6 @@ async fn connections() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_connections(), 1);
-    assert_eq!(stats.connections_added(), 1);
-    assert_eq!(stats.connections_shut_down(), 0);
 
     // Remove 1 client and add 2.
     client1.join().await;
@@ -49,8 +45,6 @@ async fn connections() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_connections(), 2);
-    assert_eq!(stats.connections_added(), 2);
-    assert_eq!(stats.connections_shut_down(), 1);
 
     // Remove 2 clients.
     client2.join().await;
@@ -59,16 +53,12 @@ async fn connections() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_connections(), 0);
-    assert_eq!(stats.connections_added(), 0);
-    assert_eq!(stats.connections_shut_down(), 2);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_connections(), 0);
-    assert_eq!(stats.connections_added(), 0);
-    assert_eq!(stats.connections_shut_down(), 0);
 
     broker.join().await;
 }
@@ -83,8 +73,6 @@ async fn objects() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_objects(), 0);
-    assert_eq!(stats.objects_created(), 0);
-    assert_eq!(stats.objects_destroyed(), 0);
 
     // Create 1 object.
     let obj1 = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -92,8 +80,6 @@ async fn objects() {
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
     assert_eq!(stats.num_objects(), 1);
-    assert_eq!(stats.objects_created(), 1);
-    assert_eq!(stats.objects_destroyed(), 0);
 
     // Destroy 1 object and create 2.
     obj1.destroy().await.unwrap();
@@ -103,8 +89,6 @@ async fn objects() {
     assert_eq!(stats.messages_sent(), 3);
     assert_eq!(stats.messages_received(), 3);
     assert_eq!(stats.num_objects(), 2);
-    assert_eq!(stats.objects_created(), 2);
-    assert_eq!(stats.objects_destroyed(), 1);
 
     // Destroy 2 objects.
     obj2.destroy().await.unwrap();
@@ -113,16 +97,12 @@ async fn objects() {
     assert_eq!(stats.messages_sent(), 2);
     assert_eq!(stats.messages_received(), 2);
     assert_eq!(stats.num_objects(), 0);
-    assert_eq!(stats.objects_created(), 0);
-    assert_eq!(stats.objects_destroyed(), 2);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_objects(), 0);
-    assert_eq!(stats.objects_created(), 0);
-    assert_eq!(stats.objects_destroyed(), 0);
 
     client.join().await;
     broker.join().await;
@@ -138,8 +118,6 @@ async fn services() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_services(), 0);
-    assert_eq!(stats.services_created(), 0);
-    assert_eq!(stats.services_destroyed(), 0);
 
     // Create 1 object with 3 services.
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -150,8 +128,6 @@ async fn services() {
     assert_eq!(stats.messages_sent(), 4);
     assert_eq!(stats.messages_received(), 4);
     assert_eq!(stats.num_services(), 3);
-    assert_eq!(stats.services_created(), 3);
-    assert_eq!(stats.services_destroyed(), 0);
 
     // Destroy 1 service.
     svc1.destroy().await.unwrap();
@@ -159,8 +135,6 @@ async fn services() {
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
     assert_eq!(stats.num_services(), 2);
-    assert_eq!(stats.services_created(), 0);
-    assert_eq!(stats.services_destroyed(), 1);
 
     // Destroy 2 services.
     svc2.destroy().await.unwrap();
@@ -169,16 +143,12 @@ async fn services() {
     assert_eq!(stats.messages_sent(), 2);
     assert_eq!(stats.messages_received(), 2);
     assert_eq!(stats.num_services(), 0);
-    assert_eq!(stats.services_created(), 0);
-    assert_eq!(stats.services_destroyed(), 2);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_services(), 0);
-    assert_eq!(stats.services_created(), 0);
-    assert_eq!(stats.services_destroyed(), 0);
 
     client.join().await;
     broker.join().await;
@@ -196,9 +166,6 @@ async fn function_calls() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 3);
     assert_eq!(stats.messages_received(), 3);
-    assert_eq!(stats.num_function_calls(), 0);
-    assert_eq!(stats.functions_called(), 0);
-    assert_eq!(stats.functions_replied(), 0);
 
     // Call 2 functions.
     let reply1 = proxy.call(0, &());
@@ -208,9 +175,6 @@ async fn function_calls() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 2);
     assert_eq!(stats.messages_received(), 2);
-    assert_eq!(stats.num_function_calls(), 2);
-    assert_eq!(stats.functions_called(), 2);
-    assert_eq!(stats.functions_replied(), 0);
 
     // Reply 1 function call.
     call1.promise.ok(&()).unwrap();
@@ -218,9 +182,6 @@ async fn function_calls() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
-    assert_eq!(stats.num_function_calls(), 1);
-    assert_eq!(stats.functions_called(), 0);
-    assert_eq!(stats.functions_replied(), 1);
 
     // Reply 1 function call.
     call2.promise.ok(&()).unwrap();
@@ -228,17 +189,11 @@ async fn function_calls() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
-    assert_eq!(stats.num_function_calls(), 0);
-    assert_eq!(stats.functions_called(), 0);
-    assert_eq!(stats.functions_replied(), 1);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
-    assert_eq!(stats.num_function_calls(), 0);
-    assert_eq!(stats.functions_called(), 0);
-    assert_eq!(stats.functions_replied(), 0);
 
     client.join().await;
     broker.join().await;
@@ -264,8 +219,6 @@ async fn events() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 5);
     assert_eq!(stats.messages_received(), 4);
-    assert_eq!(stats.events_received(), 0);
-    assert_eq!(stats.events_sent(), 0);
 
     // Emit 3 events on 0.
     svc.emit_event(0, &()).unwrap();
@@ -275,8 +228,6 @@ async fn events() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 7);
     assert_eq!(stats.messages_received(), 4);
-    assert_eq!(stats.events_received(), 3);
-    assert_eq!(stats.events_sent(), 6);
 
     // Emit 2 events on 0.
     // Emit 1 event on 1.
@@ -287,15 +238,11 @@ async fn events() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 5);
     assert_eq!(stats.messages_received(), 4);
-    assert_eq!(stats.events_received(), 3);
-    assert_eq!(stats.events_sent(), 4);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
-    assert_eq!(stats.events_received(), 0);
-    assert_eq!(stats.events_sent(), 0);
 
     client1.join().await;
     client2.join().await;
@@ -314,9 +261,6 @@ async fn channels() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_channels(), 0);
-    assert_eq!(stats.channels_created(), 0);
-    assert_eq!(stats.channels_closed(), 0);
-    assert_eq!(stats.items_sent(), 0);
 
     // Create 1 channel.
     let (mut sender, _receiver) = client1
@@ -327,9 +271,6 @@ async fn channels() {
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
     assert_eq!(stats.num_channels(), 1);
-    assert_eq!(stats.channels_created(), 1);
-    assert_eq!(stats.channels_closed(), 0);
-    assert_eq!(stats.items_sent(), 0);
 
     // Create 2 channels and close 1.
     sender.close().await.unwrap();
@@ -345,9 +286,6 @@ async fn channels() {
     assert_eq!(stats.messages_sent(), 3);
     assert_eq!(stats.messages_received(), 3);
     assert_eq!(stats.num_channels(), 2);
-    assert_eq!(stats.channels_created(), 2);
-    assert_eq!(stats.channels_closed(), 1);
-    assert_eq!(stats.items_sent(), 0);
 
     // Claim 1 and send 3 items.
     let mut receiver1 = receiver1.claim(16).await.unwrap();
@@ -360,9 +298,6 @@ async fn channels() {
     assert_eq!(stats.messages_sent(), 6);
     assert_eq!(stats.messages_received(), 5);
     assert_eq!(stats.num_channels(), 2);
-    assert_eq!(stats.channels_created(), 0);
-    assert_eq!(stats.channels_closed(), 0);
-    assert_eq!(stats.items_sent(), 3);
 
     // Close 2 channels.
     sender1.close().await.unwrap();
@@ -372,9 +307,6 @@ async fn channels() {
     assert_eq!(stats.messages_sent(), 4);
     assert_eq!(stats.messages_received(), 3);
     assert_eq!(stats.num_channels(), 0);
-    assert_eq!(stats.channels_created(), 0);
-    assert_eq!(stats.channels_closed(), 2);
-    assert_eq!(stats.items_sent(), 0);
 
     client1.join().await;
     client2.join().await;
@@ -391,8 +323,6 @@ async fn create_and_destroy_bus_listeners() {
     assert_eq!(stats.messages_sent(), 0);
     assert_eq!(stats.messages_received(), 0);
     assert_eq!(stats.num_bus_listeners(), 0);
-    assert_eq!(stats.bus_listeners_created(), 0);
-    assert_eq!(stats.bus_listeners_destroyed(), 0);
 
     // Create 2 bus listeners.
     let mut bus_listener1 = client.create_bus_listener().await.unwrap();
@@ -401,8 +331,6 @@ async fn create_and_destroy_bus_listeners() {
     assert_eq!(stats.messages_sent(), 2);
     assert_eq!(stats.messages_received(), 2);
     assert_eq!(stats.num_bus_listeners(), 2);
-    assert_eq!(stats.bus_listeners_created(), 2);
-    assert_eq!(stats.bus_listeners_destroyed(), 0);
 
     // Destroy 1 bus listener.
     bus_listener1.destroy().await.unwrap();
@@ -410,8 +338,6 @@ async fn create_and_destroy_bus_listeners() {
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
     assert_eq!(stats.num_bus_listeners(), 1);
-    assert_eq!(stats.bus_listeners_created(), 0);
-    assert_eq!(stats.bus_listeners_destroyed(), 1);
 
     // Destroy 1 bus listener.
     bus_listener2.destroy().await.unwrap();
@@ -419,176 +345,7 @@ async fn create_and_destroy_bus_listeners() {
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
     assert_eq!(stats.num_bus_listeners(), 0);
-    assert_eq!(stats.bus_listeners_created(), 0);
-    assert_eq!(stats.bus_listeners_destroyed(), 1);
 
     client.join().await;
-    broker.join().await;
-}
-
-#[tokio::test]
-async fn start_and_stop_bus_listeners() {
-    let mut broker = TestBroker::new();
-    let mut client = broker.add_client().await;
-
-    let mut bus_listener1 = client.create_bus_listener().await.unwrap();
-    let mut bus_listener2 = client.create_bus_listener().await.unwrap();
-    broker.take_statistics().await.unwrap();
-
-    // Initial state.
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 0);
-    assert_eq!(stats.messages_received(), 0);
-    assert_eq!(stats.num_bus_listeners_active(), 0);
-    assert_eq!(stats.bus_listeners_started(), 0);
-    assert_eq!(stats.bus_listeners_stopped(), 0);
-
-    // Start 2 bus listeners.
-    bus_listener1.start(BusListenerScope::All).await.unwrap();
-    bus_listener2.start(BusListenerScope::All).await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 4);
-    assert_eq!(stats.messages_received(), 2);
-    assert_eq!(stats.num_bus_listeners_active(), 2);
-    assert_eq!(stats.bus_listeners_started(), 2);
-    assert_eq!(stats.bus_listeners_stopped(), 0);
-
-    // Stop 1 bus listener.
-    bus_listener1.stop().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 1);
-    assert_eq!(stats.messages_received(), 1);
-    assert_eq!(stats.num_bus_listeners_active(), 1);
-    assert_eq!(stats.bus_listeners_started(), 0);
-    assert_eq!(stats.bus_listeners_stopped(), 1);
-
-    // Stop 1 bus listener.
-    bus_listener2.stop().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 1);
-    assert_eq!(stats.messages_received(), 1);
-    assert_eq!(stats.num_bus_listeners_active(), 0);
-    assert_eq!(stats.bus_listeners_started(), 0);
-    assert_eq!(stats.bus_listeners_stopped(), 1);
-
-    client.join().await;
-    broker.join().await;
-}
-
-#[tokio::test]
-async fn bus_listener_filters() {
-    let mut broker = TestBroker::new();
-    let mut client = broker.add_client().await;
-    let uuid = ObjectUuid::new_v4();
-
-    let mut bus_listener = client.create_bus_listener().await.unwrap();
-    broker.take_statistics().await.unwrap();
-
-    // Initial state.
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 0);
-    assert_eq!(stats.messages_received(), 0);
-    assert_eq!(stats.bus_listener_filters_added(), 0);
-    assert_eq!(stats.bus_listener_filters_removed(), 0);
-    assert_eq!(stats.bus_listener_filters_cleared(), 0);
-
-    // Add 3 filters.
-    bus_listener
-        .add_filter(BusListenerFilter::any_object())
-        .unwrap();
-    bus_listener
-        .add_filter(BusListenerFilter::any_object_any_service())
-        .unwrap();
-    bus_listener
-        .add_filter(BusListenerFilter::object(uuid))
-        .unwrap();
-    client.sync_broker().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 1);
-    assert_eq!(stats.messages_received(), 4);
-    assert_eq!(stats.bus_listener_filters_added(), 3);
-    assert_eq!(stats.bus_listener_filters_removed(), 0);
-    assert_eq!(stats.bus_listener_filters_cleared(), 0);
-
-    // Remove 2 filters.
-    bus_listener
-        .remove_filter(BusListenerFilter::any_object())
-        .unwrap();
-    bus_listener
-        .remove_filter(BusListenerFilter::any_object_any_service())
-        .unwrap();
-    client.sync_broker().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 1);
-    assert_eq!(stats.messages_received(), 3);
-    assert_eq!(stats.bus_listener_filters_added(), 0);
-    assert_eq!(stats.bus_listener_filters_removed(), 2);
-    assert_eq!(stats.bus_listener_filters_cleared(), 0);
-
-    // Clear filters.
-    bus_listener.clear_filters().unwrap();
-    client.sync_broker().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 1);
-    assert_eq!(stats.messages_received(), 2);
-    assert_eq!(stats.bus_listener_filters_added(), 0);
-    assert_eq!(stats.bus_listener_filters_removed(), 0);
-    assert_eq!(stats.bus_listener_filters_cleared(), 1);
-
-    client.join().await;
-    broker.join().await;
-}
-
-#[tokio::test]
-async fn bus_events() {
-    let mut broker = TestBroker::new();
-    let mut client1 = broker.add_client().await;
-    let mut client2 = broker.add_client().await;
-
-    let mut bus_listener1 = client1.create_bus_listener().await.unwrap();
-    let mut bus_listener2 = client2.create_bus_listener().await.unwrap();
-    let mut bus_listener3 = client2.create_bus_listener().await.unwrap();
-    broker.take_statistics().await.unwrap();
-
-    // Initial state.
-    let obj1 = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let obj2 = client1.create_object(ObjectUuid::new_v4()).await.unwrap();
-    bus_listener1
-        .add_filter(BusListenerFilter::any_object())
-        .unwrap();
-    bus_listener1.start(BusListenerScope::All).await.unwrap();
-    bus_listener2
-        .add_filter(BusListenerFilter::object(obj2.id().uuid))
-        .unwrap();
-    bus_listener2.start(BusListenerScope::New).await.unwrap();
-    bus_listener3
-        .add_filter(BusListenerFilter::object(obj2.id().uuid))
-        .unwrap();
-    bus_listener3.start(BusListenerScope::New).await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 8);
-    assert_eq!(stats.messages_received(), 8);
-    assert_eq!(stats.bus_events_sent(), 2);
-
-    // Destroy obj1.
-    obj1.destroy().await.unwrap();
-    client1.sync_broker().await.unwrap();
-    client2.sync_broker().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 4);
-    assert_eq!(stats.messages_received(), 3);
-    assert_eq!(stats.bus_events_sent(), 1);
-
-    // Destroy obj2.
-    obj2.destroy().await.unwrap();
-    client1.sync_broker().await.unwrap();
-    client2.sync_broker().await.unwrap();
-    let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 5);
-    assert_eq!(stats.messages_received(), 3);
-    assert_eq!(stats.bus_events_sent(), 2);
-
-    client1.join().await;
-    client2.join().await;
     broker.join().await;
 }

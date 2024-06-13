@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Statistics` no longer contains any `pub` fields. Instead, getters have been added for the
   individual statistics. The `non_exhaustive` attribute has also been removed.
 - `Statistics` no longer implements `Eq` and `PartialEq`.
+- `Statistics` has overall been reduced to contain far fewer fields. It now only counts the number
+  of objects, services, channels and bus listeners. Additionally, the number of sent and received
+  messages are tracked.
 
 ## [0.6.0] - 2024-06-07
 

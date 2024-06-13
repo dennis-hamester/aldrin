@@ -200,7 +200,6 @@ impl Broker {
                 #[cfg(feature = "statistics")]
                 {
                     self.statistics.num_connections += 1;
-                    self.statistics.connections_added += 1;
                 }
             }
 
@@ -362,7 +361,6 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_connections -= 1;
-            self.statistics.connections_shut_down += 1;
         }
     }
 
@@ -470,7 +468,6 @@ impl Broker {
                 #[cfg(feature = "statistics")]
                 {
                     self.statistics.num_objects += 1;
-                    self.statistics.objects_created += 1;
                 }
 
                 Ok(())
@@ -592,7 +589,6 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_services += 1;
-            self.statistics.services_created += 1;
         }
 
         Ok(())
@@ -706,12 +702,6 @@ impl Broker {
             state.push_remove_conn(callee_id.clone(), false);
         }
 
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.num_function_calls += 1;
-            self.statistics.functions_called += 1;
-        }
-
         Ok(())
     }
 
@@ -728,12 +718,6 @@ impl Broker {
         let obj = self.objs.get(&call.callee_obj).expect("inconsistent state");
         if obj.conn_id() != id {
             return;
-        }
-
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.num_function_calls -= 1;
-            self.statistics.functions_replied += 1;
         }
 
         let call = self.function_calls.remove(req.serial).unwrap();
@@ -871,23 +855,11 @@ impl Broker {
         }
 
         for (conn_id, conn) in self.conns.iter() {
-            if conn.is_subscribed_to(req.service_cookie, req.event) {
-                // False positive: Clippy doesn't consider the #[cfg(...)] below.
-                #[allow(clippy::collapsible_if)]
-                if send!(self, conn, req.clone()).is_err() {
-                    state.push_remove_conn(conn_id.clone(), false);
-                }
-
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.events_sent += 1;
-                }
+            if conn.is_subscribed_to(req.service_cookie, req.event)
+                && send!(self, conn, req.clone()).is_err()
+            {
+                state.push_remove_conn(conn_id.clone(), false);
             }
-        }
-
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.events_received += 1;
         }
     }
 
@@ -954,7 +926,6 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_channels += 1;
-            self.statistics.channels_created += 1;
         }
 
         Ok(())
@@ -1128,11 +1099,6 @@ impl Broker {
             Ok(res) => res,
 
             Err(e) => {
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.items_dropped += 1;
-                }
-
                 match e {
                     SendItemError::ReceiverUnclaimed => {
                         // The order matters here. The sender needs to get a notification that the
@@ -1168,17 +1134,7 @@ impl Broker {
             },
         );
 
-        if res.is_ok() {
-            #[cfg(feature = "statistics")]
-            {
-                self.statistics.items_sent += 1;
-            }
-        } else {
-            #[cfg(feature = "statistics")]
-            {
-                self.statistics.items_dropped += 1;
-            }
-
+        if res.is_err() {
             state.push_remove_conn(receiver_id.clone(), false);
         }
 
@@ -1222,7 +1178,6 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.bus_listeners_created += 1;
             self.statistics.num_bus_listeners += 1;
         }
 
@@ -1282,11 +1237,6 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.add_filter(req.filter);
-
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.bus_listener_filters_added += 1;
-                }
             }
         }
     }
@@ -1295,11 +1245,6 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.remove_filter(req.filter);
-
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.bus_listener_filters_removed += 1;
-                }
             }
         }
     }
@@ -1308,11 +1253,6 @@ impl Broker {
         if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
             if bus_listener.conn_id() == id {
                 bus_listener.clear_filters();
-
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.bus_listener_filters_cleared += 1;
-                }
             }
         }
     }
@@ -1355,12 +1295,6 @@ impl Broker {
             );
         }
 
-        #[cfg(feature = "statistics")]
-        {
-            self.statistics.num_bus_listeners_active += 1;
-            self.statistics.bus_listeners_started += 1;
-        }
-
         send!(
             self,
             conn,
@@ -1383,11 +1317,6 @@ impl Broker {
                             event: BusEvent::ObjectCreated(object),
                         },
                     )?;
-
-                    #[cfg(feature = "statistics")]
-                    {
-                        self.statistics.bus_events_sent += 1;
-                    }
                 }
             }
 
@@ -1403,11 +1332,6 @@ impl Broker {
                             event: BusEvent::ServiceCreated(service),
                         },
                     )?;
-
-                    #[cfg(feature = "statistics")]
-                    {
-                        self.statistics.bus_events_sent += 1;
-                    }
                 }
             }
 
@@ -1449,12 +1373,6 @@ impl Broker {
         }
 
         if bus_listener.stop() {
-            #[cfg(feature = "statistics")]
-            {
-                self.statistics.num_bus_listeners_active -= 1;
-                self.statistics.bus_listeners_stopped += 1;
-            }
-
             send!(
                 self,
                 conn,
@@ -1523,7 +1441,6 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_objects -= 1;
-            self.statistics.objects_destroyed += 1;
         }
     }
 
@@ -1573,7 +1490,6 @@ impl Broker {
         #[cfg(feature = "statistics")]
         {
             self.statistics.num_services -= 1;
-            self.statistics.services_destroyed += 1;
         }
     }
 
@@ -1650,7 +1566,6 @@ impl Broker {
             #[cfg(feature = "statistics")]
             {
                 self.statistics.num_channels -= 1;
-                self.statistics.channels_closed += 1;
             }
         }
     }
@@ -1666,13 +1581,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.bus_listeners_destroyed += 1;
             self.statistics.num_bus_listeners -= 1;
-
-            if bus_listener.is_started() {
-                self.statistics.num_bus_listeners_active -= 1;
-                self.statistics.bus_listeners_stopped += 1;
-            }
         }
     }
 
@@ -1705,12 +1614,7 @@ impl Broker {
                 },
             );
 
-            if res.is_ok() {
-                #[cfg(feature = "statistics")]
-                {
-                    self.statistics.bus_events_sent += 1;
-                }
-            } else {
+            if res.is_err() {
                 remove_conns.insert(conn_id);
             }
         }
