@@ -410,13 +410,8 @@ where
         &mut self,
         msg: CreateObjectReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.create_object.remove(msg.serial) {
-            Some(req) => req,
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::CreateObjectReply(msg),
-                ))
-            }
+        let Some(req) = self.create_object.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         let reply = match msg.result {
@@ -424,16 +419,17 @@ where
                 ObjectId::new(req.uuid, cookie),
                 self.handle.clone(),
             )),
+
             CreateObjectResult::DuplicateObject => Err(Error::DuplicateObject),
         };
 
-        req.reply.send(reply).ok();
+        let _ = req.reply.send(reply);
         Ok(())
     }
 
     fn msg_destroy_object_reply(&mut self, msg: DestroyObjectReply) {
         if let Some(send) = self.destroy_object.remove(msg.serial) {
-            send.send(msg.result).ok();
+            let _ = send.send(msg.result);
         }
     }
 
@@ -441,13 +437,8 @@ where
         &mut self,
         msg: CreateServiceReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.create_service.remove(msg.serial) {
-            Some(req) => req,
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::CreateServiceReply(msg),
-                ))
-            }
+        let Some(req) = self.create_service.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         let reply = match msg.result {
@@ -455,6 +446,7 @@ where
                 let (send, function_calls) = mpsc::unbounded();
                 let dup = self.services.insert(cookie, send);
                 debug_assert!(dup.is_none());
+
                 Ok(Service::new_impl(
                     ServiceId::new(req.object_id, req.service_uuid, cookie),
                     req.version,
@@ -462,19 +454,19 @@ where
                     function_calls,
                 ))
             }
+
             CreateServiceResult::DuplicateService => Err(Error::DuplicateService),
             CreateServiceResult::InvalidObject => Err(Error::InvalidObject),
             CreateServiceResult::ForeignObject => unreachable!(),
         };
 
-        req.reply.send(reply).ok();
+        let _ = req.reply.send(reply);
         Ok(())
     }
 
     fn msg_destroy_service_reply(&mut self, msg: DestroyServiceReply) {
-        let req = match self.destroy_service.remove(msg.serial) {
-            Some(req) => req,
-            None => return,
+        let Some(req) = self.destroy_service.remove(msg.serial) else {
+            return;
         };
 
         let reply = match msg.result {
@@ -484,11 +476,12 @@ where
                 self.broker_subscriptions.remove(&req.id.cookie);
                 Ok(())
             }
+
             DestroyServiceResult::InvalidService => Err(Error::InvalidService),
             DestroyServiceResult::ForeignObject => unreachable!(),
         };
 
-        req.reply.send(reply).ok();
+        let _ = req.reply.send(reply);
     }
 
     async fn msg_call_function(&mut self, msg: CallFunction) -> Result<(), RunError<T::Error>> {
@@ -535,15 +528,16 @@ where
     }
 
     fn msg_subscribe_event_reply(&mut self, msg: SubscribeEventReply) {
-        let (listener_id, service_cookie, id, rep_send) =
-            match self.subscribe_event.remove(msg.serial) {
-                Some(req) => req,
-                None => return,
-            };
+        let Some((listener_id, service_cookie, id, rep_send)) =
+            self.subscribe_event.remove(msg.serial)
+        else {
+            return;
+        };
 
         // || would short-circuit and changing the order would move msg.result out.
         let mut err = msg.result != SubscribeEventResult::Ok;
         err |= rep_send.send(msg.result).is_err();
+
         if err {
             self.subscriptions
                 .entry(service_cookie)
@@ -555,9 +549,8 @@ where
     }
 
     fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
-        let mut subs = match self.broker_subscriptions.entry(msg.service_cookie) {
-            Entry::Occupied(subs) => subs,
-            Entry::Vacant(_) => return,
+        let Entry::Occupied(mut subs) = self.broker_subscriptions.entry(msg.service_cookie) else {
+            return;
         };
 
         subs.get_mut().remove(&msg.event);
@@ -567,30 +560,27 @@ where
     }
 
     fn msg_emit_event(&mut self, msg: EmitEvent) {
-        let senders = match self
+        let Some(senders) = self
             .subscriptions
             .get_mut(&msg.service_cookie)
             .and_then(|s| s.get_mut(&msg.event))
-        {
-            Some(senders) => senders,
-            None => return,
+        else {
+            return;
         };
 
         for sender in senders.values_mut() {
             // Should we close the channel in case of send errors?
-            sender
-                .unbounded_send(EventListenerRequest::EmitEvent(
-                    msg.service_cookie,
-                    msg.event,
-                    msg.value.clone(),
-                ))
-                .ok();
+            let _ = sender.unbounded_send(EventListenerRequest::EmitEvent(
+                msg.service_cookie,
+                msg.event,
+                msg.value.clone(),
+            ));
         }
     }
 
     fn msg_query_service_version_reply(&mut self, msg: QueryServiceVersionReply) {
         if let Some(send) = self.query_service_version.remove(msg.serial) {
-            send.send(msg.result).ok();
+            let _ = send.send(msg.result);
         }
     }
 
@@ -605,7 +595,7 @@ where
                 let receiver = UnclaimedReceiverInner::new(msg.cookie, self.handle.clone());
                 let dup = self.senders.insert(msg.cookie, SenderState::Pending(send));
                 debug_assert!(dup.is_none());
-                reply.send((sender, receiver)).ok();
+                let _ = reply.send((sender, receiver));
                 Ok(())
             }
 
@@ -618,13 +608,11 @@ where
                     .receivers
                     .insert(msg.cookie, ReceiverState::Pending(send));
                 debug_assert!(dup.is_none());
-                req.reply.send((sender, receiver)).ok();
+                let _ = req.reply.send((sender, receiver));
                 Ok(())
             }
 
-            None => Err(RunError::UnexpectedMessageReceived(
-                Message::CreateChannelReply(msg),
-            )),
+            None => Err(RunError::UnexpectedMessageReceived(msg.into())),
         }
     }
 
@@ -632,13 +620,8 @@ where
         &mut self,
         msg: CloseChannelEndReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.close_channel_end.remove(msg.serial) {
-            Some(req) => req,
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::CloseChannelEndReply(msg),
-                ))
-            }
+        let Some(req) = self.close_channel_end.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         if req.claimed {
@@ -657,12 +640,13 @@ where
 
         let res = match msg.result {
             CloseChannelEndResult::Ok => Ok(()),
+
             CloseChannelEndResult::InvalidChannel | CloseChannelEndResult::ForeignChannel => {
                 Err(Error::InvalidChannel)
             }
         };
 
-        req.reply.send(res).ok();
+        let _ = req.reply.send(res);
         Ok(())
     }
 
@@ -676,9 +660,10 @@ where
 
                 match receiver {
                     Some(ReceiverState::Pending(_)) | Some(ReceiverState::Established(_)) => Ok(()),
-                    Some(ReceiverState::SenderClosed) | None => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndClosed(msg)),
-                    ),
+
+                    Some(ReceiverState::SenderClosed) | None => {
+                        Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    }
                 }
             }
 
@@ -690,9 +675,10 @@ where
 
                 match sender {
                     Some(SenderState::Pending(_)) | Some(SenderState::Established(_)) => Ok(()),
-                    Some(SenderState::ReceiverClosed) | None => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndClosed(msg)),
-                    ),
+
+                    Some(SenderState::ReceiverClosed) | None => {
+                        Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    }
                 }
             }
         }
@@ -702,13 +688,8 @@ where
         &mut self,
         msg: ClaimChannelEndReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.claim_channel_end.remove(msg.serial) {
-            Some(req) => req,
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::ClaimChannelEndReply(msg),
-                ))
-            }
+        let Some(req) = self.claim_channel_end.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         match req {
@@ -720,25 +701,21 @@ where
                         .insert(req.cookie, SenderState::Established(send));
                     debug_assert!(dup.is_none());
                     let sender = SenderInner::new(req.cookie, self.handle.clone(), recv, capacity);
-                    req.reply.send(Ok(sender)).ok();
+                    let _ = req.reply.send(Ok(sender));
                 }
 
                 ClaimChannelEndResult::ReceiverClaimed => {
-                    return Err(RunError::UnexpectedMessageReceived(
-                        Message::ClaimChannelEndReply(msg),
-                    ))
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()))
                 }
 
                 ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
-                    req.reply.send(Err(Error::InvalidChannel)).ok();
+                    let _ = req.reply.send(Err(Error::InvalidChannel));
                 }
             },
 
             ClaimChannelEndData::Receiver(req) => match msg.result {
                 ClaimChannelEndResult::SenderClaimed(_) => {
-                    return Err(RunError::UnexpectedMessageReceived(
-                        Message::ClaimChannelEndReply(msg),
-                    ))
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()))
                 }
 
                 ClaimChannelEndResult::ReceiverClaimed => {
@@ -749,11 +726,11 @@ where
                     debug_assert!(dup.is_none());
                     let receiver =
                         ReceiverInner::new(req.cookie, self.handle.clone(), recv, req.capacity);
-                    req.reply.send(Ok(receiver)).ok();
+                    let _ = req.reply.send(Ok(receiver));
                 }
 
                 ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
-                    req.reply.send(Err(Error::InvalidChannel)).ok();
+                    let _ = req.reply.send(Err(Error::InvalidChannel));
                 }
             },
         }
@@ -767,50 +744,40 @@ where
     ) -> Result<(), RunError<T::Error>> {
         match msg.end {
             ChannelEndWithCapacity::Sender => {
-                let receiver = match self.receivers.get_mut(&msg.cookie) {
-                    Some(receiver) => receiver,
-                    None => {
-                        return Err(RunError::UnexpectedMessageReceived(
-                            Message::ChannelEndClaimed(msg),
-                        ))
-                    }
+                let Some(receiver) = self.receivers.get_mut(&msg.cookie) else {
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()));
                 };
 
                 let (send, recv) = mpsc::unbounded();
 
                 match mem::replace(receiver, ReceiverState::Established(send)) {
                     ReceiverState::Pending(send) => {
-                        send.send(recv).ok();
+                        let _ = send.send(recv);
                         Ok(())
                     }
 
-                    ReceiverState::Established(_) | ReceiverState::SenderClosed => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
-                    ),
+                    ReceiverState::Established(_) | ReceiverState::SenderClosed => {
+                        Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    }
                 }
             }
 
             ChannelEndWithCapacity::Receiver(capacity) => {
-                let sender = match self.senders.get_mut(&msg.cookie) {
-                    Some(sender) => sender,
-                    None => {
-                        return Err(RunError::UnexpectedMessageReceived(
-                            Message::ChannelEndClaimed(msg),
-                        ))
-                    }
+                let Some(sender) = self.senders.get_mut(&msg.cookie) else {
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()));
                 };
 
                 let (send, recv) = mpsc::unbounded();
 
                 match mem::replace(sender, SenderState::Established(send)) {
                     SenderState::Pending(send) => {
-                        send.send((capacity, recv)).ok();
+                        let _ = send.send((capacity, recv));
                         Ok(())
                     }
 
-                    SenderState::Established(_) | SenderState::ReceiverClosed => Err(
-                        RunError::UnexpectedMessageReceived(Message::ChannelEndClaimed(msg)),
-                    ),
+                    SenderState::Established(_) | SenderState::ReceiverClosed => {
+                        Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    }
                 }
             }
         }
@@ -818,33 +785,28 @@ where
 
     fn msg_item_received(&self, msg: ItemReceived) -> Result<(), RunError<T::Error>> {
         if let Some(ReceiverState::Established(send)) = self.receivers.get(&msg.cookie) {
-            send.unbounded_send(msg.value).ok();
+            let _ = send.unbounded_send(msg.value);
             Ok(())
         } else {
-            Err(RunError::UnexpectedMessageReceived(Message::ItemReceived(
-                msg,
-            )))
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
     }
 
     fn msg_add_channel_capacity(&self, msg: AddChannelCapacity) -> Result<(), RunError<T::Error>> {
         if let Some(SenderState::Established(send)) = self.senders.get(&msg.cookie) {
-            send.unbounded_send(msg.capacity).ok();
+            let _ = send.unbounded_send(msg.capacity);
             Ok(())
         } else {
-            Err(RunError::UnexpectedMessageReceived(
-                Message::AddChannelCapacity(msg),
-            ))
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
     }
 
     fn msg_sync_reply(&mut self, msg: SyncReply) -> Result<(), RunError<T::Error>> {
-        let req = match self.sync.remove(msg.serial) {
-            Some(req) => req,
-            None => return Err(RunError::UnexpectedMessageReceived(Message::SyncReply(msg))),
+        let Some(req) = self.sync.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
-        req.send(()).ok();
+        let _ = req.send(());
         Ok(())
     }
 
@@ -858,9 +820,8 @@ where
             for (listener_id, sender) in events_ids {
                 if dups.insert(listener_id) {
                     // Should we close the channel in case of send errors?
-                    sender
-                        .unbounded_send(EventListenerRequest::ServiceDestroyed(msg.service_cookie))
-                        .ok();
+                    let _ = sender
+                        .unbounded_send(EventListenerRequest::ServiceDestroyed(msg.service_cookie));
                 }
             }
         }
@@ -870,14 +831,8 @@ where
         &mut self,
         msg: CreateBusListenerReply,
     ) -> Result<(), RunError<T::Error>> {
-        let data = match self.create_bus_listener.remove(msg.serial) {
-            Some(data) => data,
-
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::CreateBusListenerReply(msg),
-                ))
-            }
+        let Some(data) = self.create_bus_listener.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         let (send, recv) = mpsc::unbounded();
@@ -885,12 +840,12 @@ where
         match data {
             CreateBusListenerData::BusListener(reply) => {
                 let listener = BusListener::new_impl(msg.cookie, self.handle.clone(), recv);
-                reply.send(listener).ok();
+                let _ = reply.send(listener);
             }
 
             CreateBusListenerData::LifetimeListener(reply) => {
                 let listener = LifetimeListener::new(msg.cookie, self.handle.clone(), recv);
-                reply.send(listener).ok();
+                let _ = reply.send(listener);
             }
         }
 
@@ -905,14 +860,8 @@ where
         &mut self,
         msg: DestroyBusListenerReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.destroy_bus_listener.remove(msg.serial) {
-            Some(reply) => reply,
-
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::DestroyBusListenerReply(msg),
-                ))
-            }
+        let Some(req) = self.destroy_bus_listener.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         if msg.result == DestroyBusListenerResult::Ok {
@@ -920,7 +869,7 @@ where
             debug_assert!(contained.is_some());
         }
 
-        req.reply.send(msg.result).ok();
+        let _ = req.reply.send(msg.result);
 
         Ok(())
     }
@@ -929,33 +878,23 @@ where
         &mut self,
         msg: StartBusListenerReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.start_bus_listener.remove(msg.serial) {
-            Some(reply) => reply,
-
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::StartBusListenerReply(msg),
-                ))
-            }
+        let Some(req) = self.start_bus_listener.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         if msg.result == StartBusListenerResult::Ok {
             let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::StartBusListenerReply(msg),
-                ));
+                return Err(RunError::UnexpectedMessageReceived(msg.into()));
             };
 
             if bus_listener.start(req.scope) {
-                req.reply.send(msg.result).ok();
+                let _ = req.reply.send(msg.result);
                 Ok(())
             } else {
-                Err(RunError::UnexpectedMessageReceived(
-                    Message::StartBusListenerReply(msg),
-                ))
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
             }
         } else {
-            req.reply.send(msg.result).ok();
+            let _ = req.reply.send(msg.result);
             Ok(())
         }
     }
@@ -964,33 +903,23 @@ where
         &mut self,
         msg: StopBusListenerReply,
     ) -> Result<(), RunError<T::Error>> {
-        let req = match self.stop_bus_listener.remove(msg.serial) {
-            Some(reply) => reply,
-
-            None => {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::StopBusListenerReply(msg),
-                ))
-            }
+        let Some(req) = self.stop_bus_listener.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
         if msg.result == StopBusListenerResult::Ok {
             let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) else {
-                return Err(RunError::UnexpectedMessageReceived(
-                    Message::StopBusListenerReply(msg),
-                ));
+                return Err(RunError::UnexpectedMessageReceived(msg.into()));
             };
 
             if bus_listener.stop() {
-                req.reply.send(msg.result).ok();
+                let _ = req.reply.send(msg.result);
                 Ok(())
             } else {
-                Err(RunError::UnexpectedMessageReceived(
-                    Message::StopBusListenerReply(msg),
-                ))
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
             }
         } else {
-            req.reply.send(msg.result).ok();
+            let _ = req.reply.send(msg.result);
             Ok(())
         }
     }
@@ -998,17 +927,13 @@ where
     fn msg_emit_bus_event(&self, msg: EmitBusEvent) -> Result<(), RunError<T::Error>> {
         if let Some(cookie) = msg.cookie {
             let Some(bus_listener) = self.bus_listeners.get(&cookie) else {
-                return Err(RunError::UnexpectedMessageReceived(Message::EmitBusEvent(
-                    msg,
-                )));
+                return Err(RunError::UnexpectedMessageReceived(msg.into()));
             };
 
             if bus_listener.emit_current(msg.event) {
                 Ok(())
             } else {
-                Err(RunError::UnexpectedMessageReceived(Message::EmitBusEvent(
-                    msg,
-                )))
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
             }
         } else {
             for bus_listener in self.bus_listeners.values() {
@@ -1027,14 +952,10 @@ where
             if bus_listener.current_finished() {
                 Ok(())
             } else {
-                Err(RunError::UnexpectedMessageReceived(
-                    Message::BusListenerCurrentFinished(msg),
-                ))
+                Err(RunError::UnexpectedMessageReceived(msg.into()))
             }
         } else {
-            Err(RunError::UnexpectedMessageReceived(
-                Message::BusListenerCurrentFinished(msg),
-            ))
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
     }
 
@@ -1117,6 +1038,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let uuid = req.uuid;
         let serial = self.create_object.insert(req);
+
         self.t
             .send_and_flush(CreateObject { serial, uuid })
             .await
@@ -1128,6 +1050,7 @@ where
         req: DestroyObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_object.insert(req.reply);
+
         self.t
             .send_and_flush(DestroyObject {
                 serial,
@@ -1145,6 +1068,7 @@ where
         let uuid = req.service_uuid;
         let version = req.version;
         let serial = self.create_service.insert(req);
+
         self.t
             .send_and_flush(CreateService {
                 serial,
@@ -1162,6 +1086,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.id.cookie;
         let serial = self.destroy_service.insert(req);
+
         self.t
             .send_and_flush(DestroyService { serial, cookie })
             .await
@@ -1173,6 +1098,7 @@ where
         req: CallFunctionRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(req.reply);
+
         self.t
             .send_and_flush(CallFunction {
                 serial,
@@ -1209,6 +1135,7 @@ where
             .or_default()
             .entry(req.id)
             .or_default();
+
         let send_req = subs.is_empty();
         let duplicate = subs.insert(req.listener_id, req.sender).is_some();
 
@@ -1241,14 +1168,12 @@ where
         &mut self,
         req: UnsubscribeEventRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let mut subs = match self.subscriptions.entry(req.service_cookie) {
-            Entry::Occupied(subs) => subs,
-            Entry::Vacant(_) => return Ok(()),
+        let Entry::Occupied(mut subs) = self.subscriptions.entry(req.service_cookie) else {
+            return Ok(());
         };
 
-        let mut ids = match subs.get_mut().entry(req.id) {
-            Entry::Occupied(ids) => ids,
-            Entry::Vacant(_) => return Ok(()),
+        let Entry::Occupied(mut ids) = subs.get_mut().entry(req.id) else {
+            return Ok(());
         };
 
         if ids.get_mut().remove(&req.listener_id).is_none() {
@@ -1289,6 +1214,7 @@ where
         req: QueryServiceVersionRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.query_service_version.insert(req.reply);
+
         self.t
             .send_and_flush(QueryServiceVersion {
                 serial,
@@ -1303,6 +1229,7 @@ where
         req: CreateClaimedSenderRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_channel.insert(CreateChannelData::Sender(req));
+
         self.t
             .send_and_flush(CreateChannel {
                 serial,
@@ -1318,6 +1245,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let capacity = req.capacity.get();
         let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
+
         self.t
             .send_and_flush(CreateChannel {
                 serial,
@@ -1408,11 +1336,12 @@ where
     }
 
     fn req_sync_client(&self, req: SyncClientRequest) {
-        req.send(()).ok();
+        let _ = req.send(());
     }
 
     async fn req_sync_broker(&mut self, req: SyncBrokerRequest) -> Result<(), RunError<T::Error>> {
         let serial = self.sync.insert(req);
+
         self.t
             .send_and_flush(Sync { serial })
             .await
@@ -1456,6 +1385,7 @@ where
 
         self.t.send_and_flush(req).await?;
         bus_listener.add_filter(req.filter);
+
         Ok(())
     }
 
@@ -1469,6 +1399,7 @@ where
 
         self.t.send_and_flush(req).await?;
         bus_listener.remove_filter(req.filter);
+
         Ok(())
     }
 
@@ -1482,6 +1413,7 @@ where
 
         self.t.send_and_flush(req).await?;
         bus_listener.clear_filters();
+
         Ok(())
     }
 
