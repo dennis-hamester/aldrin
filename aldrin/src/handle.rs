@@ -94,7 +94,7 @@ impl Handle {
     /// will not treat that as an error. This is different than most other functions, which would
     /// return [`Error::Shutdown`] instead.
     pub fn shutdown(&self) {
-        self.send.unbounded_send(HandleRequest::Shutdown).ok();
+        let _ = self.send.unbounded_send(HandleRequest::Shutdown);
     }
 
     /// Creates a new object on the bus.
@@ -160,12 +160,13 @@ impl Handle {
 
     pub(crate) fn destroy_object_now(&self, cookie: ObjectCookie) {
         let (reply, _) = oneshot::channel();
-        self.send
+
+        let _ = self
+            .send
             .unbounded_send(HandleRequest::DestroyObject(DestroyObjectRequest {
                 cookie,
                 reply,
-            }))
-            .ok();
+            }));
     }
 
     pub(crate) async fn create_service(
@@ -201,12 +202,13 @@ impl Handle {
 
     pub(crate) fn destroy_service_now(&self, id: ServiceId) {
         let (reply, _) = oneshot::channel();
-        self.send
+
+        let _ = self
+            .send
             .unbounded_send(HandleRequest::DestroyService(DestroyServiceRequest {
                 id,
                 reply,
-            }))
-            .ok();
+            }));
     }
 
     pub(crate) fn call<Args>(&self, id: ServiceId, function: u32, args: &Args) -> Reply
@@ -614,11 +616,10 @@ impl Handle {
 
     pub(crate) fn destroy_bus_listener_now(&self, cookie: BusListenerCookie) {
         let (reply, _) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::DestroyBusListener(
-                DestroyBusListenerRequest { cookie, reply },
-            ))
-            .ok();
+
+        let _ = self.send.unbounded_send(HandleRequest::DestroyBusListener(
+            DestroyBusListenerRequest { cookie, reply },
+        ));
     }
 
     pub(crate) fn add_bus_listener_filter(
@@ -934,7 +935,8 @@ impl Handle {
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        self.send.unbounded_send(HandleRequest::HandleCloned).ok();
+        let _ = self.send.unbounded_send(HandleRequest::HandleCloned);
+
         Handle {
             send: self.send.clone(),
         }
@@ -943,7 +945,7 @@ impl Clone for Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        self.send.unbounded_send(HandleRequest::HandleDropped).ok();
+        let _ = self.send.unbounded_send(HandleRequest::HandleDropped);
     }
 }
 

@@ -307,9 +307,7 @@ impl UnclaimedSenderInner {
 impl Drop for UnclaimedSenderInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client
-                .close_channel_end(self.cookie, ChannelEnd::Sender, false)
-                .ok();
+            let _ = client.close_channel_end(self.cookie, ChannelEnd::Sender, false);
         }
     }
 }
@@ -472,10 +470,9 @@ impl PendingSenderInner {
 impl Drop for PendingSenderInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            state
+            let _ = state
                 .client
-                .close_channel_end(self.cookie, ChannelEnd::Sender, true)
-                .ok();
+                .close_channel_end(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -814,9 +811,7 @@ impl Drop for SenderInner {
         if let SenderInnerState::Open { client, .. } =
             mem::replace(&mut self.state, SenderInnerState::Closed)
         {
-            client
-                .close_channel_end(self.cookie, ChannelEnd::Sender, true)
-                .ok();
+            let _ = client.close_channel_end(self.cookie, ChannelEnd::Sender, true);
         }
     }
 }
@@ -1113,9 +1108,7 @@ impl UnclaimedReceiverInner {
 impl Drop for UnclaimedReceiverInner {
     fn drop(&mut self) {
         if let Some(client) = self.client.take() {
-            client
-                .close_channel_end(self.cookie, ChannelEnd::Receiver, false)
-                .ok();
+            let _ = client.close_channel_end(self.cookie, ChannelEnd::Receiver, false);
         }
     }
 }
@@ -1257,10 +1250,9 @@ impl PendingReceiverInner {
 impl Drop for PendingReceiverInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            state
+            let _ = state
                 .client
-                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
-                .ok();
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }
@@ -1392,7 +1384,7 @@ impl ReceiverInner {
             let diff = state.max_capacity.get() - state.cur_capacity;
             debug_assert!(diff >= 1);
 
-            state.client.add_channel_capacity(self.cookie, diff).ok();
+            let _ = state.client.add_channel_capacity(self.cookie, diff);
             state.cur_capacity += diff;
         }
 
@@ -1414,10 +1406,9 @@ impl ReceiverInner {
 impl Drop for ReceiverInner {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            state
+            let _ = state
                 .client
-                .close_channel_end(self.cookie, ChannelEnd::Receiver, true)
-                .ok();
+                .close_channel_end(self.cookie, ChannelEnd::Receiver, true);
         }
     }
 }

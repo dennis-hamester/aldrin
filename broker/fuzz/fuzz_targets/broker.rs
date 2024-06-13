@@ -68,7 +68,7 @@ impl Fuzzer {
         let mut broker = self.broker.clone();
         self.runtime.spawn(async move {
             if let Ok(conn) = broker.connect(channel2).await {
-                conn.run().await.ok();
+                let _ = conn.run().await;
             }
         });
     }

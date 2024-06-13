@@ -40,7 +40,7 @@ impl Broker {
         let mut stderr = child.stderr.take().unwrap();
         let stderr = tokio::spawn(async move {
             let mut buf = Vec::new();
-            stderr.read_to_end(&mut buf).await.ok();
+            let _ = stderr.read_to_end(&mut buf).await;
             buf
         });
 

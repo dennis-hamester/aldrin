@@ -170,7 +170,7 @@ impl BrokerHandle {
     /// # }
     /// ```
     pub async fn shutdown(&mut self) {
-        self.send.send(ConnectionEvent::ShutdownBroker).await.ok();
+        let _ = self.send.send(ConnectionEvent::ShutdownBroker).await;
     }
 
     /// Shuts down the broker when the last client disconnects.
@@ -201,10 +201,7 @@ impl BrokerHandle {
     /// # }
     /// ```
     pub async fn shutdown_idle(&mut self) {
-        self.send
-            .send(ConnectionEvent::ShutdownIdleBroker)
-            .await
-            .ok();
+        let _ = self.send.send(ConnectionEvent::ShutdownIdleBroker).await;
     }
 
     /// Shuts down a specific connection.

@@ -485,9 +485,7 @@ impl BusListenerHandle {
         if self.scope.is_none() {
             self.scope = Some(scope);
             self.current_finished = !scope.includes_current();
-            self.events
-                .unbounded_send(BusListenerEvent::Started(scope))
-                .ok();
+            let _ = self.events.unbounded_send(BusListenerEvent::Started(scope));
             true
         } else {
             false
@@ -497,7 +495,7 @@ impl BusListenerHandle {
     pub fn stop(&mut self) -> bool {
         if self.scope.is_some() {
             self.scope = None;
-            self.events.unbounded_send(BusListenerEvent::Stopped).ok();
+            let _ = self.events.unbounded_send(BusListenerEvent::Stopped);
             true
         } else {
             false
@@ -506,9 +504,9 @@ impl BusListenerHandle {
 
     pub fn current_finished(&mut self) -> bool {
         if !self.current_finished {
-            self.events
-                .unbounded_send(BusListenerEvent::CurrentFinished)
-                .ok();
+            let _ = self
+                .events
+                .unbounded_send(BusListenerEvent::CurrentFinished);
             self.current_finished = true;
             true
         } else {
@@ -518,9 +516,7 @@ impl BusListenerHandle {
 
     pub fn emit_current(&self, event: BusEvent) -> bool {
         if self.includes_current() && !self.current_finished {
-            self.events
-                .unbounded_send(BusListenerEvent::Event(event))
-                .ok();
+            let _ = self.events.unbounded_send(BusListenerEvent::Event(event));
             true
         } else {
             false
@@ -529,9 +525,7 @@ impl BusListenerHandle {
 
     pub fn emit_new_if_matches(&self, event: BusEvent) {
         if self.includes_new() && self.matches_filters(event) {
-            self.events
-                .unbounded_send(BusListenerEvent::Event(event))
-                .ok();
+            let _ = self.events.unbounded_send(BusListenerEvent::Event(event));
         }
     }
 

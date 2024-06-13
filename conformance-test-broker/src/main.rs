@@ -73,7 +73,7 @@ impl BrokerUnderTest {
                     };
 
                     self.broker.shutdown().await;
-                    self.join.await.ok();
+                    let _ = self.join.await;
 
                     break res;
                 }
@@ -107,7 +107,7 @@ impl BrokerUnderTest {
             }
         };
 
-        sender.send(res).ok();
+        let _ = sender.send(res);
     }
 }
 

@@ -235,7 +235,7 @@ impl Broker {
 
             #[cfg(feature = "statistics")]
             ConnectionEvent::TakeStatistics(sender) => {
-                sender.send(self.statistics.take()).ok();
+                let _ = sender.send(self.statistics.take());
             }
         }
     }
