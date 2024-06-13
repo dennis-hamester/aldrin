@@ -57,7 +57,7 @@ macro_rules! send {
 
         #[cfg(feature = "statistics")]
         {
-            $self.statistics.messages_sent += 1;
+            $self.statistics.messages_sent = $self.statistics.messages_sent.saturating_add(1);
         }
 
         res
@@ -199,7 +199,8 @@ impl Broker {
 
                 #[cfg(feature = "statistics")]
                 {
-                    self.statistics.num_connections += 1;
+                    self.statistics.num_connections =
+                        self.statistics.num_connections.saturating_add(1);
                 }
             }
 
@@ -214,7 +215,8 @@ impl Broker {
 
                 #[cfg(feature = "statistics")]
                 {
-                    self.statistics.messages_received += 1;
+                    self.statistics.messages_received =
+                        self.statistics.messages_received.saturating_add(1);
                 }
             }
 
@@ -360,7 +362,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_connections -= 1;
+            self.statistics.num_connections = self.statistics.num_connections.saturating_sub(1);
         }
     }
 
@@ -467,7 +469,7 @@ impl Broker {
 
                 #[cfg(feature = "statistics")]
                 {
-                    self.statistics.num_objects += 1;
+                    self.statistics.num_objects = self.statistics.num_objects.saturating_add(1);
                 }
 
                 Ok(())
@@ -588,7 +590,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_services += 1;
+            self.statistics.num_services = self.statistics.num_services.saturating_add(1);
         }
 
         Ok(())
@@ -925,7 +927,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_channels += 1;
+            self.statistics.num_channels = self.statistics.num_channels.saturating_add(1);
         }
 
         Ok(())
@@ -1178,7 +1180,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_bus_listeners += 1;
+            self.statistics.num_bus_listeners = self.statistics.num_bus_listeners.saturating_add(1);
         }
 
         conn.add_bus_listener(cookie);
@@ -1440,7 +1442,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_objects -= 1;
+            self.statistics.num_objects = self.statistics.num_objects.saturating_sub(1);
         }
     }
 
@@ -1489,7 +1491,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_services -= 1;
+            self.statistics.num_services = self.statistics.num_services.saturating_sub(1);
         }
     }
 
@@ -1565,7 +1567,7 @@ impl Broker {
 
             #[cfg(feature = "statistics")]
             {
-                self.statistics.num_channels -= 1;
+                self.statistics.num_channels = self.statistics.num_channels.saturating_sub(1);
             }
         }
     }
@@ -1581,7 +1583,7 @@ impl Broker {
 
         #[cfg(feature = "statistics")]
         {
-            self.statistics.num_bus_listeners -= 1;
+            self.statistics.num_bus_listeners = self.statistics.num_bus_listeners.saturating_sub(1);
         }
     }
 
