@@ -28,6 +28,27 @@ impl Layout {
             Self::Enum(e) => e.name(),
         }
     }
+
+    pub fn as_service(&self) -> Option<&Service> {
+        match self {
+            Self::Service(service) => Some(service),
+            _ => None,
+        }
+    }
+
+    pub fn as_struct(&self) -> Option<&Struct> {
+        match self {
+            Self::Struct(struct_) => Some(struct_),
+            _ => None,
+        }
+    }
+
+    pub fn as_enum(&self) -> Option<&Enum> {
+        match self {
+            Self::Enum(enum_) => Some(enum_),
+            _ => None,
+        }
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
