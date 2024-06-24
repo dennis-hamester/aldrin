@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AsyncTransportExt` now takes `impl Into<Message>` in `send()`, `send_and_flush()` and
   `send_start_unpin()`.
+- Enable the `std` feature of `uuid`.
 
 ## [0.6.0] - 2024-06-07
 
