@@ -6,6 +6,9 @@ use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+/// Boxed [`AsyncTransport`] type returned by [`AsyncTransportExt::boxed`].
+pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;
+
 /// Bidirectional asynchronous message transport.
 ///
 /// This trait represents the core abstraction used throughout Aldrin for communication between
@@ -230,6 +233,13 @@ pub trait AsyncTransportExt: AsyncTransport {
             transport: self,
             map_err: f,
         }
+    }
+
+    fn boxed<'a>(self) -> BoxedTransport<'a, Self::Error>
+    where
+        Self: Sized + std::marker::Send + 'a,
+    {
+        Box::pin(self)
     }
 }
 

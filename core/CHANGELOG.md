@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `AsyncTransportExt::boxed()` turns an `AsyncTransport` into a
+  `Pin<Box<dyn AsyncTransport + Send>>`. A type alias `BoxedTransport` has also been added.
+
 ### Changed
 
 - `AsyncTransportExt` now takes `impl Into<Message>` in `send()`, `send_and_flush()` and
