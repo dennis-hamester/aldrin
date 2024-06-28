@@ -8,7 +8,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tokio::net::TcpStream;
 use tokio::signal;
 
-const BUS_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9999);
+const BUS_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 24940);
 
 // The generated code can be inspected using rustdoc. Just run
 // `cargo doc --document-private-items --open` and look at the `echo` module.

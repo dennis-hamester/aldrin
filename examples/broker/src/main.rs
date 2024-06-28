@@ -8,7 +8,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::signal;
 use tokio::time;
 
-const BIND_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9999);
+const BIND_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 24940);
 const STATISTICS_INTERVAL: Duration = Duration::from_secs(60);
 
 /// Aldrin broker for the examples.
