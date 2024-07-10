@@ -16,6 +16,11 @@ use uuid::{Error as UuidError, Uuid};
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct ObjectId {
     /// UUID of the object.
     pub uuid: ObjectUuid,
@@ -58,6 +63,11 @@ impl Deserialize for ObjectId {
 /// all objects on the bus.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct ObjectUuid(pub Uuid);
 
@@ -130,6 +140,11 @@ impl FromStr for ObjectUuid {
 /// distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct ObjectCookie(pub Uuid);
 
@@ -199,6 +214,11 @@ impl fmt::Display for ObjectCookie {
 /// different.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct ServiceId {
     /// Id of the associated object.
     pub object_id: ObjectId,
@@ -248,6 +268,11 @@ impl Deserialize for ServiceId {
 /// all services of an object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct ServiceUuid(pub Uuid);
 
@@ -320,6 +345,11 @@ impl FromStr for ServiceUuid {
 /// can still be distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct ServiceCookie(pub Uuid);
 
@@ -382,6 +412,11 @@ impl fmt::Display for ServiceCookie {
 /// [`ChannelCookie`s](Self) are chosen by the broker when creating a channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct ChannelCookie(pub Uuid);
 
@@ -444,6 +479,11 @@ impl fmt::Display for ChannelCookie {
 /// [`BusListenerCookie`s](Self) are chosen by the broker when creating a bus listener.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct BusListenerCookie(pub Uuid);
 
@@ -491,6 +531,11 @@ impl fmt::Display for BusListenerCookie {
 /// Introspection type ID of a service, struct or enum.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct TypeId(pub Uuid);
 

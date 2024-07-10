@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support protocol version 1.17.
 - Support introspection.
+- Add `serde` Cargo feature, which enables Serde support in `aldrin-core`.
 
 ### Changed
 

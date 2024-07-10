@@ -25,6 +25,7 @@ introspection = [
     "aldrin-core/introspection",
     "dep:rand",
 ]
+serde = ["aldrin-core/serde"]
 statistics = []
 tokio = ["aldrin-core/tokio"]
 

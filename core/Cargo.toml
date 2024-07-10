@@ -31,6 +31,10 @@ fuzzing = [
 ]
 introspection = ["uuid/v5"]
 new-v4-ids = ["uuid/v4"]
+serde = [
+    "dep:serde",
+    "uuid/serde",
+]
 tokio = ["dep:tokio"]
 
 [dependencies.arbitrary]
@@ -61,6 +65,15 @@ default-features = false
 [dependencies.pin-project-lite]
 version = "0.2.13"
 default-features = false
+
+[dependencies.serde]
+optional = true
+version = "1.0.193"
+default-features = false
+features = [
+    "derive",
+    "std",
+]
 
 [dependencies.thiserror]
 version = "1.0.50"

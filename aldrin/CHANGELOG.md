@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support introspection.
 - Add `low_level::Proxy::type_id()`.
 - Add `low_level::Proxy::query_introspection()`.
+- Add `serde` Cargo feature, which enables Serde support in `aldrin-core`.
 
 ### Changed
 

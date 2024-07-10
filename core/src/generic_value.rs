@@ -10,6 +10,11 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Value {
     None,
     Some(Box<Value>),
@@ -238,6 +243,11 @@ impl Deserialize for Value {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct Struct(pub HashMap<u32, Value>);
 
 impl Serialize for Struct {
@@ -270,6 +280,11 @@ impl Deserialize for Struct {
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct Enum {
     pub variant: u32,
     pub value: Value,

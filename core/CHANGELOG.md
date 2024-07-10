@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Pin<Box<dyn AsyncTransport + Send>>`. A type alias `BoxedTransport` has also been added.
 - Add an `impl<'a, T: AsRef<[u8]>> From<&'a T>` for `&'a ByteSlice`. This removes the need to import
   `ByteSlice` is most cases.
+- Add optional Serde support for `Value` and all id types. It is gated behind the `serde` Cargo
+  feature.
 
 ### Changed
 

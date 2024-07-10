@@ -22,6 +22,7 @@ channel = ["aldrin-core/channel"]
 codegen = ["dep:aldrin-macros"]
 introspection = ["aldrin-core/introspection"]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
+serde = ["aldrin-core/serde"]
 sink = ["dep:futures-sink"]
 tokio = ["aldrin-core/tokio"]
 
