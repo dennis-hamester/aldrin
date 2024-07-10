@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ByteSlice` is most cases.
 - Add optional Serde support for `Value` and all id types. It is gated behind the `serde` Cargo
   feature.
+- Add optional introspection support, which is gated behind the `introspection` Cargo feature. If
+  enabled, this adds the `introspection` module containing all relevant types exchanged by brokers
+  and clients.
 
 ### Changed
 
