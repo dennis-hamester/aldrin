@@ -8,7 +8,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct Variant {
     id: u32,
     name: String,
-    data: Option<TypeRef>,
+    variant_type: Option<TypeRef>,
 }
 
 impl Variant {
@@ -20,8 +20,8 @@ impl Variant {
         &self.name
     }
 
-    pub fn data(&self) -> Option<&TypeRef> {
-        self.data.as_ref()
+    pub fn variant_type(&self) -> Option<&TypeRef> {
+        self.variant_type.as_ref()
     }
 }
 
@@ -30,7 +30,7 @@ impl Variant {
 enum VariantField {
     Id = 0,
     Name = 1,
-    Data = 2,
+    VariantType = 2,
 }
 
 impl Serialize for Variant {
@@ -39,7 +39,7 @@ impl Serialize for Variant {
 
         serializer.serialize_field(VariantField::Id, &self.id)?;
         serializer.serialize_field(VariantField::Name, &self.name)?;
-        serializer.serialize_field(VariantField::Data, &self.data)?;
+        serializer.serialize_field(VariantField::VariantType, &self.variant_type)?;
 
         serializer.finish()
     }
@@ -51,9 +51,13 @@ impl Deserialize for Variant {
 
         let id = deserializer.deserialize_specific_field(VariantField::Id)?;
         let name = deserializer.deserialize_specific_field(VariantField::Name)?;
-        let data = deserializer.deserialize_specific_field(VariantField::Data)?;
+        let variant_type = deserializer.deserialize_specific_field(VariantField::VariantType)?;
 
-        deserializer.finish(Self { id, name, data })
+        deserializer.finish(Self {
+            id,
+            name,
+            variant_type,
+        })
     }
 }
 
@@ -61,7 +65,7 @@ impl Deserialize for Variant {
 pub struct VariantBuilder {
     id: u32,
     name: String,
-    data: Option<TypeRef>,
+    variant_type: Option<TypeRef>,
 }
 
 impl VariantBuilder {
@@ -69,12 +73,12 @@ impl VariantBuilder {
         Self {
             id,
             name: name.into(),
-            data: None,
+            variant_type: None,
         }
     }
 
-    pub fn data(mut self, data: impl Into<TypeRef>) -> Self {
-        self.data = Some(data.into());
+    pub fn variant_type(mut self, variant_type: impl Into<TypeRef>) -> Self {
+        self.variant_type = Some(variant_type.into());
         self
     }
 
@@ -82,7 +86,7 @@ impl VariantBuilder {
         Variant {
             id: self.id,
             name: self.name,
-            data: self.data,
+            variant_type: self.variant_type,
         }
     }
 }

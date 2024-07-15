@@ -8,7 +8,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct Event {
     id: u32,
     name: String,
-    data: Option<TypeRef>,
+    event_type: Option<TypeRef>,
 }
 
 impl Event {
@@ -20,8 +20,8 @@ impl Event {
         &self.name
     }
 
-    pub fn data(&self) -> Option<&TypeRef> {
-        self.data.as_ref()
+    pub fn event_type(&self) -> Option<&TypeRef> {
+        self.event_type.as_ref()
     }
 }
 
@@ -30,7 +30,7 @@ impl Event {
 enum EventField {
     Id = 0,
     Name = 1,
-    Data = 2,
+    EventType = 2,
 }
 
 impl Serialize for Event {
@@ -39,7 +39,7 @@ impl Serialize for Event {
 
         serializer.serialize_field(EventField::Id, &self.id)?;
         serializer.serialize_field(EventField::Name, &self.name)?;
-        serializer.serialize_field(EventField::Data, &self.data)?;
+        serializer.serialize_field(EventField::EventType, &self.event_type)?;
 
         serializer.finish()
     }
@@ -51,9 +51,13 @@ impl Deserialize for Event {
 
         let id = deserializer.deserialize_specific_field(EventField::Id)?;
         let name = deserializer.deserialize_specific_field(EventField::Name)?;
-        let data = deserializer.deserialize_specific_field(EventField::Data)?;
+        let event_type = deserializer.deserialize_specific_field(EventField::EventType)?;
 
-        deserializer.finish(Self { id, name, data })
+        deserializer.finish(Self {
+            id,
+            name,
+            event_type,
+        })
     }
 }
 
@@ -61,7 +65,7 @@ impl Deserialize for Event {
 pub struct EventBuilder {
     id: u32,
     name: String,
-    data: Option<TypeRef>,
+    event_type: Option<TypeRef>,
 }
 
 impl EventBuilder {
@@ -69,12 +73,12 @@ impl EventBuilder {
         Self {
             id,
             name: name.into(),
-            data: None,
+            event_type: None,
         }
     }
 
-    pub fn data(mut self, data: impl Into<TypeRef>) -> Self {
-        self.data = Some(data.into());
+    pub fn event_type(mut self, event_type: impl Into<TypeRef>) -> Self {
+        self.event_type = Some(event_type.into());
         self
     }
 
@@ -82,7 +86,7 @@ impl EventBuilder {
         Event {
             id: self.id,
             name: self.name,
-            data: self.data,
+            event_type: self.event_type,
         }
     }
 }

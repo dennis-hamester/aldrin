@@ -294,8 +294,13 @@ fn print_service(service: &Service, introspection: &Introspection) {
             println!();
         }
 
-        if let Some(data) = event.data() {
-            println!("    event {} @ {} = {};", event.name(), event.id(), data);
+        if let Some(event_type) = event.event_type() {
+            println!(
+                "    event {} @ {} = {};",
+                event.name(),
+                event.id(),
+                event_type
+            );
         } else {
             println!("    event {} @ {};", event.name(), event.id());
         }
@@ -316,10 +321,15 @@ fn print_struct(struct_: &Struct, introspection: &Introspection) {
                 "    required {} @ {} = {};",
                 field.name(),
                 field.id(),
-                field.data()
+                field.field_type()
             );
         } else {
-            println!("    {} @ {} = {};", field.name(), field.id(), field.data());
+            println!(
+                "    {} @ {} = {};",
+                field.name(),
+                field.id(),
+                field.field_type()
+            );
         }
     }
 
@@ -333,8 +343,8 @@ fn print_enum(enum_: &Enum, introspection: &Introspection) {
     for variant in enum_.variants().values() {
         print!("    {} @ {}", variant.name(), variant.id());
 
-        if let Some(data) = variant.data() {
-            print!(" = {data}");
+        if let Some(variant_type) = variant.variant_type() {
+            print!(" = {variant_type}");
         }
 
         println!(";");

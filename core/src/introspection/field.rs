@@ -9,7 +9,7 @@ pub struct Field {
     id: u32,
     name: String,
     is_required: bool,
-    data: TypeRef,
+    field_type: TypeRef,
 }
 
 impl Field {
@@ -17,13 +17,13 @@ impl Field {
         id: u32,
         name: impl Into<String>,
         is_required: bool,
-        data: impl Into<TypeRef>,
+        field_type: impl Into<TypeRef>,
     ) -> Self {
         Self {
             id,
             name: name.into(),
             is_required,
-            data: data.into(),
+            field_type: field_type.into(),
         }
     }
 
@@ -39,8 +39,8 @@ impl Field {
         self.is_required
     }
 
-    pub fn data(&self) -> &TypeRef {
-        &self.data
+    pub fn field_type(&self) -> &TypeRef {
+        &self.field_type
     }
 }
 
@@ -50,7 +50,7 @@ enum FieldField {
     Id = 0,
     Name = 1,
     IsRequired = 2,
-    Data = 3,
+    FieldType = 3,
 }
 
 impl Serialize for Field {
@@ -60,7 +60,7 @@ impl Serialize for Field {
         serializer.serialize_field(FieldField::Id, &self.id)?;
         serializer.serialize_field(FieldField::Name, &self.name)?;
         serializer.serialize_field(FieldField::IsRequired, &self.is_required)?;
-        serializer.serialize_field(FieldField::Data, &self.data)?;
+        serializer.serialize_field(FieldField::FieldType, &self.field_type)?;
 
         serializer.finish()
     }
@@ -73,13 +73,13 @@ impl Deserialize for Field {
         let id = deserializer.deserialize_specific_field(FieldField::Id)?;
         let name = deserializer.deserialize_specific_field(FieldField::Name)?;
         let is_required = deserializer.deserialize_specific_field(FieldField::IsRequired)?;
-        let data = deserializer.deserialize_specific_field(FieldField::Data)?;
+        let field_type = deserializer.deserialize_specific_field(FieldField::FieldType)?;
 
         deserializer.finish(Self {
             id,
             name,
             is_required,
-            data,
+            field_type,
         })
     }
 }

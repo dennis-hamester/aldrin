@@ -463,7 +463,7 @@ impl<'a> RustGenerator<'a> {
             for var in &vars {
                 genln!(self, "                .variant({}, \"{}\", |v| v", var.id().value(), var.name().value());
                 if let Some(var_type) = var.variant_type() {
-                    genln!(self, "                    .data({})", type_ref(var_type, schema_name));
+                    genln!(self, "                    .variant_type({})", type_ref(var_type, schema_name));
                 }
                 genln!(self, "                    .finish()");
                 genln!(self, "                )");
@@ -659,7 +659,7 @@ impl<'a> RustGenerator<'a> {
             for ev in &events {
                 genln!(self, "                .event({}, \"{}\", |e| e", ev.id().value(), ev.name().value());
                 if let Some(ev_type) = ev.event_type() {
-                    let data = match ev_type {
+                    let ev_type = match ev_type {
                         ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                             format!(
@@ -669,7 +669,7 @@ impl<'a> RustGenerator<'a> {
                         }
                     };
 
-                    genln!(self, "                    .data({})", data);
+                    genln!(self, "                    .event_type({ev_type})");
                 }
                 genln!(self, "                    .finish()");
                 genln!(self, "                )");

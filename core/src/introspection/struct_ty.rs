@@ -82,10 +82,10 @@ impl StructBuilder {
         id: u32,
         name: impl Into<String>,
         is_required: bool,
-        data: impl Into<TypeRef>,
+        field_type: impl Into<TypeRef>,
     ) -> Self {
         self.fields
-            .insert(id, Field::new(id, name, is_required, data));
+            .insert(id, Field::new(id, name, is_required, field_type));
         self
     }
 

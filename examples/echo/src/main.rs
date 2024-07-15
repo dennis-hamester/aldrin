@@ -228,9 +228,9 @@ async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
     println!("Calling echo_all(\"{}\") on {}.", args.echo, echo.id().uuid);
 
-    // This is just like `echo` above, except that the server returns no data. Instead, it will emit
-    // an event with the value we sent. The event can be seen by having another instance of this
-    // example running with the `listen` subcommand.
+    // This is just like `echo` above, except that the server returns no value. Instead, it will
+    // emit an event with the value we sent. The event can be seen by having another instance of
+    // this example running with the `listen` subcommand.
     match echo.echo_all(&args.echo).await? {
         Ok(()) => Ok(()),
         Err(EchoEchoAllError::EmptyString) => Err(anyhow!("empty string")),
