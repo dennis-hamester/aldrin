@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AsyncTransportExt::boxed()` turns an `AsyncTransport` into a
   `Pin<Box<dyn AsyncTransport + Send>>`. A type alias `BoxedTransport` has also been added.
+- Add an `impl<'a, T: AsRef<[u8]>> From<&'a T>` for `&'a ByteSlice`. This removes the need to import
+  `ByteSlice` is most cases.
 
 ### Changed
 

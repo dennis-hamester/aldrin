@@ -176,6 +176,12 @@ impl AsRef<ByteSlice> for [u8] {
     }
 }
 
+impl<'a, T: AsRef<[u8]>> From<&'a T> for &'a ByteSlice {
+    fn from(bytes: &'a T) -> Self {
+        ByteSlice::new(bytes)
+    }
+}
+
 impl ToOwned for ByteSlice {
     type Owned = Bytes;
 
