@@ -1032,7 +1032,7 @@ impl<'a> RustGenerator<'a> {
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", proxy_name);
-            genln!(self, "    const SCHEMA: &'static str = {}Introspection::SCHEMA;", svc_name);
+            genln!(self, "    const SCHEMA: &'static str = \"{}\";", self.schema.name());
             genln!(self);
 
             genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
@@ -1231,7 +1231,7 @@ impl<'a> RustGenerator<'a> {
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", svc_name);
-            genln!(self, "    const SCHEMA: &'static str = {}Introspection::SCHEMA;", svc_name);
+            genln!(self, "    const SCHEMA: &'static str = \"{}\";", self.schema.name());
             genln!(self);
 
             genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
