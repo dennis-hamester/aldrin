@@ -22,7 +22,10 @@ channel = ["aldrin-core/channel"]
 codegen = ["dep:aldrin-macros"]
 introspection = ["aldrin-core/introspection"]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
-serde = ["aldrin-core/serde"]
+serde = [
+    "aldrin-core/serde",
+    "dep:serde",
+]
 sink = ["dep:futures-sink"]
 tokio = ["aldrin-core/tokio"]
 
@@ -55,6 +58,15 @@ default-features = false
 [dependencies.futures-util]
 version = "0.3.29"
 default-features = false
+
+[dependencies.serde]
+optional = true
+version = "1.0.193"
+default-features = false
+features = [
+    "derive",
+    "std",
+]
 
 [dependencies.thiserror]
 version = "1.0.50"

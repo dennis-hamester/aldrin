@@ -104,6 +104,11 @@ impl Serialize for LifetimeScope {
 
 /// Id of a scope's lifetime.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[repr(transparent)]
 pub struct LifetimeId(pub ObjectId);
 
