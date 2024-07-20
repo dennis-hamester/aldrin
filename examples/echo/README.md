@@ -19,6 +19,6 @@ Commands:
   help      Print this message or the help of the given subcommand(s)
 
 Options:
-  -b, --bus <BUS>  Address of the broker to connect to [default: 127.0.0.1:9999]
+  -b, --bus <BUS>  Address of the broker to connect to [default: 127.0.0.1:24940]
   -h, --help       Print help
 ```
