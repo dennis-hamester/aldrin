@@ -524,6 +524,13 @@ impl<T: Serialize + ?Sized> Sender<T> {
         self.inner.cookie()
     }
 
+    /// Returns a handle to the client that was used to create the sender.
+    ///
+    /// `None` will be returned if the sender is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
+    }
+
     /// Casts the item type to a different type.
     pub fn cast<U: Serialize + ?Sized>(self) -> Sender<U> {
         Sender {
@@ -693,6 +700,16 @@ impl SenderInner {
 
     fn cookie(&self) -> ChannelCookie {
         self.cookie
+    }
+
+    fn client(&self) -> Option<&Handle> {
+        match self.state {
+            SenderInnerState::Open { ref client, .. } => Some(client),
+            SenderInnerState::Closed => None,
+
+            #[cfg(feature = "sink")]
+            SenderInnerState::Closing(_) => None,
+        }
     }
 
     fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
@@ -1337,6 +1354,13 @@ impl<T: Deserialize> Receiver<T> {
         self.inner.cookie()
     }
 
+    /// Returns a handle to the client that was used to create the receiver.
+    ///
+    /// `None` will be returned if the receiver is closed.
+    pub fn client(&self) -> Option<&Handle> {
+        self.inner.client()
+    }
+
     /// Closes the receiver without consuming it.
     pub async fn close(&mut self) -> Result<(), Error> {
         self.inner.close().await
@@ -1415,6 +1439,10 @@ impl ReceiverInner {
 
     fn cookie(&self) -> ChannelCookie {
         self.cookie
+    }
+
+    fn client(&self) -> Option<&Handle> {
+        self.state.as_ref().map(|s| &s.client)
     }
 
     async fn close(&mut self) -> Result<(), Error> {
