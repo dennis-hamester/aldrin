@@ -45,6 +45,11 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
         }
     }
 
+    /// Returns the sender's [`ChannelCookie`].
+    pub fn cookie(self) -> ChannelCookie {
+        self.cookie
+    }
+
     /// Binds the sender to a client.
     ///
     /// See also [`claim`](Self::claim) to bind and claim the sender in one step.
@@ -145,6 +150,11 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the sender's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Returns a handle to the client that was used to create the sender.
@@ -279,6 +289,10 @@ impl UnclaimedSenderInner {
         }
     }
 
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
+    }
+
     fn client(&self) -> Option<&Handle> {
         self.client.as_ref()
     }
@@ -328,6 +342,11 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the sender's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Returns a handle to the client that was used to create the sender.
@@ -438,6 +457,10 @@ impl PendingSenderInner {
         }
     }
 
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
+    }
+
     fn client(&self) -> Option<&Handle> {
         self.state.as_ref().map(|state| &state.client)
     }
@@ -493,6 +516,11 @@ impl<T: Serialize + ?Sized> Sender<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the sender's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Casts the item type to a different type.
@@ -660,6 +688,10 @@ impl SenderInner {
                 capacity,
             },
         }
+    }
+
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
     }
 
     fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
@@ -841,6 +873,11 @@ impl<T: Deserialize> UnboundReceiver<T> {
         }
     }
 
+    /// Returns the receiver's [`ChannelCookie`].
+    pub fn cookie(self) -> ChannelCookie {
+        self.cookie
+    }
+
     /// Binds the receiver to a client.
     ///
     /// See also [`claim`](Self::claim) to bind and claim the receiver in one step.
@@ -944,6 +981,11 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the receiver's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Returns a handle to the client that was used to create the receiver.
@@ -1080,6 +1122,10 @@ impl UnclaimedReceiverInner {
         }
     }
 
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
+    }
+
     fn client(&self) -> Option<&Handle> {
         self.client.as_ref()
     }
@@ -1129,6 +1175,11 @@ impl<T: Deserialize> PendingReceiver<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the receiver's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Returns a handle to the client that was used to create the receiver.
@@ -1220,6 +1271,10 @@ impl PendingReceiverInner {
         }
     }
 
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
+    }
+
     fn client(&self) -> Option<&Handle> {
         self.state.as_ref().map(|state| &state.client)
     }
@@ -1273,6 +1328,11 @@ impl<T: Deserialize> Receiver<T> {
             inner,
             phantom: PhantomData,
         }
+    }
+
+    /// Returns the receiver's [`ChannelCookie`].
+    pub fn cookie(&self) -> ChannelCookie {
+        self.inner.cookie()
     }
 
     /// Closes the receiver without consuming it.
@@ -1349,6 +1409,10 @@ impl ReceiverInner {
                 cur_capacity: max_capacity.get(),
             }),
         }
+    }
+
+    fn cookie(&self) -> ChannelCookie {
+        self.cookie
     }
 
     async fn close(&mut self) -> Result<(), Error> {
