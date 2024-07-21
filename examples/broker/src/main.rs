@@ -80,6 +80,10 @@ async fn main() -> Result<()> {
             }
         };
 
+        // Setting nodelay on the TCP socket can vastly improve latencies as Aldrin messages are
+        // typically small.
+        stream.set_nodelay(true)?;
+
         // New connections are handled in a new task, so as to not block this loop.
         println!("New connection from {}.", addr);
         let handle = handle.clone();

@@ -73,6 +73,11 @@ async fn main() -> Result<()> {
     let stream = TcpStream::connect(&args.bus)
         .await
         .with_context(|| anyhow!("failed to connect to broker at {}", args.bus))?;
+
+    // Setting nodelay on the TCP socket can vastly improve latencies as Aldrin messages are
+    // typically small.
+    stream.set_nodelay(true)?;
+
     let transport = TokioTransport::new(stream);
 
     let client = Client::connect(transport)
