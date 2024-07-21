@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `cookie()` getters to all channel types: `UnboundSender`, `UnclaimedSender`, `PendingSender`,
   `Sender`, `UnboundReceiver`, `UnclaimedReceiver`, `PendingReceiver` and `Receiver`.
+- Add `UnboundSender::new()` and `UnboundReceiver::new()` to create channels directly from
+  `ChannelCookie`s.
 
 ## [0.6.0] - 2024-06-07
 

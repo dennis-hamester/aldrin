@@ -38,7 +38,8 @@ pub struct UnboundSender<T: Serialize + ?Sized> {
 }
 
 impl<T: Serialize + ?Sized> UnboundSender<T> {
-    fn new(cookie: ChannelCookie) -> Self {
+    /// Creates a new [`UnboundSender`] from a [`ChannelCookie`].
+    pub fn new(cookie: ChannelCookie) -> Self {
         Self {
             cookie,
             phantom: PhantomData,
@@ -866,7 +867,8 @@ pub struct UnboundReceiver<T: Deserialize> {
 }
 
 impl<T: Deserialize> UnboundReceiver<T> {
-    fn new(cookie: ChannelCookie) -> Self {
+    /// Creates a new [`UnboundReceiver`] from a [`ChannelCookie`].
+    pub fn new(cookie: ChannelCookie) -> Self {
         Self {
             cookie,
             phantom: PhantomData,
