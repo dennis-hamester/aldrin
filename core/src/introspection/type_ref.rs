@@ -1,4 +1,4 @@
-use super::BuiltInType;
+use super::{BuiltInType, CustomType};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -8,12 +8,12 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TypeRef {
     BuiltIn(BuiltInType),
-    Custom(String),
+    Custom(CustomType),
 }
 
 impl TypeRef {
-    pub fn custom(name: impl Into<String>) -> Self {
-        Self::Custom(name.into())
+    pub fn custom(schema: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::Custom(CustomType::new(schema, name))
     }
 }
 

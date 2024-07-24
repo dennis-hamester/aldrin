@@ -156,7 +156,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
 
         match bus.query_introspection(type_id).await? {
             Some(introspection) => {
-                pending.extend(introspection.inner_types().values().copied());
+                pending.extend(introspection.inner_type_ids());
                 available.insert(type_id, introspection);
             }
 
@@ -230,13 +230,13 @@ async fn query(bus: &Handle, type_id: TypeId) -> Result<()> {
         Layout::Enum(enum_) => print_enum(enum_, &introspection),
     }
 
-    let inner_types = introspection.inner_types();
-    if !inner_types.is_empty() {
+    let mut inner_types = introspection.iter_inner_types().peekable();
+    if inner_types.peek().is_some() {
         println!();
         println!("Inner types:");
 
-        for (name, type_id) in inner_types {
-            println!("|- {name}: {type_id}");
+        for (schema, name, type_id) in inner_types {
+            println!("|- {schema}::{name}: {type_id}");
         }
     }
 

@@ -1,4 +1,5 @@
 mod built_in_type;
+mod custom_type;
 mod enum_ty;
 mod event;
 mod field;
@@ -23,6 +24,7 @@ use std::borrow::Cow;
 use std::collections::btree_map::{BTreeMap, Entry};
 
 pub use built_in_type::BuiltInType;
+pub use custom_type::CustomType;
 pub use enum_ty::{Enum, EnumBuilder};
 pub use event::{Event, EventBuilder};
 pub use field::Field;
@@ -42,7 +44,7 @@ pub struct Introspection {
     type_id: TypeId,
     schema: Cow<'static, str>,
     layout: Cow<'static, Layout>,
-    type_ids: BTreeMap<String, TypeId>,
+    type_ids: BTreeMap<String, BTreeMap<String, TypeId>>,
 }
 
 impl Introspection {
@@ -66,12 +68,31 @@ impl Introspection {
         &self.layout
     }
 
-    pub fn inner_types(&self) -> &BTreeMap<String, TypeId> {
+    pub fn inner_types(&self) -> &BTreeMap<String, BTreeMap<String, TypeId>> {
         &self.type_ids
     }
 
-    pub fn resolve_type(&self, name: impl AsRef<str>) -> Option<TypeId> {
-        self.type_ids.get(name.as_ref()).copied()
+    pub fn iter_inner_types(&self) -> impl Iterator<Item = (&str, &str, TypeId)> + '_ {
+        self.type_ids.iter().flat_map(|(schema, ids)| {
+            ids.iter()
+                .map(|(name, id)| (schema.as_str(), name.as_str(), *id))
+        })
+    }
+
+    pub fn inner_type_ids(&self) -> impl Iterator<Item = TypeId> + '_ {
+        self.type_ids.values().flat_map(|ids| ids.values().copied())
+    }
+
+    pub fn resolve_schema(&self, schema: impl AsRef<str>) -> Option<&BTreeMap<String, TypeId>> {
+        self.type_ids.get(schema.as_ref())
+    }
+
+    pub fn resolve_type(&self, schema: impl AsRef<str>, name: impl AsRef<str>) -> Option<TypeId> {
+        self.resolve_schema(schema)?.get(name.as_ref()).copied()
+    }
+
+    pub fn resolve_custom_type(&self, custom_type: &CustomType) -> Option<TypeId> {
+        self.resolve_type(custom_type.schema(), custom_type.name())
     }
 
     pub fn to_type_ref(&self) -> Option<TypeRef> {
@@ -81,7 +102,7 @@ impl Introspection {
             Layout::Service(_) => return None,
         };
 
-        Some(TypeRef::custom(format!("{}::{}", self.schema, name)))
+        Some(TypeRef::custom(self.schema.as_ref(), name))
     }
 }
 
@@ -134,7 +155,7 @@ pub struct IntrospectionBuilder {
     type_id: TypeId,
     schema: &'static str,
     layout: &'static Layout,
-    type_ids: BTreeMap<String, TypeId>,
+    type_ids: BTreeMap<String, BTreeMap<String, TypeId>>,
 }
 
 impl IntrospectionBuilder {
@@ -147,8 +168,19 @@ impl IntrospectionBuilder {
         }
     }
 
-    pub fn add_type<T: Introspectable>(mut self, name: impl Into<String>) -> Self {
-        match self.type_ids.entry(name.into()) {
+    pub fn add_type<T: Introspectable>(
+        mut self,
+        schema: impl AsRef<str>,
+        name: impl Into<String>,
+    ) -> Self {
+        let schema = schema.as_ref();
+
+        let type_ids = match self.type_ids.get_mut(schema) {
+            Some(type_ids) => type_ids,
+            None => self.type_ids.entry(schema.to_owned()).or_default(),
+        };
+
+        match type_ids.entry(name.into()) {
             Entry::Vacant(entry) => {
                 entry.insert(T::type_id());
             }
@@ -156,7 +188,8 @@ impl IntrospectionBuilder {
             Entry::Occupied(entry) => {
                 if *entry.get() != T::type_id() {
                     panic!(
-                        "duplicate type `{}` added to introspection of `{}::{}`",
+                        "duplicate type `{}::{}` added to introspection of `{}::{}`",
+                        schema,
                         entry.key(),
                         self.schema,
                         self.layout.name(),

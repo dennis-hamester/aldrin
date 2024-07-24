@@ -571,7 +571,7 @@ impl<'a> RustGenerator<'a> {
                     match args.part_type() {
                         ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Args>(\"{schema_name}::{svc_name}{func_name}Args\")", func_name = func.name().value().to_upper_camel_case());
+                            genln!(self, "                .add_type::<{svc_name}{func_name}Args>(\"{schema_name}\", \"{svc_name}{func_name}Args\")", func_name = func.name().value().to_upper_camel_case());
                         }
                     }
                 }
@@ -579,7 +579,7 @@ impl<'a> RustGenerator<'a> {
                     match ok.part_type() {
                         ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Ok>(\"{schema_name}::{svc_name}{func_name}Ok\")", func_name = func.name().value().to_upper_camel_case());
+                            genln!(self, "                .add_type::<{svc_name}{func_name}Ok>(\"{schema_name}\", \"{svc_name}{func_name}Ok\")", func_name = func.name().value().to_upper_camel_case());
                         }
                     }
                 }
@@ -587,7 +587,7 @@ impl<'a> RustGenerator<'a> {
                     match err.part_type() {
                         ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Error>(\"{schema_name}::{svc_name}{func_name}Error\")", func_name = func.name().value().to_upper_camel_case());
+                            genln!(self, "                .add_type::<{svc_name}{func_name}Error>(\"{schema_name}\", \"{svc_name}{func_name}Error\")", func_name = func.name().value().to_upper_camel_case());
                         }
                     }
                 }
@@ -597,7 +597,7 @@ impl<'a> RustGenerator<'a> {
                     match ev_type {
                         ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{ev_name}Event>(\"{schema_name}::{svc_name}{ev_name}Event\")", ev_name = ev.name().value().to_upper_camel_case());
+                            genln!(self, "                .add_type::<{svc_name}{ev_name}Event>(\"{schema_name}\", \"{svc_name}{ev_name}Event\")", ev_name = ev.name().value().to_upper_camel_case());
                         }
                     }
                 }
@@ -619,7 +619,7 @@ impl<'a> RustGenerator<'a> {
                         ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                             format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}::{svc_name}{}Args\")",
+                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Args\")",
                                 func.name().value().to_upper_camel_case()
                             )
                         }
@@ -632,7 +632,7 @@ impl<'a> RustGenerator<'a> {
                         ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                             format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}::{svc_name}{}Ok\")",
+                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Ok\")",
                                 func.name().value().to_upper_camel_case()
                             )
                         }
@@ -645,7 +645,7 @@ impl<'a> RustGenerator<'a> {
                         ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                             format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}::{svc_name}{}Error\")",
+                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Error\")",
                                 func.name().value().to_upper_camel_case()
                             )
                         }
@@ -663,7 +663,7 @@ impl<'a> RustGenerator<'a> {
                         ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
                         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                             format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}::{svc_name}{}Event\")",
+                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Event\")",
                                 ev.name().value().to_upper_camel_case()
                             )
                         }
@@ -1290,11 +1290,11 @@ impl<'a> RustGenerator<'a> {
             }
 
             ast::TypeNameKind::Extern(m, ty) => {
-                genln!(self, "                .add_type::<super::{schema}::{ty}>(\"{schema}::{ty}\")", schema = m.value(), ty = ty.value());
+                genln!(self, "                .add_type::<super::{schema}::{ty}>(\"{schema}\", \"{ty}\")", schema = m.value(), ty = ty.value());
             }
 
             ast::TypeNameKind::Intern(ty) => {
-                genln!(self, "                .add_type::<{ty}>(\"{schema}::{ty}\")", ty = ty.value());
+                genln!(self, "                .add_type::<{ty}>(\"{schema}\", \"{ty}\")", ty = ty.value());
             }
 
             ast::TypeNameKind::Bool
@@ -1655,12 +1655,12 @@ fn type_ref(ty: &ast::TypeName, schema: &str) -> String {
             type_ref(err, schema)
         ),
         ast::TypeNameKind::Extern(m, ty) => format!(
-            "aldrin::core::introspection::TypeRef::custom(\"{}::{}\")",
+            "aldrin::core::introspection::TypeRef::custom(\"{}\", \"{}\")",
             m.value(),
             ty.value()
         ),
         ast::TypeNameKind::Intern(ty) => format!(
-            "aldrin::core::introspection::TypeRef::custom(\"{}::{}\")",
+            "aldrin::core::introspection::TypeRef::custom(\"{}\", \"{}\")",
             schema,
             ty.value()
         ),
