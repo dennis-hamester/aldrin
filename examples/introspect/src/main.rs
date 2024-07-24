@@ -34,7 +34,7 @@ enum Command {
         type_id: TypeId,
 
         /// Also query all referenced types.
-        #[clap(long)]
+        #[clap(short, long)]
         full: bool,
     },
 }
