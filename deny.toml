@@ -3,6 +3,10 @@ allow-wildcard-paths = true
 multiple-versions = "warn"
 wildcards = "deny"
 
+[bans.workspace-dependencies]
+duplicates = "deny"
+unused = "deny"
+
 [graph]
 all-features = true
 
