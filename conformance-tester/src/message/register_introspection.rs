@@ -38,7 +38,7 @@ impl TryFrom<message::RegisterIntrospection> for RegisterIntrospection {
     fn try_from(msg: message::RegisterIntrospection) -> Result<Self> {
         let type_ids = msg
             .deserialize_type_ids()
-            .context("failed to deserialize type IDs from register-introspection message")?
+            .context("failed to deserialize type ids from register-introspection message")?
             .into_iter()
             .map(|id| id.0)
             .collect();

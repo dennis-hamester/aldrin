@@ -49,7 +49,7 @@ impl Proxy {
         self.info.version
     }
 
-    /// Returns the type ID of the proxy's service, if it is known.
+    /// Returns the type id of the proxy's service, if it is known.
     pub fn type_id(&self) -> Option<TypeId> {
         self.info.type_id
     }

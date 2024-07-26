@@ -528,7 +528,7 @@ impl fmt::Display for BusListenerCookie {
     }
 }
 
-/// Introspection type ID of a service, struct or enum.
+/// Introspection type id of a service, struct or enum.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[cfg_attr(

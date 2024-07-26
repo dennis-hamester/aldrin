@@ -22,7 +22,7 @@ use std::{future, option};
 /// `Discover`s are similar to [`BusListener`s](BusListener), in that they watch the bus for objects
 /// and services, and emit events in certain situations. The key difference is, that they focus on
 /// objects with specific sets of services. They then emit only one event, that gives access to all
-/// related IDs. A `BusListener`s on the other hand, would emit multiple events, one for the object
+/// related ids. A `BusListener`s on the other hand, would emit multiple events, one for the object
 /// and one per service.
 ///
 /// The set of objects (and associated services) that a `Discoverer` looks for is configured in
@@ -190,7 +190,7 @@ where
         self.entries.is_empty() || self.listener.is_finished()
     }
 
-    /// Queries a specific object ID.
+    /// Queries a specific object id.
     pub fn object_id(&self, key: Key, object: ObjectUuid) -> Option<ObjectId> {
         self.entries
             .get(&key)
@@ -198,7 +198,7 @@ where
             .object_id(object)
     }
 
-    /// Queries a specific service ID.
+    /// Queries a specific service id.
     pub fn service_id(
         &self,
         key: Key,
@@ -591,7 +591,7 @@ where
         }
     }
 
-    /// Returns the object's ID.
+    /// Returns the object's id.
     pub fn object_id(self) -> ObjectId {
         match self.inner {
             IterEntryInner::Specific(specific) => specific.object_id(),
@@ -599,7 +599,7 @@ where
         }
     }
 
-    /// Returns one of the object's service IDs.
+    /// Returns one of the object's service ids.
     pub fn service_id(self, service: ServiceUuid) -> ServiceId {
         match self.inner {
             IterEntryInner::Specific(specific) => specific.service_id(service),
@@ -1122,12 +1122,12 @@ where
         self.kind
     }
 
-    /// Returns the object ID that prompted this event.
+    /// Returns the object id that prompted this event.
     pub fn object_id(self) -> ObjectId {
         self.object
     }
 
-    /// Returns a service ID that is owned by this event's object.
+    /// Returns a service id that is owned by this event's object.
     ///
     /// This function can only be called for those events that are emitted when an object is created
     /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.

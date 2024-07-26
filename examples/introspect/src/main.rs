@@ -30,7 +30,7 @@ enum Command {
 
     /// Query an introspection of a specific type.
     Query {
-        /// The type ID to query.
+        /// The type id to query.
         type_id: TypeId,
 
         /// Also query all referenced types.
@@ -131,9 +131,9 @@ async fn list(bus: &Handle) -> Result<()> {
             println!("|    Name:    N/A");
 
             if let Some(type_id) = proxy.type_id() {
-                println!("|    Type ID: {}", type_id);
+                println!("|    Type id: {}", type_id);
             } else {
-                println!("|    Type ID: N/A");
+                println!("|    Type id: N/A");
             }
         }
 
@@ -199,7 +199,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
             println!();
         }
 
-        println!("Unavailable type IDs:");
+        println!("Unavailable type ids:");
 
         for type_id in unavailable {
             println!("|- {type_id}");
@@ -211,7 +211,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
 
 #[cfg(not(feature = "introspection"))]
 async fn query_full(_bus: &Handle, type_id: TypeId) -> Result<()> {
-    println!("Unavailable type IDs:");
+    println!("Unavailable type ids:");
     println!("|- {type_id}");
 
     Ok(())

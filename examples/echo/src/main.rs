@@ -124,7 +124,7 @@ async fn server(bus: &Handle) -> Result<()> {
                 match function {
                     Some(Ok(function)) => function,
 
-                    // Function calls can be invalid either because their ID is unknown or because
+                    // Function calls can be invalid either because their id is unknown or because
                     // the arguments to the call failed to deserialize.
                     Some(Err(e)) => {
                         println!("Received an invalid function call: {e}.");
@@ -193,7 +193,7 @@ async fn list(bus: &Handle) -> Result<()> {
     let mut found = false;
 
     // The discoverer will emit events for every object it has found on the bus that matches the
-    // criteria. Through the event, we can get the object's ID and the relevant service IDs.
+    // criteria. Through the event, we can get the object's id and the relevant service ids.
     while let Some(event) = discoverer.next_event().await {
         println!("Found echo server {}.", event.object_id().uuid);
         found = true;
@@ -255,7 +255,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
                     Some(Ok(event)) => event,
 
                     // As with functions, events can be invalid, either because they have an unknown
-                    // ID or because their associated value failed to deserialize.
+                    // id or because their associated value failed to deserialize.
                     Some(Err(e)) => {
                         println!("Received an invalid event: {e}.");
                         continue;
