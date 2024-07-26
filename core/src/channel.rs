@@ -13,7 +13,6 @@
 //! use aldrin_broker::Broker;
 //! use aldrin::Client;
 //! use aldrin_core::channel;
-//! use futures::future;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,8 +23,7 @@
 //!
 //!     // Connect a client with the Bounded transport:
 //!     let (t1, t2) = channel::bounded(16);
-//!     let (connection1, client1) =
-//!         future::join(broker_handle.connect(t1), Client::connect(t2)).await;
+//!     let (connection1, client1) = tokio::join!(broker_handle.connect(t1), Client::connect(t2));
 //!     let connection1 = connection1?;
 //!     let client1 = client1?;
 //!     tokio::spawn(connection1.run());
@@ -34,8 +32,7 @@
 //!
 //!     // Connect a client with the Unbounded transport:
 //!     let (t1, t2) = channel::unbounded();
-//!     let (connection2, client2) =
-//!         future::join(broker_handle.connect(t1), Client::connect(t2)).await;
+//!     let (connection2, client2) = tokio::join!(broker_handle.connect(t1), Client::connect(t2));
 //!     let connection2 = connection2?;
 //!     let client2 = client2?;
 //!     tokio::spawn(connection2.run());

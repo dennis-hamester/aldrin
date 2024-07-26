@@ -32,3 +32,69 @@ keywords = [
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dennis-hamester/aldrin"
 rust-version = "1.70.0"
+
+[workspace.dependencies]
+anstyle = { version = "1.0.7", default-features = false }
+colorchoice-clap = { version = "1.0.4", default-features = false }
+futures-channel = { version = "0.3.29", default-features = false }
+futures-core = { version = "0.3.29", default-features = false }
+futures-util = { version = "0.3.29", default-features = false }
+heck = { version = "0.4.1", default-features = false }
+serde = { version = "1.0.193", default-features = false }
+thiserror = { version = "1.0.50", default-features = false }
+tokio = { version = "1.34.0", default-features = false }
+uuid = { version = "1.6.1", default-features = false }
+
+[workspace.dependencies.aldrin]
+version = "0.7.0"
+path = "aldrin"
+default-features = false
+
+[workspace.dependencies.aldrin-broker]
+version = "0.7.0"
+path = "broker"
+default-features = false
+
+[workspace.dependencies.aldrin-codegen]
+version = "0.7.0"
+path = "codegen"
+default-features = false
+
+[workspace.dependencies.aldrin-core]
+version = "0.7.0"
+path = "core"
+default-features = false
+
+[workspace.dependencies.aldrin-parser]
+version = "0.7.0"
+path = "parser"
+default-features = false
+
+[workspace.dependencies.aldrin-test]
+version = "0.7.0"
+path = "test"
+default-features = false
+
+[workspace.dependencies.anstream]
+version = "0.6.14"
+default-features = false
+features = ["auto"]
+
+[workspace.dependencies.anyhow]
+version = "1.0.75"
+default-features = false
+features = ["std"]
+
+[workspace.dependencies.clap]
+version = "4.4.8"
+default-features = false
+features = [
+    "color",
+    "derive",
+    "error-context",
+    "help",
+    "std",
+    "suggestions",
+    "usage",
+    "wrap_help",
+]

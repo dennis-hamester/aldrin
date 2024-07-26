@@ -10,7 +10,7 @@ use aldrin::core::{ObjectUuid, SerializedValue};
 use aldrin::low_level::Proxy;
 use aldrin::Error;
 use aldrin_test::tokio::TestBroker;
-use futures::StreamExt;
+use futures_util::stream::StreamExt;
 use uuid::uuid;
 
 #[tokio::test]

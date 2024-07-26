@@ -21,40 +21,29 @@ all-features = true
 default = ["rust"]
 rust = []
 
-[dependencies.aldrin-parser]
-version = "0.7.0"
-path = "../parser"
-default-features = false
+[dependencies]
+aldrin-parser = { workspace = true }
+heck = { workspace = true }
+thiserror = { workspace = true }
 
 [dependencies.diffy]
 version = "0.4.0"
 default-features = false
 
-[dependencies.heck]
-version = "0.4.1"
-default-features = false
-
-[dependencies.thiserror]
-version = "1.0.50"
-default-features = false
-
 [dev-dependencies]
-uuid = "1.6.1"
+futures-util = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies.aldrin]
-path = "../aldrin"
+workspace = true
 features = ["codegen"]
 
 [dev-dependencies.aldrin-test]
-path = "../test"
+workspace = true
 features = ["tokio"]
 
-[dev-dependencies.futures]
-version = "0.3.29"
-default-features = false
-
 [dev-dependencies.tokio]
-version = "1.34.0"
+workspace = true
 features = [
     "macros",
     "rt",

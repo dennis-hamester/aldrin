@@ -1,6 +1,6 @@
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
-use futures::stream::FusedStream;
+use futures_util::stream::FusedStream;
 use std::mem;
 use std::time::Duration;
 use tokio::time;
@@ -243,8 +243,7 @@ async fn send_error_when_receiver_is_closed() {
 #[tokio::test]
 async fn stream_sink_pipe() {
     use aldrin_test::aldrin::{Handle, Receiver, Sender};
-    use futures::stream;
-    use futures::{SinkExt, TryStreamExt};
+    use futures_util::{stream, SinkExt, TryStreamExt};
 
     async fn create_channel(client: &Handle, capacity: u32) -> (Sender<u32>, Receiver<u32>) {
         let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
@@ -338,7 +337,8 @@ async fn sender_closed_implicit() {
 #[cfg(feature = "sink")]
 #[tokio::test]
 async fn sender_closed_drives_poll_close() {
-    use futures::Sink;
+    use futures_sink::Sink;
+    use futures_util::future;
     use std::pin::Pin;
 
     let mut broker = TestBroker::new();
@@ -355,7 +355,7 @@ async fn sender_closed_drives_poll_close() {
     assert!(!sender.is_closed());
 
     assert_eq!(
-        futures::future::poll_immediate(std::future::poll_fn(|cx| {
+        future::poll_immediate(std::future::poll_fn(|cx| {
             Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
         }))
         .await,
@@ -366,7 +366,7 @@ async fn sender_closed_drives_poll_close() {
     assert!(sender.is_closed());
 
     assert_eq!(
-        futures::future::poll_immediate(std::future::poll_fn(|cx| {
+        future::poll_immediate(std::future::poll_fn(|cx| {
             Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
         }))
         .await,

@@ -17,9 +17,8 @@ all-features = true
 [package.metadata.playground]
 all-features = true
 
-[dependencies.heck]
-version = "0.4.1"
-default-features = false
+[dependencies]
+heck = { workspace = true }
 
 [dependencies.pest]
 version = "2.7.10"
@@ -44,6 +43,5 @@ version = "0.1.11"
 default-features = false
 
 [dependencies.uuid]
-version = "1.6.1"
-default-features = false
+workspace = true
 features = ["v4"]

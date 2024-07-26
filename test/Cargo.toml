@@ -20,45 +20,29 @@ all-features = true
 [features]
 tokio = ["dep:tokio"]
 
-[dependencies.aldrin]
-version = "0.7.0"
-path = "../aldrin"
-default-features = false
-
-[dependencies.aldrin-broker]
-version = "0.7.0"
-path = "../broker"
-default-features = false
+[dependencies]
+aldrin = { workspace = true }
+aldrin-broker = { workspace = true }
+futures-util = { workspace = true }
 
 [dependencies.aldrin-core]
-version = "0.7.0"
-path = "../core"
-default-features = false
+workspace = true
 features = ["channel"]
 
-[dependencies.futures-util]
-version = "0.3.29"
-default-features = false
-
 [dependencies.tokio]
+workspace = true
 optional = true
-version = "1.34.0"
-default-features = false
 features = ["rt"]
 
 [dev-dependencies]
-anyhow = "1.0.75"
+anyhow = { workspace = true }
 
 [dev-dependencies.aldrin]
-path = "../aldrin"
+workspace = true
 features = ["codegen"]
 
-[dev-dependencies.futures]
-version = "0.3.29"
-default-features = false
-
 [dev-dependencies.tokio]
-version = "1.34.0"
+workspace = true
 features = [
     "macros",
     "rt-multi-thread",

@@ -8,23 +8,20 @@ publish = false
 introspection = ["aldrin/introspection"]
 
 [dependencies]
-anyhow = "1.0.75"
-uuid = "1.6.1"
+anyhow = { workspace = true }
+clap = { workspace = true }
+uuid = { workspace = true }
 
 [dependencies.aldrin]
-path = "../../aldrin"
+workspace = true
 features = [
     "codegen",
     "new-v4-ids",
     "tokio",
 ]
 
-[dependencies.clap]
-version = "4.4.8"
-features = ["derive"]
-
 [dependencies.tokio]
-version = "1.34.0"
+workspace = true
 features = [
     "macros",
     "net",

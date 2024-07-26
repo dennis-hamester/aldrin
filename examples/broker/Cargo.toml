@@ -9,18 +9,15 @@ introspection = ["aldrin-broker/introspection"]
 statistics = ["aldrin-broker/statistics"]
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = { workspace = true }
+clap = { workspace = true }
 
 [dependencies.aldrin-broker]
-path = "../../broker"
+workspace = true
 features = ["tokio"]
 
-[dependencies.clap]
-version = "4.4.8"
-features = ["derive"]
-
 [dependencies.tokio]
-version = "1.34.0"
+workspace = true
 features = [
     "macros",
     "net",
