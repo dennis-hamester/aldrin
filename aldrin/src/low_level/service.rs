@@ -2,7 +2,7 @@
 mod test;
 
 use super::Call;
-use crate::core::{Serialize, SerializedValue, ServiceId, ServiceInfo, ServiceUuid};
+use crate::core::{Serialize, SerializedValue, ServiceId, ServiceInfo, ServiceUuid, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::object::Object;
@@ -50,6 +50,11 @@ impl Service {
     /// Returns the version of the service.
     pub fn version(&self) -> u32 {
         self.info.version
+    }
+
+    /// Returns the type id of the service, if it was created with one.
+    pub fn type_id(&self) -> Option<TypeId> {
+        self.info.type_id
     }
 
     /// Returns a handle to the client that was used to create the service.
