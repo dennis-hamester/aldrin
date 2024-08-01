@@ -1102,6 +1102,10 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.inner.version()");
         genln!(self, "    }}");
         genln!(self);
+        genln!(self, "    pub fn type_id(&self) -> Option<aldrin::core::TypeId> {{");
+        genln!(self, "        self.inner.type_id()");
+        genln!(self, "    }}");
+        genln!(self);
         genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
         genln!(self, "        self.inner.client()");
         genln!(self, "    }}");
