@@ -2,6 +2,8 @@
 mod test;
 
 use super::Call;
+#[cfg(feature = "introspection")]
+use crate::core::introspection::Introspection;
 use crate::core::{Serialize, SerializedValue, ServiceId, ServiceInfo, ServiceUuid, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
@@ -9,6 +11,8 @@ use crate::object::Object;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_channel::oneshot::Receiver;
 use futures_core::stream::{FusedStream, Stream};
+#[cfg(feature = "introspection")]
+use std::borrow::Cow;
 use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -55,6 +59,15 @@ impl Service {
     /// Returns the type id of the service, if it was created with one.
     pub fn type_id(&self) -> Option<TypeId> {
         self.info.type_id
+    }
+
+    /// Queries the introspection for the service.
+    #[cfg(feature = "introspection")]
+    pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
+        match self.info.type_id {
+            Some(type_id) => self.client.query_introspection(type_id).await,
+            None => Ok(None),
+        }
     }
 
     /// Returns a handle to the client that was used to create the service.
