@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `type_id()` getter to services.
+- Add `query_introspection()` to services.
 
 ## [0.7.0] - 2024-07-25
 

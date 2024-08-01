@@ -1106,6 +1106,18 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.inner.type_id()");
         genln!(self, "    }}");
         genln!(self);
+
+        if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg(feature = \"{feature}\")]");
+            }
+
+            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<std::borrow::Cow<'static, aldrin::core::introspection::Introspection>>, aldrin::Error> {{");
+            genln!(self, "        self.inner.query_introspection().await");
+            genln!(self, "    }}");
+            genln!(self);
+        }
+
         genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
         genln!(self, "        self.inner.client()");
         genln!(self, "    }}");
