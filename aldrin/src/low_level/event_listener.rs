@@ -39,8 +39,6 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 /// # Examples
 ///
 /// ```
-/// use aldrin::low_level::Event;
-///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();
@@ -55,15 +53,15 @@ type Subscriptions = (ServiceId, HashSet<u32>);
 ///
 /// # svc.emit_event(1, &32u32)?;
 /// while let Some(event) = event_listener.next_event().await {
-///     match event {
-///         Event { id: 1, args, .. } => {
-///             let args: u32 = args.deserialize()?;
+///     match event.id() {
+///         1 => {
+///             let args: u32 = event.deserialize()?;
 ///             println!("Event 1 with u32 value {args}.");
 ///             # svc.emit_event(2, "Hello, world!")?;
 ///         }
 ///
-///         Event { id: 2, args, .. } => {
-///             let args: String = args.deserialize()?;
+///         2 => {
+///             let args: String = event.deserialize()?;
 ///             println!("Event 2 with string value {args}.");
 ///             # svc.destroy().await?;
 ///         }

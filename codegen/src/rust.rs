@@ -956,7 +956,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "                std::task::Poll::Pending => break std::task::Poll::Pending,");
         genln!(self, "            }};");
         genln!(self);
-        genln!(self, "            match ev.id {{");
+        genln!(self, "            match ev.id() {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
@@ -967,13 +967,13 @@ impl<'a> RustGenerator<'a> {
             let id = ev.id().value();
             let variant = service_event_variant(ev_name);
 
-            genln!(self, "                {id} => match ev.args.deserialize() {{");
+            genln!(self, "                {id} => match ev.deserialize() {{");
             if ev.event_type().is_some() {
                 genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Some(Ok({event}::{variant}(value)))),");
             } else {
                 genln!(self, "                    Ok(()) => break std::task::Poll::Ready(Some(Ok({event}::{variant}))),");
             }
-            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_arguments(ev.id, Some(e))))),");
+            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_arguments(ev.id(), Some(e))))),");
             genln!(self, "                }}");
             genln!(self);
         }
