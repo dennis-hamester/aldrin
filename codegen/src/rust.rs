@@ -1157,7 +1157,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
         genln!(self, "        }};");
         genln!(self);
-        genln!(self, "        match call.function {{");
+        genln!(self, "        match call.id() {{");
         for item in svc.items() {
             let func = match item {
                 ast::ServiceItem::Function(func) => func,
@@ -1178,9 +1178,9 @@ impl<'a> RustGenerator<'a> {
             genln!(self, "            }}");
             genln!(self);
         }
-        genln!(self, "            _ => {{");
-        genln!(self, "                let _ = call.promise.invalid_function();");
-        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_function(call.function))))");
+        genln!(self, "            id => {{");
+        genln!(self, "                let _ = call.into_promise().invalid_function();");
+        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_function(id))))");
         genln!(self, "            }}");
         genln!(self, "        }}");
         genln!(self, "    }}");

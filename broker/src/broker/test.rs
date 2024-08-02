@@ -42,7 +42,7 @@ async fn disconnect_during_function_call() {
     client2.join().await;
 
     let call = svc.next_call().await.unwrap();
-    call.promise.ok(&()).unwrap();
+    call.into_promise().ok(&()).unwrap();
     client1.join().await;
 
     broker.join_idle().await
@@ -419,13 +419,23 @@ async fn calls_from_multiple_clients() {
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
     let reply = proxy.call(0, &());
-    svc.next_call().await.unwrap().promise.done().unwrap();
+    svc.next_call()
+        .await
+        .unwrap()
+        .into_promise()
+        .done()
+        .unwrap();
     reply.await.unwrap().unwrap();
 
     let mut client3 = broker.add_client().await;
     let proxy = client3.create_proxy(svc.id()).await.unwrap();
     let reply = proxy.call(0, &());
-    svc.next_call().await.unwrap().promise.done().unwrap();
+    svc.next_call()
+        .await
+        .unwrap()
+        .into_promise()
+        .done()
+        .unwrap();
     reply.await.unwrap().unwrap();
 
     client1.join().await;
