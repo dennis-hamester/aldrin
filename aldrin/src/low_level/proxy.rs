@@ -65,27 +65,27 @@ impl Proxy {
     }
 
     /// Subscribes to an event.
-    ///
-    /// This function returns `true`, if `event` was not already subscribed to. Otherwise `false` is
-    /// returned.
-    pub async fn subscribe_event(&mut self, _event: u32) -> Result<bool, Error> {
+    pub async fn subscribe(&self, _event: u32) -> Result<(), Error> {
         todo!()
     }
 
     /// Unsubscribe from an event.
-    ///
-    /// This function returns `true`, if `event` was subscribed to before the call to this function
-    /// and is now unsubscribed from. Otherwise `false` is returned.
-    pub fn unsubscribe_event(&mut self, _event: u32) -> Result<bool, Error> {
+    pub async fn unsubscribe(&self, _event: u32) -> Result<(), Error> {
         todo!()
     }
 
     /// Polls for the next event.
+    ///
+    /// This function returns `Poll::Pending` even if no events have been subscribed to. `None` is
+    /// only returned if either the service was destroyed or the client has shut down.
     pub fn poll_next_event(&mut self, _cx: &mut Context) -> Poll<Option<Event>> {
         todo!()
     }
 
     /// Returns the next event.
+    ///
+    /// This function blocks even if no events have been subscribed to. `None` is only returned if
+    /// either the service was destroyed or the client has shut down.
     pub async fn next_event(&mut self) -> Option<Event> {
         future::poll_fn(|cx| self.poll_next_event(cx)).await
     }
@@ -93,7 +93,8 @@ impl Proxy {
     /// Indicates whether no more events can be expected.
     ///
     /// When `events_finished` returns `true`, then [`next_event`](Self::next_event) is guaranteed
-    /// to return `None`.
+    /// to return `None`. This happens only if either the service was destroyed or the client has
+    /// shut down.
     pub fn events_finished(&self) -> bool {
         todo!()
     }

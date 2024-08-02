@@ -226,12 +226,12 @@ async fn events() {
         .unwrap();
 
     let mut client2 = broker.add_client().await;
-    let mut proxy2 = client2.create_proxy(svc.id()).await.unwrap();
-    proxy2.subscribe_event(0).await.unwrap();
+    let proxy2 = client2.create_proxy(svc.id()).await.unwrap();
+    proxy2.subscribe(0).await.unwrap();
 
     let mut client3 = broker.add_client().await;
-    let mut proxy3 = client3.create_proxy(svc.id()).await.unwrap();
-    proxy3.subscribe_event(0).await.unwrap();
+    let proxy3 = client3.create_proxy(svc.id()).await.unwrap();
+    proxy3.subscribe(0).await.unwrap();
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();

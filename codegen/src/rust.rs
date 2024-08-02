@@ -914,14 +914,14 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    }}");
         genln!(self);
 
-        genln!(self, "    pub fn unsubscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
+        genln!(self, "    pub async fn unsubscribe_all(&mut self) -> Result<(), aldrin::Error> {{");
         for item in svc.items() {
             let ev = match item {
                 ast::ServiceItem::Event(ev) => ev,
                 _ => continue,
             };
             let ev_name = ev.name().value();
-            genln!(self, "        self.{}()?;", unsubscribe_event(ev_name));
+            genln!(self, "        self.{}().await?;", unsubscribe_event(ev_name));
         }
         genln!(self, "        Ok(())");
         genln!(self, "    }}");
@@ -936,13 +936,13 @@ impl<'a> RustGenerator<'a> {
             let ev_name = ev.name().value();
             let id = ev.id().value();
 
-            genln!(self, "    pub async fn {}(&mut self) -> Result<bool, aldrin::Error> {{", subscribe_event(ev_name));
-            genln!(self, "        self.inner.subscribe_event({id}).await");
+            genln!(self, "    pub async fn {}(&mut self) -> Result<(), aldrin::Error> {{", subscribe_event(ev_name));
+            genln!(self, "        self.inner.subscribe({id}).await");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    pub fn {}(&mut self) -> Result<bool, aldrin::Error> {{", unsubscribe_event(ev_name));
-            genln!(self, "        self.inner.unsubscribe_event({id})");
+            genln!(self, "    pub async fn {}(&mut self) -> Result<(), aldrin::Error> {{", unsubscribe_event(ev_name));
+            genln!(self, "        self.inner.unsubscribe({id}).await");
             genln!(self, "    }}");
             genln!(self);
         }

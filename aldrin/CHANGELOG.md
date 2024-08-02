@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fields of `low_level::Call` are now private and various functions have been added to access them.
 - `low_level::EventListener` has been removed. Event subscriptions are now only available through
   `low_level::Proxy`.
+- `low_level::Proxy::subscribe_event()` and `unsubscribe_event()` have been renamed to `subscribe()`
+  and `unsubscribe()`.
+- `low_level::Proxy::subscribe()` and `unsubscribe()` now return `Result<(), Error>` instead of
+  `Result<bool, Error>`.
+- `low_level::Proxy::subscribe()` and `unsubscribe()` no longer need a mutable reference to `self`.
+- `low_level::Proxy::unsubscribe()` is now `async`.
+- The semantics of `low_level::Proxy::poll_next_event()`, `next_event()` and `events_finished()`
+  changed such that they only return `None` (respectively `true`) if the service was destroyed or
+  the client shut down. This also extends to the `Stream` and `FusedStream` implementations of
+  `low_level::Proxy`.
 
 ## [0.7.0] - 2024-07-25
 

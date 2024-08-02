@@ -17,7 +17,7 @@ async fn stop_events_on_client_shutdown() {
         .unwrap();
 
     let mut proxy = client.create_proxy(svc.id()).await.unwrap();
-    proxy.subscribe_event(0).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
 
     client.shutdown();
     client.join().await;
@@ -42,7 +42,7 @@ async fn stop_event_on_broker_shutdown() {
         .unwrap();
 
     let mut proxy = client.create_proxy(svc.id()).await.unwrap();
-    proxy.subscribe_event(0).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
 
     broker.shutdown().await;
     client.join().await;
