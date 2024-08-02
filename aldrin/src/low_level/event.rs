@@ -1,23 +1,15 @@
-use crate::core::{
-    Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, ServiceId,
-};
+use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice};
 
 /// Event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct Event {
-    service: ServiceId,
     id: u32,
     args: SerializedValue,
 }
 
 impl Event {
-    pub(crate) fn _new(service: ServiceId, id: u32, args: SerializedValue) -> Self {
-        Event { service, id, args }
-    }
-
-    /// Returns the event's service id.
-    pub fn service(&self) -> ServiceId {
-        self.service
+    pub(crate) fn _new(id: u32, args: SerializedValue) -> Self {
+        Event { id, args }
     }
 
     /// Returns the event's id.
