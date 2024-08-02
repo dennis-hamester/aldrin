@@ -11,7 +11,7 @@ pub struct Event {
 }
 
 impl Event {
-    pub(crate) fn new(service: ServiceId, id: u32, args: SerializedValue) -> Self {
+    pub(crate) fn _new(service: ServiceId, id: u32, args: SerializedValue) -> Self {
         Event { service, id, args }
     }
 

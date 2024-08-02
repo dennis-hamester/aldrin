@@ -22,7 +22,7 @@ use crate::core::message::{
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -40,13 +40,12 @@ use crate::handle::request::{
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, QueryServiceInfoRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
-    SyncClientRequest, UnsubscribeEventRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SyncBrokerRequest, SyncClientRequest,
 };
 #[cfg(feature = "introspection")]
 use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventListenerId, EventListenerRequest, RawCall, Service};
+use crate::low_level::{RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
@@ -54,9 +53,6 @@ use select::{Select, Selected};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
-
-type Subscriptions =
-    HashMap<u32, HashMap<EventListenerId, mpsc::UnboundedSender<EventListenerRequest>>>;
 
 const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_17;
 
@@ -93,13 +89,6 @@ where
     destroy_service: SerialMap<DestroyServiceRequest>,
     function_calls: FunctionCallMap,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawCall>>,
-    subscribe_event: SerialMap<(
-        EventListenerId,
-        ServiceCookie,
-        u32,
-        oneshot::Sender<SubscribeEventResult>,
-    )>,
-    subscriptions: HashMap<ServiceCookie, Subscriptions>,
     broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
     query_service_info: SerialMap<oneshot::Sender<Result<ServiceInfo, Error>>>,
     create_channel: SerialMap<CreateChannelData>,
@@ -226,8 +215,6 @@ where
             destroy_service: SerialMap::new(),
             function_calls: FunctionCallMap::new(),
             services: HashMap::new(),
-            subscribe_event: SerialMap::new(),
-            subscriptions: HashMap::new(),
             broker_subscriptions: HashMap::new(),
             query_service_info: SerialMap::new(),
             create_channel: SerialMap::new(),
@@ -550,25 +537,8 @@ where
             .insert(msg.event);
     }
 
-    fn msg_subscribe_event_reply(&mut self, msg: SubscribeEventReply) {
-        let Some((listener_id, service_cookie, id, rep_send)) =
-            self.subscribe_event.remove(msg.serial)
-        else {
-            return;
-        };
-
-        // || would short-circuit and changing the order would move msg.result out.
-        let mut err = msg.result != SubscribeEventResult::Ok;
-        err |= rep_send.send(msg.result).is_err();
-
-        if err {
-            self.subscriptions
-                .entry(service_cookie)
-                .or_default()
-                .entry(id)
-                .or_default()
-                .remove(&listener_id);
-        }
+    fn msg_subscribe_event_reply(&self, _msg: SubscribeEventReply) {
+        todo!()
     }
 
     fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
@@ -582,23 +552,8 @@ where
         }
     }
 
-    fn msg_emit_event(&mut self, msg: EmitEvent) {
-        let Some(senders) = self
-            .subscriptions
-            .get_mut(&msg.service_cookie)
-            .and_then(|s| s.get_mut(&msg.event))
-        else {
-            return;
-        };
-
-        for sender in senders.values_mut() {
-            // Should we close the channel in case of send errors?
-            let _ = sender.unbounded_send(EventListenerRequest::EmitEvent(
-                msg.service_cookie,
-                msg.event,
-                msg.value.clone(),
-            ));
-        }
+    fn msg_emit_event(&self, _msg: EmitEvent) {
+        todo!()
     }
 
     fn msg_query_service_version_reply(
@@ -849,21 +804,8 @@ where
         Ok(())
     }
 
-    fn msg_service_destroyed(&mut self, msg: ServiceDestroyed) {
-        let Some(ids) = self.subscriptions.remove(&msg.service_cookie) else {
-            return;
-        };
-
-        let mut dups = HashSet::new();
-        for (_, events_ids) in ids {
-            for (listener_id, sender) in events_ids {
-                if dups.insert(listener_id) {
-                    // Should we close the channel in case of send errors?
-                    let _ = sender
-                        .unbounded_send(EventListenerRequest::ServiceDestroyed(msg.service_cookie));
-                }
-            }
-        }
+    fn msg_service_destroyed(&self, _msg: ServiceDestroyed) {
+        todo!()
     }
 
     fn msg_create_bus_listener_reply(
@@ -1117,8 +1059,6 @@ where
             HandleRequest::DestroyService(req) => self.req_destroy_service(req).await?,
             HandleRequest::CallFunction(req) => self.req_call_function(req).await?,
             HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await?,
-            HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
-            HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
             HandleRequest::QueryServiceInfo(req) => self.req_query_service_info(req).await?,
             HandleRequest::CreateClaimedSender(req) => self.req_create_claimed_sender(req).await?,
@@ -1276,79 +1216,6 @@ where
             .send_and_flush(CallFunctionReply {
                 serial: req.serial,
                 result: req.result,
-            })
-            .await
-            .map_err(Into::into)
-    }
-
-    async fn req_subscribe_event(
-        &mut self,
-        req: SubscribeEventRequest,
-    ) -> Result<(), RunError<T::Error>> {
-        let subs = self
-            .subscriptions
-            .entry(req.service_cookie)
-            .or_default()
-            .entry(req.id)
-            .or_default();
-
-        let send_req = subs.is_empty();
-        let duplicate = subs.insert(req.listener_id, req.sender).is_some();
-
-        if send_req {
-            let serial = Some(self.subscribe_event.insert((
-                req.listener_id,
-                req.service_cookie,
-                req.id,
-                req.reply,
-            )));
-
-            self.t
-                .send_and_flush(SubscribeEvent {
-                    serial,
-                    service_cookie: req.service_cookie,
-                    event: req.id,
-                })
-                .await
-                .map_err(Into::into)
-        } else {
-            if req.reply.send(SubscribeEventResult::Ok).is_err() && !duplicate {
-                subs.remove(&req.listener_id);
-            }
-
-            Ok(())
-        }
-    }
-
-    async fn req_unsubscribe_event(
-        &mut self,
-        req: UnsubscribeEventRequest,
-    ) -> Result<(), RunError<T::Error>> {
-        let Entry::Occupied(mut subs) = self.subscriptions.entry(req.service_cookie) else {
-            return Ok(());
-        };
-
-        let Entry::Occupied(mut ids) = subs.get_mut().entry(req.id) else {
-            return Ok(());
-        };
-
-        if ids.get_mut().remove(&req.listener_id).is_none() {
-            return Ok(());
-        }
-
-        if !ids.get().is_empty() {
-            return Ok(());
-        }
-
-        ids.remove();
-        if subs.get().is_empty() {
-            subs.remove();
-        }
-
-        self.t
-            .send_and_flush(UnsubscribeEvent {
-                service_cookie: req.service_cookie,
-                event: req.id,
             })
             .await
             .map_err(Into::into)
@@ -1679,25 +1546,6 @@ where
         }
 
         Ok(())
-    }
-
-    fn shutdown_all_events(&self) {
-        for by_service in self.subscriptions.values() {
-            for by_function in by_service.values() {
-                for events in by_function.values() {
-                    events.close_channel();
-                }
-            }
-        }
-    }
-}
-
-impl<T> Drop for Client<T>
-where
-    T: AsyncTransport + Unpin,
-{
-    fn drop(&mut self) {
-        self.shutdown_all_events();
     }
 }
 

@@ -8,7 +8,7 @@ use crate::core::introspection::Introspection;
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
-    StopBusListenerResult, SubscribeEventResult,
+    StopBusListenerResult,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -18,9 +18,9 @@ use crate::core::{
     ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{EventListenerId, EventListenerRequest, Service};
+use crate::low_level::Service;
 use crate::{Error, Object};
-use futures_channel::{mpsc, oneshot};
+use futures_channel::oneshot;
 use std::num::NonZeroU32;
 
 #[derive(Debug)]
@@ -34,8 +34,6 @@ pub(crate) enum HandleRequest {
     DestroyService(DestroyServiceRequest),
     CallFunction(CallFunctionRequest),
     CallFunctionReply(CallFunctionReplyRequest),
-    SubscribeEvent(SubscribeEventRequest),
-    UnsubscribeEvent(UnsubscribeEventRequest),
     EmitEvent(EmitEventRequest),
     QueryServiceInfo(QueryServiceInfoRequest),
     CreateClaimedSender(CreateClaimedSenderRequest),
@@ -102,22 +100,6 @@ pub(crate) struct CallFunctionRequest {
 pub(crate) struct CallFunctionReplyRequest {
     pub serial: u32,
     pub result: CallFunctionResult,
-}
-
-#[derive(Debug)]
-pub(crate) struct SubscribeEventRequest {
-    pub listener_id: EventListenerId,
-    pub service_cookie: ServiceCookie,
-    pub id: u32,
-    pub sender: mpsc::UnboundedSender<EventListenerRequest>,
-    pub reply: oneshot::Sender<SubscribeEventResult>,
-}
-
-#[derive(Debug)]
-pub(crate) struct UnsubscribeEventRequest {
-    pub listener_id: EventListenerId,
-    pub service_cookie: ServiceCookie,
-    pub id: u32,
 }
 
 #[derive(Debug)]

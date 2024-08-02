@@ -9,7 +9,7 @@ use crate::core::introspection::{Introspectable, Introspection};
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
-    StopBusListenerResult, SubscribeEventResult,
+    StopBusListenerResult,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -21,9 +21,7 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{
-    EventListener, EventListenerId, EventListenerRequest, Proxy, Reply, Service,
-};
+use crate::low_level::{Proxy, Reply, Service};
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
@@ -32,8 +30,7 @@ use request::{
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, QueryServiceInfoRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest,
-    UnsubscribeEventRequest,
+    StartBusListenerRequest, StopBusListenerRequest,
 };
 #[cfg(feature = "introspection")]
 use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -254,50 +251,6 @@ impl Handle {
             .unbounded_send(HandleRequest::CallFunctionReply(CallFunctionReplyRequest {
                 serial,
                 result,
-            }))
-            .map_err(|_| Error::Shutdown)
-    }
-
-    /// Creates a new [`EventListener`].
-    pub fn create_event_listener(&self) -> EventListener {
-        EventListener::new(self.clone())
-    }
-
-    pub(crate) async fn subscribe_event(
-        &self,
-        listener_id: EventListenerId,
-        service_id: ServiceId,
-        id: u32,
-        sender: UnboundedSender<EventListenerRequest>,
-    ) -> Result<(), Error> {
-        let (rep_send, rep_recv) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::SubscribeEvent(SubscribeEventRequest {
-                listener_id,
-                service_cookie: service_id.cookie,
-                id,
-                sender,
-                reply: rep_send,
-            }))
-            .map_err(|_| Error::Shutdown)?;
-        let reply = rep_recv.await.map_err(|_| Error::Shutdown)?;
-        match reply {
-            SubscribeEventResult::Ok => Ok(()),
-            SubscribeEventResult::InvalidService => Err(Error::InvalidService),
-        }
-    }
-
-    pub(crate) fn unsubscribe_event(
-        &self,
-        listener_id: EventListenerId,
-        service_id: ServiceId,
-        id: u32,
-    ) -> Result<(), Error> {
-        self.send
-            .unbounded_send(HandleRequest::UnsubscribeEvent(UnsubscribeEventRequest {
-                listener_id,
-                service_cookie: service_id.cookie,
-                id,
             }))
             .map_err(|_| Error::Shutdown)
     }

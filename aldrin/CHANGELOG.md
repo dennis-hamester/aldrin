@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fields of `low_level::Event` are now private and various functions have been added to access them.
 - Fields of `low_level::Call` are now private and various functions have been added to access them.
+- `low_level::EventListener` has been removed. Event subscriptions are now only available through
+  `low_level::Proxy`.
 
 ## [0.7.0] - 2024-07-25
 
