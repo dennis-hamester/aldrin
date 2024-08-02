@@ -1,6 +1,3 @@
-#[cfg(test)]
-mod test;
-
 use super::Call;
 #[cfg(feature = "introspection")]
 use crate::core::introspection::Introspection;

@@ -1,6 +1,3 @@
-#[cfg(test)]
-mod test;
-
 use crate::core::{SerializedValue, ServiceCookie, ServiceId};
 use crate::handle::Handle;
 use crate::low_level::Event;

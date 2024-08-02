@@ -9,6 +9,8 @@ mod promise;
 mod proxy;
 mod reply;
 mod service;
+#[cfg(test)]
+mod test;
 
 pub(crate) use event_listener::{EventListenerId, EventListenerRequest};
 pub(crate) use service::RawCall;
