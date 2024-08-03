@@ -1138,11 +1138,11 @@ impl<'a> RustGenerator<'a> {
             if let Some(ev_type) = ev.event_type() {
                 let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
                 genln!(self, "    pub fn {ev_name}(&self, arg: {var_type}) -> Result<(), aldrin::Error> {{");
-                genln!(self, "        self.inner.emit_event({id}, &arg)");
+                genln!(self, "        self.inner.emit({id}, &arg)");
                 genln!(self, "    }}");
             } else {
                 genln!(self, "    pub fn {ev_name}(&self) -> Result<(), aldrin::Error> {{");
-                genln!(self, "        self.inner.emit_event({id}, &())");
+                genln!(self, "        self.inner.emit({id}, &())");
                 genln!(self, "    }}");
             }
 

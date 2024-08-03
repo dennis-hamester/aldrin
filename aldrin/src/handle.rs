@@ -507,7 +507,7 @@ impl Handle {
     /// # let obj = handle.create_object(ObjectUuid::new_v4()).await?;
     /// # let service = obj.create_service(ServiceUuid::new_v4(), ServiceInfo::new(0)).await?;
     ///
-    /// service.emit_event(0, "Hi!")?;
+    /// service.emit(0, "Hi!")?;
     ///
     /// // Synchronize with the broker to ensure that the event has actually been processed.
     /// handle.sync_broker().await?;

@@ -239,9 +239,9 @@ async fn events() {
     assert_eq!(stats.messages_received(), 6);
 
     // Emit 3 events on 0.
-    svc.emit_event(0, &()).unwrap();
-    svc.emit_event(0, &()).unwrap();
-    svc.emit_event(0, &()).unwrap();
+    svc.emit(0, &()).unwrap();
+    svc.emit(0, &()).unwrap();
+    svc.emit(0, &()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 7);
@@ -249,9 +249,9 @@ async fn events() {
 
     // Emit 2 events on 0.
     // Emit 1 event on 1.
-    svc.emit_event(0, &()).unwrap();
-    svc.emit_event(0, &()).unwrap();
-    svc.emit_event(1, &()).unwrap();
+    svc.emit(0, &()).unwrap();
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 5);

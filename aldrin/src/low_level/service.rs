@@ -101,7 +101,7 @@ impl Service {
     }
 
     /// Emits an event.
-    pub fn emit_event<T>(&self, event: u32, args: &T) -> Result<(), Error>
+    pub fn emit<T>(&self, event: u32, args: &T) -> Result<(), Error>
     where
         T: Serialize + ?Sized,
     {
