@@ -1,0 +1,59 @@
+name: Check a single Component
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        required: true
+        type: string
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+
+jobs:
+  check-component:
+    name: ${{ matrix.rust }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - 1.70.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.rust }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          components: clippy
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (no default features, no tests)
+        run: cargo check --locked --no-default-features --package ${{ inputs.component }}
+
+      - name: cargo check (no default features, with tests)
+        run: cargo check --locked --no-default-features --tests --package ${{ inputs.component }}
+
+      - name: cargo check (all features, no tests)
+        run: cargo check --locked --all-features --package ${{ inputs.component }}
+
+      - name: cargo check (all features, with tests)
+        run: cargo check --locked --all-features --tests --package ${{ inputs.component }}
+
+      - name: cargo clippy (all features, with tests)
+        if: ${{ matrix.rust == 'stable' }}
+        run: cargo clippy --locked --all-features --tests --package ${{ inputs.component }}
+
+      - name: cargo test (no default features)
+        run: cargo test --locked --no-default-features --package ${{ inputs.component }}
+
+      - name: cargo test (all features)
+        run: cargo test --locked --all-features --package ${{ inputs.component }}

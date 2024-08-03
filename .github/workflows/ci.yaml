@@ -11,39 +11,70 @@ env:
 
 jobs:
 
-  ci:
-    name: Continuous integration
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - beta
-          - 1.70.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Rust ${{ matrix.rust }}
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-          components: clippy
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: Cargo check (no default features)
-        run: cargo check --locked --no-default-features --tests
-      - name: Cargo check (all features)
-        run: cargo check --locked --all-features --tests
-      - name: Cargo test (no default features)
-        run: cargo test --locked --no-default-features
-      - name: Cargo test (all features)
-        run: cargo test --locked --all-features
-      - name: Cargo clippy (no default features)
-        if: ${{ matrix.rust == 'stable' }}
-        run: cargo clippy --locked --no-default-features --tests
-      - name: Cargo clippy (all features)
-        if: ${{ matrix.rust == 'stable' }}
-        run: cargo clippy --locked --all-features --tests
+  ci-aldrin:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin
+
+  ci-aldrin-broker:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-broker
+
+  ci-aldrin-codegen:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-codegen
+
+  ci-aldrin-conformance-tester:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-conformance-tester
+
+  ci-aldrin-core:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-core
+
+  ci-aldrin-gen:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-gen
+
+  ci-aldrin-macros:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-macros
+
+  ci-aldrin-parser:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-parser
+
+  ci-aldrin-test:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: aldrin-test
+
+  ci-conformance-test-broker:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: conformance-test-broker
+
+  ci-example-broker:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-broker
+
+  ci-example-echo:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-echo
+
+  ci-example-introspect:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-introspect
 
   doc:
     name: Check docs
