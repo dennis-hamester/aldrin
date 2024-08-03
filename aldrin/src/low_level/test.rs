@@ -396,3 +396,22 @@ async fn no_unnecessary_events_emitted() {
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_received(), 1);
 }
+
+#[tokio::test]
+async fn close_events_with_subscribers() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
+    svc.destroy().await.unwrap();
+
+    assert!(proxy.next_event().await.is_none());
+}
