@@ -27,7 +27,7 @@ use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
-    CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
+    CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest, CreateProxyRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, SendItemRequest, StartBusListenerRequest,
     StopBusListenerRequest,
@@ -874,12 +874,21 @@ impl Handle {
     }
 
     /// Creates a new proxy to a service.
-    pub async fn create_proxy(&self, _service: ServiceId) -> Result<Proxy, Error> {
-        todo!()
+    pub async fn create_proxy(&self, service: ServiceId) -> Result<Proxy, Error> {
+        let (reply, recv) = oneshot::channel();
+
+        self.send
+            .unbounded_send(HandleRequest::CreateProxy(CreateProxyRequest {
+                service,
+                reply,
+            }))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
-    pub(crate) fn destroy_proxy_now(&self, _proxy: ProxyId) {
-        todo!()
+    pub(crate) fn destroy_proxy_now(&self, proxy: ProxyId) {
+        let _ = self.send.unbounded_send(HandleRequest::DestroyProxy(proxy));
     }
 
     /// Registers an introspectable type with the client.

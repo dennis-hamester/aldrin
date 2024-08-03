@@ -18,7 +18,7 @@ use crate::core::{
     ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::Service;
+use crate::low_level::{Proxy, ProxyId, Service};
 use crate::{Error, Object};
 use futures_channel::oneshot;
 use std::num::NonZeroU32;
@@ -53,6 +53,8 @@ pub(crate) enum HandleRequest {
     StopBusListener(StopBusListenerRequest),
     CreateLifetimeListener(CreateLifetimeListenerRequest),
     GetProtocolVersion(GetProtocolVersionRequest),
+    CreateProxy(CreateProxyRequest),
+    DestroyProxy(ProxyId),
     #[cfg(feature = "introspection")]
     RegisterIntrospection(&'static Introspection),
     #[cfg(feature = "introspection")]
@@ -172,6 +174,12 @@ pub(crate) struct StopBusListenerRequest {
 pub(crate) type CreateLifetimeListenerRequest = oneshot::Sender<LifetimeListener>;
 
 pub(crate) type GetProtocolVersionRequest = oneshot::Sender<ProtocolVersion>;
+
+#[derive(Debug)]
+pub(crate) struct CreateProxyRequest {
+    pub service: ServiceId,
+    pub reply: oneshot::Sender<Result<Proxy, Error>>,
+}
 
 #[cfg(feature = "introspection")]
 #[derive(Debug)]

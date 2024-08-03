@@ -18,9 +18,11 @@ use crate::core::message::{
     DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
     DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent, EmitEvent,
     ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeEvent, SubscribeEventReply, Sync, SyncReply, UnsubscribeEvent,
+    QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion,
+    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
+    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
+    SubscribeEventReply, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -28,6 +30,7 @@ use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
+    ServiceInfo,
 };
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
@@ -35,14 +38,14 @@ use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
-    CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, SendItemRequest, StartBusListenerRequest,
-    StopBusListenerRequest, SyncBrokerRequest, SyncClientRequest,
+    CreateProxyRequest, CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest,
+    DestroyServiceRequest, EmitEventRequest, HandleRequest, SendItemRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SyncBrokerRequest, SyncClientRequest,
 };
 #[cfg(feature = "introspection")]
 use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{RawCall, Service};
+use crate::low_level::{Proxy, ProxyId, RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
@@ -99,6 +102,8 @@ where
     stop_bus_listener: SerialMap<StopBusListenerRequest>,
     bus_listeners: HashMap<BusListenerCookie, BusListenerHandle>,
     abort_call_handles: HashMap<u32, oneshot::Sender<()>>,
+    query_service_info: SerialMap<CreateProxyRequest>,
+    query_service_version: SerialMap<CreateProxyRequest>,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
     #[cfg(feature = "introspection")]
@@ -224,6 +229,8 @@ where
             stop_bus_listener: SerialMap::new(),
             bus_listeners: HashMap::new(),
             abort_call_handles: HashMap::new(),
+            query_service_info: SerialMap::new(),
+            query_service_version: SerialMap::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
             #[cfg(feature = "introspection")]
@@ -357,7 +364,6 @@ where
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
-            Message::QueryServiceVersionReply(_) => todo!(),
             Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
             Message::CloseChannelEndReply(msg) => self.msg_close_channel_end_reply(msg)?,
             Message::ChannelEndClosed(msg) => self.msg_channel_end_closed(msg)?,
@@ -378,7 +384,8 @@ where
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
-            Message::QueryServiceInfoReply(_) => todo!(),
+            Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg)?,
+            Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -997,6 +1004,64 @@ where
         Err(RunError::UnexpectedMessageReceived(msg.into()))
     }
 
+    fn msg_query_service_info_reply(
+        &mut self,
+        msg: QueryServiceInfoReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(req) = self.query_service_info.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
+        };
+
+        debug_assert!(self.protocol_version >= ProtocolVersion::V1_17);
+
+        let info = match msg.result {
+            QueryServiceInfoResult::Ok(info) => {
+                info.deserialize().map_err(RunError::Deserialize).map(Ok)?
+            }
+
+            QueryServiceInfoResult::InvalidService => Err(Error::InvalidService),
+        };
+
+        self.finish_create_proxy(req, info);
+        Ok(())
+    }
+
+    fn msg_query_service_version_reply(
+        &mut self,
+        msg: QueryServiceVersionReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(req) = self.query_service_version.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
+        };
+
+        // We never send QueryServiceVersion on protocol versions >= 1.17.
+        debug_assert!(self.protocol_version < ProtocolVersion::V1_17);
+
+        let info = match msg.result {
+            QueryServiceVersionResult::Ok(version) => Ok(ServiceInfo::new(version)),
+            QueryServiceVersionResult::InvalidService => Err(Error::InvalidService),
+        };
+
+        self.finish_create_proxy(req, info);
+        Ok(())
+    }
+
+    fn finish_create_proxy(&self, req: CreateProxyRequest, info: Result<ServiceInfo, Error>) {
+        let res = info.map(|info| {
+            let (_, recv) = mpsc::unbounded();
+
+            Proxy::new_impl(
+                ProxyId::new_v4(),
+                self.handle.clone(),
+                req.service,
+                info,
+                recv,
+            )
+        });
+
+        let _ = req.reply.send(res);
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -1038,6 +1103,8 @@ where
             HandleRequest::GetProtocolVersion(req) => {
                 let _ = req.send(self.protocol_version);
             }
+            HandleRequest::CreateProxy(req) => self.req_create_proxy(req).await?,
+            HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy),
             #[cfg(feature = "introspection")]
             HandleRequest::RegisterIntrospection(introspection) => {
                 self.introspection
@@ -1416,6 +1483,25 @@ where
             .await
             .map_err(Into::into)
     }
+
+    async fn req_create_proxy(
+        &mut self,
+        req: CreateProxyRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let msg = if self.protocol_version >= ProtocolVersion::V1_17 {
+            let cookie = req.service.cookie;
+            let serial = self.query_service_info.insert(req);
+            Message::QueryServiceInfo(QueryServiceInfo { serial, cookie })
+        } else {
+            let cookie = req.service.cookie;
+            let serial = self.query_service_version.insert(req);
+            Message::QueryServiceVersion(QueryServiceVersion { serial, cookie })
+        };
+
+        self.t.send_and_flush(msg).await.map_err(Into::into)
+    }
+
+    fn req_destroy_proxy(&self, _proxy: ProxyId) {}
 
     #[cfg(feature = "introspection")]
     async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {

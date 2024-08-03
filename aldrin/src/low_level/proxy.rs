@@ -29,7 +29,7 @@ impl Proxy {
         client.create_proxy(service).await
     }
 
-    pub(crate) fn _new_impl(
+    pub(crate) fn new_impl(
         id: ProxyId,
         client: Handle,
         svc: ServiceId,
@@ -142,7 +142,7 @@ impl FusedStream for Proxy {
 pub(crate) struct ProxyId(Uuid);
 
 impl ProxyId {
-    pub fn _new_v4() -> Self {
+    pub fn new_v4() -> Self {
         Self(Uuid::new_v4())
     }
 }
