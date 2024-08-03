@@ -1,8 +1,10 @@
-use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid, TypeId};
+use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;
 use std::time::Duration;
 use tokio::time;
+use uuid::uuid;
 
 #[tokio::test]
 async fn stop_events_on_client_shutdown() {
@@ -71,4 +73,294 @@ async fn fused_stream_terminate_after_destroy() {
     assert!(!svc.is_terminated());
     assert!(svc.next_call().await.is_none());
     assert!(svc.is_terminated());
+}
+
+#[tokio::test]
+async fn proxy_getter() {
+    const TYPE_ID: TypeId = TypeId(uuid!("e6cffd81-51fb-4466-ac58-758db91d6bfa"));
+
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::with_type_id(1, TYPE_ID);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+
+    assert_eq!(proxy.id(), svc.id());
+    assert_eq!(proxy.version(), 1);
+    assert_eq!(proxy.type_id(), Some(TYPE_ID));
+}
+
+#[tokio::test]
+async fn call_ok() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().ok(&()).unwrap();
+
+    let reply = reply.await.unwrap();
+    assert_eq!(reply.unwrap().deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn call_done() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().done().unwrap();
+
+    let reply = reply.await.unwrap();
+    assert_eq!(reply.unwrap().deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn call_err() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().err(&()).unwrap();
+
+    let reply = reply.await.unwrap();
+    assert_eq!(reply.unwrap_err().deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn call_abort_by_callee() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().abort().unwrap();
+
+    assert_eq!(reply.await, Err(Error::CallAborted));
+}
+
+#[tokio::test]
+async fn call_abort_by_caller() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+    reply.abort();
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+
+    let mut promise = call.into_promise();
+    promise.aborted().await;
+    assert!(promise.is_aborted());
+}
+
+#[tokio::test]
+async fn call_invalid_function() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().invalid_function().unwrap();
+
+    assert_eq!(reply.await, Err(Error::invalid_function(0)));
+}
+
+#[tokio::test]
+async fn call_invalid_args() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let mut svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    let reply = proxy.call(0, &());
+
+    let call = svc.next_call().await.unwrap();
+    assert_eq!(call.deserialize(), Ok(()));
+    call.into_promise().invalid_args().unwrap();
+
+    assert_eq!(reply.await, Err(Error::invalid_arguments(0, None)));
+}
+
+#[tokio::test]
+async fn subscribe_event() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
+
+    svc.emit_event(1, &()).unwrap();
+    svc.emit_event(0, &()).unwrap();
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn unsubscribe_event() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
+    proxy.subscribe(1).await.unwrap();
+
+    svc.emit_event(0, &()).unwrap();
+    svc.emit_event(1, &()).unwrap();
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy.unsubscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+
+    svc.emit_event(0, &()).unwrap();
+    svc.emit_event(1, &()).unwrap();
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn events_mutliple_proxies() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy1 = client.create_proxy(svc.id()).await.unwrap();
+    proxy1.subscribe(0).await.unwrap();
+    proxy1.subscribe(1).await.unwrap();
+
+    let mut proxy2 = client.create_proxy(svc.id()).await.unwrap();
+    proxy2.subscribe(0).await.unwrap();
+    proxy2.subscribe(1).await.unwrap();
+
+    svc.emit_event(0, &()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy2.unsubscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+
+    svc.emit_event(0, &()).unwrap();
+    svc.emit_event(1, &()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
 }
