@@ -51,6 +51,7 @@ mod stop_bus_listener;
 mod stop_bus_listener_reply;
 mod subscribe_event;
 mod subscribe_event_reply;
+mod subscribe_service;
 mod sync;
 mod sync_reply;
 #[cfg(test)]
@@ -116,6 +117,7 @@ pub use stop_bus_listener::StopBusListener;
 pub use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
+pub use subscribe_service::SubscribeService;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_event::UnsubscribeEvent;
@@ -178,6 +180,7 @@ pub enum MessageKind {
     CreateService2 = 52,
     QueryServiceInfo = 53,
     QueryServiceInfoReply = 54,
+    SubscribeService = 55,
 }
 
 impl MessageKind {
@@ -238,7 +241,8 @@ impl MessageKind {
             | Self::BusListenerCurrentFinished
             | Self::AbortFunctionCall
             | Self::QueryIntrospection
-            | Self::QueryServiceInfo => false,
+            | Self::QueryServiceInfo
+            | Self::SubscribeService => false,
         }
     }
 }
@@ -312,6 +316,7 @@ pub enum Message {
     CreateService2(CreateService2),
     QueryServiceInfo(QueryServiceInfo),
     QueryServiceInfoReply(QueryServiceInfoReply),
+    SubscribeService(SubscribeService),
 }
 
 impl MessageOps for Message {
@@ -372,6 +377,7 @@ impl MessageOps for Message {
             Self::CreateService2(_) => MessageKind::CreateService2,
             Self::QueryServiceInfo(_) => MessageKind::QueryServiceInfo,
             Self::QueryServiceInfoReply(_) => MessageKind::QueryServiceInfoReply,
+            Self::SubscribeService(_) => MessageKind::SubscribeService,
         }
     }
 
@@ -432,6 +438,7 @@ impl MessageOps for Message {
             Self::CreateService2(msg) => msg.serialize_message(),
             Self::QueryServiceInfo(msg) => msg.serialize_message(),
             Self::QueryServiceInfoReply(msg) => msg.serialize_message(),
+            Self::SubscribeService(msg) => msg.serialize_message(),
         }
     }
 
@@ -597,6 +604,9 @@ impl MessageOps for Message {
             MessageKind::QueryServiceInfoReply => {
                 QueryServiceInfoReply::deserialize_message(buf).map(Self::QueryServiceInfoReply)
             }
+            MessageKind::SubscribeService => {
+                SubscribeService::deserialize_message(buf).map(Self::SubscribeService)
+            }
         }
     }
 
@@ -657,6 +667,7 @@ impl MessageOps for Message {
             Self::CreateService2(msg) => msg.value(),
             Self::QueryServiceInfo(msg) => msg.value(),
             Self::QueryServiceInfoReply(msg) => msg.value(),
+            Self::SubscribeService(msg) => msg.value(),
         }
     }
 }

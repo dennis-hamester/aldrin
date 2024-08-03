@@ -17,7 +17,7 @@ use aldrin_broker::core::message::{
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeService, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -84,6 +84,7 @@ pub enum MessageLe {
     CreateService2(CreateService2Le),
     QueryServiceInfo(QueryServiceInfoLe),
     QueryServiceInfoReply(QueryServiceInfoReplyLe),
+    SubscribeService(SubscribeServiceLe),
 }
 
 impl MessageLe {
@@ -144,6 +145,7 @@ impl MessageLe {
             Self::CreateService2(msg) => msg.to_core(ctx).into(),
             Self::QueryServiceInfo(msg) => msg.to_core(ctx).into(),
             Self::QueryServiceInfoReply(msg) => msg.to_core(ctx).into(),
+            Self::SubscribeService(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -210,6 +212,7 @@ impl UpdateContext for ProtoMessage {
             Self::CreateService2(msg) => msg.update_context(ctx),
             Self::QueryServiceInfo(msg) => msg.update_context(ctx),
             Self::QueryServiceInfoReply(msg) => msg.update_context(ctx),
+            Self::SubscribeService(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1940,5 +1943,27 @@ impl UpdateContext for QueryServiceInfoReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct SubscribeServiceLe {
+    pub serial: SerialLe,
+    pub service_cookie: UuidLe,
+}
+
+impl SubscribeServiceLe {
+    pub fn to_core(&self, ctx: &Context) -> SubscribeService {
+        SubscribeService {
+            serial: self.serial.get(ctx),
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for SubscribeService {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        ctx.add_uuid(self.service_cookie.0);
     }
 }

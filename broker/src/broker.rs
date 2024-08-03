@@ -423,6 +423,7 @@ impl Broker {
             }
             Message::CreateService2(req) => self.create_service2(state, id, req)?,
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
+            Message::SubscribeService(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
