@@ -55,6 +55,8 @@ pub(crate) enum HandleRequest {
     GetProtocolVersion(GetProtocolVersionRequest),
     CreateProxy(CreateProxyRequest),
     DestroyProxy(ProxyId),
+    SubscribeEvent(SubscribeEventRequest),
+    UnsubscribeEvent(UnsubscribeEventRequest),
     #[cfg(feature = "introspection")]
     RegisterIntrospection(&'static Introspection),
     #[cfg(feature = "introspection")]
@@ -179,6 +181,20 @@ pub(crate) type GetProtocolVersionRequest = oneshot::Sender<ProtocolVersion>;
 pub(crate) struct CreateProxyRequest {
     pub service: ServiceId,
     pub reply: oneshot::Sender<Result<Proxy, Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SubscribeEventRequest {
+    pub proxy: ProxyId,
+    pub event: u32,
+    pub reply: oneshot::Sender<Result<(), Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct UnsubscribeEventRequest {
+    pub proxy: ProxyId,
+    pub event: u32,
+    pub reply: oneshot::Sender<Result<(), Error>>,
 }
 
 #[cfg(feature = "introspection")]

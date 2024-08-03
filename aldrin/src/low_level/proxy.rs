@@ -83,13 +83,13 @@ impl Proxy {
     }
 
     /// Subscribes to an event.
-    pub async fn subscribe(&self, _event: u32) -> Result<(), Error> {
-        todo!()
+    pub async fn subscribe(&self, event: u32) -> Result<(), Error> {
+        self.client.subscribe_event(self.id, event).await
     }
 
     /// Unsubscribe from an event.
-    pub async fn unsubscribe(&self, _event: u32) -> Result<(), Error> {
-        todo!()
+    pub async fn unsubscribe(&self, event: u32) -> Result<(), Error> {
+        self.client.unsubscribe_event(self.id, event).await
     }
 
     /// Polls for the next event.

@@ -30,7 +30,7 @@ use request::{
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest, CreateProxyRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, SendItemRequest, StartBusListenerRequest,
-    StopBusListenerRequest,
+    StopBusListenerRequest, SubscribeEventRequest, UnsubscribeEventRequest,
 };
 #[cfg(feature = "introspection")]
 use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -889,6 +889,34 @@ impl Handle {
 
     pub(crate) fn destroy_proxy_now(&self, proxy: ProxyId) {
         let _ = self.send.unbounded_send(HandleRequest::DestroyProxy(proxy));
+    }
+
+    pub(crate) async fn subscribe_event(&self, proxy: ProxyId, event: u32) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+
+        self.send
+            .unbounded_send(HandleRequest::SubscribeEvent(SubscribeEventRequest {
+                proxy,
+                event,
+                reply,
+            }))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)?
+    }
+
+    pub(crate) async fn unsubscribe_event(&self, proxy: ProxyId, event: u32) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+
+        self.send
+            .unbounded_send(HandleRequest::UnsubscribeEvent(UnsubscribeEventRequest {
+                proxy,
+                event,
+                reply,
+            }))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     /// Registers an introspectable type with the client.

@@ -1,3 +1,4 @@
+mod proxies;
 mod select;
 
 use crate::bus_listener::{BusListener, BusListenerHandle};
@@ -22,7 +23,7 @@ use crate::core::message::{
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -40,15 +41,17 @@ use crate::handle::request::{
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
     CreateProxyRequest, CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest,
     DestroyServiceRequest, EmitEventRequest, HandleRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest, SyncBrokerRequest, SyncClientRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
+    SyncClientRequest, UnsubscribeEventRequest,
 };
 #[cfg(feature = "introspection")]
 use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{Proxy, ProxyId, RawCall, Service};
+use crate::low_level::{ProxyId, RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use futures_channel::{mpsc, oneshot};
+use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
@@ -104,6 +107,8 @@ where
     abort_call_handles: HashMap<u32, oneshot::Sender<()>>,
     query_service_info: SerialMap<CreateProxyRequest>,
     query_service_version: SerialMap<CreateProxyRequest>,
+    subscribe_event: SerialMap<SubscribeEventRequest>,
+    proxies: Proxies,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
     #[cfg(feature = "introspection")]
@@ -231,6 +236,8 @@ where
             abort_call_handles: HashMap::new(),
             query_service_info: SerialMap::new(),
             query_service_version: SerialMap::new(),
+            subscribe_event: SerialMap::new(),
+            proxies: Proxies::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
             #[cfg(feature = "introspection")]
@@ -361,9 +368,7 @@ where
             Message::CallFunction(msg) => self.msg_call_function(msg).await?,
             Message::CallFunctionReply(msg) => self.msg_call_function_reply(msg),
             Message::SubscribeEvent(msg) => self.msg_subscribe_event(msg),
-            Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
-            Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::CreateChannelReply(msg) => self.msg_create_channel_reply(msg)?,
             Message::CloseChannelEndReply(msg) => self.msg_close_channel_end_reply(msg)?,
             Message::ChannelEndClosed(msg) => self.msg_channel_end_closed(msg)?,
@@ -372,7 +377,6 @@ where
             Message::ItemReceived(msg) => self.msg_item_received(msg)?,
             Message::AddChannelCapacity(msg) => self.msg_add_channel_capacity(msg)?,
             Message::SyncReply(msg) => self.msg_sync_reply(msg)?,
-            Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
             Message::CreateBusListenerReply(msg) => self.msg_create_bus_listener_reply(msg)?,
             Message::DestroyBusListenerReply(msg) => self.msg_destroy_bus_listener_reply(msg)?,
             Message::StartBusListenerReply(msg) => self.msg_start_bus_listener_reply(msg)?,
@@ -386,6 +390,9 @@ where
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
             Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg)?,
             Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg)?,
+            Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg)?,
+            Message::EmitEvent(msg) => self.msg_emit_event(msg),
+            Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -539,10 +546,6 @@ where
             .insert(msg.event);
     }
 
-    fn msg_subscribe_event_reply(&self, _msg: SubscribeEventReply) {
-        todo!()
-    }
-
     fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
         let Entry::Occupied(mut subs) = self.broker_subscriptions.entry(msg.service_cookie) else {
             return;
@@ -552,10 +555,6 @@ where
         if subs.get().is_empty() {
             subs.remove();
         }
-    }
-
-    fn msg_emit_event(&self, _msg: EmitEvent) {
-        todo!()
     }
 
     fn msg_create_channel_reply(
@@ -782,10 +781,6 @@ where
 
         let _ = req.send(());
         Ok(())
-    }
-
-    fn msg_service_destroyed(&self, _msg: ServiceDestroyed) {
-        todo!()
     }
 
     fn msg_create_bus_listener_reply(
@@ -1046,20 +1041,34 @@ where
         Ok(())
     }
 
-    fn finish_create_proxy(&self, req: CreateProxyRequest, info: Result<ServiceInfo, Error>) {
-        let res = info.map(|info| {
-            let (_, recv) = mpsc::unbounded();
-
-            Proxy::new_impl(
-                ProxyId::new_v4(),
-                self.handle.clone(),
-                req.service,
-                info,
-                recv,
-            )
-        });
-
+    fn finish_create_proxy(&mut self, req: CreateProxyRequest, info: Result<ServiceInfo, Error>) {
+        let res = info.map(|info| self.proxies.create(self.handle.clone(), req.service, info));
         let _ = req.reply.send(res);
+    }
+
+    fn msg_subscribe_event_reply(
+        &mut self,
+        msg: SubscribeEventReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if let Some(req) = self.subscribe_event.remove(msg.serial) {
+            let res = match msg.result {
+                SubscribeEventResult::Ok => Ok(()),
+                SubscribeEventResult::InvalidService => Err(Error::InvalidService),
+            };
+
+            let _ = req.reply.send(res);
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
+    fn msg_emit_event(&self, msg: EmitEvent) {
+        self.proxies.emit(msg.service_cookie, msg.event, msg.value);
+    }
+
+    fn msg_service_destroyed(&mut self, msg: ServiceDestroyed) {
+        self.proxies.remove_service(msg.service_cookie);
     }
 
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
@@ -1104,7 +1113,9 @@ where
                 let _ = req.send(self.protocol_version);
             }
             HandleRequest::CreateProxy(req) => self.req_create_proxy(req).await?,
-            HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy),
+            HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy).await?,
+            HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
+            HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
             #[cfg(feature = "introspection")]
             HandleRequest::RegisterIntrospection(introspection) => {
                 self.introspection
@@ -1501,7 +1512,82 @@ where
         self.t.send_and_flush(msg).await.map_err(Into::into)
     }
 
-    fn req_destroy_proxy(&self, _proxy: ProxyId) {}
+    async fn req_destroy_proxy(&mut self, proxy: ProxyId) -> Result<(), RunError<T::Error>> {
+        if let Some((service_cookie, events)) = self.proxies.remove(proxy) {
+            if !events.is_empty() {
+                for event in events {
+                    self.t
+                        .send(UnsubscribeEvent {
+                            service_cookie,
+                            event,
+                        })
+                        .await?;
+                }
+
+                self.t.flush().await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn req_subscribe_event(
+        &mut self,
+        req: SubscribeEventRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        match self.proxies.subscribe(req.proxy, req.event) {
+            SubscribeResult::Forward(service_cookie) => {
+                let event = req.event;
+                let serial = self.subscribe_event.insert(req);
+
+                self.t
+                    .send_and_flush(SubscribeEvent {
+                        serial: Some(serial),
+                        service_cookie,
+                        event,
+                    })
+                    .await?;
+            }
+
+            SubscribeResult::Noop => {
+                let _ = req.reply.send(Ok(()));
+            }
+
+            SubscribeResult::InvalidProxy => {
+                let _ = req.reply.send(Err(Error::InvalidService));
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn req_unsubscribe_event(
+        &mut self,
+        req: UnsubscribeEventRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        match self.proxies.unsubscribe(req.proxy, req.event) {
+            SubscribeResult::Forward(service_cookie) => {
+                self.t
+                    .send_and_flush(UnsubscribeEvent {
+                        service_cookie,
+                        event: req.event,
+                    })
+                    .await?;
+
+                let _ = req.reply.send(Ok(()));
+            }
+
+            SubscribeResult::Noop => {
+                let _ = req.reply.send(Ok(()));
+            }
+
+            SubscribeResult::InvalidProxy => {
+                let _ = req.reply.send(Err(Error::InvalidService));
+            }
+        }
+
+        Ok(())
+    }
 
     #[cfg(feature = "introspection")]
     async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {
