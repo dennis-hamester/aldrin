@@ -1247,14 +1247,23 @@ where
     }
 
     async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
-        self.t
-            .send_and_flush(EmitEvent {
-                service_cookie: req.service_cookie,
-                event: req.event,
-                value: req.value,
-            })
-            .await
-            .map_err(Into::into)
+        let subscribed = self
+            .broker_subscriptions
+            .get(&req.service_cookie)
+            .map(|events| events.contains(&req.event))
+            .unwrap_or(false);
+
+        if subscribed {
+            self.t
+                .send_and_flush(EmitEvent {
+                    service_cookie: req.service_cookie,
+                    event: req.event,
+                    value: req.value,
+                })
+                .await?
+        }
+
+        Ok(())
     }
 
     async fn req_create_claimed_sender(

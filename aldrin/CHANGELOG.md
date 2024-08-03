@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `low_level::Service::type_id()` getter.
 - Add `low_level::Service::query_introspection()`.
 
+### Fixed
+
+- Events are now only emitted to the broker if there are actual subscribers.
+
 ### Changed
 
 - Fields of `low_level::Event` are now private and various functions have been added to access them.

@@ -364,3 +364,35 @@ async fn events_mutliple_proxies() {
     assert_eq!(ev.id(), 1);
     assert_eq!(ev.deserialize(), Ok(()));
 }
+
+#[tokio::test]
+async fn no_unnecessary_events_emitted() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+    broker.take_statistics().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_received(), 2);
+
+    proxy.unsubscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+    broker.take_statistics().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.messages_received(), 1);
+}

@@ -65,6 +65,10 @@ features = [
 workspace = true
 features = ["v4"]
 
+[dev-dependencies.aldrin-broker]
+workspace = true
+features = ["statistics"]
+
 [dev-dependencies.aldrin-core]
 workspace = true
 features = ["channel"]

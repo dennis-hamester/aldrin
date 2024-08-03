@@ -255,7 +255,7 @@ async fn events() {
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 5);
-    assert_eq!(stats.messages_received(), 4);
+    assert_eq!(stats.messages_received(), 3);
 
     // Final state.
     let stats = broker.take_statistics().await.unwrap();
