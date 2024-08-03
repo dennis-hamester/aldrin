@@ -419,7 +419,10 @@ where
             | Message::RegisterIntrospection(_)
             | Message::CreateService2(_)
             | Message::QueryServiceInfo(_)
-            | Message::SubscribeService(_) => return Err(RunError::UnexpectedMessageReceived(msg)),
+            | Message::SubscribeService(_)
+            | Message::UnsubscribeService(_) => {
+                return Err(RunError::UnexpectedMessageReceived(msg))
+            }
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
         }

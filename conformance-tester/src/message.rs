@@ -56,6 +56,7 @@ mod subscribe_service_reply;
 mod sync;
 mod sync_reply;
 mod unsubscribe_event;
+mod unsubscribe_service;
 
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
@@ -122,6 +123,7 @@ pub use subscribe_service_reply::SubscribeServiceReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_event::UnsubscribeEvent;
+pub use unsubscribe_service::UnsubscribeService;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
@@ -183,6 +185,7 @@ pub enum Message {
     QueryServiceInfoReply(QueryServiceInfoReply),
     SubscribeService(SubscribeService),
     SubscribeServiceReply(SubscribeServiceReply),
+    UnsubscribeService(UnsubscribeService),
 }
 
 impl Message {
@@ -281,6 +284,7 @@ impl Message {
             Self::SubscribeServiceReply(msg) => {
                 msg.to_core(ctx).map(ProtoMessage::SubscribeServiceReply)
             }
+            Self::UnsubscribeService(msg) => msg.to_core(ctx).map(ProtoMessage::UnsubscribeService),
         }
     }
 
@@ -399,6 +403,9 @@ impl Message {
             }
             (Self::SubscribeService(msg), Self::SubscribeService(other)) => msg.matches(other, ctx),
             (Self::SubscribeServiceReply(msg), Self::SubscribeServiceReply(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::UnsubscribeService(msg), Self::UnsubscribeService(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -554,6 +561,9 @@ impl Message {
             (Self::SubscribeServiceReply(msg), Self::SubscribeServiceReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::UnsubscribeService(msg), Self::UnsubscribeService(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -647,6 +657,7 @@ impl Message {
             Self::SubscribeServiceReply(msg) => {
                 msg.apply_context(ctx).map(Self::SubscribeServiceReply)
             }
+            Self::UnsubscribeService(msg) => msg.apply_context(ctx).map(Self::UnsubscribeService),
         }
     }
 }
@@ -743,6 +754,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::SubscribeServiceReply(msg) => {
                 msg.try_into().map(Self::SubscribeServiceReply)
             }
+            ProtoMessage::UnsubscribeService(msg) => msg.try_into().map(Self::UnsubscribeService),
         }
     }
 }

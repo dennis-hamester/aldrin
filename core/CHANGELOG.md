@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add new protocol version 1.18.
-- Add `SubscribeService` and `SubscribeServiceReply` messages.
+- Add `SubscribeService`, `SubscribeServiceReply` and `UnsubscribeService` messages.
 
 ## [0.7.0] - 2024-07-25
 

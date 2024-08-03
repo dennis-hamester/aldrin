@@ -18,7 +18,7 @@ use aldrin_broker::core::message::{
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
     SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -87,6 +87,7 @@ pub enum MessageLe {
     QueryServiceInfoReply(QueryServiceInfoReplyLe),
     SubscribeService(SubscribeServiceLe),
     SubscribeServiceReply(SubscribeServiceReplyLe),
+    UnsubscribeService(UnsubscribeServiceLe),
 }
 
 impl MessageLe {
@@ -149,6 +150,7 @@ impl MessageLe {
             Self::QueryServiceInfoReply(msg) => msg.to_core(ctx).into(),
             Self::SubscribeService(msg) => msg.to_core(ctx).into(),
             Self::SubscribeServiceReply(msg) => msg.to_core(ctx).into(),
+            Self::UnsubscribeService(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -217,6 +219,7 @@ impl UpdateContext for ProtoMessage {
             Self::QueryServiceInfoReply(msg) => msg.update_context(ctx),
             Self::SubscribeService(msg) => msg.update_context(ctx),
             Self::SubscribeServiceReply(msg) => msg.update_context(ctx),
+            Self::UnsubscribeService(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -2010,5 +2013,24 @@ impl UpdateContext for SubscribeServiceReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct UnsubscribeServiceLe {
+    pub service_cookie: UuidLe,
+}
+
+impl UnsubscribeServiceLe {
+    pub fn to_core(&self, ctx: &Context) -> UnsubscribeService {
+        UnsubscribeService {
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for UnsubscribeService {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.service_cookie.0);
     }
 }
