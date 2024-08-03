@@ -112,7 +112,7 @@ async fn list(bus: &Handle) -> Result<()> {
         println!("Object {}: {} service(s)", object_id.uuid, services.len());
 
         for service_id in services {
-            let proxy = Proxy::new(bus.clone(), service_id).await?;
+            let proxy = Proxy::new(bus, service_id).await?;
 
             println!("|- Service {}", service_id.uuid);
 

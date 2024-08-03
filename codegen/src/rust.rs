@@ -820,7 +820,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "    pub const UUID: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
         genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
         genln!(self);
-        genln!(self, "    pub async fn new(client: aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
+        genln!(self, "    pub async fn new(client: &aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
         genln!(self, "        if id.uuid != Self::UUID {{");
         genln!(self, "            return Err(aldrin::Error::InvalidService);");
         genln!(self, "        }}");

@@ -1,30 +1,48 @@
-use super::Event;
-use super::Reply;
+use super::{Event, Reply};
 #[cfg(feature = "introspection")]
 use crate::core::introspection::Introspection;
 use crate::core::{Serialize, ServiceId, ServiceInfo, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
+use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 #[cfg(feature = "introspection")]
 use std::borrow::Cow;
 use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use uuid::Uuid;
 
 /// Proxy to a service.
 #[derive(Debug)]
 pub struct Proxy {
+    id: ProxyId,
     client: Handle,
-    id: ServiceId,
+    svc: ServiceId,
     info: ServiceInfo,
+    recv: UnboundedReceiver<Event>,
 }
 
 impl Proxy {
     /// Creates a new proxy to a service.
-    pub async fn new(client: Handle, id: ServiceId) -> Result<Self, Error> {
-        let info = client.query_service_info(id).await?;
-        Ok(Self { client, id, info })
+    pub async fn new(client: &Handle, service: ServiceId) -> Result<Self, Error> {
+        client.create_proxy(service).await
+    }
+
+    pub(crate) fn _new_impl(
+        id: ProxyId,
+        client: Handle,
+        svc: ServiceId,
+        info: ServiceInfo,
+        recv: UnboundedReceiver<Event>,
+    ) -> Self {
+        Self {
+            id,
+            client,
+            svc,
+            info,
+            recv,
+        }
     }
 
     /// Returns a handle to the proxy's client.
@@ -34,7 +52,7 @@ impl Proxy {
 
     /// Returns the id of the proxy's service.
     pub fn id(&self) -> ServiceId {
-        self.id
+        self.svc
     }
 
     /// Returns the version of the proxy's service.
@@ -61,7 +79,7 @@ impl Proxy {
     where
         Args: Serialize + ?Sized,
     {
-        self.client.call(self.id, function, args)
+        self.client.call(self.svc, function, args)
     }
 
     /// Subscribes to an event.
@@ -78,8 +96,8 @@ impl Proxy {
     ///
     /// This function returns `Poll::Pending` even if no events have been subscribed to. `None` is
     /// only returned if either the service was destroyed or the client has shut down.
-    pub fn poll_next_event(&mut self, _cx: &mut Context) -> Poll<Option<Event>> {
-        todo!()
+    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<Event>> {
+        Pin::new(&mut self.recv).poll_next(cx)
     }
 
     /// Returns the next event.
@@ -96,7 +114,13 @@ impl Proxy {
     /// to return `None`. This happens only if either the service was destroyed or the client has
     /// shut down.
     pub fn events_finished(&self) -> bool {
-        todo!()
+        self.recv.is_terminated()
+    }
+}
+
+impl Drop for Proxy {
+    fn drop(&mut self) {
+        self.client.destroy_proxy_now(self.id);
     }
 }
 
@@ -111,5 +135,14 @@ impl Stream for Proxy {
 impl FusedStream for Proxy {
     fn is_terminated(&self) -> bool {
         self.events_finished()
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct ProxyId(Uuid);
+
+impl ProxyId {
+    pub fn _new_v4() -> Self {
+        Self(Uuid::new_v4())
     }
 }

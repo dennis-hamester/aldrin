@@ -174,7 +174,7 @@ async fn function_calls() {
         .create_service(ServiceUuid::new_v4(), info)
         .await
         .unwrap();
-    let proxy = Proxy::new(client.clone(), svc.id()).await.unwrap();
+    let proxy = Proxy::new(&client, svc.id()).await.unwrap();
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();

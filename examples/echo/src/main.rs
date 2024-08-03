@@ -289,6 +289,6 @@ async fn get_echo(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<EchoP
         .await?
         .ok_or_else(|| anyhow!("echo server not found"))?;
 
-    let echo = EchoProxy::new(bus.clone(), service_id).await?;
+    let echo = EchoProxy::new(bus, service_id).await?;
     Ok(echo)
 }

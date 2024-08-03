@@ -35,7 +35,6 @@ pub(crate) enum HandleRequest {
     CallFunction(CallFunctionRequest),
     CallFunctionReply(CallFunctionReplyRequest),
     EmitEvent(EmitEventRequest),
-    QueryServiceInfo(QueryServiceInfoRequest),
     CreateClaimedSender(CreateClaimedSenderRequest),
     CreateClaimedReceiver(CreateClaimedReceiverRequest),
     CloseChannelEnd(CloseChannelEndRequest),
@@ -107,12 +106,6 @@ pub(crate) struct EmitEventRequest {
     pub service_cookie: ServiceCookie,
     pub event: u32,
     pub value: SerializedValue,
-}
-
-#[derive(Debug)]
-pub(crate) struct QueryServiceInfoRequest {
-    pub cookie: ServiceCookie,
-    pub reply: oneshot::Sender<Result<ServiceInfo, Error>>,
 }
 
 pub(crate) type CreateClaimedSenderRequest =

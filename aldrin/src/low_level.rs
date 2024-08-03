@@ -11,6 +11,7 @@ mod service;
 #[cfg(test)]
 mod test;
 
+pub(crate) use proxy::ProxyId;
 pub(crate) use service::RawCall;
 
 pub use call::Call;

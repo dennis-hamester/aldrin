@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `low_level::Proxy`.
 - `low_level::Event::service()` has been removed. As events are now only returned by
   `low_level::Proxy`, the service id should be generally be known anyway.
+- `low_level::Proxy::new()` now takes a reference to a `Handle` instead of an owned `Handle`.
 
 ## [0.7.0] - 2024-07-25
 

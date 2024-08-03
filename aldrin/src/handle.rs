@@ -21,7 +21,7 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{Proxy, Reply, Service};
+use crate::low_level::{Proxy, ProxyId, Reply, Service};
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
@@ -29,8 +29,8 @@ use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
-    EmitEventRequest, HandleRequest, QueryServiceInfoRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest,
+    EmitEventRequest, HandleRequest, SendItemRequest, StartBusListenerRequest,
+    StopBusListenerRequest,
 };
 #[cfg(feature = "introspection")]
 use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -272,21 +272,6 @@ impl Handle {
                 value,
             }))
             .map_err(|_| Error::Shutdown)
-    }
-
-    pub(crate) async fn query_service_info(
-        &self,
-        service_id: ServiceId,
-    ) -> Result<ServiceInfo, Error> {
-        let (reply, recv) = oneshot::channel();
-        self.send
-            .unbounded_send(HandleRequest::QueryServiceInfo(QueryServiceInfoRequest {
-                cookie: service_id.cookie,
-                reply,
-            }))
-            .map_err(|_| Error::Shutdown)?;
-
-        recv.await.map_err(|_| Error::Shutdown)?
     }
 
     /// Creates a channel and automatically claims the sender.
@@ -889,8 +874,12 @@ impl Handle {
     }
 
     /// Creates a new proxy to a service.
-    pub async fn create_proxy(&self, id: ServiceId) -> Result<Proxy, Error> {
-        Proxy::new(self.clone(), id).await
+    pub async fn create_proxy(&self, _service: ServiceId) -> Result<Proxy, Error> {
+        todo!()
+    }
+
+    pub(crate) fn destroy_proxy_now(&self, _proxy: ProxyId) {
+        todo!()
     }
 
     /// Registers an introspectable type with the client.
