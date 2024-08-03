@@ -415,3 +415,25 @@ async fn close_events_with_subscribers() {
 
     assert!(proxy.next_event().await.is_none());
 }
+
+#[tokio::test]
+async fn close_events_without_subscribers() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    svc.destroy().await.unwrap();
+
+    let event = time::timeout(Duration::from_millis(100), proxy.next_event())
+        .await
+        .unwrap();
+
+    assert!(event.is_none());
+}
