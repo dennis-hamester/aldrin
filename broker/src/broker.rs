@@ -449,7 +449,8 @@ impl Broker {
             | Message::BusListenerCurrentFinished(_)
             | Message::Connect2(_)
             | Message::ConnectReply2(_)
-            | Message::QueryServiceInfoReply(_) => return Err(()),
+            | Message::QueryServiceInfoReply(_)
+            | Message::SubscribeServiceReply(_) => return Err(()),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }

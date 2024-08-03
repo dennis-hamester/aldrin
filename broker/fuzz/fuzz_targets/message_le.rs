@@ -17,7 +17,8 @@ use aldrin_broker::core::message::{
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
+    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -85,6 +86,7 @@ pub enum MessageLe {
     QueryServiceInfo(QueryServiceInfoLe),
     QueryServiceInfoReply(QueryServiceInfoReplyLe),
     SubscribeService(SubscribeServiceLe),
+    SubscribeServiceReply(SubscribeServiceReplyLe),
 }
 
 impl MessageLe {
@@ -146,6 +148,7 @@ impl MessageLe {
             Self::QueryServiceInfo(msg) => msg.to_core(ctx).into(),
             Self::QueryServiceInfoReply(msg) => msg.to_core(ctx).into(),
             Self::SubscribeService(msg) => msg.to_core(ctx).into(),
+            Self::SubscribeServiceReply(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -213,6 +216,7 @@ impl UpdateContext for ProtoMessage {
             Self::QueryServiceInfo(msg) => msg.update_context(ctx),
             Self::QueryServiceInfoReply(msg) => msg.update_context(ctx),
             Self::SubscribeService(msg) => msg.update_context(ctx),
+            Self::SubscribeServiceReply(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -1965,5 +1969,46 @@ impl UpdateContext for SubscribeService {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         ctx.add_uuid(self.service_cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum SubscribeServiceResultLe {
+    Ok,
+    InvalidService,
+}
+
+impl SubscribeServiceResultLe {
+    pub fn to_core(&self, _ctx: &Context) -> SubscribeServiceResult {
+        match self {
+            Self::Ok => SubscribeServiceResult::Ok,
+            Self::InvalidService => SubscribeServiceResult::InvalidService,
+        }
+    }
+}
+
+impl UpdateContext for SubscribeServiceResult {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct SubscribeServiceReplyLe {
+    pub serial: SerialLe,
+    pub result: SubscribeServiceResultLe,
+}
+
+impl SubscribeServiceReplyLe {
+    pub fn to_core(&self, ctx: &Context) -> SubscribeServiceReply {
+        SubscribeServiceReply {
+            serial: self.serial.get(ctx),
+            result: self.result.to_core(ctx),
+        }
+    }
+}
+
+impl UpdateContext for SubscribeServiceReply {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        self.result.update_context(ctx);
     }
 }

@@ -52,6 +52,7 @@ mod stop_bus_listener_reply;
 mod subscribe_event;
 mod subscribe_event_reply;
 mod subscribe_service;
+mod subscribe_service_reply;
 mod sync;
 mod sync_reply;
 mod unsubscribe_event;
@@ -117,6 +118,7 @@ pub use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
 pub use subscribe_service::SubscribeService;
+pub use subscribe_service_reply::SubscribeServiceReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_event::UnsubscribeEvent;
@@ -180,6 +182,7 @@ pub enum Message {
     QueryServiceInfo(QueryServiceInfo),
     QueryServiceInfoReply(QueryServiceInfoReply),
     SubscribeService(SubscribeService),
+    SubscribeServiceReply(SubscribeServiceReply),
 }
 
 impl Message {
@@ -275,6 +278,9 @@ impl Message {
                 msg.to_core(ctx).map(ProtoMessage::QueryServiceInfoReply)
             }
             Self::SubscribeService(msg) => msg.to_core(ctx).map(ProtoMessage::SubscribeService),
+            Self::SubscribeServiceReply(msg) => {
+                msg.to_core(ctx).map(ProtoMessage::SubscribeServiceReply)
+            }
         }
     }
 
@@ -392,6 +398,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::SubscribeService(msg), Self::SubscribeService(other)) => msg.matches(other, ctx),
+            (Self::SubscribeServiceReply(msg), Self::SubscribeServiceReply(other)) => {
+                msg.matches(other, ctx)
+            }
             _ => Ok(false),
         }
     }
@@ -542,6 +551,9 @@ impl Message {
             (Self::SubscribeService(msg), Self::SubscribeService(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::SubscribeServiceReply(msg), Self::SubscribeServiceReply(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -632,6 +644,9 @@ impl Message {
                 msg.apply_context(ctx).map(Self::QueryServiceInfoReply)
             }
             Self::SubscribeService(msg) => msg.apply_context(ctx).map(Self::SubscribeService),
+            Self::SubscribeServiceReply(msg) => {
+                msg.apply_context(ctx).map(Self::SubscribeServiceReply)
+            }
         }
     }
 }
@@ -725,6 +740,9 @@ impl TryFrom<ProtoMessage> for Message {
                 msg.try_into().map(Self::QueryServiceInfoReply)
             }
             ProtoMessage::SubscribeService(msg) => msg.try_into().map(Self::SubscribeService),
+            ProtoMessage::SubscribeServiceReply(msg) => {
+                msg.try_into().map(Self::SubscribeServiceReply)
+            }
         }
     }
 }
