@@ -10,10 +10,7 @@ pub(super) struct ConnectionState {
     protocol_version: ProtocolVersion,
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
-
-    /// Map of active subscriptions made by this connection.
-    subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
-
+    events: HashMap<ServiceCookie, HashSet<u32>>,
     senders: HashSet<ChannelCookie>,
     receivers: HashSet<ChannelCookie>,
     bus_listeners: HashSet<BusListenerCookie>,
@@ -26,7 +23,7 @@ impl ConnectionState {
             protocol_version,
             send,
             objects: HashSet::new(),
-            subscriptions: HashMap::new(),
+            events: HashMap::new(),
             senders: HashSet::new(),
             receivers: HashSet::new(),
             bus_listeners: HashSet::new(),
@@ -56,33 +53,33 @@ impl ConnectionState {
         self.send.unbounded_send(msg).map_err(|_| ())
     }
 
-    pub fn add_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {
-        self.subscriptions.entry(svc_cookie).or_default().insert(id);
+    pub fn subscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
+        self.events.entry(svc_cookie).or_default().insert(event);
     }
 
-    pub fn remove_subscription(&mut self, svc_cookie: ServiceCookie, id: u32) {
-        if let Entry::Occupied(mut subs) = self.subscriptions.entry(svc_cookie) {
-            subs.get_mut().remove(&id);
+    pub fn unsubscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
+        if let Entry::Occupied(mut subs) = self.events.entry(svc_cookie) {
+            subs.get_mut().remove(&event);
             if subs.get().is_empty() {
                 subs.remove();
             }
         }
     }
 
-    pub fn remove_all_subscriptions(&mut self, svc_cookie: ServiceCookie) {
-        self.subscriptions.remove(&svc_cookie);
+    pub fn unsubscribe_all(&mut self, svc_cookie: ServiceCookie) {
+        self.events.remove(&svc_cookie);
     }
 
-    pub fn subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
-        self.subscriptions
+    pub fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
+        self.events
             .iter()
-            .flat_map(|(&c, ids)| ids.iter().map(move |&id| (c, id)))
+            .flat_map(|(&c, ids)| ids.iter().map(move |&event| (c, event)))
     }
 
-    pub fn is_subscribed_to(&self, svc_cookie: ServiceCookie, id: u32) -> bool {
-        self.subscriptions
+    pub fn is_subscribed_to_event(&self, svc_cookie: ServiceCookie, event: u32) -> bool {
+        self.events
             .get(&svc_cookie)
-            .map(|s| s.contains(&id))
+            .map(|s| s.contains(&event))
             .unwrap_or(false)
     }
 

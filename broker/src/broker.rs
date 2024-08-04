@@ -360,8 +360,8 @@ impl Broker {
             self.remove_object(state, obj_cookie);
         }
 
-        for (svc_cookie, event) in conn.subscriptions() {
-            self.remove_subscription(state, id, svc_cookie, event);
+        for (svc_cookie, event) in conn.event_subscriptions() {
+            self.remove_event_subscription(state, id, svc_cookie, event);
         }
 
         for chann_cookie in conn.senders() {
@@ -815,12 +815,12 @@ impl Broker {
             },
         )?;
 
-        conn.add_subscription(req.service_cookie, req.event);
+        conn.subscribe_event(req.service_cookie, req.event);
         let send_req = self
             .svcs
             .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state")
-            .add_subscription(req.event, id.clone());
+            .subscribe_event(req.event, id.clone());
 
         if send_req {
             let target_conn_id = self
@@ -859,8 +859,8 @@ impl Broker {
             return;
         };
 
-        conn.remove_subscription(req.service_cookie, req.event);
-        let send_unsubscribe = svc.remove_subscription(req.event, id);
+        conn.unsubscribe_event(req.service_cookie, req.event);
+        let send_unsubscribe = svc.unsubscribe_event(req.event, id);
 
         if send_unsubscribe {
             let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
@@ -888,7 +888,7 @@ impl Broker {
         }
 
         for (conn_id, conn) in self.conns.iter() {
-            if conn.is_subscribed_to(req.service_cookie, req.event)
+            if conn.is_subscribed_to_event(req.service_cookie, req.event)
                 && send!(self, conn, req.clone()).is_err()
             {
                 state.push_remove_conn(conn_id.clone(), false);
@@ -1823,7 +1823,7 @@ impl Broker {
 
         for conn_id in svc.subscribed_conn_ids() {
             if let Some(conn) = self.conns.get_mut(conn_id) {
-                conn.remove_all_subscriptions(svc_cookie);
+                conn.unsubscribe_all(svc_cookie);
                 state.push_services_destroyed(conn_id.clone(), svc_cookie);
             }
         }
@@ -1838,7 +1838,7 @@ impl Broker {
     ///
     /// If this was the last subscription of `event`, a notification is sent to the owner of
     /// `svc_cookie`. It is safe to call this function with an invalid `conn_id` or `svc_cookie`.
-    fn remove_subscription(
+    fn remove_event_subscription(
         &mut self,
         state: &mut State,
         conn_id: &ConnectionId,
@@ -1851,7 +1851,7 @@ impl Broker {
 
         // The connection might already have been removed.
         if let Some(conn) = self.conns.get_mut(conn_id) {
-            conn.remove_subscription(svc_cookie, event);
+            conn.unsubscribe_event(svc_cookie, event);
         }
 
         let svc = self
@@ -1859,7 +1859,7 @@ impl Broker {
             .get_mut(&(obj_id.uuid, svc_uuid))
             .expect("inconsistent state");
 
-        if svc.remove_subscription(event, conn_id) {
+        if svc.unsubscribe_event(event, conn_id) {
             let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
             state.push_unsubscribe(obj.conn_id().clone(), svc_cookie, event);
         }
