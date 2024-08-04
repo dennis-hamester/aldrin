@@ -19,18 +19,39 @@ impl Proxies {
         }
     }
 
-    pub fn create(&mut self, client: Handle, service: ServiceId, info: ServiceInfo) -> Proxy {
+    pub fn create(
+        &mut self,
+        client: Handle,
+        service: ServiceId,
+        info: ServiceInfo,
+    ) -> (Proxy, bool) {
         let id = ProxyId::new_v4();
         let (send, recv) = mpsc::unbounded();
 
         self.entries
             .insert(id, ProxyEntry::new(service.cookie, send));
-        self.services.entry(service.cookie).or_default().insert(id);
 
-        Proxy::new_impl(id, client, service, info, recv)
+        let subscribe_service = match self.services.entry(service.cookie) {
+            Entry::Occupied(mut entries) => {
+                debug_assert!(!entries.get().is_empty());
+                entries.get_mut().insert(id);
+                false
+            }
+
+            Entry::Vacant(entries) => {
+                let entries = entries.insert(HashSet::new());
+                entries.insert(id);
+                true
+            }
+        };
+
+        (
+            Proxy::new_impl(id, client, service, info, recv),
+            subscribe_service,
+        )
     }
 
-    pub fn remove(&mut self, proxy: ProxyId) -> Option<(ServiceCookie, HashSet<u32>)> {
+    pub fn remove(&mut self, proxy: ProxyId) -> Option<(ServiceCookie, HashSet<u32>, bool)> {
         let entry = self.entries.remove(&proxy)?;
         let (cookie, mut events) = entry.remove();
 
@@ -41,8 +62,9 @@ impl Proxies {
         let contained = entries.get_mut().remove(&proxy);
         debug_assert!(contained);
 
-        if entries.get().is_empty() {
+        let unsubscribe_service = if entries.get().is_empty() {
             entries.remove();
+            true
         } else {
             events.retain(|&event| {
                 entries.get().iter().any(|proxy| {
@@ -52,9 +74,11 @@ impl Proxies {
                         .is_subscribed_to(event)
                 })
             });
-        }
 
-        Some((cookie, events))
+            false
+        };
+
+        Some((cookie, events, unsubscribe_service))
     }
 
     pub fn remove_service(&mut self, service: ServiceCookie) {

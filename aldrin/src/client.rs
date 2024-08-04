@@ -23,7 +23,8 @@ use crate::core::message::{
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
+    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -57,7 +58,7 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
 
-const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_17;
+const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_18;
 
 /// Aldrin client used to connect to a broker.
 ///
@@ -108,6 +109,7 @@ where
     query_service_info: SerialMap<CreateProxyRequest>,
     query_service_version: SerialMap<CreateProxyRequest>,
     subscribe_event: SerialMap<SubscribeEventRequest>,
+    subscribe_service: SerialMap<ServiceCookie>,
     proxies: Proxies,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
@@ -237,6 +239,7 @@ where
             query_service_info: SerialMap::new(),
             query_service_version: SerialMap::new(),
             subscribe_event: SerialMap::new(),
+            subscribe_service: SerialMap::new(),
             proxies: Proxies::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
@@ -388,12 +391,14 @@ where
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
-            Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg)?,
-            Message::QueryServiceVersionReply(msg) => self.msg_query_service_version_reply(msg)?,
+            Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg).await?,
+            Message::QueryServiceVersionReply(msg) => {
+                self.msg_query_service_version_reply(msg).await?
+            }
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg)?,
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
-            Message::SubscribeServiceReply(_) => todo!(),
+            Message::SubscribeServiceReply(msg) => self.msg_subscribe_service_reply(msg)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1004,7 +1009,7 @@ where
         Err(RunError::UnexpectedMessageReceived(msg.into()))
     }
 
-    fn msg_query_service_info_reply(
+    async fn msg_query_service_info_reply(
         &mut self,
         msg: QueryServiceInfoReply,
     ) -> Result<(), RunError<T::Error>> {
@@ -1022,11 +1027,11 @@ where
             QueryServiceInfoResult::InvalidService => Err(Error::InvalidService),
         };
 
-        self.finish_create_proxy(req, info);
+        self.finish_create_proxy(req, info).await?;
         Ok(())
     }
 
-    fn msg_query_service_version_reply(
+    async fn msg_query_service_version_reply(
         &mut self,
         msg: QueryServiceVersionReply,
     ) -> Result<(), RunError<T::Error>> {
@@ -1042,13 +1047,40 @@ where
             QueryServiceVersionResult::InvalidService => Err(Error::InvalidService),
         };
 
-        self.finish_create_proxy(req, info);
+        self.finish_create_proxy(req, info).await?;
         Ok(())
     }
 
-    fn finish_create_proxy(&mut self, req: CreateProxyRequest, info: Result<ServiceInfo, Error>) {
-        let res = info.map(|info| self.proxies.create(self.handle.clone(), req.service, info));
-        let _ = req.reply.send(res);
+    async fn finish_create_proxy(
+        &mut self,
+        req: CreateProxyRequest,
+        info: Result<ServiceInfo, Error>,
+    ) -> Result<(), RunError<T::Error>> {
+        let info = match info {
+            Ok(info) => info,
+
+            Err(e) => {
+                let _ = req.reply.send(Err(e));
+                return Ok(());
+            }
+        };
+
+        let (proxy, subscribe_service) =
+            self.proxies.create(self.handle.clone(), req.service, info);
+        let _ = req.reply.send(Ok(proxy));
+
+        if subscribe_service && (self.protocol_version >= ProtocolVersion::V1_18) {
+            let serial = self.subscribe_service.insert(req.service.cookie);
+
+            self.t
+                .send_and_flush(SubscribeService {
+                    serial,
+                    service_cookie: req.service.cookie,
+                })
+                .await?;
+        }
+
+        Ok(())
     }
 
     fn msg_subscribe_event_reply(
@@ -1074,6 +1106,23 @@ where
 
     fn msg_service_destroyed(&mut self, msg: ServiceDestroyed) {
         self.proxies.remove_service(msg.service_cookie);
+    }
+
+    fn msg_subscribe_service_reply(
+        &mut self,
+        msg: SubscribeServiceReply,
+    ) -> Result<(), RunError<T::Error>> {
+        if let Some(service) = self.subscribe_service.remove(msg.serial) {
+            debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
+
+            if msg.result == SubscribeServiceResult::InvalidService {
+                self.proxies.remove_service(service);
+            }
+
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
     }
 
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
@@ -1527,7 +1576,9 @@ where
     }
 
     async fn req_destroy_proxy(&mut self, proxy: ProxyId) -> Result<(), RunError<T::Error>> {
-        if let Some((service_cookie, events)) = self.proxies.remove(proxy) {
+        if let Some((service_cookie, events, unsubscribe_service)) = self.proxies.remove(proxy) {
+            let mut flush = false;
+
             if !events.is_empty() {
                 for event in events {
                     self.t
@@ -1538,6 +1589,15 @@ where
                         .await?;
                 }
 
+                flush = true;
+            }
+
+            if unsubscribe_service && (self.protocol_version >= ProtocolVersion::V1_18) {
+                self.t.send(UnsubscribeService { service_cookie }).await?;
+                flush = true;
+            }
+
+            if flush {
                 self.t.flush().await?;
             }
         }

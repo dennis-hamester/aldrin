@@ -95,15 +95,19 @@ impl Proxy {
     /// Polls for the next event.
     ///
     /// This function returns `Poll::Pending` even if no events have been subscribed to. `None` is
-    /// only returned if either the service was destroyed or the client has shut down.
+    /// only guaranteed to be returned if the client has shut down.
+    ///
+    /// On protocol version 1.18 or later, `None` is also returned if the service was destroyed.
     pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<Event>> {
         Pin::new(&mut self.recv).poll_next(cx)
     }
 
     /// Returns the next event.
     ///
-    /// This function blocks even if no events have been subscribed to. `None` is only returned if
-    /// either the service was destroyed or the client has shut down.
+    /// This function blocks even if no events have been subscribed to. `None` is only guaranteed to
+    /// be returned if the client has shut down.
+    ///
+    /// On protocol version 1.18 or later, `None` is also returned if the service was destroyed.
     pub async fn next_event(&mut self) -> Option<Event> {
         future::poll_fn(|cx| self.poll_next_event(cx)).await
     }
