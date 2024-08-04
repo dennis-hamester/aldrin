@@ -11,6 +11,7 @@ pub(super) struct ConnectionState {
     send: UnboundedSender<Message>,
     objects: HashSet<ObjectCookie>,
     events: HashMap<ServiceCookie, HashSet<u32>>,
+    subscriptions: HashSet<ServiceCookie>,
     senders: HashSet<ChannelCookie>,
     receivers: HashSet<ChannelCookie>,
     bus_listeners: HashSet<BusListenerCookie>,
@@ -24,6 +25,7 @@ impl ConnectionState {
             send,
             objects: HashSet::new(),
             events: HashMap::new(),
+            subscriptions: HashSet::new(),
             senders: HashSet::new(),
             receivers: HashSet::new(),
             bus_listeners: HashSet::new(),
@@ -66,10 +68,6 @@ impl ConnectionState {
         }
     }
 
-    pub fn unsubscribe_all(&mut self, svc_cookie: ServiceCookie) {
-        self.events.remove(&svc_cookie);
-    }
-
     pub fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
         self.events
             .iter()
@@ -81,6 +79,23 @@ impl ConnectionState {
             .get(&svc_cookie)
             .map(|s| s.contains(&event))
             .unwrap_or(false)
+    }
+
+    pub fn subscribe(&mut self, svc_cookie: ServiceCookie) {
+        self.subscriptions.insert(svc_cookie);
+    }
+
+    pub fn unsubscribe(&mut self, svc_cookie: ServiceCookie) {
+        self.subscriptions.remove(&svc_cookie);
+    }
+
+    pub fn subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
+        self.subscriptions.iter().copied()
+    }
+
+    pub fn unsubscribe_all(&mut self, svc_cookie: ServiceCookie) {
+        self.events.remove(&svc_cookie);
+        self.subscriptions.remove(&svc_cookie);
     }
 
     pub fn add_sender(&mut self, cookie: ChannelCookie) {

@@ -178,8 +178,8 @@ async fn function_calls() {
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 3);
-    assert_eq!(stats.messages_received(), 3);
+    assert_eq!(stats.messages_sent(), 4);
+    assert_eq!(stats.messages_received(), 4);
 
     // Call 2 functions.
     let reply1 = proxy.call(0, &());
@@ -235,8 +235,8 @@ async fn events() {
 
     // Initial state.
     let stats = broker.take_statistics().await.unwrap();
-    assert_eq!(stats.messages_sent(), 7);
-    assert_eq!(stats.messages_received(), 6);
+    assert_eq!(stats.messages_sent(), 9);
+    assert_eq!(stats.messages_received(), 8);
 
     // Emit 3 events on 0.
     svc.emit(0, &()).unwrap();

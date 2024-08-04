@@ -28,7 +28,8 @@ use crate::core::message::{
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
+    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
+    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -364,6 +365,10 @@ impl Broker {
             self.remove_event_subscription(state, id, svc_cookie, event);
         }
 
+        for svc_cookie in conn.subscriptions() {
+            self.remove_subscription(id, svc_cookie);
+        }
+
         for chann_cookie in conn.senders() {
             self.remove_channel_end(state, chann_cookie, ChannelEnd::Sender, Some(id));
         }
@@ -423,8 +428,8 @@ impl Broker {
             }
             Message::CreateService2(req) => self.create_service2(state, id, req)?,
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
-            Message::SubscribeService(_) => todo!(),
-            Message::UnsubscribeService(_) => todo!(),
+            Message::SubscribeService(req) => self.subscribe_service(id, req)?,
+            Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1756,6 +1761,74 @@ impl Broker {
         send!(self, conn, reply)
     }
 
+    fn subscribe_service(&mut self, id: &ConnectionId, req: SubscribeService) -> Result<(), ()> {
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            return Err(());
+        }
+
+        match self.svc_uuids.get(&req.service_cookie) {
+            Some(&(obj_id, svc_uuid, _)) => {
+                send!(
+                    self,
+                    conn,
+                    SubscribeServiceReply {
+                        serial: req.serial,
+                        result: SubscribeServiceResult::Ok,
+                    },
+                )?;
+
+                self.svcs
+                    .get_mut(&(obj_id.uuid, svc_uuid))
+                    .expect("inconsistent state")
+                    .subscribe(id.clone());
+
+                conn.subscribe(req.service_cookie);
+
+                Ok(())
+            }
+
+            None => {
+                send!(
+                    self,
+                    conn,
+                    SubscribeServiceReply {
+                        serial: req.serial,
+                        result: SubscribeServiceResult::InvalidService,
+                    },
+                )
+            }
+        }
+    }
+
+    fn unsubscribe_service(
+        &mut self,
+        id: &ConnectionId,
+        req: UnsubscribeService,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get_mut(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            return Err(());
+        }
+
+        if let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) {
+            self.svcs
+                .get_mut(&(obj_id.uuid, svc_uuid))
+                .expect("inconsistent state")
+                .unsubscribe(id);
+
+            conn.unsubscribe(req.service_cookie);
+        }
+
+        Ok(())
+    }
+
     /// Removes the object `obj_cookie` and queues up events in `state`.
     ///
     /// This function will also remove all services owned by that object as well as everything
@@ -1862,6 +1935,15 @@ impl Broker {
         if svc.unsubscribe_event(event, conn_id) {
             let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
             state.push_unsubscribe(obj.conn_id().clone(), svc_cookie, event);
+        }
+    }
+
+    fn remove_subscription(&mut self, conn_id: &ConnectionId, svc_cookie: ServiceCookie) {
+        if let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&svc_cookie) {
+            self.svcs
+                .get_mut(&(obj_id.uuid, svc_uuid))
+                .expect("inconsistent state")
+                .unsubscribe(conn_id);
         }
     }
 

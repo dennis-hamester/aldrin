@@ -8,6 +8,9 @@ pub(crate) struct Service {
 
     /// Map of events subscribed by a set of connections.
     events: HashMap<u32, HashSet<ConnectionId>>,
+
+    /// Set of connections subscribed to this service.
+    subscriptions: HashSet<ConnectionId>,
 }
 
 impl Service {
@@ -15,6 +18,7 @@ impl Service {
         Service {
             function_calls: HashSet::new(),
             events: HashMap::new(),
+            subscriptions: HashSet::new(),
         }
     }
 
@@ -66,11 +70,21 @@ impl Service {
         }
     }
 
+    pub fn subscribe(&mut self, conn_id: ConnectionId) {
+        self.subscriptions.insert(conn_id);
+    }
+
+    pub fn unsubscribe(&mut self, conn_id: &ConnectionId) {
+        self.subscriptions.remove(conn_id);
+    }
+
     pub fn subscribed_conn_ids(&self) -> impl Iterator<Item = &ConnectionId> {
         #[allow(clippy::mutable_key_type)]
         let mut res = HashSet::new();
 
         res.extend(self.events.values().flatten());
+        res.extend(self.subscriptions.iter());
+
         res.into_iter()
     }
 }
