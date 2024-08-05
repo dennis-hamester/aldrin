@@ -457,7 +457,8 @@ impl Broker {
             | Message::Connect2(_)
             | Message::ConnectReply2(_)
             | Message::QueryServiceInfoReply(_)
-            | Message::SubscribeServiceReply(_) => return Err(()),
+            | Message::SubscribeServiceReply(_)
+            | Message::SubscribeAllEventsReply(_) => return Err(()),
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled by connection.
         }
