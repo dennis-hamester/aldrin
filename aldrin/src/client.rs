@@ -399,6 +399,7 @@ where
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
             Message::SubscribeServiceReply(msg) => self.msg_subscribe_service_reply(msg)?,
+            Message::SubscribeAllEvents(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

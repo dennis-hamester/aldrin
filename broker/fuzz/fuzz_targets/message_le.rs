@@ -16,9 +16,10 @@ use aldrin_broker::core::message::{
     QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeService,
+    SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent,
+    UnsubscribeService,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -88,6 +89,7 @@ pub enum MessageLe {
     SubscribeService(SubscribeServiceLe),
     SubscribeServiceReply(SubscribeServiceReplyLe),
     UnsubscribeService(UnsubscribeServiceLe),
+    SubscribeAllEvents(SubscribeAllEventsLe),
 }
 
 impl MessageLe {
@@ -151,6 +153,7 @@ impl MessageLe {
             Self::SubscribeService(msg) => msg.to_core(ctx).into(),
             Self::SubscribeServiceReply(msg) => msg.to_core(ctx).into(),
             Self::UnsubscribeService(msg) => msg.to_core(ctx).into(),
+            Self::SubscribeAllEvents(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -220,6 +223,7 @@ impl UpdateContext for ProtoMessage {
             Self::SubscribeService(msg) => msg.update_context(ctx),
             Self::SubscribeServiceReply(msg) => msg.update_context(ctx),
             Self::UnsubscribeService(msg) => msg.update_context(ctx),
+            Self::SubscribeAllEvents(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -2041,6 +2045,30 @@ impl UnsubscribeServiceLe {
 
 impl UpdateContext for UnsubscribeService {
     fn update_context(&self, ctx: &mut Context) {
+        ctx.add_uuid(self.service_cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct SubscribeAllEventsLe {
+    pub serial: Option<SerialLe>,
+    pub service_cookie: UuidLe,
+}
+
+impl SubscribeAllEventsLe {
+    pub fn to_core(&self, ctx: &Context) -> SubscribeAllEvents {
+        SubscribeAllEvents {
+            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for SubscribeAllEvents {
+    fn update_context(&self, ctx: &mut Context) {
+        if let Some(serial) = self.serial {
+            ctx.add_serial(serial);
+        }
         ctx.add_uuid(self.service_cookie.0);
     }
 }
