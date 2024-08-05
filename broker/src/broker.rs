@@ -430,6 +430,7 @@ impl Broker {
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
             Message::SubscribeService(req) => self.subscribe_service(id, req)?,
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
+            Message::SubscribeAllEvents(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
