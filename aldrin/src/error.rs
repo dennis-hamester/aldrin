@@ -140,6 +140,10 @@ pub enum Error {
     /// A value failed to serialized.
     #[error(transparent)]
     Serialize(#[from] SerializeError),
+
+    /// The negotiated protocol version is too low.
+    #[error("not supported")]
+    NotSupported,
 }
 
 impl Error {
