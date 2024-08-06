@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support protocol version 1.18.
 - Add `low_level::Service::type_id()` getter.
 - Add `low_level::Service::query_introspection()`.
+- Add `Error::NotSupported`, for failures due to missing protocol support.
 
 ### Fixed
 
