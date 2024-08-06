@@ -57,6 +57,7 @@ mod subscribe_service;
 mod subscribe_service_reply;
 mod sync;
 mod sync_reply;
+mod unsubscribe_all_events;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
@@ -126,6 +127,7 @@ pub use subscribe_service::SubscribeService;
 pub use subscribe_service_reply::SubscribeServiceReply;
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
+pub use unsubscribe_all_events::UnsubscribeAllEvents;
 pub use unsubscribe_event::UnsubscribeEvent;
 pub use unsubscribe_service::UnsubscribeService;
 
@@ -192,6 +194,7 @@ pub enum Message {
     UnsubscribeService(UnsubscribeService),
     SubscribeAllEvents(SubscribeAllEvents),
     SubscribeAllEventsReply(SubscribeAllEventsReply),
+    UnsubscribeAllEvents(UnsubscribeAllEvents),
 }
 
 impl Message {
@@ -294,6 +297,9 @@ impl Message {
             Self::SubscribeAllEvents(msg) => msg.to_core(ctx).map(ProtoMessage::SubscribeAllEvents),
             Self::SubscribeAllEventsReply(msg) => {
                 msg.to_core(ctx).map(ProtoMessage::SubscribeAllEventsReply)
+            }
+            Self::UnsubscribeAllEvents(msg) => {
+                msg.to_core(ctx).map(ProtoMessage::UnsubscribeAllEvents)
             }
         }
     }
@@ -422,6 +428,9 @@ impl Message {
                 msg.matches(other, ctx)
             }
             (Self::SubscribeAllEventsReply(msg), Self::SubscribeAllEventsReply(other)) => {
+                msg.matches(other, ctx)
+            }
+            (Self::UnsubscribeAllEvents(msg), Self::UnsubscribeAllEvents(other)) => {
                 msg.matches(other, ctx)
             }
             _ => Ok(false),
@@ -586,6 +595,9 @@ impl Message {
             (Self::SubscribeAllEventsReply(msg), Self::SubscribeAllEventsReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::UnsubscribeAllEvents(msg), Self::UnsubscribeAllEvents(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -683,6 +695,9 @@ impl Message {
             Self::SubscribeAllEvents(msg) => msg.apply_context(ctx).map(Self::SubscribeAllEvents),
             Self::SubscribeAllEventsReply(msg) => {
                 msg.apply_context(ctx).map(Self::SubscribeAllEventsReply)
+            }
+            Self::UnsubscribeAllEvents(msg) => {
+                msg.apply_context(ctx).map(Self::UnsubscribeAllEvents)
             }
         }
     }
@@ -784,6 +799,9 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::SubscribeAllEvents(msg) => msg.try_into().map(Self::SubscribeAllEvents),
             ProtoMessage::SubscribeAllEventsReply(msg) => {
                 msg.try_into().map(Self::SubscribeAllEventsReply)
+            }
+            ProtoMessage::UnsubscribeAllEvents(msg) => {
+                msg.try_into().map(Self::UnsubscribeAllEvents)
             }
         }
     }

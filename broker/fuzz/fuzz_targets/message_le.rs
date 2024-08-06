@@ -19,7 +19,7 @@ use aldrin_broker::core::message::{
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
     SubscribeAllEventsReply, SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync,
-    SyncReply, UnsubscribeEvent, UnsubscribeService,
+    SyncReply, UnsubscribeAllEvents, UnsubscribeEvent, UnsubscribeService,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -91,6 +91,7 @@ pub enum MessageLe {
     UnsubscribeService(UnsubscribeServiceLe),
     SubscribeAllEvents(SubscribeAllEventsLe),
     SubscribeAllEventsReply(SubscribeAllEventsReplyLe),
+    UnsubscribeAllEvents(UnsubscribeAllEventsLe),
 }
 
 impl MessageLe {
@@ -156,6 +157,7 @@ impl MessageLe {
             Self::UnsubscribeService(msg) => msg.to_core(ctx).into(),
             Self::SubscribeAllEvents(msg) => msg.to_core(ctx).into(),
             Self::SubscribeAllEventsReply(msg) => msg.to_core(ctx).into(),
+            Self::UnsubscribeAllEvents(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -227,6 +229,7 @@ impl UpdateContext for ProtoMessage {
             Self::UnsubscribeService(msg) => msg.update_context(ctx),
             Self::SubscribeAllEvents(msg) => msg.update_context(ctx),
             Self::SubscribeAllEventsReply(msg) => msg.update_context(ctx),
+            Self::UnsubscribeAllEvents(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -2116,5 +2119,29 @@ impl UpdateContext for SubscribeAllEventsReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct UnsubscribeAllEventsLe {
+    pub serial: Option<SerialLe>,
+    pub service_cookie: UuidLe,
+}
+
+impl UnsubscribeAllEventsLe {
+    pub fn to_core(&self, ctx: &Context) -> UnsubscribeAllEvents {
+        UnsubscribeAllEvents {
+            serial: self.serial.as_ref().map(|serial| serial.get(ctx)),
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+        }
+    }
+}
+
+impl UpdateContext for UnsubscribeAllEvents {
+    fn update_context(&self, ctx: &mut Context) {
+        if let Some(serial) = self.serial {
+            ctx.add_serial(serial);
+        }
+        ctx.add_uuid(self.service_cookie.0);
     }
 }

@@ -401,6 +401,7 @@ where
             Message::SubscribeServiceReply(msg) => self.msg_subscribe_service_reply(msg)?,
             Message::SubscribeAllEvents(_) => todo!(),
             Message::SubscribeAllEventsReply(_) => todo!(),
+            Message::UnsubscribeAllEvents(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)

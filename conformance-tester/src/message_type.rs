@@ -63,6 +63,7 @@ pub enum MessageType {
     SubscribeServiceReply,
     Sync,
     SyncReply,
+    UnsubscribeAllEvents,
     UnsubscribeEvent,
     UnsubscribeService,
 }
@@ -128,6 +129,7 @@ impl fmt::Display for MessageType {
             Self::SubscribeServiceReply => f.pad("subscribe-service-reply"),
             Self::Sync => f.pad("sync"),
             Self::SyncReply => f.pad("sync-reply"),
+            Self::UnsubscribeAllEvents => f.pad("unsubscribe-all-events"),
             Self::UnsubscribeEvent => f.pad("unsubscribe-event"),
             Self::UnsubscribeService => f.pad("unsubscribe-service"),
         }
