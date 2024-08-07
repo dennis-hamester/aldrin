@@ -96,12 +96,7 @@ impl Proxies {
         };
 
         let service = entry.service();
-
-        if entry.subscribe(event)
-            && !self.entries.iter().any(|(&id, entry)| {
-                (entry.service() == service) && (id != proxy) && entry.is_subscribed_to(event)
-            })
-        {
+        if entry.subscribe(event) && !self.is_any_subscribed_to(service, event, Some(proxy)) {
             SubscribeResult::Forward(service)
         } else {
             SubscribeResult::Noop
@@ -114,17 +109,30 @@ impl Proxies {
         };
 
         let service = entry.service();
-
-        if entry.unsubscribe(event)
-            && !self
-                .entries
-                .values()
-                .any(|entry| (entry.service() == service) && entry.is_subscribed_to(event))
-        {
+        if entry.unsubscribe(event) && !self.is_any_subscribed_to(service, event, None) {
             SubscribeResult::Forward(service)
         } else {
             SubscribeResult::Noop
         }
+    }
+
+    fn is_any_subscribed_to(
+        &self,
+        service: ServiceCookie,
+        event: u32,
+        except: Option<ProxyId>,
+    ) -> bool {
+        self.entries
+            .iter()
+            .filter(|(_, entry)| entry.service() == service)
+            .filter(|(&id, _)| {
+                if let Some(except) = except {
+                    id != except
+                } else {
+                    true
+                }
+            })
+            .any(|(_, entry)| entry.is_subscribed_to(event))
     }
 
     pub fn emit(&self, service: ServiceCookie, event: u32, args: SerializedValue) {
