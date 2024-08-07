@@ -98,10 +98,9 @@ impl Proxies {
         let service = entry.service();
 
         if entry.subscribe(event)
-            && !self
-                .entries
-                .iter()
-                .any(|(&id, entry)| (id != proxy) && entry.is_subscribed_to(event))
+            && !self.entries.iter().any(|(&id, entry)| {
+                (entry.service() == service) && (id != proxy) && entry.is_subscribed_to(event)
+            })
         {
             SubscribeResult::Forward(service)
         } else {
@@ -120,7 +119,7 @@ impl Proxies {
             && !self
                 .entries
                 .values()
-                .any(|entry| entry.is_subscribed_to(event))
+                .any(|entry| (entry.service() == service) && entry.is_subscribed_to(event))
         {
             SubscribeResult::Forward(service)
         } else {

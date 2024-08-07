@@ -437,3 +437,54 @@ async fn close_events_without_subscribers() {
 
     assert!(event.is_none());
 }
+
+#[tokio::test]
+async fn subscribe_multiple_services_same_event_id() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+
+    let svc1 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let mut proxy1 = client.create_proxy(svc1.id()).await.unwrap();
+
+    let svc2 = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+    let mut proxy2 = client.create_proxy(svc2.id()).await.unwrap();
+
+    proxy1.subscribe(0).await.unwrap();
+    proxy2.subscribe(0).await.unwrap();
+
+    svc1.emit(0, &1).unwrap();
+    svc2.emit(0, &2).unwrap();
+
+    let event1 = time::timeout(Duration::from_millis(100), proxy1.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(event1.id(), 0);
+    assert_eq!(event1.deserialize(), Ok(1));
+
+    let event2 = time::timeout(Duration::from_millis(100), proxy2.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(event2.id(), 0);
+    assert_eq!(event2.deserialize(), Ok(2));
+
+    proxy2.unsubscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+
+    svc2.emit(0, &3).unwrap();
+    assert!(
+        time::timeout(Duration::from_millis(100), proxy2.next_event())
+            .await
+            .is_err()
+    );
+}
