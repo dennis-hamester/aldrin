@@ -92,6 +92,19 @@ impl Proxy {
         self.client.unsubscribe_event(self.id, event).await
     }
 
+    /// Subscribes to all events.
+    ///
+    /// Note that this function can return [`Error::NotSupported`], if the protocol version, that is
+    /// negotiated at runtime, isn't high enough.
+    pub async fn subscribe_all(&self) -> Result<(), Error> {
+        self.client.subscribe_all_events(self.id).await
+    }
+
+    /// Unsubscribes from all events.
+    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
+        self.client.unsubscribe_all_events(self.id).await
+    }
+
     /// Polls for the next event.
     ///
     /// This function returns `Poll::Pending` even if no events have been subscribed to. `None` is

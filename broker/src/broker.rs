@@ -27,9 +27,10 @@ use crate::core::message::{
     QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeService,
+    SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent,
+    UnsubscribeService,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -430,7 +431,7 @@ impl Broker {
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
             Message::SubscribeService(req) => self.subscribe_service(id, req)?,
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
-            Message::SubscribeAllEvents(_) => todo!(),
+            Message::SubscribeAllEvents(req) => self.subscribe_all_events(id, req)?,
             Message::UnsubscribeAllEvents(_) => todo!(),
 
             Message::Connect(_)
@@ -1830,6 +1831,18 @@ impl Broker {
         }
 
         Ok(())
+    }
+
+    fn subscribe_all_events(&self, id: &ConnectionId, req: SubscribeAllEvents) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            return Err(());
+        }
+
+        todo!()
     }
 
     /// Removes the object `obj_cookie` and queues up events in `state`.

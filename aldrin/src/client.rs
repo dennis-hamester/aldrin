@@ -22,9 +22,10 @@ use crate::core::message::{
     QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeService,
+    SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent,
+    UnsubscribeService,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -42,8 +43,9 @@ use crate::handle::request::{
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
     CreateProxyRequest, CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest,
     DestroyServiceRequest, EmitEventRequest, HandleRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
-    SyncClientRequest, UnsubscribeEventRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SubscribeAllEventsRequest,
+    SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeAllEventsRequest,
+    UnsubscribeEventRequest,
 };
 #[cfg(feature = "introspection")]
 use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -110,6 +112,7 @@ where
     query_service_version: SerialMap<CreateProxyRequest>,
     subscribe_event: SerialMap<SubscribeEventRequest>,
     subscribe_service: SerialMap<ServiceCookie>,
+    subscribe_all_events: SerialMap<SubscribeAllEventsRequest>,
     proxies: Proxies,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
@@ -240,6 +243,7 @@ where
             query_service_version: SerialMap::new(),
             subscribe_event: SerialMap::new(),
             subscribe_service: SerialMap::new(),
+            subscribe_all_events: SerialMap::new(),
             proxies: Proxies::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
@@ -1173,6 +1177,10 @@ where
             HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy).await?,
             HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
             HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
+            HandleRequest::SubscribeAllEvents(req) => self.req_subscribe_all_events(req).await?,
+            HandleRequest::UnsubscribeAllEvents(req) => {
+                self.req_unsubscribe_all_events(req).await?
+            }
             #[cfg(feature = "introspection")]
             HandleRequest::RegisterIntrospection(introspection) => {
                 self.introspection
@@ -1664,6 +1672,47 @@ where
         }
 
         Ok(())
+    }
+
+    async fn req_subscribe_all_events(
+        &mut self,
+        req: SubscribeAllEventsRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_18 {
+            match self.proxies.check_subscribe_all(req.proxy) {
+                SubscribeResult::Forward(service_cookie) => {
+                    let serial = self.subscribe_all_events.insert(req);
+
+                    self.t
+                        .send_and_flush(SubscribeAllEvents {
+                            serial: Some(serial),
+                            service_cookie,
+                        })
+                        .await?;
+                }
+
+                SubscribeResult::Noop => {
+                    let subscribed = self.proxies.subscribe_all(req.proxy);
+                    debug_assert!(subscribed);
+                    let _ = req.reply.send(Ok(()));
+                }
+
+                SubscribeResult::InvalidProxy => {
+                    let _ = req.reply.send(Err(Error::InvalidService));
+                }
+            }
+        } else {
+            let _ = req.reply.send(Err(Error::NotSupported));
+        }
+
+        Ok(())
+    }
+
+    async fn req_unsubscribe_all_events(
+        &mut self,
+        req: UnsubscribeAllEventsRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        todo!()
     }
 
     #[cfg(feature = "introspection")]

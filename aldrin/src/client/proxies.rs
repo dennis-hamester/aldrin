@@ -135,6 +135,79 @@ impl Proxies {
             .any(|(_, entry)| entry.is_subscribed_to(event))
     }
 
+    pub fn check_subscribe_all(&self, proxy: ProxyId) -> SubscribeResult {
+        if let Some(service) = self.entries.get(&proxy).map(ProxyEntry::service) {
+            if self
+                .entries
+                .values()
+                .filter(|entry| entry.service() == service)
+                .any(ProxyEntry::is_subscribed_to_all)
+            {
+                SubscribeResult::Noop
+            } else {
+                SubscribeResult::Forward(service)
+            }
+        } else {
+            SubscribeResult::InvalidProxy
+        }
+    }
+
+    pub fn subscribe_all(&mut self, proxy: ProxyId) -> bool {
+        if let Some(entry) = self.entries.get_mut(&proxy) {
+            entry.subscribe_all();
+            true
+        } else {
+            false
+        }
+    }
+
+    // pub fn unsubscribe_all(&mut self, proxy: ProxyId) -> SubscribeResult {
+    //     // let Some(entry) = self.entries.get_mut(&proxy) else {
+    //     //     return SubscribeResult::InvalidProxy;
+    //     // };
+
+    //     // let service = entry.service();
+
+    //     // if entry.unsubscribe_all()
+    //     //     && !self
+    //     //         .entries
+    //     //         .values()
+    //     //         .any(|entry| entry.is_subscribed_to_all())
+    //     // {
+    //     //     SubscribeResult::Forward(service)
+    //     // } else {
+    //     //     SubscribeResult::Noop
+    //     // }
+
+    //     todo!()
+    // }
+
+    // pub fn is_subscribed_to_all(&self, proxy: ProxyId) -> SubscribeResult {
+    //     // if let Some(entry) = self.entries.get(&proxy) else {
+    //     //     if entry.is_subscribed_to_all() {
+    //     //         SubscribeResult::Noop
+    //     //     } else {
+    //     //     }
+    //     // } else {
+    //     //     SubscribeResult::InvalidProxy
+    //     // }
+
+    //     // let service = entry.service();
+
+    //     // if entry.subscribe_all()
+    //     //     && !self
+    //     //         .entries
+    //     //         .iter()
+    //     //         .any(|(&id, entry)| (id != proxy) && entry.is_subscribed_to_all())
+    //     // {
+    //     //     SubscribeResult::Forward(service)
+    //     // } else {
+    //     //     SubscribeResult::Noop
+    //     // }
+
+    //     todo!()
+    // }
+
     pub fn emit(&self, service: ServiceCookie, event: u32, args: SerializedValue) {
         if let Some(proxies) = self.services.get(&service) {
             let mut proxies = proxies.iter().peekable();
@@ -142,7 +215,7 @@ impl Proxies {
             while let Some(proxy) = proxies.next() {
                 let proxy = self.entries.get(proxy).expect("inconsistent state");
 
-                if proxy.is_subscribed_to(event) {
+                if proxy.is_subscribed_to_all() || proxy.is_subscribed_to(event) {
                     // Avoid cloning args for the last proxy.
                     if proxies.peek().is_some() {
                         proxy.emit(event, args.clone());
@@ -161,6 +234,7 @@ struct ProxyEntry {
     service: ServiceCookie,
     send: UnboundedSender<Event>,
     events: HashSet<u32>,
+    all_events: bool,
 }
 
 impl ProxyEntry {
@@ -169,6 +243,7 @@ impl ProxyEntry {
             service,
             send,
             events: HashSet::new(),
+            all_events: false,
         }
     }
 
@@ -190,6 +265,23 @@ impl ProxyEntry {
 
     fn is_subscribed_to(&self, event: u32) -> bool {
         self.events.contains(&event)
+    }
+
+    fn subscribe_all(&mut self) {
+        self.all_events = true;
+    }
+
+    fn unsubscribe_all(&mut self) -> bool {
+        if self.all_events {
+            self.all_events = false;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn is_subscribed_to_all(&self) -> bool {
+        self.all_events
     }
 
     fn emit(&self, event: u32, args: SerializedValue) {

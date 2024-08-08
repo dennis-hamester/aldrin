@@ -488,3 +488,30 @@ async fn subscribe_multiple_services_same_event_id() {
             .is_err()
     );
 }
+
+#[tokio::test]
+async fn subscribe_all() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+}
