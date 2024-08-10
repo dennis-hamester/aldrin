@@ -1,3 +1,4 @@
+mod broker_subscriptions;
 mod proxies;
 mod select;
 
@@ -51,11 +52,11 @@ use crate::lifetime::LifetimeListener;
 use crate::low_level::{ProxyId, RawCall, Service};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
+use broker_subscriptions::BrokerSubscriptions;
 use futures_channel::{mpsc, oneshot};
 use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
-use std::collections::hash_map::{Entry, HashMap};
-use std::collections::HashSet;
+use std::collections::hash_map::HashMap;
 use std::mem;
 
 const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_18;
@@ -93,7 +94,7 @@ where
     destroy_service: SerialMap<DestroyServiceRequest>,
     function_calls: FunctionCallMap,
     services: HashMap<ServiceCookie, mpsc::UnboundedSender<RawCall>>,
-    broker_subscriptions: HashMap<ServiceCookie, HashSet<u32>>,
+    broker_subscriptions: BrokerSubscriptions,
     create_channel: SerialMap<CreateChannelData>,
     close_channel_end: SerialMap<CloseChannelEndRequest>,
     claim_channel_end: SerialMap<ClaimChannelEndData>,
@@ -223,7 +224,7 @@ where
             destroy_service: SerialMap::new(),
             function_calls: FunctionCallMap::new(),
             services: HashMap::new(),
-            broker_subscriptions: HashMap::new(),
+            broker_subscriptions: BrokerSubscriptions::new(),
             create_channel: SerialMap::new(),
             close_channel_end: SerialMap::new(),
             claim_channel_end: SerialMap::new(),
@@ -506,7 +507,7 @@ where
             DestroyServiceResult::Ok => {
                 let contained = self.services.remove(&req.id.cookie);
                 debug_assert!(contained.is_some());
-                self.broker_subscriptions.remove(&req.id.cookie);
+                self.broker_subscriptions.remove_service(req.id.cookie);
                 Ok(())
             }
 
@@ -555,20 +556,12 @@ where
 
     fn msg_subscribe_event(&mut self, msg: SubscribeEvent) {
         self.broker_subscriptions
-            .entry(msg.service_cookie)
-            .or_default()
-            .insert(msg.event);
+            .subscribe(msg.service_cookie, msg.event);
     }
 
     fn msg_unsubscribe_event(&mut self, msg: UnsubscribeEvent) {
-        let Entry::Occupied(mut subs) = self.broker_subscriptions.entry(msg.service_cookie) else {
-            return;
-        };
-
-        subs.get_mut().remove(&msg.event);
-        if subs.get().is_empty() {
-            subs.remove();
-        }
+        self.broker_subscriptions
+            .unsubscribe(msg.service_cookie, msg.event);
     }
 
     fn msg_create_channel_reply(
@@ -1309,13 +1302,10 @@ where
     }
 
     async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
-        let subscribed = self
+        if self
             .broker_subscriptions
-            .get(&req.service_cookie)
-            .map(|events| events.contains(&req.event))
-            .unwrap_or(false);
-
-        if subscribed {
+            .emit(req.service_cookie, req.event)
+        {
             self.t
                 .send_and_flush(EmitEvent {
                     service_cookie: req.service_cookie,
