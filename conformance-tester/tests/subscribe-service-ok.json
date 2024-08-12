@@ -1,0 +1,49 @@
+{
+    "name": "subscribe-service-ok",
+    "description": "Subscribe to a service",
+    "long-description": "A client subscribes to a service and gets notified when it is destroyed.",
+    "version": "1.18",
+    "message-types": [
+        "service-destroyed",
+        "subscribe-service",
+        "subscribe-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-service",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-service-reply",
+            "serial": 0,
+            "result": "ok"
+        },
+        {
+            "type": "destroy-service",
+            "cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "service-destroyed",
+            "service-cookie": "get:service"
+        }
+    ]
+}
