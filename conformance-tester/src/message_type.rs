@@ -57,9 +57,12 @@ pub enum MessageType {
     StopBusListenerReply,
     SubscribeEvent,
     SubscribeEventReply,
+    SubscribeService,
+    SubscribeServiceReply,
     Sync,
     SyncReply,
     UnsubscribeEvent,
+    UnsubscribeService,
 }
 
 impl fmt::Display for MessageType {
@@ -117,9 +120,12 @@ impl fmt::Display for MessageType {
             Self::StopBusListenerReply => f.pad("stop-bus-listener-reply"),
             Self::SubscribeEvent => f.pad("subscribe-event"),
             Self::SubscribeEventReply => f.pad("subscribe-event-reply"),
+            Self::SubscribeService => f.pad("subscribe-service"),
+            Self::SubscribeServiceReply => f.pad("subscribe-service-reply"),
             Self::Sync => f.pad("sync"),
             Self::SyncReply => f.pad("sync-reply"),
             Self::UnsubscribeEvent => f.pad("unsubscribe-event"),
+            Self::UnsubscribeService => f.pad("unsubscribe-service"),
         }
     }
 }
