@@ -1,0 +1,27 @@
+{
+    "name": "subscribe-invalid-service",
+    "description": "Subscribe to an invalid service",
+    "long-description": "A client tries to subscribe to an invalid service.",
+    "version": "1.18",
+    "message-types": [
+        "subscribe-service",
+        "subscribe-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "send",
+            "message": "subscribe-service",
+            "serial": 0,
+            "service-cookie": "00000000-0000-0000-0000-000000000001"
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-service-reply",
+            "serial": 0,
+            "result": "invalid-service"
+        }
+    ]
+}
