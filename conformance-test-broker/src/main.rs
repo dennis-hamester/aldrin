@@ -82,6 +82,7 @@ impl BrokerUnderTest {
     }
 
     async fn handle_new_connection(mut broker: BrokerHandle, stream: TcpStream) -> Result<()> {
+        stream.set_nodelay(true)?;
         let transport = TokioTransport::new(stream);
 
         let conn = broker
