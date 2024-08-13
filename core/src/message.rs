@@ -60,6 +60,7 @@ mod sync_reply;
 #[cfg(test)]
 mod test;
 mod unsubscribe_all_events;
+mod unsubscribe_all_events_reply;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
@@ -129,6 +130,7 @@ pub use subscribe_service_reply::{SubscribeServiceReply, SubscribeServiceResult}
 pub use sync::Sync;
 pub use sync_reply::SyncReply;
 pub use unsubscribe_all_events::UnsubscribeAllEvents;
+pub use unsubscribe_all_events_reply::{UnsubscribeAllEventsReply, UnsubscribeAllEventsResult};
 pub use unsubscribe_event::UnsubscribeEvent;
 pub use unsubscribe_service::UnsubscribeService;
 
@@ -196,6 +198,7 @@ pub enum MessageKind {
     SubscribeAllEvents = 58,
     SubscribeAllEventsReply = 59,
     UnsubscribeAllEvents = 60,
+    UnsubscribeAllEventsReply = 61,
 }
 
 impl MessageKind {
@@ -262,7 +265,8 @@ impl MessageKind {
             | Self::UnsubscribeService
             | Self::SubscribeAllEvents
             | Self::SubscribeAllEventsReply
-            | Self::UnsubscribeAllEvents => false,
+            | Self::UnsubscribeAllEvents
+            | Self::UnsubscribeAllEventsReply => false,
         }
     }
 }
@@ -342,6 +346,7 @@ pub enum Message {
     SubscribeAllEvents(SubscribeAllEvents),
     SubscribeAllEventsReply(SubscribeAllEventsReply),
     UnsubscribeAllEvents(UnsubscribeAllEvents),
+    UnsubscribeAllEventsReply(UnsubscribeAllEventsReply),
 }
 
 impl MessageOps for Message {
@@ -408,6 +413,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEvents(_) => MessageKind::SubscribeAllEvents,
             Self::SubscribeAllEventsReply(_) => MessageKind::SubscribeAllEventsReply,
             Self::UnsubscribeAllEvents(_) => MessageKind::UnsubscribeAllEvents,
+            Self::UnsubscribeAllEventsReply(_) => MessageKind::UnsubscribeAllEventsReply,
         }
     }
 
@@ -474,6 +480,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEvents(msg) => msg.serialize_message(),
             Self::SubscribeAllEventsReply(msg) => msg.serialize_message(),
             Self::UnsubscribeAllEvents(msg) => msg.serialize_message(),
+            Self::UnsubscribeAllEventsReply(msg) => msg.serialize_message(),
         }
     }
 
@@ -657,6 +664,10 @@ impl MessageOps for Message {
             MessageKind::UnsubscribeAllEvents => {
                 UnsubscribeAllEvents::deserialize_message(buf).map(Self::UnsubscribeAllEvents)
             }
+            MessageKind::UnsubscribeAllEventsReply => {
+                UnsubscribeAllEventsReply::deserialize_message(buf)
+                    .map(Self::UnsubscribeAllEventsReply)
+            }
         }
     }
 
@@ -723,6 +734,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEvents(msg) => msg.value(),
             Self::SubscribeAllEventsReply(msg) => msg.value(),
             Self::UnsubscribeAllEvents(msg) => msg.value(),
+            Self::UnsubscribeAllEventsReply(msg) => msg.value(),
         }
     }
 }

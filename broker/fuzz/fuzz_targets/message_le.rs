@@ -19,7 +19,8 @@ use aldrin_broker::core::message::{
     StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
     SubscribeAllEventsReply, SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync,
-    SyncReply, UnsubscribeAllEvents, UnsubscribeEvent, UnsubscribeService,
+    SyncReply, UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult,
+    UnsubscribeEvent, UnsubscribeService,
 };
 use aldrin_broker::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
@@ -92,6 +93,7 @@ pub enum MessageLe {
     SubscribeAllEvents(SubscribeAllEventsLe),
     SubscribeAllEventsReply(SubscribeAllEventsReplyLe),
     UnsubscribeAllEvents(UnsubscribeAllEventsLe),
+    UnsubscribeAllEventsReply(UnsubscribeAllEventsReplyLe),
 }
 
 impl MessageLe {
@@ -158,6 +160,7 @@ impl MessageLe {
             Self::SubscribeAllEvents(msg) => msg.to_core(ctx).into(),
             Self::SubscribeAllEventsReply(msg) => msg.to_core(ctx).into(),
             Self::UnsubscribeAllEvents(msg) => msg.to_core(ctx).into(),
+            Self::UnsubscribeAllEventsReply(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -230,6 +233,7 @@ impl UpdateContext for ProtoMessage {
             Self::SubscribeAllEvents(msg) => msg.update_context(ctx),
             Self::SubscribeAllEventsReply(msg) => msg.update_context(ctx),
             Self::UnsubscribeAllEvents(msg) => msg.update_context(ctx),
+            Self::UnsubscribeAllEventsReply(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -2143,5 +2147,48 @@ impl UpdateContext for UnsubscribeAllEvents {
             ctx.add_serial(serial);
         }
         ctx.add_uuid(self.service_cookie.0);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub enum UnsubscribeAllEventsResultLe {
+    Ok,
+    InvalidService,
+    NotSupported,
+}
+
+impl UnsubscribeAllEventsResultLe {
+    pub fn to_core(&self, _ctx: &Context) -> UnsubscribeAllEventsResult {
+        match self {
+            Self::Ok => UnsubscribeAllEventsResult::Ok,
+            Self::InvalidService => UnsubscribeAllEventsResult::InvalidService,
+            Self::NotSupported => UnsubscribeAllEventsResult::NotSupported,
+        }
+    }
+}
+
+impl UpdateContext for UnsubscribeAllEventsResult {
+    fn update_context(&self, _ctx: &mut Context) {}
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct UnsubscribeAllEventsReplyLe {
+    pub serial: SerialLe,
+    pub result: UnsubscribeAllEventsResultLe,
+}
+
+impl UnsubscribeAllEventsReplyLe {
+    pub fn to_core(&self, ctx: &Context) -> UnsubscribeAllEventsReply {
+        UnsubscribeAllEventsReply {
+            serial: self.serial.get(ctx),
+            result: self.result.to_core(ctx),
+        }
+    }
+}
+
+impl UpdateContext for UnsubscribeAllEventsReply {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        self.result.update_context(ctx);
     }
 }

@@ -402,6 +402,7 @@ where
             Message::SubscribeAllEvents(_) => todo!(),
             Message::SubscribeAllEventsReply(_) => todo!(),
             Message::UnsubscribeAllEvents(_) => todo!(),
+            Message::UnsubscribeAllEventsReply(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
