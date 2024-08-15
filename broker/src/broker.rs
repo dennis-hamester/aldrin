@@ -913,7 +913,7 @@ impl Broker {
         let reply = match self.svc_uuids.get(&req.cookie) {
             Some(&(_, _, info)) => QueryServiceVersionReply {
                 serial: req.serial,
-                result: QueryServiceVersionResult::Ok(info.version),
+                result: QueryServiceVersionResult::Ok(info.version()),
             },
 
             None => QueryServiceVersionReply {

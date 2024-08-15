@@ -50,18 +50,18 @@ impl Service {
 
     /// Returns the version of the service.
     pub fn version(&self) -> u32 {
-        self.info.version
+        self.info.version()
     }
 
     /// Returns the type id of the service, if it was created with one.
     pub fn type_id(&self) -> Option<TypeId> {
-        self.info.type_id
+        self.info.type_id()
     }
 
     /// Queries the introspection for the service.
     #[cfg(feature = "introspection")]
     pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
-        match self.info.type_id {
+        match self.info.type_id() {
             Some(type_id) => self.client.query_introspection(type_id).await,
             None => Ok(None),
         }

@@ -134,7 +134,7 @@ mod test {
             0x76, 0x46, 0xa5, 0x8e, 0x2d, 0x48, 0x71, 0x02, 0x58, 0xbc, 0x2c, 1, 0,
         ];
         let info =
-            ServiceInfo::with_type_id(2, TypeId(uuid!("cf41c688-4976-46a5-8e2d-48710258bc2c")));
+            ServiceInfo::new(2).set_type_id(TypeId(uuid!("cf41c688-4976-46a5-8e2d-48710258bc2c")));
 
         let msg = QueryServiceInfoReply::ok_with_serialize_info(1, info).unwrap();
         assert_serialize_eq(&msg, serialized);

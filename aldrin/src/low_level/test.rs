@@ -83,7 +83,7 @@ async fn proxy_getter() {
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
-    let info = ServiceInfo::with_type_id(1, TYPE_ID);
+    let info = ServiceInfo::new(1).set_type_id(TYPE_ID);
     let svc = obj
         .create_service(ServiceUuid::new_v4(), info)
         .await

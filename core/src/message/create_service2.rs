@@ -131,7 +131,7 @@ mod test {
             1,
             ObjectCookie(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
             ServiceUuid(uuid!("d3efd00b-7a7b-4bf7-bdd3-3c6632473347")),
-            ServiceInfo::with_type_id(2, TypeId(uuid!("8250b89e-0a58-4b00-9e8e-48e8466f3331"))),
+            ServiceInfo::new(2).set_type_id(TypeId(uuid!("8250b89e-0a58-4b00-9e8e-48e8466f3331"))),
         )
         .unwrap();
 

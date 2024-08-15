@@ -57,18 +57,18 @@ impl Proxy {
 
     /// Returns the version of the proxy's service.
     pub fn version(&self) -> u32 {
-        self.info.version
+        self.info.version()
     }
 
     /// Returns the type id of the proxy's service, if it is known.
     pub fn type_id(&self) -> Option<TypeId> {
-        self.info.type_id
+        self.info.type_id()
     }
 
     /// Queries the introspection for the proxy's service.
     #[cfg(feature = "introspection")]
     pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
-        match self.info.type_id {
+        match self.info.type_id() {
             Some(type_id) => self.client.query_introspection(type_id).await,
             None => Ok(None),
         }

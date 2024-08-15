@@ -13,8 +13,8 @@ enum ServiceInfoField {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ServiceInfo {
-    pub version: u32,
-    pub type_id: Option<TypeId>,
+    version: u32,
+    type_id: Option<TypeId>,
 }
 
 impl ServiceInfo {
@@ -25,11 +25,24 @@ impl ServiceInfo {
         }
     }
 
-    pub fn with_type_id(version: u32, type_id: TypeId) -> Self {
-        Self {
-            version,
-            type_id: Some(type_id),
-        }
+    pub fn version(self) -> u32 {
+        self.version
+    }
+
+    #[must_use = "this method follows the builder pattern and returns a new `ServiceInfo`"]
+    pub fn set_version(mut self, version: u32) -> Self {
+        self.version = version;
+        self
+    }
+
+    pub fn type_id(self) -> Option<TypeId> {
+        self.type_id
+    }
+
+    #[must_use = "this method follows the builder pattern and returns a new `ServiceInfo`"]
+    pub fn set_type_id(mut self, type_id: TypeId) -> Self {
+        self.type_id = Some(type_id);
+        self
     }
 }
 

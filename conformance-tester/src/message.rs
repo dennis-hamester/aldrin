@@ -837,17 +837,14 @@ pub struct ServiceInfo {
 
 impl ServiceInfo {
     pub fn to_core(&self, ctx: &Context) -> Result<CoreServiceInfo> {
-        let type_id = self
-            .type_id
-            .as_ref()
-            .map(|id| id.get(ctx))
-            .transpose()?
-            .map(TypeId);
+        let mut info = CoreServiceInfo::new(self.version);
 
-        Ok(CoreServiceInfo {
-            version: self.version,
-            type_id,
-        })
+        if let Some(ref type_id) = self.type_id {
+            let type_id = type_id.get(ctx).map(TypeId)?;
+            info = info.set_type_id(type_id);
+        }
+
+        Ok(info)
     }
 
     fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
@@ -885,8 +882,8 @@ impl ServiceInfo {
 impl From<CoreServiceInfo> for ServiceInfo {
     fn from(info: CoreServiceInfo) -> Self {
         Self {
-            version: info.version,
-            type_id: info.type_id.map(Into::into),
+            version: info.version(),
+            type_id: info.type_id().map(Into::into),
         }
     }
 }

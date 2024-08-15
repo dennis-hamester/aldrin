@@ -1832,10 +1832,11 @@ impl ServiceInfoLe {
     fn serialize(&self, ctx: &Context) -> SerializedValue {
         match self {
             Self::Valid { version, type_id } => {
-                let info = ServiceInfo {
-                    version: *version as u32,
-                    type_id: type_id.as_ref().map(|id| id.get(ctx)).map(TypeId),
-                };
+                let mut info = ServiceInfo::new(*version as u32);
+
+                if let Some(type_id) = type_id {
+                    info = info.set_type_id(TypeId(type_id.get(ctx)));
+                }
 
                 SerializedValue::serialize(&info).unwrap()
             }
@@ -1847,7 +1848,7 @@ impl ServiceInfoLe {
 
 impl UpdateContext for ServiceInfo {
     fn update_context(&self, ctx: &mut Context) {
-        if let Some(type_id) = self.type_id {
+        if let Some(type_id) = self.type_id() {
             ctx.add_uuid(type_id.0);
         }
     }

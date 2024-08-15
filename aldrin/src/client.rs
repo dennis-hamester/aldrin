@@ -1240,7 +1240,7 @@ where
 
             self.t.send_and_flush(msg).await.map_err(Into::into)
         } else {
-            let version = req.info.version;
+            let version = req.info.version();
             let serial = self.create_service.insert(req);
 
             self.t
