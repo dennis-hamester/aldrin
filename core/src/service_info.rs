@@ -82,3 +82,28 @@ impl Deserialize for ServiceInfo {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::ServiceInfo;
+    use crate::ids::TypeId;
+    use crate::serialized_value::SerializedValue;
+    use uuid::uuid;
+
+    fn serde(info: ServiceInfo) -> ServiceInfo {
+        SerializedValue::serialize(&info)
+            .unwrap()
+            .deserialize()
+            .unwrap()
+    }
+
+    #[test]
+    fn serialize() {
+        let info = ServiceInfo::new(1);
+        assert_eq!(info, serde(info));
+
+        let info =
+            ServiceInfo::new(1).set_type_id(TypeId(uuid!("88e82fb9-03b2-4f51-94d8-4702cfacc90c")));
+        assert_eq!(info, serde(info));
+    }
+}
