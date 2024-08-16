@@ -1,4 +1,5 @@
-use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid, TypeId};
+use crate::core::{ObjectUuid, ServiceUuid, TypeId};
+use aldrin_test::aldrin::low_level::ServiceInfo;
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;

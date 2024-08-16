@@ -8,6 +8,7 @@ mod promise;
 mod proxy;
 mod reply;
 mod service;
+mod service_info;
 #[cfg(test)]
 mod test;
 
@@ -20,3 +21,4 @@ pub use promise::Promise;
 pub use proxy::Proxy;
 pub use reply::Reply;
 pub use service::Service;
+pub use service_info::ServiceInfo;

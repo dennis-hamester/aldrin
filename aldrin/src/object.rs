@@ -1,6 +1,6 @@
 use super::{Error, Handle};
-use crate::core::{ObjectId, ObjectUuid, ServiceInfo, ServiceUuid};
-use crate::low_level::Service;
+use crate::core::{ObjectId, ObjectUuid, ServiceUuid};
+use crate::low_level::{Service, ServiceInfo};
 
 /// Owned object on the bus.
 ///
@@ -81,7 +81,8 @@ impl Object {
     ///
     /// ```
     /// use aldrin::Error;
-    /// use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+    /// use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// use aldrin::low_level::ServiceInfo;
     /// use uuid::uuid;
     ///
     /// const MY_SERVICE_UUID: ServiceUuid = ServiceUuid(uuid!("800b47a1-3882-4601-9155-e18c654476cc"));

@@ -9,11 +9,10 @@ use crate::core::message::{
 };
 use crate::core::transport::AsyncTransportExt;
 use crate::core::{
-    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceInfo,
-    ServiceUuid,
+    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
 };
 use crate::{Broker, BrokerHandle};
-use aldrin::low_level::Proxy;
+use aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin::Client;
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};

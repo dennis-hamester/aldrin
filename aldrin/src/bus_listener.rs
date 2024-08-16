@@ -37,9 +37,8 @@ use std::task::{Context, Poll};
 /// ## Enumerating all current objects and services
 ///
 /// ```
-/// use aldrin::core::{
-///     BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceInfo, ServiceUuid,
-/// };
+/// use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectUuid, ServiceUuid};
+/// use aldrin::low_level::ServiceInfo;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let broker = aldrin_test::tokio::TestBroker::new();

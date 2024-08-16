@@ -62,7 +62,8 @@ use std::{future, option};
 ///
 /// ```
 /// # use aldrin::{Discoverer, DiscovererEventKind};
-/// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+/// # use aldrin::core::{ObjectUuid, ServiceUuid};
+/// # use aldrin::low_level::ServiceInfo;
 /// # use aldrin_test::tokio::TestBroker;
 /// # use uuid::uuid;
 /// # #[tokio::main]

@@ -1236,7 +1236,7 @@ where
         let uuid = req.service_uuid;
 
         if self.protocol_version >= ProtocolVersion::V1_17 {
-            let info = req.info;
+            let info = req.info.to_core();
             let serial = self.create_service.insert(req);
 
             let msg = CreateService2::with_serialize_info(serial, object_cookie, uuid, info)

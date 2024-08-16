@@ -1,9 +1,10 @@
 use super::Call;
 #[cfg(feature = "introspection")]
 use crate::core::introspection::Introspection;
-use crate::core::{Serialize, SerializedValue, ServiceId, ServiceInfo, ServiceUuid, TypeId};
+use crate::core::{Serialize, SerializedValue, ServiceId, ServiceUuid, TypeId};
 use crate::error::Error;
 use crate::handle::Handle;
+use crate::low_level::ServiceInfo;
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_channel::oneshot::Receiver;

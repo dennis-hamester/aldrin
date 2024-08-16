@@ -14,11 +14,10 @@ use crate::core::message::{
 use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
-    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceInfo,
-    ServiceUuid,
+    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{Proxy, ProxyId, Service};
+use crate::low_level::{Proxy, ProxyId, Service, ServiceInfo};
 use crate::{Error, Object};
 use futures_channel::oneshot;
 use std::num::NonZeroU32;

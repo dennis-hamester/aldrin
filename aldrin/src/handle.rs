@@ -16,12 +16,12 @@ use crate::core::TypeId;
 use crate::core::{
     BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
     ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
-    ServiceInfo, ServiceUuid,
+    ServiceUuid,
 };
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{Proxy, ProxyId, Reply, Service};
+use crate::low_level::{Proxy, ProxyId, Reply, Service, ServiceInfo};
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
@@ -499,7 +499,8 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::low_level::ServiceInfo;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
@@ -660,7 +661,8 @@ impl Handle {
     /// # Examples
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::low_level::ServiceInfo;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();
@@ -688,7 +690,8 @@ impl Handle {
     /// Without specifying an `ObjectUuid`:
     ///
     /// ```
-    /// # use aldrin::core::{ObjectUuid, ServiceInfo, ServiceUuid};
+    /// # use aldrin::core::{ObjectUuid, ServiceUuid};
+    /// # use aldrin::low_level::ServiceInfo;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let broker = aldrin_test::tokio::TestBroker::new();

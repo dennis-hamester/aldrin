@@ -1,5 +1,5 @@
-use crate::core::{ObjectUuid, ServiceInfo, ServiceUuid};
-use aldrin_test::aldrin::low_level::Service;
+use crate::core::{ObjectUuid, ServiceUuid};
+use aldrin_test::aldrin::low_level::{Service, ServiceInfo};
 use aldrin_test::aldrin::{Discoverer, DiscovererEvent, DiscovererEventKind, Object};
 use aldrin_test::tokio::TestBroker;
 use std::fmt::Debug;

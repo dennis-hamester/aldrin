@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `low_level::Proxy`, the service id should be generally be known anyway.
 - `low_level::Proxy::new()` now takes a reference to a `Handle` instead of an owned `Handle`.
 - Rename `low_level::Service::emit_event()` to just `emit()`.
+- `aldrin_core::ServiceInfo` (resp. `aldrin::core::ServiceInfo`) in the public API has been replaced
+  by a new type `aldrin::low_level::ServiceInfo`.
 
 ## [0.7.0] - 2024-07-25
 
