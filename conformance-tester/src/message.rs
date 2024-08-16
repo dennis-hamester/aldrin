@@ -833,6 +833,7 @@ impl fmt::Display for ChannelEndWithCapacity {
 pub struct ServiceInfo {
     pub version: u32,
     pub type_id: Option<UuidRef>,
+    pub subscribe_all: Option<bool>,
 }
 
 impl ServiceInfo {
@@ -842,6 +843,10 @@ impl ServiceInfo {
         if let Some(ref type_id) = self.type_id {
             let type_id = type_id.get(ctx).map(TypeId)?;
             info = info.set_type_id(type_id);
+        }
+
+        if let Some(subscribe_all) = self.subscribe_all {
+            info = info.set_subscribe_all(subscribe_all);
         }
 
         Ok(info)
@@ -854,7 +859,7 @@ impl ServiceInfo {
             _ => false,
         };
 
-        Ok(res && (self.version == other.version))
+        Ok(res && (self.version == other.version) && (self.subscribe_all == other.subscribe_all))
     }
 
     pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
@@ -875,6 +880,7 @@ impl ServiceInfo {
         Ok(Self {
             version: self.version,
             type_id,
+            subscribe_all: self.subscribe_all,
         })
     }
 }
@@ -884,6 +890,7 @@ impl From<CoreServiceInfo> for ServiceInfo {
         Self {
             version: info.version(),
             type_id: info.type_id().map(Into::into),
+            subscribe_all: info.subscribe_all(),
         }
     }
 }

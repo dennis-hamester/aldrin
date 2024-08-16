@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add new protocol version 1.18.
 - Add `SubscribeService`, `SubscribeServiceReply` and `UnsubscribeService` messages.
+- Add `subscribe_all` field to `ServiceInfo`.
 
 ### Changed
 

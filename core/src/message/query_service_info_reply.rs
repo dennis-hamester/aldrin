@@ -130,11 +130,12 @@ mod test {
     #[test]
     fn ok() {
         let serialized = [
-            35, 0, 0, 0, 54, 24, 0, 0, 0, 39, 2, 0, 7, 2, 1, 1, 14, 0xcf, 0x41, 0xc6, 0x88, 0x49,
-            0x76, 0x46, 0xa5, 0x8e, 0x2d, 0x48, 0x71, 0x02, 0x58, 0xbc, 0x2c, 1, 0,
+            39, 0, 0, 0, 54, 28, 0, 0, 0, 39, 3, 0, 7, 2, 1, 1, 14, 0xcf, 0x41, 0xc6, 0x88, 0x49,
+            0x76, 0x46, 0xa5, 0x8e, 0x2d, 0x48, 0x71, 0x02, 0x58, 0xbc, 0x2c, 2, 1, 2, 1, 1, 0,
         ];
-        let info =
-            ServiceInfo::new(2).set_type_id(TypeId(uuid!("cf41c688-4976-46a5-8e2d-48710258bc2c")));
+        let info = ServiceInfo::new(2)
+            .set_type_id(TypeId(uuid!("cf41c688-4976-46a5-8e2d-48710258bc2c")))
+            .set_subscribe_all(true);
 
         let msg = QueryServiceInfoReply::ok_with_serialize_info(1, info).unwrap();
         assert_serialize_eq(&msg, serialized);

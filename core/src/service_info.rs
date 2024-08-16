@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test_old1;
+
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::TypeId;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -9,12 +12,14 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 enum ServiceInfoField {
     Version = 0,
     TypeId = 1,
+    SubscribeAll = 2,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ServiceInfo {
     version: u32,
     type_id: Option<TypeId>,
+    subscribe_all: Option<bool>,
 }
 
 impl ServiceInfo {
@@ -22,6 +27,7 @@ impl ServiceInfo {
         Self {
             version,
             type_id: None,
+            subscribe_all: None,
         }
     }
 
@@ -44,14 +50,25 @@ impl ServiceInfo {
         self.type_id = Some(type_id);
         self
     }
+
+    pub fn subscribe_all(self) -> Option<bool> {
+        self.subscribe_all
+    }
+
+    #[must_use = "this method follows the builder pattern and returns a new `ServiceInfo`"]
+    pub fn set_subscribe_all(mut self, subscribe_all: bool) -> Self {
+        self.subscribe_all = Some(subscribe_all);
+        self
+    }
 }
 
 impl Serialize for ServiceInfo {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(2)?;
+        let mut serializer = serializer.serialize_struct(3)?;
 
         serializer.serialize_field(ServiceInfoField::Version, &self.version)?;
         serializer.serialize_field(ServiceInfoField::TypeId, &self.type_id)?;
+        serializer.serialize_field(ServiceInfoField::SubscribeAll, &self.subscribe_all)?;
 
         serializer.finish()
     }
@@ -63,6 +80,7 @@ impl Deserialize for ServiceInfo {
 
         let mut version = None;
         let mut type_id = None;
+        let mut subscribe_all = None;
 
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
@@ -70,6 +88,7 @@ impl Deserialize for ServiceInfo {
             match deserializer.try_id() {
                 Ok(ServiceInfoField::Version) => version = deserializer.deserialize().map(Some)?,
                 Ok(ServiceInfoField::TypeId) => type_id = deserializer.deserialize()?,
+                Ok(ServiceInfoField::SubscribeAll) => subscribe_all = deserializer.deserialize()?,
                 Err(_) => deserializer.skip()?,
             }
         }
@@ -78,6 +97,7 @@ impl Deserialize for ServiceInfo {
             Ok(Self {
                 version: version.ok_or(DeserializeError::InvalidSerialization)?,
                 type_id,
+                subscribe_all,
             })
         })
     }
@@ -104,6 +124,14 @@ mod test {
 
         let info =
             ServiceInfo::new(1).set_type_id(TypeId(uuid!("88e82fb9-03b2-4f51-94d8-4702cfacc90c")));
+        assert_eq!(info, serde(info));
+
+        let info = ServiceInfo::new(1).set_subscribe_all(true);
+        assert_eq!(info, serde(info));
+
+        let info = ServiceInfo::new(1)
+            .set_type_id(TypeId(uuid!("88e82fb9-03b2-4f51-94d8-4702cfacc90c")))
+            .set_subscribe_all(true);
         assert_eq!(info, serde(info));
     }
 }

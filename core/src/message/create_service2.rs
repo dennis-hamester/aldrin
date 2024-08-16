@@ -89,16 +89,16 @@ mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
     use super::CreateService2;
-    use crate::ids::{ObjectCookie, ServiceUuid, TypeId};
+    use crate::ids::{ObjectCookie, ServiceUuid};
     use crate::service_info::ServiceInfo;
     use uuid::uuid;
 
     #[test]
     fn create_service2() {
         let serialized = [
-            49, 0, 0, 0, 52, 7, 0, 0, 0, 39, 2, 0, 7, 2, 1, 0, 1, 0xb7, 0xc3, 0xbe, 0x13, 0x53,
-            0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 0xd3, 0xef, 0xd0,
-            0x0b, 0x7a, 0x7b, 0x4b, 0xf7, 0xbd, 0xd3, 0x3c, 0x66, 0x32, 0x47, 0x33, 0x47,
+            51, 0, 0, 0, 52, 9, 0, 0, 0, 39, 3, 0, 7, 2, 1, 0, 2, 0, 1, 0xb7, 0xc3, 0xbe, 0x13,
+            0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 0xd3, 0xef,
+            0xd0, 0x0b, 0x7a, 0x7b, 0x4b, 0xf7, 0xbd, 0xd3, 0x3c, 0x66, 0x32, 0x47, 0x33, 0x47,
         ];
 
         let msg = CreateService2::with_serialize_info(
@@ -106,32 +106,6 @@ mod test {
             ObjectCookie(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
             ServiceUuid(uuid!("d3efd00b-7a7b-4bf7-bdd3-3c6632473347")),
             ServiceInfo::new(2),
-        )
-        .unwrap();
-
-        assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq(&msg, serialized);
-
-        let msg = Message::CreateService2(msg);
-        assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq(&msg, serialized);
-    }
-
-    #[test]
-    fn with_type_id() {
-        let serialized = [
-            66, 0, 0, 0, 52, 24, 0, 0, 0, 39, 2, 0, 7, 2, 1, 1, 14, 0x82, 0x50, 0xb8, 0x9e, 0x0a,
-            0x58, 0x4b, 0x00, 0x9e, 0x8e, 0x48, 0xe8, 0x46, 0x6f, 0x33, 0x31, 1, 0xb7, 0xc3, 0xbe,
-            0x13, 0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 0xd3,
-            0xef, 0xd0, 0x0b, 0x7a, 0x7b, 0x4b, 0xf7, 0xbd, 0xd3, 0x3c, 0x66, 0x32, 0x47, 0x33,
-            0x47,
-        ];
-
-        let msg = CreateService2::with_serialize_info(
-            1,
-            ObjectCookie(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
-            ServiceUuid(uuid!("d3efd00b-7a7b-4bf7-bdd3-3c6632473347")),
-            ServiceInfo::new(2).set_type_id(TypeId(uuid!("8250b89e-0a58-4b00-9e8e-48e8466f3331"))),
         )
         .unwrap();
 

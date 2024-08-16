@@ -1823,6 +1823,7 @@ pub enum ServiceInfoLe {
     Valid {
         version: u8,
         type_id: Option<UuidLe>,
+        subscribe_all: Option<bool>,
     },
 
     Invalid,
@@ -1831,11 +1832,19 @@ pub enum ServiceInfoLe {
 impl ServiceInfoLe {
     fn serialize(&self, ctx: &Context) -> SerializedValue {
         match self {
-            Self::Valid { version, type_id } => {
+            Self::Valid {
+                version,
+                type_id,
+                subscribe_all,
+            } => {
                 let mut info = ServiceInfo::new(*version as u32);
 
                 if let Some(type_id) = type_id {
                     info = info.set_type_id(TypeId(type_id.get(ctx)));
+                }
+
+                if let Some(subscribe_all) = subscribe_all {
+                    info = info.set_subscribe_all(*subscribe_all);
                 }
 
                 SerializedValue::serialize(&info).unwrap()
