@@ -1712,9 +1712,13 @@ impl Broker {
             );
         }
 
-        let Ok(info) = req.deserialize_info() else {
+        let Ok(mut info) = req.deserialize_info() else {
             return Err(());
         };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            info = info.set_subscribe_all(false);
+        }
 
         let svc_cookie = ServiceCookie::new_v4();
         send!(
