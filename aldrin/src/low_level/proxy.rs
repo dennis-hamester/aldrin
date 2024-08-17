@@ -65,6 +65,11 @@ impl Proxy {
         self.info.type_id()
     }
 
+    /// Returns whether it's possible to subscribe to all events.
+    pub fn can_subscribe_all(&self) -> bool {
+        self.info.subscribe_all().unwrap_or(false)
+    }
+
     /// Queries the introspection for the proxy's service.
     #[cfg(feature = "introspection")]
     pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
