@@ -28,6 +28,20 @@ impl BrokerSubscriptions {
         }
     }
 
+    pub fn subscribe_all(&mut self, service: ServiceCookie) {
+        self.entries.entry(service).or_default().subscribe_all();
+    }
+
+    pub fn unsubscribe_all(&mut self, service: ServiceCookie) {
+        if let Entry::Occupied(mut entry) = self.entries.entry(service) {
+            entry.get_mut().unsubscribe_all();
+
+            if entry.get().is_empty() {
+                entry.remove();
+            }
+        }
+    }
+
     pub fn emit(&self, service: ServiceCookie, event: u32) -> bool {
         self.entries
             .get(&service)
@@ -43,11 +57,12 @@ impl BrokerSubscriptions {
 #[derive(Debug, Default)]
 struct Service {
     events: HashSet<u32>,
+    all_events: bool,
 }
 
 impl Service {
     fn is_empty(&self) -> bool {
-        self.events.is_empty()
+        !self.all_events && self.events.is_empty()
     }
 
     fn subscribe(&mut self, event: u32) {
@@ -58,7 +73,15 @@ impl Service {
         self.events.remove(&event);
     }
 
+    fn subscribe_all(&mut self) {
+        self.all_events = true;
+    }
+
+    fn unsubscribe_all(&mut self) {
+        self.all_events = false;
+    }
+
     fn emit(&self, event: u32) -> bool {
-        self.events.contains(&event)
+        self.all_events || self.events.contains(&event)
     }
 }

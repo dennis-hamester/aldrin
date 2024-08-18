@@ -9,6 +9,9 @@ pub(crate) struct Service {
     /// Map of events subscribed by a set of connections.
     events: HashMap<u32, HashSet<ConnectionId>>,
 
+    /// Set of connections subscribed to all events.
+    all_events: HashSet<ConnectionId>,
+
     /// Set of connections subscribed to this service.
     subscriptions: HashSet<ConnectionId>,
 }
@@ -18,6 +21,7 @@ impl Service {
         Service {
             function_calls: HashSet::new(),
             events: HashMap::new(),
+            all_events: HashSet::new(),
             subscriptions: HashSet::new(),
         }
     }
@@ -68,6 +72,18 @@ impl Service {
 
             Entry::Vacant(_) => false,
         }
+    }
+
+    pub fn subscribe_all_events(&mut self, conn_id: ConnectionId) -> bool {
+        let was_empty = self.all_events.is_empty();
+        self.all_events.insert(conn_id);
+        was_empty
+    }
+
+    pub fn unsubscribe_all_events(&mut self, conn_id: &ConnectionId) -> bool {
+        let was_empty = self.all_events.is_empty();
+        self.all_events.remove(conn_id);
+        !was_empty && self.all_events.is_empty()
     }
 
     pub fn subscribe(&mut self, conn_id: ConnectionId) {

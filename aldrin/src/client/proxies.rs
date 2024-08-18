@@ -4,6 +4,7 @@ use aldrin_core::{SerializedValue, ServiceCookie, ServiceId, ServiceInfo};
 use futures_channel::mpsc::{self, UnboundedSender};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::mem;
 
 #[derive(Debug)]
 pub(crate) struct Proxies {
@@ -51,22 +52,22 @@ impl Proxies {
         )
     }
 
-    pub fn remove(&mut self, proxy: ProxyId) -> Option<(ServiceCookie, HashSet<u32>, bool)> {
-        let entry = self.entries.remove(&proxy)?;
-        let (cookie, mut events) = entry.remove();
+    pub fn remove(&mut self, proxy: ProxyId) -> Option<RemoveProxyResult> {
+        let mut res = self.entries.remove(&proxy)?.remove();
 
-        let Entry::Occupied(mut entries) = self.services.entry(cookie) else {
+        let Entry::Occupied(mut entries) = self.services.entry(res.service) else {
             panic!("inconsistent state");
         };
 
         let contained = entries.get_mut().remove(&proxy);
         debug_assert!(contained);
 
-        let unsubscribe_service = if entries.get().is_empty() {
+        if entries.get().is_empty() {
             entries.remove();
-            true
         } else {
-            events.retain(|&event| {
+            res.unsubscribe = false;
+
+            res.events.retain(|&event| {
                 entries.get().iter().all(|proxy| {
                     !self
                         .entries
@@ -76,10 +77,10 @@ impl Proxies {
                 })
             });
 
-            false
-        };
+            res.all_events &= !self.is_any_subscribed_to_all(res.service, None);
+        }
 
-        Some((cookie, events, unsubscribe_service))
+        Some(res)
     }
 
     pub fn remove_service(&mut self, service: ServiceCookie) {
@@ -136,6 +137,52 @@ impl Proxies {
             .any(|(_, entry)| entry.is_subscribed_to(event))
     }
 
+    pub fn subscribe_all(&mut self, proxy: ProxyId) -> SubscribeResult {
+        let Some(entry) = self.entries.get_mut(&proxy) else {
+            return SubscribeResult::InvalidProxy;
+        };
+
+        let service = entry.service();
+        if entry.subscribe_all() && !self.is_any_subscribed_to_all(service, Some(proxy)) {
+            SubscribeResult::Forward(service)
+        } else {
+            SubscribeResult::Noop
+        }
+    }
+
+    pub fn unsubscribe_all(&mut self, proxy: ProxyId) -> Option<UnsubscribeAllResult> {
+        let mut res = self.entries.get_mut(&proxy)?.unsubscribe_all();
+        let entries = self.services.get(&res.service).expect("inconsistent state");
+
+        res.events.retain(|&event| {
+            entries.iter().all(|proxy| {
+                !self
+                    .entries
+                    .get(proxy)
+                    .expect("inconsistent state")
+                    .is_subscribed_to(event)
+            })
+        });
+
+        res.all_events &= !self.is_any_subscribed_to_all(res.service, None);
+
+        Some(res)
+    }
+
+    fn is_any_subscribed_to_all(&self, service: ServiceCookie, except: Option<ProxyId>) -> bool {
+        self.entries
+            .iter()
+            .filter(|(_, entry)| entry.service() == service)
+            .filter(|(&id, _)| {
+                if let Some(except) = except {
+                    id != except
+                } else {
+                    true
+                }
+            })
+            .any(|(_, entry)| entry.is_subscribed_to_all())
+    }
+
     pub fn emit(&self, service: ServiceCookie, event: u32, args: SerializedValue) {
         if let Some(proxies) = self.services.get(&service) {
             let mut proxies = proxies.iter().peekable();
@@ -143,7 +190,7 @@ impl Proxies {
             while let Some(proxy) = proxies.next() {
                 let proxy = self.entries.get(proxy).expect("inconsistent state");
 
-                if proxy.is_subscribed_to(event) {
+                if proxy.is_subscribed_to_all() || proxy.is_subscribed_to(event) {
                     // Avoid cloning args for the last proxy.
                     if proxies.peek().is_some() {
                         proxy.emit(event, args.clone());
@@ -162,6 +209,7 @@ struct ProxyEntry {
     service: ServiceCookie,
     send: UnboundedSender<Event>,
     events: HashSet<u32>,
+    all_events: bool,
 }
 
 impl ProxyEntry {
@@ -170,6 +218,7 @@ impl ProxyEntry {
             service,
             send,
             events: HashSet::new(),
+            all_events: false,
         }
     }
 
@@ -177,8 +226,13 @@ impl ProxyEntry {
         self.service
     }
 
-    fn remove(self) -> (ServiceCookie, HashSet<u32>) {
-        (self.service, self.events)
+    fn remove(self) -> RemoveProxyResult {
+        RemoveProxyResult {
+            service: self.service,
+            unsubscribe: true,
+            events: self.events,
+            all_events: self.all_events,
+        }
     }
 
     fn subscribe(&mut self, event: u32) -> bool {
@@ -193,10 +247,39 @@ impl ProxyEntry {
         self.events.contains(&event)
     }
 
+    fn subscribe_all(&mut self) -> bool {
+        if self.all_events {
+            false
+        } else {
+            self.all_events = true;
+            true
+        }
+    }
+
+    fn unsubscribe_all(&mut self) -> UnsubscribeAllResult {
+        UnsubscribeAllResult {
+            service: self.service,
+            events: mem::take(&mut self.events),
+            all_events: mem::take(&mut self.all_events),
+        }
+    }
+
+    fn is_subscribed_to_all(&self) -> bool {
+        self.all_events
+    }
+
     fn emit(&self, event: u32, args: SerializedValue) {
-        debug_assert!(self.events.contains(&event));
+        debug_assert!(self.all_events || self.events.contains(&event));
         let _ = self.send.unbounded_send(Event::new(event, args));
     }
+}
+
+#[derive(Debug)]
+pub(crate) struct RemoveProxyResult {
+    pub service: ServiceCookie,
+    pub unsubscribe: bool,
+    pub events: HashSet<u32>,
+    pub all_events: bool,
 }
 
 #[derive(Debug)]
@@ -204,4 +287,11 @@ pub(crate) enum SubscribeResult {
     Forward(ServiceCookie),
     Noop,
     InvalidProxy,
+}
+
+#[derive(Debug)]
+pub(crate) struct UnsubscribeAllResult {
+    pub service: ServiceCookie,
+    pub events: HashSet<u32>,
+    pub all_events: bool,
 }

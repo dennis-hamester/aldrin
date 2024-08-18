@@ -23,9 +23,11 @@ use crate::core::message::{
     QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion,
     QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
+    SubscribeAllEventsReply, SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync,
+    SyncReply, UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult,
+    UnsubscribeEvent, UnsubscribeService,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -43,8 +45,9 @@ use crate::handle::request::{
     CreateClaimedSenderRequest, CreateLifetimeListenerRequest, CreateObjectRequest,
     CreateProxyRequest, CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest,
     DestroyServiceRequest, EmitEventRequest, HandleRequest, SendItemRequest,
-    StartBusListenerRequest, StopBusListenerRequest, SubscribeEventRequest, SyncBrokerRequest,
-    SyncClientRequest, UnsubscribeEventRequest,
+    StartBusListenerRequest, StopBusListenerRequest, SubscribeAllEventsRequest,
+    SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeAllEventsRequest,
+    UnsubscribeEventRequest,
 };
 #[cfg(feature = "introspection")]
 use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -111,6 +114,8 @@ where
     query_service_version: SerialMap<CreateProxyRequest>,
     subscribe_event: SerialMap<SubscribeEventRequest>,
     subscribe_service: SerialMap<ServiceCookie>,
+    subscribe_all_events: SerialMap<SubscribeAllEventsRequest>,
+    unsubscribe_all_events: SerialMap<UnsubscribeAllEventsRequest>,
     proxies: Proxies,
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, &'static Introspection>,
@@ -241,6 +246,8 @@ where
             query_service_version: SerialMap::new(),
             subscribe_event: SerialMap::new(),
             subscribe_service: SerialMap::new(),
+            subscribe_all_events: SerialMap::new(),
+            unsubscribe_all_events: SerialMap::new(),
             proxies: Proxies::new(),
             #[cfg(feature = "introspection")]
             introspection: HashMap::new(),
@@ -400,10 +407,12 @@ where
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
             Message::SubscribeServiceReply(msg) => self.msg_subscribe_service_reply(msg)?,
-            Message::SubscribeAllEvents(_) => todo!(),
-            Message::SubscribeAllEventsReply(_) => todo!(),
-            Message::UnsubscribeAllEvents(_) => todo!(),
-            Message::UnsubscribeAllEventsReply(_) => todo!(),
+            Message::SubscribeAllEvents(msg) => self.msg_subscribe_all_events(msg)?,
+            Message::SubscribeAllEventsReply(msg) => self.msg_subscribe_all_events_reply(msg)?,
+            Message::UnsubscribeAllEvents(msg) => self.msg_unsubscribe_all_events(msg)?,
+            Message::UnsubscribeAllEventsReply(msg) => {
+                self.msg_unsubscribe_all_events_reply(msg)?
+            }
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1122,6 +1131,73 @@ where
         }
     }
 
+    fn msg_subscribe_all_events(
+        &mut self,
+        msg: SubscribeAllEvents,
+    ) -> Result<(), RunError<T::Error>> {
+        if (self.protocol_version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
+            self.broker_subscriptions.subscribe_all(msg.service_cookie);
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
+    fn msg_subscribe_all_events_reply(
+        &mut self,
+        msg: SubscribeAllEventsReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(req) = self.subscribe_all_events.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
+        };
+
+        let res = match msg.result {
+            SubscribeAllEventsResult::Ok => Ok(()),
+            SubscribeAllEventsResult::InvalidService => Err(Error::InvalidService),
+
+            SubscribeAllEventsResult::NotSupported => {
+                return Err(RunError::UnexpectedMessageReceived(msg.into()))
+            }
+        };
+
+        let _ = req.reply.send(res);
+        Ok(())
+    }
+
+    fn msg_unsubscribe_all_events(
+        &mut self,
+        msg: UnsubscribeAllEvents,
+    ) -> Result<(), RunError<T::Error>> {
+        if (self.protocol_version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
+            self.broker_subscriptions
+                .unsubscribe_all(msg.service_cookie);
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
+    }
+
+    fn msg_unsubscribe_all_events_reply(
+        &mut self,
+        msg: UnsubscribeAllEventsReply,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(req) = self.unsubscribe_all_events.remove(msg.serial) else {
+            return Err(RunError::UnexpectedMessageReceived(msg.into()));
+        };
+
+        let res = match msg.result {
+            UnsubscribeAllEventsResult::Ok => Ok(()),
+            UnsubscribeAllEventsResult::InvalidService => Err(Error::InvalidService),
+
+            UnsubscribeAllEventsResult::NotSupported => {
+                return Err(RunError::UnexpectedMessageReceived(msg.into()))
+            }
+        };
+
+        let _ = req.reply.send(res);
+        Ok(())
+    }
+
     async fn handle_request(&mut self, req: HandleRequest) -> Result<(), RunError<T::Error>> {
         match req {
             HandleRequest::HandleCloned => self.req_handle_cloned(),
@@ -1167,6 +1243,10 @@ where
             HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy).await?,
             HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
             HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
+            HandleRequest::SubscribeAllEvents(req) => self.req_subscribe_all_events(req).await?,
+            HandleRequest::UnsubscribeAllEvents(req) => {
+                self.req_unsubscribe_all_events(req).await?
+            }
             #[cfg(feature = "introspection")]
             HandleRequest::RegisterIntrospection(introspection) => {
                 self.introspection
@@ -1574,30 +1654,35 @@ where
     }
 
     async fn req_destroy_proxy(&mut self, proxy: ProxyId) -> Result<(), RunError<T::Error>> {
-        if let Some((service_cookie, events, unsubscribe_service)) = self.proxies.remove(proxy) {
-            let mut flush = false;
-
-            if !events.is_empty() {
-                for event in events {
-                    self.t
-                        .send(UnsubscribeEvent {
-                            service_cookie,
-                            event,
-                        })
-                        .await?;
-                }
-
-                flush = true;
+        if let Some(res) = self.proxies.remove(proxy) {
+            if res.unsubscribe && (self.protocol_version >= ProtocolVersion::V1_18) {
+                self.t
+                    .send(UnsubscribeService {
+                        service_cookie: res.service,
+                    })
+                    .await?;
             }
 
-            if unsubscribe_service && (self.protocol_version >= ProtocolVersion::V1_18) {
-                self.t.send(UnsubscribeService { service_cookie }).await?;
-                flush = true;
+            for event in res.events {
+                self.t
+                    .send(UnsubscribeEvent {
+                        service_cookie: res.service,
+                        event,
+                    })
+                    .await?;
             }
 
-            if flush {
-                self.t.flush().await?;
+            if res.all_events {
+                debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
+                self.t
+                    .send(UnsubscribeAllEvents {
+                        serial: None,
+                        service_cookie: res.service,
+                    })
+                    .await?;
             }
+
+            self.t.flush().await?;
         }
 
         Ok(())
@@ -1658,6 +1743,74 @@ where
             }
         }
 
+        Ok(())
+    }
+
+    async fn req_subscribe_all_events(
+        &mut self,
+        req: SubscribeAllEventsRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        if self.protocol_version >= ProtocolVersion::V1_18 {
+            match self.proxies.subscribe_all(req.proxy) {
+                SubscribeResult::Forward(service_cookie) => {
+                    let serial = self.subscribe_all_events.insert(req);
+
+                    self.t
+                        .send_and_flush(SubscribeAllEvents {
+                            serial: Some(serial),
+                            service_cookie,
+                        })
+                        .await?;
+                }
+
+                SubscribeResult::Noop => {
+                    let _ = req.reply.send(Ok(()));
+                }
+
+                SubscribeResult::InvalidProxy => {
+                    let _ = req.reply.send(Err(Error::InvalidService));
+                }
+            }
+        } else {
+            let _ = req.reply.send(Err(Error::NotSupported));
+        }
+
+        Ok(())
+    }
+
+    async fn req_unsubscribe_all_events(
+        &mut self,
+        req: UnsubscribeAllEventsRequest,
+    ) -> Result<(), RunError<T::Error>> {
+        let Some(res) = self.proxies.unsubscribe_all(req.proxy) else {
+            let _ = req.reply.send(Err(Error::InvalidService));
+            return Ok(());
+        };
+
+        for event in res.events {
+            self.t
+                .send(dbg!(UnsubscribeEvent {
+                    service_cookie: res.service,
+                    event,
+                }))
+                .await?;
+        }
+
+        if res.all_events {
+            debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
+            let serial = self.unsubscribe_all_events.insert(req);
+
+            self.t
+                .send(dbg!(UnsubscribeAllEvents {
+                    serial: Some(serial),
+                    service_cookie: res.service,
+                }))
+                .await?;
+        } else {
+            let _ = req.reply.send(Ok(()));
+        }
+
+        self.t.flush().await?;
         Ok(())
     }
 

@@ -30,7 +30,8 @@ use request::{
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest, CreateProxyRequest,
     CreateServiceRequest, DestroyBusListenerRequest, DestroyObjectRequest, DestroyServiceRequest,
     EmitEventRequest, HandleRequest, SendItemRequest, StartBusListenerRequest,
-    StopBusListenerRequest, SubscribeEventRequest, UnsubscribeEventRequest,
+    StopBusListenerRequest, SubscribeAllEventsRequest, SubscribeEventRequest,
+    UnsubscribeAllEventsRequest, UnsubscribeEventRequest,
 };
 #[cfg(feature = "introspection")]
 use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
@@ -917,6 +918,30 @@ impl Handle {
                 event,
                 reply,
             }))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)?
+    }
+
+    pub(crate) async fn subscribe_all_events(&self, proxy: ProxyId) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+
+        self.send
+            .unbounded_send(HandleRequest::SubscribeAllEvents(
+                SubscribeAllEventsRequest { proxy, reply },
+            ))
+            .map_err(|_| Error::Shutdown)?;
+
+        recv.await.map_err(|_| Error::Shutdown)?
+    }
+
+    pub(crate) async fn unsubscribe_all_events(&self, proxy: ProxyId) -> Result<(), Error> {
+        let (reply, recv) = oneshot::channel();
+
+        self.send
+            .unbounded_send(HandleRequest::UnsubscribeAllEvents(
+                UnsubscribeAllEventsRequest { proxy, reply },
+            ))
             .map_err(|_| Error::Shutdown)?;
 
         recv.await.map_err(|_| Error::Shutdown)?

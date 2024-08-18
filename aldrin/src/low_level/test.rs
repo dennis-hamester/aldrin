@@ -546,3 +546,214 @@ async fn destroy_proxy() {
     assert_eq!(ev.id(), 0);
     assert_eq!(ev.deserialize(), Ok(()));
 }
+
+#[tokio::test]
+async fn subscribe_all() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+}
+
+#[tokio::test]
+async fn unsubscribe_all() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe(0).await.unwrap();
+    proxy.subscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy.unsubscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+    svc.destroy().await.unwrap();
+
+    assert!(proxy.next_event().await.is_none());
+}
+
+#[tokio::test]
+async fn unsubscribe_all_multiple_proxies() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy1 = client.create_proxy(svc.id()).await.unwrap();
+    proxy1.subscribe(0).await.unwrap();
+    proxy1.subscribe_all().await.unwrap();
+
+    let mut proxy2 = client.create_proxy(svc.id()).await.unwrap();
+    proxy2.subscribe(1).await.unwrap();
+    proxy2.subscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy1.unsubscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy2.unsubscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+    svc.destroy().await.unwrap();
+
+    assert!(proxy1.next_event().await.is_none());
+    assert!(proxy2.next_event().await.is_none());
+}
+
+#[tokio::test]
+async fn unsubscribe_all_mixed() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy1 = client.create_proxy(svc.id()).await.unwrap();
+    proxy1.subscribe(0).await.unwrap();
+    proxy1.subscribe_all().await.unwrap();
+
+    let mut proxy2 = client.create_proxy(svc.id()).await.unwrap();
+    proxy2.subscribe(0).await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 1);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy1.unsubscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+
+    let ev = time::timeout(Duration::from_millis(100), proxy2.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    proxy2.unsubscribe_all().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+    svc.emit(1, &()).unwrap();
+    svc.destroy().await.unwrap();
+
+    assert!(proxy1.next_event().await.is_none());
+    assert!(proxy2.next_event().await.is_none());
+}
+
+#[tokio::test]
+async fn unsubscribe_all_without_serial() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), ServiceInfo::new(0))
+        .await
+        .unwrap();
+
+    let proxy = client.create_proxy(svc.id()).await.unwrap();
+    proxy.subscribe_all().await.unwrap();
+    mem::drop(proxy);
+
+    client.sync_broker().await.unwrap();
+}

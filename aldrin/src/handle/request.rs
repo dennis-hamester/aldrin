@@ -56,6 +56,8 @@ pub(crate) enum HandleRequest {
     DestroyProxy(ProxyId),
     SubscribeEvent(SubscribeEventRequest),
     UnsubscribeEvent(UnsubscribeEventRequest),
+    SubscribeAllEvents(SubscribeAllEventsRequest),
+    UnsubscribeAllEvents(UnsubscribeAllEventsRequest),
     #[cfg(feature = "introspection")]
     RegisterIntrospection(&'static Introspection),
     #[cfg(feature = "introspection")]
@@ -193,6 +195,18 @@ pub(crate) struct SubscribeEventRequest {
 pub(crate) struct UnsubscribeEventRequest {
     pub proxy: ProxyId,
     pub event: u32,
+    pub reply: oneshot::Sender<Result<(), Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SubscribeAllEventsRequest {
+    pub proxy: ProxyId,
+    pub reply: oneshot::Sender<Result<(), Error>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct UnsubscribeAllEventsRequest {
+    pub proxy: ProxyId,
     pub reply: oneshot::Sender<Result<(), Error>>,
 }
 

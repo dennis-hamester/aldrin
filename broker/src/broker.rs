@@ -27,9 +27,11 @@ use crate::core::message::{
     QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RegisterIntrospection, RemoveBusListenerFilter, SendItem,
     ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeEvent,
-    SubscribeEventReply, SubscribeEventResult, SubscribeService, SubscribeServiceReply,
-    SubscribeServiceResult, Sync, SyncReply, UnsubscribeEvent, UnsubscribeService,
+    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
+    SubscribeAllEventsReply, SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync,
+    SyncReply, UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult,
+    UnsubscribeEvent, UnsubscribeService,
 };
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
@@ -270,7 +272,7 @@ impl Broker {
                 continue;
             }
 
-            if let Some((conn_id, service_cookie, event)) = state.pop_unsubscribe() {
+            if let Some((conn_id, service_cookie, event)) = state.pop_unsubscribe_event() {
                 let Some(conn) = self.conns.get(&conn_id) else {
                     continue;
                 };
@@ -278,6 +280,23 @@ impl Broker {
                 let msg = UnsubscribeEvent {
                     service_cookie,
                     event,
+                };
+
+                if send!(self, conn, msg).is_err() {
+                    state.push_remove_conn(conn_id, false);
+                }
+
+                continue;
+            }
+
+            if let Some((conn_id, service_cookie)) = state.pop_unsubscribe_all_events() {
+                let Some(conn) = self.conns.get(&conn_id) else {
+                    continue;
+                };
+
+                let msg = UnsubscribeAllEvents {
+                    serial: None,
+                    service_cookie,
                 };
 
                 if send!(self, conn, msg).is_err() {
@@ -365,6 +384,10 @@ impl Broker {
             self.remove_event_subscription(state, id, svc_cookie, event);
         }
 
+        for svc_cookie in conn.all_event_subscriptions() {
+            self.remove_all_events_subscription(state, id, svc_cookie);
+        }
+
         for svc_cookie in conn.subscriptions() {
             self.remove_subscription(id, svc_cookie);
         }
@@ -430,8 +453,8 @@ impl Broker {
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
             Message::SubscribeService(req) => self.subscribe_service(id, req)?,
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
-            Message::SubscribeAllEvents(_) => todo!(),
-            Message::UnsubscribeAllEvents(_) => todo!(),
+            Message::SubscribeAllEvents(req) => self.subscribe_all_events(id, req)?,
+            Message::UnsubscribeAllEvents(req) => self.unsubscribe_all_events(id, req)?,
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -1837,6 +1860,181 @@ impl Broker {
         Ok(())
     }
 
+    fn subscribe_all_events(
+        &mut self,
+        id: &ConnectionId,
+        req: SubscribeAllEvents,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            return Err(());
+        }
+
+        let Some(serial) = req.serial else {
+            return Err(());
+        };
+
+        let Some(&(obj_id, svc_uuid, info)) = self.svc_uuids.get(&req.service_cookie) else {
+            return send!(
+                self,
+                conn,
+                SubscribeAllEventsReply {
+                    serial,
+                    result: SubscribeAllEventsResult::InvalidService,
+                },
+            );
+        };
+
+        if !info.subscribe_all().unwrap_or(false) {
+            return send!(
+                self,
+                conn,
+                SubscribeAllEventsReply {
+                    serial,
+                    result: SubscribeAllEventsResult::NotSupported,
+                },
+            );
+        }
+
+        let target_conn_id = self
+            .objs
+            .get(&obj_id.uuid)
+            .expect("inconsistent state")
+            .conn_id();
+
+        let target_conn = self.conns.get(target_conn_id).expect("inconsistent state");
+
+        if target_conn.protocol_version() < ProtocolVersion::V1_18 {
+            return send!(
+                self,
+                conn,
+                SubscribeAllEventsReply {
+                    serial,
+                    result: SubscribeAllEventsResult::NotSupported,
+                },
+            );
+        }
+
+        send!(
+            self,
+            conn,
+            SubscribeAllEventsReply {
+                serial,
+                result: SubscribeAllEventsResult::Ok,
+            },
+        )?;
+
+        let conn = self.conns.get_mut(id).unwrap();
+
+        conn.subscribe_all_events(req.service_cookie);
+        let send_req = self
+            .svcs
+            .get_mut(&(obj_id.uuid, svc_uuid))
+            .expect("inconsistent state")
+            .subscribe_all_events(id.clone());
+
+        if send_req {
+            let _ = send!(
+                self,
+                self.conns.get(target_conn_id).unwrap(),
+                SubscribeAllEvents {
+                    serial: None,
+                    service_cookie: req.service_cookie,
+                },
+            );
+        }
+
+        Ok(())
+    }
+
+    fn unsubscribe_all_events(
+        &mut self,
+        id: &ConnectionId,
+        req: UnsubscribeAllEvents,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_18 {
+            return Err(());
+        }
+
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) else {
+            if let Some(serial) = req.serial {
+                return send!(
+                    self,
+                    conn,
+                    UnsubscribeAllEventsReply {
+                        serial,
+                        result: UnsubscribeAllEventsResult::InvalidService,
+                    },
+                );
+            } else {
+                return Ok(());
+            }
+        };
+
+        let target_conn_id = self
+            .objs
+            .get(&obj_id.uuid)
+            .expect("inconsistent state")
+            .conn_id();
+
+        let target_conn = self.conns.get(target_conn_id).expect("inconsistent state");
+
+        if target_conn.protocol_version() < ProtocolVersion::V1_18 {
+            if let Some(serial) = req.serial {
+                return send!(
+                    self,
+                    conn,
+                    UnsubscribeAllEventsReply {
+                        serial,
+                        result: UnsubscribeAllEventsResult::NotSupported,
+                    },
+                );
+            } else {
+                return Ok(());
+            }
+        }
+
+        if let Some(serial) = req.serial {
+            send!(
+                self,
+                conn,
+                UnsubscribeAllEventsReply {
+                    serial,
+                    result: UnsubscribeAllEventsResult::Ok,
+                },
+            )?;
+        }
+
+        let conn = self.conns.get_mut(id).unwrap();
+
+        conn.unsubscribe_all_events(req.service_cookie);
+        let send_req = self
+            .svcs
+            .get_mut(&(obj_id.uuid, svc_uuid))
+            .expect("inconsistent state")
+            .unsubscribe_all_events(id);
+
+        if send_req {
+            let _ = send!(
+                self,
+                self.conns.get(target_conn_id).unwrap(),
+                UnsubscribeAllEvents {
+                    serial: None,
+                    service_cookie: req.service_cookie,
+                },
+            );
+        }
+
+        Ok(())
+    }
+
     /// Removes the object `obj_cookie` and queues up events in `state`.
     ///
     /// This function will also remove all services owned by that object as well as everything
@@ -1942,7 +2140,33 @@ impl Broker {
 
         if svc.unsubscribe_event(event, conn_id) {
             let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
-            state.push_unsubscribe(obj.conn_id().clone(), svc_cookie, event);
+            state.push_unsubscribe_event(obj.conn_id().clone(), svc_cookie, event);
+        }
+    }
+
+    fn remove_all_events_subscription(
+        &mut self,
+        state: &mut State,
+        conn_id: &ConnectionId,
+        svc_cookie: ServiceCookie,
+    ) {
+        let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&svc_cookie) else {
+            return;
+        };
+
+        // The connection might already have been removed.
+        if let Some(conn) = self.conns.get_mut(conn_id) {
+            conn.unsubscribe_all_events(svc_cookie);
+        }
+
+        let svc = self
+            .svcs
+            .get_mut(&(obj_id.uuid, svc_uuid))
+            .expect("inconsistent state");
+
+        if svc.unsubscribe_all_events(conn_id) {
+            let obj = self.objs.get(&obj_id.uuid).expect("inconsistent state");
+            state.push_unsubscribe_all_events(obj.conn_id().clone(), svc_cookie);
         }
     }
 
