@@ -67,8 +67,9 @@ impl Proxies {
             true
         } else {
             events.retain(|&event| {
-                entries.get().iter().any(|proxy| {
-                    self.entries
+                entries.get().iter().all(|proxy| {
+                    !self
+                        .entries
                         .get(proxy)
                         .expect("inconsistent state")
                         .is_subscribed_to(event)

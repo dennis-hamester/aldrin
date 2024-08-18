@@ -3,6 +3,7 @@ use aldrin_test::aldrin::low_level::ServiceInfo;
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;
+use std::mem;
 use std::time::Duration;
 use tokio::time;
 use uuid::uuid;
@@ -504,4 +505,44 @@ async fn can_subscribe_all() {
     let proxy = client.create_proxy(svc.id()).await.unwrap();
 
     assert!(proxy.can_subscribe_all());
+}
+
+#[tokio::test]
+async fn destroy_proxy() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), ServiceInfo::new(0))
+        .await
+        .unwrap();
+
+    let mut proxy1 = client.create_proxy(svc.id()).await.unwrap();
+    let mut proxy2 = client.create_proxy(svc.id()).await.unwrap();
+
+    proxy1.subscribe(0).await.unwrap();
+    proxy2.subscribe(0).await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
+
+    mem::drop(proxy1);
+    client.sync_broker().await.unwrap();
+
+    svc.emit(0, &()).unwrap();
+
+    let ev = time::timeout(Duration::from_millis(100), proxy2.next_event())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(ev.id(), 0);
+    assert_eq!(ev.deserialize(), Ok(()));
 }
