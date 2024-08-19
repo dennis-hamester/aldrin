@@ -1,0 +1,48 @@
+{
+    "name": "subscribe-all-events-ok",
+    "description": "Subscribe to all events of a service",
+    "long-description": "A client subscribes to all events of a service.",
+    "version": "1.18",
+    "message-types": [
+        "subscribe-all-events",
+        "subscribe-all-events-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service2",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0,
+            "subscribe-all": true
+        },
+        {
+            "type": "send",
+            "message": "subscribe-all-events",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive-unordered",
+            "messages": [
+                {
+                    "message": "subscribe-all-events",
+                    "service-cookie": "get:service"
+                },
+                {
+                    "message": "subscribe-all-events-reply",
+                    "serial": 0,
+                    "result": "ok"
+                }
+            ]
+        }
+    ]
+}
