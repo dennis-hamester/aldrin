@@ -1,0 +1,32 @@
+{
+    "name": "create-service2-invalid-info",
+    "description": "Create a service with an invalid service info",
+    "long-description": "A client tries creates a service with an invalid service info.",
+    "version": "1.17",
+    "message-types": [
+        "create-service2",
+        "create-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "sync": false,
+            "shutdown": false
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "send",
+            "message": "create-service2",
+            "serial": 0,
+            "object-cookie": "get:object",
+            "uuid": "00000000-0000-0000-0000-000000000002"
+        },
+        {
+            "type": "connection-closed"
+        }
+    ]
+}
