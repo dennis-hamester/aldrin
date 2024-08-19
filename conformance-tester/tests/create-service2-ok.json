@@ -1,0 +1,37 @@
+{
+    "name": "create-service2-ok",
+    "description": "Create a service (create-service2)",
+    "long-description": "A client successfully creates a service using the create-service2 message.",
+    "version": "1.17",
+    "message-types": [
+        "create-service2",
+        "create-service-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "send",
+            "message": "create-service2",
+            "serial": 0,
+            "object-cookie": "get:object",
+            "uuid": "00000000-0000-0000-0000-000000000002",
+            "info": {
+                "version": 0
+            }
+        },
+        {
+            "type": "receive",
+            "message": "create-service-reply",
+            "serial": 0,
+            "result": "ok",
+            "cookie": "set:service"
+        }
+    ]
+}
