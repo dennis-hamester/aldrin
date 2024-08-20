@@ -1,0 +1,39 @@
+{
+    "name": "subscribe-all-events-not-supported",
+    "description": "Subscribe to all events of a service that doesn't support it",
+    "long-description": "A client tries to subscribe to all events of a service, which doesn't support this",
+    "version": "1.18",
+    "message-types": [
+        "subscribe-all-events",
+        "subscribe-all-events-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service2",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0
+        },
+        {
+            "type": "send",
+            "message": "subscribe-all-events",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "message": "subscribe-all-events-reply",
+            "serial": 0,
+            "result": "not-supported"
+        }
+    ]
+}
