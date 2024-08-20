@@ -121,7 +121,7 @@ pub use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult
 pub use stop_bus_listener::StopBusListener;
 pub use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
 pub use subscribe_all_events::SubscribeAllEvents;
-pub use subscribe_all_events_reply::SubscribeAllEventsReply;
+pub use subscribe_all_events_reply::{SubscribeAllEventsReply, SubscribeAllEventsResult};
 pub use subscribe_event::SubscribeEvent;
 pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
 pub use subscribe_service::SubscribeService;
