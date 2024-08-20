@@ -829,6 +829,14 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        Ok(Self {{ inner }})");
         genln!(self, "    }}");
         genln!(self);
+        genln!(self, "    pub fn inner(&self) -> &aldrin::low_level::Proxy {{");
+        genln!(self, "        &self.inner");
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn inner_mut(&mut self) -> &mut aldrin::low_level::Proxy {{");
+        genln!(self, "        &mut self.inner");
+        genln!(self, "    }}");
+        genln!(self);
         genln!(self, "    pub fn into_inner(self) -> aldrin::low_level::Proxy {{");
         genln!(self, "        self.inner");
         genln!(self, "    }}");
