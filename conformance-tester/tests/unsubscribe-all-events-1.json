@@ -1,0 +1,52 @@
+{
+    "name": "unsubscribe-all-events-1",
+    "description": "A client unsubscribes from all events of a service",
+    "long-description": "A client unsubscribes from all events of a service.",
+    "version": "1.18",
+    "message-types": [
+        "unsubscribe-all-events",
+        "unsubscribe-all-events-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect"
+        },
+        {
+            "type": "create-object",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service2",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0,
+            "subscribe-all": true
+        },
+        {
+            "type": "subscribe-all-events",
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "send",
+            "message": "unsubscribe-all-events",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive-unordered",
+            "messages": [
+                {
+                    "message": "unsubscribe-all-events",
+                    "service-cookie": "get:service"
+                },
+                {
+                    "message": "unsubscribe-all-events-reply",
+                    "serial": 0,
+                    "result": "ok"
+                }
+            ]
+        }
+    ]
+}
