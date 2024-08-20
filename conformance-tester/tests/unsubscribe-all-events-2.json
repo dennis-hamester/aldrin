@@ -1,0 +1,89 @@
+{
+    "name": "unsubscribe-all-events-2",
+    "description": "Two clients subscribe and unsubscibe to all events of a service",
+    "long-description": "Three clients connect, of which the last two subscribe to all events of a service the first clients owns. They then unsubscribe again. The broker must also unsubscribe after the last one.",
+    "version": "1.18",
+    "message-types": [
+        "unsubscribe-all-events",
+        "unsubscribe-all-events-reply"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "client1"
+        },
+        {
+            "type": "connect",
+            "client": "client2"
+        },
+        {
+            "type": "connect",
+            "client": "client3"
+        },
+        {
+            "type": "create-object",
+            "client": "client1",
+            "uuid": "00000000-0000-0000-0000-000000000001",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service2",
+            "client": "client1",
+            "object-cookie": "get:object",
+            "service-uuid": "00000000-0000-0000-0000-000000000002",
+            "service-cookie": "set:service",
+            "version": 0,
+            "subscribe-all": true
+        },
+        {
+            "type": "subscribe-all-events",
+            "client": "client2",
+            "service-cookie": "get:service",
+            "owner": "client1"
+        },
+        {
+            "type": "subscribe-all-events",
+            "client": "client3",
+            "service-cookie": "get:service",
+            "with-owner": false
+        },
+        {
+            "type": "send",
+            "client": "client2",
+            "message": "unsubscribe-all-events",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "client": "client2",
+            "message": "unsubscribe-all-events-reply",
+            "serial": 0,
+            "result": "ok"
+        },
+        {
+            "type": "sync",
+            "client": "client1"
+        },
+        {
+            "type": "send",
+            "client": "client3",
+            "message": "unsubscribe-all-events",
+            "serial": 0,
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "client": "client1",
+            "message": "unsubscribe-all-events",
+            "service-cookie": "get:service"
+        },
+        {
+            "type": "receive",
+            "client": "client3",
+            "message": "unsubscribe-all-events-reply",
+            "serial": 0,
+            "result": "ok"
+        }
+    ]
+}
