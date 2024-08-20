@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `type_id()` getter to services.
 - Add `query_introspection()` to services.
-- Add `inner()` and `inner_mut()` to proxies.
+- Add `inner()` and `inner_mut()` to proxies and services.
 
 ### Changed
 

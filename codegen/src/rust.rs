@@ -1098,6 +1098,14 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        Ok({} {{ inner }})", svc_name);
         genln!(self, "    }}");
         genln!(self);
+        genln!(self, "    pub fn inner(&self) -> &aldrin::low_level::Service {{");
+        genln!(self, "        &self.inner");
+        genln!(self, "    }}");
+        genln!(self);
+        genln!(self, "    pub fn inner_mut(&mut self) -> &mut aldrin::low_level::Service {{");
+        genln!(self, "        &mut self.inner");
+        genln!(self, "    }}");
+        genln!(self);
         genln!(self, "    pub fn into_inner(self) -> aldrin::low_level::Service {{");
         genln!(self, "        self.inner");
         genln!(self, "    }}");
