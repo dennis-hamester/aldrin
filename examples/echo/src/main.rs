@@ -208,7 +208,11 @@ async fn list(bus: &Handle) -> Result<()> {
 
 async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
-    println!("Calling echo(\"{}\") on {}.", args.echo, echo.id().uuid);
+    println!(
+        "Calling echo(\"{}\") on {}.",
+        args.echo,
+        echo.id().object_id.uuid
+    );
 
     // This is what a function call in Aldrin looks like on the client's side. The `?` handles
     // errors on the protocol level, such as when e.g. the server shuts down during any of these
@@ -226,7 +230,11 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
 
 async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     let echo = get_echo(bus, args.server).await?;
-    println!("Calling echo_all(\"{}\") on {}.", args.echo, echo.id().uuid);
+    println!(
+        "Calling echo_all(\"{}\") on {}.",
+        args.echo,
+        echo.id().object_id.uuid
+    );
 
     // This is just like `echo` above, except that the server returns no value. Instead, it will
     // emit an event with the value we sent. The event can be seen by having another instance of
@@ -246,7 +254,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
     // of the Echo service.
     echo.subscribe_all().await?;
 
-    println!("Listen to events from {}.", echo.id().uuid);
+    println!("Listen to events from {}.", echo.id().object_id.uuid);
 
     loop {
         let event = tokio::select! {
