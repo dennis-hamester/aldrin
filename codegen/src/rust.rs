@@ -923,15 +923,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self);
 
         genln!(self, "    pub async fn unsubscribe_all(&self) -> Result<(), aldrin::Error> {{");
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            genln!(self, "        self.{}().await?;", unsubscribe_event(ev_name));
-        }
-        genln!(self, "        Ok(())");
+        genln!(self, "        self.inner.unsubscribe_all().await");
         genln!(self, "    }}");
         genln!(self);
 

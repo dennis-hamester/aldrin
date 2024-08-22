@@ -1,0 +1,7 @@
+service SubscribeAll {
+    uuid = 60b1c793-c017-42ab-ae64-918fc4225cf6;
+    version = 1;
+
+    event ev1 @ 1;
+    event ev2 @ 2;
+}

@@ -3,6 +3,7 @@ aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
 aldrin::generate!("test/result.aldrin");
+aldrin::generate!("test/subscribe_all.aldrin");
 aldrin::generate!("test/test1.aldrin");
 aldrin::generate!("test/unit.aldrin");
 
@@ -11,6 +12,7 @@ use aldrin::low_level::Proxy;
 use aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::StreamExt;
+use subscribe_all::SubscribeAllEvent;
 use uuid::uuid;
 
 #[tokio::test]
@@ -96,4 +98,40 @@ fn new_as_old() {
     let new_serialized = SerializedValue::serialize(&new).unwrap();
     let old: old_new::Old = new_serialized.deserialize().unwrap();
     assert_eq!(old.f1, 1);
+}
+
+#[tokio::test]
+async fn unsubscribe_all() {
+    let broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let svc = subscribe_all::SubscribeAll::new(&obj).await.unwrap();
+    let mut proxy = subscribe_all::SubscribeAllProxy::new(&client, svc.id())
+        .await
+        .unwrap();
+
+    proxy.subscribe_ev1().await.unwrap();
+    proxy.inner().subscribe_all().await.unwrap();
+
+    svc.ev1().unwrap();
+    svc.ev2().unwrap();
+
+    assert!(matches!(
+        proxy.next_event().await,
+        Some(Ok(SubscribeAllEvent::Ev1))
+    ));
+
+    assert!(matches!(
+        proxy.next_event().await,
+        Some(Ok(SubscribeAllEvent::Ev2))
+    ));
+
+    proxy.unsubscribe_all().await.unwrap();
+
+    svc.ev1().unwrap();
+    svc.ev2().unwrap();
+    svc.destroy().await.unwrap();
+
+    assert!(proxy.next_event().await.is_none());
 }
