@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Take `&self` instead of `&mut self` in `subscribe_{event}()`, `unsubscribe_{event}()`,
   `subscribe_all()` and `unsubscribe_all()` of proxy types.
+- Take `&self` instead of `&mut self` in `destroy()` of service types.
 
 ## [0.7.0] - 2024-07-25
 

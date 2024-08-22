@@ -1122,7 +1122,7 @@ impl<'a> RustGenerator<'a> {
         genln!(self, "        self.inner.client()");
         genln!(self, "    }}");
         genln!(self);
-        genln!(self, "    pub async fn destroy(&mut self) -> Result<(), aldrin::Error> {{");
+        genln!(self, "    pub async fn destroy(&self) -> Result<(), aldrin::Error> {{");
         genln!(self, "        self.inner.destroy().await");
         genln!(self, "    }}");
         genln!(self);
