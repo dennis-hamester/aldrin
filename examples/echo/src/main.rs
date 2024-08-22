@@ -68,7 +68,7 @@ struct Listen {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    println!("Connection to broker at {}.", args.bus);
+    println!("Connecting to broker at {}.", args.bus);
 
     let stream = TcpStream::connect(&args.bus)
         .await
