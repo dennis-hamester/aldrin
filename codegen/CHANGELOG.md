@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `type_id()` getter to services.
 - Add `query_introspection()` to services.
 
+### Changed
+
+- Take `&self` instead of `&mut self` in `subscribe_{event}()`, `unsubscribe_{event}()`,
+  `subscribe_all()` and `unsubscribe_all()` of proxy types.
+
 ## [0.7.0] - 2024-07-25
 
 ### Added
