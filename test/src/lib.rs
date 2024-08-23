@@ -12,22 +12,20 @@
 
 #[cfg(test)]
 mod test;
-mod transport;
 
 #[cfg(feature = "tokio")]
 pub mod tokio;
 
 use aldrin::{Client, Handle};
 use aldrin_broker::{Broker, BrokerHandle, Connection, ConnectionHandle};
-use aldrin_core::channel;
+use aldrin_core::channel::{self, Disconnected};
+use aldrin_core::transport::{AsyncTransportExt, BoxedTransport};
 use futures_util::future;
 use std::ops::{Deref, DerefMut};
 
 // For tests directly in aldrin_broker and aldrin.
 #[doc(hidden)]
 pub use {aldrin, aldrin_broker};
-
-pub use transport::TestTransport;
 
 /// Broker for use in tests.
 ///
@@ -137,14 +135,18 @@ impl ClientBuilder {
 
     /// Creates a new `TestClient` with the current settings.
     pub async fn build(mut self) -> TestClient {
-        let (t1, t2): (Box<dyn TestTransport>, Box<dyn TestTransport>) = match self.channel {
+        let (t1, t2): (
+            BoxedTransport<Disconnected>,
+            BoxedTransport<'static, Disconnected>,
+        ) = match self.channel {
             Some(fifo_size) => {
                 let (t1, t2) = channel::bounded(fifo_size);
-                (Box::new(t1), Box::new(t2))
+                (t1.boxed(), t2.boxed())
             }
+
             None => {
                 let (t1, t2) = channel::unbounded();
-                (Box::new(t1), Box::new(t2))
+                (t1.boxed(), t2.boxed())
             }
         };
 
@@ -201,8 +203,8 @@ impl ClientBuilder {
 pub struct TestClient {
     handle: Handle,
     connection_handle: ConnectionHandle,
-    client: Option<Client<Box<dyn TestTransport>>>,
-    conn: Option<Connection<Box<dyn TestTransport>>>,
+    client: Option<Client<BoxedTransport<'static, Disconnected>>>,
+    conn: Option<Connection<BoxedTransport<'static, Disconnected>>>,
 }
 
 impl TestClient {
@@ -230,7 +232,7 @@ impl TestClient {
     ///
     /// This function panics when the [`Client`] has already been taken out. It must be called only
     /// once.
-    pub fn take_client(&mut self) -> Client<Box<dyn TestTransport>> {
+    pub fn take_client(&mut self) -> Client<BoxedTransport<'static, Disconnected>> {
         self.client.take().expect("client already taken")
     }
 
@@ -243,7 +245,7 @@ impl TestClient {
     ///
     /// This function panics when the [`Connection`] has already been taken out. It must be called
     /// only once.
-    pub fn take_connection(&mut self) -> Connection<Box<dyn TestTransport>> {
+    pub fn take_connection(&mut self) -> Connection<BoxedTransport<'static, Disconnected>> {
         self.conn.take().expect("connection already taken")
     }
 }
