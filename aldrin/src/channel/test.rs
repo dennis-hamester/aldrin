@@ -189,11 +189,7 @@ async fn multiple_clients() {
         .await
         .unwrap();
 
-    let mut receiver = receiver
-        .unbind()
-        .claim(client2.handle.clone(), 16)
-        .await
-        .unwrap();
+    let mut receiver = receiver.unbind().claim(client2.clone(), 16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
     sender.send_item(&"hello".to_owned()).await.unwrap();

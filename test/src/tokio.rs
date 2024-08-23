@@ -22,9 +22,7 @@ use tokio::task::JoinHandle;
 /// See the [`tokio` module documentation](self) for usage examples.
 #[derive(Debug)]
 pub struct TestBroker {
-    /// Handle to the broker.
-    pub handle: BrokerHandle,
-
+    handle: BrokerHandle,
     join: Option<JoinHandle<()>>,
 }
 
@@ -37,6 +35,11 @@ impl TestBroker {
             handle: broker.handle,
             join: Some(join),
         }
+    }
+
+    /// Returns a handle to the broker.
+    pub fn handle(&self) -> &BrokerHandle {
+        &self.handle
     }
 
     /// Shuts down the broker and joins its task.
@@ -167,12 +170,8 @@ impl ClientBuilder {
 /// be called on [`TestClient`] as well.
 #[derive(Debug)]
 pub struct TestClient {
-    /// `Handle` to the `Client`.
-    pub handle: Handle,
-
-    /// `ConnectionHandle` to the `Connection`.
-    pub connection_handle: ConnectionHandle,
-
+    handle: Handle,
+    connection_handle: ConnectionHandle,
     client: Option<JoinHandle<Result<(), RunError<Disconnected>>>>,
     conn: Option<JoinHandle<Result<(), ConnectionError<Disconnected>>>>,
 }
@@ -181,6 +180,16 @@ impl TestClient {
     /// Creates a new `ClientBuilder`.
     pub fn builder(broker: BrokerHandle) -> ClientBuilder {
         ClientBuilder::new(broker)
+    }
+
+    /// Returns a handle to the client.
+    pub fn handle(&self) -> &Handle {
+        &self.handle
+    }
+
+    /// Returns a handle to the connection.
+    pub fn connection(&self) -> &ConnectionHandle {
+        &self.connection_handle
     }
 
     /// Shuts down the client and joins the client and connection tasks.
