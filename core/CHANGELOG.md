@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `subscribe_all` field to `ServiceInfo`.
 - Add `SubscribeAllEvents`, `SubscribeAllEventsReply`, `UnsubscribeAllEvents` and
   `UnsubscribeAllEventsReply` messages.
+- Implement `Debug` for `BoxedTransport<'a, E>`.
 
 ### Changed
 

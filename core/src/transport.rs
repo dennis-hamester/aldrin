@@ -1,5 +1,6 @@
 use crate::message::Message;
 use pin_project_lite::pin_project;
+use std::fmt;
 use std::future::Future;
 use std::mem;
 use std::ops::DerefMut;
@@ -8,6 +9,12 @@ use std::task::{Context, Poll};
 
 /// Boxed [`AsyncTransport`] type returned by [`AsyncTransportExt::boxed`].
 pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;
+
+impl<'a, E> fmt::Debug for BoxedTransport<'a, E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("BoxedTransport").finish()
+    }
+}
 
 /// Bidirectional asynchronous message transport.
 ///
