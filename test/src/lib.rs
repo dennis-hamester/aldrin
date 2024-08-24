@@ -47,9 +47,9 @@ impl TestBroker {
     /// Creates a new broker.
     pub fn new() -> Self {
         let broker = Broker::new();
-        let handle = broker.handle().clone();
+
         TestBroker {
-            handle,
+            handle: broker.handle().clone(),
             broker: Some(broker),
         }
     }
@@ -72,21 +72,20 @@ impl TestBroker {
         self.broker.take().expect("broker already taken")
     }
 
-    /// Creates a new `ClientBuilder`.
-    ///
-    /// Use of this function is recommended only if non-default settings are required for the
-    /// [`Client`] or its [`Connection`]. A default [`Client`] can be added directly with
-    /// [`add_client`](TestBroker::add_client).
-    pub fn client_builder(&self) -> ClientBuilder {
-        ClientBuilder::new(self.handle.clone())
-    }
+    /// Add a new client to the broker.
+    pub async fn add_client(&mut self) -> TestClient {
+        let (t1, t2) = channel::unbounded();
 
-    /// Creates a default `Client`.
-    ///
-    /// If you need more control over the [`Client`] and [`Connection`] settings, then use
-    /// [`client_builder`](TestBroker::client_builder) instead.
-    pub async fn add_client(&self) -> TestClient {
-        self.client_builder().build().await
+        let client = Client::connect(t1.boxed());
+        let conn = self.handle.connect(t2.boxed());
+
+        let (client, conn) = future::join(client, conn).await;
+        let client = client.expect("client failed to connect");
+        let handle = client.handle().clone();
+        let conn = conn.expect("connection failed to establish");
+        let connection_handle = conn.handle().clone();
+
+        TestClient::new(handle, connection_handle, client, conn)
     }
 }
 
@@ -110,87 +109,7 @@ impl DerefMut for TestBroker {
     }
 }
 
-/// Builder struct for a new `Client`.
-///
-/// A [`ClientBuilder`] allows for more control over how [`Client`] and [`Connection`] are setup,
-/// specifically what kind of channel is used as the transport. If you do not require any special
-/// settings, it is recommended to use [`TestBroker::add_client`] instead.
-#[derive(Debug, Clone)]
-pub struct ClientBuilder {
-    broker: BrokerHandle,
-    channel: Option<usize>,
-}
-
-impl ClientBuilder {
-    /// Creates a new `ClientBuilder`.
-    ///
-    /// The default [`ClientBuilder`] is configured to use an unbounded channel between [`Broker`]
-    /// and [`Client`].
-    pub fn new(broker: BrokerHandle) -> Self {
-        ClientBuilder {
-            broker,
-            channel: None,
-        }
-    }
-
-    /// Creates a new `TestClient` with the current settings.
-    pub async fn build(mut self) -> TestClient {
-        let (t1, t2): (
-            BoxedTransport<Disconnected>,
-            BoxedTransport<'static, Disconnected>,
-        ) = match self.channel {
-            Some(fifo_size) => {
-                let (t1, t2) = channel::bounded(fifo_size);
-                (t1.boxed(), t2.boxed())
-            }
-
-            None => {
-                let (t1, t2) = channel::unbounded();
-                (t1.boxed(), t2.boxed())
-            }
-        };
-
-        let client = Client::connect(t1);
-        let conn = self.broker.connect(t2);
-
-        let (client, conn) = future::join(client, conn).await;
-        let client = client.expect("client failed to connect");
-        let handle = client.handle().clone();
-        let conn = conn.expect("connection failed to establish");
-        let connection_handle = conn.handle().clone();
-
-        TestClient {
-            handle,
-            connection_handle,
-            client: Some(client),
-            conn: Some(conn),
-        }
-    }
-
-    /// Uses an unbounded channel as the transport between `Broker` and `Client`.
-    ///
-    /// This is the default after creating a new [`ClientBuilder`].
-    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
-    pub fn unbounded_channel(mut self) -> Self {
-        self.channel = None;
-        self
-    }
-
-    /// Uses a bounded channel as the transport between `Broker` and `Client`.
-    ///
-    /// See [`aldrin_core::channel::bounded`] for more information on the `fifo_size` parameter.
-    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
-    pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
-        self.channel = Some(fifo_size);
-        self
-    }
-}
-
 /// Client for use in tests.
-///
-/// [`TestClient`s](TestClient) with default settings can be created using
-/// [`TestBroker::add_client`], or alternatively with a [`ClientBuilder`] if more control over the
-/// settings is required.
 ///
 /// After creating a [`TestClient`], it is fully connected to the [`TestBroker`], but neither the
 /// underlying [`Client`] nor the [`Connection`] are running. This must be done manually by taking
@@ -208,9 +127,18 @@ pub struct TestClient {
 }
 
 impl TestClient {
-    /// Creates a new `ClientBuilder`.
-    pub fn builder(broker: BrokerHandle) -> ClientBuilder {
-        ClientBuilder::new(broker)
+    fn new(
+        handle: Handle,
+        connection_handle: ConnectionHandle,
+        client: Client<BoxedTransport<'static, Disconnected>>,
+        conn: Connection<BoxedTransport<'static, Disconnected>>,
+    ) -> Self {
+        Self {
+            handle,
+            connection_handle,
+            client: Some(client),
+            conn: Some(conn),
+        }
     }
 
     /// Returns a handle to the client.

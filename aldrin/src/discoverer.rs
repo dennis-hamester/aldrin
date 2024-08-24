@@ -33,7 +33,7 @@ use std::{future, option};
 /// # use aldrin_test::tokio::TestBroker;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = TestBroker::new();
+/// # let mut broker = TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// # fn k(_: &DiscovererBuilder<()>) {}
 /// let builder = Discoverer::builder(&handle);
@@ -68,7 +68,7 @@ use std::{future, option};
 /// # use uuid::uuid;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = TestBroker::new();
+/// # let mut broker = TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// const OBJECT_UUID: ObjectUuid = ObjectUuid(uuid!("730c1d68-212b-4181-9813-811948813809"));
 /// const SERVICE_UUID_1: ServiceUuid = ServiceUuid(uuid!("25b952af-7447-4275-9a68-1f9b689d96a4"));

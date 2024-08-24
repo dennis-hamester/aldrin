@@ -17,7 +17,7 @@ use uuid::uuid;
 
 #[tokio::test]
 async fn auto_reply_with_invalid_args() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -34,7 +34,7 @@ async fn auto_reply_with_invalid_args() {
 
 #[tokio::test]
 async fn auto_reply_with_invalid_function() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -102,7 +102,7 @@ fn new_as_old() {
 
 #[tokio::test]
 async fn unsubscribe_all() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();

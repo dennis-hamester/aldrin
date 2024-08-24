@@ -10,7 +10,7 @@ use uuid::uuid;
 
 #[tokio::test]
 async fn stop_events_on_client_shutdown() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -60,7 +60,7 @@ async fn stop_event_on_broker_shutdown() {
 
 #[tokio::test]
 async fn fused_stream_terminate_after_destroy() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -81,7 +81,7 @@ async fn fused_stream_terminate_after_destroy() {
 async fn proxy_getter() {
     const TYPE_ID: TypeId = TypeId(uuid!("e6cffd81-51fb-4466-ac58-758db91d6bfa"));
 
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -100,7 +100,7 @@ async fn proxy_getter() {
 
 #[tokio::test]
 async fn call_ok() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -123,7 +123,7 @@ async fn call_ok() {
 
 #[tokio::test]
 async fn call_done() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -146,7 +146,7 @@ async fn call_done() {
 
 #[tokio::test]
 async fn call_err() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -169,7 +169,7 @@ async fn call_err() {
 
 #[tokio::test]
 async fn call_abort_by_callee() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -191,7 +191,7 @@ async fn call_abort_by_callee() {
 
 #[tokio::test]
 async fn call_abort_by_caller() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -215,7 +215,7 @@ async fn call_abort_by_caller() {
 
 #[tokio::test]
 async fn call_invalid_function() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -237,7 +237,7 @@ async fn call_invalid_function() {
 
 #[tokio::test]
 async fn call_invalid_args() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -259,7 +259,7 @@ async fn call_invalid_args() {
 
 #[tokio::test]
 async fn subscribe_event() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -282,7 +282,7 @@ async fn subscribe_event() {
 
 #[tokio::test]
 async fn unsubscribe_event() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -320,7 +320,7 @@ async fn unsubscribe_event() {
 
 #[tokio::test]
 async fn events_mutliple_proxies() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -401,7 +401,7 @@ async fn no_unnecessary_events_emitted() {
 
 #[tokio::test]
 async fn close_events_with_subscribers() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -420,7 +420,7 @@ async fn close_events_with_subscribers() {
 
 #[tokio::test]
 async fn close_events_without_subscribers() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -442,7 +442,7 @@ async fn close_events_without_subscribers() {
 
 #[tokio::test]
 async fn subscribe_multiple_services_same_event_id() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -493,7 +493,7 @@ async fn subscribe_multiple_services_same_event_id() {
 
 #[tokio::test]
 async fn can_subscribe_all() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -509,7 +509,7 @@ async fn can_subscribe_all() {
 
 #[tokio::test]
 async fn destroy_proxy() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -549,7 +549,7 @@ async fn destroy_proxy() {
 
 #[tokio::test]
 async fn subscribe_all() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -582,7 +582,7 @@ async fn subscribe_all() {
 
 #[tokio::test]
 async fn unsubscribe_all() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -624,7 +624,7 @@ async fn unsubscribe_all() {
 
 #[tokio::test]
 async fn unsubscribe_all_multiple_proxies() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -686,7 +686,7 @@ async fn unsubscribe_all_multiple_proxies() {
 
 #[tokio::test]
 async fn unsubscribe_all_mixed() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
@@ -742,7 +742,7 @@ async fn unsubscribe_all_mixed() {
 
 #[tokio::test]
 async fn unsubscribe_all_without_serial() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();

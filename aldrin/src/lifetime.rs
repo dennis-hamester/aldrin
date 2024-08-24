@@ -33,7 +33,7 @@ use std::task::{Context, Poll};
 /// # use aldrin_test::tokio::TestBroker;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = TestBroker::new();
+/// # let mut broker = TestBroker::new();
 /// # let client1 = broker.add_client().await;
 /// # let client2 = broker.add_client().await;
 /// // Assume client 1 is using a service from client 2. In turn, client 2 needs to know when

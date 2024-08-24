@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replace all public fields with getters.
 - Remove the `TestTransport` trait and replace its use with `BoxedTransport` from `aldrin-core`.
+- `ClientBuilder`s have been removed.
+- `tokio::TestBroker::add_client()` now takes `&mut self`.
 
 ## [0.7.0] - 2024-07-25
 

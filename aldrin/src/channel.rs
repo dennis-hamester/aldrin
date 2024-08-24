@@ -63,7 +63,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     /// # let sender = sender.unbind();
@@ -96,7 +96,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     /// # let sender = sender.unbind();
@@ -177,7 +177,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // Create a channel with an unclaimed sender and a claimed receiver.
     /// let (sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
@@ -207,7 +207,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     ///
@@ -245,7 +245,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // The sender is unclaimed, while the receiver has been claimed automatically.
     /// let (sender, receiver) = handle.create_channel_with_claimed_receiver(16).await?;
@@ -373,7 +373,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
@@ -395,7 +395,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (mut sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
@@ -578,7 +578,7 @@ impl<T: Serialize + ?Sized> Sender<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
     ///
@@ -909,7 +909,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let (sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     /// # let receiver = receiver.unbind();
@@ -945,7 +945,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let (sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     /// # let receiver = receiver.unbind();
@@ -1026,7 +1026,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     /// # use aldrin_test::tokio::TestBroker;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // Create a channel with an unclaimed receiver and a claimed sender.
     /// let (sender, receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
@@ -1056,7 +1056,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (sender, mut receiver) = handle.create_channel_with_claimed_sender::<u32>().await?;
     ///
@@ -1096,7 +1096,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// // The receiver is unclaimed, while the sender has been claimed automatically.
     /// let (sender, receiver) = handle.create_channel_with_claimed_sender().await?;
@@ -1226,7 +1226,7 @@ impl<T: Deserialize> PendingReceiver<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = TestBroker::new();
+    /// # let mut broker = TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let (sender, mut receiver) = handle.create_channel_with_claimed_receiver::<u32>(16).await?;
     ///

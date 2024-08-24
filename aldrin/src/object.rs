@@ -22,7 +22,7 @@ use crate::low_level::{Service, ServiceInfo};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio::TestBroker::new();
+/// # let mut broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 /// // Create an object with a random UUID:
 /// let object1 = handle.create_object(ObjectUuid::new_v4()).await?;
@@ -89,7 +89,7 @@ impl Object {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// let object = handle.create_object(ObjectUuid::new_v4()).await?;
     ///

@@ -41,7 +41,7 @@ use std::task::{Context, Poll};
 /// use aldrin::low_level::ServiceInfo;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let broker = aldrin_test::tokio::TestBroker::new();
+/// # let mut broker = aldrin_test::tokio::TestBroker::new();
 /// # let handle = broker.add_client().await;
 ///
 /// // Create a few objects and services.
@@ -155,7 +155,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///
@@ -192,7 +192,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///
@@ -238,7 +238,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///
@@ -264,7 +264,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///
@@ -292,7 +292,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///
@@ -320,7 +320,7 @@ impl BusListener {
     /// # use uuid::uuid;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
+    /// # let mut broker = aldrin_test::tokio::TestBroker::new();
     /// # let handle = broker.add_client().await;
     /// # let mut bus_listener = handle.create_bus_listener().await?;
     ///

@@ -43,7 +43,7 @@ async fn client_stops_when_last_handle_is_dropped() {
 
 #[tokio::test]
 async fn abort_create_object() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let uuid = ObjectUuid::new_v4();
@@ -61,7 +61,7 @@ async fn abort_create_object() {
 
 #[tokio::test]
 async fn abort_create_service() {
-    let broker = TestBroker::new();
+    let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();

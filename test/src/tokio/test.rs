@@ -16,20 +16,3 @@ async fn shutdown_idle() {
 
     time::timeout(Duration::from_secs(1), test).await.unwrap();
 }
-
-#[tokio::test]
-async fn client_builder() {
-    let broker = TestBroker::new();
-    let mut builder = broker.client_builder();
-    let mut base = builder.0.clone();
-
-    assert_eq!(builder.0.channel, base.channel);
-
-    builder = builder.bounded_channel(1);
-    base = base.bounded_channel(1);
-    assert_eq!(builder.0.channel, base.channel);
-
-    builder = builder.unbounded_channel();
-    base = base.unbounded_channel();
-    assert_eq!(builder.0.channel, base.channel);
-}

@@ -22,24 +22,24 @@ use tokio::task::JoinHandle;
 /// See the [`tokio` module documentation](self) for usage examples.
 #[derive(Debug)]
 pub struct TestBroker {
-    handle: BrokerHandle,
+    inner: crate::TestBroker,
     join: Option<JoinHandle<()>>,
 }
 
 impl TestBroker {
     /// Creates a new broker.
     pub fn new() -> Self {
-        let mut broker = crate::TestBroker::new();
-        let join = tokio::spawn(broker.take_broker().run());
+        let mut inner = crate::TestBroker::new();
+
         TestBroker {
-            handle: broker.handle,
-            join: Some(join),
+            join: Some(tokio::spawn(inner.take_broker().run())),
+            inner,
         }
     }
 
     /// Returns a handle to the broker.
     pub fn handle(&self) -> &BrokerHandle {
-        &self.handle
+        &self.inner
     }
 
     /// Shuts down the broker and joins its task.
@@ -53,7 +53,7 @@ impl TestBroker {
     /// This function will panic if the [`Broker`](aldrin_broker::Broker) task has already been
     /// joined or attempted to join (see notes above as well).
     pub async fn join(&mut self) {
-        self.handle.shutdown().await;
+        self.inner.shutdown().await;
         self.join.take().expect("already joined").await.unwrap();
     }
 
@@ -68,27 +68,14 @@ impl TestBroker {
     /// This function will panic if the [`Broker`](aldrin_broker::Broker) task has already been
     /// joined or attempted to join (see notes above as well).
     pub async fn join_idle(&mut self) {
-        self.handle.shutdown_idle().await;
+        self.inner.shutdown_idle().await;
         self.join.take().expect("already joined").await.unwrap();
     }
 
-    /// Creates a new `ClientBuilder`.
-    ///
-    /// Use of this function is recommended only if non-default settings are required for the
-    /// [`Client`](aldrin::Client) or its [`Connection`](aldrin_broker::Connection). A
-    /// default [`Client`](aldrin::Client) can be added directly with
-    /// [`add_client`](TestBroker::add_client).
-    pub fn client_builder(&self) -> ClientBuilder {
-        ClientBuilder::new(self.handle.clone())
-    }
-
-    /// Creates a default `Client`.
-    ///
-    /// If you need more control over the [`Client`](aldrin::Client) and
-    /// [`Connection`](aldrin_broker::Connection) settings, then use
-    /// [`client_builder`](TestBroker::client_builder) instead.
-    pub async fn add_client(&self) -> TestClient {
-        self.client_builder().build().await
+    /// Creates a new `Client`.
+    pub async fn add_client(&mut self) -> TestClient {
+        let inner = self.inner.add_client().await;
+        TestClient::new(inner)
     }
 }
 
@@ -102,94 +89,44 @@ impl Deref for TestBroker {
     type Target = BrokerHandle;
 
     fn deref(&self) -> &BrokerHandle {
-        &self.handle
+        &self.inner
     }
 }
 
 impl DerefMut for TestBroker {
     fn deref_mut(&mut self) -> &mut BrokerHandle {
-        &mut self.handle
-    }
-}
-
-/// Tokio-based builder struct for a new `Client`.
-///
-/// A [`ClientBuilder`] allows for more control over how [`Client`](aldrin::Client) and
-/// [`Connection`](aldrin_broker::Connection) are setup, specifically what kind of channel is used
-/// as the transport. If you do not required any special settings, it is recommended to use
-/// [`TestBroker::add_client`] instead.
-#[derive(Debug, Clone)]
-pub struct ClientBuilder(crate::ClientBuilder);
-
-impl ClientBuilder {
-    /// Creates a new `ClientBuilder`.
-    ///
-    /// The default [`ClientBuilder`] is configured to use an unbounded channel between
-    /// [`Broker`](aldrin_broker::Broker) and [`Client`](aldrin::Client).
-    pub fn new(broker: BrokerHandle) -> Self {
-        ClientBuilder(crate::ClientBuilder::new(broker))
-    }
-
-    /// Creates a new `TestClient` with the current settings.
-    pub async fn build(self) -> TestClient {
-        let mut client = self.0.build().await;
-        TestClient {
-            client: Some(tokio::spawn(client.take_client().run())),
-            conn: Some(tokio::spawn(client.take_connection().run())),
-            handle: client.handle,
-            connection_handle: client.connection_handle,
-        }
-    }
-
-    /// Uses an unbounded channel as the transport between `Broker` and `Client`.
-    ///
-    /// This is the default after creating a new [`ClientBuilder`].
-    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
-    pub fn unbounded_channel(mut self) -> Self {
-        self.0 = self.0.unbounded_channel();
-        self
-    }
-
-    /// Uses a bounded channel as the transport between `Broker` and `Client`.
-    ///
-    /// See [`aldrin_core::channel::bounded`] for more information on the `fifo_size` parameter.
-    #[must_use = "this method follows the builder pattern and returns a new `ClientBuilder`"]
-    pub fn bounded_channel(mut self, fifo_size: usize) -> Self {
-        self.0 = self.0.bounded_channel(fifo_size);
-        self
+        &mut self.inner
     }
 }
 
 /// Tokio-based client for use in tests.
 ///
-/// [`TestClient`s](TestClient) with default settings can be created using
-/// [`TestBroker::add_client`], or alternatively with a [`ClientBuilder`] if more control over the
-/// settings is required.
-///
 /// [`TestClient`] dereferences to [`aldrin::Handle`] and thus all methods on [`Handle`] can
 /// be called on [`TestClient`] as well.
 #[derive(Debug)]
 pub struct TestClient {
-    handle: Handle,
-    connection_handle: ConnectionHandle,
+    inner: crate::TestClient,
     client: Option<JoinHandle<Result<(), RunError<Disconnected>>>>,
     conn: Option<JoinHandle<Result<(), ConnectionError<Disconnected>>>>,
 }
 
 impl TestClient {
-    /// Creates a new `ClientBuilder`.
-    pub fn builder(broker: BrokerHandle) -> ClientBuilder {
-        ClientBuilder::new(broker)
+    fn new(mut inner: crate::TestClient) -> Self {
+        Self {
+            client: Some(tokio::spawn(inner.take_client().run())),
+            conn: Some(tokio::spawn(inner.take_connection().run())),
+            inner,
+        }
     }
 
     /// Returns a handle to the client.
     pub fn handle(&self) -> &Handle {
-        &self.handle
+        &self.inner
     }
 
     /// Returns a handle to the connection.
     pub fn connection(&self) -> &ConnectionHandle {
-        &self.connection_handle
+        self.inner.connection()
     }
 
     /// Shuts down the client and joins the client and connection tasks.
@@ -203,7 +140,7 @@ impl TestClient {
     /// This function will panic if the tasks have already been joined or attempted to join (see
     /// notes above as well).
     pub async fn join(&mut self) {
-        self.handle.shutdown();
+        self.inner.shutdown();
         self.join_client().await;
         self.join_connection().await;
     }
@@ -231,6 +168,6 @@ impl Deref for TestClient {
     type Target = Handle;
 
     fn deref(&self) -> &Handle {
-        &self.handle
+        &self.inner
     }
 }
