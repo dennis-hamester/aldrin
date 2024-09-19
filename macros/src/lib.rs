@@ -13,16 +13,13 @@ extern crate proc_macro;
 
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{Diagnostic, Parsed, Parser};
-use proc_macro::TokenStream;
+use manyhow::{emit, manyhow, Emitter, Error, Result};
 use proc_macro2::Span;
-use proc_macro_error::{
-    abort_call_site, emit_call_site_error, emit_call_site_warning, proc_macro_error,
-};
 use std::env;
 use std::fmt::Write;
 use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
+use syn::{Ident, LitBool, LitStr, Token};
 
 /// Generates code from an Aldrin schema.
 ///
@@ -235,80 +232,54 @@ use syn::{parse_macro_input, Error, Ident, LitBool, LitStr, Result, Token};
 ///
 /// # Errors and warnings
 ///
-/// Any errors and warnings from the schemas will be shown as part of the regular compiler
-/// output. No code will be generated, if there are any errors in the schemas.
+/// Any errors from the schemas will be shown as part of the regular compiler output and no code
+/// will be generated.
 ///
-/// Warnings can currently only be emitted on nightly Rust. They are silently ignored on stable and
-/// beta. Unfortunately, this may suppress important diagnostics about your schemas. You can use the
-/// option `warnings_as_errors = true` to treat all warnings as errors.
+/// Warnings are currently not emitted, due to limitations on stable Rust. Unfortunately, this may
+/// suppress important diagnostics about your schemas. You can use the option
+/// `warnings_as_errors = true` to treat all warnings as errors.
 ///
-/// On the other hand, if you are on nightly Rust and generate code for a foreign schema, which you
-/// have no direct influence on, warnings may clutter your compiler output. In that case you can use
-/// `suppress_warnings = true` to ignore all warnings.
-///
-/// In general, it is advisable to use `warnings_as_errors` for your own schemas, and
-/// `suppress_warnings` for foreign schemas:
-///
-/// ```
-/// // Own schema
+/// ```compile_fail
 /// # use aldrin_macros::generate;
 /// generate! {
 ///     "schemas/example5.aldrin",
-///     include = "schemas/foreign",
 ///     warnings_as_errors = true,
-/// }
-///
-/// // Foreign schema
-/// generate! {
-///     "schemas/foreign/example6.aldrin",
-///     suppress_warnings = true,
 /// }
 /// # fn main() {}
 /// ```
-#[proc_macro_error]
-#[proc_macro]
-pub fn generate(input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(input as Args);
-
+#[manyhow(proc_macro)]
+pub fn generate(args: Args, emitter: &mut Emitter) -> Result {
     let mut parser = Parser::new();
     for include in args.includes {
         parser.add_schema_path(include);
     }
 
     let mut modules = String::new();
-    let mut abort = false;
 
     for schema in args.schemas {
         let parsed = parser.parse(&schema);
 
         for error in parsed.errors() {
-            let msg = format_diagnostic(error, &parsed);
-            emit_call_site_error!(msg);
+            emit!(emitter, "{}", format_diagnostic(error, &parsed));
         }
 
-        if !args.suppress_warnings || args.warnings_as_errors {
+        if args.warnings_as_errors {
             for warning in parsed.warnings() {
-                let msg = format_diagnostic(warning, &parsed);
-
-                if args.warnings_as_errors {
-                    emit_call_site_error!(msg);
-                } else {
-                    emit_call_site_warning!(msg);
-                }
+                emit!(emitter, "{}", format_diagnostic(warning, &parsed));
             }
         }
 
         if !parsed.errors().is_empty() {
-            abort |= true;
             continue;
         }
 
         let gen = Generator::new(&args.options, &parsed);
-
         let mut rust_options = RustOptions::new();
+
         for patch in &args.patches {
             rust_options.patches.push(patch);
         }
+
         rust_options.struct_builders = args.struct_builders;
         rust_options.struct_non_exhaustive = args.struct_non_exhaustive;
         rust_options.enum_non_exhaustive = args.enum_non_exhaustive;
@@ -318,9 +289,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
+
             Err(e) => {
-                emit_call_site_error!("{}", e);
-                abort_call_site!("there were Aldrin schema errors");
+                emit!(emitter, "Aldrin code generation failed: {e}");
+                continue;
             }
         };
 
@@ -345,11 +317,12 @@ pub fn generate(input: TokenStream) -> TokenStream {
         write!(&mut modules, "}}").unwrap();
     }
 
-    if abort {
-        abort_call_site!("there were Aldrin schema errors");
-    }
+    emitter.into_result()?;
 
-    modules.parse().unwrap()
+    modules
+        .parse()
+        .map_err(syn::Error::from)
+        .map_err(Error::from)
 }
 
 struct Args {
@@ -357,7 +330,6 @@ struct Args {
     includes: Vec<PathBuf>,
     options: Options,
     warnings_as_errors: bool,
-    suppress_warnings: bool,
     patches: Vec<PathBuf>,
     struct_builders: bool,
     struct_non_exhaustive: bool,
@@ -368,14 +340,14 @@ struct Args {
 }
 
 impl Parse for Args {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
         let first_schema = lit_str_to_path(input.parse::<LitStr>()?);
+
         let mut args = Args {
             schemas: vec![first_schema],
             includes: Vec::new(),
             options: Options::default(),
             warnings_as_errors: false,
-            suppress_warnings: false,
             patches: Vec::new(),
             struct_builders: true,
             struct_non_exhaustive: true,
@@ -411,8 +383,6 @@ impl Parse for Args {
                 args.options.server = input.parse::<LitBool>()?.value;
             } else if opt == "warnings_as_errors" {
                 args.warnings_as_errors = input.parse::<LitBool>()?.value;
-            } else if opt == "suppress_warnings" {
-                args.suppress_warnings = input.parse::<LitBool>()?.value;
             } else if opt == "patch" {
                 let lit_str = input.parse::<LitStr>()?;
                 args.patches.push(lit_str_to_path(lit_str));
@@ -433,7 +403,7 @@ impl Parse for Args {
                 args.introspection_if = Some(lit_str.value());
                 args.options.introspection = true;
             } else {
-                return Err(Error::new_spanned(opt, "invalid option"));
+                return Err(syn::Error::new_spanned(opt, "invalid option"));
             }
 
             if input.is_empty() {
@@ -443,7 +413,7 @@ impl Parse for Args {
         }
 
         if (args.schemas.len() > 1) && !args.patches.is_empty() {
-            return Err(Error::new(
+            return Err(syn::Error::new(
                 Span::call_site(),
                 "patches cannot be applied to multiple schemas",
             ));
