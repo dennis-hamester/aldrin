@@ -341,7 +341,7 @@ struct Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let first_schema = lit_str_to_path(input.parse::<LitStr>()?);
+        let first_schema = lit_str_to_path(&input.parse::<LitStr>()?)?;
 
         let mut args = Args {
             schemas: vec![first_schema],
@@ -365,7 +365,7 @@ impl Parse for Args {
                 break;
             };
 
-            args.schemas.push(lit_str_to_path(lit_str));
+            args.schemas.push(lit_str_to_path(&lit_str)?);
         }
 
         // Options
@@ -375,7 +375,7 @@ impl Parse for Args {
 
             if opt == "include" {
                 let lit_str = input.parse::<LitStr>()?;
-                args.includes.push(lit_str_to_path(lit_str));
+                args.includes.push(lit_str_to_path(&lit_str)?);
             } else if opt == "client" {
                 args.options.client = input.parse::<LitBool>()?.value;
             } else if opt == "server" {
@@ -384,7 +384,7 @@ impl Parse for Args {
                 args.warnings_as_errors = input.parse::<LitBool>()?.value;
             } else if opt == "patch" {
                 let lit_str = input.parse::<LitStr>()?;
-                args.patches.push(lit_str_to_path(lit_str));
+                args.patches.push(lit_str_to_path(&lit_str)?);
             } else if opt == "struct_builders" {
                 args.struct_builders = input.parse::<LitBool>()?.value;
             } else if opt == "struct_non_exhaustive" {
@@ -434,17 +434,22 @@ fn format_diagnostic(diag: &impl Diagnostic, parsed: &Parsed) -> String {
     msg
 }
 
-fn lit_str_to_path(lit_str: LitStr) -> PathBuf {
+fn lit_str_to_path(lit_str: &LitStr) -> syn::Result<PathBuf> {
     let path = PathBuf::from(lit_str.value());
 
     if path.is_absolute() {
-        path
+        Ok(path)
     } else {
-        let mut absolute = PathBuf::from(
-            env::var("CARGO_MANIFEST_DIR")
-                .expect("relative paths require CARGO_MANIFEST_DIR environment variable"),
-        );
+        let mut absolute = env::var("CARGO_MANIFEST_DIR")
+            .map(PathBuf::from)
+            .map_err(|e| {
+                syn::Error::new(
+                    lit_str.span(),
+                    format!("relative paths require CARGO_MANIFEST_DIR environment variable: {e}"),
+                )
+            })?;
+
         absolute.push(path);
-        absolute
+        Ok(absolute)
     }
 }
