@@ -361,9 +361,8 @@ impl Parse for Args {
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
 
-            let lit_str = match input.parse::<LitStr>() {
-                Ok(lit_str) => lit_str,
-                Err(_) => break,
+            let Ok(lit_str) = input.parse::<LitStr>() else {
+                break;
             };
 
             args.schemas.push(lit_str_to_path(lit_str));
@@ -409,6 +408,7 @@ impl Parse for Args {
             if input.is_empty() {
                 break;
             }
+
             input.parse::<Token![,]>()?;
         }
 
@@ -423,11 +423,8 @@ impl Parse for Args {
     }
 }
 
-fn format_diagnostic<D>(d: &D, parsed: &Parsed) -> String
-where
-    D: Diagnostic,
-{
-    let formatted = d.format(parsed);
+fn format_diagnostic(diag: &impl Diagnostic, parsed: &Parsed) -> String {
+    let formatted = diag.format(parsed);
 
     let mut msg = format!("{}\n", formatted.summary());
     for line in formatted.lines().skip(1) {
