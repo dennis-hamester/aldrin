@@ -2,11 +2,20 @@
 allow-wildcard-paths = true
 multiple-versions = "warn"
 wildcards = "deny"
+workspace-default-features = "deny"
 
 [bans.workspace-dependencies]
 duplicates = "deny"
 include-path-dependencies = false
 unused = "deny"
+
+[[bans.features]]
+crate = "aldrin-codegen"
+allow = ["default"]
+
+[[bans.features]]
+crate = "example-introspect"
+allow = ["default"]
 
 [graph]
 all-features = true
