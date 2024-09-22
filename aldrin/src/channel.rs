@@ -11,6 +11,7 @@ use crate::error::Error;
 use crate::handle::CloseChannelEndFuture;
 use futures_channel::{mpsc, oneshot};
 use futures_core::stream::{FusedStream, Stream};
+use std::fmt;
 use std::future;
 use std::marker::PhantomData;
 use std::mem;
@@ -31,7 +32,6 @@ const LOW_CAPACITY: u32 = 4;
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
 /// not bound to any client), it will not close the sending end of a channel. This is the main
 /// difference from `UnclaimedSender`.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct UnboundSender<T: ?Sized> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn(T)>,
@@ -121,6 +121,30 @@ impl<T: ?Sized> UnboundSender<T> {
     }
 }
 
+impl<T: ?Sized> fmt::Debug for UnboundSender<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("UnboundSender")
+            .field("cookie", &self.cookie)
+            .finish()
+    }
+}
+
+impl<T: ?Sized> Clone for UnboundSender<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> Copy for UnboundSender<T> {}
+
+impl<T1: ?Sized, T2: ?Sized> PartialEq<UnboundSender<T2>> for UnboundSender<T1> {
+    fn eq(&self, rhs: &UnboundSender<T2>) -> bool {
+        self.cookie == rhs.cookie
+    }
+}
+
+impl<T: ?Sized> Eq for UnboundSender<T> {}
+
 impl<T: ?Sized> Serialize for UnboundSender<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_sender(self.cookie);
@@ -139,7 +163,6 @@ impl<T: ?Sized> Deserialize for UnboundSender<T> {
 /// [`UnclaimedSender`s](Self) are similar to [`UnboundSender`s](UnboundSender) in that they
 /// identify the sending end of a channel in an unclaimed state. This sender is however bound to a
 /// client and can thus be claimed.
-#[derive(Debug)]
 pub struct UnclaimedSender<T: ?Sized> {
     inner: UnclaimedSenderInner,
     phantom: PhantomData<fn(T)>,
@@ -276,6 +299,14 @@ impl<T: ?Sized> UnclaimedSender<T> {
     }
 }
 
+impl<T: ?Sized> fmt::Debug for UnclaimedSender<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("UnclaimedSender")
+            .field("inner", &self.inner)
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct UnclaimedSenderInner {
     cookie: ChannelCookie,
@@ -331,7 +362,6 @@ impl Drop for UnclaimedSenderInner {
 ///
 /// [`PendingSender`s](Self) are used to wait until some client has claimed the receiving end of the
 /// channel. This is done with the [`established`](Self::established) function.
-#[derive(Debug)]
 pub struct PendingSender<T: ?Sized> {
     inner: PendingSenderInner,
     phantom: PhantomData<fn(T)>,
@@ -431,6 +461,14 @@ impl<T: ?Sized> PendingSender<T> {
     }
 }
 
+impl<T: ?Sized> fmt::Debug for PendingSender<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("PendingSender")
+            .field("inner", &self.inner)
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct PendingSenderInner {
     cookie: ChannelCookie,
@@ -505,7 +543,6 @@ impl Drop for PendingSenderInner {
 ///
 /// This type of sender is obtained when a channel has been fully established, either by
 /// [`PendingSender::established`] or by [`UnclaimedSender::claim`].
-#[derive(Debug)]
 pub struct Sender<T: ?Sized> {
     inner: SenderInner,
     phantom: PhantomData<fn(T)>,
@@ -618,6 +655,14 @@ impl<T: Serialize + ?Sized> Sender<T> {
     pub async fn send_item(&mut self, item: &T) -> Result<(), Error> {
         self.send_ready().await?;
         self.start_send_item(item)
+    }
+}
+
+impl<T: ?Sized> fmt::Debug for Sender<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Sender")
+            .field("inner", &self.inner)
+            .finish()
     }
 }
 
@@ -879,7 +924,6 @@ impl Drop for SenderInner {
 /// It is worth noting that this type implements [`Copy`] and [`Clone`]. As such (and because it is
 /// not bound to any client), it will not close the receiving end of a channel. This is the main
 /// difference from `UnclaimedReceiver`.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct UnboundReceiver<T> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn() -> T>,
@@ -972,6 +1016,30 @@ impl<T> UnboundReceiver<T> {
     }
 }
 
+impl<T> fmt::Debug for UnboundReceiver<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("UnboundReceiver")
+            .field("cookie", &self.cookie)
+            .finish()
+    }
+}
+
+impl<T> Clone for UnboundReceiver<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T> Copy for UnboundReceiver<T> {}
+
+impl<T1, T2> PartialEq<UnboundReceiver<T2>> for UnboundReceiver<T1> {
+    fn eq(&self, rhs: &UnboundReceiver<T2>) -> bool {
+        self.cookie == rhs.cookie
+    }
+}
+
+impl<T> Eq for UnboundReceiver<T> {}
+
 impl<T> Serialize for UnboundReceiver<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_receiver(self.cookie);
@@ -990,7 +1058,6 @@ impl<T> Deserialize for UnboundReceiver<T> {
 /// [`UnclaimedReceiver`s](Self) are similar to [`UnboundReceiver`s](UnboundReceiver) in that they
 /// identify the receiving end of a channel in an unclaimed state. This receiver is however bound to
 /// a client and can thus be claimed.
-#[derive(Debug)]
 pub struct UnclaimedReceiver<T> {
     inner: UnclaimedReceiverInner,
     phantom: PhantomData<fn() -> T>,
@@ -1129,6 +1196,14 @@ impl<T> UnclaimedReceiver<T> {
     }
 }
 
+impl<T> fmt::Debug for UnclaimedReceiver<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("UnclaimedReceiver")
+            .field("inner", &self.inner)
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct UnclaimedReceiverInner {
     cookie: ChannelCookie,
@@ -1184,7 +1259,6 @@ impl Drop for UnclaimedReceiverInner {
 ///
 /// [`PendingReceiver`s](Self) are used to wait until some client has claimed the sending end of the
 /// channel. This is done with the [`established`](Self::established) function.
-#[derive(Debug)]
 pub struct PendingReceiver<T> {
     inner: PendingReceiverInner,
     phantom: PhantomData<fn() -> T>,
@@ -1259,6 +1333,14 @@ impl<T> PendingReceiver<T> {
             inner: self.inner,
             phantom: PhantomData,
         }
+    }
+}
+
+impl<T> fmt::Debug for PendingReceiver<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("PendingReceiver")
+            .field("inner", &self.inner)
+            .finish()
     }
 }
 
@@ -1337,7 +1419,6 @@ impl Drop for PendingReceiverInner {
 ///
 /// This type of receiver is obtained when a channel has been fully established, either by
 /// [`PendingReceiver::established`] or by [`UnclaimedReceiver::claim`].
-#[derive(Debug)]
 pub struct Receiver<T> {
     inner: ReceiverInner,
     phantom: PhantomData<fn() -> T>,
@@ -1392,6 +1473,14 @@ impl<T: Deserialize> Receiver<T> {
     /// Returns the next item.
     pub async fn next_item(&mut self) -> Result<Option<T>, Error> {
         future::poll_fn(|cx| self.poll_next_item(cx)).await
+    }
+}
+
+impl<T> fmt::Debug for Receiver<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Receiver")
+            .field("inner", &self.inner)
+            .finish()
     }
 }
 

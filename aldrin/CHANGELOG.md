@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Events are now only emitted to the broker if there are actual subscribers.
 - On protocol version 1.18, `low_level::Proxy::next_event()` and `poll_next_event()` now return
   `None` when the service destroyed even if no events are subscribed.
+- The generic bound on `Debug`, `Clone`, `Copy`, `PartialEq` and `Eq` implementations of all channel
+  types no longer require the item type to also implement the respective trait.
 
 ### Changed
 
