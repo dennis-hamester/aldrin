@@ -413,6 +413,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-downloader"
+version = "0.0.0"
+dependencies = [
+ "aldrin",
+ "anyhow",
+ "clap",
+ "sha2",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "example-echo"
 version = "0.0.0"
 dependencies = [
