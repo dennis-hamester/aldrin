@@ -35,7 +35,9 @@ futures-util = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-core]
-workspace = true
+version = "0.7.0"
+path = "../core"
+default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.aldrin-macros]
@@ -66,15 +68,18 @@ workspace = true
 features = ["v4"]
 
 [dev-dependencies.aldrin-broker]
-workspace = true
+path = "../broker"
+default-features = false
 features = ["statistics"]
 
 [dev-dependencies.aldrin-core]
-workspace = true
+path = "../core"
+default-features = false
 features = ["channel"]
 
 [dev-dependencies.aldrin-test]
-workspace = true
+path = "../test"
+default-features = false
 features = ["tokio"]
 
 [dev-dependencies.futures-util]

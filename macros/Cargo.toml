@@ -20,11 +20,15 @@ all-features = true
 [lib]
 proc-macro = true
 
-[dependencies]
-aldrin-parser = { workspace = true }
+[dependencies.aldrin-parser]
+version = "0.7.0"
+path = "../parser"
+default-features = false
 
 [dependencies.aldrin-codegen]
-workspace = true
+version = "0.7.0"
+path = "../codegen"
+default-features = false
 features = ["rust"]
 
 [dependencies.manyhow]
@@ -49,7 +53,8 @@ features = [
 ]
 
 [dev-dependencies.aldrin]
-workspace = true
+path = "../aldrin"
+default-features = false
 features = [
     "codegen",
     "introspection",

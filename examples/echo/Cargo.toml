@@ -13,7 +13,8 @@ clap = { workspace = true }
 uuid = { workspace = true }
 
 [dependencies.aldrin]
-workspace = true
+path = "../../aldrin"
+default-features = false
 features = [
     "codegen",
     "new-v4-ids",

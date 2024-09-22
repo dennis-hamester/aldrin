@@ -5,6 +5,7 @@ wildcards = "deny"
 
 [bans.workspace-dependencies]
 duplicates = "deny"
+include-path-dependencies = false
 unused = "deny"
 
 [graph]

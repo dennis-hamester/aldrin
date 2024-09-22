@@ -21,12 +21,22 @@ all-features = true
 tokio = ["dep:tokio"]
 
 [dependencies]
-aldrin = { workspace = true }
-aldrin-broker = { workspace = true }
 futures-util = { workspace = true }
 
+[dependencies.aldrin]
+version = "0.7.0"
+path = "../aldrin"
+default-features = false
+
+[dependencies.aldrin-broker]
+version = "0.7.0"
+path = "../broker"
+default-features = false
+
 [dependencies.aldrin-core]
-workspace = true
+version = "0.7.0"
+path = "../core"
+default-features = false
 features = ["channel"]
 
 [dependencies.tokio]
@@ -38,7 +48,8 @@ features = ["rt"]
 anyhow = { workspace = true }
 
 [dev-dependencies.aldrin]
-workspace = true
+path = "../aldrin"
+default-features = false
 features = ["codegen"]
 
 [dev-dependencies.tokio]

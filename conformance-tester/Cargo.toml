@@ -19,7 +19,9 @@ clap = { workspace = true }
 colorchoice-clap = { workspace = true }
 
 [dependencies.aldrin-core]
-workspace = true
+version = "0.7.0"
+path = "../core"
+default-features = false
 features = ["tokio"]
 
 [dependencies.bwrap]

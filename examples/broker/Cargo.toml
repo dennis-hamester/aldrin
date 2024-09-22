@@ -13,7 +13,8 @@ anyhow = { workspace = true }
 clap = { workspace = true }
 
 [dependencies.aldrin-broker]
-workspace = true
+path = "../../broker"
+default-features = false
 features = ["tokio"]
 
 [dependencies.tokio]

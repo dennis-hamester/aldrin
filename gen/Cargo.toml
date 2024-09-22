@@ -12,7 +12,6 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aldrin-parser = { workspace = true }
 anstream = { workspace = true }
 anstyle = { workspace = true }
 anyhow = { workspace = true }
@@ -20,5 +19,12 @@ clap = { workspace = true }
 colorchoice-clap = { workspace = true }
 
 [dependencies.aldrin-codegen]
-workspace = true
+version = "0.7.0"
+path = "../codegen"
+default-features = false
 features = ["rust"]
+
+[dependencies.aldrin-parser]
+version = "0.7.0"
+path = "../parser"
+default-features = false

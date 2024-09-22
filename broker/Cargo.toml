@@ -34,7 +34,9 @@ futures-core = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-core]
-workspace = true
+version = "0.7.0"
+path = "../core"
+default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.futures-channel]
@@ -58,18 +60,23 @@ features = [
 ]
 
 [dev-dependencies]
-aldrin = { workspace = true }
 anyhow = { workspace = true }
 
+[dev-dependencies.aldrin]
+path = "../aldrin"
+default-features = false
+
 [dev-dependencies.aldrin-core]
-workspace = true
+path = "../core"
+default-features = false
 features = [
     "channel",
     "tokio",
 ]
 
 [dev-dependencies.aldrin-test]
-workspace = true
+path = "../test"
+default-features = false
 features = ["tokio"]
 
 [dev-dependencies.tokio]
