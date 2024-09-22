@@ -14,7 +14,7 @@ use crate::core::message::{
 #[cfg(feature = "introspection")]
 use crate::core::TypeId;
 use crate::core::{
-    BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd, Deserialize,
+    BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd,
     ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
     ServiceUuid,
 };
@@ -328,10 +328,7 @@ impl Handle {
     /// ```
     pub async fn create_channel_with_claimed_sender<T>(
         &self,
-    ) -> Result<(PendingSender<T>, UnclaimedReceiver<T>), Error>
-    where
-        T: Serialize + Deserialize,
-    {
+    ) -> Result<(PendingSender<T>, UnclaimedReceiver<T>), Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::CreateClaimedSender(reply))
@@ -358,10 +355,7 @@ impl Handle {
     pub async fn create_channel_with_claimed_receiver<T>(
         &self,
         capacity: u32,
-    ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error>
-    where
-        T: Serialize + Deserialize,
-    {
+    ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error> {
         let capacity = NonZeroU32::new(capacity).unwrap_or(NonZeroU32::new(1).unwrap());
 
         let (reply, recv) = oneshot::channel();

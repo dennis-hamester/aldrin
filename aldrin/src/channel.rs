@@ -32,12 +32,12 @@ const LOW_CAPACITY: u32 = 4;
 /// not bound to any client), it will not close the sending end of a channel. This is the main
 /// difference from `UnclaimedSender`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UnboundSender<T: Serialize + ?Sized> {
+pub struct UnboundSender<T: ?Sized> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: Serialize + ?Sized> UnboundSender<T> {
+impl<T: ?Sized> UnboundSender<T> {
     /// Creates a new [`UnboundSender`] from a [`ChannelCookie`].
     pub fn new(cookie: ChannelCookie) -> Self {
         Self {
@@ -113,7 +113,7 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Serialize + ?Sized>(self) -> UnboundSender<U> {
+    pub fn cast<U: ?Sized>(self) -> UnboundSender<U> {
         UnboundSender {
             cookie: self.cookie,
             phantom: PhantomData,
@@ -121,14 +121,14 @@ impl<T: Serialize + ?Sized> UnboundSender<T> {
     }
 }
 
-impl<T: Serialize + ?Sized> Serialize for UnboundSender<T> {
+impl<T: ?Sized> Serialize for UnboundSender<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_sender(self.cookie);
         Ok(())
     }
 }
 
-impl<T: Serialize + ?Sized> Deserialize for UnboundSender<T> {
+impl<T: ?Sized> Deserialize for UnboundSender<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(Self::new)
     }
@@ -140,12 +140,12 @@ impl<T: Serialize + ?Sized> Deserialize for UnboundSender<T> {
 /// identify the sending end of a channel in an unclaimed state. This sender is however bound to a
 /// client and can thus be claimed.
 #[derive(Debug)]
-pub struct UnclaimedSender<T: Serialize + ?Sized> {
+pub struct UnclaimedSender<T: ?Sized> {
     inner: UnclaimedSenderInner,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: Serialize + ?Sized> UnclaimedSender<T> {
+impl<T: ?Sized> UnclaimedSender<T> {
     pub(crate) fn new(inner: UnclaimedSenderInner) -> Self {
         Self {
             inner,
@@ -268,7 +268,7 @@ impl<T: Serialize + ?Sized> UnclaimedSender<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Serialize + ?Sized>(self) -> UnclaimedSender<U> {
+    pub fn cast<U: ?Sized>(self) -> UnclaimedSender<U> {
         UnclaimedSender {
             inner: self.inner,
             phantom: PhantomData,
@@ -332,12 +332,12 @@ impl Drop for UnclaimedSenderInner {
 /// [`PendingSender`s](Self) are used to wait until some client has claimed the receiving end of the
 /// channel. This is done with the [`established`](Self::established) function.
 #[derive(Debug)]
-pub struct PendingSender<T: Serialize + ?Sized> {
+pub struct PendingSender<T: ?Sized> {
     inner: PendingSenderInner,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: Serialize + ?Sized> PendingSender<T> {
+impl<T: ?Sized> PendingSender<T> {
     pub(crate) fn new(inner: PendingSenderInner) -> Self {
         Self {
             inner,
@@ -423,7 +423,7 @@ impl<T: Serialize + ?Sized> PendingSender<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Serialize + ?Sized>(self) -> PendingSender<U> {
+    pub fn cast<U: ?Sized>(self) -> PendingSender<U> {
         PendingSender {
             inner: self.inner,
             phantom: PhantomData,
@@ -506,12 +506,12 @@ impl Drop for PendingSenderInner {
 /// This type of sender is obtained when a channel has been fully established, either by
 /// [`PendingSender::established`] or by [`UnclaimedSender::claim`].
 #[derive(Debug)]
-pub struct Sender<T: Serialize + ?Sized> {
+pub struct Sender<T: ?Sized> {
     inner: SenderInner,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: Serialize + ?Sized> Sender<T> {
+impl<T: ?Sized> Sender<T> {
     pub(crate) fn new(inner: SenderInner) -> Self {
         Self {
             inner,
@@ -532,7 +532,7 @@ impl<T: Serialize + ?Sized> Sender<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Serialize + ?Sized>(self) -> Sender<U> {
+    pub fn cast<U: ?Sized>(self) -> Sender<U> {
         Sender {
             inner: self.inner,
             phantom: PhantomData,
@@ -547,23 +547,6 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// Waits until the channel has capacity to send at least 1 item.
     pub async fn send_ready(&mut self) -> Result<(), Error> {
         future::poll_fn(|cx| self.poll_send_ready(cx)).await
-    }
-
-    /// Sends an item on the channel.
-    ///
-    /// This function panics if the channel doesn't have any capacity left. You must call either
-    /// [`send_ready`](Self::send_ready) or [`poll_send_ready`](Self::poll_send_ready) before to
-    /// ensure there is capacity.
-    pub fn start_send_item(&mut self, item: &T) -> Result<(), Error> {
-        self.inner.start_send_item(item)
-    }
-
-    /// Sends an item on the channel.
-    ///
-    /// This function will wait until the channel has capacity to send at least 1 item.
-    pub async fn send_item(&mut self, item: &T) -> Result<(), Error> {
-        self.send_ready().await?;
-        self.start_send_item(item)
     }
 
     /// Closes the sender without consuming it.
@@ -616,6 +599,25 @@ impl<T: Serialize + ?Sized> Sender<T> {
     /// Completes when the channel is closed.
     pub async fn closed(&mut self) {
         future::poll_fn(|cx| self.poll_closed(cx)).await
+    }
+}
+
+impl<T: Serialize + ?Sized> Sender<T> {
+    /// Sends an item on the channel.
+    ///
+    /// This function panics if the channel doesn't have any capacity left. You must call either
+    /// [`send_ready`](Self::send_ready) or [`poll_send_ready`](Self::poll_send_ready) before to
+    /// ensure there is capacity.
+    pub fn start_send_item(&mut self, item: &T) -> Result<(), Error> {
+        self.inner.start_send_item(item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This function will wait until the channel has capacity to send at least 1 item.
+    pub async fn send_item(&mut self, item: &T) -> Result<(), Error> {
+        self.send_ready().await?;
+        self.start_send_item(item)
     }
 }
 
@@ -878,12 +880,12 @@ impl Drop for SenderInner {
 /// not bound to any client), it will not close the receiving end of a channel. This is the main
 /// difference from `UnclaimedReceiver`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UnboundReceiver<T: Deserialize> {
+pub struct UnboundReceiver<T> {
     cookie: ChannelCookie,
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: Deserialize> UnboundReceiver<T> {
+impl<T> UnboundReceiver<T> {
     /// Creates a new [`UnboundReceiver`] from a [`ChannelCookie`].
     pub fn new(cookie: ChannelCookie) -> Self {
         Self {
@@ -962,7 +964,7 @@ impl<T: Deserialize> UnboundReceiver<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Deserialize>(self) -> UnboundReceiver<U> {
+    pub fn cast<U>(self) -> UnboundReceiver<U> {
         UnboundReceiver {
             cookie: self.cookie,
             phantom: PhantomData,
@@ -970,14 +972,14 @@ impl<T: Deserialize> UnboundReceiver<T> {
     }
 }
 
-impl<T: Deserialize> Serialize for UnboundReceiver<T> {
+impl<T> Serialize for UnboundReceiver<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_receiver(self.cookie);
         Ok(())
     }
 }
 
-impl<T: Deserialize> Deserialize for UnboundReceiver<T> {
+impl<T> Deserialize for UnboundReceiver<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(Self::new)
     }
@@ -989,12 +991,12 @@ impl<T: Deserialize> Deserialize for UnboundReceiver<T> {
 /// identify the receiving end of a channel in an unclaimed state. This receiver is however bound to
 /// a client and can thus be claimed.
 #[derive(Debug)]
-pub struct UnclaimedReceiver<T: Deserialize> {
+pub struct UnclaimedReceiver<T> {
     inner: UnclaimedReceiverInner,
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: Deserialize> UnclaimedReceiver<T> {
+impl<T> UnclaimedReceiver<T> {
     pub(crate) fn new(inner: UnclaimedReceiverInner) -> Self {
         Self {
             inner,
@@ -1119,7 +1121,7 @@ impl<T: Deserialize> UnclaimedReceiver<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Deserialize>(self) -> UnclaimedReceiver<U> {
+    pub fn cast<U>(self) -> UnclaimedReceiver<U> {
         UnclaimedReceiver {
             inner: self.inner,
             phantom: PhantomData,
@@ -1183,12 +1185,12 @@ impl Drop for UnclaimedReceiverInner {
 /// [`PendingReceiver`s](Self) are used to wait until some client has claimed the sending end of the
 /// channel. This is done with the [`established`](Self::established) function.
 #[derive(Debug)]
-pub struct PendingReceiver<T: Deserialize> {
+pub struct PendingReceiver<T> {
     inner: PendingReceiverInner,
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: Deserialize> PendingReceiver<T> {
+impl<T> PendingReceiver<T> {
     pub(crate) fn new(inner: PendingReceiverInner) -> Self {
         Self {
             inner,
@@ -1252,7 +1254,7 @@ impl<T: Deserialize> PendingReceiver<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Deserialize>(self) -> PendingReceiver<U> {
+    pub fn cast<U>(self) -> PendingReceiver<U> {
         PendingReceiver {
             inner: self.inner,
             phantom: PhantomData,
@@ -1336,12 +1338,12 @@ impl Drop for PendingReceiverInner {
 /// This type of receiver is obtained when a channel has been fully established, either by
 /// [`PendingReceiver::established`] or by [`UnclaimedReceiver::claim`].
 #[derive(Debug)]
-pub struct Receiver<T: Deserialize> {
+pub struct Receiver<T> {
     inner: ReceiverInner,
     phantom: PhantomData<fn() -> T>,
 }
 
-impl<T: Deserialize> Receiver<T> {
+impl<T> Receiver<T> {
     pub(crate) fn new(inner: ReceiverInner) -> Self {
         Self {
             inner,
@@ -1367,13 +1369,15 @@ impl<T: Deserialize> Receiver<T> {
     }
 
     /// Casts the item type to a different type.
-    pub fn cast<U: Deserialize>(self) -> Receiver<U> {
+    pub fn cast<U>(self) -> Receiver<U> {
         Receiver {
             inner: self.inner,
             phantom: PhantomData,
         }
     }
+}
 
+impl<T: Deserialize> Receiver<T> {
     /// Polls for the next item.
     pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
         match self.inner.poll_next_item(cx) {

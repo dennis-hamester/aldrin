@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `low_level::Service::emit_event()` to just `emit()`.
 - `aldrin_core::ServiceInfo` (resp. `aldrin::core::ServiceInfo`) in the public API has been replaced
   by a new type `aldrin::low_level::ServiceInfo`.
+- The generic bounds on all channel types are now more relaxed and no longer require `Serialize` or
+  `Deserialize`. Only the relevant functions and trait implementation still require the respective
+  bound.
 
 ## [0.7.0] - 2024-07-25
 
