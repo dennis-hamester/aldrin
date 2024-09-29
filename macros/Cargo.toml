@@ -1,6 +1,6 @@
 [package]
 name = "aldrin-macros"
-description = "Aldrin code generation macros."
+description = "Aldrin macros."
 version = "0.8.0"
 
 authors.workspace = true
@@ -20,12 +20,20 @@ all-features = true
 [lib]
 proc-macro = true
 
+[features]
+codegen = [
+    "dep:aldrin-parser",
+    "dep:aldrin-codegen",
+]
+
 [dependencies.aldrin-parser]
+optional = true
 version = "0.8.0"
 path = "../parser"
 default-features = false
 
 [dependencies.aldrin-codegen]
+optional = true
 version = "0.8.2"
 path = "../codegen"
 default-features = false
