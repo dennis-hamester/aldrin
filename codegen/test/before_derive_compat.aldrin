@@ -1,0 +1,11 @@
+struct NewStruct {
+    required f1 @ 1 = i32;
+    required f2 @ 2 = option<i32>;
+    f3 @ 3 = i32;
+}
+
+enum NewEnum {
+    Var1 @ 1;
+    Var2 @ 2 = i32;
+    Var3 @ 3 = option<i32>;
+}
