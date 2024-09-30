@@ -22,6 +22,7 @@ channel = ["aldrin-core/channel"]
 codegen = [
     "aldrin-macros/codegen",
     "dep:aldrin-macros",
+    "derive",
 ]
 derive = [
     "dep:aldrin-macros",

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump MSRV to 1.71.1.
 - Adapt to new introspection system.
+- Derive `Serialize` and `Deserialize` with the new macros in `aldrin-macros`.
 
 ## [0.8.2] - 2024-10-30
 

@@ -1,4 +1,7 @@
-use aldrin::core::{ObjectUuid, SerializedValue};
+use aldrin::core::{
+    Deserialize, DeserializeError, Deserializer, ObjectUuid, Serialize, SerializeError,
+    SerializedValue, Serializer,
+};
 use aldrin::low_level::Proxy;
 use aldrin::Error;
 use aldrin_test::tokio::TestBroker;
@@ -6,6 +9,7 @@ use futures_util::stream::StreamExt;
 use subscribe_all::SubscribeAllEvent;
 use uuid::uuid;
 
+aldrin::generate!("test/before_derive_compat.aldrin");
 aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/introspection.aldrin", introspection = true);
@@ -154,4 +158,230 @@ async fn unsubscribe_all() {
     svc.destroy().await.unwrap();
 
     assert!(proxy.next_event().await.is_none());
+}
+
+#[tokio::test]
+async fn before_derive_compat_struct() {
+    use before_derive_compat::NewStruct;
+
+    pub struct OldStruct {
+        pub f1: i32,
+        pub f2: Option<i32>,
+        pub f3: Option<i32>,
+    }
+
+    impl Serialize for OldStruct {
+        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer = serializer.serialize_struct(3)?;
+
+            serializer.serialize_field(1u32, &self.f1)?;
+            serializer.serialize_field(2u32, &self.f2)?;
+            serializer.serialize_field(3u32, &self.f3)?;
+
+            serializer.finish()
+        }
+    }
+
+    impl Deserialize for OldStruct {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let mut deserializer = deserializer.deserialize_struct()?;
+
+            let mut f1 = None;
+            let mut f2 = None;
+            let mut f3 = None;
+
+            while deserializer.has_more_fields() {
+                let deserializer = deserializer.deserialize_field()?;
+
+                match deserializer.id() {
+                    1 => f1 = deserializer.deserialize().map(Some)?,
+                    2 => f2 = deserializer.deserialize().map(Some)?,
+                    3 => f3 = deserializer.deserialize()?,
+                    _ => deserializer.skip()?,
+                }
+            }
+
+            deserializer.finish_with(|| {
+                Ok(Self {
+                    f1: f1.ok_or(DeserializeError::InvalidSerialization)?,
+                    f2: f2.ok_or(DeserializeError::InvalidSerialization)?,
+                    f3,
+                })
+            })
+        }
+    }
+
+    let old = OldStruct {
+        f1: 0,
+        f2: None,
+        f3: None,
+    };
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewStruct>().unwrap();
+    assert_eq!(new.f1, old.f1);
+    assert_eq!(new.f2, old.f2);
+    assert_eq!(new.f3, old.f3);
+
+    let old = OldStruct {
+        f1: 0,
+        f2: Some(1),
+        f3: None,
+    };
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewStruct>().unwrap();
+    assert_eq!(new.f1, old.f1);
+    assert_eq!(new.f2, old.f2);
+    assert_eq!(new.f3, old.f3);
+
+    let old = OldStruct {
+        f1: 0,
+        f2: None,
+        f3: Some(2),
+    };
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewStruct>().unwrap();
+    assert_eq!(new.f1, old.f1);
+    assert_eq!(new.f2, old.f2);
+    assert_eq!(new.f3, old.f3);
+
+    let old = OldStruct {
+        f1: 0,
+        f2: Some(1),
+        f3: Some(2),
+    };
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewStruct>().unwrap();
+    assert_eq!(new.f1, old.f1);
+    assert_eq!(new.f2, old.f2);
+    assert_eq!(new.f3, old.f3);
+
+    let new = NewStruct {
+        f1: 0,
+        f2: None,
+        f3: None,
+    };
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldStruct>().unwrap();
+    assert_eq!(old.f1, new.f1);
+    assert_eq!(old.f2, new.f2);
+    assert_eq!(old.f3, new.f3);
+
+    let new = NewStruct {
+        f1: 0,
+        f2: Some(1),
+        f3: None,
+    };
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldStruct>().unwrap();
+    assert_eq!(old.f1, new.f1);
+    assert_eq!(old.f2, new.f2);
+    assert_eq!(old.f3, new.f3);
+
+    let new = NewStruct {
+        f1: 0,
+        f2: None,
+        f3: Some(2),
+    };
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldStruct>().unwrap();
+    assert_eq!(old.f1, new.f1);
+    assert_eq!(old.f2, new.f2);
+    assert_eq!(old.f3, new.f3);
+
+    let new = NewStruct {
+        f1: 0,
+        f2: Some(1),
+        f3: Some(2),
+    };
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldStruct>().unwrap();
+    assert_eq!(old.f1, new.f1);
+    assert_eq!(old.f2, new.f2);
+    assert_eq!(old.f3, new.f3);
+}
+
+#[tokio::test]
+async fn before_derive_compat_enum() {
+    use before_derive_compat::NewEnum;
+
+    #[derive(Debug)]
+    pub enum OldEnum {
+        Var1,
+        Var2(i32),
+        Var3(Option<i32>),
+    }
+
+    impl Serialize for OldEnum {
+        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+            match self {
+                Self::Var1 => serializer.serialize_enum(1u32, &()),
+                Self::Var2(v) => serializer.serialize_enum(2u32, v),
+                Self::Var3(v) => serializer.serialize_enum(3u32, v),
+            }
+        }
+    }
+
+    impl Deserialize for OldEnum {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let deserializer = deserializer.deserialize_enum()?;
+
+            match deserializer.variant() {
+                1 => deserializer.deserialize().map(|()| Self::Var1),
+                2 => deserializer.deserialize().map(Self::Var2),
+                3 => deserializer.deserialize().map(Self::Var3),
+                _ => Err(DeserializeError::InvalidSerialization),
+            }
+        }
+    }
+
+    impl PartialEq<OldEnum> for NewEnum {
+        fn eq(&self, other: &OldEnum) -> bool {
+            match (self, other) {
+                (Self::Var1, OldEnum::Var1) => true,
+                (Self::Var2(v1), OldEnum::Var2(v2)) => v1 == v2,
+                (Self::Var3(v1), OldEnum::Var3(v2)) => v1 == v2,
+                _ => false,
+            }
+        }
+    }
+
+    let old = OldEnum::Var1;
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let old = OldEnum::Var2(0);
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let old = OldEnum::Var3(None);
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let old = OldEnum::Var3(Some(1));
+    let serialized = SerializedValue::serialize(&old).unwrap();
+    let new = serialized.deserialize::<NewEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let new = NewEnum::Var1;
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let new = NewEnum::Var2(0);
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let new = NewEnum::Var3(None);
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldEnum>().unwrap();
+    assert_eq!(new, old);
+
+    let new = NewEnum::Var3(Some(1));
+    let serialized = SerializedValue::serialize(&new).unwrap();
+    let old = serialized.deserialize::<OldEnum>().unwrap();
+    assert_eq!(new, old);
 }
