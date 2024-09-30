@@ -25,6 +25,11 @@ codegen = [
     "dep:aldrin-parser",
     "dep:aldrin-codegen",
 ]
+derive = [
+    "dep:quote",
+    "syn/clone-impls",
+    "syn/derive",
+]
 
 [dependencies.aldrin-parser]
 optional = true
@@ -51,6 +56,11 @@ features = [
 version = "1.0.69"
 default-features = false
 
+[dependencies.quote]
+optional = true
+version = "1.0.33"
+default-features = false
+
 [dependencies.syn]
 version = "2.0.39"
 default-features = false
@@ -67,3 +77,8 @@ features = [
     "codegen",
     "introspection",
 ]
+
+[dev-dependencies.aldrin-core]
+path = "../core"
+default-features = false
+features = ["derive"]
