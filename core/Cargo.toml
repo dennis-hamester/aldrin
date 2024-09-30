@@ -25,6 +25,7 @@ channel = [
     "dep:futures-channel",
     "dep:futures-core",
 ]
+derive = ["dep:aldrin-macros"]
 fuzzing = [
     "dep:arbitrary",
     "uuid/arbitrary",
@@ -39,6 +40,13 @@ tokio = ["dep:tokio"]
 
 [dependencies]
 thiserror = { workspace = true }
+
+[dependencies.aldrin-macros]
+optional = true
+version = "0.8.0"
+path = "../macros"
+default-features = false
+features = ["derive"]
 
 [dependencies.arbitrary]
 optional = true

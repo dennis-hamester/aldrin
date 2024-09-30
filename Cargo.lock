@@ -91,6 +91,7 @@ version = "0.8.0"
 dependencies = [
  "aldrin",
  "aldrin-broker",
+ "aldrin-macros",
  "arbitrary",
  "bytes",
  "futures-channel",
@@ -122,9 +123,11 @@ version = "0.8.0"
 dependencies = [
  "aldrin",
  "aldrin-codegen",
+ "aldrin-core",
  "aldrin-parser",
  "manyhow",
  "proc-macro2",
+ "quote",
  "syn",
 ]
 

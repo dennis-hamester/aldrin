@@ -28,6 +28,8 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
+#[cfg(feature = "derive")]
+pub use aldrin_macros::{Deserialize, Serialize};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};

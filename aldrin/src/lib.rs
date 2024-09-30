@@ -83,6 +83,8 @@ pub mod private;
 pub use aldrin_core as core;
 #[cfg(feature = "codegen")]
 pub use aldrin_macros::generate;
+#[cfg(feature = "derive")]
+pub use aldrin_macros::{DeserializeFromAldrin as Deserialize, SerializeFromAldrin as Serialize};
 pub use bus_listener::BusListener;
 pub use channel::{
     PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,

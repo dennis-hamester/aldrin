@@ -23,6 +23,10 @@ codegen = [
     "aldrin-macros/codegen",
     "dep:aldrin-macros",
 ]
+derive = [
+    "dep:aldrin-macros",
+    "aldrin-macros/derive",
+]
 introspection = ["aldrin-core/introspection"]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
 serde = [
