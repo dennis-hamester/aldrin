@@ -164,17 +164,25 @@ impl RustGenerator<'_> {
         let has_required_fields = num_required_fields > 0;
 
         let derive_default = if has_required_fields { "" } else { ", Default" };
-        genln!(self, "#[derive(Debug, Clone{}{})]", derive_default, attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{}{})]", derive_default, attrs.additional_derives());
         if self.rust_options.struct_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
         genln!(self, "pub struct {} {{", name);
+        let mut first = true;
         for field in fields {
-            let field_name = field.name().value();
-            if field.required() {
-                genln!(self, "    pub {}: {},", field_name, type_name(field.field_type()));
+            if first {
+                first = false;
             } else {
-                genln!(self, "    pub {}: Option<{}>,", field_name, type_name(field.field_type()));
+                genln!(self);
+            }
+
+            if field.required() {
+                genln!(self, "    #[aldrin(id = {})]", field.id().value());
+                genln!(self, "    pub {}: {},", field.name().value(), type_name(field.field_type()));
+            } else {
+                genln!(self, "    #[aldrin(id = {}, optional)]", field.id().value());
+                genln!(self, "    pub {}: Option<{}>,", field.name().value(), type_name(field.field_type()));
             }
         }
         genln!(self, "}}");
@@ -193,58 +201,6 @@ impl RustGenerator<'_> {
             genln!(self, "        {}::new()", builder_name);
             genln!(self, "    }}");
         }
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::core::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin::core::Serializer) -> Result<(), aldrin::core::SerializeError> {{");
-        genln!(self, "        let mut serializer = serializer.serialize_struct({})?;", fields.len());
-        genln!(self);
-        for field in fields {
-            genln!(self, "        serializer.serialize_field({}u32, &self.{})?;", field.id().value(), field.name().value());
-        }
-        genln!(self);
-        genln!(self, "        serializer.finish()");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::core::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin::core::Deserializer) -> Result<Self, aldrin::core::DeserializeError> {{");
-        genln!(self, "        let mut deserializer = deserializer.deserialize_struct()?;");
-        genln!(self);
-        for field in fields {
-            genln!(self, "        let mut {} = None;", field.name().value());
-        }
-        genln!(self);
-        genln!(self, "        while deserializer.has_more_fields() {{");
-        genln!(self, "            let deserializer = deserializer.deserialize_field()?;");
-        genln!(self);
-        genln!(self, "            match deserializer.id() {{");
-        for field in fields {
-            let id = field.id().value();
-            let name = field.name().value();
-            if field.required() {
-                genln!(self, "                {id} => {name} = deserializer.deserialize().map(Some)?,");
-            } else {
-                genln!(self, "                {id} => {name} = deserializer.deserialize()?,");
-            }
-        }
-        genln!(self, "                _ => deserializer.skip()?,");
-        genln!(self, "            }}");
-        genln!(self, "        }}");
-        genln!(self);
-        genln!(self, "        deserializer.finish_with(|| Ok(Self {{");
-        for field in fields {
-            let field_name = field.name().value();
-            if field.required() {
-                genln!(self, "            {field_name}: {field_name}.ok_or(aldrin::core::DeserializeError::InvalidSerialization)?,");
-            } else {
-                genln!(self, "            {field_name},");
-            }
-        }
-        genln!(self, "        }}))");
-        genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 
@@ -358,56 +314,26 @@ impl RustGenerator<'_> {
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
 
-        genln!(self, "#[derive(Debug, Clone{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{})]", attrs.additional_derives());
         if self.rust_options.enum_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
         genln!(self, "pub enum {} {{", name);
+        let mut first = true;
         for var in vars {
-            let var_name = var.name().value();
+            if first {
+                first = false;
+            } else {
+                genln!(self);
+            }
+
+            genln!(self, "    #[aldrin(id = {})]", var.id().value());
             if let Some(var_type) = var.variant_type() {
-                genln!(self, "    {}({}),", var_name, type_name(var_type));
+                genln!(self, "    {}({}),", var.name().value(), type_name(var_type));
             } else {
-                genln!(self, "    {},", var_name);
+                genln!(self, "    {},", var.name().value());
             }
         }
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::core::Serialize for {name} {{");
-        genln!(self, "    fn serialize(&self, serializer: aldrin::core::Serializer) -> Result<(), aldrin::core::SerializeError> {{");
-        genln!(self, "        match self {{");
-        for var in vars {
-            let name = var.name().value();
-            let id = var.id().value();
-            if var.variant_type().is_some() {
-                genln!(self, "            Self::{name}(v) => serializer.serialize_enum({id}u32, v),");
-            } else {
-                genln!(self, "            Self::{name} => serializer.serialize_enum({id}u32, &()),");
-            }
-        }
-        genln!(self, "        }}");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::core::Deserialize for {name} {{");
-        genln!(self, "    fn deserialize(deserializer: aldrin::core::Deserializer) -> Result<Self, aldrin::core::DeserializeError> {{");
-        genln!(self, "        let deserializer = deserializer.deserialize_enum()?;");
-        genln!(self);
-        genln!(self, "        match deserializer.variant() {{");
-        for var in vars {
-            let name = var.name().value();
-            let id = var.id().value();
-            if var.variant_type().is_some() {
-                genln!(self, "            {id} => deserializer.deserialize().map(Self::{name}),");
-            } else {
-                genln!(self, "            {id} => deserializer.deserialize().map(|()| Self::{name}),");
-            }
-        }
-        genln!(self, "            _ => Err(aldrin::core::DeserializeError::InvalidSerialization),");
-        genln!(self, "        }}");
-        genln!(self, "    }}");
         genln!(self, "}}");
         genln!(self);
 

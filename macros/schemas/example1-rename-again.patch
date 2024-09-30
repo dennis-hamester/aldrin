@@ -1,12 +1,15 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -8,22 +8,22 @@
+@@ -8,7 +8,7 @@
  
- #[derive(Debug, Clone, Default)]
+ #[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize, Default)]
  #[non_exhaustive]
 -pub struct MyStructRenamed {
 +pub struct MyStructRenamedAgain {
+     #[aldrin(id = 1, optional)]
      pub field1: Option<u32>,
+ 
+@@ -16,18 +16,18 @@
      pub field2: Option<u32>,
  }
  
@@ -23,30 +26,13 @@
      }
  }
  
--impl aldrin::core::Serialize for MyStructRenamed {
-+impl aldrin::core::Serialize for MyStructRenamedAgain {
-     fn serialize(&self, serializer: aldrin::core::Serializer) -> Result<(), aldrin::core::SerializeError> {
-         let mut serializer = serializer.serialize_struct(2)?;
- 
-@@ -34,7 +34,7 @@
-     }
- }
- 
--impl aldrin::core::Deserialize for MyStructRenamed {
-+impl aldrin::core::Deserialize for MyStructRenamedAgain {
-     fn deserialize(deserializer: aldrin::core::Deserializer) -> Result<Self, aldrin::core::DeserializeError> {
-         let mut deserializer = deserializer.deserialize_struct()?;
- 
-@@ -59,7 +59,7 @@
- }
- 
  #[derive(Debug, Clone, Default)]
 -pub struct MyStructRenamedBuilder {
 +pub struct MyStructRenamedAgainBuilder {
      #[doc(hidden)]
      field1: Option<u32>,
  
-@@ -68,7 +68,7 @@
+@@ -36,7 +36,7 @@
  
  }
  
@@ -55,7 +41,7 @@
      pub fn new() -> Self {
          Default::default()
      }
-@@ -83,8 +83,8 @@
+@@ -51,8 +51,8 @@
          self
      }
  
