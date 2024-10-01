@@ -1,3 +1,11 @@
+use aldrin::core::{ObjectUuid, SerializedValue};
+use aldrin::low_level::Proxy;
+use aldrin::Error;
+use aldrin_test::tokio::TestBroker;
+use futures_util::stream::StreamExt;
+use subscribe_all::SubscribeAllEvent;
+use uuid::uuid;
+
 aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/introspection.aldrin", introspection = true);
@@ -26,14 +34,6 @@ mod empty_introspection {
         server = false,
     );
 }
-
-use aldrin::core::{ObjectUuid, SerializedValue};
-use aldrin::low_level::Proxy;
-use aldrin::Error;
-use aldrin_test::tokio::TestBroker;
-use futures_util::stream::StreamExt;
-use subscribe_all::SubscribeAllEvent;
-use uuid::uuid;
 
 #[tokio::test]
 async fn auto_reply_with_invalid_args() {
