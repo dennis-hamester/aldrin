@@ -13,7 +13,6 @@ pub struct Context {
 }
 
 impl Context {
-    #[allow(clippy::new_without_default)]
     pub fn new(version: ProtocolVersion) -> Self {
         Self {
             clients: HashMap::new(),

@@ -44,7 +44,6 @@ fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
 fn test_none() {
     let serialized = [0];
 
-    #[allow(clippy::let_unit_value)]
     let value = ();
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);

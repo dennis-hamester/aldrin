@@ -5,7 +5,6 @@
 //!
 //! See the documentation of the [`generate!`] macro for more information and usage examples.
 
-#![allow(clippy::needless_doctest_main)]
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
