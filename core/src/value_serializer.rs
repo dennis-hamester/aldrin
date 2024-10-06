@@ -399,7 +399,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     }
 }
 
-impl<'a, K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'a, K> {
+impl<K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'_, K> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("MapSerializer");
 
@@ -459,7 +459,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     }
 }
 
-impl<'a, T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'a, T> {
+impl<T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("SetSerializer");
 

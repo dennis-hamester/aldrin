@@ -23,7 +23,7 @@ pub struct RustOptions<'a> {
     pub introspection_if: Option<&'a str>,
 }
 
-impl<'a> RustOptions<'a> {
+impl RustOptions<'_> {
     pub fn new() -> Self {
         RustOptions {
             patches: Vec::new(),
@@ -37,7 +37,7 @@ impl<'a> RustOptions<'a> {
     }
 }
 
-impl<'a> Default for RustOptions<'a> {
+impl Default for RustOptions<'_> {
     fn default() -> Self {
         RustOptions::new()
     }
@@ -83,7 +83,7 @@ macro_rules! genln {
 
 #[rustfmt::skip::macros(gen, genln)]
 #[allow(clippy::branches_sharing_code)]
-impl<'a> RustGenerator<'a> {
+impl RustGenerator<'_> {
     fn generate(mut self) -> Result<RustOutput, Error> {
         genln!(self, "#![allow(clippy::enum_variant_names)]");
         genln!(self, "#![allow(clippy::large_enum_variant)]");

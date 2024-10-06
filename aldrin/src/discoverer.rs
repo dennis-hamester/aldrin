@@ -417,7 +417,7 @@ where
     }
 }
 
-impl<'a, Key> FusedIterator for DiscovererIter<'a, Key> where Key: Copy + Eq + Hash {}
+impl<Key> FusedIterator for DiscovererIter<'_, Key> where Key: Copy + Eq + Hash {}
 
 /// Entry of a `Discoverer`.
 #[derive(Debug)]
@@ -544,7 +544,7 @@ where
     }
 }
 
-impl<'a, Key> FusedIterator for DiscovererEntryIter<'a, Key> where Key: Copy + Eq + Hash {}
+impl<Key> FusedIterator for DiscovererEntryIter<'_, Key> where Key: Copy + Eq + Hash {}
 
 impl<'a, Key> From<SpecificObjectIter<'a, Key>> for DiscovererEntryIter<'a, Key>
 where
@@ -580,7 +580,7 @@ pub struct DiscovererIterEntry<'a, Key> {
     inner: IterEntryInner<'a, Key>,
 }
 
-impl<'a, Key> DiscovererIterEntry<'a, Key>
+impl<Key> DiscovererIterEntry<'_, Key>
 where
     Key: Copy + Eq + Hash,
 {

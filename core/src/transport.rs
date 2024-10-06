@@ -10,7 +10,7 @@ use std::task::{Context, Poll};
 /// Boxed [`AsyncTransport`] type returned by [`AsyncTransportExt::boxed`].
 pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;
 
-impl<'a, E> fmt::Debug for BoxedTransport<'a, E> {
+impl<E> fmt::Debug for BoxedTransport<'_, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("BoxedTransport").finish()
     }
@@ -258,7 +258,7 @@ pub struct Receive<'a, T>(&'a mut T)
 where
     T: AsyncTransport + Unpin + ?Sized;
 
-impl<'a, T> Future for Receive<'a, T>
+impl<T> Future for Receive<'_, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
@@ -279,7 +279,7 @@ where
     msg: Option<Message>,
 }
 
-impl<'a, T> Future for Send<'a, T>
+impl<T> Future for Send<'_, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
@@ -311,7 +311,7 @@ pub struct Flush<'a, T>(&'a mut T)
 where
     T: AsyncTransport + Unpin + ?Sized;
 
-impl<'a, T> Future for Flush<'a, T>
+impl<T> Future for Flush<'_, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {
@@ -338,7 +338,7 @@ where
     None,
 }
 
-impl<'a, T> Future for SendFlush<'a, T>
+impl<T> Future for SendFlush<'_, T>
 where
     T: AsyncTransport + Unpin + ?Sized,
 {

@@ -153,7 +153,7 @@ impl<'a> IntoIterator for &'a Formatted<'a> {
     }
 }
 
-impl<'a> fmt::Display for Formatted<'a> {
+impl fmt::Display for Formatted<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for line in self {
             line.fmt(f)?;
@@ -220,7 +220,7 @@ impl<'a> IntoIterator for &'a Line<'a> {
     }
 }
 
-impl<'a> fmt::Display for Line<'a> {
+impl fmt::Display for Line<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (chunk, _) in self {
             f.write_str(chunk)?;

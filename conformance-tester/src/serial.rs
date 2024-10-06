@@ -75,7 +75,7 @@ impl<'de> Deserialize<'de> for Serial {
     {
         struct SerialVisitor;
 
-        impl<'de> Visitor<'de> for SerialVisitor {
+        impl Visitor<'_> for SerialVisitor {
             type Value = Serial;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

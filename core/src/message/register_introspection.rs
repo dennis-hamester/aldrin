@@ -60,7 +60,7 @@ impl From<RegisterIntrospection> for Message {
 
 struct SerializeTypeIds<'a>(&'a HashSet<TypeId>);
 
-impl<'a> Serialize for SerializeTypeIds<'a> {
+impl Serialize for SerializeTypeIds<'_> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_set_iter(self.0.iter().map(|id| id.0))
     }

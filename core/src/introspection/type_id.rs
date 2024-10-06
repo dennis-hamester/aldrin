@@ -40,7 +40,7 @@ enum ComputeTypeIdField {
     Types = 2,
 }
 
-impl<'a> Serialize for ComputeTypeId<'a> {
+impl Serialize for ComputeTypeId<'_> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(3)?;
 
