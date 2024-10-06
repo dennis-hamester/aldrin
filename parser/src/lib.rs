@@ -1,4 +1,3 @@
-#![allow(clippy::large_enum_variant)]
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
