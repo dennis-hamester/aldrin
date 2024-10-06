@@ -105,7 +105,6 @@ pub struct Formatted<'a> {
     lines: Vec<Line<'a>>,
 }
 
-#[allow(clippy::len_without_is_empty)]
 impl<'a> Formatted<'a> {
     /// Kind of the diagnostic; error or warning.
     pub fn kind(&self) -> DiagnosticKind {
@@ -130,6 +129,7 @@ impl<'a> Formatted<'a> {
     }
 
     /// Returns the number of lines.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.lines.len() + 1
     }
@@ -195,9 +195,9 @@ pub struct Line<'a> {
     chunks: Vec<(Cow<'a, str>, Style)>,
 }
 
-#[allow(clippy::len_without_is_empty)]
 impl<'a> Line<'a> {
     /// Returns the number of chunks in this line.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.chunks.len() + 1
     }
