@@ -23,6 +23,8 @@ mod value_serializer;
 pub mod channel;
 #[cfg(feature = "introspection")]
 pub mod introspection;
+#[cfg(feature = "introspection")]
+pub mod introspection_v2;
 pub mod message;
 #[cfg(feature = "tokio")]
 pub mod tokio;
