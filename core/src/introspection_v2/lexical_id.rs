@@ -1,0 +1,102 @@
+use super::KeyType;
+use crate::error::{DeserializeError, SerializeError};
+use crate::value_deserializer::{Deserialize, Deserializer};
+use crate::value_serializer::{Serialize, Serializer};
+use uuid::{uuid, Uuid};
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[repr(transparent)]
+pub struct LexicalId(pub Uuid);
+
+impl LexicalId {
+    pub const NIL: Self = Self(Uuid::nil());
+
+    pub const BOOL: Self = Self(uuid!("f00cbfc4-cf2f-457a-aa56-35923c8b2571"));
+    pub const U8: Self = Self(uuid!("0ff2b764-1666-46e1-82ff-aa59264ba7f0"));
+    pub const I8: Self = Self(uuid!("055a9029-e3ff-4b38-922f-6a5eee338138"));
+    pub const U16: Self = Self(uuid!("355797a3-ef55-49d0-a1e3-3048247c9365"));
+    pub const I16: Self = Self(uuid!("3e86f004-6b09-46dd-aacd-f1161ad546f4"));
+    pub const U32: Self = Self(uuid!("dff83171-4355-4fde-a2a4-67bd804b31c2"));
+    pub const I32: Self = Self(uuid!("8afa8119-736a-4bab-ad71-3b6f8061bed0"));
+    pub const U64: Self = Self(uuid!("1a192e74-8220-4bad-bacb-3385e9c26abf"));
+    pub const I64: Self = Self(uuid!("a4669bfb-1c1c-43c4-ad3f-ea2afab22756"));
+    pub const F32: Self = Self(uuid!("046a2593-0627-44bf-8a6c-d24cb7ef54b2"));
+    pub const F64: Self = Self(uuid!("64d58c83-68f9-43d2-9401-04dbc61e34b0"));
+    pub const STRING: Self = Self(uuid!("034cb183-38c7-4d26-984e-c56730eafc3f"));
+    pub const UUID: Self = Self(uuid!("8cdde1d6-e2ca-4e19-860d-cbe901547816"));
+    pub const OBJECT_ID: Self = Self(uuid!("abab21a3-2ebe-47d6-9caa-1e4fd71e2171"));
+    pub const SERVICE_ID: Self = Self(uuid!("b241ed0d-89db-493e-a4f5-73f13aa4a7a0"));
+    pub const VALUE: Self = Self(uuid!("eb70f272-1c31-4933-a933-4030dd012f07"));
+    pub const BYTES: Self = Self(uuid!("300d98f6-3267-48c2-8aa0-dc36e28b0c43"));
+    pub const LIFETIME: Self = Self(uuid!("e406e363-6eef-41c8-83ae-d114fd6cb0b8"));
+    pub const UNIT: Self = Self(uuid!("630e81c6-b8f3-4c0f-97e3-44d214168d6c"));
+
+    pub const NAMESPACE_OPTION: Uuid = uuid!("050c596f-9fcc-4d5b-9caa-3507553bc64a");
+    pub const NAMESPACE_BOX: Uuid = uuid!("b3073eb9-7200-44ff-b79e-5165103a9382");
+    pub const NAMESPACE_VEC: Uuid = uuid!("c638aee9-5728-42f8-8405-49ae00280a85");
+    pub const NAMESPACE_MAP: Uuid = uuid!("69370c52-3211-46d9-8f7d-9ab0fd1536c9");
+    pub const NAMESPACE_SET: Uuid = uuid!("d9fa4f35-368c-4ad0-86f1-35ace576d58b");
+    pub const NAMESPACE_SENDER: Uuid = uuid!("052ac1dd-c0d4-4f4c-9b7a-78448875a21f");
+    pub const NAMESPACE_RECEIVER: Uuid = uuid!("d697238d-56e0-4132-980e-baf1a64c9bfd");
+    pub const NAMESPACE_RESULT: Uuid = uuid!("aef81d6c-35cc-43f7-99f3-a17c0eada1f4");
+
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
+    }
+
+    pub fn option(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_OPTION, ty.0)
+    }
+
+    pub fn box_ty(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_BOX, ty.0)
+    }
+
+    pub fn vec(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_VEC, ty.0)
+    }
+
+    pub fn map(key: KeyType, ty: Self) -> Self {
+        Self::new_v5_2(Self::NAMESPACE_MAP, key.id(), ty.0)
+    }
+
+    pub fn set(key: KeyType) -> Self {
+        Self::new_v5(Self::NAMESPACE_SET, key.id())
+    }
+
+    pub fn sender(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_SENDER, ty.0)
+    }
+
+    pub fn receiver(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_RECEIVER, ty.0)
+    }
+
+    pub fn result(ok: Self, err: Self) -> Self {
+        Self::new_v5_2(Self::NAMESPACE_RESULT, ok.0, err.0)
+    }
+
+    fn new_v5(ns: Uuid, ty: Uuid) -> Self {
+        Self(Uuid::new_v5(&ns, ty.as_bytes()))
+    }
+
+    fn new_v5_2(ns: Uuid, a: Uuid, b: Uuid) -> Self {
+        let mut name = [0; 32];
+        name[..16].copy_from_slice(a.as_bytes());
+        name[16..].copy_from_slice(b.as_bytes());
+        Self(Uuid::new_v5(&ns, &name))
+    }
+}
+
+impl Serialize for LexicalId {
+    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0);
+        Ok(())
+    }
+}
+
+impl Deserialize for LexicalId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
+    }
+}
