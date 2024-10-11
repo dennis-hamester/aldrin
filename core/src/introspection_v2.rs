@@ -1,9 +1,11 @@
 mod built_in_type;
+mod field;
 mod key_type;
 mod layout;
 mod lexical_id;
 mod map_type;
 mod result_type;
+mod struct_ty;
 mod type_id;
 
 use crate::error::{DeserializeError, SerializeError};
@@ -15,11 +17,13 @@ use std::collections::BTreeMap;
 use uuid::Uuid;
 
 pub use built_in_type::BuiltInType;
+pub use field::Field;
 pub use key_type::{KeyType, KeyTypeOf};
 pub use layout::Layout;
 pub use lexical_id::LexicalId;
 pub use map_type::MapType;
 pub use result_type::ResultType;
+pub use struct_ty::{Struct, StructBuilder};
 
 #[derive(Debug, Clone)]
 pub struct Introspection {
@@ -64,6 +68,10 @@ impl Introspection {
 
     pub fn as_built_in_layout(&self) -> Option<BuiltInType> {
         self.layout.as_built_in()
+    }
+
+    pub fn as_struct_layout(&self) -> Option<&Struct> {
+        self.layout.as_struct()
     }
 }
 
