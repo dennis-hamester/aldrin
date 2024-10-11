@@ -1,11 +1,14 @@
 mod built_in_type;
 mod enum_ty;
+mod event;
 mod field;
+mod function;
 mod key_type;
 mod layout;
 mod lexical_id;
 mod map_type;
 mod result_type;
+mod service;
 mod struct_ty;
 mod type_id;
 mod variant;
@@ -20,12 +23,15 @@ use uuid::Uuid;
 
 pub use built_in_type::BuiltInType;
 pub use enum_ty::{Enum, EnumBuilder};
+pub use event::Event;
 pub use field::Field;
+pub use function::Function;
 pub use key_type::{KeyType, KeyTypeOf};
 pub use layout::Layout;
 pub use lexical_id::LexicalId;
 pub use map_type::MapType;
 pub use result_type::ResultType;
+pub use service::{Service, ServiceBuilder};
 pub use struct_ty::{Struct, StructBuilder};
 pub use variant::Variant;
 

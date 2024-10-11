@@ -49,6 +49,13 @@ impl Layout {
             _ => None,
         }
     }
+
+    pub fn as_service(&self) -> Option<&Service> {
+        match self {
+            Self::Service(ty) => Some(ty),
+            _ => None,
+        }
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
