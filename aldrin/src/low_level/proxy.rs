@@ -6,8 +6,6 @@ use crate::error::Error;
 use crate::handle::Handle;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
-#[cfg(feature = "introspection")]
-use std::borrow::Cow;
 use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -72,7 +70,7 @@ impl Proxy {
 
     /// Queries the introspection for the proxy's service.
     #[cfg(feature = "introspection")]
-    pub async fn query_introspection(&self) -> Result<Option<Cow<'static, Introspection>>, Error> {
+    pub async fn query_introspection(&self) -> Result<Option<Introspection>, Error> {
         match self.info.type_id() {
             Some(type_id) => self.client.query_introspection(type_id).await,
             None => Ok(None),

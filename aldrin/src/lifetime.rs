@@ -2,6 +2,10 @@
 mod test;
 
 use crate::bus_listener::BusListenerEvent;
+#[cfg(feature = "introspection")]
+use crate::core::introspection::{
+    BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
+};
 use crate::core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
     DeserializeError, Deserializer, ObjectId, ObjectUuid, Serialize, SerializeError, Serializer,
@@ -102,6 +106,21 @@ impl Serialize for LifetimeScope {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for LifetimeScope {
+    fn layout() -> Layout {
+        LifetimeId::layout()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LifetimeId::lexical_id()
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        LifetimeId::inner_types(types)
+    }
+}
+
 /// Id of a scope's lifetime.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(
@@ -137,6 +156,19 @@ impl Deserialize for LifetimeId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         ObjectId::deserialize(deserializer).map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for LifetimeId {
+    fn layout() -> Layout {
+        BuiltInType::Lifetime.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::LIFETIME
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<ObjectId> for LifetimeId {

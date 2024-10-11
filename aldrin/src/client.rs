@@ -8,7 +8,7 @@ use crate::channel::{
     UnclaimedSenderInner,
 };
 #[cfg(feature = "introspection")]
-use crate::core::introspection::Introspection;
+use crate::core::introspection::{DynIntrospectable, Introspection};
 use crate::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
@@ -39,6 +39,8 @@ use crate::core::{
 };
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
+#[cfg(feature = "introspection")]
+use crate::handle::request::QueryIntrospectionRequest;
 use crate::handle::request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateBusListenerRequest, CreateClaimedReceiverRequest,
@@ -49,8 +51,6 @@ use crate::handle::request::{
     SubscribeEventRequest, SyncBrokerRequest, SyncClientRequest, UnsubscribeAllEventsRequest,
     UnsubscribeEventRequest,
 };
-#[cfg(feature = "introspection")]
-use crate::handle::request::{IntrospectionQueryResult, QueryIntrospectionRequest};
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{ProxyId, RawCall, Service};
 use crate::serial_map::SerialMap;
@@ -59,7 +59,7 @@ use broker_subscriptions::BrokerSubscriptions;
 use futures_channel::{mpsc, oneshot};
 use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
-use std::collections::hash_map::HashMap;
+use std::collections::HashMap;
 use std::mem;
 
 const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_18;
@@ -118,7 +118,7 @@ where
     unsubscribe_all_events: SerialMap<UnsubscribeAllEventsRequest>,
     proxies: Proxies,
     #[cfg(feature = "introspection")]
-    introspection: HashMap<TypeId, &'static Introspection>,
+    introspection: HashMap<TypeId, SerializedValue>,
     #[cfg(feature = "introspection")]
     query_introspection: SerialMap<QueryIntrospectionRequest>,
 }
@@ -949,17 +949,19 @@ where
         msg: QueryIntrospection,
     ) -> Result<(), RunError<T::Error>> {
         if self.protocol_version >= ProtocolVersion::V1_17 {
-            let reply = if let Some(introspection) = self.introspection.get(&msg.type_id) {
-                QueryIntrospectionReply::ok_with_serialize_introspection(msg.serial, introspection)
-                    .map_err(RunError::Serialize)?
+            let result = if let Some(introspection) = self.introspection.get(&msg.type_id) {
+                QueryIntrospectionResult::Ok(introspection.clone())
             } else {
-                QueryIntrospectionReply {
-                    serial: msg.serial,
-                    result: QueryIntrospectionResult::Unavailable,
-                }
+                QueryIntrospectionResult::Unavailable
             };
 
-            self.t.send_and_flush(reply).await.map_err(Into::into)
+            self.t
+                .send_and_flush(QueryIntrospectionReply {
+                    serial: msg.serial,
+                    result,
+                })
+                .await
+                .map_err(Into::into)
         } else {
             Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
@@ -994,9 +996,7 @@ where
 
         match msg.result {
             QueryIntrospectionResult::Ok(introspection) => {
-                let _ = req
-                    .reply
-                    .send(Some(IntrospectionQueryResult::Serialized(introspection)));
+                let _ = req.reply.send(Some(introspection));
             }
 
             QueryIntrospectionResult::Unavailable => {
@@ -1248,10 +1248,7 @@ where
                 self.req_unsubscribe_all_events(req).await?
             }
             #[cfg(feature = "introspection")]
-            HandleRequest::RegisterIntrospection(introspection) => {
-                self.introspection
-                    .insert(introspection.type_id(), introspection);
-            }
+            HandleRequest::RegisterIntrospection(ty) => self.req_register_introspection(ty),
             #[cfg(feature = "introspection")]
             HandleRequest::SubmitIntrospection => self.req_submit_introspection().await?,
             #[cfg(feature = "introspection")]
@@ -1815,6 +1812,28 @@ where
     }
 
     #[cfg(feature = "introspection")]
+    fn req_register_introspection(&mut self, ty: DynIntrospectable) {
+        use std::collections::hash_map::Entry;
+
+        let mut types = vec![ty];
+
+        while let Some(ty) = types.pop() {
+            let introspection = Introspection::from_dyn(ty);
+
+            let Entry::Vacant(entry) = self.introspection.entry(introspection.type_id()) else {
+                continue;
+            };
+
+            let Ok(introspection) = SerializedValue::serialize(&introspection) else {
+                continue;
+            };
+
+            ty.inner_types(&mut types);
+            entry.insert(introspection);
+        }
+    }
+
+    #[cfg(feature = "introspection")]
     async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {
         use crate::core::message::RegisterIntrospection;
 
@@ -1839,9 +1858,7 @@ where
         req: QueryIntrospectionRequest,
     ) -> Result<(), RunError<T::Error>> {
         if let Some(introspection) = self.introspection.get(&req.type_id) {
-            let _ = req
-                .reply
-                .send(Some(IntrospectionQueryResult::Local(introspection)));
+            let _ = req.reply.send(Some(introspection.clone()));
             Ok(())
         } else if self.protocol_version >= ProtocolVersion::V1_17 {
             let type_id = req.type_id;
