@@ -2,6 +2,10 @@
 mod test;
 
 use super::Handle;
+#[cfg(feature = "introspection")]
+use crate::core::introspection::{
+    BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
+};
 use crate::core::{
     ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer, Serialize,
     SerializeError, SerializedValue, Serializer,
@@ -155,6 +159,21 @@ impl<T: ?Sized> Serialize for UnboundSender<T> {
 impl<T: ?Sized> Deserialize for UnboundSender<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(Self::new)
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable + ?Sized> Introspectable for UnboundSender<T> {
+    fn layout() -> Layout {
+        BuiltInType::Sender(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::sender(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1050,6 +1069,21 @@ impl<T> Serialize for UnboundReceiver<T> {
 impl<T> Deserialize for UnboundReceiver<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(Self::new)
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for UnboundReceiver<T> {
+    fn layout() -> Layout {
+        BuiltInType::Receiver(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::receiver(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
     }
 }
 

@@ -4,7 +4,7 @@ use crate::channel::{
     UnclaimedSenderInner,
 };
 #[cfg(feature = "introspection")]
-use crate::core::introspection::Introspection;
+use crate::core::introspection::DynIntrospectable;
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
@@ -59,7 +59,7 @@ pub(crate) enum HandleRequest {
     SubscribeAllEvents(SubscribeAllEventsRequest),
     UnsubscribeAllEvents(UnsubscribeAllEventsRequest),
     #[cfg(feature = "introspection")]
-    RegisterIntrospection(&'static Introspection),
+    RegisterIntrospection(DynIntrospectable),
     #[cfg(feature = "introspection")]
     SubmitIntrospection,
     #[cfg(feature = "introspection")]
@@ -214,12 +214,5 @@ pub(crate) struct UnsubscribeAllEventsRequest {
 #[derive(Debug)]
 pub(crate) struct QueryIntrospectionRequest {
     pub type_id: TypeId,
-    pub reply: oneshot::Sender<Option<IntrospectionQueryResult>>,
-}
-
-#[cfg(feature = "introspection")]
-#[derive(Debug)]
-pub(crate) enum IntrospectionQueryResult {
-    Local(&'static Introspection),
-    Serialized(SerializedValue),
+    pub reply: oneshot::Sender<Option<SerializedValue>>,
 }

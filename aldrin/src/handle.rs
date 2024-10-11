@@ -5,7 +5,7 @@ use crate::channel::{
     PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
 };
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{Introspectable, Introspection};
+use crate::core::introspection::{DynIntrospectable, Introspectable, Introspection};
 use crate::core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
@@ -25,6 +25,8 @@ use crate::low_level::{Proxy, ProxyId, Reply, Service, ServiceInfo};
 use crate::object::Object;
 use futures_channel::mpsc::UnboundedSender;
 use futures_channel::oneshot;
+#[cfg(feature = "introspection")]
+use request::QueryIntrospectionRequest;
 use request::{
     CallFunctionReplyRequest, CallFunctionRequest, ClaimReceiverRequest, ClaimSenderRequest,
     CloseChannelEndRequest, CreateClaimedReceiverRequest, CreateObjectRequest, CreateProxyRequest,
@@ -33,10 +35,6 @@ use request::{
     StopBusListenerRequest, SubscribeAllEventsRequest, SubscribeEventRequest,
     UnsubscribeAllEventsRequest, UnsubscribeEventRequest,
 };
-#[cfg(feature = "introspection")]
-use request::{IntrospectionQueryResult, QueryIntrospectionRequest};
-#[cfg(feature = "introspection")]
-use std::borrow::Cow;
 use std::future::Future;
 use std::hash::Hash;
 use std::mem::MaybeUninit;
@@ -945,9 +943,17 @@ impl Handle {
     ///
     /// Registered types are made available to be queried by other clients.
     #[cfg(feature = "introspection")]
-    pub fn register_introspection<T: Introspectable>(&self) -> Result<(), Error> {
+    pub fn register_introspection<T: Introspectable + ?Sized>(&self) -> Result<(), Error> {
+        self.register_introspection_dyn(DynIntrospectable::new::<T>())
+    }
+
+    /// Registers an introspectable type with the client.
+    ///
+    /// Registered types are made available to be queried by other clients.
+    #[cfg(feature = "introspection")]
+    pub fn register_introspection_dyn(&self, ty: DynIntrospectable) -> Result<(), Error> {
         self.send
-            .unbounded_send(HandleRequest::RegisterIntrospection(T::introspection()))
+            .unbounded_send(HandleRequest::RegisterIntrospection(ty))
             .map_err(|_| Error::Shutdown)
     }
 
@@ -964,7 +970,7 @@ impl Handle {
     pub async fn query_introspection(
         &self,
         type_id: TypeId,
-    ) -> Result<Option<Cow<'static, Introspection>>, Error> {
+    ) -> Result<Option<Introspection>, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::QueryIntrospection(
@@ -973,14 +979,7 @@ impl Handle {
             .map_err(|_| Error::Shutdown)?;
 
         match recv.await {
-            Ok(Some(IntrospectionQueryResult::Local(introspection))) => {
-                Ok(Some(Cow::Borrowed(introspection)))
-            }
-
-            Ok(Some(IntrospectionQueryResult::Serialized(introspection))) => {
-                Ok(introspection.deserialize().ok().map(Cow::Owned))
-            }
-
+            Ok(Some(introspection)) => Ok(introspection.deserialize().ok()),
             Ok(None) => Ok(None),
             Err(_) => Err(Error::Shutdown),
         }
