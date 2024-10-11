@@ -1,5 +1,7 @@
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
+#[cfg(feature = "introspection")]
+use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -239,6 +241,19 @@ impl Deserialize for Value {
             ValueKind::Receiver => deserializer.deserialize_receiver().map(Self::Receiver),
         }
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for Value {
+    fn layout() -> Layout {
+        BuiltInType::Value.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::VALUE
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]

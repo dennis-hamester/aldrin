@@ -3,6 +3,11 @@ mod test;
 
 use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
+#[cfg(feature = "introspection")]
+use crate::introspection::{
+    BuiltInType, DynIntrospectable, Introspectable, KeyTypeOf, Layout, LexicalId, MapType,
+    ResultType,
+};
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -143,6 +148,19 @@ impl Deserialize for Bytes {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for Bytes {
+    fn layout() -> Layout {
+        BuiltInType::Bytes.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::BYTES
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 /// Wrapper for `[u8]` to enable `Serialize` and `Deserialize` specializations.
 #[derive(Debug, PartialEq, Eq)]
 #[repr(transparent)]
@@ -214,6 +232,19 @@ impl Serialize for ByteSlice {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for ByteSlice {
+    fn layout() -> Layout {
+        BuiltInType::Bytes.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::BYTES
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 /// Empty value that deserializes from everything by skipping over it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Skip;
@@ -230,9 +261,39 @@ impl<T: Serialize + ?Sized> Serialize for &T {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable + ?Sized> Introspectable for &T {
+    fn layout() -> Layout {
+        BuiltInType::Box(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::box_ty(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl<T: Serialize + ?Sized> Serialize for &mut T {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         (**self).serialize(serializer)
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable + ?Sized> Introspectable for &mut T {
+    fn layout() -> Layout {
+        BuiltInType::Box(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::box_ty(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -248,6 +309,21 @@ impl<T: Deserialize> Deserialize for Box<T> {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
+    fn layout() -> Layout {
+        BuiltInType::Box(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::box_ty(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl Serialize for () {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_none();
@@ -259,6 +335,19 @@ impl Deserialize for () {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_none()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for () {
+    fn layout() -> Layout {
+        BuiltInType::Unit.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UNIT
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<T: Serialize> Serialize for Option<T> {
@@ -278,6 +367,21 @@ impl<T: Deserialize> Deserialize for Option<T> {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for Option<T> {
+    fn layout() -> Layout {
+        BuiltInType::Option(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::option(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl Serialize for bool {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_bool(*self);
@@ -289,6 +393,19 @@ impl Deserialize for bool {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_bool()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for bool {
+    fn layout() -> Layout {
+        BuiltInType::Bool.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::BOOL
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u8 {
@@ -304,6 +421,19 @@ impl Deserialize for u8 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for u8 {
+    fn layout() -> Layout {
+        BuiltInType::U8.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::U8
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for i8 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i8(*self);
@@ -315,6 +445,19 @@ impl Deserialize for i8 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i8()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for i8 {
+    fn layout() -> Layout {
+        BuiltInType::I8.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::I8
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u16 {
@@ -330,6 +473,19 @@ impl Deserialize for u16 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for u16 {
+    fn layout() -> Layout {
+        BuiltInType::U16.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::U16
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for i16 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i16(*self);
@@ -341,6 +497,19 @@ impl Deserialize for i16 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i16()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for i16 {
+    fn layout() -> Layout {
+        BuiltInType::I16.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::I16
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u32 {
@@ -356,6 +525,19 @@ impl Deserialize for u32 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for u32 {
+    fn layout() -> Layout {
+        BuiltInType::U32.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::U32
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for i32 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i32(*self);
@@ -367,6 +549,19 @@ impl Deserialize for i32 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i32()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for i32 {
+    fn layout() -> Layout {
+        BuiltInType::I32.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::I32
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u64 {
@@ -382,6 +577,19 @@ impl Deserialize for u64 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for u64 {
+    fn layout() -> Layout {
+        BuiltInType::U64.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::U64
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for i64 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_i64(*self);
@@ -393,6 +601,19 @@ impl Deserialize for i64 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i64()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for i64 {
+    fn layout() -> Layout {
+        BuiltInType::I64.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::I64
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for f32 {
@@ -408,6 +629,19 @@ impl Deserialize for f32 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for f32 {
+    fn layout() -> Layout {
+        BuiltInType::F32.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::F32
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for f64 {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_f64(*self);
@@ -421,10 +655,36 @@ impl Deserialize for f64 {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for f64 {
+    fn layout() -> Layout {
+        BuiltInType::F64.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::F64
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for str {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for str {
+    fn layout() -> Layout {
+        BuiltInType::String.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::STRING
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for String {
@@ -437,6 +697,19 @@ impl Deserialize for String {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_string()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for String {
+    fn layout() -> Layout {
+        BuiltInType::String.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::STRING
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for Uuid {
@@ -452,6 +725,19 @@ impl Deserialize for Uuid {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for Uuid {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl<T: Serialize> Serialize for Vec<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
@@ -461,6 +747,21 @@ impl<T: Serialize> Serialize for Vec<T> {
 impl<T: Deserialize> Deserialize for Vec<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new()
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for Vec<T> {
+    fn layout() -> Layout {
+        BuiltInType::Vec(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::vec(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -476,6 +777,21 @@ impl<T: Deserialize> Deserialize for VecDeque<T> {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for VecDeque<T> {
+    fn layout() -> Layout {
+        BuiltInType::Vec(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::vec(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl<T: Serialize> Serialize for LinkedList<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
@@ -488,9 +804,39 @@ impl<T: Deserialize> Deserialize for LinkedList<T> {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for LinkedList<T> {
+    fn layout() -> Layout {
+        BuiltInType::Vec(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::vec(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl<T: Serialize> Serialize for [T] {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable> Introspectable for [T] {
+    fn layout() -> Layout {
+        BuiltInType::Vec(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::vec(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -550,6 +896,21 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
+    fn layout() -> Layout {
+        BuiltInType::Vec(T::lexical_id()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::vec(T::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+    }
+}
+
 impl Serialize for bytes::Bytes {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_byte_slice(self)
@@ -564,6 +925,19 @@ impl Deserialize for bytes::Bytes {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for bytes::Bytes {
+    fn layout() -> Layout {
+        BuiltInType::Bytes.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::BYTES
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl Serialize for bytes::BytesMut {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_byte_slice(self)
@@ -576,6 +950,19 @@ impl Deserialize for bytes::BytesMut {
         let vec = deserializer.deserialize_bytes_to_vec()?;
         Ok(bytes::BytesMut::from(vec.as_slice()))
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for bytes::BytesMut {
+    fn layout() -> Layout {
+        BuiltInType::Bytes.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::BYTES
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<K: SerializeKey, V: Serialize, S> Serialize for HashMap<K, V, S> {
@@ -595,6 +982,25 @@ where
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<K, V, S> Introspectable for HashMap<K, V, S>
+where
+    K: KeyTypeOf,
+    V: Introspectable,
+{
+    fn layout() -> Layout {
+        BuiltInType::Map(MapType::new(K::key_type_of(), V::lexical_id())).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::map(K::key_type_of(), V::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<V>())
+    }
+}
+
 impl<K: SerializeKey, V: Serialize> Serialize for BTreeMap<K, V> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_map_iter(self)
@@ -604,6 +1010,21 @@ impl<K: SerializeKey, V: Serialize> Serialize for BTreeMap<K, V> {
 impl<K: DeserializeKey + Ord, V: Deserialize> Deserialize for BTreeMap<K, V> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
+    fn layout() -> Layout {
+        BuiltInType::Map(MapType::new(K::key_type_of(), V::lexical_id())).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::map(K::key_type_of(), V::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<V>())
     }
 }
 
@@ -623,6 +1044,19 @@ where
     }
 }
 
+#[cfg(feature = "introspection")]
+impl<T: KeyTypeOf, S> Introspectable for HashSet<T, S> {
+    fn layout() -> Layout {
+        BuiltInType::Set(T::key_type_of()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::set(T::key_type_of())
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl<T: SerializeKey> Serialize for BTreeSet<T> {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_set_iter(self)
@@ -633,6 +1067,19 @@ impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
     }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: KeyTypeOf> Introspectable for BTreeSet<T> {
+    fn layout() -> Layout {
+        BuiltInType::Set(T::key_type_of()).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::set(T::key_type_of())
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<'a, T> Serialize for Cow<'a, T>
@@ -655,6 +1102,22 @@ where
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         T::Owned::deserialize(deserializer).map(Self::Owned)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl<'a, T> Introspectable for Cow<'a, T>
+where
+    T: Introspectable + ToOwned + ?Sized + 'a,
+{
+    fn layout() -> Layout {
+        T::layout()
+    }
+
+    fn lexical_id() -> LexicalId {
+        T::lexical_id()
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -689,6 +1152,22 @@ where
             ResultVariant::Ok => deserializer.deserialize().map(Ok),
             ResultVariant::Err => deserializer.deserialize().map(Err),
         }
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl<T: Introspectable, E: Introspectable> Introspectable for Result<T, E> {
+    fn layout() -> Layout {
+        BuiltInType::Result(ResultType::new(T::lexical_id(), E::lexical_id())).into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::result(T::lexical_id(), E::lexical_id())
+    }
+
+    fn inner_types(types: &mut Vec<DynIntrospectable>) {
+        types.push(DynIntrospectable::new::<T>());
+        types.push(DynIntrospectable::new::<E>());
     }
 }
 
