@@ -104,6 +104,10 @@ impl Introspection {
 
         Some(TypeRef::custom(self.schema.as_ref(), name))
     }
+
+    pub fn as_service_layout(&self) -> Option<&Service> {
+        self.layout.as_service()
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]

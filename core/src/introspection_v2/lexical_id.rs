@@ -40,6 +40,7 @@ impl LexicalId {
     pub const NAMESPACE_RECEIVER: Uuid = uuid!("d697238d-56e0-4132-980e-baf1a64c9bfd");
     pub const NAMESPACE_RESULT: Uuid = uuid!("aef81d6c-35cc-43f7-99f3-a17c0eada1f4");
     pub const NAMESPACE_CUSTOM: Uuid = uuid!("04334fe0-0ea2-44ea-97b2-c17a7a4cbbd3");
+    pub const NAMESPACE_SERVICE: Uuid = uuid!("ddd86559-be89-4b6c-a460-fc347cd6f00b");
 
     pub const fn is_nil(&self) -> bool {
         self.0.is_nil()
@@ -78,12 +79,11 @@ impl LexicalId {
     }
 
     pub fn custom(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
-        let fully_qualified = format!("{}::{}", schema.as_ref(), name.as_ref());
+        Self::fully_qualified(Self::NAMESPACE_CUSTOM, schema, name)
+    }
 
-        Self(Uuid::new_v5(
-            &Self::NAMESPACE_CUSTOM,
-            fully_qualified.as_bytes(),
-        ))
+    pub fn service(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
+        Self::fully_qualified(Self::NAMESPACE_SERVICE, schema, name)
     }
 
     fn new_v5(ns: Uuid, ty: Uuid) -> Self {
@@ -95,6 +95,11 @@ impl LexicalId {
         name[..16].copy_from_slice(a.as_bytes());
         name[16..].copy_from_slice(b.as_bytes());
         Self(Uuid::new_v5(&ns, &name))
+    }
+
+    fn fully_qualified(ns: Uuid, schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
+        let fully_qualified = format!("{}::{}", schema.as_ref(), name.as_ref());
+        Self(Uuid::new_v5(&ns, fully_qualified.as_bytes()))
     }
 }
 

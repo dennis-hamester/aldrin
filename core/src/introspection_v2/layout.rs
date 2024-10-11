@@ -1,4 +1,4 @@
-use super::{BuiltInType, Enum, Struct};
+use super::{BuiltInType, Enum, Service, Struct};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -10,6 +10,7 @@ pub enum Layout {
     BuiltIn(BuiltInType),
     Struct(Struct),
     Enum(Enum),
+    Service(Service),
 }
 
 impl Layout {
@@ -18,6 +19,7 @@ impl Layout {
             Self::BuiltIn(_) => BuiltInType::NAMESPACE,
             Self::Struct(_) => Struct::NAMESPACE,
             Self::Enum(_) => Enum::NAMESPACE,
+            Self::Service(_) => Service::NAMESPACE,
         }
     }
 
@@ -61,12 +63,19 @@ impl From<Enum> for Layout {
     }
 }
 
+impl From<Service> for Layout {
+    fn from(ty: Service) -> Self {
+        Self::Service(ty)
+    }
+}
+
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 enum LayoutVariant {
     BuiltIn = 0,
     Struct = 1,
     Enum = 2,
+    Service = 3,
 }
 
 impl Serialize for Layout {
@@ -75,6 +84,7 @@ impl Serialize for Layout {
             Self::BuiltIn(ty) => serializer.serialize_enum(LayoutVariant::BuiltIn, ty),
             Self::Struct(ty) => serializer.serialize_enum(LayoutVariant::Struct, ty),
             Self::Enum(ty) => serializer.serialize_enum(LayoutVariant::Enum, ty),
+            Self::Service(ty) => serializer.serialize_enum(LayoutVariant::Service, ty),
         }
     }
 }
@@ -87,6 +97,7 @@ impl Deserialize for Layout {
             LayoutVariant::BuiltIn => deserializer.deserialize().map(Self::BuiltIn),
             LayoutVariant::Struct => deserializer.deserialize().map(Self::Struct),
             LayoutVariant::Enum => deserializer.deserialize().map(Self::Enum),
+            LayoutVariant::Service => deserializer.deserialize().map(Self::Service),
         }
     }
 }
