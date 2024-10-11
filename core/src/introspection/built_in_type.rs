@@ -1,11 +1,11 @@
-use super::{KeyType, MapType, ResultType, TypeRef};
+use super::{KeyType, LexicalId, MapType, ResultType};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::fmt;
+use uuid::{uuid, Uuid};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum BuiltInType {
     Bool,
     U8,
@@ -23,23 +23,21 @@ pub enum BuiltInType {
     ObjectId,
     ServiceId,
     Value,
-    Option(Box<TypeRef>),
-    Box(Box<TypeRef>),
-    Vec(Box<TypeRef>),
+    Option(LexicalId),
+    Box(LexicalId),
+    Vec(LexicalId),
     Bytes,
-    Map(Box<MapType>),
+    Map(MapType),
     Set(KeyType),
-    Sender(Box<TypeRef>),
-    Receiver(Box<TypeRef>),
+    Sender(LexicalId),
+    Receiver(LexicalId),
     Lifetime,
     Unit,
-    Result(Box<ResultType>),
+    Result(ResultType),
 }
 
-impl From<BuiltInType> for TypeRef {
-    fn from(t: BuiltInType) -> Self {
-        Self::BuiltIn(t)
-    }
+impl BuiltInType {
+    pub const NAMESPACE: Uuid = uuid!("43852cf9-014c-44f1-86d7-0b1b753eeb02");
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -140,40 +138,6 @@ impl Deserialize for BuiltInType {
             BuiltInTypeVariant::Lifetime => deserializer.deserialize().map(|()| Self::Lifetime),
             BuiltInTypeVariant::Unit => deserializer.deserialize().map(|()| Self::Unit),
             BuiltInTypeVariant::Result => deserializer.deserialize().map(Self::Result),
-        }
-    }
-}
-
-impl fmt::Display for BuiltInType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Bool => write!(f, "bool"),
-            Self::U8 => write!(f, "u8"),
-            Self::I8 => write!(f, "i8"),
-            Self::U16 => write!(f, "u16"),
-            Self::I16 => write!(f, "i16"),
-            Self::U32 => write!(f, "u32"),
-            Self::I32 => write!(f, "i32"),
-            Self::U64 => write!(f, "u64"),
-            Self::I64 => write!(f, "i64"),
-            Self::F32 => write!(f, "f32"),
-            Self::F64 => write!(f, "f64"),
-            Self::String => write!(f, "string"),
-            Self::Uuid => write!(f, "uuid"),
-            Self::ObjectId => write!(f, "object_id"),
-            Self::ServiceId => write!(f, "service_id"),
-            Self::Value => write!(f, "value"),
-            Self::Option(inner) => write!(f, "option<{inner}>"),
-            Self::Box(inner) => write!(f, "box<{inner}>"),
-            Self::Vec(inner) => write!(f, "vec<{inner}>"),
-            Self::Bytes => write!(f, "bytes"),
-            Self::Map(inner) => inner.fmt(f),
-            Self::Set(inner) => write!(f, "set<{inner}>"),
-            Self::Sender(inner) => write!(f, "sender<{inner}>"),
-            Self::Receiver(inner) => write!(f, "receiver<{inner}>"),
-            Self::Lifetime => write!(f, "lifetime"),
-            Self::Unit => write!(f, "unit"),
-            Self::Result(inner) => inner.fmt(f),
         }
     }
 }

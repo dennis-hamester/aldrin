@@ -1,30 +1,26 @@
-use super::{BuiltInType, TypeRef};
+use super::LexicalId;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ResultType {
-    ok: TypeRef,
-    err: TypeRef,
+    ok: LexicalId,
+    err: LexicalId,
 }
 
 impl ResultType {
-    pub fn new(ok: impl Into<TypeRef>, err: impl Into<TypeRef>) -> Self {
-        Self {
-            ok: ok.into(),
-            err: err.into(),
-        }
+    pub fn new(ok: LexicalId, err: LexicalId) -> Self {
+        Self { ok, err }
     }
 
-    pub fn ok(&self) -> &TypeRef {
-        &self.ok
+    pub fn ok(self) -> LexicalId {
+        self.ok
     }
 
-    pub fn err(&self) -> &TypeRef {
-        &self.err
+    pub fn err(self) -> LexicalId {
+        self.err
     }
 }
 
@@ -54,23 +50,5 @@ impl Deserialize for ResultType {
         let err = deserializer.deserialize_specific_field(ResultTypeField::Err)?;
 
         deserializer.finish(Self { ok, err })
-    }
-}
-
-impl From<ResultType> for BuiltInType {
-    fn from(t: ResultType) -> Self {
-        BuiltInType::Result(Box::new(t))
-    }
-}
-
-impl From<ResultType> for TypeRef {
-    fn from(t: ResultType) -> Self {
-        Self::BuiltIn(t.into())
-    }
-}
-
-impl fmt::Display for ResultType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "result<{}, {}>", self.ok, self.err)
     }
 }

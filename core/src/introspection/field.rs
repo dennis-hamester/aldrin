@@ -1,15 +1,15 @@
-use super::TypeRef;
+use super::LexicalId;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Field {
     id: u32,
     name: String,
     is_required: bool,
-    field_type: TypeRef,
+    field_type: LexicalId,
 }
 
 impl Field {
@@ -17,13 +17,13 @@ impl Field {
         id: u32,
         name: impl Into<String>,
         is_required: bool,
-        field_type: impl Into<TypeRef>,
+        field_type: LexicalId,
     ) -> Self {
         Self {
             id,
             name: name.into(),
             is_required,
-            field_type: field_type.into(),
+            field_type,
         }
     }
 
@@ -39,8 +39,8 @@ impl Field {
         self.is_required
     }
 
-    pub fn field_type(&self) -> &TypeRef {
-        &self.field_type
+    pub fn field_type(&self) -> LexicalId {
+        self.field_type
     }
 }
 
