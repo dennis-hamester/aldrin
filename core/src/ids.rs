@@ -1,4 +1,6 @@
 use crate::error::{DeserializeError, SerializeError};
+#[cfg(feature = "introspection")]
+use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::fmt;
@@ -57,6 +59,19 @@ impl Deserialize for ObjectId {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for ObjectId {
+    fn layout() -> Layout {
+        BuiltInType::ObjectId.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::OBJECT_ID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 /// UUID of an object.
 ///
 /// [`ObjectUuid`s](Self) are chosen by the user when creating an object and must be unique among
@@ -105,6 +120,19 @@ impl Deserialize for ObjectUuid {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for ObjectUuid {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<Uuid> for ObjectUuid {
@@ -182,6 +210,19 @@ impl Deserialize for ObjectCookie {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for ObjectCookie {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<Uuid> for ObjectCookie {
@@ -262,6 +303,19 @@ impl Deserialize for ServiceId {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for ServiceId {
+    fn layout() -> Layout {
+        BuiltInType::ServiceId.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::SERVICE_ID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 /// UUID of a service.
 ///
 /// [`ServiceUuid`s](Self) are chosen by the user when creating a service and must be unique among
@@ -310,6 +364,19 @@ impl Deserialize for ServiceUuid {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for ServiceUuid {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<Uuid> for ServiceUuid {
@@ -389,6 +456,19 @@ impl Deserialize for ServiceCookie {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for ServiceCookie {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 impl From<Uuid> for ServiceCookie {
     fn from(cookie: Uuid) -> Self {
         ServiceCookie(cookie)
@@ -454,6 +534,19 @@ impl Deserialize for ChannelCookie {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for ChannelCookie {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<Uuid> for ChannelCookie {
@@ -560,6 +653,19 @@ impl Deserialize for TypeId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for TypeId {
+    fn layout() -> Layout {
+        BuiltInType::Uuid.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::UUID
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<Uuid> for TypeId {

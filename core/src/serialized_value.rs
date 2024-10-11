@@ -2,6 +2,8 @@
 mod test;
 
 use crate::error::{DeserializeError, SerializeError};
+#[cfg(feature = "introspection")]
+use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -119,6 +121,19 @@ impl Deserialize for SerializedValue {
     }
 }
 
+#[cfg(feature = "introspection")]
+impl Introspectable for SerializedValue {
+    fn layout() -> Layout {
+        BuiltInType::Value.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::VALUE
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
 #[cfg(feature = "fuzzing")]
 impl<'a> arbitrary::Arbitrary<'a> for SerializedValue {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -208,4 +223,17 @@ impl Serialize for SerializedValueSlice {
         serializer.copy_from_serialized_value(self);
         Ok(())
     }
+}
+
+#[cfg(feature = "introspection")]
+impl Introspectable for SerializedValueSlice {
+    fn layout() -> Layout {
+        BuiltInType::Value.into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::VALUE
+    }
+
+    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
