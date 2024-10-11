@@ -1,4 +1,4 @@
-use super::{DynIntrospectable, Introspectable, Layout};
+use super::{DynIntrospectable, Introspectable, Layout, VERSION};
 use crate::error::SerializeError;
 use crate::ids::TypeId;
 use crate::serialized_value::SerializedValue;
@@ -54,8 +54,9 @@ impl Compute {
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 enum ComputeField {
-    Layout = 0,
-    InnerTypes = 1,
+    Version = 0,
+    Layout = 1,
+    InnerTypes = 2,
 }
 
 impl Serialize for Compute {
@@ -68,8 +69,9 @@ impl Serialize for Compute {
             }
         }
 
-        let mut serializer = serializer.serialize_struct(2)?;
+        let mut serializer = serializer.serialize_struct(3)?;
 
+        serializer.serialize_field(ComputeField::Version, &VERSION)?;
         serializer.serialize_field(ComputeField::Layout, &self.layout)?;
         serializer.serialize_field(ComputeField::InnerTypes, &InnerTypes(&self.inner_types))?;
 

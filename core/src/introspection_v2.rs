@@ -35,6 +35,8 @@ pub use service::{Service, ServiceBuilder};
 pub use struct_ty::{Struct, StructBuilder};
 pub use variant::Variant;
 
+pub const VERSION: u32 = 1;
+
 #[derive(Debug, Clone)]
 pub struct Introspection {
     type_id: TypeId,
@@ -92,9 +94,10 @@ impl Introspection {
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 enum IntrospectionField {
-    TypeId = 0,
-    Layout = 1,
-    TypeIds = 2,
+    Version = 0,
+    TypeId = 1,
+    Layout = 2,
+    TypeIds = 3,
 }
 
 impl Serialize for Introspection {
@@ -107,8 +110,9 @@ impl Serialize for Introspection {
             }
         }
 
-        let mut serializer = serializer.serialize_struct(3)?;
+        let mut serializer = serializer.serialize_struct(4)?;
 
+        serializer.serialize_field(IntrospectionField::Version, &VERSION)?;
         serializer.serialize_field(IntrospectionField::TypeId, &self.type_id)?;
         serializer.serialize_field(IntrospectionField::Layout, &self.layout)?;
         serializer.serialize_field(IntrospectionField::TypeIds, &TypeIds(&self.type_ids))?;
@@ -139,6 +143,11 @@ impl Deserialize for Introspection {
         }
 
         let mut deserializer = deserializer.deserialize_struct()?;
+
+        let version: u32 = deserializer.deserialize_specific_field(IntrospectionField::Version)?;
+        if version != VERSION {
+            return Err(DeserializeError::InvalidSerialization);
+        }
 
         let type_id = deserializer.deserialize_specific_field(IntrospectionField::TypeId)?;
         let layout = deserializer.deserialize_specific_field(IntrospectionField::Layout)?;
