@@ -1,4 +1,4 @@
-use super::{Event, EventBuilder, Function, FunctionBuilder, Layout};
+use super::{Event, Function, LexicalId};
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::ServiceUuid;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -7,8 +7,9 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Service {
+    schema: String,
     name: String,
     uuid: ServiceUuid,
     version: u32,
@@ -19,8 +20,17 @@ pub struct Service {
 impl Service {
     pub const NAMESPACE: Uuid = uuid!("de06b048-55f7-43b9-8d34-555795c2f4c6");
 
-    pub fn builder(name: impl Into<String>, uuid: ServiceUuid, version: u32) -> ServiceBuilder {
-        ServiceBuilder::new(name, uuid, version)
+    pub fn builder(
+        schema: impl Into<String>,
+        name: impl Into<String>,
+        uuid: ServiceUuid,
+        version: u32,
+    ) -> ServiceBuilder {
+        ServiceBuilder::new(schema, name, uuid, version)
+    }
+
+    pub fn schema(&self) -> &str {
+        &self.schema
     }
 
     pub fn name(&self) -> &str {
@@ -47,17 +57,19 @@ impl Service {
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 enum ServiceField {
-    Name = 0,
-    Uuid = 1,
-    Version = 2,
-    Functions = 3,
-    Events = 4,
+    Schema = 0,
+    Name = 1,
+    Uuid = 2,
+    Version = 3,
+    Functions = 4,
+    Events = 5,
 }
 
 impl Serialize for Service {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(5)?;
+        let mut serializer = serializer.serialize_struct(6)?;
 
+        serializer.serialize_field(ServiceField::Schema, &self.schema)?;
         serializer.serialize_field(ServiceField::Name, &self.name)?;
         serializer.serialize_field(ServiceField::Uuid, &self.uuid)?;
         serializer.serialize_field(ServiceField::Version, &self.version)?;
@@ -72,6 +84,7 @@ impl Deserialize for Service {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
+        let schema = deserializer.deserialize_specific_field(ServiceField::Schema)?;
         let name = deserializer.deserialize_specific_field(ServiceField::Name)?;
         let uuid = deserializer.deserialize_specific_field(ServiceField::Uuid)?;
         let version = deserializer.deserialize_specific_field(ServiceField::Version)?;
@@ -79,6 +92,7 @@ impl Deserialize for Service {
         let events = deserializer.deserialize_specific_field(ServiceField::Events)?;
 
         deserializer.finish(Self {
+            schema,
             name,
             uuid,
             version,
@@ -88,14 +102,9 @@ impl Deserialize for Service {
     }
 }
 
-impl From<Service> for Layout {
-    fn from(s: Service) -> Self {
-        Self::Service(s)
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ServiceBuilder {
+    schema: String,
     name: String,
     uuid: ServiceUuid,
     version: u32,
@@ -104,8 +113,14 @@ pub struct ServiceBuilder {
 }
 
 impl ServiceBuilder {
-    pub fn new(name: impl Into<String>, uuid: ServiceUuid, version: u32) -> Self {
+    pub fn new(
+        schema: impl Into<String>,
+        name: impl Into<String>,
+        uuid: ServiceUuid,
+        version: u32,
+    ) -> Self {
         Self {
+            schema: schema.into(),
             name: name.into(),
             uuid,
             version,
@@ -118,9 +133,12 @@ impl ServiceBuilder {
         mut self,
         id: u32,
         name: impl Into<String>,
-        f: impl FnOnce(FunctionBuilder) -> Function,
+        args: Option<LexicalId>,
+        ok: Option<LexicalId>,
+        err: Option<LexicalId>,
     ) -> Self {
-        self.functions.insert(id, f(FunctionBuilder::new(id, name)));
+        self.functions
+            .insert(id, Function::new(id, name, args, ok, err));
         self
     }
 
@@ -128,14 +146,15 @@ impl ServiceBuilder {
         mut self,
         id: u32,
         name: impl Into<String>,
-        f: impl FnOnce(EventBuilder) -> Event,
+        event_type: Option<LexicalId>,
     ) -> Self {
-        self.events.insert(id, f(EventBuilder::new(id, name)));
+        self.events.insert(id, Event::new(id, name, event_type));
         self
     }
 
     pub fn finish(self) -> Service {
         Service {
+            schema: self.schema,
             name: self.name,
             uuid: self.uuid,
             version: self.version,

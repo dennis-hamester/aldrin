@@ -1,30 +1,26 @@
-use super::{BuiltInType, KeyType, TypeRef};
+use super::{KeyType, LexicalId};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MapType {
     key: KeyType,
-    value: TypeRef,
+    value: LexicalId,
 }
 
 impl MapType {
-    pub fn new(key: KeyType, value: impl Into<TypeRef>) -> Self {
-        Self {
-            key,
-            value: value.into(),
-        }
+    pub fn new(key: KeyType, value: LexicalId) -> Self {
+        Self { key, value }
     }
 
-    pub fn key(&self) -> KeyType {
+    pub fn key(self) -> KeyType {
         self.key
     }
 
-    pub fn value(&self) -> &TypeRef {
-        &self.value
+    pub fn value(self) -> LexicalId {
+        self.value
     }
 }
 
@@ -54,23 +50,5 @@ impl Deserialize for MapType {
         let value = deserializer.deserialize_specific_field(MapTypeField::Value)?;
 
         deserializer.finish(Self { key, value })
-    }
-}
-
-impl From<MapType> for BuiltInType {
-    fn from(t: MapType) -> Self {
-        BuiltInType::Map(Box::new(t))
-    }
-}
-
-impl From<MapType> for TypeRef {
-    fn from(t: MapType) -> Self {
-        Self::BuiltIn(t.into())
-    }
-}
-
-impl fmt::Display for MapType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "map<{} -> {}>", self.key, self.value)
     }
 }

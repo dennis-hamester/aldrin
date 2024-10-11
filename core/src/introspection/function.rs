@@ -1,19 +1,35 @@
-use super::TypeRef;
+use super::LexicalId;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Function {
     id: u32,
     name: String,
-    args: Option<TypeRef>,
-    ok: Option<TypeRef>,
-    err: Option<TypeRef>,
+    args: Option<LexicalId>,
+    ok: Option<LexicalId>,
+    err: Option<LexicalId>,
 }
 
 impl Function {
+    pub(super) fn new(
+        id: u32,
+        name: impl Into<String>,
+        args: Option<LexicalId>,
+        ok: Option<LexicalId>,
+        err: Option<LexicalId>,
+    ) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            args,
+            ok,
+            err,
+        }
+    }
+
     pub fn id(&self) -> u32 {
         self.id
     }
@@ -22,16 +38,16 @@ impl Function {
         &self.name
     }
 
-    pub fn args(&self) -> Option<&TypeRef> {
-        self.args.as_ref()
+    pub fn args(&self) -> Option<LexicalId> {
+        self.args
     }
 
-    pub fn ok(&self) -> Option<&TypeRef> {
-        self.ok.as_ref()
+    pub fn ok(&self) -> Option<LexicalId> {
+        self.ok
     }
 
-    pub fn err(&self) -> Option<&TypeRef> {
-        self.err.as_ref()
+    pub fn err(&self) -> Option<LexicalId> {
+        self.err
     }
 }
 
@@ -76,51 +92,5 @@ impl Deserialize for Function {
             ok,
             err,
         })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct FunctionBuilder {
-    id: u32,
-    name: String,
-    args: Option<TypeRef>,
-    ok: Option<TypeRef>,
-    err: Option<TypeRef>,
-}
-
-impl FunctionBuilder {
-    pub(crate) fn new(id: u32, name: impl Into<String>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            args: None,
-            ok: None,
-            err: None,
-        }
-    }
-
-    pub fn args(mut self, args: impl Into<TypeRef>) -> Self {
-        self.args = Some(args.into());
-        self
-    }
-
-    pub fn ok(mut self, ok: impl Into<TypeRef>) -> Self {
-        self.ok = Some(ok.into());
-        self
-    }
-
-    pub fn err(mut self, err: impl Into<TypeRef>) -> Self {
-        self.err = Some(err.into());
-        self
-    }
-
-    pub fn finish(self) -> Function {
-        Function {
-            id: self.id,
-            name: self.name,
-            args: self.args,
-            ok: self.ok,
-            err: self.err,
-        }
     }
 }

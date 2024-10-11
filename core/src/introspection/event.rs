@@ -1,17 +1,25 @@
-use super::TypeRef;
+use super::LexicalId;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Event {
     id: u32,
     name: String,
-    event_type: Option<TypeRef>,
+    event_type: Option<LexicalId>,
 }
 
 impl Event {
+    pub(super) fn new(id: u32, name: impl Into<String>, event_type: Option<LexicalId>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            event_type,
+        }
+    }
+
     pub fn id(&self) -> u32 {
         self.id
     }
@@ -20,8 +28,8 @@ impl Event {
         &self.name
     }
 
-    pub fn event_type(&self) -> Option<&TypeRef> {
-        self.event_type.as_ref()
+    pub fn event_type(&self) -> Option<LexicalId> {
+        self.event_type
     }
 }
 
@@ -58,35 +66,5 @@ impl Deserialize for Event {
             name,
             event_type,
         })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct EventBuilder {
-    id: u32,
-    name: String,
-    event_type: Option<TypeRef>,
-}
-
-impl EventBuilder {
-    pub(crate) fn new(id: u32, name: impl Into<String>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            event_type: None,
-        }
-    }
-
-    pub fn event_type(mut self, event_type: impl Into<TypeRef>) -> Self {
-        self.event_type = Some(event_type.into());
-        self
-    }
-
-    pub fn finish(self) -> Event {
-        Event {
-            id: self.id,
-            name: self.name,
-            event_type: self.event_type,
-        }
     }
 }

@@ -1,17 +1,25 @@
-use super::TypeRef;
+use super::LexicalId;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Variant {
     id: u32,
     name: String,
-    variant_type: Option<TypeRef>,
+    variant_type: Option<LexicalId>,
 }
 
 impl Variant {
+    pub(super) fn new(id: u32, name: impl Into<String>, variant_type: Option<LexicalId>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            variant_type,
+        }
+    }
+
     pub fn id(&self) -> u32 {
         self.id
     }
@@ -20,8 +28,8 @@ impl Variant {
         &self.name
     }
 
-    pub fn variant_type(&self) -> Option<&TypeRef> {
-        self.variant_type.as_ref()
+    pub fn variant_type(&self) -> Option<LexicalId> {
+        self.variant_type
     }
 }
 
@@ -58,35 +66,5 @@ impl Deserialize for Variant {
             name,
             variant_type,
         })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantBuilder {
-    id: u32,
-    name: String,
-    variant_type: Option<TypeRef>,
-}
-
-impl VariantBuilder {
-    pub(crate) fn new(id: u32, name: impl Into<String>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            variant_type: None,
-        }
-    }
-
-    pub fn variant_type(mut self, variant_type: impl Into<TypeRef>) -> Self {
-        self.variant_type = Some(variant_type.into());
-        self
-    }
-
-    pub fn finish(self) -> Variant {
-        Variant {
-            id: self.id,
-            name: self.name,
-            variant_type: self.variant_type,
-        }
     }
 }
