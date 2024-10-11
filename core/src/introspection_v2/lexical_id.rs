@@ -39,6 +39,7 @@ impl LexicalId {
     pub const NAMESPACE_SENDER: Uuid = uuid!("052ac1dd-c0d4-4f4c-9b7a-78448875a21f");
     pub const NAMESPACE_RECEIVER: Uuid = uuid!("d697238d-56e0-4132-980e-baf1a64c9bfd");
     pub const NAMESPACE_RESULT: Uuid = uuid!("aef81d6c-35cc-43f7-99f3-a17c0eada1f4");
+    pub const NAMESPACE_CUSTOM: Uuid = uuid!("04334fe0-0ea2-44ea-97b2-c17a7a4cbbd3");
 
     pub const fn is_nil(&self) -> bool {
         self.0.is_nil()
@@ -74,6 +75,15 @@ impl LexicalId {
 
     pub fn result(ok: Self, err: Self) -> Self {
         Self::new_v5_2(Self::NAMESPACE_RESULT, ok.0, err.0)
+    }
+
+    pub fn custom(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
+        let fully_qualified = format!("{}::{}", schema.as_ref(), name.as_ref());
+
+        Self(Uuid::new_v5(
+            &Self::NAMESPACE_CUSTOM,
+            fully_qualified.as_bytes(),
+        ))
     }
 
     fn new_v5(ns: Uuid, ty: Uuid) -> Self {
