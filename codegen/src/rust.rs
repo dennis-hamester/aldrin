@@ -1072,17 +1072,14 @@ impl RustGenerator<'_> {
         genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
         genln!(self);
         genln!(self, "    pub async fn new(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
+        genln!(self, "        let info = aldrin::low_level::ServiceInfo::new(Self::VERSION);");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
                 genln!(self, "        #[cfg(feature = \"{feature}\")]");
-                genln!(self, "        let info = aldrin::low_level::ServiceInfo::new(Self::VERSION).set_type_id(<Self as aldrin::core::introspection::Introspectable>::type_id());");
-
-                genln!(self, "        #[cfg(not(feature = \"{feature}\"))]");
-                genln!(self, "        let info = aldrin::low_level::ServiceInfo::new(Self::VERSION);");
             }
-        } else {
-            genln!(self, "        let info = aldrin::low_level::ServiceInfo::new(Self::VERSION);");
+
+            genln!(self, "        let info = info.set_type_id(<Self as aldrin::core::introspection::Introspectable>::type_id());");
         }
 
         genln!(self, "        let inner = object.create_service(Self::UUID, info).await?;");

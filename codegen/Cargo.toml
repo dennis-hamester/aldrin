@@ -41,7 +41,10 @@ uuid = { workspace = true }
 [dev-dependencies.aldrin]
 path = "../aldrin"
 default-features = false
-features = ["codegen"]
+features = [
+    "codegen",
+    "introspection",
+]
 
 [dev-dependencies.aldrin-test]
 path = "../test"

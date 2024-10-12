@@ -1,11 +1,22 @@
 aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
+aldrin::generate!("test/introspection.aldrin", introspection = true);
 aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
 aldrin::generate!("test/result.aldrin");
 aldrin::generate!("test/subscribe_all.aldrin");
 aldrin::generate!("test/test1.aldrin");
 aldrin::generate!("test/unit.aldrin");
+
+mod conditional_introspection {
+    mod available {
+        aldrin::generate!("test/introspection.aldrin", introspection_if = "rust");
+    }
+
+    mod unavailable {
+        aldrin::generate!("test/introspection.aldrin", introspection_if = "disabled");
+    }
+}
 
 use aldrin::core::{ObjectUuid, SerializedValue};
 use aldrin::low_level::Proxy;

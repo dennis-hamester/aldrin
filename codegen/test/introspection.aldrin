@@ -1,0 +1,4 @@
+service S1 {
+    uuid = 8e1d05c6-b4c9-48a7-9121-d0dc3bf04f54;
+    version = 1;
+}
