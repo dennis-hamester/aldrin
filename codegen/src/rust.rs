@@ -6,6 +6,7 @@ use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
 use diffy::Patch;
 use heck::ToUpperCamelCase;
+use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
@@ -74,6 +75,10 @@ struct RustGenerator<'a> {
     options: &'a Options,
     rust_options: &'a RustOptions<'a>,
     output: RustOutput,
+}
+
+macro_rules! gen {
+    ($this:expr, $($arg:tt)+) => { write!($this.output.module_content, $($arg)+).unwrap() };
 }
 
 macro_rules! genln {
@@ -299,59 +304,44 @@ impl RustGenerator<'_> {
         if self.options.introspection {
             let schema_name = self.schema.name();
 
-            let mut fields = fields.iter().collect::<Vec<_>>();
-            fields.sort_unstable_by(|a, b| {
-                let a = a.id().value().parse::<u32>().unwrap();
-                let b = b.id().value().parse::<u32>().unwrap();
-                a.cmp(&b)
-            });
-
             if let Some(feature) = self.rust_options.introspection_if {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
-            genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
-            genln!(self);
-
-            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
-            genln!(self, "        static INTROSPECTION: std::sync::OnceLock<aldrin::core::introspection::Introspection> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        INTROSPECTION.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Introspection::builder::<Self>()");
-            for field in &fields {
-                self.gen_add_type(field.field_type(), schema_name);
+            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
+            genln!(self, "        aldrin::core::introspection::Struct::builder(\"{schema_name}\", \"{name}\")");
+            for field in fields {
+                let id = field.id().value();
+                let name = field.name().value();
+                let required = field.required();
+                let field_ty = type_name(field.field_type());
+                genln!(self, "            .field({id}, \"{name}\", {required}, <{field_ty} as aldrin::core::introspection::Introspectable>::lexical_id())");
             }
-            genln!(self, "                .finish()");
-            genln!(self, "        }})");
+            genln!(self, "            .finish()");
+            genln!(self, "            .into()");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
-            genln!(self, "        static LAYOUT: std::sync::OnceLock<aldrin::core::introspection::Layout> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        LAYOUT.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Struct::builder(\"{}\")", name);
-            for field in &fields {
-                genln!(self, "                .field({}, \"{}\", {}, {})", field.id().value(), field.name().value(), field.required(), type_ref(field.field_type(), schema_name));
-            }
-            genln!(self, "                .finish()");
-            genln!(self, "                .into()");
-            genln!(self, "        }})");
+            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
+            genln!(self, "        aldrin::core::introspection::LexicalId::custom(\"{schema_name}\", \"{name}\")");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
-            for field in &fields {
-                self.gen_insert_type(field.field_type());
+            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
+            let mut types = BTreeSet::new();
+            for field in fields {
+                types.insert(format!(
+                    "aldrin::core::introspection::DynIntrospectable::new::<{}>()",
+                    type_name(field.field_type())
+                ));
             }
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
+            genln!(self, "        let field_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
+            for ty in types {
+                genln!(self, "            {ty},");
+            }
+            genln!(self, "        ];");
+            genln!(self, "        types.extend(field_types);");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -424,68 +414,49 @@ impl RustGenerator<'_> {
         if self.options.introspection {
             let schema_name = self.schema.name();
 
-            let mut vars = vars.iter().collect::<Vec<_>>();
-            vars.sort_unstable_by(|a, b| {
-                let a = a.id().value().parse::<u32>().unwrap();
-                let b = b.id().value().parse::<u32>().unwrap();
-                a.cmp(&b)
-            });
-
             if let Some(feature) = self.rust_options.introspection_if {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
-            genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
-            genln!(self);
-
-            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
-            genln!(self, "        static INTROSPECTION: std::sync::OnceLock<aldrin::core::introspection::Introspection> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        INTROSPECTION.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Introspection::builder::<Self>()");
-            for var in &vars {
+            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
+            genln!(self, "        aldrin::core::introspection::Enum::builder(\"{schema_name}\", \"{name}\")");
+            for var in vars {
+                let id = var.id().value();
+                let name = var.name().value();
                 if let Some(var_type) = var.variant_type() {
-                    self.gen_add_type(var_type, schema_name);
+                    let var_ty = type_name(var_type);
+                    genln!(self, "            .variant_with_type({id}, \"{name}\", <{var_ty} as aldrin::core::introspection::Introspectable>::lexical_id())");
+                } else {
+                    genln!(self, "            .unit_variant({id}, \"{name}\")");
                 }
             }
-            genln!(self, "                .finish()");
-            genln!(self, "        }})");
+            genln!(self, "            .finish()");
+            genln!(self, "            .into()");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
-            genln!(self, "        static LAYOUT: std::sync::OnceLock<aldrin::core::introspection::Layout> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        LAYOUT.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Enum::builder(\"{}\")", name);
-            for var in &vars {
-                genln!(self, "                .variant({}, \"{}\", |v| v", var.id().value(), var.name().value());
-                if let Some(var_type) = var.variant_type() {
-                    genln!(self, "                    .variant_type({})", type_ref(var_type, schema_name));
-                }
-                genln!(self, "                    .finish()");
-                genln!(self, "                )");
-            }
-            genln!(self, "                .finish()");
-            genln!(self, "                .into()");
-            genln!(self, "        }})");
+            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
+            genln!(self, "        aldrin::core::introspection::LexicalId::custom(\"{schema_name}\", \"{name}\")");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
-            for var in &vars {
+            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
+            let mut types = BTreeSet::new();
+            for var in vars {
                 if let Some(var_type) = var.variant_type() {
-                    self.gen_insert_type(var_type);
+                    types.insert(format!(
+                        "aldrin::core::introspection::DynIntrospectable::new::<{}>()",
+                        type_name(var_type)
+                    ));
                 }
             }
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
+            genln!(self, "        let var_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
+            for ty in types {
+                genln!(self, "            {ty},");
+            }
+            genln!(self, "        ];");
+            genln!(self, "        types.extend(var_types);");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -510,40 +481,6 @@ impl RustGenerator<'_> {
         if self.options.introspection {
             let schema_name = self.schema.name();
 
-            let mut functions = svc
-                .items()
-                .iter()
-                .filter_map(|item| {
-                    if let ast::ServiceItem::Function(func) = item {
-                        Some(func)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-            functions.sort_unstable_by(|a, b| {
-                let a = a.id().value().parse::<u32>().unwrap();
-                let b = b.id().value().parse::<u32>().unwrap();
-                a.cmp(&b)
-            });
-
-            let mut events = svc
-                .items()
-                .iter()
-                .filter_map(|item| {
-                    if let ast::ServiceItem::Event(ev) = item {
-                        Some(ev)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-            events.sort_unstable_by(|a, b| {
-                let a = a.id().value().parse::<u32>().unwrap();
-                let b = b.id().value().parse::<u32>().unwrap();
-                a.cmp(&b)
-            });
-
             if let Some(feature) = self.rust_options.introspection_if {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
@@ -557,172 +494,101 @@ impl RustGenerator<'_> {
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {}Introspection {{", svc_name);
-            genln!(self, "    const SCHEMA: &'static str = \"{}\";", schema_name);
-            genln!(self);
+            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
+            let svc_uuid = format!(
+                "aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"))",
+                svc.uuid().value()
+            );
+            genln!(self, "        aldrin::core::introspection::Service::builder(\"{schema_name}\", \"{svc_name}\", {svc_uuid}, {})", svc.version().value());
+            for item in svc.items() {
+                match item {
+                    ast::ServiceItem::Function(func) => {
+                        let func_name = func.name().value();
+                        gen!(self, "            .function({}, \"{func_name}\", ", func.id().value());
+                        match func.args() {
+                            Some(args) => gen!(self, "Some({}), ", type_name_or_inline_lexical_id(args.part_type(), svc_name, func_name, "Args")),
+                            None => gen!(self, "None, "),
+                        }
+                        match func.ok() {
+                            Some(ok) => gen!(self, "Some({}), ", type_name_or_inline_lexical_id(ok.part_type(), svc_name, func_name, "Ok")),
+                            None => gen!(self, "None, "),
+                        }
+                        match func.err() {
+                            Some(err) => gen!(self, "Some({})", type_name_or_inline_lexical_id(err.part_type(), svc_name, func_name, "Error")),
+                            None => gen!(self, "None"),
+                        }
+                        genln!(self, ")");
+                    }
 
-            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
-            genln!(self, "        static INTROSPECTION: std::sync::OnceLock<aldrin::core::introspection::Introspection> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        INTROSPECTION.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Introspection::builder::<Self>()");
-            for func in &functions {
-                if let Some(args) = func.args() {
-                    match args.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Args>(\"{schema_name}\", \"{svc_name}{func_name}Args\")", func_name = func.name().value().to_upper_camel_case());
+                    ast::ServiceItem::Event(ev) => {
+                        let ev_name = ev.name().value();
+                        gen!(self, "            .event({}, \"{ev_name}\", ", ev.id().value());
+                        match ev.event_type() {
+                            Some(ev_type) => gen!(self, "Some({})", type_name_or_inline_lexical_id(ev_type, svc_name, ev_name, "Event")),
+                            None => gen!(self, "None"),
                         }
-                    }
-                }
-                if let Some(ok) = func.ok() {
-                    match ok.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Ok>(\"{schema_name}\", \"{svc_name}{func_name}Ok\")", func_name = func.name().value().to_upper_camel_case());
-                        }
-                    }
-                }
-                if let Some(err) = func.err() {
-                    match err.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{func_name}Error>(\"{schema_name}\", \"{svc_name}{func_name}Error\")", func_name = func.name().value().to_upper_camel_case());
-                        }
+                        genln!(self, ")");
                     }
                 }
             }
-            for ev in &events {
-                if let Some(ev_type) = ev.event_type() {
-                    match ev_type {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_add_type(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "                .add_type::<{svc_name}{ev_name}Event>(\"{schema_name}\", \"{svc_name}{ev_name}Event\")", ev_name = ev.name().value().to_upper_camel_case());
-                        }
-                    }
-                }
-            }
-            genln!(self, "                .finish()");
-            genln!(self, "        }})");
+            genln!(self, "            .finish()");
+            genln!(self, "            .into()");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
-            genln!(self, "        static LAYOUT: std::sync::OnceLock<aldrin::core::introspection::Layout> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        LAYOUT.get_or_init(|| {{");
-            genln!(self, "            aldrin::core::introspection::Service::builder(\"{}\", aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\")), {})", svc_name, svc.uuid().value(), svc.version().value());
-            for func in &functions {
-                genln!(self, "                .function({}, \"{}\", |f| f", func.id().value(), func.name().value());
-                if let Some(args) = func.args() {
-                    let args = match args.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Args\")",
-                                func.name().value().to_upper_camel_case()
-                            )
-                        }
-                    };
-
-                    genln!(self, "                    .args({})", args);
-                }
-                if let Some(ok) = func.ok() {
-                    let ok = match ok.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Ok\")",
-                                func.name().value().to_upper_camel_case()
-                            )
-                        }
-                    };
-
-                    genln!(self, "                    .ok({})", ok);
-                }
-                if let Some(err) = func.err() {
-                    let err = match err.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Error\")",
-                                func.name().value().to_upper_camel_case()
-                            )
-                        }
-                    };
-
-                    genln!(self, "                    .err({})", err);
-                }
-                genln!(self, "                    .finish()");
-                genln!(self, "                )");
-            }
-            for ev in &events {
-                genln!(self, "                .event({}, \"{}\", |e| e", ev.id().value(), ev.name().value());
-                if let Some(ev_type) = ev.event_type() {
-                    let ev_type = match ev_type {
-                        ast::TypeNameOrInline::TypeName(ty) => type_ref(ty, schema_name),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            format!(
-                                "aldrin::core::introspection::TypeRef::custom(\"{schema_name}\", \"{svc_name}{}Event\")",
-                                ev.name().value().to_upper_camel_case()
-                            )
-                        }
-                    };
-
-                    genln!(self, "                    .event_type({ev_type})");
-                }
-                genln!(self, "                    .finish()");
-                genln!(self, "                )");
-            }
-            genln!(self, "                .finish()");
-            genln!(self, "                .into()");
-            genln!(self, "        }})");
+            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
+            genln!(self, "        aldrin::core::introspection::LexicalId::service(\"{schema_name}\", \"{svc_name}\")");
             genln!(self, "    }}");
             genln!(self);
 
-            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
-            for func in &functions {
-                if let Some(args) = func.args() {
-                    match args.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_insert_type(ty),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "        types.insert::<{}>();", format!("{svc_name}{}Args", func.name().value().to_upper_camel_case()));
+            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
+            let mut types = BTreeSet::new();
+            for item in svc.items() {
+                match item {
+                    ast::ServiceItem::Function(func) => {
+                        let func_name = func.name().value();
+                        if let Some(args) = func.args() {
+                            types.insert(type_name_or_inline_dyn_introspectable(
+                                args.part_type(),
+                                svc_name,
+                                func_name,
+                                "Args",
+                            ));
+                        }
+                        if let Some(ok) = func.ok() {
+                            types.insert(type_name_or_inline_dyn_introspectable(
+                                ok.part_type(),
+                                svc_name,
+                                func_name,
+                                "Ok",
+                            ));
+                        }
+                        if let Some(err) = func.err() {
+                            types.insert(type_name_or_inline_dyn_introspectable(
+                                err.part_type(),
+                                svc_name,
+                                func_name,
+                                "Error",
+                            ));
                         }
                     }
-                }
-                if let Some(ok) = func.ok() {
-                    match ok.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_insert_type(ty),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "        types.insert::<{}>();", format!("{svc_name}{}Ok", func.name().value().to_upper_camel_case()));
-                        }
-                    }
-                }
-                if let Some(err) = func.err() {
-                    match err.part_type() {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_insert_type(ty),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "        types.insert::<{}>();", format!("{svc_name}{}Error", func.name().value().to_upper_camel_case()));
-                        }
-                    }
-                }
-            }
-            for ev in &events {
-                if let Some(ev_type) = ev.event_type() {
-                    match ev_type {
-                        ast::TypeNameOrInline::TypeName(ty) => self.gen_insert_type(ty),
-                        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                            genln!(self, "        types.insert::<{}>();", format!("{svc_name}{}Event", ev.name().value().to_upper_camel_case()));
-                        }
-                    }
-                }
-            }
-            genln!(self, "    }}");
-            genln!(self);
 
-            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
-            genln!(self, "        static TYPE_ID: std::sync::OnceLock<aldrin::core::TypeId> = std::sync::OnceLock::new();");
-            genln!(self);
-            genln!(self, "        *TYPE_ID.get_or_init(aldrin::core::TypeId::compute::<Self>)");
+                    ast::ServiceItem::Event(ev) => {
+                        let ev_name = ev.name().value();
+                        if let Some(ev_type) = ev.event_type() {
+                            types.insert(type_name_or_inline_dyn_introspectable(
+                                ev_type, svc_name, ev_name, "Event",
+                            ));
+                        }
+                    }
+                }
+            }
+            genln!(self, "        let field_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
+            for ty in types {
+                genln!(self, "            {ty},");
+            }
+            genln!(self, "        ];");
+            genln!(self, "        types.extend(field_types);");
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -862,7 +728,7 @@ impl RustGenerator<'_> {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<std::borrow::Cow<'static, aldrin::core::introspection::Introspection>>, aldrin::Error> {{");
+            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<aldrin::core::introspection::Introspection>, aldrin::Error> {{");
             genln!(self, "        self.inner.query_introspection().await");
             genln!(self, "    }}");
             genln!(self);
@@ -1031,26 +897,16 @@ impl RustGenerator<'_> {
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", proxy_name);
-            genln!(self, "    const SCHEMA: &'static str = \"{}\";", self.schema.name());
-            genln!(self);
-
-            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
-            genln!(self, "        {}Introspection::introspection()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
+            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
             genln!(self, "        {}Introspection::layout()", svc_name);
             genln!(self, "    }}");
             genln!(self);
-
-            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
-            genln!(self, "        {}Introspection::insert_types(types);", svc_name);
+            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
+            genln!(self, "        {}Introspection::lexical_id()", svc_name);
             genln!(self, "    }}");
             genln!(self);
-
-            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
-            genln!(self, "        {}Introspection::type_id()", svc_name);
+            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
+            genln!(self, "        {}Introspection::inner_types(types);", svc_name);
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -1079,7 +935,7 @@ impl RustGenerator<'_> {
                 genln!(self, "        #[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "        let info = info.set_type_id(<Self as aldrin::core::introspection::Introspectable>::type_id());");
+            genln!(self, "        let info = info.set_type_id(aldrin::core::TypeId::compute::<Self>());");
         }
 
         genln!(self, "        let inner = object.create_service(Self::UUID, info).await?;");
@@ -1116,7 +972,7 @@ impl RustGenerator<'_> {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<std::borrow::Cow<'static, aldrin::core::introspection::Introspection>>, aldrin::Error> {{");
+            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<aldrin::core::introspection::Introspection>, aldrin::Error> {{");
             genln!(self, "        self.inner.query_introspection().await");
             genln!(self, "    }}");
             genln!(self);
@@ -1251,26 +1107,16 @@ impl RustGenerator<'_> {
             }
 
             genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", svc_name);
-            genln!(self, "    const SCHEMA: &'static str = \"{}\";", self.schema.name());
-            genln!(self);
-
-            genln!(self, "    fn introspection() -> &'static aldrin::core::introspection::Introspection {{");
-            genln!(self, "        {}Introspection::introspection()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn layout() -> &'static aldrin::core::introspection::Layout {{");
+            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
             genln!(self, "        {}Introspection::layout()", svc_name);
             genln!(self, "    }}");
             genln!(self);
-
-            genln!(self, "    fn insert_types(types: &mut aldrin::core::introspection::Types) {{");
-            genln!(self, "        {}Introspection::insert_types(types);", svc_name);
+            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
+            genln!(self, "        {}Introspection::lexical_id()", svc_name);
             genln!(self, "    }}");
             genln!(self);
-
-            genln!(self, "    fn type_id() -> aldrin::core::TypeId {{");
-            genln!(self, "        {}Introspection::type_id()", svc_name);
+            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
+            genln!(self, "        {}Introspection::inner_types(types);", svc_name);
             genln!(self, "    }}");
             genln!(self, "}}");
             genln!(self);
@@ -1295,96 +1141,6 @@ impl RustGenerator<'_> {
         genln!(self);
     }
 
-    fn gen_add_type(&mut self, ty: &ast::TypeName, schema: &str) {
-        match ty.kind() {
-            ast::TypeNameKind::Option(ty)
-            | ast::TypeNameKind::Box(ty)
-            | ast::TypeNameKind::Vec(ty)
-            | ast::TypeNameKind::Map(_, ty)
-            | ast::TypeNameKind::Sender(ty)
-            | ast::TypeNameKind::Receiver(ty) => self.gen_add_type(ty, schema),
-
-            ast::TypeNameKind::Result(ok, err) => {
-                self.gen_add_type(ok, schema);
-                self.gen_add_type(err, schema);
-            }
-
-            ast::TypeNameKind::Extern(m, ty) => {
-                genln!(self, "                .add_type::<super::{schema}::{ty}>(\"{schema}\", \"{ty}\")", schema = m.value(), ty = ty.value());
-            }
-
-            ast::TypeNameKind::Intern(ty) => {
-                genln!(self, "                .add_type::<{ty}>(\"{schema}\", \"{ty}\")", ty = ty.value());
-            }
-
-            ast::TypeNameKind::Bool
-            | ast::TypeNameKind::U8
-            | ast::TypeNameKind::I8
-            | ast::TypeNameKind::U16
-            | ast::TypeNameKind::I16
-            | ast::TypeNameKind::U32
-            | ast::TypeNameKind::I32
-            | ast::TypeNameKind::U64
-            | ast::TypeNameKind::I64
-            | ast::TypeNameKind::F32
-            | ast::TypeNameKind::F64
-            | ast::TypeNameKind::String
-            | ast::TypeNameKind::Uuid
-            | ast::TypeNameKind::ObjectId
-            | ast::TypeNameKind::ServiceId
-            | ast::TypeNameKind::Value
-            | ast::TypeNameKind::Bytes
-            | ast::TypeNameKind::Set(_)
-            | ast::TypeNameKind::Lifetime
-            | ast::TypeNameKind::Unit => {}
-        }
-    }
-
-    fn gen_insert_type(&mut self, ty: &ast::TypeName) {
-        match ty.kind() {
-            ast::TypeNameKind::Option(ty)
-            | ast::TypeNameKind::Box(ty)
-            | ast::TypeNameKind::Vec(ty)
-            | ast::TypeNameKind::Map(_, ty)
-            | ast::TypeNameKind::Sender(ty)
-            | ast::TypeNameKind::Receiver(ty) => self.gen_insert_type(ty),
-
-            ast::TypeNameKind::Result(ok, err) => {
-                self.gen_insert_type(ok);
-                self.gen_insert_type(err);
-            }
-
-            ast::TypeNameKind::Extern(m, ty) => {
-                genln!(self, "        types.insert::<super::{}::{}>();", m.value(), ty.value());
-            }
-
-            ast::TypeNameKind::Intern(ty) => {
-                genln!(self, "        types.insert::<{}>();", ty.value());
-            }
-
-            ast::TypeNameKind::Bool
-            | ast::TypeNameKind::U8
-            | ast::TypeNameKind::I8
-            | ast::TypeNameKind::U16
-            | ast::TypeNameKind::I16
-            | ast::TypeNameKind::U32
-            | ast::TypeNameKind::I32
-            | ast::TypeNameKind::U64
-            | ast::TypeNameKind::I64
-            | ast::TypeNameKind::F32
-            | ast::TypeNameKind::F64
-            | ast::TypeNameKind::String
-            | ast::TypeNameKind::Uuid
-            | ast::TypeNameKind::ObjectId
-            | ast::TypeNameKind::ServiceId
-            | ast::TypeNameKind::Value
-            | ast::TypeNameKind::Bytes
-            | ast::TypeNameKind::Set(_)
-            | ast::TypeNameKind::Lifetime
-            | ast::TypeNameKind::Unit => {}
-        }
-    }
-
     fn register_introspection(&mut self, def: &ast::Definition) {
         match def {
             ast::Definition::Struct(d) => {
@@ -1395,58 +1151,11 @@ impl RustGenerator<'_> {
                 genln!(self, "    handle.register_introspection::<{}>()?;", e.name().value())
             }
 
-            ast::Definition::Service(s) => self.register_service_introspection(s),
-            ast::Definition::Const(_) => {}
-        }
-    }
-
-    fn register_service_introspection(&mut self, svc: &ast::ServiceDef) {
-        let svc_name = svc.name().value();
-
-        genln!(self, "    handle.register_introspection::<{svc_name}Introspection>()?;");
-
-        for item in svc.items() {
-            match item {
-                ast::ServiceItem::Function(func) => {
-                    let func_name = func.name().value();
-
-                    if let Some(args) = func.args() {
-                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
-                            args.part_type()
-                        {
-                            let name = function_args_type_name(svc_name, func_name, args);
-                            genln!(self, "    handle.register_introspection::<{name}>()?;");
-                        }
-                    }
-
-                    if let Some(ok) = func.ok() {
-                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
-                            ok.part_type()
-                        {
-                            let name = function_ok_type_name(svc_name, func_name, ok);
-                            genln!(self, "    handle.register_introspection::<{name}>()?;");
-                        }
-                    }
-
-                    if let Some(err) = func.err() {
-                        if let ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) =
-                            err.part_type()
-                        {
-                            let name = function_err_type_name(svc_name, func_name, err);
-                            genln!(self, "    handle.register_introspection::<{name}>()?;");
-                        }
-                    }
-                }
-
-                ast::ServiceItem::Event(ev) => {
-                    if let Some(ty @ ast::TypeNameOrInline::Struct(_))
-                    | Some(ty @ ast::TypeNameOrInline::Enum(_)) = ev.event_type()
-                    {
-                        let name = event_variant_type(svc_name, ev.name().value(), ty);
-                        genln!(self, "    handle.register_introspection::<{name}>()?;");
-                    }
-                }
+            ast::Definition::Service(s) => {
+                genln!(self, "    handle.register_introspection::<{}Introspection>()?;", s.name().value());
             }
+
+            ast::Definition::Const(_) => {}
         }
     }
 }
@@ -1611,97 +1320,6 @@ fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
     }
 }
 
-fn type_ref(ty: &ast::TypeName, schema: &str) -> String {
-    match ty.kind() {
-        ast::TypeNameKind::Bool => "aldrin::core::introspection::BuiltInType::Bool".to_owned(),
-        ast::TypeNameKind::U8 => "aldrin::core::introspection::BuiltInType::U8".to_owned(),
-        ast::TypeNameKind::I8 => "aldrin::core::introspection::BuiltInType::I8".to_owned(),
-        ast::TypeNameKind::U16 => "aldrin::core::introspection::BuiltInType::U16".to_owned(),
-        ast::TypeNameKind::I16 => "aldrin::core::introspection::BuiltInType::I16".to_owned(),
-        ast::TypeNameKind::U32 => "aldrin::core::introspection::BuiltInType::U32".to_owned(),
-        ast::TypeNameKind::I32 => "aldrin::core::introspection::BuiltInType::I32".to_owned(),
-        ast::TypeNameKind::U64 => "aldrin::core::introspection::BuiltInType::U64".to_owned(),
-        ast::TypeNameKind::I64 => "aldrin::core::introspection::BuiltInType::I64".to_owned(),
-        ast::TypeNameKind::F32 => "aldrin::core::introspection::BuiltInType::F32".to_owned(),
-        ast::TypeNameKind::F64 => "aldrin::core::introspection::BuiltInType::F64".to_owned(),
-        ast::TypeNameKind::String => "aldrin::core::introspection::BuiltInType::String".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin::core::introspection::BuiltInType::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => {
-            "aldrin::core::introspection::BuiltInType::ObjectId".to_owned()
-        }
-        ast::TypeNameKind::ServiceId => {
-            "aldrin::core::introspection::BuiltInType::ServiceId".to_owned()
-        }
-        ast::TypeNameKind::Value => "aldrin::core::introspection::BuiltInType::Value".to_owned(),
-        ast::TypeNameKind::Box(ty) => format!(
-            "aldrin::core::introspection::BuiltInType::Box(Box::new({}.into()))",
-            type_ref(ty, schema)
-        ),
-        ast::TypeNameKind::Option(ty) => format!(
-            "aldrin::core::introspection::BuiltInType::Option(Box::new({}.into()))",
-            type_ref(ty, schema)
-        ),
-        ast::TypeNameKind::Vec(ty) => format!(
-            "aldrin::core::introspection::BuiltInType::Vec(Box::new({}.into()))",
-            type_ref(ty, schema)
-        ),
-        ast::TypeNameKind::Bytes => "aldrin::core::introspection::BuiltInType::Bytes".to_owned(),
-        ast::TypeNameKind::Map(k, v) => format!(
-            "aldrin::core::introspection::BuiltInType::Map(Box::new(aldrin::core::introspection::MapType::new({}, {})))",
-            key_type_ref(k),
-            type_ref(v, schema),
-        ),
-        ast::TypeNameKind::Set(ty) => {
-            format!(
-                "aldrin::core::introspection::BuiltInType::Set({})",
-                key_type_ref(ty)
-            )
-        }
-        ast::TypeNameKind::Sender(ty) => format!(
-            "aldrin::core::introspection::BuiltInType::Sender(Box::new({}.into()))",
-            type_ref(ty, schema)
-        ),
-        ast::TypeNameKind::Receiver(ty) => format!(
-            "aldrin::core::introspection::BuiltInType::Receiver(Box::new({}.into()))",
-            type_ref(ty, schema)
-        ),
-        ast::TypeNameKind::Lifetime => {
-            "aldrin::core::introspection::BuiltInType::Lifetime".to_owned()
-        }
-        ast::TypeNameKind::Unit => "aldrin::core::introspection::BuiltInType::Unit".to_owned(),
-        ast::TypeNameKind::Result(ok, err) => format!(
-            "aldrin::core::introspection::ResultType::new({}, {})",
-            type_ref(ok, schema),
-            type_ref(err, schema)
-        ),
-        ast::TypeNameKind::Extern(m, ty) => format!(
-            "aldrin::core::introspection::TypeRef::custom(\"{}\", \"{}\")",
-            m.value(),
-            ty.value()
-        ),
-        ast::TypeNameKind::Intern(ty) => format!(
-            "aldrin::core::introspection::TypeRef::custom(\"{}\", \"{}\")",
-            schema,
-            ty.value()
-        ),
-    }
-}
-
-fn key_type_ref(ty: &ast::KeyTypeName) -> &'static str {
-    match ty.kind() {
-        ast::KeyTypeNameKind::U8 => "aldrin::core::introspection::KeyType::U8",
-        ast::KeyTypeNameKind::I8 => "aldrin::core::introspection::KeyType::I8",
-        ast::KeyTypeNameKind::U16 => "aldrin::core::introspection::KeyType::U16",
-        ast::KeyTypeNameKind::I16 => "aldrin::core::introspection::KeyType::I16",
-        ast::KeyTypeNameKind::U32 => "aldrin::core::introspection::KeyType::U32",
-        ast::KeyTypeNameKind::I32 => "aldrin::core::introspection::KeyType::I32",
-        ast::KeyTypeNameKind::U64 => "aldrin::core::introspection::KeyType::U64",
-        ast::KeyTypeNameKind::I64 => "aldrin::core::introspection::KeyType::I64",
-        ast::KeyTypeNameKind::String => "aldrin::core::introspection::KeyType::String",
-        ast::KeyTypeNameKind::Uuid => "aldrin::core::introspection::KeyType::Uuid",
-    }
-}
-
 fn struct_builder_name(base: &str) -> String {
     format!("{base}Builder")
 }
@@ -1820,6 +1438,44 @@ fn service_functions(svc_name: &str) -> String {
 
 fn service_function_variant(func_name: &str) -> String {
     func_name.to_upper_camel_case()
+}
+
+fn type_name_or_inline_lexical_id(
+    ty: &ast::TypeNameOrInline,
+    svc_name: &str,
+    ctx: &str,
+    suffix: &str,
+) -> String {
+    let intro = "aldrin::core::introspection::Introspectable";
+
+    match ty {
+        ast::TypeNameOrInline::TypeName(ty) => {
+            format!("<{} as {intro}>::lexical_id()", type_name(ty))
+        }
+
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => format!(
+            "<{svc_name}{}{suffix} as {intro}>::lexical_id()",
+            ctx.to_upper_camel_case()
+        ),
+    }
+}
+
+fn type_name_or_inline_dyn_introspectable(
+    ty: &ast::TypeNameOrInline,
+    svc_name: &str,
+    ctx: &str,
+    suffix: &str,
+) -> String {
+    let func = "aldrin::core::introspection::DynIntrospectable::new";
+
+    match ty {
+        ast::TypeNameOrInline::TypeName(ty) => format!("{func}::<{}>()", type_name(ty)),
+
+        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => format!(
+            "{func}::<{svc_name}{}{suffix}>()",
+            ctx.to_upper_camel_case()
+        ),
+    }
 }
 
 struct RustAttributes {
