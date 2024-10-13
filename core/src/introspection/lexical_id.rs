@@ -2,7 +2,9 @@ use super::KeyType;
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
-use uuid::{uuid, Uuid};
+use std::fmt;
+use std::str::FromStr;
+use uuid::{uuid, Error as UuidError, Uuid};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[repr(transparent)]
@@ -113,5 +115,31 @@ impl Serialize for LexicalId {
 impl Deserialize for LexicalId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl From<Uuid> for LexicalId {
+    fn from(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+}
+
+impl From<LexicalId> for Uuid {
+    fn from(id: LexicalId) -> Self {
+        id.0
+    }
+}
+
+impl fmt::Display for LexicalId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl FromStr for LexicalId {
+    type Err = UuidError;
+
+    fn from_str(s: &str) -> Result<Self, UuidError> {
+        s.parse().map(Self)
     }
 }
