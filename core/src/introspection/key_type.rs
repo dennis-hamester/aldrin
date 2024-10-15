@@ -2,6 +2,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::fmt;
 use uuid::{uuid, Uuid};
 
 #[derive(
@@ -60,6 +61,23 @@ impl Deserialize for KeyType {
         let deserializer = deserializer.deserialize_enum()?;
         let variant = deserializer.try_variant()?;
         deserializer.deserialize().map(|()| variant)
+    }
+}
+
+impl fmt::Display for KeyType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::U8 => write!(f, "u8"),
+            Self::I8 => write!(f, "i8"),
+            Self::U16 => write!(f, "u16"),
+            Self::I16 => write!(f, "i16"),
+            Self::U32 => write!(f, "u32"),
+            Self::I32 => write!(f, "i32"),
+            Self::U64 => write!(f, "u64"),
+            Self::I64 => write!(f, "i64"),
+            Self::String => write!(f, "string"),
+            Self::Uuid => write!(f, "uuid"),
+        }
     }
 }
 
