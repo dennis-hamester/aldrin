@@ -1,5 +1,7 @@
 #[cfg(feature = "introspection")]
-use aldrin::core::introspection::{Enum, Introspection, Layout, Service, Struct};
+use aldrin::core::introspection::{
+    BuiltInType, Enum, Event, Function, Introspection, Layout, LexicalId, Service, Struct,
+};
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
 use aldrin::low_level::Proxy;
@@ -117,12 +119,13 @@ async fn list(bus: &Handle) -> Result<()> {
             println!("|- Service {}", service_id.uuid);
 
             #[cfg(feature = "introspection")]
-            if let Some(introspection) = proxy.query_introspection().await? {
-                println!(
-                    "|    Name:    {}::{}",
-                    introspection.schema(),
-                    introspection.name()
-                );
+            if let Some(svc) = proxy
+                .query_introspection()
+                .await?
+                .as_ref()
+                .and_then(Introspection::as_service_layout)
+            {
+                println!("|    Name:    {}::{}", svc.schema(), svc.name());
             } else {
                 println!("|    Name:    N/A");
             }
@@ -144,100 +147,10 @@ async fn list(bus: &Handle) -> Result<()> {
 }
 
 #[cfg(feature = "introspection")]
-async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
-    let mut pending = vec![type_id];
-    let mut available = BTreeMap::new();
-    let mut unavailable = BTreeSet::new();
-
-    while let Some(type_id) = pending.pop() {
-        if available.contains_key(&type_id) || unavailable.contains(&type_id) {
-            continue;
-        }
-
-        match bus.query_introspection(type_id).await? {
-            Some(introspection) => {
-                pending.extend(introspection.inner_type_ids());
-                available.insert(type_id, introspection);
-            }
-
-            None => {
-                unavailable.insert(type_id);
-            }
-        }
-    }
-
-    let mut first = true;
-
-    for introspection in available.values() {
-        if let Layout::Service(service) = introspection.layout() {
-            print_service(service, introspection);
-            first = false;
-            break;
-        }
-    }
-
-    for (_, introspection) in available {
-        if let Layout::Service(_) = introspection.layout() {
-            continue;
-        }
-
-        if first {
-            first = false;
-        } else {
-            println!();
-        }
-
-        match introspection.layout() {
-            Layout::Struct(struct_) => print_struct(struct_, &introspection),
-            Layout::Enum(enum_) => print_enum(enum_, &introspection),
-            Layout::Service(_) => {}
-        }
-    }
-
-    if !unavailable.is_empty() {
-        if !first {
-            println!();
-        }
-
-        println!("Unavailable type ids:");
-
-        for type_id in unavailable {
-            println!("|- {type_id}");
-        }
-    }
-
-    Ok(())
-}
-
-#[cfg(not(feature = "introspection"))]
-async fn query_full(_bus: &Handle, type_id: TypeId) -> Result<()> {
-    println!("Unavailable type ids:");
-    println!("|- {type_id}");
-
-    Ok(())
-}
-
-#[cfg(feature = "introspection")]
 async fn query(bus: &Handle, type_id: TypeId) -> Result<()> {
-    let Some(introspection) = bus.query_introspection(type_id).await? else {
-        println!("No introspection available for {type_id}.");
-        return Ok(());
-    };
-
-    match introspection.layout() {
-        Layout::Service(service) => print_service(service, &introspection),
-        Layout::Struct(struct_) => print_struct(struct_, &introspection),
-        Layout::Enum(enum_) => print_enum(enum_, &introspection),
-    }
-
-    let mut inner_types = introspection.iter_inner_types().peekable();
-    if inner_types.peek().is_some() {
-        println!();
-        println!("Inner types:");
-
-        for (schema, name, type_id) in inner_types {
-            println!("|- {schema}::{name}: {type_id}");
-        }
+    match bus.query_introspection(type_id).await? {
+        Some(introspection) => print_introspection(&introspection, &BTreeMap::new(), false),
+        None => println!("No introspection available for {type_id}."),
     }
 
     Ok(())
@@ -250,105 +163,322 @@ async fn query(_bus: &Handle, type_id: TypeId) -> Result<()> {
 }
 
 #[cfg(feature = "introspection")]
-fn print_service(service: &Service, introspection: &Introspection) {
-    println!("service {}::{} {{", introspection.schema(), service.name());
-    println!("    uuid = {};", service.uuid());
-    println!("    version = {};", service.version());
+async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
+    use std::collections::HashSet;
 
-    let mut first = true;
-    for function in service.functions().values() {
-        if first {
-            println!();
+    let Some(introspection) = bus.query_introspection(type_id).await? else {
+        println!("No introspection available for {type_id}.");
+        return Ok(());
+    };
+
+    let mut db = BTreeMap::new();
+    let mut unavailable = HashSet::new();
+    let mut pending = vec![type_id];
+
+    while let Some(type_id) = pending.pop() {
+        let Some(introspection) = bus.query_introspection(type_id).await? else {
+            unavailable.insert(type_id);
+            continue;
+        };
+
+        for type_id in introspection.type_ids().values() {
+            if !db.contains_key(type_id) && !unavailable.contains(type_id) {
+                pending.push(*type_id);
+            }
         }
 
-        if function.args().is_some() || function.ok().is_some() || function.err().is_some() {
-            if !first {
-                println!();
-            }
+        db.insert(type_id, introspection);
+    }
 
-            println!("    fn {} @ {} {{", function.name(), function.id());
+    print_introspection(&introspection, &db, true);
 
-            if let Some(args) = function.args() {
-                println!("        args = {args};");
-            }
-
-            if let Some(ok) = function.ok() {
-                println!("        ok = {ok};");
-            }
-
-            if let Some(err) = function.err() {
-                println!("        err = {err};");
-            }
-
-            println!("    }}");
-            first = true;
-        } else {
-            println!("    fn {} @ {};", function.name(), function.id());
-            first = false;
+    for introspection in db.values() {
+        if (introspection.type_id() != type_id) && introspection.layout().as_built_in().is_none() {
+            print_introspection(introspection, &db, true);
         }
     }
 
-    let mut first = true;
-    for event in service.events().values() {
-        if first {
-            println!();
-        }
+    Ok(())
+}
 
-        if let Some(event_type) = event.event_type() {
-            println!(
-                "    event {} @ {} = {};",
-                event.name(),
-                event.id(),
-                event_type
-            );
-        } else {
-            println!("    event {} @ {};", event.name(), event.id());
-        }
-
-        first = false;
-    }
-
-    println!("}}");
+#[cfg(not(feature = "introspection"))]
+async fn query_full(_bus: &Handle, type_id: TypeId) -> Result<()> {
+    println!("No introspection available for {type_id}.");
+    Ok(())
 }
 
 #[cfg(feature = "introspection")]
-fn print_struct(struct_: &Struct, introspection: &Introspection) {
-    println!("struct {}::{} {{", introspection.schema(), struct_.name());
+fn print_introspection(
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    match introspection.layout() {
+        Layout::BuiltIn(ty) => print_built_in(*ty, introspection, db),
+        Layout::Struct(ty) => print_struct(ty, introspection, db, full),
+        Layout::Enum(ty) => print_enum(ty, introspection, db, full),
+        Layout::Service(ty) => print_service(ty, introspection, db, full),
+    }
 
-    for field in struct_.fields().values() {
+    if !full {
+        let type_ids = introspection.type_ids();
+        if !type_ids.is_empty() {
+            println!(" lexical_id                             type_id");
+            println!(
+                "-------------------------------------- --------------------------------------"
+            );
+
+            for (lexical_id, type_id) in type_ids {
+                println!(" {lexical_id}   {type_id}");
+            }
+
+            println!();
+        }
+    }
+}
+
+#[cfg(feature = "introspection")]
+fn print_built_in(
+    ty: BuiltInType,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+) {
+    print_built_in_type_name(ty, introspection, db, false);
+    println!();
+    println!();
+}
+
+#[cfg(feature = "introspection")]
+fn print_struct(
+    ty: &Struct,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    println!("struct {}::{} {{", ty.schema(), ty.name());
+
+    for field in ty.fields().values() {
         if field.is_required() {
-            println!(
-                "    required {} @ {} = {};",
-                field.name(),
-                field.id(),
-                field.field_type()
-            );
+            print!("    required ");
         } else {
-            println!(
-                "    {} @ {} = {};",
-                field.name(),
-                field.id(),
-                field.field_type()
-            );
+            print!("    ");
         }
+
+        print!("{} @ {} = ", field.name(), field.id());
+        print_type_name(field.field_type(), introspection, db, full);
+        println!(";");
     }
 
     println!("}}");
+    println!();
 }
 
 #[cfg(feature = "introspection")]
-fn print_enum(enum_: &Enum, introspection: &Introspection) {
-    println!("enum {}::{} {{", introspection.schema(), enum_.name());
+fn print_enum(
+    ty: &Enum,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    println!("enum {}::{} {{", ty.schema(), ty.name());
 
-    for variant in enum_.variants().values() {
-        print!("    {} @ {}", variant.name(), variant.id());
+    for var in ty.variants().values() {
+        print!("    {} @ {}", var.name(), var.id());
 
-        if let Some(variant_type) = variant.variant_type() {
-            print!(" = {variant_type}");
+        if let Some(var_type) = var.variant_type() {
+            print!(" = ");
+            print_type_name(var_type, introspection, db, full);
         }
 
         println!(";");
     }
 
     println!("}}");
+    println!();
+}
+
+#[cfg(feature = "introspection")]
+fn print_service(
+    ty: &Service,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    println!("service {}::{} {{", ty.schema(), ty.name());
+    println!("    uuid = {};", ty.uuid());
+    println!("    version = {};", ty.version());
+
+    for func in ty.functions().values() {
+        println!();
+        print_function(func, introspection, db, full);
+    }
+
+    for ev in ty.events().values() {
+        println!();
+        print_event(ev, introspection, db, full);
+    }
+
+    println!("}}");
+    println!();
+}
+
+#[cfg(feature = "introspection")]
+fn print_function(
+    func: &Function,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    print!("    fn {} @ {}", func.name(), func.id());
+
+    if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
+        println!(" {{");
+
+        if let Some(ty) = func.args() {
+            print!("        args = ");
+            print_type_name(ty, introspection, db, full);
+            println!(";");
+        }
+
+        if let Some(ty) = func.ok() {
+            print!("        ok = ");
+            print_type_name(ty, introspection, db, full);
+            println!(";");
+        }
+
+        if let Some(ty) = func.err() {
+            print!("        err = ");
+            print_type_name(ty, introspection, db, full);
+            println!(";");
+        }
+
+        println!("    }}");
+    } else {
+        println!(";");
+    }
+}
+
+#[cfg(feature = "introspection")]
+fn print_event(
+    ev: &Event,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    print!("    event {} @ {}", ev.name(), ev.id());
+
+    if let Some(ty) = ev.event_type() {
+        print!(" = ");
+        print_type_name(ty, introspection, db, full);
+    }
+
+    println!(";");
+}
+
+#[cfg(feature = "introspection")]
+fn print_type_name(
+    ty: LexicalId,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    let Some(type_id) = introspection.type_ids().get(&ty) else {
+        print!("lexical_id({ty})");
+        return;
+    };
+
+    let Some(introspection) = db.get(type_id) else {
+        if full {
+            print!("type_id({type_id})");
+        } else {
+            print!("lexical_id({ty})");
+        }
+
+        return;
+    };
+
+    match introspection.layout() {
+        Layout::BuiltIn(ty) => print_built_in_type_name(*ty, introspection, db, full),
+        Layout::Struct(ty) => print!("{}::{}", ty.schema(), ty.name()),
+        Layout::Enum(ty) => print!("{}::{}", ty.schema(), ty.name()),
+        Layout::Service(ty) => print!("{}::{}", ty.schema(), ty.name()),
+    }
+}
+
+#[cfg(feature = "introspection")]
+fn print_built_in_type_name(
+    built_in: BuiltInType,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    match built_in {
+        BuiltInType::Bool => print!("bool"),
+        BuiltInType::U8 => print!("u8"),
+        BuiltInType::I8 => print!("i8"),
+        BuiltInType::U16 => print!("u16"),
+        BuiltInType::I16 => print!("i16"),
+        BuiltInType::U32 => print!("u32"),
+        BuiltInType::I32 => print!("i32"),
+        BuiltInType::U64 => print!("u64"),
+        BuiltInType::I64 => print!("i64"),
+        BuiltInType::F32 => print!("f32"),
+        BuiltInType::F64 => print!("f64"),
+        BuiltInType::String => print!("string"),
+        BuiltInType::Uuid => print!("uuid"),
+        BuiltInType::ObjectId => print!("object_id"),
+        BuiltInType::ServiceId => print!("service_id"),
+        BuiltInType::Value => print!("value"),
+
+        BuiltInType::Option(ty) => {
+            print!("option<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Box(ty) => {
+            print!("box<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Vec(ty) => {
+            print!("vec<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Bytes => print!("bytes"),
+
+        BuiltInType::Map(ty) => {
+            print!("map<{} -> ", ty.key());
+            print_type_name(ty.value(), introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Set(ty) => print!("set<{}>", ty),
+
+        BuiltInType::Sender(ty) => {
+            print!("sender<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Receiver(ty) => {
+            print!("receiver<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
+
+        BuiltInType::Lifetime => print!("lifetime"),
+        BuiltInType::Unit => print!("unit"),
+
+        BuiltInType::Result(ty) => {
+            print!("result<");
+            print_type_name(ty.ok(), introspection, db, full);
+            print!(", ");
+            print_type_name(ty.err(), introspection, db, full);
+            print!(">");
+        }
+    }
 }
