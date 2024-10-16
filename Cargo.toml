@@ -37,9 +37,9 @@ rust-version = "1.70.0"
 [workspace.dependencies]
 anstyle = { version = "1.0.7", default-features = false }
 colorchoice-clap = { version = "1.0.4", default-features = false }
-futures-channel = { version = "0.3.29", default-features = false }
-futures-core = { version = "0.3.29", default-features = false }
-futures-util = { version = "0.3.29", default-features = false }
+futures-channel = { version = "0.3.31", default-features = false }
+futures-core = { version = "0.3.31", default-features = false }
+futures-util = { version = "0.3.31", default-features = false }
 heck = { version = "0.4.1", default-features = false }
 serde = { version = "1.0.193", default-features = false }
 thiserror = { version = "1.0.50", default-features = false }
