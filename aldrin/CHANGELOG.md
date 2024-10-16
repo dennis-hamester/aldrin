@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bump MSRV to 1.71.1.
 - Adapt to new introspection system. On the API level, `Introspection` is no longer returned in a
   `Cow` but directly instead.
 
