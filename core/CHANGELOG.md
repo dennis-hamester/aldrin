@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bump MSRV to 1.71.1.
 - The introspection system introduced in 0.7.0 was completely redone and is not backwards
   compatible. Generally, all types that are `Serialize` now also implement `Introspectable`.
 - The `SerializeKey` and `DeserializeKey` traits have been redesigned and it's now possible to
