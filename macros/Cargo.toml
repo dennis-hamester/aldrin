@@ -81,4 +81,7 @@ features = [
 [dev-dependencies.aldrin-core]
 path = "../core"
 default-features = false
-features = ["derive"]
+features = [
+    "derive",
+    "introspection",
+]
