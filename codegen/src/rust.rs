@@ -162,9 +162,27 @@ impl RustGenerator<'_> {
         let builder_name = struct_builder_name(name);
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
+        let schema_name = self.schema.name();
 
         let derive_default = if has_required_fields { "" } else { ", Default" };
-        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{}{})]", derive_default, attrs.additional_derives());
+
+        let derive_introspectable =
+            if self.options.introspection && self.rust_options.introspection_if.is_none() {
+                ", aldrin::Introspectable"
+            } else {
+                ""
+            };
+
+        genln!(self, "#[derive(Debug, Clone{derive_default}, aldrin::Serialize, aldrin::Deserialize{derive_introspectable}{})]", attrs.additional_derives());
+
+        if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive(aldrin::Introspectable))]");
+            }
+        }
+
+        genln!(self, "#[aldrin(schema = \"{schema_name}\")]");
+
         if self.rust_options.struct_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
@@ -256,52 +274,6 @@ impl RustGenerator<'_> {
             genln!(self, "}}");
             genln!(self);
         }
-
-        if self.options.introspection {
-            let schema_name = self.schema.name();
-
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
-            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
-            genln!(self, "        aldrin::core::introspection::Struct::builder(\"{schema_name}\", \"{name}\")");
-            for field in fields {
-                let id = field.id().value();
-                let name = field.name().value();
-                let required = field.required();
-                let field_ty = type_name(field.field_type());
-                genln!(self, "            .field({id}, \"{name}\", {required}, <{field_ty} as aldrin::core::introspection::Introspectable>::lexical_id())");
-            }
-            genln!(self, "            .finish()");
-            genln!(self, "            .into()");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
-            genln!(self, "        aldrin::core::introspection::LexicalId::custom(\"{schema_name}\", \"{name}\")");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
-            let mut types = BTreeSet::new();
-            for field in fields {
-                types.insert(format!(
-                    "aldrin::core::introspection::DynIntrospectable::new::<{}>()",
-                    type_name(field.field_type())
-                ));
-            }
-            genln!(self, "        let field_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
-            for ty in types {
-                genln!(self, "            {ty},");
-            }
-            genln!(self, "        ];");
-            genln!(self, "        types.extend(field_types);");
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
-        }
     }
 
     fn enum_def(
@@ -310,11 +282,28 @@ impl RustGenerator<'_> {
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
     ) {
+        let schema_name = self.schema.name();
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
 
-        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{})]", attrs.additional_derives());
+        let derive_introspectable =
+            if self.options.introspection && self.rust_options.introspection_if.is_none() {
+                ", aldrin::Introspectable"
+            } else {
+                ""
+            };
+
+        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{derive_introspectable}{})]", attrs.additional_derives());
+
+        if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive(aldrin::Introspectable))]");
+            }
+        }
+
+        genln!(self, "#[aldrin(schema = \"{schema_name}\")]");
+
         if self.rust_options.enum_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
@@ -336,57 +325,6 @@ impl RustGenerator<'_> {
         }
         genln!(self, "}}");
         genln!(self);
-
-        if self.options.introspection {
-            let schema_name = self.schema.name();
-
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", name);
-            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
-            genln!(self, "        aldrin::core::introspection::Enum::builder(\"{schema_name}\", \"{name}\")");
-            for var in vars {
-                let id = var.id().value();
-                let name = var.name().value();
-                if let Some(var_type) = var.variant_type() {
-                    let var_ty = type_name(var_type);
-                    genln!(self, "            .variant_with_type({id}, \"{name}\", <{var_ty} as aldrin::core::introspection::Introspectable>::lexical_id())");
-                } else {
-                    genln!(self, "            .unit_variant({id}, \"{name}\")");
-                }
-            }
-            genln!(self, "            .finish()");
-            genln!(self, "            .into()");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
-            genln!(self, "        aldrin::core::introspection::LexicalId::custom(\"{schema_name}\", \"{name}\")");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
-            let mut types = BTreeSet::new();
-            for var in vars {
-                if let Some(var_type) = var.variant_type() {
-                    types.insert(format!(
-                        "aldrin::core::introspection::DynIntrospectable::new::<{}>()",
-                        type_name(var_type)
-                    ));
-                }
-            }
-            genln!(self, "        let var_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
-            for ty in types {
-                genln!(self, "            {ty},");
-            }
-            genln!(self, "        ];");
-            genln!(self, "        types.extend(var_types);");
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
-        }
     }
 
     fn service_def(&mut self, svc: &ast::ServiceDef) {

@@ -1,15 +1,15 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -8,7 +8,7 @@
- 
- #[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize, Default)]
+@@ -9,7 +9,7 @@
+ #[derive(Debug, Clone, Default, aldrin::Serialize, aldrin::Deserialize)]
+ #[aldrin(schema = "example1")]
  #[non_exhaustive]
 -pub struct MyStruct {
 +pub struct MyStructRenamed {
      #[aldrin(id = 1, optional)]
      pub field1: Option<u32>,
  
-@@ -16,18 +16,18 @@
+@@ -17,18 +17,18 @@
      pub field2: Option<u32>,
  }
  
@@ -32,7 +32,7 @@
      #[doc(hidden)]
      field1: Option<u32>,
  
-@@ -36,7 +36,7 @@
+@@ -37,7 +37,7 @@
  
  }
  
@@ -41,7 +41,7 @@
      pub fn new() -> Self {
          Default::default()
      }
-@@ -51,8 +51,8 @@
+@@ -52,8 +52,8 @@
          self
      }
  
