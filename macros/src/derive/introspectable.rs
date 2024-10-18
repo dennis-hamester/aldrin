@@ -1,0 +1,286 @@
+use super::{ItemOptions, Options};
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::punctuated::Punctuated;
+use syn::{
+    parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Generics, Result, Token,
+    Variant,
+};
+
+pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
+    gen_introspectable(input, options)
+}
+
+pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core))?;
+    gen_introspectable(input, options)
+}
+
+fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStream> {
+    let name = &input.ident;
+    let name_str = name.to_string();
+    let krate = options.krate();
+
+    let schema = options.schema().ok_or_else(|| {
+        Error::new_spanned(
+            &input,
+            "aldrin(schema = \"...\") must be set to derive Introspectable",
+        )
+    })?;
+
+    let (layout, inner_types) = match input.data {
+        Data::Struct(data) => match data.fields {
+            Fields::Named(fields) => gen_struct(&fields.named, &name_str, &options)?,
+            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name_str, &options)?,
+            Fields::Unit => gen_struct(&Punctuated::new(), &name_str, &options)?,
+        },
+
+        Data::Enum(data) => gen_enum(&data.variants, &name_str, &options)?,
+
+        Data::Union(_) => {
+            return Err(Error::new_spanned(
+                input.ident,
+                "unions are not supported by Aldrin",
+            ))
+        }
+    };
+
+    let generics = add_trait_bounds(input.generics, &options);
+
+    let generic_lexical_ids = generics.type_params().map(|ty| {
+        let ty = &ty.ident;
+        quote! { <#ty as #krate::introspection::Introspectable>::lexical_id() }
+    });
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    Ok(quote! {
+        #[automatically_derived]
+        impl #impl_generics #krate::introspection::Introspectable for #name #ty_generics #where_clause {
+            fn layout() -> #krate::introspection::Layout {
+                #layout
+            }
+
+            fn lexical_id() -> #krate::introspection::LexicalId {
+                #krate::introspection::LexicalId::custom_generic(
+                    #schema,
+                    #name_str,
+                    &[#( #generic_lexical_ids ),*],
+                )
+            }
+
+            fn inner_types(types: &mut ::std::vec::Vec<#krate::introspection::DynIntrospectable>) {
+                #inner_types
+            }
+        }
+    })
+}
+
+fn add_trait_bounds(mut generics: Generics, options: &Options) -> Generics {
+    let krate = options.krate();
+
+    let predicates = &mut generics
+        .where_clause
+        .get_or_insert_with(|| parse_quote!(where))
+        .predicates;
+
+    if let Some(bounds) = options.intro_bounds() {
+        predicates.extend(bounds.into_iter().cloned());
+    } else {
+        for param in &generics.params {
+            if let GenericParam::Type(param) = param {
+                let ident = &param.ident;
+                predicates.push(parse_quote!(#ident: #krate::introspection::Introspectable));
+            }
+        }
+    }
+
+    generics
+}
+
+fn gen_struct(
+    fields: &Punctuated<Field, Token![,]>,
+    name: &str,
+    options: &Options,
+) -> Result<(TokenStream, TokenStream)> {
+    let krate = options.krate();
+    let schema = options.schema().unwrap();
+
+    let mut layout: Vec<TokenStream> = Vec::new();
+    let mut inner_types: Vec<TokenStream> = Vec::new();
+    let mut next_id = 0;
+
+    for (index, field) in fields.into_iter().enumerate() {
+        let (field_layout, field_inner_types, id) = gen_field(field, index, next_id, options)?;
+
+        layout.push(field_layout);
+        inner_types.push(field_inner_types);
+
+        next_id = id + 1;
+    }
+
+    let layout = quote! {
+        #krate::introspection::Struct::builder(#schema, #name)
+            #(#layout)*
+            .finish()
+            .into()
+    };
+
+    let inner_types = if fields.is_empty() {
+        TokenStream::new()
+    } else {
+        let len = fields.len();
+
+        quote! {
+            let inner_types: [#krate::introspection::DynIntrospectable; #len] = [
+                #(#inner_types),*
+            ];
+
+            types.extend(inner_types);
+        }
+    };
+
+    Ok((layout, inner_types))
+}
+
+fn gen_field(
+    field: &Field,
+    index: usize,
+    default_id: u32,
+    options: &Options,
+) -> Result<(TokenStream, TokenStream, u32)> {
+    let krate = options.krate();
+    let item_options = ItemOptions::new(&field.attrs, default_id)?;
+    let id = item_options.id();
+    let is_required = !item_options.is_optional();
+    let field_type = &field.ty;
+
+    let name = match field.ident {
+        Some(ref name) => name.to_string(),
+        None => format!("field{index}"),
+    };
+
+    let lexical_id = if is_required {
+        quote! { <#field_type as #krate::introspection::Introspectable>::lexical_id() }
+    } else {
+        quote! { <#field_type as #krate::introspection::private::OptionHelper>::lexical_id() }
+    };
+
+    let layout = quote! { .field(#id, #name, #is_required, #lexical_id) };
+
+    let inner_types = if is_required {
+        quote! { #krate::introspection::DynIntrospectable::new::<#field_type>() }
+    } else {
+        quote! {
+            <#field_type as #krate::introspection::private::OptionHelper>::dyn_introspectable()
+        }
+    };
+
+    Ok((layout, inner_types, default_id))
+}
+
+fn gen_enum(
+    variants: &Punctuated<Variant, Token![,]>,
+    name: &str,
+    options: &Options,
+) -> Result<(TokenStream, TokenStream)> {
+    let krate = options.krate();
+    let schema = options.schema().unwrap();
+
+    let mut layout: Vec<TokenStream> = Vec::new();
+    let mut inner_types: Vec<TokenStream> = Vec::new();
+    let mut next_id = 0;
+
+    for variant in variants.into_iter() {
+        let (var_layout, var_inner_types, id) = gen_variant(variant, next_id, options)?;
+
+        next_id = id + 1;
+        layout.push(var_layout);
+
+        if let Some(var_inner_types) = var_inner_types {
+            inner_types.push(var_inner_types);
+        }
+    }
+
+    let layout = quote! {
+        #krate::introspection::Enum::builder(#schema, #name)
+            #(#layout)*
+            .finish()
+            .into()
+    };
+
+    let inner_types = if inner_types.is_empty() {
+        TokenStream::new()
+    } else {
+        let len = inner_types.len();
+
+        quote! {
+            let inner_types: [#krate::introspection::DynIntrospectable; #len] = [
+                #(#inner_types),*
+            ];
+
+            types.extend(inner_types);
+        }
+    };
+
+    Ok((layout, inner_types))
+}
+
+fn gen_variant(
+    variant: &Variant,
+    default_id: u32,
+    options: &Options,
+) -> Result<(TokenStream, Option<TokenStream>, u32)> {
+    let item_options = ItemOptions::new(&variant.attrs, default_id)?;
+
+    if item_options.is_optional() {
+        return Err(Error::new_spanned(
+            variant,
+            "enum variants cannot be optional",
+        ));
+    }
+
+    let krate = options.krate();
+    let id = item_options.id();
+    let name = variant.ident.to_string();
+
+    let (layout, inner_types) = match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => {
+            (quote! { .unit_variant(#id, #name) }, None)
+        }
+
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => {
+            let var_type = &fields.unnamed[0].ty;
+
+            (
+                quote! {
+                    .variant_with_type(
+                        #id,
+                        #name,
+                        <#var_type as #krate::introspection::Introspectable>::lexical_id()
+                    )
+                },
+                Some(quote! { #krate::introspection::DynIntrospectable::new::<#var_type>() }),
+            )
+        }
+
+        Fields::Unnamed(_) => {
+            return Err(Error::new_spanned(
+                variant,
+                "tuple-like variants with more than 1 element are not supported by Aldrin",
+            ));
+        }
+
+        Fields::Unit => (quote! { .unit_variant(#id, #name) }, None),
+
+        Fields::Named(_) => {
+            return Err(Error::new_spanned(
+                variant,
+                "struct-like variants are not supported by Aldrin",
+            ));
+        }
+    };
+
+    Ok((layout, inner_types, id))
+}

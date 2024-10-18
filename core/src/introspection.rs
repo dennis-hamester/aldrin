@@ -13,6 +13,9 @@ mod struct_ty;
 mod type_id;
 mod variant;
 
+#[doc(hidden)]
+pub mod private;
+
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::TypeId;
 use crate::value_deserializer::{Deserialize, Deserializer};

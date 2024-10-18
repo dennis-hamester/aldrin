@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add derive macros for the `Serialize` and `Deserialize` traits.
+- Add derive macros for the `Serialize`, `Deserialize` and `Introspectable` traits.
 
 ### Changed
 

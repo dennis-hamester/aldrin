@@ -28,6 +28,8 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
+#[cfg(all(feature = "derive", feature = "introspection"))]
+pub use aldrin_macros::Introspectable;
 #[cfg(feature = "derive")]
 pub use aldrin_macros::{Deserialize, Serialize};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};

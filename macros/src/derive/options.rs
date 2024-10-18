@@ -5,12 +5,16 @@ pub struct Options {
     krate: Path,
     ser_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     de_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    intro_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    schema: Option<LitStr>,
 }
 
 impl Options {
     pub fn new(attrs: &[Attribute], mut krate: Path) -> Result<Self> {
         let mut ser_bounds = None;
         let mut de_bounds = None;
+        let mut intro_bounds = None;
+        let mut schema = None;
 
         for attr in attrs {
             if !attr.path().is_ident("aldrin") {
@@ -26,6 +30,7 @@ impl Options {
                     let value: LitStr = meta.value()?.parse()?;
                     ser_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
                     de_bounds = ser_bounds.clone();
+                    intro_bounds = ser_bounds.clone();
                     Ok(())
                 } else if meta.path.is_ident("ser_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
@@ -34,6 +39,13 @@ impl Options {
                 } else if meta.path.is_ident("de_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
                     de_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
+                    Ok(())
+                } else if meta.path.is_ident("intro_bounds") {
+                    let value: LitStr = meta.value()?.parse()?;
+                    intro_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
+                    Ok(())
+                } else if meta.path.is_ident("schema") {
+                    schema = meta.value()?.parse().map(Some)?;
                     Ok(())
                 } else {
                     Err(meta.error("unknown attribute"))
@@ -45,6 +57,8 @@ impl Options {
             krate,
             ser_bounds,
             de_bounds,
+            intro_bounds,
+            schema,
         })
     }
 
@@ -58,6 +72,14 @@ impl Options {
 
     pub fn de_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
         self.de_bounds.as_ref()
+    }
+
+    pub fn intro_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
+        self.intro_bounds.as_ref()
+    }
+
+    pub fn schema(&self) -> Option<&LitStr> {
+        self.schema.as_ref()
     }
 }
 
