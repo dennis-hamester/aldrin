@@ -431,3 +431,129 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     derive::gen_deserialize_from_aldrin(input)
 }
+
+#[cfg(feature = "derive")]
+/// Derive macro for the `Introspectable` trait.
+///
+/// # Container attributes
+///
+/// ## `schema`
+///
+/// Custom Aldrin types require specifying the name of the schema they are defined in.
+///
+/// ```
+/// # use aldrin_core::Introspectable;
+/// #[derive(Introspectable)]
+/// #[aldrin(schema = "my_schema")]
+/// struct MyStruct {
+///     field1: u32
+/// }
+/// ```
+///
+/// ## `crate`
+///
+/// The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
+/// crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
+/// somewhere. The default is `::aldrin_core`.
+///
+/// Note that there is also the [`IntrospectableFromAldrin`] macro, for which `crate` defaults to
+/// `::aldrin::core`. This macro is re-exported in `aldrin` as `Introspectable`.
+///
+/// ```
+/// mod my_reexports {
+///     pub use aldrin_core as my_aldrin_core;
+/// }
+///
+/// #[derive(my_reexports::my_aldrin_core::Introspectable)]
+/// #[aldrin(crate = "my_reexports::my_aldrin_core", schema = "my_schema")]
+/// struct MyStruct {
+///     field1: u32,
+/// }
+/// ```
+///
+/// ## `bounds`, `intro_bounds`
+///
+/// Per default, additional bounds `T: Introspectable` are added for each type parameter `T`. Use
+/// `intro_bounds` to override or inhibit this.
+///
+/// `bounds` is a shorthand for setting `intro_bounds` as well as `ser_bounds` and `de_bounds` for
+/// [`Serialize`] and [`Deserialize`] simultaneously.
+///
+/// The attribute's value should be a string literal containing bounds as they would appear in a
+/// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
+/// attribute to an empty string will inhibit the default bounds.
+///
+/// # Field and variant attributes
+///
+/// ## `id`
+///
+/// Use `#[aldrin(id = ...)]` to override the automatically defined id for a field or variant.
+///
+/// Default ids start at 0 for the first field or variant and then increment by 1 for each
+/// subsequent field or variant.
+///
+/// ```
+/// # use aldrin_core::Introspectable;
+/// #[derive(Introspectable)]
+/// #[aldrin(schema = "my_schema")]
+/// struct MyStruct {
+///     field1: u32, // id = 0
+///
+///     #[aldrin(id = 5)]
+///     field2: u32, // id = 5
+///
+///     field3: u32, // id = 6
+/// }
+/// ```
+///
+/// ```
+/// # use aldrin_core::Introspectable;
+/// #[derive(Introspectable)]
+/// #[aldrin(schema = "my_schema")]
+/// enum MyEnum {
+///     Variant1, // id = 0
+///
+///     #[aldrin(id = 5)]
+///     Variant2, // id = 5
+///
+///     Variant3, // id = 6
+/// }
+/// ```
+///
+/// ## `optional`
+///
+/// Use `#[aldrin(optional)]` to mark fields of a struct as optional. They must be of an `Option<T>`
+/// type.
+///
+/// ```
+/// # use aldrin_core::Introspectable;
+/// #[derive(Introspectable)]
+/// #[aldrin(schema = "my_schema")]
+/// struct MyStruct {
+///     required_field_1: i32,
+///     required_field_2: Option<i32>,
+///
+///     #[aldrin(optional)]
+///     optional_field: Option<i32>,
+/// }
+/// ```
+#[manyhow::manyhow]
+#[proc_macro_derive(Introspectable, attributes(aldrin))]
+pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_introspectable_from_core(input)
+}
+
+#[cfg(feature = "derive")]
+/// Derive macro for the `Introspectable` trait.
+///
+/// See the documentation of the [`Introspectable`] derive macro in `aldrin_macros` for more
+/// information.
+///
+/// This is the same as [`Introspectable`], except that the `crate` defaults to `::aldrin::core`.
+#[manyhow::manyhow]
+#[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
+pub fn introspectable_from_aldrin(
+    input: syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_introspectable_from_aldrin(input)
+}
