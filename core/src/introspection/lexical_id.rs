@@ -81,11 +81,19 @@ impl LexicalId {
     }
 
     pub fn custom(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
-        Self::fully_qualified(Self::NAMESPACE_CUSTOM, schema, name)
+        Self::fully_qualified(Self::NAMESPACE_CUSTOM, schema, name, &[])
+    }
+
+    pub fn custom_generic<const N: usize>(
+        schema: impl AsRef<str>,
+        name: impl AsRef<str>,
+        types: &[Self; N],
+    ) -> Self {
+        Self::fully_qualified(Self::NAMESPACE_CUSTOM, schema, name, types)
     }
 
     pub fn service(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
-        Self::fully_qualified(Self::NAMESPACE_SERVICE, schema, name)
+        Self::fully_qualified(Self::NAMESPACE_SERVICE, schema, name, &[])
     }
 
     fn new_v5(ns: Uuid, ty: Uuid) -> Self {
@@ -99,8 +107,30 @@ impl LexicalId {
         Self(Uuid::new_v5(&ns, &name))
     }
 
-    fn fully_qualified(ns: Uuid, schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
-        let fully_qualified = format!("{}::{}", schema.as_ref(), name.as_ref());
+    fn fully_qualified<const N: usize>(
+        ns: Uuid,
+        schema: impl AsRef<str>,
+        name: impl AsRef<str>,
+        types: &[Self; N],
+    ) -> Self {
+        let mut fully_qualified = format!("{}::{}", schema.as_ref(), name.as_ref());
+
+        if N > 0 {
+            fully_qualified.push('<');
+        }
+
+        for (i, ty) in types.iter().enumerate() {
+            if i > 0 {
+                fully_qualified.push(',');
+            }
+
+            fully_qualified.push_str(&ty.to_string());
+        }
+
+        if N > 0 {
+            fully_qualified.push('>');
+        }
+
         Self(Uuid::new_v5(&ns, fully_qualified.as_bytes()))
     }
 }

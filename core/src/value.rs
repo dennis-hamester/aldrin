@@ -6,7 +6,7 @@ use crate::error::{DeserializeError, SerializeError};
 #[cfg(feature = "introspection")]
 use crate::introspection::{
     BuiltInType, DynIntrospectable, Introspectable, KeyTypeOf, Layout, LexicalId, MapType,
-    ResultType,
+    ResultType, Struct,
 };
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -1181,4 +1181,99 @@ impl Deserialize for Infallible {
     fn deserialize(_deserializer: Deserializer) -> Result<Self, DeserializeError> {
         Err(DeserializeError::UnexpectedValue)
     }
+}
+
+macro_rules! tuple_impls {
+    { $len:literal, $( ($gen:ident, $idx:tt) ),+ } => {
+        impl<$( $gen ),+> Serialize for ($( $gen, )+)
+        where
+            $( $gen: Serialize ),+
+        {
+            fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+                let mut serializer = serializer.serialize_struct($len)?;
+
+                $(
+                    serializer.serialize_field($idx as u32, &self.$idx)?;
+                )+
+
+                serializer.finish()
+            }
+        }
+
+        impl<$( $gen ),+> Deserialize for ($( $gen, )+)
+        where
+            $( $gen: Deserialize ),+
+        {
+            fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+                let mut deserializer = deserializer.deserialize_struct()?;
+
+                $(
+                    #[allow(non_snake_case)]
+                    let mut $gen = None;
+                )+
+
+                while deserializer.has_more_fields() {
+                    let deserializer = deserializer.deserialize_field()?;
+
+                    match deserializer.id() {
+                        $( $idx => $gen = deserializer.deserialize().map(Some)?, )+
+                        _ => deserializer.skip()?,
+                    }
+                }
+
+                deserializer.finish_with(|| {
+                    Ok(($( $gen.ok_or(DeserializeError::InvalidSerialization)?, )+))
+                })
+            }
+        }
+
+        #[cfg(feature = "introspection")]
+        impl<$( $gen ),+> Introspectable for ($( $gen, )+)
+        where
+            $( $gen: Introspectable ),+
+        {
+            fn layout() -> Layout {
+                Struct::builder("std", concat!("Tuple", $len))
+                    $( .field($idx, concat!("field", $idx), true, $gen::lexical_id()) )+
+                    .finish()
+                    .into()
+            }
+
+            fn lexical_id() -> LexicalId {
+                LexicalId::custom_generic(
+                    "std",
+                    concat!("Tuple", $len),
+                    &[$( $gen::lexical_id() ),+],
+                )
+            }
+
+            fn inner_types(types: &mut Vec<DynIntrospectable>) {
+                let inner_types: [DynIntrospectable; $len] = [
+                    $( DynIntrospectable::new::<$gen>() ),+
+                ];
+                types.extend(inner_types);
+            }
+        }
+    };
+}
+
+tuple_impls! {  1, (T0, 0) }
+tuple_impls! {  2, (T0, 0), (T1, 1) }
+tuple_impls! {  3, (T0, 0), (T1, 1), (T2, 2) }
+tuple_impls! {  4, (T0, 0), (T1, 1), (T2, 2), (T3, 3) }
+tuple_impls! {  5, (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4) }
+tuple_impls! {  6, (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5) }
+tuple_impls! {  7, (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6) }
+tuple_impls! {  8, (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6), (T7, 7) }
+tuple_impls! {  9, (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6), (T7, 7), (T8, 8) }
+tuple_impls! { 10,
+    (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6), (T7, 7), (T8, 8), (T9, 9)
+}
+tuple_impls! { 11,
+    (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6), (T7, 7), (T8, 8), (T9, 9),
+    (T10, 10)
+}
+tuple_impls! { 12,
+    (T0, 0), (T1, 1), (T2, 2), (T3, 3), (T4, 4), (T5, 5), (T6, 6), (T7, 7), (T8, 8),
+    (T9, 9), (T10, 10), (T11, 11)
 }
