@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Implement `Serialize` and `Deserialize` for tuples up to size 12.
+
 ### Changed
 
 - The introspection system introduced in 0.7.0 was completely redone and is not backwards
