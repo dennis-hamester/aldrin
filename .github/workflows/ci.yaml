@@ -66,6 +66,11 @@ jobs:
     with:
       component: example-broker
 
+  ci-example-downloader:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-downloader
+
   ci-example-echo:
     uses: ./.github/workflows/check-component.yaml
     with:
