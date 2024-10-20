@@ -81,12 +81,12 @@ pub mod low_level;
 pub mod private;
 
 pub use aldrin_core as core;
-#[cfg(feature = "codegen")]
-pub use aldrin_macros::generate;
-#[cfg(all(feature = "derive", feature = "introspection"))]
+#[cfg(all(feature = "codegen", feature = "introspection"))]
 pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
-#[cfg(feature = "derive")]
-pub use aldrin_macros::{DeserializeFromAldrin as Deserialize, SerializeFromAldrin as Serialize};
+#[cfg(feature = "codegen")]
+pub use aldrin_macros::{
+    generate, DeserializeFromAldrin as Deserialize, SerializeFromAldrin as Serialize,
+};
 pub use bus_listener::BusListener;
 pub use channel::{
     PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,

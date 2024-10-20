@@ -1,25 +1,26 @@
 //! Aldrin macros
 //!
-//! The macros provided by this crate depend on the enabled Cargo features. All macros are also
-//! available as re-exports in other Aldrin crates. It is generally advised to use those re-exports
-//! instead of depending directly on this crate.
+//! The macros in this crate are not generally meant to be used directly, but through re-exports in
+//! other crates. The follow overview lists all macros and where they are re-exported.
 //!
-//! # `generate!()`
+//! - [`generate`](generate!): Re-exported in crate `aldrin`
+//! - [`Serialize`]: Re-exported in crate `aldrin` and `aldrin-core`
+//! - [`Deserialize`]: Re-exported in crate `aldrin` and `aldrin-core`
+//! - [`Introspectable`]: Re-exported in crate `aldrin` and `aldrin-core`
 //!
-//! - Cargo feature: `codegen`
-//! - Re-exported in crate: `aldrin`
+//! Note that the derive macros come in 2 variants, depending on where they are
+//! re-exported. E.g. [`Serialize`] is re-exported in `aldrin-core`, but [`SerializeFromAldrin`] is
+//! re-exported in `aldrin` as `Serialize`. This was done because derive macros, when used from
+//! `aldrin`, require slightly different behavior.
 
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 
 extern crate proc_macro;
 
-#[cfg(feature = "codegen")]
 mod codegen;
-#[cfg(feature = "derive")]
 mod derive;
 
-#[cfg(feature = "codegen")]
 /// Generates code from an Aldrin schema.
 ///
 /// This macro provides a front-end to the Aldrin code generator. It is an alternative to running
@@ -255,7 +256,6 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
     codegen::generate(args, emitter)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Serialize` trait.
 ///
 /// Note: this documentation also applies to the [`Deserialize`] derive macro.
@@ -398,7 +398,6 @@ pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::
     derive::gen_serialize_from_core(input)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Serialize` trait.
 ///
 /// See the documentation of the [`Serialize`] derive macro in `aldrin_macros` for more information.
@@ -410,7 +409,6 @@ pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2
     derive::gen_serialize_from_aldrin(input)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Deserialize` trait.
 ///
 /// See the documentation of the [`Serialize`] derive macro, which also applies for this macro.
@@ -420,7 +418,6 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
     derive::gen_deserialize_from_core(input)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Deserialize` trait.
 ///
 /// See the documentation of the [`Serialize`] derive macro in `aldrin_macros` for more information.
@@ -432,7 +429,6 @@ pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
     derive::gen_deserialize_from_aldrin(input)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Introspectable` trait.
 ///
 /// # Container attributes
@@ -543,7 +539,6 @@ pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_mac
     derive::gen_introspectable_from_core(input)
 }
 
-#[cfg(feature = "derive")]
 /// Derive macro for the `Introspectable` trait.
 ///
 /// See the documentation of the [`Introspectable`] derive macro in `aldrin_macros` for more
