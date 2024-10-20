@@ -6,6 +6,7 @@
 //! ## Procedural macros
 //!
 //! - [`generate`](generate!): Re-exported in crate `aldrin`
+//! - [`service`](service!): Re-exported in crate `aldrin`
 //!
 //! ## Derive macros
 //!
@@ -163,6 +164,7 @@ extern crate proc_macro;
 
 mod codegen;
 mod derive;
+mod service;
 
 /// Generates code from an Aldrin schema.
 ///
@@ -397,6 +399,144 @@ mod derive;
 #[proc_macro]
 pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow::Result {
     codegen::generate(args, emitter)
+}
+
+/// Defines a service and proxy type.
+///
+/// The form this macro takes closely resembles that of services in Aldrin schema, but it uses
+/// actual Rust expressions and types.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// service! {
+///     pub service Echo {
+///         uuid = ServiceUuid(uuid!("ee98534d-345a-4399-a656-07fd9c39a96e"));
+///         version = 1;
+///
+///         fn echo @ 1 {
+///             args = String;
+///             ok = String;
+///             err = Error;
+///         }
+///
+///         fn echo_all @ 2 {
+///             args = String;
+///             err = Error;
+///         }
+///
+///         event echoed_to_all @ 1 = String;
+///     }
+/// }
+///
+/// #[derive(Serialize, Deserialize, AsSerializeArg)]
+/// pub enum Error {
+///     EmptyString,
+/// }
+/// ```
+///
+/// # Overriding the path to the `aldrin` crate
+///
+/// Use the `#[aldrin(crate = "...")]` attribute to override the path to the `aldrin` crate.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// mod my_reexports {
+///     pub use aldrin as my_aldrin;
+/// }
+///
+/// service! {
+///     #[aldrin(crate = "my_reexports::my_aldrin")]
+///     pub service Ping {
+///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
+///         version = 1;
+///     }
+/// }
+/// ```
+///
+/// # Generating only client or server code
+///
+/// Client and server code generation can be disabled individually with the `#[aldrin(no_client)]`
+/// and `#[aldrin(no_server)]` attributes.
+///
+/// The following examples uses `no_client` and thus no `PingProxy` type will be generated.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// service! {
+///     #[aldrin(no_client)]
+///     pub service Ping {
+///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
+///         version = 1;
+///     }
+/// }
+/// ```
+///
+/// # Suppressing `#[non_exhaustive]`
+///
+/// The 2 auxiliary enums for functions and events are normally marked as `#[non_exhaustive]`. This
+/// can be suppressed by the attributes `#[aldrin(no_function_non_exhaustive)]` and
+/// `#[aldrin(no_event_non_exhaustive)]`.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// service! {
+///     #[aldrin(no_function_non_exhaustive, no_event_non_exhaustive)]
+///     pub service Ping {
+///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
+///         version = 1;
+///
+///         fn ping @ 1;
+///         event pong @ 1;
+///     }
+/// }
+/// ```
+///
+/// # Introspection
+///
+/// The `Introspectable` trait can be implemented automatically by specifying the
+/// `#[aldrin(introspection)]` attribute. It also requires the `#[aldrin(schema = "...")]` attribute
+/// and all referenced types must be `Introspectable`.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// service! {
+///     #[aldrin(schema = "ping", introspection)]
+///     pub service Ping {
+///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
+///         version = 1;
+///     }
+/// }
+/// ```
+///
+/// It is also possible to implement `Introspectable` conditionally depending on some Cargo feature
+/// with the `#[aldrin(introspection_if = "...")]` attribute.
+///
+/// ```
+/// # use aldrin::core::ServiceUuid;
+/// # use aldrin::private::uuid::uuid;
+/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// service! {
+///     #[aldrin(schema = "ping", introspection_if = "introspection")]
+///     pub service Ping {
+///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
+///         version = 1;
+///     }
+/// }
+/// ```
+#[manyhow::manyhow]
+#[proc_macro]
+pub fn service(svc: service::Service) -> proc_macro2::TokenStream {
+    svc.generate()
 }
 
 /// Derive macro for the `Serialize` trait.

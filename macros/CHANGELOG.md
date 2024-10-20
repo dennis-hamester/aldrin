@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add derive macros for the `Serialize`, `Deserialize` and `Introspectable` traits.
 - Add derive macros for the `SerializeKey`, `DeserializeKey` and `KeyTypeOf` traits.
 - Add a derive macro for the `AsSerializeArg` trait.
+- Add the macro `service!()` which can generate client and server code based on a form that
+  resembles Aldrin schema.
 
 ### Changed
 

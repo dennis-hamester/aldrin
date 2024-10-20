@@ -125,6 +125,7 @@ dependencies = [
  "aldrin-codegen",
  "aldrin-core",
  "aldrin-parser",
+ "heck",
  "manyhow",
  "proc-macro2",
  "quote",
