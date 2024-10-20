@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump MSRV to 1.71.1.
+- All macros are now always available and all Cargo features have been removed.
 
 ## [0.8.0] - 2024-09-22
 

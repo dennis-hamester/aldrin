@@ -46,7 +46,6 @@ optional = true
 version = "0.8.0"
 path = "../macros"
 default-features = false
-features = ["derive"]
 
 [dependencies.arbitrary]
 optional = true
