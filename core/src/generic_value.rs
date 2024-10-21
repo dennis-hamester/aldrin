@@ -118,8 +118,10 @@ impl Value {
 }
 
 impl Serialize for Value {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        match self {
+    type Borrowed<'a> = &'a Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        match val {
             Self::None => serializer.serialize_none(),
             Self::Some(value) => serializer.serialize_some(value)?,
             Self::Bool(value) => serializer.serialize_bool(*value),
@@ -266,10 +268,12 @@ impl Introspectable for Value {
 pub struct Struct(pub HashMap<u32, Value>);
 
 impl Serialize for Struct {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(self.0.len())?;
+    type Borrowed<'a> = &'a Self;
 
-        for (&id, field) in &self.0 {
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        let mut serializer = serializer.serialize_struct(val.0.len())?;
+
+        for (&id, field) in &val.0 {
             serializer.serialize_field(id, field)?;
         }
 
@@ -312,8 +316,10 @@ impl Enum {
 }
 
 impl Serialize for Enum {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_enum(self.variant, &self.value)
+    type Borrowed<'a> = &'a Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_enum(val.variant, &val.value)
     }
 }
 

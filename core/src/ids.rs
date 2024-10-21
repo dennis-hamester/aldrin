@@ -47,8 +47,10 @@ impl ObjectId {
 }
 
 impl Serialize for ObjectId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_object_id(*self);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_object_id(val);
         Ok(())
     }
 }
@@ -110,8 +112,10 @@ impl ObjectUuid {
 }
 
 impl Serialize for ObjectUuid {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }
@@ -200,8 +204,10 @@ impl ObjectCookie {
 }
 
 impl Serialize for ObjectCookie {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }
@@ -291,8 +297,10 @@ impl ServiceId {
 }
 
 impl Serialize for ServiceId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_service_id(*self);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_service_id(val);
         Ok(())
     }
 }
@@ -354,8 +362,10 @@ impl ServiceUuid {
 }
 
 impl Serialize for ServiceUuid {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }
@@ -444,8 +454,10 @@ impl ServiceCookie {
 }
 
 impl Serialize for ServiceCookie {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }
@@ -524,8 +536,10 @@ impl ChannelCookie {
 }
 
 impl Serialize for ChannelCookie {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }
@@ -643,8 +657,10 @@ impl TypeId {
 }
 
 impl Serialize for TypeId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
+    type Borrowed<'a> = Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(val.0);
         Ok(())
     }
 }

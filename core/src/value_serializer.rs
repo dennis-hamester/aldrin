@@ -11,8 +11,14 @@ use std::marker::PhantomData;
 use uuid::Uuid;
 
 pub trait Serialize {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError>;
+    type Borrowed<'a>
+    where
+        Self: 'a;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError>;
 }
+
+pub type SerializeAs<'a, T> = <T as Serialize>::Borrowed<'a>;
 
 #[derive(Debug)]
 pub struct Serializer<'a> {

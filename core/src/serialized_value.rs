@@ -108,8 +108,10 @@ impl PartialEq<SerializedValue> for [u8] {
 }
 
 impl Serialize for SerializedValue {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (**self).serialize(serializer)
+    type Borrowed<'a> = &'a SerializedValueSlice;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        (*val).serialize(serializer)
     }
 }
 
@@ -219,8 +221,10 @@ impl PartialEq<SerializedValueSlice> for [u8] {
 }
 
 impl Serialize for SerializedValueSlice {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.copy_from_serialized_value(self);
+    type Borrowed<'a> = &'a Self;
+
+    fn serialize(val: Self::Borrowed<'_>, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.copy_from_serialized_value(val);
         Ok(())
     }
 }
