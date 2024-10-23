@@ -97,6 +97,12 @@ impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &mut T {
     }
 }
 
+impl<T: KeyTypeOf + ?Sized> KeyTypeOf for Box<T> {
+    fn key_type_of() -> KeyType {
+        T::key_type_of()
+    }
+}
+
 impl KeyTypeOf for u8 {
     fn key_type_of() -> KeyType {
         KeyType::U8
