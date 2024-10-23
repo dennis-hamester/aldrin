@@ -6,7 +6,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use bytes::BytesMut;
 use std::borrow::Borrow;
 use std::fmt;
@@ -121,6 +121,17 @@ impl Deserialize for SerializedValue {
     }
 }
 
+impl AsSerializeArg for SerializedValue {
+    type SerializeArg<'a> = &'a SerializedValueSlice;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for SerializedValue {
     fn layout() -> Layout {
@@ -222,6 +233,17 @@ impl Serialize for SerializedValueSlice {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.copy_from_serialized_value(self);
         Ok(())
+    }
+}
+
+impl AsSerializeArg for SerializedValueSlice {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 

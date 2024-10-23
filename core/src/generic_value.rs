@@ -4,7 +4,7 @@ use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
@@ -243,6 +243,17 @@ impl Deserialize for Value {
     }
 }
 
+impl AsSerializeArg for Value {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for Value {
     fn layout() -> Layout {
@@ -293,6 +304,17 @@ impl Deserialize for Struct {
     }
 }
 
+impl AsSerializeArg for Struct {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[cfg_attr(
@@ -323,5 +345,16 @@ impl Deserialize for Enum {
         let variant = deserializer.variant();
         let value = deserializer.deserialize()?;
         Ok(Self::new(variant, value))
+    }
+}
+
+impl AsSerializeArg for Enum {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }

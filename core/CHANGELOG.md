@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `Serialize` and `Deserialize` for tuples up to size 12.
 - `SerializeKey`, `DeserializeKey` and `KeyTypeOf` are now implemented for `ObjectUuid`,
   `ObjectCookie`, `ServiceUuid`, `ServiceCookie`, `ChannelCookie`, `TypeId` and `LexicalId`.
+- Add the trait `AsSerializeArg` and helper type alias `SerializeArg`. The trait establishes a
+  mapping from serializable types such as `String` to types which are more convenient to pass as
+  arguments for serialization such as `&str`. It's expected (but not enforced) that all types, which
+  implement `Serialize`, also implement `AsSerializeArg`.
 
 ### Changed
 

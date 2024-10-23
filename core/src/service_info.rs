@@ -4,7 +4,7 @@ mod test_old1;
 use crate::error::{DeserializeError, SerializeError};
 use crate::ids::TypeId;
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -100,6 +100,17 @@ impl Deserialize for ServiceInfo {
                 subscribe_all,
             })
         })
+    }
+}
+
+impl AsSerializeArg for ServiceInfo {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 

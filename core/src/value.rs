@@ -10,7 +10,7 @@ use crate::introspection::{
 };
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::borrow::{Borrow, Cow};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
@@ -148,6 +148,17 @@ impl Deserialize for Bytes {
     }
 }
 
+impl AsSerializeArg for Bytes {
+    type SerializeArg<'a> = &'a [u8];
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for Bytes {
     fn layout() -> Layout {
@@ -232,6 +243,17 @@ impl Serialize for ByteSlice {
     }
 }
 
+impl AsSerializeArg for ByteSlice {
+    type SerializeArg<'a> = &'a [u8];
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for ByteSlice {
     fn layout() -> Layout {
@@ -261,6 +283,20 @@ impl<T: Serialize + ?Sized> Serialize for &T {
     }
 }
 
+impl<T: AsSerializeArg + ?Sized> AsSerializeArg for &T {
+    type SerializeArg<'a>
+        = T::SerializeArg<'a>
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        (**self).as_serialize_arg()
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for &T {
     fn layout() -> Layout {
@@ -279,6 +315,20 @@ impl<T: Introspectable + ?Sized> Introspectable for &T {
 impl<T: Serialize + ?Sized> Serialize for &mut T {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         (**self).serialize(serializer)
+    }
+}
+
+impl<T: AsSerializeArg + ?Sized> AsSerializeArg for &mut T {
+    type SerializeArg<'a>
+        = T::SerializeArg<'a>
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        (**self).as_serialize_arg()
     }
 }
 
@@ -309,6 +359,20 @@ impl<T: Deserialize> Deserialize for Box<T> {
     }
 }
 
+impl<T: AsSerializeArg + ?Sized> AsSerializeArg for Box<T> {
+    type SerializeArg<'a>
+        = T::SerializeArg<'a>
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        (**self).as_serialize_arg()
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
     fn layout() -> Layout {
@@ -334,6 +398,16 @@ impl Serialize for () {
 impl Deserialize for () {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_none()
+    }
+}
+
+impl AsSerializeArg for () {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
     }
 }
 
@@ -367,6 +441,20 @@ impl<T: Deserialize> Deserialize for Option<T> {
     }
 }
 
+impl<T: AsSerializeArg> AsSerializeArg for Option<T> {
+    type SerializeArg<'a>
+        = Option<T::SerializeArg<'a>>
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self.as_ref().map(AsSerializeArg::as_serialize_arg)
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for Option<T> {
     fn layout() -> Layout {
@@ -392,6 +480,17 @@ impl Serialize for bool {
 impl Deserialize for bool {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_bool()
+    }
+}
+
+impl AsSerializeArg for bool {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -421,6 +520,17 @@ impl Deserialize for u8 {
     }
 }
 
+impl AsSerializeArg for u8 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for u8 {
     fn layout() -> Layout {
@@ -444,6 +554,17 @@ impl Serialize for i8 {
 impl Deserialize for i8 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i8()
+    }
+}
+
+impl AsSerializeArg for i8 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -473,6 +594,17 @@ impl Deserialize for u16 {
     }
 }
 
+impl AsSerializeArg for u16 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for u16 {
     fn layout() -> Layout {
@@ -496,6 +628,17 @@ impl Serialize for i16 {
 impl Deserialize for i16 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i16()
+    }
+}
+
+impl AsSerializeArg for i16 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -525,6 +668,17 @@ impl Deserialize for u32 {
     }
 }
 
+impl AsSerializeArg for u32 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for u32 {
     fn layout() -> Layout {
@@ -548,6 +702,17 @@ impl Serialize for i32 {
 impl Deserialize for i32 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i32()
+    }
+}
+
+impl AsSerializeArg for i32 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -577,6 +742,17 @@ impl Deserialize for u64 {
     }
 }
 
+impl AsSerializeArg for u64 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for u64 {
     fn layout() -> Layout {
@@ -600,6 +776,17 @@ impl Serialize for i64 {
 impl Deserialize for i64 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_i64()
+    }
+}
+
+impl AsSerializeArg for i64 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -629,6 +816,17 @@ impl Deserialize for f32 {
     }
 }
 
+impl AsSerializeArg for f32 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for f32 {
     fn layout() -> Layout {
@@ -655,6 +853,17 @@ impl Deserialize for f64 {
     }
 }
 
+impl AsSerializeArg for f64 {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for f64 {
     fn layout() -> Layout {
@@ -671,6 +880,17 @@ impl Introspectable for f64 {
 impl Serialize for str {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
+    }
+}
+
+impl AsSerializeArg for str {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -696,6 +916,17 @@ impl Serialize for String {
 impl Deserialize for String {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_string()
+    }
+}
+
+impl AsSerializeArg for String {
+    type SerializeArg<'a> = &'a str;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -725,6 +956,17 @@ impl Deserialize for Uuid {
     }
 }
 
+impl AsSerializeArg for Uuid {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for Uuid {
     fn layout() -> Layout {
@@ -747,6 +989,20 @@ impl<T: Serialize> Serialize for Vec<T> {
 impl<T: Deserialize> Deserialize for Vec<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new()
+    }
+}
+
+impl<T: Serialize> AsSerializeArg for Vec<T> {
+    type SerializeArg<'a>
+        = &'a [T]
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -777,6 +1033,20 @@ impl<T: Deserialize> Deserialize for VecDeque<T> {
     }
 }
 
+impl<T: Serialize> AsSerializeArg for VecDeque<T> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for VecDeque<T> {
     fn layout() -> Layout {
@@ -804,6 +1074,20 @@ impl<T: Deserialize> Deserialize for LinkedList<T> {
     }
 }
 
+impl<T: Serialize> AsSerializeArg for LinkedList<T> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for LinkedList<T> {
     fn layout() -> Layout {
@@ -822,6 +1106,20 @@ impl<T: Introspectable> Introspectable for LinkedList<T> {
 impl<T: Serialize> Serialize for [T] {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_vec_iter(self)
+    }
+}
+
+impl<T: Serialize> AsSerializeArg for [T] {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -896,6 +1194,20 @@ impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
     }
 }
 
+impl<T: Serialize, const N: usize> AsSerializeArg for [T; N] {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
     fn layout() -> Layout {
@@ -922,6 +1234,17 @@ impl Deserialize for bytes::Bytes {
         deserializer
             .deserialize_bytes_to_vec()
             .map(bytes::Bytes::from)
+    }
+}
+
+impl AsSerializeArg for bytes::Bytes {
+    type SerializeArg<'a> = &'a [u8];
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -952,6 +1275,17 @@ impl Deserialize for bytes::BytesMut {
     }
 }
 
+impl AsSerializeArg for bytes::BytesMut {
+    type SerializeArg<'a> = &'a [u8];
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for bytes::BytesMut {
     fn layout() -> Layout {
@@ -979,6 +1313,20 @@ where
 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
+    }
+}
+
+impl<K: SerializeKey, V: Serialize, S> AsSerializeArg for HashMap<K, V, S> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -1013,6 +1361,20 @@ impl<K: DeserializeKey + Ord, V: Deserialize> Deserialize for BTreeMap<K, V> {
     }
 }
 
+impl<K: SerializeKey, V: Serialize> AsSerializeArg for BTreeMap<K, V> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
     fn layout() -> Layout {
@@ -1044,6 +1406,20 @@ where
     }
 }
 
+impl<T: SerializeKey, S> AsSerializeArg for HashSet<T, S> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: KeyTypeOf, S> Introspectable for HashSet<T, S> {
     fn layout() -> Layout {
@@ -1066,6 +1442,20 @@ impl<T: SerializeKey> Serialize for BTreeSet<T> {
 impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
+    }
+}
+
+impl<T: SerializeKey> AsSerializeArg for BTreeSet<T> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -1101,6 +1491,23 @@ where
 {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         T::Owned::deserialize(deserializer).map(Self::Owned)
+    }
+}
+
+impl<'a, T> AsSerializeArg for Cow<'a, T>
+where
+    T: AsSerializeArg + ToOwned + ?Sized + 'a,
+{
+    type SerializeArg<'b>
+        = T::SerializeArg<'b>
+    where
+        Self: 'b;
+
+    fn as_serialize_arg<'b>(&'b self) -> Self::SerializeArg<'b>
+    where
+        Self: 'b,
+    {
+        self.as_ref().as_serialize_arg()
     }
 }
 
@@ -1155,6 +1562,22 @@ where
     }
 }
 
+impl<T: AsSerializeArg, E: AsSerializeArg> AsSerializeArg for Result<T, E> {
+    type SerializeArg<'a>
+        = Result<T::SerializeArg<'a>, E::SerializeArg<'a>>
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self.as_ref()
+            .map(T::as_serialize_arg)
+            .map_err(E::as_serialize_arg)
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, E: Introspectable> Introspectable for Result<T, E> {
     fn layout() -> Layout {
@@ -1180,6 +1603,17 @@ impl Serialize for Infallible {
 impl Deserialize for Infallible {
     fn deserialize(_deserializer: Deserializer) -> Result<Self, DeserializeError> {
         Err(DeserializeError::UnexpectedValue)
+    }
+}
+
+impl AsSerializeArg for Infallible {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -1224,6 +1658,23 @@ macro_rules! tuple_impls {
                 deserializer.finish_with(|| {
                     Ok(($( $gen.ok_or(DeserializeError::InvalidSerialization)?, )+))
                 })
+            }
+        }
+
+        impl<$( $gen ),+> AsSerializeArg for ($( $gen, )+)
+        where
+            $( $gen: AsSerializeArg ),+
+        {
+            type SerializeArg<'a>
+                = ($( $gen::SerializeArg<'a>, )+)
+            where
+                Self: 'a;
+
+            fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+            where
+                Self: 'a,
+            {
+                ($( self.$idx.as_serialize_arg(), )+)
             }
         }
 

@@ -51,8 +51,8 @@ pub use value_deserializer::{
     FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
 };
 pub use value_serializer::{
-    BytesSerializer, MapSerializer, Serialize, Serializer, SetSerializer, StructSerializer,
-    VecSerializer,
+    AsSerializeArg, BytesSerializer, MapSerializer, Serialize, SerializeArg, Serializer,
+    SetSerializer, StructSerializer, VecSerializer,
 };
 
 const MAX_VALUE_DEPTH: u8 = 32;

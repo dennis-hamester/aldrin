@@ -6,7 +6,7 @@ use crate::introspection::{
 };
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use std::fmt;
 use std::str::FromStr;
 use uuid::{Error as UuidError, Uuid};
@@ -60,6 +60,17 @@ impl Serialize for ObjectId {
 impl Deserialize for ObjectId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_object_id()
+    }
+}
+
+impl AsSerializeArg for ObjectId {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -123,6 +134,17 @@ impl Serialize for ObjectUuid {
 impl Deserialize for ObjectUuid {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl AsSerializeArg for ObjectUuid {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -234,6 +256,17 @@ impl Serialize for ObjectCookie {
 impl Deserialize for ObjectCookie {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl AsSerializeArg for ObjectCookie {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -349,6 +382,17 @@ impl Deserialize for ServiceId {
     }
 }
 
+impl AsSerializeArg for ServiceId {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for ServiceId {
     fn layout() -> Layout {
@@ -409,6 +453,17 @@ impl Serialize for ServiceUuid {
 impl Deserialize for ServiceUuid {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl AsSerializeArg for ServiceUuid {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -523,6 +578,17 @@ impl Deserialize for ServiceCookie {
     }
 }
 
+impl AsSerializeArg for ServiceCookie {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for ServiceCookie {
     fn layout() -> Layout {
@@ -621,6 +687,17 @@ impl Serialize for ChannelCookie {
 impl Deserialize for ChannelCookie {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl AsSerializeArg for ChannelCookie {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 
@@ -761,6 +838,17 @@ impl Serialize for TypeId {
 impl Deserialize for TypeId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl AsSerializeArg for TypeId {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 

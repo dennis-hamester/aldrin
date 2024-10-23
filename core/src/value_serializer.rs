@@ -14,6 +14,18 @@ pub trait Serialize {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError>;
 }
 
+pub trait AsSerializeArg {
+    type SerializeArg<'a>: Serialize
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a;
+}
+
+pub type SerializeArg<'a, T> = <T as AsSerializeArg>::SerializeArg<'a>;
+
 #[derive(Debug)]
 pub struct Serializer<'a> {
     buf: &'a mut BytesMut,

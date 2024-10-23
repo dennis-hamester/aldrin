@@ -5,7 +5,7 @@ use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeser
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -67,6 +67,17 @@ impl Deserialize for ConnectData {
         }
 
         deserializer.finish(Self { user })
+    }
+}
+
+impl AsSerializeArg for ConnectData {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
