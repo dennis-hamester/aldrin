@@ -173,7 +173,7 @@ impl RustGenerator<'_> {
                 ""
             };
 
-        genln!(self, "#[derive(Debug, Clone{derive_default}, aldrin::Serialize, aldrin::Deserialize{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone{derive_default}, aldrin::Serialize, aldrin::Deserialize, aldrin::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -294,7 +294,7 @@ impl RustGenerator<'_> {
                 ""
             };
 
-        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize, aldrin::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
