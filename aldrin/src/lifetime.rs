@@ -7,7 +7,7 @@ use crate::core::introspection::{
     BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
 };
 use crate::core::{
-    BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
+    AsSerializeArg, BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
     DeserializeError, Deserializer, ObjectId, ObjectUuid, Serialize, SerializeError, Serializer,
 };
 use crate::error::Error;
@@ -106,6 +106,17 @@ impl Serialize for LifetimeScope {
     }
 }
 
+impl AsSerializeArg for LifetimeScope {
+    type SerializeArg<'a> = &'a Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
+    }
+}
+
 #[cfg(feature = "introspection")]
 impl Introspectable for LifetimeScope {
     fn layout() -> Layout {
@@ -155,6 +166,17 @@ impl Serialize for LifetimeId {
 impl Deserialize for LifetimeId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         ObjectId::deserialize(deserializer).map(Self)
+    }
+}
+
+impl AsSerializeArg for LifetimeId {
+    type SerializeArg<'a> = Self;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        *self
     }
 }
 

@@ -7,8 +7,8 @@ use crate::core::introspection::{
     BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
 };
 use crate::core::{
-    ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer, Serialize,
-    SerializeError, SerializedValue, Serializer,
+    AsSerializeArg, ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer,
+    Serialize, SerializeError, SerializedValue, Serializer,
 };
 use crate::error::Error;
 #[cfg(feature = "sink")]
@@ -159,6 +159,20 @@ impl<T: ?Sized> Serialize for UnboundSender<T> {
 impl<T: ?Sized> Deserialize for UnboundSender<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(Self::new)
+    }
+}
+
+impl<T: Sized> AsSerializeArg for UnboundSender<T> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
@@ -1069,6 +1083,20 @@ impl<T> Serialize for UnboundReceiver<T> {
 impl<T> Deserialize for UnboundReceiver<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(Self::new)
+    }
+}
+
+impl<T> AsSerializeArg for UnboundReceiver<T> {
+    type SerializeArg<'a>
+        = &'a Self
+    where
+        Self: 'a;
+
+    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
+    where
+        Self: 'a,
+    {
+        self
     }
 }
 
