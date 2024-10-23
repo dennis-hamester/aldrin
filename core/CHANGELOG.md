@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The introspection system introduced in 0.7.0 was completely redone and is not backwards
   compatible. Generally, all types that are `Serialize` now also implement `Introspectable`.
+- The `SerializeKey` and `DeserializeKey` traits have been redesigned and it's now possible to
+  implement them for custom types. The new traits resemble specialized versions of `Into` and
+  `TryFrom` and map custom types to and from one of the base key types.
 
 ## [0.8.0] - 2024-09-22
 

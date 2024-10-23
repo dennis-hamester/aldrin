@@ -30,7 +30,7 @@ pub mod transport;
 
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
-pub use deserialize_key::DeserializeKey;
+pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};
 pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
@@ -38,7 +38,7 @@ pub use ids::{
     ServiceUuid, TypeId,
 };
 pub use protocol_version::ProtocolVersion;
-pub use serialize_key::SerializeKey;
+pub use serialize_key::{SerializeKey, SerializeKeyImpl};
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use service_info::ServiceInfo;
 pub use value::{ByteSlice, Bytes, Skip, ValueKind};

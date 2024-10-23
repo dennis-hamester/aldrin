@@ -1,7 +1,7 @@
 use crate::buf_ext::BufMutExt;
 use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
-use crate::serialize_key::SerializeKey;
+use crate::serialize_key::{Sealed as _, SerializeKey};
 use crate::serialized_value::SerializedValueSlice;
 use crate::value::ValueKind;
 use crate::MAX_VALUE_DEPTH;
@@ -353,7 +353,7 @@ pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
 impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            K::serialize_map_value_kind(&mut buf);
+            K::Impl::serialize_map_value_kind(&mut buf);
             buf.put_varint_u32_le(num_elems as u32);
 
             Ok(Self {
@@ -382,7 +382,7 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            key.serialize_key(self.buf)?;
+            key.as_impl().serialize_key(self.buf)?;
             value.serialize(Serializer::new(self.buf, self.depth)?)?;
             Ok(self)
         } else {
@@ -419,7 +419,7 @@ pub struct SetSerializer<'a, T: SerializeKey + ?Sized> {
 impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            T::serialize_set_value_kind(&mut buf);
+            T::Impl::serialize_set_value_kind(&mut buf);
             buf.put_varint_u32_le(num_elems as u32);
 
             Ok(Self {
@@ -443,7 +443,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     pub fn serialize_element(&mut self, value: &T) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            value.serialize_key(self.buf)?;
+            value.as_impl().serialize_key(self.buf)?;
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)

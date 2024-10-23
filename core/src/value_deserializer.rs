@@ -1,5 +1,5 @@
 use crate::buf_ext::ValueBufExt;
-use crate::deserialize_key::DeserializeKey;
+use crate::deserialize_key::{DeserializeKey, Sealed as _};
 use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -567,7 +567,7 @@ pub struct MapDeserializer<'a, 'b, K: DeserializeKey> {
 
 impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
     fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        K::deserialize_map_value_kind(buf)?;
+        K::Impl::deserialize_map_value_kind(buf)?;
         Self::new_without_value_kind(buf, depth)
     }
 
@@ -619,7 +619,7 @@ impl<'a, 'b, K: DeserializeKey> MapDeserializer<'a, 'b, K> {
             Err(DeserializeError::NoMoreElements)
         } else {
             self.len -= 1;
-            K::skip(self.buf)?;
+            K::Impl::skip(self.buf)?;
             Deserializer::new(self.buf, self.depth)?.skip()
         }
     }
@@ -674,7 +674,8 @@ pub struct ElementDeserializer<'a, 'b, K: DeserializeKey> {
 
 impl<'a, 'b, K: DeserializeKey> ElementDeserializer<'a, 'b, K> {
     fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        let key = K::deserialize_key(buf)?;
+        let key = K::Impl::deserialize_key(buf)?;
+        let key = K::try_from_impl(key)?;
         Ok(Self { buf, key, depth })
     }
 
@@ -701,7 +702,7 @@ pub struct SetDeserializer<'a, 'b, T: DeserializeKey> {
 
 impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
     fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
-        T::deserialize_set_value_kind(buf)?;
+        T::Impl::deserialize_set_value_kind(buf)?;
         Self::new_without_value_kind(buf)
     }
 
@@ -728,7 +729,8 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
             Err(DeserializeError::NoMoreElements)
         } else {
             self.len -= 1;
-            T::deserialize_key(self.buf)
+            let key = T::Impl::deserialize_key(self.buf)?;
+            T::try_from_impl(key)
         }
     }
 
@@ -749,7 +751,7 @@ impl<'a, 'b, T: DeserializeKey> SetDeserializer<'a, 'b, T> {
             Err(DeserializeError::NoMoreElements)
         } else {
             self.len -= 1;
-            T::skip(self.buf)
+            T::Impl::skip(self.buf)
         }
     }
 
