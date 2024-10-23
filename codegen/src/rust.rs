@@ -611,8 +611,8 @@ impl RustGenerator<'_> {
                 .args()
                 .map(|args| {
                     format!(
-                        ", arg: {}",
-                        function_args_call_type_name(svc_name, func_name, args)
+                        ", arg: aldrin::core::SerializeArg<'_, {}>",
+                        function_args_type_name(svc_name, func_name, args)
                     )
                 })
                 .unwrap_or_default();
@@ -860,8 +860,8 @@ impl RustGenerator<'_> {
             let id = ev.id().value();
 
             if let Some(ev_type) = ev.event_type() {
-                let var_type = event_variant_call_type(svc_name, ev_name, ev_type);
-                genln!(self, "    pub fn {ev_name}(&self, arg: {var_type}) -> Result<(), aldrin::Error> {{");
+                let var_type = event_variant_type(svc_name, ev_name, ev_type);
+                genln!(self, "    pub fn {ev_name}(&self, arg: aldrin::core::SerializeArg<{var_type}>) -> Result<(), aldrin::Error> {{");
                 genln!(self, "        self.inner.emit({id}, &arg)");
                 genln!(self, "    }}");
             } else {
@@ -947,12 +947,12 @@ impl RustGenerator<'_> {
 
             let ok = func
                 .ok()
-                .map(|ok| function_ok_promise_type_name(svc_name, func_name, ok))
+                .map(|ok| function_ok_type_name(svc_name, func_name, ok))
                 .unwrap_or_else(|| "()".to_owned());
 
             let err = func
                 .err()
-                .map(|err| function_err_promise_type_name(svc_name, func_name, err))
+                .map(|err| function_err_type_name(svc_name, func_name, err))
                 .unwrap_or_else(|| "std::convert::Infallible".to_owned());
 
             if let Some(args) = func.args() {
@@ -1058,105 +1058,7 @@ fn type_name(ty: &ast::TypeName) -> String {
         ),
         ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
         ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
-        }
-        ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
-        }
-        ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
-        ast::TypeNameKind::Unit => "()".to_owned(),
-        ast::TypeNameKind::Result(ok, err) => {
-            format!("Result<{}, {}>", type_name(ok), type_name(err))
-        }
-        ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
-        ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
-    }
-}
-
-fn unsized_ref_type_name(ty: &ast::TypeName) -> String {
-    match ty.kind() {
-        ast::TypeNameKind::Bool => "bool".to_owned(),
-        ast::TypeNameKind::U8 => "u8".to_owned(),
-        ast::TypeNameKind::I8 => "i8".to_owned(),
-        ast::TypeNameKind::U16 => "u16".to_owned(),
-        ast::TypeNameKind::I16 => "i16".to_owned(),
-        ast::TypeNameKind::U32 => "u32".to_owned(),
-        ast::TypeNameKind::I32 => "i32".to_owned(),
-        ast::TypeNameKind::U64 => "u64".to_owned(),
-        ast::TypeNameKind::I64 => "i64".to_owned(),
-        ast::TypeNameKind::F32 => "f32".to_owned(),
-        ast::TypeNameKind::F64 => "f64".to_owned(),
-        ast::TypeNameKind::String => "&str".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin::core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin::core::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => "&aldrin::core::SerializedValueSlice".to_owned(),
-        ast::TypeNameKind::Option(ty) => format!("Option<{}>", unsized_ref_type_name(ty)),
-        ast::TypeNameKind::Box(ty) => unsized_ref_type_name(ty),
-        ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "&aldrin::core::ByteSlice".to_owned(),
-            _ => format!("&[{}]", type_name(ty)),
-        },
-        ast::TypeNameKind::Bytes => "&aldrin::core::ByteSlice".to_owned(),
-        ast::TypeNameKind::Map(k, v) => format!(
-            "&std::collections::HashMap<{}, {}>",
-            key_type_name(k),
-            type_name(v)
-        ),
-        ast::TypeNameKind::Set(ty) => format!("&std::collections::HashSet<{}>", key_type_name(ty)),
-        ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
-        }
-        ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
-        }
-        ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
-        ast::TypeNameKind::Unit => "()".to_owned(),
-        ast::TypeNameKind::Result(ok, err) => {
-            format!(
-                "Result<{}, {}>",
-                unsized_ref_type_name(ok),
-                unsized_ref_type_name(err)
-            )
-        }
-        ast::TypeNameKind::Extern(m, ty) => format!("&super::{}::{}", m.value(), ty.value()),
-        ast::TypeNameKind::Intern(ty) => format!("&{}", ty.value()),
-    }
-}
-
-fn unsized_type_name(ty: &ast::TypeName) -> String {
-    match ty.kind() {
-        ast::TypeNameKind::Bool => "bool".to_owned(),
-        ast::TypeNameKind::U8 => "u8".to_owned(),
-        ast::TypeNameKind::I8 => "i8".to_owned(),
-        ast::TypeNameKind::U16 => "u16".to_owned(),
-        ast::TypeNameKind::I16 => "i16".to_owned(),
-        ast::TypeNameKind::U32 => "u32".to_owned(),
-        ast::TypeNameKind::I32 => "i32".to_owned(),
-        ast::TypeNameKind::U64 => "u64".to_owned(),
-        ast::TypeNameKind::I64 => "i64".to_owned(),
-        ast::TypeNameKind::F32 => "f32".to_owned(),
-        ast::TypeNameKind::F64 => "f64".to_owned(),
-        ast::TypeNameKind::String => "str".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin::core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin::core::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => "aldrin::core::SerializedValueSlice".to_owned(),
-        ast::TypeNameKind::Box(ty) => unsized_type_name(ty),
-        ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
-        ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin::core::ByteSlice".to_owned(),
-            _ => format!("[{}]", type_name(ty)),
-        },
-        ast::TypeNameKind::Bytes => "aldrin::core::ByteSlice".to_owned(),
-        ast::TypeNameKind::Map(k, v) => format!(
-            "std::collections::HashMap<{}, {}>",
-            key_type_name(k),
-            type_name(v)
-        ),
-        ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
-        ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", unsized_type_name(ty))
+            format!("aldrin::UnboundSender<{}>", type_name(ty))
         }
         ast::TypeNameKind::Receiver(ty) => {
             format!("aldrin::UnboundReceiver<{}>", type_name(ty))
@@ -1203,19 +1105,6 @@ fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::Function
     }
 }
 
-fn function_args_call_type_name(
-    svc_name: &str,
-    func_name: &str,
-    part: &ast::FunctionPart,
-) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => unsized_ref_type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("&{svc_name}{}Args", func_name.to_upper_camel_case())
-        }
-    }
-}
-
 fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
@@ -1225,35 +1114,9 @@ fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPa
     }
 }
 
-fn function_ok_promise_type_name(
-    svc_name: &str,
-    func_name: &str,
-    part: &ast::FunctionPart,
-) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => unsized_type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
-        }
-    }
-}
-
 fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Error", func_name.to_upper_camel_case())
-        }
-    }
-}
-
-fn function_err_promise_type_name(
-    svc_name: &str,
-    func_name: &str,
-    part: &ast::FunctionPart,
-) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => unsized_type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Error", func_name.to_upper_camel_case())
         }
@@ -1281,19 +1144,6 @@ fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::TypeNameOrIn
         ast::TypeNameOrInline::TypeName(ref ty) => type_name(ty),
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Event", service_event_variant(ev_name))
-        }
-    }
-}
-
-fn event_variant_call_type(
-    svc_name: &str,
-    ev_name: &str,
-    ev_type: &ast::TypeNameOrInline,
-) -> String {
-    match ev_type {
-        ast::TypeNameOrInline::TypeName(ref ty) => unsized_ref_type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("&{svc_name}{}Event", service_event_variant(ev_name))
         }
     }
 }
