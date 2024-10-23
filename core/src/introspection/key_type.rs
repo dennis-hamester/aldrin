@@ -82,89 +82,61 @@ impl fmt::Display for KeyType {
 }
 
 pub trait KeyTypeOf {
-    fn key_type_of() -> KeyType;
+    const KEY_TYPE: KeyType;
 }
 
 impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &T {
-    fn key_type_of() -> KeyType {
-        T::key_type_of()
-    }
+    const KEY_TYPE: KeyType = T::KEY_TYPE;
 }
 
 impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &mut T {
-    fn key_type_of() -> KeyType {
-        T::key_type_of()
-    }
+    const KEY_TYPE: KeyType = T::KEY_TYPE;
 }
 
 impl<T: KeyTypeOf + ?Sized> KeyTypeOf for Box<T> {
-    fn key_type_of() -> KeyType {
-        T::key_type_of()
-    }
+    const KEY_TYPE: KeyType = T::KEY_TYPE;
 }
 
 impl KeyTypeOf for u8 {
-    fn key_type_of() -> KeyType {
-        KeyType::U8
-    }
+    const KEY_TYPE: KeyType = KeyType::U8;
 }
 
 impl KeyTypeOf for i8 {
-    fn key_type_of() -> KeyType {
-        KeyType::I8
-    }
+    const KEY_TYPE: KeyType = KeyType::I8;
 }
 
 impl KeyTypeOf for u16 {
-    fn key_type_of() -> KeyType {
-        KeyType::U16
-    }
+    const KEY_TYPE: KeyType = KeyType::U16;
 }
 
 impl KeyTypeOf for i16 {
-    fn key_type_of() -> KeyType {
-        KeyType::I16
-    }
+    const KEY_TYPE: KeyType = KeyType::I16;
 }
 
 impl KeyTypeOf for u32 {
-    fn key_type_of() -> KeyType {
-        KeyType::U32
-    }
+    const KEY_TYPE: KeyType = KeyType::U32;
 }
 
 impl KeyTypeOf for i32 {
-    fn key_type_of() -> KeyType {
-        KeyType::I32
-    }
+    const KEY_TYPE: KeyType = KeyType::I32;
 }
 
 impl KeyTypeOf for u64 {
-    fn key_type_of() -> KeyType {
-        KeyType::U64
-    }
+    const KEY_TYPE: KeyType = KeyType::U64;
 }
 
 impl KeyTypeOf for i64 {
-    fn key_type_of() -> KeyType {
-        KeyType::I64
-    }
+    const KEY_TYPE: KeyType = KeyType::I64;
 }
 
 impl KeyTypeOf for String {
-    fn key_type_of() -> KeyType {
-        KeyType::String
-    }
+    const KEY_TYPE: KeyType = KeyType::String;
 }
 
 impl KeyTypeOf for str {
-    fn key_type_of() -> KeyType {
-        KeyType::String
-    }
+    const KEY_TYPE: KeyType = KeyType::String;
 }
 
 impl KeyTypeOf for Uuid {
-    fn key_type_of() -> KeyType {
-        KeyType::Uuid
-    }
+    const KEY_TYPE: KeyType = KeyType::Uuid;
 }

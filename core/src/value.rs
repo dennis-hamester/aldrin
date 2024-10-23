@@ -989,11 +989,11 @@ where
     V: Introspectable,
 {
     fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::key_type_of(), V::lexical_id())).into()
+        BuiltInType::Map(MapType::new(K::KEY_TYPE, V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::map(K::key_type_of(), V::lexical_id())
+        LexicalId::map(K::KEY_TYPE, V::lexical_id())
     }
 
     fn inner_types(types: &mut Vec<DynIntrospectable>) {
@@ -1016,11 +1016,11 @@ impl<K: DeserializeKey + Ord, V: Deserialize> Deserialize for BTreeMap<K, V> {
 #[cfg(feature = "introspection")]
 impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
     fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::key_type_of(), V::lexical_id())).into()
+        BuiltInType::Map(MapType::new(K::KEY_TYPE, V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::map(K::key_type_of(), V::lexical_id())
+        LexicalId::map(K::KEY_TYPE, V::lexical_id())
     }
 
     fn inner_types(types: &mut Vec<DynIntrospectable>) {
@@ -1047,11 +1047,11 @@ where
 #[cfg(feature = "introspection")]
 impl<T: KeyTypeOf, S> Introspectable for HashSet<T, S> {
     fn layout() -> Layout {
-        BuiltInType::Set(T::key_type_of()).into()
+        BuiltInType::Set(T::KEY_TYPE).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::set(T::key_type_of())
+        LexicalId::set(T::KEY_TYPE)
     }
 
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
@@ -1072,11 +1072,11 @@ impl<T: DeserializeKey + Ord> Deserialize for BTreeSet<T> {
 #[cfg(feature = "introspection")]
 impl<T: KeyTypeOf> Introspectable for BTreeSet<T> {
     fn layout() -> Layout {
-        BuiltInType::Set(T::key_type_of()).into()
+        BuiltInType::Set(T::KEY_TYPE).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::set(T::key_type_of())
+        LexicalId::set(T::KEY_TYPE)
     }
 
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
