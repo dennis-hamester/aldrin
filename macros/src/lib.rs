@@ -15,6 +15,7 @@
 //! - [`SerializeKey`]
 //! - [`DeserializeKey`]
 //! - [`KeyTypeOf`]
+//! - [`AsSerializeArg`]
 //!
 //! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
 //!
@@ -51,7 +52,7 @@
 //! ##### `{ser,de,intro,ser_key,de_key,key_ty}_bounds`
 //!
 //! Applies to:
-//! - `ser_bounds`: [`Serialize`]
+//! - `ser_bounds`: [`Serialize`], [`AsSerializeArg`]
 //! - `de_bounds`: [`Deserialize`]
 //! - `intro_bounds`: [`Introspectable`]
 //! - `ser_key_bounds`: [`SerializeKey`]
@@ -588,4 +589,37 @@ pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 #[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
 pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     derive::gen_key_type_of_from_aldrin(input)
+}
+
+/// Derive macro for the `AsSerializeArg` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+#[manyhow::manyhow]
+#[proc_macro_derive(AsSerializeArg, attributes(aldrin))]
+pub fn as_serialize_arg_from_core(
+    input: syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_as_serialize_arg_from_core(input)
+}
+
+/// Derive macro for the `AsSerializeArg` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(AsSerializeArgFromAldrin, attributes(aldrin))]
+pub fn as_serialize_arg_from_aldrin(
+    input: syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_as_serialize_arg_from_aldrin(input)
 }

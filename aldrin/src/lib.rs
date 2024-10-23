@@ -84,8 +84,9 @@ pub use aldrin_core as core;
 #[cfg(feature = "codegen")]
 #[doc(inline)]
 pub use aldrin_macros::{
-    generate, DeserializeFromAldrin as Deserialize, DeserializeKeyFromAldrin as DeserializeKey,
-    SerializeFromAldrin as Serialize, SerializeKeyFromAldrin as SerializeKey,
+    generate, AsSerializeArgFromAldrin as AsSerializeArg, DeserializeFromAldrin as Deserialize,
+    DeserializeKeyFromAldrin as DeserializeKey, SerializeFromAldrin as Serialize,
+    SerializeKeyFromAldrin as SerializeKey,
 };
 #[cfg(all(feature = "codegen", feature = "introspection"))]
 #[doc(inline)]

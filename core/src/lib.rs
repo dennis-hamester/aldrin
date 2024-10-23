@@ -29,7 +29,7 @@ pub mod tokio;
 pub mod transport;
 
 #[cfg(feature = "derive")]
-pub use aldrin_macros::{Deserialize, DeserializeKey, Serialize, SerializeKey};
+pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
 #[cfg(all(feature = "derive", feature = "introspection"))]
 pub use aldrin_macros::{Introspectable, KeyTypeOf};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};

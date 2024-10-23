@@ -1,3 +1,4 @@
+mod as_serialize_arg;
 mod deserialize;
 mod deserialize_key;
 mod introspectable;
@@ -10,6 +11,7 @@ use options::{ItemOptions, Options};
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, GenericParam, Generics, Path, Token, WherePredicate};
 
+pub use as_serialize_arg::{gen_as_serialize_arg_from_aldrin, gen_as_serialize_arg_from_core};
 pub use deserialize::{gen_deserialize_from_aldrin, gen_deserialize_from_core};
 pub use deserialize_key::{gen_deserialize_key_from_aldrin, gen_deserialize_key_from_core};
 pub use introspectable::{gen_introspectable_from_aldrin, gen_introspectable_from_core};
