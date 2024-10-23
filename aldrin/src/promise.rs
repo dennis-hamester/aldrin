@@ -1,4 +1,4 @@
-use crate::core::Serialize;
+use crate::core::{AsSerializeArg, Serialize, SerializeArg};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::low_level::Promise as LlPromise;
@@ -70,11 +70,22 @@ impl<T: ?Sized, E: ?Sized> Promise<T, E> {
 
 impl<T, E> Promise<T, E>
 where
+    T: AsSerializeArg + ?Sized,
+    E: ?Sized,
+{
+    /// Signals that the call was successful.
+    pub fn ok(self, value: SerializeArg<T>) -> Result<(), Error> {
+        self.inner.ok(&value)
+    }
+}
+
+impl<T, E> Promise<T, E>
+where
     T: Serialize + ?Sized,
     E: ?Sized,
 {
     /// Signals that the call was successful.
-    pub fn ok(self, value: &T) -> Result<(), Error> {
+    pub fn ok_ref(self, value: &T) -> Result<(), Error> {
         self.inner.ok(value)
     }
 }
@@ -89,11 +100,33 @@ impl<E: ?Sized> Promise<(), E> {
 impl<T, E> Promise<T, E>
 where
     T: ?Sized,
+    E: AsSerializeArg + ?Sized,
+{
+    /// Signals that the call failed.
+    pub fn err(self, value: SerializeArg<E>) -> Result<(), Error> {
+        self.inner.err(&value)
+    }
+}
+
+impl<T, E> Promise<T, E>
+where
+    T: ?Sized,
     E: Serialize + ?Sized,
 {
     /// Signals that the call failed.
-    pub fn err(self, value: &E) -> Result<(), Error> {
+    pub fn err_ref(self, value: &E) -> Result<(), Error> {
         self.inner.err(value)
+    }
+}
+
+impl<T, E> Promise<T, E>
+where
+    T: AsSerializeArg + ?Sized,
+    E: AsSerializeArg + ?Sized,
+{
+    /// Sets the call's reply.
+    pub fn set(self, res: Result<SerializeArg<T>, SerializeArg<E>>) -> Result<(), Error> {
+        self.inner.set(res.as_ref())
     }
 }
 
@@ -103,7 +136,7 @@ where
     E: Serialize + ?Sized,
 {
     /// Sets the call's reply.
-    pub fn set(self, res: Result<&T, &E>) -> Result<(), Error> {
+    pub fn set_ref(self, res: Result<&T, &E>) -> Result<(), Error> {
         self.inner.set(res)
     }
 }
