@@ -156,16 +156,16 @@ async fn send_and_receive() {
     let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
-    sender.send_item(&1).await.unwrap();
+    sender.send_item(1).await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some(1)));
 
-    sender.send_item(&2).await.unwrap();
-    sender.send_item(&3).await.unwrap();
+    sender.send_item(2).await.unwrap();
+    sender.send_item(3).await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some(2)));
     assert_eq!(receiver.next_item().await, Ok(Some(3)));
 
-    sender.send_item(&4).await.unwrap();
-    sender.send_item(&5).await.unwrap();
+    sender.send_item(4).await.unwrap();
+    sender.send_item(5).await.unwrap();
     sender.close().await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some(4)));
     assert_eq!(receiver.next_item().await, Ok(Some(5)));
@@ -192,7 +192,7 @@ async fn multiple_clients() {
     let mut receiver = receiver.unbind().claim(client2.clone(), 16).await.unwrap();
     let mut sender = sender.established().await.unwrap();
 
-    sender.send_item(&"hello".to_owned()).await.unwrap();
+    sender.send_item("hello").await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some("hello".to_string())));
 
     client1.join().await;
@@ -223,7 +223,7 @@ async fn send_error_when_receiver_is_closed() {
         tokio::select! {
             () = &mut timeout => panic!("timeout reached"),
             _ = interval.tick() => {
-                if sender.send_item(&0).await.is_err() {
+                if sender.send_item(0).await.is_err() {
                     break;
                 }
             }

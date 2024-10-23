@@ -304,9 +304,9 @@ impl Handle {
     /// let mut sender = sender.established().await?;
     ///
     /// // The channel is now fully established and client 1 can send items to client 2.
-    /// sender.send_item(&1).await?;
-    /// sender.send_item(&2).await?;
-    /// sender.send_item(&3).await?;
+    /// sender.send_item(1).await?;
+    /// sender.send_item(2).await?;
+    /// sender.send_item(3).await?;
     ///
     /// // Client 1 will close (or drop) the channel when it has nothing to send anymore.
     /// sender.close().await?;

@@ -1,7 +1,7 @@
 --- example1-orig.rs
 +++ example1-patched.rs
 @@ -9,7 +9,7 @@
- #[derive(Debug, Clone, Default, aldrin::Serialize, aldrin::Deserialize)]
+ #[derive(Debug, Clone, Default, aldrin::Serialize, aldrin::Deserialize, aldrin::AsSerializeArg)]
  #[aldrin(schema = "example1")]
  #[non_exhaustive]
 -pub struct MyStruct {

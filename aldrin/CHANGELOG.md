@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump MSRV to 1.71.1.
 - Adapt to new introspection system. On the API level, `Introspection` is no longer returned in a
   `Cow` but directly instead.
+- `Sender::send_item()` now takes the item as `SerializeArg<T>` instead of `&T`. The function
+  `send_item_ref()` was also added, which still takes `&T`.
 
 ## [0.8.0] - 2024-09-22
 

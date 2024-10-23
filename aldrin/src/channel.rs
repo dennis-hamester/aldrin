@@ -8,7 +8,7 @@ use crate::core::introspection::{
 };
 use crate::core::{
     AsSerializeArg, ChannelCookie, ChannelEnd, Deserialize, DeserializeError, Deserializer,
-    Serialize, SerializeError, SerializedValue, Serializer,
+    Serialize, SerializeArg, SerializeError, SerializedValue, Serializer,
 };
 use crate::error::Error;
 #[cfg(feature = "sink")]
@@ -313,8 +313,8 @@ impl<T: ?Sized> UnclaimedSender<T> {
     /// let mut receiver = receiver.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send_item(&1).await?;
-    /// sender.send_item(&2).await?;
+    /// sender.send_item(1).await?;
+    /// sender.send_item(2).await?;
     /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
     /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
@@ -639,9 +639,9 @@ impl<T: ?Sized> Sender<T> {
     /// let mut sender = sender.established().await?;
     ///
     /// // Send a couple of items and then close the sender.
-    /// sender.send_item(&1).await?;
-    /// sender.send_item(&2).await?;
-    /// sender.send_item(&3).await?;
+    /// sender.send_item(1).await?;
+    /// sender.send_item(2).await?;
+    /// sender.send_item(3).await?;
     /// sender.close().await?;
     ///
     /// // The receiver will receive all items followed by None.
@@ -672,22 +672,41 @@ impl<T: ?Sized> Sender<T> {
     }
 }
 
+impl<T: AsSerializeArg + ?Sized> Sender<T> {
+    /// Sends an item on the channel.
+    ///
+    /// This function panics if the channel doesn't have any capacity left. You must call either
+    /// [`send_ready`](Self::send_ready) or [`poll_send_ready`](Self::poll_send_ready) before to
+    /// ensure there is capacity.
+    pub fn start_send_item(&mut self, item: SerializeArg<T>) -> Result<(), Error> {
+        self.inner.start_send_item(&item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This function will wait until the channel has capacity to send at least 1 item.
+    pub async fn send_item(&mut self, item: SerializeArg<'_, T>) -> Result<(), Error> {
+        self.send_ready().await?;
+        self.start_send_item(item)
+    }
+}
+
 impl<T: Serialize + ?Sized> Sender<T> {
     /// Sends an item on the channel.
     ///
     /// This function panics if the channel doesn't have any capacity left. You must call either
     /// [`send_ready`](Self::send_ready) or [`poll_send_ready`](Self::poll_send_ready) before to
     /// ensure there is capacity.
-    pub fn start_send_item(&mut self, item: &T) -> Result<(), Error> {
+    pub fn start_send_item_ref(&mut self, item: &T) -> Result<(), Error> {
         self.inner.start_send_item(item)
     }
 
     /// Sends an item on the channel.
     ///
     /// This function will wait until the channel has capacity to send at least 1 item.
-    pub async fn send_item(&mut self, item: &T) -> Result<(), Error> {
+    pub async fn send_item_ref(&mut self, item: &T) -> Result<(), Error> {
         self.send_ready().await?;
-        self.start_send_item(item)
+        self.start_send_item_ref(item)
     }
 }
 
@@ -708,7 +727,7 @@ impl<T: Serialize + ?Sized> futures_sink::Sink<&T> for Sender<T> {
     }
 
     fn start_send(mut self: Pin<&mut Self>, item: &T) -> Result<(), Self::Error> {
-        self.start_send_item(item)
+        self.start_send_item_ref(item)
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
@@ -729,7 +748,7 @@ impl<T: Serialize> futures_sink::Sink<T> for Sender<T> {
     }
 
     fn start_send(mut self: Pin<&mut Self>, item: T) -> Result<(), Self::Error> {
-        self.start_send_item(&item)
+        self.start_send_item_ref(&item)
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
@@ -1239,8 +1258,8 @@ impl<T> UnclaimedReceiver<T> {
     /// let mut sender = sender.established().await?;
     ///
     /// // The channel is now fully established and items can be sent and received.
-    /// sender.send_item(&1).await?;
-    /// sender.send_item(&2).await?;
+    /// sender.send_item(1).await?;
+    /// sender.send_item(2).await?;
     /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
     /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
     /// # Ok(())
