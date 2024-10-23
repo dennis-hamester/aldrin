@@ -81,13 +81,9 @@ impl fmt::Display for KeyType {
     }
 }
 
-pub trait Sealed {}
-
-pub trait KeyTypeOf: Sealed {
+pub trait KeyTypeOf {
     fn key_type_of() -> KeyType;
 }
-
-impl<T: Sealed + ?Sized> Sealed for &T {}
 
 impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &T {
     fn key_type_of() -> KeyType {
@@ -95,15 +91,11 @@ impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &T {
     }
 }
 
-impl<T: Sealed + ?Sized> Sealed for &mut T {}
-
 impl<T: KeyTypeOf + ?Sized> KeyTypeOf for &mut T {
     fn key_type_of() -> KeyType {
         T::key_type_of()
     }
 }
-
-impl Sealed for u8 {}
 
 impl KeyTypeOf for u8 {
     fn key_type_of() -> KeyType {
@@ -111,15 +103,11 @@ impl KeyTypeOf for u8 {
     }
 }
 
-impl Sealed for i8 {}
-
 impl KeyTypeOf for i8 {
     fn key_type_of() -> KeyType {
         KeyType::I8
     }
 }
-
-impl Sealed for u16 {}
 
 impl KeyTypeOf for u16 {
     fn key_type_of() -> KeyType {
@@ -127,15 +115,11 @@ impl KeyTypeOf for u16 {
     }
 }
 
-impl Sealed for i16 {}
-
 impl KeyTypeOf for i16 {
     fn key_type_of() -> KeyType {
         KeyType::I16
     }
 }
-
-impl Sealed for u32 {}
 
 impl KeyTypeOf for u32 {
     fn key_type_of() -> KeyType {
@@ -143,15 +127,11 @@ impl KeyTypeOf for u32 {
     }
 }
 
-impl Sealed for i32 {}
-
 impl KeyTypeOf for i32 {
     fn key_type_of() -> KeyType {
         KeyType::I32
     }
 }
-
-impl Sealed for u64 {}
 
 impl KeyTypeOf for u64 {
     fn key_type_of() -> KeyType {
@@ -159,15 +139,11 @@ impl KeyTypeOf for u64 {
     }
 }
 
-impl Sealed for i64 {}
-
 impl KeyTypeOf for i64 {
     fn key_type_of() -> KeyType {
         KeyType::I64
     }
 }
-
-impl Sealed for String {}
 
 impl KeyTypeOf for String {
     fn key_type_of() -> KeyType {
@@ -175,15 +151,11 @@ impl KeyTypeOf for String {
     }
 }
 
-impl Sealed for str {}
-
 impl KeyTypeOf for str {
     fn key_type_of() -> KeyType {
         KeyType::String
     }
 }
-
-impl Sealed for Uuid {}
 
 impl KeyTypeOf for Uuid {
     fn key_type_of() -> KeyType {
