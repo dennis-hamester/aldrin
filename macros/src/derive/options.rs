@@ -6,6 +6,7 @@ pub struct Options {
     ser_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     de_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     intro_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    ser_key_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     schema: Option<LitStr>,
 }
 
@@ -14,6 +15,7 @@ impl Options {
         let mut ser_bounds = None;
         let mut de_bounds = None;
         let mut intro_bounds = None;
+        let mut ser_key_bounds = None;
         let mut schema = None;
 
         for attr in attrs {
@@ -31,6 +33,7 @@ impl Options {
                     ser_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
                     de_bounds = ser_bounds.clone();
                     intro_bounds = ser_bounds.clone();
+                    ser_key_bounds = ser_bounds.clone();
                     Ok(())
                 } else if meta.path.is_ident("ser_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
@@ -43,6 +46,10 @@ impl Options {
                 } else if meta.path.is_ident("intro_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
                     intro_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
+                    Ok(())
+                } else if meta.path.is_ident("ser_key_bounds") {
+                    let value: LitStr = meta.value()?.parse()?;
+                    ser_key_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
                     Ok(())
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;
@@ -58,6 +65,7 @@ impl Options {
             ser_bounds,
             de_bounds,
             intro_bounds,
+            ser_key_bounds,
             schema,
         })
     }
@@ -76,6 +84,10 @@ impl Options {
 
     pub fn intro_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
         self.intro_bounds.as_ref()
+    }
+
+    pub fn ser_key_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
+        self.ser_key_bounds.as_ref()
     }
 
     pub fn schema(&self) -> Option<&LitStr> {

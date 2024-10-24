@@ -552,3 +552,23 @@ pub fn introspectable_from_aldrin(
 ) -> syn::Result<proc_macro2::TokenStream> {
     derive::gen_introspectable_from_aldrin(input)
 }
+
+/// Derive macro for the `SerializeKey` trait.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(SerializeKey, attributes(aldrin))]
+pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_serialize_key_from_core(input)
+}
+
+/// Derive macro for the `SerializeKey` trait.
+///
+/// This is the same as [`SerializeKey`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
+pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_serialize_key_from_aldrin(input)
+}
