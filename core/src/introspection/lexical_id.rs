@@ -1,5 +1,7 @@
-use super::KeyType;
+use super::{KeyType, KeyTypeOf};
+use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
+use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::fmt;
@@ -146,6 +148,26 @@ impl Deserialize for LexicalId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
+}
+
+impl SerializeKey for LexicalId {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for LexicalId {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+impl KeyTypeOf for LexicalId {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for LexicalId {

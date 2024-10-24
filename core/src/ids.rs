@@ -1,6 +1,10 @@
+use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
+use crate::introspection::{
+    BuiltInType, DynIntrospectable, Introspectable, KeyType, KeyTypeOf, Layout, LexicalId,
+};
+use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::fmt;
@@ -135,6 +139,27 @@ impl Introspectable for ObjectUuid {
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
+impl SerializeKey for ObjectUuid {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for ObjectUuid {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for ObjectUuid {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
+}
+
 impl From<Uuid> for ObjectUuid {
     fn from(uuid: Uuid) -> Self {
         ObjectUuid(uuid)
@@ -223,6 +248,27 @@ impl Introspectable for ObjectCookie {
     }
 
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
+impl SerializeKey for ObjectCookie {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for ObjectCookie {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for ObjectCookie {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for ObjectCookie {
@@ -379,6 +425,27 @@ impl Introspectable for ServiceUuid {
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
+impl SerializeKey for ServiceUuid {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for ServiceUuid {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for ServiceUuid {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
+}
+
 impl From<Uuid> for ServiceUuid {
     fn from(uuid: Uuid) -> Self {
         ServiceUuid(uuid)
@@ -469,6 +536,27 @@ impl Introspectable for ServiceCookie {
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
 }
 
+impl SerializeKey for ServiceCookie {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for ServiceCookie {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for ServiceCookie {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
+}
+
 impl From<Uuid> for ServiceCookie {
     fn from(cookie: Uuid) -> Self {
         ServiceCookie(cookie)
@@ -547,6 +635,27 @@ impl Introspectable for ChannelCookie {
     }
 
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
+impl SerializeKey for ChannelCookie {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for ChannelCookie {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for ChannelCookie {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for ChannelCookie {
@@ -666,6 +775,27 @@ impl Introspectable for TypeId {
     }
 
     fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+}
+
+impl SerializeKey for TypeId {
+    type Impl<'a> = Uuid;
+
+    fn as_impl(&self) -> Self::Impl<'_> {
+        self.0
+    }
+}
+
+impl DeserializeKey for TypeId {
+    type Impl = Uuid;
+
+    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+#[cfg(feature = "introspection")]
+impl KeyTypeOf for TypeId {
+    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for TypeId {

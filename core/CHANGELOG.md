@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Implement `Serialize` and `Deserialize` for tuples up to size 12.
+- `SerializeKey`, `DeserializeKey` and `KeyTypeOf` are now implemented for `ObjectUuid`,
+  `ObjectCookie`, `ServiceUuid`, `ServiceCookie`, `ChannelCookie`, `TypeId` and `LexicalId`.
 
 ### Changed
 
