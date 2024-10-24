@@ -19,7 +19,6 @@ use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
-use uuid::Uuid;
 
 pub use built_in_type::BuiltInType;
 pub use enum_ty::{Enum, EnumBuilder};
@@ -106,20 +105,12 @@ enum IntrospectionField {
 
 impl Serialize for Introspection {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        struct TypeIds<'a>(&'a BTreeMap<LexicalId, TypeId>);
-
-        impl Serialize for TypeIds<'_> {
-            fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-                serializer.serialize_map_iter(self.0.iter().map(|(k, v)| (k.0, v)))
-            }
-        }
-
         let mut serializer = serializer.serialize_struct(4)?;
 
         serializer.serialize_field(IntrospectionField::Version, &VERSION)?;
         serializer.serialize_field(IntrospectionField::TypeId, &self.type_id)?;
         serializer.serialize_field(IntrospectionField::Layout, &self.layout)?;
-        serializer.serialize_field(IntrospectionField::TypeIds, &TypeIds(&self.type_ids))?;
+        serializer.serialize_field(IntrospectionField::TypeIds, &self.type_ids)?;
 
         serializer.finish()
     }
@@ -127,25 +118,6 @@ impl Serialize for Introspection {
 
 impl Deserialize for Introspection {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        #[derive(Default)]
-        struct TypeIds(BTreeMap<LexicalId, TypeId>);
-
-        impl Deserialize for TypeIds {
-            fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-                deserializer.deserialize_map_extend_new()
-            }
-        }
-
-        impl Extend<(Uuid, TypeId)> for TypeIds {
-            fn extend<T>(&mut self, iter: T)
-            where
-                T: IntoIterator<Item = (Uuid, TypeId)>,
-            {
-                self.0
-                    .extend(iter.into_iter().map(|(k, v)| (LexicalId(k), v)))
-            }
-        }
-
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let version: u32 = deserializer.deserialize_specific_field(IntrospectionField::Version)?;
@@ -155,13 +127,12 @@ impl Deserialize for Introspection {
 
         let type_id = deserializer.deserialize_specific_field(IntrospectionField::TypeId)?;
         let layout = deserializer.deserialize_specific_field(IntrospectionField::Layout)?;
-        let type_ids: TypeIds =
-            deserializer.deserialize_specific_field(IntrospectionField::TypeIds)?;
+        let type_ids = deserializer.deserialize_specific_field(IntrospectionField::TypeIds)?;
 
         deserializer.finish(Self {
             type_id,
             layout,
-            type_ids: type_ids.0,
+            type_ids,
         })
     }
 }

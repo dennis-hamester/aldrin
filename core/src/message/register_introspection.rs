@@ -5,8 +5,6 @@ use crate::ids::TypeId;
 use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
 use crate::message_serializer::{MessageSerializeError, MessageSerializer};
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
 use bytes::BytesMut;
 use std::collections::HashSet;
 
@@ -18,14 +16,12 @@ pub struct RegisterIntrospection {
 
 impl RegisterIntrospection {
     pub fn with_serialize_type_ids(type_ids: &HashSet<TypeId>) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(&SerializeTypeIds(type_ids))?;
+        let value = SerializedValue::serialize(type_ids)?;
         Ok(Self { value })
     }
 
     pub fn deserialize_type_ids(&self) -> Result<HashSet<TypeId>, DeserializeError> {
-        self.value
-            .deserialize::<DeserializeTypeIds>()
-            .map(|ids| ids.0)
+        self.value.deserialize()
     }
 }
 
@@ -55,30 +51,6 @@ impl Sealed for RegisterIntrospection {}
 impl From<RegisterIntrospection> for Message {
     fn from(msg: RegisterIntrospection) -> Self {
         Self::RegisterIntrospection(msg)
-    }
-}
-
-struct SerializeTypeIds<'a>(&'a HashSet<TypeId>);
-
-impl Serialize for SerializeTypeIds<'_> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self.0.iter().map(|id| id.0))
-    }
-}
-
-struct DeserializeTypeIds(HashSet<TypeId>);
-
-impl Deserialize for DeserializeTypeIds {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_set()?;
-
-        let mut ids = HashSet::new();
-        while !deserializer.is_empty() {
-            let id = deserializer.deserialize_element().map(TypeId)?;
-            ids.insert(id);
-        }
-
-        deserializer.finish(Self(ids))
     }
 }
 
