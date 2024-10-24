@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add derive macros for the `Serialize`, `Deserialize` and `Introspectable` traits.
-- Add derive macro for the `SerializeKey` trait.
+- Add derive macros for the `SerializeKey` and `DeserializeKey` traits.
 
 ### Changed
 

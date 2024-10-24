@@ -7,6 +7,7 @@ pub struct Options {
     de_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     intro_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     ser_key_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
+    de_key_bounds: Option<Punctuated<WherePredicate, Token![,]>>,
     schema: Option<LitStr>,
 }
 
@@ -16,6 +17,7 @@ impl Options {
         let mut de_bounds = None;
         let mut intro_bounds = None;
         let mut ser_key_bounds = None;
+        let mut de_key_bounds = None;
         let mut schema = None;
 
         for attr in attrs {
@@ -34,6 +36,7 @@ impl Options {
                     de_bounds = ser_bounds.clone();
                     intro_bounds = ser_bounds.clone();
                     ser_key_bounds = ser_bounds.clone();
+                    de_key_bounds = ser_bounds.clone();
                     Ok(())
                 } else if meta.path.is_ident("ser_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
@@ -51,6 +54,10 @@ impl Options {
                     let value: LitStr = meta.value()?.parse()?;
                     ser_key_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
                     Ok(())
+                } else if meta.path.is_ident("de_key_bounds") {
+                    let value: LitStr = meta.value()?.parse()?;
+                    de_key_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
+                    Ok(())
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;
                     Ok(())
@@ -66,6 +73,7 @@ impl Options {
             de_bounds,
             intro_bounds,
             ser_key_bounds,
+            de_key_bounds,
             schema,
         })
     }
@@ -88,6 +96,10 @@ impl Options {
 
     pub fn ser_key_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
         self.ser_key_bounds.as_ref()
+    }
+
+    pub fn de_key_bounds(&self) -> Option<&Punctuated<WherePredicate, Token![,]>> {
+        self.de_key_bounds.as_ref()
     }
 
     pub fn schema(&self) -> Option<&LitStr> {

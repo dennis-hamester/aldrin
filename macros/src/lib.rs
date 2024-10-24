@@ -572,3 +572,25 @@ pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macr
 pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     derive::gen_serialize_key_from_aldrin(input)
 }
+
+/// Derive macro for the `DeserializeKey` trait.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(DeserializeKey, attributes(aldrin))]
+pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_deserialize_key_from_core(input)
+}
+
+/// Derive macro for the `DeserializeKey` trait.
+///
+/// This is the same as [`DeserializeKey`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
+pub fn deserialize_key_from_aldrin(
+    input: syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_deserialize_key_from_aldrin(input)
+}

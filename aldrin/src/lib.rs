@@ -85,8 +85,8 @@ pub use aldrin_core as core;
 pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
 #[cfg(feature = "codegen")]
 pub use aldrin_macros::{
-    generate, DeserializeFromAldrin as Deserialize, SerializeFromAldrin as Serialize,
-    SerializeKeyFromAldrin as SerializeKey,
+    generate, DeserializeFromAldrin as Deserialize, DeserializeKeyFromAldrin as DeserializeKey,
+    SerializeFromAldrin as Serialize, SerializeKeyFromAldrin as SerializeKey,
 };
 pub use bus_listener::BusListener;
 pub use channel::{
