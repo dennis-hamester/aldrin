@@ -28,10 +28,10 @@ pub mod message;
 pub mod tokio;
 pub mod transport;
 
-#[cfg(all(feature = "derive", feature = "introspection"))]
-pub use aldrin_macros::Introspectable;
 #[cfg(feature = "derive")]
 pub use aldrin_macros::{Deserialize, DeserializeKey, Serialize, SerializeKey};
+#[cfg(all(feature = "derive", feature = "introspection"))]
+pub use aldrin_macros::{Introspectable, KeyTypeOf};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};

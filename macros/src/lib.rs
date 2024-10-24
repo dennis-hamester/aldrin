@@ -594,3 +594,23 @@ pub fn deserialize_key_from_aldrin(
 ) -> syn::Result<proc_macro2::TokenStream> {
     derive::gen_deserialize_key_from_aldrin(input)
 }
+
+/// Derive macro for the `KeyTypeOf` trait.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(KeyTypeOf, attributes(aldrin))]
+pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_key_type_of_from_core(input)
+}
+
+/// Derive macro for the `KeyTypeOf` trait.
+///
+/// This is the same as [`KeyTypeOf`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// TODO
+#[manyhow::manyhow]
+#[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
+pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    derive::gen_key_type_of_from_aldrin(input)
+}
