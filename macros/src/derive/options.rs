@@ -32,15 +32,6 @@ impl Options {
                     let value: LitStr = meta.value()?.parse()?;
                     krate = value.parse().map_err(|e| Error::new_spanned(value, e))?;
                     Ok(())
-                } else if meta.path.is_ident("bounds") {
-                    let value: LitStr = meta.value()?.parse()?;
-                    ser_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;
-                    de_bounds = ser_bounds.clone();
-                    intro_bounds = ser_bounds.clone();
-                    ser_key_bounds = ser_bounds.clone();
-                    de_key_bounds = ser_bounds.clone();
-                    key_ty_bounds = ser_bounds.clone();
-                    Ok(())
                 } else if meta.path.is_ident("ser_bounds") {
                     let value: LitStr = meta.value()?.parse()?;
                     ser_bounds = parse_lit_str_into_where_predicates(&value).map(Some)?;

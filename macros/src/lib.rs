@@ -287,12 +287,10 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 /// }
 /// ```
 ///
-/// ## `bounds`, `ser_bounds`, `de_bounds`
+/// ## `ser_bounds`, `de_bounds`
 ///
 /// Per default, additional bounds `T: Serialize` and `T: Deserialize` are added for each type
 /// parameter `T`. Use `ser_bounds` and `de_bounds` to override or inhibit this.
-///
-/// `bounds` is a shorthand for setting `ser_bounds` and `de_bounds` simultaneously.
 ///
 /// The attribute's value should be a string literal containing bounds as they would appear in a
 /// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
@@ -467,13 +465,10 @@ pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
 /// }
 /// ```
 ///
-/// ## `bounds`, `intro_bounds`
+/// ## `intro_bounds`
 ///
 /// Per default, additional bounds `T: Introspectable` are added for each type parameter `T`. Use
 /// `intro_bounds` to override or inhibit this.
-///
-/// `bounds` is a shorthand for setting `intro_bounds` as well as `ser_bounds` and `de_bounds` for
-/// [`Serialize`] and [`Deserialize`] simultaneously.
 ///
 /// The attribute's value should be a string literal containing bounds as they would appear in a
 /// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
