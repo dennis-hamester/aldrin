@@ -18,11 +18,6 @@
 //!
 //! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
 //!
-//! Note that the derive macros come in 2 variants, depending on where they are re-exported. E.g.
-//! [`Serialize`] is re-exported in `aldrin-core`, but [`SerializeFromAldrin`] is re-exported in
-//! `aldrin` as `Serialize`. This was done because derive macros, when used from `aldrin`, require
-//! slightly different behavior.
-//!
 //! ### Attributes
 //!
 //! All derive macros support various attributes and some apply to multiple macros.
@@ -415,10 +410,9 @@ pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::
 
 /// Derive macro for the `Serialize` trait.
 ///
-/// This is the same as [`Serialize`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
 pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -437,10 +431,9 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 
 /// Derive macro for the `Deserialize` trait.
 ///
-/// This is the same as [`Deserialize`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
 pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -459,10 +452,9 @@ pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_mac
 
 /// Derive macro for the `Introspectable` trait.
 ///
-/// This is the same as [`Introspectable`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
 pub fn introspectable_from_aldrin(
@@ -483,10 +475,9 @@ pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macr
 
 /// Derive macro for the `SerializeKey` trait.
 ///
-/// This is the same as [`SerializeKey`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
 pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -505,10 +496,9 @@ pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_ma
 
 /// Derive macro for the `DeserializeKey` trait.
 ///
-/// This is the same as [`DeserializeKey`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
 pub fn deserialize_key_from_aldrin(
@@ -529,10 +519,9 @@ pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 
 /// Derive macro for the `KeyTypeOf` trait.
 ///
-/// This is the same as [`KeyTypeOf`], except that the `crate` defaults to `::aldrin::core`.
-///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+#[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
 pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
