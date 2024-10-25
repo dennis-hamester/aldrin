@@ -1,10 +1,8 @@
-use super::Options;
+use super::{add_trait_bounds, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{
-    parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Generics, Result, Token,
-};
+use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token};
 
 pub fn gen_key_type_of_from_core(input: DeriveInput) -> Result<TokenStream> {
     let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
@@ -42,7 +40,11 @@ fn gen_key_type_of(input: DeriveInput, options: Options) -> Result<TokenStream> 
         }
     };
 
-    let generics = add_trait_bounds(input.generics, &options);
+    let generics = add_trait_bounds(
+        input.generics,
+        &parse_quote!(#krate::KeyTypeOf),
+        options.key_ty_bounds(),
+    );
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     Ok(quote! {
@@ -51,28 +53,6 @@ fn gen_key_type_of(input: DeriveInput, options: Options) -> Result<TokenStream> 
             #body
         }
     })
-}
-
-fn add_trait_bounds(mut generics: Generics, options: &Options) -> Generics {
-    let krate = options.krate();
-
-    let predicates = &mut generics
-        .where_clause
-        .get_or_insert_with(|| parse_quote!(where))
-        .predicates;
-
-    if let Some(bounds) = options.key_ty_bounds() {
-        predicates.extend(bounds.into_iter().cloned());
-    } else {
-        for param in &generics.params {
-            if let GenericParam::Type(type_param) = param {
-                let ident = &type_param.ident;
-                predicates.push(parse_quote!(#ident: #krate::introspection::KeyTypeOf));
-            }
-        }
-    }
-
-    generics
 }
 
 fn gen_struct(fields: &Punctuated<Field, Token![,]>, options: &Options) -> Result<TokenStream> {

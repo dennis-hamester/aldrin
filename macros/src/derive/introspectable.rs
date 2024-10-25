@@ -1,11 +1,8 @@
-use super::{ItemOptions, Options};
+use super::{add_trait_bounds, ItemOptions, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{
-    parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Generics, Result, Token,
-    Variant,
-};
+use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
 
 pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
@@ -46,7 +43,11 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
         }
     };
 
-    let generics = add_trait_bounds(input.generics, &options);
+    let generics = add_trait_bounds(
+        input.generics,
+        &parse_quote!(#krate::Introspectable),
+        options.intro_bounds(),
+    );
 
     let generic_lexical_ids = generics.type_params().map(|ty| {
         let ty = &ty.ident;
@@ -75,28 +76,6 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
             }
         }
     })
-}
-
-fn add_trait_bounds(mut generics: Generics, options: &Options) -> Generics {
-    let krate = options.krate();
-
-    let predicates = &mut generics
-        .where_clause
-        .get_or_insert_with(|| parse_quote!(where))
-        .predicates;
-
-    if let Some(bounds) = options.intro_bounds() {
-        predicates.extend(bounds.into_iter().cloned());
-    } else {
-        for param in &generics.params {
-            if let GenericParam::Type(param) = param {
-                let ident = &param.ident;
-                predicates.push(parse_quote!(#ident: #krate::introspection::Introspectable));
-            }
-        }
-    }
-
-    generics
 }
 
 fn gen_struct(
