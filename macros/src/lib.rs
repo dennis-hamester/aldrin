@@ -1,17 +1,164 @@
-//! Aldrin macros
+//! # Aldrin macros
 //!
 //! The macros in this crate are not generally meant to be used directly, but through re-exports in
-//! other crates. The follow overview lists all macros and where they are re-exported.
+//! other crates.
+//!
+//! ## Procedural macros
 //!
 //! - [`generate`](generate!): Re-exported in crate `aldrin`
-//! - [`Serialize`]: Re-exported in crate `aldrin` and `aldrin-core`
-//! - [`Deserialize`]: Re-exported in crate `aldrin` and `aldrin-core`
-//! - [`Introspectable`]: Re-exported in crate `aldrin` and `aldrin-core`
 //!
-//! Note that the derive macros come in 2 variants, depending on where they are
-//! re-exported. E.g. [`Serialize`] is re-exported in `aldrin-core`, but [`SerializeFromAldrin`] is
-//! re-exported in `aldrin` as `Serialize`. This was done because derive macros, when used from
-//! `aldrin`, require slightly different behavior.
+//! ## Derive macros
+//!
+//! - [`Serialize`]
+//! - [`Deserialize`]
+//! - [`Introspectable`]
+//! - [`SerializeKey`]
+//! - [`DeserializeKey`]
+//! - [`KeyTypeOf`]
+//!
+//! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
+//!
+//! Note that the derive macros come in 2 variants, depending on where they are re-exported. E.g.
+//! [`Serialize`] is re-exported in `aldrin-core`, but [`SerializeFromAldrin`] is re-exported in
+//! `aldrin` as `Serialize`. This was done because derive macros, when used from `aldrin`, require
+//! slightly different behavior.
+//!
+//! ### Attributes
+//!
+//! All derive macros support various attributes and some apply to multiple macros.
+//!
+//! #### Container attributes
+//!
+//! ##### `crate`
+//!
+//! - Applies to: all derive macros
+//!
+//! The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
+//! crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
+//! somewhere. The default value depends on from where the macro is invoked, it's either
+//! `::aldrin::core` or `::aldrin_core`.
+//!
+//! ```
+//! mod my_reexports {
+//!     pub use aldrin_core as my_aldrin_core;
+//! }
+//!
+//! #[derive(
+//!     my_reexports::my_aldrin_core::Serialize,
+//!     my_reexports::my_aldrin_core::Deserialize,
+//! )]
+//! #[aldrin(crate = "my_reexports::my_aldrin_core")]
+//! struct Person {
+//!     name: String,
+//! }
+//! ```
+//!
+//! ##### `{ser,de,intro,ser_key,de_key,key_ty}_bounds`
+//!
+//! Applies to:
+//! - `ser_bounds`: `Serialize`
+//! - `de_bounds`: `Deserialize`
+//! - `intro_bounds`: `Introspectable`
+//! - `ser_key_bounds`: `SerializeKey`
+//! - `de_key_bounds`: `DeserializeKey`
+//! - `key_ty_bounds`: `KeyTypeOf`
+//!
+//! These attributes specify the generic bounds added to `where` clauses The default is to add `T:
+//! Trait` bounds for each type parameter `T` and the respective trait.
+//!
+//! The values of these attributes must be a string of comma-separated bounds, just like they would
+//! appear in a `where` clause.
+//!
+//! ```
+//! # use aldrin_core::{Deserialize, Serialize};
+//! #[derive(Serialize, Deserialize)]
+//! #[aldrin(ser_bounds = "T: aldrin::core::Serialize")]
+//! #[aldrin(de_bounds = "T: aldrin::core::Deserialize")]
+//! struct Person<T> {
+//!     pets: Vec<T>,
+//! }
+//! ```
+//!
+//! ##### `schema`
+//!
+//! - Applies to: `Introspectable`
+//!
+//! Deriving `Introspectable` requires specifying a schema name. It is an error if this attribute is
+//! missing.
+//!
+//! ```
+//! # use aldrin_core::Introspectable;
+//! #[derive(Introspectable)]
+//! #[aldrin(schema = "contacts")]
+//! struct Person {
+//!     name: String,
+//! }
+//! ```
+//!
+//! #### Field and variant attributes
+//!
+//! ##### `id`
+//!
+//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//!
+//! Use `#[aldrin(id = ...)]` to override the automatically defined id for a field or variant.
+//!
+//! Default ids start at 0 for the first field or variant and then increment by 1 for each
+//! subsequent field or variant.
+//!
+//! ```
+//! # use aldrin_core::{Deserialize, Introspectable, Serialize};
+//! #[derive(Serialize, Deserialize, Introspectable)]
+//! #[aldrin(schema = "family_tree")]
+//! struct Person {
+//!     age: u8, // id = 0
+//!
+//!     #[aldrin(id = 5)]
+//!     name: String, // id = 5
+//!
+//!     siblings: Vec<Self>, // id = 6
+//! }
+//! ```
+//!
+//! ```
+//! # use aldrin_core::{Deserialize, Introspectable, Serialize};
+//! #[derive(Serialize, Deserialize, Introspectable)]
+//! #[aldrin(schema = "pets")]
+//! enum Pet {
+//!     Dog, // id = 0
+//!
+//!     #[aldrin(id = 5)]
+//!     Cat, // id = 5
+//!
+//!     Alpaca, // id = 6
+//! }
+//! ```
+//!
+//! ##### `optional`
+//!
+//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//!
+//! Use `#[aldrin(optional)]` to mark fields of a struct as optional. They must be of an `Option<T>`
+//! type.
+//!
+//! Optional fields are not serialized if `None` and are allowed to be missing when deserializing a
+//! value.
+//!
+//! ```
+//! # use aldrin_core::{Deserialize, Serialize};
+//! #[derive(Serialize, Deserialize)]
+//! struct MyStruct {
+//!     required_field_1: i32,
+//!     required_field_2: Option<i32>,
+//!
+//!     #[aldrin(optional)]
+//!     optional_field: Option<i32>,
+//! }
+//! ```
+//!
+//! Both fields `required_field_1` and `required_field_2` will always be serialized and
+//! deserialization will fail if either is missing. Serialization of `optional_field` is skipped if
+//! it is `None`. If it's missing during deserialization, then it will be set to `None`.
 
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
@@ -258,138 +405,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 
 /// Derive macro for the `Serialize` trait.
 ///
-/// Note: this documentation also applies to the [`Deserialize`] derive macro.
-///
-/// # Container attributes
-///
-/// ## `crate`
-///
-/// The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
-/// crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
-/// somewhere. The default is `::aldrin_core`.
-///
-/// Note that there are also the [`SerializeFromAldrin`] and [`DeserializeFromAldrin`] macros, for
-/// which `crate` defaults to `::aldrin::core`. These macros are re-exported in `aldrin` as
-/// `Serialize` and `Deserialize`.
-///
-/// ```
-/// mod my_reexports {
-///     pub use aldrin_core as my_aldrin_core;
-/// }
-///
-/// #[derive(
-///     my_reexports::my_aldrin_core::Serialize,
-///     my_reexports::my_aldrin_core::Deserialize,
-/// )]
-/// #[aldrin(crate = "my_reexports::my_aldrin_core")]
-/// struct MyStruct {
-///     field1: u32,
-/// }
-/// ```
-///
-/// ## `ser_bounds`, `de_bounds`
-///
-/// Per default, additional bounds `T: Serialize` and `T: Deserialize` are added for each type
-/// parameter `T`. Use `ser_bounds` and `de_bounds` to override or inhibit this.
-///
-/// The attribute's value should be a string literal containing bounds as they would appear in a
-/// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
-/// attribute to an empty string will inhibit the default bounds.
-///
-/// The following example defines a newtype struct for [`Cow`](std::borrow::Cow). This fails to
-/// compile, because `Cow`'s `Deserialize` implementation requires `T::Owned: Deserialize`. The
-/// default bound `T: Deserialize` is wrong in this case.
-///
-/// ```compile_fail
-/// # use aldrin_core::{Deserialize, Serialize};
-/// # use std::borrow::Cow;
-/// #[derive(Serialize, Deserialize)]
-/// struct MyStruct<'a, T>(Cow<'a, T>)
-/// where
-///     T: ToOwned + ?Sized + 'a;
-/// ```
-///
-/// ```text
-/// error[E0277]: the trait bound `<T as ToOwned>::Owned: Deserialize` is not satisfied
-///    --> src/lib.rs
-///     |
-/// 1   | #[derive(Serialize, Deserialize)]
-///     |                     ^^^^^^^^^^^ the trait `Deserialize` is not implemented for `<T as ToOwned>::Owned`
-///     |
-///     = note: required for `Cow<'_, T>` to implement `Deserialize`
-/// note: required by a bound in `FieldDeserializer::<'a, 'b>::deserialize`
-/// ```
-///
-/// The solution is to override the default bounds with `de_bounds`:
-///
-/// ```
-/// # use aldrin_core::{Deserialize, Serialize};
-/// # use std::borrow::Cow;
-/// #[derive(Serialize, Deserialize)]
-/// #[aldrin(de_bounds = "T::Owned: aldrin_core::Deserialize")]
-/// struct MyStruct<'a, T>(Cow<'a, T>)
-/// where
-///     T: ToOwned + ?Sized + 'a;
-/// ```
-///
-/// # Field and variant attributes
-///
-/// ## `id`
-///
-/// Use `#[aldrin(id = ...)]` to override the automatically defined id for a field or variant.
-///
-/// Default ids start at 0 for the first field or variant and then increment by 1 for each
-/// subsequent field or variant.
-///
-/// ```
-/// # use aldrin_core::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize)]
-/// struct MyStruct {
-///     field1: u32, // id = 0
-///
-///     #[aldrin(id = 5)]
-///     field2: u32, // id = 5
-///
-///     field3: u32, // id = 6
-/// }
-/// ```
-///
-/// ```
-/// # use aldrin_core::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize)]
-/// enum MyEnum {
-///     Variant1, // id = 0
-///
-///     #[aldrin(id = 5)]
-///     Variant2, // id = 5
-///
-///     Variant3, // id = 6
-/// }
-/// ```
-///
-/// ## `optional`
-///
-/// Use `#[aldrin(optional)]` to mark fields of a struct as optional. They must be of an `Option<T>`
-/// type.
-///
-/// Optional fields are not serialized if `None` and are allowed to be missing in the serialized
-/// form.
-///
-/// ```
-/// # use aldrin_core::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize)]
-/// struct MyStruct {
-///     required_field_1: i32,
-///     required_field_2: Option<i32>,
-///
-///     #[aldrin(optional)]
-///     optional_field: Option<i32>,
-/// }
-/// ```
-///
-/// Both fields `required_field_1` and `required_field_2` will always be serialized and
-/// deserialization will fail if they are missing. Serialization of `optional_field` is skipped if
-/// it is `None`. If it's missing during deserialization, then it will be set to `None`.
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(Serialize, attributes(aldrin))]
 pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -398,9 +415,10 @@ pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::
 
 /// Derive macro for the `Serialize` trait.
 ///
-/// See the documentation of the [`Serialize`] derive macro in `aldrin_macros` for more information.
-///
 /// This is the same as [`Serialize`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
 pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -409,7 +427,8 @@ pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2
 
 /// Derive macro for the `Deserialize` trait.
 ///
-/// See the documentation of the [`Serialize`] derive macro, which also applies for this macro.
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(Deserialize, attributes(aldrin))]
 pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -418,9 +437,10 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 
 /// Derive macro for the `Deserialize` trait.
 ///
-/// See the documentation of the [`Serialize`] derive macro in `aldrin_macros` for more information.
-///
 /// This is the same as [`Deserialize`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
 pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -429,105 +449,8 @@ pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
 
 /// Derive macro for the `Introspectable` trait.
 ///
-/// # Container attributes
-///
-/// ## `schema`
-///
-/// Custom Aldrin types require specifying the name of the schema they are defined in.
-///
-/// ```
-/// # use aldrin_core::Introspectable;
-/// #[derive(Introspectable)]
-/// #[aldrin(schema = "my_schema")]
-/// struct MyStruct {
-///     field1: u32
-/// }
-/// ```
-///
-/// ## `crate`
-///
-/// The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
-/// crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
-/// somewhere. The default is `::aldrin_core`.
-///
-/// Note that there is also the [`IntrospectableFromAldrin`] macro, for which `crate` defaults to
-/// `::aldrin::core`. This macro is re-exported in `aldrin` as `Introspectable`.
-///
-/// ```
-/// mod my_reexports {
-///     pub use aldrin_core as my_aldrin_core;
-/// }
-///
-/// #[derive(my_reexports::my_aldrin_core::Introspectable)]
-/// #[aldrin(crate = "my_reexports::my_aldrin_core", schema = "my_schema")]
-/// struct MyStruct {
-///     field1: u32,
-/// }
-/// ```
-///
-/// ## `intro_bounds`
-///
-/// Per default, additional bounds `T: Introspectable` are added for each type parameter `T`. Use
-/// `intro_bounds` to override or inhibit this.
-///
-/// The attribute's value should be a string literal containing bounds as they would appear in a
-/// where clause. Multiple bounds can be specified by separating them with a comma. Setting either
-/// attribute to an empty string will inhibit the default bounds.
-///
-/// # Field and variant attributes
-///
-/// ## `id`
-///
-/// Use `#[aldrin(id = ...)]` to override the automatically defined id for a field or variant.
-///
-/// Default ids start at 0 for the first field or variant and then increment by 1 for each
-/// subsequent field or variant.
-///
-/// ```
-/// # use aldrin_core::Introspectable;
-/// #[derive(Introspectable)]
-/// #[aldrin(schema = "my_schema")]
-/// struct MyStruct {
-///     field1: u32, // id = 0
-///
-///     #[aldrin(id = 5)]
-///     field2: u32, // id = 5
-///
-///     field3: u32, // id = 6
-/// }
-/// ```
-///
-/// ```
-/// # use aldrin_core::Introspectable;
-/// #[derive(Introspectable)]
-/// #[aldrin(schema = "my_schema")]
-/// enum MyEnum {
-///     Variant1, // id = 0
-///
-///     #[aldrin(id = 5)]
-///     Variant2, // id = 5
-///
-///     Variant3, // id = 6
-/// }
-/// ```
-///
-/// ## `optional`
-///
-/// Use `#[aldrin(optional)]` to mark fields of a struct as optional. They must be of an `Option<T>`
-/// type.
-///
-/// ```
-/// # use aldrin_core::Introspectable;
-/// #[derive(Introspectable)]
-/// #[aldrin(schema = "my_schema")]
-/// struct MyStruct {
-///     required_field_1: i32,
-///     required_field_2: Option<i32>,
-///
-///     #[aldrin(optional)]
-///     optional_field: Option<i32>,
-/// }
-/// ```
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(Introspectable, attributes(aldrin))]
 pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -536,10 +459,10 @@ pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_mac
 
 /// Derive macro for the `Introspectable` trait.
 ///
-/// See the documentation of the [`Introspectable`] derive macro in `aldrin_macros` for more
-/// information.
-///
 /// This is the same as [`Introspectable`], except that the `crate` defaults to `::aldrin::core`.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
 pub fn introspectable_from_aldrin(
@@ -550,7 +473,8 @@ pub fn introspectable_from_aldrin(
 
 /// Derive macro for the `SerializeKey` trait.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKey, attributes(aldrin))]
 pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -561,7 +485,8 @@ pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macr
 ///
 /// This is the same as [`SerializeKey`], except that the `crate` defaults to `::aldrin::core`.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
 pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -570,7 +495,8 @@ pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_ma
 
 /// Derive macro for the `DeserializeKey` trait.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKey, attributes(aldrin))]
 pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -581,7 +507,8 @@ pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_ma
 ///
 /// This is the same as [`DeserializeKey`], except that the `crate` defaults to `::aldrin::core`.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
 pub fn deserialize_key_from_aldrin(
@@ -592,7 +519,8 @@ pub fn deserialize_key_from_aldrin(
 
 /// Derive macro for the `KeyTypeOf` trait.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOf, attributes(aldrin))]
 pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -603,7 +531,8 @@ pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 ///
 /// This is the same as [`KeyTypeOf`], except that the `crate` defaults to `::aldrin::core`.
 ///
-/// TODO
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
 pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
