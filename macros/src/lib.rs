@@ -26,7 +26,7 @@
 //!
 //! ##### `crate`
 //!
-//! - Applies to: all derive macros
+//! - Applies to: [all derive macros](crate#derive-macros)
 //!
 //! The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
 //! crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
@@ -51,12 +51,12 @@
 //! ##### `{ser,de,intro,ser_key,de_key,key_ty}_bounds`
 //!
 //! Applies to:
-//! - `ser_bounds`: `Serialize`
-//! - `de_bounds`: `Deserialize`
-//! - `intro_bounds`: `Introspectable`
-//! - `ser_key_bounds`: `SerializeKey`
-//! - `de_key_bounds`: `DeserializeKey`
-//! - `key_ty_bounds`: `KeyTypeOf`
+//! - `ser_bounds`: [`Serialize`]
+//! - `de_bounds`: [`Deserialize`]
+//! - `intro_bounds`: [`Introspectable`]
+//! - `ser_key_bounds`: [`SerializeKey`]
+//! - `de_key_bounds`: [`DeserializeKey`]
+//! - `key_ty_bounds`: [`KeyTypeOf`]
 //!
 //! These attributes specify the generic bounds added to `where` clauses The default is to add `T:
 //! Trait` bounds for each type parameter `T` and the respective trait.
@@ -402,6 +402,12 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Serialize, attributes(aldrin))]
 pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -412,6 +418,12 @@ pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
@@ -423,6 +435,12 @@ pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`de_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Deserialize, attributes(aldrin))]
 pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -433,6 +451,12 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`de_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
@@ -444,6 +468,13 @@ pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`schema`](crate#crate)
+/// - [`intro_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Introspectable, attributes(aldrin))]
 pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -454,6 +485,13 @@ pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_mac
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`schema`](crate#crate)
+/// - [`intro_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`id`](crate#id)
+/// - [`optional`](crate#optional)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
@@ -467,6 +505,10 @@ pub fn introspectable_from_aldrin(
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKey, attributes(aldrin))]
 pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -477,6 +519,10 @@ pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macr
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ser_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
@@ -488,6 +534,10 @@ pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_ma
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`de_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKey, attributes(aldrin))]
 pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -498,6 +548,10 @@ pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_ma
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`de_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
@@ -511,6 +565,10 @@ pub fn deserialize_key_from_aldrin(
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`key_ty_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOf, attributes(aldrin))]
 pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -521,6 +579,10 @@ pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
 /// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`key_ty_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
