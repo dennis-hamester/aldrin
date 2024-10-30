@@ -19,7 +19,7 @@ clap = { workspace = true }
 colorchoice-clap = { workspace = true }
 
 [dependencies.aldrin-codegen]
-version = "0.8.1"
+version = "0.8.2"
 path = "../codegen"
 default-features = false
 features = ["rust"]
