@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Derive `Serialize`, `Deserialize` and `Introspectable` with the new macros in `aldrin-macros`.
 - Take `SerializeArg<T>` everywhere a serializable type is in argument position. This includes
   function calls of proxy types and event emitters on services.
+- The code generated for services now uses the new `service!()` macro from `aldrin-macros`.
 
 ## [0.8.2] - 2024-10-30
 

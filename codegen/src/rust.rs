@@ -6,7 +6,6 @@ use crate::Options;
 use aldrin_parser::{ast, Parsed, Schema};
 use diffy::Patch;
 use heck::ToUpperCamelCase;
-use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::fs;
 use std::path::Path;
@@ -88,15 +87,6 @@ macro_rules! genln {
 #[rustfmt::skip::macros(gen, genln)]
 impl RustGenerator<'_> {
     fn generate(mut self) -> Result<RustOutput, Error> {
-        genln!(self, "#![allow(clippy::enum_variant_names)]");
-        genln!(self, "#![allow(clippy::large_enum_variant)]");
-        genln!(self, "#![allow(clippy::match_single_binding)]");
-        genln!(self, "#![allow(clippy::type_complexity)]");
-        genln!(self, "#![allow(dead_code)]");
-        genln!(self, "#![allow(unused_mut)]");
-        genln!(self, "#![allow(unused_variables)]");
-        genln!(self);
-
         for def in self.schema.definitions() {
             self.definition(def);
         }
@@ -327,129 +317,87 @@ impl RustGenerator<'_> {
 
         let svc_name = svc.name().value();
 
-        if self.options.client {
-            self.service_def_client(svc);
+        genln!(self, "aldrin::service! {{");
+
+        gen!(self, "    #[aldrin(schema = \"{}\"", self.schema.name());
+
+        if !self.options.client {
+            gen!(self, ", no_client");
         }
 
-        if self.options.server {
-            self.service_def_server(svc);
+        if !self.options.server {
+            gen!(self, ", no_server");
+        }
+
+        if !self.rust_options.function_non_exhaustive {
+            gen!(self, ", no_function_non_exhaustive");
+        }
+
+        if !self.rust_options.event_non_exhaustive {
+            gen!(self, ", no_event_non_exhaustive");
         }
 
         if self.options.introspection {
-            let schema_name = self.schema.name();
-
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "#[doc(hidden)]");
-            genln!(self, "struct {}Introspection;", svc_name);
-            genln!(self);
-
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "impl aldrin::core::introspection::Introspectable for {}Introspection {{", svc_name);
-            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
-            let svc_uuid = format!(
-                "aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"))",
-                svc.uuid().value()
-            );
-            genln!(self, "        aldrin::core::introspection::Service::builder(\"{schema_name}\", \"{svc_name}\", {svc_uuid}, {})", svc.version().value());
-            for item in svc.items() {
-                match item {
-                    ast::ServiceItem::Function(func) => {
-                        let func_name = func.name().value();
-                        gen!(self, "            .function({}, \"{func_name}\", ", func.id().value());
-                        match func.args() {
-                            Some(args) => gen!(self, "Some({}), ", type_name_or_inline_lexical_id(args.part_type(), svc_name, func_name, "Args")),
-                            None => gen!(self, "None, "),
-                        }
-                        match func.ok() {
-                            Some(ok) => gen!(self, "Some({}), ", type_name_or_inline_lexical_id(ok.part_type(), svc_name, func_name, "Ok")),
-                            None => gen!(self, "None, "),
-                        }
-                        match func.err() {
-                            Some(err) => gen!(self, "Some({})", type_name_or_inline_lexical_id(err.part_type(), svc_name, func_name, "Error")),
-                            None => gen!(self, "None"),
-                        }
-                        genln!(self, ")");
-                    }
-
-                    ast::ServiceItem::Event(ev) => {
-                        let ev_name = ev.name().value();
-                        gen!(self, "            .event({}, \"{ev_name}\", ", ev.id().value());
-                        match ev.event_type() {
-                            Some(ev_type) => gen!(self, "Some({})", type_name_or_inline_lexical_id(ev_type, svc_name, ev_name, "Event")),
-                            None => gen!(self, "None"),
-                        }
-                        genln!(self, ")");
-                    }
-                }
-            }
-            genln!(self, "            .finish()");
-            genln!(self, "            .into()");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
-            genln!(self, "        aldrin::core::introspection::LexicalId::service(\"{schema_name}\", \"{svc_name}\")");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
-            let mut types = BTreeSet::new();
-            for item in svc.items() {
-                match item {
-                    ast::ServiceItem::Function(func) => {
-                        let func_name = func.name().value();
-                        if let Some(args) = func.args() {
-                            types.insert(type_name_or_inline_dyn_introspectable(
-                                args.part_type(),
-                                svc_name,
-                                func_name,
-                                "Args",
-                            ));
-                        }
-                        if let Some(ok) = func.ok() {
-                            types.insert(type_name_or_inline_dyn_introspectable(
-                                ok.part_type(),
-                                svc_name,
-                                func_name,
-                                "Ok",
-                            ));
-                        }
-                        if let Some(err) = func.err() {
-                            types.insert(type_name_or_inline_dyn_introspectable(
-                                err.part_type(),
-                                svc_name,
-                                func_name,
-                                "Error",
-                            ));
-                        }
-                    }
-
-                    ast::ServiceItem::Event(ev) => {
-                        let ev_name = ev.name().value();
-                        if let Some(ev_type) = ev.event_type() {
-                            types.insert(type_name_or_inline_dyn_introspectable(
-                                ev_type, svc_name, ev_name, "Event",
-                            ));
-                        }
-                    }
-                }
-            }
-            genln!(self, "        let field_types: [aldrin::core::introspection::DynIntrospectable; {}] = [", types.len());
-            for ty in types {
-                genln!(self, "            {ty},");
-            }
-            genln!(self, "        ];");
-            genln!(self, "        types.extend(field_types);");
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
+            gen!(self, ", introspection");
         }
+
+        if let Some(feature) = self.rust_options.introspection_if {
+            gen!(self, ", introspection_if = \"{feature}\"");
+        }
+
+        genln!(self, ")]");
+
+        genln!(self, "    pub service {svc_name} {{");
+        genln!(self, "        uuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
+        genln!(self, "        version = {};", svc.version().value());
+
+        for item in svc.items() {
+            genln!(self);
+
+            match item {
+                ast::ServiceItem::Function(func) => {
+                    let name = func.name().value();
+
+                    gen!(self, "        fn {name} @ {}", func.id().value());
+
+                    if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
+                        genln!(self, " {{");
+
+                        if let Some(args) = func.args() {
+                            genln!(self, "            args = {};", function_args_type_name(svc_name, name, args));
+                        }
+
+                        if let Some(ok) = func.ok() {
+                            genln!(self, "            ok = {};", function_ok_type_name(svc_name, name, ok));
+                        }
+
+                        if let Some(err) = func.err() {
+                            genln!(self, "            err = {};", function_err_type_name(svc_name, name, err));
+                        }
+
+                        genln!(self, "        }}");
+                    } else {
+                        genln!(self, ";");
+                    }
+                }
+
+                ast::ServiceItem::Event(ev) => {
+                    let name = ev.name().value();
+
+                    gen!(self, "        event {name} @ {}", ev.id().value());
+
+                    if let Some(event_type) = ev.event_type() {
+                        gen!(self, " = {}", event_variant_type(svc_name, name, event_type));
+                    }
+
+                    genln!(self, ";");
+                }
+            }
+        }
+
+        genln!(self, "    }}");
+        genln!(self, "}}");
+        genln!(self);
 
         for item in svc.items() {
             match item {
@@ -463,11 +411,13 @@ impl RustGenerator<'_> {
                                 None,
                                 s.fields(),
                             ),
+
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &function_args_type_name(svc_name, func_name, args),
                                 None,
                                 e.variants(),
                             ),
+
                             ast::TypeNameOrInline::TypeName(_) => {}
                         }
                     }
@@ -479,11 +429,13 @@ impl RustGenerator<'_> {
                                 None,
                                 s.fields(),
                             ),
+
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &function_ok_type_name(svc_name, func_name, ok),
                                 None,
                                 e.variants(),
                             ),
+
                             ast::TypeNameOrInline::TypeName(_) => {}
                         }
                     }
@@ -495,11 +447,13 @@ impl RustGenerator<'_> {
                                 None,
                                 s.fields(),
                             ),
+
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &function_err_type_name(svc_name, func_name, err),
                                 None,
                                 e.variants(),
                             ),
+
                             ast::TypeNameOrInline::TypeName(_) => {}
                         }
                     }
@@ -508,475 +462,25 @@ impl RustGenerator<'_> {
                 ast::ServiceItem::Event(ev) => {
                     if let Some(ty) = ev.event_type() {
                         let ev_name = ev.name().value();
+
                         match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &event_variant_type(svc_name, ev_name, ty),
                                 None,
                                 s.fields(),
                             ),
+
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &event_variant_type(svc_name, ev_name, ty),
                                 None,
                                 e.variants(),
                             ),
+
                             ast::TypeNameOrInline::TypeName(_) => {}
                         }
                     }
                 }
             }
-        }
-    }
-
-    fn service_def_client(&mut self, svc: &ast::ServiceDef) {
-        let svc_name = svc.name().value();
-        let proxy_name = service_proxy_name(svc_name);
-
-        genln!(self, "#[derive(Debug)]");
-        genln!(self, "pub struct {} {{", proxy_name);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    inner: aldrin::low_level::Proxy,");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl {} {{", proxy_name);
-        genln!(self, "    pub const UUID: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
-        genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
-        genln!(self);
-        genln!(self, "    pub async fn new(client: &aldrin::Handle, id: aldrin::core::ServiceId) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        if id.uuid != Self::UUID {{");
-        genln!(self, "            return Err(aldrin::Error::InvalidService);");
-        genln!(self, "        }}");
-        genln!(self);
-        genln!(self, "        let inner = aldrin::low_level::Proxy::new(client, id).await?;");
-        genln!(self, "        Ok(Self {{ inner }})");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn inner(&self) -> &aldrin::low_level::Proxy {{");
-        genln!(self, "        &self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn inner_mut(&mut self) -> &mut aldrin::low_level::Proxy {{");
-        genln!(self, "        &mut self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn into_inner(self) -> aldrin::low_level::Proxy {{");
-        genln!(self, "        self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
-        genln!(self, "        self.inner.client()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.inner.id()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn version(&self) -> u32 {{");
-        genln!(self, "        self.inner.version()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn type_id(&self) -> Option<aldrin::core::TypeId> {{");
-        genln!(self, "        self.inner.type_id()");
-        genln!(self, "    }}");
-        genln!(self);
-
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<aldrin::core::introspection::Introspection>, aldrin::Error> {{");
-            genln!(self, "        self.inner.query_introspection().await");
-            genln!(self, "    }}");
-            genln!(self);
-        }
-
-        for item in svc.items() {
-            let func = match item {
-                ast::ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-
-            let func_name = func.name().value();
-            let id = func.id().value();
-
-            let arg = func
-                .args()
-                .map(|args| {
-                    format!(
-                        ", arg: aldrin::core::SerializeArg<'_, {}>",
-                        function_args_type_name(svc_name, func_name, args)
-                    )
-                })
-                .unwrap_or_default();
-
-            let ok = func
-                .ok()
-                .map(|ok| function_ok_type_name(svc_name, func_name, ok))
-                .unwrap_or_else(|| "()".to_string());
-
-            let err = func
-                .err()
-                .map(|err| function_err_type_name(svc_name, func_name, err))
-                .unwrap_or_else(|| "std::convert::Infallible".to_string());
-
-            genln!(self, "    pub fn {func_name}(&self{arg}) -> aldrin::Reply<{ok}, {err}> {{");
-            if func.args().is_some() {
-                genln!(self, "        self.inner.call({id}, &arg).cast()");
-            } else {
-                genln!(self, "        self.inner.call({id}, &()).cast()");
-            }
-            genln!(self, "    }}");
-
-            genln!(self);
-        }
-
-        genln!(self, "    pub async fn subscribe_all(&self) -> Result<(), aldrin::Error> {{");
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            genln!(self, "        self.{}().await?;", subscribe_event(ev_name));
-        }
-        genln!(self, "        Ok(())");
-        genln!(self, "    }}");
-        genln!(self);
-
-        genln!(self, "    pub async fn unsubscribe_all(&self) -> Result<(), aldrin::Error> {{");
-        genln!(self, "        self.inner.unsubscribe_all().await");
-        genln!(self, "    }}");
-        genln!(self);
-
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-
-            genln!(self, "    pub async fn {}(&self) -> Result<(), aldrin::Error> {{", subscribe_event(ev_name));
-            genln!(self, "        self.inner.subscribe({id}).await");
-            genln!(self, "    }}");
-            genln!(self);
-
-            genln!(self, "    pub async fn {}(&self) -> Result<(), aldrin::Error> {{", unsubscribe_event(ev_name));
-            genln!(self, "        self.inner.unsubscribe({id}).await");
-            genln!(self, "    }}");
-            genln!(self);
-        }
-
-        let event = service_event(svc_name);
-        genln!(self, "    pub fn poll_next_event(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Option<Result<{event}, aldrin::Error>>> {{");
-        genln!(self, "        loop {{");
-        genln!(self, "            let ev = match self.inner.poll_next_event(cx) {{");
-        genln!(self, "                std::task::Poll::Ready(Some(ev)) => ev,");
-        genln!(self, "                std::task::Poll::Ready(None) => break std::task::Poll::Ready(None),");
-        genln!(self, "                std::task::Poll::Pending => break std::task::Poll::Pending,");
-        genln!(self, "            }};");
-        genln!(self);
-        genln!(self, "            match ev.id() {{");
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-            let variant = service_event_variant(ev_name);
-
-            genln!(self, "                {id} => match ev.deserialize() {{");
-            if ev.event_type().is_some() {
-                genln!(self, "                    Ok(value) => break std::task::Poll::Ready(Some(Ok({event}::{variant}(value)))),");
-            } else {
-                genln!(self, "                    Ok(()) => break std::task::Poll::Ready(Some(Ok({event}::{variant}))),");
-            }
-            genln!(self, "                    Err(e) => break std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_arguments(ev.id(), Some(e))))),");
-            genln!(self, "                }}");
-            genln!(self);
-        }
-        genln!(self, "                _ => {{}}");
-        genln!(self, "            }}");
-        genln!(self, "        }}");
-        genln!(self, "    }}");
-        genln!(self);
-
-        genln!(self, "    pub async fn next_event(&mut self) -> Option<Result<{event}, aldrin::Error>> {{");
-        genln!(self, "        std::future::poll_fn(|cx| self.poll_next_event(cx)).await");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {proxy_name} {{");
-        genln!(self, "    type Item = Result<{event}, aldrin::Error>;");
-        genln!(self);
-        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        self.poll_next_event(cx)");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {proxy_name} {{");
-        genln!(self, "    fn is_terminated(&self) -> bool {{");
-        genln!(self, "        self.inner.events_finished()");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "#[derive(Debug, Clone)]");
-        if self.rust_options.event_non_exhaustive {
-            genln!(self, "#[non_exhaustive]");
-        }
-        genln!(self, "pub enum {} {{", event);
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            let variant = service_event_variant(ev_name);
-            if let Some(ev_type) = ev.event_type() {
-                genln!(self, "    {}({}),", variant, event_variant_type(svc_name, ev_name, ev_type))
-            } else {
-                genln!(self, "    {},", variant);
-            }
-        }
-        genln!(self, "}}");
-        genln!(self);
-
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", proxy_name);
-            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
-            genln!(self, "        {}Introspection::layout()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
-            genln!(self, "        {}Introspection::lexical_id()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
-            genln!(self, "        {}Introspection::inner_types(types);", svc_name);
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
-        }
-    }
-
-    fn service_def_server(&mut self, svc: &ast::ServiceDef) {
-        let svc_name = svc.name().value();
-
-        genln!(self, "#[derive(Debug)]");
-        genln!(self, "pub struct {} {{", svc_name);
-        genln!(self, "    #[doc(hidden)]");
-        genln!(self, "    inner: aldrin::low_level::Service,");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl {} {{", svc_name);
-        genln!(self, "    pub const UUID: aldrin::core::ServiceUuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
-        genln!(self, "    pub const VERSION: u32 = {};", svc.version().value());
-        genln!(self);
-        genln!(self, "    pub async fn new(object: &aldrin::Object) -> Result<Self, aldrin::Error> {{");
-        genln!(self, "        let info = aldrin::low_level::ServiceInfo::new(Self::VERSION);");
-
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "        #[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "        let info = info.set_type_id(aldrin::core::TypeId::compute::<Self>());");
-        }
-
-        genln!(self, "        let inner = object.create_service(Self::UUID, info).await?;");
-        genln!(self, "        Ok({} {{ inner }})", svc_name);
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn inner(&self) -> &aldrin::low_level::Service {{");
-        genln!(self, "        &self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn inner_mut(&mut self) -> &mut aldrin::low_level::Service {{");
-        genln!(self, "        &mut self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn into_inner(self) -> aldrin::low_level::Service {{");
-        genln!(self, "        self.inner");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn id(&self) -> aldrin::core::ServiceId {{");
-        genln!(self, "        self.inner.id()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn version(&self) -> u32 {{");
-        genln!(self, "        self.inner.version()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub fn type_id(&self) -> Option<aldrin::core::TypeId> {{");
-        genln!(self, "        self.inner.type_id()");
-        genln!(self, "    }}");
-        genln!(self);
-
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "    pub async fn query_introspection(&self) -> Result<Option<aldrin::core::introspection::Introspection>, aldrin::Error> {{");
-            genln!(self, "        self.inner.query_introspection().await");
-            genln!(self, "    }}");
-            genln!(self);
-        }
-
-        genln!(self, "    pub fn client(&self) -> &aldrin::Handle {{");
-        genln!(self, "        self.inner.client()");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub async fn destroy(&self) -> Result<(), aldrin::Error> {{");
-        genln!(self, "        self.inner.destroy().await");
-        genln!(self, "    }}");
-        genln!(self);
-
-        for item in svc.items() {
-            let ev = match item {
-                ast::ServiceItem::Event(ev) => ev,
-                _ => continue,
-            };
-            let ev_name = ev.name().value();
-            let id = ev.id().value();
-
-            if let Some(ev_type) = ev.event_type() {
-                let var_type = event_variant_type(svc_name, ev_name, ev_type);
-                genln!(self, "    pub fn {ev_name}(&self, arg: aldrin::core::SerializeArg<{var_type}>) -> Result<(), aldrin::Error> {{");
-                genln!(self, "        self.inner.emit({id}, &arg)");
-                genln!(self, "    }}");
-            } else {
-                genln!(self, "    pub fn {ev_name}(&self) -> Result<(), aldrin::Error> {{");
-                genln!(self, "        self.inner.emit({id}, &())");
-                genln!(self, "    }}");
-            }
-
-            genln!(self);
-        }
-
-        let functions = service_functions(svc_name);
-        genln!(self, "    pub fn poll_next_call(&mut self, cx: &mut std::task::Context) -> std::task::Poll<Option<Result<{functions}, aldrin::Error>>> {{");
-        genln!(self, "        let call = match self.inner.poll_next_call(cx) {{");
-        genln!(self, "            std::task::Poll::Ready(Some(call)) => call,");
-        genln!(self, "            std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),");
-        genln!(self, "            std::task::Poll::Pending => return std::task::Poll::Pending,");
-        genln!(self, "        }};");
-        genln!(self);
-        genln!(self, "        match call.id() {{");
-        for item in svc.items() {
-            let func = match item {
-                ast::ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-
-            let func_name = func.name().value();
-            let id = func.id().value();
-            let function = service_function_variant(func_name);
-
-            genln!(self, "            {id} => match call.deserialize_and_cast() {{");
-            if func.args().is_some() {
-                genln!(self, "                Ok((args, promise)) => std::task::Poll::Ready(Some(Ok({functions}::{function}(args, promise)))),");
-            } else {
-                genln!(self, "                Ok(((), promise)) => std::task::Poll::Ready(Some(Ok({functions}::{function}(promise)))),");
-            }
-            genln!(self, "                Err(e) => std::task::Poll::Ready(Some(Err(e))),");
-            genln!(self, "            }}");
-            genln!(self);
-        }
-        genln!(self, "            id => {{");
-        genln!(self, "                let _ = call.into_promise().invalid_function();");
-        genln!(self, "                std::task::Poll::Ready(Some(Err(aldrin::Error::invalid_function(id))))");
-        genln!(self, "            }}");
-        genln!(self, "        }}");
-        genln!(self, "    }}");
-        genln!(self);
-        genln!(self, "    pub async fn next_call(&mut self) -> Option<Result<{functions}, aldrin::Error>> {{");
-        genln!(self, "        std::future::poll_fn(|cx| self.poll_next_call(cx)).await");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::private::futures_core::stream::Stream for {svc_name} {{");
-        genln!(self, "    type Item = Result<{functions}, aldrin::Error>;");
-        genln!(self);
-        genln!(self, "    fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context) -> std::task::Poll<Option<Self::Item>> {{");
-        genln!(self, "        self.poll_next_call(cx)");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "impl aldrin::private::futures_core::stream::FusedStream for {svc_name} {{");
-        genln!(self, "    fn is_terminated(&self) -> bool {{");
-        genln!(self, "        self.inner.is_terminated()");
-        genln!(self, "    }}");
-        genln!(self, "}}");
-        genln!(self);
-
-        genln!(self, "#[derive(Debug)]");
-        if self.rust_options.function_non_exhaustive {
-            genln!(self, "#[non_exhaustive]");
-        }
-        genln!(self, "pub enum {} {{", functions);
-        for item in svc.items() {
-            let func = match item {
-                ast::ServiceItem::Function(func) => func,
-                _ => continue,
-            };
-
-            let func_name = item.name().value();
-            let function = service_function_variant(func_name);
-
-            let ok = func
-                .ok()
-                .map(|ok| function_ok_type_name(svc_name, func_name, ok))
-                .unwrap_or_else(|| "()".to_owned());
-
-            let err = func
-                .err()
-                .map(|err| function_err_type_name(svc_name, func_name, err))
-                .unwrap_or_else(|| "std::convert::Infallible".to_owned());
-
-            if let Some(args) = func.args() {
-                let args_type = function_args_type_name(svc_name, func_name, args);
-                genln!(self, "    {function}({args_type}, aldrin::Promise<{ok}, {err}>),");
-            } else {
-                genln!(self, "    {function}(aldrin::Promise<{ok}, {err}>),");
-            }
-        }
-        genln!(self, "}}");
-        genln!(self);
-
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg(feature = \"{feature}\")]");
-            }
-
-            genln!(self, "impl aldrin::core::introspection::Introspectable for {} {{", svc_name);
-            genln!(self, "    fn layout() -> aldrin::core::introspection::Layout {{");
-            genln!(self, "        {}Introspection::layout()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-            genln!(self, "    fn lexical_id() -> aldrin::core::introspection::LexicalId {{");
-            genln!(self, "        {}Introspection::lexical_id()", svc_name);
-            genln!(self, "    }}");
-            genln!(self);
-            genln!(self, "    fn inner_types(types: &mut Vec<aldrin::core::introspection::DynIntrospectable>) {{");
-            genln!(self, "        {}Introspection::inner_types(types);", svc_name);
-            genln!(self, "    }}");
-            genln!(self, "}}");
-            genln!(self);
         }
     }
 
@@ -1085,10 +589,6 @@ fn struct_builder_name(base: &str) -> String {
     format!("{base}Builder")
 }
 
-fn service_proxy_name(svc_name: &str) -> String {
-    format!("{svc_name}Proxy")
-}
-
 fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
     match part.part_type() {
         ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
@@ -1116,20 +616,8 @@ fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionP
     }
 }
 
-fn service_event(svc_name: &str) -> String {
-    format!("{svc_name}Event")
-}
-
 fn service_event_variant(ev_name: &str) -> String {
     ev_name.to_upper_camel_case()
-}
-
-fn subscribe_event(ev_name: &str) -> String {
-    format!("subscribe_{ev_name}")
-}
-
-fn unsubscribe_event(ev_name: &str) -> String {
-    format!("unsubscribe_{ev_name}")
 }
 
 fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::TypeNameOrInline) -> String {
@@ -1138,52 +626,6 @@ fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::TypeNameOrIn
         ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
             format!("{svc_name}{}Event", service_event_variant(ev_name))
         }
-    }
-}
-
-fn service_functions(svc_name: &str) -> String {
-    format!("{svc_name}Function")
-}
-
-fn service_function_variant(func_name: &str) -> String {
-    func_name.to_upper_camel_case()
-}
-
-fn type_name_or_inline_lexical_id(
-    ty: &ast::TypeNameOrInline,
-    svc_name: &str,
-    ctx: &str,
-    suffix: &str,
-) -> String {
-    let intro = "aldrin::core::introspection::Introspectable";
-
-    match ty {
-        ast::TypeNameOrInline::TypeName(ty) => {
-            format!("<{} as {intro}>::lexical_id()", type_name(ty))
-        }
-
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => format!(
-            "<{svc_name}{}{suffix} as {intro}>::lexical_id()",
-            ctx.to_upper_camel_case()
-        ),
-    }
-}
-
-fn type_name_or_inline_dyn_introspectable(
-    ty: &ast::TypeNameOrInline,
-    svc_name: &str,
-    ctx: &str,
-    suffix: &str,
-) -> String {
-    let func = "aldrin::core::introspection::DynIntrospectable::new";
-
-    match ty {
-        ast::TypeNameOrInline::TypeName(ty) => format!("{func}::<{}>()", type_name(ty)),
-
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => format!(
-            "{func}::<{svc_name}{}{suffix}>()",
-            ctx.to_upper_camel_case()
-        ),
     }
 }
 
