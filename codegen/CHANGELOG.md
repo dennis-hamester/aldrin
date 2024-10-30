@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Adapt to new introspection system.
+
+## [0.8.2] - 2024-10-30
+
 ### Fixed
 
 - Fix generated code when introspection is enabled, but both client and server code generation are
   disabled.
-
-### Changed
-
-- Adapt to new introspection system.
 
 ## [0.8.1] - 2024-10-12
 
@@ -98,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
+[0.8.2]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-codegen-0.8.2
 [0.8.1]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-codegen-0.8.1
 [0.8.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-codegen-0.8.0
 [0.7.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-codegen-0.7.0
