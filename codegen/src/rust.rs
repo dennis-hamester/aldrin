@@ -8,8 +8,7 @@ use diffy::Patch;
 use heck::ToUpperCamelCase;
 use std::collections::BTreeSet;
 use std::fmt::Write;
-use std::fs::File;
-use std::io::Read;
+use std::fs;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -125,13 +124,7 @@ impl RustGenerator<'_> {
     }
 
     fn patch(&mut self, patch: &Path) -> Result<(), Error> {
-        let patch = {
-            let mut file = File::open(patch)?;
-            let mut cnt = String::new();
-            file.read_to_string(&mut cnt)?;
-            cnt
-        };
-
+        let patch = fs::read_to_string(patch)?;
         let patch = Patch::from_str(&patch)?;
         self.output.module_content = diffy::apply(&self.output.module_content, &patch)?;
         Ok(())
