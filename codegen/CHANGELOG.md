@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fix generated code when introspection is enabled, but both client and server code generation are
+  disabled.
+
 ### Changed
 
 - Adapt to new introspection system.

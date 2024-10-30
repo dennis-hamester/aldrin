@@ -18,6 +18,15 @@ mod conditional_introspection {
     }
 }
 
+mod empty_introspection {
+    aldrin::generate!(
+        "test/introspection.aldrin",
+        introspection = true,
+        client = false,
+        server = false,
+    );
+}
+
 use aldrin::core::{ObjectUuid, SerializedValue};
 use aldrin::low_level::Proxy;
 use aldrin::Error;

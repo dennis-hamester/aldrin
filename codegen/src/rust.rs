@@ -1152,7 +1152,9 @@ impl RustGenerator<'_> {
             }
 
             ast::Definition::Service(s) => {
-                genln!(self, "    handle.register_introspection::<{}Introspection>()?;", s.name().value());
+                if self.options.client || self.options.server {
+                    genln!(self, "    handle.register_introspection::<{}Introspection>()?;", s.name().value());
+                }
             }
 
             ast::Definition::Const(_) => {}
