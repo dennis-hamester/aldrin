@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add option `--crate` to subcommand `rust` to specify the path to the `aldrin` crate.
+
 ### Changed
 
 - Bump MSRV to 1.71.1.

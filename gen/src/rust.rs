@@ -46,6 +46,10 @@ pub struct RustArgs {
     #[clap(long, value_name = "FEATURE")]
     introspection_if: Option<String>,
 
+    /// Path of the aldrin crate
+    #[clap(long = "crate", value_name = "PATH")]
+    krate: Option<String>,
+
     /// Path to an Aldrin schema file.
     schema: PathBuf,
 }
@@ -91,6 +95,10 @@ pub fn run(args: RustArgs) -> Result<bool> {
     rust_options.event_non_exhaustive = !args.no_event_non_exhaustive;
     rust_options.function_non_exhaustive = !args.no_function_non_exhaustive;
     rust_options.introspection_if = args.introspection_if.as_deref();
+
+    if let Some(ref krate) = args.krate {
+        rust_options.krate = krate;
+    }
 
     let gen = Generator::new(&options, &parsed);
     let output = gen.generate_rust(&rust_options)?;
