@@ -10,6 +10,31 @@ use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 
+const BOOL: &str = "::std::primitive::bool";
+const BOX: &str = "::std::boxed::Box";
+const CLONE: &str = "::std::clone::Clone";
+const DEBUG: &str = "::std::fmt::Debug";
+const DEFAULT: &str = "::std::default::Default";
+const F32: &str = "::std::primitive::f32";
+const F64: &str = "::std::primitive::f64";
+const HASH_MAP: &str = "::std::collections::HashMap";
+const HASH_SET: &str = "::std::collections::HashSet";
+const I16: &str = "::std::primitive::i16";
+const I32: &str = "::std::primitive::i32";
+const I64: &str = "::std::primitive::i64";
+const I8: &str = "::std::primitive::i8";
+const OK: &str = "::std::result::Result::Ok";
+const OPTION: &str = "::std::option::Option";
+const RESULT: &str = "::std::result::Result";
+const SOME: &str = "::std::option::Option::Some";
+const STR: &str = "::std::primitive::str";
+const STRING: &str = "::std::string::String";
+const U16: &str = "::std::primitive::u16";
+const U32: &str = "::std::primitive::u32";
+const U64: &str = "::std::primitive::u64";
+const U8: &str = "::std::primitive::u8";
+const VEC: &str = "::std::vec::Vec";
+
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct RustOptions<'a> {
@@ -107,13 +132,13 @@ impl RustGenerator<'_> {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "pub fn register_introspection(client: &{krate}::Handle) -> Result<(), {krate}::Error> {{");
+            genln!(self, "pub fn register_introspection(client: &{krate}::Handle) -> {RESULT}<(), {krate}::Error> {{");
 
             for def in self.schema.definitions() {
                 self.register_introspection(def);
             }
 
-            genln!(self, "    Ok(())");
+            genln!(self, "    {OK}(())");
             genln!(self, "}}");
         }
 
@@ -158,8 +183,13 @@ impl RustGenerator<'_> {
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
-        let derive_default = if has_required_fields { "" } else { ", Default" };
         let additional_derives = attrs.additional_derives();
+
+        let derive_default = if has_required_fields {
+            String::new()
+        } else {
+            format!(", {DEFAULT}")
+        };
 
         let derive_introspectable =
             if self.options.introspection && self.rust_options.introspection_if.is_none() {
@@ -168,7 +198,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
+        genln!(self, "#[derive({DEBUG}, {CLONE}{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -199,7 +229,7 @@ impl RustGenerator<'_> {
                 genln!(self, "    pub {name}: {ty},");
             } else {
                 genln!(self, "    #[aldrin(id = {id}, optional)]");
-                genln!(self, "    pub {name}: Option<{ty}>,");
+                genln!(self, "    pub {name}: {OPTION}<{ty}>,");
             }
         }
         genln!(self, "}}");
@@ -208,7 +238,7 @@ impl RustGenerator<'_> {
         genln!(self, "impl {name} {{");
         if !has_required_fields {
             genln!(self, "    pub fn new() -> Self {{");
-            genln!(self, "        Default::default()");
+            genln!(self, "        <Self as {DEFAULT}>::default()");
             genln!(self, "    }}");
             genln!(self);
         }
@@ -222,13 +252,13 @@ impl RustGenerator<'_> {
         genln!(self);
 
         if self.rust_options.struct_builders {
-            genln!(self, "#[derive(Debug, Clone, Default)]");
+            genln!(self, "#[derive({DEBUG}, {CLONE}, {DEFAULT})]");
             genln!(self, "pub struct {builder_name} {{");
             for field in fields {
                 let name = field.name().value();
                 let ty = self.type_name(field.field_type());
                 genln!(self, "    #[doc(hidden)]");
-                genln!(self, "    {name}: Option<{ty}>,");
+                genln!(self, "    {name}: {OPTION}<{ty}>,");
                 genln!(self);
             }
             genln!(self, "}}");
@@ -236,14 +266,14 @@ impl RustGenerator<'_> {
 
             genln!(self, "impl {builder_name} {{");
             genln!(self, "    pub fn new() -> Self {{");
-            genln!(self, "        Default::default()");
+            genln!(self, "        <Self as {DEFAULT}>::default()");
             genln!(self, "    }}");
             genln!(self);
             for field in fields {
                 let name = field.name().value();
                 let ty = self.type_name(field.field_type());
                 genln!(self, "    pub fn {name}(mut self, {name}: {ty}) -> Self {{");
-                genln!(self, "        self.{name} = Some({name});");
+                genln!(self, "        self.{name} = {SOME}({name});");
                 genln!(self, "        self");
                 genln!(self, "    }}");
                 genln!(self);
@@ -258,8 +288,8 @@ impl RustGenerator<'_> {
                 }
                 genln!(self, "        }}");
             } else {
-                genln!(self, "    pub fn build(self) -> Result<{name}, {krate}::Error> {{");
-                genln!(self, "        Ok({name} {{");
+                genln!(self, "    pub fn build(self) -> {RESULT}<{name}, {krate}::Error> {{");
+                genln!(self, "        {OK}({name} {{");
                 for field in fields {
                     let name = field.name().value();
                     if field.required() {
@@ -298,7 +328,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
+        genln!(self, "#[derive({DEBUG}, {CLONE}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -526,47 +556,47 @@ impl RustGenerator<'_> {
         match const_def.value() {
             ast::ConstValue::U8(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: u8 = {val};");
+                genln!(self, "pub const {name}: {U8} = {val};");
             }
 
             ast::ConstValue::I8(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: i8 = {val};");
+                genln!(self, "pub const {name}: {I8} = {val};");
             }
 
             ast::ConstValue::U16(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: u16 = {val};");
+                genln!(self, "pub const {name}: {U16} = {val};");
             }
 
             ast::ConstValue::I16(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: i16 = {val};");
+                genln!(self, "pub const {name}: {I16} = {val};");
             }
 
             ast::ConstValue::U32(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: u32 = {val};");
+                genln!(self, "pub const {name}: {U32} = {val};");
             }
 
             ast::ConstValue::I32(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: i32 = {val};");
+                genln!(self, "pub const {name}: {I32} = {val};");
             }
 
             ast::ConstValue::U64(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: u64 = {val};");
+                genln!(self, "pub const {name}: {U64} = {val};");
             }
 
             ast::ConstValue::I64(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: i64 = {val};");
+                genln!(self, "pub const {name}: {I64} = {val};");
             }
 
             ast::ConstValue::String(v) => {
                 let val = v.value();
-                genln!(self, "pub const {name}: &str = \"{val}\";");
+                genln!(self, "pub const {name}: &{STR} = \"{val}\";");
             }
 
             ast::ConstValue::Uuid(v) => {
@@ -605,41 +635,39 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate;
 
         match ty.kind() {
-            ast::TypeNameKind::Bool => "bool".to_owned(),
-            ast::TypeNameKind::U8 => "u8".to_owned(),
-            ast::TypeNameKind::I8 => "i8".to_owned(),
-            ast::TypeNameKind::U16 => "u16".to_owned(),
-            ast::TypeNameKind::I16 => "i16".to_owned(),
-            ast::TypeNameKind::U32 => "u32".to_owned(),
-            ast::TypeNameKind::I32 => "i32".to_owned(),
-            ast::TypeNameKind::U64 => "u64".to_owned(),
-            ast::TypeNameKind::I64 => "i64".to_owned(),
-            ast::TypeNameKind::F32 => "f32".to_owned(),
-            ast::TypeNameKind::F64 => "f64".to_owned(),
-            ast::TypeNameKind::String => "String".to_owned(),
+            ast::TypeNameKind::Bool => BOOL.to_owned(),
+            ast::TypeNameKind::U8 => U8.to_owned(),
+            ast::TypeNameKind::I8 => I8.to_owned(),
+            ast::TypeNameKind::U16 => U16.to_owned(),
+            ast::TypeNameKind::I16 => I16.to_owned(),
+            ast::TypeNameKind::U32 => U32.to_owned(),
+            ast::TypeNameKind::I32 => I32.to_owned(),
+            ast::TypeNameKind::U64 => U64.to_owned(),
+            ast::TypeNameKind::I64 => I64.to_owned(),
+            ast::TypeNameKind::F32 => F32.to_owned(),
+            ast::TypeNameKind::F64 => F64.to_owned(),
+            ast::TypeNameKind::String => STRING.to_owned(),
             ast::TypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
             ast::TypeNameKind::ObjectId => format!("{krate}::core::ObjectId"),
             ast::TypeNameKind::ServiceId => format!("{krate}::core::ServiceId"),
             ast::TypeNameKind::Value => format!("{krate}::core::SerializedValue"),
-            ast::TypeNameKind::Option(ty) => format!("Option<{}>", self.type_name(ty)),
-            ast::TypeNameKind::Box(ty) => format!("Box<{}>", self.type_name(ty)),
+            ast::TypeNameKind::Option(ty) => format!("{OPTION}<{}>", self.type_name(ty)),
+            ast::TypeNameKind::Box(ty) => format!("{BOX}<{}>", self.type_name(ty)),
 
             ast::TypeNameKind::Vec(ty) => match ty.kind() {
                 ast::TypeNameKind::U8 => format!("{krate}::core::Bytes"),
-                _ => format!("Vec<{}>", self.type_name(ty)),
+                _ => format!("{VEC}<{}>", self.type_name(ty)),
             },
 
             ast::TypeNameKind::Bytes => format!("{krate}::core::Bytes"),
 
             ast::TypeNameKind::Map(k, v) => format!(
-                "std::collections::HashMap<{}, {}>",
+                "{HASH_MAP}<{}, {}>",
                 self.key_type_name(k),
                 self.type_name(v)
             ),
 
-            ast::TypeNameKind::Set(ty) => {
-                format!("std::collections::HashSet<{}>", self.key_type_name(ty))
-            }
+            ast::TypeNameKind::Set(ty) => format!("{HASH_SET}<{}>", self.key_type_name(ty)),
 
             ast::TypeNameKind::Sender(ty) => {
                 format!("{krate}::UnboundSender<{}>", self.type_name(ty))
@@ -653,7 +681,7 @@ impl RustGenerator<'_> {
             ast::TypeNameKind::Unit => "()".to_owned(),
 
             ast::TypeNameKind::Result(ok, err) => {
-                format!("Result<{}, {}>", self.type_name(ok), self.type_name(err))
+                format!("{RESULT}<{}, {}>", self.type_name(ok), self.type_name(err))
             }
 
             ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
@@ -723,15 +751,15 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate;
 
         match ty.kind() {
-            ast::KeyTypeNameKind::U8 => "u8".to_owned(),
-            ast::KeyTypeNameKind::I8 => "i8".to_owned(),
-            ast::KeyTypeNameKind::U16 => "u16".to_owned(),
-            ast::KeyTypeNameKind::I16 => "i16".to_owned(),
-            ast::KeyTypeNameKind::U32 => "u32".to_owned(),
-            ast::KeyTypeNameKind::I32 => "i32".to_owned(),
-            ast::KeyTypeNameKind::U64 => "u64".to_owned(),
-            ast::KeyTypeNameKind::I64 => "i64".to_owned(),
-            ast::KeyTypeNameKind::String => "String".to_owned(),
+            ast::KeyTypeNameKind::U8 => U8.to_owned(),
+            ast::KeyTypeNameKind::I8 => I8.to_owned(),
+            ast::KeyTypeNameKind::U16 => U16.to_owned(),
+            ast::KeyTypeNameKind::I16 => I16.to_owned(),
+            ast::KeyTypeNameKind::U32 => U32.to_owned(),
+            ast::KeyTypeNameKind::I32 => I32.to_owned(),
+            ast::KeyTypeNameKind::U64 => U64.to_owned(),
+            ast::KeyTypeNameKind::I64 => I64.to_owned(),
+            ast::KeyTypeNameKind::String => STRING.to_owned(),
             ast::KeyTypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
         }
     }
@@ -792,24 +820,31 @@ impl RustAttributes {
 
     fn additional_derives(&self) -> String {
         let mut derives = String::new();
+
         if self.impl_copy {
-            derives.push_str(", Copy");
+            derives.push_str(", ::std::marker::Copy");
         }
+
         if self.impl_partial_eq {
-            derives.push_str(", PartialEq");
+            derives.push_str(", ::std::cmp::PartialEq");
         }
+
         if self.impl_eq {
-            derives.push_str(", Eq");
+            derives.push_str(", ::std::cmp::Eq");
         }
+
         if self.impl_partial_ord {
-            derives.push_str(", PartialOrd");
+            derives.push_str(", ::std::cmp::PartialOrd");
         }
+
         if self.impl_ord {
-            derives.push_str(", Ord");
+            derives.push_str(", ::std::cmp::Ord");
         }
+
         if self.impl_hash {
-            derives.push_str(", Hash");
+            derives.push_str(", ::std::hash::Hash");
         }
+
         derives
     }
 }

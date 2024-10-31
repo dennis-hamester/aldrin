@@ -1,22 +1,22 @@
 --- example1-orig.rs
 +++ example1-patched.rs
 @@ -1,7 +1,7 @@
- #[derive(Debug, Clone, Default, ::aldrin::Serialize, ::aldrin::Deserialize, ::aldrin::AsSerializeArg)]
+ #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default, ::aldrin::Serialize, ::aldrin::Deserialize, ::aldrin::AsSerializeArg)]
  #[aldrin(crate = "::aldrin::core", schema = "example1")]
  #[non_exhaustive]
 -pub struct MyStructRenamed {
 +pub struct MyStructRenamedAgain {
      #[aldrin(id = 1, optional)]
-     pub field1: Option<u32>,
+     pub field1: ::std::option::Option<::std::primitive::u32>,
  
 @@ -9,18 +9,18 @@
-     pub field2: Option<u32>,
+     pub field2: ::std::option::Option<::std::primitive::u32>,
  }
  
 -impl MyStructRenamed {
 +impl MyStructRenamedAgain {
      pub fn new() -> Self {
-         Default::default()
+         <Self as ::std::default::Default>::default()
      }
  
 -    pub fn builder() -> MyStructRenamedBuilder {
@@ -26,11 +26,11 @@
      }
  }
  
- #[derive(Debug, Clone, Default)]
+ #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default)]
 -pub struct MyStructRenamedBuilder {
 +pub struct MyStructRenamedAgainBuilder {
      #[doc(hidden)]
-     field1: Option<u32>,
+     field1: ::std::option::Option<::std::primitive::u32>,
  
 @@ -29,7 +29,7 @@
  
@@ -39,7 +39,7 @@
 -impl MyStructRenamedBuilder {
 +impl MyStructRenamedAgainBuilder {
      pub fn new() -> Self {
-         Default::default()
+         <Self as ::std::default::Default>::default()
      }
 @@ -44,8 +44,8 @@
          self
