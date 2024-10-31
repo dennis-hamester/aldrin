@@ -1,14 +1,14 @@
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{Diagnostic, Parsed, Parser};
-use manyhow::{emit, Emitter, Error, Result};
+use manyhow::{emit, Emitter};
 use proc_macro2::Span;
 use std::env;
 use std::fmt::Write;
 use std::path::PathBuf;
 use syn::parse::{Parse, ParseStream};
-use syn::{Ident, LitBool, LitStr, Token};
+use syn::{Error, Ident, LitBool, LitStr, Result, Token};
 
-pub fn generate(args: Args, emitter: &mut Emitter) -> Result {
+pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
     let mut parser = Parser::new();
     for include in args.includes {
         parser.add_schema_path(include);
@@ -81,8 +81,8 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> Result {
 
     modules
         .parse()
-        .map_err(syn::Error::from)
         .map_err(Error::from)
+        .map_err(manyhow::Error::from)
 }
 
 pub struct Args {
@@ -100,7 +100,7 @@ pub struct Args {
 }
 
 impl Parse for Args {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
+    fn parse(input: ParseStream) -> Result<Self> {
         let first_schema = lit_str_to_path(&input.parse::<LitStr>()?)?;
 
         let mut args = Args {
@@ -162,7 +162,7 @@ impl Parse for Args {
                 args.introspection_if = Some(lit_str.value());
                 args.options.introspection = true;
             } else {
-                return Err(syn::Error::new_spanned(opt, "invalid option"));
+                return Err(Error::new_spanned(opt, "invalid option"));
             }
 
             if input.is_empty() {
@@ -173,7 +173,7 @@ impl Parse for Args {
         }
 
         if (args.schemas.len() > 1) && !args.patches.is_empty() {
-            return Err(syn::Error::new(
+            return Err(Error::new(
                 Span::call_site(),
                 "patches cannot be applied to multiple schemas",
             ));
@@ -194,7 +194,7 @@ fn format_diagnostic(diag: &impl Diagnostic, parsed: &Parsed) -> String {
     msg
 }
 
-fn lit_str_to_path(lit_str: &LitStr) -> syn::Result<PathBuf> {
+fn lit_str_to_path(lit_str: &LitStr) -> Result<PathBuf> {
     let path = PathBuf::from(lit_str.value());
 
     if path.is_absolute() {
@@ -203,7 +203,7 @@ fn lit_str_to_path(lit_str: &LitStr) -> syn::Result<PathBuf> {
         let mut absolute = env::var("CARGO_MANIFEST_DIR")
             .map(PathBuf::from)
             .map_err(|e| {
-                syn::Error::new(
+                Error::new(
                     lit_str.span(),
                     format!("relative paths require CARGO_MANIFEST_DIR environment variable: {e}"),
                 )

@@ -166,6 +166,9 @@ mod codegen;
 mod derive;
 mod service;
 
+use proc_macro2::TokenStream;
+use syn::{DeriveInput, Result};
+
 /// Generates code from an Aldrin schema.
 ///
 /// This macro provides a front-end to the Aldrin code generator. It is an alternative to running
@@ -535,7 +538,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 /// ```
 #[manyhow::manyhow]
 #[proc_macro]
-pub fn service(svc: service::Service) -> proc_macro2::TokenStream {
+pub fn service(svc: service::Service) -> TokenStream {
     svc.generate()
 }
 
@@ -551,7 +554,7 @@ pub fn service(svc: service::Service) -> proc_macro2::TokenStream {
 /// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Serialize, attributes(aldrin))]
-pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_serialize_from_core(input)
 }
 
@@ -568,7 +571,7 @@ pub fn serialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
-pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_serialize_from_aldrin(input)
 }
 
@@ -584,7 +587,7 @@ pub fn serialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2
 /// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Deserialize, attributes(aldrin))]
-pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_deserialize_from_core(input)
 }
 
@@ -601,7 +604,7 @@ pub fn deserialize_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
-pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn deserialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_deserialize_from_aldrin(input)
 }
 
@@ -618,7 +621,7 @@ pub fn deserialize_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
 /// - [`optional`](crate#optional)
 #[manyhow::manyhow]
 #[proc_macro_derive(Introspectable, attributes(aldrin))]
-pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_introspectable_from_core(input)
 }
 
@@ -636,9 +639,7 @@ pub fn introspectable_from_core(input: syn::DeriveInput) -> syn::Result<proc_mac
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
-pub fn introspectable_from_aldrin(
-    input: syn::DeriveInput,
-) -> syn::Result<proc_macro2::TokenStream> {
+pub fn introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_introspectable_from_aldrin(input)
 }
 
@@ -652,7 +653,7 @@ pub fn introspectable_from_aldrin(
 /// - [`ser_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKey, attributes(aldrin))]
-pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_serialize_key_from_core(input)
 }
 
@@ -667,7 +668,7 @@ pub fn serialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macr
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
-pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_serialize_key_from_aldrin(input)
 }
 
@@ -681,7 +682,7 @@ pub fn serialize_key_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_ma
 /// - [`de_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKey, attributes(aldrin))]
-pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_deserialize_key_from_core(input)
 }
 
@@ -696,9 +697,7 @@ pub fn deserialize_key_from_core(input: syn::DeriveInput) -> syn::Result<proc_ma
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
-pub fn deserialize_key_from_aldrin(
-    input: syn::DeriveInput,
-) -> syn::Result<proc_macro2::TokenStream> {
+pub fn deserialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_deserialize_key_from_aldrin(input)
 }
 
@@ -712,7 +711,7 @@ pub fn deserialize_key_from_aldrin(
 /// - [`key_ty_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOf, attributes(aldrin))]
-pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn key_type_of_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_key_type_of_from_core(input)
 }
 
@@ -727,7 +726,7 @@ pub fn key_type_of_from_core(input: syn::DeriveInput) -> syn::Result<proc_macro2
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
-pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub fn key_type_of_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_key_type_of_from_aldrin(input)
 }
 
@@ -741,9 +740,7 @@ pub fn key_type_of_from_aldrin(input: syn::DeriveInput) -> syn::Result<proc_macr
 /// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 #[manyhow::manyhow]
 #[proc_macro_derive(AsSerializeArg, attributes(aldrin))]
-pub fn as_serialize_arg_from_core(
-    input: syn::DeriveInput,
-) -> syn::Result<proc_macro2::TokenStream> {
+pub fn as_serialize_arg_from_core(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_as_serialize_arg_from_core(input)
 }
 
@@ -758,8 +755,6 @@ pub fn as_serialize_arg_from_core(
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(AsSerializeArgFromAldrin, attributes(aldrin))]
-pub fn as_serialize_arg_from_aldrin(
-    input: syn::DeriveInput,
-) -> syn::Result<proc_macro2::TokenStream> {
+pub fn as_serialize_arg_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_as_serialize_arg_from_aldrin(input)
 }
