@@ -1,0 +1,416 @@
+service Service {
+    uuid = 85fcf836-3541-43d6-bf47-a6231909faba;
+    version = 1;
+
+    fn f1 @ 1 {
+        args = bool;
+        ok = bool;
+        err = bool;
+    }
+
+    fn f2 @ 2 {
+        args = u8;
+        ok = u8;
+        err = u8;
+    }
+
+    fn f3 @ 3 {
+        args = i8;
+        ok = i8;
+        err = i8;
+    }
+
+    fn f4 @ 4 {
+        args = u16;
+        ok = u16;
+        err = u16;
+    }
+
+    fn f5 @ 5 {
+        args = i16;
+        ok = i16;
+        err = i16;
+    }
+
+    fn f6 @ 6 {
+        args = u32;
+        ok = u32;
+        err = u32;
+    }
+
+    fn f7 @ 7 {
+        args = i32;
+        ok = i32;
+        err = i32;
+    }
+
+    fn f8 @ 8 {
+        args = u64;
+        ok = u64;
+        err = u64;
+    }
+
+    fn f9 @ 9 {
+        args = i64;
+        ok = i64;
+        err = i64;
+    }
+
+    fn f10 @ 10 {
+        args = f32;
+        ok = f32;
+        err = f32;
+    }
+
+    fn f11 @ 11 {
+        args = f64;
+        ok = f64;
+        err = f64;
+    }
+
+    fn f12 @ 12 {
+        args = string;
+        ok = string;
+        err = string;
+    }
+
+    fn f13 @ 13 {
+        args = uuid;
+        ok = uuid;
+        err = uuid;
+    }
+
+    fn f14 @ 14 {
+        args = object_id;
+        ok = object_id;
+        err = object_id;
+    }
+
+    fn f15 @ 15 {
+        args = service_id;
+        ok = service_id;
+        err = service_id;
+    }
+
+    fn f16 @ 16 {
+        args = value;
+        ok = value;
+        err = value;
+    }
+
+    fn f17 @ 17 {
+        args = option<unit>;
+        ok = option<unit>;
+        err = option<unit>;
+    }
+
+    fn f18 @ 18 {
+        args = box<unit>;
+        ok = box<unit>;
+        err = box<unit>;
+    }
+
+    fn f19 @ 19 {
+        args = vec<unit>;
+        ok = vec<unit>;
+        err = vec<unit>;
+    }
+
+    fn f20 @ 20 {
+        args = bytes;
+        ok = bytes;
+        err = bytes;
+    }
+
+    fn f21 @ 21 {
+        args = map<u8 -> unit>;
+        ok = map<u8 -> unit>;
+        err = map<u8 -> unit>;
+    }
+
+    fn f22 @ 22 {
+        args = map<i8 -> unit>;
+        ok = map<i8 -> unit>;
+        err = map<i8 -> unit>;
+    }
+
+    fn f23 @ 23 {
+        args = map<u16 -> unit>;
+        ok = map<u16 -> unit>;
+        err = map<u16 -> unit>;
+    }
+
+    fn f24 @ 24 {
+        args = map<i16 -> unit>;
+        ok = map<i16 -> unit>;
+        err = map<i16 -> unit>;
+    }
+
+    fn f25 @ 25 {
+        args = map<u32 -> unit>;
+        ok = map<u32 -> unit>;
+        err = map<u32 -> unit>;
+    }
+
+    fn f26 @ 26 {
+        args = map<i32 -> unit>;
+        ok = map<i32 -> unit>;
+        err = map<i32 -> unit>;
+    }
+
+    fn f27 @ 27 {
+        args = map<u64 -> unit>;
+        ok = map<u64 -> unit>;
+        err = map<u64 -> unit>;
+    }
+
+    fn f28 @ 28 {
+        args = map<i64 -> unit>;
+        ok = map<i64 -> unit>;
+        err = map<i64 -> unit>;
+    }
+
+    fn f29 @ 29 {
+        args = map<string -> unit>;
+        ok = map<string -> unit>;
+        err = map<string -> unit>;
+    }
+
+    fn f30 @ 30 {
+        args = map<uuid -> unit>;
+        ok = map<uuid -> unit>;
+        err = map<uuid -> unit>;
+    }
+
+    fn f31 @ 31 {
+        args = set<u8>;
+        ok = set<u8>;
+        err = set<u8>;
+    }
+
+    fn f32 @ 32 {
+        args = set<i8>;
+        ok = set<i8>;
+        err = set<i8>;
+    }
+
+    fn f33 @ 33 {
+        args = set<u16>;
+        ok = set<u16>;
+        err = set<u16>;
+    }
+
+    fn f34 @ 34 {
+        args = set<i16>;
+        ok = set<i16>;
+        err = set<i16>;
+    }
+
+    fn f35 @ 35 {
+        args = set<u32>;
+        ok = set<u32>;
+        err = set<u32>;
+    }
+
+    fn f36 @ 36 {
+        args = set<i32>;
+        ok = set<i32>;
+        err = set<i32>;
+    }
+
+    fn f37 @ 37 {
+        args = set<u64>;
+        ok = set<u64>;
+        err = set<u64>;
+    }
+
+    fn f38 @ 38 {
+        args = set<i64>;
+        ok = set<i64>;
+        err = set<i64>;
+    }
+
+    fn f39 @ 39 {
+        args = set<string>;
+        ok = set<string>;
+        err = set<string>;
+    }
+
+    fn f40 @ 40 {
+        args = set<uuid>;
+        ok = set<uuid>;
+        err = set<uuid>;
+    }
+
+    fn f41 @ 41 {
+        args = sender<unit>;
+        ok = sender<unit>;
+        err = sender<unit>;
+    }
+
+    fn f42 @ 42 {
+        args = receiver<unit>;
+        ok = receiver<unit>;
+        err = receiver<unit>;
+    }
+
+    fn f43 @ 43 {
+        args = lifetime;
+        ok = lifetime;
+        err = lifetime;
+    }
+
+    fn f44 @ 44 {
+        args = unit;
+        ok = unit;
+        err = unit;
+    }
+
+    fn f45 @ 45 {
+        args = result<unit, unit>;
+        ok = result<unit, unit>;
+        err = result<unit, unit>;
+    }
+
+    event e1 @ 1 = bool;
+    event e2 @ 2 = u8;
+    event e3 @ 3 = i8;
+    event e4 @ 4 = u16;
+    event e5 @ 5 = i16;
+    event e6 @ 6 = u32;
+    event e7 @ 7 = i32;
+    event e8 @ 8 = u64;
+    event e9 @ 9 = i64;
+    event e10 @ 10 = f32;
+    event e11 @ 11 = f64;
+    event e12 @ 12 = string;
+    event e13 @ 13 = uuid;
+    event e14 @ 14 = object_id;
+    event e15 @ 15 = service_id;
+    event e16 @ 16 = value;
+    event e17 @ 17 = option<unit>;
+    event e18 @ 18 = box<unit>;
+    event e19 @ 19 = vec<unit>;
+    event e20 @ 20 = bytes;
+    event e21 @ 21 = map<u8 -> unit>;
+    event e22 @ 22 = map<i8 -> unit>;
+    event e23 @ 23 = map<u16 -> unit>;
+    event e24 @ 24 = map<i16 -> unit>;
+    event e25 @ 25 = map<u32 -> unit>;
+    event e26 @ 26 = map<i32 -> unit>;
+    event e27 @ 27 = map<u64 -> unit>;
+    event e28 @ 28 = map<i64 -> unit>;
+    event e29 @ 29 = map<string -> unit>;
+    event e30 @ 30 = map<uuid -> unit>;
+    event e31 @ 31 = set<u8>;
+    event e32 @ 32 = set<i8>;
+    event e33 @ 33 = set<u16>;
+    event e34 @ 34 = set<i16>;
+    event e35 @ 35 = set<u32>;
+    event e36 @ 36 = set<i32>;
+    event e37 @ 37 = set<u64>;
+    event e38 @ 38 = set<i64>;
+    event e39 @ 39 = set<string>;
+    event e40 @ 40 = set<uuid>;
+    event e41 @ 41 = sender<unit>;
+    event e42 @ 42 = receiver<unit>;
+    event e43 @ 43 = lifetime;
+    event e44 @ 44 = unit;
+    event e45 @ 45 = result<unit, unit>;
+}
+
+struct Struct {
+    f1 @ 1 = bool;
+    f2 @ 2 = u8;
+    f3 @ 3 = i8;
+    f4 @ 4 = u16;
+    f5 @ 5 = i16;
+    f6 @ 6 = u32;
+    f7 @ 7 = i32;
+    f8 @ 8 = u64;
+    f9 @ 9 = i64;
+    f10 @ 10 = f32;
+    f11 @ 11 = f64;
+    f12 @ 12 = string;
+    f13 @ 13 = uuid;
+    f14 @ 14 = object_id;
+    f15 @ 15 = service_id;
+    f16 @ 16 = value;
+    f17 @ 17 = option<unit>;
+    f18 @ 18 = box<unit>;
+    f19 @ 19 = vec<unit>;
+    f20 @ 20 = bytes;
+    f21 @ 21 = map<u8 -> unit>;
+    f22 @ 22 = map<i8 -> unit>;
+    f23 @ 23 = map<u16 -> unit>;
+    f24 @ 24 = map<i16 -> unit>;
+    f25 @ 25 = map<u32 -> unit>;
+    f26 @ 26 = map<i32 -> unit>;
+    f27 @ 27 = map<u64 -> unit>;
+    f28 @ 28 = map<i64 -> unit>;
+    f29 @ 29 = map<string -> unit>;
+    f30 @ 30 = map<uuid -> unit>;
+    f31 @ 31 = set<u8>;
+    f32 @ 32 = set<i8>;
+    f33 @ 33 = set<u16>;
+    f34 @ 34 = set<i16>;
+    f35 @ 35 = set<u32>;
+    f36 @ 36 = set<i32>;
+    f37 @ 37 = set<u64>;
+    f38 @ 38 = set<i64>;
+    f39 @ 39 = set<string>;
+    f40 @ 40 = set<uuid>;
+    f41 @ 41 = sender<unit>;
+    f42 @ 42 = receiver<unit>;
+    f43 @ 43 = lifetime;
+    f44 @ 44 = unit;
+    f45 @ 45 = result<unit, unit>;
+}
+
+enum Enum {
+    V1 @ 1 = bool;
+    V2 @ 2 = u8;
+    V3 @ 3 = i8;
+    V4 @ 4 = u16;
+    V5 @ 5 = i16;
+    V6 @ 6 = u32;
+    V7 @ 7 = i32;
+    V8 @ 8 = u64;
+    V9 @ 9 = i64;
+    V10 @ 10 = f32;
+    V11 @ 11 = f64;
+    V12 @ 12 = string;
+    V13 @ 13 = uuid;
+    V14 @ 14 = object_id;
+    V15 @ 15 = service_id;
+    V16 @ 16 = value;
+    V17 @ 17 = option<unit>;
+    V18 @ 18 = box<unit>;
+    V19 @ 19 = vec<unit>;
+    V20 @ 20 = bytes;
+    V21 @ 21 = map<u8 -> unit>;
+    V22 @ 22 = map<i8 -> unit>;
+    V23 @ 23 = map<u16 -> unit>;
+    V24 @ 24 = map<i16 -> unit>;
+    V25 @ 25 = map<u32 -> unit>;
+    V26 @ 26 = map<i32 -> unit>;
+    V27 @ 27 = map<u64 -> unit>;
+    V28 @ 28 = map<i64 -> unit>;
+    V29 @ 29 = map<string -> unit>;
+    V30 @ 30 = map<uuid -> unit>;
+    V31 @ 31 = set<u8>;
+    V32 @ 32 = set<i8>;
+    V33 @ 33 = set<u16>;
+    V34 @ 34 = set<i16>;
+    V35 @ 35 = set<u32>;
+    V36 @ 36 = set<i32>;
+    V37 @ 37 = set<u64>;
+    V38 @ 38 = set<i64>;
+    V39 @ 39 = set<string>;
+    V40 @ 40 = set<uuid>;
+    V41 @ 41 = sender<unit>;
+    V42 @ 42 = receiver<unit>;
+    V43 @ 43 = lifetime;
+    V44 @ 44 = unit;
+    V45 @ 45 = result<unit, unit>;
+}

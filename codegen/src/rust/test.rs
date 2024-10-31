@@ -9,6 +9,7 @@ use futures_util::stream::StreamExt;
 use subscribe_all::SubscribeAllEvent;
 use uuid::uuid;
 
+aldrin::generate!("test/all_types.aldrin");
 aldrin::generate!("test/before_derive_compat.aldrin");
 aldrin::generate!("test/constants.aldrin");
 aldrin::generate!("test/generic_struct.aldrin");
