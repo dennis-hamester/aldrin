@@ -109,7 +109,7 @@ impl Runtime {
 
     pub fn poll_all_tasks(&mut self) -> bool {
         for task in &mut self.tasks {
-            let Some(ref mut inner) = task else {
+            let Some(inner) = task else {
                 continue;
             };
 

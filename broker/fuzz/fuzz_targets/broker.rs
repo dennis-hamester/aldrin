@@ -84,7 +84,7 @@ impl Fuzzer {
             return;
         };
 
-        let Some(ref mut inner) = client else {
+        let Some(inner) = client else {
             return;
         };
 
@@ -97,7 +97,7 @@ impl Fuzzer {
 
     fn drain_clients(&mut self) {
         for client in &mut self.clients {
-            let Some(ref mut inner) = client else {
+            let Some(inner) = client else {
                 continue;
             };
 

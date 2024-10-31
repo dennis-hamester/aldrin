@@ -127,7 +127,7 @@ impl Proxies {
         self.entries
             .iter()
             .filter(|(_, entry)| entry.service() == service)
-            .filter(|(&id, _)| {
+            .filter(|&(&id, _)| {
                 if let Some(except) = except {
                     id != except
                 } else {
@@ -173,7 +173,7 @@ impl Proxies {
         self.entries
             .iter()
             .filter(|(_, entry)| entry.service() == service)
-            .filter(|(&id, _)| {
+            .filter(|&(&id, _)| {
                 if let Some(except) = except {
                     id != except
                 } else {

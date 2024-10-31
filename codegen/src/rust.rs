@@ -767,7 +767,7 @@ impl RustGenerator<'_> {
         raw: bool,
     ) -> String {
         match ev_type {
-            ast::TypeNameOrInline::TypeName(ref ty) => self.type_name(ty),
+            ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
