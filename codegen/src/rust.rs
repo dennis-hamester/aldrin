@@ -100,7 +100,7 @@ impl RustGenerator<'_> {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "pub fn register_introspection(handle: &{krate}::Handle) -> Result<(), {krate}::Error> {{");
+            genln!(self, "pub fn register_introspection(client: &{krate}::Handle) -> Result<(), {krate}::Error> {{");
 
             for def in self.schema.definitions() {
                 self.register_introspection(def);
@@ -514,16 +514,16 @@ impl RustGenerator<'_> {
     fn register_introspection(&mut self, def: &ast::Definition) {
         match def {
             ast::Definition::Struct(d) => {
-                genln!(self, "    handle.register_introspection::<{}>()?;", d.name().value())
+                genln!(self, "    client.register_introspection::<{}>()?;", d.name().value())
             }
 
             ast::Definition::Enum(e) => {
-                genln!(self, "    handle.register_introspection::<{}>()?;", e.name().value())
+                genln!(self, "    client.register_introspection::<{}>()?;", e.name().value())
             }
 
             ast::Definition::Service(s) => {
                 if self.options.client || self.options.server {
-                    genln!(self, "    handle.register_introspection::<{}Introspection>()?;", s.name().value());
+                    genln!(self, "    client.register_introspection::<{}Introspection>()?;", s.name().value());
                 }
             }
 
