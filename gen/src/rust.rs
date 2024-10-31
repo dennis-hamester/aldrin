@@ -100,8 +100,8 @@ pub fn run(args: RustArgs) -> Result<bool> {
         rust_options.krate = krate;
     }
 
-    let gen = Generator::new(&options, &parsed);
-    let output = gen.generate_rust(&rust_options)?;
+    let generator = Generator::new(&options, &parsed);
+    let output = generator.generate_rust(&rust_options)?;
 
     let module_path = output_dir.join(format!("{}.rs", output.module_name));
     let file = if args.common_gen_args.overwrite {

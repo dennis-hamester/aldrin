@@ -34,7 +34,7 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
             continue;
         }
 
-        let gen = Generator::new(&args.options, &parsed);
+        let generator = Generator::new(&args.options, &parsed);
         let mut rust_options = RustOptions::new();
 
         for patch in &args.patches {
@@ -52,7 +52,7 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
             rust_options.krate = krate;
         }
 
-        let output = match gen.generate_rust(&rust_options) {
+        let output = match generator.generate_rust(&rust_options) {
             Ok(output) => output,
 
             Err(e) => {
