@@ -21,8 +21,8 @@ impl Body {
             quote! { #[cfg(feature = #feature)] }
         });
 
-        let query_introspection = if options.introspection() {
-            Some(quote! {
+        let query_introspection = options.introspection().then(|| {
+            quote! {
                 #introspection_if
                 pub async fn query_introspection(
                     &self,
@@ -32,10 +32,8 @@ impl Body {
                 > {
                     self.inner.query_introspection().await
                 }
-            })
-        } else {
-            None
-        };
+            }
+        });
 
         let fn_calls = self
             .items
@@ -181,17 +179,15 @@ impl Body {
             quote! { #[cfg(feature = #feature)] }
         });
 
-        let info_type_id = if options.introspection() {
-            Some(quote! {
+        let info_type_id = options.introspection().then(|| {
+            quote! {
                 #introspection_if
                 let info = info.set_type_id(#krate::core::TypeId::compute::<Self>());
-            })
-        } else {
-            None
-        };
+            }
+        });
 
-        let query_introspection = if options.introspection() {
-            Some(quote! {
+        let query_introspection = options.introspection().then(|| {
+            quote! {
                 #introspection_if
                 pub async fn query_introspection(
                     &self,
@@ -201,10 +197,8 @@ impl Body {
                 > {
                     self.inner.query_introspection().await
                 }
-            })
-        } else {
-            None
-        };
+            }
+        });
 
         let ev_emiters = self
             .items
