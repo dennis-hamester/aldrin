@@ -43,7 +43,7 @@ pub struct RustArgs {
     patch: Vec<PathBuf>,
 
     /// Guard introspection code by the specified Cargo feature.
-    #[clap(long, requires = "introspection", value_name = "FEATURE")]
+    #[clap(long, value_name = "FEATURE")]
     introspection_if: Option<String>,
 
     /// Path to an Aldrin schema file.
@@ -79,7 +79,7 @@ pub fn run(args: RustArgs) -> Result<bool> {
     let mut options = Options::new();
     options.client = !args.common_gen_args.no_client;
     options.server = !args.common_gen_args.no_server;
-    options.introspection = args.common_gen_args.introspection;
+    options.introspection = args.common_gen_args.introspection || args.introspection_if.is_some();
 
     let mut rust_options = RustOptions::new();
     for patch in &args.patch {

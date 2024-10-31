@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump MSRV to 1.71.1.
+- `--introspection-if` no longer requires `--introspection` but instead implies it, which is more
+  consistent with other codegen frontends.
 
 ## [0.8.0] - 2024-09-22
 
