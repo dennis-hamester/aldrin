@@ -184,7 +184,7 @@ impl Body {
         let info_type_id = if options.introspection() {
             Some(quote! {
                 #introspection_if
-                let into = info.set_type_id(#krate::core::TypeId::compute::<Self>());
+                let info = info.set_type_id(#krate::core::TypeId::compute::<Self>());
             })
         } else {
             None
