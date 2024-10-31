@@ -78,12 +78,19 @@ struct RustGenerator<'a> {
 }
 
 macro_rules! gen {
-    ($this:expr, $($arg:tt)+) => { write!($this.output.module_content, $($arg)+).unwrap() };
+    ($this:expr, $arg:literal) => {
+        write!($this.output.module_content, $arg).unwrap()
+    };
 }
 
 macro_rules! genln {
-    ($this:expr) => { writeln!($this.output.module_content).unwrap() };
-    ($this:expr, $($arg:tt)+) => { writeln!($this.output.module_content, $($arg)+).unwrap() };
+    ($this:expr) => {
+        writeln!($this.output.module_content).unwrap()
+    };
+
+    ($this:expr, $arg:literal) => {
+        writeln!($this.output.module_content, $arg).unwrap()
+    };
 }
 
 #[rustfmt::skip::macros(gen, genln)]
@@ -151,8 +158,8 @@ impl RustGenerator<'_> {
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
-
         let derive_default = if has_required_fields { "" } else { ", Default" };
+        let additional_derives = attrs.additional_derives();
 
         let derive_introspectable =
             if self.options.introspection && self.rust_options.introspection_if.is_none() {
@@ -161,7 +168,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -174,9 +181,13 @@ impl RustGenerator<'_> {
         if self.rust_options.struct_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
-        genln!(self, "pub struct {} {{", name);
+        genln!(self, "pub struct {name} {{");
         let mut first = true;
         for field in fields {
+            let id = field.id().value();
+            let name = field.name().value();
+            let ty = self.type_name(field.field_type());
+
             if first {
                 first = false;
             } else {
@@ -184,17 +195,17 @@ impl RustGenerator<'_> {
             }
 
             if field.required() {
-                genln!(self, "    #[aldrin(id = {})]", field.id().value());
-                genln!(self, "    pub {}: {},", field.name().value(), self.type_name(field.field_type()));
+                genln!(self, "    #[aldrin(id = {id})]");
+                genln!(self, "    pub {name}: {ty},");
             } else {
-                genln!(self, "    #[aldrin(id = {}, optional)]", field.id().value());
-                genln!(self, "    pub {}: Option<{}>,", field.name().value(), self.type_name(field.field_type()));
+                genln!(self, "    #[aldrin(id = {id}, optional)]");
+                genln!(self, "    pub {name}: Option<{ty}>,");
             }
         }
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl {} {{", name);
+        genln!(self, "impl {name} {{");
         if !has_required_fields {
             genln!(self, "    pub fn new() -> Self {{");
             genln!(self, "        Default::default()");
@@ -203,8 +214,8 @@ impl RustGenerator<'_> {
         }
 
         if self.rust_options.struct_builders {
-            genln!(self, "    pub fn builder() -> {} {{", builder_name);
-            genln!(self, "        {}::new()", builder_name);
+            genln!(self, "    pub fn builder() -> {builder_name} {{");
+            genln!(self, "        {builder_name}::new()");
             genln!(self, "    }}");
         }
         genln!(self, "}}");
@@ -212,48 +223,50 @@ impl RustGenerator<'_> {
 
         if self.rust_options.struct_builders {
             genln!(self, "#[derive(Debug, Clone, Default)]");
-            genln!(self, "pub struct {} {{", builder_name);
+            genln!(self, "pub struct {builder_name} {{");
             for field in fields {
-                let field_name = field.name().value();
+                let name = field.name().value();
+                let ty = self.type_name(field.field_type());
                 genln!(self, "    #[doc(hidden)]");
-                genln!(self, "    {}: Option<{}>,", field_name, self.type_name(field.field_type()));
+                genln!(self, "    {name}: Option<{ty}>,");
                 genln!(self);
             }
             genln!(self, "}}");
             genln!(self);
 
-            genln!(self, "impl {} {{", builder_name);
+            genln!(self, "impl {builder_name} {{");
             genln!(self, "    pub fn new() -> Self {{");
             genln!(self, "        Default::default()");
             genln!(self, "    }}");
             genln!(self);
             for field in fields {
-                let field_name = field.name().value();
-                genln!(self, "    pub fn {0}(mut self, {0}: {1}) -> Self {{", field_name, self.type_name(field.field_type()));
-                genln!(self, "        self.{0} = Some({0});", field_name);
+                let name = field.name().value();
+                let ty = self.type_name(field.field_type());
+                genln!(self, "    pub fn {name}(mut self, {name}: {ty}) -> Self {{");
+                genln!(self, "        self.{name} = Some({name});");
                 genln!(self, "        self");
                 genln!(self, "    }}");
                 genln!(self);
             }
 
             if !has_required_fields {
-                genln!(self, "    pub fn build(self) -> {} {{", name);
-                genln!(self, "        {} {{", name);
+                genln!(self, "    pub fn build(self) -> {name} {{");
+                genln!(self, "        {name} {{");
                 for field in fields {
-                    let field_name = field.name().value();
-                    genln!(self, "            {0}: self.{0},", field_name);
+                    let name = field.name().value();
+                    genln!(self, "            {name}: self.{name},");
                 }
                 genln!(self, "        }}");
             } else {
-                genln!(self, "    pub fn build(self) -> Result<{}, {krate}::Error> {{", name);
-                genln!(self, "        Ok({} {{", name);
+                genln!(self, "    pub fn build(self) -> Result<{name}, {krate}::Error> {{");
+                genln!(self, "        Ok({name} {{");
                 for field in fields {
-                    let field_name = field.name().value();
+                    let name = field.name().value();
                     if field.required() {
                         let id = field.id().value();
-                        genln!(self, "            {0}: self.{0}.ok_or_else(|| {krate}::Error::required_field_missing({1}))?,", field_name, id);
+                        genln!(self, "            {name}: self.{name}.ok_or_else(|| {krate}::Error::required_field_missing({id}))?,");
                     } else {
-                        genln!(self, "            {0}: self.{0},", field_name);
+                        genln!(self, "            {name}: self.{name},");
                     }
                 }
                 genln!(self, "        }})");
@@ -272,9 +285,11 @@ impl RustGenerator<'_> {
     ) {
         let krate = &self.rust_options.krate;
         let schema_name = self.schema.name();
+
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
+        let additional_derives = attrs.additional_derives();
 
         let derive_introspectable =
             if self.options.introspection && self.rust_options.introspection_if.is_none() {
@@ -283,7 +298,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -296,20 +311,24 @@ impl RustGenerator<'_> {
         if self.rust_options.enum_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
-        genln!(self, "pub enum {} {{", name);
+        genln!(self, "pub enum {name} {{");
         let mut first = true;
         for var in vars {
+            let id = var.id().value();
+            let name = var.name().value();
+
             if first {
                 first = false;
             } else {
                 genln!(self);
             }
 
-            genln!(self, "    #[aldrin(id = {})]", var.id().value());
-            if let Some(var_type) = var.variant_type() {
-                genln!(self, "    {}({}),", var.name().value(), self.type_name(var_type));
+            genln!(self, "    #[aldrin(id = {id})]");
+            if let Some(ty) = var.variant_type() {
+                let ty = self.type_name(ty);
+                genln!(self, "    {name}({ty}),");
             } else {
-                genln!(self, "    {},", var.name().value());
+                genln!(self, "    {name},");
             }
         }
         genln!(self, "}}");
@@ -322,11 +341,14 @@ impl RustGenerator<'_> {
         }
 
         let krate = self.rust_options.krate;
+        let schema = self.schema.name();
         let svc_name = svc.name().value();
+        let uuid = svc.uuid().value();
+        let version = svc.version().value();
 
         genln!(self, "{krate}::service! {{");
 
-        gen!(self, "    #[aldrin(crate = \"{krate}\", schema = \"{}\"", self.schema.name());
+        gen!(self, "    #[aldrin(crate = \"{krate}\", schema = \"{schema}\"");
 
         if !self.options.client {
             gen!(self, ", no_client");
@@ -355,8 +377,8 @@ impl RustGenerator<'_> {
         genln!(self, ")]");
 
         genln!(self, "    pub service {svc_name} {{");
-        genln!(self, "        uuid = {krate}::core::ServiceUuid({krate}::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
-        genln!(self, "        version = {};", svc.version().value());
+        genln!(self, "        uuid = {krate}::core::ServiceUuid({krate}::private::uuid::uuid!(\"{uuid}\"));");
+        genln!(self, "        version = {version};");
 
         for item in svc.items() {
             genln!(self);
@@ -364,22 +386,26 @@ impl RustGenerator<'_> {
             match item {
                 ast::ServiceItem::Function(func) => {
                     let name = func.name().value();
+                    let id = func.id().value();
 
-                    gen!(self, "        fn {name} @ {}", func.id().value());
+                    gen!(self, "        fn {name} @ {id}");
 
                     if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
                         genln!(self, " {{");
 
                         if let Some(args) = func.args() {
-                            genln!(self, "            args = {};", self.function_args_type_name(svc_name, name, args));
+                            let ty = self.function_args_type_name(svc_name, name, args);
+                            genln!(self, "            args = {ty};");
                         }
 
                         if let Some(ok) = func.ok() {
-                            genln!(self, "            ok = {};", self.function_ok_type_name(svc_name, name, ok));
+                            let ty = self.function_ok_type_name(svc_name, name, ok);
+                            genln!(self, "            ok = {ty};");
                         }
 
                         if let Some(err) = func.err() {
-                            genln!(self, "            err = {};", self.function_err_type_name(svc_name, name, err));
+                            let ty = self.function_err_type_name(svc_name, name, err);
+                            genln!(self, "            err = {ty};");
                         }
 
                         genln!(self, "        }}");
@@ -390,11 +416,13 @@ impl RustGenerator<'_> {
 
                 ast::ServiceItem::Event(ev) => {
                     let name = ev.name().value();
+                    let id = ev.id().value();
 
-                    gen!(self, "        event {name} @ {}", ev.id().value());
+                    gen!(self, "        event {name} @ {id}");
 
-                    if let Some(event_type) = ev.event_type() {
-                        gen!(self, " = {}", self.event_variant_type(svc_name, name, event_type));
+                    if let Some(ty) = ev.event_type() {
+                        let ty = self.event_variant_type(svc_name, name, ty);
+                        gen!(self, " = {ty}");
                     }
 
                     genln!(self, ";");
@@ -496,16 +524,55 @@ impl RustGenerator<'_> {
         let name = const_def.name().value();
 
         match const_def.value() {
-            ast::ConstValue::U8(v) => genln!(self, "pub const {}: u8 = {};", name, v.value()),
-            ast::ConstValue::I8(v) => genln!(self, "pub const {}: i8 = {};", name, v.value()),
-            ast::ConstValue::U16(v) => genln!(self, "pub const {}: u16 = {};", name, v.value()),
-            ast::ConstValue::I16(v) => genln!(self, "pub const {}: i16 = {};", name, v.value()),
-            ast::ConstValue::U32(v) => genln!(self, "pub const {}: u32 = {};", name, v.value()),
-            ast::ConstValue::I32(v) => genln!(self, "pub const {}: i32 = {};", name, v.value()),
-            ast::ConstValue::U64(v) => genln!(self, "pub const {}: u64 = {};", name, v.value()),
-            ast::ConstValue::I64(v) => genln!(self, "pub const {}: i64 = {};", name, v.value()),
-            ast::ConstValue::String(v) => genln!(self, "pub const {}: &str = \"{}\";", name, v.value()),
-            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: {krate}::private::uuid::Uuid = {krate}::private::uuid::uuid!(\"{}\");", name, v.value()),
+            ast::ConstValue::U8(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: u8 = {val};");
+            }
+
+            ast::ConstValue::I8(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: i8 = {val};");
+            }
+
+            ast::ConstValue::U16(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: u16 = {val};");
+            }
+
+            ast::ConstValue::I16(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: i16 = {val};");
+            }
+
+            ast::ConstValue::U32(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: u32 = {val};");
+            }
+
+            ast::ConstValue::I32(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: i32 = {val};");
+            }
+
+            ast::ConstValue::U64(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: u64 = {val};");
+            }
+
+            ast::ConstValue::I64(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: i64 = {val};");
+            }
+
+            ast::ConstValue::String(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: &str = \"{val}\";");
+            }
+
+            ast::ConstValue::Uuid(v) => {
+                let val = v.value();
+                genln!(self, "pub const {name}: {krate}::private::uuid::Uuid = {krate}::private::uuid::uuid!(\"{val}\");");
+            }
         };
 
         genln!(self);
@@ -514,16 +581,19 @@ impl RustGenerator<'_> {
     fn register_introspection(&mut self, def: &ast::Definition) {
         match def {
             ast::Definition::Struct(d) => {
-                genln!(self, "    client.register_introspection::<{}>()?;", d.name().value())
+                let name = d.name().value();
+                genln!(self, "    client.register_introspection::<{name}>()?;");
             }
 
             ast::Definition::Enum(e) => {
-                genln!(self, "    client.register_introspection::<{}>()?;", e.name().value())
+                let name = e.name().value();
+                genln!(self, "    client.register_introspection::<{name}>()?;");
             }
 
             ast::Definition::Service(s) => {
                 if self.options.client || self.options.server {
-                    genln!(self, "    client.register_introspection::<{}Introspection>()?;", s.name().value());
+                    let name = s.name().value();
+                    genln!(self, "    client.register_introspection::<{name}Introspection>()?;");
                 }
             }
 
