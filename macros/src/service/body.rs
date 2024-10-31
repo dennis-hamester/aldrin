@@ -21,8 +21,13 @@ impl Body {
             quote! { #[cfg(feature = #feature)] }
         });
 
-        let query_introspection = options.introspection().then(|| {
+        let introspection_fns = options.introspection().then(|| {
             quote! {
+                #introspection_if
+                pub fn introspection() -> #krate::core::introspection::Introspection {
+                    #krate::core::introspection::Introspection::new::<Self>()
+                }
+
                 #introspection_if
                 pub async fn query_introspection(
                     &self,
@@ -115,7 +120,7 @@ impl Body {
                 self.inner.type_id()
             }
 
-            #query_introspection
+            #introspection_fns
             #fn_calls
 
             pub async fn subscribe_all(&self) -> ::std::result::Result<(), #krate::Error> {
@@ -186,8 +191,13 @@ impl Body {
             }
         });
 
-        let query_introspection = options.introspection().then(|| {
+        let introspection_fns = options.introspection().then(|| {
             quote! {
+                #introspection_if
+                pub fn introspection() -> #krate::core::introspection::Introspection {
+                    #krate::core::introspection::Introspection::new::<Self>()
+                }
+
                 #introspection_if
                 pub async fn query_introspection(
                     &self,
@@ -250,7 +260,7 @@ impl Body {
                 self.inner.type_id()
             }
 
-            #query_introspection
+            #introspection_fns
 
             pub fn client(&self) -> &#krate::Handle {
                 self.inner.client()
