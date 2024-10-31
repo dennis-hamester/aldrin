@@ -77,3 +77,6 @@ features = [
     "derive",
     "introspection",
 ]
+
+[dev-dependencies.uuid]
+workspace = true

@@ -411,8 +411,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// service! {
 ///     pub service Echo {
 ///         uuid = ServiceUuid(uuid!("ee98534d-345a-4399-a656-07fd9c39a96e"));
@@ -445,8 +445,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// mod my_reexports {
 ///     pub use aldrin as my_aldrin;
 /// }
@@ -469,8 +469,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(no_client)]
 ///     pub service Ping {
@@ -488,8 +488,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(no_function_non_exhaustive, no_event_non_exhaustive)]
 ///     pub service Ping {
@@ -510,8 +510,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(schema = "ping", introspection)]
 ///     pub service Ping {
@@ -526,8 +526,8 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin::private::uuid::uuid;
 /// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(schema = "ping", introspection_if = "introspection")]
 ///     pub service Ping {
