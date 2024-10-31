@@ -1,0 +1,24 @@
+import extern;
+
+service trait {
+    uuid = dafd1909-c9b5-4e5d-a773-709b53a01145;
+    version = 1;
+
+    fn ref @ 1 {
+        args = true;
+        ok = true;
+        err = true;
+    }
+
+    event mut @ 1 = false;
+}
+
+struct true {
+    required if @ 1 = extern::pub;
+    required else @ 2 = extern::pub;
+}
+
+enum false {
+    break @ 1;
+    continue @ 2 = extern::pub;
+}

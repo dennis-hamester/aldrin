@@ -12,6 +12,7 @@ use uuid::uuid;
 aldrin::generate!("test/all_types.aldrin");
 aldrin::generate!("test/before_derive_compat.aldrin");
 aldrin::generate!("test/constants.aldrin");
+aldrin::generate!("test/extern.aldrin", introspection = true);
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/introspection.aldrin", introspection = true);
 aldrin::generate!("test/old_new.aldrin");
@@ -20,6 +21,12 @@ aldrin::generate!("test/result.aldrin");
 aldrin::generate!("test/subscribe_all.aldrin");
 aldrin::generate!("test/test1.aldrin");
 aldrin::generate!("test/unit.aldrin");
+
+aldrin::generate!(
+    "test/raw_identifiers.aldrin",
+    include = "test",
+    introspection = true
+);
 
 mod conditional_introspection {
     mod available {

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The field `krate` has been added to `RustOptions` to override the path of the `aldrin` crate. The
   default is `::aldrin`.
 
+### Fixed
+
+- Use raw identifiers for all user supplied names.
+
 ### Changed
 
 - Bump MSRV to 1.71.1.

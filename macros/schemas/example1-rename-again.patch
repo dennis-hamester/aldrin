@@ -4,40 +4,40 @@
  #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default, ::aldrin::Serialize, ::aldrin::Deserialize, ::aldrin::AsSerializeArg)]
  #[aldrin(crate = "::aldrin::core", schema = "example1")]
  #[non_exhaustive]
--pub struct MyStructRenamed {
-+pub struct MyStructRenamedAgain {
+-pub struct r#MyStructRenamed {
++pub struct r#MyStructRenamedAgain {
      #[aldrin(id = 1, optional)]
-     pub field1: ::std::option::Option<::std::primitive::u32>,
+     pub r#field1: ::std::option::Option<::std::primitive::u32>,
  
 @@ -9,18 +9,18 @@
-     pub field2: ::std::option::Option<::std::primitive::u32>,
+     pub r#field2: ::std::option::Option<::std::primitive::u32>,
  }
  
--impl MyStructRenamed {
-+impl MyStructRenamedAgain {
+-impl r#MyStructRenamed {
++impl r#MyStructRenamedAgain {
      pub fn new() -> Self {
          <Self as ::std::default::Default>::default()
      }
  
--    pub fn builder() -> MyStructRenamedBuilder {
--        MyStructRenamedBuilder::new()
-+    pub fn builder() -> MyStructRenamedAgainBuilder {
-+        MyStructRenamedAgainBuilder::new()
+-    pub fn builder() -> r#MyStructRenamedBuilder {
+-        r#MyStructRenamedBuilder::new()
++    pub fn builder() -> r#MyStructRenamedAgainBuilder {
++        r#MyStructRenamedAgainBuilder::new()
      }
  }
  
  #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default)]
--pub struct MyStructRenamedBuilder {
-+pub struct MyStructRenamedAgainBuilder {
+-pub struct r#MyStructRenamedBuilder {
++pub struct r#MyStructRenamedAgainBuilder {
      #[doc(hidden)]
-     field1: ::std::option::Option<::std::primitive::u32>,
+     r#field1: ::std::option::Option<::std::primitive::u32>,
  
 @@ -29,7 +29,7 @@
  
  }
  
--impl MyStructRenamedBuilder {
-+impl MyStructRenamedAgainBuilder {
+-impl r#MyStructRenamedBuilder {
++impl r#MyStructRenamedAgainBuilder {
      pub fn new() -> Self {
          <Self as ::std::default::Default>::default()
      }
@@ -45,10 +45,10 @@
          self
      }
  
--    pub fn build(self) -> MyStructRenamed {
--        MyStructRenamed {
-+    pub fn build(self) -> MyStructRenamedAgain {
-+        MyStructRenamedAgain {
-             field1: self.field1,
-             field2: self.field2,
+-    pub fn build(self) -> r#MyStructRenamed {
+-        r#MyStructRenamed {
++    pub fn build(self) -> r#MyStructRenamedAgain {
++        r#MyStructRenamedAgain {
+             r#field1: self.r#field1,
+             r#field2: self.r#field2,
          }

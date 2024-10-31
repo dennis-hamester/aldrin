@@ -161,9 +161,11 @@ impl RustGenerator<'_> {
             ast::Definition::Struct(d) => {
                 self.struct_def(d.name().value(), Some(d.attributes()), d.fields())
             }
+
             ast::Definition::Enum(e) => {
                 self.enum_def(e.name().value(), Some(e.attributes()), e.variants())
             }
+
             ast::Definition::Service(s) => self.service_def(s),
             ast::Definition::Const(c) => self.const_def(c),
         }
@@ -176,10 +178,11 @@ impl RustGenerator<'_> {
         fields: &[ast::StructField],
     ) {
         let krate = self.rust_options.krate;
+        let ident = format!("r#{name}");
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
-        let builder_name = struct_builder_name(name);
+        let builder_ident = format!("r#{}", struct_builder_name(name));
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
@@ -211,11 +214,11 @@ impl RustGenerator<'_> {
         if self.rust_options.struct_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
-        genln!(self, "pub struct {name} {{");
+        genln!(self, "pub struct {ident} {{");
         let mut first = true;
         for field in fields {
             let id = field.id().value();
-            let name = field.name().value();
+            let ident = format!("r#{}", field.name().value());
             let ty = self.type_name(field.field_type());
 
             if first {
@@ -226,16 +229,16 @@ impl RustGenerator<'_> {
 
             if field.required() {
                 genln!(self, "    #[aldrin(id = {id})]");
-                genln!(self, "    pub {name}: {ty},");
+                genln!(self, "    pub {ident}: {ty},");
             } else {
                 genln!(self, "    #[aldrin(id = {id}, optional)]");
-                genln!(self, "    pub {name}: {OPTION}<{ty}>,");
+                genln!(self, "    pub {ident}: {OPTION}<{ty}>,");
             }
         }
         genln!(self, "}}");
         genln!(self);
 
-        genln!(self, "impl {name} {{");
+        genln!(self, "impl {ident} {{");
         if !has_required_fields {
             genln!(self, "    pub fn new() -> Self {{");
             genln!(self, "        <Self as {DEFAULT}>::default()");
@@ -244,8 +247,8 @@ impl RustGenerator<'_> {
         }
 
         if self.rust_options.struct_builders {
-            genln!(self, "    pub fn builder() -> {builder_name} {{");
-            genln!(self, "        {builder_name}::new()");
+            genln!(self, "    pub fn builder() -> {builder_ident} {{");
+            genln!(self, "        {builder_ident}::new()");
             genln!(self, "    }}");
         }
         genln!(self, "}}");
@@ -253,50 +256,53 @@ impl RustGenerator<'_> {
 
         if self.rust_options.struct_builders {
             genln!(self, "#[derive({DEBUG}, {CLONE}, {DEFAULT})]");
-            genln!(self, "pub struct {builder_name} {{");
+            genln!(self, "pub struct {builder_ident} {{");
             for field in fields {
-                let name = field.name().value();
+                let ident = format!("r#{}", field.name().value());
                 let ty = self.type_name(field.field_type());
+
                 genln!(self, "    #[doc(hidden)]");
-                genln!(self, "    {name}: {OPTION}<{ty}>,");
+                genln!(self, "    {ident}: {OPTION}<{ty}>,");
                 genln!(self);
             }
             genln!(self, "}}");
             genln!(self);
 
-            genln!(self, "impl {builder_name} {{");
+            genln!(self, "impl {builder_ident} {{");
             genln!(self, "    pub fn new() -> Self {{");
             genln!(self, "        <Self as {DEFAULT}>::default()");
             genln!(self, "    }}");
             genln!(self);
             for field in fields {
-                let name = field.name().value();
+                let ident = format!("r#{}", field.name().value());
                 let ty = self.type_name(field.field_type());
-                genln!(self, "    pub fn {name}(mut self, {name}: {ty}) -> Self {{");
-                genln!(self, "        self.{name} = {SOME}({name});");
+
+                genln!(self, "    pub fn {ident}(mut self, {ident}: {ty}) -> Self {{");
+                genln!(self, "        self.{ident} = {SOME}({ident});");
                 genln!(self, "        self");
                 genln!(self, "    }}");
                 genln!(self);
             }
 
             if !has_required_fields {
-                genln!(self, "    pub fn build(self) -> {name} {{");
-                genln!(self, "        {name} {{");
+                genln!(self, "    pub fn build(self) -> {ident} {{");
+                genln!(self, "        {ident} {{");
                 for field in fields {
-                    let name = field.name().value();
-                    genln!(self, "            {name}: self.{name},");
+                    let ident = format!("r#{}", field.name().value());
+                    genln!(self, "            {ident}: self.{ident},");
                 }
                 genln!(self, "        }}");
             } else {
-                genln!(self, "    pub fn build(self) -> {RESULT}<{name}, {krate}::Error> {{");
-                genln!(self, "        {OK}({name} {{");
+                genln!(self, "    pub fn build(self) -> {RESULT}<{ident}, {krate}::Error> {{");
+                genln!(self, "        {OK}({ident} {{");
                 for field in fields {
-                    let name = field.name().value();
+                    let ident = format!("r#{}", field.name().value());
+
                     if field.required() {
                         let id = field.id().value();
-                        genln!(self, "            {name}: self.{name}.ok_or_else(|| {krate}::Error::required_field_missing({id}))?,");
+                        genln!(self, "            {ident}: self.{ident}.ok_or_else(|| {krate}::Error::required_field_missing({id}))?,");
                     } else {
-                        genln!(self, "            {name}: self.{name},");
+                        genln!(self, "            {ident}: self.{ident},");
                     }
                 }
                 genln!(self, "        }})");
@@ -313,6 +319,7 @@ impl RustGenerator<'_> {
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
     ) {
+        let ident = format!("r#{name}");
         let krate = &self.rust_options.krate;
         let schema_name = self.schema.name();
 
@@ -341,11 +348,11 @@ impl RustGenerator<'_> {
         if self.rust_options.enum_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
         }
-        genln!(self, "pub enum {name} {{");
+        genln!(self, "pub enum {ident} {{");
         let mut first = true;
         for var in vars {
             let id = var.id().value();
-            let name = var.name().value();
+            let ident = format!("r#{}", var.name().value());
 
             if first {
                 first = false;
@@ -356,9 +363,9 @@ impl RustGenerator<'_> {
             genln!(self, "    #[aldrin(id = {id})]");
             if let Some(ty) = var.variant_type() {
                 let ty = self.type_name(ty);
-                genln!(self, "    {name}({ty}),");
+                genln!(self, "    {ident}({ty}),");
             } else {
-                genln!(self, "    {name},");
+                genln!(self, "    {ident},");
             }
         }
         genln!(self, "}}");
@@ -373,6 +380,7 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate;
         let schema = self.schema.name();
         let svc_name = svc.name().value();
+        let ident = format!("r#{svc_name}");
         let uuid = svc.uuid().value();
         let version = svc.version().value();
 
@@ -406,7 +414,7 @@ impl RustGenerator<'_> {
 
         genln!(self, ")]");
 
-        genln!(self, "    pub service {svc_name} {{");
+        genln!(self, "    pub service {ident} {{");
         genln!(self, "        uuid = {krate}::core::ServiceUuid({krate}::private::uuid::uuid!(\"{uuid}\"));");
         genln!(self, "        version = {version};");
 
@@ -416,25 +424,26 @@ impl RustGenerator<'_> {
             match item {
                 ast::ServiceItem::Function(func) => {
                     let name = func.name().value();
+                    let ident = format!("r#{name}");
                     let id = func.id().value();
 
-                    gen!(self, "        fn {name} @ {id}");
+                    gen!(self, "        fn {ident} @ {id}");
 
                     if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
                         genln!(self, " {{");
 
                         if let Some(args) = func.args() {
-                            let ty = self.function_args_type_name(svc_name, name, args);
+                            let ty = self.function_args_type_name(svc_name, name, args, true);
                             genln!(self, "            args = {ty};");
                         }
 
                         if let Some(ok) = func.ok() {
-                            let ty = self.function_ok_type_name(svc_name, name, ok);
+                            let ty = self.function_ok_type_name(svc_name, name, ok, true);
                             genln!(self, "            ok = {ty};");
                         }
 
                         if let Some(err) = func.err() {
-                            let ty = self.function_err_type_name(svc_name, name, err);
+                            let ty = self.function_err_type_name(svc_name, name, err, true);
                             genln!(self, "            err = {ty};");
                         }
 
@@ -446,12 +455,13 @@ impl RustGenerator<'_> {
 
                 ast::ServiceItem::Event(ev) => {
                     let name = ev.name().value();
+                    let ident = format!("r#{name}");
                     let id = ev.id().value();
 
-                    gen!(self, "        event {name} @ {id}");
+                    gen!(self, "        event {ident} @ {id}");
 
                     if let Some(ty) = ev.event_type() {
-                        let ty = self.event_variant_type(svc_name, name, ty);
+                        let ty = self.event_variant_type(svc_name, name, ty, true);
                         gen!(self, " = {ty}");
                     }
 
@@ -472,13 +482,13 @@ impl RustGenerator<'_> {
                     if let Some(args) = func.args() {
                         match args.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &self.function_args_type_name(svc_name, func_name, args),
+                                &self.function_args_type_name(svc_name, func_name, args, false),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &self.function_args_type_name(svc_name, func_name, args),
+                                &self.function_args_type_name(svc_name, func_name, args, false),
                                 None,
                                 e.variants(),
                             ),
@@ -490,13 +500,13 @@ impl RustGenerator<'_> {
                     if let Some(ok) = func.ok() {
                         match ok.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &self.function_ok_type_name(svc_name, func_name, ok),
+                                &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &self.function_ok_type_name(svc_name, func_name, ok),
+                                &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 None,
                                 e.variants(),
                             ),
@@ -508,13 +518,13 @@ impl RustGenerator<'_> {
                     if let Some(err) = func.err() {
                         match err.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &self.function_err_type_name(svc_name, func_name, err),
+                                &self.function_err_type_name(svc_name, func_name, err, false),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &self.function_err_type_name(svc_name, func_name, err),
+                                &self.function_err_type_name(svc_name, func_name, err, false),
                                 None,
                                 e.variants(),
                             ),
@@ -530,13 +540,13 @@ impl RustGenerator<'_> {
 
                         match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &self.event_variant_type(svc_name, ev_name, ty),
+                                &self.event_variant_type(svc_name, ev_name, ty, false),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &self.event_variant_type(svc_name, ev_name, ty),
+                                &self.event_variant_type(svc_name, ev_name, ty, false),
                                 None,
                                 e.variants(),
                             ),
@@ -611,19 +621,19 @@ impl RustGenerator<'_> {
     fn register_introspection(&mut self, def: &ast::Definition) {
         match def {
             ast::Definition::Struct(d) => {
-                let name = d.name().value();
-                genln!(self, "    client.register_introspection::<{name}>()?;");
+                let ident = format!("r#{}", d.name().value());
+                genln!(self, "    client.register_introspection::<{ident}>()?;");
             }
 
             ast::Definition::Enum(e) => {
-                let name = e.name().value();
-                genln!(self, "    client.register_introspection::<{name}>()?;");
+                let ident = format!("r#{}", e.name().value());
+                genln!(self, "    client.register_introspection::<{ident}>()?;");
             }
 
             ast::Definition::Service(s) => {
                 if self.options.client || self.options.server {
-                    let name = s.name().value();
-                    genln!(self, "    client.register_introspection::<{name}Introspection>()?;");
+                    let ident = format!("r#{}", s.name().value());
+                    genln!(self, "    client.register_introspection::<{ident}Introspection>()?;");
                 }
             }
 
@@ -684,8 +694,8 @@ impl RustGenerator<'_> {
                 format!("{RESULT}<{}, {}>", self.type_name(ok), self.type_name(err))
             }
 
-            ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
-            ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
+            ast::TypeNameKind::Extern(m, ty) => format!("super::r#{}::r#{}", m.value(), ty.value()),
+            ast::TypeNameKind::Intern(ty) => format!("r#{}", ty.value().to_owned()),
         }
     }
 
@@ -694,12 +704,17 @@ impl RustGenerator<'_> {
         svc_name: &str,
         func_name: &str,
         part: &ast::FunctionPart,
+        raw: bool,
     ) -> String {
         match part.part_type() {
             ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                format!("{svc_name}{}Args", func_name.to_upper_camel_case())
+                if raw {
+                    format!("r#{svc_name}{}Args", func_name.to_upper_camel_case())
+                } else {
+                    format!("{svc_name}{}Args", func_name.to_upper_camel_case())
+                }
             }
         }
     }
@@ -709,11 +724,17 @@ impl RustGenerator<'_> {
         svc_name: &str,
         func_name: &str,
         part: &ast::FunctionPart,
+        raw: bool,
     ) -> String {
         match part.part_type() {
             ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
+
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
+                if raw {
+                    format!("r#{svc_name}{}Ok", func_name.to_upper_camel_case())
+                } else {
+                    format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
+                }
             }
         }
     }
@@ -723,11 +744,17 @@ impl RustGenerator<'_> {
         svc_name: &str,
         func_name: &str,
         part: &ast::FunctionPart,
+        raw: bool,
     ) -> String {
         match part.part_type() {
             ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
+
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                format!("{svc_name}{}Error", func_name.to_upper_camel_case())
+                if raw {
+                    format!("r#{svc_name}{}Error", func_name.to_upper_camel_case())
+                } else {
+                    format!("{svc_name}{}Error", func_name.to_upper_camel_case())
+                }
             }
         }
     }
@@ -737,12 +764,17 @@ impl RustGenerator<'_> {
         svc_name: &str,
         ev_name: &str,
         ev_type: &ast::TypeNameOrInline,
+        raw: bool,
     ) -> String {
         match ev_type {
             ast::TypeNameOrInline::TypeName(ref ty) => self.type_name(ty),
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-                format!("{svc_name}{}Event", service_event_variant(ev_name))
+                if raw {
+                    format!("r#{svc_name}{}Event", service_event_variant(ev_name))
+                } else {
+                    format!("{svc_name}{}Event", service_event_variant(ev_name))
+                }
             }
         }
     }
