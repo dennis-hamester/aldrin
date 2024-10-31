@@ -165,6 +165,8 @@ extern crate proc_macro;
 mod codegen;
 mod derive;
 mod service;
+#[cfg(test)]
+mod test;
 
 use proc_macro2::TokenStream;
 use syn::{DeriveInput, Result};
