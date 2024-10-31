@@ -29,7 +29,7 @@
 //!
 //! - Applies to: [all derive macros](crate#derive-macros)
 //!
-//! The attribute `#[aldrin(crate = "...")` can be used to override the name of the `aldrin_core`
+//! The attribute `#[aldrin(crate = "...")` can be used to override the path of the `aldrin_core`
 //! crate. This is useful when `aldrin_core` is not a direct dependency, but only reexported
 //! somewhere. The default value depends on from where the macro is invoked, it's either
 //! `::aldrin::core` or `::aldrin_core`.
