@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `generate!()` macro now supports specifying the path of the `aldrin` crate with the `crate`
   attribute.
 
+### Fixed
+
+- Use raw identifiers for the module names emitted by the `generate!()` macro.
+
 ### Changed
 
 - Bump MSRV to 1.71.1.
