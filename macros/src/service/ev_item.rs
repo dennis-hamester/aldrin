@@ -168,7 +168,11 @@ impl Parse for EvItem {
 
         let subscribe = Ident::new_raw(&format!("subscribe_{}", ident.unraw()), ident.span());
         let unsubscribe = Ident::new_raw(&format!("unsubscribe_{}", ident.unraw()), ident.span());
-        let variant = Ident::new_raw(&ident.to_string().to_upper_camel_case(), ident.span());
+
+        let variant = Ident::new_raw(
+            &ident.unraw().to_string().to_upper_camel_case(),
+            ident.span(),
+        );
 
         Ok(Self {
             ident,

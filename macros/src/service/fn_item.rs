@@ -3,6 +3,7 @@ use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
+use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::token::Brace;
 use syn::{braced, Ident, LitInt, Result, Token, Type};
@@ -167,7 +168,10 @@ impl Parse for FnItem {
             FnBody::empty()
         };
 
-        let variant = Ident::new_raw(&ident.to_string().to_upper_camel_case(), ident.span());
+        let variant = Ident::new_raw(
+            &ident.unraw().to_string().to_upper_camel_case(),
+            ident.span(),
+        );
 
         Ok(Self {
             ident,
