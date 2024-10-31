@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a derive macro for the `AsSerializeArg` trait.
 - Add the macro `service!()` which can generate client and server code based on a form that
   resembles Aldrin schema.
+- The `generate!()` macro now supports specifying the path of the `aldrin` crate with the `crate`
+  attribute.
 
 ### Changed
 

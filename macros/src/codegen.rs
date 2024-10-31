@@ -5,6 +5,7 @@ use proc_macro2::Span;
 use std::env;
 use std::fmt::Write;
 use std::path::PathBuf;
+use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{Error, Ident, LitBool, LitStr, Result, Token};
 
@@ -46,6 +47,10 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
         rust_options.event_non_exhaustive = args.event_non_exhaustive;
         rust_options.function_non_exhaustive = args.function_non_exhaustive;
         rust_options.introspection_if = args.introspection_if.as_deref();
+
+        if let Some(ref krate) = args.krate {
+            rust_options.krate = krate;
+        }
 
         let output = match gen.generate_rust(&rust_options) {
             Ok(output) => output,
@@ -97,13 +102,14 @@ pub struct Args {
     event_non_exhaustive: bool,
     function_non_exhaustive: bool,
     introspection_if: Option<String>,
+    krate: Option<String>,
 }
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> Result<Self> {
         let first_schema = lit_str_to_path(&input.parse::<LitStr>()?)?;
 
-        let mut args = Args {
+        let mut args = Self {
             schemas: vec![first_schema],
             includes: Vec::new(),
             options: Options::default(),
@@ -115,6 +121,7 @@ impl Parse for Args {
             event_non_exhaustive: true,
             function_non_exhaustive: true,
             introspection_if: None,
+            krate: None,
         };
 
         // Additional schemas
@@ -130,7 +137,7 @@ impl Parse for Args {
 
         // Options
         while !input.is_empty() {
-            let opt: Ident = input.parse()?;
+            let opt = input.call(Ident::parse_any)?;
             input.parse::<Token![=]>()?;
 
             if opt == "include" {
@@ -161,6 +168,9 @@ impl Parse for Args {
                 let lit_str = input.parse::<LitStr>()?;
                 args.introspection_if = Some(lit_str.value());
                 args.options.introspection = true;
+            } else if opt == "crate" {
+                let lit_str = input.parse::<LitStr>()?;
+                args.krate = Some(lit_str.value());
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
