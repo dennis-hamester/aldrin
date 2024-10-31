@@ -20,6 +20,7 @@ pub struct RustOptions<'a> {
     pub event_non_exhaustive: bool,
     pub function_non_exhaustive: bool,
     pub introspection_if: Option<&'a str>,
+    pub krate: &'a str,
 }
 
 impl RustOptions<'_> {
@@ -32,6 +33,7 @@ impl RustOptions<'_> {
             event_non_exhaustive: true,
             function_non_exhaustive: true,
             introspection_if: None,
+            krate: "::aldrin",
         }
     }
 }
@@ -92,11 +94,13 @@ impl RustGenerator<'_> {
         }
 
         if self.options.introspection {
+            let krate = self.rust_options.krate;
+
             if let Some(feature) = self.rust_options.introspection_if {
                 genln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
-            genln!(self, "pub fn register_introspection(handle: &aldrin::Handle) -> Result<(), aldrin::Error> {{");
+            genln!(self, "pub fn register_introspection(handle: &{krate}::Handle) -> Result<(), {krate}::Error> {{");
 
             for def in self.schema.definitions() {
                 self.register_introspection(def);
@@ -139,6 +143,7 @@ impl RustGenerator<'_> {
         attrs: Option<&[ast::Attribute]>,
         fields: &[ast::StructField],
     ) {
+        let krate = self.rust_options.krate;
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
@@ -151,20 +156,20 @@ impl RustGenerator<'_> {
 
         let derive_introspectable =
             if self.options.introspection && self.rust_options.introspection_if.is_none() {
-                ", aldrin::Introspectable"
+                format!(", {krate}::Introspectable")
             } else {
-                ""
+                String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone{derive_default}, aldrin::Serialize, aldrin::Deserialize, aldrin::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive(aldrin::Introspectable))]");
+                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
             }
         }
 
-        genln!(self, "#[aldrin(schema = \"{schema_name}\")]");
+        genln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
 
         if self.rust_options.struct_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
@@ -180,10 +185,10 @@ impl RustGenerator<'_> {
 
             if field.required() {
                 genln!(self, "    #[aldrin(id = {})]", field.id().value());
-                genln!(self, "    pub {}: {},", field.name().value(), type_name(field.field_type()));
+                genln!(self, "    pub {}: {},", field.name().value(), self.type_name(field.field_type()));
             } else {
                 genln!(self, "    #[aldrin(id = {}, optional)]", field.id().value());
-                genln!(self, "    pub {}: Option<{}>,", field.name().value(), type_name(field.field_type()));
+                genln!(self, "    pub {}: Option<{}>,", field.name().value(), self.type_name(field.field_type()));
             }
         }
         genln!(self, "}}");
@@ -211,7 +216,7 @@ impl RustGenerator<'_> {
             for field in fields {
                 let field_name = field.name().value();
                 genln!(self, "    #[doc(hidden)]");
-                genln!(self, "    {}: Option<{}>,", field_name, type_name(field.field_type()));
+                genln!(self, "    {}: Option<{}>,", field_name, self.type_name(field.field_type()));
                 genln!(self);
             }
             genln!(self, "}}");
@@ -224,7 +229,7 @@ impl RustGenerator<'_> {
             genln!(self);
             for field in fields {
                 let field_name = field.name().value();
-                genln!(self, "    pub fn {0}(mut self, {0}: {1}) -> Self {{", field_name, type_name(field.field_type()));
+                genln!(self, "    pub fn {0}(mut self, {0}: {1}) -> Self {{", field_name, self.type_name(field.field_type()));
                 genln!(self, "        self.{0} = Some({0});", field_name);
                 genln!(self, "        self");
                 genln!(self, "    }}");
@@ -240,13 +245,13 @@ impl RustGenerator<'_> {
                 }
                 genln!(self, "        }}");
             } else {
-                genln!(self, "    pub fn build(self) -> Result<{}, aldrin::Error> {{", name);
+                genln!(self, "    pub fn build(self) -> Result<{}, {krate}::Error> {{", name);
                 genln!(self, "        Ok({} {{", name);
                 for field in fields {
                     let field_name = field.name().value();
                     if field.required() {
                         let id = field.id().value();
-                        genln!(self, "            {0}: self.{0}.ok_or_else(|| aldrin::Error::required_field_missing({1}))?,", field_name, id);
+                        genln!(self, "            {0}: self.{0}.ok_or_else(|| {krate}::Error::required_field_missing({1}))?,", field_name, id);
                     } else {
                         genln!(self, "            {0}: self.{0},", field_name);
                     }
@@ -265,6 +270,7 @@ impl RustGenerator<'_> {
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
     ) {
+        let krate = &self.rust_options.krate;
         let schema_name = self.schema.name();
         let attrs = attrs
             .map(RustAttributes::parse)
@@ -272,20 +278,20 @@ impl RustGenerator<'_> {
 
         let derive_introspectable =
             if self.options.introspection && self.rust_options.introspection_if.is_none() {
-                ", aldrin::Introspectable"
+                format!(", {krate}::Introspectable")
             } else {
-                ""
+                String::new()
             };
 
-        genln!(self, "#[derive(Debug, Clone, aldrin::Serialize, aldrin::Deserialize, aldrin::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
+        genln!(self, "#[derive(Debug, Clone, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{})]", attrs.additional_derives());
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
-                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive(aldrin::Introspectable))]");
+                genln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
             }
         }
 
-        genln!(self, "#[aldrin(schema = \"{schema_name}\")]");
+        genln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
 
         if self.rust_options.enum_non_exhaustive {
             genln!(self, "#[non_exhaustive]");
@@ -301,7 +307,7 @@ impl RustGenerator<'_> {
 
             genln!(self, "    #[aldrin(id = {})]", var.id().value());
             if let Some(var_type) = var.variant_type() {
-                genln!(self, "    {}({}),", var.name().value(), type_name(var_type));
+                genln!(self, "    {}({}),", var.name().value(), self.type_name(var_type));
             } else {
                 genln!(self, "    {},", var.name().value());
             }
@@ -315,11 +321,12 @@ impl RustGenerator<'_> {
             return;
         }
 
+        let krate = self.rust_options.krate;
         let svc_name = svc.name().value();
 
-        genln!(self, "aldrin::service! {{");
+        genln!(self, "{krate}::service! {{");
 
-        gen!(self, "    #[aldrin(schema = \"{}\"", self.schema.name());
+        gen!(self, "    #[aldrin(crate = \"{krate}\", schema = \"{}\"", self.schema.name());
 
         if !self.options.client {
             gen!(self, ", no_client");
@@ -348,7 +355,7 @@ impl RustGenerator<'_> {
         genln!(self, ")]");
 
         genln!(self, "    pub service {svc_name} {{");
-        genln!(self, "        uuid = aldrin::core::ServiceUuid(aldrin::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
+        genln!(self, "        uuid = {krate}::core::ServiceUuid({krate}::private::uuid::uuid!(\"{}\"));", svc.uuid().value());
         genln!(self, "        version = {};", svc.version().value());
 
         for item in svc.items() {
@@ -364,15 +371,15 @@ impl RustGenerator<'_> {
                         genln!(self, " {{");
 
                         if let Some(args) = func.args() {
-                            genln!(self, "            args = {};", function_args_type_name(svc_name, name, args));
+                            genln!(self, "            args = {};", self.function_args_type_name(svc_name, name, args));
                         }
 
                         if let Some(ok) = func.ok() {
-                            genln!(self, "            ok = {};", function_ok_type_name(svc_name, name, ok));
+                            genln!(self, "            ok = {};", self.function_ok_type_name(svc_name, name, ok));
                         }
 
                         if let Some(err) = func.err() {
-                            genln!(self, "            err = {};", function_err_type_name(svc_name, name, err));
+                            genln!(self, "            err = {};", self.function_err_type_name(svc_name, name, err));
                         }
 
                         genln!(self, "        }}");
@@ -387,7 +394,7 @@ impl RustGenerator<'_> {
                     gen!(self, "        event {name} @ {}", ev.id().value());
 
                     if let Some(event_type) = ev.event_type() {
-                        gen!(self, " = {}", event_variant_type(svc_name, name, event_type));
+                        gen!(self, " = {}", self.event_variant_type(svc_name, name, event_type));
                     }
 
                     genln!(self, ";");
@@ -407,13 +414,13 @@ impl RustGenerator<'_> {
                     if let Some(args) = func.args() {
                         match args.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &function_args_type_name(svc_name, func_name, args),
+                                &self.function_args_type_name(svc_name, func_name, args),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &function_args_type_name(svc_name, func_name, args),
+                                &self.function_args_type_name(svc_name, func_name, args),
                                 None,
                                 e.variants(),
                             ),
@@ -425,13 +432,13 @@ impl RustGenerator<'_> {
                     if let Some(ok) = func.ok() {
                         match ok.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &function_ok_type_name(svc_name, func_name, ok),
+                                &self.function_ok_type_name(svc_name, func_name, ok),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &function_ok_type_name(svc_name, func_name, ok),
+                                &self.function_ok_type_name(svc_name, func_name, ok),
                                 None,
                                 e.variants(),
                             ),
@@ -443,13 +450,13 @@ impl RustGenerator<'_> {
                     if let Some(err) = func.err() {
                         match err.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &function_err_type_name(svc_name, func_name, err),
+                                &self.function_err_type_name(svc_name, func_name, err),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &function_err_type_name(svc_name, func_name, err),
+                                &self.function_err_type_name(svc_name, func_name, err),
                                 None,
                                 e.variants(),
                             ),
@@ -465,13 +472,13 @@ impl RustGenerator<'_> {
 
                         match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &event_variant_type(svc_name, ev_name, ty),
+                                &self.event_variant_type(svc_name, ev_name, ty),
                                 None,
                                 s.fields(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &event_variant_type(svc_name, ev_name, ty),
+                                &self.event_variant_type(svc_name, ev_name, ty),
                                 None,
                                 e.variants(),
                             ),
@@ -485,7 +492,9 @@ impl RustGenerator<'_> {
     }
 
     fn const_def(&mut self, const_def: &ast::ConstDef) {
+        let krate = self.rust_options.krate;
         let name = const_def.name().value();
+
         match const_def.value() {
             ast::ConstValue::U8(v) => genln!(self, "pub const {}: u8 = {};", name, v.value()),
             ast::ConstValue::I8(v) => genln!(self, "pub const {}: i8 = {};", name, v.value()),
@@ -496,7 +505,7 @@ impl RustGenerator<'_> {
             ast::ConstValue::U64(v) => genln!(self, "pub const {}: u64 = {};", name, v.value()),
             ast::ConstValue::I64(v) => genln!(self, "pub const {}: i64 = {};", name, v.value()),
             ast::ConstValue::String(v) => genln!(self, "pub const {}: &str = \"{}\";", name, v.value()),
-            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: aldrin::private::uuid::Uuid = aldrin::private::uuid::uuid!(\"{}\");", name, v.value()),
+            ast::ConstValue::Uuid(v) => genln!(self, "pub const {}: {krate}::private::uuid::Uuid = {krate}::private::uuid::uuid!(\"{}\");", name, v.value()),
         };
 
         genln!(self);
@@ -521,67 +530,140 @@ impl RustGenerator<'_> {
             ast::Definition::Const(_) => {}
         }
     }
-}
 
-fn type_name(ty: &ast::TypeName) -> String {
-    match ty.kind() {
-        ast::TypeNameKind::Bool => "bool".to_owned(),
-        ast::TypeNameKind::U8 => "u8".to_owned(),
-        ast::TypeNameKind::I8 => "i8".to_owned(),
-        ast::TypeNameKind::U16 => "u16".to_owned(),
-        ast::TypeNameKind::I16 => "i16".to_owned(),
-        ast::TypeNameKind::U32 => "u32".to_owned(),
-        ast::TypeNameKind::I32 => "i32".to_owned(),
-        ast::TypeNameKind::U64 => "u64".to_owned(),
-        ast::TypeNameKind::I64 => "i64".to_owned(),
-        ast::TypeNameKind::F32 => "f32".to_owned(),
-        ast::TypeNameKind::F64 => "f64".to_owned(),
-        ast::TypeNameKind::String => "String".to_owned(),
-        ast::TypeNameKind::Uuid => "aldrin::private::uuid::Uuid".to_owned(),
-        ast::TypeNameKind::ObjectId => "aldrin::core::ObjectId".to_owned(),
-        ast::TypeNameKind::ServiceId => "aldrin::core::ServiceId".to_owned(),
-        ast::TypeNameKind::Value => "aldrin::core::SerializedValue".to_owned(),
-        ast::TypeNameKind::Option(ty) => format!("Option<{}>", type_name(ty)),
-        ast::TypeNameKind::Box(ty) => format!("Box<{}>", type_name(ty)),
-        ast::TypeNameKind::Vec(ty) => match ty.kind() {
-            ast::TypeNameKind::U8 => "aldrin::core::Bytes".to_owned(),
-            _ => format!("Vec<{}>", type_name(ty)),
-        },
-        ast::TypeNameKind::Bytes => "aldrin::core::Bytes".to_owned(),
-        ast::TypeNameKind::Map(k, v) => format!(
-            "std::collections::HashMap<{}, {}>",
-            key_type_name(k),
-            type_name(v)
-        ),
-        ast::TypeNameKind::Set(ty) => format!("std::collections::HashSet<{}>", key_type_name(ty)),
-        ast::TypeNameKind::Sender(ty) => {
-            format!("aldrin::UnboundSender<{}>", type_name(ty))
+    fn type_name(&self, ty: &ast::TypeName) -> String {
+        let krate = self.rust_options.krate;
+
+        match ty.kind() {
+            ast::TypeNameKind::Bool => "bool".to_owned(),
+            ast::TypeNameKind::U8 => "u8".to_owned(),
+            ast::TypeNameKind::I8 => "i8".to_owned(),
+            ast::TypeNameKind::U16 => "u16".to_owned(),
+            ast::TypeNameKind::I16 => "i16".to_owned(),
+            ast::TypeNameKind::U32 => "u32".to_owned(),
+            ast::TypeNameKind::I32 => "i32".to_owned(),
+            ast::TypeNameKind::U64 => "u64".to_owned(),
+            ast::TypeNameKind::I64 => "i64".to_owned(),
+            ast::TypeNameKind::F32 => "f32".to_owned(),
+            ast::TypeNameKind::F64 => "f64".to_owned(),
+            ast::TypeNameKind::String => "String".to_owned(),
+            ast::TypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
+            ast::TypeNameKind::ObjectId => format!("{krate}::core::ObjectId"),
+            ast::TypeNameKind::ServiceId => format!("{krate}::core::ServiceId"),
+            ast::TypeNameKind::Value => format!("{krate}::core::SerializedValue"),
+            ast::TypeNameKind::Option(ty) => format!("Option<{}>", self.type_name(ty)),
+            ast::TypeNameKind::Box(ty) => format!("Box<{}>", self.type_name(ty)),
+
+            ast::TypeNameKind::Vec(ty) => match ty.kind() {
+                ast::TypeNameKind::U8 => format!("{krate}::core::Bytes"),
+                _ => format!("Vec<{}>", self.type_name(ty)),
+            },
+
+            ast::TypeNameKind::Bytes => format!("{krate}::core::Bytes"),
+
+            ast::TypeNameKind::Map(k, v) => format!(
+                "std::collections::HashMap<{}, {}>",
+                self.key_type_name(k),
+                self.type_name(v)
+            ),
+
+            ast::TypeNameKind::Set(ty) => {
+                format!("std::collections::HashSet<{}>", self.key_type_name(ty))
+            }
+
+            ast::TypeNameKind::Sender(ty) => {
+                format!("{krate}::UnboundSender<{}>", self.type_name(ty))
+            }
+
+            ast::TypeNameKind::Receiver(ty) => {
+                format!("{krate}::UnboundReceiver<{}>", self.type_name(ty))
+            }
+
+            ast::TypeNameKind::Lifetime => format!("{krate}::LifetimeId"),
+            ast::TypeNameKind::Unit => "()".to_owned(),
+
+            ast::TypeNameKind::Result(ok, err) => {
+                format!("Result<{}, {}>", self.type_name(ok), self.type_name(err))
+            }
+
+            ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
+            ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
         }
-        ast::TypeNameKind::Receiver(ty) => {
-            format!("aldrin::UnboundReceiver<{}>", type_name(ty))
-        }
-        ast::TypeNameKind::Lifetime => "aldrin::LifetimeId".to_owned(),
-        ast::TypeNameKind::Unit => "()".to_owned(),
-        ast::TypeNameKind::Result(ok, err) => {
-            format!("Result<{}, {}>", type_name(ok), type_name(err))
-        }
-        ast::TypeNameKind::Extern(m, ty) => format!("super::{}::{}", m.value(), ty.value()),
-        ast::TypeNameKind::Intern(ty) => ty.value().to_owned(),
     }
-}
 
-fn key_type_name(ty: &ast::KeyTypeName) -> &'static str {
-    match ty.kind() {
-        ast::KeyTypeNameKind::U8 => "u8",
-        ast::KeyTypeNameKind::I8 => "i8",
-        ast::KeyTypeNameKind::U16 => "u16",
-        ast::KeyTypeNameKind::I16 => "i16",
-        ast::KeyTypeNameKind::U32 => "u32",
-        ast::KeyTypeNameKind::I32 => "i32",
-        ast::KeyTypeNameKind::U64 => "u64",
-        ast::KeyTypeNameKind::I64 => "i64",
-        ast::KeyTypeNameKind::String => "String",
-        ast::KeyTypeNameKind::Uuid => "aldrin::private::uuid::Uuid",
+    fn function_args_type_name(
+        &self,
+        svc_name: &str,
+        func_name: &str,
+        part: &ast::FunctionPart,
+    ) -> String {
+        match part.part_type() {
+            ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
+
+            ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+                format!("{svc_name}{}Args", func_name.to_upper_camel_case())
+            }
+        }
+    }
+
+    fn function_ok_type_name(
+        &self,
+        svc_name: &str,
+        func_name: &str,
+        part: &ast::FunctionPart,
+    ) -> String {
+        match part.part_type() {
+            ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
+            ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+                format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
+            }
+        }
+    }
+
+    fn function_err_type_name(
+        &self,
+        svc_name: &str,
+        func_name: &str,
+        part: &ast::FunctionPart,
+    ) -> String {
+        match part.part_type() {
+            ast::TypeNameOrInline::TypeName(ty) => self.type_name(ty),
+            ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+                format!("{svc_name}{}Error", func_name.to_upper_camel_case())
+            }
+        }
+    }
+
+    fn event_variant_type(
+        &self,
+        svc_name: &str,
+        ev_name: &str,
+        ev_type: &ast::TypeNameOrInline,
+    ) -> String {
+        match ev_type {
+            ast::TypeNameOrInline::TypeName(ref ty) => self.type_name(ty),
+
+            ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
+                format!("{svc_name}{}Event", service_event_variant(ev_name))
+            }
+        }
+    }
+
+    fn key_type_name(&self, ty: &ast::KeyTypeName) -> String {
+        let krate = self.rust_options.krate;
+
+        match ty.kind() {
+            ast::KeyTypeNameKind::U8 => "u8".to_owned(),
+            ast::KeyTypeNameKind::I8 => "i8".to_owned(),
+            ast::KeyTypeNameKind::U16 => "u16".to_owned(),
+            ast::KeyTypeNameKind::I16 => "i16".to_owned(),
+            ast::KeyTypeNameKind::U32 => "u32".to_owned(),
+            ast::KeyTypeNameKind::I32 => "i32".to_owned(),
+            ast::KeyTypeNameKind::U64 => "u64".to_owned(),
+            ast::KeyTypeNameKind::I64 => "i64".to_owned(),
+            ast::KeyTypeNameKind::String => "String".to_owned(),
+            ast::KeyTypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
+        }
     }
 }
 
@@ -589,44 +671,8 @@ fn struct_builder_name(base: &str) -> String {
     format!("{base}Builder")
 }
 
-fn function_args_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Args", func_name.to_upper_camel_case())
-        }
-    }
-}
-
-fn function_ok_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
-        }
-    }
-}
-
-fn function_err_type_name(svc_name: &str, func_name: &str, part: &ast::FunctionPart) -> String {
-    match part.part_type() {
-        ast::TypeNameOrInline::TypeName(ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Error", func_name.to_upper_camel_case())
-        }
-    }
-}
-
 fn service_event_variant(ev_name: &str) -> String {
     ev_name.to_upper_camel_case()
-}
-
-fn event_variant_type(svc_name: &str, ev_name: &str, ev_type: &ast::TypeNameOrInline) -> String {
-    match ev_type {
-        ast::TypeNameOrInline::TypeName(ref ty) => type_name(ty),
-        ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
-            format!("{svc_name}{}Event", service_event_variant(ev_name))
-        }
-    }
 }
 
 struct RustAttributes {
