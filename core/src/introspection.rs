@@ -10,6 +10,8 @@ mod map_type;
 mod result_type;
 mod service;
 mod struct_ty;
+#[cfg(test)]
+mod test;
 mod type_id;
 mod variant;
 
@@ -57,8 +59,9 @@ impl Introspection {
 
         let mut type_ids = BTreeMap::new();
         for ty in inner_types {
-            let dup = type_ids.insert(ty.lexical_id(), TypeId::compute_from_dyn(ty));
-            assert_eq!(dup, None);
+            let type_id = TypeId::compute_from_dyn(ty);
+            let dup = type_ids.insert(ty.lexical_id(), type_id);
+            assert!(dup.is_none() || (dup == Some(type_id)));
         }
 
         Self {
