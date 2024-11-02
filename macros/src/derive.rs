@@ -6,6 +6,8 @@ mod key_type_of;
 mod options;
 mod serialize;
 mod serialize_key;
+#[cfg(test)]
+mod test;
 
 use options::{ItemOptions, Options};
 use syn::punctuated::Punctuated;

@@ -1,6 +1,7 @@
 use super::{add_trait_bounds, ItemOptions, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
 
@@ -15,8 +16,8 @@ pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream>
 }
 
 fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStream> {
-    let name = &input.ident;
-    let name_str = name.to_string();
+    let ident = &input.ident;
+    let name = ident.unraw().to_string();
     let krate = options.krate();
 
     let schema = options.schema().ok_or_else(|| {
@@ -28,12 +29,12 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
 
     let (layout, inner_types) = match input.data {
         Data::Struct(data) => match data.fields {
-            Fields::Named(fields) => gen_struct(&fields.named, &name_str, &options)?,
-            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name_str, &options)?,
-            Fields::Unit => gen_struct(&Punctuated::new(), &name_str, &options)?,
+            Fields::Named(fields) => gen_struct(&fields.named, &name, &options)?,
+            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name, &options)?,
+            Fields::Unit => gen_struct(&Punctuated::new(), &name, &options)?,
         },
 
-        Data::Enum(data) => gen_enum(&data.variants, &name_str, &options)?,
+        Data::Enum(data) => gen_enum(&data.variants, &name, &options)?,
 
         Data::Union(_) => {
             return Err(Error::new_spanned(
@@ -58,7 +59,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
 
     Ok(quote! {
         #[automatically_derived]
-        impl #impl_generics #krate::introspection::Introspectable for #name #ty_generics #where_clause {
+        impl #impl_generics #krate::introspection::Introspectable for #ident #ty_generics #where_clause {
             fn layout() -> #krate::introspection::Layout {
                 #layout
             }
@@ -66,7 +67,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
             fn lexical_id() -> #krate::introspection::LexicalId {
                 #krate::introspection::LexicalId::custom_generic(
                     #schema,
-                    #name_str,
+                    #name,
                     &[#( #generic_lexical_ids ),*],
                 )
             }
@@ -136,7 +137,7 @@ fn gen_field(
     let field_type = &field.ty;
 
     let name = match field.ident {
-        Some(ref name) => name.to_string(),
+        Some(ref name) => name.unraw().to_string(),
         None => format!("field{index}"),
     };
 
@@ -222,7 +223,7 @@ fn gen_variant(
 
     let krate = options.krate();
     let id = item_options.id();
-    let name = variant.ident.to_string();
+    let name = variant.ident.unraw().to_string();
 
     let (layout, inner_types) = match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => {
