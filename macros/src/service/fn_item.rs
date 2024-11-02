@@ -99,7 +99,7 @@ impl FnItem {
 
     pub fn layout(&self, options: &Options) -> TokenStream {
         let id = &self.id;
-        let ident = &self.ident.to_string();
+        let name = self.ident.unraw().to_string();
         let krate = options.krate();
 
         let args = match self.body.args() {
@@ -133,7 +133,7 @@ impl FnItem {
         };
 
         quote! {
-            .function(#id, #ident, #args, #ok, #err)
+            .function(#id, #name, #args, #ok, #err)
         }
     }
 

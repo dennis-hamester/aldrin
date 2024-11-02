@@ -4,6 +4,8 @@ mod fn_body;
 mod fn_item;
 mod item;
 mod options;
+#[cfg(test)]
+mod test;
 
 use body::Body;
 use ev_item::EvItem;

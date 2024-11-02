@@ -2,6 +2,7 @@ use super::{kw, EvItem, Options, ServiceItem};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
+use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{Expr, Ident, Result, Token};
 
@@ -324,7 +325,7 @@ impl Body {
     pub fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {
         let krate = options.krate();
         let schema = options.schema().unwrap();
-        let service = service.to_string();
+        let service = service.unraw().to_string();
         let uuid = &self.uuid;
         let version = &self.version;
 

@@ -126,7 +126,7 @@ impl EvItem {
 
     pub fn layout(&self, options: &Options) -> TokenStream {
         let id = &self.id;
-        let ident = &self.ident.to_string();
+        let name = self.ident.unraw().to_string();
         let krate = options.krate();
 
         let ty = match self.ty {
@@ -140,7 +140,7 @@ impl EvItem {
         };
 
         quote! {
-            .event(#id, #ident, #ty)
+            .event(#id, #name, #ty)
         }
     }
 
