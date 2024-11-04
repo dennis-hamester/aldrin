@@ -335,12 +335,12 @@ impl Body {
             .map(|item| item.layout(options))
             .collect::<TokenStream>();
 
-        let mut inner_types = HashSet::new();
+        let mut references = HashSet::new();
         for item in &self.items {
-            item.inner_types(&mut inner_types);
+            item.add_references(&mut references);
         }
-        let inner_types_len = inner_types.len();
-        let inner_types = inner_types.into_iter();
+        let references_len = references.len();
+        let references = references.into_iter();
 
         quote! {
             fn layout() -> #krate::core::introspection::Layout {
@@ -360,14 +360,14 @@ impl Body {
                 #krate::core::introspection::LexicalId::service(#schema, #service)
             }
 
-            fn inner_types(
-                types: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
+            fn add_references(
+                references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
             ) {
-                let inner_types: [#krate::core::introspection::DynIntrospectable; #inner_types_len] = [
-                    #( #krate::core::introspection::DynIntrospectable::new::<#inner_types>(), )*
+                let types: [#krate::core::introspection::DynIntrospectable; #references_len] = [
+                    #( #krate::core::introspection::DynIntrospectable::new::<#references>(), )*
                 ];
 
-                types.extend(inner_types);
+                references.extend(types);
             }
         }
     }

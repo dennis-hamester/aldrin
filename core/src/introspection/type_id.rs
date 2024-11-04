@@ -15,12 +15,12 @@ impl TypeId {
     pub fn compute_from_dyn(ty: DynIntrospectable) -> Self {
         let mut compute = Compute::new(ty.layout());
 
-        let mut inner_types = Vec::new();
-        ty.inner_types(&mut inner_types);
+        let mut references = Vec::new();
+        ty.add_references(&mut references);
 
-        while let Some(ty) = inner_types.pop() {
+        while let Some(ty) = references.pop() {
             if compute.add(ty.layout()) {
-                ty.inner_types(&mut inner_types);
+                ty.add_references(&mut references);
             }
         }
 
@@ -31,14 +31,14 @@ impl TypeId {
 
 struct Compute {
     layout: Layout,
-    inner_types: BTreeSet<Layout>,
+    referenced: BTreeSet<Layout>,
 }
 
 impl Compute {
     fn new(layout: Layout) -> Self {
         Self {
             layout,
-            inner_types: BTreeSet::new(),
+            referenced: BTreeSet::new(),
         }
     }
 
@@ -47,7 +47,7 @@ impl Compute {
     }
 
     fn add(&mut self, layout: Layout) -> bool {
-        self.inner_types.insert(layout)
+        self.referenced.insert(layout)
     }
 }
 
@@ -56,14 +56,14 @@ impl Compute {
 enum ComputeField {
     Version = 0,
     Layout = 1,
-    InnerTypes = 2,
+    Referenced = 2,
 }
 
 impl Serialize for Compute {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        struct InnerTypes<'a>(&'a BTreeSet<Layout>);
+        struct Referenced<'a>(&'a BTreeSet<Layout>);
 
-        impl Serialize for InnerTypes<'_> {
+        impl Serialize for Referenced<'_> {
             fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
                 serializer.serialize_vec_iter(self.0)
             }
@@ -73,7 +73,7 @@ impl Serialize for Compute {
 
         serializer.serialize_field(ComputeField::Version, &VERSION)?;
         serializer.serialize_field(ComputeField::Layout, &self.layout)?;
-        serializer.serialize_field(ComputeField::InnerTypes, &InnerTypes(&self.inner_types))?;
+        serializer.serialize_field(ComputeField::Referenced, &Referenced(&self.referenced))?;
 
         serializer.finish()
     }

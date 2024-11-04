@@ -115,11 +115,11 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn inner_types(
-                        types: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
+                    fn add_references(
+                        references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
                     ) {
-                        <#introspection as #krate::core::introspection::Introspectable>::inner_types(
-                            types,
+                        <#introspection as #krate::core::introspection::Introspectable>::add_references(
+                            references,
                         )
                     }
                 }
@@ -207,11 +207,11 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn inner_types(
-                        types: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
+                    fn add_references(
+                        references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
                     ) {
-                        <#introspection as #krate::core::introspection::Introspectable>::inner_types(
-                            types,
+                        <#introspection as #krate::core::introspection::Introspectable>::add_references(
+                            references,
                         )
                     }
                 }

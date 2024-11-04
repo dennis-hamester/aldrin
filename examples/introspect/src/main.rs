@@ -181,7 +181,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
             continue;
         };
 
-        for type_id in introspection.type_ids().values() {
+        for type_id in introspection.references().values() {
             if !db.contains_key(type_id) && !unavailable.contains(type_id) {
                 pending.push(*type_id);
             }
@@ -221,14 +221,14 @@ fn print_introspection(
     }
 
     if !full {
-        let type_ids = introspection.type_ids();
-        if !type_ids.is_empty() {
+        let references = introspection.references();
+        if !references.is_empty() {
             println!(" lexical_id                             type_id");
             println!(
                 "-------------------------------------- --------------------------------------"
             );
 
-            for (lexical_id, type_id) in type_ids {
+            for (lexical_id, type_id) in references {
                 println!(" {lexical_id}   {type_id}");
             }
 
@@ -382,12 +382,12 @@ fn print_type_name(
     db: &BTreeMap<TypeId, Introspection>,
     full: bool,
 ) {
-    let Some(type_id) = introspection.type_ids().get(&ty) else {
+    let Some(type_id) = introspection.resolve(ty) else {
         print!("lexical_id({ty})");
         return;
     };
 
-    let Some(introspection) = db.get(type_id) else {
+    let Some(introspection) = db.get(&type_id) else {
         if full {
             print!("type_id({type_id})");
         } else {

@@ -144,9 +144,9 @@ impl EvItem {
         }
     }
 
-    pub fn inner_types<'a>(&'a self, inner_types: &mut HashSet<&'a Type>) {
+    pub fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
         if let Some(ref ty) = self.ty {
-            inner_types.insert(ty);
+            references.insert(ty);
         }
     }
 }

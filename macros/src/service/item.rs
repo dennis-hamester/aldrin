@@ -31,10 +31,10 @@ impl ServiceItem {
         }
     }
 
-    pub fn inner_types<'a>(&'a self, inner_types: &mut HashSet<&'a Type>) {
+    pub fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
         match self {
-            Self::Event(ev) => ev.inner_types(inner_types),
-            Self::Function(func) => func.inner_types(inner_types),
+            Self::Event(ev) => ev.add_references(references),
+            Self::Function(func) => func.add_references(references),
         }
     }
 }

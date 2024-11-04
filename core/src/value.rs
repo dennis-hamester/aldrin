@@ -169,7 +169,7 @@ impl Introspectable for Bytes {
         LexicalId::BYTES
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 /// Wrapper for `[u8]` to enable `Serialize` and `Deserialize` specializations.
@@ -264,7 +264,7 @@ impl Introspectable for ByteSlice {
         LexicalId::BYTES
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 /// Empty value that deserializes from everything by skipping over it.
@@ -307,8 +307,8 @@ impl<T: Introspectable + ?Sized> Introspectable for &T {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -342,8 +342,8 @@ impl<T: Introspectable + ?Sized> Introspectable for &mut T {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -383,8 +383,8 @@ impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -421,7 +421,7 @@ impl Introspectable for () {
         LexicalId::UNIT
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<T: Serialize> Serialize for Option<T> {
@@ -465,8 +465,8 @@ impl<T: Introspectable> Introspectable for Option<T> {
         LexicalId::option(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -504,7 +504,7 @@ impl Introspectable for bool {
         LexicalId::BOOL
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u8 {
@@ -541,7 +541,7 @@ impl Introspectable for u8 {
         LexicalId::U8
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for i8 {
@@ -578,7 +578,7 @@ impl Introspectable for i8 {
         LexicalId::I8
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u16 {
@@ -615,7 +615,7 @@ impl Introspectable for u16 {
         LexicalId::U16
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for i16 {
@@ -652,7 +652,7 @@ impl Introspectable for i16 {
         LexicalId::I16
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u32 {
@@ -689,7 +689,7 @@ impl Introspectable for u32 {
         LexicalId::U32
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for i32 {
@@ -726,7 +726,7 @@ impl Introspectable for i32 {
         LexicalId::I32
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for u64 {
@@ -763,7 +763,7 @@ impl Introspectable for u64 {
         LexicalId::U64
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for i64 {
@@ -800,7 +800,7 @@ impl Introspectable for i64 {
         LexicalId::I64
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for f32 {
@@ -837,7 +837,7 @@ impl Introspectable for f32 {
         LexicalId::F32
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for f64 {
@@ -874,7 +874,7 @@ impl Introspectable for f64 {
         LexicalId::F64
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for str {
@@ -904,7 +904,7 @@ impl Introspectable for str {
         LexicalId::STRING
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for String {
@@ -940,7 +940,7 @@ impl Introspectable for String {
         LexicalId::STRING
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for Uuid {
@@ -977,7 +977,7 @@ impl Introspectable for Uuid {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<T: Serialize> Serialize for Vec<T> {
@@ -1016,8 +1016,8 @@ impl<T: Introspectable> Introspectable for Vec<T> {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1057,8 +1057,8 @@ impl<T: Introspectable> Introspectable for VecDeque<T> {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1098,8 +1098,8 @@ impl<T: Introspectable> Introspectable for LinkedList<T> {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1133,8 +1133,8 @@ impl<T: Introspectable> Introspectable for [T] {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1218,8 +1218,8 @@ impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -1258,7 +1258,7 @@ impl Introspectable for bytes::Bytes {
         LexicalId::BYTES
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl Serialize for bytes::BytesMut {
@@ -1296,7 +1296,7 @@ impl Introspectable for bytes::BytesMut {
         LexicalId::BYTES
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<K: SerializeKey, V: Serialize, S> Serialize for HashMap<K, V, S> {
@@ -1344,8 +1344,8 @@ where
         LexicalId::map(K::KEY_TYPE, V::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<V>())
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<V>())
     }
 }
 
@@ -1385,8 +1385,8 @@ impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
         LexicalId::map(K::KEY_TYPE, V::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<V>())
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<V>())
     }
 }
 
@@ -1430,7 +1430,7 @@ impl<T: KeyTypeOf, S> Introspectable for HashSet<T, S> {
         LexicalId::set(T::KEY_TYPE)
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<T: SerializeKey> Serialize for BTreeSet<T> {
@@ -1469,7 +1469,7 @@ impl<T: KeyTypeOf> Introspectable for BTreeSet<T> {
         LexicalId::set(T::KEY_TYPE)
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl<'a, T> Serialize for Cow<'a, T>
@@ -1524,7 +1524,7 @@ where
         T::lexical_id()
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -1588,9 +1588,9 @@ impl<T: Introspectable, E: Introspectable> Introspectable for Result<T, E> {
         LexicalId::result(T::lexical_id(), E::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
-        types.push(DynIntrospectable::new::<E>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
+        references.push(DynIntrospectable::new::<E>());
     }
 }
 
@@ -1698,11 +1698,12 @@ macro_rules! tuple_impls {
                 )
             }
 
-            fn inner_types(types: &mut Vec<DynIntrospectable>) {
-                let inner_types: [DynIntrospectable; $len] = [
+            fn add_references(references: &mut Vec<DynIntrospectable>) {
+                let types: [DynIntrospectable; $len] = [
                     $( DynIntrospectable::new::<$gen>() ),+
                 ];
-                types.extend(inner_types);
+
+                references.extend(types);
             }
         }
     };

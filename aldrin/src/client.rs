@@ -1833,7 +1833,7 @@ where
                 continue;
             };
 
-            ty.inner_types(&mut types);
+            ty.add_references(&mut types);
             entry.insert(introspection);
         }
     }

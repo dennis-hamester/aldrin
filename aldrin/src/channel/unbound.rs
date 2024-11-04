@@ -163,8 +163,8 @@ impl<T: Introspectable + ?Sized> Introspectable for UnboundSender<T> {
         LexicalId::sender(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }
 
@@ -321,7 +321,7 @@ impl<T: Introspectable> Introspectable for UnboundReceiver<T> {
         LexicalId::receiver(T::lexical_id())
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        types.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        references.push(DynIntrospectable::new::<T>());
     }
 }

@@ -45,7 +45,7 @@ pub const VERSION: u32 = 1;
 pub struct Introspection {
     type_id: TypeId,
     layout: Layout,
-    type_ids: BTreeMap<LexicalId, TypeId>,
+    references: BTreeMap<LexicalId, TypeId>,
 }
 
 impl Introspection {
@@ -54,20 +54,20 @@ impl Introspection {
     }
 
     pub fn from_dyn(ty: DynIntrospectable) -> Self {
-        let mut inner_types = Vec::new();
-        ty.inner_types(&mut inner_types);
+        let mut types = Vec::new();
+        ty.add_references(&mut types);
 
-        let mut type_ids = BTreeMap::new();
-        for ty in inner_types {
+        let mut references = BTreeMap::new();
+        for ty in types {
             let type_id = TypeId::compute_from_dyn(ty);
-            let dup = type_ids.insert(ty.lexical_id(), type_id);
+            let dup = references.insert(ty.lexical_id(), type_id);
             assert!(dup.is_none() || (dup == Some(type_id)));
         }
 
         Self {
             type_id: TypeId::compute_from_dyn(ty),
             layout: ty.layout(),
-            type_ids,
+            references,
         }
     }
 
@@ -83,8 +83,16 @@ impl Introspection {
         &self.layout
     }
 
-    pub fn type_ids(&self) -> &BTreeMap<LexicalId, TypeId> {
-        &self.type_ids
+    pub fn references(&self) -> &BTreeMap<LexicalId, TypeId> {
+        &self.references
+    }
+
+    pub fn resolve(&self, lexical_id: LexicalId) -> Option<TypeId> {
+        self.references.get(&lexical_id).copied()
+    }
+
+    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = (LexicalId, TypeId)> + '_ {
+        self.references.iter().map(|(k, v)| (*k, *v))
     }
 
     pub fn as_built_in_layout(&self) -> Option<BuiltInType> {
@@ -110,7 +118,7 @@ enum IntrospectionField {
     Version = 0,
     TypeId = 1,
     Layout = 2,
-    TypeIds = 3,
+    References = 3,
 }
 
 impl Serialize for Introspection {
@@ -120,7 +128,7 @@ impl Serialize for Introspection {
         serializer.serialize_field(IntrospectionField::Version, &VERSION)?;
         serializer.serialize_field(IntrospectionField::TypeId, &self.type_id)?;
         serializer.serialize_field(IntrospectionField::Layout, &self.layout)?;
-        serializer.serialize_field(IntrospectionField::TypeIds, &self.type_ids)?;
+        serializer.serialize_field(IntrospectionField::References, &self.references)?;
 
         serializer.finish()
     }
@@ -137,12 +145,12 @@ impl Deserialize for Introspection {
 
         let type_id = deserializer.deserialize_specific_field(IntrospectionField::TypeId)?;
         let layout = deserializer.deserialize_specific_field(IntrospectionField::Layout)?;
-        let type_ids = deserializer.deserialize_specific_field(IntrospectionField::TypeIds)?;
+        let references = deserializer.deserialize_specific_field(IntrospectionField::References)?;
 
         deserializer.finish(Self {
             type_id,
             layout,
-            type_ids,
+            references,
         })
     }
 }
@@ -150,14 +158,14 @@ impl Deserialize for Introspection {
 pub trait Introspectable {
     fn layout() -> Layout;
     fn lexical_id() -> LexicalId;
-    fn inner_types(types: &mut Vec<DynIntrospectable>);
+    fn add_references(references: &mut Vec<DynIntrospectable>);
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct DynIntrospectable {
     layout: fn() -> Layout,
     lexical_id: fn() -> LexicalId,
-    inner_types: fn(&mut Vec<DynIntrospectable>),
+    add_references: fn(&mut Vec<DynIntrospectable>),
 }
 
 impl DynIntrospectable {
@@ -165,7 +173,7 @@ impl DynIntrospectable {
         Self {
             layout: T::layout,
             lexical_id: T::lexical_id,
-            inner_types: T::inner_types,
+            add_references: T::add_references,
         }
     }
 
@@ -177,7 +185,7 @@ impl DynIntrospectable {
         (self.lexical_id)()
     }
 
-    pub fn inner_types(self, types: &mut Vec<DynIntrospectable>) {
-        (self.inner_types)(types)
+    pub fn add_references(self, references: &mut Vec<DynIntrospectable>) {
+        (self.add_references)(references)
     }
 }

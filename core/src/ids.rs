@@ -84,7 +84,7 @@ impl Introspectable for ObjectId {
         LexicalId::OBJECT_ID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 /// UUID of an object.
@@ -158,7 +158,7 @@ impl Introspectable for ObjectUuid {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for ObjectUuid {
@@ -280,7 +280,7 @@ impl Introspectable for ObjectCookie {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for ObjectCookie {
@@ -403,7 +403,7 @@ impl Introspectable for ServiceId {
         LexicalId::SERVICE_ID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 /// UUID of a service.
@@ -477,7 +477,7 @@ impl Introspectable for ServiceUuid {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for ServiceUuid {
@@ -599,7 +599,7 @@ impl Introspectable for ServiceCookie {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for ServiceCookie {
@@ -711,7 +711,7 @@ impl Introspectable for ChannelCookie {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for ChannelCookie {
@@ -862,7 +862,7 @@ impl Introspectable for TypeId {
         LexicalId::UUID
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl SerializeKey for TypeId {

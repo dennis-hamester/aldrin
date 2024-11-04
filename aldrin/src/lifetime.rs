@@ -127,8 +127,8 @@ impl Introspectable for LifetimeScope {
         LifetimeId::lexical_id()
     }
 
-    fn inner_types(types: &mut Vec<DynIntrospectable>) {
-        LifetimeId::inner_types(types)
+    fn add_references(references: &mut Vec<DynIntrospectable>) {
+        LifetimeId::add_references(references)
     }
 }
 
@@ -190,7 +190,7 @@ impl Introspectable for LifetimeId {
         LexicalId::LIFETIME
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 impl From<ObjectId> for LifetimeId {

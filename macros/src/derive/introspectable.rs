@@ -27,7 +27,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
         )
     })?;
 
-    let (layout, inner_types) = match input.data {
+    let (layout, add_references) = match input.data {
         Data::Struct(data) => match data.fields {
             Fields::Named(fields) => gen_struct(&fields.named, &name, &options)?,
             Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name, &options)?,
@@ -72,8 +72,10 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
                 )
             }
 
-            fn inner_types(types: &mut ::std::vec::Vec<#krate::introspection::DynIntrospectable>) {
-                #inner_types
+            fn add_references(
+                references: &mut ::std::vec::Vec<#krate::introspection::DynIntrospectable>,
+            ) {
+                #add_references
             }
         }
     })
@@ -88,14 +90,14 @@ fn gen_struct(
     let schema = options.schema().unwrap();
 
     let mut layout: Vec<TokenStream> = Vec::new();
-    let mut inner_types: Vec<TokenStream> = Vec::new();
+    let mut references: Vec<TokenStream> = Vec::new();
     let mut next_id = 0;
 
     for (index, field) in fields.into_iter().enumerate() {
-        let (field_layout, field_inner_types, id) = gen_field(field, index, next_id, options)?;
+        let (field_layout, field_references, id) = gen_field(field, index, next_id, options)?;
 
         layout.push(field_layout);
-        inner_types.push(field_inner_types);
+        references.push(field_references);
 
         next_id = id + 1;
     }
@@ -107,21 +109,21 @@ fn gen_struct(
             .into()
     };
 
-    let inner_types = if fields.is_empty() {
+    let add_references = if fields.is_empty() {
         TokenStream::new()
     } else {
         let len = fields.len();
 
         quote! {
-            let inner_types: [#krate::introspection::DynIntrospectable; #len] = [
-                #(#inner_types),*
+            let types: [#krate::introspection::DynIntrospectable; #len] = [
+                #(#references),*
             ];
 
-            types.extend(inner_types);
+            references.extend(types);
         }
     };
 
-    Ok((layout, inner_types))
+    Ok((layout, add_references))
 }
 
 fn gen_field(
@@ -149,7 +151,7 @@ fn gen_field(
 
     let layout = quote! { .field(#id, #name, #is_required, #lexical_id) };
 
-    let inner_types = if is_required {
+    let references = if is_required {
         quote! { #krate::introspection::DynIntrospectable::new::<#field_type>() }
     } else {
         quote! {
@@ -157,7 +159,7 @@ fn gen_field(
         }
     };
 
-    Ok((layout, inner_types, default_id))
+    Ok((layout, references, default_id))
 }
 
 fn gen_enum(
@@ -169,17 +171,17 @@ fn gen_enum(
     let schema = options.schema().unwrap();
 
     let mut layout: Vec<TokenStream> = Vec::new();
-    let mut inner_types: Vec<TokenStream> = Vec::new();
+    let mut references: Vec<TokenStream> = Vec::new();
     let mut next_id = 0;
 
     for variant in variants.into_iter() {
-        let (var_layout, var_inner_types, id) = gen_variant(variant, next_id, options)?;
+        let (var_layout, var_references, id) = gen_variant(variant, next_id, options)?;
 
         next_id = id + 1;
         layout.push(var_layout);
 
-        if let Some(var_inner_types) = var_inner_types {
-            inner_types.push(var_inner_types);
+        if let Some(var_references) = var_references {
+            references.push(var_references);
         }
     }
 
@@ -190,21 +192,21 @@ fn gen_enum(
             .into()
     };
 
-    let inner_types = if inner_types.is_empty() {
+    let add_references = if references.is_empty() {
         TokenStream::new()
     } else {
-        let len = inner_types.len();
+        let len = references.len();
 
         quote! {
-            let inner_types: [#krate::introspection::DynIntrospectable; #len] = [
-                #(#inner_types),*
+            let types: [#krate::introspection::DynIntrospectable; #len] = [
+                #(#references),*
             ];
 
-            types.extend(inner_types);
+            references.extend(types);
         }
     };
 
-    Ok((layout, inner_types))
+    Ok((layout, add_references))
 }
 
 fn gen_variant(
@@ -225,7 +227,7 @@ fn gen_variant(
     let id = item_options.id();
     let name = variant.ident.unraw().to_string();
 
-    let (layout, inner_types) = match variant.fields {
+    let (layout, references) = match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => {
             (quote! { .unit_variant(#id, #name) }, None)
         }
@@ -262,5 +264,5 @@ fn gen_variant(
         }
     };
 
-    Ok((layout, inner_types, id))
+    Ok((layout, references, id))
 }

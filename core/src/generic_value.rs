@@ -264,7 +264,7 @@ impl Introspectable for Value {
         LexicalId::VALUE
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -137,17 +137,17 @@ impl FnItem {
         }
     }
 
-    pub fn inner_types<'a>(&'a self, inner_types: &mut HashSet<&'a Type>) {
+    pub fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
         if let Some(args) = self.body.args() {
-            inner_types.insert(args);
+            references.insert(args);
         }
 
         if let Some(ok) = self.body.ok() {
-            inner_types.insert(ok);
+            references.insert(ok);
         }
 
         if let Some(err) = self.body.err() {
-            inner_types.insert(err);
+            references.insert(err);
         }
     }
 }

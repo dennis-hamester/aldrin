@@ -142,7 +142,7 @@ impl Introspectable for SerializedValue {
         LexicalId::VALUE
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
 
 #[cfg(feature = "fuzzing")]
@@ -257,5 +257,5 @@ impl Introspectable for SerializedValueSlice {
         LexicalId::VALUE
     }
 
-    fn inner_types(_types: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
 }
