@@ -20,6 +20,10 @@ impl Struct {
         StructBuilder::new(schema, name)
     }
 
+    pub fn lexical_id(&self) -> LexicalId {
+        LexicalId::custom(&self.schema, &self.name)
+    }
+
     pub fn schema(&self) -> &str {
         &self.schema
     }

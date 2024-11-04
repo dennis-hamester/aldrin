@@ -29,6 +29,10 @@ impl Service {
         ServiceBuilder::new(schema, name, uuid, version)
     }
 
+    pub fn lexical_id(&self) -> LexicalId {
+        LexicalId::service(&self.schema, &self.name)
+    }
+
     pub fn schema(&self) -> &str {
         &self.schema
     }

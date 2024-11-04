@@ -71,6 +71,10 @@ impl Introspection {
         }
     }
 
+    pub fn lexical_id(&self) -> LexicalId {
+        self.layout.lexical_id()
+    }
+
     pub fn type_id(&self) -> TypeId {
         self.type_id
     }

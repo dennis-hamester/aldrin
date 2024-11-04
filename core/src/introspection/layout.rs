@@ -1,4 +1,4 @@
-use super::{BuiltInType, Enum, Service, Struct};
+use super::{BuiltInType, Enum, LexicalId, Service, Struct};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -20,6 +20,15 @@ impl Layout {
             Self::Struct(_) => Struct::NAMESPACE,
             Self::Enum(_) => Enum::NAMESPACE,
             Self::Service(_) => Service::NAMESPACE,
+        }
+    }
+
+    pub fn lexical_id(&self) -> LexicalId {
+        match self {
+            Self::BuiltIn(ty) => ty.lexical_id(),
+            Self::Struct(ty) => ty.lexical_id(),
+            Self::Enum(ty) => ty.lexical_id(),
+            Self::Service(ty) => ty.lexical_id(),
         }
     }
 

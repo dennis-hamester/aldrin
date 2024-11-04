@@ -28,12 +28,16 @@ mod raw_identifiers {
 fn raw_identifiers() {
     let introspection = raw_identifiers::r#extern::introspection();
     assert_eq!(
+        introspection.lexical_id(),
+        LexicalId::service("test", "extern")
+    );
+    assert_eq!(
         introspection.type_id(),
         TypeId(uuid!("6431b279-7ac5-5d08-9e3a-ae0e8ef48a8e"))
     );
     assert_eq!(
         raw_identifiers::r#extern::lexical_id(),
-        LexicalId::service("test", "extern")
+        introspection.lexical_id()
     );
 
     let layout = introspection.as_service_layout().unwrap();

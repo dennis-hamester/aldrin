@@ -38,6 +38,38 @@ pub enum BuiltInType {
 
 impl BuiltInType {
     pub const NAMESPACE: Uuid = uuid!("43852cf9-014c-44f1-86d7-0b1b753eeb02");
+
+    pub fn lexical_id(self) -> LexicalId {
+        match self {
+            Self::Bool => LexicalId::BOOL,
+            Self::U8 => LexicalId::U8,
+            Self::I8 => LexicalId::I8,
+            Self::U16 => LexicalId::U16,
+            Self::I16 => LexicalId::I16,
+            Self::U32 => LexicalId::U32,
+            Self::I32 => LexicalId::I32,
+            Self::U64 => LexicalId::U64,
+            Self::I64 => LexicalId::I64,
+            Self::F32 => LexicalId::F32,
+            Self::F64 => LexicalId::F64,
+            Self::String => LexicalId::STRING,
+            Self::Uuid => LexicalId::UUID,
+            Self::ObjectId => LexicalId::OBJECT_ID,
+            Self::ServiceId => LexicalId::SERVICE_ID,
+            Self::Value => LexicalId::VALUE,
+            Self::Option(ty) => LexicalId::option(ty),
+            Self::Box(ty) => LexicalId::box_ty(ty),
+            Self::Vec(ty) => LexicalId::vec(ty),
+            Self::Bytes => LexicalId::BYTES,
+            Self::Map(ty) => LexicalId::map(ty.key(), ty.value()),
+            Self::Set(ty) => LexicalId::set(ty),
+            Self::Sender(ty) => LexicalId::sender(ty),
+            Self::Receiver(ty) => LexicalId::receiver(ty),
+            Self::Lifetime => LexicalId::LIFETIME,
+            Self::Unit => LexicalId::UNIT,
+            Self::Result(ty) => LexicalId::result(ty.ok(), ty.err()),
+        }
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]

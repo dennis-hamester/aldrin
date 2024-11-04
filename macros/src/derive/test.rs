@@ -17,10 +17,14 @@ fn raw_identifiers_struct() {
 
     let introspection = Introspection::new::<r#struct>();
     assert_eq!(
+        introspection.lexical_id(),
+        LexicalId::custom("test", "struct")
+    );
+    assert_eq!(
         introspection.type_id(),
         TypeId(uuid!("a888d309-8e59-5440-a13a-21f853c6729e"))
     );
-    assert_eq!(r#struct::lexical_id(), LexicalId::custom("test", "struct"));
+    assert_eq!(r#struct::lexical_id(), introspection.lexical_id());
 
     let layout = introspection.as_struct_layout().unwrap();
     assert_eq!(layout.schema(), "test");
@@ -55,10 +59,14 @@ fn raw_identifiers_enum() {
 
     let introspection = Introspection::new::<r#enum>();
     assert_eq!(
+        introspection.lexical_id(),
+        LexicalId::custom("test", "enum")
+    );
+    assert_eq!(
         introspection.type_id(),
         TypeId(uuid!("b55d73b4-2c58-5245-bd19-89d68423a05f"))
     );
-    assert_eq!(r#enum::lexical_id(), LexicalId::custom("test", "enum"));
+    assert_eq!(r#enum::lexical_id(), introspection.lexical_id());
 
     let layout = introspection.as_enum_layout().unwrap();
     assert_eq!(layout.schema(), "test");
