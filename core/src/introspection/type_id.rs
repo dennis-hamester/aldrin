@@ -1,4 +1,4 @@
-use super::{DynIntrospectable, Introspectable, Layout, VERSION};
+use super::{DynIntrospectable, Introspectable, Layout, References, VERSION};
 use crate::error::SerializeError;
 use crate::ids::TypeId;
 use crate::serialized_value::SerializedValue;
@@ -16,11 +16,11 @@ impl TypeId {
         let mut compute = Compute::new(ty.layout());
 
         let mut references = Vec::new();
-        ty.add_references(&mut references);
+        ty.add_references(&mut References::new(&mut references));
 
         while let Some(ty) = references.pop() {
             if compute.add(ty.layout()) {
-                ty.add_references(&mut references);
+                ty.add_references(&mut References::new(&mut references));
             }
         }
 

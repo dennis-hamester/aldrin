@@ -3,7 +3,7 @@ mod test;
 
 use crate::error::{DeserializeError, SerializeError};
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId};
+use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::value::ValueKind;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
@@ -142,7 +142,7 @@ impl Introspectable for SerializedValue {
         LexicalId::VALUE
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 #[cfg(feature = "fuzzing")]
@@ -257,5 +257,5 @@ impl Introspectable for SerializedValueSlice {
         LexicalId::VALUE
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }

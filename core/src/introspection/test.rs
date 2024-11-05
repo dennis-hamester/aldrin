@@ -1,4 +1,4 @@
-use super::{DynIntrospectable, Introspectable, Introspection, Layout, LexicalId, Struct};
+use super::{Introspectable, Introspection, Layout, LexicalId, References, Struct};
 
 #[test]
 fn duplicate_lexical_id_good() {
@@ -13,9 +13,9 @@ fn duplicate_lexical_id_good() {
             LexicalId::custom("dup", "Dup")
         }
 
-        fn add_references(references: &mut Vec<DynIntrospectable>) {
-            references.push(DynIntrospectable::new::<()>());
-            references.push(DynIntrospectable::new::<()>());
+        fn add_references(references: &mut References) {
+            references.add::<()>();
+            references.add::<()>();
         }
     }
 
@@ -36,7 +36,7 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Bad")
         }
 
-        fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+        fn add_references(_references: &mut References) {}
     }
 
     struct Bad2;
@@ -50,7 +50,7 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Bad")
         }
 
-        fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+        fn add_references(_references: &mut References) {}
     }
 
     struct Dup;
@@ -64,9 +64,9 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Dup")
         }
 
-        fn add_references(references: &mut Vec<DynIntrospectable>) {
-            references.push(DynIntrospectable::new::<Bad1>());
-            references.push(DynIntrospectable::new::<Bad2>());
+        fn add_references(references: &mut References) {
+            references.add::<Bad1>();
+            references.add::<Bad2>();
         }
     }
 

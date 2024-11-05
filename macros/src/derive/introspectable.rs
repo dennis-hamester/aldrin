@@ -72,9 +72,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
                 )
             }
 
-            fn add_references(
-                references: &mut ::std::vec::Vec<#krate::introspection::DynIntrospectable>,
-            ) {
+            fn add_references(references: &mut #krate::introspection::References) {
                 #add_references
             }
         }

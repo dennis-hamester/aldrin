@@ -2,7 +2,7 @@ use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
 #[cfg(feature = "introspection")]
 use crate::introspection::{
-    BuiltInType, DynIntrospectable, Introspectable, KeyType, KeyTypeOf, Layout, LexicalId,
+    BuiltInType, Introspectable, KeyType, KeyTypeOf, Layout, LexicalId, References,
 };
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -84,7 +84,7 @@ impl Introspectable for ObjectId {
         LexicalId::OBJECT_ID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 /// UUID of an object.
@@ -158,7 +158,7 @@ impl Introspectable for ObjectUuid {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for ObjectUuid {
@@ -280,7 +280,7 @@ impl Introspectable for ObjectCookie {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for ObjectCookie {
@@ -403,7 +403,7 @@ impl Introspectable for ServiceId {
         LexicalId::SERVICE_ID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 /// UUID of a service.
@@ -477,7 +477,7 @@ impl Introspectable for ServiceUuid {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for ServiceUuid {
@@ -599,7 +599,7 @@ impl Introspectable for ServiceCookie {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for ServiceCookie {
@@ -711,7 +711,7 @@ impl Introspectable for ChannelCookie {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for ChannelCookie {
@@ -862,7 +862,7 @@ impl Introspectable for TypeId {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl SerializeKey for TypeId {

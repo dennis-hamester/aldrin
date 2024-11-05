@@ -360,9 +360,7 @@ impl Body {
                 #krate::core::introspection::LexicalId::service(#schema, #service)
             }
 
-            fn add_references(
-                references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
-            ) {
+            fn add_references(references: &mut #krate::core::introspection::References) {
                 let types: [#krate::core::introspection::DynIntrospectable; #references_len] = [
                     #( #krate::core::introspection::DynIntrospectable::new::<#references>(), )*
                 ];

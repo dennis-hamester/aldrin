@@ -3,9 +3,7 @@ mod test;
 
 use crate::bus_listener::BusListenerEvent;
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{
-    BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
-};
+use crate::core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::core::{
     AsSerializeArg, BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
     DeserializeError, Deserializer, ObjectId, ObjectUuid, Serialize, SerializeError, Serializer,
@@ -127,7 +125,7 @@ impl Introspectable for LifetimeScope {
         LifetimeId::lexical_id()
     }
 
-    fn add_references(references: &mut Vec<DynIntrospectable>) {
+    fn add_references(references: &mut References) {
         LifetimeId::add_references(references)
     }
 }
@@ -190,7 +188,7 @@ impl Introspectable for LifetimeId {
         LexicalId::LIFETIME
     }
 
-    fn add_references(_references: &mut Vec<DynIntrospectable>) {}
+    fn add_references(_references: &mut References) {}
 }
 
 impl From<ObjectId> for LifetimeId {

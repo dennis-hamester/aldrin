@@ -55,7 +55,7 @@ impl Introspection {
 
     pub fn from_dyn(ty: DynIntrospectable) -> Self {
         let mut types = Vec::new();
-        ty.add_references(&mut types);
+        ty.add_references(&mut References::new(&mut types));
 
         let mut references = BTreeMap::new();
         for ty in types {
@@ -155,17 +155,49 @@ impl Deserialize for Introspection {
     }
 }
 
+#[derive(Debug)]
+pub struct References<'a> {
+    inner: &'a mut Vec<DynIntrospectable>,
+}
+
+impl<'a> References<'a> {
+    pub fn new(inner: &'a mut Vec<DynIntrospectable>) -> Self {
+        Self { inner }
+    }
+
+    pub fn add<T: Introspectable + ?Sized>(&mut self) {
+        self.add_dyn(DynIntrospectable::new::<T>());
+    }
+
+    pub fn add_dyn(&mut self, ty: DynIntrospectable) {
+        self.inner.push(ty);
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.inner.reserve(additional);
+    }
+}
+
+impl Extend<DynIntrospectable> for References<'_> {
+    fn extend<T>(&mut self, iter: T)
+    where
+        T: IntoIterator<Item = DynIntrospectable>,
+    {
+        self.inner.extend(iter);
+    }
+}
+
 pub trait Introspectable {
     fn layout() -> Layout;
     fn lexical_id() -> LexicalId;
-    fn add_references(references: &mut Vec<DynIntrospectable>);
+    fn add_references(references: &mut References);
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct DynIntrospectable {
     layout: fn() -> Layout,
     lexical_id: fn() -> LexicalId,
-    add_references: fn(&mut Vec<DynIntrospectable>),
+    add_references: fn(&mut References),
 }
 
 impl DynIntrospectable {
@@ -185,7 +217,7 @@ impl DynIntrospectable {
         (self.lexical_id)()
     }
 
-    pub fn add_references(self, references: &mut Vec<DynIntrospectable>) {
+    pub fn add_references(self, references: &mut References) {
         (self.add_references)(references)
     }
 }

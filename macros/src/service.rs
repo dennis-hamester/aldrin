@@ -115,9 +115,7 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn add_references(
-                        references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
-                    ) {
+                    fn add_references(references: &mut #krate::core::introspection::References) {
                         <#introspection as #krate::core::introspection::Introspectable>::add_references(
                             references,
                         )
@@ -207,9 +205,7 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn add_references(
-                        references: &mut ::std::vec::Vec<#krate::core::introspection::DynIntrospectable>,
-                    ) {
+                    fn add_references(references: &mut #krate::core::introspection::References) {
                         <#introspection as #krate::core::introspection::Introspectable>::add_references(
                             references,
                         )

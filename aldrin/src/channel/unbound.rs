@@ -1,8 +1,6 @@
 use super::{Receiver, Sender, UnclaimedReceiver, UnclaimedSender};
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{
-    BuiltInType, DynIntrospectable, Introspectable, Layout, LexicalId,
-};
+use crate::core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::core::{
     AsSerializeArg, ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize,
     SerializeError, Serializer,
@@ -163,8 +161,8 @@ impl<T: Introspectable + ?Sized> Introspectable for UnboundSender<T> {
         LexicalId::sender(T::lexical_id())
     }
 
-    fn add_references(references: &mut Vec<DynIntrospectable>) {
-        references.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut References) {
+        references.add::<T>();
     }
 }
 
@@ -321,7 +319,7 @@ impl<T: Introspectable> Introspectable for UnboundReceiver<T> {
         LexicalId::receiver(T::lexical_id())
     }
 
-    fn add_references(references: &mut Vec<DynIntrospectable>) {
-        references.push(DynIntrospectable::new::<T>());
+    fn add_references(references: &mut References) {
+        references.add::<T>();
     }
 }

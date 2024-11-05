@@ -4,7 +4,7 @@ mod select;
 
 use crate::bus_listener::{BusListener, BusListenerHandle};
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{DynIntrospectable, Introspection};
+use crate::core::introspection::{DynIntrospectable, Introspection, References};
 use crate::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
@@ -1833,7 +1833,7 @@ where
                 continue;
             };
 
-            ty.add_references(&mut types);
+            ty.add_references(&mut References::new(&mut types));
             entry.insert(introspection);
         }
     }
