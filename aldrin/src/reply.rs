@@ -1,6 +1,6 @@
 use crate::core::Deserialize;
 use crate::error::Error;
-use crate::low_level::Reply as LlReply;
+use crate::low_level;
 use std::fmt;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -10,12 +10,12 @@ use std::task::{Context, Poll};
 /// Future to await the result of a call.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct Reply<T, E> {
-    inner: LlReply,
+    inner: low_level::Reply,
     phantom: PhantomData<fn() -> (T, E)>,
 }
 
 impl<T, E> Reply<T, E> {
-    pub(crate) fn new(inner: LlReply) -> Self {
+    pub(crate) fn new(inner: low_level::Reply) -> Self {
         Self {
             inner,
             phantom: PhantomData,
@@ -28,7 +28,7 @@ impl<T, E> Reply<T, E> {
     }
 
     /// Extracts the inner low-level reply.
-    pub fn into_low_level(self) -> crate::low_level::Reply {
+    pub fn into_low_level(self) -> low_level::Reply {
         self.inner
     }
 

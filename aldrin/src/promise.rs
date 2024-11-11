@@ -1,19 +1,19 @@
 use crate::core::{AsSerializeArg, Serialize, SerializeArg};
 use crate::error::Error;
 use crate::handle::Handle;
-use crate::low_level::Promise as LlPromise;
+use crate::low_level;
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
 
 /// Replies to a pending call.
 pub struct Promise<T: ?Sized, E: ?Sized> {
-    inner: LlPromise,
+    inner: low_level::Promise,
     phantom: PhantomData<fn(T, E)>,
 }
 
 impl<T: ?Sized, E: ?Sized> Promise<T, E> {
-    pub(crate) fn new(inner: LlPromise) -> Self {
+    pub(crate) fn new(inner: low_level::Promise) -> Self {
         Self {
             inner,
             phantom: PhantomData,
@@ -31,7 +31,7 @@ impl<T: ?Sized, E: ?Sized> Promise<T, E> {
     }
 
     /// Extracts the inner low-level promise.
-    pub fn into_low_level(self) -> crate::low_level::Promise {
+    pub fn into_low_level(self) -> low_level::Promise {
         self.inner
     }
 
