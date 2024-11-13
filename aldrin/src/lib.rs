@@ -95,8 +95,8 @@ pub use aldrin_macros::{
 };
 pub use bus_listener::BusListener;
 pub use channel::{
-    PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver, UnboundSender,
-    UnclaimedReceiver, UnclaimedSender,
+    ChannelBuilder, PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver,
+    UnboundSender, UnclaimedReceiver, UnclaimedSender,
 };
 pub use client::Client;
 pub use discoverer::{

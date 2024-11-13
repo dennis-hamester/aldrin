@@ -11,20 +11,14 @@ async fn create_and_close() {
     let mut client = broker.add_client().await;
 
     // PendingSender & UnclaimedReceiver
-    let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (mut sender, mut receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     assert_eq!(sender.close().await, Ok(())); // This also closes the unclaimed receiver.
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Err(Error::InvalidChannel));
     assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & UnclaimedReceiver
-    let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (mut sender, mut receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
@@ -32,7 +26,8 @@ async fn create_and_close() {
 
     // UnclaimedSender & PendingReceiver
     let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(16)
         .await
         .unwrap();
     assert_eq!(receiver.close().await, Ok(())); // This also closes the unclaimed sender.
@@ -42,7 +37,8 @@ async fn create_and_close() {
 
     // UnclaimedSender & PendingReceiver
     let (mut sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     assert_eq!(sender.close().await, Ok(()));
@@ -51,10 +47,7 @@ async fn create_and_close() {
     assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & Receiver
-    let (mut sender, receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (mut sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
@@ -62,10 +55,7 @@ async fn create_and_close() {
     assert_eq!(receiver.close().await, Ok(()));
 
     // PendingSender & Receiver
-    let (mut sender, receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (mut sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
@@ -74,7 +64,8 @@ async fn create_and_close() {
 
     // Sender & PendingReceiver
     let (sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
@@ -85,7 +76,8 @@ async fn create_and_close() {
 
     // Sender & PendingReceiver
     let (sender, mut receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
@@ -95,24 +87,18 @@ async fn create_and_close() {
     assert_eq!(sender.close().await, Ok(()));
 
     // Sender & Receiver
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
 
     // Sender & Receiver
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
     let mut receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
@@ -120,11 +106,12 @@ async fn create_and_close() {
 
     // Sender & Receiver
     let (sender, receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
-    let mut receiver = receiver.established().await.unwrap();
+    let mut receiver = receiver.establish().await.unwrap();
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
@@ -132,11 +119,12 @@ async fn create_and_close() {
 
     // Sender & Receiver
     let (sender, receiver) = client
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     let mut sender = sender.claim().await.unwrap();
-    let mut receiver = receiver.established().await.unwrap();
+    let mut receiver = receiver.establish().await.unwrap();
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(receiver.close().await, Ok(()));
     assert_eq!(sender.close().await, Ok(()));
@@ -151,10 +139,10 @@ async fn send_and_receive() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
-    let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
+    let (sender, receiver) = client.create_channel().claim_sender().await.unwrap();
 
     let mut receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
 
     sender.send_item(1).await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some(1)));
@@ -185,12 +173,13 @@ async fn multiple_clients() {
     let mut client2 = broker.add_client().await;
 
     let (sender, receiver) = client1
-        .create_channel_with_claimed_sender::<String>()
+        .create_channel::<String>()
+        .claim_sender()
         .await
         .unwrap();
 
     let mut receiver = receiver.unbind().claim(client2.clone(), 16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
 
     sender.send_item("hello").await.unwrap();
     assert_eq!(receiver.next_item().await, Ok(Some("hello".to_string())));
@@ -207,12 +196,13 @@ async fn send_error_when_receiver_is_closed() {
     let mut client2 = broker.add_client().await;
 
     let (sender, receiver) = client1
-        .create_channel_with_claimed_sender::<u32>()
+        .create_channel::<u32>()
+        .claim_sender()
         .await
         .unwrap();
 
     let mut receiver = receiver.unbind().claim(client2.clone(), 16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
 
     receiver.close().await.unwrap();
 
@@ -242,9 +232,9 @@ async fn stream_sink_pipe() {
     use futures_util::{stream, SinkExt, TryStreamExt};
 
     async fn create_channel(client: &Handle, capacity: u32) -> (Sender<u32>, Receiver<u32>) {
-        let (sender, receiver) = client.create_channel_with_claimed_sender().await.unwrap();
+        let (sender, receiver) = client.create_channel().claim_sender().await.unwrap();
         let receiver = receiver.claim(capacity).await.unwrap();
-        let sender = sender.established().await.unwrap();
+        let sender = sender.establish().await.unwrap();
         (sender, receiver)
     }
 
@@ -262,7 +252,7 @@ async fn stream_sink_pipe() {
     let items_sent: Vec<_> = (0..128).collect();
 
     sender1
-        .send_all(&mut stream::iter(items_sent.iter().map(Ok)))
+        .send_all(&mut stream::iter(items_sent.iter().copied().map(Ok)))
         .await
         .unwrap();
 
@@ -285,89 +275,17 @@ async fn stream_sink_pipe() {
 }
 
 #[tokio::test]
-async fn sender_closed() {
-    let mut broker = TestBroker::new();
-    let mut client = broker.add_client().await;
-
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<u32>()
-        .await
-        .unwrap();
-
-    let mut receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
-
-    assert!(!sender.is_closed());
-
-    receiver.close().await.unwrap();
-    sender.closed().await;
-    assert!(sender.is_closed());
-
-    client.join().await;
-    broker.join().await;
-}
-
-#[tokio::test]
 async fn sender_closed_implicit() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<u32>()
-        .await
-        .unwrap();
+    let (sender, receiver) = client.create_channel::<u32>().claim_sender().await.unwrap();
 
     let receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
-
-    assert!(!sender.is_closed());
+    let mut sender = sender.establish().await.unwrap();
 
     mem::drop(receiver);
-    sender.closed().await;
-    assert!(sender.is_closed());
-
-    client.join().await;
-    broker.join().await;
-}
-
-#[cfg(feature = "sink")]
-#[tokio::test]
-async fn sender_closed_drives_poll_close() {
-    use futures_sink::Sink;
-    use futures_util::future;
-    use std::pin::Pin;
-
-    let mut broker = TestBroker::new();
-    let mut client = broker.add_client().await;
-
-    let (sender, receiver) = client
-        .create_channel_with_claimed_sender::<u32>()
-        .await
-        .unwrap();
-
-    let _receiver = receiver.claim(16).await.unwrap();
-    let mut sender = sender.established().await.unwrap();
-
-    assert!(!sender.is_closed());
-
-    assert_eq!(
-        future::poll_immediate(std::future::poll_fn(|cx| {
-            Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
-        }))
-        .await,
-        None,
-    );
-
-    sender.closed().await;
-    assert!(sender.is_closed());
-
-    assert_eq!(
-        future::poll_immediate(std::future::poll_fn(|cx| {
-            Sink::<u32>::poll_close(Pin::new(&mut sender), cx)
-        }))
-        .await,
-        Some(Ok(())),
-    );
+    sender.receiver_closed().await;
 
     client.join().await;
     broker.join().await;

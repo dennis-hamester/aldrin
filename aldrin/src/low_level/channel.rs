@@ -1,10 +1,11 @@
 mod builder;
 mod established;
 mod pending;
-#[cfg(test)]
-mod test;
+mod raw;
 mod unbound;
 mod unclaimed;
+
+use raw::RawChannel;
 
 pub use builder::ChannelBuilder;
 pub use established::{Receiver, Sender};

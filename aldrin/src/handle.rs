@@ -1,9 +1,7 @@
 pub(crate) mod request;
 
 use crate::bus_listener::BusListener;
-use crate::channel::{
-    PendingReceiver, PendingSender, ReceiverInner, SenderInner, UnclaimedReceiver, UnclaimedSender,
-};
+use crate::channel::ChannelBuilder;
 #[cfg(feature = "introspection")]
 use crate::core::introspection::{DynIntrospectable, Introspectable, Introspection};
 use crate::core::message::{
@@ -21,9 +19,12 @@ use crate::core::{
 use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
-use crate::low_level::{Proxy, ProxyId, Reply, Service, ServiceInfo};
+use crate::low_level::{
+    self, PendingReceiver, PendingSender, Proxy, ProxyId, Reply, Service, ServiceInfo,
+    UnclaimedReceiver, UnclaimedSender,
+};
 use crate::object::Object;
-use futures_channel::mpsc::UnboundedSender;
+use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
 #[cfg(feature = "introspection")]
 use request::QueryIntrospectionRequest;
@@ -273,99 +274,46 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    /// Creates a channel and automatically claims the sender.
+    /// Creates a low-level [`ChannelBuilder`](low_level::ChannelBuilder).
     ///
-    /// When creating a channel, one of the two end must be claimed immediately. This function
-    /// claims the sender. Use
-    /// [`create_channel_with_claimed_receiver`](Self::create_channel_with_claimed_receiver) to
-    /// claim the receiver instead.
+    /// Alternatively, [`ChannelBuilder::new`](low_level::ChannelBuilder::new) can be used as well.
+    pub fn create_low_level_channel(&self) -> low_level::ChannelBuilder {
+        low_level::ChannelBuilder::new(self)
+    }
+
+    /// Creates a [`ChannelBuilder`].
     ///
-    /// # Examples
-    ///
-    /// This example assumes that there are 2 clients, represented here by `handle1` and `handle2`.
-    ///
-    /// ```
-    /// # use aldrin_test::tokio::TestBroker;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let mut broker = TestBroker::new();
-    /// # let handle1 = broker.add_client().await;
-    /// # let handle2 = broker.add_client().await;
-    /// // Client 1 creates the channel. It then unbinds the receiver and makes it available to
-    /// // client 2. This will typically happen by returning it from a function call.
-    /// let (sender, receiver) = handle1.create_channel_with_claimed_sender().await?;
-    /// let receiver = receiver.unbind();
-    ///
-    /// // Client 2 gets access to the receiver, and then binds and claims it.
-    /// let mut receiver = receiver.claim(handle2.clone(), 16).await?;
-    ///
-    /// // Meanwhile, client 1 waits for the receiver to be claimed.
-    /// let mut sender = sender.established().await?;
-    ///
-    /// // The channel is now fully established and client 1 can send items to client 2.
-    /// sender.send_item(1).await?;
-    /// sender.send_item(2).await?;
-    /// sender.send_item(3).await?;
-    ///
-    /// // Client 1 will close (or drop) the channel when it has nothing to send anymore.
-    /// sender.close().await?;
-    ///
-    /// // Client 2 receives all values in order. The Result in the return values can indicate
-    /// // conversion errors when an item isn't a u32.
-    /// assert_eq!(receiver.next_item().await, Ok(Some(1)));
-    /// assert_eq!(receiver.next_item().await, Ok(Some(2)));
-    /// assert_eq!(receiver.next_item().await, Ok(Some(3)));
-    ///
-    /// // Client 2 can observe that the sender has been closed by receiving None. It follows by
-    /// // also closing (or dropping) the receiver.
-    /// assert_eq!(receiver.next_item().await, Ok(None));
-    /// receiver.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn create_channel_with_claimed_sender<T>(
+    /// Alternatively, [`ChannelBuilder::new`] can be used as well.
+    pub fn create_channel<T>(&self) -> ChannelBuilder<T> {
+        ChannelBuilder::new(self)
+    }
+
+    pub(crate) async fn create_claimed_sender(
         &self,
-    ) -> Result<(PendingSender<T>, UnclaimedReceiver<T>), Error> {
+    ) -> Result<(PendingSender, UnclaimedReceiver), Error> {
         let (reply, recv) = oneshot::channel();
+
         self.send
             .unbounded_send(HandleRequest::CreateClaimedSender(reply))
             .map_err(|_| Error::Shutdown)?;
 
-        let (sender, receiver) = recv.await.map_err(|_| Error::Shutdown)?;
-
-        Ok((PendingSender::new(sender), UnclaimedReceiver::new(receiver)))
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
-    /// Creates a channel and automatically claims the receiver.
-    ///
-    /// When creating a channel, one of the two end must be claimed immediately. This function
-    /// claims the receiver. Use
-    /// [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) to claim
-    /// the sender instead.
-    ///
-    /// A `capacity` of 0 is treated as if 1 was specificed instead.
-    ///
-    /// # Examples
-    ///
-    /// See [`create_channel_with_claimed_sender`](Self::create_channel_with_claimed_sender) for an
-    /// example.
-    pub async fn create_channel_with_claimed_receiver<T>(
+    pub(crate) async fn create_claimed_receiver(
         &self,
         capacity: u32,
-    ) -> Result<(UnclaimedSender<T>, PendingReceiver<T>), Error> {
+    ) -> Result<(UnclaimedSender, PendingReceiver), Error> {
         let capacity = NonZeroU32::new(capacity).unwrap_or(NonZeroU32::new(1).unwrap());
-
         let (reply, recv) = oneshot::channel();
+
         self.send
             .unbounded_send(HandleRequest::CreateClaimedReceiver(
                 CreateClaimedReceiverRequest { capacity, reply },
             ))
             .map_err(|_| Error::Shutdown)?;
 
-        let (sender, receiver) = recv.await.map_err(|_| Error::Shutdown)?;
-
-        Ok((UnclaimedSender::new(sender), PendingReceiver::new(receiver)))
+        recv.await.map_err(|_| Error::Shutdown)
     }
 
     pub(crate) fn close_channel_end(
@@ -387,7 +335,10 @@ impl Handle {
         Ok(CloseChannelEndFuture(recv))
     }
 
-    pub(crate) async fn claim_sender(&self, cookie: ChannelCookie) -> Result<SenderInner, Error> {
+    pub(crate) async fn claim_sender(
+        &self,
+        cookie: ChannelCookie,
+    ) -> Result<(UnboundedReceiver<u32>, u32), Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::ClaimSender(ClaimSenderRequest {
@@ -403,7 +354,7 @@ impl Handle {
         &self,
         cookie: ChannelCookie,
         capacity: u32,
-    ) -> Result<ReceiverInner, Error> {
+    ) -> Result<(UnboundedReceiver<SerializedValue>, NonZeroU32), Error> {
         let capacity = NonZeroU32::new(capacity).unwrap_or(NonZeroU32::new(1).unwrap());
 
         let (reply, recv) = oneshot::channel();

@@ -281,10 +281,7 @@ async fn channels() {
     assert_eq!(stats.num_channels(), 0);
 
     // Create 1 channel.
-    let (mut sender, _receiver) = client1
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (mut sender, _receiver) = client1.create_channel::<()>().claim_sender().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
@@ -292,12 +289,10 @@ async fn channels() {
 
     // Create 2 channels and close 1.
     sender.close().await.unwrap();
-    let (sender1, receiver1) = client1
-        .create_channel_with_claimed_sender::<()>()
-        .await
-        .unwrap();
+    let (sender1, receiver1) = client1.create_channel::<()>().claim_sender().await.unwrap();
     let (_sender2, mut receiver2) = client1
-        .create_channel_with_claimed_receiver::<()>(1)
+        .create_channel::<()>()
+        .claim_receiver(1)
         .await
         .unwrap();
     let stats = broker.take_statistics().await.unwrap();
@@ -307,7 +302,7 @@ async fn channels() {
 
     // Claim 1 and send 3 items.
     let mut receiver1 = receiver1.claim(16).await.unwrap();
-    let mut sender1 = sender1.established().await.unwrap();
+    let mut sender1 = sender1.establish().await.unwrap();
     sender1.send_item(()).await.unwrap();
     sender1.send_item(()).await.unwrap();
     sender1.send_item(()).await.unwrap();

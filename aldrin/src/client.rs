@@ -3,10 +3,6 @@ mod proxies;
 mod select;
 
 use crate::bus_listener::{BusListener, BusListenerHandle};
-use crate::channel::{
-    PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
-    UnclaimedSenderInner,
-};
 #[cfg(feature = "introspection")]
 use crate::core::introspection::{DynIntrospectable, Introspection};
 use crate::core::message::{
@@ -52,7 +48,9 @@ use crate::handle::request::{
     UnsubscribeEventRequest,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{ProxyId, RawCall, Service};
+use crate::low_level::{
+    PendingReceiver, PendingSender, ProxyId, RawCall, Service, UnclaimedReceiver, UnclaimedSender,
+};
 use crate::serial_map::SerialMap;
 use crate::{Error, Handle, Object};
 use broker_subscriptions::BrokerSubscriptions;
@@ -580,8 +578,8 @@ where
         match self.create_channel.remove(msg.serial) {
             Some(CreateChannelData::Sender(reply)) => {
                 let (send, recv) = oneshot::channel();
-                let sender = PendingSenderInner::new(msg.cookie, self.handle.clone(), recv);
-                let receiver = UnclaimedReceiverInner::new(msg.cookie, self.handle.clone());
+                let sender = PendingSender::new(self.handle.clone(), msg.cookie, recv);
+                let receiver = UnclaimedReceiver::new(self.handle.clone(), msg.cookie);
                 let dup = self.senders.insert(msg.cookie, SenderState::Pending(send));
                 debug_assert!(dup.is_none());
                 let _ = reply.send((sender, receiver));
@@ -590,9 +588,9 @@ where
 
             Some(CreateChannelData::Receiver(req)) => {
                 let (send, recv) = oneshot::channel();
-                let sender = UnclaimedSenderInner::new(msg.cookie, self.handle.clone());
+                let sender = UnclaimedSender::new(self.handle.clone(), msg.cookie);
                 let receiver =
-                    PendingReceiverInner::new(msg.cookie, self.handle.clone(), recv, req.capacity);
+                    PendingReceiver::new(self.handle.clone(), msg.cookie, recv, req.capacity);
                 let dup = self
                     .receivers
                     .insert(msg.cookie, ReceiverState::Pending(send));
@@ -648,7 +646,12 @@ where
                     .map(|receiver| mem::replace(receiver, ReceiverState::SenderClosed));
 
                 match receiver {
-                    Some(ReceiverState::Pending(_)) | Some(ReceiverState::Established(_)) => Ok(()),
+                    Some(ReceiverState::Pending(send)) => {
+                        let _ = send.send(Err(Error::InvalidChannel));
+                        Ok(())
+                    }
+
+                    Some(ReceiverState::Established(_)) => Ok(()),
 
                     Some(ReceiverState::SenderClosed) | None => {
                         Err(RunError::UnexpectedMessageReceived(msg.into()))
@@ -663,7 +666,12 @@ where
                     .map(|sender| mem::replace(sender, SenderState::ReceiverClosed));
 
                 match sender {
-                    Some(SenderState::Pending(_)) | Some(SenderState::Established(_)) => Ok(()),
+                    Some(SenderState::Pending(send)) => {
+                        let _ = send.send(Err(Error::InvalidChannel));
+                        Ok(())
+                    }
+
+                    Some(SenderState::Established(_)) => Ok(()),
 
                     Some(SenderState::ReceiverClosed) | None => {
                         Err(RunError::UnexpectedMessageReceived(msg.into()))
@@ -689,8 +697,7 @@ where
                         .senders
                         .insert(req.cookie, SenderState::Established(send));
                     debug_assert!(dup.is_none());
-                    let sender = SenderInner::new(req.cookie, self.handle.clone(), recv, capacity);
-                    let _ = req.reply.send(Ok(sender));
+                    let _ = req.reply.send(Ok((recv, capacity)));
                 }
 
                 ClaimChannelEndResult::ReceiverClaimed => {
@@ -713,9 +720,7 @@ where
                         .receivers
                         .insert(req.cookie, ReceiverState::Established(send));
                     debug_assert!(dup.is_none());
-                    let receiver =
-                        ReceiverInner::new(req.cookie, self.handle.clone(), recv, req.capacity);
-                    let _ = req.reply.send(Ok(receiver));
+                    let _ = req.reply.send(Ok((recv, req.capacity)));
                 }
 
                 ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
@@ -741,7 +746,7 @@ where
 
                 match mem::replace(receiver, ReceiverState::Established(send)) {
                     ReceiverState::Pending(send) => {
-                        let _ = send.send(recv);
+                        let _ = send.send(Ok(recv));
                         Ok(())
                     }
 
@@ -760,7 +765,7 @@ where
 
                 match mem::replace(sender, SenderState::Established(send)) {
                     SenderState::Pending(send) => {
-                        let _ = send.send((capacity, recv));
+                        let _ = send.send(Ok((recv, capacity)));
                         Ok(())
                     }
 
@@ -1899,14 +1904,14 @@ enum ClaimChannelEndData {
 
 #[derive(Debug)]
 enum SenderState {
-    Pending(oneshot::Sender<(u32, mpsc::UnboundedReceiver<u32>)>),
+    Pending(oneshot::Sender<Result<(mpsc::UnboundedReceiver<u32>, u32), Error>>),
     Established(mpsc::UnboundedSender<u32>),
     ReceiverClosed,
 }
 
 #[derive(Debug)]
 enum ReceiverState {
-    Pending(oneshot::Sender<mpsc::UnboundedReceiver<SerializedValue>>),
+    Pending(oneshot::Sender<Result<mpsc::UnboundedReceiver<SerializedValue>, Error>>),
     Established(mpsc::UnboundedSender<SerializedValue>),
     SenderClosed,
 }

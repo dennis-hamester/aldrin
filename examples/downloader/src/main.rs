@@ -153,20 +153,21 @@ async fn download_impl(
     promise: Promise<UnboundSender<Chunk>, Infallible>,
 ) -> Result<()> {
     // When creating a channel, one of the channel ends must be immediately claimed by the local
-    // client and only the other end can be sent to another client. Here, we claim receiver, which
-    // also requires specifying a capacity.
+    // client and only the other end can be sent to another client. Here, we claim the receiver,
+    // which also requires specifying a capacity.
     let (sender, receiver) = promise
         .client()
-        .create_channel_with_claimed_receiver(CAPACITY)
+        .create_channel()
+        .claim_receiver(CAPACITY)
         .await?;
 
     // Fulfill the function call and send back the sender. Channel ends must be unbound from the
     // client they were created from first.
-    promise.ok(&sender.unbind())?;
+    promise.ok(sender.unbind())?;
 
     // Wait for the channel to be established. This will block until the sender is claimed by the
     // other client.
-    let mut receiver = receiver.established().await?;
+    let mut receiver = receiver.establish().await?;
 
     let mut sha256 = Sha256::new();
     let mut size = 0u64;

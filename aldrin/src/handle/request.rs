@@ -1,8 +1,4 @@
 use crate::bus_listener::BusListener;
-use crate::channel::{
-    PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
-    UnclaimedSenderInner,
-};
 #[cfg(feature = "introspection")]
 use crate::core::introspection::DynIntrospectable;
 use crate::core::message::{
@@ -17,9 +13,12 @@ use crate::core::{
     ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::lifetime::LifetimeListener;
-use crate::low_level::{Proxy, ProxyId, Service, ServiceInfo};
+use crate::low_level::{
+    PendingReceiver, PendingSender, Proxy, ProxyId, Service, ServiceInfo, UnclaimedReceiver,
+    UnclaimedSender,
+};
 use crate::{Error, Object};
-use futures_channel::oneshot;
+use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
 
 #[derive(Debug)]
@@ -113,13 +112,12 @@ pub(crate) struct EmitEventRequest {
     pub value: SerializedValue,
 }
 
-pub(crate) type CreateClaimedSenderRequest =
-    oneshot::Sender<(PendingSenderInner, UnclaimedReceiverInner)>;
+pub(crate) type CreateClaimedSenderRequest = oneshot::Sender<(PendingSender, UnclaimedReceiver)>;
 
 #[derive(Debug)]
 pub(crate) struct CreateClaimedReceiverRequest {
     pub capacity: NonZeroU32,
-    pub reply: oneshot::Sender<(UnclaimedSenderInner, PendingReceiverInner)>,
+    pub reply: oneshot::Sender<(UnclaimedSender, PendingReceiver)>,
 }
 
 #[derive(Debug)]
@@ -133,14 +131,15 @@ pub(crate) struct CloseChannelEndRequest {
 #[derive(Debug)]
 pub(crate) struct ClaimSenderRequest {
     pub cookie: ChannelCookie,
-    pub reply: oneshot::Sender<Result<SenderInner, Error>>,
+    pub reply: oneshot::Sender<Result<(mpsc::UnboundedReceiver<u32>, u32), Error>>,
 }
 
 #[derive(Debug)]
 pub(crate) struct ClaimReceiverRequest {
     pub cookie: ChannelCookie,
     pub capacity: NonZeroU32,
-    pub reply: oneshot::Sender<Result<ReceiverInner, Error>>,
+    pub reply:
+        oneshot::Sender<Result<(mpsc::UnboundedReceiver<SerializedValue>, NonZeroU32), Error>>,
 }
 
 #[derive(Debug)]
