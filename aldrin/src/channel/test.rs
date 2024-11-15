@@ -290,3 +290,96 @@ async fn sender_closed_implicit() {
     client.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn not_leaking_pending_senders() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
+
+    // Dropping the receiver will close that half and establishing the sender will fail.
+    mem::drop(receiver);
+    assert_eq!(sender.establish().await.unwrap_err(), Error::InvalidChannel);
+
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_channels(), 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn not_leaking_pending_receivers() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client
+        .create_channel::<()>()
+        .claim_receiver(1)
+        .await
+        .unwrap();
+
+    // Dropping the sender will close that half and establishing the receiver will fail.
+    mem::drop(sender);
+    assert_eq!(
+        receiver.establish().await.unwrap_err(),
+        Error::InvalidChannel
+    );
+
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_channels(), 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn not_leaking_senders() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
+    let receiver = receiver.claim(16).await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
+
+    // Dropping the receiver will close that half and notify the sender.
+    mem::drop(receiver);
+    sender.receiver_closed().await;
+
+    // Dropping the sender will close the other half and then the entire channel.
+    mem::drop(sender);
+
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_channels(), 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn not_leaking_receivers() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
+    let mut receiver = receiver.claim(16).await.unwrap();
+    let sender = sender.establish().await.unwrap();
+
+    // Dropping the sender will close that half and notify the receiver.
+    mem::drop(sender);
+    assert_eq!(receiver.next_item().await, Ok(None));
+
+    // Dropping the receiver will close the other half and then the entire channel.
+    mem::drop(receiver);
+
+    client.sync_broker().await.unwrap();
+    let stats = broker.take_statistics().await.unwrap();
+    assert_eq!(stats.num_channels(), 0);
+
+    client.join().await;
+    broker.join().await;
+}
