@@ -53,10 +53,9 @@ async fn main() -> Result<()> {
                 #[cfg(feature = "statistics")]
                 {
                     let statistics = handle.take_statistics().await?;
-                    let duration = (statistics.end() - statistics.start()).as_secs();
 
                     println!();
-                    println!("Statistics for the last {} second(s):", duration);
+                    println!("Statistics for the last {} seconds:", STATISTICS_INTERVAL.as_secs());
                     println!(" - Messages sent: {}", statistics.messages_sent());
                     println!(" - Messages received: {}", statistics.messages_received());
                     println!(" - Connections: {}", statistics.num_connections());
