@@ -19,6 +19,9 @@ pub struct BrokerStatistics {
     pub(super) num_services: usize,
     pub(super) num_channels: usize,
     pub(super) num_bus_listeners: usize,
+
+    #[cfg(feature = "introspection")]
+    pub(super) num_introspections: usize,
 }
 
 impl BrokerStatistics {
@@ -40,6 +43,9 @@ impl BrokerStatistics {
             num_services: 0,
             num_channels: 0,
             num_bus_listeners: 0,
+
+            #[cfg(feature = "introspection")]
+            num_introspections: 0,
         }
     }
 
@@ -109,5 +115,11 @@ impl BrokerStatistics {
     /// The number of bus listeners.
     pub fn num_bus_listeners(&self) -> usize {
         self.num_bus_listeners
+    }
+
+    #[cfg(feature = "introspection")]
+    /// The number of registered introspections.
+    pub fn num_introspections(&self) -> usize {
+        self.num_introspections
     }
 }

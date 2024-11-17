@@ -18,6 +18,11 @@ impl IntrospectionDatabase {
         }
     }
 
+    #[cfg(feature = "statistics")]
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
     pub fn register(&mut self, type_ids: &HashSet<TypeId>, conn_id: &ConnectionId) {
         for type_id in type_ids {
             self.entries

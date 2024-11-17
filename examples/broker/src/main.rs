@@ -63,6 +63,10 @@ async fn main() -> Result<()> {
                     println!(" - Services: {}", statistics.num_services());
                     println!(" - Channels: {}", statistics.num_channels());
                     println!(" - Bus listeners: {}", statistics.num_bus_listeners());
+
+                    #[cfg(feature = "introspection")]
+                    println!(" - Introspections: {}", statistics.num_introspections());
+
                     println!();
                 }
 

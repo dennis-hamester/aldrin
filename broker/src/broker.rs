@@ -1490,6 +1490,12 @@ impl Broker {
 
         if let Ok(type_ids) = req.deserialize_type_ids() {
             self.introspection.register(&type_ids, id);
+
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.num_introspections = self.introspection.len();
+            }
+
             Ok(())
         } else {
             Err(())
@@ -1617,6 +1623,11 @@ impl Broker {
         };
 
         let Some(res) = self.introspection.query_replied(type_id, id, req) else {
+            #[cfg(feature = "statistics")]
+            {
+                self.statistics.num_introspections = self.introspection.len();
+            }
+
             return Err(());
         };
 
@@ -1672,6 +1683,11 @@ impl Broker {
                     state.push_remove_conn(conn_id.clone(), false);
                 }
             }
+        }
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_introspections = self.introspection.len();
         }
 
         Ok(())
@@ -2325,6 +2341,11 @@ impl Broker {
     #[cfg(feature = "introspection")]
     fn remove_introspection_conn(&mut self, state: &mut State, conn_id: &ConnectionId) {
         let remove_conn = self.introspection.remove_conn(conn_id);
+
+        #[cfg(feature = "statistics")]
+        {
+            self.statistics.num_introspections = self.introspection.len();
+        }
 
         for remove_conn in remove_conn {
             self.query_introspection
