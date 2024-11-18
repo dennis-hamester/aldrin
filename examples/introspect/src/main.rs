@@ -193,7 +193,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
     print_introspection(&introspection, &db, true);
 
     for introspection in db.values() {
-        if (introspection.type_id() != type_id) && introspection.layout().as_built_in().is_none() {
+        if (introspection.type_id() != type_id) && introspection.as_built_in_layout().is_none() {
             print_introspection(introspection, &db, true);
         }
     }
