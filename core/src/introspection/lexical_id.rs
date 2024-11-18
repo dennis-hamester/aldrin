@@ -95,7 +95,7 @@ impl LexicalId {
         Self::fully_qualified(Self::NAMESPACE_SERVICE, schema, name, &[])
     }
 
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 

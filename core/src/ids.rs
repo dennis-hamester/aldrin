@@ -45,7 +45,7 @@ impl ObjectId {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.uuid.is_nil() && self.cookie.is_nil()
     }
 }
@@ -119,7 +119,7 @@ impl ObjectUuid {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -241,7 +241,7 @@ impl ObjectCookie {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -364,7 +364,7 @@ impl ServiceId {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.object_id.is_nil() && self.uuid.is_nil() && self.cookie.is_nil()
     }
 }
@@ -438,7 +438,7 @@ impl ServiceUuid {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -560,7 +560,7 @@ impl ServiceCookie {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -672,7 +672,7 @@ impl ChannelCookie {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -784,7 +784,7 @@ impl BusListenerCookie {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }
@@ -823,7 +823,7 @@ impl TypeId {
     pub const NIL: Self = Self(Uuid::nil());
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }

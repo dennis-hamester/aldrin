@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `SerializeKey` and `DeserializeKey` traits have been redesigned and it's now possible to
   implement them for custom types. The new traits resemble specialized versions of `Into` and
   `TryFrom` and map custom types to and from one of the base key types.
+- The `is_nil()` method of all id types now takes `self` by value instead of by reference.
 
 ## [0.8.0] - 2024-09-22
 
