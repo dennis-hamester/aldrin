@@ -150,7 +150,7 @@ impl LifetimeId {
     }
 
     /// Checks if the id is nil (all zeros).
-    pub const fn is_nil(&self) -> bool {
+    pub const fn is_nil(self) -> bool {
         self.0.is_nil()
     }
 }

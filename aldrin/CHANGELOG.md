@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `set_ref()` have been added.
 - Channels have undergone a large rewrite. There are now new low-level types and the overall
   ergonomics have been improved.
+- `LifetimeId::is_nil()` now takes `self` by value instead of by reference.
 
 ## [0.8.0] - 2024-09-22
 
