@@ -10,24 +10,27 @@ use syn::{braced, Ident, LitInt, Result, Token, Type};
 
 pub(super) struct FnItem {
     ident: Ident,
+    ident_ref: Ident,
     variant: Ident,
     id: LitInt,
     body: FnBody,
 }
 
 impl FnItem {
-    pub fn gen_call(&self, options: &Options) -> TokenStream {
+    pub fn gen_calls(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
+        let ident_ref = &self.ident_ref;
         let id = &self.id;
 
-        let (args, val) = match self.body.args() {
+        let (args, args_ref, val) = match self.body.args() {
             Some(args) => (
                 Some(quote! { , args: #krate::core::SerializeArg<#args> }),
+                Some(quote! { , args: &#args }),
                 quote! { &args },
             ),
 
-            None => (None, quote! { &() }),
+            None => (None, None, quote! { &() }),
         };
 
         let ok = match self.body.ok() {
@@ -42,6 +45,10 @@ impl FnItem {
 
         quote! {
             pub fn #ident(&self #args) -> #krate::Reply<#ok, #err> {
+                self.inner.call(#id, #val).cast()
+            }
+
+            pub fn #ident_ref(&self #args_ref) -> #krate::Reply<#ok, #err> {
                 self.inner.call(#id, #val).cast()
             }
         }
@@ -168,6 +175,8 @@ impl Parse for FnItem {
             FnBody::empty()
         };
 
+        let ident_ref = Ident::new_raw(&format!("{}_ref", &ident.unraw()), ident.span());
+
         let variant = Ident::new_raw(
             &ident.unraw().to_string().to_upper_camel_case(),
             ident.span(),
@@ -175,6 +184,7 @@ impl Parse for FnItem {
 
         Ok(Self {
             ident,
+            ident_ref,
             variant,
             id,
             body,

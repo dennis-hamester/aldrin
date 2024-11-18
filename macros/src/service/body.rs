@@ -45,7 +45,7 @@ impl Body {
             .items
             .iter()
             .filter_map(ServiceItem::as_function)
-            .map(|func| func.gen_call(options))
+            .map(|func| func.gen_calls(options))
             .collect::<TokenStream>();
 
         let subscribe_all_body = self
