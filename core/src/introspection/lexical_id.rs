@@ -1,6 +1,7 @@
-use super::{KeyType, KeyTypeOf};
+use super::{Introspection, KeyType, KeyTypeOf};
 use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
+use crate::ids::TypeId;
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -45,10 +46,6 @@ impl LexicalId {
     pub const NAMESPACE_RESULT: Uuid = uuid!("aef81d6c-35cc-43f7-99f3-a17c0eada1f4");
     pub const NAMESPACE_CUSTOM: Uuid = uuid!("04334fe0-0ea2-44ea-97b2-c17a7a4cbbd3");
     pub const NAMESPACE_SERVICE: Uuid = uuid!("ddd86559-be89-4b6c-a460-fc347cd6f00b");
-
-    pub const fn is_nil(&self) -> bool {
-        self.0.is_nil()
-    }
 
     pub fn option(ty: Self) -> Self {
         Self::new_v5(Self::NAMESPACE_OPTION, ty.0)
@@ -96,6 +93,14 @@ impl LexicalId {
 
     pub fn service(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {
         Self::fully_qualified(Self::NAMESPACE_SERVICE, schema, name, &[])
+    }
+
+    pub const fn is_nil(&self) -> bool {
+        self.0.is_nil()
+    }
+
+    pub fn resolve(self, introspection: &Introspection) -> Option<TypeId> {
+        introspection.resolve(self)
     }
 
     fn new_v5(ns: Uuid, ty: Uuid) -> Self {
