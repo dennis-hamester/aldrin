@@ -9,6 +9,7 @@ use syn::{Ident, LitInt, Result, Token, Type};
 
 pub(super) struct EvItem {
     ident: Ident,
+    ident_ref: Ident,
     subscribe: Ident,
     unsubscribe: Ident,
     variant: Ident,
@@ -103,22 +104,28 @@ impl EvItem {
         }
     }
 
-    pub fn gen_emit(&self, options: &Options) -> TokenStream {
+    pub fn gen_emitters(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
+        let ident_ref = &self.ident_ref;
         let id = &self.id;
 
-        let (args, val) = match self.ty {
+        let (args, args_ref, val) = match self.ty {
             Some(ref ty) => (
                 Some(quote! { , args: #krate::core::SerializeArg<'_, #ty> }),
+                Some(quote! { , args: &#ty }),
                 quote! { &args },
             ),
 
-            None => (None, quote! { &() }),
+            None => (None, None, quote! { &() }),
         };
 
         quote! {
             pub fn #ident(&self #args) -> ::std::result::Result<(), #krate::Error> {
+                self.inner.emit(#id, #val)
+            }
+
+            pub fn #ident_ref(&self #args_ref) -> ::std::result::Result<(), #krate::Error> {
                 self.inner.emit(#id, #val)
             }
         }
@@ -166,6 +173,7 @@ impl Parse for EvItem {
 
         input.parse::<Token![;]>()?;
 
+        let ident_ref = Ident::new_raw(&format!("{}_ref", ident.unraw()), ident.span());
         let subscribe = Ident::new_raw(&format!("subscribe_{}", ident.unraw()), ident.span());
         let unsubscribe = Ident::new_raw(&format!("unsubscribe_{}", ident.unraw()), ident.span());
 
@@ -176,6 +184,7 @@ impl Parse for EvItem {
 
         Ok(Self {
             ident,
+            ident_ref,
             subscribe,
             unsubscribe,
             variant,

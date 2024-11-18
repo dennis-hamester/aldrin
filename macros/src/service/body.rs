@@ -211,11 +211,11 @@ impl Body {
             }
         });
 
-        let ev_emiters = self
+        let ev_emitters = self
             .items
             .iter()
             .filter_map(ServiceItem::as_event)
-            .map(|ev| ev.gen_emit(options))
+            .map(|ev| ev.gen_emitters(options))
             .collect::<TokenStream>();
 
         let next_call_match_arms = self
@@ -271,7 +271,7 @@ impl Body {
                 self.inner.destroy().await
             }
 
-            #ev_emiters
+            #ev_emitters
 
             pub fn poll_next_call(
                 &mut self,
