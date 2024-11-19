@@ -1,7 +1,7 @@
 [package]
 name = "aldrin-macros"
 description = "Aldrin macros."
-version = "0.8.0"
+version = "0.9.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -24,12 +24,12 @@ proc-macro = true
 heck = { workspace = true }
 
 [dependencies.aldrin-parser]
-version = "0.8.0"
+version = "0.9.0"
 path = "../parser"
 default-features = false
 
 [dependencies.aldrin-codegen]
-version = "0.8.2"
+version = "0.9.0"
 path = "../codegen"
 default-features = false
 features = ["rust"]
