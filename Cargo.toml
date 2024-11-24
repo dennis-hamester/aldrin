@@ -37,6 +37,9 @@ rust-version = "1.71.1"
 [workspace.lints.rustdoc]
 broken_intra_doc_links = "deny"
 
+[workspace.lints.clippy]
+incompatible_msrv = "deny"
+
 [workspace.dependencies]
 anstyle = { version = "1.0.7", default-features = false }
 colorchoice-clap = { version = "1.0.4", default-features = false }
