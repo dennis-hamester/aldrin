@@ -1,5 +1,4 @@
 #![deny(missing_debug_implementations)]
-#![deny(unsafe_op_in_unsafe_fn)]
 
 mod buf_ext;
 mod bus_listener;
