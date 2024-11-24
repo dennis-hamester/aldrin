@@ -33,6 +33,7 @@ mod conditional_introspection {
         aldrin::generate!("test/introspection.aldrin", introspection_if = "rust");
     }
 
+    #[allow(unexpected_cfgs)]
     mod unavailable {
         aldrin::generate!("test/introspection.aldrin", introspection_if = "disabled");
     }
