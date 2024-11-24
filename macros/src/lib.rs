@@ -158,7 +158,6 @@
 //! it is `None`. If it's missing during deserialization, then it will be set to `None`.
 
 #![deny(missing_docs)]
-#![deny(rustdoc::broken_intra_doc_links)]
 
 extern crate proc_macro;
 

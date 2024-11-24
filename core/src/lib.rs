@@ -1,5 +1,4 @@
 #![deny(missing_debug_implementations)]
-#![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod buf_ext;

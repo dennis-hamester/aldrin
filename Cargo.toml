@@ -34,7 +34,8 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/dennis-hamester/aldrin"
 rust-version = "1.71.1"
 
-[workspace.lints]
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "deny"
 
 [workspace.dependencies]
 anstyle = { version = "1.0.7", default-features = false }

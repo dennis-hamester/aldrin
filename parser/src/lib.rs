@@ -1,5 +1,4 @@
 #![deny(missing_debug_implementations)]
-#![deny(rustdoc::broken_intra_doc_links)]
 
 mod grammar;
 mod issues;
