@@ -7,6 +7,9 @@ publish = false
 [features]
 introspection = ["aldrin/introspection"]
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true }

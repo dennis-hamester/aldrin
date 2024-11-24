@@ -21,6 +21,9 @@ all-features = true
 default = ["rust"]
 rust = []
 
+[lints]
+workspace = true
+
 [dependencies]
 heck = { workspace = true }
 thiserror = { workspace = true }

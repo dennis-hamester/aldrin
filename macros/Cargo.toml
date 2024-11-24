@@ -20,6 +20,9 @@ all-features = true
 [lib]
 proc-macro = true
 
+[lints]
+workspace = true
+
 [dependencies]
 heck = { workspace = true }
 

@@ -29,6 +29,9 @@ serde = [
 sink = ["dep:futures-sink"]
 tokio = ["aldrin-core/tokio"]
 
+[lints]
+workspace = true
+
 [dependencies]
 futures-core = { workspace = true }
 futures-util = { workspace = true }

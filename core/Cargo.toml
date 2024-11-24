@@ -38,6 +38,9 @@ serde = [
 ]
 tokio = ["dep:tokio"]
 
+[lints]
+workspace = true
+
 [dependencies]
 thiserror = { workspace = true }
 

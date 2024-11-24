@@ -29,6 +29,9 @@ serde = ["aldrin-core/serde"]
 statistics = []
 tokio = ["aldrin-core/tokio"]
 
+[lints]
+workspace = true
+
 [dependencies]
 futures-core = { workspace = true }
 thiserror = { workspace = true }

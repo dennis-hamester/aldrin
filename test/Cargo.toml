@@ -20,6 +20,9 @@ all-features = true
 [features]
 tokio = ["dep:tokio"]
 
+[lints]
+workspace = true
+
 [dependencies]
 futures-util = { workspace = true }
 
