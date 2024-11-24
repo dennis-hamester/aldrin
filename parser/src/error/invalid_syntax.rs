@@ -31,7 +31,7 @@ impl InvalidSyntax {
             Expected::add(rule, &mut expected);
         }
 
-        InvalidSyntax {
+        Self {
             schema_name: schema_name.into(),
             pos,
             expected,
@@ -120,7 +120,7 @@ impl Diagnostic for InvalidSyntax {
 
 impl From<InvalidSyntax> for Error {
     fn from(e: InvalidSyntax) -> Self {
-        Error::InvalidSyntax(e)
+        Self::InvalidSyntax(e)
     }
 }
 
@@ -206,7 +206,8 @@ impl Expected {
             Expected::Keyword("uuid"),
         ];
 
-        let add: &[&[Expected]] = match rule {
+        #[allow(clippy::use_self)]
+        let add: &[&[Self]] = match rule {
             Rule::EOI => &[&[Expected::Eof]],
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],

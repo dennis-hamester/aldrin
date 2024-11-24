@@ -68,6 +68,6 @@ impl Diagnostic for InvalidFunctionId {
 
 impl From<InvalidFunctionId> for Error {
     fn from(e: InvalidFunctionId) -> Self {
-        Error::InvalidFunctionId(e)
+        Self::InvalidFunctionId(e)
     }
 }

@@ -33,7 +33,7 @@ impl DuplicateFunctionId {
             |duplicate, first| {
                 max_id += 1;
                 let free_id = max_id;
-                validate.add_error(DuplicateFunctionId {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
@@ -97,6 +97,6 @@ impl Diagnostic for DuplicateFunctionId {
 
 impl From<DuplicateFunctionId> for Error {
     fn from(e: DuplicateFunctionId) -> Self {
-        Error::DuplicateFunctionId(e)
+        Self::DuplicateFunctionId(e)
     }
 }

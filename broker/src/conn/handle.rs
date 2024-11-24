@@ -12,7 +12,7 @@ pub struct ConnectionHandle {
 
 impl ConnectionHandle {
     pub(super) fn new(id: ConnectionId) -> Self {
-        ConnectionHandle { id }
+        Self { id }
     }
 
     pub(crate) fn id(&self) -> &ConnectionId {

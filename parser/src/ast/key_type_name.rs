@@ -18,7 +18,7 @@ impl KeyTypeName {
         let pair = pairs.next().unwrap();
         let kind = KeyTypeNameKind::parse(pair);
 
-        KeyTypeName { span, kind }
+        Self { span, kind }
     }
 
     pub fn span(&self) -> Span {
@@ -47,16 +47,16 @@ pub enum KeyTypeNameKind {
 impl KeyTypeNameKind {
     fn parse(pair: Pair<Rule>) -> Self {
         match pair.as_rule() {
-            Rule::kw_u8 => KeyTypeNameKind::U8,
-            Rule::kw_i8 => KeyTypeNameKind::I8,
-            Rule::kw_u16 => KeyTypeNameKind::U16,
-            Rule::kw_i16 => KeyTypeNameKind::I16,
-            Rule::kw_u32 => KeyTypeNameKind::U32,
-            Rule::kw_i32 => KeyTypeNameKind::I32,
-            Rule::kw_u64 => KeyTypeNameKind::U64,
-            Rule::kw_i64 => KeyTypeNameKind::I64,
-            Rule::kw_string => KeyTypeNameKind::String,
-            Rule::kw_uuid => KeyTypeNameKind::Uuid,
+            Rule::kw_u8 => Self::U8,
+            Rule::kw_i8 => Self::I8,
+            Rule::kw_u16 => Self::U16,
+            Rule::kw_i16 => Self::I16,
+            Rule::kw_u32 => Self::U32,
+            Rule::kw_i32 => Self::I32,
+            Rule::kw_u64 => Self::U64,
+            Rule::kw_i64 => Self::I64,
+            Rule::kw_string => Self::String,
+            Rule::kw_uuid => Self::Uuid,
             _ => unreachable!(),
         }
     }

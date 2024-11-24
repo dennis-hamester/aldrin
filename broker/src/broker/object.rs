@@ -10,7 +10,7 @@ pub(crate) struct Object {
 
 impl Object {
     pub fn new(conn_id: ConnectionId) -> Self {
-        Object {
+        Self {
             conn_id,
             svcs: HashSet::new(),
         }

@@ -47,7 +47,7 @@ impl TestBroker {
     pub fn new() -> Self {
         let broker = Broker::new();
 
-        TestBroker {
+        Self {
             handle: broker.handle().clone(),
             broker: Some(broker),
         }
@@ -90,7 +90,7 @@ impl TestBroker {
 
 impl Default for TestBroker {
     fn default() -> Self {
-        TestBroker::new()
+        Self::new()
     }
 }
 

@@ -31,7 +31,7 @@ impl TestBroker {
     pub fn new() -> Self {
         let mut inner = crate::TestBroker::new();
 
-        TestBroker {
+        Self {
             join: Some(tokio::spawn(inner.take_broker().run())),
             inner,
         }
@@ -81,7 +81,7 @@ impl TestBroker {
 
 impl Default for TestBroker {
     fn default() -> Self {
-        TestBroker::new()
+        Self::new()
     }
 }
 

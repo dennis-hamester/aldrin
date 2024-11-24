@@ -24,7 +24,7 @@ impl DuplicateStructField {
             fields,
             |field| field.name().value(),
             |duplicate, first| {
-                validate.add_error(DuplicateStructField {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
@@ -97,6 +97,6 @@ impl Diagnostic for DuplicateStructField {
 
 impl From<DuplicateStructField> for Error {
     fn from(e: DuplicateStructField) -> Self {
-        Error::DuplicateStructField(e)
+        Self::DuplicateStructField(e)
     }
 }

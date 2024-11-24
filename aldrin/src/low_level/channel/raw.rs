@@ -125,6 +125,6 @@ enum State {
 
 impl State {
     fn is_open(&self) -> bool {
-        matches!(self, State::Open)
+        matches!(self, Self::Open)
     }
 }

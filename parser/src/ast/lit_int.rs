@@ -11,7 +11,8 @@ pub struct LitInt {
 impl LitInt {
     pub(crate) fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::lit_int);
-        LitInt {
+
+        Self {
             span: Span::from_pair(&pair),
             value: pair.as_str().to_owned(),
         }
@@ -35,7 +36,8 @@ pub struct LitPosInt {
 impl LitPosInt {
     pub(crate) fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::lit_pos_int);
-        LitPosInt {
+
+        Self {
             span: Span::from_pair(&pair),
             value: pair.as_str().to_owned(),
         }

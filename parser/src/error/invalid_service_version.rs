@@ -17,7 +17,7 @@ impl InvalidServiceVersion {
             return;
         }
 
-        validate.add_error(InvalidServiceVersion {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             ver: service_def.version().clone(),
             svc_ident: service_def.name().clone(),
@@ -68,6 +68,6 @@ impl Diagnostic for InvalidServiceVersion {
 
 impl From<InvalidServiceVersion> for Error {
     fn from(e: InvalidServiceVersion) -> Self {
-        Error::InvalidServiceVersion(e)
+        Self::InvalidServiceVersion(e)
     }
 }

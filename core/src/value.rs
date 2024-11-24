@@ -108,7 +108,7 @@ impl AsRef<[u8]> for Bytes {
 
 impl From<Vec<u8>> for Bytes {
     fn from(bytes: Vec<u8>) -> Self {
-        Bytes(bytes)
+        Self(bytes)
     }
 }
 
@@ -355,7 +355,7 @@ impl<T: Serialize + ?Sized> Serialize for Box<T> {
 
 impl<T: Deserialize> Deserialize for Box<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        T::deserialize(deserializer).map(Box::new)
+        T::deserialize(deserializer).map(Self::new)
     }
 }
 
@@ -1231,9 +1231,7 @@ impl Serialize for bytes::Bytes {
 
 impl Deserialize for bytes::Bytes {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer
-            .deserialize_bytes_to_vec()
-            .map(bytes::Bytes::from)
+        deserializer.deserialize_bytes_to_vec().map(Self::from)
     }
 }
 
@@ -1271,7 +1269,7 @@ impl Deserialize for bytes::BytesMut {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         // This is inefficient, but bytes doesn't currently offer a better alternative.
         let vec = deserializer.deserialize_bytes_to_vec()?;
-        Ok(bytes::BytesMut::from(vec.as_slice()))
+        Ok(Self::from(vec.as_slice()))
     }
 }
 

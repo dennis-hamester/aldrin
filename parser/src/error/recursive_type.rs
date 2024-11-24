@@ -53,7 +53,7 @@ impl Diagnostic for RecursiveStruct {
 
 impl From<RecursiveStruct> for Error {
     fn from(e: RecursiveStruct) -> Self {
-        Error::RecursiveStruct(e)
+        Self::RecursiveStruct(e)
     }
 }
 
@@ -106,7 +106,7 @@ impl Diagnostic for RecursiveEnum {
 
 impl From<RecursiveEnum> for Error {
     fn from(e: RecursiveEnum) -> Self {
-        Error::RecursiveEnum(e)
+        Self::RecursiveEnum(e)
     }
 }
 

@@ -12,7 +12,7 @@ pub struct LineCol {
 impl LineCol {
     fn from_pest(pos: &pest::Position) -> Self {
         let (line, column) = pos.line_col();
-        LineCol { line, column }
+        Self { line, column }
     }
 }
 
@@ -24,7 +24,7 @@ pub struct Position {
 
 impl Position {
     pub(crate) fn from_pest(pos: &pest::Position) -> Self {
-        Position {
+        Self {
             index: pos.pos(),
             line_col: LineCol::from_pest(pos),
         }
@@ -43,7 +43,7 @@ impl Position {
             LineColLocation::Span((line, column), _) => LineCol { line, column },
         };
 
-        Position { index, line_col }
+        Self { index, line_col }
     }
 }
 
@@ -56,7 +56,7 @@ pub struct Span {
 impl Span {
     pub(crate) fn from_pair(pair: &Pair<Rule>) -> Self {
         let span = pair.as_span();
-        Span {
+        Self {
             from: Position::from_pest(&span.start_pos()),
             to: Position::from_pest(&span.end_pos()),
         }

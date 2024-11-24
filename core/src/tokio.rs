@@ -25,7 +25,7 @@ pin_project! {
 
 impl<T> TokioTransport<T> {
     pub fn new(io: T) -> Self {
-        TokioTransport {
+        Self {
             io,
             packetizer: Packetizer::new(),
             write_buf: BytesMut::with_capacity(INITIAL_CAPACITY),

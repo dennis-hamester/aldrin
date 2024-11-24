@@ -9,7 +9,7 @@ pub struct Event {
 
 impl Event {
     pub(crate) fn new(id: u32, args: SerializedValue) -> Self {
-        Event { id, args }
+        Self { id, args }
     }
 
     /// Returns the event's id.

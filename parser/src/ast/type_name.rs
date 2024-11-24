@@ -21,7 +21,7 @@ impl TypeName {
         let pair = pairs.next().unwrap();
         let kind = TypeNameKind::parse(pair);
 
-        TypeName { span, kind }
+        Self { span, kind }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -73,31 +73,32 @@ pub enum TypeNameKind {
 impl TypeNameKind {
     fn parse(pair: Pair<Rule>) -> Self {
         match pair.as_rule() {
-            Rule::kw_bool => TypeNameKind::Bool,
-            Rule::kw_u8 => TypeNameKind::U8,
-            Rule::kw_i8 => TypeNameKind::I8,
-            Rule::kw_u16 => TypeNameKind::U16,
-            Rule::kw_i16 => TypeNameKind::I16,
-            Rule::kw_u32 => TypeNameKind::U32,
-            Rule::kw_i32 => TypeNameKind::I32,
-            Rule::kw_u64 => TypeNameKind::U64,
-            Rule::kw_i64 => TypeNameKind::I64,
-            Rule::kw_f32 => TypeNameKind::F32,
-            Rule::kw_f64 => TypeNameKind::F64,
-            Rule::kw_string => TypeNameKind::String,
-            Rule::kw_uuid => TypeNameKind::Uuid,
-            Rule::kw_object_id => TypeNameKind::ObjectId,
-            Rule::kw_service_id => TypeNameKind::ServiceId,
-            Rule::kw_value => TypeNameKind::Value,
-            Rule::kw_lifetime => TypeNameKind::Lifetime,
-            Rule::kw_unit => TypeNameKind::Unit,
+            Rule::kw_bool => Self::Bool,
+            Rule::kw_u8 => Self::U8,
+            Rule::kw_i8 => Self::I8,
+            Rule::kw_u16 => Self::U16,
+            Rule::kw_i16 => Self::I16,
+            Rule::kw_u32 => Self::U32,
+            Rule::kw_i32 => Self::I32,
+            Rule::kw_u64 => Self::U64,
+            Rule::kw_i64 => Self::I64,
+            Rule::kw_f32 => Self::F32,
+            Rule::kw_f64 => Self::F64,
+            Rule::kw_string => Self::String,
+            Rule::kw_uuid => Self::Uuid,
+            Rule::kw_object_id => Self::ObjectId,
+            Rule::kw_service_id => Self::ServiceId,
+            Rule::kw_value => Self::Value,
+            Rule::kw_lifetime => Self::Lifetime,
+            Rule::kw_unit => Self::Unit,
 
             Rule::option_type => {
                 let mut pairs = pair.into_inner();
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Option(Box::new(TypeName::parse(pair)))
+
+                Self::Option(Box::new(TypeName::parse(pair)))
             }
 
             Rule::box_type => {
@@ -105,7 +106,8 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Box(Box::new(TypeName::parse(pair)))
+
+                Self::Box(Box::new(TypeName::parse(pair)))
             }
 
             Rule::vec_type => {
@@ -113,10 +115,11 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Vec(Box::new(TypeName::parse(pair)))
+
+                Self::Vec(Box::new(TypeName::parse(pair)))
             }
 
-            Rule::kw_bytes => TypeNameKind::Bytes,
+            Rule::kw_bytes => Self::Bytes,
 
             Rule::map_type => {
                 let mut pairs = pair.into_inner();
@@ -125,7 +128,8 @@ impl TypeNameKind {
                 let key_pair = pairs.next().unwrap();
                 pairs.next().unwrap(); // Skip ->.
                 let type_pair = pairs.next().unwrap();
-                TypeNameKind::Map(
+
+                Self::Map(
                     KeyTypeName::parse(key_pair),
                     Box::new(TypeName::parse(type_pair)),
                 )
@@ -136,7 +140,8 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Set(KeyTypeName::parse(pair))
+
+                Self::Set(KeyTypeName::parse(pair))
             }
 
             Rule::sender_type => {
@@ -144,7 +149,8 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Sender(Box::new(TypeName::parse(pair)))
+
+                Self::Sender(Box::new(TypeName::parse(pair)))
             }
 
             Rule::receiver_type => {
@@ -152,7 +158,8 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip keyword.
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
-                TypeNameKind::Receiver(Box::new(TypeName::parse(pair)))
+
+                Self::Receiver(Box::new(TypeName::parse(pair)))
             }
 
             Rule::result_type => {
@@ -162,7 +169,8 @@ impl TypeNameKind {
                 let ok_pair = pairs.next().unwrap();
                 pairs.next().unwrap(); // Skip ,.
                 let err_pair = pairs.next().unwrap();
-                TypeNameKind::Result(
+
+                Self::Result(
                     Box::new(TypeName::parse(ok_pair)),
                     Box::new(TypeName::parse(err_pair)),
                 )
@@ -174,10 +182,11 @@ impl TypeNameKind {
                 let schema_name = SchemaName::parse(pair);
                 pairs.next().unwrap(); // Skip ::.
                 let ident = Ident::parse(pairs.next().unwrap());
-                TypeNameKind::Extern(schema_name, ident)
+
+                Self::Extern(schema_name, ident)
             }
 
-            Rule::ident => TypeNameKind::Intern(Ident::parse(pair)),
+            Rule::ident => Self::Intern(Ident::parse(pair)),
 
             _ => unreachable!(),
         }

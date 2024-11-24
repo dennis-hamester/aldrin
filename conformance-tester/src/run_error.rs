@@ -7,7 +7,7 @@ pub struct RunError {
 
 impl RunError {
     pub fn with_stderr(error: impl Into<Error>, stderr: Vec<u8>) -> Self {
-        RunError {
+        Self {
             error: error.into(),
             stderr,
         }

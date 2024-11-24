@@ -18,7 +18,7 @@ pub(crate) struct Service {
 
 impl Service {
     pub fn new() -> Self {
-        Service {
+        Self {
             function_calls: HashSet::new(),
             events: HashMap::new(),
             all_events: HashSet::new(),

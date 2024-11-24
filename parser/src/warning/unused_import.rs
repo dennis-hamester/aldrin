@@ -20,7 +20,7 @@ impl UnusedImport {
             return;
         }
 
-        validate.add_warning(UnusedImport {
+        validate.add_warning(Self {
             schema_name: validate.schema_name().to_owned(),
             import: import.clone(),
         });
@@ -205,6 +205,6 @@ impl Diagnostic for UnusedImport {
 
 impl From<UnusedImport> for Warning {
     fn from(w: UnusedImport) -> Self {
-        Warning::UnusedImport(w)
+        Self::UnusedImport(w)
     }
 }

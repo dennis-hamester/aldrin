@@ -23,7 +23,7 @@ impl Attribute {
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
 
-        let mut att = Attribute {
+        let mut att = Self {
             span,
             name,
             options: Vec::new(),

@@ -55,7 +55,7 @@ pub enum ConnectResult {
 }
 
 impl From<ConnectResult> for message::ConnectResult {
-    fn from(res: ConnectResult) -> message::ConnectResult {
+    fn from(res: ConnectResult) -> Self {
         match res {
             ConnectResult::Ok { minor_version } => Self::Ok(minor_version),
             ConnectResult::Rejected => Self::Rejected,

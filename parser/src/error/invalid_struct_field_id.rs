@@ -17,7 +17,7 @@ impl InvalidStructFieldId {
             return;
         }
 
-        validate.add_error(InvalidStructFieldId {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             id: field.id().clone(),
             field_ident: field.name().clone(),
@@ -68,6 +68,6 @@ impl Diagnostic for InvalidStructFieldId {
 
 impl From<InvalidStructFieldId> for Error {
     fn from(e: InvalidStructFieldId) -> Self {
-        Error::InvalidStructFieldId(e)
+        Self::InvalidStructFieldId(e)
     }
 }

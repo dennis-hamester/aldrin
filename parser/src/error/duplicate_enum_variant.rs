@@ -24,7 +24,7 @@ impl DuplicateEnumVariant {
             vars,
             |var| var.name().value(),
             |duplicate, first| {
-                validate.add_error(DuplicateEnumVariant {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
@@ -97,6 +97,6 @@ impl Diagnostic for DuplicateEnumVariant {
 
 impl From<DuplicateEnumVariant> for Error {
     fn from(e: DuplicateEnumVariant) -> Self {
-        Error::DuplicateEnumVariant(e)
+        Self::DuplicateEnumVariant(e)
     }
 }

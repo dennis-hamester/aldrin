@@ -17,7 +17,7 @@ impl DuplicateImport {
             schema.imports(),
             |import| import.schema_name().value(),
             |duplicate, first| {
-                validate.add_warning(DuplicateImport {
+                validate.add_warning(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.clone(),
                     first: first.span(),
@@ -70,6 +70,6 @@ impl Diagnostic for DuplicateImport {
 
 impl From<DuplicateImport> for Warning {
     fn from(w: DuplicateImport) -> Self {
-        Warning::DuplicateImport(w)
+        Self::DuplicateImport(w)
     }
 }

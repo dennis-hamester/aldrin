@@ -24,7 +24,7 @@ impl ImportStmt {
         let pair = pairs.next().unwrap();
         let schema_name = SchemaName::parse(pair);
 
-        ImportStmt { span, schema_name }
+        Self { span, schema_name }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {

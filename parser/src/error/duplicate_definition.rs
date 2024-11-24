@@ -17,7 +17,7 @@ impl DuplicateDefinition {
             schema.definitions(),
             |def| def.name().value(),
             |duplicate, first| {
-                validate.add_error(DuplicateDefinition {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
@@ -66,6 +66,6 @@ impl Diagnostic for DuplicateDefinition {
 
 impl From<DuplicateDefinition> for Error {
     fn from(e: DuplicateDefinition) -> Self {
-        Error::DuplicateDefinition(e)
+        Self::DuplicateDefinition(e)
     }
 }

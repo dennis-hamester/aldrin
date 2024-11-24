@@ -32,7 +32,7 @@ impl ImportNotFound {
             })
             .collect();
 
-        validate.add_error(ImportNotFound {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             import: import_stmt.clone(),
             tried,
@@ -85,6 +85,6 @@ impl Diagnostic for ImportNotFound {
 
 impl From<ImportNotFound> for Error {
     fn from(e: ImportNotFound) -> Self {
-        Error::ImportNotFound(e)
+        Self::ImportNotFound(e)
     }
 }

@@ -19,38 +19,38 @@ impl Definition {
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
         match pair.as_rule() {
-            Rule::struct_def => Definition::Struct(StructDef::parse(pair)),
-            Rule::enum_def => Definition::Enum(EnumDef::parse(pair)),
-            Rule::service_def => Definition::Service(ServiceDef::parse(pair)),
-            Rule::const_def => Definition::Const(ConstDef::parse(pair)),
+            Rule::struct_def => Self::Struct(StructDef::parse(pair)),
+            Rule::enum_def => Self::Enum(EnumDef::parse(pair)),
+            Rule::service_def => Self::Service(ServiceDef::parse(pair)),
+            Rule::const_def => Self::Const(ConstDef::parse(pair)),
             _ => unreachable!(),
         }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         match self {
-            Definition::Struct(d) => d.validate(validate),
-            Definition::Enum(d) => d.validate(validate),
-            Definition::Service(d) => d.validate(validate),
-            Definition::Const(d) => d.validate(validate),
+            Self::Struct(d) => d.validate(validate),
+            Self::Enum(d) => d.validate(validate),
+            Self::Service(d) => d.validate(validate),
+            Self::Const(d) => d.validate(validate),
         }
     }
 
     pub fn span(&self) -> Span {
         match self {
-            Definition::Struct(d) => d.span(),
-            Definition::Enum(d) => d.span(),
-            Definition::Service(d) => d.span(),
-            Definition::Const(d) => d.span(),
+            Self::Struct(d) => d.span(),
+            Self::Enum(d) => d.span(),
+            Self::Service(d) => d.span(),
+            Self::Const(d) => d.span(),
         }
     }
 
     pub fn name(&self) -> &Ident {
         match self {
-            Definition::Struct(d) => d.name(),
-            Definition::Enum(d) => d.name(),
-            Definition::Service(d) => d.name(),
-            Definition::Const(d) => d.name(),
+            Self::Struct(d) => d.name(),
+            Self::Enum(d) => d.name(),
+            Self::Service(d) => d.name(),
+            Self::Const(d) => d.name(),
         }
     }
 }

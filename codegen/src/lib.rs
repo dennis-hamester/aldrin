@@ -47,7 +47,7 @@ pub struct Options {
 
 impl Options {
     pub fn new() -> Self {
-        Options {
+        Self {
             client: true,
             server: true,
             introspection: false,
@@ -57,6 +57,6 @@ impl Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Options::new()
+        Self::new()
     }
 }

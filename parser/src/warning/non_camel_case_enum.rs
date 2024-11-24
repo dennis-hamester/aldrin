@@ -16,7 +16,7 @@ impl NonCamelCaseEnum {
     pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate) {
         let camel_case = enum_def.name().value().to_upper_camel_case();
         if enum_def.name().value() != camel_case {
-            validate.add_warning(NonCamelCaseEnum {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 camel_case,
                 ident: enum_def.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonCamelCaseEnum {
 
 impl From<NonCamelCaseEnum> for Warning {
     fn from(w: NonCamelCaseEnum) -> Self {
-        Warning::NonCamelCaseEnum(w)
+        Self::NonCamelCaseEnum(w)
     }
 }

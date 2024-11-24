@@ -310,7 +310,7 @@ impl Message {
         }
     }
 
-    pub fn matches(&self, other: &Message, ctx: &Context) -> Result<bool> {
+    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
@@ -446,7 +446,7 @@ impl Message {
         }
     }
 
-    pub fn update_context(&self, other: &Message, ctx: &mut Context) -> Result<()> {
+    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),

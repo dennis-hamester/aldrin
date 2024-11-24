@@ -12,7 +12,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn new() -> Self {
-        Parser {
+        Self {
             schema_paths: Vec::new(),
         }
     }
@@ -87,7 +87,7 @@ impl Parser {
 
 impl Default for Parser {
     fn default() -> Self {
-        Parser::new()
+        Self::new()
     }
 }
 

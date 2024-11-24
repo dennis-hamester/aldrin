@@ -18,26 +18,26 @@ impl TypeNameOrInline {
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
         match pair.as_rule() {
-            Rule::type_name => TypeNameOrInline::TypeName(TypeName::parse(pair)),
-            Rule::struct_inline => TypeNameOrInline::Struct(InlineStruct::parse(pair)),
-            Rule::enum_inline => TypeNameOrInline::Enum(InlineEnum::parse(pair)),
+            Rule::type_name => Self::TypeName(TypeName::parse(pair)),
+            Rule::struct_inline => Self::Struct(InlineStruct::parse(pair)),
+            Rule::enum_inline => Self::Enum(InlineEnum::parse(pair)),
             _ => unreachable!(),
         }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         match self {
-            TypeNameOrInline::TypeName(ty) => ty.validate(validate),
-            TypeNameOrInline::Struct(s) => s.validate(validate),
-            TypeNameOrInline::Enum(e) => e.validate(validate),
+            Self::TypeName(ty) => ty.validate(validate),
+            Self::Struct(s) => s.validate(validate),
+            Self::Enum(e) => e.validate(validate),
         }
     }
 
     pub fn span(&self) -> Span {
         match self {
-            TypeNameOrInline::TypeName(t) => t.span(),
-            TypeNameOrInline::Struct(s) => s.span(),
-            TypeNameOrInline::Enum(e) => e.span(),
+            Self::TypeName(t) => t.span(),
+            Self::Struct(s) => s.span(),
+            Self::Enum(e) => e.span(),
         }
     }
 }

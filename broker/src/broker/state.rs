@@ -20,7 +20,7 @@ pub(super) struct State {
 
 impl State {
     pub fn new() -> Self {
-        State {
+        Self {
             shutdown_now: false,
             shutdown_idle: false,
             remove_conns: Vec::new(),

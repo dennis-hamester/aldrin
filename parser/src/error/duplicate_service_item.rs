@@ -18,7 +18,7 @@ impl DuplicateServiceItem {
             service.items(),
             |item| item.name().value(),
             |duplicate, first| {
-                validate.add_error(DuplicateServiceItem {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
@@ -76,6 +76,6 @@ impl Diagnostic for DuplicateServiceItem {
 
 impl From<DuplicateServiceItem> for Error {
     fn from(e: DuplicateServiceItem) -> Self {
-        Error::DuplicateServiceItem(e)
+        Self::DuplicateServiceItem(e)
     }
 }

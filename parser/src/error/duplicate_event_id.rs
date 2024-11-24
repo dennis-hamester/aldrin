@@ -33,7 +33,7 @@ impl DuplicateEventId {
             |duplicate, first| {
                 max_id += 1;
                 let free_id = max_id;
-                validate.add_error(DuplicateEventId {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
@@ -97,6 +97,6 @@ impl Diagnostic for DuplicateEventId {
 
 impl From<DuplicateEventId> for Error {
     fn from(e: DuplicateEventId) -> Self {
-        Error::DuplicateEventId(e)
+        Self::DuplicateEventId(e)
     }
 }

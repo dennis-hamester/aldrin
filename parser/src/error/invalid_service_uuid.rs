@@ -18,7 +18,7 @@ impl InvalidServiceUuid {
             return;
         }
 
-        validate.add_error(InvalidServiceUuid {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             uuid: service_def.uuid().clone(),
             svc_ident: service_def.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for InvalidServiceUuid {
 
 impl From<InvalidServiceUuid> for Error {
     fn from(e: InvalidServiceUuid) -> Self {
-        Error::InvalidServiceUuid(e)
+        Self::InvalidServiceUuid(e)
     }
 }

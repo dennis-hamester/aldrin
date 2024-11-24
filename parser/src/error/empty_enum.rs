@@ -22,7 +22,7 @@ impl EmptyEnum {
             return;
         }
 
-        validate.add_error(EmptyEnum {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             span,
             ident: ident.cloned(),
@@ -66,6 +66,6 @@ impl Diagnostic for EmptyEnum {
 
 impl From<EmptyEnum> for Error {
     fn from(e: EmptyEnum) -> Self {
-        Error::EmptyEnum(e)
+        Self::EmptyEnum(e)
     }
 }

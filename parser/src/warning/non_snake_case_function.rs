@@ -16,7 +16,7 @@ impl NonSnakeCaseFunction {
     pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate) {
         let snake_case = func.name().value().to_snake_case();
         if func.name().value() != snake_case {
-            validate.add_warning(NonSnakeCaseFunction {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 snake_case,
                 ident: func.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonSnakeCaseFunction {
 
 impl From<NonSnakeCaseFunction> for Warning {
     fn from(w: NonSnakeCaseFunction) -> Self {
-        Warning::NonSnakeCaseFunction(w)
+        Self::NonSnakeCaseFunction(w)
     }
 }

@@ -30,7 +30,7 @@ impl ExternTypeNotFound {
             .and_then(|s| util::did_you_mean_type(s, ident.value(), false))
             .map(ToOwned::to_owned);
 
-        validate.add_error(ExternTypeNotFound {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             extern_schema: schema_name.clone(),
             extern_ident: ident.clone(),
@@ -89,6 +89,6 @@ impl Diagnostic for ExternTypeNotFound {
 
 impl From<ExternTypeNotFound> for Error {
     fn from(e: ExternTypeNotFound) -> Self {
-        Error::ExternTypeNotFound(e)
+        Self::ExternTypeNotFound(e)
     }
 }

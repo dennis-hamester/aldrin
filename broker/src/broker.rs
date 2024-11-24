@@ -143,7 +143,7 @@ impl Broker {
     pub fn new() -> Self {
         let (send, recv) = channel(FIFO_SIZE);
 
-        Broker {
+        Self {
             recv,
             handle: Some(BrokerHandle::new(send)),
             conns: HashMap::new(),
@@ -2395,7 +2395,7 @@ impl Broker {
 
 impl Default for Broker {
     fn default() -> Self {
-        Broker::new()
+        Self::new()
     }
 }
 

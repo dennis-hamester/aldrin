@@ -25,8 +25,8 @@ impl Schema {
     {
         let schema_path = schema_path.as_ref();
 
-        let mut schema = Schema {
-            name: Schema::parse_file_name(schema_path, issues),
+        let mut schema = Self {
+            name: Self::parse_file_name(schema_path, issues),
             path: schema_path.to_owned(),
             source: None,
             imports: Vec::new(),

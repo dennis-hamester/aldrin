@@ -71,7 +71,7 @@ impl LifetimeScope {
     }
 
     pub(crate) fn new_impl(object: Object) -> Self {
-        LifetimeScope { object }
+        Self { object }
     }
 
     /// Return the scope's id.

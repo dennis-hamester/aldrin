@@ -52,7 +52,7 @@ impl Object {
     }
 
     pub(crate) fn new_impl(id: ObjectId, client: Handle) -> Self {
-        Object { id, client }
+        Self { id, client }
     }
 
     /// Returns the id of the object.

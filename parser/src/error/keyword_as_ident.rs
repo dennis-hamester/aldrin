@@ -20,7 +20,7 @@ impl KeywordAsIdent {
             return;
         }
 
-        validate.add_error(KeywordAsIdent {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             ident: ident.clone(),
         });
@@ -59,6 +59,6 @@ impl Diagnostic for KeywordAsIdent {
 
 impl From<KeywordAsIdent> for Error {
     fn from(e: KeywordAsIdent) -> Self {
-        Error::KeywordAsIdent(e)
+        Self::KeywordAsIdent(e)
     }
 }

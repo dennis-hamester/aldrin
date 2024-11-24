@@ -21,7 +21,7 @@ pub(super) struct ConnectionState {
 
 impl ConnectionState {
     pub fn new(protocol_version: ProtocolVersion, send: UnboundedSender<Message>) -> Self {
-        ConnectionState {
+        Self {
             protocol_version,
             send,
             objects: HashSet::new(),

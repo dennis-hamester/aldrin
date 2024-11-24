@@ -45,7 +45,7 @@ where
         send: Sender<ConnectionEvent>,
         recv: UnboundedReceiver<Message>,
     ) -> Self {
-        Connection {
+        Self {
             t,
             send,
             recv,

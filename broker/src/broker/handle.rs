@@ -32,8 +32,8 @@ pub struct BrokerHandle {
 }
 
 impl BrokerHandle {
-    pub(crate) fn new(send: mpsc::Sender<ConnectionEvent>) -> BrokerHandle {
-        BrokerHandle {
+    pub(crate) fn new(send: mpsc::Sender<ConnectionEvent>) -> Self {
+        Self {
             send,
             ids: ConnectionIdManager::new(),
         }

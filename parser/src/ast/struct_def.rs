@@ -47,7 +47,7 @@ impl StructDef {
             }
         }
 
-        StructDef {
+        Self {
             span,
             attrs,
             name,
@@ -118,7 +118,7 @@ impl InlineStruct {
             }
         }
 
-        InlineStruct {
+        Self {
             span,
             kw_span,
             fields,
@@ -190,7 +190,7 @@ impl StructField {
         let pair = pairs.next().unwrap();
         let field_type = TypeName::parse(pair);
 
-        StructField {
+        Self {
             span,
             req,
             name,

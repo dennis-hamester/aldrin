@@ -6,7 +6,7 @@ pub(crate) struct ConnectionIdManager(Arc<Mutex<Inner>>);
 
 impl ConnectionIdManager {
     pub fn new() -> Self {
-        ConnectionIdManager(Arc::new(Mutex::new(Inner::new())))
+        Self(Arc::new(Mutex::new(Inner::new())))
     }
 
     pub fn acquire(&self) -> ConnectionId {
@@ -32,7 +32,7 @@ struct Inner {
 
 impl Inner {
     fn new() -> Self {
-        Inner {
+        Self {
             next: 0,
             free: Vec::new(),
         }
@@ -67,7 +67,7 @@ pub(crate) struct ConnectionId(Arc<ConnectionIdInner>);
 
 impl ConnectionId {
     fn new(id: usize, ids: ConnectionIdManager) -> Self {
-        ConnectionId(Arc::new(ConnectionIdInner::new(id, ids)))
+        Self(Arc::new(ConnectionIdInner::new(id, ids)))
     }
 }
 
@@ -96,7 +96,7 @@ struct ConnectionIdInner {
 
 impl ConnectionIdInner {
     fn new(id: usize, ids: ConnectionIdManager) -> Self {
-        ConnectionIdInner { id, ids }
+        Self { id, ids }
     }
 
     fn id(&self) -> usize {

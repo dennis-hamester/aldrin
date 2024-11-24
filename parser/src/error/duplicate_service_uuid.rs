@@ -37,7 +37,7 @@ impl DuplicateServiceUuid {
             if entries.len() > 1 {
                 let first = entries.first().unwrap();
 
-                issues.add_error(DuplicateServiceUuid {
+                issues.add_error(Self {
                     schema_name: first.0.name().to_owned(),
                     uuid: first.1.uuid().clone(),
                     svc_idents: entries
@@ -100,6 +100,6 @@ impl Diagnostic for DuplicateServiceUuid {
 
 impl From<DuplicateServiceUuid> for Error {
     fn from(e: DuplicateServiceUuid) -> Self {
-        Error::DuplicateServiceUuid(e)
+        Self::DuplicateServiceUuid(e)
     }
 }

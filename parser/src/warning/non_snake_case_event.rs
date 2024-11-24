@@ -16,7 +16,7 @@ impl NonSnakeCaseEvent {
     pub(crate) fn validate(ev: &EventDef, validate: &mut Validate) {
         let snake_case = ev.name().value().to_snake_case();
         if ev.name().value() != snake_case {
-            validate.add_warning(NonSnakeCaseEvent {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 snake_case,
                 ident: ev.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonSnakeCaseEvent {
 
 impl From<NonSnakeCaseEvent> for Warning {
     fn from(w: NonSnakeCaseEvent) -> Self {
-        Warning::NonSnakeCaseEvent(w)
+        Self::NonSnakeCaseEvent(w)
     }
 }

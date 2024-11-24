@@ -85,7 +85,7 @@ pub struct Bounded {
 
 impl Bounded {
     fn new(receiver: mpsc::Receiver<Message>, sender: mpsc::Sender<Message>) -> Self {
-        Bounded { receiver, sender }
+        Self { receiver, sender }
     }
 }
 
@@ -151,7 +151,7 @@ impl Unbounded {
         receiver: mpsc::UnboundedReceiver<Message>,
         sender: mpsc::UnboundedSender<Message>,
     ) -> Self {
-        Unbounded { receiver, sender }
+        Self { receiver, sender }
     }
 }
 

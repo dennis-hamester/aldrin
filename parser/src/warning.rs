@@ -48,33 +48,33 @@ impl Diagnostic for Warning {
 
     fn schema_name(&self) -> &str {
         match self {
-            Warning::DuplicateImport(w) => w.schema_name(),
-            Warning::NonCamelCaseEnum(w) => w.schema_name(),
-            Warning::NonCamelCaseEnumVariant(w) => w.schema_name(),
-            Warning::NonCamelCaseService(w) => w.schema_name(),
-            Warning::NonCamelCaseStruct(w) => w.schema_name(),
-            Warning::NonShoutySnakeCaseConst(w) => w.schema_name(),
-            Warning::NonSnakeCaseEvent(w) => w.schema_name(),
-            Warning::NonSnakeCaseFunction(w) => w.schema_name(),
-            Warning::NonSnakeCaseSchemaName(w) => w.schema_name(),
-            Warning::NonSnakeCaseStructField(w) => w.schema_name(),
-            Warning::UnusedImport(w) => w.schema_name(),
+            Self::DuplicateImport(w) => w.schema_name(),
+            Self::NonCamelCaseEnum(w) => w.schema_name(),
+            Self::NonCamelCaseEnumVariant(w) => w.schema_name(),
+            Self::NonCamelCaseService(w) => w.schema_name(),
+            Self::NonCamelCaseStruct(w) => w.schema_name(),
+            Self::NonShoutySnakeCaseConst(w) => w.schema_name(),
+            Self::NonSnakeCaseEvent(w) => w.schema_name(),
+            Self::NonSnakeCaseFunction(w) => w.schema_name(),
+            Self::NonSnakeCaseSchemaName(w) => w.schema_name(),
+            Self::NonSnakeCaseStructField(w) => w.schema_name(),
+            Self::UnusedImport(w) => w.schema_name(),
         }
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
         match self {
-            Warning::DuplicateImport(w) => w.format(parsed),
-            Warning::NonCamelCaseEnum(w) => w.format(parsed),
-            Warning::NonCamelCaseEnumVariant(w) => w.format(parsed),
-            Warning::NonCamelCaseService(w) => w.format(parsed),
-            Warning::NonCamelCaseStruct(w) => w.format(parsed),
-            Warning::NonShoutySnakeCaseConst(w) => w.format(parsed),
-            Warning::NonSnakeCaseEvent(w) => w.format(parsed),
-            Warning::NonSnakeCaseFunction(w) => w.format(parsed),
-            Warning::NonSnakeCaseSchemaName(w) => w.format(parsed),
-            Warning::NonSnakeCaseStructField(w) => w.format(parsed),
-            Warning::UnusedImport(w) => w.format(parsed),
+            Self::DuplicateImport(w) => w.format(parsed),
+            Self::NonCamelCaseEnum(w) => w.format(parsed),
+            Self::NonCamelCaseEnumVariant(w) => w.format(parsed),
+            Self::NonCamelCaseService(w) => w.format(parsed),
+            Self::NonCamelCaseStruct(w) => w.format(parsed),
+            Self::NonShoutySnakeCaseConst(w) => w.format(parsed),
+            Self::NonSnakeCaseEvent(w) => w.format(parsed),
+            Self::NonSnakeCaseFunction(w) => w.format(parsed),
+            Self::NonSnakeCaseSchemaName(w) => w.format(parsed),
+            Self::NonSnakeCaseStructField(w) => w.format(parsed),
+            Self::UnusedImport(w) => w.format(parsed),
         }
     }
 }

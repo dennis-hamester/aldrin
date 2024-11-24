@@ -35,7 +35,7 @@ impl BrokerUnderTest {
         let (sender, stdin_closed) = oneshot::channel();
         thread::spawn(|| Self::wait_stdin_closed(sender));
 
-        Ok(BrokerUnderTest {
+        Ok(Self {
             broker: handle,
             join,
             listener,

@@ -90,7 +90,7 @@ impl Sealed for u16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<u16>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -118,7 +118,7 @@ impl Sealed for i16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<i16>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -146,7 +146,7 @@ impl Sealed for u32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<u32>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -174,7 +174,7 @@ impl Sealed for i32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<i32>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -202,7 +202,7 @@ impl Sealed for u64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<u64>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -230,7 +230,7 @@ impl Sealed for i64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<i64>() }>()
+        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
 }
 
@@ -248,7 +248,7 @@ impl Sealed for String {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
         let len = buf.try_get_varint_u32_le()? as usize;
         let bytes = buf.try_copy_to_bytes(len)?.into();
-        String::from_utf8(bytes).map_err(|_| DeserializeError::InvalidSerialization)
+        Self::from_utf8(bytes).map_err(|_| DeserializeError::InvalidSerialization)
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -279,7 +279,7 @@ impl Sealed for Uuid {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self, DeserializeError> {
         let mut bytes = uuid::Bytes::default();
         buf.try_copy_to_slice(&mut bytes)?;
-        Ok(Uuid::from_bytes(bytes))
+        Ok(Self::from_bytes(bytes))
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {

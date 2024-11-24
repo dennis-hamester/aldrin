@@ -8,7 +8,7 @@ pub(crate) struct SerialMap<T> {
 
 impl<T> SerialMap<T> {
     pub fn new() -> Self {
-        SerialMap {
+        Self {
             next: 0,
             elems: HashMap::new(),
         }

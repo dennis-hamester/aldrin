@@ -22,7 +22,7 @@ impl TypeNotFound {
 
         let candidate = util::did_you_mean_type(schema, ident.value(), true).map(ToOwned::to_owned);
 
-        validate.add_error(TypeNotFound {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             ident: ident.clone(),
             candidate,
@@ -69,6 +69,6 @@ impl Diagnostic for TypeNotFound {
 
 impl From<TypeNotFound> for Error {
     fn from(e: TypeNotFound) -> Self {
-        Error::TypeNotFound(e)
+        Self::TypeNotFound(e)
     }
 }

@@ -23,7 +23,7 @@ impl MissingImport {
         let candidates = schema.imports().iter().map(|i| i.schema_name().value());
         let candidate = util::did_you_mean(candidates, schema_name.value()).map(ToOwned::to_owned);
 
-        validate.add_error(MissingImport {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             extern_schema: schema_name.clone(),
             candidate,
@@ -78,6 +78,6 @@ impl Diagnostic for MissingImport {
 
 impl From<MissingImport> for Error {
     fn from(e: MissingImport) -> Self {
-        Error::MissingImport(e)
+        Self::MissingImport(e)
     }
 }

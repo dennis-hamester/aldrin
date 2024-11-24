@@ -17,7 +17,7 @@ impl InvalidEnumVariantId {
             return;
         }
 
-        validate.add_error(InvalidEnumVariantId {
+        validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             id: var.id().clone(),
             var_ident: var.name().clone(),
@@ -68,6 +68,6 @@ impl Diagnostic for InvalidEnumVariantId {
 
 impl From<InvalidEnumVariantId> for Error {
     fn from(e: InvalidEnumVariantId) -> Self {
-        Error::InvalidEnumVariantId(e)
+        Self::InvalidEnumVariantId(e)
     }
 }

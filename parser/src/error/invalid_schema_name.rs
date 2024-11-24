@@ -12,7 +12,7 @@ impl InvalidSchemaName {
     where
         S: Into<String>,
     {
-        InvalidSchemaName {
+        Self {
             schema_name: schema_name.into(),
         }
     }
@@ -41,6 +41,6 @@ impl Diagnostic for InvalidSchemaName {
 
 impl From<InvalidSchemaName> for Error {
     fn from(e: InvalidSchemaName) -> Self {
-        Error::InvalidSchemaName(e)
+        Self::InvalidSchemaName(e)
     }
 }

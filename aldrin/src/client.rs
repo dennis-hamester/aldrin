@@ -214,7 +214,7 @@ where
         }
 
         let (send, recv) = mpsc::unbounded();
-        let client = Client {
+        let client = Self {
             select: Select::new(),
             t,
             protocol_version,

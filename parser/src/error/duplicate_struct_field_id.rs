@@ -34,7 +34,7 @@ impl DuplicateStructFieldId {
             |duplicate, first| {
                 max_id += 1;
                 let free_id = max_id;
-                validate.add_error(DuplicateStructFieldId {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
@@ -110,6 +110,6 @@ impl Diagnostic for DuplicateStructFieldId {
 
 impl From<DuplicateStructFieldId> for Error {
     fn from(e: DuplicateStructFieldId) -> Self {
-        Error::DuplicateStructFieldId(e)
+        Self::DuplicateStructFieldId(e)
     }
 }

@@ -39,6 +39,7 @@ broken_intra_doc_links = "deny"
 
 [workspace.lints.clippy]
 incompatible_msrv = "deny"
+use_self = "deny"
 
 [workspace.dependencies]
 anstyle = { version = "1.0.7", default-features = false }

@@ -25,7 +25,7 @@ impl InvalidConstValue {
         };
 
         if is_err {
-            validate.add_error(InvalidConstValue {
+            validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),
                 const_value: const_value.clone(),
             });
@@ -82,6 +82,6 @@ impl Diagnostic for InvalidConstValue {
 
 impl From<InvalidConstValue> for Error {
     fn from(e: InvalidConstValue) -> Self {
-        Error::InvalidConstValue(e)
+        Self::InvalidConstValue(e)
     }
 }

@@ -68,6 +68,6 @@ impl Diagnostic for InvalidEventId {
 
 impl From<InvalidEventId> for Error {
     fn from(e: InvalidEventId) -> Self {
-        Error::InvalidEventId(e)
+        Self::InvalidEventId(e)
     }
 }

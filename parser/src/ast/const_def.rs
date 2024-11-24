@@ -31,7 +31,7 @@ impl ConstDef {
         let value_span = Span::from_pair(&value_pair);
         let value = ConstValue::parse(value_pair);
 
-        ConstDef {
+        Self {
             span,
             name,
             value_span,
@@ -90,16 +90,16 @@ impl ConstValue {
         let pair = pairs.next().unwrap();
 
         match rule {
-            Rule::const_u8 => ConstValue::U8(LitInt::parse(pair)),
-            Rule::const_i8 => ConstValue::I8(LitInt::parse(pair)),
-            Rule::const_u16 => ConstValue::U16(LitInt::parse(pair)),
-            Rule::const_i16 => ConstValue::I16(LitInt::parse(pair)),
-            Rule::const_u32 => ConstValue::U32(LitInt::parse(pair)),
-            Rule::const_i32 => ConstValue::I32(LitInt::parse(pair)),
-            Rule::const_u64 => ConstValue::U64(LitInt::parse(pair)),
-            Rule::const_i64 => ConstValue::I64(LitInt::parse(pair)),
-            Rule::const_string => ConstValue::String(LitString::parse(pair)),
-            Rule::const_uuid => ConstValue::Uuid(LitUuid::parse(pair)),
+            Rule::const_u8 => Self::U8(LitInt::parse(pair)),
+            Rule::const_i8 => Self::I8(LitInt::parse(pair)),
+            Rule::const_u16 => Self::U16(LitInt::parse(pair)),
+            Rule::const_i16 => Self::I16(LitInt::parse(pair)),
+            Rule::const_u32 => Self::U32(LitInt::parse(pair)),
+            Rule::const_i32 => Self::I32(LitInt::parse(pair)),
+            Rule::const_u64 => Self::U64(LitInt::parse(pair)),
+            Rule::const_i64 => Self::I64(LitInt::parse(pair)),
+            Rule::const_string => Self::String(LitString::parse(pair)),
+            Rule::const_uuid => Self::Uuid(LitUuid::parse(pair)),
             _ => unreachable!(),
         }
     }

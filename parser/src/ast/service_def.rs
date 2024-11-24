@@ -47,7 +47,7 @@ impl ServiceDef {
             }
         }
 
-        ServiceDef {
+        Self {
             span,
             name,
             uuid,
@@ -121,30 +121,30 @@ impl ServiceItem {
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
         match pair.as_rule() {
-            Rule::fn_def => ServiceItem::Function(FunctionDef::parse(pair)),
-            Rule::event_def => ServiceItem::Event(EventDef::parse(pair)),
+            Rule::fn_def => Self::Function(FunctionDef::parse(pair)),
+            Rule::event_def => Self::Event(EventDef::parse(pair)),
             _ => unreachable!(),
         }
     }
 
     fn validate(&self, validate: &mut Validate) {
         match self {
-            ServiceItem::Function(i) => i.validate(validate),
-            ServiceItem::Event(i) => i.validate(validate),
+            Self::Function(i) => i.validate(validate),
+            Self::Event(i) => i.validate(validate),
         }
     }
 
     pub fn span(&self) -> Span {
         match self {
-            ServiceItem::Function(i) => i.span(),
-            ServiceItem::Event(i) => i.span(),
+            Self::Function(i) => i.span(),
+            Self::Event(i) => i.span(),
         }
     }
 
     pub fn name(&self) -> &Ident {
         match self {
-            ServiceItem::Function(i) => i.name(),
-            ServiceItem::Event(i) => i.name(),
+            Self::Function(i) => i.name(),
+            Self::Event(i) => i.name(),
         }
     }
 }
@@ -191,7 +191,7 @@ impl FunctionDef {
             }
         }
 
-        FunctionDef {
+        Self {
             span,
             name,
             id,
@@ -269,7 +269,7 @@ impl FunctionPart {
         let pair = pairs.next().unwrap();
         let part_type = TypeNameOrInline::parse(pair);
 
-        FunctionPart { span, part_type }
+        Self { span, part_type }
     }
 
     fn validate(&self, validate: &mut Validate) {
@@ -321,7 +321,7 @@ impl EventDef {
             _ => unreachable!(),
         };
 
-        EventDef {
+        Self {
             span,
             name,
             id,

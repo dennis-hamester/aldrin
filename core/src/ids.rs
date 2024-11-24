@@ -41,7 +41,7 @@ impl ObjectId {
 
     /// Creates a new [`ObjectId`] from an [`ObjectUuid`] and [`ObjectCookie`].
     pub const fn new(uuid: ObjectUuid, cookie: ObjectCookie) -> Self {
-        ObjectId { uuid, cookie }
+        Self { uuid, cookie }
     }
 
     /// Checks if the id is nil (all zeros).
@@ -184,7 +184,7 @@ impl KeyTypeOf for ObjectUuid {
 
 impl From<Uuid> for ObjectUuid {
     fn from(uuid: Uuid) -> Self {
-        ObjectUuid(uuid)
+        Self(uuid)
     }
 }
 
@@ -306,7 +306,7 @@ impl KeyTypeOf for ObjectCookie {
 
 impl From<Uuid> for ObjectCookie {
     fn from(cookie: Uuid) -> Self {
-        ObjectCookie(cookie)
+        Self(cookie)
     }
 }
 
@@ -356,7 +356,7 @@ impl ServiceId {
 
     /// Creates a new [`ServiceId`] from an [`ObjectId`], a [`ServiceUuid`] and a [`ServiceCookie`].
     pub const fn new(object_id: ObjectId, uuid: ServiceUuid, cookie: ServiceCookie) -> Self {
-        ServiceId {
+        Self {
             object_id,
             uuid,
             cookie,
@@ -503,7 +503,7 @@ impl KeyTypeOf for ServiceUuid {
 
 impl From<Uuid> for ServiceUuid {
     fn from(uuid: Uuid) -> Self {
-        ServiceUuid(uuid)
+        Self(uuid)
     }
 }
 
@@ -625,7 +625,7 @@ impl KeyTypeOf for ServiceCookie {
 
 impl From<Uuid> for ServiceCookie {
     fn from(cookie: Uuid) -> Self {
-        ServiceCookie(cookie)
+        Self(cookie)
     }
 }
 
@@ -737,7 +737,7 @@ impl KeyTypeOf for ChannelCookie {
 
 impl From<Uuid> for ChannelCookie {
     fn from(cookie: Uuid) -> Self {
-        ChannelCookie(cookie)
+        Self(cookie)
     }
 }
 

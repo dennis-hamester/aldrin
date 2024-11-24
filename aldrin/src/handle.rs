@@ -86,7 +86,7 @@ pub struct Handle {
 
 impl Handle {
     pub(crate) fn new(send: UnboundedSender<HandleRequest>) -> Self {
-        Handle { send }
+        Self { send }
     }
 
     /// Shuts down the client.
@@ -941,7 +941,7 @@ impl Clone for Handle {
     fn clone(&self) -> Self {
         let _ = self.send.unbounded_send(HandleRequest::HandleCloned);
 
-        Handle {
+        Self {
             send: self.send.clone(),
         }
     }

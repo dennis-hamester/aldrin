@@ -17,7 +17,7 @@ impl NonSnakeCaseSchemaName {
             return;
         }
 
-        validate.add_warning(NonSnakeCaseSchemaName {
+        validate.add_warning(Self {
             schema_name: schema_name.to_owned(),
             snake_case,
         });
@@ -57,6 +57,6 @@ impl Diagnostic for NonSnakeCaseSchemaName {
 
 impl From<NonSnakeCaseSchemaName> for Warning {
     fn from(w: NonSnakeCaseSchemaName) -> Self {
-        Warning::NonSnakeCaseSchemaName(w)
+        Self::NonSnakeCaseSchemaName(w)
     }
 }

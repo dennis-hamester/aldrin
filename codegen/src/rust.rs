@@ -816,7 +816,7 @@ struct RustAttributes {
 
 impl RustAttributes {
     fn new() -> Self {
-        RustAttributes {
+        Self {
             impl_copy: false,
             impl_partial_eq: false,
             impl_eq: false,

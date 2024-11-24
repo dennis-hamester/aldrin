@@ -16,7 +16,7 @@ impl NonSnakeCaseStructField {
     pub(crate) fn validate(struct_field: &StructField, validate: &mut Validate) {
         let snake_case = struct_field.name().value().to_snake_case();
         if struct_field.name().value() != snake_case {
-            validate.add_warning(NonSnakeCaseStructField {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 snake_case,
                 ident: struct_field.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonSnakeCaseStructField {
 
 impl From<NonSnakeCaseStructField> for Warning {
     fn from(w: NonSnakeCaseStructField) -> Self {
-        Warning::NonSnakeCaseStructField(w)
+        Self::NonSnakeCaseStructField(w)
     }
 }

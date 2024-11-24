@@ -47,7 +47,7 @@ impl EnumDef {
             }
         }
 
-        EnumDef {
+        Self {
             span,
             attrs,
             name,
@@ -114,7 +114,7 @@ impl InlineEnum {
             }
         }
 
-        InlineEnum {
+        Self {
             span,
             kw_span,
             vars,
@@ -178,7 +178,7 @@ impl EnumVariant {
             _ => unreachable!(),
         };
 
-        EnumVariant {
+        Self {
             span,
             name,
             id,

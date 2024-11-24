@@ -16,7 +16,7 @@ impl NonShoutySnakeCaseConst {
     pub(crate) fn validate(const_def: &ConstDef, validate: &mut Validate) {
         let shouty_snake_case = const_def.name().value().to_shouty_snake_case();
         if const_def.name().value() != shouty_snake_case {
-            validate.add_warning(NonShoutySnakeCaseConst {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 shouty_snake_case,
                 ident: const_def.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonShoutySnakeCaseConst {
 
 impl From<NonShoutySnakeCaseConst> for Warning {
     fn from(w: NonShoutySnakeCaseConst) -> Self {
-        Warning::NonShoutySnakeCaseConst(w)
+        Self::NonShoutySnakeCaseConst(w)
     }
 }

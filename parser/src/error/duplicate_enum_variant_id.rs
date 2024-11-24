@@ -34,7 +34,7 @@ impl DuplicateEnumVariantId {
             |duplicate, first| {
                 max_id += 1;
                 let free_id = max_id;
-                validate.add_error(DuplicateEnumVariantId {
+                validate.add_error(Self {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
@@ -110,6 +110,6 @@ impl Diagnostic for DuplicateEnumVariantId {
 
 impl From<DuplicateEnumVariantId> for Error {
     fn from(e: DuplicateEnumVariantId) -> Self {
-        Error::DuplicateEnumVariantId(e)
+        Self::DuplicateEnumVariantId(e)
     }
 }

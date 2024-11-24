@@ -13,7 +13,7 @@ impl IoError {
     where
         S: Into<String>,
     {
-        IoError {
+        Self {
             schema_name: schema_name.into(),
             err,
         }
@@ -46,6 +46,6 @@ impl Diagnostic for IoError {
 
 impl From<IoError> for Error {
     fn from(e: IoError) -> Self {
-        Error::IoError(e)
+        Self::IoError(e)
     }
 }

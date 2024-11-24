@@ -16,7 +16,7 @@ impl NonCamelCaseService {
     pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate) {
         let camel_case = service_def.name().value().to_upper_camel_case();
         if service_def.name().value() != camel_case {
-            validate.add_warning(NonCamelCaseService {
+            validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 camel_case,
                 ident: service_def.name().clone(),
@@ -66,6 +66,6 @@ impl Diagnostic for NonCamelCaseService {
 
 impl From<NonCamelCaseService> for Warning {
     fn from(w: NonCamelCaseService) -> Self {
-        Warning::NonCamelCaseService(w)
+        Self::NonCamelCaseService(w)
     }
 }
