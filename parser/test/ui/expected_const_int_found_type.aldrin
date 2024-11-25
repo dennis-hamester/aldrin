@@ -1,0 +1,13 @@
+import expected_const_int_found_type_import;
+
+const CONST = u8(1);
+
+struct CONSt {
+}
+
+struct Foo {
+    f1 @ 1 = [u8; CONST];
+    f2 @ 2 = [u8; CONSt];
+    f3 @ 3 = [u8; expected_const_int_found_type_import::CONST];
+    f4 @ 4 = [u8; expected_const_int_found_type_import::CONSt];
+}

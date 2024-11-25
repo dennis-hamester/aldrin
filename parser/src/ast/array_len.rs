@@ -1,5 +1,5 @@
 use super::{LitPosInt, NamedRef};
-use crate::error::ConstIntNotFound;
+use crate::error::{ConstIntNotFound, ExpectedConstIntFoundType};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -58,6 +58,7 @@ impl ArrayLenValue {
 
             Self::Ref(ty) => {
                 ConstIntNotFound::validate(ty, validate);
+                ExpectedConstIntFoundType::validate(ty, validate);
 
                 ty.validate(validate);
             }
