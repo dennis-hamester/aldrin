@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add error types `ExpectedTypeFoundService` and `ExpectedTypeFoundConst`.
 - Support parsing array types of the form: `[TYPE; LEN]`. The array length can be a positive integer
   literal or a named reference to a constant.
-- Add error types `ConstIntNotFound` and `ExpectedConstIntFoundType`.
+- Add error types `ConstIntNotFound`, `ExpectedConstIntFoundService` and
+  `ExpectedConstIntFoundType`.
 
 ### Fixed
 

@@ -1,0 +1,6 @@
+const CONST = u8(1);
+
+service CONSt {
+    uuid = 616d30b1-0c4b-4639-8328-aa2d32c52cbb;
+    version = 1;
+}

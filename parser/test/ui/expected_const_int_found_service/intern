@@ -1,0 +1,7 @@
+error: expected integer constant; found service `CONSt`
+   --> test/ui/expected_const_int_found_service.aldrin:12:19
+    |
+ 12 |     f2 @ 2 = [u8; CONSt];
+    |                   ^^^^^ integer constant expected here
+    |
+    = help: did you mean `CONST`?
