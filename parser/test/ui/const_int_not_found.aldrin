@@ -1,0 +1,10 @@
+import const_int_not_found_import;
+
+const FOUND = u8(1);
+
+struct Foo {
+    f1 @ 1 = [u8; FOUND];
+    f2 @ 2 = [u8; FOUNT];
+    f3 @ 3 = [u8; const_int_not_found_import::FOUND];
+    f4 @ 4 = [u8; const_int_not_found_import::FOUNT];
+}

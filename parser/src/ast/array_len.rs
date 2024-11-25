@@ -1,4 +1,5 @@
 use super::{LitPosInt, NamedRef};
+use crate::error::ConstIntNotFound;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -54,7 +55,12 @@ impl ArrayLenValue {
     fn validate(&self, validate: &mut Validate) {
         match self {
             Self::Literal(_) => {}
-            Self::Ref(ty) => ty.validate(validate),
+
+            Self::Ref(ty) => {
+                ConstIntNotFound::validate(ty, validate);
+
+                ty.validate(validate);
+            }
         }
     }
 }

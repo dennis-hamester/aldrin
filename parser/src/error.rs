@@ -1,3 +1,4 @@
+mod const_int_not_found;
 mod duplicate_definition;
 mod duplicate_enum_variant;
 mod duplicate_enum_variant_id;
@@ -29,6 +30,7 @@ mod type_not_found;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
 use crate::Parsed;
 
+pub use const_int_not_found::ConstIntNotFound;
 pub use duplicate_definition::DuplicateDefinition;
 pub use duplicate_enum_variant::DuplicateEnumVariant;
 pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
@@ -60,6 +62,7 @@ pub use type_not_found::TypeNotFound;
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
+    ConstIntNotFound(ConstIntNotFound),
     DuplicateDefinition(DuplicateDefinition),
     DuplicateEnumVariant(DuplicateEnumVariant),
     DuplicateEnumVariantId(DuplicateEnumVariantId),
@@ -97,6 +100,7 @@ impl Diagnostic for Error {
 
     fn schema_name(&self) -> &str {
         match self {
+            Self::ConstIntNotFound(e) => e.schema_name(),
             Self::DuplicateDefinition(e) => e.schema_name(),
             Self::DuplicateEnumVariant(e) => e.schema_name(),
             Self::DuplicateEnumVariantId(e) => e.schema_name(),
@@ -130,6 +134,7 @@ impl Diagnostic for Error {
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
         match self {
+            Self::ConstIntNotFound(e) => e.format(parsed),
             Self::DuplicateDefinition(e) => e.format(parsed),
             Self::DuplicateEnumVariant(e) => e.format(parsed),
             Self::DuplicateEnumVariantId(e) => e.format(parsed),

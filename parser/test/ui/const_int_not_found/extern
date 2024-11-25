@@ -1,0 +1,7 @@
+error: integer constant `const_int_not_found_import::FOUNT` not found
+  --> test/ui/const_int_not_found.aldrin:9:19
+   |
+ 9 |     f4 @ 4 = [u8; const_int_not_found_import::FOUNT];
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ integer constant used here
+   |
+   = help: did you mean `const_int_not_found_import::FOUND`?

@@ -1,8 +1,10 @@
-use crate::ast::Definition;
+use crate::ast::{ConstValue, Definition};
 use crate::Schema;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::hash::Hash;
+
+const THRESHOLD: f64 = 0.8;
 
 const BUILTIN_TYPES: &[&str] = &[
     "bool",
@@ -31,7 +33,7 @@ where
         .map(|s| (s, strsim::jaro_winkler(s, value)))
         .max_by(|s1, s2| s1.1.partial_cmp(&s2.1).unwrap_or(Ordering::Equal))
     {
-        if score > 0.8 {
+        if score > THRESHOLD {
             return Some(candidate);
         }
     }
@@ -41,7 +43,7 @@ where
 
 pub fn did_you_mean_type<'a>(
     schema: &'a Schema,
-    type_name: &str,
+    name: &str,
     with_builtins: bool,
 ) -> Option<&'a str> {
     let candidates = schema.definitions().iter().filter_map(|d| match d {
@@ -51,10 +53,33 @@ pub fn did_you_mean_type<'a>(
     });
 
     if with_builtins {
-        did_you_mean(candidates.chain(BUILTIN_TYPES.iter().copied()), type_name)
+        did_you_mean(candidates.chain(BUILTIN_TYPES.iter().copied()), name)
     } else {
-        did_you_mean(candidates, type_name)
+        did_you_mean(candidates, name)
     }
+}
+
+pub fn did_you_mean_const_int<'a>(schema: &'a Schema, name: &str) -> Option<&'a str> {
+    let candidates = schema
+        .definitions()
+        .iter()
+        .filter_map(Definition::as_const)
+        .filter(|const_def| {
+            matches!(
+                const_def.value(),
+                ConstValue::U8(_)
+                    | ConstValue::I8(_)
+                    | ConstValue::U16(_)
+                    | ConstValue::I16(_)
+                    | ConstValue::U32(_)
+                    | ConstValue::I32(_)
+                    | ConstValue::U64(_)
+                    | ConstValue::I64(_)
+            )
+        })
+        .map(|d| d.name().value());
+
+    did_you_mean(candidates, name)
 }
 
 pub fn find_duplicates<I, KFN, K, DFN>(iter: I, mut key_fn: KFN, mut dup_fn: DFN)

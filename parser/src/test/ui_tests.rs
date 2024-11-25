@@ -1,3 +1,4 @@
+ui_test!(const_int_not_found);
 ui_test!(error_empty_enum);
 ui_test!(expected_type_found_const);
 ui_test!(expected_type_found_service);
