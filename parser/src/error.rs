@@ -10,6 +10,7 @@ mod duplicate_struct_field;
 mod duplicate_struct_field_id;
 mod empty_enum;
 mod expected_const_int_found_service;
+mod expected_const_int_found_string;
 mod expected_const_int_found_type;
 mod expected_type_found_const;
 mod expected_type_found_service;
@@ -45,6 +46,7 @@ pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
 pub use empty_enum::EmptyEnum;
 pub use expected_const_int_found_service::ExpectedConstIntFoundService;
+pub use expected_const_int_found_string::ExpectedConstIntFoundString;
 pub use expected_const_int_found_type::ExpectedConstIntFoundType;
 pub use expected_type_found_const::ExpectedTypeFoundConst;
 pub use expected_type_found_service::ExpectedTypeFoundService;
@@ -80,6 +82,7 @@ pub enum Error {
     DuplicateStructFieldId(DuplicateStructFieldId),
     EmptyEnum(EmptyEnum),
     ExpectedConstIntFoundService(ExpectedConstIntFoundService),
+    ExpectedConstIntFoundString(ExpectedConstIntFoundString),
     ExpectedConstIntFoundType(ExpectedConstIntFoundType),
     ExpectedTypeFoundConst(ExpectedTypeFoundConst),
     ExpectedTypeFoundService(ExpectedTypeFoundService),
@@ -121,6 +124,7 @@ impl Diagnostic for Error {
             Self::DuplicateStructFieldId(e) => e.schema_name(),
             Self::EmptyEnum(e) => e.schema_name(),
             Self::ExpectedConstIntFoundService(e) => e.schema_name(),
+            Self::ExpectedConstIntFoundString(e) => e.schema_name(),
             Self::ExpectedConstIntFoundType(e) => e.schema_name(),
             Self::ExpectedTypeFoundConst(e) => e.schema_name(),
             Self::ExpectedTypeFoundService(e) => e.schema_name(),
@@ -158,6 +162,7 @@ impl Diagnostic for Error {
             Self::DuplicateStructFieldId(e) => e.format(parsed),
             Self::EmptyEnum(e) => e.format(parsed),
             Self::ExpectedConstIntFoundService(e) => e.format(parsed),
+            Self::ExpectedConstIntFoundString(e) => e.format(parsed),
             Self::ExpectedConstIntFoundType(e) => e.format(parsed),
             Self::ExpectedTypeFoundConst(e) => e.format(parsed),
             Self::ExpectedTypeFoundService(e) => e.format(parsed),

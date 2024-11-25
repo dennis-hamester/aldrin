@@ -1,0 +1,7 @@
+error: expected integer constant; found string constant `CONST_2`
+  --> test/ui/expected_const_int_found_string.aldrin:8:19
+   |
+ 8 |     f2 @ 2 = [u8; CONST_2];
+   |                   ^^^^^^^ integer constant expected here
+   |
+   = help: did you mean `CONST_1`?

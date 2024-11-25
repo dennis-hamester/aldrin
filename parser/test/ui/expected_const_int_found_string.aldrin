@@ -1,0 +1,11 @@
+import expected_const_int_found_string_import;
+
+const CONST_1 = u8(1);
+const CONST_2 = string("foo");
+
+struct Foo {
+    f1 @ 1 = [u8; CONST_1];
+    f2 @ 2 = [u8; CONST_2];
+    f3 @ 3 = [u8; expected_const_int_found_string_import::CONST_1];
+    f4 @ 4 = [u8; expected_const_int_found_string_import::CONST_2];
+}
