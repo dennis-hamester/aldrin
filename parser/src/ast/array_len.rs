@@ -1,5 +1,7 @@
 use super::{LitPosInt, NamedRef};
-use crate::error::{ConstIntNotFound, ExpectedConstIntFoundService, ExpectedConstIntFoundType};
+use crate::error::{
+    ConstIntNotFound, ExpectedConstIntFoundService, ExpectedConstIntFoundType, InvalidArrayLen,
+};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -25,6 +27,8 @@ impl ArrayLen {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        InvalidArrayLen::validate(self, validate);
+
         self.value.validate(validate);
     }
 

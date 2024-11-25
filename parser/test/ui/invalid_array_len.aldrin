@@ -1,0 +1,13 @@
+import invalid_array_len_import;
+
+const BAD1 = u8(0);
+const BAD2 = u64(4294967296);
+
+struct Foobar {
+    f1 @ 1 = [u8; 0];
+    f2 @ 2 = [u8; 4294967296];
+    f3 @ 3 = [u8; BAD1];
+    f4 @ 4 = [u8; BAD2];
+    f5 @ 5 = [u8; invalid_array_len_import::BAD1];
+    f6 @ 6 = [u8; invalid_array_len_import::BAD2];
+}

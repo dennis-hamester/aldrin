@@ -14,6 +14,7 @@ mod expected_const_int_found_type;
 mod expected_type_found_const;
 mod expected_type_found_service;
 mod import_not_found;
+mod invalid_array_len;
 mod invalid_const_value;
 mod invalid_enum_variant_id;
 mod invalid_event_id;
@@ -48,6 +49,7 @@ pub use expected_const_int_found_type::ExpectedConstIntFoundType;
 pub use expected_type_found_const::ExpectedTypeFoundConst;
 pub use expected_type_found_service::ExpectedTypeFoundService;
 pub use import_not_found::ImportNotFound;
+pub use invalid_array_len::InvalidArrayLen;
 pub use invalid_const_value::InvalidConstValue;
 pub use invalid_enum_variant_id::InvalidEnumVariantId;
 pub use invalid_event_id::InvalidEventId;
@@ -82,6 +84,7 @@ pub enum Error {
     ExpectedTypeFoundConst(ExpectedTypeFoundConst),
     ExpectedTypeFoundService(ExpectedTypeFoundService),
     ImportNotFound(ImportNotFound),
+    InvalidArrayLen(InvalidArrayLen),
     InvalidConstValue(InvalidConstValue),
     InvalidEnumVariantId(InvalidEnumVariantId),
     InvalidEventId(InvalidEventId),
@@ -122,6 +125,7 @@ impl Diagnostic for Error {
             Self::ExpectedTypeFoundConst(e) => e.schema_name(),
             Self::ExpectedTypeFoundService(e) => e.schema_name(),
             Self::ImportNotFound(e) => e.schema_name(),
+            Self::InvalidArrayLen(e) => e.schema_name(),
             Self::InvalidConstValue(e) => e.schema_name(),
             Self::InvalidEnumVariantId(e) => e.schema_name(),
             Self::InvalidEventId(e) => e.schema_name(),
@@ -158,6 +162,7 @@ impl Diagnostic for Error {
             Self::ExpectedTypeFoundConst(e) => e.format(parsed),
             Self::ExpectedTypeFoundService(e) => e.format(parsed),
             Self::ImportNotFound(e) => e.format(parsed),
+            Self::InvalidArrayLen(e) => e.format(parsed),
             Self::InvalidConstValue(e) => e.format(parsed),
             Self::InvalidEnumVariantId(e) => e.format(parsed),
             Self::InvalidEventId(e) => e.format(parsed),

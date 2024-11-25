@@ -1,0 +1,12 @@
+error: invalid array length 0
+   --> test/ui/invalid_array_len.aldrin:11:19
+    |
+ 11 |     f5 @ 5 = [u8; invalid_array_len_import::BAD1];
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ array length used here
+    |
+   ::: test/ui/invalid_array_len_import.aldrin:1:7
+    |
+  1 | const BAD1 = u8(0);
+    |       ---- constant defined here
+    |
+    = help: arrays must have a length in the range from 1 to 4294967295

@@ -1,0 +1,2 @@
+const BAD1 = u8(0);
+const BAD2 = u64(4294967296);
