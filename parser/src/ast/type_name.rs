@@ -1,5 +1,5 @@
 use super::{KeyTypeName, NamedRef};
-use crate::error::ExpectedTypeFoundService;
+use crate::error::{ExpectedTypeFoundConst, ExpectedTypeFoundService};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -197,6 +197,7 @@ impl TypeNameKind {
 
             Self::Ref(ty) => {
                 ExpectedTypeFoundService::validate(ty, validate);
+                ExpectedTypeFoundConst::validate(ty, validate);
                 ty.validate(validate);
             }
 

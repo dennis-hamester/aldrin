@@ -1,0 +1,15 @@
+import expected_type_found_const_import;
+
+const TypE = u8(0);
+
+struct Type {
+}
+
+const Type = u8(0);
+
+struct Foo {
+    f1 @ 1 = TypE;
+    f2 @ 2 = expected_type_found_const_import::TypE;
+    f3 @ 3 = Type;
+    f4 @ 4 = expected_type_found_const_import::Type;
+}

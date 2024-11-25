@@ -1,0 +1,6 @@
+const TypE = u8(0);
+
+struct Type {
+}
+
+const Type = u8(0);

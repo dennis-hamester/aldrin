@@ -1,0 +1,7 @@
+error: expected type; found constant `TypE`
+   --> test/ui/expected_type_found_const.aldrin:11:14
+    |
+ 11 |     f1 @ 1 = TypE;
+    |              ^^^^ type expected here
+    |
+    = help: did you mean `Type`?

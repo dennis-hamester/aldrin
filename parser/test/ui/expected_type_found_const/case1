@@ -1,0 +1,7 @@
+warning: constant `TypE` should have an upper-case name
+  --> test/ui/expected_type_found_const.aldrin:3:7
+   |
+ 3 | const TypE = u8(0);
+   |       ^^^^
+   |
+   = help: consider renaming constant `TypE` to `TYP_E`

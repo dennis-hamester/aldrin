@@ -1,0 +1,11 @@
+error: duplicate definition `Type`
+  --> test/ui/expected_type_found_const.aldrin:8:7
+   |
+ 8 | const Type = u8(0);
+   |       ^^^^ duplicate definition
+   |
+  ::: test/ui/expected_type_found_const.aldrin:5:8
+   |
+ 5 | struct Type {
+   |        ---- first defined here
+   |
