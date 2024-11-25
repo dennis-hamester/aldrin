@@ -1,4 +1,5 @@
 use super::{KeyTypeName, NamedRef};
+use crate::error::ExpectedTypeFoundService;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -194,7 +195,10 @@ impl TypeNameKind {
                 err.validate(validate);
             }
 
-            Self::Ref(ty) => ty.validate(validate),
+            Self::Ref(ty) => {
+                ExpectedTypeFoundService::validate(ty, validate);
+                ty.validate(validate);
+            }
 
             Self::Bool
             | Self::U8

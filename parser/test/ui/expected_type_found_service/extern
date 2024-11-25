@@ -1,0 +1,7 @@
+error: expected type; found service `TypE`
+   --> test/ui/expected_type_found_service.aldrin:18:14
+    |
+ 18 |     f2 @ 2 = expected_type_found_service_import::TypE;
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type expected here
+    |
+    = help: did you mean `expected_type_found_service_import::Type`?

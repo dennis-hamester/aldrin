@@ -1,0 +1,12 @@
+service TypE {
+    uuid = 1e83754f-2f65-4687-920c-7f85c4108bda;
+    version = 1;
+}
+
+struct Type {
+}
+
+service Type {
+    uuid = b44b8c93-b725-4661-ac2f-cccff5eac76c;
+    version = 1;
+}

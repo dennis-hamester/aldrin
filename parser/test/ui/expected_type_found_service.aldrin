@@ -1,0 +1,21 @@
+import expected_type_found_service_import;
+
+service TypE {
+    uuid = 306848e3-292d-4214-8d58-5df05cf3da34;
+    version = 1;
+}
+
+struct Type {
+}
+
+service Type {
+    uuid = 8ec8de0d-9052-4f1e-ba26-42cb6cdb0285;
+    version = 1;
+}
+
+struct Foo {
+    f1 @ 1 = TypE;
+    f2 @ 2 = expected_type_found_service_import::TypE;
+    f3 @ 3 = Type;
+    f4 @ 4 = expected_type_found_service_import::Type;
+}

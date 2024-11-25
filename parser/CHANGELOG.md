@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `Definition::as_{struct,enum,service,const}()` methods.
+- Add error type `ExpectedTypeFoundService`.
+
+### Fixed
+
+- Fixed allowing to reference services where types are expected.
 
 ### Changed
 
