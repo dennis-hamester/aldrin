@@ -1,5 +1,5 @@
-use super::{KeyTypeName, NamedRef};
-use crate::error::{ExpectedTypeFoundConst, ExpectedTypeFoundService};
+use super::{ArrayLen, KeyTypeName, NamedRef};
+use crate::error::{ExpectedTypeFoundConst, ExpectedTypeFoundService, TypeNotFound};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -66,6 +66,7 @@ pub enum TypeNameKind {
     Lifetime,
     Unit,
     Result(Box<TypeName>, Box<TypeName>),
+    Array(Box<TypeName>, ArrayLen),
     Ref(NamedRef),
 }
 
@@ -175,6 +176,19 @@ impl TypeNameKind {
                 )
             }
 
+            Rule::array_type => {
+                let mut pairs = pair.into_inner();
+                pairs.next().unwrap(); // Skip [.
+                let type_pair = pairs.next().unwrap();
+                pairs.next().unwrap(); // Skip ;.
+                let len_pair = pairs.next().unwrap();
+
+                Self::Array(
+                    Box::new(TypeName::parse(type_pair)),
+                    ArrayLen::parse(len_pair),
+                )
+            }
+
             Rule::named_ref => Self::Ref(NamedRef::parse(pair)),
 
             _ => unreachable!(),
@@ -195,7 +209,13 @@ impl TypeNameKind {
                 err.validate(validate);
             }
 
+            Self::Array(ty, len) => {
+                ty.validate(validate);
+                len.validate(validate);
+            }
+
             Self::Ref(ty) => {
+                TypeNotFound::validate(ty, validate);
                 ExpectedTypeFoundService::validate(ty, validate);
                 ExpectedTypeFoundConst::validate(ty, validate);
                 ty.validate(validate);

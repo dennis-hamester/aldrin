@@ -1,8 +1,8 @@
 use super::Warning;
 use crate::ast::{
-    Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart, ImportStmt, InlineEnum,
-    InlineStruct, NamedRef, NamedRefKind, SchemaName, ServiceDef, ServiceItem, StructDef,
-    StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    ArrayLen, ArrayLenValue, Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart,
+    ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, SchemaName, ServiceDef,
+    ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
@@ -144,6 +144,10 @@ impl UnusedImport {
             | TypeNameKind::Sender(ty)
             | TypeNameKind::Receiver(ty) => Self::visit_type_name(ty, schema_name),
 
+            TypeNameKind::Array(ty, len) => {
+                Self::visit_type_name(ty, schema_name) || Self::visit_array_len(len, schema_name)
+            }
+
             TypeNameKind::Result(ok, err) => {
                 Self::visit_type_name(ok, schema_name) || Self::visit_type_name(err, schema_name)
             }
@@ -177,6 +181,13 @@ impl UnusedImport {
         match ty.kind() {
             NamedRefKind::Intern(_) => false,
             NamedRefKind::Extern(schema, _) => schema.value() == schema_name.value(),
+        }
+    }
+
+    fn visit_array_len(len: &ArrayLen, schema_name: &SchemaName) -> bool {
+        match len.value() {
+            ArrayLenValue::Literal(_) => false,
+            ArrayLenValue::Ref(ty) => Self::visit_named_ref(ty, schema_name),
         }
     }
 

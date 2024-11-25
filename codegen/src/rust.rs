@@ -694,6 +694,7 @@ impl RustGenerator<'_> {
                 format!("{RESULT}<{}, {}>", self.type_name(ok), self.type_name(err))
             }
 
+            ast::TypeNameKind::Array(_, _) => todo!(),
             ast::TypeNameKind::Ref(ty) => self.named_ref_name(ty),
         }
     }

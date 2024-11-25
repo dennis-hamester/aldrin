@@ -1,5 +1,5 @@
 use super::{Ident, SchemaName};
-use crate::error::{MissingImport, TypeNotFound};
+use crate::error::MissingImport;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -25,8 +25,6 @@ impl NamedRef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        TypeNotFound::validate(self, validate);
-
         self.kind.validate(validate);
     }
 

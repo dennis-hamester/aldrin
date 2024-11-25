@@ -1,3 +1,4 @@
+mod array_len;
 mod attribute;
 mod const_def;
 mod definition;
@@ -15,6 +16,7 @@ mod struct_def;
 mod type_name;
 mod type_name_or_inline;
 
+pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
 pub use definition::Definition;
