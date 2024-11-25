@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The `TypeNameKind` variants `Intern` and `Extern` have been refactored into a new type
   `NamedRef`. This type also provides a span for the entire name, not just its components.
+- The error type `ExternTypeNotFound` has been merged into `TypeNotFound`.
 
 ## [0.9.0] - 2024-11-19
 

@@ -1,5 +1,5 @@
 use super::{Ident, SchemaName};
-use crate::error::{ExternTypeNotFound, MissingImport, TypeNotFound};
+use crate::error::{MissingImport, TypeNotFound};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -25,6 +25,8 @@ impl NamedRef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        TypeNotFound::validate(self, validate);
+
         self.kind.validate(validate);
     }
 
@@ -72,13 +74,10 @@ impl NamedRefKind {
 
     fn validate(&self, validate: &mut Validate) {
         match self {
-            Self::Intern(ty) => {
-                TypeNotFound::validate(ty, validate);
-            }
+            Self::Intern(_) => {}
 
-            Self::Extern(schema, ty) => {
+            Self::Extern(schema, _) => {
                 MissingImport::validate(schema, validate);
-                ExternTypeNotFound::validate(schema, ty, validate);
             }
         }
     }

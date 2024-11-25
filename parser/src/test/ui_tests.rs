@@ -5,3 +5,4 @@ ui_test!(invalid_function_id);
 ui_test!(recursive1);
 ui_test!(recursive2_a);
 ui_test!(sender_receiver_imports);
+ui_test!(type_not_found);

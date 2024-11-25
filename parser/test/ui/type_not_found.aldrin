@@ -1,0 +1,9 @@
+import type_not_found_import;
+
+struct Found {
+}
+
+struct Foobar {
+    f1 @ 1 = NotFound;
+    f2 @ 2 = type_not_found_import::NotFound;
+}
