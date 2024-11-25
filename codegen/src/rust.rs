@@ -694,8 +694,14 @@ impl RustGenerator<'_> {
                 format!("{RESULT}<{}, {}>", self.type_name(ok), self.type_name(err))
             }
 
-            ast::TypeNameKind::Extern(m, ty) => format!("super::r#{}::r#{}", m.value(), ty.value()),
-            ast::TypeNameKind::Intern(ty) => format!("r#{}", ty.value().to_owned()),
+            ast::TypeNameKind::Ref(ty) => self.named_ref_name(ty),
+        }
+    }
+
+    fn named_ref_name(&self, ty: &ast::NamedRef) -> String {
+        match ty.kind() {
+            ast::NamedRefKind::Intern(ty) => format!("r#{}", ty.value().to_owned()),
+            ast::NamedRefKind::Extern(m, ty) => format!("super::r#{}::r#{}", m.value(), ty.value()),
         }
     }
 

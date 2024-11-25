@@ -1,5 +1,7 @@
 use super::Error;
-use crate::ast::{Definition, EnumDef, Ident, StructDef, TypeName, TypeNameKind};
+use crate::ast::{
+    Definition, EnumDef, Ident, NamedRef, NamedRefKind, StructDef, TypeName, TypeNameKind,
+};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -214,16 +216,21 @@ impl<'a> Context<'a> {
         self.visit_external_type(self.current_schema, ident)
     }
 
+    fn visit_named_ref(self, named_ref: &NamedRef) -> bool {
+        match named_ref.kind() {
+            NamedRefKind::Intern(ident) => self.visit_internal_type(ident),
+
+            NamedRefKind::Extern(schema_name, ident) => {
+                self.visit_external_type(schema_name.value(), ident)
+            }
+        }
+    }
+
     fn visit_type_name(self, type_name: &TypeName) -> bool {
         match type_name.kind() {
             TypeNameKind::Option(type_name) => self.visit_type_name(type_name),
             TypeNameKind::Result(ok, err) => self.visit_type_name(ok) || self.visit_type_name(err),
-
-            TypeNameKind::Extern(schema_name, ident) => {
-                self.visit_external_type(schema_name.value(), ident)
-            }
-
-            TypeNameKind::Intern(ident) => self.visit_internal_type(ident),
+            TypeNameKind::Ref(named_ref) => self.visit_named_ref(named_ref),
 
             TypeNameKind::Bool
             | TypeNameKind::U8

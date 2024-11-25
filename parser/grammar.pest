@@ -76,6 +76,9 @@ kw_result = @{ "result" }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
+external_ref = { schema_name ~ tok_scope ~ ident }
+named_ref = { external_ref | ident }
+
 option_type = { kw_option ~ tok_ang_open ~ type_name ~ tok_ang_close }
 box_type = { kw_box ~ tok_ang_open ~ type_name ~ tok_ang_close }
 vec_type = { kw_vec ~ tok_ang_open ~ type_name ~ tok_ang_close }
@@ -83,7 +86,6 @@ map_type = { kw_map ~ tok_ang_open ~ key_type_name ~ tok_arrow ~ type_name ~ tok
 set_type = { kw_set ~ tok_ang_open ~ key_type_name ~ tok_ang_close }
 sender_type = { kw_sender ~ tok_ang_open ~ type_name ~ tok_ang_close }
 receiver_type = { kw_receiver ~ tok_ang_open ~ type_name ~ tok_ang_close }
-external_type_name = { schema_name ~ tok_scope ~ ident }
 result_type = { kw_result ~ tok_ang_open ~ type_name ~ tok_comma ~ type_name ~ tok_ang_close }
 
 key_type_name = {
@@ -98,6 +100,7 @@ key_type_name = {
     | kw_string
     | kw_uuid
 }
+
 type_name = {
     kw_bool
     | kw_u8
@@ -126,8 +129,7 @@ type_name = {
     | kw_lifetime
     | kw_unit
     | result_type
-    | external_type_name
-    | ident
+    | named_ref
 }
 
 type_name_or_inline = { (type_name ~ tok_term) | struct_inline | enum_inline }

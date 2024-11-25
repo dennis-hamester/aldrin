@@ -1,8 +1,8 @@
 use super::Warning;
 use crate::ast::{
     Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart, ImportStmt, InlineEnum,
-    InlineStruct, SchemaName, ServiceDef, ServiceItem, StructDef, StructField, TypeName,
-    TypeNameKind, TypeNameOrInline,
+    InlineStruct, NamedRef, NamedRefKind, SchemaName, ServiceDef, ServiceItem, StructDef,
+    StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
@@ -148,7 +148,7 @@ impl UnusedImport {
                 Self::visit_type_name(ok, schema_name) || Self::visit_type_name(err, schema_name)
             }
 
-            TypeNameKind::Extern(schema, _) => schema.value() == schema_name.value(),
+            TypeNameKind::Ref(ty) => Self::visit_named_ref(ty, schema_name),
 
             TypeNameKind::Bool
             | TypeNameKind::U8
@@ -169,8 +169,14 @@ impl UnusedImport {
             | TypeNameKind::Bytes
             | TypeNameKind::Set(_)
             | TypeNameKind::Lifetime
-            | TypeNameKind::Unit
-            | TypeNameKind::Intern(_) => false,
+            | TypeNameKind::Unit => false,
+        }
+    }
+
+    fn visit_named_ref(ty: &NamedRef, schema_name: &SchemaName) -> bool {
+        match ty.kind() {
+            NamedRefKind::Intern(_) => false,
+            NamedRefKind::Extern(schema, _) => schema.value() == schema_name.value(),
         }
     }
 

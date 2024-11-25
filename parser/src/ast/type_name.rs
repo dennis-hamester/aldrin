@@ -1,5 +1,4 @@
-use super::{Ident, KeyTypeName, SchemaName};
-use crate::error::{ExternTypeNotFound, MissingImport, TypeNotFound};
+use super::{KeyTypeName, NamedRef};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -66,8 +65,7 @@ pub enum TypeNameKind {
     Lifetime,
     Unit,
     Result(Box<TypeName>, Box<TypeName>),
-    Extern(SchemaName, Ident),
-    Intern(Ident),
+    Ref(NamedRef),
 }
 
 impl TypeNameKind {
@@ -176,17 +174,7 @@ impl TypeNameKind {
                 )
             }
 
-            Rule::external_type_name => {
-                let mut pairs = pair.into_inner();
-                let pair = pairs.next().unwrap();
-                let schema_name = SchemaName::parse(pair);
-                pairs.next().unwrap(); // Skip ::.
-                let ident = Ident::parse(pairs.next().unwrap());
-
-                Self::Extern(schema_name, ident)
-            }
-
-            Rule::ident => Self::Intern(Ident::parse(pair)),
+            Rule::named_ref => Self::Ref(NamedRef::parse(pair)),
 
             _ => unreachable!(),
         }
@@ -206,14 +194,7 @@ impl TypeNameKind {
                 err.validate(validate);
             }
 
-            Self::Extern(schema, ty) => {
-                MissingImport::validate(schema, validate);
-                ExternTypeNotFound::validate(schema, ty, validate);
-            }
-
-            Self::Intern(ty) => {
-                TypeNotFound::validate(ty, validate);
-            }
+            Self::Ref(ty) => ty.validate(validate),
 
             Self::Bool
             | Self::U8
