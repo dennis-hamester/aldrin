@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `Definition::as_{struct,enum,service,const}()` methods.
+
 ### Changed
 
 - The `TypeNameKind` variants `Intern` and `Extern` have been refactored into a new type

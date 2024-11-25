@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{Definition, Ident, LitUuid};
+use crate::ast::{Ident, LitUuid};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::issues::Issues;
 use crate::{Parsed, Schema};
@@ -21,9 +21,8 @@ impl DuplicateServiceUuid {
 
         for schema in schemas {
             for def in schema.definitions() {
-                let svc = match def {
-                    Definition::Service(svc) => svc,
-                    _ => continue,
+                let Some(svc) = def.as_service() else {
+                    continue;
                 };
 
                 uuids

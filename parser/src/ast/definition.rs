@@ -53,4 +53,32 @@ impl Definition {
             Self::Const(d) => d.name(),
         }
     }
+
+    pub fn as_struct(&self) -> Option<&StructDef> {
+        match self {
+            Self::Struct(d) => Some(d),
+            _ => None,
+        }
+    }
+
+    pub fn as_enum(&self) -> Option<&EnumDef> {
+        match self {
+            Self::Enum(d) => Some(d),
+            _ => None,
+        }
+    }
+
+    pub fn as_service(&self) -> Option<&ServiceDef> {
+        match self {
+            Self::Service(d) => Some(d),
+            _ => None,
+        }
+    }
+
+    pub fn as_const(&self) -> Option<&ConstDef> {
+        match self {
+            Self::Const(d) => Some(d),
+            _ => None,
+        }
+    }
 }
