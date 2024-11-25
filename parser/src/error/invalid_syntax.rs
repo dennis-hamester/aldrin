@@ -189,6 +189,7 @@ impl Expected {
             Expected::Keyword("value"),
             Expected::Keyword("vec"),
             Expected::SchemaName,
+            Expected::Token("["),
         ];
 
         const INLINE: &[Expected] = &[Expected::Keyword("enum"), Expected::Keyword("struct")];
@@ -205,6 +206,9 @@ impl Expected {
             Expected::Keyword("u8"),
             Expected::Keyword("uuid"),
         ];
+
+        const ARRAY_LEN: &[Expected] =
+            &[Expected::Ident, Expected::LitPosInt, Expected::SchemaName];
 
         #[allow(clippy::use_self)]
         let add: &[&[Self]] = match rule {
@@ -247,6 +251,7 @@ impl Expected {
             Rule::tok_term => &[&[Expected::Token(";")]],
             Rule::type_name => &[TYPE_NAME],
             Rule::type_name_or_inline => &[TYPE_NAME, INLINE],
+            Rule::array_len => &[ARRAY_LEN],
             _ => return,
         };
 
