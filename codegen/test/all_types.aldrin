@@ -272,6 +272,18 @@ service Service {
         err = result<unit, unit>;
     }
 
+    fn f46 @ 46 {
+        args = Struct;
+        ok = Struct;
+        err = Struct;
+    }
+
+    fn f47 @ 47 {
+        args = Enum;
+        ok = Enum;
+        err = Enum;
+    }
+
     event e1 @ 1 = bool;
     event e2 @ 2 = u8;
     event e3 @ 3 = i8;
@@ -317,6 +329,8 @@ service Service {
     event e43 @ 43 = lifetime;
     event e44 @ 44 = unit;
     event e45 @ 45 = result<unit, unit>;
+    event e46 @ 46 = Struct;
+    event e47 @ 47 = Enum;
 }
 
 struct Struct {
@@ -365,6 +379,8 @@ struct Struct {
     f43 @ 43 = lifetime;
     f44 @ 44 = unit;
     f45 @ 45 = result<unit, unit>;
+    f46 @ 46 = box<Struct>;
+    f47 @ 47 = box<Enum>;
 }
 
 enum Enum {
@@ -413,4 +429,6 @@ enum Enum {
     V43 @ 43 = lifetime;
     V44 @ 44 = unit;
     V45 @ 45 = result<unit, unit>;
+    V46 @ 46 = box<Struct>;
+    V47 @ 47 = box<Enum>;
 }
