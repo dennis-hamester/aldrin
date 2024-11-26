@@ -694,8 +694,24 @@ impl RustGenerator<'_> {
                 format!("{RESULT}<{}, {}>", self.type_name(ok), self.type_name(err))
             }
 
-            ast::TypeNameKind::Array(_, _) => todo!(),
+            ast::TypeNameKind::Array(ty, len) => self.array_name(ty, len),
             ast::TypeNameKind::Ref(ty) => self.named_ref_name(ty),
+        }
+    }
+
+    fn array_name(&self, ty: &ast::TypeName, len: &ast::ArrayLen) -> String {
+        match len.value() {
+            ast::ArrayLenValue::Literal(len) => {
+                format!("[{}; {}usize]", self.type_name(ty), len.value())
+            }
+
+            ast::ArrayLenValue::Ref(named_ref) => {
+                format!(
+                    "[{}; {} as usize]",
+                    self.type_name(ty),
+                    self.named_ref_name(named_ref)
+                )
+            }
         }
     }
 
