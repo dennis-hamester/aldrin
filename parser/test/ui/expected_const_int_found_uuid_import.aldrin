@@ -1,0 +1,2 @@
+const CONST_1 = u8(1);
+const CONST_2 = uuid(d3779a5d-35c4-4ff5-90a8-adaac8713155);

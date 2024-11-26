@@ -12,6 +12,7 @@ mod empty_enum;
 mod expected_const_int_found_service;
 mod expected_const_int_found_string;
 mod expected_const_int_found_type;
+mod expected_const_int_found_uuid;
 mod expected_type_found_const;
 mod expected_type_found_service;
 mod import_not_found;
@@ -48,6 +49,7 @@ pub use empty_enum::EmptyEnum;
 pub use expected_const_int_found_service::ExpectedConstIntFoundService;
 pub use expected_const_int_found_string::ExpectedConstIntFoundString;
 pub use expected_const_int_found_type::ExpectedConstIntFoundType;
+pub use expected_const_int_found_uuid::ExpectedConstIntFoundUuid;
 pub use expected_type_found_const::ExpectedTypeFoundConst;
 pub use expected_type_found_service::ExpectedTypeFoundService;
 pub use import_not_found::ImportNotFound;
@@ -84,6 +86,7 @@ pub enum Error {
     ExpectedConstIntFoundService(ExpectedConstIntFoundService),
     ExpectedConstIntFoundString(ExpectedConstIntFoundString),
     ExpectedConstIntFoundType(ExpectedConstIntFoundType),
+    ExpectedConstIntFoundUuid(ExpectedConstIntFoundUuid),
     ExpectedTypeFoundConst(ExpectedTypeFoundConst),
     ExpectedTypeFoundService(ExpectedTypeFoundService),
     ImportNotFound(ImportNotFound),
@@ -126,6 +129,7 @@ impl Diagnostic for Error {
             Self::ExpectedConstIntFoundService(e) => e.schema_name(),
             Self::ExpectedConstIntFoundString(e) => e.schema_name(),
             Self::ExpectedConstIntFoundType(e) => e.schema_name(),
+            Self::ExpectedConstIntFoundUuid(e) => e.schema_name(),
             Self::ExpectedTypeFoundConst(e) => e.schema_name(),
             Self::ExpectedTypeFoundService(e) => e.schema_name(),
             Self::ImportNotFound(e) => e.schema_name(),
@@ -164,6 +168,7 @@ impl Diagnostic for Error {
             Self::ExpectedConstIntFoundService(e) => e.format(parsed),
             Self::ExpectedConstIntFoundString(e) => e.format(parsed),
             Self::ExpectedConstIntFoundType(e) => e.format(parsed),
+            Self::ExpectedConstIntFoundUuid(e) => e.format(parsed),
             Self::ExpectedTypeFoundConst(e) => e.format(parsed),
             Self::ExpectedTypeFoundService(e) => e.format(parsed),
             Self::ImportNotFound(e) => e.format(parsed),

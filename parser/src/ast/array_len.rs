@@ -1,7 +1,7 @@
 use super::{LitPosInt, NamedRef};
 use crate::error::{
     ConstIntNotFound, ExpectedConstIntFoundService, ExpectedConstIntFoundString,
-    ExpectedConstIntFoundType, InvalidArrayLen,
+    ExpectedConstIntFoundType, ExpectedConstIntFoundUuid, InvalidArrayLen,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -66,6 +66,7 @@ impl ArrayLenValue {
                 ExpectedConstIntFoundService::validate(ty, validate);
                 ExpectedConstIntFoundString::validate(ty, validate);
                 ExpectedConstIntFoundType::validate(ty, validate);
+                ExpectedConstIntFoundUuid::validate(ty, validate);
 
                 ty.validate(validate);
             }

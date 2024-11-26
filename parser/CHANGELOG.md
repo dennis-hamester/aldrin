@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support parsing array types of the form: `[TYPE; LEN]`. The array length can be a positive integer
   literal or a named reference to a constant.
 - Add error types `ConstIntNotFound`, `InvalidArrayLen`, `ExpectedConstIntFoundService`,
-  `ExpectedConstIntFoundType` and `ExpectedConstIntFoundString`.
+  `ExpectedConstIntFoundType`, `ExpectedConstIntFoundString` and `ExpectedConstIntFoundUuid`.
 
 ### Fixed
 

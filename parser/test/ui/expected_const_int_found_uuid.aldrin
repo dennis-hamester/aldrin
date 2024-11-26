@@ -1,0 +1,11 @@
+import expected_const_int_found_uuid_import;
+
+const CONST_1 = u8(1);
+const CONST_2 = uuid(e89d6c79-be00-43a5-8ee4-4adf63d17af8);
+
+struct Foo {
+    f1 @ 1 = [u8; CONST_1];
+    f2 @ 2 = [u8; CONST_2];
+    f3 @ 3 = [u8; expected_const_int_found_uuid_import::CONST_1];
+    f4 @ 4 = [u8; expected_const_int_found_uuid_import::CONST_2];
+}
