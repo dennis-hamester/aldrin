@@ -285,9 +285,13 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
         .send_item(&Chunk::Done(sha256.to_vec().into()))
         .await?;
 
+    let duration = time.elapsed();
+    let mibps = size as f64 / duration.as_secs_f64() / 1024.0 / 1024.0;
+
     println!(
-        "Upload finished in {} milliseconds.",
-        time.elapsed().as_millis()
+        "Upload finished in {} milliseconds ({:.2} MiB/s).",
+        duration.as_millis(),
+        mibps
     );
 
     Ok(())
