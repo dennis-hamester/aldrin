@@ -1,7 +1,7 @@
 [package]
 name = "aldrin-conformance-tester"
 description = "Protocol conformance tester for Aldrin brokers."
-version = "0.9.0"
+version = "0.10.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -22,7 +22,7 @@ clap = { workspace = true }
 colorchoice-clap = { workspace = true }
 
 [dependencies.aldrin-core]
-version = "0.9.0"
+version = "0.10.0"
 path = "../core"
 default-features = false
 features = ["tokio"]
