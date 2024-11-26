@@ -481,6 +481,10 @@ fn print_built_in_type_name(
             print!(">");
         }
 
-        BuiltInType::Array(_) => todo!(),
+        BuiltInType::Array(ty) => {
+            print!("[");
+            print_type_name(ty.elem_type(), introspection, db, full);
+            print!("; {}]", ty.len());
+        }
     }
 }
