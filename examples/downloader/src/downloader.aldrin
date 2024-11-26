@@ -17,5 +17,5 @@ enum Chunk {
     Data @ 1 = bytes;
 
     /// The SHA-256 of the file.
-    Done @ 2 = bytes;
+    Done @ 2 = [u8; 32];
 }

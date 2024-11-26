@@ -281,9 +281,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
     }
 
     let sha256 = sha256.finalize();
-    sender
-        .send_item(&Chunk::Done(sha256.to_vec().into()))
-        .await?;
+    sender.send_item(&Chunk::Done(sha256.into())).await?;
 
     let duration = time.elapsed();
     let mibps = size as f64 / duration.as_secs_f64() / 1024.0 / 1024.0;
