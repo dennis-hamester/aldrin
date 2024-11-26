@@ -1,4 +1,4 @@
-use super::{KeyType, LexicalId, MapType, ResultType};
+use super::{ArrayType, KeyType, LexicalId, MapType, ResultType};
 use crate::error::{DeserializeError, SerializeError};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
@@ -34,6 +34,7 @@ pub enum BuiltInType {
     Lifetime,
     Unit,
     Result(ResultType),
+    Array(ArrayType),
 }
 
 impl BuiltInType {
@@ -68,6 +69,7 @@ impl BuiltInType {
             Self::Lifetime => LexicalId::LIFETIME,
             Self::Unit => LexicalId::UNIT,
             Self::Result(ty) => LexicalId::result(ty.ok(), ty.err()),
+            Self::Array(arr) => LexicalId::array(arr.elem_type(), arr.len()),
         }
     }
 }
@@ -102,6 +104,7 @@ enum BuiltInTypeVariant {
     Lifetime = 24,
     Unit = 25,
     Result = 26,
+    Array = 27,
 }
 
 impl Serialize for BuiltInType {
@@ -134,6 +137,7 @@ impl Serialize for BuiltInType {
             Self::Lifetime => serializer.serialize_enum(BuiltInTypeVariant::Lifetime, &()),
             Self::Unit => serializer.serialize_enum(BuiltInTypeVariant::Unit, &()),
             Self::Result(t) => serializer.serialize_enum(BuiltInTypeVariant::Result, t),
+            Self::Array(t) => serializer.serialize_enum(BuiltInTypeVariant::Array, t),
         }
     }
 }
@@ -170,6 +174,7 @@ impl Deserialize for BuiltInType {
             BuiltInTypeVariant::Lifetime => deserializer.deserialize().map(|()| Self::Lifetime),
             BuiltInTypeVariant::Unit => deserializer.deserialize().map(|()| Self::Unit),
             BuiltInTypeVariant::Result => deserializer.deserialize().map(Self::Result),
+            BuiltInTypeVariant::Array => deserializer.deserialize().map(Self::Array),
         }
     }
 }

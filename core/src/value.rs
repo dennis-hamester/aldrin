@@ -5,8 +5,8 @@ use crate::deserialize_key::DeserializeKey;
 use crate::error::{DeserializeError, SerializeError};
 #[cfg(feature = "introspection")]
 use crate::introspection::{
-    BuiltInType, DynIntrospectable, Introspectable, KeyTypeOf, Layout, LexicalId, MapType,
-    References, ResultType, Struct,
+    ArrayType, BuiltInType, DynIntrospectable, Introspectable, KeyTypeOf, Layout, LexicalId,
+    MapType, References, ResultType, Struct,
 };
 use crate::serialize_key::SerializeKey;
 use crate::value_deserializer::{Deserialize, Deserializer};
@@ -1211,11 +1211,11 @@ impl<T: Serialize, const N: usize> AsSerializeArg for [T; N] {
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
     fn layout() -> Layout {
-        BuiltInType::Vec(T::lexical_id()).into()
+        BuiltInType::Array(ArrayType::new(T::lexical_id(), N as u32)).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::vec(T::lexical_id())
+        LexicalId::array(T::lexical_id(), N as u32)
     }
 
     fn add_references(references: &mut References) {

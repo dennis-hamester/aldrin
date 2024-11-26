@@ -480,5 +480,7 @@ fn print_built_in_type_name(
             print_type_name(ty.err(), introspection, db, full);
             print!(">");
         }
+
+        BuiltInType::Array(_) => todo!(),
     }
 }

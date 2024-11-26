@@ -44,6 +44,7 @@ impl LexicalId {
     pub const NAMESPACE_SENDER: Uuid = uuid!("052ac1dd-c0d4-4f4c-9b7a-78448875a21f");
     pub const NAMESPACE_RECEIVER: Uuid = uuid!("d697238d-56e0-4132-980e-baf1a64c9bfd");
     pub const NAMESPACE_RESULT: Uuid = uuid!("aef81d6c-35cc-43f7-99f3-a17c0eada1f4");
+    pub const NAMESPACE_ARRAY: Uuid = uuid!("770f9cf7-be15-454e-9fea-bb452fa813ed");
     pub const NAMESPACE_CUSTOM: Uuid = uuid!("04334fe0-0ea2-44ea-97b2-c17a7a4cbbd3");
     pub const NAMESPACE_SERVICE: Uuid = uuid!("ddd86559-be89-4b6c-a460-fc347cd6f00b");
 
@@ -77,6 +78,13 @@ impl LexicalId {
 
     pub fn result(ok: Self, err: Self) -> Self {
         Self::new_v5_2(Self::NAMESPACE_RESULT, ok.0, err.0)
+    }
+
+    pub fn array(ty: Self, len: u32) -> Self {
+        let mut name = [0; 20];
+        name[..16].copy_from_slice(ty.0.as_bytes());
+        name[16..].copy_from_slice(&len.to_le_bytes());
+        Self(Uuid::new_v5(&Self::NAMESPACE_ARRAY, &name))
     }
 
     pub fn custom(schema: impl AsRef<str>, name: impl AsRef<str>) -> Self {

@@ -1,3 +1,4 @@
+mod array_type;
 mod built_in_type;
 mod enum_ty;
 mod event;
@@ -25,6 +26,7 @@ use crate::value_serializer::{Serialize, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
+pub use array_type::ArrayType;
 pub use built_in_type::BuiltInType;
 pub use enum_ty::{Enum, EnumBuilder};
 pub use event::Event;
