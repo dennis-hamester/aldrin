@@ -213,6 +213,7 @@ impl Expected {
         #[allow(clippy::use_self)]
         let add: &[&[Self]] = match rule {
             Rule::EOI => &[&[Expected::Eof]],
+            Rule::array_len => &[ARRAY_LEN],
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],
             Rule::ident => &[&[Expected::Ident]],
@@ -251,7 +252,6 @@ impl Expected {
             Rule::tok_term => &[&[Expected::Token(";")]],
             Rule::type_name => &[TYPE_NAME],
             Rule::type_name_or_inline => &[TYPE_NAME, INLINE],
-            Rule::array_len => &[ARRAY_LEN],
             _ => return,
         };
 
