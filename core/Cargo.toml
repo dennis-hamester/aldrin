@@ -46,7 +46,7 @@ thiserror = { workspace = true }
 
 [dependencies.aldrin-macros]
 optional = true
-version = "0.10.0"
+version = "0.10.1"
 path = "../macros"
 default-features = false
 
