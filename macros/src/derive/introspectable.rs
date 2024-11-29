@@ -92,12 +92,13 @@ fn gen_struct(
     let mut next_id = 0;
 
     for (index, field) in fields.into_iter().enumerate() {
-        let (field_layout, field_references, id) = gen_field(field, index, next_id, options)?;
+        let item_options = ItemOptions::new(&field.attrs, next_id)?;
+        next_id = item_options.id() + 1;
+
+        let (field_layout, field_references) = gen_field(field, index, options, &item_options)?;
 
         layout.push(field_layout);
         references.push(field_references);
-
-        next_id = id + 1;
     }
 
     let layout = quote! {
@@ -127,11 +128,10 @@ fn gen_struct(
 fn gen_field(
     field: &Field,
     index: usize,
-    default_id: u32,
     options: &Options,
-) -> Result<(TokenStream, TokenStream, u32)> {
+    item_options: &ItemOptions,
+) -> Result<(TokenStream, TokenStream)> {
     let krate = options.krate();
-    let item_options = ItemOptions::new(&field.attrs, default_id)?;
     let id = item_options.id();
     let is_required = !item_options.is_optional();
     let field_type = &field.ty;
@@ -157,7 +157,7 @@ fn gen_field(
         }
     };
 
-    Ok((layout, references, id))
+    Ok((layout, references))
 }
 
 fn gen_enum(
@@ -173,9 +173,11 @@ fn gen_enum(
     let mut next_id = 0;
 
     for variant in variants.into_iter() {
-        let (var_layout, var_references, id) = gen_variant(variant, next_id, options)?;
+        let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+        next_id = item_options.id() + 1;
 
-        next_id = id + 1;
+        let (var_layout, var_references) = gen_variant(variant, options, &item_options)?;
+
         layout.push(var_layout);
 
         if let Some(var_references) = var_references {
@@ -209,11 +211,9 @@ fn gen_enum(
 
 fn gen_variant(
     variant: &Variant,
-    default_id: u32,
     options: &Options,
-) -> Result<(TokenStream, Option<TokenStream>, u32)> {
-    let item_options = ItemOptions::new(&variant.attrs, default_id)?;
-
+    item_options: &ItemOptions,
+) -> Result<(TokenStream, Option<TokenStream>)> {
     if item_options.is_optional() {
         return Err(Error::new_spanned(
             variant,
@@ -262,5 +262,5 @@ fn gen_variant(
         }
     };
 
-    Ok((layout, references, id))
+    Ok((layout, references))
 }
