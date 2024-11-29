@@ -1,3 +1,6 @@
+use aldrin::core::introspection::Introspection;
+use aldrin::Introspectable;
+
 mod raw_identifiers {
     #![allow(non_camel_case_types)]
 
@@ -39,4 +42,34 @@ mod raw_identifiers {
     #[derive(Debug, Clone, Serialize, Deserialize, AsSerializeArg, Introspectable)]
     #[aldrin(schema = "raw_identifiers")]
     enum r#false {}
+}
+
+#[test]
+fn introspection_non_default_field_ids() {
+    #[allow(dead_code)]
+    #[derive(Introspectable)]
+    #[aldrin(schema = "test")]
+    struct NonDefaultFieldIds {
+        field0: (),
+
+        #[aldrin(id = 2)]
+        field2: (),
+
+        field3: (),
+    }
+
+    let introspection = Introspection::new::<NonDefaultFieldIds>();
+    let layout = introspection.as_struct_layout().unwrap();
+
+    let field0 = layout.fields().get(&0).unwrap();
+    assert_eq!(field0.id(), 0);
+    assert_eq!(field0.name(), "field0");
+
+    let field2 = layout.fields().get(&2).unwrap();
+    assert_eq!(field2.id(), 2);
+    assert_eq!(field2.name(), "field2");
+
+    let field3 = layout.fields().get(&3).unwrap();
+    assert_eq!(field3.id(), 3);
+    assert_eq!(field3.name(), "field3");
 }

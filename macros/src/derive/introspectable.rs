@@ -157,7 +157,7 @@ fn gen_field(
         }
     };
 
-    Ok((layout, references, default_id))
+    Ok((layout, references, id))
 }
 
 fn gen_enum(
