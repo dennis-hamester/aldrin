@@ -62,10 +62,12 @@ fn gen_struct(fields: &Punctuated<Field, Token![,]>) -> Result<TokenStream> {
     let mut next_id = 0;
 
     for (index, field) in fields.into_iter().enumerate() {
-        let (serialize, id, optional) = gen_field(field, index, next_id)?;
+        let item_options = ItemOptions::new(&field.attrs, next_id)?;
+        next_id = item_options.id() + 1;
+
+        let (serialize, optional) = gen_field(field, index, &item_options)?;
 
         body.push(serialize);
-        next_id = id + 1;
 
         if let Some(optional) = optional {
             num_optional_fields.push(optional);
@@ -102,9 +104,8 @@ fn gen_struct(fields: &Punctuated<Field, Token![,]>) -> Result<TokenStream> {
 fn gen_field(
     field: &Field,
     index: usize,
-    default_id: u32,
-) -> Result<(TokenStream, u32, Option<TokenStream>)> {
-    let item_options = ItemOptions::new(&field.attrs, default_id)?;
+    item_options: &ItemOptions,
+) -> Result<(TokenStream, Option<TokenStream>)> {
     let id = item_options.id();
 
     let (serialize, optional) = match (field.ident.as_ref(), item_options.is_optional()) {
@@ -150,7 +151,7 @@ fn gen_field(
         }
     };
 
-    Ok((serialize, id, optional))
+    Ok((serialize, optional))
 }
 
 fn gen_enum(variants: &Punctuated<Variant, Token![,]>) -> Result<TokenStream> {
@@ -160,9 +161,9 @@ fn gen_enum(variants: &Punctuated<Variant, Token![,]>) -> Result<TokenStream> {
         variants
             .into_iter()
             .map(|variant| {
-                let (tokens, id) = gen_variant(variant, next_id)?;
-                next_id = id + 1;
-                Ok(tokens)
+                let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+                next_id = item_options.id() + 1;
+                gen_variant(variant, &item_options)
             })
             .collect::<Result<Vec<_>>>()?
     };
@@ -174,9 +175,7 @@ fn gen_enum(variants: &Punctuated<Variant, Token![,]>) -> Result<TokenStream> {
     })
 }
 
-fn gen_variant(variant: &Variant, default_id: u32) -> Result<(TokenStream, u32)> {
-    let item_options = ItemOptions::new(&variant.attrs, default_id)?;
-
+fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
     if item_options.is_optional() {
         return Err(Error::new_spanned(
             variant,
@@ -187,31 +186,25 @@ fn gen_variant(variant: &Variant, default_id: u32) -> Result<(TokenStream, u32)>
     let ident = &variant.ident;
     let id = item_options.id();
 
-    let tokens = match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => quote! {
+    match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => Ok(quote! {
             Self::#ident() => serializer.serialize_enum(#id, &())
-        },
+        }),
 
-        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => quote! {
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
             Self::#ident(ref val) => serializer.serialize_enum(#id, val)
-        },
+        }),
 
-        Fields::Unnamed(_) => {
-            return Err(Error::new_spanned(
-                variant,
-                "tuple-like variants with more than 1 element are not supported by Aldrin",
-            ))
-        }
+        Fields::Unnamed(_) => Err(Error::new_spanned(
+            variant,
+            "tuple-like variants with more than 1 element are not supported by Aldrin",
+        )),
 
-        Fields::Unit => quote! { Self::#ident => serializer.serialize_enum(#id, &()) },
+        Fields::Unit => Ok(quote! { Self::#ident => serializer.serialize_enum(#id, &()) }),
 
-        Fields::Named(_) => {
-            return Err(Error::new_spanned(
-                variant,
-                "struct-like variants are not supported by Aldrin",
-            ))
-        }
-    };
-
-    Ok((tokens, id))
+        Fields::Named(_) => Err(Error::new_spanned(
+            variant,
+            "struct-like variants are not supported by Aldrin",
+        )),
+    }
 }
