@@ -26,7 +26,6 @@ const I8: &str = "::std::primitive::i8";
 const OK: &str = "::std::result::Result::Ok";
 const OPTION: &str = "::std::option::Option";
 const RESULT: &str = "::std::result::Result";
-const SOME: &str = "::std::option::Option::Some";
 const STR: &str = "::std::primitive::str";
 const STRING: &str = "::std::string::String";
 const U16: &str = "::std::primitive::u16";
@@ -39,7 +38,6 @@ const VEC: &str = "::std::vec::Vec";
 #[non_exhaustive]
 pub struct RustOptions<'a> {
     pub patches: Vec<&'a Path>,
-    pub struct_builders: bool,
     pub introspection_if: Option<&'a str>,
     pub krate: &'a str,
 }
@@ -48,7 +46,6 @@ impl RustOptions<'_> {
     pub fn new() -> Self {
         RustOptions {
             patches: Vec::new(),
-            struct_builders: true,
             introspection_if: None,
             krate: "::aldrin",
         }
@@ -174,7 +171,6 @@ impl RustGenerator<'_> {
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
-        let builder_ident = format!("r#{}", struct_builder_name(name));
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
@@ -226,75 +222,10 @@ impl RustGenerator<'_> {
         codeln!(self, "}}");
         codeln!(self);
 
-        codeln!(self, "impl {ident} {{");
         if !has_required_fields {
+            codeln!(self, "impl {ident} {{");
             codeln!(self, "    pub fn new() -> Self {{");
             codeln!(self, "        <Self as {DEFAULT}>::default()");
-            codeln!(self, "    }}");
-            codeln!(self);
-        }
-
-        if self.rust_options.struct_builders {
-            codeln!(self, "    pub fn builder() -> {builder_ident} {{");
-            codeln!(self, "        {builder_ident}::new()");
-            codeln!(self, "    }}");
-        }
-        codeln!(self, "}}");
-        codeln!(self);
-
-        if self.rust_options.struct_builders {
-            codeln!(self, "#[derive({DEBUG}, {CLONE}, {DEFAULT})]");
-            codeln!(self, "pub struct {builder_ident} {{");
-            for field in fields {
-                let ident = format!("r#{}", field.name().value());
-                let ty = self.type_name(field.field_type());
-
-                codeln!(self, "    #[doc(hidden)]");
-                codeln!(self, "    {ident}: {OPTION}<{ty}>,");
-                codeln!(self);
-            }
-            codeln!(self, "}}");
-            codeln!(self);
-
-            codeln!(self, "impl {builder_ident} {{");
-            codeln!(self, "    pub fn new() -> Self {{");
-            codeln!(self, "        <Self as {DEFAULT}>::default()");
-            codeln!(self, "    }}");
-            codeln!(self);
-            for field in fields {
-                let ident = format!("r#{}", field.name().value());
-                let ty = self.type_name(field.field_type());
-
-                codeln!(self, "    pub fn {ident}(mut self, {ident}: {ty}) -> Self {{");
-                codeln!(self, "        self.{ident} = {SOME}({ident});");
-                codeln!(self, "        self");
-                codeln!(self, "    }}");
-                codeln!(self);
-            }
-
-            if !has_required_fields {
-                codeln!(self, "    pub fn build(self) -> {ident} {{");
-                codeln!(self, "        {ident} {{");
-                for field in fields {
-                    let ident = format!("r#{}", field.name().value());
-                    codeln!(self, "            {ident}: self.{ident},");
-                }
-                codeln!(self, "        }}");
-            } else {
-                codeln!(self, "    pub fn build(self) -> {RESULT}<{ident}, {krate}::Error> {{");
-                codeln!(self, "        {OK}({ident} {{");
-                for field in fields {
-                    let ident = format!("r#{}", field.name().value());
-
-                    if field.required() {
-                        let id = field.id().value();
-                        codeln!(self, "            {ident}: self.{ident}.ok_or_else(|| {krate}::Error::required_field_missing({id}))?,");
-                    } else {
-                        codeln!(self, "            {ident}: self.{ident},");
-                    }
-                }
-                codeln!(self, "        }})");
-            }
             codeln!(self, "    }}");
             codeln!(self, "}}");
             codeln!(self);
@@ -794,10 +725,6 @@ impl RustGenerator<'_> {
             ast::KeyTypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
         }
     }
-}
-
-fn struct_builder_name(base: &str) -> String {
-    format!("{base}Builder")
 }
 
 fn service_event_variant(ev_name: &str) -> String {
