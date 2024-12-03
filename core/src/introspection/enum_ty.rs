@@ -61,14 +61,24 @@ impl Deserialize for Enum {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let schema = deserializer.deserialize_specific_field(EnumField::Schema)?;
-        let name = deserializer.deserialize_specific_field(EnumField::Name)?;
-        let variants = deserializer.deserialize_specific_field(EnumField::Variants)?;
+        let mut schema = None;
+        let mut name = None;
+        let mut variants = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                EnumField::Schema => schema = deserializer.deserialize().map(Some)?,
+                EnumField::Name => name = deserializer.deserialize().map(Some)?,
+                EnumField::Variants => variants = deserializer.deserialize().map(Some)?,
+            }
+        }
 
         deserializer.finish(Self {
-            schema,
-            name,
-            variants,
+            schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            variants: variants.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
 }
