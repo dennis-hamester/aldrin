@@ -190,10 +190,10 @@ use syn::{DeriveInput, Result};
 /// generate!("schemas/example1.aldrin");
 ///
 /// fn main() {
-///     example1::MyStruct::builder()
-///         .field1(12)
-///         .field2(34)
-///         .build();
+///     example1::MyStruct {
+///         field1: Some(1),
+///         field2: None,
+///     };
 /// }
 /// ```
 ///
@@ -221,10 +221,10 @@ use syn::{DeriveInput, Result};
 /// }
 ///
 /// fn main() {
-///     schema::MyStruct::builder() // Note `schema` instead of `example1`.
-///         .field1(12)
-///         .field2(34)
-///         .build();
+///     schema::MyStruct { // Note `schema` instead of `example1`.
+///         field1: Some(1),
+///         field2: None,
+///     };
 /// }
 /// ```
 ///
@@ -258,9 +258,11 @@ use syn::{DeriveInput, Result};
 /// }
 ///
 /// fn main() {
-///     example3::Foo::builder()
-///         .bar(example4::Bar::builder().baz(12).build())
-///         .build();
+///     example3::Foo {
+///         bar: Some(example4::Bar {
+///             baz: Some(12),
+///         }),
+///     };
 /// }
 /// ```
 ///
@@ -289,10 +291,10 @@ use syn::{DeriveInput, Result};
 /// }
 ///
 /// fn main() {
-///     example1::MyStructRenamed::builder()
-///         .field1(12)
-///         .field2(34)
-///         .build();
+///     example1::MyStructRenamed {
+///         field1: Some(1),
+///         field2: None,
+///     };
 /// }
 /// ```
 ///
@@ -307,30 +309,8 @@ use syn::{DeriveInput, Result};
 /// }
 ///
 /// fn main() {
-///     example1::MyStructRenamedAgain::builder()
-///         .field1(12)
-///         .field2(34)
-///         .build();
-/// }
-/// ```
-///
-/// # Omitting struct builders
-///
-/// For every struct in the schema, usually a corresponding builder is generated as well. This can
-/// be turned off by setting `struct_builders = false`.
-///
-/// ```
-/// # use aldrin_macros::generate;
-/// generate! {
-///     "schemas/example1.aldrin",
-///     struct_builders = false,
-/// }
-///
-/// fn main() {
-///     // example1::MyStruct::builder() and example1::MyStructBuilder are not generated
-///
-///     let my_struct = example1::MyStruct {
-///         field1: Some(42),
+///     example1::MyStructRenamedAgain {
+///         field1: Some(1),
 ///         field2: None,
 ///     };
 /// }
