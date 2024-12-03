@@ -42,10 +42,6 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
         }
 
         rust_options.struct_builders = args.struct_builders;
-        rust_options.struct_non_exhaustive = args.struct_non_exhaustive;
-        rust_options.enum_non_exhaustive = args.enum_non_exhaustive;
-        rust_options.event_non_exhaustive = args.event_non_exhaustive;
-        rust_options.function_non_exhaustive = args.function_non_exhaustive;
         rust_options.introspection_if = args.introspection_if.as_deref();
 
         if let Some(ref krate) = args.krate {
@@ -97,10 +93,6 @@ pub struct Args {
     warnings_as_errors: bool,
     patches: Vec<PathBuf>,
     struct_builders: bool,
-    struct_non_exhaustive: bool,
-    enum_non_exhaustive: bool,
-    event_non_exhaustive: bool,
-    function_non_exhaustive: bool,
     introspection_if: Option<String>,
     krate: Option<String>,
 }
@@ -116,10 +108,6 @@ impl Parse for Args {
             warnings_as_errors: false,
             patches: Vec::new(),
             struct_builders: true,
-            struct_non_exhaustive: true,
-            enum_non_exhaustive: true,
-            event_non_exhaustive: true,
-            function_non_exhaustive: true,
             introspection_if: None,
             krate: None,
         };
@@ -154,14 +142,6 @@ impl Parse for Args {
                 args.patches.push(lit_str_to_path(&lit_str)?);
             } else if opt == "struct_builders" {
                 args.struct_builders = input.parse::<LitBool>()?.value;
-            } else if opt == "struct_non_exhaustive" {
-                args.struct_non_exhaustive = input.parse::<LitBool>()?.value;
-            } else if opt == "enum_non_exhaustive" {
-                args.enum_non_exhaustive = input.parse::<LitBool>()?.value;
-            } else if opt == "event_non_exhaustive" {
-                args.event_non_exhaustive = input.parse::<LitBool>()?.value;
-            } else if opt == "function_non_exhaustive" {
-                args.function_non_exhaustive = input.parse::<LitBool>()?.value;
             } else if opt == "introspection" {
                 args.options.introspection = input.parse::<LitBool>()?.value;
             } else if opt == "introspection_if" {

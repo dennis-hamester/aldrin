@@ -165,15 +165,8 @@ impl Service {
         let vars = self.body.gen_event();
         let event = &self.event;
 
-        let non_exhaustive = if self.options.event_non_exhaustive() {
-            Some(quote! { #[non_exhaustive] })
-        } else {
-            None
-        };
-
         quote! {
             #[derive(::std::fmt::Debug, ::std::clone::Clone)]
-            #non_exhaustive
             #vis enum #event {
                 #vars
             }
@@ -255,15 +248,8 @@ impl Service {
         let vars = self.body.gen_function(&self.options);
         let function = &self.function;
 
-        let non_exhaustive = if self.options.function_non_exhaustive() {
-            Some(quote! { #[non_exhaustive] })
-        } else {
-            None
-        };
-
         quote! {
             #[derive(::std::fmt::Debug)]
-            #non_exhaustive
             #vis enum #function {
                 #vars
             }

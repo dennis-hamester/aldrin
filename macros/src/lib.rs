@@ -336,27 +336,6 @@ use syn::{DeriveInput, Result};
 /// }
 /// ```
 ///
-/// # Omitting `#[non_exhaustive]` attribute
-///
-/// The `#[non_exhaustive]` attribute can optionally be skipped on structs, enums, service event
-/// enums and service function enums. Set one or more of:
-///
-/// - `struct_non_exhaustive = false`
-/// - `enum_non_exhaustive = false`
-/// - `event_non_exhaustive = false`
-/// - `function_non_exhaustive = false`
-///
-/// ```
-/// # use aldrin_macros::generate;
-/// generate! {
-///     "schemas/example1.aldrin",
-///     struct_non_exhaustive = false,
-///     enum_non_exhaustive = false,
-///     event_non_exhaustive = false,
-///     function_non_exhaustive = false,
-/// }
-/// ```
-///
 /// # Enabling introspection
 ///
 /// To enable introspection support, pass `introspection = true` to the macro. This additionally
@@ -496,28 +475,6 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///     pub service Ping {
 ///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
 ///         version = 1;
-///     }
-/// }
-/// ```
-///
-/// # Suppressing `#[non_exhaustive]`
-///
-/// The 2 auxiliary enums for functions and events are normally marked as `#[non_exhaustive]`. This
-/// can be suppressed by the attributes `#[aldrin(no_function_non_exhaustive)]` and
-/// `#[aldrin(no_event_non_exhaustive)]`.
-///
-/// ```
-/// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
-/// # use uuid::uuid;
-/// service! {
-///     #[aldrin(no_function_non_exhaustive, no_event_non_exhaustive)]
-///     pub service Ping {
-///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
-///         version = 1;
-///
-///         fn ping @ 1;
-///         event pong @ 1;
 ///     }
 /// }
 /// ```
