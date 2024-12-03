@@ -20,22 +20,6 @@ pub struct RustArgs {
     #[clap(long)]
     no_struct_builders: bool,
 
-    /// Don't annotate structs with non_exhaustive attribute.
-    #[clap(long)]
-    no_struct_non_exhaustive: bool,
-
-    /// Don't annotate enums with non_exhaustive attribute.
-    #[clap(long)]
-    no_enum_non_exhaustive: bool,
-
-    /// Don't annotate service event enums with non_exhaustive attribute.
-    #[clap(long)]
-    no_event_non_exhaustive: bool,
-
-    /// Don't annotate service function enums with non_exhaustive attribute.
-    #[clap(long)]
-    no_function_non_exhaustive: bool,
-
     /// Path to a patch to apply to the generated code.
     ///
     /// This argument can be specified multiple times to apply more than one patch.
@@ -90,10 +74,6 @@ pub fn run(args: RustArgs) -> Result<bool> {
         rust_options.patches.push(patch);
     }
     rust_options.struct_builders = !args.no_struct_builders;
-    rust_options.struct_non_exhaustive = !args.no_struct_non_exhaustive;
-    rust_options.enum_non_exhaustive = !args.no_enum_non_exhaustive;
-    rust_options.event_non_exhaustive = !args.no_event_non_exhaustive;
-    rust_options.function_non_exhaustive = !args.no_function_non_exhaustive;
     rust_options.introspection_if = args.introspection_if.as_deref();
 
     if let Some(ref krate) = args.krate {

@@ -5,8 +5,6 @@ pub(super) struct Options {
     krate: Path,
     client: bool,
     server: bool,
-    event_non_exhaustive: bool,
-    function_non_exhaustive: bool,
     introspection: bool,
     introspection_if: Option<LitStr>,
     schema: Option<LitStr>,
@@ -23,14 +21,6 @@ impl Options {
 
     pub fn server(&self) -> bool {
         self.server
-    }
-
-    pub fn event_non_exhaustive(&self) -> bool {
-        self.event_non_exhaustive
-    }
-
-    pub fn function_non_exhaustive(&self) -> bool {
-        self.function_non_exhaustive
     }
 
     pub fn introspection(&self) -> bool {
@@ -53,8 +43,6 @@ impl Parse for Options {
         let mut krate = parse_quote!(::aldrin);
         let mut client = true;
         let mut server = true;
-        let mut event_non_exhaustive = true;
-        let mut function_non_exhaustive = true;
         let mut introspection = false;
         let mut introspection_if = None;
         let mut schema = None;
@@ -74,12 +62,6 @@ impl Parse for Options {
                     Ok(())
                 } else if meta.path.is_ident("no_server") {
                     server = false;
-                    Ok(())
-                } else if meta.path.is_ident("no_event_non_exhaustive") {
-                    event_non_exhaustive = false;
-                    Ok(())
-                } else if meta.path.is_ident("no_function_non_exhaustive") {
-                    function_non_exhaustive = false;
                     Ok(())
                 } else if meta.path.is_ident("introspection") {
                     introspection = true;
@@ -102,8 +84,6 @@ impl Parse for Options {
                 krate,
                 client,
                 server,
-                event_non_exhaustive,
-                function_non_exhaustive,
                 introspection,
                 introspection_if,
                 schema,

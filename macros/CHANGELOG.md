@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix visibility of the `UUID` and `VERSION` associated consts of service types. Proxy types were
   already `pub`.
 
+### Changed
+
+- Remove support for marking types as `#[non_exhaustive]`.
+
 ## [0.10.1] - 2024-11-29
 
 ### Fixed
