@@ -16,10 +16,6 @@ pub struct RustArgs {
     #[clap(flatten)]
     common_gen_args: CommonGenArgs,
 
-    /// Don't generate builders for structs.
-    #[clap(long)]
-    no_struct_builders: bool,
-
     /// Path to a patch to apply to the generated code.
     ///
     /// This argument can be specified multiple times to apply more than one patch.
@@ -73,7 +69,6 @@ pub fn run(args: RustArgs) -> Result<bool> {
     for patch in &args.patch {
         rust_options.patches.push(patch);
     }
-    rust_options.struct_builders = !args.no_struct_builders;
     rust_options.introspection_if = args.introspection_if.as_deref();
 
     if let Some(ref krate) = args.krate {

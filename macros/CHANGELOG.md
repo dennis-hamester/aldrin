@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remove support for marking types as `#[non_exhaustive]`.
+- Remove support for struct builders.
 
 ## [0.10.1] - 2024-11-29
 

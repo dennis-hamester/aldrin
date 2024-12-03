@@ -8,7 +8,7 @@
      #[aldrin(id = 1, optional)]
      pub r#field1: ::std::option::Option<::std::primitive::u32>,
  
-@@ -8,18 +8,18 @@
+@@ -8,7 +8,7 @@
      pub r#field2: ::std::option::Option<::std::primitive::u32>,
  }
  
@@ -17,37 +17,3 @@
      pub fn new() -> Self {
          <Self as ::std::default::Default>::default()
      }
- 
--    pub fn builder() -> r#MyStructBuilder {
--        r#MyStructBuilder::new()
-+    pub fn builder() -> r#MyStructRenamedBuilder {
-+        r#MyStructRenamedBuilder::new()
-     }
- }
- 
- #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default)]
--pub struct r#MyStructBuilder {
-+pub struct r#MyStructRenamedBuilder {
-     #[doc(hidden)]
-     r#field1: ::std::option::Option<::std::primitive::u32>,
- 
-@@ -28,7 +28,7 @@
- 
- }
- 
--impl r#MyStructBuilder {
-+impl r#MyStructRenamedBuilder {
-     pub fn new() -> Self {
-         <Self as ::std::default::Default>::default()
-     }
-@@ -43,8 +43,8 @@
-         self
-     }
- 
--    pub fn build(self) -> r#MyStruct {
--        r#MyStruct {
-+    pub fn build(self) -> r#MyStructRenamed {
-+        r#MyStructRenamed {
-             r#field1: self.r#field1,
-             r#field2: self.r#field2,
-         }
