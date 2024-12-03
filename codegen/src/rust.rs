@@ -40,10 +40,6 @@ const VEC: &str = "::std::vec::Vec";
 pub struct RustOptions<'a> {
     pub patches: Vec<&'a Path>,
     pub struct_builders: bool,
-    pub struct_non_exhaustive: bool,
-    pub enum_non_exhaustive: bool,
-    pub event_non_exhaustive: bool,
-    pub function_non_exhaustive: bool,
     pub introspection_if: Option<&'a str>,
     pub krate: &'a str,
 }
@@ -53,10 +49,6 @@ impl RustOptions<'_> {
         RustOptions {
             patches: Vec::new(),
             struct_builders: true,
-            struct_non_exhaustive: true,
-            enum_non_exhaustive: true,
-            event_non_exhaustive: true,
-            function_non_exhaustive: true,
             introspection_if: None,
             krate: "::aldrin",
         }
@@ -210,10 +202,6 @@ impl RustGenerator<'_> {
         }
 
         codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
-
-        if self.rust_options.struct_non_exhaustive {
-            codeln!(self, "#[non_exhaustive]");
-        }
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
         for field in fields {
@@ -344,10 +332,6 @@ impl RustGenerator<'_> {
         }
 
         codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
-
-        if self.rust_options.enum_non_exhaustive {
-            codeln!(self, "#[non_exhaustive]");
-        }
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
         for var in vars {
@@ -394,14 +378,6 @@ impl RustGenerator<'_> {
 
         if !self.options.server {
             code!(self, ", no_server");
-        }
-
-        if !self.rust_options.function_non_exhaustive {
-            code!(self, ", no_function_non_exhaustive");
-        }
-
-        if !self.rust_options.event_non_exhaustive {
-            code!(self, ", no_event_non_exhaustive");
         }
 
         if self.options.introspection {
