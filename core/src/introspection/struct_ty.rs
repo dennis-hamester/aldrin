@@ -61,14 +61,24 @@ impl Deserialize for Struct {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let schema = deserializer.deserialize_specific_field(StructField::Schema)?;
-        let name = deserializer.deserialize_specific_field(StructField::Name)?;
-        let fields = deserializer.deserialize_specific_field(StructField::Fields)?;
+        let mut schema = None;
+        let mut name = None;
+        let mut fields = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                StructField::Schema => schema = deserializer.deserialize().map(Some)?,
+                StructField::Name => name = deserializer.deserialize().map(Some)?,
+                StructField::Fields => fields = deserializer.deserialize().map(Some)?,
+            }
+        }
 
         deserializer.finish(Self {
-            schema,
-            name,
-            fields,
+            schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            fields: fields.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
 }

@@ -57,13 +57,23 @@ impl Deserialize for Variant {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let id = deserializer.deserialize_specific_field(VariantField::Id)?;
-        let name = deserializer.deserialize_specific_field(VariantField::Name)?;
-        let variant_type = deserializer.deserialize_specific_field(VariantField::VariantType)?;
+        let mut id = None;
+        let mut name = None;
+        let mut variant_type = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                VariantField::Id => id = deserializer.deserialize().map(Some)?,
+                VariantField::Name => name = deserializer.deserialize().map(Some)?,
+                VariantField::VariantType => variant_type = deserializer.deserialize()?,
+            }
+        }
 
         deserializer.finish(Self {
-            id,
-            name,
+            id: id.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
             variant_type,
         })
     }
