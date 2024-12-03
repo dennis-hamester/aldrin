@@ -47,9 +47,21 @@ impl Deserialize for ArrayType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let elem_type = deserializer.deserialize_specific_field(ArrayTypeField::ElemType)?;
-        let len = deserializer.deserialize_specific_field(ArrayTypeField::Len)?;
+        let mut elem_type = None;
+        let mut len = None;
 
-        deserializer.finish(Self { elem_type, len })
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                ArrayTypeField::ElemType => elem_type = deserializer.deserialize().map(Some)?,
+                ArrayTypeField::Len => len = deserializer.deserialize().map(Some)?,
+            }
+        }
+
+        deserializer.finish(Self {
+            elem_type: elem_type.ok_or(DeserializeError::InvalidSerialization)?,
+            len: len.ok_or(DeserializeError::InvalidSerialization)?,
+        })
     }
 }

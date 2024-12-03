@@ -79,15 +79,27 @@ impl Deserialize for Function {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let id = deserializer.deserialize_specific_field(FunctionField::Id)?;
-        let name = deserializer.deserialize_specific_field(FunctionField::Name)?;
-        let args = deserializer.deserialize_specific_field(FunctionField::Args)?;
-        let ok = deserializer.deserialize_specific_field(FunctionField::Ok)?;
-        let err = deserializer.deserialize_specific_field(FunctionField::Err)?;
+        let mut id = None;
+        let mut name = None;
+        let mut args = None;
+        let mut ok = None;
+        let mut err = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                FunctionField::Id => id = deserializer.deserialize().map(Some)?,
+                FunctionField::Name => name = deserializer.deserialize().map(Some)?,
+                FunctionField::Args => args = deserializer.deserialize()?,
+                FunctionField::Ok => ok = deserializer.deserialize()?,
+                FunctionField::Err => err = deserializer.deserialize()?,
+            }
+        }
 
         deserializer.finish(Self {
-            id,
-            name,
+            id: id.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
             args,
             ok,
             err,

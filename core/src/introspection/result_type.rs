@@ -46,9 +46,21 @@ impl Deserialize for ResultType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let ok = deserializer.deserialize_specific_field(ResultTypeField::Ok)?;
-        let err = deserializer.deserialize_specific_field(ResultTypeField::Err)?;
+        let mut ok = None;
+        let mut err = None;
 
-        deserializer.finish(Self { ok, err })
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                ResultTypeField::Ok => ok = deserializer.deserialize().map(Some)?,
+                ResultTypeField::Err => err = deserializer.deserialize().map(Some)?,
+            }
+        }
+
+        deserializer.finish(Self {
+            ok: ok.ok_or(DeserializeError::InvalidSerialization)?,
+            err: err.ok_or(DeserializeError::InvalidSerialization)?,
+        })
     }
 }
