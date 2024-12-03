@@ -57,13 +57,23 @@ impl Deserialize for Event {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let id = deserializer.deserialize_specific_field(EventField::Id)?;
-        let name = deserializer.deserialize_specific_field(EventField::Name)?;
-        let event_type = deserializer.deserialize_specific_field(EventField::EventType)?;
+        let mut id = None;
+        let mut name = None;
+        let mut event_type = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                EventField::Id => id = deserializer.deserialize().map(Some)?,
+                EventField::Name => name = deserializer.deserialize().map(Some)?,
+                EventField::EventType => event_type = deserializer.deserialize()?,
+            }
+        }
 
         deserializer.finish(Self {
-            id,
-            name,
+            id: id.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
             event_type,
         })
     }

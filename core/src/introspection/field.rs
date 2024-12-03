@@ -70,16 +70,27 @@ impl Deserialize for Field {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let id = deserializer.deserialize_specific_field(FieldField::Id)?;
-        let name = deserializer.deserialize_specific_field(FieldField::Name)?;
-        let is_required = deserializer.deserialize_specific_field(FieldField::IsRequired)?;
-        let field_type = deserializer.deserialize_specific_field(FieldField::FieldType)?;
+        let mut id = None;
+        let mut name = None;
+        let mut is_required = None;
+        let mut field_type = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                FieldField::Id => id = deserializer.deserialize().map(Some)?,
+                FieldField::Name => name = deserializer.deserialize().map(Some)?,
+                FieldField::IsRequired => is_required = deserializer.deserialize().map(Some)?,
+                FieldField::FieldType => field_type = deserializer.deserialize().map(Some)?,
+            }
+        }
 
         deserializer.finish(Self {
-            id,
-            name,
-            is_required,
-            field_type,
+            id: id.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            is_required: is_required.ok_or(DeserializeError::InvalidSerialization)?,
+            field_type: field_type.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
 }

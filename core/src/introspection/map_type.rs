@@ -46,9 +46,21 @@ impl Deserialize for MapType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let key = deserializer.deserialize_specific_field(MapTypeField::Key)?;
-        let value = deserializer.deserialize_specific_field(MapTypeField::Value)?;
+        let mut key = None;
+        let mut value = None;
 
-        deserializer.finish(Self { key, value })
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                MapTypeField::Key => key = deserializer.deserialize().map(Some)?,
+                MapTypeField::Value => value = deserializer.deserialize().map(Some)?,
+            }
+        }
+
+        deserializer.finish(Self {
+            key: key.ok_or(DeserializeError::InvalidSerialization)?,
+            value: value.ok_or(DeserializeError::InvalidSerialization)?,
+        })
     }
 }

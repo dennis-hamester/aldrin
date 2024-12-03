@@ -88,20 +88,33 @@ impl Deserialize for Service {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let schema = deserializer.deserialize_specific_field(ServiceField::Schema)?;
-        let name = deserializer.deserialize_specific_field(ServiceField::Name)?;
-        let uuid = deserializer.deserialize_specific_field(ServiceField::Uuid)?;
-        let version = deserializer.deserialize_specific_field(ServiceField::Version)?;
-        let functions = deserializer.deserialize_specific_field(ServiceField::Functions)?;
-        let events = deserializer.deserialize_specific_field(ServiceField::Events)?;
+        let mut schema = None;
+        let mut name = None;
+        let mut uuid = None;
+        let mut version = None;
+        let mut functions = None;
+        let mut events = None;
+
+        while deserializer.has_more_fields() {
+            let deserializer = deserializer.deserialize_field()?;
+
+            match deserializer.try_id()? {
+                ServiceField::Schema => schema = deserializer.deserialize().map(Some)?,
+                ServiceField::Name => name = deserializer.deserialize().map(Some)?,
+                ServiceField::Uuid => uuid = deserializer.deserialize().map(Some)?,
+                ServiceField::Version => version = deserializer.deserialize().map(Some)?,
+                ServiceField::Functions => functions = deserializer.deserialize().map(Some)?,
+                ServiceField::Events => events = deserializer.deserialize().map(Some)?,
+            }
+        }
 
         deserializer.finish(Self {
-            schema,
-            name,
-            uuid,
-            version,
-            functions,
-            events,
+            schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
+            name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            uuid: uuid.ok_or(DeserializeError::InvalidSerialization)?,
+            version: version.ok_or(DeserializeError::InvalidSerialization)?,
+            functions: functions.ok_or(DeserializeError::InvalidSerialization)?,
+            events: events.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
 }
