@@ -1,0 +1,11 @@
+error: fallback field of inline struct uses duplicate name `field1`
+   --> test/ui/duplicate_struct_fallback_name.aldrin:13:13
+    |
+ 13 | ... field1 = fallback;
+    |     ^^^^^^ fallback field defined here
+    |
+   ::: test/ui/duplicate_struct_fallback_name.aldrin:12:13
+    |
+ 12 | ... field1 @ 1 = i32;
+    |     ------ name first used here
+    |

@@ -1,6 +1,7 @@
 use super::{Attribute, Ident, LitPosInt, TypeName};
 use crate::error::{
-    DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
+    DuplicateStructFallbackName, DuplicateStructField, DuplicateStructFieldId,
+    InvalidStructFieldId, RecursiveStruct,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -76,6 +77,16 @@ impl StructDef {
         );
         NonCamelCaseStruct::validate(self, validate);
         RecursiveStruct::validate(self, validate);
+
+        if let Some(ref fallback) = self.fallback {
+            DuplicateStructFallbackName::validate(
+                fallback,
+                &self.fields,
+                self.name.span(),
+                Some(&self.name),
+                validate,
+            );
+        }
 
         self.name.validate(validate);
         for field in &self.fields {
@@ -154,6 +165,16 @@ impl InlineStruct {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateStructField::validate(&self.fields, self.kw_span, None, validate);
         DuplicateStructFieldId::validate(&self.fields, self.kw_span, None, validate);
+
+        if let Some(ref fallback) = self.fallback {
+            DuplicateStructFallbackName::validate(
+                fallback,
+                &self.fields,
+                self.kw_span,
+                None,
+                validate,
+            );
+        }
 
         for field in &self.fields {
             field.validate(validate);

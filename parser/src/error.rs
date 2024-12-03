@@ -7,6 +7,7 @@ mod duplicate_event_id;
 mod duplicate_function_id;
 mod duplicate_service_item;
 mod duplicate_service_uuid;
+mod duplicate_struct_fallback_name;
 mod duplicate_struct_field;
 mod duplicate_struct_field_id;
 mod empty_enum;
@@ -45,6 +46,7 @@ pub use duplicate_event_id::DuplicateEventId;
 pub use duplicate_function_id::DuplicateFunctionId;
 pub use duplicate_service_item::DuplicateServiceItem;
 pub use duplicate_service_uuid::DuplicateServiceUuid;
+pub use duplicate_struct_fallback_name::DuplicateStructFallbackName;
 pub use duplicate_struct_field::DuplicateStructField;
 pub use duplicate_struct_field_id::DuplicateStructFieldId;
 pub use empty_enum::EmptyEnum;
@@ -83,6 +85,7 @@ pub enum Error {
     DuplicateFunctionId(DuplicateFunctionId),
     DuplicateServiceItem(DuplicateServiceItem),
     DuplicateServiceUuid(DuplicateServiceUuid),
+    DuplicateStructFallbackName(DuplicateStructFallbackName),
     DuplicateStructField(DuplicateStructField),
     DuplicateStructFieldId(DuplicateStructFieldId),
     EmptyEnum(EmptyEnum),
@@ -127,6 +130,7 @@ impl Diagnostic for Error {
             Self::DuplicateFunctionId(e) => e.schema_name(),
             Self::DuplicateServiceItem(e) => e.schema_name(),
             Self::DuplicateServiceUuid(e) => e.schema_name(),
+            Self::DuplicateStructFallbackName(e) => e.schema_name(),
             Self::DuplicateStructField(e) => e.schema_name(),
             Self::DuplicateStructFieldId(e) => e.schema_name(),
             Self::EmptyEnum(e) => e.schema_name(),
@@ -167,6 +171,7 @@ impl Diagnostic for Error {
             Self::DuplicateFunctionId(e) => e.format(parsed),
             Self::DuplicateServiceItem(e) => e.format(parsed),
             Self::DuplicateServiceUuid(e) => e.format(parsed),
+            Self::DuplicateStructFallbackName(e) => e.format(parsed),
             Self::DuplicateStructField(e) => e.format(parsed),
             Self::DuplicateStructFieldId(e) => e.format(parsed),
             Self::EmptyEnum(e) => e.format(parsed),
