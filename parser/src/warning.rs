@@ -8,6 +8,7 @@ mod non_shouty_snake_case_const;
 mod non_snake_case_event;
 mod non_snake_case_function;
 mod non_snake_case_schema_name;
+mod non_snake_case_struct_fallback;
 mod non_snake_case_struct_field;
 mod unused_import;
 
@@ -24,6 +25,7 @@ pub use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
 pub use non_snake_case_event::NonSnakeCaseEvent;
 pub use non_snake_case_function::NonSnakeCaseFunction;
 pub use non_snake_case_schema_name::NonSnakeCaseSchemaName;
+pub use non_snake_case_struct_fallback::NonSnakeCaseStructFallback;
 pub use non_snake_case_struct_field::NonSnakeCaseStructField;
 pub use unused_import::UnusedImport;
 
@@ -40,6 +42,7 @@ pub enum Warning {
     NonSnakeCaseEvent(NonSnakeCaseEvent),
     NonSnakeCaseFunction(NonSnakeCaseFunction),
     NonSnakeCaseSchemaName(NonSnakeCaseSchemaName),
+    NonSnakeCaseStructFallback(NonSnakeCaseStructFallback),
     NonSnakeCaseStructField(NonSnakeCaseStructField),
     UnusedImport(UnusedImport),
 }
@@ -61,6 +64,7 @@ impl Diagnostic for Warning {
             Self::NonSnakeCaseEvent(w) => w.schema_name(),
             Self::NonSnakeCaseFunction(w) => w.schema_name(),
             Self::NonSnakeCaseSchemaName(w) => w.schema_name(),
+            Self::NonSnakeCaseStructFallback(w) => w.schema_name(),
             Self::NonSnakeCaseStructField(w) => w.schema_name(),
             Self::UnusedImport(w) => w.schema_name(),
         }
@@ -78,6 +82,7 @@ impl Diagnostic for Warning {
             Self::NonSnakeCaseEvent(w) => w.format(parsed),
             Self::NonSnakeCaseFunction(w) => w.format(parsed),
             Self::NonSnakeCaseSchemaName(w) => w.format(parsed),
+            Self::NonSnakeCaseStructFallback(w) => w.format(parsed),
             Self::NonSnakeCaseStructField(w) => w.format(parsed),
             Self::UnusedImport(w) => w.format(parsed),
         }

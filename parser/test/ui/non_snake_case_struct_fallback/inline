@@ -1,0 +1,7 @@
+warning: struct fallback `UnknownFields` should have a snake-case name
+   --> test/ui/non_snake_case_struct_fallback.aldrin:11:13
+    |
+ 11 | ... UnknownFields = fallback;
+    |     ^^^^^^^^^^^^^
+    |
+    = help: consider renaming the struct fallback `UnknownFields` to `unknown_fields`

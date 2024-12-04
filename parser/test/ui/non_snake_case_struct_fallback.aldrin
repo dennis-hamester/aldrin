@@ -1,0 +1,14 @@
+struct Struct {
+    UnknownFields = fallback;
+}
+
+service Service {
+    uuid = 3097f7e0-a68f-43a2-8768-9434605b6cf3;
+    version = 1;
+
+    fn func @ 1 {
+        args = struct {
+            UnknownFields = fallback;
+        }
+    }
+}

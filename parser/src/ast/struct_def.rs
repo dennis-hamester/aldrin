@@ -5,7 +5,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseStruct, NonSnakeCaseStructField};
+use crate::warning::{NonCamelCaseStruct, NonSnakeCaseStructFallback, NonSnakeCaseStructField};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -69,16 +69,19 @@ impl StructDef {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         DuplicateStructField::validate(&self.fields, self.name.span(), Some(&self.name), validate);
+        NonCamelCaseStruct::validate(self, validate);
+        RecursiveStruct::validate(self, validate);
+
         DuplicateStructFieldId::validate(
             &self.fields,
             self.name.span(),
             Some(&self.name),
             validate,
         );
-        NonCamelCaseStruct::validate(self, validate);
-        RecursiveStruct::validate(self, validate);
 
         if let Some(ref fallback) = self.fallback {
+            NonSnakeCaseStructFallback::validate(fallback, validate);
+
             DuplicateStructFallbackName::validate(
                 fallback,
                 &self.fields,
@@ -167,6 +170,8 @@ impl InlineStruct {
         DuplicateStructFieldId::validate(&self.fields, self.kw_span, None, validate);
 
         if let Some(ref fallback) = self.fallback {
+            NonSnakeCaseStructFallback::validate(fallback, validate);
+
             DuplicateStructFallbackName::validate(
                 fallback,
                 &self.fields,

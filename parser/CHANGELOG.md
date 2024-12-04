@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for enum and struct fallbacks.
 - Add error types `DuplicateEnumFallbackName` and `DuplicateStructFallbackName`.
-- Add warning type `NonCamelCaseEnumFallback`.
+- Add warning types `NonCamelCaseEnumFallback` and `NonSnakeCaseStructFallback`.
 
 ### Fixed
 

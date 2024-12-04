@@ -14,6 +14,7 @@ ui_test!(invalid_array_len);
 ui_test!(invalid_event_id);
 ui_test!(invalid_function_id);
 ui_test!(non_camel_case_enum_fallback);
+ui_test!(non_snake_case_struct_fallback);
 ui_test!(recursive1);
 ui_test!(recursive2_a);
 ui_test!(sender_receiver_imports);
