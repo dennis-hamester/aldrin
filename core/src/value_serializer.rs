@@ -3,6 +3,7 @@ use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::{Sealed as _, SerializeKey};
 use crate::serialized_value::SerializedValueSlice;
+use crate::unknown_variant::UnknownVariant;
 use crate::value::ValueKind;
 use crate::MAX_VALUE_DEPTH;
 use bytes::{BufMut, BytesMut};
@@ -243,6 +244,10 @@ impl<'a> Serializer<'a> {
         self.buf.put_discriminant_u8(ValueKind::Enum);
         self.buf.put_varint_u32_le(variant.into());
         value.serialize(self)
+    }
+
+    pub fn serialize_unknown_variant(self, variant: &UnknownVariant) -> Result<(), SerializeError> {
+        self.serialize_enum(variant.id(), variant.value())
     }
 
     pub fn serialize_sender(self, value: ChannelCookie) {

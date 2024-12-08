@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add type `UnknownVariant` to represent an unknown enum variant. `ValueSerializer` and
+  `ValueDeserializer` have been extended as well.
+
 ### Changed
 
 - Introspection is now deserialized more liberally and allows struct fields to be out of
