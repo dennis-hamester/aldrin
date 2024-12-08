@@ -5,7 +5,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseEnum, NonCamelCaseEnumVariant};
+use crate::warning::{NonCamelCaseEnum, NonCamelCaseEnumFallback, NonCamelCaseEnumVariant};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -89,6 +89,8 @@ impl EnumDef {
                 Some(&self.name),
                 validate,
             );
+
+            NonCamelCaseEnumFallback::validate(fallback, validate);
         }
 
         self.name.validate(validate);
@@ -179,6 +181,7 @@ impl InlineEnum {
 
         if let Some(ref fallback) = self.fallback {
             DuplicateEnumFallbackName::validate(fallback, &self.vars, self.kw_span, None, validate);
+            NonCamelCaseEnumFallback::validate(fallback, validate);
         }
 
         for var in &self.vars {

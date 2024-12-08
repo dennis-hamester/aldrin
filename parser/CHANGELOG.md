@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for enum fallbacks.
 - Add error type `DuplicateEnumFallbackName`.
+- Add warning type `NonCamelCaseEnumFallback`.
 
 ## [0.10.0] - 2024-11-26
 
