@@ -1,5 +1,6 @@
 mod const_int_not_found;
 mod duplicate_definition;
+mod duplicate_enum_fallback_name;
 mod duplicate_enum_variant;
 mod duplicate_enum_variant_id;
 mod duplicate_event_id;
@@ -37,6 +38,7 @@ use crate::Parsed;
 
 pub use const_int_not_found::ConstIntNotFound;
 pub use duplicate_definition::DuplicateDefinition;
+pub use duplicate_enum_fallback_name::DuplicateEnumFallbackName;
 pub use duplicate_enum_variant::DuplicateEnumVariant;
 pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
 pub use duplicate_event_id::DuplicateEventId;
@@ -74,6 +76,7 @@ pub use type_not_found::TypeNotFound;
 pub enum Error {
     ConstIntNotFound(ConstIntNotFound),
     DuplicateDefinition(DuplicateDefinition),
+    DuplicateEnumFallbackName(DuplicateEnumFallbackName),
     DuplicateEnumVariant(DuplicateEnumVariant),
     DuplicateEnumVariantId(DuplicateEnumVariantId),
     DuplicateEventId(DuplicateEventId),
@@ -117,6 +120,7 @@ impl Diagnostic for Error {
         match self {
             Self::ConstIntNotFound(e) => e.schema_name(),
             Self::DuplicateDefinition(e) => e.schema_name(),
+            Self::DuplicateEnumFallbackName(e) => e.schema_name(),
             Self::DuplicateEnumVariant(e) => e.schema_name(),
             Self::DuplicateEnumVariantId(e) => e.schema_name(),
             Self::DuplicateEventId(e) => e.schema_name(),
@@ -156,6 +160,7 @@ impl Diagnostic for Error {
         match self {
             Self::ConstIntNotFound(e) => e.format(parsed),
             Self::DuplicateDefinition(e) => e.format(parsed),
+            Self::DuplicateEnumFallbackName(e) => e.format(parsed),
             Self::DuplicateEnumVariant(e) => e.format(parsed),
             Self::DuplicateEnumVariantId(e) => e.format(parsed),
             Self::DuplicateEventId(e) => e.format(parsed),

@@ -1,0 +1,11 @@
+error: fallback variant of enum `Enum` uses duplicate name `Var1`
+  --> test/ui/duplicate_enum_fallback_name.aldrin:3:5
+   |
+ 3 |     Var1 = fallback;
+   |     ^^^^ fallback variant defined here
+   |
+  ::: test/ui/duplicate_enum_fallback_name.aldrin:2:5
+   |
+ 2 |     Var1 @ 1;
+   |     ---- name first used here
+   |

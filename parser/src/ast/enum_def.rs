@@ -1,6 +1,7 @@
 use super::{Attribute, Ident, LitPosInt, TypeName};
 use crate::error::{
-    DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
+    DuplicateEnumFallbackName, DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum,
+    InvalidEnumVariantId, RecursiveEnum,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -79,6 +80,16 @@ impl EnumDef {
             Some(&self.name),
             validate,
         );
+
+        if let Some(ref fallback) = self.fallback {
+            DuplicateEnumFallbackName::validate(
+                fallback,
+                &self.vars,
+                self.name.span(),
+                Some(&self.name),
+                validate,
+            );
+        }
 
         self.name.validate(validate);
         for var in &self.vars {
@@ -165,6 +176,10 @@ impl InlineEnum {
             None,
             validate,
         );
+
+        if let Some(ref fallback) = self.fallback {
+            DuplicateEnumFallbackName::validate(fallback, &self.vars, self.kw_span, None, validate);
+        }
 
         for var in &self.vars {
             var.validate(validate);
