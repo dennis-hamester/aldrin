@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add type `UnknownVariant` to represent an unknown enum variant. `ValueSerializer` and
   `ValueDeserializer` have been extended as well.
+- Enum introspection (`introspection::Enum`) can now specify a special variant as a fallback.
 
 ### Changed
 

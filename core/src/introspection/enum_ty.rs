@@ -11,6 +11,7 @@ pub struct Enum {
     schema: String,
     name: String,
     variants: BTreeMap<u32, Variant>,
+    fallback: Option<String>,
 }
 
 impl Enum {
@@ -35,6 +36,10 @@ impl Enum {
     pub fn variants(&self) -> &BTreeMap<u32, Variant> {
         &self.variants
     }
+
+    pub fn fallback(&self) -> Option<&str> {
+        self.fallback.as_deref()
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -43,15 +48,21 @@ enum EnumField {
     Schema = 0,
     Name = 1,
     Variants = 2,
+    Fallback = 3,
 }
 
 impl Serialize for Enum {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(3)?;
+        let num = 3 + (self.fallback.is_some() as usize);
+        let mut serializer = serializer.serialize_struct(num)?;
 
         serializer.serialize_field(EnumField::Schema, &self.schema)?;
         serializer.serialize_field(EnumField::Name, &self.name)?;
         serializer.serialize_field(EnumField::Variants, &self.variants)?;
+
+        if let Some(ref fallback) = self.fallback {
+            serializer.serialize_field(EnumField::Fallback, &Some(fallback))?;
+        }
 
         serializer.finish()
     }
@@ -64,6 +75,7 @@ impl Deserialize for Enum {
         let mut schema = None;
         let mut name = None;
         let mut variants = None;
+        let mut fallback = None;
 
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
@@ -72,6 +84,7 @@ impl Deserialize for Enum {
                 EnumField::Schema => schema = deserializer.deserialize().map(Some)?,
                 EnumField::Name => name = deserializer.deserialize().map(Some)?,
                 EnumField::Variants => variants = deserializer.deserialize().map(Some)?,
+                EnumField::Fallback => fallback = deserializer.deserialize()?,
             }
         }
 
@@ -79,6 +92,7 @@ impl Deserialize for Enum {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
             variants: variants.ok_or(DeserializeError::InvalidSerialization)?,
+            fallback,
         })
     }
 }
@@ -88,6 +102,7 @@ pub struct EnumBuilder {
     schema: String,
     name: String,
     variants: BTreeMap<u32, Variant>,
+    fallback: Option<String>,
 }
 
 impl EnumBuilder {
@@ -96,6 +111,7 @@ impl EnumBuilder {
             schema: schema.into(),
             name: name.into(),
             variants: BTreeMap::new(),
+            fallback: None,
         }
     }
 
@@ -123,11 +139,17 @@ impl EnumBuilder {
         self.variant(id, name, None)
     }
 
+    pub fn fallback(mut self, name: impl Into<String>) -> Self {
+        self.fallback = Some(name.into());
+        self
+    }
+
     pub fn finish(self) -> Enum {
         Enum {
             schema: self.schema,
             name: self.name,
             variants: self.variants,
+            fallback: self.fallback,
         }
     }
 }
