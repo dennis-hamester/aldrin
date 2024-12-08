@@ -1,5 +1,6 @@
 use crate::buf_ext::ValueBufExt;
 use crate::deserialize_key::{DeserializeKey, Sealed as _};
+use crate::enum_fallback::EnumFallback;
 use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
@@ -955,6 +956,12 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
 
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
         T::deserialize(Deserializer::new(self.buf, self.depth)?)
+    }
+
+    pub fn into_fallback(self) -> Result<EnumFallback, DeserializeError> {
+        let variant = self.variant;
+        let value = self.deserialize()?;
+        Ok(EnumFallback::new(variant, value))
     }
 
     pub fn skip(self) -> Result<(), DeserializeError> {

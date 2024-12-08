@@ -4,6 +4,7 @@ mod buf_ext;
 mod bus_listener;
 mod channel_end;
 mod deserialize_key;
+mod enum_fallback;
 mod error;
 mod generic_value;
 mod ids;
@@ -33,6 +34,7 @@ pub use aldrin_macros::{Introspectable, KeyTypeOf};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};
+pub use enum_fallback::EnumFallback;
 pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
