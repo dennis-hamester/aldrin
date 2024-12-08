@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add support for enum fallbacks.
+
 ### Fixed
 
 - The built-in types `f32`, `f64`, `lifetime` and `unit` are now also suggested in error messages
