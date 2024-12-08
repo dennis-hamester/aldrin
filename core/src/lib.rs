@@ -13,6 +13,7 @@ mod protocol_version;
 mod serialize_key;
 mod serialized_value;
 mod service_info;
+mod unknown_variant;
 mod value;
 mod value_deserializer;
 mod value_serializer;
@@ -43,6 +44,7 @@ pub use protocol_version::ProtocolVersion;
 pub use serialize_key::{SerializeKey, SerializeKeyImpl};
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use service_info::ServiceInfo;
+pub use unknown_variant::UnknownVariant;
 pub use value::{ByteSlice, Bytes, Skip, ValueKind};
 pub use value_deserializer::{
     BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,

@@ -5,6 +5,7 @@ use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::serialized_value::SerializedValueSlice;
+use crate::unknown_variant::UnknownVariant;
 use crate::value::ValueKind;
 use crate::MAX_VALUE_DEPTH;
 use bytes::Buf;
@@ -955,6 +956,12 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
 
     pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
         T::deserialize(Deserializer::new(self.buf, self.depth)?)
+    }
+
+    pub fn into_unknown_variant(self) -> Result<UnknownVariant, DeserializeError> {
+        let id = self.variant;
+        let value = self.deserialize()?;
+        Ok(UnknownVariant::new(id, value))
     }
 
     pub fn skip(self) -> Result<(), DeserializeError> {
