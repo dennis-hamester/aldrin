@@ -131,6 +131,13 @@ fn gen_field(
     options: &Options,
     item_options: &ItemOptions,
 ) -> Result<(TokenStream, TokenStream)> {
+    if item_options.is_fallback() {
+        return Err(Error::new_spanned(
+            field,
+            "struct fields cannot be marked fallback",
+        ));
+    }
+
     let krate = options.krate();
     let id = item_options.id();
     let is_required = !item_options.is_optional();
@@ -171,9 +178,26 @@ fn gen_enum(
     let mut layout: Vec<TokenStream> = Vec::new();
     let mut references: Vec<TokenStream> = Vec::new();
     let mut next_id = 0;
+    let mut has_fallback = false;
 
     for variant in variants.into_iter() {
         let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+        if item_options.is_fallback() {
+            if has_fallback {
+                return Err(Error::new_spanned(
+                    variant,
+                    "only one variant can be marked fallback",
+                ));
+            }
+
+            has_fallback = true;
+        } else if has_fallback {
+            return Err(Error::new_spanned(
+                variant,
+                "variants after the fallback are not allowed",
+            ));
+        }
+
         next_id = item_options.id() + 1;
 
         let (var_layout, var_references) = gen_variant(variant, options, &item_options)?;
@@ -221,6 +245,18 @@ fn gen_variant(
         ));
     }
 
+    if item_options.is_fallback() {
+        gen_fallback_variant(variant).map(|toks| (toks, None))
+    } else {
+        gen_regular_variant(variant, options, item_options)
+    }
+}
+
+fn gen_regular_variant(
+    variant: &Variant,
+    options: &Options,
+    item_options: &ItemOptions,
+) -> Result<(TokenStream, Option<TokenStream>)> {
     let krate = options.krate();
     let id = item_options.id();
     let name = variant.ident.unraw().to_string();
@@ -263,4 +299,24 @@ fn gen_variant(
     };
 
     Ok((layout, references))
+}
+
+fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
+    let name = variant.ident.unraw().to_string();
+
+    match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
+            .fallback(#name)
+        }),
+
+        Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(
+            variant,
+            "the fallback variant must have exactly 1 element",
+        )),
+
+        Fields::Named(_) => Err(Error::new_spanned(
+            variant,
+            "struct-like variants are not supported by Aldrin",
+        )),
+    }
 }

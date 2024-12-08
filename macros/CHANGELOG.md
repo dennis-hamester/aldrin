@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `#[aldrin(fallback)]` to optionally mark the last variant of an enum as the fallback variant.
+
 ### Fixed
 
 - Fix visibility of the `UUID` and `VERSION` associated consts of service types. Proxy types were

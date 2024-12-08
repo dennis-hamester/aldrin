@@ -1,5 +1,5 @@
 use aldrin_core::introspection::{Introspectable, Introspection, LexicalId};
-use aldrin_core::{Introspectable, TypeId};
+use aldrin_core::{Introspectable, TypeId, UnknownVariant};
 use uuid::uuid;
 
 #[test]
@@ -84,4 +84,39 @@ fn raw_identifiers_enum() {
     assert_eq!(var.id(), 1);
     assert_eq!(var.name(), "else");
     assert_eq!(var.variant_type(), Some(LexicalId::U32));
+}
+
+#[test]
+fn enum_fallback() {
+    #[derive(Introspectable)]
+    #[aldrin(schema = "test")]
+    #[allow(dead_code)]
+    enum Foo {
+        Var1(u32),
+
+        #[aldrin(fallback)]
+        Fallback(UnknownVariant),
+    }
+
+    let introspection = Introspection::new::<Foo>();
+    assert_eq!(introspection.lexical_id(), LexicalId::custom("test", "Foo"));
+    assert_eq!(
+        introspection.type_id(),
+        TypeId(uuid!("0d387b9e-26fb-567f-a7ec-9e70127fc58d"))
+    );
+    assert_eq!(Foo::lexical_id(), introspection.lexical_id());
+
+    let layout = introspection.as_enum_layout().unwrap();
+    assert_eq!(layout.schema(), "test");
+    assert_eq!(layout.name(), "Foo");
+
+    let variants = layout.variants();
+    assert_eq!(variants.len(), 1);
+
+    let var = &variants[&0];
+    assert_eq!(var.id(), 0);
+    assert_eq!(var.name(), "Var1");
+    assert_eq!(var.variant_type(), Some(LexicalId::U32));
+
+    assert_eq!(layout.fallback(), Some("Fallback"));
 }
