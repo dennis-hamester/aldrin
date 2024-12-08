@@ -73,6 +73,14 @@ fn gen_struct(
             .enumerate()
             .map(|(index, field)| {
                 let item_options = ItemOptions::new(&field.attrs, next_id)?;
+
+                if item_options.is_fallback() {
+                    return Err(Error::new_spanned(
+                        field,
+                        "struct fields cannot be marked fallback",
+                    ));
+                }
+
                 let field_ident = format_ident!("field{index}");
                 next_id = item_options.id() + 1;
                 Ok((field, item_options, field_ident))
@@ -141,59 +149,107 @@ fn gen_struct(
 
 fn gen_enum(variants: &Punctuated<Variant, Token![,]>, options: &Options) -> Result<TokenStream> {
     let krate = options.krate();
+    let mut next_id = 0;
+    let mut has_fallback = false;
 
-    let variants = {
-        let mut next_id = 0;
+    let mut match_arms = Vec::new();
+    for variant in variants {
+        let item_options = ItemOptions::new(&variant.attrs, next_id)?;
 
-        variants
-            .into_iter()
-            .map(|variant| {
-                let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+        if item_options.is_fallback() {
+            if has_fallback {
+                return Err(Error::new_spanned(
+                    variant,
+                    "only one variant can be marked fallback",
+                ));
+            }
 
-                let (has_field, is_unit) = match variant.fields {
-                    Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => (false, false),
-                    Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => (true, false),
-                    Fields::Unit => (false, true),
+            has_fallback = true;
+        } else if has_fallback {
+            return Err(Error::new_spanned(
+                variant,
+                "variants after the fallback are not allowed",
+            ));
+        }
 
-                    Fields::Named(_) => {
-                        return Err(Error::new_spanned(
-                            variant,
-                            "struct-like variants are not supported by Aldrin",
-                        ))
-                    }
+        next_id = item_options.id() + 1;
+        match_arms.push(gen_variant(variant, &item_options)?);
+    }
 
-                    Fields::Unnamed(_) => return Err(Error::new_spanned(
-                        variant,
-                        "tuple-like variants with more than 1 element are not supported by Aldrin",
-                    )),
-                };
-
-                next_id = item_options.id() + 1;
-                Ok((&variant.ident, item_options, has_field, is_unit))
-            })
-            .collect::<Result<Vec<_>>>()?
+    let catch_all = if has_fallback {
+        TokenStream::new()
+    } else {
+        quote! { _ => ::std::result::Result::Err(#krate::DeserializeError::InvalidSerialization), }
     };
-
-    let match_arms = variants
-        .iter()
-        .map(|(ident, item_options, has_field, is_unit)| {
-            let id = item_options.id();
-
-            let rhs = match (has_field, is_unit) {
-                (true, _) => quote! { deserializer.deserialize().map(Self::#ident) },
-                (false, true) => quote! { deserializer.deserialize().map(|()| Self::#ident) },
-                (false, false) => quote! { deserializer.deserialize().map(|()| Self::#ident()) },
-            };
-
-            quote! { #id => #rhs, }
-        });
 
     Ok(quote! {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.variant() {
             #(#match_arms)*
-            _ => ::std::result::Result::Err(#krate::DeserializeError::InvalidSerialization),
+            #catch_all
         }
     })
+}
+
+fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
+    if item_options.is_optional() {
+        return Err(Error::new_spanned(
+            variant,
+            "enum variants cannot be optional",
+        ));
+    }
+
+    if item_options.is_fallback() {
+        gen_fallback_variant(variant)
+    } else {
+        gen_regular_variant(variant, item_options)
+    }
+}
+
+fn gen_regular_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
+    let ident = &variant.ident;
+    let id = item_options.id();
+
+    match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => Ok(quote! {
+            #id => deserializer.deserialize().map(|()| Self::#ident()),
+        }),
+
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
+            #id => deserializer.deserialize().map(Self::#ident),
+        }),
+
+        Fields::Unnamed(_) => Err(Error::new_spanned(
+            variant,
+            "tuple-like variants with more than 1 element are not supported by Aldrin",
+        )),
+
+        Fields::Unit => Ok(quote! { #id => deserializer.deserialize().map(|()| Self::#ident), }),
+
+        Fields::Named(_) => Err(Error::new_spanned(
+            variant,
+            "struct-like variants are not supported by Aldrin",
+        )),
+    }
+}
+
+fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
+    let ident = &variant.ident;
+
+    match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
+            _ => deserializer.into_fallback().map(Self::#ident),
+        }),
+
+        Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(
+            variant,
+            "the fallback variant must have exactly 1 element",
+        )),
+
+        Fields::Named(_) => Err(Error::new_spanned(
+            variant,
+            "struct-like variants are not supported by Aldrin",
+        )),
+    }
 }
