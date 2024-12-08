@@ -14,11 +14,12 @@ pub struct EmptyEnum {
 impl EmptyEnum {
     pub(crate) fn validate(
         vars: &[EnumVariant],
+        fallback: Option<&Ident>,
         span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
-        if !vars.is_empty() {
+        if !vars.is_empty() || fallback.is_some() {
             return;
         }
 

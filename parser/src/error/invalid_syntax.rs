@@ -221,6 +221,7 @@ impl Expected {
             Rule::kw_args => &[&[Expected::Keyword("args")]],
             Rule::kw_enum => &[&[Expected::Keyword("enum")]],
             Rule::kw_err => &[&[Expected::Keyword("err")]],
+            Rule::kw_fallback => &[&[Expected::Keyword("fallback")]],
             Rule::kw_import => &[&[Expected::Keyword("import")]],
             Rule::kw_object_id => &[&[Expected::Keyword("object_id")]],
             Rule::kw_ok => &[&[Expected::Keyword("ok")]],
