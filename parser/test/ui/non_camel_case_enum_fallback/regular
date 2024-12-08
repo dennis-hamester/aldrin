@@ -1,0 +1,7 @@
+warning: enum fallback `unknown` should have a camel-case name
+  --> test/ui/non_camel_case_enum_fallback.aldrin:2:5
+   |
+ 2 |     unknown = fallback;
+   |     ^^^^^^^
+   |
+   = help: consider renaming the enum fallback `unknown` to `Unknown`

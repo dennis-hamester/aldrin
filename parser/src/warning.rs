@@ -1,5 +1,6 @@
 mod duplicate_import;
 mod non_camel_case_enum;
+mod non_camel_case_enum_fallback;
 mod non_camel_case_enum_variant;
 mod non_camel_case_service;
 mod non_camel_case_struct;
@@ -15,6 +16,7 @@ use crate::Parsed;
 
 pub use duplicate_import::DuplicateImport;
 pub use non_camel_case_enum::NonCamelCaseEnum;
+pub use non_camel_case_enum_fallback::NonCamelCaseEnumFallback;
 pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
 pub use non_camel_case_service::NonCamelCaseService;
 pub use non_camel_case_struct::NonCamelCaseStruct;
@@ -30,6 +32,7 @@ pub use unused_import::UnusedImport;
 pub enum Warning {
     DuplicateImport(DuplicateImport),
     NonCamelCaseEnum(NonCamelCaseEnum),
+    NonCamelCaseEnumFallback(NonCamelCaseEnumFallback),
     NonCamelCaseEnumVariant(NonCamelCaseEnumVariant),
     NonCamelCaseService(NonCamelCaseService),
     NonCamelCaseStruct(NonCamelCaseStruct),
@@ -50,6 +53,7 @@ impl Diagnostic for Warning {
         match self {
             Self::DuplicateImport(w) => w.schema_name(),
             Self::NonCamelCaseEnum(w) => w.schema_name(),
+            Self::NonCamelCaseEnumFallback(w) => w.schema_name(),
             Self::NonCamelCaseEnumVariant(w) => w.schema_name(),
             Self::NonCamelCaseService(w) => w.schema_name(),
             Self::NonCamelCaseStruct(w) => w.schema_name(),
@@ -66,6 +70,7 @@ impl Diagnostic for Warning {
         match self {
             Self::DuplicateImport(w) => w.format(parsed),
             Self::NonCamelCaseEnum(w) => w.format(parsed),
+            Self::NonCamelCaseEnumFallback(w) => w.format(parsed),
             Self::NonCamelCaseEnumVariant(w) => w.format(parsed),
             Self::NonCamelCaseService(w) => w.format(parsed),
             Self::NonCamelCaseStruct(w) => w.format(parsed),
