@@ -1,0 +1,16 @@
+enum Enum {
+    Var1 @ 1;
+    Var1 = fallback;
+}
+
+service Service {
+    uuid = f8fbef11-114a-48e2-812f-50ed661b54be;
+    version = 1;
+
+    fn func @ 1 {
+        args = enum {
+            Var1 @ 1;
+            Var1 = fallback;
+        }
+    }
+}

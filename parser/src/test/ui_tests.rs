@@ -1,4 +1,5 @@
 ui_test!(const_int_not_found);
+ui_test!(duplicate_enum_fallback_name);
 ui_test!(error_empty_enum);
 ui_test!(expected_const_int_found_service);
 ui_test!(expected_const_int_found_string);
