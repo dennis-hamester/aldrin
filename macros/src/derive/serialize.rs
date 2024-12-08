@@ -106,6 +106,13 @@ fn gen_field(
     index: usize,
     item_options: &ItemOptions,
 ) -> Result<(TokenStream, Option<TokenStream>)> {
+    if item_options.is_fallback() {
+        return Err(Error::new_spanned(
+            field,
+            "struct fields cannot be marked fallback",
+        ));
+    }
+
     let id = item_options.id();
 
     let (serialize, optional) = match (field.ident.as_ref(), item_options.is_optional()) {
@@ -157,11 +164,29 @@ fn gen_field(
 fn gen_enum(variants: &Punctuated<Variant, Token![,]>) -> Result<TokenStream> {
     let body = {
         let mut next_id = 0;
+        let mut has_fallback = false;
 
         variants
             .into_iter()
             .map(|variant| {
                 let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+
+                if item_options.is_fallback() {
+                    if has_fallback {
+                        return Err(Error::new_spanned(
+                            variant,
+                            "only one variant can be marked fallback",
+                        ));
+                    }
+
+                    has_fallback = true;
+                } else if has_fallback {
+                    return Err(Error::new_spanned(
+                        variant,
+                        "variants after the fallback are not allowed",
+                    ));
+                }
+
                 next_id = item_options.id() + 1;
                 gen_variant(variant, &item_options)
             })
@@ -183,6 +208,14 @@ fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStr
         ));
     }
 
+    if item_options.is_fallback() {
+        gen_fallback_variant(variant)
+    } else {
+        gen_regular_variant(variant, item_options)
+    }
+}
+
+fn gen_regular_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
     let ident = &variant.ident;
     let id = item_options.id();
 
@@ -201,6 +234,26 @@ fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStr
         )),
 
         Fields::Unit => Ok(quote! { Self::#ident => serializer.serialize_enum(#id, &()) }),
+
+        Fields::Named(_) => Err(Error::new_spanned(
+            variant,
+            "struct-like variants are not supported by Aldrin",
+        )),
+    }
+}
+
+fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
+    let ident = &variant.ident;
+
+    match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
+            Self::#ident(ref val) => serializer.serialize_unknown_variant(val)
+        }),
+
+        Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(
+            variant,
+            "the fallback variant must have exactly 1 element",
+        )),
 
         Fields::Named(_) => Err(Error::new_spanned(
             variant,
