@@ -12,6 +12,7 @@ use uuid::uuid;
 aldrin::generate!("test/all_types.aldrin");
 aldrin::generate!("test/before_derive_compat.aldrin");
 aldrin::generate!("test/constants.aldrin");
+aldrin::generate!("test/enum_fallback.aldrin");
 aldrin::generate!("test/extern.aldrin", introspection = true);
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/introspection.aldrin", introspection = true);
@@ -393,4 +394,22 @@ async fn before_derive_compat_enum() {
     let serialized = SerializedValue::serialize(&new).unwrap();
     let old = serialized.deserialize::<OldEnum>().unwrap();
     assert_eq!(new, old);
+}
+
+#[test]
+fn enum_fallback_new_to_old() {
+    use enum_fallback::{New, Old};
+
+    let new = New::Var2(1);
+    let serialized = SerializedValue::serialize(&new).unwrap();
+
+    let old = serialized.deserialize::<Old>().unwrap();
+    let Old::Unknown(variant) = old else { panic!() };
+
+    assert_eq!(variant.id(), 2);
+    assert_eq!(variant.deserialize(), Ok(1u32));
+
+    let serialized = SerializedValue::serialize(&Old::Unknown(variant)).unwrap();
+    let new2 = serialized.deserialize().unwrap();
+    assert_eq!(new, new2);
 }

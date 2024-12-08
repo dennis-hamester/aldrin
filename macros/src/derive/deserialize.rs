@@ -239,7 +239,7 @@ fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
 
     match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            _ => deserializer.into_fallback().map(Self::#ident),
+            _ => deserializer.into_unknown_variant().map(Self::#ident),
         }),
 
         Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(

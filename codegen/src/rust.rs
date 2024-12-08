@@ -151,9 +151,12 @@ impl RustGenerator<'_> {
                 self.struct_def(d.name().value(), Some(d.attributes()), d.fields())
             }
 
-            ast::Definition::Enum(e) => {
-                self.enum_def(e.name().value(), Some(e.attributes()), e.variants())
-            }
+            ast::Definition::Enum(e) => self.enum_def(
+                e.name().value(),
+                Some(e.attributes()),
+                e.variants(),
+                e.fallback(),
+            ),
 
             ast::Definition::Service(s) => self.service_def(s),
             ast::Definition::Const(c) => self.const_def(c),
@@ -237,6 +240,7 @@ impl RustGenerator<'_> {
         name: &str,
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
+        fallback: Option<&ast::Ident>,
     ) {
         let ident = format!("r#{name}");
         let krate = &self.rust_options.krate;
@@ -282,6 +286,15 @@ impl RustGenerator<'_> {
             } else {
                 codeln!(self, "    {ident},");
             }
+        }
+        if let Some(fallback) = fallback {
+            if !first {
+                codeln!(self);
+            }
+
+            let ident = format!("r#{}", fallback.value());
+            codeln!(self, "    #[aldrin(fallback)]");
+            codeln!(self, "    {ident}({krate}::core::UnknownVariant),");
         }
         codeln!(self, "}}");
         codeln!(self);
@@ -398,6 +411,7 @@ impl RustGenerator<'_> {
                                 &self.function_args_type_name(svc_name, func_name, args, false),
                                 None,
                                 e.variants(),
+                                e.fallback(),
                             ),
 
                             ast::TypeNameOrInline::TypeName(_) => {}
@@ -416,6 +430,7 @@ impl RustGenerator<'_> {
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 None,
                                 e.variants(),
+                                e.fallback(),
                             ),
 
                             ast::TypeNameOrInline::TypeName(_) => {}
@@ -434,6 +449,7 @@ impl RustGenerator<'_> {
                                 &self.function_err_type_name(svc_name, func_name, err, false),
                                 None,
                                 e.variants(),
+                                e.fallback(),
                             ),
 
                             ast::TypeNameOrInline::TypeName(_) => {}
@@ -456,6 +472,7 @@ impl RustGenerator<'_> {
                                 &self.event_variant_type(svc_name, ev_name, ty, false),
                                 None,
                                 e.variants(),
+                                e.fallback(),
                             ),
 
                             ast::TypeNameOrInline::TypeName(_) => {}
