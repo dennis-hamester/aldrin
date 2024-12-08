@@ -1,5 +1,8 @@
 use aldrin_core::introspection::{Introspectable, Introspection, LexicalId};
-use aldrin_core::{Introspectable, TypeId, UnknownVariant};
+use aldrin_core::{
+    AsSerializeArg, Deserialize, Introspectable, Serialize, SerializedValue, TypeId, UnknownVariant,
+};
+use std::collections::HashMap;
 use uuid::uuid;
 
 #[test]
@@ -119,4 +122,86 @@ fn enum_fallback() {
     assert_eq!(var.variant_type(), Some(LexicalId::U32));
 
     assert_eq!(layout.fallback(), Some("Fallback"));
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct Unit;
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct EmptyStruct {}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct EmptyTupleStruct();
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct EmptyStructWithFallback {
+    #[aldrin(fallback)]
+    unknown: HashMap<u32, SerializedValue>,
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct EmptyTupleStructWithFallback(#[aldrin(fallback)] HashMap<u32, SerializedValue>);
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct RegularStruct {
+    foo: u32,
+
+    #[aldrin(id = 2, optional)]
+    bar: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct RegularTupleStruct(u32, #[aldrin(id = 2, optional)] Option<String>);
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct RegularStructWithFallback {
+    foo: u32,
+
+    #[aldrin(id = 2, optional)]
+    bar: Option<String>,
+
+    #[aldrin(fallback)]
+    unknown: HashMap<u32, SerializedValue>,
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+struct RegularTupleStructWithFallback(
+    u32,
+    #[aldrin(id = 2, optional)] Option<String>,
+    #[aldrin(fallback)] HashMap<u32, SerializedValue>,
+);
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+enum EmptyEnum {}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+enum EnumWithFallback {
+    #[aldrin(fallback)]
+    Unknown(UnknownVariant),
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+enum RegularEnum {
+    Variant1(u32),
+}
+
+#[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
+#[aldrin(schema = "test")]
+enum RegularEnumWithFallback {
+    Variant1(u32),
+
+    #[aldrin(fallback)]
+    Unknown(UnknownVariant),
 }
