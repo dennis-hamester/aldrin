@@ -1,4 +1,5 @@
 use crate::buf_ext::BufMutExt;
+use crate::enum_fallback::EnumFallback;
 use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::{Sealed as _, SerializeKey};
@@ -243,6 +244,10 @@ impl<'a> Serializer<'a> {
         self.buf.put_discriminant_u8(ValueKind::Enum);
         self.buf.put_varint_u32_le(variant.into());
         value.serialize(self)
+    }
+
+    pub fn serialize_enum_fallback(self, fallback: &EnumFallback) -> Result<(), SerializeError> {
+        self.serialize_enum(fallback.variant(), fallback.value())
     }
 
     pub fn serialize_sender(self, value: ChannelCookie) {
