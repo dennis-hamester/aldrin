@@ -1,0 +1,12 @@
+#[rust(impl_partial_eq, impl_eq)]
+enum Old {
+    Var1 @ 1;
+    Unknown = fallback;
+}
+
+#[rust(impl_partial_eq, impl_eq)]
+enum New {
+    Var1 @ 1;
+    Var2 @ 2 = u32;
+    Unknown = fallback;
+}
