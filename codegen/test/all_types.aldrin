@@ -2,289 +2,289 @@ service Service {
     uuid = 85fcf836-3541-43d6-bf47-a6231909faba;
     version = 1;
 
-    fn f1 @ 1 {
+    fn func1 @ 1 {
         args = bool;
         ok = bool;
         err = bool;
     }
 
-    fn f2 @ 2 {
+    fn func2 @ 2 {
         args = u8;
         ok = u8;
         err = u8;
     }
 
-    fn f3 @ 3 {
+    fn func3 @ 3 {
         args = i8;
         ok = i8;
         err = i8;
     }
 
-    fn f4 @ 4 {
+    fn func4 @ 4 {
         args = u16;
         ok = u16;
         err = u16;
     }
 
-    fn f5 @ 5 {
+    fn func5 @ 5 {
         args = i16;
         ok = i16;
         err = i16;
     }
 
-    fn f6 @ 6 {
+    fn func6 @ 6 {
         args = u32;
         ok = u32;
         err = u32;
     }
 
-    fn f7 @ 7 {
+    fn func7 @ 7 {
         args = i32;
         ok = i32;
         err = i32;
     }
 
-    fn f8 @ 8 {
+    fn func8 @ 8 {
         args = u64;
         ok = u64;
         err = u64;
     }
 
-    fn f9 @ 9 {
+    fn func9 @ 9 {
         args = i64;
         ok = i64;
         err = i64;
     }
 
-    fn f10 @ 10 {
+    fn func10 @ 10 {
         args = f32;
         ok = f32;
         err = f32;
     }
 
-    fn f11 @ 11 {
+    fn func11 @ 11 {
         args = f64;
         ok = f64;
         err = f64;
     }
 
-    fn f12 @ 12 {
+    fn func12 @ 12 {
         args = string;
         ok = string;
         err = string;
     }
 
-    fn f13 @ 13 {
+    fn func13 @ 13 {
         args = uuid;
         ok = uuid;
         err = uuid;
     }
 
-    fn f14 @ 14 {
+    fn func14 @ 14 {
         args = object_id;
         ok = object_id;
         err = object_id;
     }
 
-    fn f15 @ 15 {
+    fn func15 @ 15 {
         args = service_id;
         ok = service_id;
         err = service_id;
     }
 
-    fn f16 @ 16 {
+    fn func16 @ 16 {
         args = value;
         ok = value;
         err = value;
     }
 
-    fn f17 @ 17 {
+    fn func17 @ 17 {
         args = option<unit>;
         ok = option<unit>;
         err = option<unit>;
     }
 
-    fn f18 @ 18 {
+    fn func18 @ 18 {
         args = box<unit>;
         ok = box<unit>;
         err = box<unit>;
     }
 
-    fn f19 @ 19 {
+    fn func19 @ 19 {
         args = vec<unit>;
         ok = vec<unit>;
         err = vec<unit>;
     }
 
-    fn f20 @ 20 {
+    fn func20 @ 20 {
         args = bytes;
         ok = bytes;
         err = bytes;
     }
 
-    fn f21 @ 21 {
+    fn func21 @ 21 {
         args = map<u8 -> unit>;
         ok = map<u8 -> unit>;
         err = map<u8 -> unit>;
     }
 
-    fn f22 @ 22 {
+    fn func22 @ 22 {
         args = map<i8 -> unit>;
         ok = map<i8 -> unit>;
         err = map<i8 -> unit>;
     }
 
-    fn f23 @ 23 {
+    fn func23 @ 23 {
         args = map<u16 -> unit>;
         ok = map<u16 -> unit>;
         err = map<u16 -> unit>;
     }
 
-    fn f24 @ 24 {
+    fn func24 @ 24 {
         args = map<i16 -> unit>;
         ok = map<i16 -> unit>;
         err = map<i16 -> unit>;
     }
 
-    fn f25 @ 25 {
+    fn func25 @ 25 {
         args = map<u32 -> unit>;
         ok = map<u32 -> unit>;
         err = map<u32 -> unit>;
     }
 
-    fn f26 @ 26 {
+    fn func26 @ 26 {
         args = map<i32 -> unit>;
         ok = map<i32 -> unit>;
         err = map<i32 -> unit>;
     }
 
-    fn f27 @ 27 {
+    fn func27 @ 27 {
         args = map<u64 -> unit>;
         ok = map<u64 -> unit>;
         err = map<u64 -> unit>;
     }
 
-    fn f28 @ 28 {
+    fn func28 @ 28 {
         args = map<i64 -> unit>;
         ok = map<i64 -> unit>;
         err = map<i64 -> unit>;
     }
 
-    fn f29 @ 29 {
+    fn func29 @ 29 {
         args = map<string -> unit>;
         ok = map<string -> unit>;
         err = map<string -> unit>;
     }
 
-    fn f30 @ 30 {
+    fn func30 @ 30 {
         args = map<uuid -> unit>;
         ok = map<uuid -> unit>;
         err = map<uuid -> unit>;
     }
 
-    fn f31 @ 31 {
+    fn func31 @ 31 {
         args = set<u8>;
         ok = set<u8>;
         err = set<u8>;
     }
 
-    fn f32 @ 32 {
+    fn func32 @ 32 {
         args = set<i8>;
         ok = set<i8>;
         err = set<i8>;
     }
 
-    fn f33 @ 33 {
+    fn func33 @ 33 {
         args = set<u16>;
         ok = set<u16>;
         err = set<u16>;
     }
 
-    fn f34 @ 34 {
+    fn func34 @ 34 {
         args = set<i16>;
         ok = set<i16>;
         err = set<i16>;
     }
 
-    fn f35 @ 35 {
+    fn func35 @ 35 {
         args = set<u32>;
         ok = set<u32>;
         err = set<u32>;
     }
 
-    fn f36 @ 36 {
+    fn func36 @ 36 {
         args = set<i32>;
         ok = set<i32>;
         err = set<i32>;
     }
 
-    fn f37 @ 37 {
+    fn func37 @ 37 {
         args = set<u64>;
         ok = set<u64>;
         err = set<u64>;
     }
 
-    fn f38 @ 38 {
+    fn func38 @ 38 {
         args = set<i64>;
         ok = set<i64>;
         err = set<i64>;
     }
 
-    fn f39 @ 39 {
+    fn func39 @ 39 {
         args = set<string>;
         ok = set<string>;
         err = set<string>;
     }
 
-    fn f40 @ 40 {
+    fn func40 @ 40 {
         args = set<uuid>;
         ok = set<uuid>;
         err = set<uuid>;
     }
 
-    fn f41 @ 41 {
+    fn func41 @ 41 {
         args = sender<unit>;
         ok = sender<unit>;
         err = sender<unit>;
     }
 
-    fn f42 @ 42 {
+    fn func42 @ 42 {
         args = receiver<unit>;
         ok = receiver<unit>;
         err = receiver<unit>;
     }
 
-    fn f43 @ 43 {
+    fn func43 @ 43 {
         args = lifetime;
         ok = lifetime;
         err = lifetime;
     }
 
-    fn f44 @ 44 {
+    fn func44 @ 44 {
         args = unit;
         ok = unit;
         err = unit;
     }
 
-    fn f45 @ 45 {
+    fn func45 @ 45 {
         args = result<unit, unit>;
         ok = result<unit, unit>;
         err = result<unit, unit>;
     }
 
-    fn f46 @ 46 {
+    fn func46 @ 46 {
         args = Struct;
         ok = Struct;
         err = Struct;
     }
 
-    fn f47 @ 47 {
+    fn func47 @ 47 {
         args = Enum;
         ok = Enum;
         err = Enum;
     }
 
-    fn f48 @ 48 {
+    fn func48 @ 48 {
         args = [unit; 1];
         ok = [unit; 1];
         err = [unit; 1];
@@ -341,54 +341,54 @@ service Service {
 }
 
 struct Struct {
-    f1 @ 1 = bool;
-    f2 @ 2 = u8;
-    f3 @ 3 = i8;
-    f4 @ 4 = u16;
-    f5 @ 5 = i16;
-    f6 @ 6 = u32;
-    f7 @ 7 = i32;
-    f8 @ 8 = u64;
-    f9 @ 9 = i64;
-    f10 @ 10 = f32;
-    f11 @ 11 = f64;
-    f12 @ 12 = string;
-    f13 @ 13 = uuid;
-    f14 @ 14 = object_id;
-    f15 @ 15 = service_id;
-    f16 @ 16 = value;
-    f17 @ 17 = option<unit>;
-    f18 @ 18 = box<unit>;
-    f19 @ 19 = vec<unit>;
-    f20 @ 20 = bytes;
-    f21 @ 21 = map<u8 -> unit>;
-    f22 @ 22 = map<i8 -> unit>;
-    f23 @ 23 = map<u16 -> unit>;
-    f24 @ 24 = map<i16 -> unit>;
-    f25 @ 25 = map<u32 -> unit>;
-    f26 @ 26 = map<i32 -> unit>;
-    f27 @ 27 = map<u64 -> unit>;
-    f28 @ 28 = map<i64 -> unit>;
-    f29 @ 29 = map<string -> unit>;
-    f30 @ 30 = map<uuid -> unit>;
-    f31 @ 31 = set<u8>;
-    f32 @ 32 = set<i8>;
-    f33 @ 33 = set<u16>;
-    f34 @ 34 = set<i16>;
-    f35 @ 35 = set<u32>;
-    f36 @ 36 = set<i32>;
-    f37 @ 37 = set<u64>;
-    f38 @ 38 = set<i64>;
-    f39 @ 39 = set<string>;
-    f40 @ 40 = set<uuid>;
-    f41 @ 41 = sender<unit>;
-    f42 @ 42 = receiver<unit>;
-    f43 @ 43 = lifetime;
-    f44 @ 44 = unit;
-    f45 @ 45 = result<unit, unit>;
-    f46 @ 46 = box<Struct>;
-    f47 @ 47 = box<Enum>;
-    f48 @ 48 = [unit; 1];
+    field1 @ 1 = bool;
+    field2 @ 2 = u8;
+    field3 @ 3 = i8;
+    field4 @ 4 = u16;
+    field5 @ 5 = i16;
+    field6 @ 6 = u32;
+    field7 @ 7 = i32;
+    field8 @ 8 = u64;
+    field9 @ 9 = i64;
+    field10 @ 10 = f32;
+    field11 @ 11 = f64;
+    field12 @ 12 = string;
+    field13 @ 13 = uuid;
+    field14 @ 14 = object_id;
+    field15 @ 15 = service_id;
+    field16 @ 16 = value;
+    field17 @ 17 = option<unit>;
+    field18 @ 18 = box<unit>;
+    field19 @ 19 = vec<unit>;
+    field20 @ 20 = bytes;
+    field21 @ 21 = map<u8 -> unit>;
+    field22 @ 22 = map<i8 -> unit>;
+    field23 @ 23 = map<u16 -> unit>;
+    field24 @ 24 = map<i16 -> unit>;
+    field25 @ 25 = map<u32 -> unit>;
+    field26 @ 26 = map<i32 -> unit>;
+    field27 @ 27 = map<u64 -> unit>;
+    field28 @ 28 = map<i64 -> unit>;
+    field29 @ 29 = map<string -> unit>;
+    field30 @ 30 = map<uuid -> unit>;
+    field31 @ 31 = set<u8>;
+    field32 @ 32 = set<i8>;
+    field33 @ 33 = set<u16>;
+    field34 @ 34 = set<i16>;
+    field35 @ 35 = set<u32>;
+    field36 @ 36 = set<i32>;
+    field37 @ 37 = set<u64>;
+    field38 @ 38 = set<i64>;
+    field39 @ 39 = set<string>;
+    field40 @ 40 = set<uuid>;
+    field41 @ 41 = sender<unit>;
+    field42 @ 42 = receiver<unit>;
+    field43 @ 43 = lifetime;
+    field44 @ 44 = unit;
+    field45 @ 45 = result<unit, unit>;
+    field46 @ 46 = box<Struct>;
+    field47 @ 47 = box<Enum>;
+    field48 @ 48 = [unit; 1];
 }
 
 enum Enum {

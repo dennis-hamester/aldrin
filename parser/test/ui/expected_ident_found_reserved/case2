@@ -1,0 +1,7 @@
+warning: service `service` should have a camel-case name
+  --> test/ui/expected_ident_found_reserved.aldrin:5:9
+   |
+ 5 | service service {
+   |         ^^^^^^^
+   |
+   = help: consider renaming service `service` to `Service`

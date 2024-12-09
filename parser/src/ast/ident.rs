@@ -1,4 +1,4 @@
-use crate::error::KeywordAsIdent;
+use crate::error::ExpectedIdentFoundReserved;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -21,7 +21,7 @@ impl Ident {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        KeywordAsIdent::validate(self, validate);
+        ExpectedIdentFoundReserved::validate(self, validate);
     }
 
     pub fn span(&self) -> Span {

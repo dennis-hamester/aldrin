@@ -1,0 +1,7 @@
+error: expected identifer; found reserved name `bool`
+  --> test/ui/expected_ident_found_reserved.aldrin:3:7
+   |
+ 3 | const bool = u8(1);
+   |       ^^^^ identifier expected here
+   |
+   = note: the name `bool` is reserved and cannot be used as an identifer

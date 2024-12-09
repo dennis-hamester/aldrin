@@ -4,6 +4,7 @@ ui_test!(expected_const_int_found_service);
 ui_test!(expected_const_int_found_string);
 ui_test!(expected_const_int_found_type);
 ui_test!(expected_const_int_found_uuid);
+ui_test!(expected_ident_found_reserved);
 ui_test!(expected_type_found_const);
 ui_test!(expected_type_found_service);
 ui_test!(grapheme_width);

@@ -1,0 +1,7 @@
+error: expected identifer; found reserved name `enum`
+   --> test/ui/expected_ident_found_reserved.aldrin:29:6
+    |
+ 29 | enum enum {
+    |      ^^^^ identifier expected here
+    |
+    = note: the name `enum` is reserved and cannot be used as an identifer

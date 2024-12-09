@@ -13,6 +13,7 @@ mod expected_const_int_found_service;
 mod expected_const_int_found_string;
 mod expected_const_int_found_type;
 mod expected_const_int_found_uuid;
+mod expected_ident_found_reserved;
 mod expected_type_found_const;
 mod expected_type_found_service;
 mod import_not_found;
@@ -27,7 +28,6 @@ mod invalid_service_version;
 mod invalid_struct_field_id;
 mod invalid_syntax;
 mod io_error;
-mod keyword_as_ident;
 mod missing_import;
 mod recursive_type;
 mod type_not_found;
@@ -50,6 +50,7 @@ pub use expected_const_int_found_service::ExpectedConstIntFoundService;
 pub use expected_const_int_found_string::ExpectedConstIntFoundString;
 pub use expected_const_int_found_type::ExpectedConstIntFoundType;
 pub use expected_const_int_found_uuid::ExpectedConstIntFoundUuid;
+pub use expected_ident_found_reserved::ExpectedIdentFoundReserved;
 pub use expected_type_found_const::ExpectedTypeFoundConst;
 pub use expected_type_found_service::ExpectedTypeFoundService;
 pub use import_not_found::ImportNotFound;
@@ -64,7 +65,6 @@ pub use invalid_service_version::InvalidServiceVersion;
 pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use invalid_syntax::{Expected, InvalidSyntax};
 pub use io_error::IoError;
-pub use keyword_as_ident::KeywordAsIdent;
 pub use missing_import::MissingImport;
 pub use recursive_type::{RecursiveEnum, RecursiveStruct};
 pub use type_not_found::TypeNotFound;
@@ -87,6 +87,7 @@ pub enum Error {
     ExpectedConstIntFoundString(ExpectedConstIntFoundString),
     ExpectedConstIntFoundType(ExpectedConstIntFoundType),
     ExpectedConstIntFoundUuid(ExpectedConstIntFoundUuid),
+    ExpectedIdentFoundReserved(ExpectedIdentFoundReserved),
     ExpectedTypeFoundConst(ExpectedTypeFoundConst),
     ExpectedTypeFoundService(ExpectedTypeFoundService),
     ImportNotFound(ImportNotFound),
@@ -101,7 +102,6 @@ pub enum Error {
     InvalidStructFieldId(InvalidStructFieldId),
     InvalidSyntax(InvalidSyntax),
     IoError(IoError),
-    KeywordAsIdent(KeywordAsIdent),
     MissingImport(MissingImport),
     RecursiveEnum(RecursiveEnum),
     RecursiveStruct(RecursiveStruct),
@@ -130,6 +130,7 @@ impl Diagnostic for Error {
             Self::ExpectedConstIntFoundString(e) => e.schema_name(),
             Self::ExpectedConstIntFoundType(e) => e.schema_name(),
             Self::ExpectedConstIntFoundUuid(e) => e.schema_name(),
+            Self::ExpectedIdentFoundReserved(e) => e.schema_name(),
             Self::ExpectedTypeFoundConst(e) => e.schema_name(),
             Self::ExpectedTypeFoundService(e) => e.schema_name(),
             Self::ImportNotFound(e) => e.schema_name(),
@@ -144,7 +145,6 @@ impl Diagnostic for Error {
             Self::InvalidStructFieldId(e) => e.schema_name(),
             Self::InvalidSyntax(e) => e.schema_name(),
             Self::IoError(e) => e.schema_name(),
-            Self::KeywordAsIdent(e) => e.schema_name(),
             Self::MissingImport(e) => e.schema_name(),
             Self::RecursiveEnum(e) => e.schema_name(),
             Self::RecursiveStruct(e) => e.schema_name(),
@@ -169,6 +169,7 @@ impl Diagnostic for Error {
             Self::ExpectedConstIntFoundString(e) => e.format(parsed),
             Self::ExpectedConstIntFoundType(e) => e.format(parsed),
             Self::ExpectedConstIntFoundUuid(e) => e.format(parsed),
+            Self::ExpectedIdentFoundReserved(e) => e.format(parsed),
             Self::ExpectedTypeFoundConst(e) => e.format(parsed),
             Self::ExpectedTypeFoundService(e) => e.format(parsed),
             Self::ImportNotFound(e) => e.format(parsed),
@@ -183,7 +184,6 @@ impl Diagnostic for Error {
             Self::InvalidStructFieldId(e) => e.format(parsed),
             Self::InvalidSyntax(e) => e.format(parsed),
             Self::IoError(e) => e.format(parsed),
-            Self::KeywordAsIdent(e) => e.format(parsed),
             Self::MissingImport(e) => e.format(parsed),
             Self::RecursiveEnum(e) => e.format(parsed),
             Self::RecursiveStruct(e) => e.format(parsed),

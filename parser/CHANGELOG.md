@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- The `KeywordAsIdent` error has been replaced by `ExpectedIdentFoundReserved`, which also rejects
+  several more identifiers. The complete list is: `bool`, `box`, `bytes`, `const`, `enum`, `event`,
+  `f32`, `f64`, `fn`, `i16`, `i32`, `i64`, `i8`, `import`, `lifetime`, `map`, `object_id`, `option`,
+  `receiver`, `required`, `result`, `sender`, `service`, `service_id`, `set`, `string`, `struct`,
+  `u16`, `u32`, `u64`, `u8`, `unit`, `uuid`, `value` and `vec`.
+
 ## [0.10.0] - 2024-11-26
 
 ### Added

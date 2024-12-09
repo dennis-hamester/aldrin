@@ -1,0 +1,7 @@
+warning: enum `enum` should have a camel-case name
+   --> test/ui/expected_ident_found_reserved.aldrin:29:6
+    |
+ 29 | enum enum {
+    |      ^^^^
+    |
+    = help: consider renaming enum `enum` to `Enum`

@@ -1,0 +1,7 @@
+warning: constant `bool` should have an upper-case name
+  --> test/ui/expected_ident_found_reserved.aldrin:3:7
+   |
+ 3 | const bool = u8(1);
+   |       ^^^^
+   |
+   = help: consider renaming constant `bool` to `BOOL`
