@@ -1,0 +1,7 @@
+error: type `f31` not found
+  --> test/ui/did_you_mean_builtin.aldrin:2:14
+   |
+ 2 |     f1 @ 1 = f31;
+   |              ^^^ type used here
+   |
+   = help: did you mean `f32`?

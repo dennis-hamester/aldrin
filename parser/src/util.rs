@@ -6,13 +6,17 @@ use std::hash::Hash;
 
 const THRESHOLD: f64 = 0.8;
 
+// This should contain all builtin types, except for generics.
 const BUILTIN_TYPES: &[&str] = &[
     "bool",
     "bytes",
+    "f32",
+    "f64",
     "i16",
     "i32",
     "i64",
     "i8",
+    "lifetime",
     "object_id",
     "service_id",
     "string",
@@ -20,6 +24,7 @@ const BUILTIN_TYPES: &[&str] = &[
     "u32",
     "u64",
     "u8",
+    "unit",
     "uuid",
     "value",
 ];

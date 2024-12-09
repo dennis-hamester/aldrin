@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- The built-in types `f32`, `f64`, `lifetime` and `unit` are now also suggested in error messages
+  where appropriate.
+
 ### Changed
 
 - The `KeywordAsIdent` error has been replaced by `ExpectedIdentFoundReserved`, which also rejects

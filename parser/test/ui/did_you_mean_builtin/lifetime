@@ -1,0 +1,7 @@
+error: type `lifetim` not found
+  --> test/ui/did_you_mean_builtin.aldrin:4:14
+   |
+ 4 |     f3 @ 3 = lifetim;
+   |              ^^^^^^^ type used here
+   |
+   = help: did you mean `lifetime`?

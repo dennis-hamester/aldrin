@@ -1,0 +1,6 @@
+struct Foo {
+    f1 @ 1 = f31;
+    f2 @ 2 = f63;
+    f3 @ 3 = lifetim;
+    f4 @ 4 = uni;
+}
