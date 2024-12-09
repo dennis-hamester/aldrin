@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The built-in types `f32`, `f64`, `lifetime` and `unit` are now also suggested in error messages
   where appropriate.
+- Built-in types are no longer suggested in error messages when an external references was not
+  found.
 
 ### Changed
 

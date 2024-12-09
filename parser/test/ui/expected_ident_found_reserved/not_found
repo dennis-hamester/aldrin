@@ -1,7 +1,6 @@
 error: type `expected_ident_found_reserved_import::bool` not found
    --> test/ui/expected_ident_found_reserved.aldrin:10:16
     |
- 10 | ... args = expected_ident_found_reserved_import::bool; // FIXME
+ 10 | ... args = expected_ident_found_reserved_import::bool;
     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type used here
     |
-    = help: did you mean `expected_ident_found_reserved_import::bool`?

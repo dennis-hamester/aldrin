@@ -7,7 +7,7 @@ service service {
     version = 1;
 
     fn bool @ 1 {
-        args = expected_ident_found_reserved_import::bool; // FIXME
+        args = expected_ident_found_reserved_import::bool;
 
         ok = struct {
             bool @ 1 = bool;
