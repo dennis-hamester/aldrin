@@ -156,6 +156,46 @@
 //! Both fields `required_field_1` and `required_field_2` will always be serialized and
 //! deserialization will fail if either is missing. Serialization of `optional_field` is skipped if
 //! it is `None`. If it's missing during deserialization, then it will be set to `None`.
+//!
+//! ##### `fallback`
+//!
+//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//!
+//! The last field of a struct and the last variant of an enum can optionally be marked with
+//! `#[aldrin(fallback)]`. This will enable successful serialization and deserialization of unknown
+//! fields and variants. For structs, the field type must be `HashMap<u32, SerializedValue>`. For
+//! enums, the variant must have a single field of type `aldrin_core::UnknownVariant`.
+//!
+//! This attribute cannot be combined with `#[aldrin(optional)]`.
+//!
+//! Example of a struct with a fallback field:
+//! ```
+//! # use aldrin_core::{Deserialize, Introspectable, Serialize, SerializedValue};
+//! # use std::collections::HashMap;
+//! #[derive(Serialize, Deserialize, Introspectable)]
+//! #[aldrin(schema = "contacts")]
+//! struct Person {
+//!     name: String,
+//!     age: u8,
+//!
+//!     #[aldrin(fallback)]
+//!     unknown_fields: HashMap<u32, SerializedValue>,
+//! }
+//! ```
+//!
+//! Example of an enum with a fallback variant:
+//! ```
+//! # use aldrin_core::{Deserialize, Introspectable, Serialize, UnknownVariant};
+//! #[derive(Serialize, Deserialize, Introspectable)]
+//! #[aldrin(schema = "zoo")]
+//! enum AnimalType {
+//!     Alpaca,
+//!     Pig,
+//!
+//!     #[aldrin(fallback)]
+//!     Unkown(UnknownVariant),
+//! }
+//! ```
 
 #![deny(missing_docs)]
 
