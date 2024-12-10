@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enum introspection (`introspection::Enum`) can now specify a special variant as a fallback.
 - `ValueSerializer` and `ValueDeserializer` have been extended to support structs with a fallback
   field of type `HashMap<u32, SerializedValue>`.
+- Struct introspection (`introspection::Struct`) can now specify a special field as a fallback.
 
 ### Changed
 
