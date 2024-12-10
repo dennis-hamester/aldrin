@@ -147,9 +147,12 @@ impl RustGenerator<'_> {
 
     fn definition(&mut self, def: &ast::Definition) {
         match def {
-            ast::Definition::Struct(d) => {
-                self.struct_def(d.name().value(), Some(d.attributes()), d.fields())
-            }
+            ast::Definition::Struct(d) => self.struct_def(
+                d.name().value(),
+                Some(d.attributes()),
+                d.fields(),
+                d.fallback(),
+            ),
 
             ast::Definition::Enum(e) => self.enum_def(
                 e.name().value(),
@@ -168,6 +171,7 @@ impl RustGenerator<'_> {
         name: &str,
         attrs: Option<&[ast::Attribute]>,
         fields: &[ast::StructField],
+        fallback: Option<&ast::Ident>,
     ) {
         let krate = self.rust_options.krate;
         let ident = format!("r#{name}");
@@ -221,6 +225,15 @@ impl RustGenerator<'_> {
                 codeln!(self, "    #[aldrin(id = {id}, optional)]");
                 codeln!(self, "    pub {ident}: {OPTION}<{ty}>,");
             }
+        }
+        if let Some(fallback) = fallback {
+            if !first {
+                codeln!(self);
+            }
+
+            let ident = format!("r#{}", fallback.value());
+            codeln!(self, "    #[aldrin(fallback)]");
+            codeln!(self, "    pub {ident}: {HASH_MAP}<{U32}, {krate}::core::SerializedValue>,");
         }
         codeln!(self, "}}");
         codeln!(self);
@@ -405,6 +418,7 @@ impl RustGenerator<'_> {
                                 &self.function_args_type_name(svc_name, func_name, args, false),
                                 None,
                                 s.fields(),
+                                s.fallback(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
@@ -424,6 +438,7 @@ impl RustGenerator<'_> {
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 None,
                                 s.fields(),
+                                s.fallback(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
@@ -443,6 +458,7 @@ impl RustGenerator<'_> {
                                 &self.function_err_type_name(svc_name, func_name, err, false),
                                 None,
                                 s.fields(),
+                                s.fallback(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
@@ -466,6 +482,7 @@ impl RustGenerator<'_> {
                                 &self.event_variant_type(svc_name, ev_name, ty, false),
                                 None,
                                 s.fields(),
+                                s.fallback(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
