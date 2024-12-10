@@ -59,33 +59,58 @@ fn gen_deserialize(input: DeriveInput, options: Options) -> Result<TokenStream> 
 }
 
 fn gen_struct(
-    fields: &Punctuated<Field, Token![,]>,
+    struct_fields: &Punctuated<Field, Token![,]>,
     options: &Options,
     named: bool,
 ) -> Result<TokenStream> {
     let krate = options.krate();
+    let mut fields = Vec::new();
+    let mut next_id = 0;
+    let mut fallback = None;
 
-    let fields = {
-        let mut next_id = 0;
+    for field in struct_fields {
+        let item_options = ItemOptions::new(&field.attrs, next_id)?;
 
-        fields
-            .into_iter()
-            .enumerate()
-            .map(|(index, field)| {
-                let item_options = ItemOptions::new(&field.attrs, next_id)?;
+        if item_options.is_fallback() {
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "only one field can be marked fallback",
+                ));
+            }
 
-                if item_options.is_fallback() {
-                    return Err(Error::new_spanned(
-                        field,
-                        "struct fields cannot be marked fallback",
-                    ));
-                }
+            if item_options.is_optional() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields cannot be marked both optional and fallback",
+                ));
+            }
 
-                let field_ident = format_ident!("field{index}");
-                next_id = item_options.id() + 1;
-                Ok((field, item_options, field_ident))
-            })
-            .collect::<Result<Vec<_>>>()?
+            fallback = Some(field);
+        } else {
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields after the fallback are not allowed",
+                ));
+            }
+
+            next_id = item_options.id() + 1;
+
+            let field_ident = if let Some(ref ident) = field.ident {
+                ident.clone()
+            } else {
+                format_ident!("__field{}", item_options.id())
+            };
+
+            fields.push((field, item_options, field_ident));
+        }
+    }
+
+    let deserializer = if fallback.is_some() {
+        quote! { deserializer.deserialize_struct_with_fallback()? }
+    } else {
+        quote! { deserializer.deserialize_struct()? }
     };
 
     let field_vars = fields.iter().map(|(_, _, field_ident)| {
@@ -96,54 +121,78 @@ fn gen_struct(
         let id = item_options.id();
 
         if item_options.is_optional() {
-            quote! { #id => #field_ident = deserializer.deserialize()?, }
+            quote! { #id => #field_ident = __deserializer.deserialize()?, }
         } else {
             quote! {
-                #id => #field_ident = deserializer.deserialize().map(::std::option::Option::Some)?,
+                #id => {
+                    #field_ident = __deserializer.deserialize().map(::std::option::Option::Some)?;
+                }
             }
         }
     });
 
-    let ok_expr = if named {
-        let field_inits = fields.iter().map(|(field, item_options, field_ident)| {
-            let ident = field.ident.as_ref().unwrap();
-
-            if item_options.is_optional() {
-                quote! { #ident: #field_ident }
-            } else {
-                quote! {
-                    #ident: #field_ident.ok_or(#krate::DeserializeError::InvalidSerialization)?
-                }
-            }
-        });
-
-        quote! { Self { #(#field_inits),* } }
+    let wildcard = if fallback.is_some() {
+        quote! { _ => __deserializer.add_to_fallback()?, }
     } else {
-        let field_inits = fields.iter().map(|(_, item_options, field_ident)| {
-            if item_options.is_optional() {
-                quote! { #field_ident }
-            } else {
-                quote! { #field_ident.ok_or(#krate::DeserializeError::InvalidSerialization)? }
-            }
-        });
+        quote! { _ => __deserializer.skip()?, }
+    };
 
-        quote! { Self(#(#field_inits),*) }
+    let field_inits = fields.iter().map(|(field, item_options, field_ident)| {
+        match (field.ident.as_ref(), item_options.is_optional()) {
+            (Some(ref ident), false) => quote! {
+                #ident: #ident.ok_or(#krate::DeserializeError::InvalidSerialization)?,
+            },
+
+            (Some(ref ident), true) => quote! { #ident, },
+
+            (None, false) => quote! {
+                #field_ident.ok_or(#krate::DeserializeError::InvalidSerialization)?,
+            },
+
+            (None, true) => quote! { #field_ident, },
+        }
+    });
+
+    let finish = if let Some(fallback) = fallback {
+        if let Some(ref ident) = fallback.ident {
+            quote! {
+                __deserializer.finish_with(|#ident| ::std::result::Result::Ok(Self {
+                    #(#field_inits)*
+                    #ident,
+                }))
+            }
+        } else {
+            quote! {
+                __deserializer.finish_with(|__fallback| ::std::result::Result::Ok(Self(
+                    #(#field_inits)*
+                    __fallback,
+                )))
+            }
+        }
+    } else if named {
+        quote! {
+            __deserializer.finish_with(|| ::std::result::Result::Ok(Self { #(#field_inits)* }))
+        }
+    } else {
+        quote! {
+            __deserializer.finish_with(|| ::std::result::Result::Ok(Self(#(#field_inits)*)))
+        }
     };
 
     Ok(quote! {
-        let mut deserializer = deserializer.deserialize_struct()?;
+        let mut __deserializer = #deserializer;
         #(#field_vars)*
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while __deserializer.has_more_fields() {
+            let __deserializer = __deserializer.deserialize_field()?;
 
-            match deserializer.id() {
+            match __deserializer.id() {
                 #(#match_arms)*
-                _ => deserializer.skip()?,
+                #wildcard
             }
         }
 
-        deserializer.finish_with(|| ::std::result::Result::Ok(#ok_expr))
+        #finish
     })
 }
 

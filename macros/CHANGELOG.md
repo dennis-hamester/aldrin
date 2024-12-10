@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `#[aldrin(fallback)]` to optionally mark the last variant of an enum as the fallback variant.
+- Add `#[aldrin(fallback)]` to optionally mark the last variant of an enum or the last field of a
+  struct as the fallback.
 
 ### Fixed
 
