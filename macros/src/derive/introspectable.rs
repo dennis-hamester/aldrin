@@ -87,23 +87,56 @@ fn gen_struct(
     let krate = options.krate();
     let schema = options.schema().unwrap();
 
-    let mut layout: Vec<TokenStream> = Vec::new();
-    let mut references: Vec<TokenStream> = Vec::new();
+    let mut layout = Vec::new();
+    let mut references = Vec::new();
     let mut next_id = 0;
+    let mut fallback = None;
 
     for (index, field) in fields.into_iter().enumerate() {
         let item_options = ItemOptions::new(&field.attrs, next_id)?;
-        next_id = item_options.id() + 1;
 
-        let (field_layout, field_references) = gen_field(field, index, options, &item_options)?;
+        if item_options.is_fallback() {
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "only one field can be marked fallback",
+                ));
+            }
 
-        layout.push(field_layout);
-        references.push(field_references);
+            if item_options.is_optional() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields cannot be marked both optional and fallback",
+                ));
+            }
+
+            fallback = match field.ident {
+                Some(ref ident) => Some(ident.unraw().to_string()),
+                None => Some("fallback".to_owned()),
+            };
+        } else {
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields after the fallback are not allowed",
+                ));
+            }
+
+            next_id = item_options.id() + 1;
+
+            let (field_layout, field_references) = gen_field(field, index, options, &item_options)?;
+
+            layout.push(field_layout);
+            references.push(field_references);
+        }
     }
+
+    let fallback = fallback.map(|ident| quote! { .fallback(#ident) });
 
     let layout = quote! {
         #krate::introspection::Struct::builder(#schema, #name)
             #(#layout)*
+            #fallback
             .finish()
             .into()
     };
@@ -111,7 +144,7 @@ fn gen_struct(
     let add_references = if fields.is_empty() {
         TokenStream::new()
     } else {
-        let len = fields.len();
+        let len = references.len();
 
         quote! {
             let types: [#krate::introspection::DynIntrospectable; #len] = [
@@ -131,13 +164,6 @@ fn gen_field(
     options: &Options,
     item_options: &ItemOptions,
 ) -> Result<(TokenStream, TokenStream)> {
-    if item_options.is_fallback() {
-        return Err(Error::new_spanned(
-            field,
-            "struct fields cannot be marked fallback",
-        ));
-    }
-
     let krate = options.krate();
     let id = item_options.id();
     let is_required = !item_options.is_optional();
