@@ -60,45 +60,134 @@ fn gen_struct(fields: &Punctuated<Field, Token![,]>) -> Result<TokenStream> {
     let mut num_optional_fields = Vec::new();
     let mut body = Vec::new();
     let mut next_id = 0;
+    let mut fallback = None;
 
     for (index, field) in fields.into_iter().enumerate() {
         let item_options = ItemOptions::new(&field.attrs, next_id)?;
-        next_id = item_options.id() + 1;
 
-        let (serialize, optional) = gen_field(field, index, &item_options)?;
+        if item_options.is_fallback() {
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "only one field can be marked fallback",
+                ));
+            }
 
-        body.push(serialize);
+            if item_options.is_optional() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields cannot be marked both optional and fallback",
+                ));
+            }
 
-        if let Some(optional) = optional {
-            num_optional_fields.push(optional);
+            fallback = Some((index, field));
         } else {
-            num_required_fields += 1;
+            if fallback.is_some() {
+                return Err(Error::new_spanned(
+                    field,
+                    "fields after the fallback are not allowed",
+                ));
+            }
+
+            next_id = item_options.id() + 1;
+            let (serialize, optional) = gen_field(field, index, &item_options)?;
+            body.push(serialize);
+
+            if let Some(optional) = optional {
+                num_optional_fields.push(optional);
+            } else {
+                num_required_fields += 1;
+            }
         }
     }
 
-    match (num_required_fields, num_optional_fields.is_empty()) {
-        (0, true) => Ok(quote! { serializer.serialize_struct(0)?.finish() }),
+    let (num_fields_var, num_fields_ref) = match (
+        num_required_fields,
+        num_optional_fields.is_empty(),
+        fallback,
+    ) {
+        (0, true, None) => (None, quote! { 0 }),
 
-        (num_required_fields, true) => Ok(quote! {
-            let mut serializer = serializer.serialize_struct(#num_required_fields)?;
-            #(#body)*
-            serializer.finish()
-        }),
+        (0, false, None) => (
+            Some(quote! { let num_fields = #(#num_optional_fields)+*; }),
+            quote! { num_fields },
+        ),
 
-        (0, false) => Ok(quote! {
-            let num_fields = #(#num_optional_fields)+*;
-            let mut serializer = serializer.serialize_struct(num_fields)?;
-            #(#body)*
-            serializer.finish()
-        }),
+        (0, true, Some((index, field))) => (
+            None,
+            if let Some(ref ident) = field.ident {
+                quote! { self.#ident.len() }
+            } else {
+                let index = Index::from(index);
+                quote! { self.#index.len() }
+            },
+        ),
 
-        (num_required_fields, false) => Ok(quote! {
-            let num_fields = #num_required_fields + #(#num_optional_fields)+*;
-            let mut serializer = serializer.serialize_struct(num_fields)?;
-            #(#body)*
-            serializer.finish()
-        }),
-    }
+        (0, false, Some((index, field))) => (
+            if let Some(ref ident) = field.ident {
+                Some(quote! { let num_fields = #(#num_optional_fields)+* + self.#ident.len(); })
+            } else {
+                let index = Index::from(index);
+                Some(quote! { let num_fields = #(#num_optional_fields)+* + self.#index.len(); })
+            },
+            quote! { num_fields },
+        ),
+
+        (num_required_fields, true, None) => (None, quote! { #num_required_fields }),
+
+        (num_required_fields, false, None) => (
+            Some(quote! { let num_fields = #num_required_fields + #(#num_optional_fields)+*; }),
+            quote! { num_fields },
+        ),
+
+        (num_required_fields, true, Some((index, field))) => (
+            None,
+            if let Some(ref ident) = field.ident {
+                quote! { #num_required_fields + self.#ident.len() }
+            } else {
+                let index = Index::from(index);
+                quote! { #num_required_fields + self.#index.len() }
+            },
+        ),
+
+        (num_required_fields, false, Some((index, field))) => (
+            if let Some(ref ident) = field.ident {
+                Some(quote! {
+                    let num_fields =
+                        #num_required_fields +
+                        #(#num_optional_fields)+* +
+                        self.#ident.len();
+                })
+            } else {
+                let index = Index::from(index);
+                Some(quote! {
+                    let num_fields =
+                        #num_required_fields +
+                        #(#num_optional_fields)+* +
+                        self.#index.len();
+                })
+            },
+            quote! { num_fields },
+        ),
+    };
+
+    let finish = if let Some((index, field)) = fallback {
+        if let Some(ref ident) = field.ident {
+            quote! { serializer.finish_with_fallback(&self.#ident) }
+        } else {
+            let index = Index::from(index);
+            quote! { serializer.finish_with_fallback(&self.#index) }
+        }
+    } else {
+        quote! { serializer.finish() }
+    };
+
+    Ok(quote! {
+        #num_fields_var
+        let mut serializer = serializer.serialize_struct(#num_fields_ref)?;
+        #(#body)*
+        #finish
+    })
 }
 
 fn gen_field(
@@ -106,13 +195,6 @@ fn gen_field(
     index: usize,
     item_options: &ItemOptions,
 ) -> Result<(TokenStream, Option<TokenStream>)> {
-    if item_options.is_fallback() {
-        return Err(Error::new_spanned(
-            field,
-            "struct fields cannot be marked fallback",
-        ));
-    }
-
     let id = item_options.id();
 
     let (serialize, optional) = match (field.ident.as_ref(), item_options.is_optional()) {
