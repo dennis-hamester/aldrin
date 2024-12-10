@@ -4,11 +4,12 @@ use crate::error::DeserializeError;
 use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::serialized_value::SerializedValueSlice;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::unknown_variant::UnknownVariant;
 use crate::value::ValueKind;
 use crate::MAX_VALUE_DEPTH;
 use bytes::Buf;
+use std::collections::HashMap;
 use std::iter;
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -339,6 +340,12 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_struct(self) -> Result<StructDeserializer<'a, 'b>, DeserializeError> {
         StructDeserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_struct_with_fallback(
+        self,
+    ) -> Result<StructWithFallbackDeserializer<'a, 'b>, DeserializeError> {
+        StructWithFallbackDeserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, 'b>, DeserializeError> {
@@ -919,6 +926,156 @@ impl<'a, 'b> FieldDeserializer<'a, 'b> {
 
     pub fn skip(self) -> Result<(), DeserializeError> {
         Deserializer::new(self.buf, self.depth)?.skip()
+    }
+}
+
+#[derive(Debug)]
+pub struct StructWithFallbackDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
+    num_fields: u32,
+    depth: u8,
+    fallback: HashMap<u32, SerializedValue>,
+}
+
+impl<'a, 'b> StructWithFallbackDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        buf.ensure_discriminant_u8(ValueKind::Struct)?;
+        Self::new_without_value_kind(buf, depth)
+    }
+
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        let num_fields = buf.try_get_varint_u32_le()?;
+
+        Ok(Self {
+            buf,
+            num_fields,
+            depth,
+            fallback: HashMap::new(),
+        })
+    }
+
+    pub fn remaining_fields(&self) -> usize {
+        self.num_fields as usize
+    }
+
+    pub fn has_more_fields(&self) -> bool {
+        self.num_fields > 0
+    }
+
+    pub fn deserialize_field(
+        &mut self,
+    ) -> Result<FieldWithFallbackDeserializer<'_, 'b>, DeserializeError> {
+        if self.has_more_fields() {
+            self.num_fields -= 1;
+            FieldWithFallbackDeserializer::new(self.buf, self.depth, &mut self.fallback)
+        } else {
+            Err(DeserializeError::NoMoreElements)
+        }
+    }
+
+    pub fn deserialize_specific_field<T: Deserialize>(
+        &mut self,
+        id: impl Into<u32>,
+    ) -> Result<T, DeserializeError> {
+        let field = self.deserialize_field()?;
+
+        if field.id() == id.into() {
+            field.deserialize()
+        } else {
+            Err(DeserializeError::InvalidSerialization)
+        }
+    }
+
+    pub fn skip(mut self) -> Result<(), DeserializeError> {
+        while self.has_more_fields() {
+            self.deserialize_field()?.skip()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        if self.has_more_fields() {
+            Err(DeserializeError::MoreElementsRemain)
+        } else {
+            Ok(t)
+        }
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce(HashMap<u32, SerializedValue>) -> Result<T, DeserializeError>,
+    {
+        if self.has_more_fields() {
+            Err(DeserializeError::MoreElementsRemain)
+        } else {
+            f(self.fallback)
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip()?;
+        Ok(t)
+    }
+
+    pub fn skip_and_finish_with<T, F>(mut self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce(HashMap<u32, SerializedValue>) -> Result<T, DeserializeError>,
+    {
+        while self.has_more_fields() {
+            self.deserialize_field()?.add_to_fallback()?;
+        }
+
+        f(self.fallback)
+    }
+}
+
+#[derive(Debug)]
+pub struct FieldWithFallbackDeserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
+    id: u32,
+    depth: u8,
+    fallback: &'a mut HashMap<u32, SerializedValue>,
+}
+
+impl<'a, 'b> FieldWithFallbackDeserializer<'a, 'b> {
+    fn new(
+        buf: &'a mut &'b [u8],
+        depth: u8,
+        fallback: &'a mut HashMap<u32, SerializedValue>,
+    ) -> Result<Self, DeserializeError> {
+        let id = buf.try_get_varint_u32_le()?;
+
+        Ok(Self {
+            buf,
+            id,
+            depth,
+            fallback,
+        })
+    }
+
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn try_id<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
+        self.id
+            .try_into()
+            .map_err(|_| DeserializeError::InvalidSerialization)
+    }
+
+    pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
+        T::deserialize(Deserializer::new(self.buf, self.depth)?)
+    }
+
+    pub fn skip(self) -> Result<(), DeserializeError> {
+        Deserializer::new(self.buf, self.depth)?.skip()
+    }
+
+    pub fn add_to_fallback(self) -> Result<(), DeserializeError> {
+        let value = SerializedValue::deserialize(Deserializer::new(self.buf, self.depth)?)?;
+        self.fallback.insert(self.id, value);
+        Ok(())
     }
 }
 

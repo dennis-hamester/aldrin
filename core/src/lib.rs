@@ -48,7 +48,8 @@ pub use unknown_variant::UnknownVariant;
 pub use value::{ByteSlice, Bytes, Skip, ValueKind};
 pub use value_deserializer::{
     BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,
-    FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
+    FieldDeserializer, FieldWithFallbackDeserializer, MapDeserializer, SetDeserializer,
+    StructDeserializer, StructWithFallbackDeserializer, VecDeserializer,
 };
 pub use value_serializer::{
     AsSerializeArg, BytesSerializer, MapSerializer, Serialize, SerializeArg, Serializer,

@@ -2,11 +2,12 @@ use crate::buf_ext::BufMutExt;
 use crate::error::SerializeError;
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 use crate::serialize_key::{Sealed as _, SerializeKey};
-use crate::serialized_value::SerializedValueSlice;
+use crate::serialized_value::{SerializedValue, SerializedValueSlice};
 use crate::unknown_variant::UnknownVariant;
 use crate::value::ValueKind;
 use crate::MAX_VALUE_DEPTH;
 use bytes::{BufMut, BytesMut};
+use std::collections::HashMap;
 use std::fmt;
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -538,5 +539,22 @@ impl<'a> StructSerializer<'a> {
         } else {
             Err(SerializeError::TooFewElements)
         }
+    }
+
+    pub fn finish_with_fallback(
+        mut self,
+        fallback: &HashMap<u32, SerializedValue>,
+    ) -> Result<(), SerializeError> {
+        for (&id, value) in fallback {
+            if self.num_fields == 0 {
+                return Err(SerializeError::TooManyElements);
+            }
+
+            self.num_fields -= 1;
+            self.buf.put_varint_u32_le(id);
+            value.serialize(Serializer::new(self.buf, self.depth)?)?;
+        }
+
+        self.finish()
     }
 }
