@@ -1,6 +1,7 @@
 use super::Promise;
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice};
 use crate::error::Error;
+use crate::function_fallback::FunctionFallback;
 use crate::handle::Handle;
 use futures_channel::oneshot::Receiver;
 
@@ -77,5 +78,14 @@ impl Call {
                 Err(Error::invalid_arguments(self.id, Some(e)))
             }
         }
+    }
+
+    /// TODO
+    pub fn into_fallback(self) -> FunctionFallback {
+        FunctionFallback::new(self)
+    }
+
+    pub(crate) fn invalid_function_ref(&mut self) {
+        self.promise.invalid_function_ref();
     }
 }

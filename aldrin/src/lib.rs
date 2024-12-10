@@ -64,6 +64,7 @@ mod channel;
 mod client;
 mod discoverer;
 mod function_call_map;
+mod function_fallback;
 mod handle;
 mod lifetime;
 mod object;
@@ -103,6 +104,7 @@ pub use discoverer::{
     DiscovererEventKind, DiscovererIter, DiscovererIterEntry,
 };
 pub use error::Error;
+pub use function_fallback::FunctionFallback;
 pub use handle::Handle;
 pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
