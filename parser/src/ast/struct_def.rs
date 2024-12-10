@@ -14,6 +14,7 @@ pub struct StructDef {
     attrs: Vec<Attribute>,
     name: Ident,
     fields: Vec<StructField>,
+    fallback: Option<Ident>,
 }
 
 impl StructDef {
@@ -39,9 +40,18 @@ impl StructDef {
         pairs.next().unwrap(); // Skip {.
 
         let mut fields = Vec::new();
+        let mut fallback = None;
+
         for pair in pairs {
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
+
+                Rule::struct_fallback => {
+                    let mut pairs = pair.into_inner();
+                    let pair = pairs.next().unwrap();
+                    fallback = Some(Ident::parse(pair));
+                }
+
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -52,6 +62,7 @@ impl StructDef {
             attrs,
             name,
             fields,
+            fallback,
         }
     }
 
@@ -87,6 +98,10 @@ impl StructDef {
     pub fn fields(&self) -> &[StructField] {
         &self.fields
     }
+
+    pub fn fallback(&self) -> Option<&Ident> {
+        self.fallback.as_ref()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -94,6 +109,7 @@ pub struct InlineStruct {
     span: Span,
     kw_span: Span,
     fields: Vec<StructField>,
+    fallback: Option<Ident>,
 }
 
 impl InlineStruct {
@@ -110,9 +126,18 @@ impl InlineStruct {
         pairs.next().unwrap(); // Skip {.
 
         let mut fields = Vec::new();
+        let mut fallback = None;
+
         for pair in pairs {
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
+
+                Rule::struct_fallback => {
+                    let mut pairs = pair.into_inner();
+                    let pair = pairs.next().unwrap();
+                    fallback = Some(Ident::parse(pair));
+                }
+
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -122,6 +147,7 @@ impl InlineStruct {
             span,
             kw_span,
             fields,
+            fallback,
         }
     }
 
@@ -144,6 +170,10 @@ impl InlineStruct {
 
     pub fn fields(&self) -> &[StructField] {
         &self.fields
+    }
+
+    pub fn fallback(&self) -> Option<&Ident> {
+        self.fallback.as_ref()
     }
 }
 
