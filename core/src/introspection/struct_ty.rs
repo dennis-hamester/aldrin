@@ -11,6 +11,7 @@ pub struct Struct {
     schema: String,
     name: String,
     fields: BTreeMap<u32, Field>,
+    fallback: Option<String>,
 }
 
 impl Struct {
@@ -35,6 +36,10 @@ impl Struct {
     pub fn fields(&self) -> &BTreeMap<u32, Field> {
         &self.fields
     }
+
+    pub fn fallback(&self) -> Option<&str> {
+        self.fallback.as_deref()
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -43,15 +48,21 @@ enum StructField {
     Schema = 0,
     Name = 1,
     Fields = 2,
+    Fallback = 3,
 }
 
 impl Serialize for Struct {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(3)?;
+        let num = 3 + (self.fallback.is_some() as usize);
+        let mut serializer = serializer.serialize_struct(num)?;
 
         serializer.serialize_field(StructField::Schema, &self.schema)?;
         serializer.serialize_field(StructField::Name, &self.name)?;
         serializer.serialize_field(StructField::Fields, &self.fields)?;
+
+        if self.fallback.is_some() {
+            serializer.serialize_field(StructField::Fallback, &self.fallback)?;
+        }
 
         serializer.finish()
     }
@@ -64,6 +75,7 @@ impl Deserialize for Struct {
         let mut schema = None;
         let mut name = None;
         let mut fields = None;
+        let mut fallback = None;
 
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
@@ -72,6 +84,7 @@ impl Deserialize for Struct {
                 StructField::Schema => schema = deserializer.deserialize().map(Some)?,
                 StructField::Name => name = deserializer.deserialize().map(Some)?,
                 StructField::Fields => fields = deserializer.deserialize().map(Some)?,
+                StructField::Fallback => fallback = deserializer.deserialize()?,
             }
         }
 
@@ -79,6 +92,7 @@ impl Deserialize for Struct {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
             fields: fields.ok_or(DeserializeError::InvalidSerialization)?,
+            fallback,
         })
     }
 }
@@ -88,6 +102,7 @@ pub struct StructBuilder {
     schema: String,
     name: String,
     fields: BTreeMap<u32, Field>,
+    fallback: Option<String>,
 }
 
 impl StructBuilder {
@@ -96,6 +111,7 @@ impl StructBuilder {
             schema: schema.into(),
             name: name.into(),
             fields: BTreeMap::new(),
+            fallback: None,
         }
     }
 
@@ -111,11 +127,17 @@ impl StructBuilder {
         self
     }
 
+    pub fn fallback(mut self, name: impl Into<String>) -> Self {
+        self.fallback = Some(name.into());
+        self
+    }
+
     pub fn finish(self) -> Struct {
         Struct {
             schema: self.schema,
             name: self.name,
             fields: self.fields,
+            fallback: self.fallback,
         }
     }
 }
