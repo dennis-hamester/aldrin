@@ -14,6 +14,20 @@ const BUS_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST),
 // `cargo doc --document-private-items --open` and look at the `echo` module.
 aldrin::generate!("src/echo.aldrin", introspection_if = "introspection");
 
+mod foo {
+    use aldrin::core::ServiceUuid;
+    use uuid::uuid;
+
+    aldrin::service! {
+        service Foobar {
+            uuid = ServiceUuid(uuid!("25107cd3-7635-4ed3-b0aa-0fa38b0d7bf9"));
+            version = 1;
+
+            fn unknown = FunctionFallback;
+        }
+    }
+}
+
 /// Echo example.
 #[derive(Parser)]
 struct Args {

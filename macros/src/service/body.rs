@@ -4,7 +4,7 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
-use syn::{Expr, Ident, Result, Token};
+use syn::{Error, Expr, Ident, Result, Token};
 
 pub(super) struct Body {
     uuid: Expr,
@@ -386,6 +386,40 @@ impl Parse for Body {
         let mut items = Vec::new();
         while !input.is_empty() {
             items.push(input.parse()?);
+        }
+
+        let mut fn_fallback = false;
+        for item in &items {
+            match item {
+                ServiceItem::Event(ev) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            ev.ident(),
+                            "events must be defined before any fallback",
+                        ));
+                    }
+                }
+
+                ServiceItem::Function(func) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            func.ident(),
+                            "functions must be defined before any fallback",
+                        ));
+                    }
+                }
+
+                ServiceItem::FunctionFallback(func) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            func.ident(),
+                            "there can be at most one function fallback",
+                        ));
+                    } else {
+                        fn_fallback = true;
+                    }
+                }
+            }
         }
 
         Ok(Self {

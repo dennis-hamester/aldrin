@@ -1,6 +1,7 @@
 mod body;
 mod ev_item;
 mod fn_body;
+mod fn_fallback_item;
 mod fn_item;
 mod item;
 mod options;
@@ -10,6 +11,7 @@ mod test;
 use body::Body;
 use ev_item::EvItem;
 use fn_body::FnBody;
+use fn_fallback_item::FnFallbackItem;
 use fn_item::FnItem;
 use item::ServiceItem;
 use options::Options;
@@ -44,24 +46,12 @@ pub struct Service {
 
 impl Service {
     pub fn generate(&self) -> TokenStream {
-        let client = if self.options.client() {
-            Some(self.gen_client())
-        } else {
-            None
-        };
+        let client = self.options.client().then(|| self.gen_client());
+        let server = self.options.server().then(|| self.gen_server());
 
-        let server = if self.options.server() {
-            Some(self.gen_server())
-        } else {
-            None
-        };
-
-        let introspection =
-            if self.options.introspection() && (self.options.client() || self.options.server()) {
-                Some(self.gen_introspection())
-            } else {
-                None
-            };
+        let introspection = (self.options.introspection()
+            && (self.options.client() || self.options.server()))
+        .then(|| self.gen_introspection());
 
         quote! {
             #client
