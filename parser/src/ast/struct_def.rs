@@ -86,8 +86,13 @@ impl StructDef {
         RecursiveStruct::validate(self, validate);
 
         self.name.validate(validate);
+
         for field in &self.fields {
             field.validate(validate);
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            NonSnakeCaseStructField::validate(fallback, validate);
         }
     }
 
@@ -173,6 +178,10 @@ impl InlineStruct {
         for field in &self.fields {
             field.validate(validate);
         }
+
+        if let Some(ref fallback) = self.fallback {
+            NonSnakeCaseStructField::validate(fallback, validate);
+        }
     }
 
     pub fn span(&self) -> Span {
@@ -246,7 +255,7 @@ impl StructField {
 
     fn validate(&self, validate: &mut Validate) {
         InvalidStructFieldId::validate(self, validate);
-        NonSnakeCaseStructField::validate(self, validate);
+        NonSnakeCaseStructField::validate(&self.name, validate);
 
         self.name.validate(validate);
         self.field_type.validate(validate);

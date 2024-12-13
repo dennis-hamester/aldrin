@@ -1,0 +1,16 @@
+struct Struct {
+    FirstFirst @ 1 = u32;
+    UnknownFields = fallback;
+}
+
+service Service {
+    uuid = 6cdd992b-afcb-445c-a0a7-83b4d94448dc;
+    version = 1;
+
+    fn func @ 1 {
+        args = struct {
+            FirstFirst @ 1 = u32;
+            UnknownFields = fallback;
+        }
+    }
+}

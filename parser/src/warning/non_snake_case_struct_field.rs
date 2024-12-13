@@ -1,5 +1,5 @@
 use super::Warning;
-use crate::ast::{Ident, StructField};
+use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -13,13 +13,14 @@ pub struct NonSnakeCaseStructField {
 }
 
 impl NonSnakeCaseStructField {
-    pub(crate) fn validate(struct_field: &StructField, validate: &mut Validate) {
-        let snake_case = struct_field.name().value().to_snake_case();
-        if struct_field.name().value() != snake_case {
+    pub(crate) fn validate(ident: &Ident, validate: &mut Validate) {
+        let snake_case = ident.value().to_snake_case();
+
+        if ident.value() != snake_case {
             validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 snake_case,
-                ident: struct_field.name().clone(),
+                ident: ident.clone(),
             });
         }
     }
