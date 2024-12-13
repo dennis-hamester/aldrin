@@ -1,7 +1,7 @@
 error: expected identifer; found reserved name `struct`
-   --> test/ui/expected_ident_found_reserved.aldrin:25:8
+   --> test/ui/expected_ident_found_reserved.aldrin:27:8
     |
- 25 | struct struct {
+ 27 | struct struct {
     |        ^^^^^^ identifier expected here
     |
     = note: the name `struct` is reserved and cannot be used as an identifer

@@ -1,7 +1,7 @@
-warning: variant `bool` should have a camel-case name
-   --> test/ui/expected_ident_found_reserved.aldrin:30:5
+warning: enum `enum` should have a camel-case name
+   --> test/ui/expected_ident_found_reserved.aldrin:32:6
     |
- 30 |     bool @ 1;
-    |     ^^^^
+ 32 | enum enum {
+    |      ^^^^
     |
-    = help: consider renaming variant `bool` to `Bool`
+    = help: consider renaming enum `enum` to `Enum`

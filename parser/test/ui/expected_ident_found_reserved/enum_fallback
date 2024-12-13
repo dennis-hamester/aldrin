@@ -1,0 +1,7 @@
+error: expected identifer; found reserved name `const`
+   --> test/ui/expected_ident_found_reserved.aldrin:34:5
+    |
+ 34 |     const = fallback;
+    |     ^^^^^ identifier expected here
+    |
+    = note: the name `const` is reserved and cannot be used as an identifer

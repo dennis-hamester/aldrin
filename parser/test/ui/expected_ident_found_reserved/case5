@@ -1,7 +1,7 @@
-warning: enum `enum` should have a camel-case name
-   --> test/ui/expected_ident_found_reserved.aldrin:29:6
+warning: struct `struct` should have a camel-case name
+   --> test/ui/expected_ident_found_reserved.aldrin:27:8
     |
- 29 | enum enum {
-    |      ^^^^
+ 27 | struct struct {
+    |        ^^^^^^
     |
-    = help: consider renaming enum `enum` to `Enum`
+    = help: consider renaming struct `struct` to `Struct`

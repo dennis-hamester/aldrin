@@ -94,6 +94,7 @@ impl EnumDef {
         }
 
         if let Some(ref fallback) = self.fallback {
+            fallback.validate(validate);
             NonCamelCaseEnumVariant::validate(fallback, validate);
         }
     }
@@ -190,6 +191,7 @@ impl InlineEnum {
         }
 
         if let Some(ref fallback) = self.fallback {
+            fallback.validate(validate);
             NonCamelCaseEnumVariant::validate(fallback, validate);
         }
     }

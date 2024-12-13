@@ -11,10 +11,12 @@ service service {
 
         ok = struct {
             bool @ 1 = bool;
+            const = fallback;
         }
 
         err = enum {
             bool @ 1;
+            const = fallback;
         }
     }
 
@@ -24,8 +26,10 @@ service service {
 #[bool(bool, bool)]
 struct struct {
     bool @ 1 = bool;
+    const = fallback;
 }
 
 enum enum {
     bool @ 1;
+    const = fallback;
 }
