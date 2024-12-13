@@ -163,15 +163,14 @@
 //!
 //! The last field of a struct and the last variant of an enum can optionally be marked with
 //! `#[aldrin(fallback)]`. This will enable successful serialization and deserialization of unknown
-//! fields and variants. For structs, the field type must be `HashMap<u32, SerializedValue>`. For
+//! fields and variants. For structs, the field type must be `aldrin_core::UnknownFields`. For
 //! enums, the variant must have a single field of type `aldrin_core::UnknownVariant`.
 //!
 //! This attribute cannot be combined with `#[aldrin(optional)]`.
 //!
 //! Example of a struct with a fallback field:
 //! ```
-//! # use aldrin_core::{Deserialize, Introspectable, Serialize, SerializedValue};
-//! # use std::collections::HashMap;
+//! # use aldrin_core::{Deserialize, Introspectable, Serialize, SerializedValue, UnknownFields};
 //! #[derive(Serialize, Deserialize, Introspectable)]
 //! #[aldrin(schema = "contacts")]
 //! struct Person {
@@ -179,7 +178,7 @@
 //!     age: u8,
 //!
 //!     #[aldrin(fallback)]
-//!     unknown_fields: HashMap<u32, SerializedValue>,
+//!     unknown_fields: UnknownFields,
 //! }
 //! ```
 //!

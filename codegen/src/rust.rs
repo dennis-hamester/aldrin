@@ -233,7 +233,7 @@ impl RustGenerator<'_> {
 
             let ident = format!("r#{}", fallback.value());
             codeln!(self, "    #[aldrin(fallback)]");
-            codeln!(self, "    pub {ident}: {HASH_MAP}<{U32}, {krate}::core::SerializedValue>,");
+            codeln!(self, "    pub {ident}: {krate}::core::UnknownFields,");
         }
         codeln!(self, "}}");
         codeln!(self);

@@ -1,8 +1,7 @@
 use aldrin_core::introspection::{Introspectable, Introspection, LexicalId};
 use aldrin_core::{
-    AsSerializeArg, Deserialize, Introspectable, Serialize, SerializedValue, TypeId, UnknownVariant,
+    AsSerializeArg, Deserialize, Introspectable, Serialize, TypeId, UnknownFields, UnknownVariant,
 };
-use std::collections::HashMap;
 use uuid::uuid;
 
 #[test]
@@ -140,12 +139,12 @@ struct EmptyTupleStruct();
 #[aldrin(schema = "test")]
 struct EmptyStructWithFallback {
     #[aldrin(fallback)]
-    unknown: HashMap<u32, SerializedValue>,
+    unknown: UnknownFields,
 }
 
 #[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
 #[aldrin(schema = "test")]
-struct EmptyTupleStructWithFallback(#[aldrin(fallback)] HashMap<u32, SerializedValue>);
+struct EmptyTupleStructWithFallback(#[aldrin(fallback)] UnknownFields);
 
 #[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
 #[aldrin(schema = "test")]
@@ -169,7 +168,7 @@ struct RegularStructWithFallback {
     bar: Option<String>,
 
     #[aldrin(fallback)]
-    unknown: HashMap<u32, SerializedValue>,
+    unknown: UnknownFields,
 }
 
 #[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
@@ -177,7 +176,7 @@ struct RegularStructWithFallback {
 struct RegularTupleStructWithFallback(
     u32,
     #[aldrin(id = 2, optional)] Option<String>,
-    #[aldrin(fallback)] HashMap<u32, SerializedValue>,
+    #[aldrin(fallback)] UnknownFields,
 );
 
 #[derive(Serialize, Deserialize, Introspectable, AsSerializeArg)]
