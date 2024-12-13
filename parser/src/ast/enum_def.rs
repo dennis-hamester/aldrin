@@ -67,7 +67,14 @@ impl EnumDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateEnumVariant::validate(&self.vars, self.name.span(), Some(&self.name), validate);
+        DuplicateEnumVariant::validate(
+            &self.vars,
+            self.fallback.as_ref(),
+            self.name.span(),
+            Some(&self.name),
+            validate,
+        );
+
         DuplicateEnumVariantId::validate(&self.vars, self.name.span(), Some(&self.name), validate);
         NonCamelCaseEnum::validate(self, validate);
         RecursiveEnum::validate(self, validate);
@@ -155,7 +162,14 @@ impl InlineEnum {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateEnumVariant::validate(&self.vars, self.kw_span, None, validate);
+        DuplicateEnumVariant::validate(
+            &self.vars,
+            self.fallback.as_ref(),
+            self.kw_span,
+            None,
+            validate,
+        );
+
         DuplicateEnumVariantId::validate(&self.vars, self.kw_span, None, validate);
 
         EmptyEnum::validate(
