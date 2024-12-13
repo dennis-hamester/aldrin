@@ -13,6 +13,7 @@ ui_test!(grapheme_width);
 ui_test!(invalid_array_len);
 ui_test!(invalid_event_id);
 ui_test!(invalid_function_id);
+ui_test!(non_snake_case_struct_field);
 ui_test!(recursive1);
 ui_test!(recursive2_a);
 ui_test!(sender_receiver_imports);
