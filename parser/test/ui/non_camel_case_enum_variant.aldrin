@@ -1,0 +1,16 @@
+enum Enum {
+    regular_variant @ 1;
+    unknown_variant = fallback;
+}
+
+service Service {
+    uuid = e92118de-0348-4134-8b00-a1b516b13132;
+    version = 1;
+
+    fn func @ 1 {
+        args = enum {
+            regular_variant @ 1;
+            unknown_variant = fallback;
+        }
+    }
+}

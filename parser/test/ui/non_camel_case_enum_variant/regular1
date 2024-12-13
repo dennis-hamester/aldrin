@@ -1,0 +1,7 @@
+warning: variant `regular_variant` should have a camel-case name
+  --> test/ui/non_camel_case_enum_variant.aldrin:2:5
+   |
+ 2 |     regular_variant @ 1;
+   |     ^^^^^^^^^^^^^^^
+   |
+   = help: consider renaming variant `regular_variant` to `RegularVariant`
