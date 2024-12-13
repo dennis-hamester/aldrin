@@ -1,0 +1,18 @@
+struct Struct {
+    field @ 1 = i32;
+    field @ 2 = i32;
+    field = fallback;
+}
+
+service Service {
+    uuid = f8fbef11-114a-48e2-812f-50ed661b54be;
+    version = 1;
+
+    fn func @ 1 {
+        args = struct {
+            field @ 1 = i32;
+            field @ 2 = i32;
+            field = fallback;
+        }
+    }
+}

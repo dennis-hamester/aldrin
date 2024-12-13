@@ -1,5 +1,6 @@
 ui_test!(const_int_not_found);
 ui_test!(did_you_mean_builtin);
+ui_test!(duplicate_struct_field);
 ui_test!(error_empty_enum);
 ui_test!(expected_const_int_found_service);
 ui_test!(expected_const_int_found_string);
