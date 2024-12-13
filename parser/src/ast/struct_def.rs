@@ -92,6 +92,7 @@ impl StructDef {
         }
 
         if let Some(ref fallback) = self.fallback {
+            fallback.validate(validate);
             NonSnakeCaseStructField::validate(fallback, validate);
         }
     }
@@ -180,6 +181,7 @@ impl InlineStruct {
         }
 
         if let Some(ref fallback) = self.fallback {
+            fallback.validate(validate);
             NonSnakeCaseStructField::validate(fallback, validate);
         }
     }
