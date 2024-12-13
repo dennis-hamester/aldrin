@@ -16,6 +16,7 @@ pub struct DuplicateEnumVariant {
 impl DuplicateEnumVariant {
     pub(crate) fn validate(
         vars: &[EnumVariant],
+        fallback: Option<&Ident>,
         enum_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
@@ -33,6 +34,22 @@ impl DuplicateEnumVariant {
                 })
             },
         );
+
+        if let Some(fallback) = fallback {
+            for var in vars {
+                if fallback.value() == var.name().value() {
+                    validate.add_error(Self {
+                        schema_name: validate.schema_name().to_owned(),
+                        duplicate: fallback.clone(),
+                        first: var.span(),
+                        enum_span,
+                        enum_ident: ident.cloned(),
+                    });
+
+                    break;
+                }
+            }
+        }
     }
 
     pub fn duplicate(&self) -> &Ident {

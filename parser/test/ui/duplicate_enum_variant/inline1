@@ -1,0 +1,11 @@
+error: duplicate variant `Var` in inline enum
+   --> test/ui/duplicate_enum_variant.aldrin:14:13
+    |
+ 14 | ... Var @ 2;
+    |     ^^^ duplicate defined here
+    |
+   ::: test/ui/duplicate_enum_variant.aldrin:13:13
+    |
+ 13 | ... Var @ 1;
+    |     --- first defined here
+    |
