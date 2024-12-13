@@ -1,0 +1,11 @@
+error: duplicate field `field` in inline struct
+   --> test/ui/duplicate_struct_field.aldrin:14:13
+    |
+ 14 | ... field @ 2 = i32;
+    |     ^^^^^ duplicate defined here
+    |
+   ::: test/ui/duplicate_struct_field.aldrin:13:13
+    |
+ 13 | ... field @ 1 = i32;
+    |     ----- first defined here
+    |

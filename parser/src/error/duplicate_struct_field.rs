@@ -16,6 +16,7 @@ pub struct DuplicateStructField {
 impl DuplicateStructField {
     pub(crate) fn validate(
         fields: &[StructField],
+        fallback: Option<&Ident>,
         struct_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
@@ -33,6 +34,22 @@ impl DuplicateStructField {
                 })
             },
         );
+
+        if let Some(fallback) = fallback {
+            for field in fields {
+                if fallback.value() == field.name().value() {
+                    validate.add_error(Self {
+                        schema_name: validate.schema_name().to_owned(),
+                        duplicate: fallback.clone(),
+                        first: field.name().span(),
+                        struct_span,
+                        struct_ident: ident.cloned(),
+                    });
+
+                    break;
+                }
+            }
+        }
     }
 
     pub fn duplicate(&self) -> &Ident {
