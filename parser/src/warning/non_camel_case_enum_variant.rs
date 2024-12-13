@@ -1,5 +1,5 @@
 use super::Warning;
-use crate::ast::{EnumVariant, Ident};
+use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -13,13 +13,14 @@ pub struct NonCamelCaseEnumVariant {
 }
 
 impl NonCamelCaseEnumVariant {
-    pub(crate) fn validate(var: &EnumVariant, validate: &mut Validate) {
-        let camel_case = var.name().value().to_upper_camel_case();
-        if var.name().value() != camel_case {
+    pub(crate) fn validate(ident: &Ident, validate: &mut Validate) {
+        let camel_case = ident.value().to_upper_camel_case();
+
+        if ident.value() != camel_case {
             validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),
                 camel_case,
-                ident: var.name().clone(),
+                ident: ident.clone(),
             });
         }
     }

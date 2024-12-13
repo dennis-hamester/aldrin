@@ -88,8 +88,13 @@ impl EnumDef {
         );
 
         self.name.validate(validate);
+
         for var in &self.vars {
             var.validate(validate);
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            NonCamelCaseEnumVariant::validate(fallback, validate);
         }
     }
 
@@ -183,6 +188,10 @@ impl InlineEnum {
         for var in &self.vars {
             var.validate(validate);
         }
+
+        if let Some(ref fallback) = self.fallback {
+            NonCamelCaseEnumVariant::validate(fallback, validate);
+        }
     }
 
     pub fn span(&self) -> Span {
@@ -246,7 +255,7 @@ impl EnumVariant {
 
     fn validate(&self, validate: &mut Validate) {
         InvalidEnumVariantId::validate(self, validate);
-        NonCamelCaseEnumVariant::validate(self, validate);
+        NonCamelCaseEnumVariant::validate(&self.name, validate);
 
         self.name.validate(validate);
         if let Some(ref var_type) = self.var_type {

@@ -1,0 +1,7 @@
+warning: variant `unknown_variant` should have a camel-case name
+  --> test/ui/non_camel_case_enum_variant.aldrin:3:5
+   |
+ 3 |     unknown_variant = fallback;
+   |     ^^^^^^^^^^^^^^^
+   |
+   = help: consider renaming variant `unknown_variant` to `UnknownVariant`
