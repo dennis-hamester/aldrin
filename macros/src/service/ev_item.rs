@@ -18,6 +18,10 @@ pub(super) struct EvItem {
 }
 
 impl EvItem {
+    pub fn ident(&self) -> &Ident {
+        &self.ident
+    }
+
     pub fn gen_subscribe_call(&self) -> TokenStream {
         let subscribe = &self.subscribe;
         quote! { self.#subscribe().await?; }

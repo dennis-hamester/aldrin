@@ -17,6 +17,10 @@ pub(super) struct FnItem {
 }
 
 impl FnItem {
+    pub fn ident(&self) -> &Ident {
+        &self.ident
+    }
+
     pub fn gen_calls(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;

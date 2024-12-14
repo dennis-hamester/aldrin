@@ -1,12 +1,13 @@
-use super::{kw, EvItem, FnItem, Options};
+use super::{kw, EvItem, FnFallbackItem, FnItem, Options};
 use proc_macro2::TokenStream;
 use std::collections::HashSet;
 use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Result, Token, Type};
+use syn::{Attribute, Ident, Result, Token, Type};
 
 pub(super) enum ServiceItem {
     Event(EvItem),
     Function(FnItem),
+    FunctionFallback(FnFallbackItem),
 }
 
 impl ServiceItem {
@@ -14,6 +15,7 @@ impl ServiceItem {
         match self {
             Self::Event(ev) => Some(ev),
             Self::Function(_) => None,
+            Self::FunctionFallback(_) => None,
         }
     }
 
@@ -21,6 +23,15 @@ impl ServiceItem {
         match self {
             Self::Event(_) => None,
             Self::Function(func) => Some(func),
+            Self::FunctionFallback(_) => None,
+        }
+    }
+
+    pub fn as_fallback_function(&self) -> Option<&FnFallbackItem> {
+        match self {
+            Self::Event(_) => None,
+            Self::Function(_) => None,
+            Self::FunctionFallback(func) => Some(func),
         }
     }
 
@@ -28,6 +39,7 @@ impl ServiceItem {
         match self {
             Self::Event(ev) => ev.layout(options),
             Self::Function(func) => func.layout(options),
+            Self::FunctionFallback(func) => func.layout(),
         }
     }
 
@@ -35,6 +47,27 @@ impl ServiceItem {
         match self {
             Self::Event(ev) => ev.add_references(references),
             Self::Function(func) => func.add_references(references),
+            Self::FunctionFallback(_) => {}
+        }
+    }
+
+    fn parse_ev(input: ParseStream) -> Result<Self> {
+        input.parse().map(Self::Event)
+    }
+
+    fn parse_fn(input: ParseStream) -> Result<Self> {
+        let begin = input.fork();
+
+        begin.parse::<Token![fn]>()?;
+        begin.parse::<Ident>()?;
+
+        let lookahead = begin.lookahead1();
+        if lookahead.peek(Token![@]) {
+            input.parse().map(Self::Function)
+        } else if lookahead.peek(Token![=]) {
+            input.parse().map(Self::FunctionFallback)
+        } else {
+            Err(lookahead.error())
         }
     }
 }
@@ -46,9 +79,9 @@ impl Parse for ServiceItem {
 
         let lookahead = begin.lookahead1();
         if lookahead.peek(kw::event) {
-            input.parse().map(Self::Event)
+            input.call(Self::parse_ev)
         } else if lookahead.peek(Token![fn]) {
-            input.parse().map(Self::Function)
+            input.call(Self::parse_fn)
         } else {
             Err(lookahead.error())
         }

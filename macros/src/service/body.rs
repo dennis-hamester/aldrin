@@ -1,10 +1,10 @@
-use super::{kw, EvItem, Options, ServiceItem};
+use super::{kw, EvItem, FnFallbackItem, Options, ServiceItem};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
-use syn::{Expr, Ident, Result, Token};
+use syn::{Error, Expr, Ident, Result, Token};
 
 pub(super) struct Body {
     uuid: Expr,
@@ -225,6 +225,24 @@ impl Body {
             .map(|func| func.gen_next_call_match_arm(function))
             .collect::<TokenStream>();
 
+        let next_call_fallback = match self.function_fallback() {
+            Some(fallback) => fallback.gen_next_call_match_arm(function),
+
+            None => quote! {
+                id => {
+                    let _ = call.into_promise().invalid_function();
+
+                    ::std::task::Poll::Ready(
+                        ::std::option::Option::Some(
+                            ::std::result::Result::Err(
+                                #krate::Error::invalid_function(id),
+                            ),
+                        ),
+                    )
+                }
+            },
+        };
+
         quote! {
             pub const UUID: #krate::core::ServiceUuid = #uuid;
             pub const VERSION: ::std::primitive::u32 = #version;
@@ -291,18 +309,7 @@ impl Body {
 
                 match call.id() {
                     #next_call_match_arms
-
-                    id => {
-                        let _ = call.into_promise().invalid_function();
-
-                        ::std::task::Poll::Ready(
-                            ::std::option::Option::Some(
-                                ::std::result::Result::Err(
-                                    #krate::Error::invalid_function(id),
-                                ),
-                            ),
-                        )
-                    }
+                    #next_call_fallback
                 }
             }
 
@@ -315,11 +322,18 @@ impl Body {
     }
 
     pub fn gen_function(&self, options: &Options) -> TokenStream {
-        self.items
+        let mut variants = self
+            .items
             .iter()
             .filter_map(ServiceItem::as_function)
             .map(|func| func.gen_variant(options))
-            .collect::<TokenStream>()
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.function_fallback() {
+            variants.extend(fallback.gen_variant());
+        }
+
+        variants
     }
 
     pub fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {
@@ -369,6 +383,12 @@ impl Body {
             }
         }
     }
+
+    fn function_fallback(&self) -> Option<&FnFallbackItem> {
+        self.items
+            .iter()
+            .find_map(ServiceItem::as_fallback_function)
+    }
 }
 
 impl Parse for Body {
@@ -386,6 +406,40 @@ impl Parse for Body {
         let mut items = Vec::new();
         while !input.is_empty() {
             items.push(input.parse()?);
+        }
+
+        let mut fn_fallback = false;
+        for item in &items {
+            match item {
+                ServiceItem::Event(ev) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            ev.ident(),
+                            "events must be defined before any fallback",
+                        ));
+                    }
+                }
+
+                ServiceItem::Function(func) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            func.ident(),
+                            "functions must be defined before any fallback",
+                        ));
+                    }
+                }
+
+                ServiceItem::FunctionFallback(func) => {
+                    if fn_fallback {
+                        return Err(Error::new_spanned(
+                            func.ident(),
+                            "there can be at most one function fallback",
+                        ));
+                    } else {
+                        fn_fallback = true;
+                    }
+                }
+            }
         }
 
         Ok(Self {
