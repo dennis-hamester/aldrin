@@ -269,6 +269,10 @@ fn print_struct(
         println!(";");
     }
 
+    if let Some(fallback) = ty.fallback() {
+        println!("    {fallback} = fallback;");
+    }
+
     println!("}}");
     println!();
 }
@@ -291,6 +295,10 @@ fn print_enum(
         }
 
         println!(";");
+    }
+
+    if let Some(fallback) = ty.fallback() {
+        println!("    {fallback} = fallback;");
     }
 
     println!("}}");
@@ -316,6 +324,16 @@ fn print_service(
     for ev in ty.events().values() {
         println!();
         print_event(ev, introspection, db, full);
+    }
+
+    if let Some(fallback) = ty.function_fallback() {
+        println!();
+        println!("    {fallback} = fallback;");
+    }
+
+    if let Some(fallback) = ty.event_fallback() {
+        println!();
+        println!("    {fallback} = fallback;");
     }
 
     println!("}}");
