@@ -16,6 +16,7 @@ pub struct ServiceDef {
     uuid: LitUuid,
     ver: LitPosInt,
     items: Vec<ServiceItem>,
+    fn_fallback: Option<FunctionFallbackDef>,
 }
 
 impl ServiceDef {
@@ -39,9 +40,22 @@ impl ServiceDef {
         let ver = Self::parse_version(pair);
 
         let mut items = Vec::new();
+        let mut fn_fallback = None;
+
         for pair in pairs {
             match pair.as_rule() {
                 Rule::service_item => items.push(ServiceItem::parse(pair)),
+
+                Rule::service_fallback => {
+                    let mut pairs = pair.into_inner();
+                    let pair = pairs.next().unwrap();
+
+                    match pair.as_rule() {
+                        Rule::fn_fallback => fn_fallback = Some(FunctionFallbackDef::parse(pair)),
+                        _ => unreachable!(),
+                    }
+                }
+
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -53,6 +67,7 @@ impl ServiceDef {
             uuid,
             ver,
             items,
+            fn_fallback,
         }
     }
 
@@ -83,8 +98,13 @@ impl ServiceDef {
         NonCamelCaseService::validate(self, validate);
 
         self.name.validate(validate);
+
         for item in &self.items {
             item.validate(validate);
+        }
+
+        if let Some(ref fn_fallback) = self.fn_fallback {
+            fn_fallback.validate(validate);
         }
     }
 
@@ -106,6 +126,10 @@ impl ServiceDef {
 
     pub fn items(&self) -> &[ServiceItem] {
         &self.items
+    }
+
+    pub fn function_fallback(&self) -> Option<&FunctionFallbackDef> {
+        self.fn_fallback.as_ref()
     }
 }
 
@@ -353,5 +377,40 @@ impl EventDef {
 
     pub fn event_type(&self) -> Option<&TypeNameOrInline> {
         self.event_type.as_ref()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionFallbackDef {
+    span: Span,
+    name: Ident,
+}
+
+impl FunctionFallbackDef {
+    fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::fn_fallback);
+
+        let span = Span::from_pair(&pair);
+
+        let mut pairs = pair.into_inner();
+
+        pairs.next().unwrap(); // Skip keyword.
+
+        let pair = pairs.next().unwrap();
+        let name = Ident::parse(pair);
+
+        Self { span, name }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        self.name.validate(validate);
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
     }
 }
