@@ -20,7 +20,11 @@ const CAPACITY: u32 = 32;
 
 // The generated code can be inspected using rustdoc. Just run
 // `cargo doc --document-private-items --open` and look at the `downloader` module.
-aldrin::generate!("src/downloader.aldrin", introspection_if = "introspection");
+aldrin::generate!(
+    "src/downloader.aldrin",
+    introspection_if = "introspection",
+    warnings_as_errors = true,
+);
 
 /// Downloader example.
 #[derive(Parser)]

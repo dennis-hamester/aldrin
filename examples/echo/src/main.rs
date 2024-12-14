@@ -12,7 +12,11 @@ const BUS_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST),
 
 // The generated code can be inspected using rustdoc. Just run
 // `cargo doc --document-private-items --open` and look at the `echo` module.
-aldrin::generate!("src/echo.aldrin", introspection_if = "introspection");
+aldrin::generate!(
+    "src/echo.aldrin",
+    introspection_if = "introspection",
+    warnings_as_errors = true,
+);
 
 /// Echo example.
 #[derive(Parser)]
