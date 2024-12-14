@@ -236,6 +236,14 @@ impl<'a> Serializer<'a> {
         StructSerializer::new(self.buf, num_fields, self.depth)
     }
 
+    pub fn serialize_struct_with_unknown_fields(
+        self,
+        num_fields: usize,
+        unknown_fields: &UnknownFields,
+    ) -> Result<StructSerializer<'a>, SerializeError> {
+        StructSerializer::with_unknown_fields(self.buf, num_fields, unknown_fields, self.depth)
+    }
+
     pub fn serialize_enum<T: Serialize + ?Sized>(
         mut self,
         variant: impl Into<u32>,
@@ -510,6 +518,17 @@ impl<'a> StructSerializer<'a> {
         }
     }
 
+    fn with_unknown_fields(
+        buf: &'a mut BytesMut,
+        num_fields: usize,
+        unknown_fields: &UnknownFields,
+        depth: u8,
+    ) -> Result<Self, SerializeError> {
+        let mut this = Self::new(buf, num_fields + unknown_fields.len(), depth)?;
+        this.serialize_unknown_fields(unknown_fields)?;
+        Ok(this)
+    }
+
     pub fn remaining_fields(&self) -> usize {
         self.num_fields as usize
     }
@@ -533,18 +552,10 @@ impl<'a> StructSerializer<'a> {
         }
     }
 
-    pub fn finish(self) -> Result<(), SerializeError> {
-        if self.num_fields == 0 {
-            Ok(())
-        } else {
-            Err(SerializeError::TooFewElements)
-        }
-    }
-
-    pub fn finish_with_fallback(
-        mut self,
+    pub fn serialize_unknown_fields(
+        &mut self,
         unknown_fields: &UnknownFields,
-    ) -> Result<(), SerializeError> {
+    ) -> Result<&mut Self, SerializeError> {
         for (id, value) in unknown_fields {
             if self.num_fields == 0 {
                 return Err(SerializeError::TooManyElements);
@@ -555,6 +566,14 @@ impl<'a> StructSerializer<'a> {
             value.serialize(Serializer::new(self.buf, self.depth)?)?;
         }
 
-        self.finish()
+        Ok(self)
+    }
+
+    pub fn finish(self) -> Result<(), SerializeError> {
+        if self.num_fields == 0 {
+            Ok(())
+        } else {
+            Err(SerializeError::TooFewElements)
+        }
     }
 }

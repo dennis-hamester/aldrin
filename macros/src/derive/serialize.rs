@@ -101,92 +101,47 @@ fn gen_struct(fields: &Punctuated<Field, Token![,]>) -> Result<TokenStream> {
         }
     }
 
-    let (num_fields_var, num_fields_ref) = match (
-        num_required_fields,
-        num_optional_fields.is_empty(),
-        fallback,
-    ) {
-        (0, true, None) => (None, quote! { 0 }),
+    let (num_var, num_ref) = match (num_required_fields, num_optional_fields.is_empty()) {
+        (0, true) => (None, quote! { 0 }),
 
-        (0, false, None) => (
-            Some(quote! { let num_fields = #(#num_optional_fields)+*; }),
-            quote! { num_fields },
+        (0, false) => (
+            Some(quote! { let num = #(#num_optional_fields)+*; }),
+            quote! { num },
         ),
 
-        (0, true, Some((index, field))) => (
-            None,
-            if let Some(ref ident) = field.ident {
-                quote! { self.#ident.len() }
-            } else {
-                let index = Index::from(index);
-                quote! { self.#index.len() }
-            },
-        ),
+        (num_required_fields, true) => (None, quote! { #num_required_fields }),
 
-        (0, false, Some((index, field))) => (
-            if let Some(ref ident) = field.ident {
-                Some(quote! { let num_fields = #(#num_optional_fields)+* + self.#ident.len(); })
-            } else {
-                let index = Index::from(index);
-                Some(quote! { let num_fields = #(#num_optional_fields)+* + self.#index.len(); })
-            },
-            quote! { num_fields },
-        ),
-
-        (num_required_fields, true, None) => (None, quote! { #num_required_fields }),
-
-        (num_required_fields, false, None) => (
-            Some(quote! { let num_fields = #num_required_fields + #(#num_optional_fields)+*; }),
-            quote! { num_fields },
-        ),
-
-        (num_required_fields, true, Some((index, field))) => (
-            None,
-            if let Some(ref ident) = field.ident {
-                quote! { #num_required_fields + self.#ident.len() }
-            } else {
-                let index = Index::from(index);
-                quote! { #num_required_fields + self.#index.len() }
-            },
-        ),
-
-        (num_required_fields, false, Some((index, field))) => (
-            if let Some(ref ident) = field.ident {
-                Some(quote! {
-                    let num_fields =
-                        #num_required_fields +
-                        #(#num_optional_fields)+* +
-                        self.#ident.len();
-                })
-            } else {
-                let index = Index::from(index);
-                Some(quote! {
-                    let num_fields =
-                        #num_required_fields +
-                        #(#num_optional_fields)+* +
-                        self.#index.len();
-                })
-            },
-            quote! { num_fields },
+        (num_required_fields, false) => (
+            Some(quote! { let num = #num_required_fields + #(#num_optional_fields)+*; }),
+            quote! { num },
         ),
     };
 
-    let finish = if let Some((index, field)) = fallback {
-        if let Some(ref ident) = field.ident {
-            quote! { serializer.finish_with_fallback(&self.#ident) }
-        } else {
-            let index = Index::from(index);
-            quote! { serializer.finish_with_fallback(&self.#index) }
-        }
-    } else {
-        quote! { serializer.finish() }
+    let serializer = match fallback {
+        Some((index, field)) => match field.ident {
+            Some(ref ident) => quote! {
+                let mut serializer =
+                    serializer.serialize_struct_with_unknown_fields(#num_ref, &self.#ident)?;
+            },
+
+            None => {
+                let index = Index::from(index);
+
+                quote! {
+                    let mut serializer =
+                        serializer.serialize_struct_with_unknown_fields(#num_ref, &self.#index)?;
+                }
+            }
+        },
+
+        None => quote! { let mut serializer = serializer.serialize_struct(#num_ref)?; },
     };
 
     Ok(quote! {
-        #num_fields_var
-        let mut serializer = serializer.serialize_struct(#num_fields_ref)?;
+        #num_var
+        #serializer
         #(#body)*
-        #finish
+        serializer.finish()
     })
 }
 
