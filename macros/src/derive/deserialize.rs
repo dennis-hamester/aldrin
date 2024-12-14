@@ -107,12 +107,6 @@ fn gen_struct(
         }
     }
 
-    let deserializer = if fallback.is_some() {
-        quote! { deserializer.deserialize_struct_with_fallback()? }
-    } else {
-        quote! { deserializer.deserialize_struct()? }
-    };
-
     let field_vars = fields.iter().map(|(_, _, field_ident)| {
         quote! { let mut #field_ident = ::std::option::Option::None; }
     });
@@ -132,7 +126,7 @@ fn gen_struct(
     });
 
     let wildcard = if fallback.is_some() {
-        quote! { _ => __deserializer.add_to_fallback()?, }
+        quote! { _ => __deserializer.add_to_unknown_fields()?, }
     } else {
         quote! { _ => __deserializer.skip()?, }
     };
@@ -171,16 +165,16 @@ fn gen_struct(
         }
     } else if named {
         quote! {
-            __deserializer.finish_with(|| ::std::result::Result::Ok(Self { #(#field_inits)* }))
+            __deserializer.finish_with(|_| ::std::result::Result::Ok(Self { #(#field_inits)* }))
         }
     } else {
         quote! {
-            __deserializer.finish_with(|| ::std::result::Result::Ok(Self(#(#field_inits)*)))
+            __deserializer.finish_with(|_| ::std::result::Result::Ok(Self(#(#field_inits)*)))
         }
     };
 
     Ok(quote! {
-        let mut __deserializer = #deserializer;
+        let mut __deserializer = deserializer.deserialize_struct()?;
         #(#field_vars)*
 
         while __deserializer.has_more_fields() {

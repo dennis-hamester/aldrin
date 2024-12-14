@@ -211,7 +211,7 @@ async fn before_derive_compat_struct() {
                 }
             }
 
-            deserializer.finish_with(|| {
+            deserializer.finish_with(|_| {
                 Ok(Self {
                     f1: f1.ok_or(DeserializeError::InvalidSerialization)?,
                     f2: f2.ok_or(DeserializeError::InvalidSerialization)?,

@@ -1226,7 +1226,7 @@ impl Deserialize for TestStruct {
             }
         }
 
-        deserializer.finish_with(|| {
+        deserializer.finish_with(|_| {
             Ok(Self {
                 a: a.ok_or(DeserializeError::InvalidSerialization)?,
                 b,
