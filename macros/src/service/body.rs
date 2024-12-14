@@ -1,4 +1,4 @@
-use super::{kw, EvItem, FnFallbackItem, Options, ServiceItem};
+use super::{kw, EvFallbackItem, EvItem, FnFallbackItem, Options, ServiceItem};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
@@ -75,6 +75,11 @@ impl Body {
             .filter_map(ServiceItem::as_event)
             .map(|ev| ev.gen_next_event_match_arm(event, options))
             .collect::<TokenStream>();
+
+        let next_event_fallback = match self.event_fallback() {
+            Some(fallback) => fallback.gen_next_event_match_arm(event),
+            None => quote! { _ => {} },
+        };
 
         quote! {
             pub const UUID: #krate::core::ServiceUuid = #uuid;
@@ -155,7 +160,7 @@ impl Body {
 
                     match ev.id() {
                         #next_event_match_arms
-                        _ => {}
+                        #next_event_fallback
                     }
                 }
             }
@@ -169,11 +174,18 @@ impl Body {
     }
 
     pub fn gen_event(&self) -> TokenStream {
-        self.items
+        let mut variants = self
+            .items
             .iter()
             .filter_map(ServiceItem::as_event)
             .map(EvItem::gen_variant)
-            .collect::<TokenStream>()
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.event_fallback() {
+            variants.extend(fallback.gen_variant());
+        }
+
+        variants
     }
 
     pub fn gen_service(&self, function: &Ident, options: &Options) -> TokenStream {
@@ -389,6 +401,10 @@ impl Body {
             .iter()
             .find_map(ServiceItem::as_fallback_function)
     }
+
+    fn event_fallback(&self) -> Option<&EvFallbackItem> {
+        self.items.iter().find_map(ServiceItem::as_fallback_event)
+    }
 }
 
 impl Parse for Body {
@@ -408,23 +424,35 @@ impl Parse for Body {
             items.push(input.parse()?);
         }
 
+        let mut ev_fallback = false;
         let mut fn_fallback = false;
         for item in &items {
             match item {
                 ServiceItem::Event(ev) => {
-                    if fn_fallback {
+                    if ev_fallback || fn_fallback {
                         return Err(Error::new_spanned(
                             ev.ident(),
-                            "events must be defined before any fallback",
+                            "events must be defined before any fallbacks",
                         ));
                     }
                 }
 
+                ServiceItem::EventFallback(ev) => {
+                    if ev_fallback {
+                        return Err(Error::new_spanned(
+                            ev.ident(),
+                            "there can be at most one evnt fallback",
+                        ));
+                    } else {
+                        ev_fallback = true;
+                    }
+                }
+
                 ServiceItem::Function(func) => {
-                    if fn_fallback {
+                    if ev_fallback || fn_fallback {
                         return Err(Error::new_spanned(
                             func.ident(),
-                            "functions must be defined before any fallback",
+                            "functions must be defined before any fallbacks",
                         ));
                     }
                 }

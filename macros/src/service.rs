@@ -1,4 +1,5 @@
 mod body;
+mod ev_fallback_item;
 mod ev_item;
 mod fn_body;
 mod fn_fallback_item;
@@ -9,6 +10,7 @@ mod options;
 mod test;
 
 use body::Body;
+use ev_fallback_item::EvFallbackItem;
 use ev_item::EvItem;
 use fn_body::FnBody;
 use fn_fallback_item::FnFallbackItem;
