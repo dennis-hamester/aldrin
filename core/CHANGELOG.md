@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ValueSerializer` and `ValueDeserializer` have been extended to support structs with a fallback
   field of type `UnknownFields`.
 - Struct introspection (`introspection::Struct`) can now specify a special field as a fallback.
+- Service introspection (`introspection::Service`) can now specify a special function as a fallback.
 
 ### Changed
 
