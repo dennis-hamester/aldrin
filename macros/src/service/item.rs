@@ -1,4 +1,4 @@
-use super::{kw, EvItem, FnFallbackItem, FnItem, Options};
+use super::{kw, EvFallbackItem, EvItem, FnFallbackItem, FnItem, Options};
 use proc_macro2::TokenStream;
 use std::collections::HashSet;
 use syn::parse::{Parse, ParseStream};
@@ -6,6 +6,7 @@ use syn::{Attribute, Ident, Result, Token, Type};
 
 pub(super) enum ServiceItem {
     Event(EvItem),
+    EventFallback(EvFallbackItem),
     Function(FnItem),
     FunctionFallback(FnFallbackItem),
 }
@@ -14,30 +15,35 @@ impl ServiceItem {
     pub fn as_event(&self) -> Option<&EvItem> {
         match self {
             Self::Event(ev) => Some(ev),
-            Self::Function(_) => None,
-            Self::FunctionFallback(_) => None,
+            Self::EventFallback(_) | Self::Function(_) | Self::FunctionFallback(_) => None,
+        }
+    }
+
+    pub fn as_fallback_event(&self) -> Option<&EvFallbackItem> {
+        match self {
+            Self::EventFallback(ev) => Some(ev),
+            Self::Event(_) | Self::Function(_) | Self::FunctionFallback(_) => None,
         }
     }
 
     pub fn as_function(&self) -> Option<&FnItem> {
         match self {
-            Self::Event(_) => None,
             Self::Function(func) => Some(func),
-            Self::FunctionFallback(_) => None,
+            Self::Event(_) | Self::EventFallback(_) | Self::FunctionFallback(_) => None,
         }
     }
 
     pub fn as_fallback_function(&self) -> Option<&FnFallbackItem> {
         match self {
-            Self::Event(_) => None,
-            Self::Function(_) => None,
             Self::FunctionFallback(func) => Some(func),
+            Self::Event(_) | Self::EventFallback(_) | Self::Function(_) => None,
         }
     }
 
     pub fn layout(&self, options: &Options) -> TokenStream {
         match self {
             Self::Event(ev) => ev.layout(options),
+            Self::EventFallback(ev) => ev.layout(),
             Self::Function(func) => func.layout(options),
             Self::FunctionFallback(func) => func.layout(),
         }
@@ -47,12 +53,24 @@ impl ServiceItem {
         match self {
             Self::Event(ev) => ev.add_references(references),
             Self::Function(func) => func.add_references(references),
-            Self::FunctionFallback(_) => {}
+            Self::EventFallback(_) | Self::FunctionFallback(_) => {}
         }
     }
 
     fn parse_ev(input: ParseStream) -> Result<Self> {
-        input.parse().map(Self::Event)
+        let begin = input.fork();
+
+        begin.parse::<kw::event>()?;
+        begin.parse::<Ident>()?;
+
+        let lookahead = begin.lookahead1();
+        if lookahead.peek(Token![@]) {
+            input.parse().map(Self::Event)
+        } else if lookahead.peek(Token![=]) {
+            input.parse().map(Self::EventFallback)
+        } else {
+            Err(lookahead.error())
+        }
     }
 
     fn parse_fn(input: ParseStream) -> Result<Self> {

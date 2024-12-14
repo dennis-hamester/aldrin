@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `#[aldrin(fallback)]` to optionally mark the last variant of an enum or the last field of a
   struct as the fallback.
 - Add `#[aldrin(fallback)]` to optionally mark the last function of a service as the fallback.
+- Add `#[aldrin(fallback)]` to optionally mark the last event of a service as the fallback.
 
 ### Fixed
 
