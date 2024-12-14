@@ -205,10 +205,7 @@ fn gen_field(
                 }
             };
 
-            let optional = Some(quote! {
-                if ::std::option::Option::is_some(&self.#ident) { 1 } else { 0 }
-            });
-
+            let optional = Some(quote! { (::std::option::Option::is_some(&self.#ident) as usize) });
             (serialize, optional)
         }
 
@@ -226,10 +223,7 @@ fn gen_field(
                 }
             };
 
-            let optional = Some(quote! {
-                if ::std::option::Option::is_some(&self.#index) { 1 } else { 0 }
-            });
-
+            let optional = Some(quote! { (::std::option::Option::is_some(&self.#index) as usize) });
             (serialize, optional)
         }
 
