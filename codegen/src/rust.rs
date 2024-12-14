@@ -411,6 +411,14 @@ impl RustGenerator<'_> {
             codeln!(self, "        fn {ident} = {krate}::UnknownCall;");
         }
 
+        if let Some(fallback) = svc.event_fallback() {
+            let name = fallback.name().value();
+            let ident = format!("r#{name}");
+
+            codeln!(self);
+            codeln!(self, "        event {ident} = {krate}::UnknownEvent;");
+        }
+
         codeln!(self, "    }}");
         codeln!(self, "}}");
         codeln!(self);
