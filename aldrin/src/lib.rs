@@ -73,6 +73,7 @@ mod serial_map;
 #[cfg(test)]
 mod test;
 mod unknown_call;
+mod unknown_event;
 
 pub mod error;
 pub mod low_level;
@@ -110,3 +111,4 @@ pub use object::Object;
 pub use promise::Promise;
 pub use reply::Reply;
 pub use unknown_call::UnknownCall;
+pub use unknown_event::UnknownEvent;

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `UnknownCall`, which represents an unknown pending call.
+- Add `UnknownEvent`, which represents an unknown event.
 
 ### Changed
 
