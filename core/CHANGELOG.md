@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field of type `UnknownFields`.
 - Struct introspection (`introspection::Struct`) can now specify a special field as a fallback.
 - Service introspection (`introspection::Service`) can now specify a special function as a fallback.
+- Service introspection (`introspection::Service`) can now specify a special event as a fallback.
 
 ### Changed
 

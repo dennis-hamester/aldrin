@@ -16,6 +16,7 @@ pub struct Service {
     functions: BTreeMap<u32, Function>,
     events: BTreeMap<u32, Event>,
     function_fallback: Option<String>,
+    event_fallback: Option<String>,
 }
 
 impl Service {
@@ -61,6 +62,10 @@ impl Service {
     pub fn function_fallback(&self) -> Option<&str> {
         self.function_fallback.as_deref()
     }
+
+    pub fn event_fallback(&self) -> Option<&str> {
+        self.event_fallback.as_deref()
+    }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -73,11 +78,14 @@ enum ServiceField {
     Functions = 4,
     Events = 5,
     FunctionFallback = 6,
+    EventFallback = 7,
 }
 
 impl Serialize for Service {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        let num = 6 + (self.function_fallback.is_some() as usize);
+        let num = 6
+            + (self.function_fallback.is_some() as usize)
+            + (self.event_fallback.is_some() as usize);
         let mut serializer = serializer.serialize_struct(num)?;
 
         serializer.serialize_field(ServiceField::Schema, &self.schema)?;
@@ -89,6 +97,10 @@ impl Serialize for Service {
 
         if self.function_fallback.is_some() {
             serializer.serialize_field(ServiceField::FunctionFallback, &self.function_fallback)?;
+        }
+
+        if self.event_fallback.is_some() {
+            serializer.serialize_field(ServiceField::EventFallback, &self.event_fallback)?;
         }
 
         serializer.finish()
@@ -106,6 +118,7 @@ impl Deserialize for Service {
         let mut functions = None;
         let mut events = None;
         let mut function_fallback = None;
+        let mut event_fallback = None;
 
         while deserializer.has_more_fields() {
             let deserializer = deserializer.deserialize_field()?;
@@ -118,6 +131,7 @@ impl Deserialize for Service {
                 ServiceField::Functions => functions = deserializer.deserialize().map(Some)?,
                 ServiceField::Events => events = deserializer.deserialize().map(Some)?,
                 ServiceField::FunctionFallback => function_fallback = deserializer.deserialize()?,
+                ServiceField::EventFallback => event_fallback = deserializer.deserialize()?,
             }
         }
 
@@ -129,6 +143,7 @@ impl Deserialize for Service {
             functions: functions.ok_or(DeserializeError::InvalidSerialization)?,
             events: events.ok_or(DeserializeError::InvalidSerialization)?,
             function_fallback,
+            event_fallback,
         })
     }
 }
@@ -142,6 +157,7 @@ pub struct ServiceBuilder {
     functions: BTreeMap<u32, Function>,
     events: BTreeMap<u32, Event>,
     function_fallback: Option<String>,
+    event_fallback: Option<String>,
 }
 
 impl ServiceBuilder {
@@ -159,6 +175,7 @@ impl ServiceBuilder {
             functions: BTreeMap::new(),
             events: BTreeMap::new(),
             function_fallback: None,
+            event_fallback: None,
         }
     }
 
@@ -190,6 +207,11 @@ impl ServiceBuilder {
         self
     }
 
+    pub fn event_fallback(mut self, name: impl Into<String>) -> Self {
+        self.event_fallback = Some(name.into());
+        self
+    }
+
     pub fn finish(self) -> Service {
         Service {
             schema: self.schema,
@@ -199,6 +221,7 @@ impl ServiceBuilder {
             functions: self.functions,
             events: self.events,
             function_fallback: self.function_fallback,
+            event_fallback: self.event_fallback,
         }
     }
 }
