@@ -1,0 +1,19 @@
+service Service1 {
+    uuid = 84e944bf-dd7d-4cac-8be4-eab8c3adff9e;
+    version = 1;
+
+    fn dup @ 1;
+    event dup @ 1;
+    fn dup = fallback;
+    event dup = fallback;
+}
+
+service Service2 {
+    uuid = 38d8679c-3784-42d6-83dc-dfb3867b62ca;
+    version = 1;
+
+    fn dup1 @ 1;
+    event dup1 @ 1;
+    fn dup2 = fallback;
+    event dup2 = fallback;
+}
