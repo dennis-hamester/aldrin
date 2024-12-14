@@ -72,6 +72,7 @@ mod reply;
 mod serial_map;
 #[cfg(test)]
 mod test;
+mod unknown_call;
 
 pub mod error;
 pub mod low_level;
@@ -108,3 +109,4 @@ pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
 pub use promise::Promise;
 pub use reply::Reply;
+pub use unknown_call::UnknownCall;
