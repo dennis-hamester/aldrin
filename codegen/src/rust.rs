@@ -403,6 +403,14 @@ impl RustGenerator<'_> {
             }
         }
 
+        if let Some(fallback) = svc.function_fallback() {
+            let name = fallback.name().value();
+            let ident = format!("r#{name}");
+
+            codeln!(self);
+            codeln!(self, "        fn {ident} = {krate}::UnknownCall;");
+        }
+
         codeln!(self, "    }}");
         codeln!(self, "}}");
         codeln!(self);
