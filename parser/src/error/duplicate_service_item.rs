@@ -14,6 +14,8 @@ pub struct DuplicateServiceItem {
 
 impl DuplicateServiceItem {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
+        let mut fallback_dup = false;
+
         util::find_duplicates(
             service.items(),
             |item| item.name().value(),
@@ -26,6 +28,58 @@ impl DuplicateServiceItem {
                 })
             },
         );
+
+        if let Some(fallback) = service.function_fallback() {
+            for item in service.items() {
+                if fallback.name().value() == item.name().value() {
+                    validate.add_error(Self {
+                        schema_name: validate.schema_name().to_owned(),
+                        duplicate: fallback.name().clone(),
+                        first: item.name().span(),
+                        service_ident: service.name().clone(),
+                    });
+
+                    fallback_dup = true;
+                    break;
+                }
+            }
+        }
+
+        if let Some(fallback) = service.event_fallback() {
+            for item in service.items() {
+                if fallback.name().value() == item.name().value() {
+                    validate.add_error(Self {
+                        schema_name: validate.schema_name().to_owned(),
+                        duplicate: fallback.name().clone(),
+                        first: item.name().span(),
+                        service_ident: service.name().clone(),
+                    });
+
+                    fallback_dup = true;
+                    break;
+                }
+            }
+        }
+
+        if !fallback_dup {
+            if let (Some(func), Some(ev)) = (service.function_fallback(), service.event_fallback())
+            {
+                if func.name().value() == ev.name().value() {
+                    let (duplicate, first) = if func.span().from < ev.span().from {
+                        (ev.name().clone(), func.name().span())
+                    } else {
+                        (func.name().clone(), ev.name().span())
+                    };
+
+                    validate.add_error(Self {
+                        schema_name: validate.schema_name().to_owned(),
+                        duplicate,
+                        first,
+                        service_ident: service.name().clone(),
+                    });
+                }
+            }
+        }
     }
 
     pub fn duplicate(&self) -> &Ident {

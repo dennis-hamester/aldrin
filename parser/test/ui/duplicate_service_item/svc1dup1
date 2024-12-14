@@ -1,0 +1,11 @@
+error: duplicate item `dup` in service `Service1`
+  --> test/ui/duplicate_service_item.aldrin:6:11
+   |
+ 6 |     event dup @ 1;
+   |           ^^^ duplicate defined here
+   |
+  ::: test/ui/duplicate_service_item.aldrin:5:8
+   |
+ 5 |     fn dup @ 1;
+   |        --- first defined here
+   |
