@@ -72,7 +72,7 @@ impl Deserialize for ServiceInfoOld {
             }
         }
 
-        deserializer.finish_with(|| {
+        deserializer.finish_with(|_| {
             Ok(Self {
                 version: version.ok_or(DeserializeError::InvalidSerialization)?,
                 type_id,

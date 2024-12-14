@@ -342,12 +342,6 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         StructDeserializer::new(self.buf, self.depth)
     }
 
-    pub fn deserialize_struct_with_fallback(
-        self,
-    ) -> Result<StructWithFallbackDeserializer<'a, 'b>, DeserializeError> {
-        StructWithFallbackDeserializer::new(self.buf, self.depth)
-    }
-
     pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, 'b>, DeserializeError> {
         EnumDeserializer::new(self.buf, self.depth)
     }
@@ -809,135 +803,10 @@ pub struct StructDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     num_fields: u32,
     depth: u8,
-}
-
-impl<'a, 'b> StructDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::Struct)?;
-        Self::new_without_value_kind(buf, depth)
-    }
-
-    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        let num_fields = buf.try_get_varint_u32_le()?;
-        Ok(Self {
-            buf,
-            num_fields,
-            depth,
-        })
-    }
-
-    pub fn remaining_fields(&self) -> usize {
-        self.num_fields as usize
-    }
-
-    pub fn has_more_fields(&self) -> bool {
-        self.num_fields > 0
-    }
-
-    pub fn deserialize_field(&mut self) -> Result<FieldDeserializer<'_, 'b>, DeserializeError> {
-        if self.has_more_fields() {
-            self.num_fields -= 1;
-            FieldDeserializer::new(self.buf, self.depth)
-        } else {
-            Err(DeserializeError::NoMoreElements)
-        }
-    }
-
-    pub fn deserialize_specific_field<T: Deserialize>(
-        &mut self,
-        id: impl Into<u32>,
-    ) -> Result<T, DeserializeError> {
-        let field = self.deserialize_field()?;
-
-        if field.id() == id.into() {
-            field.deserialize()
-        } else {
-            Err(DeserializeError::InvalidSerialization)
-        }
-    }
-
-    pub fn skip(mut self) -> Result<(), DeserializeError> {
-        while self.has_more_fields() {
-            self.deserialize_field()?.skip()?;
-        }
-
-        Ok(())
-    }
-
-    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
-        if self.has_more_fields() {
-            Err(DeserializeError::MoreElementsRemain)
-        } else {
-            Ok(t)
-        }
-    }
-
-    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
-    where
-        F: FnOnce() -> Result<T, DeserializeError>,
-    {
-        if self.has_more_fields() {
-            Err(DeserializeError::MoreElementsRemain)
-        } else {
-            f()
-        }
-    }
-
-    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
-        self.skip()?;
-        Ok(t)
-    }
-
-    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
-    where
-        F: FnOnce() -> Result<T, DeserializeError>,
-    {
-        self.skip()?;
-        f()
-    }
-}
-
-#[derive(Debug)]
-pub struct FieldDeserializer<'a, 'b> {
-    buf: &'a mut &'b [u8],
-    id: u32,
-    depth: u8,
-}
-
-impl<'a, 'b> FieldDeserializer<'a, 'b> {
-    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        let id = buf.try_get_varint_u32_le()?;
-        Ok(Self { buf, id, depth })
-    }
-
-    pub fn id(&self) -> u32 {
-        self.id
-    }
-
-    pub fn try_id<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
-        self.id
-            .try_into()
-            .map_err(|_| DeserializeError::InvalidSerialization)
-    }
-
-    pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
-        T::deserialize(Deserializer::new(self.buf, self.depth)?)
-    }
-
-    pub fn skip(self) -> Result<(), DeserializeError> {
-        Deserializer::new(self.buf, self.depth)?.skip()
-    }
-}
-
-#[derive(Debug)]
-pub struct StructWithFallbackDeserializer<'a, 'b> {
-    buf: &'a mut &'b [u8],
-    num_fields: u32,
-    depth: u8,
     unknown_fields: UnknownFields,
 }
 
-impl<'a, 'b> StructWithFallbackDeserializer<'a, 'b> {
+impl<'a, 'b> StructDeserializer<'a, 'b> {
     fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Struct)?;
         Self::new_without_value_kind(buf, depth)
@@ -962,12 +831,10 @@ impl<'a, 'b> StructWithFallbackDeserializer<'a, 'b> {
         self.num_fields > 0
     }
 
-    pub fn deserialize_field(
-        &mut self,
-    ) -> Result<FieldWithFallbackDeserializer<'_, 'b>, DeserializeError> {
+    pub fn deserialize_field(&mut self) -> Result<FieldDeserializer<'_, 'b>, DeserializeError> {
         if self.has_more_fields() {
             self.num_fields -= 1;
-            FieldWithFallbackDeserializer::new(self.buf, self.depth, &mut self.unknown_fields)
+            FieldDeserializer::new(self.buf, self.depth, &mut self.unknown_fields)
         } else {
             Err(DeserializeError::NoMoreElements)
         }
@@ -1023,7 +890,7 @@ impl<'a, 'b> StructWithFallbackDeserializer<'a, 'b> {
         F: FnOnce(UnknownFields) -> Result<T, DeserializeError>,
     {
         while self.has_more_fields() {
-            self.deserialize_field()?.add_to_fallback()?;
+            self.deserialize_field()?.skip()?;
         }
 
         f(self.unknown_fields)
@@ -1031,14 +898,14 @@ impl<'a, 'b> StructWithFallbackDeserializer<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct FieldWithFallbackDeserializer<'a, 'b> {
+pub struct FieldDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     id: u32,
     depth: u8,
     unknown_fields: &'a mut UnknownFields,
 }
 
-impl<'a, 'b> FieldWithFallbackDeserializer<'a, 'b> {
+impl<'a, 'b> FieldDeserializer<'a, 'b> {
     fn new(
         buf: &'a mut &'b [u8],
         depth: u8,
@@ -1072,7 +939,7 @@ impl<'a, 'b> FieldWithFallbackDeserializer<'a, 'b> {
         Deserializer::new(self.buf, self.depth)?.skip()
     }
 
-    pub fn add_to_fallback(self) -> Result<(), DeserializeError> {
+    pub fn add_to_unknown_fields(self) -> Result<(), DeserializeError> {
         let value = SerializedValue::deserialize(Deserializer::new(self.buf, self.depth)?)?;
         self.unknown_fields.insert(self.id, value);
         Ok(())

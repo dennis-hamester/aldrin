@@ -45,7 +45,7 @@ fn concrete_vs_vague() {
                 }
             }
 
-            deserializer.finish_with(|| {
+            deserializer.finish_with(|_| {
                 Ok(Self {
                     field1: field1.ok_or(DeserializeError::InvalidSerialization)?,
                     field2: field2.ok_or(DeserializeError::InvalidSerialization)?,

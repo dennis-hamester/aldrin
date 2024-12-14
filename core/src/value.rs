@@ -1653,7 +1653,7 @@ macro_rules! tuple_impls {
                     }
                 }
 
-                deserializer.finish_with(|| {
+                deserializer.finish_with(|_| {
                     Ok(($( $gen.ok_or(DeserializeError::InvalidSerialization)?, )+))
                 })
             }
