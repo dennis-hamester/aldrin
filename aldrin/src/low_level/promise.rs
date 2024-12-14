@@ -102,6 +102,12 @@ impl Promise {
             .function_call_reply(self.serial, CallFunctionResult::InvalidFunction)
     }
 
+    pub(crate) fn invalid_function_ref(&mut self) {
+        if let Some(client) = self.client.take() {
+            let _ = client.function_call_reply(self.serial, CallFunctionResult::InvalidFunction);
+        }
+    }
+
     /// Signals that invalid arguments were passed to the function.
     pub fn invalid_args(mut self) -> Result<(), Error> {
         self.client

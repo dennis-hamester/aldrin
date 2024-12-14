@@ -2,6 +2,7 @@ use super::Promise;
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice};
 use crate::error::Error;
 use crate::handle::Handle;
+use crate::unknown_call::UnknownCall;
 use futures_channel::oneshot::Receiver;
 
 /// Pending call.
@@ -77,5 +78,14 @@ impl Call {
                 Err(Error::invalid_arguments(self.id, Some(e)))
             }
         }
+    }
+
+    /// Converts this call into an [`UnknownCall`].
+    pub fn into_unknown_call(self) -> UnknownCall {
+        UnknownCall::new(self)
+    }
+
+    pub(crate) fn invalid_function_ref(&mut self) {
+        self.promise.invalid_function_ref();
     }
 }
