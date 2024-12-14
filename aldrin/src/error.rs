@@ -101,10 +101,6 @@ pub enum Error {
     #[error("call aborted")]
     CallAborted,
 
-    /// A field that is required for some type is missing.
-    #[error(transparent)]
-    RequiredFieldMissing(#[from] RequiredFieldMissing),
-
     /// An invalid reply was received for a call.
     ///
     /// This can indicate a schema mismatch.
@@ -155,11 +151,6 @@ impl Error {
     /// Creates a new `InvalidArguments` error.
     pub fn invalid_arguments(id: u32, source: Option<DeserializeError>) -> Self {
         Self::InvalidArguments(InvalidArguments::new(id, source))
-    }
-
-    /// Creates a new `RequiredFieldMissing` error.
-    pub fn required_field_missing(field: u32) -> Self {
-        Self::RequiredFieldMissing(RequiredFieldMissing::new(field))
     }
 
     /// Creates a new `InvalidReply` error.
@@ -213,25 +204,6 @@ impl InvalidArguments {
     /// Returns the id of the function or event.
     pub fn id(self) -> u32 {
         self.id
-    }
-}
-
-/// A field that is required for some type is missing.
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-#[error("required field {} missing", .field)]
-pub struct RequiredFieldMissing {
-    field: u32,
-}
-
-impl RequiredFieldMissing {
-    /// Creates a new `RequiredFieldMissing` error.
-    pub fn new(field: u32) -> Self {
-        Self { field }
-    }
-
-    /// Returns the id of the field that is missing.
-    pub fn field(self) -> u32 {
-        self.field
     }
 }
 
