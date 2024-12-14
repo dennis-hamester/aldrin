@@ -17,6 +17,7 @@ pub struct ServiceDef {
     ver: LitPosInt,
     items: Vec<ServiceItem>,
     fn_fallback: Option<FunctionFallbackDef>,
+    ev_fallback: Option<EventFallbackDef>,
 }
 
 impl ServiceDef {
@@ -41,18 +42,25 @@ impl ServiceDef {
 
         let mut items = Vec::new();
         let mut fn_fallback = None;
+        let mut ev_fallback = None;
 
         for pair in pairs {
             match pair.as_rule() {
                 Rule::service_item => items.push(ServiceItem::parse(pair)),
 
                 Rule::service_fallback => {
-                    let mut pairs = pair.into_inner();
-                    let pair = pairs.next().unwrap();
+                    for pair in pair.into_inner() {
+                        match pair.as_rule() {
+                            Rule::fn_fallback => {
+                                fn_fallback = Some(FunctionFallbackDef::parse(pair))
+                            }
 
-                    match pair.as_rule() {
-                        Rule::fn_fallback => fn_fallback = Some(FunctionFallbackDef::parse(pair)),
-                        _ => unreachable!(),
+                            Rule::event_fallback => {
+                                ev_fallback = Some(EventFallbackDef::parse(pair))
+                            }
+
+                            _ => unreachable!(),
+                        }
                     }
                 }
 
@@ -68,6 +76,7 @@ impl ServiceDef {
             ver,
             items,
             fn_fallback,
+            ev_fallback,
         }
     }
 
@@ -106,6 +115,10 @@ impl ServiceDef {
         if let Some(ref fn_fallback) = self.fn_fallback {
             fn_fallback.validate(validate);
         }
+
+        if let Some(ref ev_fallback) = self.ev_fallback {
+            ev_fallback.validate(validate);
+        }
     }
 
     pub fn span(&self) -> Span {
@@ -130,6 +143,10 @@ impl ServiceDef {
 
     pub fn function_fallback(&self) -> Option<&FunctionFallbackDef> {
         self.fn_fallback.as_ref()
+    }
+
+    pub fn event_fallback(&self) -> Option<&EventFallbackDef> {
+        self.ev_fallback.as_ref()
     }
 }
 
@@ -389,6 +406,41 @@ pub struct FunctionFallbackDef {
 impl FunctionFallbackDef {
     fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::fn_fallback);
+
+        let span = Span::from_pair(&pair);
+
+        let mut pairs = pair.into_inner();
+
+        pairs.next().unwrap(); // Skip keyword.
+
+        let pair = pairs.next().unwrap();
+        let name = Ident::parse(pair);
+
+        Self { span, name }
+    }
+
+    fn validate(&self, validate: &mut Validate) {
+        self.name.validate(validate);
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EventFallbackDef {
+    span: Span,
+    name: Ident,
+}
+
+impl EventFallbackDef {
+    fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::event_fallback);
 
         let span = Span::from_pair(&pair);
 

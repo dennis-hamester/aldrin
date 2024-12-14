@@ -30,7 +30,8 @@ pub use lit_uuid::LitUuid;
 pub use named_ref::{NamedRef, NamedRefKind};
 pub use schema_name::SchemaName;
 pub use service_def::{
-    EventDef, FunctionDef, FunctionFallbackDef, FunctionPart, ServiceDef, ServiceItem,
+    EventDef, EventFallbackDef, FunctionDef, FunctionFallbackDef, FunctionPart, ServiceDef,
+    ServiceItem,
 };
 pub use struct_def::{InlineStruct, StructDef, StructField};
 pub use type_name::{TypeName, TypeNameKind};

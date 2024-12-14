@@ -172,7 +172,7 @@ service_def = {
 service_uuid = { kw_uuid ~ tok_eq ~ lit_uuid ~ tok_term }
 service_version = { kw_version ~ tok_eq ~ lit_pos_int ~ tok_term }
 service_item = { fn_def | event_def }
-service_fallback = { fn_fallback }
+service_fallback = { (fn_fallback ~ event_fallback?) | (event_fallback ~ fn_fallback?) }
 
 fn_def = { kw_fn ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_cur_open ~ fn_body ~ tok_cur_close) | tok_term) }
 fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
@@ -182,6 +182,7 @@ fn_err = { kw_err ~ tok_eq ~ type_name_or_inline }
 fn_fallback = { kw_fn ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 event_def = { kw_event ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_eq ~ type_name_or_inline) | tok_term) }
+event_fallback = { kw_event ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 const_def = { kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
 const_value = {
