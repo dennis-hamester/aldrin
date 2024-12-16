@@ -226,8 +226,8 @@ impl Body {
             .collect::<TokenStream>();
 
         quote! {
-            const UUID: #krate::core::ServiceUuid = #uuid;
-            const VERSION: ::std::primitive::u32 = #version;
+            pub const UUID: #krate::core::ServiceUuid = #uuid;
+            pub const VERSION: ::std::primitive::u32 = #version;
 
             pub async fn new(object: &#krate::Object) -> ::std::result::Result<Self, #krate::Error> {
                 let info = #krate::low_level::ServiceInfo::new(Self::VERSION);
