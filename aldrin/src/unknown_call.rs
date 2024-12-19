@@ -1,4 +1,4 @@
-use crate::core::{Deserialize, DeserializeError, SerializedValueSlice};
+use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::low_level::Call;
@@ -37,6 +37,11 @@ impl UnknownCall {
     /// Deserializes the call's arguments.
     pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
         self.inner.as_ref().unwrap().deserialize()
+    }
+
+    /// Deserializes the call's arguments into a generic [`Value`].
+    pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
+        self.deserialize()
     }
 
     /// Deserializes arguments and casts the inner promise to a specific set of result types.
