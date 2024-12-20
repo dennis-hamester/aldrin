@@ -2,6 +2,8 @@ use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::low_level::Call;
+use std::error::Error as StdError;
+use std::fmt;
 
 /// An unknown pending call.
 #[derive(Debug)]
@@ -68,3 +70,11 @@ impl Drop for UnknownCall {
         }
     }
 }
+
+impl fmt::Display for UnknownCall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unknown function {} called", self.id())
+    }
+}
+
+impl StdError for UnknownCall {}
