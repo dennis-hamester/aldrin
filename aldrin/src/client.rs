@@ -1791,10 +1791,10 @@ where
 
         for event in res.events {
             self.t
-                .send(dbg!(UnsubscribeEvent {
+                .send(UnsubscribeEvent {
                     service_cookie: res.service,
                     event,
-                }))
+                })
                 .await?;
         }
 
@@ -1803,10 +1803,10 @@ where
             let serial = self.unsubscribe_all_events.insert(req);
 
             self.t
-                .send(dbg!(UnsubscribeAllEvents {
+                .send(UnsubscribeAllEvents {
                     serial: Some(serial),
                     service_cookie: res.service,
-                }))
+                })
                 .await?;
         } else {
             let _ = req.reply.send(Ok(()));
