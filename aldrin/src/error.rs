@@ -3,6 +3,7 @@
 use crate::core::message::Message;
 use crate::core::{DeserializeError, SerializeError, SerializedValue};
 use crate::unknown_call::UnknownCall;
+use crate::unknown_event::UnknownEvent;
 use thiserror::Error;
 
 /// Error when connecting to a broker.
@@ -92,6 +93,17 @@ pub enum Error {
     #[error(transparent)]
     InvalidFunction(#[from] InvalidFunction),
 
+    /// An invalid event was received.
+    ///
+    /// This can indicate a schema mismatch.
+    ///
+    /// This error is never automatically generated. Functions that receive events (such as
+    /// [`Proxy::next_event`](crate::low_level::Proxy::next_event)) will normally skip over any
+    /// errors. If however event fallbacks are used, then [`UnknownEvent`] can be manually converted
+    /// to this variant.
+    #[error(transparent)]
+    InvalidEvent(#[from] InvalidEvent),
+
     /// Invalid arguments were supplied to a function or event.
     ///
     /// This can indicate a schema mismatch.
@@ -177,6 +189,18 @@ impl From<&UnknownCall> for Error {
     }
 }
 
+impl From<UnknownEvent> for Error {
+    fn from(event: UnknownEvent) -> Self {
+        InvalidEvent::from(event).into()
+    }
+}
+
+impl From<&UnknownEvent> for Error {
+    fn from(event: &UnknownEvent) -> Self {
+        InvalidEvent::from(event).into()
+    }
+}
+
 /// An invalid function was called.
 ///
 /// This can indicate a schema mismatch.
@@ -207,6 +231,39 @@ impl From<UnknownCall> for InvalidFunction {
 impl From<&UnknownCall> for InvalidFunction {
     fn from(call: &UnknownCall) -> Self {
         Self::new(call.id())
+    }
+}
+
+/// An invalid event was received.
+///
+/// This can indicate a schema mismatch.
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("invalid event {} received", .id)]
+pub struct InvalidEvent {
+    id: u32,
+}
+
+impl InvalidEvent {
+    /// Creates a new `InvalidEvent` error.
+    pub fn new(id: u32) -> Self {
+        Self { id }
+    }
+
+    /// Returns the id of the invalid event.
+    pub fn id(self) -> u32 {
+        self.id
+    }
+}
+
+impl From<UnknownEvent> for InvalidEvent {
+    fn from(event: UnknownEvent) -> Self {
+        Self::new(event.id())
+    }
+}
+
+impl From<&UnknownEvent> for InvalidEvent {
+    fn from(event: &UnknownEvent) -> Self {
+        Self::new(event.id())
     }
 }
 
