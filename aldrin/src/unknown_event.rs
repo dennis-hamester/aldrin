@@ -1,5 +1,7 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use crate::low_level::Event;
+use std::error::Error as StdError;
+use std::fmt;
 
 /// An unknown event emitted by a service.
 #[derive(Debug, Clone)]
@@ -37,3 +39,11 @@ impl UnknownEvent {
         self.deserialize()
     }
 }
+
+impl fmt::Display for UnknownEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unknown event {} received", self.id())
+    }
+}
+
+impl StdError for UnknownEvent {}
