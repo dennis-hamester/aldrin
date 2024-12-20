@@ -145,8 +145,8 @@ pub enum Error {
 
 impl Error {
     /// Creates a new `InvalidFunction` error.
-    pub fn invalid_function(function: u32) -> Self {
-        Self::InvalidFunction(InvalidFunction::new(function))
+    pub fn invalid_function(id: u32) -> Self {
+        Self::InvalidFunction(InvalidFunction::new(id))
     }
 
     /// Creates a new `InvalidArguments` error.
@@ -181,20 +181,20 @@ impl From<&UnknownCall> for Error {
 ///
 /// This can indicate a schema mismatch.
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-#[error("invalid function {} called", .function)]
+#[error("invalid function {} called", .id)]
 pub struct InvalidFunction {
-    function: u32,
+    id: u32,
 }
 
 impl InvalidFunction {
     /// Creates a new `InvalidFunction` error.
-    pub fn new(function: u32) -> Self {
-        Self { function }
+    pub fn new(id: u32) -> Self {
+        Self { id }
     }
 
     /// Returns the id of the invalid function.
-    pub fn function(self) -> u32 {
-        self.function
+    pub fn id(self) -> u32 {
+        self.id
     }
 }
 
