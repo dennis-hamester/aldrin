@@ -2,6 +2,7 @@
 
 use crate::core::message::Message;
 use crate::core::{DeserializeError, SerializeError, SerializedValue};
+use crate::unknown_call::UnknownCall;
 use thiserror::Error;
 
 /// Error when connecting to a broker.
@@ -164,6 +165,18 @@ impl Error {
     }
 }
 
+impl From<UnknownCall> for Error {
+    fn from(call: UnknownCall) -> Self {
+        InvalidFunction::from(call).into()
+    }
+}
+
+impl From<&UnknownCall> for Error {
+    fn from(call: &UnknownCall) -> Self {
+        InvalidFunction::from(call).into()
+    }
+}
+
 /// An invalid function was called.
 ///
 /// This can indicate a schema mismatch.
@@ -182,6 +195,18 @@ impl InvalidFunction {
     /// Returns the id of the invalid function.
     pub fn function(self) -> u32 {
         self.function
+    }
+}
+
+impl From<UnknownCall> for InvalidFunction {
+    fn from(call: UnknownCall) -> Self {
+        Self::new(call.id())
+    }
+}
+
+impl From<&UnknownCall> for InvalidFunction {
+    fn from(call: &UnknownCall) -> Self {
+        Self::new(call.id())
     }
 }
 
