@@ -1,6 +1,7 @@
 use crate::error::DeserializeError;
 use crate::generic_value::Struct;
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
+use crate::value::ValueKind;
 use std::collections::hash_map::{HashMap, IntoIter, Iter};
 use std::iter::Map;
 use std::ops::{Deref, DerefMut};
@@ -11,6 +12,13 @@ pub struct UnknownFields(pub HashMap<u32, SerializedValue>);
 impl UnknownFields {
     pub fn new() -> Self {
         Self(HashMap::new())
+    }
+
+    pub fn has_fields_set(&self) -> bool {
+        self.0
+            .values()
+            .filter_map(|val| val.kind().ok())
+            .any(|kind| kind != ValueKind::None)
     }
 
     pub fn iter(&self) -> impl ExactSizeIterator<Item = (u32, &SerializedValueSlice)> {
