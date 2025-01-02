@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove support for marking types as `#[non_exhaustive]`.
 - Remove support for struct builders.
+- Function enums now use `aldrin::Call` instead of a tuple for the arguments and the promise.
 
 ## [0.10.1] - 2024-11-29
 

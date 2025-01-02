@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove `RequiredFieldMissing` error.
 - Rename `InvalidFunction::function()` to `id()`.
+- `low_level::Call::deserialize_and_cast()` and `UnknownCall::deserialize_and_cast()` now return a
+  `Call` instead of a tuple.
 
 ## [0.10.0] - 2024-11-26
 

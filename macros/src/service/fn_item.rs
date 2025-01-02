@@ -62,7 +62,10 @@ impl FnItem {
         let krate = options.krate();
         let variant = &self.variant;
 
-        let args = self.body.args().map(|args| quote! { #args, });
+        let args = match self.body.args() {
+            Some(args) => quote! { #args },
+            None => quote! { () },
+        };
 
         let ok = match self.body.ok() {
             Some(ok) => quote! { #ok },
@@ -75,7 +78,7 @@ impl FnItem {
         };
 
         quote! {
-            #variant(#args #krate::Promise<#ok, #err>),
+            #variant(#krate::Call<#args, #ok, #err>),
         }
     }
 
@@ -83,18 +86,12 @@ impl FnItem {
         let id = &self.id;
         let variant = &self.variant;
 
-        let (args, val) = if self.body.args().is_some() {
-            (quote! { args }, Some(quote! { args, }))
-        } else {
-            (quote! { () }, None)
-        };
-
         quote! {
             #id => match call.deserialize_and_cast() {
-                ::std::result::Result::Ok((#args, promise)) => {
+                ::std::result::Result::Ok((call)) => {
                     ::std::task::Poll::Ready(
                         ::std::option::Option::Some(
-                            ::std::result::Result::Ok(#function::#variant(#val promise)),
+                            ::std::result::Result::Ok(#function::#variant(call)),
                         ),
                     )
                 }

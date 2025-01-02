@@ -1,23 +1,24 @@
+use crate::call::Call;
 use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use crate::error::Error;
 use crate::handle::Handle;
-use crate::low_level::Call;
+use crate::low_level::Call as LlCall;
 use std::error::Error as StdError;
 use std::fmt;
 
 /// An unknown pending call.
 #[derive(Debug)]
 pub struct UnknownCall {
-    inner: Option<Call>,
+    inner: Option<LlCall>,
 }
 
 impl UnknownCall {
-    pub(crate) fn new(inner: Call) -> Self {
+    pub(crate) fn new(inner: LlCall) -> Self {
         Self { inner: Some(inner) }
     }
 
-    /// Extracts the inner low-level [`Call`].
-    pub fn into_low_level(mut self) -> Call {
+    /// Extracts the inner low-level [`Call`](crate::low_level::Call).
+    pub fn into_low_level(mut self) -> crate::low_level::Call {
         self.inner.take().unwrap()
     }
 
@@ -46,14 +47,12 @@ impl UnknownCall {
         self.deserialize()
     }
 
-    /// Deserializes arguments and casts the inner promise to a specific set of result types.
+    /// Deserializes arguments and casts the call to a known [`Call`].
     ///
     /// If deserialization fails, then the call will be replied using
     /// [`Promise::invalid_args`](crate::low_level::Promise::invalid_args) and
     /// [`Error::InvalidArguments`] will be returned.
-    pub fn deserialize_and_cast<Args, T, E>(
-        mut self,
-    ) -> Result<(Args, crate::promise::Promise<T, E>), Error>
+    pub fn deserialize_and_cast<Args, T, E>(mut self) -> Result<Call<Args, T, E>, Error>
     where
         Args: Deserialize,
         T: ?Sized,

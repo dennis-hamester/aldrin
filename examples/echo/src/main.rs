@@ -147,25 +147,27 @@ async fn server(bus: &Handle) -> Result<()> {
             }
         };
 
-        // `EchoFunction` is a generated enum, that has one variant for each defined
-        // function. Function arguments (if any) and a promise object are contained in each
-        // variant. Aldrin does not impose any restrictions on when the reply is sent. If
-        // e.g. processing the function call takes some time, then it is fine to hang onto the
-        // promise object until then. If the promise object is dropped, then the caller will be
-        // notified that the call has been aborted.
+        // `EchoFunction` is a generated enum, that has one variant for each defined function.
+        // Function arguments (if any) and a promise object are contained in the call object. Aldrin
+        // does not impose any restrictions on when the reply is sent. If e.g. processing the
+        // function call takes some time, then it is fine to hang onto the call or the inner promise
+        // object until then. If the promise object is dropped, then the caller will be notified
+        // that the call has been aborted.
         match function {
-            EchoFunction::Echo(args, promise) => {
+            EchoFunction::Echo(mut call) => {
+                let args = call.take_args();
                 println!("echo(\"{args}\") called.");
 
                 if !args.is_empty() {
                     // Here, we echo the same value back to the caller.
-                    promise.ok(&args)?;
+                    call.ok(&args)?;
                 } else {
-                    promise.err(&EchoEchoError::EmptyString)?;
+                    call.err(&EchoEchoError::EmptyString)?;
                 }
             }
 
-            EchoFunction::EchoAll(args, promise) => {
+            EchoFunction::EchoAll(mut call) => {
+                let args = call.take_args();
                 println!("echo_all(\"{args}\") called.");
 
                 if !args.is_empty() {
@@ -176,9 +178,9 @@ async fn server(bus: &Handle) -> Result<()> {
                     echo.echoed_to_all(&args)?;
 
                     // No value is sent back to the caller.
-                    promise.done()?;
+                    call.done()?;
                 } else {
-                    promise.err(&EchoEchoAllError::EmptyString)?;
+                    call.err(&EchoEchoAllError::EmptyString)?;
                 }
             }
         }

@@ -13,6 +13,14 @@ pub struct Call<Args, T: ?Sized, E: ?Sized> {
 }
 
 impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
+    pub(crate) fn new(id: u32, args: Args, promise: Promise<T, E>) -> Self {
+        Self {
+            id,
+            args: Some(args),
+            promise: Some(promise),
+        }
+    }
+
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
         self.id

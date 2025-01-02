@@ -1,6 +1,6 @@
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::ObjectUuid;
-use aldrin::{Client, Handle, Promise, UnboundSender};
+use aldrin::{Call, Client, Handle, Promise, UnboundSender};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use downloader::{Chunk, Downloader, DownloaderDownloadArgs, DownloaderFunction, DownloaderProxy};
@@ -115,8 +115,8 @@ async fn server(bus: &Handle) -> Result<()> {
         tokio::select! {
             function = downloader.next_call() => {
                 match function {
-                    Some(Ok(DownloaderFunction::Download(args, promise))) => {
-                        tokio::spawn(download(args, promise));
+                    Some(Ok(DownloaderFunction::Download(call))) => {
+                        tokio::spawn(download(call));
                     }
 
                     // Function calls can be invalid either because their id is unknown or because
@@ -140,10 +140,10 @@ async fn server(bus: &Handle) -> Result<()> {
     }
 }
 
-async fn download(
-    args: DownloaderDownloadArgs,
-    promise: Promise<UnboundSender<Chunk>, Infallible>,
-) {
+async fn download(mut call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infallible>) {
+    let args = call.take_args();
+    let promise = call.take_promise();
+
     println!("Downloading `{}` ({} bytes).", args.name, args.size);
 
     match download_impl(args.size, promise).await {

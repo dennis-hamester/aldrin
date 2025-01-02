@@ -1,4 +1,5 @@
 use super::Promise;
+use crate::call::Call as HlCall;
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice};
 use crate::error::Error;
 use crate::handle::Handle;
@@ -58,20 +59,18 @@ impl Call {
         (self.args, self.promise)
     }
 
-    /// Deserializes arguments and casts the promise to a specific set of result types.
+    /// Deserializes arguments and casts the call to a high-level [`Call`](crate::call::Call).
     ///
     /// If deserialization fails, then the call will be replied using [`Promise::invalid_args`] and
     /// [`Error::InvalidArguments`] will be returned.
-    pub fn deserialize_and_cast<Args, T, E>(
-        self,
-    ) -> Result<(Args, crate::promise::Promise<T, E>), Error>
+    pub fn deserialize_and_cast<Args, T, E>(self) -> Result<crate::call::Call<Args, T, E>, Error>
     where
         Args: Deserialize,
         T: ?Sized,
         E: ?Sized,
     {
         match self.args.deserialize() {
-            Ok(args) => Ok((args, self.promise.cast())),
+            Ok(args) => Ok(HlCall::new(self.id, args, self.promise.cast())),
 
             Err(e) => {
                 let _ = self.promise.invalid_args();
