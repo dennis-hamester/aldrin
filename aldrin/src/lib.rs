@@ -60,6 +60,7 @@
 #![deny(missing_docs)]
 
 mod bus_listener;
+mod call;
 mod channel;
 mod client;
 mod discoverer;
@@ -95,6 +96,7 @@ pub use aldrin_macros::{
     IntrospectableFromAldrin as Introspectable, KeyTypeOfFromAldrin as KeyTypeOf,
 };
 pub use bus_listener::BusListener;
+pub use call::Call;
 pub use channel::{
     ChannelBuilder, PendingReceiver, PendingSender, Receiver, Sender, UnboundReceiver,
     UnboundSender, UnclaimedReceiver, UnclaimedSender,
