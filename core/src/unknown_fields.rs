@@ -27,7 +27,7 @@ impl UnknownFields {
 
     pub fn deserialize_as_value(&self) -> Result<Struct, DeserializeError> {
         self.iter()
-            .map(|(id, val)| val.deserialize().map(|val| (id, val)))
+            .map(|(id, val)| val.deserialize_as_value().map(|val| (id, val)))
             .collect::<Result<_, _>>()
             .map(Struct)
     }

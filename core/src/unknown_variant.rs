@@ -31,6 +31,8 @@ impl UnknownVariant {
     }
 
     pub fn deserialize_as_value(&self) -> Result<Enum, DeserializeError> {
-        self.deserialize().map(|value| Enum::new(self.id, value))
+        self.value
+            .deserialize_as_value()
+            .map(|value| Enum::new(self.id, value))
     }
 }

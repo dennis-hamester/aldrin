@@ -2,6 +2,7 @@
 mod test;
 
 use crate::error::{DeserializeError, SerializeError};
+use crate::generic_value::Value;
 #[cfg(feature = "introspection")]
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::value::ValueKind;
@@ -186,6 +187,10 @@ impl SerializedValueSlice {
         }
 
         res
+    }
+
+    pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
+        self.deserialize()
     }
 }
 
