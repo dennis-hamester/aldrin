@@ -1,21 +1,21 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
-use crate::low_level::Event;
+use crate::low_level::Event as LlEvent;
 use std::error::Error as StdError;
 use std::fmt;
 
 /// An unknown event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct UnknownEvent {
-    inner: Event,
+    inner: LlEvent,
 }
 
 impl UnknownEvent {
-    pub(crate) fn new(inner: Event) -> Self {
+    pub(crate) fn new(inner: LlEvent) -> Self {
         Self { inner }
     }
 
     /// Extracts the inner low-level event.
-    pub fn into_low_level(self) -> Event {
+    pub fn into_low_level(self) -> crate::low_level::Event {
         self.inner
     }
 
