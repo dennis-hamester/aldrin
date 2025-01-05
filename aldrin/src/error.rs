@@ -205,7 +205,7 @@ impl From<&UnknownEvent> for Error {
 ///
 /// This can indicate a schema mismatch.
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-#[error("invalid function {} called", .id)]
+#[error("invalid function {id} called")]
 pub struct InvalidFunction {
     id: u32,
 }
@@ -238,7 +238,7 @@ impl From<&UnknownCall> for InvalidFunction {
 ///
 /// This can indicate a schema mismatch.
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-#[error("invalid event {} received", .id)]
+#[error("invalid event {id} received")]
 pub struct InvalidEvent {
     id: u32,
 }
@@ -271,7 +271,7 @@ impl From<&UnknownEvent> for InvalidEvent {
 ///
 /// This can indicate a schema mismatch.
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-#[error("invalid arguments for function or event {}", .id)]
+#[error("invalid arguments for function or event {id}")]
 pub struct InvalidArguments {
     id: u32,
     source: Option<DeserializeError>,

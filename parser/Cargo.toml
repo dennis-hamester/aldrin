@@ -24,12 +24,12 @@ all-features = true
 heck = { workspace = true }
 
 [dependencies.pest]
-version = "2.7.10"
+version = "2.7.15"
 default-features = false
 features = ["std"]
 
 [dependencies.pest_derive]
-version = "2.7.10"
+version = "2.7.15"
 default-features = false
 features = ["std"]
 
