@@ -61,6 +61,11 @@ jobs:
     with:
       component: conformance-test-broker
 
+  ci-example-bookmarks:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-bookmarks
+
   ci-example-broker:
     uses: ./.github/workflows/check-component.yaml
     with:
