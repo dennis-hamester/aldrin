@@ -1,6 +1,6 @@
 use super::Promise;
 use crate::call::Call as HlCall;
-use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice};
+use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use crate::error::Error;
 use crate::handle::Handle;
 use crate::unknown_call::UnknownCall;
@@ -47,6 +47,11 @@ impl Call {
     /// Deserializes the call's arguments.
     pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
         self.args.deserialize()
+    }
+
+    /// Deserializes the call's arguments into a generic [`Value`].
+    pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
+        self.args.deserialize_as_value()
     }
 
     /// Converts this call into its promise object.
