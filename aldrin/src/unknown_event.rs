@@ -36,7 +36,7 @@ impl UnknownEvent {
 
     /// Deserializes the events's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
-        self.deserialize()
+        self.inner.deserialize_as_value()
     }
 }
 

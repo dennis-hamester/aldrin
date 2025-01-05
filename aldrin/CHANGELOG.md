@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add variant `Error::InvalidEvent` and inner type `InvalidEvent`.
 - Add `Call` as a high-level alternative to `low_level::Call`.
 - Add `low_level::Call::deserialize_as_value()` to deserialize the arguments into a generic `Value`.
+- Add `low_level::Event::deserialize_as_value()` to deserialize the arguments into a generic
+  `Value`.
 
 ### Changed
 
