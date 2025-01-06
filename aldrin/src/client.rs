@@ -391,16 +391,20 @@ where
             Message::StartBusListenerReply(msg) => self.msg_start_bus_listener_reply(msg)?,
             Message::StopBusListenerReply(msg) => self.msg_stop_bus_listener_reply(msg)?,
             Message::EmitBusEvent(msg) => self.msg_emit_bus_event(msg)?,
+
             Message::BusListenerCurrentFinished(msg) => {
                 self.msg_bus_listener_current_finished(msg)?
             }
+
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
             Message::QueryIntrospection(msg) => self.msg_query_introspection(msg).await?,
             Message::QueryIntrospectionReply(msg) => self.msg_query_introspection_reply(msg)?,
             Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg).await?,
+
             Message::QueryServiceVersionReply(msg) => {
                 self.msg_query_service_version_reply(msg).await?
             }
+
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg)?,
             Message::EmitEvent(msg) => self.msg_emit_event(msg),
             Message::ServiceDestroyed(msg) => self.msg_service_destroyed(msg),
@@ -408,6 +412,7 @@ where
             Message::SubscribeAllEvents(msg) => self.msg_subscribe_all_events(msg)?,
             Message::SubscribeAllEventsReply(msg) => self.msg_subscribe_all_events_reply(msg)?,
             Message::UnsubscribeAllEvents(msg) => self.msg_unsubscribe_all_events(msg)?,
+
             Message::UnsubscribeAllEventsReply(msg) => {
                 self.msg_unsubscribe_all_events_reply(msg)?
             }
@@ -441,7 +446,7 @@ where
                 return Err(RunError::UnexpectedMessageReceived(msg))
             }
 
-            Message::Shutdown(Shutdown) => unreachable!(), // Handled in run.
+            Message::Shutdown(Shutdown) => unreachable!(), // Handled in run().
         }
 
         Ok(())
