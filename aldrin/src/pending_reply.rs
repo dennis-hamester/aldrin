@@ -9,12 +9,12 @@ use std::task::{Context, Poll};
 
 /// Future to await the result of a call.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct Reply<T, E> {
+pub struct PendingReply<T, E> {
     inner: LlPendingReply,
     phantom: PhantomData<fn() -> (T, E)>,
 }
 
-impl<T, E> Reply<T, E> {
+impl<T, E> PendingReply<T, E> {
     pub(crate) fn new(inner: LlPendingReply) -> Self {
         Self {
             inner,
@@ -23,8 +23,8 @@ impl<T, E> Reply<T, E> {
     }
 
     /// Casts the reply to resolve to different types.
-    pub fn cast<T2, E2>(self) -> Reply<T2, E2> {
-        Reply::new(self.inner)
+    pub fn cast<T2, E2>(self) -> PendingReply<T2, E2> {
+        PendingReply::new(self.inner)
     }
 
     /// Extracts the inner low-level [`PendingReply`](LlPendingReply).
@@ -34,13 +34,13 @@ impl<T, E> Reply<T, E> {
 
     /// Aborts the call and signals that there is no longer interest in the reply.
     ///
-    /// This function is equivalent to dropping the `Reply`.
+    /// This function is equivalent to dropping the `PendingReply`.
     pub fn abort(self) {
         self.inner.abort();
     }
 }
 
-impl<T: Deserialize, E: Deserialize> Future for Reply<T, E> {
+impl<T: Deserialize, E: Deserialize> Future for PendingReply<T, E> {
     type Output = Result<Result<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
@@ -61,8 +61,10 @@ impl<T: Deserialize, E: Deserialize> Future for Reply<T, E> {
     }
 }
 
-impl<T, E> fmt::Debug for Reply<T, E> {
+impl<T, E> fmt::Debug for PendingReply<T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Reply").field("inner", &self.inner).finish()
+        f.debug_struct("PendingReply")
+            .field("inner", &self.inner)
+            .finish()
     }
 }

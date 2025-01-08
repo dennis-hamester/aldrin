@@ -1,7 +1,7 @@
 use crate::core::message::CallFunctionResult;
 use crate::core::SerializedValue;
 use crate::error::Error;
-use crate::reply::Reply as HlReply;
+use crate::pending_reply::PendingReply as HlPendingReply;
 use futures_channel::oneshot::Receiver;
 use std::future::Future;
 use std::pin::Pin;
@@ -20,9 +20,9 @@ impl PendingReply {
         Self { recv, function }
     }
 
-    /// Cast the reply to a typed [`Reply<T, E>`](HlReply).
-    pub fn cast<T, E>(self) -> crate::reply::Reply<T, E> {
-        HlReply::new(self)
+    /// Cast the reply to a typed [`PendingReply<T, E>`](HlPendingReply).
+    pub fn cast<T, E>(self) -> crate::pending_reply::PendingReply<T, E> {
+        HlPendingReply::new(self)
     }
 
     /// Aborts the call and signals that there is no longer interest in the reply.

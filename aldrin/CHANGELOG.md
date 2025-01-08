@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Rename `low_level::Reply` to `PendingReply`.
+- Rename the types `Reply` and `low_level::Reply` to `PendingReply`.
 
 ## [0.11.0] - 2025-01-07
 

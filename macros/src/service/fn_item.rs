@@ -48,11 +48,11 @@ impl FnItem {
         };
 
         quote! {
-            pub fn #ident(&self #args) -> #krate::Reply<#ok, #err> {
+            pub fn #ident(&self #args) -> #krate::PendingReply<#ok, #err> {
                 self.inner.call(#id, #val).cast()
             }
 
-            pub fn #ident_ref(&self #args_ref) -> #krate::Reply<#ok, #err> {
+            pub fn #ident_ref(&self #args_ref) -> #krate::PendingReply<#ok, #err> {
                 self.inner.call(#id, #val).cast()
             }
         }
