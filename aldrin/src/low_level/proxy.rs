@@ -1,4 +1,4 @@
-use super::{Event, Reply};
+use super::{Event, PendingReply};
 #[cfg(feature = "introspection")]
 use crate::core::introspection::Introspection;
 use crate::core::{Serialize, ServiceId, ServiceInfo, TypeId};
@@ -78,7 +78,7 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call<Args>(&self, function: u32, args: &Args) -> Reply
+    pub fn call<Args>(&self, function: u32, args: &Args) -> PendingReply
     where
         Args: Serialize + ?Sized,
     {

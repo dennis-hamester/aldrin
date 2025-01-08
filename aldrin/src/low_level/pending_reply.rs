@@ -10,12 +10,12 @@ use std::task::{Context, Poll};
 /// Future to await the result of a call.
 #[derive(Debug)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct Reply {
+pub struct PendingReply {
     recv: Receiver<Result<CallFunctionResult, Error>>,
     function: u32,
 }
 
-impl Reply {
+impl PendingReply {
     pub(crate) fn new(recv: Receiver<Result<CallFunctionResult, Error>>, function: u32) -> Self {
         Self { recv, function }
     }
@@ -27,11 +27,11 @@ impl Reply {
 
     /// Aborts the call and signals that there is no longer interest in the reply.
     ///
-    /// This function is equivalent to dropping the `Reply`.
+    /// This function is equivalent to dropping the `PendingReply`.
     pub fn abort(self) {}
 }
 
-impl Future for Reply {
+impl Future for PendingReply {
     type Output = Result<Result<SerializedValue, SerializedValue>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {

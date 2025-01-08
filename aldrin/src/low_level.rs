@@ -5,9 +5,9 @@
 mod call;
 mod channel;
 mod event;
+mod pending_reply;
 mod promise;
 mod proxy;
-mod reply;
 mod service;
 mod service_info;
 #[cfg(test)]
@@ -22,8 +22,8 @@ pub use channel::{
     UnboundSender, UnclaimedReceiver, UnclaimedSender,
 };
 pub use event::Event;
+pub use pending_reply::PendingReply;
 pub use promise::Promise;
 pub use proxy::Proxy;
-pub use reply::Reply;
 pub use service::Service;
 pub use service_info::ServiceInfo;

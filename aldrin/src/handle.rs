@@ -20,7 +20,7 @@ use crate::discoverer::{Discoverer, DiscovererBuilder};
 use crate::error::Error;
 use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
 use crate::low_level::{
-    self, PendingReceiver, PendingSender, Proxy, ProxyId, Reply, Service, ServiceInfo,
+    self, PendingReceiver, PendingReply, PendingSender, Proxy, ProxyId, Service, ServiceInfo,
     UnclaimedReceiver, UnclaimedSender,
 };
 use crate::object::Object;
@@ -216,7 +216,7 @@ impl Handle {
             }));
     }
 
-    pub(crate) fn call<Args>(&self, id: ServiceId, function: u32, args: &Args) -> Reply
+    pub(crate) fn call<Args>(&self, id: ServiceId, function: u32, args: &Args) -> PendingReply
     where
         Args: Serialize + ?Sized,
     {
@@ -239,7 +239,7 @@ impl Handle {
             }
         }
 
-        Reply::new(recv, function)
+        PendingReply::new(recv, function)
     }
 
     pub(crate) fn function_call_reply(

@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The client now records the timestamp when an event is received. This is available via the new
   functions `Event::timestamp()` and `low_level::Event::timestamp()`.
 
+### Changed
+
+- Rename `low_level::Reply` to `PendingReply`.
+
 ## [0.11.0] - 2025-01-07
 
 ### Added
