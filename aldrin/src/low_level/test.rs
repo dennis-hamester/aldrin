@@ -117,7 +117,7 @@ async fn call_ok() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().ok(&()).unwrap();
 
-    let reply = reply.await.unwrap();
+    let reply = reply.await.unwrap().into_args();
     assert_eq!(reply.unwrap().deserialize(), Ok(()));
 }
 
@@ -140,7 +140,7 @@ async fn call_done() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().done().unwrap();
 
-    let reply = reply.await.unwrap();
+    let reply = reply.await.unwrap().into_args();
     assert_eq!(reply.unwrap().deserialize(), Ok(()));
 }
 
@@ -163,7 +163,7 @@ async fn call_err() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().err(&()).unwrap();
 
-    let reply = reply.await.unwrap();
+    let reply = reply.await.unwrap().into_args();
     assert_eq!(reply.unwrap_err().deserialize(), Ok(()));
 }
 
@@ -186,7 +186,7 @@ async fn call_abort_by_callee() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().abort().unwrap();
 
-    assert_eq!(reply.await, Err(Error::CallAborted));
+    assert_eq!(reply.await.unwrap_err(), Error::CallAborted);
 }
 
 #[tokio::test]
@@ -232,7 +232,7 @@ async fn call_invalid_function() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().invalid_function().unwrap();
 
-    assert_eq!(reply.await, Err(Error::invalid_function(0)));
+    assert_eq!(reply.await.unwrap_err(), Error::invalid_function(0));
 }
 
 #[tokio::test]
@@ -254,7 +254,7 @@ async fn call_invalid_args() {
     assert_eq!(call.deserialize(), Ok(()));
     call.into_promise().invalid_args().unwrap();
 
-    assert_eq!(reply.await, Err(Error::invalid_arguments(0, None)));
+    assert_eq!(reply.await.unwrap_err(), Error::invalid_arguments(0, None));
 }
 
 #[tokio::test]

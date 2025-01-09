@@ -59,11 +59,11 @@ async fn auto_reply_with_invalid_args() {
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = proxy.call(1, &0).await;
-    assert_eq!(res, Err(Error::invalid_arguments(1, None)));
+    let err = proxy.call(1, &0).await.unwrap_err();
+    assert_eq!(err, Error::invalid_arguments(1, None));
 
-    let res = proxy.call(2, &()).await;
-    assert_eq!(res, Err(Error::invalid_arguments(2, None)));
+    let err = proxy.call(2, &()).await.unwrap_err();
+    assert_eq!(err, Error::invalid_arguments(2, None));
 }
 
 #[tokio::test]
@@ -76,8 +76,8 @@ async fn auto_reply_with_invalid_function() {
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let res = proxy.call(3, &()).await;
-    assert_eq!(res, Err(Error::invalid_function(3)));
+    let err = proxy.call(3, &()).await.unwrap_err();
+    assert_eq!(err, Error::invalid_function(3));
 }
 
 #[test]

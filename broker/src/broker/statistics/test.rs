@@ -192,14 +192,14 @@ async fn function_calls() {
 
     // Reply 1 function call.
     call1.into_promise().ok(&()).unwrap();
-    reply1.await.unwrap().unwrap();
+    reply1.await.unwrap().into_args().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
 
     // Reply 1 function call.
     call2.into_promise().ok(&()).unwrap();
-    reply2.await.unwrap().unwrap();
+    reply2.await.unwrap().into_args().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);

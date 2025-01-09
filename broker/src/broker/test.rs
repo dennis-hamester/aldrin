@@ -424,7 +424,7 @@ async fn calls_from_multiple_clients() {
         .into_promise()
         .done()
         .unwrap();
-    reply.await.unwrap().unwrap();
+    reply.await.unwrap().into_args().unwrap();
 
     let mut client3 = broker.add_client().await;
     let proxy = client3.create_proxy(svc.id()).await.unwrap();
@@ -435,7 +435,7 @@ async fn calls_from_multiple_clients() {
         .into_promise()
         .done()
         .unwrap();
-    reply.await.unwrap().unwrap();
+    reply.await.unwrap().into_args().unwrap();
 
     client1.join().await;
     client2.join().await;

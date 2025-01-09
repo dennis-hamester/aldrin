@@ -1,5 +1,5 @@
+use super::Reply;
 use crate::core::message::CallFunctionResult;
-use crate::core::SerializedValue;
 use crate::error::Error;
 use crate::pending_reply::PendingReply as HlPendingReply;
 use futures_channel::oneshot::Receiver;
@@ -32,12 +32,17 @@ impl PendingReply {
 }
 
 impl Future for PendingReply {
-    type Output = Result<Result<SerializedValue, SerializedValue>, Error>;
+    type Output = Result<Reply, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match Pin::new(&mut self.recv).poll(cx) {
-            Poll::Ready(Ok(Ok(CallFunctionResult::Ok(t)))) => Poll::Ready(Ok(Ok(t))),
-            Poll::Ready(Ok(Ok(CallFunctionResult::Err(e)))) => Poll::Ready(Ok(Err(e))),
+            Poll::Ready(Ok(Ok(CallFunctionResult::Ok(t)))) => {
+                Poll::Ready(Ok(Reply::new(self.function, Ok(t))))
+            }
+
+            Poll::Ready(Ok(Ok(CallFunctionResult::Err(e)))) => {
+                Poll::Ready(Ok(Reply::new(self.function, Err(e))))
+            }
 
             Poll::Ready(Ok(Ok(CallFunctionResult::Aborted))) => {
                 Poll::Ready(Err(Error::CallAborted))

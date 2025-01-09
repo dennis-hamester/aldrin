@@ -8,6 +8,10 @@ pub struct Reply {
 }
 
 impl Reply {
+    pub(crate) fn new(id: u32, args: Result<SerializedValue, SerializedValue>) -> Self {
+        Self { id, args }
+    }
+
     /// Returns the reply's function id.
     pub fn id(&self) -> u32 {
         self.id

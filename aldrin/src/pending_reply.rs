@@ -45,14 +45,16 @@ impl<T: Deserialize, E: Deserialize> Future for PendingReply<T, E> {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match Pin::new(&mut self.inner).poll(cx) {
-            Poll::Ready(Ok(Ok(t))) => match t.deserialize() {
-                Ok(t) => Poll::Ready(Ok(Ok(t))),
-                Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
-            },
+            Poll::Ready(Ok(reply)) => match reply.into_args() {
+                Ok(t) => match t.deserialize() {
+                    Ok(t) => Poll::Ready(Ok(Ok(t))),
+                    Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
+                },
 
-            Poll::Ready(Ok(Err(e))) => match e.deserialize() {
-                Ok(e) => Poll::Ready(Ok(Err(e))),
-                Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
+                Err(e) => match e.deserialize() {
+                    Ok(e) => Poll::Ready(Ok(Err(e))),
+                    Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
+                },
             },
 
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
