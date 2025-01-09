@@ -1,6 +1,7 @@
 use crate::core::Deserialize;
 use crate::error::Error;
 use crate::low_level::PendingReply as LlPendingReply;
+use crate::reply::Reply;
 use std::fmt;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -41,20 +42,13 @@ impl<T, E> PendingReply<T, E> {
 }
 
 impl<T: Deserialize, E: Deserialize> Future for PendingReply<T, E> {
-    type Output = Result<Result<T, E>, Error>;
+    type Output = Result<Reply<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match Pin::new(&mut self.inner).poll(cx) {
-            Poll::Ready(Ok(reply)) => match reply.into_args() {
-                Ok(t) => match t.deserialize() {
-                    Ok(t) => Poll::Ready(Ok(Ok(t))),
-                    Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
-                },
-
-                Err(e) => match e.deserialize() {
-                    Ok(e) => Poll::Ready(Ok(Err(e))),
-                    Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
-                },
+            Poll::Ready(Ok(reply)) => match reply.deserialize_and_cast() {
+                Ok(reply) => Poll::Ready(Ok(reply)),
+                Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
             },
 
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),

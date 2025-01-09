@@ -254,7 +254,8 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
             name: name.into_owned(),
             size,
         })
-        .await??;
+        .await?
+        .into_args()?;
 
     // In order to use the sender, it must be bound to a client and claimed. The `claim()` function
     // on `UnboundSender` will perform both steps and return a `Sender<Chunk>`. This will also

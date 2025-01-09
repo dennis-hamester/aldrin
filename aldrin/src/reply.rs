@@ -6,6 +6,13 @@ pub struct Reply<T, E> {
 }
 
 impl<T, E> Reply<T, E> {
+    pub(crate) fn new(id: u32, args: Result<T, E>) -> Self {
+        Self {
+            id,
+            args: Some(args),
+        }
+    }
+
     /// Returns the reply's function id.
     pub fn id(&self) -> u32 {
         self.id

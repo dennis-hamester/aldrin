@@ -395,10 +395,10 @@ async fn add(args: Add, bus: &Handle) -> Result<()> {
             return Err(anyhow!("server doesn't support groups"));
         }
 
-        bookmarks.add(&bookmark).await??;
+        bookmarks.add(&bookmark).await?.into_args()?;
         println!("Bookmark `{}` added to the group `{group}`.", bookmark.name);
     } else {
-        bookmarks.add(&bookmark).await??;
+        bookmarks.add(&bookmark).await?.into_args()?;
 
         println!(
             "Bookmark `{}` added to the unspecified group.",
@@ -424,7 +424,8 @@ async fn get(args: Get, bus: &Handle) -> Result<()> {
                 group: Some(group.clone()),
                 unknown_fields: UnknownFields::new(),
             })
-            .await??;
+            .await?
+            .into_args()?;
 
         if list.is_empty() {
             println!("No bookmarks found in the group `{group}`.");
@@ -434,7 +435,7 @@ async fn get(args: Get, bus: &Handle) -> Result<()> {
 
         list
     } else {
-        let list = bookmarks.get().await??;
+        let list = bookmarks.get().await?.into_args()?;
 
         if list.is_empty() {
             println!("No bookmarks found in the unspecified group.");
@@ -461,7 +462,7 @@ async fn get_groups(args: GetGroups, bus: &Handle) -> Result<()> {
         return Err(anyhow!("server doesn't support groups"));
     }
 
-    let groups = bookmarks.get_groups().await??;
+    let groups = bookmarks.get_groups().await?.into_args()?;
 
     if groups.is_empty() {
         println!("No groups found.");
@@ -571,11 +572,12 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
                 group: Some(group.clone()),
                 unknown_fields: UnknownFields::new(),
             })
-            .await??;
+            .await?
+            .into_args()?;
 
         println!("Bookmark `{}` removed from the group `{group}`.", args.name);
     } else {
-        bookmarks.remove(&args.name).await??;
+        bookmarks.remove(&args.name).await?.into_args()?;
 
         println!(
             "Bookmark `{}` removed from the unspecified group.",

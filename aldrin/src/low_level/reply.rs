@@ -1,4 +1,5 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use crate::reply::Reply as HlReply;
 
 /// Reply of a call.
 #[derive(Debug, Clone)]
@@ -43,5 +44,14 @@ impl Reply {
     /// Deserializes the arguments of the reply as generic [`Value`s](Value).
     pub fn deserialize_as_value(&self) -> Result<Result<Value, Value>, DeserializeError> {
         self.deserialize()
+    }
+
+    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](HlReply).
+    pub fn deserialize_and_cast<T, E>(&self) -> Result<crate::reply::Reply<T, E>, DeserializeError>
+    where
+        T: Deserialize,
+        E: Deserialize,
+    {
+        self.deserialize().map(|args| HlReply::new(self.id, args))
     }
 }
