@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `low_level::Event::deserialize_and_cast()`.
 - The client now records the timestamp when an event is received. This is available via the new
   functions `Event::timestamp()` and `low_level::Event::timestamp()`.
+- Add type `low_level::Reply` to hold the result of a call.
 
 ### Changed
 
