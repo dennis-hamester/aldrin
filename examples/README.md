@@ -13,3 +13,4 @@ All examples listed in the [client](#client) section below require a broker to c
 - [introspect](introspect/): Queries introspection of services and types on a bus.
 - [bookmarks](bookmarks/): Shows how schemata can be evolved while maintaining backwards
   compatibility.
+- [media player](media-player/): Uses properties to keep track of a media player's state.

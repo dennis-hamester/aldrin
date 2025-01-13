@@ -11,6 +11,7 @@ members = [
     "examples/downloader",
     "examples/echo",
     "examples/introspect",
+    "examples/media-player",
     "gen",
     "macros",
     "parser",

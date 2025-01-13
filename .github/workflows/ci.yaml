@@ -86,6 +86,11 @@ jobs:
     with:
       component: example-introspect
 
+  ci-example-media-player:
+    uses: ./.github/workflows/check-component.yaml
+    with:
+      component: example-media-player
+
   doc:
     name: Check docs
     runs-on: ubuntu-latest
