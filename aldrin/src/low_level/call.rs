@@ -53,6 +53,12 @@ impl Call {
         &self.args
     }
 
+    /// Takes out the call's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> SerializedValue {
+        self.args.take()
+    }
+
     /// Deserializes the call's arguments.
     pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
         self.args.deserialize()
