@@ -20,6 +20,9 @@ pub struct SerializedValue {
 
 impl SerializedValue {
     /// Cheaply creates an empty `SerializedValue`.
+    ///
+    /// Note that an empty `SerializedValue` will panic when derefencing it to a
+    /// [`SerializedValueSlice`] and when trying to deserialize it.
     pub fn empty() -> Self {
         Self {
             buf: BytesMut::new(),
@@ -44,6 +47,12 @@ impl SerializedValue {
 
     pub(crate) fn into_bytes_mut(self) -> BytesMut {
         self.buf
+    }
+}
+
+impl Default for SerializedValue {
+    fn default() -> Self {
+        Self::empty()
     }
 }
 
