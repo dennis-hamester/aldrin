@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add type `Property` to help keeping track of remote values.
 - Add `low_level::PendingReply::id()`.
 - Add `low_level::Call::take_args()`.
+- Add `low_level::Event::take_args()`.
 
 ### Changed
 

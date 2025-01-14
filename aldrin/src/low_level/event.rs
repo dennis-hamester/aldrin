@@ -35,6 +35,12 @@ impl Event {
         &self.args
     }
 
+    /// Takes out the event's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> SerializedValue {
+        self.args.take()
+    }
+
     /// Returns the event's arguments.
     pub fn into_args(self) -> SerializedValue {
         self.args
