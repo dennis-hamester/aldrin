@@ -41,6 +41,15 @@ impl Reply {
         }
     }
 
+    /// Takes out the reply's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> Result<SerializedValue, SerializedValue> {
+        match self.args {
+            Ok(ref mut args) => Ok(args.take()),
+            Err(ref mut args) => Err(args.take()),
+        }
+    }
+
     /// Returns the arguments of the reply.
     pub fn into_args(self) -> Result<SerializedValue, SerializedValue> {
         self.args
