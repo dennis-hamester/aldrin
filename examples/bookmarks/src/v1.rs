@@ -9,7 +9,6 @@ use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
 use tokio::signal;
-use uuid::Uuid;
 
 #[derive(Parser)]
 pub enum Args {
@@ -66,7 +65,7 @@ pub struct ServerArg {
     ///
     /// If this is not specified, then the first server is used that is found.
     #[clap(short, long)]
-    server: Option<Uuid>,
+    server: Option<ObjectUuid>,
 }
 
 pub async fn run(args: Args, bus: &Handle) -> Result<()> {
@@ -217,7 +216,7 @@ async fn add(args: Add, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-async fn get(server: Option<Uuid>, bus: &Handle) -> Result<()> {
+async fn get(server: Option<ObjectUuid>, bus: &Handle) -> Result<()> {
     let bookmarks = get_bookmarks(server, bus).await?;
     let id = bookmarks.id().object_id.uuid;
     println!("Using server {id}.");
@@ -296,9 +295,9 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-async fn get_bookmarks(id: Option<Uuid>, bus: &Handle) -> Result<BookmarksProxy> {
+async fn get_bookmarks(id: Option<ObjectUuid>, bus: &Handle) -> Result<BookmarksProxy> {
     let (_, [id]) = bus
-        .find_object(id.map(ObjectUuid), &[Bookmarks::UUID])
+        .find_object(id, &[Bookmarks::UUID])
         .await?
         .ok_or_else(|| anyhow!("server not found"))?;
 

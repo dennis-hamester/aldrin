@@ -415,7 +415,6 @@ dependencies = [
  "anyhow",
  "clap",
  "tokio",
- "uuid",
 ]
 
 [[package]]
