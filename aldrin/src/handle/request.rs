@@ -149,7 +149,7 @@ pub(crate) struct SendItemRequest {
     pub value: SerializedValue,
 }
 
-pub(crate) type SyncClientRequest = oneshot::Sender<()>;
+pub(crate) type SyncClientRequest = oneshot::Sender<Instant>;
 
 pub(crate) type SyncBrokerRequest = oneshot::Sender<()>;
 

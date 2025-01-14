@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename the types `Reply` and `low_level::Reply` to `PendingReply`.
 - `PendingReply` and `low_level::PendingReply` now resolve to `Reply` and `low_level::Reply` instead
   of directly to the call's result.
+- `Handle::sync_client()` now returns the timestamp when the client has processed the request.
 
 ## [0.11.0] - 2025-01-07
 

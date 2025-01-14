@@ -1520,7 +1520,7 @@ where
     }
 
     fn req_sync_client(&self, req: SyncClientRequest) {
-        let _ = req.send(());
+        let _ = req.send(Instant::now());
     }
 
     async fn req_sync_broker(&mut self, req: SyncBrokerRequest) -> Result<(), RunError<T::Error>> {

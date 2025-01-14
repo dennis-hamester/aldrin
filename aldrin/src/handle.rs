@@ -42,6 +42,7 @@ use std::mem::MaybeUninit;
 use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
 /// Handle to a client.
 ///
@@ -394,6 +395,8 @@ impl Handle {
 
     /// Synchronizes with the client.
     ///
+    /// Returns the timestamp when the [`Client`](crate::Client) has processed the request.
+    ///
     /// This function ensures that all previous requests to the client have been processed. There
     /// are some occasions in which requests are sent outside of an async context, e.g. when
     /// dropping values such as [`Object`]. By synchronizing with the client, it is possible to
@@ -422,7 +425,7 @@ impl Handle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn sync_client(&self) -> Result<(), Error> {
+    pub async fn sync_client(&self) -> Result<Instant, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SyncClient(reply))
