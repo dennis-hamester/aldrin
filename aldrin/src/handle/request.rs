@@ -151,7 +151,7 @@ pub(crate) struct SendItemRequest {
 
 pub(crate) type SyncClientRequest = oneshot::Sender<Instant>;
 
-pub(crate) type SyncBrokerRequest = oneshot::Sender<()>;
+pub(crate) type SyncBrokerRequest = oneshot::Sender<Instant>;
 
 pub(crate) type CreateBusListenerRequest = oneshot::Sender<BusListener>;
 

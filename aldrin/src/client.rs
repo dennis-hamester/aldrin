@@ -803,12 +803,12 @@ where
     }
 
     fn msg_sync_reply(&mut self, msg: SyncReply) -> Result<(), RunError<T::Error>> {
-        let Some(req) = self.sync.remove(msg.serial) else {
-            return Err(RunError::UnexpectedMessageReceived(msg.into()));
-        };
-
-        let _ = req.send(());
-        Ok(())
+        if let Some(req) = self.sync.remove(msg.serial) {
+            let _ = req.send(Instant::now());
+            Ok(())
+        } else {
+            Err(RunError::UnexpectedMessageReceived(msg.into()))
+        }
     }
 
     fn msg_create_bus_listener_reply(

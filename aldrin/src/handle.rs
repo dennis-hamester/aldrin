@@ -436,6 +436,8 @@ impl Handle {
 
     /// Synchronizes with the broker.
     ///
+    /// Returns the timestamp when the [`Client`](crate::Client) has received the broker's reply.
+    ///
     /// Certain requests such as emitting an event or sending an item on a channel don't synchronize
     /// with the broker in the same way as e.g. creating an object does. This function can be used
     /// to ensure that such a request has been processed by the broker.
@@ -463,7 +465,7 @@ impl Handle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn sync_broker(&self) -> Result<(), Error> {
+    pub async fn sync_broker(&self) -> Result<Instant, Error> {
         let (reply, recv) = oneshot::channel();
         self.send
             .unbounded_send(HandleRequest::SyncBroker(reply))
