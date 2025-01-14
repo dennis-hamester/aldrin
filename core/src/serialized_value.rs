@@ -11,6 +11,7 @@ use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use bytes::BytesMut;
 use std::borrow::Borrow;
 use std::fmt;
+use std::mem;
 use std::ops::Deref;
 
 #[derive(Clone, Eq)]
@@ -35,6 +36,10 @@ impl SerializedValue {
         let serializer = Serializer::new(&mut buf, 0)?;
         value.serialize(serializer)?;
         Ok(Self { buf })
+    }
+
+    pub fn take(&mut self) -> Self {
+        mem::take(self)
     }
 
     pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {

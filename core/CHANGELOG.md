@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Implement `Default` for `SerializedValue`.
+- Add `SerializedValue::take()`.
 
 ## [0.11.0] - 2025-01-07
 
