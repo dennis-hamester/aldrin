@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The client now records the timestamp when a call is received. This is available via the new
   functions `Call::timestamp()` and `low_level::Call::timestamp()`.
 - Add `Call::into_args_and_promise()`.
+- Add type `Event`, which is a high-level equivalent to `low_level::Event`.
+- Add `low_level::Event::deserialize_and_cast()`.
 
 ## [0.11.0] - 2025-01-07
 

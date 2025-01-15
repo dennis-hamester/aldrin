@@ -1,4 +1,5 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use crate::event::Event as HlEvent;
 use crate::unknown_event::UnknownEvent;
 
 /// Event emitted by a service.
@@ -36,6 +37,16 @@ impl Event {
     /// Deserializes the event's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
         self.args.deserialize_as_value()
+    }
+
+    /// Deserializes the arguments and casts the event to a high-level [`Event`](HlEvent).
+    pub fn deserialize_and_cast<T>(&self) -> Result<crate::event::Event<T>, DeserializeError>
+    where
+        T: Deserialize,
+    {
+        self.args
+            .deserialize()
+            .map(|args| HlEvent::new(self.id, args))
     }
 
     /// Converts this event into an [`UnknownEvent`].
