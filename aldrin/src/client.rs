@@ -59,6 +59,7 @@ use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
 use std::collections::HashMap;
 use std::mem;
+use std::time::Instant;
 
 const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_18;
 
@@ -541,6 +542,7 @@ where
         let req = RawCall {
             serial: msg.serial,
             function: msg.function,
+            timestamp: Instant::now(),
             args: msg.value,
             aborted: abort_recv,
         };

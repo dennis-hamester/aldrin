@@ -12,6 +12,7 @@ use futures_core::stream::{FusedStream, Stream};
 use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
 /// Owned service.
 #[derive(Debug)]
@@ -86,6 +87,7 @@ impl Service {
                 call.aborted,
                 call.serial,
                 call.function,
+                call.timestamp,
                 call.args,
             ))),
 
@@ -132,6 +134,7 @@ impl FusedStream for Service {
 pub(crate) struct RawCall {
     pub serial: u32,
     pub function: u32,
+    pub timestamp: Instant,
     pub args: SerializedValue,
     pub aborted: Receiver<()>,
 }

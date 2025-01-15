@@ -5,11 +5,13 @@ use crate::error::Error;
 use crate::handle::Handle;
 use crate::unknown_call::UnknownCall;
 use futures_channel::oneshot::Receiver;
+use std::time::Instant;
 
 /// Pending call.
 #[derive(Debug)]
 pub struct Call {
     id: u32,
+    timestamp: Instant,
     args: SerializedValue,
     promise: Promise,
 }
@@ -20,10 +22,12 @@ impl Call {
         aborted: Receiver<()>,
         serial: u32,
         id: u32,
+        timestamp: Instant,
         args: SerializedValue,
     ) -> Self {
         Self {
             id,
+            timestamp,
             args,
             promise: Promise::new(client, aborted, serial),
         }
@@ -37,6 +41,11 @@ impl Call {
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the timestamp when the call was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Returns a slice to the call's serialized arguments.
@@ -64,7 +73,7 @@ impl Call {
         (self.args, self.promise)
     }
 
-    /// Deserializes arguments and casts the call to a high-level [`Call`](crate::call::Call).
+    /// Deserializes arguments and casts the call to a high-level [`Call`](HlCall).
     ///
     /// If deserialization fails, then the call will be replied using [`Promise::invalid_args`] and
     /// [`Error::InvalidArguments`] will be returned.
@@ -75,7 +84,12 @@ impl Call {
         E: ?Sized,
     {
         match self.args.deserialize() {
-            Ok(args) => Ok(HlCall::new(self.id, args, self.promise.cast())),
+            Ok(args) => Ok(HlCall::new(
+                self.id,
+                self.timestamp,
+                args,
+                self.promise.cast(),
+            )),
 
             Err(e) => {
                 let _ = self.promise.invalid_args();
