@@ -24,7 +24,7 @@ impl EvFallbackItem {
             _ => {
                 break ::std::task::Poll::Ready(::std::option::Option::Some(
                     ::std::result::Result::Ok(#event::#variant(ev.into_unknown_event())),
-                ))
+                ));
             }
         }
     }

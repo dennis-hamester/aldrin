@@ -173,12 +173,12 @@ impl Body {
         }
     }
 
-    pub fn gen_event(&self) -> TokenStream {
+    pub fn gen_event(&self, options: &Options) -> TokenStream {
         let mut variants = self
             .items
             .iter()
             .filter_map(ServiceItem::as_event)
-            .map(EvItem::gen_variant)
+            .map(|ev| ev.gen_variant(options))
             .collect::<TokenStream>();
 
         if let Some(fallback) = self.event_fallback() {

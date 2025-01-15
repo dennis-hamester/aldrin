@@ -154,7 +154,7 @@ impl Service {
 
     fn gen_event(&self) -> TokenStream {
         let vis = &self.vis;
-        let vars = self.body.gen_event();
+        let vars = self.body.gen_event(&self.options);
         let event = &self.event;
 
         quote! {

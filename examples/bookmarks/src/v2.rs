@@ -493,12 +493,12 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
 
     while let Some(event) = bookmarks.next_event().await {
         match event {
-            Ok(BookmarksEvent::Added(bookmark)) | Ok(BookmarksEvent::AddedV2(bookmark)) => {
-                bookmark_added(bookmark)
+            Ok(BookmarksEvent::Added(ev)) | Ok(BookmarksEvent::AddedV2(ev)) => {
+                bookmark_added(ev.into_args())
             }
 
-            Ok(BookmarksEvent::Removed(bookmark)) | Ok(BookmarksEvent::RemovedV2(bookmark)) => {
-                bookmark_removed(bookmark)
+            Ok(BookmarksEvent::Removed(ev)) | Ok(BookmarksEvent::RemovedV2(ev)) => {
+                bookmark_removed(ev.into_args())
             }
 
             Ok(BookmarksEvent::UnknownEvent(event)) => unknown_event(event),

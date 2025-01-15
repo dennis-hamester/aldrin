@@ -56,56 +56,36 @@ impl EvItem {
         let id = &self.id;
         let variant = &self.variant;
 
-        let ok = if self.ty.is_some() {
-            quote! {
-                ::std::result::Result::Ok(val) => {
-                    break ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(
-                            ::std::result::Result::Ok(#event::#variant(val)),
-                        ),
-                    );
-                }
-            }
-        } else {
-            quote! {
-                ::std::result::Result::Ok(()) => {
-                    break ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(
-                            ::std::result::Result::Ok(#event::#variant),
-                        ),
-                    );
-                }
-            }
-        };
-
         quote! {
-            #id => match ev.deserialize() {
-                #ok
+            #id => {
+                break match ev.deserialize_and_cast() {
+                    ::std::result::Result::Ok(ev) => ::std::task::Poll::Ready(
+                        ::std::option::Option::Some(::std::result::Result::Ok(#event::#variant(ev))),
+                    ),
 
-                ::std::result::Result::Err(e) => {
-                    break ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(
-                            ::std::result::Result::Err(
-                                #krate::Error::invalid_arguments(
-                                    ev.id(),
-                                    ::std::option::Option::Some(e),
-                                ),
-                            ),
-                        ),
-                    );
-                }
+                    ::std::result::Result::Err(e) => {
+                        ::std::task::Poll::Ready(::std::option::Option::Some(
+                            ::std::result::Result::Err(#krate::Error::invalid_arguments(
+                                ev.id(),
+                                ::std::option::Option::Some(e),
+                            )),
+                        ))
+                    }
+                };
             }
         }
     }
 
-    pub fn gen_variant(&self) -> TokenStream {
+    pub fn gen_variant(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
         let variant = &self.variant;
 
-        if let Some(ref ty) = self.ty {
-            quote! { #variant(#ty), }
-        } else {
-            quote! { #variant, }
-        }
+        let ty = match self.ty {
+            Some(ref ty) => quote! { #ty },
+            None => quote! { () },
+        };
+
+        quote! { #variant(#krate::Event<#ty>), }
     }
 
     pub fn gen_emitters(&self, options: &Options) -> TokenStream {

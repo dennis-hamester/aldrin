@@ -249,9 +249,9 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
 
     while let Some(event) = bookmarks.next_event().await {
         match event {
-            Ok(BookmarksEvent::Added(bookmark)) => bookmark_added(bookmark),
-            Ok(BookmarksEvent::Removed(bookmark)) => bookmark_removed(bookmark),
-            Ok(BookmarksEvent::UnknownEvent(event)) => unknown_event(event),
+            Ok(BookmarksEvent::Added(ev)) => bookmark_added(ev.into_args()),
+            Ok(BookmarksEvent::Removed(ev)) => bookmark_removed(ev.into_args()),
+            Ok(BookmarksEvent::UnknownEvent(ev)) => unknown_event(ev),
             Err(e) => invalid_event(e),
         }
     }

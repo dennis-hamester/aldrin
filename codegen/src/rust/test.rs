@@ -152,13 +152,13 @@ async fn unsubscribe_all() {
     svc.ev2().unwrap();
 
     assert!(matches!(
-        proxy.next_event().await,
-        Some(Ok(SubscribeAllEvent::Ev1))
+        proxy.next_event().await.unwrap().unwrap(),
+        SubscribeAllEvent::Ev1(_)
     ));
 
     assert!(matches!(
-        proxy.next_event().await,
-        Some(Ok(SubscribeAllEvent::Ev2))
+        proxy.next_event().await.unwrap().unwrap(),
+        SubscribeAllEvent::Ev2(_)
     ));
 
     proxy.unsubscribe_all().await.unwrap();
