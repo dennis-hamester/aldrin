@@ -3,7 +3,6 @@
 
 use aldrin_core::message::Packetizer;
 use libfuzzer_sys::fuzz_target;
-use std::mem::MaybeUninit;
 
 fuzz_target!(|data: Vec<Vec<u8>>| {
     let mut packetizer = Packetizer::new();
@@ -16,10 +15,7 @@ fuzz_target!(|data: Vec<Vec<u8>>| {
             let dst = packetizer.spare_capacity_mut();
             let to_write = rem.min(dst.len());
 
-            MaybeUninit::copy_from_slice(
-                &mut dst[..to_write],
-                &data[len - rem..len - rem + to_write],
-            );
+            dst[..to_write].write_copy_of_slice(&data[len - rem..len - rem + to_write]);
 
             rem -= to_write;
             unsafe {
