@@ -1,22 +1,33 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use crate::event::Event as HlEvent;
 use crate::unknown_event::UnknownEvent;
+use std::time::Instant;
 
 /// Event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct Event {
     id: u32,
+    timestamp: Instant,
     args: SerializedValue,
 }
 
 impl Event {
-    pub(crate) fn new(id: u32, args: SerializedValue) -> Self {
-        Self { id, args }
+    pub(crate) fn new(id: u32, timestamp: Instant, args: SerializedValue) -> Self {
+        Self {
+            id,
+            timestamp,
+            args,
+        }
     }
 
     /// Returns the event's id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the timestamp when the event was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Returns a slice to the event's serialized arguments.
@@ -46,7 +57,7 @@ impl Event {
     {
         self.args
             .deserialize()
-            .map(|args| HlEvent::new(self.id, args))
+            .map(|args| HlEvent::new(self.id, self.timestamp, args))
     }
 
     /// Converts this event into an [`UnknownEvent`].

@@ -1119,7 +1119,8 @@ where
     }
 
     fn msg_emit_event(&self, msg: EmitEvent) {
-        self.proxies.emit(msg.service_cookie, msg.event, msg.value);
+        self.proxies
+            .emit(msg.service_cookie, msg.event, Instant::now(), msg.value);
     }
 
     fn msg_service_destroyed(&mut self, msg: ServiceDestroyed) {

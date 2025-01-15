@@ -1,14 +1,18 @@
+use std::time::Instant;
+
 /// Event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct Event<T> {
     id: u32,
+    timestamp: Instant,
     args: Option<T>,
 }
 
 impl<T> Event<T> {
-    pub(crate) fn new(id: u32, args: T) -> Self {
+    pub(crate) fn new(id: u32, timestamp: Instant, args: T) -> Self {
         Self {
             id,
+            timestamp,
             args: Some(args),
         }
     }
@@ -16,6 +20,11 @@ impl<T> Event<T> {
     /// Returns the event's id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the timestamp when the event was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Returns a reference to the event's arguments.

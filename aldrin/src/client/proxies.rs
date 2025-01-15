@@ -5,6 +5,7 @@ use futures_channel::mpsc::{self, UnboundedSender};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
+use std::time::Instant;
 
 #[derive(Debug)]
 pub(crate) struct Proxies {
@@ -183,7 +184,13 @@ impl Proxies {
             .any(|(_, entry)| entry.is_subscribed_to_all())
     }
 
-    pub fn emit(&self, service: ServiceCookie, event: u32, args: SerializedValue) {
+    pub fn emit(
+        &self,
+        service: ServiceCookie,
+        event: u32,
+        timestamp: Instant,
+        args: SerializedValue,
+    ) {
         if let Some(proxies) = self.services.get(&service) {
             let mut proxies = proxies.iter().peekable();
 
@@ -193,9 +200,9 @@ impl Proxies {
                 if proxy.is_subscribed_to_all() || proxy.is_subscribed_to(event) {
                     // Avoid cloning args for the last proxy.
                     if proxies.peek().is_some() {
-                        proxy.emit(event, args.clone());
+                        proxy.emit(event, timestamp, args.clone());
                     } else {
-                        proxy.emit(event, args);
+                        proxy.emit(event, timestamp, args);
                         break;
                     }
                 }
@@ -268,9 +275,9 @@ impl ProxyEntry {
         self.all_events
     }
 
-    fn emit(&self, event: u32, args: SerializedValue) {
+    fn emit(&self, event: u32, timestamp: Instant, args: SerializedValue) {
         debug_assert!(self.all_events || self.events.contains(&event));
-        let _ = self.send.unbounded_send(Event::new(event, args));
+        let _ = self.send.unbounded_send(Event::new(event, timestamp, args));
     }
 }
 

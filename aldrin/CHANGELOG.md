@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Call::into_args_and_promise()`.
 - Add type `Event`, which is a high-level equivalent to `low_level::Event`.
 - Add `low_level::Event::deserialize_and_cast()`.
+- The client now records the timestamp when an event is received. This is available via the new
+  functions `Event::timestamp()` and `low_level::Event::timestamp()`.
 
 ## [0.11.0] - 2025-01-07
 
