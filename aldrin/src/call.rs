@@ -103,6 +103,15 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
         self.promise.is_some()
     }
 
+    /// Converts the call into a tuple of its arguments and promise.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if either the arguments or the promise have already been taken out.
+    pub fn into_args_and_promise(mut self) -> (Args, Promise<T, E>) {
+        (self.take_args(), self.take_promise())
+    }
+
     /// Casts the call to a different result type.
     pub fn cast<T2: ?Sized, E2: ?Sized>(self) -> Call<Args, T2, E2> {
         Call {
