@@ -13,7 +13,6 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true }
-uuid = { workspace = true }
 
 [dependencies.aldrin]
 path = "../../aldrin"

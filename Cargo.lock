@@ -436,7 +436,6 @@ dependencies = [
  "clap",
  "sha2",
  "tokio",
- "uuid",
 ]
 
 [[package]]
@@ -447,7 +446,6 @@ dependencies = [
  "anyhow",
  "clap",
  "tokio",
- "uuid",
 ]
 
 [[package]]
