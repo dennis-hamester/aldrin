@@ -1,8 +1,11 @@
 [package]
 name = "example-downloader"
 version = "0.0.0"
-edition = "2021"
 publish = false
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [features]
 introspection = ["aldrin/introspection"]

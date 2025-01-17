@@ -2,11 +2,11 @@
 name = "conformance-test-broker"
 description = "Host for aldrin-broker conformance tests."
 version = "0.0.0"
-authors = ["Aldrin Contributors"]
-license = "MIT OR Apache-2.0"
-edition = "2021"
-rust-version = "1.71.1"
 publish = false
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [lints]
 workspace = true
