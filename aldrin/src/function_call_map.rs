@@ -3,8 +3,9 @@ use crate::error::Error;
 use crate::serial_map::SerialMap;
 use futures_channel::oneshot::Sender;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
-type ResultSender = Sender<Result<CallFunctionResult, Error>>;
+type ResultSender = Sender<Result<(CallFunctionResult, Instant), Error>>;
 
 #[derive(Debug)]
 pub struct FunctionCallMap {

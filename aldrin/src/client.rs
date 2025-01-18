@@ -564,7 +564,7 @@ where
 
     fn msg_call_function_reply(&mut self, msg: CallFunctionReply) {
         if let Some(send) = self.function_calls.remove(msg.serial) {
-            let _ = send.send(Ok(msg.result));
+            let _ = send.send(Ok((msg.result, Instant::now())));
         }
     }
 

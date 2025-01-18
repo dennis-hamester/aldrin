@@ -20,6 +20,7 @@ use crate::low_level::{
 use crate::{Error, Object};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
+use std::time::Instant;
 
 #[derive(Debug)]
 pub(crate) enum HandleRequest {
@@ -96,7 +97,7 @@ pub(crate) struct CallFunctionRequest {
     pub service_cookie: ServiceCookie,
     pub function: u32,
     pub value: SerializedValue,
-    pub reply: oneshot::Sender<Result<CallFunctionResult, Error>>,
+    pub reply: oneshot::Sender<Result<(CallFunctionResult, Instant), Error>>,
 }
 
 #[derive(Debug)]

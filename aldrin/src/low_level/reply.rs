@@ -1,21 +1,36 @@
 use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use crate::reply::Reply as HlReply;
+use std::time::Instant;
 
 /// Reply of a call.
 #[derive(Debug, Clone)]
 pub struct Reply {
     id: u32,
+    timestamp: Instant,
     args: Result<SerializedValue, SerializedValue>,
 }
 
 impl Reply {
-    pub(crate) fn new(id: u32, args: Result<SerializedValue, SerializedValue>) -> Self {
-        Self { id, args }
+    pub(crate) fn new(
+        id: u32,
+        timestamp: Instant,
+        args: Result<SerializedValue, SerializedValue>,
+    ) -> Self {
+        Self {
+            id,
+            timestamp,
+            args,
+        }
     }
 
     /// Returns the reply's function id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the timestamp when the reply was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Returns the reply's arguments as slices.
@@ -52,6 +67,7 @@ impl Reply {
         T: Deserialize,
         E: Deserialize,
     {
-        self.deserialize().map(|args| HlReply::new(self.id, args))
+        self.deserialize()
+            .map(|args| HlReply::new(self.id, self.timestamp, args))
     }
 }

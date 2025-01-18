@@ -1,14 +1,18 @@
+use std::time::Instant;
+
 /// Reply of a call.
 #[derive(Debug, Clone)]
 pub struct Reply<T, E> {
     id: u32,
+    timestamp: Instant,
     args: Option<Result<T, E>>,
 }
 
 impl<T, E> Reply<T, E> {
-    pub(crate) fn new(id: u32, args: Result<T, E>) -> Self {
+    pub(crate) fn new(id: u32, timestamp: Instant, args: Result<T, E>) -> Self {
         Self {
             id,
+            timestamp,
             args: Some(args),
         }
     }
@@ -16,6 +20,11 @@ impl<T, E> Reply<T, E> {
     /// Returns the reply's function id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the timestamp when the reply was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Returns the reply's arguments as references.

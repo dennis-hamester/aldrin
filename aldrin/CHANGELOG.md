@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The client now records the timestamp when an event is received. This is available via the new
   functions `Event::timestamp()` and `low_level::Event::timestamp()`.
 - Add types `Reply` and `low_level::Reply` to hold the result of a call.
+- The client now records the timestamp when a reply to a call is received. This is available via the
+  new functions `Reply::timestamp()` and `low_level::Reply::timestamp()`.
 
 ### Changed
 

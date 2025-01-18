@@ -6,17 +6,21 @@ use futures_channel::oneshot::Receiver;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
 /// Future to await the result of a call.
 #[derive(Debug)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct PendingReply {
-    recv: Receiver<Result<CallFunctionResult, Error>>,
+    recv: Receiver<Result<(CallFunctionResult, Instant), Error>>,
     function: u32,
 }
 
 impl PendingReply {
-    pub(crate) fn new(recv: Receiver<Result<CallFunctionResult, Error>>, function: u32) -> Self {
+    pub(crate) fn new(
+        recv: Receiver<Result<(CallFunctionResult, Instant), Error>>,
+        function: u32,
+    ) -> Self {
         Self { recv, function }
     }
 
@@ -36,27 +40,27 @@ impl Future for PendingReply {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match Pin::new(&mut self.recv).poll(cx) {
-            Poll::Ready(Ok(Ok(CallFunctionResult::Ok(t)))) => {
-                Poll::Ready(Ok(Reply::new(self.function, Ok(t))))
+            Poll::Ready(Ok(Ok((CallFunctionResult::Ok(t), timestamp)))) => {
+                Poll::Ready(Ok(Reply::new(self.function, timestamp, Ok(t))))
             }
 
-            Poll::Ready(Ok(Ok(CallFunctionResult::Err(e)))) => {
-                Poll::Ready(Ok(Reply::new(self.function, Err(e))))
+            Poll::Ready(Ok(Ok((CallFunctionResult::Err(e), timestamp)))) => {
+                Poll::Ready(Ok(Reply::new(self.function, timestamp, Err(e))))
             }
 
-            Poll::Ready(Ok(Ok(CallFunctionResult::Aborted))) => {
+            Poll::Ready(Ok(Ok((CallFunctionResult::Aborted, _)))) => {
                 Poll::Ready(Err(Error::CallAborted))
             }
 
-            Poll::Ready(Ok(Ok(CallFunctionResult::InvalidService))) => {
+            Poll::Ready(Ok(Ok((CallFunctionResult::InvalidService, _)))) => {
                 Poll::Ready(Err(Error::InvalidService))
             }
 
-            Poll::Ready(Ok(Ok(CallFunctionResult::InvalidFunction))) => {
+            Poll::Ready(Ok(Ok((CallFunctionResult::InvalidFunction, _)))) => {
                 Poll::Ready(Err(Error::invalid_function(self.function)))
             }
 
-            Poll::Ready(Ok(Ok(CallFunctionResult::InvalidArgs))) => {
+            Poll::Ready(Ok(Ok((CallFunctionResult::InvalidArgs, _)))) => {
                 Poll::Ready(Err(Error::invalid_arguments(self.function, None)))
             }
 
