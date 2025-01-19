@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `low_level::Event::take_args()`.
 - Add `low_level::Reply::take_args()`.
 - Add `Event::as_ref()`, `as_mut()` and `map()`.
-- Add `Reply::as_ref()` and `as_mut()`.
+- Add `Reply::as_ref()`, `as_mut()`, `map_args()`, `map()` and `map_err()`.
 
 ### Changed
 

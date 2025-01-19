@@ -51,4 +51,28 @@ impl<T, E> Reply<T, E> {
     pub fn as_mut(&mut self) -> Reply<&mut T, &mut E> {
         Reply::new(self.id, self.timestamp, self.args.as_mut())
     }
+
+    /// Maps a `Reply<T, E>` to `Reply<U, F>` by applying a function to the arguments.
+    pub fn map_args<O, U, F>(self, op: O) -> Reply<U, F>
+    where
+        O: FnOnce(Result<T, E>) -> Result<U, F>,
+    {
+        Reply::new(self.id, self.timestamp, op(self.args))
+    }
+
+    /// Maps a `Reply<T, E>` to `Reply<U, E>` by applying a function to the `Ok` arguments.
+    pub fn map<F, U>(self, op: F) -> Reply<U, E>
+    where
+        F: FnOnce(T) -> U,
+    {
+        Reply::new(self.id, self.timestamp, self.args.map(op))
+    }
+
+    /// Maps a `Reply<T, E>` to `Reply<T, F>` by applying a function to the `Err` arguments.
+    pub fn map_err<O, F>(self, op: O) -> Reply<T, F>
+    where
+        O: FnOnce(E) -> F,
+    {
+        Reply::new(self.id, self.timestamp, self.args.map_err(op))
+    }
 }
