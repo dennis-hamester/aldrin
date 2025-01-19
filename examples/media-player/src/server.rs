@@ -81,35 +81,35 @@ impl Server {
         }
     }
 
-    fn get_state(&self, mut call: Call<(), State, Infallible>) -> Result<()> {
+    fn get_state(&self, call: Call<(), State, Infallible>) -> Result<()> {
         call.ok(&self.state)?;
         Ok(())
     }
 
-    fn get_metadata(&self, mut call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
+    fn get_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
         call.ok_ref(&self.metadata)?;
         Ok(())
     }
 
-    fn get_position(&self, mut call: Call<(), Option<u32>, Infallible>) -> Result<()> {
+    fn get_position(&self, call: Call<(), Option<u32>, Infallible>) -> Result<()> {
         call.ok_ref(&self.position)?;
         Ok(())
     }
 
-    fn get_last_metadata(&self, mut call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
+    fn get_last_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
         call.ok_ref(&self.last_metadata)?;
         Ok(())
     }
 
-    fn play(&mut self, mut call: Call<MediaPlayerPlayArgs, (), Error>) -> Result<()> {
-        let args = call.take_args();
+    fn play(&mut self, call: Call<MediaPlayerPlayArgs, (), Error>) -> Result<()> {
+        let (args, promise) = call.into_args_and_promise();
         let duration = args.duration.unwrap_or(10);
 
         println!("Starting `{}` with a duration of {duration}s.", args.title);
 
         if args.title.is_empty() {
             println!("Rejecting play command with empty title.");
-            call.err(&Error::InvalidTitle)?;
+            promise.err(&Error::InvalidTitle)?;
             return Ok(());
         }
 
@@ -137,11 +137,11 @@ impl Server {
         }
         self.svc.state_changed(&self.state)?;
 
-        call.done()?;
+        promise.done()?;
         Ok(())
     }
 
-    fn stop(&mut self, mut call: Call<(), (), Infallible>) -> Result<()> {
+    fn stop(&mut self, call: Call<(), (), Infallible>) -> Result<()> {
         if self.state == State::Stopped {
             println!("Playback is already stopped.");
             call.done()?;
@@ -173,7 +173,7 @@ impl Server {
         Ok(())
     }
 
-    fn pause(&mut self, mut call: Call<(), (), Error>) -> Result<()> {
+    fn pause(&mut self, call: Call<(), (), Error>) -> Result<()> {
         if self.state == State::Playing {
             println!("Pausing playback.");
             self.state = State::Paused;
@@ -188,7 +188,7 @@ impl Server {
         Ok(())
     }
 
-    fn resume(&mut self, mut call: Call<(), (), Error>) -> Result<()> {
+    fn resume(&mut self, call: Call<(), (), Error>) -> Result<()> {
         if self.state == State::Paused {
             println!("Resuming playback.");
             self.state = State::Playing;

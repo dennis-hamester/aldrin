@@ -154,28 +154,28 @@ async fn server(bus: &Handle) -> Result<()> {
         // object until then. If the promise object is dropped, then the caller will be notified
         // that the call has been aborted.
         match function {
-            EchoFunction::Echo(mut call) => {
-                let args = call.take_args();
+            EchoFunction::Echo(call) => {
+                let (args, promise) = call.into_args_and_promise();
                 println!("echo(\"{args}\") called.");
 
-                if !args.is_empty() {
+                if args.is_empty() {
                     // Here, we echo the same value back to the caller.
-                    call.ok(&args)?;
+                    promise.ok(&args)?;
                 } else {
-                    call.err(&EchoEchoError::EmptyString)?;
+                    promise.err(&EchoEchoError::EmptyString)?;
                 }
             }
 
-            EchoFunction::EchoAll(mut call) => {
-                let args = call.take_args();
+            EchoFunction::EchoAll(call) => {
+                let args = call.args();
                 println!("echo_all(\"{args}\") called.");
 
-                if !args.is_empty() {
+                if args.is_empty() {
                     // This emits an event to all subscribed clients. If there is no such client,
                     // then the event will not even be sent to the broker. In any case, the event
                     // will be sent at most once. The broker then dispatches it further to other
                     // clients.
-                    echo.echoed_to_all(&args)?;
+                    echo.echoed_to_all(args)?;
 
                     // No value is sent back to the caller.
                     call.done()?;

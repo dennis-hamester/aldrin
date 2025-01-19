@@ -10,8 +10,8 @@ use std::time::Instant;
 pub struct Call<Args, T: ?Sized, E: ?Sized> {
     id: u32,
     timestamp: Instant,
-    args: Option<Args>,
-    promise: Option<Promise<T, E>>,
+    args: Args,
+    promise: Promise<T, E>,
 }
 
 impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
@@ -19,8 +19,8 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
         Self {
             id,
             timestamp,
-            args: Some(args),
-            promise: Some(promise),
+            args,
+            promise,
         }
     }
 
@@ -35,81 +35,28 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
     }
 
     /// Returns a reference to the call's arguments.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have been [taken](Self::take_args) out.
     pub fn args(&self) -> &Args {
-        self.args.as_ref().expect("args were already taken")
+        &self.args
     }
 
     /// Returns a mutable reference to the call's arguments.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have been [taken](Self::take_args) out.
     pub fn args_mut(&mut self) -> &mut Args {
-        self.args.as_mut().expect("args were already taken")
-    }
-
-    /// Takes out the call's arguments.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have already been taken out.
-    pub fn take_args(&mut self) -> Args {
-        self.args.take().expect("args were already taken")
-    }
-
-    /// Returns `true`, if the call's arguments have not yet been taken out.
-    pub fn has_args(&self) -> bool {
-        self.args.is_some()
+        &mut self.args
     }
 
     /// Returns a reference to the call's promise object.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub fn promise(&self) -> &Promise<T, E> {
-        self.promise.as_ref().expect("promise was already taken")
+        &self.promise
     }
 
     /// Returns a mutable reference to the call's promise object.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub fn promise_mut(&mut self) -> &mut Promise<T, E> {
-        self.promise.as_mut().expect("promise was already taken")
-    }
-
-    /// Takes out the call's promise object.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has already been taken out, either by this function
-    /// or by one of the functions, which implicitly consume the promise.
-    pub fn take_promise(&mut self) -> Promise<T, E> {
-        self.promise.take().expect("promise was already taken")
-    }
-
-    /// Returns `true`, if the call's promise object has not yet been taken out.
-    pub fn has_promise(&self) -> bool {
-        self.promise.is_some()
+        &mut self.promise
     }
 
     /// Converts the call into a tuple of its arguments and promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if either the arguments or the promise have already been taken out.
-    pub fn into_args_and_promise(mut self) -> (Args, Promise<T, E>) {
-        (self.take_args(), self.take_promise())
+    pub fn into_args_and_promise(self) -> (Args, Promise<T, E>) {
+        (self.args, self.promise)
     }
 
     /// Casts the call to a different result type.
@@ -118,93 +65,45 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
             id: self.id,
             timestamp: self.timestamp,
             args: self.args,
-            promise: self.promise.map(Promise::cast),
+            promise: self.promise.cast(),
         }
     }
 
     /// Returns a handle to the client that was used to create the call.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub fn client(&self) -> &Handle {
-        self.promise().client()
+        self.promise.client()
     }
 
     /// Aborts the call.
     ///
     /// The caller will be notified that the call was aborted.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn abort(&mut self) -> Result<(), Error> {
-        self.take_promise().abort()
+    pub fn abort(self) -> Result<(), Error> {
+        self.promise.abort()
     }
 
     /// Signals that an invalid function was called.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn invalid_function(&mut self) -> Result<(), Error> {
-        self.take_promise().invalid_function()
+    pub fn invalid_function(self) -> Result<(), Error> {
+        self.promise.invalid_function()
     }
 
     /// Signals that invalid arguments were passed to the function.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn invalid_args(&mut self) -> Result<(), Error> {
-        self.take_promise().invalid_args()
+    pub fn invalid_args(self) -> Result<(), Error> {
+        self.promise.invalid_args()
     }
 
     /// Returns whether the call was aborted by the caller.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub fn is_aborted(&mut self) -> bool {
-        self.promise_mut().is_aborted()
+        self.promise.is_aborted()
     }
 
     /// Polls whether the call was aborted by the caller.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
-        self.promise_mut().poll_aborted(cx)
+        self.promise.poll_aborted(cx)
     }
 
     /// Resolves if the call was aborted by the caller.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
     pub async fn aborted(&mut self) {
-        self.promise_mut().aborted().await
+        self.promise.aborted().await
     }
 }
 
@@ -214,16 +113,8 @@ where
     E: ?Sized,
 {
     /// Signals that the call was successful.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn ok(&mut self, value: SerializeArg<T>) -> Result<(), Error> {
-        self.take_promise().ok(value)
+    pub fn ok(self, value: SerializeArg<T>) -> Result<(), Error> {
+        self.promise.ok(value)
     }
 }
 
@@ -233,31 +124,15 @@ where
     E: ?Sized,
 {
     /// Signals that the call was successful.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn ok_ref(&mut self, value: &T) -> Result<(), Error> {
-        self.take_promise().ok_ref(value)
+    pub fn ok_ref(self, value: &T) -> Result<(), Error> {
+        self.promise.ok_ref(value)
     }
 }
 
 impl<Args, E: ?Sized> Call<Args, (), E> {
     /// Signals that the call was successful without returning a value.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn done(&mut self) -> Result<(), Error> {
-        self.take_promise().done()
+    pub fn done(self) -> Result<(), Error> {
+        self.promise.done()
     }
 }
 
@@ -267,16 +142,8 @@ where
     E: AsSerializeArg + ?Sized,
 {
     /// Signals that the call failed.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn err(&mut self, value: SerializeArg<E>) -> Result<(), Error> {
-        self.take_promise().err(value)
+    pub fn err(self, value: SerializeArg<E>) -> Result<(), Error> {
+        self.promise.err(value)
     }
 }
 
@@ -286,16 +153,8 @@ where
     E: Serialize + ?Sized,
 {
     /// Signals that the call failed.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn err_ref(&mut self, value: &E) -> Result<(), Error> {
-        self.take_promise().err_ref(value)
+    pub fn err_ref(self, value: &E) -> Result<(), Error> {
+        self.promise.err_ref(value)
     }
 }
 
@@ -305,16 +164,8 @@ where
     E: AsSerializeArg + ?Sized,
 {
     /// Sets the call's reply.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn set(&mut self, res: Result<SerializeArg<T>, SerializeArg<E>>) -> Result<(), Error> {
-        self.take_promise().set(res)
+    pub fn set(self, res: Result<SerializeArg<T>, SerializeArg<E>>) -> Result<(), Error> {
+        self.promise.set(res)
     }
 }
 
@@ -324,16 +175,8 @@ where
     E: Serialize + ?Sized,
 {
     /// Sets the call's reply.
-    ///
-    /// This function consumes the promise.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the promise has been taken out, either
-    /// [explicitly](Self::take_promise) or by one of the functions, which implicitly consume the
-    /// promise.
-    pub fn set_ref(&mut self, res: Result<&T, &E>) -> Result<(), Error> {
-        self.take_promise().set_ref(res)
+    pub fn set_ref(self, res: Result<&T, &E>) -> Result<(), Error> {
+        self.promise.set_ref(res)
     }
 }
 

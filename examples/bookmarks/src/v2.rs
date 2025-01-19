@@ -179,7 +179,7 @@ impl Server {
         Ok(())
     }
 
-    fn get(&self, mut call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
+    fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks in the unspecified group.");
 
         let list = self
@@ -194,11 +194,8 @@ impl Server {
         Ok(())
     }
 
-    fn get_v2(
-        &self,
-        mut call: Call<BookmarksGetV2Args, Vec<Bookmark>, BookmarkError>,
-    ) -> Result<()> {
-        let args = call.take_args();
+    fn get_v2(&self, call: Call<BookmarksGetV2Args, Vec<Bookmark>, BookmarkError>) -> Result<()> {
+        let args = call.args();
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to get bookmarks due to unknown arguments.");
@@ -224,18 +221,18 @@ impl Server {
         Ok(())
     }
 
-    fn add(&mut self, mut call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
-        let bookmark = call.take_args();
+    fn add(&mut self, call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
+        let (bookmark, promise) = call.into_args_and_promise();
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
-            call.err(&BookmarkError::UnknownFields)?;
+            promise.err(&BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
         if bookmark.name.is_empty() {
             println!("Rejecting bookmark because the name is empty.");
-            call.err(&BookmarkError::InvalidName)?;
+            promise.err(&BookmarkError::InvalidName)?;
             return Ok(());
         }
 
@@ -245,20 +242,20 @@ impl Server {
             .any(|b| (b.name == bookmark.name) && (b.group == bookmark.group))
         {
             println!("Rejecting bookmark because the name is used already.");
-            call.err(&BookmarkError::DuplicateName)?;
+            promise.err(&BookmarkError::DuplicateName)?;
             return Ok(());
         }
 
         if bookmark.url.is_empty() {
             println!("Rejecting bookmark because the URL is empty.");
-            call.err(&BookmarkError::InvalidUrl)?;
+            promise.err(&BookmarkError::InvalidUrl)?;
             return Ok(());
         }
 
         if let Some(ref group) = bookmark.group {
             if group.is_empty() {
                 println!("Rejecting bookmark because the group is empty.");
-                call.err(&BookmarkError::InvalidGroup)?;
+                promise.err(&BookmarkError::InvalidGroup)?;
                 return Ok(());
             }
         }
@@ -280,18 +277,18 @@ impl Server {
         }
 
         self.list.push(bookmark);
-        call.done()?;
+        promise.done()?;
 
         Ok(())
     }
 
-    fn remove(&mut self, mut call: Call<String, (), BookmarkError>) -> Result<()> {
-        let name = call.take_args();
+    fn remove(&mut self, call: Call<String, (), BookmarkError>) -> Result<()> {
+        let name = call.args();
 
         let Some(idx) = self
             .list
             .iter()
-            .position(|b| (b.name == name) && b.group.is_none())
+            .position(|b| (b.name == *name) && b.group.is_none())
         else {
             println!("Failed to remove unknown bookmark `{name}`");
             call.err(&BookmarkError::InvalidName)?;
@@ -305,11 +302,8 @@ impl Server {
         Ok(())
     }
 
-    fn remove_v2(
-        &mut self,
-        mut call: Call<BookmarksRemoveV2Args, (), BookmarkError>,
-    ) -> Result<()> {
-        let args = call.take_args();
+    fn remove_v2(&mut self, call: Call<BookmarksRemoveV2Args, (), BookmarkError>) -> Result<()> {
+        let args = call.args();
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to remove a bookmark due to unknown arguments.");
@@ -345,7 +339,7 @@ impl Server {
         Ok(())
     }
 
-    fn get_groups(&mut self, mut call: Call<(), Vec<Option<String>>, Infallible>) -> Result<()> {
+    fn get_groups(&mut self, call: Call<(), Vec<Option<String>>, Infallible>) -> Result<()> {
         let mut groups = self
             .list
             .iter()

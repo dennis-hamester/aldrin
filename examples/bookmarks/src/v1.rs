@@ -123,51 +123,51 @@ impl Server {
         Ok(())
     }
 
-    fn get(&self, mut call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
+    fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks.");
         call.ok(&self.list)?;
         Ok(())
     }
 
-    fn add(&mut self, mut call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
-        let bookmark = call.take_args();
+    fn add(&mut self, call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
+        let (bookmark, promise) = call.into_args_and_promise();
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
-            call.err(&BookmarkError::UnknownFields)?;
+            promise.err(&BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
         if bookmark.name.is_empty() {
             println!("Rejecting bookmark because the name is empty.");
-            call.err(&BookmarkError::InvalidName)?;
+            promise.err(&BookmarkError::InvalidName)?;
             return Ok(());
         }
 
         if self.list.iter().any(|b| b.name == bookmark.name) {
             println!("Rejecting bookmark because the name is used already.");
-            call.err(&BookmarkError::DuplicateName)?;
+            promise.err(&BookmarkError::DuplicateName)?;
             return Ok(());
         }
 
         if bookmark.url.is_empty() {
             println!("Rejecting bookmark because the URL is empty.");
-            call.err(&BookmarkError::InvalidUrl)?;
+            promise.err(&BookmarkError::InvalidUrl)?;
             return Ok(());
         }
 
         println!("Bookmark `{}` added.", bookmark.name);
         self.svc.added(&bookmark)?;
         self.list.push(bookmark);
-        call.done()?;
+        promise.done()?;
 
         Ok(())
     }
 
-    fn remove(&mut self, mut call: Call<String, (), BookmarkError>) -> Result<()> {
-        let name = call.take_args();
+    fn remove(&mut self, call: Call<String, (), BookmarkError>) -> Result<()> {
+        let name = call.args();
 
-        let Some(idx) = self.list.iter().position(|b| b.name == name) else {
+        let Some(idx) = self.list.iter().position(|b| b.name == *name) else {
             println!("Failed to remove unknown bookmark `{name}`");
             call.err(&BookmarkError::InvalidName)?;
             return Ok(());

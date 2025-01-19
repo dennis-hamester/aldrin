@@ -140,9 +140,8 @@ async fn server(bus: &Handle) -> Result<()> {
     }
 }
 
-async fn download(mut call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infallible>) {
-    let args = call.take_args();
-    let promise = call.take_promise();
+async fn download(call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infallible>) {
+    let (args, promise) = call.into_args_and_promise();
 
     println!("Downloading `{}` ({} bytes).", args.name, args.size);
 
