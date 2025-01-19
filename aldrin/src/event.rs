@@ -41,4 +41,14 @@ impl<T> Event<T> {
     pub fn into_args(self) -> T {
         self.args
     }
+
+    /// Converts from `&Event<T>` to `Event<&T>`.
+    pub fn as_ref(&self) -> Event<&T> {
+        Event::new(self.id, self.timestamp, &self.args)
+    }
+
+    /// Converts from `&mut Event<T>` to `Event<&mut T>`.
+    pub fn as_mut(&mut self) -> Event<&mut T> {
+        Event::new(self.id, self.timestamp, &mut self.args)
+    }
 }
