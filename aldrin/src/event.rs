@@ -51,4 +51,12 @@ impl<T> Event<T> {
     pub fn as_mut(&mut self) -> Event<&mut T> {
         Event::new(self.id, self.timestamp, &mut self.args)
     }
+
+    /// Maps an `Event<T>` to `Event<U>` by applying a function to the arguments.
+    pub fn map<F, U>(self, f: F) -> Event<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        Event::new(self.id, self.timestamp, f(self.args))
+    }
 }
