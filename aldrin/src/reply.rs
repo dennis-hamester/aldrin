@@ -5,7 +5,7 @@ use std::time::Instant;
 pub struct Reply<T, E> {
     id: u32,
     timestamp: Instant,
-    args: Option<Result<T, E>>,
+    args: Result<T, E>,
 }
 
 impl<T, E> Reply<T, E> {
@@ -13,7 +13,7 @@ impl<T, E> Reply<T, E> {
         Self {
             id,
             timestamp,
-            args: Some(args),
+            args,
         }
     }
 
@@ -28,49 +28,17 @@ impl<T, E> Reply<T, E> {
     }
 
     /// Returns the reply's arguments as references.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have been [taken](Self::take_args) out.
     pub fn args(&self) -> Result<&T, &E> {
-        self.args
-            .as_ref()
-            .expect("args were already taken")
-            .as_ref()
+        self.args.as_ref()
     }
 
     /// Returns the reply's arguments as mutable references.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have been [taken](Self::take_args) out.
     pub fn args_mut(&mut self) -> Result<&mut T, &mut E> {
-        self.args
-            .as_mut()
-            .expect("args were already taken")
-            .as_mut()
-    }
-
-    /// Takes out the reply's arguments.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have already been taken out.
-    pub fn take_args(&mut self) -> Result<T, E> {
-        self.args.take().expect("args were already taken")
+        self.args.as_mut()
     }
 
     /// Converts the reply to its arguments.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the arguments have been [taken](Self::take_args) out.
-    pub fn into_args(mut self) -> Result<T, E> {
-        self.take_args()
-    }
-
-    /// Returns `true`, if the reply's arguments have not yet been taken out.
-    pub fn has_args(&self) -> bool {
-        self.args.is_some()
+    pub fn into_args(self) -> Result<T, E> {
+        self.args
     }
 }
