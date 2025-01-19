@@ -41,4 +41,14 @@ impl<T, E> Reply<T, E> {
     pub fn into_args(self) -> Result<T, E> {
         self.args
     }
+
+    /// Converts from `&Reply<T, E>` to `Reply<&T, &E>`.
+    pub fn as_ref(&self) -> Reply<&T, &E> {
+        Reply::new(self.id, self.timestamp, self.args.as_ref())
+    }
+
+    /// Converts from `&mut Reply<T, E>` to `Reply<&mut T, &mut E>`.
+    pub fn as_mut(&mut self) -> Reply<&mut T, &mut E> {
+        Reply::new(self.id, self.timestamp, self.args.as_mut())
+    }
 }
