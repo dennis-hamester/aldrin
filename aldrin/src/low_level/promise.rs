@@ -8,19 +8,30 @@ use futures_core::FusedFuture;
 use std::future::{self, Future};
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
 /// Replies to a pending call.
 #[derive(Debug)]
 pub struct Promise {
     client: Option<Handle>,
+    id: u32,
+    timestamp: Instant,
     aborted: Receiver<()>,
     serial: u32,
 }
 
 impl Promise {
-    pub(crate) fn new(client: Handle, aborted: Receiver<()>, serial: u32) -> Self {
+    pub(crate) fn new(
+        client: Handle,
+        id: u32,
+        timestamp: Instant,
+        aborted: Receiver<()>,
+        serial: u32,
+    ) -> Self {
         Self {
             client: Some(client),
+            id,
+            timestamp,
             aborted,
             serial,
         }
@@ -29,6 +40,16 @@ impl Promise {
     /// Returns a handle to the client that was used to create the promise.
     pub fn client(&self) -> &Handle {
         self.client.as_ref().unwrap()
+    }
+
+    /// Returns the call's function id.
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    /// Returns the timestamp when the call was received.
+    pub fn timestamp(&self) -> Instant {
+        self.timestamp
     }
 
     /// Casts the promise to a specific set of result types.

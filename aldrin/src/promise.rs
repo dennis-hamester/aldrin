@@ -5,6 +5,7 @@ use crate::low_level;
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
+use std::time::Instant;
 
 /// Replies to a pending call.
 pub struct Promise<T: ?Sized, E: ?Sized> {
@@ -23,6 +24,16 @@ impl<T: ?Sized, E: ?Sized> Promise<T, E> {
     /// Returns a handle to the client that was used to create the promise.
     pub fn client(&self) -> &Handle {
         self.inner.client()
+    }
+
+    /// Returns the call's function id.
+    pub fn id(&self) -> u32 {
+        self.inner.id()
+    }
+
+    /// Returns the timestamp when the call was received.
+    pub fn timestamp(&self) -> Instant {
+        self.inner.timestamp()
     }
 
     /// Casts the promise to a different result type.

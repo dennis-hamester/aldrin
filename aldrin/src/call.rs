@@ -8,30 +8,28 @@ use std::time::Instant;
 
 /// Pending call.
 pub struct Call<Args, T: ?Sized, E: ?Sized> {
-    id: u32,
-    timestamp: Instant,
     args: Args,
     promise: Promise<T, E>,
 }
 
 impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
-    pub(crate) fn new(id: u32, timestamp: Instant, args: Args, promise: Promise<T, E>) -> Self {
-        Self {
-            id,
-            timestamp,
-            args,
-            promise,
-        }
+    pub(crate) fn new(args: Args, promise: Promise<T, E>) -> Self {
+        Self { args, promise }
+    }
+
+    /// Returns a handle to the client that was used to create the call.
+    pub fn client(&self) -> &Handle {
+        self.promise.client()
     }
 
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
-        self.id
+        self.promise.id()
     }
 
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
-        self.timestamp
+        self.promise.timestamp()
     }
 
     /// Returns a reference to the call's arguments.
@@ -61,17 +59,7 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
 
     /// Casts the call to a different result type.
     pub fn cast<T2: ?Sized, E2: ?Sized>(self) -> Call<Args, T2, E2> {
-        Call {
-            id: self.id,
-            timestamp: self.timestamp,
-            args: self.args,
-            promise: self.promise.cast(),
-        }
-    }
-
-    /// Returns a handle to the client that was used to create the call.
-    pub fn client(&self) -> &Handle {
-        self.promise.client()
+        Call::new(self.args, self.promise.cast())
     }
 
     /// Aborts the call.
@@ -188,8 +176,6 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Call")
-            .field("id", &self.id)
-            .field("timestamp", &self.timestamp)
             .field("args", &self.args)
             .field("promise", &self.promise)
             .finish()

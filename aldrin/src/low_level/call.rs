@@ -10,8 +10,6 @@ use std::time::Instant;
 /// Pending call.
 #[derive(Debug)]
 pub struct Call {
-    id: u32,
-    timestamp: Instant,
     args: SerializedValue,
     promise: Promise,
 }
@@ -26,10 +24,8 @@ impl Call {
         args: SerializedValue,
     ) -> Self {
         Self {
-            id,
-            timestamp,
             args,
-            promise: Promise::new(client, aborted, serial),
+            promise: Promise::new(client, id, timestamp, aborted, serial),
         }
     }
 
@@ -40,12 +36,12 @@ impl Call {
 
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
-        self.id
+        self.promise.id()
     }
 
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
-        self.timestamp
+        self.promise.timestamp()
     }
 
     /// Returns a slice to the call's serialized arguments.
@@ -90,16 +86,12 @@ impl Call {
         E: ?Sized,
     {
         match self.args.deserialize() {
-            Ok(args) => Ok(HlCall::new(
-                self.id,
-                self.timestamp,
-                args,
-                self.promise.cast(),
-            )),
+            Ok(args) => Ok(HlCall::new(args, self.promise.cast())),
 
             Err(e) => {
+                let id = self.promise.id();
                 let _ = self.promise.invalid_args();
-                Err(Error::invalid_arguments(self.id, Some(e)))
+                Err(Error::invalid_arguments(id, Some(e)))
             }
         }
     }
