@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add types `Reply` and `low_level::Reply` to hold the result of a call.
 - The client now records the timestamp when a reply to a call is received. This is available via the
   new functions `Reply::timestamp()` and `low_level::Reply::timestamp()`.
+- Add type `Property` to help keeping track of remote values.
 
 ### Changed
 

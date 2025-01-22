@@ -71,6 +71,7 @@ mod lifetime;
 mod object;
 mod pending_reply;
 mod promise;
+mod property;
 mod reply;
 mod serial_map;
 #[cfg(test)]
@@ -115,6 +116,7 @@ pub use lifetime::{Lifetime, LifetimeId, LifetimeScope};
 pub use object::Object;
 pub use pending_reply::PendingReply;
 pub use promise::Promise;
+pub use property::Property;
 pub use reply::Reply;
 pub use unknown_call::UnknownCall;
 pub use unknown_event::UnknownEvent;
