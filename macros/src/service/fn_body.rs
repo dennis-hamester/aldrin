@@ -17,6 +17,17 @@ impl FnBody {
         }
     }
 
+    pub fn parse_simplified(input: ParseStream) -> Result<Self> {
+        input.parse::<Token![=]>()?;
+        let ok = input.parse()?;
+
+        Ok(Self {
+            args: None,
+            ok: Some(ok),
+            err: None,
+        })
+    }
+
     pub fn args(&self) -> Option<&Type> {
         self.args.as_ref()
     }

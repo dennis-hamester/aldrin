@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Functions that have only an `ok` part can now be simplified to `fn foo @ 1 = i32`.
+
 ### Changed
 
 - Use `aldrin::Event` in generated event types, instead of directly emplacing the arguments.

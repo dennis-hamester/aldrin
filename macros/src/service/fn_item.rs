@@ -172,6 +172,10 @@ impl Parse for FnItem {
             let content;
             braced!(content in input);
             content.parse()?
+        } else if lookahead.peek(Token![=]) {
+            let body = input.call(FnBody::parse_simplified)?;
+            input.parse::<Token![;]>()?;
+            body
         } else if lookahead.peek(Token![;]) {
             input.parse::<Token![;]>()?;
             FnBody::empty()
