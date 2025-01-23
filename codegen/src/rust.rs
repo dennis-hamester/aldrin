@@ -362,7 +362,10 @@ impl RustGenerator<'_> {
 
                     code!(self, "        fn {ident} @ {id}");
 
-                    if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
+                    if let (None, Some(ok), None) = (func.args(), func.ok(), func.err()) {
+                        let ty = self.function_ok_type_name(svc_name, name, ok, true);
+                        codeln!(self, " = {ty};");
+                    } else if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
                         codeln!(self, " {{");
 
                         if let Some(args) = func.args() {
