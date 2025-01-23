@@ -2,9 +2,7 @@ service Bookmarks {
     uuid = 35660342-8ecb-4101-903a-d1ba49d66f29;
     version = 2;
 
-    fn get @ 1 {
-        ok = vec<Bookmark>;
-    }
+    fn get @ 1 = vec<Bookmark>;
 
     // Added in version 2.
     fn get_v2 @ 4 {
@@ -39,9 +37,7 @@ service Bookmarks {
     }
 
     // Added in version 2.
-    fn get_groups @ 6 {
-        ok = vec<option<string>>;
-    }
+    fn get_groups @ 6 = vec<option<string>>;
 
     event added @ 1 = Bookmark;
 

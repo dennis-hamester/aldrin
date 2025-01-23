@@ -2,9 +2,7 @@ service Bookmarks {
     uuid = 35660342-8ecb-4101-903a-d1ba49d66f29;
     version = 1;
 
-    fn get @ 1 {
-        ok = vec<Bookmark>;
-    }
+    fn get @ 1 = vec<Bookmark>;
 
     fn add @ 2 {
         args = Bookmark;
