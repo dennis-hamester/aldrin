@@ -167,13 +167,16 @@ impl Parse for FnItem {
         input.parse::<Token![@]>()?;
         let id = input.parse()?;
 
-        let body = if input.peek(Brace) {
+        let lookahead = input.lookahead1();
+        let body = if lookahead.peek(Brace) {
             let content;
             braced!(content in input);
             content.parse()?
-        } else {
+        } else if lookahead.peek(Token![;]) {
             input.parse::<Token![;]>()?;
             FnBody::empty()
+        } else {
+            return Err(lookahead.error());
         };
 
         let ident_ref = Ident::new_raw(&format!("{}_ref", &ident.unraw()), ident.span());
