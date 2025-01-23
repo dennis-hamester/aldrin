@@ -223,11 +223,12 @@ impl FunctionDef {
         let mut err = None;
         for pair in pairs {
             match pair.as_rule() {
-                Rule::tok_cur_open => {}
                 Rule::fn_args => args = Some(FunctionPart::parse(pair)),
                 Rule::fn_ok => ok = Some(FunctionPart::parse(pair)),
                 Rule::fn_err => err = Some(FunctionPart::parse(pair)),
-                Rule::tok_cur_close | Rule::tok_term => break,
+                Rule::type_name_or_inline => ok = Some(FunctionPart::parse(pair)),
+
+                Rule::tok_cur_open | Rule::tok_cur_close | Rule::tok_eq | Rule::tok_term => {}
                 _ => unreachable!(),
             }
         }
@@ -294,22 +295,25 @@ pub struct FunctionPart {
 
 impl FunctionPart {
     fn parse(pair: Pair<Rule>) -> Self {
-        assert!(
-            (pair.as_rule() == Rule::fn_args)
-                || (pair.as_rule() == Rule::fn_ok)
-                || (pair.as_rule() == Rule::fn_err)
-        );
-
         let span = Span::from_pair(&pair);
 
-        let mut pairs = pair.into_inner();
+        let pair = if (pair.as_rule() == Rule::fn_args)
+            || (pair.as_rule() == Rule::fn_ok)
+            || (pair.as_rule() == Rule::fn_err)
+        {
+            let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
-        pairs.next().unwrap(); // Skip =.
+            pairs.next().unwrap(); // Skip keyword.
+            pairs.next().unwrap(); // Skip =.
 
-        let pair = pairs.next().unwrap();
+            pairs.next().unwrap()
+        } else if pair.as_rule() == Rule::type_name_or_inline {
+            pair
+        } else {
+            unreachable!()
+        };
+
         let part_type = TypeNameOrInline::parse(pair);
-
         Self { span, part_type }
     }
 

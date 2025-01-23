@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for enum and struct fallbacks.
 - Add support for function and event fallbacks.
+- Functions that have only an `ok` part can now be simplified to `fn foo @ 1 = i32`.
 
 ### Fixed
 

@@ -174,8 +174,10 @@ service_version = { kw_version ~ tok_eq ~ lit_pos_int ~ tok_term }
 service_item = { fn_def | event_def }
 service_fallback = { (fn_fallback ~ event_fallback?) | (event_fallback ~ fn_fallback?) }
 
-fn_def = { kw_fn ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_cur_open ~ fn_body ~ tok_cur_close) | tok_term) }
-fn_body = _{ fn_args? ~ fn_ok? ~ fn_err? }
+fn_def = { kw_fn ~ ident ~ tok_at ~ lit_pos_int ~ fn_body }
+fn_body = _{ fn_body_full | fn_body_ok | tok_term }
+fn_body_full = _{ tok_cur_open ~ fn_args? ~ fn_ok? ~ fn_err? ~ tok_cur_close }
+fn_body_ok = _{ tok_eq ~ type_name_or_inline }
 fn_args = { kw_args ~ tok_eq ~ type_name_or_inline }
 fn_ok = { kw_ok ~ tok_eq ~ type_name_or_inline }
 fn_err = { kw_err ~ tok_eq ~ type_name_or_inline }
