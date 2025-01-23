@@ -349,7 +349,11 @@ fn print_function(
 ) {
     print!("    fn {} @ {}", func.name(), func.id());
 
-    if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
+    if let (None, Some(ty), None) = (func.args(), func.ok(), func.err()) {
+        print!(" = ");
+        print_type_name(ty, introspection, db, full);
+        println!(";");
+    } else if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
         println!(" {{");
 
         if let Some(ty) = func.args() {
