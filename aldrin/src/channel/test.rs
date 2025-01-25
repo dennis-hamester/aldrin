@@ -1,3 +1,4 @@
+use crate::core::{ByteSlice, Bytes};
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::FusedStream;
@@ -379,6 +380,28 @@ async fn not_leaking_receivers() {
     client.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.num_channels(), 0);
+
+    client.join().await;
+    broker.join().await;
+}
+
+#[tokio::test]
+async fn channel_bytes() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let (sender, receiver) = client
+        .create_channel::<Bytes>()
+        .claim_sender()
+        .await
+        .unwrap();
+
+    let mut receiver = receiver.claim(1).await.unwrap();
+    let mut sender = sender.establish().await.unwrap();
+
+    sender.send_item(ByteSlice::new(&[1, 2, 3])).await.unwrap();
+    let bytes = receiver.next_item().await.unwrap().unwrap();
+    assert_eq!(bytes, [1u8, 2, 3][..]);
 
     client.join().await;
     broker.join().await;
