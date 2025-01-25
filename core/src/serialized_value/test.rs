@@ -1,5 +1,6 @@
 use crate::error::{DeserializeError, SerializeError};
 use crate::serialized_value::SerializedValue;
+use crate::test::assert_as_serialize_arg_eq;
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 
@@ -82,4 +83,10 @@ fn concrete_vs_vague() {
             .deserialize()
             .unwrap()
     );
+}
+
+#[test]
+fn as_serialize_arg() {
+    let value = SerializedValue::serialize(&()).unwrap();
+    assert_as_serialize_arg_eq(&value);
 }

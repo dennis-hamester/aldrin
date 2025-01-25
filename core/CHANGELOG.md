@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `assert_as_serialize_arg_eq_with()`, which can be used to assert that the `AsSerializeArg` and
   `Deserialize` impls on a type or pair of types match correctly.
 
+### Fixed
+
+- The `AsSerializeArg` impls for `Bytes`, `ByteSlice`, `bytes::Bytes` and `bytes::BytesMut` now all
+  correctly map to `ByteSlice` instead of `[u8]`.
+
 ## [0.11.0] - 2025-01-07
 
 ### Added

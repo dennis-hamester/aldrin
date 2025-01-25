@@ -5,6 +5,9 @@ use crate::ids::{
     ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId, ServiceUuid,
 };
 use crate::serialized_value::{SerializedValue, SerializedValueSlice};
+use crate::test::{
+    assert_as_serialize_arg_eq, assert_as_serialize_arg_eq_with, assert_as_serialize_arg_with,
+};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{Serialize, Serializer};
 use std::borrow::Cow;
@@ -49,10 +52,12 @@ fn test_none() {
     let value = ();
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::None;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -62,14 +67,17 @@ fn test_some() {
     let value = Some(());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Some(Box::new(Value::None));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Some(Option::<()>::None);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -79,10 +87,12 @@ fn test_bool_false() {
     let value = false;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Bool(false);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -92,10 +102,12 @@ fn test_bool_true() {
     let value = true;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Bool(true);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -104,6 +116,7 @@ fn test_bool_non_zero() {
     let value = true;
     let serialized = [2, 2];
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -113,10 +126,12 @@ fn test_u8_0() {
     let value = 0u8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U8(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -126,10 +141,12 @@ fn test_u8_255() {
     let value = 255u8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U8(255);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -139,10 +156,12 @@ fn test_i8_0() {
     let value = 0i8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -152,10 +171,12 @@ fn test_i8_1() {
     let value = 1i8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -165,10 +186,12 @@ fn test_i8_minus_1() {
     let value = -1i8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8(-1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -178,10 +201,12 @@ fn test_i8_127() {
     let value = 127i8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8(127);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -191,10 +216,12 @@ fn test_i8_minus_128() {
     let value = -128i8;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8(-128);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -204,10 +231,12 @@ fn test_u16_0() {
     let value = 0u16;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U16(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -217,10 +246,12 @@ fn test_u16_max() {
     let value = u16::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U16(u16::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -230,10 +261,12 @@ fn test_i16_0() {
     let value = 0i16;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -243,10 +276,12 @@ fn test_i16_1() {
     let value = 1i16;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -256,10 +291,12 @@ fn test_i16_minus_1() {
     let value = -1i16;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16(-1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -269,10 +306,12 @@ fn test_i16_max() {
     let value = i16::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16(i16::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -282,10 +321,12 @@ fn test_i16_min() {
     let value = i16::MIN;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16(i16::MIN);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -295,10 +336,12 @@ fn test_u32_0() {
     let value = 0u32;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U32(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -308,10 +351,12 @@ fn test_u32_max() {
     let value = u32::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U32(u32::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -321,10 +366,12 @@ fn test_i32_0() {
     let value = 0i32;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -334,10 +381,12 @@ fn test_i32_1() {
     let value = 1i32;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -347,10 +396,12 @@ fn test_i32_minus_1() {
     let value = -1i32;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32(-1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -360,10 +411,12 @@ fn test_i32_max() {
     let value = i32::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32(i32::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -373,10 +426,12 @@ fn test_i32_min() {
     let value = i32::MIN;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32(i32::MIN);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -386,10 +441,12 @@ fn test_u64_0() {
     let value = 0u64;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U64(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -399,10 +456,12 @@ fn test_u64_max() {
     let value = u64::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U64(u64::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -412,10 +471,12 @@ fn test_i64_0() {
     let value = 0i64;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64(0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -425,10 +486,12 @@ fn test_i64_1() {
     let value = 1i64;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -438,10 +501,12 @@ fn test_i64_minux_1() {
     let value = -1i64;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64(-1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -451,10 +516,12 @@ fn test_i64_max() {
     let value = i64::MAX;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64(i64::MAX);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -464,10 +531,12 @@ fn test_i64_min() {
     let value = i64::MIN;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64(i64::MIN);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -477,10 +546,12 @@ fn test_f32_0() {
     let value = 0f32;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::F32(0.0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -490,10 +561,12 @@ fn test_f32_pi() {
     let value = f32::consts::PI;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::F32(f32::consts::PI);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -503,10 +576,12 @@ fn test_f64_0() {
     let value = 0f64;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::F64(0.0);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -516,10 +591,12 @@ fn test_f64_pi() {
     let value = f64::consts::PI;
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::F64(f64::consts::PI);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -529,10 +606,12 @@ fn test_string_1() {
     let value = "abcd".to_owned();
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::String("abcd".to_owned());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -542,10 +621,12 @@ fn test_string_2() {
     let value = "äöü".to_owned();
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::String("äöü".to_owned());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -555,10 +636,12 @@ fn test_string_empty() {
     let value = String::new();
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::String(String::new());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -566,6 +649,7 @@ fn test_str() {
     let value = "abcd";
     let serialized = [13, 4, b'a', b'b', b'c', b'd'];
     assert_serialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq_with::<_, String>(&value);
 }
 
 #[test]
@@ -578,10 +662,12 @@ fn test_uuid() {
     let value = uuid!("01234567-89ab-cdef-0246-8ace13579bdf");
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Uuid(uuid!("01234567-89ab-cdef-0246-8ace13579bdf"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -591,10 +677,12 @@ fn test_vec_1() {
     let value = vec![7u8, 8];
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Vec(vec![Value::U8(7), Value::U8(8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -603,6 +691,7 @@ fn test_vec_2() {
     let value = Value::Vec(vec![Value::None, Value::U8(4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -611,6 +700,7 @@ fn test_vec_deque() {
     let value = VecDeque::from_iter([7u8, 8]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -619,6 +709,7 @@ fn test_linked_list() {
     let value = LinkedList::from_iter([7u8, 8]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -626,6 +717,7 @@ fn test_slice() {
     let serialized = [17, 2, 3, 7, 3, 8];
     let value = [7u8, 8];
     assert_serialize_eq(&value[..], serialized);
+    assert_as_serialize_arg_eq_with::<_, Vec<_>>(&value[..]);
 }
 
 #[test]
@@ -634,6 +726,7 @@ fn test_array() {
     let value = [7u8, 8];
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -643,10 +736,12 @@ fn test_bytes() {
     let value = Bytes::new([1, 2, 3]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::Bytes(Vec::from([1, 2, 3]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -655,6 +750,7 @@ fn test_ext_bytes() {
     let value = bytes::Bytes::from_iter([1, 2, 3]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -663,13 +759,15 @@ fn test_ext_bytes_mut() {
     let value = bytes::BytesMut::from_iter([1, 2, 3]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
 fn test_byte_slice() {
     let serialized = [18, 3, 1, 2, 3];
     let value = ByteSlice::new(&[1, 2, 3]);
-    assert_serialize_eq(&value, serialized);
+    assert_serialize_eq(value, serialized);
+    assert_as_serialize_arg_eq_with::<_, Bytes>(value);
 }
 
 #[test]
@@ -721,6 +819,7 @@ fn test_u8_hash_map() {
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U8Map(HashMap::from_iter([(0, Value::U8(1)), (2, Value::U8(3))]));
     let mut buf = bytes::BytesMut::new();
@@ -730,6 +829,7 @@ fn test_u8_hash_map() {
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -738,6 +838,7 @@ fn test_u8_btree_map() {
     let value = BTreeMap::<u8, u8>::from_iter([(0, 1), (2, 3)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -747,10 +848,12 @@ fn test_i8_hash_map() {
     let value = HashMap::<i8, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -759,6 +862,7 @@ fn test_i8_btree_map() {
     let value = BTreeMap::from_iter([(2i8, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -768,10 +872,12 @@ fn test_u16_hash_map() {
     let value = HashMap::<u16, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U16Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -780,6 +886,7 @@ fn test_u16_btree_map() {
     let value = BTreeMap::from_iter([(2u16, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -789,10 +896,12 @@ fn test_i16_hash_map() {
     let value = HashMap::<i16, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -801,6 +910,7 @@ fn test_i16_btree_map() {
     let value = BTreeMap::from_iter([(2i16, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -810,10 +920,12 @@ fn test_u32_hash_map() {
     let value = HashMap::<u32, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U32Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -822,6 +934,7 @@ fn test_u32_btree_map() {
     let value = BTreeMap::from_iter([(2u32, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -831,10 +944,12 @@ fn test_i32_hash_map() {
     let value = HashMap::<i32, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -843,6 +958,7 @@ fn test_i32_btree_map() {
     let value = BTreeMap::from_iter([(2i32, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -852,10 +968,12 @@ fn test_u64_hash_map() {
     let value = HashMap::<u64, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U64Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -864,6 +982,7 @@ fn test_u64_btree_map() {
     let value = BTreeMap::from_iter([(2u64, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -873,10 +992,12 @@ fn test_i64_hash_map() {
     let value = HashMap::<i64, u8>::from_iter([(2, 4)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64Map(HashMap::from_iter([(2, Value::U8(4))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -885,6 +1006,7 @@ fn test_i64_btree_map() {
     let value = BTreeMap::from_iter([(2i64, 4u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -894,10 +1016,12 @@ fn test_string_hash_map() {
     let value = HashMap::<String, u16>::from_iter([("34".to_owned(), 6)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::StringMap(HashMap::from_iter([("34".to_owned(), Value::U16(6))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -905,6 +1029,7 @@ fn test_str_hash_map() {
     let serialized = [27, 1, 2, b'3', b'4', 5, 6];
     let value = HashMap::<&str, u16>::from_iter([("34", 6)]);
     assert_serialize_eq(&value, serialized);
+    assert_as_serialize_arg_with::<_, HashMap<String, u16>>(&value);
 }
 
 #[test]
@@ -913,6 +1038,7 @@ fn test_string_btree_map() {
     let value = BTreeMap::from_iter([("34".to_owned(), 6u16)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -920,6 +1046,7 @@ fn test_str_btree_map() {
     let serialized = [27, 1, 2, b'3', b'4', 5, 6];
     let value = BTreeMap::from_iter([("34", 6u16)]);
     assert_serialize_eq(&value, serialized);
+    assert_as_serialize_arg_with::<_, BTreeMap<String, u16>>(&value);
 }
 
 #[test]
@@ -933,10 +1060,12 @@ fn test_uuid_hash_map() {
     let value = HashMap::<_, _>::from_iter([(uuid, 0u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::UuidMap(HashMap::<_, _>::from_iter([(uuid, Value::U8(0))]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -950,6 +1079,7 @@ fn test_uuid_btree_map() {
     let value = BTreeMap::from_iter([(uuid, 0u8)]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -965,6 +1095,7 @@ fn test_u8_hash_set() {
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U8Set(value);
     let mut buf = bytes::BytesMut::new();
@@ -974,6 +1105,7 @@ fn test_u8_hash_set() {
     assert!((buf[..] == serialized1) || (buf[..] == serialized2));
     assert_deserialize_eq(&value, serialized1);
     assert_deserialize_eq(&value, serialized2);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -982,6 +1114,7 @@ fn test_u8_btree_set() {
     let value = BTreeSet::from_iter([4u8, 3]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -991,10 +1124,12 @@ fn test_i8_hash_set() {
     let value = HashSet::<_>::from_iter([2i8]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I8Set(HashSet::from_iter([2]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1003,6 +1138,7 @@ fn test_i8_btree_set() {
     let value = BTreeSet::from_iter([2i8]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1012,10 +1148,12 @@ fn test_u16_hash_set() {
     let value = HashSet::<_>::from_iter([2u16]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U16Set(HashSet::from_iter([2]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1024,6 +1162,7 @@ fn test_u16_btree_set() {
     let value = BTreeSet::from_iter([2u16]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1033,10 +1172,12 @@ fn test_i16_hash_set() {
     let value = HashSet::<_>::from_iter([1i16]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I16Set(HashSet::from_iter([1]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1045,6 +1186,7 @@ fn test_i16_btree_set() {
     let value = BTreeSet::from_iter([1i16]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1054,10 +1196,12 @@ fn test_u32_hash_set() {
     let value = HashSet::<_>::from_iter([2u32]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U32Set(HashSet::from_iter([2]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1066,6 +1210,7 @@ fn test_u32_btree_set() {
     let value = BTreeSet::from_iter([2u32]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1075,10 +1220,12 @@ fn test_i32_hash_set() {
     let value = HashSet::<_>::from_iter([1i32]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I32Set(HashSet::from_iter([1]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1087,6 +1234,7 @@ fn test_i32_btree_set() {
     let value = BTreeSet::from_iter([1i32]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1096,10 +1244,12 @@ fn test_u64_hash_set() {
     let value = HashSet::<_>::from_iter([2u64]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::U64Set(HashSet::from_iter([2]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1108,6 +1258,7 @@ fn test_u64_btree_set() {
     let value = BTreeSet::from_iter([2u64]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1117,10 +1268,12 @@ fn test_i64_hash_set() {
     let value = HashSet::<_>::from_iter([1i64]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::I64Set(HashSet::from_iter([1]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1129,6 +1282,7 @@ fn test_i64_btree_set() {
     let value = BTreeSet::from_iter([1i64]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1138,10 +1292,12 @@ fn test_string_hash_set() {
     let value = HashSet::<_>::from_iter(["34".to_owned()]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::StringSet(HashSet::from_iter(["34".to_owned()]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1149,6 +1305,7 @@ fn test_str_hash_set() {
     let serialized = [37, 1, 2, b'3', b'4'];
     let value = HashSet::<_>::from_iter(["34"]);
     assert_serialize_eq(&value, serialized);
+    assert_as_serialize_arg_with::<_, HashSet<String>>(&value);
 }
 
 #[test]
@@ -1157,6 +1314,7 @@ fn test_string_btree_set() {
     let value = BTreeSet::from_iter(["34".to_owned()]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1164,6 +1322,7 @@ fn test_str_btree_set() {
     let serialized = [37, 1, 2, b'3', b'4'];
     let value = BTreeSet::from_iter(["34"]);
     assert_serialize_eq(&value, serialized);
+    assert_as_serialize_arg_with::<_, BTreeSet<String>>(&value);
 }
 
 #[test]
@@ -1177,10 +1336,12 @@ fn test_uuid_hash_set() {
     let value = HashSet::<_>::from_iter([uuid]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::UuidSet(HashSet::<_>::from_iter([uuid]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1194,6 +1355,7 @@ fn test_uuid_btree_set() {
     let value = BTreeSet::from_iter([uuid]);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1262,6 +1424,7 @@ fn test_struct_3() {
     let value = Value::Struct(Struct(HashMap::from_iter([(0, Value::U8(4))])));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1273,6 +1436,7 @@ fn test_struct_4() {
     )])));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1281,6 +1445,7 @@ fn test_struct_5() {
     let value = Value::Struct(Struct(HashMap::from_iter([(0, Value::None)])));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1320,6 +1485,7 @@ fn test_enum_1() {
     let value = Value::Enum(Box::new(Enum::new(0, Value::U8(4))));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1333,6 +1499,7 @@ fn test_enum_2() {
     let value = Value::Enum(Box::new(Enum::new(1, Value::None)));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1349,6 +1516,7 @@ fn test_enum_3() {
     )));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1361,6 +1529,7 @@ fn test_sender() {
     let value = Value::Sender(channel_cookie);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1373,6 +1542,7 @@ fn test_receiver() {
     let value = Value::Receiver(channel_cookie);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1389,10 +1559,12 @@ fn test_object_id() {
     );
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::ObjectId(value);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1415,10 +1587,12 @@ fn test_service_id() {
     );
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let value = Value::ServiceId(value);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1431,6 +1605,7 @@ fn test_object_uuid() {
     let value = ObjectUuid(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1443,6 +1618,7 @@ fn test_object_cookie() {
     let value = ObjectCookie(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1455,6 +1631,7 @@ fn test_service_uuid() {
     let value = ServiceUuid(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1467,6 +1644,7 @@ fn test_service_cookie() {
     let value = ServiceCookie(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1479,6 +1657,7 @@ fn test_channel_cookie() {
     let value = ChannelCookie(uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29"));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1487,11 +1666,13 @@ fn test_cow() {
     let value = Cow::Borrowed("abcd");
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 
     let serialized = [13, 4, b'a', b'b', b'c', b'd'];
     let value = Cow::<str>::Owned("abcd".to_string());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1500,6 +1681,7 @@ fn test_cow_bytes_owned() {
     let value = Cow::<ByteSlice>::Owned(vec![1, 2, 3].into());
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1508,6 +1690,7 @@ fn test_cow_bytes_borrowed() {
     let value = Cow::Borrowed(ByteSlice::new(&[1, 2, 3]));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1543,6 +1726,7 @@ fn test_result_ok() {
     let value = Result::<u8, u8>::Ok(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    let _ = assert_as_serialize_arg_eq(&value);
 }
 
 #[test]
@@ -1551,6 +1735,7 @@ fn test_result_err() {
     let value = Result::<u8, u8>::Err(1);
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
+    let _ = assert_as_serialize_arg_eq(&value);
 }
 
 #[test]

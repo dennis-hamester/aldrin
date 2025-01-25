@@ -149,7 +149,7 @@ impl Deserialize for Bytes {
 }
 
 impl AsSerializeArg for Bytes {
-    type SerializeArg<'a> = &'a [u8];
+    type SerializeArg<'a> = &'a ByteSlice;
 
     fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
     where
@@ -244,7 +244,7 @@ impl Serialize for ByteSlice {
 }
 
 impl AsSerializeArg for ByteSlice {
-    type SerializeArg<'a> = &'a [u8];
+    type SerializeArg<'a> = &'a Self;
 
     fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
     where
@@ -1236,13 +1236,13 @@ impl Deserialize for bytes::Bytes {
 }
 
 impl AsSerializeArg for bytes::Bytes {
-    type SerializeArg<'a> = &'a [u8];
+    type SerializeArg<'a> = &'a ByteSlice;
 
     fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
     where
         Self: 'a,
     {
-        self
+        ByteSlice::new(self)
     }
 }
 
@@ -1274,13 +1274,13 @@ impl Deserialize for bytes::BytesMut {
 }
 
 impl AsSerializeArg for bytes::BytesMut {
-    type SerializeArg<'a> = &'a [u8];
+    type SerializeArg<'a> = &'a ByteSlice;
 
     fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
     where
         Self: 'a,
     {
-        self
+        ByteSlice::new(self)
     }
 }
 
