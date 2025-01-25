@@ -72,6 +72,11 @@ pub enum ValueKind {
 
 /// Wrapper for `Vec<u8>` to enable `Serialize` and `Deserialize` specializations.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct Bytes(pub Vec<u8>);
 
 impl Bytes {
