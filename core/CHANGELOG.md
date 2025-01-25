@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `Default` for `SerializedValue`.
 - Add `SerializedValue::take()`.
+- Add the module `test` with the functions `assert_as_serialize_arg()`,
+  `assert_as_serialize_arg_with()`, `assert_as_serialize_arg_eq()` and
+  `assert_as_serialize_arg_eq_with()`, which can be used to assert that the `AsSerializeArg` and
+  `Deserialize` impls on a type or pair of types match correctly.
 
 ## [0.11.0] - 2025-01-07
 

@@ -24,6 +24,7 @@ pub mod channel;
 #[cfg(feature = "introspection")]
 pub mod introspection;
 pub mod message;
+pub mod test;
 #[cfg(feature = "tokio")]
 pub mod tokio;
 pub mod transport;
