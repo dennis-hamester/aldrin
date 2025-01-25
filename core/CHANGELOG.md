@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Deserialize` impls on a type or pair of types match correctly.
 - Implement `serde::Serialize` and `Deserialize` for `Bytes`.
 - Implement `arbitrary::Arbitrary` for `Bytes`.
+- Add `Serializer::serialize()`.
 
 ### Fixed
 

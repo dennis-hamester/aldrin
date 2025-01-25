@@ -54,6 +54,10 @@ impl<'a> Serializer<'a> {
         self.buf.extend_from_slice(value);
     }
 
+    pub fn serialize<T: Serialize + ?Sized>(self, value: &T) -> Result<(), SerializeError> {
+        value.serialize(self)
+    }
+
     pub fn serialize_none(self) {
         self.buf.put_discriminant_u8(ValueKind::None);
     }
