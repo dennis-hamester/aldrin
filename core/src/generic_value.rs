@@ -2,7 +2,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 #[cfg(feature = "introspection")]
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
-use crate::value::{ByteSlice, ValueKind};
+use crate::value::{ByteSlice, Bytes, ValueKind};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
@@ -172,71 +172,49 @@ impl Serialize for Value {
 impl Deserialize for Value {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         match deserializer.peek_value_kind()? {
-            ValueKind::None => deserializer.deserialize_none().map(|_| Self::None),
+            ValueKind::None => deserializer.deserialize_none().map(|()| Self::None),
             ValueKind::Some => deserializer.deserialize_some().map(Self::Some),
-            ValueKind::Bool => deserializer.deserialize_bool().map(Self::Bool),
-            ValueKind::U8 => deserializer.deserialize_u8().map(Self::U8),
-            ValueKind::I8 => deserializer.deserialize_i8().map(Self::I8),
-            ValueKind::U16 => deserializer.deserialize_u16().map(Self::U16),
-            ValueKind::I16 => deserializer.deserialize_i16().map(Self::I16),
-            ValueKind::U32 => deserializer.deserialize_u32().map(Self::U32),
-            ValueKind::I32 => deserializer.deserialize_i32().map(Self::I32),
-            ValueKind::U64 => deserializer.deserialize_u64().map(Self::U64),
-            ValueKind::I64 => deserializer.deserialize_i64().map(Self::I64),
-            ValueKind::F32 => deserializer.deserialize_f32().map(Self::F32),
-            ValueKind::F64 => deserializer.deserialize_f64().map(Self::F64),
-            ValueKind::String => deserializer.deserialize_string().map(Self::String),
-            ValueKind::Uuid => deserializer.deserialize_uuid().map(Self::Uuid),
-            ValueKind::ObjectId => deserializer.deserialize_object_id().map(Self::ObjectId),
-            ValueKind::ServiceId => deserializer.deserialize_service_id().map(Self::ServiceId),
-            ValueKind::Vec => deserializer.deserialize_vec_extend_new().map(Self::Vec),
-            ValueKind::Bytes => deserializer.deserialize_bytes_to_vec().map(Self::Bytes),
-            ValueKind::U8Map => deserializer.deserialize_map_extend_new().map(Self::U8Map),
-            ValueKind::I8Map => deserializer.deserialize_map_extend_new().map(Self::I8Map),
-            ValueKind::U16Map => deserializer.deserialize_map_extend_new().map(Self::U16Map),
-            ValueKind::I16Map => deserializer.deserialize_map_extend_new().map(Self::I16Map),
-            ValueKind::U32Map => deserializer.deserialize_map_extend_new().map(Self::U32Map),
-            ValueKind::I32Map => deserializer.deserialize_map_extend_new().map(Self::I32Map),
-            ValueKind::U64Map => deserializer.deserialize_map_extend_new().map(Self::U64Map),
-            ValueKind::I64Map => deserializer.deserialize_map_extend_new().map(Self::I64Map),
-            ValueKind::StringMap => deserializer
-                .deserialize_map_extend_new()
-                .map(Self::StringMap),
-            ValueKind::UuidMap => deserializer.deserialize_map_extend_new().map(Self::UuidMap),
-            ValueKind::U8Set => deserializer
-                .deserialize_set_extend_new::<u8, _>()
-                .map(Self::U8Set),
-            ValueKind::I8Set => deserializer
-                .deserialize_set_extend_new::<i8, _>()
-                .map(Self::I8Set),
-            ValueKind::U16Set => deserializer
-                .deserialize_set_extend_new::<u16, _>()
-                .map(Self::U16Set),
-            ValueKind::I16Set => deserializer
-                .deserialize_set_extend_new::<i16, _>()
-                .map(Self::I16Set),
-            ValueKind::U32Set => deserializer
-                .deserialize_set_extend_new::<u32, _>()
-                .map(Self::U32Set),
-            ValueKind::I32Set => deserializer
-                .deserialize_set_extend_new::<i32, _>()
-                .map(Self::I32Set),
-            ValueKind::U64Set => deserializer
-                .deserialize_set_extend_new::<u64, _>()
-                .map(Self::U64Set),
-            ValueKind::I64Set => deserializer
-                .deserialize_set_extend_new::<i64, _>()
-                .map(Self::I64Set),
-            ValueKind::StringSet => deserializer
-                .deserialize_set_extend_new()
-                .map(Self::StringSet),
-            ValueKind::UuidSet => deserializer
-                .deserialize_set_extend_new::<Uuid, _>()
-                .map(Self::UuidSet),
-            ValueKind::Struct => Struct::deserialize(deserializer).map(Self::Struct),
-            ValueKind::Enum => Enum::deserialize(deserializer)
-                .map(Box::new)
-                .map(Self::Enum),
+            ValueKind::Bool => deserializer.deserialize().map(Self::Bool),
+            ValueKind::U8 => deserializer.deserialize().map(Self::U8),
+            ValueKind::I8 => deserializer.deserialize().map(Self::I8),
+            ValueKind::U16 => deserializer.deserialize().map(Self::U16),
+            ValueKind::I16 => deserializer.deserialize().map(Self::I16),
+            ValueKind::U32 => deserializer.deserialize().map(Self::U32),
+            ValueKind::I32 => deserializer.deserialize().map(Self::I32),
+            ValueKind::U64 => deserializer.deserialize().map(Self::U64),
+            ValueKind::I64 => deserializer.deserialize().map(Self::I64),
+            ValueKind::F32 => deserializer.deserialize().map(Self::F32),
+            ValueKind::F64 => deserializer.deserialize().map(Self::F64),
+            ValueKind::String => deserializer.deserialize().map(Self::String),
+            ValueKind::Uuid => deserializer.deserialize().map(Self::Uuid),
+            ValueKind::ObjectId => deserializer.deserialize().map(Self::ObjectId),
+            ValueKind::ServiceId => deserializer.deserialize().map(Self::ServiceId),
+            ValueKind::Vec => deserializer.deserialize().map(Self::Vec),
+            ValueKind::Bytes => deserializer
+                .deserialize::<Bytes>()
+                .map(|b| Self::Bytes(b.0)),
+            ValueKind::U8Map => deserializer.deserialize().map(Self::U8Map),
+            ValueKind::I8Map => deserializer.deserialize().map(Self::I8Map),
+            ValueKind::U16Map => deserializer.deserialize().map(Self::U16Map),
+            ValueKind::I16Map => deserializer.deserialize().map(Self::I16Map),
+            ValueKind::U32Map => deserializer.deserialize().map(Self::U32Map),
+            ValueKind::I32Map => deserializer.deserialize().map(Self::I32Map),
+            ValueKind::U64Map => deserializer.deserialize().map(Self::U64Map),
+            ValueKind::I64Map => deserializer.deserialize().map(Self::I64Map),
+            ValueKind::StringMap => deserializer.deserialize().map(Self::StringMap),
+            ValueKind::UuidMap => deserializer.deserialize().map(Self::UuidMap),
+            ValueKind::U8Set => deserializer.deserialize().map(Self::U8Set),
+            ValueKind::I8Set => deserializer.deserialize().map(Self::I8Set),
+            ValueKind::U16Set => deserializer.deserialize().map(Self::U16Set),
+            ValueKind::I16Set => deserializer.deserialize().map(Self::I16Set),
+            ValueKind::U32Set => deserializer.deserialize().map(Self::U32Set),
+            ValueKind::I32Set => deserializer.deserialize().map(Self::I32Set),
+            ValueKind::U64Set => deserializer.deserialize().map(Self::U64Set),
+            ValueKind::I64Set => deserializer.deserialize().map(Self::I64Set),
+            ValueKind::StringSet => deserializer.deserialize().map(Self::StringSet),
+            ValueKind::UuidSet => deserializer.deserialize().map(Self::UuidSet),
+            ValueKind::Struct => deserializer.deserialize().map(Self::Struct),
+            ValueKind::Enum => deserializer.deserialize().map(Self::Enum),
             ValueKind::Sender => deserializer.deserialize_sender().map(Self::Sender),
             ValueKind::Receiver => deserializer.deserialize_receiver().map(Self::Receiver),
         }

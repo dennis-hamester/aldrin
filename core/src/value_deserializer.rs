@@ -134,6 +134,10 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         }
     }
 
+    pub fn deserialize<T: Deserialize>(self) -> Result<T, DeserializeError> {
+        T::deserialize(self)
+    }
+
     pub fn deserialize_none(self) -> Result<(), DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::None)
     }
