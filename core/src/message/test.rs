@@ -4,6 +4,7 @@ use crate::value_deserializer::Deserialize;
 use bytes::BytesMut;
 use std::fmt::Debug;
 
+#[track_caller]
 pub fn assert_serialize_eq<T, B>(msg: &T, expected: B)
 where
     T: MessageOps + Clone + Debug,
@@ -20,6 +21,7 @@ where
     );
 }
 
+#[track_caller]
 pub fn assert_deserialize_eq<T, B>(expected: &T, serialized: B) -> T
 where
     T: MessageOps + PartialEq + Debug,
@@ -32,6 +34,7 @@ where
     deserialized
 }
 
+#[track_caller]
 pub fn assert_deserialize_eq_with_value<T, B, V>(expected: &T, serialized: B, value: &V)
 where
     T: MessageOps + PartialEq + Debug,

@@ -14,11 +14,13 @@ use std::fmt::Debug;
 use std::{f32, f64};
 use uuid::uuid;
 
+#[track_caller]
 fn assert_serialize_eq<T: Serialize + ?Sized, B: AsRef<[u8]>>(value: &T, expected: B) {
     let serialized_value = SerializedValue::serialize(value).unwrap();
     assert_eq!(serialized_value, *expected.as_ref());
 }
 
+#[track_caller]
 fn assert_deserialize_eq<T: Deserialize + PartialEq + Debug, B: AsRef<[u8]>>(
     expected: &T,
     serialized: B,
