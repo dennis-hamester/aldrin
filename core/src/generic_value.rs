@@ -2,7 +2,7 @@ use crate::error::{DeserializeError, SerializeError};
 use crate::ids::{ChannelCookie, ObjectId, ServiceId};
 #[cfg(feature = "introspection")]
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
-use crate::value::{ByteSlice, Bytes, ValueKind};
+use crate::value::{Bytes, ValueKind};
 use crate::value_deserializer::{Deserialize, Deserializer};
 use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
@@ -36,7 +36,7 @@ pub enum Value {
     ObjectId(ObjectId),
     ServiceId(ServiceId),
     Vec(Vec<Value>),
-    Bytes(Vec<u8>),
+    Bytes(Bytes),
     U8Map(HashMap<u8, Value>),
     I8Map(HashMap<i8, Value>),
     U16Map(HashMap<u16, Value>),
@@ -138,7 +138,7 @@ impl Serialize for Value {
             Self::ObjectId(value) => serializer.serialize(value)?,
             Self::ServiceId(value) => serializer.serialize(value)?,
             Self::Vec(value) => serializer.serialize(value)?,
-            Self::Bytes(value) => serializer.serialize(ByteSlice::new(value))?,
+            Self::Bytes(value) => serializer.serialize(value)?,
             Self::U8Map(value) => serializer.serialize(value)?,
             Self::I8Map(value) => serializer.serialize(value)?,
             Self::U16Map(value) => serializer.serialize(value)?,
@@ -190,9 +190,7 @@ impl Deserialize for Value {
             ValueKind::ObjectId => deserializer.deserialize().map(Self::ObjectId),
             ValueKind::ServiceId => deserializer.deserialize().map(Self::ServiceId),
             ValueKind::Vec => deserializer.deserialize().map(Self::Vec),
-            ValueKind::Bytes => deserializer
-                .deserialize::<Bytes>()
-                .map(|b| Self::Bytes(b.0)),
+            ValueKind::Bytes => deserializer.deserialize().map(Self::Bytes),
             ValueKind::U8Map => deserializer.deserialize().map(Self::U8Map),
             ValueKind::I8Map => deserializer.deserialize().map(Self::I8Map),
             ValueKind::U16Map => deserializer.deserialize().map(Self::U16Map),

@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Serializer::serialize()`.
 - Add `Deserializer::deserialize()`.
 
+### Changed
+
+- `Value::Bytes(_)` now contains a value of type `Bytes` instead of `Vec<u8>`.
+
 ### Fixed
 
 - The `AsSerializeArg` impls for `Bytes`, `ByteSlice`, `bytes::Bytes` and `bytes::BytesMut` now all

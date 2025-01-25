@@ -738,7 +738,7 @@ fn test_bytes() {
     assert_deserialize_eq(&value, serialized);
     assert_as_serialize_arg_eq(&value);
 
-    let value = Value::Bytes(Vec::from([1, 2, 3]));
+    let value = Value::Bytes(Bytes(Vec::from([1, 2, 3])));
     assert_serialize_eq(&value, serialized);
     assert_deserialize_eq(&value, serialized);
     assert_as_serialize_arg_eq(&value);
