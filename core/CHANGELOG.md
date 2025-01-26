@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add new protocol version 1.19.
 - Implement `Default` for `SerializedValue`.
 - Add `SerializedValue::take()`.
 - Add the module `test` with the functions `assert_as_serialize_arg()`,
