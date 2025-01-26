@@ -555,6 +555,7 @@ where
         let req = RawCall {
             serial: msg.serial,
             function: msg.function,
+            version: msg.version,
             timestamp: Instant::now(),
             args: msg.value,
             aborted: abort_recv,

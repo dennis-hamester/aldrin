@@ -87,6 +87,7 @@ impl Service {
                 call.aborted,
                 call.serial,
                 call.function,
+                call.version,
                 call.timestamp,
                 call.args,
             ))),
@@ -134,6 +135,7 @@ impl FusedStream for Service {
 pub(crate) struct RawCall {
     pub serial: u32,
     pub function: u32,
+    pub version: Option<u32>,
     pub timestamp: Instant,
     pub args: SerializedValue,
     pub aborted: Receiver<()>,

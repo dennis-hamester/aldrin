@@ -27,6 +27,11 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
         self.promise.id()
     }
 
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.promise.version()
+    }
+
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
         self.promise.timestamp()

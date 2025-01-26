@@ -15,6 +15,7 @@ use std::time::Instant;
 pub struct Promise {
     client: Option<Handle>,
     id: u32,
+    version: Option<u32>,
     timestamp: Instant,
     aborted: Receiver<()>,
     serial: u32,
@@ -24,6 +25,7 @@ impl Promise {
     pub(crate) fn new(
         client: Handle,
         id: u32,
+        version: Option<u32>,
         timestamp: Instant,
         aborted: Receiver<()>,
         serial: u32,
@@ -31,6 +33,7 @@ impl Promise {
         Self {
             client: Some(client),
             id,
+            version,
             timestamp,
             aborted,
             serial,
@@ -45,6 +48,11 @@ impl Promise {
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.version
     }
 
     /// Returns the timestamp when the call was received.

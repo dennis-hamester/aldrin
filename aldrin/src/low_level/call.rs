@@ -20,12 +20,13 @@ impl Call {
         aborted: Receiver<()>,
         serial: u32,
         id: u32,
+        version: Option<u32>,
         timestamp: Instant,
         args: SerializedValue,
     ) -> Self {
         Self {
             args,
-            promise: Promise::new(client, id, timestamp, aborted, serial),
+            promise: Promise::new(client, id, version, timestamp, aborted, serial),
         }
     }
 
@@ -37,6 +38,11 @@ impl Call {
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
         self.promise.id()
+    }
+
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.promise.version()
     }
 
     /// Returns the timestamp when the call was received.

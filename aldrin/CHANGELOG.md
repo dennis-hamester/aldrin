@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Promise::id()` and `low_level::Promise::id()`.
 - Add `PendingReply::id()`.
 - Add `PendingReply::version()` and `low_level::PendingReply::version()`.
+- Add `Call::version()`, `low_level::Call::version()`, `Promise::version()` and
+  `low_level::Promise::version()`.
 
 ### Changed
 
