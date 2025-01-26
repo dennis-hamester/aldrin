@@ -15,13 +15,13 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
 use crate::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
-    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
-    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
+    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateService2, CreateServiceReply,
+    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
     QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply,
     QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
@@ -425,6 +425,7 @@ impl Broker {
             Message::CreateService(req) => self.create_service(state, id, req)?,
             Message::DestroyService(req) => self.destroy_service(state, id, req)?,
             Message::CallFunction(req) => self.call_function(state, id, req)?,
+            Message::CallFunction2(req) => self.call_function2(state, id, req)?,
             Message::CallFunctionReply(req) => self.call_function_reply(state, id, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
@@ -455,7 +456,6 @@ impl Broker {
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
             Message::SubscribeAllEvents(req) => self.subscribe_all_events(id, req)?,
             Message::UnsubscribeAllEvents(req) => self.unsubscribe_all_events(id, req)?,
-            Message::CallFunction2(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -712,6 +712,40 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunction,
     ) -> Result<(), ()> {
+        let req = CallFunction2 {
+            serial: req.serial,
+            service_cookie: req.service_cookie,
+            function: req.function,
+            version: None,
+            value: req.value,
+        };
+
+        self.call_function_impl(state, id, req)
+    }
+
+    fn call_function2(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CallFunction2,
+    ) -> Result<(), ()> {
+        let Some(conn) = self.conns.get(id) else {
+            return Ok(());
+        };
+
+        if conn.protocol_version() < ProtocolVersion::V1_19 {
+            return Err(());
+        }
+
+        self.call_function_impl(state, id, req)
+    }
+
+    fn call_function_impl(
+        &mut self,
+        state: &mut State,
+        id: &ConnectionId,
+        req: CallFunction2,
+    ) -> Result<(), ()> {
         let Some(conn) = self.conns.get_mut(id) else {
             return Ok(());
         };
@@ -753,16 +787,30 @@ impl Broker {
             .expect("inconsistent state")
             .add_function_call(serial);
 
-        let res = send!(
-            self,
-            callee_conn,
-            CallFunction {
-                serial,
-                service_cookie: req.service_cookie,
-                function: req.function,
-                value: req.value,
-            },
-        );
+        let res = if callee_conn.protocol_version() >= ProtocolVersion::V1_19 {
+            send!(
+                self,
+                callee_conn,
+                CallFunction2 {
+                    serial,
+                    service_cookie: req.service_cookie,
+                    function: req.function,
+                    version: req.version,
+                    value: req.value,
+                }
+            )
+        } else {
+            send!(
+                self,
+                callee_conn,
+                CallFunction {
+                    serial,
+                    service_cookie: req.service_cookie,
+                    function: req.function,
+                    value: req.value,
+                }
+            )
+        };
 
         if res.is_err() {
             state.push_remove_conn(callee_id.clone(), false);
