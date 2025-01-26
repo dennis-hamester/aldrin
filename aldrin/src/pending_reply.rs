@@ -23,6 +23,11 @@ impl<T, E> PendingReply<T, E> {
         }
     }
 
+    /// Returns the pending reply's function id.
+    pub fn id(&self) -> u32 {
+        self.inner.id()
+    }
+
     /// Casts the reply to resolve to different types.
     pub fn cast<T2, E2>(self) -> PendingReply<T2, E2> {
         PendingReply::new(self.inner)

@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Event::as_ref()`, `as_mut()` and `map()`.
 - Add `Reply::as_ref()`, `as_mut()`, `map_args()`, `map()` and `map_err()`.
 - Add `Promise::id()` and `low_level::Promise::id()`.
+- Add `PendingReply::id()`.
 
 ### Changed
 
