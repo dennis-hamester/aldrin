@@ -1,0 +1,27 @@
+{
+    "name": "call-function2-denied",
+    "description": "Connect with version 1.14 and send call-function2",
+    "long-description": "A client connects with protocol version 1.14 and sends call-function2. The broker must disconnect the client.",
+    "message-types": [
+        "call-function2"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "version": "1.14",
+            "sync": false,
+            "shutdown": false
+        },
+        {
+            "type": "send",
+            "message": "call-function2",
+            "serial": 0,
+            "service-cookie": "2e2e91c9-e0f7-4205-858d-d189060d2839",
+            "function": 0,
+            "value-type": "none"
+        },
+        {
+            "type": "connection-closed"
+        }
+    ]
+}
