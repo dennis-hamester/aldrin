@@ -14,19 +14,26 @@ use std::time::Instant;
 pub struct PendingReply {
     recv: Receiver<Result<(CallFunctionResult, Instant), Error>>,
     id: u32,
+    version: Option<u32>,
 }
 
 impl PendingReply {
     pub(crate) fn new(
         recv: Receiver<Result<(CallFunctionResult, Instant), Error>>,
         id: u32,
+        version: Option<u32>,
     ) -> Self {
-        Self { recv, id }
+        Self { recv, id, version }
     }
 
     /// Returns the pending reply's function id.
     pub fn id(&self) -> u32 {
         self.id
+    }
+
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.version
     }
 
     /// Cast the reply to a typed [`PendingReply<T, E>`](HlPendingReply).

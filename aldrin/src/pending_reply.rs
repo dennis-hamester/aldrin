@@ -28,6 +28,11 @@ impl<T, E> PendingReply<T, E> {
         self.inner.id()
     }
 
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.inner.version()
+    }
+
     /// Casts the reply to resolve to different types.
     pub fn cast<T2, E2>(self) -> PendingReply<T2, E2> {
         PendingReply::new(self.inner)

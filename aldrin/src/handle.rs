@@ -247,7 +247,7 @@ impl Handle {
             }
         }
 
-        PendingReply::new(recv, function)
+        PendingReply::new(recv, function, version)
     }
 
     pub(crate) fn function_call_reply(
