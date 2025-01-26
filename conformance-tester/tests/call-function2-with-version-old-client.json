@@ -1,0 +1,69 @@
+{
+    "name": "call-function2-with-version-old-client",
+    "description": "Send call-function2 with a version to a client that doesn't support it",
+    "long-description": "Two clients connect, one with version 1.19 and the other with 1.18. The new client sends call-function2 with a version, which the broker converts to call-function and sends it to the old client.",
+    "version": "1.19",
+    "message-types": [
+        "call-function2"
+    ],
+    "steps": [
+        {
+            "type": "connect",
+            "client": "caller"
+        },
+        {
+            "type": "connect",
+            "client": "callee",
+            "version": "1.18"
+        },
+        {
+            "type": "create-object",
+            "client": "callee",
+            "uuid": "4505d5e4-6c63-4aa2-945a-acacd8ee1074",
+            "cookie": "set:object"
+        },
+        {
+            "type": "create-service",
+            "client": "callee",
+            "object-cookie": "get:object",
+            "service-uuid": "2ffa48d8-d47e-4dda-b039-a319a59f5afd",
+            "service-cookie": "set:service",
+            "version": 1
+        },
+        {
+            "type": "send",
+            "client": "caller",
+            "message": "call-function2",
+            "serial": 0,
+            "service-cookie": "get:service",
+            "function": 0,
+            "version": 1,
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "client": "callee",
+            "message": "call-function",
+            "serial": "set:serial",
+            "service-cookie": "get:service",
+            "function": 0,
+            "value-type": "none"
+        },
+        {
+            "type": "send",
+            "client": "callee",
+            "message": "call-function-reply",
+            "serial": "get:serial",
+            "result": "ok",
+            "value-type": "none"
+        },
+        {
+            "type": "receive",
+            "client": "caller",
+            "message": "call-function-reply",
+            "serial": 0,
+            "result": "ok",
+            "value-type": "none"
+        }
+    ]
+}
