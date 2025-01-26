@@ -3,14 +3,14 @@ use crate::serial_le::SerialLe;
 use crate::uuid_le::UuidLe;
 use aldrin_broker::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
-    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData,
-    ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
-    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect,
+    Connect2, ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult,
+    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateService2, CreateServiceReply,
+    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message as ProtoMessage,
     QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo,
     QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
@@ -94,6 +94,7 @@ pub enum MessageLe {
     SubscribeAllEventsReply(SubscribeAllEventsReplyLe),
     UnsubscribeAllEvents(UnsubscribeAllEventsLe),
     UnsubscribeAllEventsReply(UnsubscribeAllEventsReplyLe),
+    CallFunction2(CallFunction2Le),
 }
 
 impl MessageLe {
@@ -161,6 +162,7 @@ impl MessageLe {
             Self::SubscribeAllEventsReply(msg) => msg.to_core(ctx).into(),
             Self::UnsubscribeAllEvents(msg) => msg.to_core(ctx).into(),
             Self::UnsubscribeAllEventsReply(msg) => msg.to_core(ctx).into(),
+            Self::CallFunction2(msg) => msg.to_core(ctx).into(),
         }
     }
 }
@@ -234,6 +236,7 @@ impl UpdateContext for ProtoMessage {
             Self::SubscribeAllEventsReply(msg) => msg.update_context(ctx),
             Self::UnsubscribeAllEvents(msg) => msg.update_context(ctx),
             Self::UnsubscribeAllEventsReply(msg) => msg.update_context(ctx),
+            Self::CallFunction2(msg) => msg.update_context(ctx),
         }
     }
 }
@@ -2190,5 +2193,33 @@ impl UpdateContext for UnsubscribeAllEventsReply {
     fn update_context(&self, ctx: &mut Context) {
         ctx.add_serial(self.serial);
         self.result.update_context(ctx);
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+pub struct CallFunction2Le {
+    pub serial: SerialLe,
+    pub service_cookie: UuidLe,
+    pub function: u8,
+    pub version: Option<u8>,
+}
+
+impl CallFunction2Le {
+    pub fn to_core(&self, ctx: &Context) -> CallFunction2 {
+        CallFunction2::with_serialize_value(
+            self.serial.get(ctx),
+            ServiceCookie(self.service_cookie.get(ctx)),
+            self.function as u32,
+            self.version.map(|v| v as u32),
+            &(),
+        )
+        .unwrap()
+    }
+}
+
+impl UpdateContext for CallFunction2 {
+    fn update_context(&self, ctx: &mut Context) {
+        ctx.add_serial(self.serial);
+        ctx.add_uuid(self.service_cookie.0);
     }
 }

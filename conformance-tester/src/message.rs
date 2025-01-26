@@ -4,6 +4,7 @@ mod add_channel_capacity;
 mod bus_listener_current_finished;
 mod bus_listener_filter;
 mod call_function;
+mod call_function2;
 mod call_function_reply;
 mod channel_end_claimed;
 mod channel_end_closed;
@@ -75,6 +76,7 @@ pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_current_finished::BusListenerCurrentFinished;
 pub use call_function::CallFunction;
+pub use call_function2::CallFunction2;
 pub use call_function_reply::CallFunctionReply;
 pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
@@ -198,6 +200,7 @@ pub enum Message {
     SubscribeAllEventsReply(SubscribeAllEventsReply),
     UnsubscribeAllEvents(UnsubscribeAllEvents),
     UnsubscribeAllEventsReply(UnsubscribeAllEventsReply),
+    CallFunction2(CallFunction2),
 }
 
 impl Message {
@@ -307,6 +310,7 @@ impl Message {
             Self::UnsubscribeAllEventsReply(msg) => msg
                 .to_core(ctx)
                 .map(ProtoMessage::UnsubscribeAllEventsReply),
+            Self::CallFunction2(msg) => msg.to_core(ctx).map(ProtoMessage::CallFunction2),
         }
     }
 
@@ -442,6 +446,7 @@ impl Message {
             (Self::UnsubscribeAllEventsReply(msg), Self::UnsubscribeAllEventsReply(other)) => {
                 msg.matches(other, ctx)
             }
+            (Self::CallFunction2(msg), Self::CallFunction2(other)) => msg.matches(other, ctx),
             _ => Ok(false),
         }
     }
@@ -610,6 +615,9 @@ impl Message {
             (Self::UnsubscribeAllEventsReply(msg), Self::UnsubscribeAllEventsReply(other)) => {
                 msg.update_context(other, ctx)
             }
+            (Self::CallFunction2(msg), Self::CallFunction2(other)) => {
+                msg.update_context(other, ctx)
+            }
             _ => unreachable!(),
         }
     }
@@ -714,6 +722,7 @@ impl Message {
             Self::UnsubscribeAllEventsReply(msg) => {
                 msg.apply_context(ctx).map(Self::UnsubscribeAllEventsReply)
             }
+            Self::CallFunction2(msg) => msg.apply_context(ctx).map(Self::CallFunction2),
         }
     }
 }
@@ -821,6 +830,7 @@ impl TryFrom<ProtoMessage> for Message {
             ProtoMessage::UnsubscribeAllEventsReply(msg) => {
                 msg.try_into().map(Self::UnsubscribeAllEventsReply)
             }
+            ProtoMessage::CallFunction2(msg) => msg.try_into().map(Self::CallFunction2),
         }
     }
 }

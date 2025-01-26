@@ -418,6 +418,8 @@ where
                 self.msg_unsubscribe_all_events_reply(msg)?
             }
 
+            Message::CallFunction2(_) => todo!(),
+
             Message::Connect(_)
             | Message::ConnectReply(_)
             | Message::CreateObject(_)

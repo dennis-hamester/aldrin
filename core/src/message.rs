@@ -3,6 +3,7 @@ mod add_bus_listener_filter;
 mod add_channel_capacity;
 mod bus_listener_current_finished;
 mod call_function;
+mod call_function2;
 mod call_function_reply;
 mod channel_end_claimed;
 mod channel_end_closed;
@@ -75,6 +76,7 @@ pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_current_finished::BusListenerCurrentFinished;
 pub use call_function::CallFunction;
+pub use call_function2::CallFunction2;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
 pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
@@ -199,6 +201,7 @@ pub enum MessageKind {
     SubscribeAllEventsReply = 59,
     UnsubscribeAllEvents = 60,
     UnsubscribeAllEventsReply = 61,
+    CallFunction2 = 62,
 }
 
 impl MessageKind {
@@ -216,7 +219,8 @@ impl MessageKind {
             | Self::RegisterIntrospection
             | Self::QueryIntrospectionReply
             | Self::CreateService2
-            | Self::QueryServiceInfoReply => true,
+            | Self::QueryServiceInfoReply
+            | Self::CallFunction2 => true,
 
             Self::Shutdown
             | Self::CreateObject
@@ -347,6 +351,7 @@ pub enum Message {
     SubscribeAllEventsReply(SubscribeAllEventsReply),
     UnsubscribeAllEvents(UnsubscribeAllEvents),
     UnsubscribeAllEventsReply(UnsubscribeAllEventsReply),
+    CallFunction2(CallFunction2),
 }
 
 impl MessageOps for Message {
@@ -414,6 +419,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEventsReply(_) => MessageKind::SubscribeAllEventsReply,
             Self::UnsubscribeAllEvents(_) => MessageKind::UnsubscribeAllEvents,
             Self::UnsubscribeAllEventsReply(_) => MessageKind::UnsubscribeAllEventsReply,
+            Self::CallFunction2(_) => MessageKind::CallFunction2,
         }
     }
 
@@ -481,6 +487,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEventsReply(msg) => msg.serialize_message(),
             Self::UnsubscribeAllEvents(msg) => msg.serialize_message(),
             Self::UnsubscribeAllEventsReply(msg) => msg.serialize_message(),
+            Self::CallFunction2(msg) => msg.serialize_message(),
         }
     }
 
@@ -668,6 +675,9 @@ impl MessageOps for Message {
                 UnsubscribeAllEventsReply::deserialize_message(buf)
                     .map(Self::UnsubscribeAllEventsReply)
             }
+            MessageKind::CallFunction2 => {
+                CallFunction2::deserialize_message(buf).map(Self::CallFunction2)
+            }
         }
     }
 
@@ -735,6 +745,7 @@ impl MessageOps for Message {
             Self::SubscribeAllEventsReply(msg) => msg.value(),
             Self::UnsubscribeAllEvents(msg) => msg.value(),
             Self::UnsubscribeAllEventsReply(msg) => msg.value(),
+            Self::CallFunction2(msg) => msg.value(),
         }
     }
 }

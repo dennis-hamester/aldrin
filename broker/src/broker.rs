@@ -455,6 +455,7 @@ impl Broker {
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
             Message::SubscribeAllEvents(req) => self.subscribe_all_events(id, req)?,
             Message::UnsubscribeAllEvents(req) => self.unsubscribe_all_events(id, req)?,
+            Message::CallFunction2(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
