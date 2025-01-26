@@ -131,7 +131,7 @@ async fn abort_function_call() {
         .unwrap();
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
 
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
     let mut promise = svc.next_call().await.unwrap().into_promise();
 
     assert!(!promise.is_aborted());
@@ -157,7 +157,7 @@ async fn reply_aborted_call() {
         .unwrap();
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
 
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
     let mut promise = svc.next_call().await.unwrap().into_promise();
 
     assert!(!promise.is_aborted());

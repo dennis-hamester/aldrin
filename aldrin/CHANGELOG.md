@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support protocol version 1.19.
 - The client now records the timestamp when a call is received. This is available via the new
   functions `timestamp()` methods on `Call`, `low_level::Call`, `Promise` and `low_level::Promise`.
 - Add `Call::into_args_and_promise()`.

@@ -182,9 +182,9 @@ async fn function_calls() {
     assert_eq!(stats.messages_received(), 4);
 
     // Call 2 functions.
-    let reply1 = proxy.call(0, &());
+    let reply1 = proxy.call(0, &(), None);
     let call1 = svc.next_call().await.unwrap();
-    let reply2 = proxy.call(0, &());
+    let reply2 = proxy.call(0, &(), None);
     let call2 = svc.next_call().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 2);

@@ -96,6 +96,7 @@ pub(crate) struct DestroyServiceRequest {
 pub(crate) struct CallFunctionRequest {
     pub service_cookie: ServiceCookie,
     pub function: u32,
+    pub version: Option<u32>,
     pub value: SerializedValue,
     pub reply: oneshot::Sender<Result<(CallFunctionResult, Instant), Error>>,
 }

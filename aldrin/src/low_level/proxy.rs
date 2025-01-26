@@ -78,11 +78,11 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call<Args>(&self, function: u32, args: &Args) -> PendingReply
+    pub fn call<Args>(&self, function: u32, args: &Args, version: Option<u32>) -> PendingReply
     where
         Args: Serialize + ?Sized,
     {
-        self.client.call(self.svc, function, args)
+        self.client.call(self.svc, function, args, version)
     }
 
     /// Subscribes to an event.

@@ -217,7 +217,13 @@ impl Handle {
             }));
     }
 
-    pub(crate) fn call<Args>(&self, id: ServiceId, function: u32, args: &Args) -> PendingReply
+    pub(crate) fn call<Args>(
+        &self,
+        id: ServiceId,
+        function: u32,
+        args: &Args,
+        version: Option<u32>,
+    ) -> PendingReply
     where
         Args: Serialize + ?Sized,
     {
@@ -228,6 +234,7 @@ impl Handle {
                 let req = HandleRequest::CallFunction(CallFunctionRequest {
                     service_cookie: id.cookie,
                     function,
+                    version,
                     value,
                     reply: send,
                 });

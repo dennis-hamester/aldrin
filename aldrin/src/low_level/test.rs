@@ -111,7 +111,7 @@ async fn call_ok() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -134,7 +134,7 @@ async fn call_done() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -157,7 +157,7 @@ async fn call_err() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -180,7 +180,7 @@ async fn call_abort_by_callee() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -202,7 +202,7 @@ async fn call_abort_by_caller() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
     reply.abort();
 
     let call = svc.next_call().await.unwrap();
@@ -226,7 +226,7 @@ async fn call_invalid_function() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -248,7 +248,7 @@ async fn call_invalid_args() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &());
+    let reply = proxy.call(0, &(), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));

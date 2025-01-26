@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support protocol version 1.19.
 - Functions that have only an `ok` part can now be simplified to `fn foo @ 1 = i32`.
 
 ### Changed

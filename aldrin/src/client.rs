@@ -7,23 +7,23 @@ use crate::bus_listener::{BusListener, BusListenerHandle};
 use crate::core::introspection::{DynIntrospectable, Introspection, References};
 use crate::core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
-    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, ClearBusListenerFilters,
-    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData,
-    ConnectResult, CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply,
-    CreateObject, CreateObjectReply, CreateObjectResult, CreateService, CreateService2,
-    CreateServiceReply, CreateServiceResult, DestroyBusListener, DestroyBusListenerReply,
-    DestroyBusListenerResult, DestroyObject, DestroyObjectReply, DestroyObjectResult,
-    DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent, EmitEvent,
-    ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult,
-    QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion,
-    QueryServiceVersionReply, QueryServiceVersionResult, RemoveBusListenerFilter, SendItem,
-    ServiceDestroyed, Shutdown, StartBusListener, StartBusListenerReply, StartBusListenerResult,
-    StopBusListener, StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents,
-    SubscribeAllEventsReply, SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply,
-    SubscribeEventResult, SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync,
-    SyncReply, UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult,
-    UnsubscribeEvent, UnsubscribeService,
+    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
+    Connect2, ConnectData, ConnectResult, CreateBusListener, CreateBusListenerReply, CreateChannel,
+    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
+    CreateService2, CreateServiceReply, CreateServiceResult, DestroyBusListener,
+    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
+    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
+    EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
+    QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult,
+    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
+    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
+    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
+    StopBusListenerResult, SubscribeAllEvents, SubscribeAllEventsReply, SubscribeAllEventsResult,
+    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeService,
+    SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply, UnsubscribeAllEvents,
+    UnsubscribeAllEventsReply, UnsubscribeAllEventsResult, UnsubscribeEvent, UnsubscribeService,
 };
 use crate::core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
@@ -61,7 +61,7 @@ use std::collections::HashMap;
 use std::mem;
 use std::time::Instant;
 
-const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_18;
+const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_19;
 
 /// Aldrin client used to connect to a broker.
 ///
@@ -376,6 +376,7 @@ where
             Message::CreateServiceReply(msg) => self.msg_create_service_reply(msg)?,
             Message::DestroyServiceReply(msg) => self.msg_destroy_service_reply(msg),
             Message::CallFunction(msg) => self.msg_call_function(msg).await?,
+            Message::CallFunction2(msg) => self.msg_call_function2(msg).await?,
             Message::CallFunctionReply(msg) => self.msg_call_function_reply(msg),
             Message::SubscribeEvent(msg) => self.msg_subscribe_event(msg),
             Message::UnsubscribeEvent(msg) => self.msg_unsubscribe_event(msg),
@@ -417,8 +418,6 @@ where
             Message::UnsubscribeAllEventsReply(msg) => {
                 self.msg_unsubscribe_all_events_reply(msg)?
             }
-
-            Message::CallFunction2(_) => todo!(),
 
             Message::Connect(_)
             | Message::ConnectReply(_)
@@ -534,6 +533,18 @@ where
     }
 
     async fn msg_call_function(&mut self, msg: CallFunction) -> Result<(), RunError<T::Error>> {
+        let msg = CallFunction2 {
+            serial: msg.serial,
+            service_cookie: msg.service_cookie,
+            function: msg.function,
+            version: None,
+            value: msg.value,
+        };
+
+        self.msg_call_function2(msg).await
+    }
+
+    async fn msg_call_function2(&mut self, msg: CallFunction2) -> Result<(), RunError<T::Error>> {
         let send = self
             .services
             .get_mut(&msg.service_cookie)
@@ -1367,15 +1378,28 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(req.reply);
 
-        self.t
-            .send_and_flush(CallFunction {
-                serial,
-                service_cookie: req.service_cookie,
-                function: req.function,
-                value: req.value,
-            })
-            .await
-            .map_err(Into::into)
+        if self.protocol_version >= ProtocolVersion::V1_19 {
+            self.t
+                .send_and_flush(CallFunction2 {
+                    serial,
+                    service_cookie: req.service_cookie,
+                    function: req.function,
+                    version: req.version,
+                    value: req.value,
+                })
+                .await
+                .map_err(Into::into)
+        } else {
+            self.t
+                .send_and_flush(CallFunction {
+                    serial,
+                    service_cookie: req.service_cookie,
+                    function: req.function,
+                    value: req.value,
+                })
+                .await
+                .map_err(Into::into)
+        }
     }
 
     async fn req_call_function_reply(
