@@ -7,7 +7,8 @@
     ],
     "steps": [
         {
-            "type": "connect"
+            "type": "connect",
+            "version": "1.14"
         },
         {
             "type": "create-object",

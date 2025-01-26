@@ -11,11 +11,13 @@
     "steps": [
         {
             "type": "connect",
-            "client": "caller"
+            "client": "caller",
+            "version": "1.16"
         },
         {
             "type": "connect",
-            "client": "callee"
+            "client": "callee",
+            "version": "1.16"
         },
         {
             "type": "create-object",
