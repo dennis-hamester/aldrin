@@ -1,10 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::SerializeError;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_serializer::Serialize;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -22,22 +21,6 @@ pub enum ConnectReply {
     Ok(SerializedValue),
     IncompatibleVersion(u32),
     Rejected(SerializedValue),
-}
-
-impl ConnectReply {
-    pub fn ok_with_serialize_value<T: Serialize + ?Sized>(
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self::Ok(value))
-    }
-
-    pub fn rejected_with_serialize_value<T: Serialize + ?Sized>(
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self::Rejected(value))
-    }
 }
 
 impl MessageOps for ConnectReply {
@@ -109,19 +92,20 @@ mod test {
     };
     use super::super::Message;
     use super::ConnectReply;
+    use crate::{tags, SerializedValue};
 
     #[test]
     fn ok() {
         let serialized = [12, 0, 0, 0, 1, 2, 0, 0, 0, 3, 4, 0];
         let value = 4u8;
 
-        let msg = ConnectReply::ok_with_serialize_value(&value).unwrap();
+        let msg = ConnectReply::Ok(SerializedValue::serialize(value).unwrap());
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::ConnectReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 
     #[test]
@@ -142,12 +126,12 @@ mod test {
         let serialized = [12, 0, 0, 0, 1, 2, 0, 0, 0, 3, 4, 2];
         let value = 4u8;
 
-        let msg = ConnectReply::rejected_with_serialize_value(&value).unwrap();
+        let msg = ConnectReply::Rejected(SerializedValue::serialize(value).unwrap());
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::ConnectReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 }

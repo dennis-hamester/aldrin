@@ -1,6 +1,5 @@
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::fmt;
 use uuid::{uuid, Uuid};
@@ -50,17 +49,29 @@ impl KeyType {
     }
 }
 
-impl Serialize for KeyType {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_enum(*self, &())
+impl Tag for KeyType {}
+
+impl PrimaryTag for KeyType {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for KeyType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_unit_enum(self)
     }
 }
 
-impl Deserialize for KeyType {
+impl Serialize<KeyType> for &KeyType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<Self> for KeyType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
         let variant = deserializer.try_variant()?;
-        deserializer.deserialize().map(|()| variant)
+        deserializer.deserialize_unit().map(|()| variant)
     }
 }
 
@@ -126,6 +137,14 @@ impl KeyTypeOf for u64 {
 }
 
 impl KeyTypeOf for i64 {
+    const KEY_TYPE: KeyType = KeyType::I64;
+}
+
+impl KeyTypeOf for usize {
+    const KEY_TYPE: KeyType = KeyType::U64;
+}
+
+impl KeyTypeOf for isize {
     const KEY_TYPE: KeyType = KeyType::I64;
 }
 

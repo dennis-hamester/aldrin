@@ -1,10 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, OptionKind};
-use crate::bus_listener::BusEvent;
-use crate::ids::{BusListenerCookie, ObjectId, ServiceId};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::SerializedValueSlice;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
+};
+use crate::{BusEvent, BusListenerCookie, ObjectId, SerializedValueSlice, ServiceId};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -143,8 +142,7 @@ mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
     use super::EmitBusEvent;
-    use crate::bus_listener::BusEvent;
-    use crate::ids::{BusListenerCookie, ObjectId, ServiceId};
+    use crate::{BusEvent, BusListenerCookie, ObjectId, ServiceId};
     use uuid::uuid;
 
     #[test]

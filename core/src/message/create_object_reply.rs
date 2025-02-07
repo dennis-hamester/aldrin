@@ -1,9 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::ids::ObjectCookie;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::SerializedValueSlice;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
+use crate::{ObjectCookie, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -89,7 +89,7 @@ mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
     use super::{CreateObjectReply, CreateObjectResult};
-    use crate::ids::ObjectCookie;
+    use crate::ObjectCookie;
     use uuid::uuid;
 
     #[test]

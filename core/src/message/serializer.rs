@@ -1,8 +1,7 @@
+use super::{MessageKind, MessageSerializeError};
 use crate::buf_ext::BufMutExt;
-use crate::message::MessageKind;
-use crate::serialized_value::SerializedValue;
+use crate::SerializedValue;
 use bytes::{BufMut, BytesMut};
-use thiserror::Error;
 use uuid::Uuid;
 
 pub(crate) struct MessageSerializer {
@@ -45,7 +44,7 @@ impl MessageSerializer {
     }
 
     pub fn with_none_value(kind: MessageKind) -> Self {
-        Self::with_value(SerializedValue::serialize(&()).unwrap(), kind).unwrap()
+        Self::with_value(SerializedValue::serialize(()).unwrap(), kind).unwrap()
     }
 
     pub fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
@@ -69,13 +68,4 @@ impl MessageSerializer {
             Err(MessageSerializeError::Overflow)
         }
     }
-}
-
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MessageSerializeError {
-    #[error("serialized message overflowed")]
-    Overflow,
-
-    #[error("invalid value")]
-    InvalidValue,
 }

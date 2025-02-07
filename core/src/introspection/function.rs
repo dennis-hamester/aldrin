@@ -1,7 +1,6 @@
 use super::LexicalId;
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -61,21 +60,33 @@ enum FunctionField {
     Err = 4,
 }
 
-impl Serialize for Function {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Function {}
+
+impl PrimaryTag for Function {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Function {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Function> for &Function {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(5)?;
 
-        serializer.serialize_field(FunctionField::Id, &self.id)?;
-        serializer.serialize_field(FunctionField::Name, &self.name)?;
-        serializer.serialize_field(FunctionField::Args, &self.args)?;
-        serializer.serialize_field(FunctionField::Ok, &self.ok)?;
-        serializer.serialize_field(FunctionField::Err, &self.err)?;
+        serializer.serialize::<tags::U32, _>(FunctionField::Id, self.id)?;
+        serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
+        serializer.serialize::<tags::Option<LexicalId>, _>(FunctionField::Args, self.args)?;
+        serializer.serialize::<tags::Option<LexicalId>, _>(FunctionField::Ok, self.ok)?;
+        serializer.serialize::<tags::Option<LexicalId>, _>(FunctionField::Err, self.err)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Function {
+impl Deserialize<Self> for Function {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -85,15 +96,31 @@ impl Deserialize for Function {
         let mut ok = None;
         let mut err = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                FunctionField::Id => id = deserializer.deserialize().map(Some)?,
-                FunctionField::Name => name = deserializer.deserialize().map(Some)?,
-                FunctionField::Args => args = deserializer.deserialize()?,
-                FunctionField::Ok => ok = deserializer.deserialize()?,
-                FunctionField::Err => err = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(FunctionField::Id) => {
+                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                }
+
+                Ok(FunctionField::Name) => {
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(FunctionField::Args) => {
+                    args = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
+                }
+
+                Ok(FunctionField::Ok) => {
+                    ok = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
+                }
+
+                Ok(FunctionField::Err) => {
+                    err = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

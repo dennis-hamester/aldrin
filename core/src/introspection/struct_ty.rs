@@ -1,7 +1,6 @@
 use super::{Field, LexicalId};
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
@@ -51,24 +50,41 @@ enum StructField {
     Fallback = 3,
 }
 
-impl Serialize for Struct {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Struct {}
+
+impl PrimaryTag for Struct {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Struct {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Struct> for &Struct {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 3 + (self.fallback.is_some() as usize);
         let mut serializer = serializer.serialize_struct(num)?;
 
-        serializer.serialize_field(StructField::Schema, &self.schema)?;
-        serializer.serialize_field(StructField::Name, &self.name)?;
-        serializer.serialize_field(StructField::Fields, &self.fields)?;
+        serializer.serialize::<tags::String, _>(StructField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
+
+        serializer
+            .serialize::<tags::Map<tags::U32, Field>, _>(StructField::Fields, &self.fields)?;
 
         if self.fallback.is_some() {
-            serializer.serialize_field(StructField::Fallback, &self.fallback)?;
+            serializer.serialize::<tags::Option<tags::String>, _>(
+                StructField::Fallback,
+                &self.fallback,
+            )?;
         }
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Struct {
+impl Deserialize<Self> for Struct {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -77,14 +93,28 @@ impl Deserialize for Struct {
         let mut fields = None;
         let mut fallback = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                StructField::Schema => schema = deserializer.deserialize().map(Some)?,
-                StructField::Name => name = deserializer.deserialize().map(Some)?,
-                StructField::Fields => fields = deserializer.deserialize().map(Some)?,
-                StructField::Fallback => fallback = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(StructField::Schema) => {
+                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+                Ok(StructField::Name) => {
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(StructField::Fields) => {
+                    fields = deserializer
+                        .deserialize::<tags::Map<tags::U32, Field>, _>()
+                        .map(Some)?
+                }
+
+                Ok(StructField::Fallback) => {
+                    fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

@@ -1,8 +1,8 @@
 use super::{Event, Function, LexicalId};
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::ServiceUuid;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ServiceUuid,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
@@ -81,33 +81,57 @@ enum ServiceField {
     EventFallback = 7,
 }
 
-impl Serialize for Service {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Service {}
+
+impl PrimaryTag for Service {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Service {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Service> for &Service {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 6
             + (self.function_fallback.is_some() as usize)
             + (self.event_fallback.is_some() as usize);
         let mut serializer = serializer.serialize_struct(num)?;
 
-        serializer.serialize_field(ServiceField::Schema, &self.schema)?;
-        serializer.serialize_field(ServiceField::Name, &self.name)?;
-        serializer.serialize_field(ServiceField::Uuid, &self.uuid)?;
-        serializer.serialize_field(ServiceField::Version, &self.version)?;
-        serializer.serialize_field(ServiceField::Functions, &self.functions)?;
-        serializer.serialize_field(ServiceField::Events, &self.events)?;
+        serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
+        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, self.uuid)?;
+        serializer.serialize::<tags::U32, _>(ServiceField::Version, self.version)?;
+
+        serializer.serialize::<tags::Map<tags::U32, Function>, _>(
+            ServiceField::Functions,
+            &self.functions,
+        )?;
+
+        serializer
+            .serialize::<tags::Map<tags::U32, Event>, _>(ServiceField::Events, &self.events)?;
 
         if self.function_fallback.is_some() {
-            serializer.serialize_field(ServiceField::FunctionFallback, &self.function_fallback)?;
+            serializer.serialize::<tags::Option<tags::String>, _>(
+                ServiceField::FunctionFallback,
+                &self.function_fallback,
+            )?;
         }
 
         if self.event_fallback.is_some() {
-            serializer.serialize_field(ServiceField::EventFallback, &self.event_fallback)?;
+            serializer.serialize::<tags::Option<tags::String>, _>(
+                ServiceField::EventFallback,
+                &self.event_fallback,
+            )?;
         }
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Service {
+impl Deserialize<Self> for Service {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -120,18 +144,48 @@ impl Deserialize for Service {
         let mut function_fallback = None;
         let mut event_fallback = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                ServiceField::Schema => schema = deserializer.deserialize().map(Some)?,
-                ServiceField::Name => name = deserializer.deserialize().map(Some)?,
-                ServiceField::Uuid => uuid = deserializer.deserialize().map(Some)?,
-                ServiceField::Version => version = deserializer.deserialize().map(Some)?,
-                ServiceField::Functions => functions = deserializer.deserialize().map(Some)?,
-                ServiceField::Events => events = deserializer.deserialize().map(Some)?,
-                ServiceField::FunctionFallback => function_fallback = deserializer.deserialize()?,
-                ServiceField::EventFallback => event_fallback = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(ServiceField::Schema) => {
+                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(ServiceField::Name) => {
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(ServiceField::Uuid) => {
+                    uuid = deserializer.deserialize::<ServiceUuid, _>().map(Some)?
+                }
+
+                Ok(ServiceField::Version) => {
+                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                }
+
+                Ok(ServiceField::Functions) => {
+                    functions = deserializer
+                        .deserialize::<tags::Map<tags::U32, Function>, _>()
+                        .map(Some)?
+                }
+
+                Ok(ServiceField::Events) => {
+                    events = deserializer
+                        .deserialize::<tags::Map<tags::U32, Event>, _>()
+                        .map(Some)?
+                }
+
+                Ok(ServiceField::FunctionFallback) => {
+                    function_fallback =
+                        deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                }
+
+                Ok(ServiceField::EventFallback) => {
+                    event_fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

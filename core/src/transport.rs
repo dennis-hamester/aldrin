@@ -1,11 +1,10 @@
 use crate::message::Message;
 use pin_project_lite::pin_project;
-use std::fmt;
 use std::future::Future;
-use std::mem;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{fmt, mem};
 
 /// Boxed [`AsyncTransport`] type returned by [`AsyncTransportExt::boxed`].
 pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;

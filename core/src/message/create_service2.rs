@@ -1,11 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::{ObjectCookie, ServiceUuid};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::service_info::ServiceInfo;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{ObjectCookie, SerializedValue, SerializedValueSlice, ServiceUuid};
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,28 +13,6 @@ pub struct CreateService2 {
     pub object_cookie: ObjectCookie,
     pub uuid: ServiceUuid,
     pub value: SerializedValue,
-}
-
-impl CreateService2 {
-    pub fn with_serialize_info(
-        serial: u32,
-        object_cookie: ObjectCookie,
-        uuid: ServiceUuid,
-        info: ServiceInfo,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(&info)?;
-
-        Ok(Self {
-            serial,
-            object_cookie,
-            uuid,
-            value,
-        })
-    }
-
-    pub fn deserialize_info(&self) -> Result<ServiceInfo, DeserializeError> {
-        self.value.deserialize()
-    }
 }
 
 impl MessageOps for CreateService2 {
@@ -86,11 +62,10 @@ impl From<CreateService2> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
     use super::CreateService2;
-    use crate::ids::{ObjectCookie, ServiceUuid};
-    use crate::service_info::ServiceInfo;
+    use crate::{ObjectCookie, SerializedValue, ServiceInfo, ServiceUuid};
     use uuid::uuid;
 
     #[test]
@@ -100,20 +75,20 @@ mod test {
             0x53, 0x77, 0x46, 0x6e, 0xb4, 0xbf, 0x37, 0x38, 0x76, 0x52, 0x3d, 0x1b, 0xd3, 0xef,
             0xd0, 0x0b, 0x7a, 0x7b, 0x4b, 0xf7, 0xbd, 0xd3, 0x3c, 0x66, 0x32, 0x47, 0x33, 0x47,
         ];
+        let value = ServiceInfo::new(2);
 
-        let msg = CreateService2::with_serialize_info(
-            1,
-            ObjectCookie(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
-            ServiceUuid(uuid!("d3efd00b-7a7b-4bf7-bdd3-3c6632473347")),
-            ServiceInfo::new(2),
-        )
-        .unwrap();
+        let msg = CreateService2 {
+            serial: 1,
+            object_cookie: ObjectCookie(uuid!("b7c3be13-5377-466e-b4bf-373876523d1b")),
+            uuid: ServiceUuid(uuid!("d3efd00b-7a7b-4bf7-bdd3-3c6632473347")),
+            value: SerializedValue::serialize(value).unwrap(),
+        };
 
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq(&msg, serialized);
+        assert_deserialize_eq_with_value(&msg, serialized, &value);
 
         let msg = Message::CreateService2(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq(&msg, serialized);
+        assert_deserialize_eq_with_value(&msg, serialized, &value);
     }
 }

@@ -1,9 +1,9 @@
 use super::ServiceInfo;
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::TypeId;
-use crate::serialized_value::SerializedValue;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
+    Serializer, TypeId,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::uuid;
 
@@ -42,32 +42,50 @@ impl ServiceInfoOld {
     }
 }
 
-impl Serialize for ServiceInfoOld {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for ServiceInfoOld {}
+
+impl PrimaryTag for ServiceInfoOld {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for ServiceInfoOld {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(2)?;
 
-        serializer.serialize_field(ServiceInfoFieldOld::Version, &self.version)?;
-        serializer.serialize_field(ServiceInfoFieldOld::TypeId, &self.type_id)?;
+        serializer.serialize::<tags::U32, _>(ServiceInfoFieldOld::Version, self.version)?;
+
+        serializer
+            .serialize::<tags::Option<TypeId>, _>(ServiceInfoFieldOld::TypeId, self.type_id)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for ServiceInfoOld {
+impl Serialize<ServiceInfoOld> for &ServiceInfoOld {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<Self> for ServiceInfoOld {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut version = None;
         let mut type_id = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
             match deserializer.try_id() {
                 Ok(ServiceInfoFieldOld::Version) => {
-                    version = deserializer.deserialize().map(Some)?
+                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?;
                 }
-                Ok(ServiceInfoFieldOld::TypeId) => type_id = deserializer.deserialize()?,
+
+                Ok(ServiceInfoFieldOld::TypeId) => {
+                    type_id = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
+                }
+
                 Err(_) => deserializer.skip()?,
             }
         }
@@ -84,7 +102,7 @@ impl Deserialize for ServiceInfoOld {
 #[test]
 fn old_to_new() {
     fn serde(old: ServiceInfoOld) -> ServiceInfo {
-        SerializedValue::serialize(&old)
+        SerializedValue::serialize(old)
             .unwrap()
             .deserialize()
             .unwrap()
@@ -105,7 +123,7 @@ fn old_to_new() {
 #[test]
 fn new_to_old() {
     fn serde(new: ServiceInfo) -> ServiceInfoOld {
-        SerializedValue::serialize(&new)
+        SerializedValue::serialize(new)
             .unwrap()
             .deserialize()
             .unwrap()

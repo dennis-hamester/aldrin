@@ -1,8 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::SerializedValueSlice;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
+use crate::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 

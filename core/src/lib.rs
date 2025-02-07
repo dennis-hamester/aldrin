@@ -2,60 +2,66 @@
 
 mod buf_ext;
 mod bus_listener;
+mod bytes;
 mod channel_end;
+mod deserialize;
 mod deserialize_key;
+mod deserializer;
 mod error;
-mod generic_value;
 mod ids;
-mod message_deserializer;
-mod message_serializer;
+mod impls;
+mod key_impls;
 mod protocol_version;
+mod serialize;
 mod serialize_key;
 mod serialized_value;
+mod serializer;
 mod service_info;
 mod unknown_fields;
 mod unknown_variant;
 mod value;
-mod value_deserializer;
-mod value_serializer;
+mod value_kind;
 
+pub mod adapters;
 #[cfg(feature = "channel")]
 pub mod channel;
 #[cfg(feature = "introspection")]
 pub mod introspection;
 pub mod message;
-pub mod test;
+pub mod tags;
 #[cfg(feature = "tokio")]
 pub mod tokio;
 pub mod transport;
 
-#[cfg(feature = "derive")]
-pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
-#[cfg(all(feature = "derive", feature = "introspection"))]
-pub use aldrin_macros::{Introspectable, KeyTypeOf};
+pub use crate::bytes::{ByteSlice, Bytes};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
-pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};
+pub use deserialize::Deserialize;
+pub use deserialize_key::DeserializeKey;
+pub use deserializer::{
+    BytesDeserializer, Deserializer, EnumDeserializer, FieldDeserializer, MapDeserializer,
+    MapElementDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
+};
 pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
-pub use generic_value::{Enum, Struct, Value};
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid, TypeId,
 };
 pub use protocol_version::ProtocolVersion;
-pub use serialize_key::{SerializeKey, SerializeKeyImpl};
+pub use serialize::Serialize;
+pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
+pub use serializer::{
+    BytesSerializer, MapSerializer, Serializer, SetSerializer, StructSerializer, VecSerializer,
+};
 pub use service_info::ServiceInfo;
-pub use unknown_fields::UnknownFields;
-pub use unknown_variant::UnknownVariant;
-pub use value::{ByteSlice, Bytes, Skip, ValueKind};
-pub use value_deserializer::{
-    BytesDeserializer, Deserialize, Deserializer, ElementDeserializer, EnumDeserializer,
-    FieldDeserializer, MapDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
-};
-pub use value_serializer::{
-    AsSerializeArg, BytesSerializer, MapSerializer, Serialize, SerializeArg, Serializer,
-    SetSerializer, StructSerializer, VecSerializer,
-};
+pub use unknown_fields::{AsUnknownFields, UnknownFields, UnknownFieldsRef};
+pub use unknown_variant::{AsUnknownVariant, UnknownVariant, UnknownVariantRef};
+pub use value::{Enum, Struct, Value};
+pub use value_kind::ValueKind;
+// #[cfg(feature = "derive")]
+// pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
+// #[cfg(all(feature = "derive", feature = "introspection"))]
+// pub use aldrin_macros::{Introspectable, KeyTypeOf};
 
 const MAX_VALUE_DEPTH: u8 = 32;

@@ -25,6 +25,7 @@ mod create_object_reply;
 mod create_service;
 mod create_service2;
 mod create_service_reply;
+mod deserializer;
 mod destroy_bus_listener;
 mod destroy_bus_listener_reply;
 mod destroy_object;
@@ -33,7 +34,9 @@ mod destroy_service;
 mod destroy_service_reply;
 mod emit_bus_event;
 mod emit_event;
+mod error;
 mod item_received;
+mod kind;
 mod packetizer;
 mod query_introspection;
 mod query_introspection_reply;
@@ -44,6 +47,7 @@ mod query_service_version_reply;
 mod register_introspection;
 mod remove_bus_listener_filter;
 mod send_item;
+mod serializer;
 mod service_destroyed;
 mod shutdown;
 mod start_bus_listener;
@@ -65,12 +69,13 @@ mod unsubscribe_all_events_reply;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
-use crate::serialized_value::SerializedValueSlice;
+use crate::SerializedValueSlice;
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-pub use crate::message_deserializer::MessageDeserializeError;
-pub use crate::message_serializer::MessageSerializeError;
+pub(crate) use deserializer::{MessageWithValueDeserializer, MessageWithoutValueDeserializer};
+pub(crate) use serializer::MessageSerializer;
+
 pub use abort_function_call::AbortFunctionCall;
 pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
@@ -106,7 +111,9 @@ pub use destroy_service::DestroyService;
 pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
 pub use emit_bus_event::EmitBusEvent;
 pub use emit_event::EmitEvent;
+pub use error::{MessageDeserializeError, MessageSerializeError};
 pub use item_received::ItemReceived;
+pub use kind::MessageKind;
 pub use packetizer::Packetizer;
 pub use query_introspection::QueryIntrospection;
 pub use query_introspection_reply::{QueryIntrospectionReply, QueryIntrospectionResult};
@@ -135,145 +142,6 @@ pub use unsubscribe_all_events::UnsubscribeAllEvents;
 pub use unsubscribe_all_events_reply::{UnsubscribeAllEventsReply, UnsubscribeAllEventsResult};
 pub use unsubscribe_event::UnsubscribeEvent;
 pub use unsubscribe_service::UnsubscribeService;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-pub enum MessageKind {
-    Connect = 0,
-    ConnectReply = 1,
-    Shutdown = 2,
-    CreateObject = 3,
-    CreateObjectReply = 4,
-    DestroyObject = 5,
-    DestroyObjectReply = 6,
-    CreateService = 7,
-    CreateServiceReply = 8,
-    DestroyService = 9,
-    DestroyServiceReply = 10,
-    CallFunction = 11,
-    CallFunctionReply = 12,
-    SubscribeEvent = 13,
-    SubscribeEventReply = 14,
-    UnsubscribeEvent = 15,
-    EmitEvent = 16,
-    QueryServiceVersion = 17,
-    QueryServiceVersionReply = 18,
-    CreateChannel = 19,
-    CreateChannelReply = 20,
-    CloseChannelEnd = 21,
-    CloseChannelEndReply = 22,
-    ChannelEndClosed = 23,
-    ClaimChannelEnd = 24,
-    ClaimChannelEndReply = 25,
-    ChannelEndClaimed = 26,
-    SendItem = 27,
-    ItemReceived = 28,
-    AddChannelCapacity = 29,
-    Sync = 30,
-    SyncReply = 31,
-    ServiceDestroyed = 32,
-    CreateBusListener = 33,
-    CreateBusListenerReply = 34,
-    DestroyBusListener = 35,
-    DestroyBusListenerReply = 36,
-    AddBusListenerFilter = 37,
-    RemoveBusListenerFilter = 38,
-    ClearBusListenerFilters = 39,
-    StartBusListener = 40,
-    StartBusListenerReply = 41,
-    StopBusListener = 42,
-    StopBusListenerReply = 43,
-    EmitBusEvent = 44,
-    BusListenerCurrentFinished = 45,
-    Connect2 = 46,
-    ConnectReply2 = 47,
-    AbortFunctionCall = 48,
-    RegisterIntrospection = 49,
-    QueryIntrospection = 50,
-    QueryIntrospectionReply = 51,
-    CreateService2 = 52,
-    QueryServiceInfo = 53,
-    QueryServiceInfoReply = 54,
-    SubscribeService = 55,
-    SubscribeServiceReply = 56,
-    UnsubscribeService = 57,
-    SubscribeAllEvents = 58,
-    SubscribeAllEventsReply = 59,
-    UnsubscribeAllEvents = 60,
-    UnsubscribeAllEventsReply = 61,
-    CallFunction2 = 62,
-}
-
-impl MessageKind {
-    pub fn has_value(self) -> bool {
-        match self {
-            Self::Connect
-            | Self::ConnectReply
-            | Self::CallFunction
-            | Self::CallFunctionReply
-            | Self::EmitEvent
-            | Self::SendItem
-            | Self::ItemReceived
-            | Self::Connect2
-            | Self::ConnectReply2
-            | Self::RegisterIntrospection
-            | Self::QueryIntrospectionReply
-            | Self::CreateService2
-            | Self::QueryServiceInfoReply
-            | Self::CallFunction2 => true,
-
-            Self::Shutdown
-            | Self::CreateObject
-            | Self::CreateObjectReply
-            | Self::DestroyObject
-            | Self::DestroyObjectReply
-            | Self::CreateService
-            | Self::CreateServiceReply
-            | Self::DestroyService
-            | Self::DestroyServiceReply
-            | Self::SubscribeEvent
-            | Self::SubscribeEventReply
-            | Self::UnsubscribeEvent
-            | Self::QueryServiceVersion
-            | Self::QueryServiceVersionReply
-            | Self::CreateChannel
-            | Self::CreateChannelReply
-            | Self::CloseChannelEnd
-            | Self::CloseChannelEndReply
-            | Self::ChannelEndClosed
-            | Self::ClaimChannelEnd
-            | Self::ClaimChannelEndReply
-            | Self::ChannelEndClaimed
-            | Self::AddChannelCapacity
-            | Self::Sync
-            | Self::SyncReply
-            | Self::ServiceDestroyed
-            | Self::CreateBusListener
-            | Self::CreateBusListenerReply
-            | Self::DestroyBusListener
-            | Self::DestroyBusListenerReply
-            | Self::AddBusListenerFilter
-            | Self::RemoveBusListenerFilter
-            | Self::ClearBusListenerFilters
-            | Self::StartBusListener
-            | Self::StartBusListenerReply
-            | Self::StopBusListener
-            | Self::StopBusListenerReply
-            | Self::EmitBusEvent
-            | Self::BusListenerCurrentFinished
-            | Self::AbortFunctionCall
-            | Self::QueryIntrospection
-            | Self::QueryServiceInfo
-            | Self::SubscribeService
-            | Self::SubscribeServiceReply
-            | Self::UnsubscribeService
-            | Self::SubscribeAllEvents
-            | Self::SubscribeAllEventsReply
-            | Self::UnsubscribeAllEvents
-            | Self::UnsubscribeAllEventsReply => false,
-        }
-    }
-}
 
 mod message_ops {
     pub trait Sealed {}
@@ -496,185 +364,247 @@ impl MessageOps for Message {
             return Err(MessageDeserializeError::UnexpectedEoi);
         }
 
-        match buf[4]
+        let kind = buf[4]
             .try_into()
-            .map_err(|_| MessageDeserializeError::InvalidSerialization)?
-        {
+            .map_err(|_| MessageDeserializeError::InvalidSerialization)?;
+
+        match kind {
             MessageKind::Connect => Connect::deserialize_message(buf).map(Self::Connect),
+
             MessageKind::ConnectReply => {
                 ConnectReply::deserialize_message(buf).map(Self::ConnectReply)
             }
+
             MessageKind::Shutdown => Shutdown::deserialize_message(buf).map(Self::Shutdown),
+
             MessageKind::CreateObject => {
                 CreateObject::deserialize_message(buf).map(Self::CreateObject)
             }
+
             MessageKind::CreateObjectReply => {
                 CreateObjectReply::deserialize_message(buf).map(Self::CreateObjectReply)
             }
+
             MessageKind::DestroyObject => {
                 DestroyObject::deserialize_message(buf).map(Self::DestroyObject)
             }
+
             MessageKind::DestroyObjectReply => {
                 DestroyObjectReply::deserialize_message(buf).map(Self::DestroyObjectReply)
             }
+
             MessageKind::CreateService => {
                 CreateService::deserialize_message(buf).map(Self::CreateService)
             }
+
             MessageKind::CreateServiceReply => {
                 CreateServiceReply::deserialize_message(buf).map(Self::CreateServiceReply)
             }
+
             MessageKind::DestroyService => {
                 DestroyService::deserialize_message(buf).map(Self::DestroyService)
             }
+
             MessageKind::DestroyServiceReply => {
                 DestroyServiceReply::deserialize_message(buf).map(Self::DestroyServiceReply)
             }
+
             MessageKind::CallFunction => {
                 CallFunction::deserialize_message(buf).map(Self::CallFunction)
             }
+
             MessageKind::CallFunctionReply => {
                 CallFunctionReply::deserialize_message(buf).map(Self::CallFunctionReply)
             }
+
             MessageKind::SubscribeEvent => {
                 SubscribeEvent::deserialize_message(buf).map(Self::SubscribeEvent)
             }
+
             MessageKind::SubscribeEventReply => {
                 SubscribeEventReply::deserialize_message(buf).map(Self::SubscribeEventReply)
             }
+
             MessageKind::UnsubscribeEvent => {
                 UnsubscribeEvent::deserialize_message(buf).map(Self::UnsubscribeEvent)
             }
+
             MessageKind::EmitEvent => EmitEvent::deserialize_message(buf).map(Self::EmitEvent),
+
             MessageKind::QueryServiceVersion => {
                 QueryServiceVersion::deserialize_message(buf).map(Self::QueryServiceVersion)
             }
+
             MessageKind::QueryServiceVersionReply => {
                 QueryServiceVersionReply::deserialize_message(buf)
                     .map(Self::QueryServiceVersionReply)
             }
+
             MessageKind::CreateChannel => {
                 CreateChannel::deserialize_message(buf).map(Self::CreateChannel)
             }
+
             MessageKind::CreateChannelReply => {
                 CreateChannelReply::deserialize_message(buf).map(Self::CreateChannelReply)
             }
+
             MessageKind::CloseChannelEnd => {
                 CloseChannelEnd::deserialize_message(buf).map(Self::CloseChannelEnd)
             }
+
             MessageKind::CloseChannelEndReply => {
                 CloseChannelEndReply::deserialize_message(buf).map(Self::CloseChannelEndReply)
             }
+
             MessageKind::ChannelEndClosed => {
                 ChannelEndClosed::deserialize_message(buf).map(Self::ChannelEndClosed)
             }
+
             MessageKind::ClaimChannelEnd => {
                 ClaimChannelEnd::deserialize_message(buf).map(Self::ClaimChannelEnd)
             }
+
             MessageKind::ClaimChannelEndReply => {
                 ClaimChannelEndReply::deserialize_message(buf).map(Self::ClaimChannelEndReply)
             }
+
             MessageKind::ChannelEndClaimed => {
                 ChannelEndClaimed::deserialize_message(buf).map(Self::ChannelEndClaimed)
             }
+
             MessageKind::SendItem => SendItem::deserialize_message(buf).map(Self::SendItem),
+
             MessageKind::ItemReceived => {
                 ItemReceived::deserialize_message(buf).map(Self::ItemReceived)
             }
+
             MessageKind::AddChannelCapacity => {
                 AddChannelCapacity::deserialize_message(buf).map(Self::AddChannelCapacity)
             }
+
             MessageKind::Sync => Sync::deserialize_message(buf).map(Self::Sync),
             MessageKind::SyncReply => SyncReply::deserialize_message(buf).map(Self::SyncReply),
+
             MessageKind::ServiceDestroyed => {
                 ServiceDestroyed::deserialize_message(buf).map(Self::ServiceDestroyed)
             }
+
             MessageKind::CreateBusListener => {
                 CreateBusListener::deserialize_message(buf).map(Self::CreateBusListener)
             }
+
             MessageKind::CreateBusListenerReply => {
                 CreateBusListenerReply::deserialize_message(buf).map(Self::CreateBusListenerReply)
             }
+
             MessageKind::DestroyBusListener => {
                 DestroyBusListener::deserialize_message(buf).map(Self::DestroyBusListener)
             }
+
             MessageKind::DestroyBusListenerReply => {
                 DestroyBusListenerReply::deserialize_message(buf).map(Self::DestroyBusListenerReply)
             }
+
             MessageKind::AddBusListenerFilter => {
                 AddBusListenerFilter::deserialize_message(buf).map(Self::AddBusListenerFilter)
             }
+
             MessageKind::RemoveBusListenerFilter => {
                 RemoveBusListenerFilter::deserialize_message(buf).map(Self::RemoveBusListenerFilter)
             }
+
             MessageKind::ClearBusListenerFilters => {
                 ClearBusListenerFilters::deserialize_message(buf).map(Self::ClearBusListenerFilters)
             }
+
             MessageKind::StartBusListener => {
                 StartBusListener::deserialize_message(buf).map(Self::StartBusListener)
             }
+
             MessageKind::StartBusListenerReply => {
                 StartBusListenerReply::deserialize_message(buf).map(Self::StartBusListenerReply)
             }
+
             MessageKind::StopBusListener => {
                 StopBusListener::deserialize_message(buf).map(Self::StopBusListener)
             }
+
             MessageKind::StopBusListenerReply => {
                 StopBusListenerReply::deserialize_message(buf).map(Self::StopBusListenerReply)
             }
+
             MessageKind::EmitBusEvent => {
                 EmitBusEvent::deserialize_message(buf).map(Self::EmitBusEvent)
             }
+
             MessageKind::BusListenerCurrentFinished => {
                 BusListenerCurrentFinished::deserialize_message(buf)
                     .map(Self::BusListenerCurrentFinished)
             }
+
             MessageKind::Connect2 => Connect2::deserialize_message(buf).map(Self::Connect2),
+
             MessageKind::ConnectReply2 => {
                 ConnectReply2::deserialize_message(buf).map(Self::ConnectReply2)
             }
+
             MessageKind::AbortFunctionCall => {
                 AbortFunctionCall::deserialize_message(buf).map(Self::AbortFunctionCall)
             }
+
             MessageKind::RegisterIntrospection => {
                 RegisterIntrospection::deserialize_message(buf).map(Self::RegisterIntrospection)
             }
+
             MessageKind::QueryIntrospection => {
                 QueryIntrospection::deserialize_message(buf).map(Self::QueryIntrospection)
             }
+
             MessageKind::QueryIntrospectionReply => {
                 QueryIntrospectionReply::deserialize_message(buf).map(Self::QueryIntrospectionReply)
             }
+
             MessageKind::CreateService2 => {
                 CreateService2::deserialize_message(buf).map(Self::CreateService2)
             }
+
             MessageKind::QueryServiceInfo => {
                 QueryServiceInfo::deserialize_message(buf).map(Self::QueryServiceInfo)
             }
+
             MessageKind::QueryServiceInfoReply => {
                 QueryServiceInfoReply::deserialize_message(buf).map(Self::QueryServiceInfoReply)
             }
+
             MessageKind::SubscribeService => {
                 SubscribeService::deserialize_message(buf).map(Self::SubscribeService)
             }
+
             MessageKind::SubscribeServiceReply => {
                 SubscribeServiceReply::deserialize_message(buf).map(Self::SubscribeServiceReply)
             }
+
             MessageKind::UnsubscribeService => {
                 UnsubscribeService::deserialize_message(buf).map(Self::UnsubscribeService)
             }
+
             MessageKind::SubscribeAllEvents => {
                 SubscribeAllEvents::deserialize_message(buf).map(Self::SubscribeAllEvents)
             }
+
             MessageKind::SubscribeAllEventsReply => {
                 SubscribeAllEventsReply::deserialize_message(buf).map(Self::SubscribeAllEventsReply)
             }
+
             MessageKind::UnsubscribeAllEvents => {
                 UnsubscribeAllEvents::deserialize_message(buf).map(Self::UnsubscribeAllEvents)
             }
+
             MessageKind::UnsubscribeAllEventsReply => {
                 UnsubscribeAllEventsReply::deserialize_message(buf)
                     .map(Self::UnsubscribeAllEventsReply)
             }
+
             MessageKind::CallFunction2 => {
                 CallFunction2::deserialize_message(buf).map(Self::CallFunction2)
             }

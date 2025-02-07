@@ -1,7 +1,6 @@
 use super::{BuiltInType, Enum, LexicalId, Service, Struct};
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::Uuid;
 
@@ -94,26 +93,47 @@ enum LayoutVariant {
     Service = 3,
 }
 
-impl Serialize for Layout {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Layout {}
+
+impl PrimaryTag for Layout {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Layout {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Layout> for &Layout {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
-            Self::BuiltIn(ty) => serializer.serialize_enum(LayoutVariant::BuiltIn, ty),
-            Self::Struct(ty) => serializer.serialize_enum(LayoutVariant::Struct, ty),
-            Self::Enum(ty) => serializer.serialize_enum(LayoutVariant::Enum, ty),
-            Self::Service(ty) => serializer.serialize_enum(LayoutVariant::Service, ty),
+            Layout::BuiltIn(ty) => {
+                serializer.serialize_enum::<BuiltInType, _>(LayoutVariant::BuiltIn, ty)
+            }
+
+            Layout::Struct(ty) => serializer.serialize_enum::<Struct, _>(LayoutVariant::Struct, ty),
+            Layout::Enum(ty) => serializer.serialize_enum::<Enum, _>(LayoutVariant::Enum, ty),
+
+            Layout::Service(ty) => {
+                serializer.serialize_enum::<Service, _>(LayoutVariant::Service, ty)
+            }
         }
     }
 }
 
-impl Deserialize for Layout {
+impl Deserialize<Self> for Layout {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.try_variant()? {
-            LayoutVariant::BuiltIn => deserializer.deserialize().map(Self::BuiltIn),
-            LayoutVariant::Struct => deserializer.deserialize().map(Self::Struct),
-            LayoutVariant::Enum => deserializer.deserialize().map(Self::Enum),
-            LayoutVariant::Service => deserializer.deserialize().map(Self::Service),
+            LayoutVariant::BuiltIn => deserializer
+                .deserialize::<BuiltInType, _>()
+                .map(Self::BuiltIn),
+
+            LayoutVariant::Struct => deserializer.deserialize::<Struct, _>().map(Self::Struct),
+            LayoutVariant::Enum => deserializer.deserialize::<Enum, _>().map(Self::Enum),
+            LayoutVariant::Service => deserializer.deserialize::<Service, _>().map(Self::Service),
         }
     }
 }

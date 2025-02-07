@@ -1,10 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::SerializeError;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_serializer::Serialize;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -30,43 +29,11 @@ pub enum CallFunctionResult {
     InvalidArgs,
 }
 
-impl CallFunctionResult {
-    pub fn ok_with_serialize_value<T: Serialize + ?Sized>(
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        SerializedValue::serialize(value).map(Self::Ok)
-    }
-
-    pub fn err_with_serialize_value<T: Serialize + ?Sized>(
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        SerializedValue::serialize(value).map(Self::Err)
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct CallFunctionReply {
     pub serial: u32,
     pub result: CallFunctionResult,
-}
-
-impl CallFunctionReply {
-    pub fn ok_with_serialize_value<T: Serialize + ?Sized>(
-        serial: u32,
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let result = CallFunctionResult::ok_with_serialize_value(value)?;
-        Ok(Self { serial, result })
-    }
-
-    pub fn err_with_serialize_value<T: Serialize + ?Sized>(
-        serial: u32,
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let result = CallFunctionResult::err_with_serialize_value(value)?;
-        Ok(Self { serial, result })
-    }
 }
 
 impl MessageOps for CallFunctionReply {
@@ -212,19 +179,23 @@ mod test {
     };
     use super::super::Message;
     use super::{CallFunctionReply, CallFunctionResult};
+    use crate::{tags, SerializedValue};
 
     #[test]
     fn ok() {
         let serialized = [13, 0, 0, 0, 12, 2, 0, 0, 0, 3, 4, 1, 0];
         let value = 4u8;
 
-        let msg = CallFunctionReply::ok_with_serialize_value(1, &value).unwrap();
+        let msg = CallFunctionReply {
+            serial: 1,
+            result: CallFunctionResult::Ok(SerializedValue::serialize(value).unwrap()),
+        };
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::CallFunctionReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 
     #[test]
@@ -232,13 +203,16 @@ mod test {
         let serialized = [13, 0, 0, 0, 12, 2, 0, 0, 0, 3, 4, 1, 1];
         let value = 4u8;
 
-        let msg = CallFunctionReply::err_with_serialize_value(1, &value).unwrap();
+        let msg = CallFunctionReply {
+            serial: 1,
+            result: CallFunctionResult::Err(SerializedValue::serialize(value).unwrap()),
+        };
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::CallFunctionReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 
     #[test]

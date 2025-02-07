@@ -1,7 +1,6 @@
 use super::LexicalId;
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -32,30 +31,49 @@ enum ArrayTypeField {
     Len = 1,
 }
 
-impl Serialize for ArrayType {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for ArrayType {}
+
+impl PrimaryTag for ArrayType {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for ArrayType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(2)?;
 
-        serializer.serialize_field(ArrayTypeField::ElemType, &self.elem_type)?;
-        serializer.serialize_field(ArrayTypeField::Len, &self.len)?;
+        serializer.serialize::<LexicalId, _>(ArrayTypeField::ElemType, self.elem_type)?;
+        serializer.serialize::<tags::U32, _>(ArrayTypeField::Len, self.len)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for ArrayType {
+impl Serialize<ArrayType> for &ArrayType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<Self> for ArrayType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut elem_type = None;
         let mut len = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                ArrayTypeField::ElemType => elem_type = deserializer.deserialize().map(Some)?,
-                ArrayTypeField::Len => len = deserializer.deserialize().map(Some)?,
+            match deserializer.try_id() {
+                Ok(ArrayTypeField::ElemType) => {
+                    elem_type = deserializer.deserialize::<LexicalId, _>().map(Some)?;
+                }
+
+                Ok(ArrayTypeField::Len) => {
+                    len = deserializer.deserialize::<tags::U32, _>().map(Some)?;
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

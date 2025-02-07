@@ -1,11 +1,13 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::{DeserializeError, SerializeError};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::tags::{PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
+    SerializedValueSlice, Serializer,
+};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -20,17 +22,40 @@ impl ConnectData {
         Self::default()
     }
 
-    pub fn serialize_user<T: Serialize + ?Sized>(
+    pub fn serialize_user_as<T: Tag, U: Serialize<T>>(
         &mut self,
-        user: &T,
+        user: U,
     ) -> Result<&mut Self, SerializeError> {
-        self.user = SerializedValue::serialize(user).map(Some)?;
+        self.user = SerializedValue::serialize_as(user).map(Some)?;
         Ok(self)
     }
 
-    pub fn deserialize_user<T: Deserialize>(&self) -> Option<Result<T, DeserializeError>> {
-        self.user.as_deref().map(SerializedValueSlice::deserialize)
+    pub fn serialize_user<T: PrimaryTag + Serialize<T::Tag>>(
+        &mut self,
+        user: T,
+    ) -> Result<&mut Self, SerializeError> {
+        self.serialize_user_as(user)
     }
+
+    pub fn deserialize_user_as<T: Tag, U: Deserialize<T>>(
+        &self,
+    ) -> Option<Result<U, DeserializeError>> {
+        self.user
+            .as_deref()
+            .map(SerializedValueSlice::deserialize_as)
+    }
+
+    pub fn deserialize_user<T: PrimaryTag + Deserialize<T::Tag>>(
+        &self,
+    ) -> Option<Result<T, DeserializeError>> {
+        self.deserialize_user_as()
+    }
+}
+
+impl Tag for ConnectData {}
+
+impl PrimaryTag for ConnectData {
+    type Tag = Self;
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -39,45 +64,36 @@ enum ConnectDataField {
     User = 0,
 }
 
-impl Serialize for ConnectData {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Serialize<Self> for ConnectData {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<ConnectData> for &ConnectData {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(1)?;
-        serializer.serialize_field(ConnectDataField::User, &self.user)?;
+        serializer.serialize(ConnectDataField::User, &self.user)?;
         serializer.finish()
     }
 }
 
-impl Deserialize for ConnectData {
+impl Deserialize<Self> for ConnectData {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut user = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            let Ok(field) = deserializer.try_id() else {
-                deserializer.skip()?;
-                continue;
-            };
-
-            match field {
-                ConnectDataField::User => user = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(ConnectDataField::User) => user = deserializer.deserialize()?,
+                Err(_) => deserializer.skip()?,
             }
         }
 
         deserializer.finish(Self { user })
-    }
-}
-
-impl AsSerializeArg for ConnectData {
-    type SerializeArg<'a> = &'a Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
     }
 }
 
@@ -87,26 +103,6 @@ pub struct Connect2 {
     pub major_version: u32,
     pub minor_version: u32,
     pub value: SerializedValue,
-}
-
-impl Connect2 {
-    pub fn with_serialize_data(
-        major_version: u32,
-        minor_version: u32,
-        data: &ConnectData,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(data)?;
-
-        Ok(Self {
-            major_version,
-            minor_version,
-            value,
-        })
-    }
-
-    pub fn deserialize_connect_data(&self) -> Result<ConnectData, DeserializeError> {
-        self.value.deserialize()
-    }
 }
 
 impl MessageOps for Connect2 {
@@ -155,13 +151,18 @@ mod test {
     use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
     use super::{Connect2, ConnectData};
+    use crate::SerializedValue;
 
     #[test]
     fn connect() {
         let serialized = [15, 0, 0, 0, 46, 4, 0, 0, 0, 39, 1, 0, 0, 1, 2];
         let value = ConnectData::new();
 
-        let msg = Connect2::with_serialize_data(1, 2, &value).unwrap();
+        let msg = Connect2 {
+            major_version: 1,
+            minor_version: 2,
+            value: SerializedValue::serialize(&value).unwrap(),
+        };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq_with_value(&msg, serialized, &value);
 

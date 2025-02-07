@@ -1,9 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::ids::{ObjectCookie, ServiceUuid};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::SerializedValueSlice;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithoutValueDeserializer,
+};
+use crate::{ObjectCookie, SerializedValueSlice, ServiceUuid};
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -67,7 +67,7 @@ mod test {
     use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
     use super::CreateService;
-    use crate::ids::{ObjectCookie, ServiceUuid};
+    use crate::{ObjectCookie, ServiceUuid};
     use uuid::uuid;
 
     #[test]

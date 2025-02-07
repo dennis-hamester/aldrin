@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod test_old1;
 
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::TypeId;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -62,19 +62,35 @@ impl ServiceInfo {
     }
 }
 
-impl Serialize for ServiceInfo {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for ServiceInfo {}
+
+impl PrimaryTag for ServiceInfo {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for ServiceInfo {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(3)?;
 
-        serializer.serialize_field(ServiceInfoField::Version, &self.version)?;
-        serializer.serialize_field(ServiceInfoField::TypeId, &self.type_id)?;
-        serializer.serialize_field(ServiceInfoField::SubscribeAll, &self.subscribe_all)?;
+        serializer.serialize::<tags::U32, _>(ServiceInfoField::Version, self.version)?;
+        serializer.serialize::<tags::Option<TypeId>, _>(ServiceInfoField::TypeId, self.type_id)?;
+
+        serializer.serialize::<tags::Option<tags::Bool>, _>(
+            ServiceInfoField::SubscribeAll,
+            self.subscribe_all,
+        )?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for ServiceInfo {
+impl Serialize<ServiceInfo> for &ServiceInfo {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<Self> for ServiceInfo {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -82,13 +98,22 @@ impl Deserialize for ServiceInfo {
         let mut type_id = None;
         let mut subscribe_all = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
             match deserializer.try_id() {
-                Ok(ServiceInfoField::Version) => version = deserializer.deserialize().map(Some)?,
-                Ok(ServiceInfoField::TypeId) => type_id = deserializer.deserialize()?,
-                Ok(ServiceInfoField::SubscribeAll) => subscribe_all = deserializer.deserialize()?,
+                Ok(ServiceInfoField::Version) => {
+                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                }
+
+                Ok(ServiceInfoField::TypeId) => {
+                    type_id = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                }
+
+                Ok(ServiceInfoField::SubscribeAll) => {
+                    subscribe_all = deserializer.deserialize::<tags::Option<tags::Bool>, _>()?
+                }
+
                 Err(_) => deserializer.skip()?,
             }
         }
@@ -103,26 +128,14 @@ impl Deserialize for ServiceInfo {
     }
 }
 
-impl AsSerializeArg for ServiceInfo {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::ServiceInfo;
-    use crate::ids::TypeId;
-    use crate::serialized_value::SerializedValue;
+    use crate::{SerializedValue, TypeId};
     use uuid::uuid;
 
     fn serde(info: ServiceInfo) -> ServiceInfo {
-        SerializedValue::serialize(&info)
+        SerializedValue::serialize(info)
             .unwrap()
             .deserialize()
             .unwrap()

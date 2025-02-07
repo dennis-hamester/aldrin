@@ -1,18 +1,20 @@
 #[cfg(test)]
 mod test;
 
-use crate::error::{DeserializeError, SerializeError};
-use crate::generic_value::Value;
 #[cfg(feature = "introspection")]
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
-use crate::value::ValueKind;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, Value,
+    ValueKind,
+};
 use bytes::BytesMut;
 use std::borrow::Borrow;
-use std::fmt;
-use std::mem;
 use std::ops::Deref;
+use std::{fmt, mem};
+
+// 4 bytes message length + 1 byte message kind + 4 bytes value length.
+const MSG_HEADER_LEN: usize = 9;
 
 #[derive(Clone, Eq)]
 pub struct SerializedValue {
@@ -30,12 +32,18 @@ impl SerializedValue {
         }
     }
 
-    pub fn serialize<T: Serialize + ?Sized>(value: &T) -> Result<Self, SerializeError> {
-        // 4 bytes message length + 1 byte message kind + 4 bytes value length.
-        let mut buf = BytesMut::zeroed(9);
+    pub fn serialize_as<T: Tag, U: Serialize<T>>(value: U) -> Result<Self, SerializeError> {
+        let mut buf = BytesMut::zeroed(MSG_HEADER_LEN);
         let serializer = Serializer::new(&mut buf, 0)?;
         value.serialize(serializer)?;
         Ok(Self { buf })
+    }
+
+    pub fn serialize<T>(value: T) -> Result<Self, SerializeError>
+    where
+        T: PrimaryTag + Serialize<T::Tag>,
+    {
+        Self::serialize_as(value)
     }
 
     pub fn take(&mut self) -> Self {
@@ -43,10 +51,7 @@ impl SerializedValue {
     }
 
     pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {
-        // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
-        // value.
-        debug_assert!(buf.len() >= 10);
-
+        debug_assert!(buf.len() > MSG_HEADER_LEN);
         Self { buf }
     }
 
@@ -65,8 +70,7 @@ impl Deref for SerializedValue {
     type Target = SerializedValueSlice;
 
     fn deref(&self) -> &SerializedValueSlice {
-        // 4 bytes message length + 1 byte message kind + 4 bytes value length.
-        SerializedValueSlice::new(&self.buf[9..])
+        SerializedValueSlice::new(&self.buf[MSG_HEADER_LEN..])
     }
 }
 
@@ -122,28 +126,27 @@ impl PartialEq<SerializedValue> for [u8] {
     }
 }
 
-impl Serialize for SerializedValue {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (**self).serialize(serializer)
+impl PrimaryTag for SerializedValue {
+    type Tag = tags::Value;
+}
+
+impl Serialize<tags::Value> for SerializedValue {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
     }
 }
 
-impl Deserialize for SerializedValue {
+impl Serialize<tags::Value> for &SerializedValue {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&**self)
+    }
+}
+
+impl Deserialize<tags::Value> for SerializedValue {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer
             .split_off_serialized_value()
-            .map(ToOwned::to_owned)
-    }
-}
-
-impl AsSerializeArg for SerializedValue {
-    type SerializeArg<'a> = &'a SerializedValueSlice;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
+            .map(SerializedValueSlice::to_owned)
     }
 }
 
@@ -163,13 +166,14 @@ impl Introspectable for SerializedValue {
 #[cfg(feature = "fuzzing")]
 impl<'a> arbitrary::Arbitrary<'a> for SerializedValue {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        let len = u.arbitrary_len::<u8>()?;
+        let len = u.arbitrary_len::<u8>()?.max(1);
         let bytes = u.bytes(len)?;
-        if bytes.len() >= 10 {
-            Ok(Self::from_bytes_mut(bytes.into()))
-        } else {
-            Err(arbitrary::Error::NotEnoughData)
-        }
+
+        let mut buf = BytesMut::with_capacity(MSG_HEADER_LEN + len);
+        buf.resize(MSG_HEADER_LEN, 0);
+        buf.extend_from_slice(bytes);
+
+        Ok(Self::from_bytes_mut(buf))
     }
 }
 
@@ -190,17 +194,21 @@ impl SerializedValueSlice {
         deserializer.peek_value_kind()
     }
 
-    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
+    pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
         let mut buf = &self.0;
         let deserializer = Deserializer::new(&mut buf, 0)?;
 
-        let res = T::deserialize(deserializer);
+        let res = U::deserialize(deserializer);
 
         if res.is_ok() && !buf.is_empty() {
             return Err(DeserializeError::TrailingData);
         }
 
         res
+    }
+
+    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+        self.deserialize_as()
     }
 
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
@@ -226,7 +234,11 @@ impl ToOwned for SerializedValueSlice {
     type Owned = SerializedValue;
 
     fn to_owned(&self) -> SerializedValue {
-        SerializedValue::serialize(self).unwrap()
+        let mut buf = BytesMut::with_capacity(MSG_HEADER_LEN + self.len());
+        buf.resize(MSG_HEADER_LEN, 0);
+        buf.extend_from_slice(self);
+
+        SerializedValue::from_bytes_mut(buf)
     }
 }
 
@@ -248,21 +260,13 @@ impl PartialEq<SerializedValueSlice> for [u8] {
     }
 }
 
-impl Serialize for SerializedValueSlice {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.copy_from_serialized_value(self);
-        Ok(())
-    }
+impl PrimaryTag for &SerializedValueSlice {
+    type Tag = tags::Value;
 }
 
-impl AsSerializeArg for SerializedValueSlice {
-    type SerializeArg<'a> = &'a Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
+impl Serialize<tags::Value> for &SerializedValueSlice {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.copy_from_serialized_value(self)
     }
 }
 

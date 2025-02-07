@@ -1,7 +1,6 @@
 use super::{KeyType, LexicalId};
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -31,30 +30,49 @@ enum MapTypeField {
     Value = 1,
 }
 
-impl Serialize for MapType {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for MapType {}
+
+impl PrimaryTag for MapType {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for MapType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(2)?;
 
-        serializer.serialize_field(MapTypeField::Key, &self.key)?;
-        serializer.serialize_field(MapTypeField::Value, &self.value)?;
+        serializer.serialize::<KeyType, _>(MapTypeField::Key, self.key)?;
+        serializer.serialize::<LexicalId, _>(MapTypeField::Value, self.value)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for MapType {
+impl Serialize<MapType> for &MapType {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<Self> for MapType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut key = None;
         let mut value = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                MapTypeField::Key => key = deserializer.deserialize().map(Some)?,
-                MapTypeField::Value => value = deserializer.deserialize().map(Some)?,
+            match deserializer.try_id() {
+                Ok(MapTypeField::Key) => {
+                    key = deserializer.deserialize::<KeyType, _>().map(Some)?
+                }
+
+                Ok(MapTypeField::Value) => {
+                    value = deserializer.deserialize::<LexicalId, _>().map(Some)?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

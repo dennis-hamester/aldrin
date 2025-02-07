@@ -1,6 +1,6 @@
-use crate::message::{Message, MessageOps, Packetizer};
-use crate::message_deserializer::MessageDeserializeError;
-use crate::message_serializer::MessageSerializeError;
+use crate::message::{
+    Message, MessageDeserializeError, MessageOps, MessageSerializeError, Packetizer,
+};
 use crate::transport::AsyncTransport;
 use bytes::{Buf, BytesMut};
 use pin_project_lite::pin_project;

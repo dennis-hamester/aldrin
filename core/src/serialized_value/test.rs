@@ -1,8 +1,6 @@
-use crate::error::{DeserializeError, SerializeError};
-use crate::serialized_value::SerializedValue;
-use crate::test::assert_as_serialize_arg_eq;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use super::SerializedValue;
+use crate::tags::{PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
 #[test]
 fn concrete_vs_vague() {
@@ -12,23 +10,52 @@ fn concrete_vs_vague() {
         field2: T2,
     }
 
-    impl<T1, T2> Serialize for Type<T1, T2>
+    impl<T1: Tag, T2: Tag> Tag for Type<T1, T2> {}
+
+    impl<T1: PrimaryTag, T2: PrimaryTag> PrimaryTag for Type<T1, T2> {
+        type Tag = Type<T1::Tag, T2::Tag>;
+    }
+
+    impl<T1, U1, T2, U2> Serialize<Type<T1, T2>> for Type<U1, U2>
     where
-        T1: Serialize,
-        T2: Serialize,
+        T1: Tag,
+        U1: Serialize<T1>,
+        T2: Tag,
+        U2: Serialize<T2>,
     {
-        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct(2)?;
-            serializer.serialize_field(1u32, &self.field1)?;
-            serializer.serialize_field(2u32, &self.field2)?;
+
+            serializer.serialize(1u32, self.field1)?;
+            serializer.serialize(2u32, self.field2)?;
+
             serializer.finish()
         }
     }
 
-    impl<T1, T2> Deserialize for Type<T1, T2>
+    impl<'a, T1, U1, T2, U2> Serialize<Type<T1, T2>> for &'a Type<U1, U2>
     where
-        T1: Deserialize,
-        T2: Deserialize,
+        T1: Tag,
+        &'a U1: Serialize<T1>,
+        T2: Tag,
+        &'a U2: Serialize<T2>,
+    {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer = serializer.serialize_struct(2)?;
+
+            serializer.serialize(1u32, &self.field1)?;
+            serializer.serialize(2u32, &self.field2)?;
+
+            serializer.finish()
+        }
+    }
+
+    impl<T1, U1, T2, U2> Deserialize<Type<T1, T2>> for Type<U1, U2>
+    where
+        T1: Tag,
+        U1: Deserialize<T1>,
+        T2: Tag,
+        U2: Deserialize<T2>,
     {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
@@ -36,8 +63,8 @@ fn concrete_vs_vague() {
             let mut field1 = None;
             let mut field2 = None;
 
-            while deserializer.has_more_fields() {
-                let deserializer = deserializer.deserialize_field()?;
+            while !deserializer.is_empty() {
+                let deserializer = deserializer.deserialize()?;
 
                 match deserializer.id() {
                     1 => field1 = deserializer.deserialize().map(Some)?,
@@ -64,7 +91,7 @@ fn concrete_vs_vague() {
     };
 
     let vague = Vague {
-        field1: SerializedValue::serialize(&0x1234).unwrap(),
+        field1: SerializedValue::serialize(0x1234).unwrap(),
         field2: SerializedValue::serialize("0x1234").unwrap(),
     };
 
@@ -83,10 +110,4 @@ fn concrete_vs_vague() {
             .deserialize()
             .unwrap()
     );
-}
-
-#[test]
-fn as_serialize_arg() {
-    let value = SerializedValue::serialize(&()).unwrap();
-    assert_as_serialize_arg_eq(&value);
 }

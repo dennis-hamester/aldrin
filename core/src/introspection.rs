@@ -19,10 +19,10 @@ mod variant;
 #[doc(hidden)]
 pub mod private;
 
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::TypeId;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
@@ -123,36 +123,75 @@ enum IntrospectionField {
     References = 3,
 }
 
-impl Serialize for Introspection {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Introspection {}
+
+impl PrimaryTag for Introspection {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Introspection {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Introspection> for &Introspection {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(4)?;
 
-        serializer.serialize_field(IntrospectionField::Version, &VERSION)?;
-        serializer.serialize_field(IntrospectionField::TypeId, &self.type_id)?;
-        serializer.serialize_field(IntrospectionField::Layout, &self.layout)?;
-        serializer.serialize_field(IntrospectionField::References, &self.references)?;
+        serializer.serialize::<tags::U32, _>(IntrospectionField::Version, VERSION)?;
+        serializer.serialize::<TypeId, _>(IntrospectionField::TypeId, self.type_id)?;
+        serializer.serialize::<Layout, _>(IntrospectionField::Layout, &self.layout)?;
+
+        serializer.serialize::<tags::Map<LexicalId, TypeId>, _>(
+            IntrospectionField::References,
+            &self.references,
+        )?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Introspection {
+impl Deserialize<Self> for Introspection {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
-        let version: u32 = deserializer.deserialize_specific_field(IntrospectionField::Version)?;
-        if version != VERSION {
-            return Err(DeserializeError::InvalidSerialization);
+        let mut type_id = None;
+        let mut layout = None;
+        let mut references = None;
+
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
+
+            match deserializer.try_id() {
+                Ok(IntrospectionField::Version) => {
+                    if deserializer.deserialize::<tags::U32, u32>()? != VERSION {
+                        return Err(DeserializeError::InvalidSerialization);
+                    }
+                }
+
+                Ok(IntrospectionField::TypeId) => {
+                    type_id = deserializer.deserialize::<TypeId, _>().map(Some)?;
+                }
+
+                Ok(IntrospectionField::Layout) => {
+                    layout = deserializer.deserialize::<Layout, _>().map(Some)?;
+                }
+
+                Ok(IntrospectionField::References) => {
+                    references = deserializer
+                        .deserialize::<tags::Map<LexicalId, TypeId>, _>()
+                        .map(Some)?;
+                }
+
+                Err(_) => deserializer.skip()?,
+            }
         }
 
-        let type_id = deserializer.deserialize_specific_field(IntrospectionField::TypeId)?;
-        let layout = deserializer.deserialize_specific_field(IntrospectionField::Layout)?;
-        let references = deserializer.deserialize_specific_field(IntrospectionField::References)?;
-
         deserializer.finish(Self {
-            type_id,
-            layout,
-            references,
+            type_id: type_id.ok_or(DeserializeError::InvalidSerialization)?,
+            layout: layout.ok_or(DeserializeError::InvalidSerialization)?,
+            references: references.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
 }

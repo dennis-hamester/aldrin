@@ -1,7 +1,6 @@
 use super::LexicalId;
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -53,20 +52,32 @@ enum FieldField {
     FieldType = 3,
 }
 
-impl Serialize for Field {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Field {}
+
+impl PrimaryTag for Field {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Field {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Field> for &Field {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(4)?;
 
-        serializer.serialize_field(FieldField::Id, &self.id)?;
-        serializer.serialize_field(FieldField::Name, &self.name)?;
-        serializer.serialize_field(FieldField::IsRequired, &self.is_required)?;
-        serializer.serialize_field(FieldField::FieldType, &self.field_type)?;
+        serializer.serialize::<tags::U32, _>(FieldField::Id, self.id)?;
+        serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;
+        serializer.serialize::<tags::Bool, _>(FieldField::IsRequired, self.is_required)?;
+        serializer.serialize::<LexicalId, _>(FieldField::FieldType, self.field_type)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Field {
+impl Deserialize<Self> for Field {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -75,14 +86,25 @@ impl Deserialize for Field {
         let mut is_required = None;
         let mut field_type = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                FieldField::Id => id = deserializer.deserialize().map(Some)?,
-                FieldField::Name => name = deserializer.deserialize().map(Some)?,
-                FieldField::IsRequired => is_required = deserializer.deserialize().map(Some)?,
-                FieldField::FieldType => field_type = deserializer.deserialize().map(Some)?,
+            match deserializer.try_id() {
+                Ok(FieldField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
+
+                Ok(FieldField::Name) => {
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(FieldField::IsRequired) => {
+                    is_required = deserializer.deserialize::<tags::Bool, _>().map(Some)?
+                }
+
+                Ok(FieldField::FieldType) => {
+                    field_type = deserializer.deserialize::<LexicalId, _>().map(Some)?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

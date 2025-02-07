@@ -1,5 +1,5 @@
 use super::{Enum, Introspectable, Introspection, Layout, LexicalId, References, Struct};
-use crate::ids::TypeId;
+use crate::TypeId;
 use uuid::uuid;
 
 #[test]

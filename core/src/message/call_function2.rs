@@ -1,11 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps, OptionKind};
-use crate::error::SerializeError;
-use crate::ids::ServiceCookie;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_serializer::Serialize;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer, OptionKind,
+};
+use crate::{SerializedValue, SerializedValueSlice, ServiceCookie};
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,26 +14,6 @@ pub struct CallFunction2 {
     pub function: u32,
     pub version: Option<u32>,
     pub value: SerializedValue,
-}
-
-impl CallFunction2 {
-    pub fn with_serialize_value<T: Serialize + ?Sized>(
-        serial: u32,
-        service_cookie: ServiceCookie,
-        function: u32,
-        version: Option<u32>,
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-
-        Ok(Self {
-            serial,
-            service_cookie,
-            function,
-            version,
-            value,
-        })
-    }
 }
 
 impl MessageOps for CallFunction2 {
@@ -105,7 +83,7 @@ mod test {
     use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
     use super::CallFunction2;
-    use crate::ids::ServiceCookie;
+    use crate::{tags, SerializedValue, ServiceCookie};
     use uuid::uuid;
 
     #[test]
@@ -116,20 +94,20 @@ mod test {
         ];
         let value = 4u8;
 
-        let msg = CallFunction2::with_serialize_value(
-            1,
-            ServiceCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
-            2,
-            None,
-            &value,
-        )
-        .unwrap();
+        let msg = CallFunction2 {
+            serial: 1,
+            service_cookie: ServiceCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
+            function: 2,
+            version: None,
+            value: SerializedValue::serialize(value).unwrap(),
+        };
+
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::CallFunction2(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 
     #[test]
@@ -140,19 +118,19 @@ mod test {
         ];
         let value = 4u8;
 
-        let msg = CallFunction2::with_serialize_value(
-            1,
-            ServiceCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
-            2,
-            Some(3),
-            &value,
-        )
-        .unwrap();
+        let msg = CallFunction2 {
+            serial: 1,
+            service_cookie: ServiceCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
+            function: 2,
+            version: Some(3),
+            value: SerializedValue::serialize(value).unwrap(),
+        };
+
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::CallFunction2(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 }

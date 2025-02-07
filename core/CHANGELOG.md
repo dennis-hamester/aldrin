@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- `Serialize` and `Deserialize` have been re-worked. They are now generic traits over a type `T`
+  (called tag), which describes how a value is serialized. This is a breaking change that affects
+  almost all parts of Aldrin.
+
 ## [0.12.0] - 2025-01-26
 
 ### Added

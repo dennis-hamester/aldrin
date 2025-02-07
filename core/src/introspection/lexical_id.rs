@@ -1,10 +1,9 @@
 use super::{Introspection, KeyType, KeyTypeOf};
-use crate::deserialize_key::DeserializeKey;
-use crate::error::{DeserializeError, SerializeError};
-use crate::ids::TypeId;
-use crate::serialize_key::SerializeKey;
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, KeyTag, PrimaryKeyTag, PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
+    SerializeKey, Serializer, TypeId,
+};
 use std::fmt;
 use std::str::FromStr;
 use uuid::{uuid, Error as UuidError, Uuid};
@@ -150,31 +149,76 @@ impl LexicalId {
     }
 }
 
-impl Serialize for LexicalId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(self.0);
-        Ok(())
+impl Tag for LexicalId {}
+
+impl PrimaryTag for LexicalId {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for LexicalId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
     }
 }
 
-impl Deserialize for LexicalId {
+impl Serialize<LexicalId> for &LexicalId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<LexicalId, _>(*self)
+    }
+}
+
+impl Deserialize<Self> for LexicalId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
 
-impl SerializeKey for LexicalId {
-    type Impl<'a> = Uuid;
-
-    fn as_impl(&self) -> Self::Impl<'_> {
-        self.0
+impl Serialize<tags::Uuid> for LexicalId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Self, _>(self)
     }
 }
 
-impl DeserializeKey for LexicalId {
-    type Impl = Uuid;
+impl Serialize<tags::Uuid> for &LexicalId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<tags::Uuid, _>(*self)
+    }
+}
 
-    fn try_from_impl(key: Self::Impl) -> Result<Self, DeserializeError> {
+impl Deserialize<tags::Uuid> for LexicalId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize::<Self, _>()
+    }
+}
+
+impl KeyTag for LexicalId {
+    type Impl = tags::Uuid;
+}
+
+impl PrimaryKeyTag for LexicalId {
+    type KeyTag = Self;
+}
+
+impl SerializeKey<Self> for LexicalId {
+    fn try_as_key(&self) -> Result<Uuid, SerializeError> {
+        Ok(self.0)
+    }
+}
+
+impl DeserializeKey<Self> for LexicalId {
+    fn try_from_key(key: Uuid) -> Result<Self, DeserializeError> {
+        Ok(Self(key))
+    }
+}
+
+impl SerializeKey<tags::Uuid> for LexicalId {
+    fn try_as_key(&self) -> Result<Uuid, SerializeError> {
+        Ok(self.0)
+    }
+}
+
+impl DeserializeKey<tags::Uuid> for LexicalId {
+    fn try_from_key(key: Uuid) -> Result<Self, DeserializeError> {
         Ok(Self(key))
     }
 }

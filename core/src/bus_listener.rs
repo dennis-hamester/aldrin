@@ -1,6 +1,5 @@
-use crate::ids::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithoutValueDeserializer};
-use crate::message_serializer::MessageSerializer;
+use crate::message::{MessageDeserializeError, MessageSerializer, MessageWithoutValueDeserializer};
+use crate::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -132,6 +131,7 @@ impl BusListenerFilter {
             }) => {
                 serializer
                     .put_discriminant_u8(BusListenerFilterKind::SpecificObjectSpecificService);
+
                 serializer.put_uuid(object.0);
                 serializer.put_uuid(service.0);
             }

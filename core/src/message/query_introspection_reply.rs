@@ -1,12 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-#[cfg(feature = "introspection")]
-use crate::error::SerializeError;
-#[cfg(feature = "introspection")]
-use crate::introspection::Introspection;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -24,31 +21,11 @@ pub enum QueryIntrospectionResult {
     Unavailable,
 }
 
-impl QueryIntrospectionResult {
-    #[cfg(feature = "introspection")]
-    pub fn ok_with_serialize_introspection(
-        introspection: &Introspection,
-    ) -> Result<Self, SerializeError> {
-        SerializedValue::serialize(introspection).map(Self::Ok)
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct QueryIntrospectionReply {
     pub serial: u32,
     pub result: QueryIntrospectionResult,
-}
-
-impl QueryIntrospectionReply {
-    #[cfg(feature = "introspection")]
-    pub fn ok_with_serialize_introspection(
-        serial: u32,
-        introspection: &Introspection,
-    ) -> Result<Self, SerializeError> {
-        let result = QueryIntrospectionResult::ok_with_serialize_introspection(introspection)?;
-        Ok(Self { serial, result })
-    }
 }
 
 impl MessageOps for QueryIntrospectionReply {
@@ -132,7 +109,7 @@ mod test {
     };
     use super::super::Message;
     use super::{QueryIntrospectionReply, QueryIntrospectionResult};
-    use crate::serialized_value::SerializedValue;
+    use crate::{tags, SerializedValue};
 
     #[test]
     fn ok() {
@@ -141,14 +118,15 @@ mod test {
 
         let msg = QueryIntrospectionReply {
             serial: 1,
-            result: QueryIntrospectionResult::Ok(SerializedValue::serialize(&value).unwrap()),
+            result: QueryIntrospectionResult::Ok(SerializedValue::serialize(value).unwrap()),
         };
+
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::QueryIntrospectionReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 
     #[test]

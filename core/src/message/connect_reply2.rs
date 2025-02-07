@@ -1,11 +1,13 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::{DeserializeError, SerializeError};
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::tags::{PrimaryTag, Tag};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
+    SerializedValueSlice, Serializer,
+};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -20,17 +22,40 @@ impl ConnectReplyData {
         Self::default()
     }
 
-    pub fn serialize_user<T: Serialize + ?Sized>(
+    pub fn serialize_user_as<T: Tag, U: Serialize<T>>(
         &mut self,
-        user: &T,
+        user: U,
     ) -> Result<&mut Self, SerializeError> {
-        self.user = SerializedValue::serialize(user).map(Some)?;
+        self.user = SerializedValue::serialize_as(user).map(Some)?;
         Ok(self)
     }
 
-    pub fn deserialize_user<T: Deserialize>(&self) -> Option<Result<T, DeserializeError>> {
-        self.user.as_deref().map(SerializedValueSlice::deserialize)
+    pub fn serialize_user<T: PrimaryTag + Serialize<T::Tag>>(
+        &mut self,
+        user: T,
+    ) -> Result<&mut Self, SerializeError> {
+        self.serialize_user_as(user)
     }
+
+    pub fn deserialize_user_as<T: Tag, U: Deserialize<T>>(
+        &self,
+    ) -> Option<Result<U, DeserializeError>> {
+        self.user
+            .as_deref()
+            .map(SerializedValueSlice::deserialize_as)
+    }
+
+    pub fn deserialize_user<T: PrimaryTag + Deserialize<T::Tag>>(
+        &self,
+    ) -> Option<Result<T, DeserializeError>> {
+        self.deserialize_user_as()
+    }
+}
+
+impl Tag for ConnectReplyData {}
+
+impl PrimaryTag for ConnectReplyData {
+    type Tag = Self;
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
@@ -39,45 +64,36 @@ enum ConnectReplyDataField {
     User = 0,
 }
 
-impl Serialize for ConnectReplyData {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Serialize<Self> for ConnectReplyData {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<ConnectReplyData> for &ConnectReplyData {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(1)?;
-        serializer.serialize_field(ConnectReplyDataField::User, &self.user)?;
+        serializer.serialize(ConnectReplyDataField::User, &self.user)?;
         serializer.finish()
     }
 }
 
-impl Deserialize for ConnectReplyData {
+impl Deserialize<Self> for ConnectReplyData {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut user = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            let Ok(field) = deserializer.try_id() else {
-                deserializer.skip()?;
-                continue;
-            };
-
-            match field {
-                ConnectReplyDataField::User => user = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(ConnectReplyDataField::User) => user = deserializer.deserialize()?,
+                Err(_) => deserializer.skip()?,
             }
         }
 
         deserializer.finish(Self { user })
-    }
-}
-
-impl AsSerializeArg for ConnectReplyData {
-    type SerializeArg<'a> = &'a Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
     }
 }
 
@@ -102,44 +118,6 @@ pub enum ConnectResult {
 pub struct ConnectReply2 {
     pub result: ConnectResult,
     pub value: SerializedValue,
-}
-
-impl ConnectReply2 {
-    pub fn ok_with_serialize_data(
-        version: u32,
-        data: &ConnectReplyData,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(data)?;
-
-        Ok(Self {
-            result: ConnectResult::Ok(version),
-            value,
-        })
-    }
-
-    pub fn rejected_with_serialize_data(data: &ConnectReplyData) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(data)?;
-
-        Ok(Self {
-            result: ConnectResult::Rejected,
-            value,
-        })
-    }
-
-    pub fn incompatible_version_with_serialize_data(
-        data: &ConnectReplyData,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(data)?;
-
-        Ok(Self {
-            result: ConnectResult::IncompatibleVersion,
-            value,
-        })
-    }
-
-    pub fn deserialize_connect_data(&self) -> Result<ConnectReplyData, DeserializeError> {
-        self.value.deserialize()
-    }
 }
 
 impl MessageOps for ConnectReply2 {
@@ -220,14 +198,18 @@ impl From<ConnectReply2> for Message {
 mod test {
     use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
-    use super::{ConnectReply2, ConnectReplyData};
+    use super::{ConnectReply2, ConnectReplyData, ConnectResult};
+    use crate::SerializedValue;
 
     #[test]
     fn ok() {
         let serialized = [15, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 0, 1];
         let value = ConnectReplyData::new();
 
-        let msg = ConnectReply2::ok_with_serialize_data(1, &value).unwrap();
+        let msg = ConnectReply2 {
+            result: ConnectResult::Ok(1),
+            value: SerializedValue::serialize(&value).unwrap(),
+        };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq_with_value(&msg, serialized, &value);
 
@@ -241,7 +223,10 @@ mod test {
         let serialized = [14, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 1];
         let value = ConnectReplyData::new();
 
-        let msg = ConnectReply2::rejected_with_serialize_data(&value).unwrap();
+        let msg = ConnectReply2 {
+            result: ConnectResult::Rejected,
+            value: SerializedValue::serialize(&value).unwrap(),
+        };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq_with_value(&msg, serialized, &value);
 
@@ -255,7 +240,10 @@ mod test {
         let serialized = [14, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 2];
         let value = ConnectReplyData::new();
 
-        let msg = ConnectReply2::incompatible_version_with_serialize_data(&value).unwrap();
+        let msg = ConnectReply2 {
+            result: ConnectResult::IncompatibleVersion,
+            value: SerializedValue::serialize(&value).unwrap(),
+        };
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq_with_value(&msg, serialized, &value);
 

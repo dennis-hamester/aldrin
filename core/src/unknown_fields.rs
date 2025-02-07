@@ -1,17 +1,24 @@
-use crate::error::DeserializeError;
-use crate::generic_value::Struct;
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value::ValueKind;
+use crate::{
+    tags, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Struct, ValueKind,
+};
 use std::collections::hash_map::{HashMap, IntoIter, Iter};
-use std::iter::Map;
+use std::convert::Infallible;
+use std::iter::{self, Empty, Map};
 use std::ops::{Deref, DerefMut};
+
+pub trait AsUnknownFields {
+    type Field: Serialize<tags::Value>;
+    type FieldsIter: ExactSizeIterator<Item = (u32, Self::Field)>;
+
+    fn fields(self) -> Self::FieldsIter;
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct UnknownFields(pub HashMap<u32, SerializedValue>);
 
 impl UnknownFields {
     pub fn new() -> Self {
-        Self(HashMap::new())
+        Self::default()
     }
 
     pub fn has_fields_set(&self) -> bool {
@@ -58,6 +65,7 @@ impl IntoIterator for UnknownFields {
 
 impl<'a> IntoIterator for &'a UnknownFields {
     type Item = (u32, &'a SerializedValueSlice);
+
     type IntoIter = Map<
         Iter<'a, u32, SerializedValue>,
         fn((&'a u32, &'a SerializedValue)) -> (u32, &'a SerializedValueSlice),
@@ -65,5 +73,58 @@ impl<'a> IntoIterator for &'a UnknownFields {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter().map(|(id, val)| (*id, val))
+    }
+}
+
+impl AsUnknownFields for UnknownFields {
+    type Field = SerializedValue;
+    type FieldsIter = <Self as IntoIterator>::IntoIter;
+
+    fn fields(self) -> Self::FieldsIter {
+        self.into_iter()
+    }
+}
+
+impl<'a> AsUnknownFields for &'a UnknownFields {
+    type Field = &'a SerializedValueSlice;
+    type FieldsIter = <Self as IntoIterator>::IntoIter;
+
+    fn fields(self) -> Self::FieldsIter {
+        self.into_iter()
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct UnknownFieldsRef<Fields>(pub Fields);
+
+impl<Fields, Field> AsUnknownFields for UnknownFieldsRef<Fields>
+where
+    Fields: IntoIterator<Item = (u32, Field)>,
+    Fields::IntoIter: ExactSizeIterator,
+    Field: Serialize<tags::Value>,
+{
+    type Field = Field;
+    type FieldsIter = Fields::IntoIter;
+
+    fn fields(self) -> Self::FieldsIter {
+        self.0.into_iter()
+    }
+}
+
+impl AsUnknownFields for () {
+    type Field = Infallible;
+    type FieldsIter = Empty<(u32, Infallible)>;
+
+    fn fields(self) -> Self::FieldsIter {
+        iter::empty()
+    }
+}
+
+impl AsUnknownFields for Infallible {
+    type Field = Self;
+    type FieldsIter = Empty<(u32, Self)>;
+
+    fn fields(self) -> Self::FieldsIter {
+        iter::empty()
     }
 }

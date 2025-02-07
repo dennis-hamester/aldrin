@@ -1,8 +1,7 @@
 use super::{DynIntrospectable, Introspectable, Layout, References, VERSION};
-use crate::error::SerializeError;
-use crate::ids::TypeId;
-use crate::serialized_value::SerializedValue;
-use crate::value_serializer::{Serialize, Serializer};
+use crate::adapters::IterAsVec;
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Serialize, SerializeError, SerializedValue, Serializer, TypeId};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeSet;
 use uuid::Uuid;
@@ -59,21 +58,23 @@ enum ComputeField {
     Referenced = 2,
 }
 
-impl Serialize for Compute {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        struct Referenced<'a>(&'a BTreeSet<Layout>);
+impl Tag for Compute {}
 
-        impl Serialize for Referenced<'_> {
-            fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-                serializer.serialize_vec_iter(self.0)
-            }
-        }
+impl PrimaryTag for Compute {
+    type Tag = Self;
+}
 
+impl Serialize<Compute> for &Compute {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(3)?;
 
-        serializer.serialize_field(ComputeField::Version, &VERSION)?;
-        serializer.serialize_field(ComputeField::Layout, &self.layout)?;
-        serializer.serialize_field(ComputeField::Referenced, &Referenced(&self.referenced))?;
+        serializer.serialize::<tags::U32, _>(ComputeField::Version, VERSION)?;
+        serializer.serialize::<Layout, _>(ComputeField::Layout, &self.layout)?;
+
+        serializer.serialize::<tags::Vec<Layout>, _>(
+            ComputeField::Referenced,
+            IterAsVec(&self.referenced),
+        )?;
 
         serializer.finish()
     }

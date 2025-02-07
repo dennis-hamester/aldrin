@@ -201,7 +201,7 @@ async fn before_derive_compat_struct() {
             let mut f3 = None;
 
             while deserializer.has_more_fields() {
-                let deserializer = deserializer.deserialize_field()?;
+                let deserializer = deserializer.deserialize()?;
 
                 match deserializer.id() {
                     1 => f1 = deserializer.deserialize().map(Some)?,

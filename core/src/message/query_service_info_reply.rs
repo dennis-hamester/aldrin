@@ -1,10 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::SerializeError;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::service_info::ServiceInfo;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -22,24 +21,11 @@ pub enum QueryServiceInfoResult {
     InvalidService,
 }
 
-impl QueryServiceInfoResult {
-    pub fn ok_with_serialize_info(info: ServiceInfo) -> Result<Self, SerializeError> {
-        SerializedValue::serialize(&info).map(Self::Ok)
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct QueryServiceInfoReply {
     pub serial: u32,
     pub result: QueryServiceInfoResult,
-}
-
-impl QueryServiceInfoReply {
-    pub fn ok_with_serialize_info(serial: u32, info: ServiceInfo) -> Result<Self, SerializeError> {
-        let result = QueryServiceInfoResult::ok_with_serialize_info(info)?;
-        Ok(Self { serial, result })
-    }
 }
 
 impl MessageOps for QueryServiceInfoReply {
@@ -123,8 +109,7 @@ mod test {
     };
     use super::super::Message;
     use super::{QueryServiceInfoReply, QueryServiceInfoResult};
-    use crate::ids::TypeId;
-    use crate::service_info::ServiceInfo;
+    use crate::{SerializedValue, ServiceInfo, TypeId};
     use uuid::uuid;
 
     #[test]
@@ -133,17 +118,21 @@ mod test {
             39, 0, 0, 0, 54, 28, 0, 0, 0, 39, 3, 0, 7, 2, 1, 1, 14, 0xcf, 0x41, 0xc6, 0x88, 0x49,
             0x76, 0x46, 0xa5, 0x8e, 0x2d, 0x48, 0x71, 0x02, 0x58, 0xbc, 0x2c, 2, 1, 2, 1, 1, 0,
         ];
-        let info = ServiceInfo::new(2)
+        let value = ServiceInfo::new(2)
             .set_type_id(TypeId(uuid!("cf41c688-4976-46a5-8e2d-48710258bc2c")))
             .set_subscribe_all(true);
 
-        let msg = QueryServiceInfoReply::ok_with_serialize_info(1, info).unwrap();
+        let msg = QueryServiceInfoReply {
+            serial: 1,
+            result: QueryServiceInfoResult::Ok(SerializedValue::serialize(value).unwrap()),
+        };
+
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &info);
+        assert_deserialize_eq_with_value(&msg, serialized, &value);
 
         let msg = Message::QueryServiceInfoReply(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &info);
+        assert_deserialize_eq_with_value(&msg, serialized, &value);
     }
 
     #[test]

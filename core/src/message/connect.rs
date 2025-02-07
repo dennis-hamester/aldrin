@@ -1,10 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::SerializeError;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_serializer::Serialize;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,16 +11,6 @@ use bytes::BytesMut;
 pub struct Connect {
     pub version: u32,
     pub value: SerializedValue,
-}
-
-impl Connect {
-    pub fn with_serialize_value<T: Serialize + ?Sized>(
-        version: u32,
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self { version, value })
-    }
 }
 
 impl MessageOps for Connect {
@@ -64,18 +53,22 @@ mod test {
     use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
     use super::Connect;
+    use crate::{tags, SerializedValue};
 
     #[test]
     fn connect() {
         let serialized = [12, 0, 0, 0, 0, 2, 0, 0, 0, 3, 4, 1];
         let value = 4u8;
 
-        let msg = Connect::with_serialize_value(1, &value).unwrap();
+        let msg = Connect {
+            version: 1,
+            value: SerializedValue::serialize(value).unwrap(),
+        };
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::Connect(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 }

@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test;
 
-use crate::error::DeserializeError;
-use crate::message_deserializer::MessageDeserializeError;
+use crate::message::MessageDeserializeError;
+use crate::DeserializeError;
 use bytes::{Buf, BufMut, Bytes};
 
 pub(crate) trait BufMutExt: BufMut {

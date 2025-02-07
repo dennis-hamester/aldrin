@@ -2,6 +2,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SerializeError {
+    #[error("unexpected value type")]
+    UnexpectedValue,
+
     #[error("serialized value overflowed")]
     Overflow,
 
@@ -26,14 +29,14 @@ pub enum DeserializeError {
     #[error("unexpected value type")]
     UnexpectedValue,
 
+    #[error("too deeply nested")]
+    TooDeeplyNested,
+
     #[error("no more elements")]
     NoMoreElements,
 
     #[error("more elements remain")]
     MoreElementsRemain,
-
-    #[error("too deeply nested")]
-    TooDeeplyNested,
 
     #[error("serialization contains trailing data")]
     TrailingData,

@@ -1,7 +1,6 @@
 use super::LexicalId;
-use crate::error::{DeserializeError, SerializeError};
-use crate::value_deserializer::{Deserialize, Deserializer};
-use crate::value_serializer::{Serialize, Serializer};
+use crate::tags::{self, PrimaryTag, Tag};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -41,19 +40,33 @@ enum EventField {
     EventType = 2,
 }
 
-impl Serialize for Event {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+impl Tag for Event {}
+
+impl PrimaryTag for Event {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for Event {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<Event> for &Event {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct(3)?;
 
-        serializer.serialize_field(EventField::Id, &self.id)?;
-        serializer.serialize_field(EventField::Name, &self.name)?;
-        serializer.serialize_field(EventField::EventType, &self.event_type)?;
+        serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
+        serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
+
+        serializer
+            .serialize::<tags::Option<LexicalId>, _>(EventField::EventType, self.event_type)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize for Event {
+impl Deserialize<Self> for Event {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -61,13 +74,21 @@ impl Deserialize for Event {
         let mut name = None;
         let mut event_type = None;
 
-        while deserializer.has_more_fields() {
-            let deserializer = deserializer.deserialize_field()?;
+        while !deserializer.is_empty() {
+            let deserializer = deserializer.deserialize()?;
 
-            match deserializer.try_id()? {
-                EventField::Id => id = deserializer.deserialize().map(Some)?,
-                EventField::Name => name = deserializer.deserialize().map(Some)?,
-                EventField::EventType => event_type = deserializer.deserialize()?,
+            match deserializer.try_id() {
+                Ok(EventField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
+
+                Ok(EventField::Name) => {
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                }
+
+                Ok(EventField::EventType) => {
+                    event_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
+                }
+
+                Err(_) => deserializer.skip()?,
             }
         }
 

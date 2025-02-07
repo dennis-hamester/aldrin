@@ -1,4 +1,5 @@
-use crate::error::{ProtocolVersionError, ProtocolVersionErrorKind};
+use crate::error::ProtocolVersionErrorKind;
+use crate::ProtocolVersionError;
 use std::fmt;
 use std::str::FromStr;
 

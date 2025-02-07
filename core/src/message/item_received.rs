@@ -1,11 +1,9 @@
 use super::message_ops::Sealed;
-use super::{Message, MessageKind, MessageOps};
-use crate::error::SerializeError;
-use crate::ids::ChannelCookie;
-use crate::message_deserializer::{MessageDeserializeError, MessageWithValueDeserializer};
-use crate::message_serializer::{MessageSerializeError, MessageSerializer};
-use crate::serialized_value::{SerializedValue, SerializedValueSlice};
-use crate::value_serializer::Serialize;
+use super::{
+    Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
+    MessageSerializer, MessageWithValueDeserializer,
+};
+use crate::{ChannelCookie, SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,16 +11,6 @@ use bytes::BytesMut;
 pub struct ItemReceived {
     pub cookie: ChannelCookie,
     pub value: SerializedValue,
-}
-
-impl ItemReceived {
-    pub fn with_serialize_value<T: Serialize + ?Sized>(
-        cookie: ChannelCookie,
-        value: &T,
-    ) -> Result<Self, SerializeError> {
-        let value = SerializedValue::serialize(value)?;
-        Ok(Self { cookie, value })
-    }
 }
 
 impl MessageOps for ItemReceived {
@@ -65,7 +53,7 @@ mod test {
     use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
     use super::ItemReceived;
-    use crate::ids::ChannelCookie;
+    use crate::{tags, ChannelCookie, SerializedValue};
     use uuid::uuid;
 
     #[test]
@@ -76,16 +64,16 @@ mod test {
         ];
         let value = 4u8;
 
-        let msg = ItemReceived::with_serialize_value(
-            ChannelCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
-            &value,
-        )
-        .unwrap();
+        let msg = ItemReceived {
+            cookie: ChannelCookie(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")),
+            value: SerializedValue::serialize(value).unwrap(),
+        };
+
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
 
         let msg = Message::ItemReceived(msg);
         assert_serialize_eq(&msg, serialized);
-        assert_deserialize_eq_with_value(&msg, serialized, &value);
+        assert_deserialize_eq_with_value::<_, _, tags::U8, _>(&msg, serialized, &value);
     }
 }

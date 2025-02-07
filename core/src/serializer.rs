@@ -1,32 +1,13 @@
 use crate::buf_ext::BufMutExt;
-use crate::error::SerializeError;
-use crate::ids::{ChannelCookie, ObjectId, ServiceId};
-use crate::serialize_key::{Sealed as _, SerializeKey};
-use crate::serialized_value::SerializedValueSlice;
-use crate::unknown_fields::UnknownFields;
-use crate::unknown_variant::UnknownVariant;
-use crate::value::ValueKind;
-use crate::MAX_VALUE_DEPTH;
+use crate::tags::{self, KeyTag, KeyTagImpl, Tag};
+use crate::{
+    AsUnknownFields, AsUnknownVariant, ChannelCookie, ObjectId, Serialize, SerializeError,
+    SerializeKey, SerializedValueSlice, ServiceId, UnknownFieldsRef, ValueKind, MAX_VALUE_DEPTH,
+};
 use bytes::{BufMut, BytesMut};
 use std::fmt;
 use std::marker::PhantomData;
 use uuid::Uuid;
-
-pub trait Serialize {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError>;
-}
-
-pub trait AsSerializeArg {
-    type SerializeArg<'a>: Serialize
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a;
-}
-
-pub type SerializeArg<'a, T> = <T as AsSerializeArg>::SerializeArg<'a>;
 
 #[derive(Debug)]
 pub struct Serializer<'a> {
@@ -43,6 +24,7 @@ impl<'a> Serializer<'a> {
 
     fn increment_depth(&mut self) -> Result<(), SerializeError> {
         self.depth += 1;
+
         if self.depth <= MAX_VALUE_DEPTH {
             Ok(())
         } else {
@@ -50,80 +32,96 @@ impl<'a> Serializer<'a> {
         }
     }
 
-    pub fn copy_from_serialized_value(self, value: &SerializedValueSlice) {
+    pub fn copy_from_serialized_value(
+        self,
+        value: &SerializedValueSlice,
+    ) -> Result<(), SerializeError> {
         self.buf.extend_from_slice(value);
+        Ok(())
     }
 
-    pub fn serialize<T: Serialize + ?Sized>(self, value: &T) -> Result<(), SerializeError> {
+    pub fn serialize<T: Tag, U: Serialize<T>>(self, value: U) -> Result<(), SerializeError> {
         value.serialize(self)
     }
 
-    pub fn serialize_none(self) {
+    pub fn serialize_none(self) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::None);
+        Ok(())
     }
 
-    pub fn serialize_some<T: Serialize + ?Sized>(
+    pub fn serialize_some<T: Tag, U: Serialize<T>>(
         mut self,
-        value: &T,
+        value: U,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Some);
-        value.serialize(self)
+        self.serialize(value)
     }
 
-    pub fn serialize_bool(self, value: bool) {
+    pub fn serialize_bool(self, value: bool) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Bool);
         self.buf.put_u8(value.into());
+        Ok(())
     }
 
-    pub fn serialize_u8(self, value: u8) {
+    pub fn serialize_u8(self, value: u8) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::U8);
         self.buf.put_u8(value);
+        Ok(())
     }
 
-    pub fn serialize_i8(self, value: i8) {
+    pub fn serialize_i8(self, value: i8) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::I8);
         self.buf.put_i8(value);
+        Ok(())
     }
 
-    pub fn serialize_u16(self, value: u16) {
+    pub fn serialize_u16(self, value: u16) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::U16);
         self.buf.put_varint_u16_le(value);
+        Ok(())
     }
 
-    pub fn serialize_i16(self, value: i16) {
+    pub fn serialize_i16(self, value: i16) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::I16);
         self.buf.put_varint_i16_le(value);
+        Ok(())
     }
 
-    pub fn serialize_u32(self, value: u32) {
+    pub fn serialize_u32(self, value: u32) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::U32);
         self.buf.put_varint_u32_le(value);
+        Ok(())
     }
 
-    pub fn serialize_i32(self, value: i32) {
+    pub fn serialize_i32(self, value: i32) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::I32);
         self.buf.put_varint_i32_le(value);
+        Ok(())
     }
 
-    pub fn serialize_u64(self, value: u64) {
+    pub fn serialize_u64(self, value: u64) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::U64);
         self.buf.put_varint_u64_le(value);
+        Ok(())
     }
 
-    pub fn serialize_i64(self, value: i64) {
+    pub fn serialize_i64(self, value: i64) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::I64);
         self.buf.put_varint_i64_le(value);
+        Ok(())
     }
 
-    pub fn serialize_f32(self, value: f32) {
+    pub fn serialize_f32(self, value: f32) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::F32);
         self.buf.put_u32_le(value.to_bits());
+        Ok(())
     }
 
-    pub fn serialize_f64(self, value: f64) {
+    pub fn serialize_f64(self, value: f64) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::F64);
         self.buf.put_u64_le(value.to_bits());
+        Ok(())
     }
 
     pub fn serialize_string(self, value: &str) -> Result<(), SerializeError> {
@@ -137,40 +135,44 @@ impl<'a> Serializer<'a> {
         }
     }
 
-    pub fn serialize_uuid(self, value: Uuid) {
+    pub fn serialize_uuid(self, value: Uuid) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Uuid);
         self.buf.put_slice(value.as_bytes());
+        Ok(())
     }
 
-    pub fn serialize_object_id(self, value: ObjectId) {
+    pub fn serialize_object_id(self, value: ObjectId) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::ObjectId);
         self.buf.put_slice(value.uuid.0.as_bytes());
         self.buf.put_slice(value.cookie.0.as_bytes());
+        Ok(())
     }
 
-    pub fn serialize_service_id(self, value: ServiceId) {
+    pub fn serialize_service_id(self, value: ServiceId) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::ServiceId);
         self.buf.put_slice(value.object_id.uuid.0.as_bytes());
         self.buf.put_slice(value.object_id.cookie.0.as_bytes());
         self.buf.put_slice(value.uuid.0.as_bytes());
         self.buf.put_slice(value.cookie.0.as_bytes());
+        Ok(())
     }
 
     pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a>, SerializeError> {
         VecSerializer::new(self.buf, num_elems, self.depth)
     }
 
-    pub fn serialize_vec_iter<T>(self, vec: T) -> Result<(), SerializeError>
+    pub fn serialize_vec_iter<T, U>(self, vec: U) -> Result<(), SerializeError>
     where
-        T: IntoIterator,
-        T::Item: Serialize,
-        T::IntoIter: ExactSizeIterator,
+        T: Tag,
+        U: IntoIterator,
+        U::IntoIter: ExactSizeIterator,
+        U::Item: Serialize<T>,
     {
         let vec = vec.into_iter();
         let mut serializer = self.serialize_vec(vec.len())?;
 
         for elem in vec {
-            serializer.serialize_element(&elem)?;
+            serializer.serialize(elem)?;
         }
 
         serializer.finish()
@@ -186,48 +188,51 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_map<K: SerializeKey + ?Sized>(
+    pub fn serialize_map<K: KeyTag>(
         self,
         num_elems: usize,
     ) -> Result<MapSerializer<'a, K>, SerializeError> {
         MapSerializer::new(self.buf, num_elems, self.depth)
     }
 
-    pub fn serialize_map_iter<T, K, V>(self, map: T) -> Result<(), SerializeError>
+    pub fn serialize_map_iter<K, L, T, U, I>(self, map: I) -> Result<(), SerializeError>
     where
-        T: IntoIterator<Item = (K, V)>,
-        T::IntoIter: ExactSizeIterator,
-        K: SerializeKey,
-        V: Serialize,
+        K: KeyTag,
+        L: SerializeKey<K>,
+        T: Tag,
+        U: Serialize<T>,
+        I: IntoIterator<Item = (L, U)>,
+        I::IntoIter: ExactSizeIterator,
     {
         let map = map.into_iter();
         let mut serializer = self.serialize_map(map.len())?;
 
         for (key, value) in map {
-            serializer.serialize_element(&key, &value)?;
+            serializer.serialize(&key, value)?;
         }
 
         serializer.finish()
     }
 
-    pub fn serialize_set<T: SerializeKey + ?Sized>(
+    pub fn serialize_set<K: KeyTag>(
         self,
         num_elems: usize,
-    ) -> Result<SetSerializer<'a, T>, SerializeError> {
+    ) -> Result<SetSerializer<'a, K>, SerializeError> {
         SetSerializer::new(self.buf, num_elems)
     }
 
-    pub fn serialize_set_iter<T>(self, set: T) -> Result<(), SerializeError>
+    pub fn serialize_set_iter<K, T>(self, set: T) -> Result<(), SerializeError>
     where
+        K: KeyTag,
         T: IntoIterator,
-        T::Item: SerializeKey,
         T::IntoIter: ExactSizeIterator,
+        T::Item: SerializeKey<K>,
     {
         let set = set.into_iter();
         let mut serializer = self.serialize_set(set.len())?;
 
         for value in set {
-            serializer.serialize_element(&value)?;
+            serializer.serialize(&value)?;
         }
 
         serializer.finish()
@@ -243,34 +248,43 @@ impl<'a> Serializer<'a> {
     pub fn serialize_struct_with_unknown_fields(
         self,
         num_fields: usize,
-        unknown_fields: &UnknownFields,
+        unknown_fields: impl AsUnknownFields,
     ) -> Result<StructSerializer<'a>, SerializeError> {
         StructSerializer::with_unknown_fields(self.buf, num_fields, unknown_fields, self.depth)
     }
 
-    pub fn serialize_enum<T: Serialize + ?Sized>(
+    pub fn serialize_enum<T: Tag, U: Serialize<T>>(
         mut self,
         variant: impl Into<u32>,
-        value: &T,
+        value: U,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Enum);
         self.buf.put_varint_u32_le(variant.into());
-        value.serialize(self)
+        self.serialize(value)
     }
 
-    pub fn serialize_unknown_variant(self, variant: &UnknownVariant) -> Result<(), SerializeError> {
+    pub fn serialize_unit_enum(self, variant: impl Into<u32>) -> Result<(), SerializeError> {
+        self.serialize_enum::<tags::Unit, _>(variant, ())
+    }
+
+    pub fn serialize_unknown_variant(
+        self,
+        variant: impl AsUnknownVariant,
+    ) -> Result<(), SerializeError> {
         self.serialize_enum(variant.id(), variant.value())
     }
 
-    pub fn serialize_sender(self, value: ChannelCookie) {
+    pub fn serialize_sender(self, value: ChannelCookie) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Sender);
         self.buf.put_slice(value.0.as_bytes());
+        Ok(())
     }
 
-    pub fn serialize_receiver(self, value: ChannelCookie) {
+    pub fn serialize_receiver(self, value: ChannelCookie) -> Result<(), SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Receiver);
         self.buf.put_slice(value.0.as_bytes());
+        Ok(())
     }
 }
 
@@ -286,6 +300,7 @@ impl<'a> VecSerializer<'a> {
         if num_elems <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Vec);
             buf.put_varint_u32_le(num_elems as u32);
+
             Ok(Self {
                 buf,
                 num_elems: num_elems as u32,
@@ -304,13 +319,16 @@ impl<'a> VecSerializer<'a> {
         self.num_elems > 0
     }
 
-    pub fn serialize_element<T: Serialize + ?Sized>(
+    pub fn serialize<T: Tag, U: Serialize<T>>(
         &mut self,
-        value: &T,
+        value: U,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            value.serialize(Serializer::new(self.buf, self.depth)?)?;
+
+            let serializer = Serializer::new(self.buf, self.depth)?;
+            serializer.serialize(value)?;
+
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -337,6 +355,7 @@ impl<'a> BytesSerializer<'a> {
         if num_elems <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Bytes);
             buf.put_varint_u32_le(num_elems as u32);
+
             Ok(Self {
                 buf,
                 num_elems: num_elems as u32,
@@ -355,7 +374,7 @@ impl<'a> BytesSerializer<'a> {
     }
 
     pub fn serialize(&mut self, bytes: &[u8]) -> Result<&mut Self, SerializeError> {
-        if self.num_elems as usize >= bytes.len() {
+        if bytes.len() <= self.num_elems as usize {
             self.num_elems -= bytes.len() as u32;
             self.buf.put_slice(bytes);
             Ok(self)
@@ -373,14 +392,14 @@ impl<'a> BytesSerializer<'a> {
     }
 }
 
-pub struct MapSerializer<'a, K: SerializeKey + ?Sized> {
+pub struct MapSerializer<'a, K> {
     buf: &'a mut BytesMut,
     num_elems: u32,
     depth: u8,
     _key: PhantomData<K>,
 }
 
-impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
+impl<'a, K: KeyTag> MapSerializer<'a, K> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
             K::Impl::serialize_map_value_kind(&mut buf);
@@ -405,15 +424,19 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
         self.num_elems > 0
     }
 
-    pub fn serialize_element<T: Serialize + ?Sized>(
+    pub fn serialize<L: SerializeKey<K> + ?Sized, T: Tag, U: Serialize<T>>(
         &mut self,
-        key: &K,
-        value: &T,
+        key: &L,
+        value: U,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            key.as_impl().serialize_key(self.buf)?;
-            value.serialize(Serializer::new(self.buf, self.depth)?)?;
+
+            K::Impl::serialize_key(key.try_as_key()?, self.buf)?;
+
+            let serializer = Serializer::new(self.buf, self.depth)?;
+            serializer.serialize(value)?;
+
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -429,27 +452,28 @@ impl<'a, K: SerializeKey + ?Sized> MapSerializer<'a, K> {
     }
 }
 
-impl<K: SerializeKey + ?Sized> fmt::Debug for MapSerializer<'_, K> {
+impl<K> fmt::Debug for MapSerializer<'_, K> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("MapSerializer");
 
         f.field("buf", &self.buf);
         f.field("num_elems", &self.num_elems);
+        f.field("depth", &self.depth);
 
         f.finish()
     }
 }
 
-pub struct SetSerializer<'a, T: SerializeKey + ?Sized> {
+pub struct SetSerializer<'a, K> {
     buf: &'a mut BytesMut,
     num_elems: u32,
-    _key: PhantomData<T>,
+    _key: PhantomData<K>,
 }
 
-impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
+impl<'a, K: KeyTag> SetSerializer<'a, K> {
     fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            T::Impl::serialize_set_value_kind(&mut buf);
+            K::Impl::serialize_set_value_kind(&mut buf);
             buf.put_varint_u32_le(num_elems as u32);
 
             Ok(Self {
@@ -470,10 +494,13 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
         self.num_elems > 0
     }
 
-    pub fn serialize_element(&mut self, value: &T) -> Result<&mut Self, SerializeError> {
+    pub fn serialize<T: SerializeKey<K> + ?Sized>(
+        &mut self,
+        value: &T,
+    ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
-            value.as_impl().serialize_key(self.buf)?;
+            K::Impl::serialize_key(value.try_as_key()?, self.buf)?;
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -489,7 +516,7 @@ impl<'a, T: SerializeKey + ?Sized> SetSerializer<'a, T> {
     }
 }
 
-impl<T: SerializeKey + ?Sized> fmt::Debug for SetSerializer<'_, T> {
+impl<T> fmt::Debug for SetSerializer<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_struct("SetSerializer");
 
@@ -512,6 +539,7 @@ impl<'a> StructSerializer<'a> {
         if num_fields <= u32::MAX as usize {
             buf.put_discriminant_u8(ValueKind::Struct);
             buf.put_varint_u32_le(num_fields as u32);
+
             Ok(Self {
                 buf,
                 num_fields: num_fields as u32,
@@ -525,11 +553,12 @@ impl<'a> StructSerializer<'a> {
     fn with_unknown_fields(
         buf: &'a mut BytesMut,
         num_fields: usize,
-        unknown_fields: &UnknownFields,
+        unknown_fields: impl AsUnknownFields,
         depth: u8,
     ) -> Result<Self, SerializeError> {
+        let unknown_fields = unknown_fields.fields();
         let mut this = Self::new(buf, num_fields + unknown_fields.len(), depth)?;
-        this.serialize_unknown_fields(unknown_fields)?;
+        this.serialize_unknown_fields(UnknownFieldsRef(unknown_fields))?;
         Ok(this)
     }
 
@@ -541,15 +570,19 @@ impl<'a> StructSerializer<'a> {
         self.num_fields > 0
     }
 
-    pub fn serialize_field<T: Serialize + ?Sized>(
+    pub fn serialize<T: Tag, U: Serialize<T>>(
         &mut self,
         id: impl Into<u32>,
-        value: &T,
+        value: U,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_fields > 0 {
             self.num_fields -= 1;
+
             self.buf.put_varint_u32_le(id.into());
-            value.serialize(Serializer::new(self.buf, self.depth)?)?;
+
+            let serializer = Serializer::new(self.buf, self.depth)?;
+            serializer.serialize(value)?;
+
             Ok(self)
         } else {
             Err(SerializeError::TooManyElements)
@@ -558,16 +591,18 @@ impl<'a> StructSerializer<'a> {
 
     pub fn serialize_unknown_fields(
         &mut self,
-        unknown_fields: &UnknownFields,
+        unknown_fields: impl AsUnknownFields,
     ) -> Result<&mut Self, SerializeError> {
-        for (id, value) in unknown_fields {
+        for (id, value) in unknown_fields.fields() {
             if self.num_fields == 0 {
                 return Err(SerializeError::TooManyElements);
             }
 
             self.num_fields -= 1;
             self.buf.put_varint_u32_le(id);
-            value.serialize(Serializer::new(self.buf, self.depth)?)?;
+
+            let serializer = Serializer::new(self.buf, self.depth)?;
+            serializer.serialize(value)?;
         }
 
         Ok(self)

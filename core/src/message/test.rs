@@ -1,6 +1,6 @@
-use super::{Message, MessageOps};
-use crate::message_deserializer::MessageDeserializeError;
-use crate::value_deserializer::Deserialize;
+use super::{Message, MessageDeserializeError, MessageOps};
+use crate::tags::Tag;
+use crate::Deserialize;
 use bytes::BytesMut;
 use std::fmt::Debug;
 
@@ -35,24 +35,26 @@ where
 }
 
 #[track_caller]
-pub fn assert_deserialize_eq_with_value<T, B, V>(expected: &T, serialized: B, value: &V)
+pub fn assert_deserialize_eq_with_value<T, B, V, W>(expected: &T, serialized: B, value: &W)
 where
     T: MessageOps + PartialEq + Debug,
     B: AsRef<[u8]>,
-    V: Deserialize + PartialEq + Debug,
+    V: Tag,
+    W: Deserialize<V> + PartialEq + Debug,
 {
     let deserialized = assert_deserialize_eq(expected, serialized);
 
     assert!(deserialized.kind().has_value());
     let serialized_value = deserialized.value().unwrap();
 
-    let deserialized_value: V = serialized_value.deserialize().unwrap();
+    let deserialized_value: W = serialized_value.deserialize_as().unwrap();
     assert_eq!(deserialized_value, *value);
 }
 
 #[test]
 fn value_larger_than_buffer() {
     let buf = BytesMut::from(&[11, 0, 0, 0, 0, 0, 105, 0, 0, 0, 5][..]);
+
     assert_eq!(
         Message::deserialize_message(buf),
         Err(MessageDeserializeError::UnexpectedEoi)
