@@ -48,12 +48,36 @@ pub struct ProtocolVersionError {
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum ProtocolVersionErrorKind {
-    #[error("invalid major version component")]
-    InvalidMajor,
+    // #[error("invalid major version component")]
+    // InvalidMajor,
 
-    #[error("invalid minor version component")]
-    InvalidMinor,
+    // #[error("invalid minor version component")]
+    // InvalidMinor,
 
-    #[error("version failed to parse")]
-    Parse,
+    // #[error("version failed to parse")]
+    // Parse,
+}
+
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+pub enum MessageDeserializeError {
+    #[error("invalid serialization")]
+    InvalidSerialization,
+
+    #[error("unexpected end of input")]
+    UnexpectedEoi,
+
+    #[error("unexpected message type")]
+    UnexpectedMessage,
+
+    #[error("serialization contains trailing data")]
+    TrailingData,
+}
+
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+pub enum MessageSerializeError {
+    #[error("serialized message overflowed")]
+    Overflow,
+
+    #[error("invalid value")]
+    InvalidValue,
 }

@@ -1,7 +1,7 @@
 #![deny(missing_debug_implementations)]
 
+mod error;
 // mod buf_ext;
-// mod error;
 // mod bus_listener;
 // mod channel_end;
 // mod deserialize_key;
@@ -29,6 +29,10 @@
 // pub mod tokio;
 // pub mod transport;
 
+pub use error::{
+    DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
+    SerializeError,
+};
 // #[cfg(feature = "derive")]
 // pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
 // #[cfg(all(feature = "derive", feature = "introspection"))]
@@ -36,7 +40,6 @@
 // pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 // pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 // pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};
-// pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 // pub use generic_value::{Enum, Struct, Value};
 // pub use ids::{
 //     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,

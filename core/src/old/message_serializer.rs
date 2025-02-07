@@ -70,12 +70,3 @@ impl MessageSerializer {
         }
     }
 }
-
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MessageSerializeError {
-    #[error("serialized message overflowed")]
-    Overflow,
-
-    #[error("invalid value")]
-    InvalidValue,
-}
