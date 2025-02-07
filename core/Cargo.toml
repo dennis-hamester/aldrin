@@ -25,7 +25,9 @@ channel = [
     "dep:futures-channel",
     "dep:futures-core",
 ]
-derive = ["dep:aldrin-macros"]
+derive = [
+    # "dep:aldrin-macros"
+]
 fuzzing = [
     "dep:arbitrary",
     "uuid/arbitrary",
@@ -44,11 +46,11 @@ workspace = true
 [dependencies]
 thiserror = { workspace = true }
 
-[dependencies.aldrin-macros]
-optional = true
-version = "0.12.0"
-path = "../macros"
-default-features = false
+# [dependencies.aldrin-macros]
+# optional = true
+# version = "0.12.0"
+# path = "../macros"
+# default-features = false
 
 [dependencies.arbitrary]
 optional = true
@@ -93,13 +95,13 @@ optional = true
 workspace = true
 features = ["std"]
 
-[dev-dependencies.aldrin]
-path = "../aldrin"
-default-features = false
+# [dev-dependencies.aldrin]
+# path = "../aldrin"
+# default-features = false
 
-[dev-dependencies.aldrin-broker]
-path = "../broker"
-default-features = false
+# [dev-dependencies.aldrin-broker]
+# path = "../broker"
+# default-features = false
 
 [dev-dependencies.tokio]
 workspace = true
