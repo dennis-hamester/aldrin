@@ -20,6 +20,7 @@ mod value_kind;
 // mod value_deserializer;
 // mod value_serializer;
 
+pub mod tag;
 // #[cfg(feature = "channel")]
 // pub mod channel;
 // #[cfg(feature = "introspection")]
@@ -34,6 +35,7 @@ pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
 };
+pub use tag::Tag;
 pub use value_kind::ValueKind;
 // #[cfg(feature = "derive")]
 // pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
