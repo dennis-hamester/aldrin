@@ -5,6 +5,7 @@ mod error;
 mod ids;
 mod key_tag;
 mod protocol_version;
+mod serialize;
 mod serialized_value;
 mod value_kind;
 // mod buf_ext;
@@ -44,6 +45,7 @@ pub use ids::{
 };
 pub use key_tag::KeyTag;
 pub use protocol_version::ProtocolVersion;
+pub use serialize::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use tag::Tag;
 pub use value_kind::ValueKind;
