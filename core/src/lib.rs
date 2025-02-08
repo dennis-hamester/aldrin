@@ -45,7 +45,7 @@ pub use ids::{
 };
 pub use key_tag::KeyTag;
 pub use protocol_version::ProtocolVersion;
-pub use serialize::SerializeKey;
+pub use serialize::{Serialize, SerializeKey, Serializer};
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use tag::Tag;
 pub use value_kind::ValueKind;
@@ -71,4 +71,4 @@ pub use value_kind::ValueKind;
 //     SetSerializer, StructSerializer, VecSerializer,
 // };
 
-// const MAX_VALUE_DEPTH: u8 = 32;
+const MAX_VALUE_DEPTH: u8 = 32;
