@@ -1,6 +1,7 @@
 #![deny(missing_debug_implementations)]
 
 mod error;
+mod value_kind;
 // mod buf_ext;
 // mod bus_listener;
 // mod channel_end;
@@ -33,6 +34,7 @@ pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
 };
+pub use value_kind::ValueKind;
 // #[cfg(feature = "derive")]
 // pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
 // #[cfg(all(feature = "derive", feature = "introspection"))]
