@@ -2,6 +2,7 @@
 
 mod bytes;
 mod error;
+mod ids;
 mod key_tag;
 mod protocol_version;
 mod value_kind;
@@ -10,7 +11,6 @@ mod value_kind;
 // mod channel_end;
 // mod deserialize_key;
 // mod generic_value;
-// mod ids;
 // mod message_deserializer;
 // mod message_serializer;
 // mod serialize_key;
@@ -38,6 +38,10 @@ pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
 };
+pub use ids::{
+    BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
+    ServiceUuid, TypeId,
+};
 pub use key_tag::KeyTag;
 pub use protocol_version::ProtocolVersion;
 pub use tag::Tag;
@@ -50,10 +54,6 @@ pub use value_kind::ValueKind;
 // pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 // pub use deserialize_key::{DeserializeKey, DeserializeKeyImpl};
 // pub use generic_value::{Enum, Struct, Value};
-// pub use ids::{
-//     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
-//     ServiceUuid, TypeId,
-// };
 // pub use serialize_key::{SerializeKey, SerializeKeyImpl};
 // pub use serialized_value::{SerializedValue, SerializedValueSlice};
 // pub use service_info::ServiceInfo;
