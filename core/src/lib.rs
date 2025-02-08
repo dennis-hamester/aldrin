@@ -1,5 +1,6 @@
 #![deny(missing_debug_implementations)]
 
+mod bytes;
 mod error;
 mod key_tag;
 mod protocol_version;
@@ -32,6 +33,7 @@ pub mod tag;
 // pub mod tokio;
 // pub mod transport;
 
+pub use bytes::{ByteSlice, Bytes};
 pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
