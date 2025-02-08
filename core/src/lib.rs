@@ -1,6 +1,7 @@
 #![deny(missing_debug_implementations)]
 
 mod error;
+mod protocol_version;
 mod value_kind;
 // mod buf_ext;
 // mod bus_listener;
@@ -10,7 +11,6 @@ mod value_kind;
 // mod ids;
 // mod message_deserializer;
 // mod message_serializer;
-// mod protocol_version;
 // mod serialize_key;
 // mod serialized_value;
 // mod service_info;
@@ -35,6 +35,7 @@ pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
 };
+pub use protocol_version::ProtocolVersion;
 pub use tag::Tag;
 pub use value_kind::ValueKind;
 // #[cfg(feature = "derive")]
@@ -49,7 +50,6 @@ pub use value_kind::ValueKind;
 //     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
 //     ServiceUuid, TypeId,
 // };
-// pub use protocol_version::ProtocolVersion;
 // pub use serialize_key::{SerializeKey, SerializeKeyImpl};
 // pub use serialized_value::{SerializedValue, SerializedValueSlice};
 // pub use service_info::ServiceInfo;
