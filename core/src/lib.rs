@@ -1,6 +1,7 @@
 #![deny(missing_debug_implementations)]
 
 mod error;
+mod key_tag;
 mod protocol_version;
 mod value_kind;
 // mod buf_ext;
@@ -35,6 +36,7 @@ pub use error::{
     DeserializeError, MessageDeserializeError, MessageSerializeError, ProtocolVersionError,
     SerializeError,
 };
+pub use key_tag::KeyTag;
 pub use protocol_version::ProtocolVersion;
 pub use tag::Tag;
 pub use value_kind::ValueKind;

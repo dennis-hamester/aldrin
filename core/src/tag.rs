@@ -1,3 +1,4 @@
+use crate::KeyTag;
 use std::marker::PhantomData;
 
 pub trait Tag: Sized {}
@@ -117,12 +118,12 @@ impl Tag for Bytes {}
 #[derive(Debug)]
 pub struct Map<K, T>(PhantomData<(K, T)>);
 
-impl<K, T: Tag> Tag for Map<K, T> {}
+impl<K: KeyTag, T: Tag> Tag for Map<K, T> {}
 
 #[derive(Debug)]
 pub struct Set<T>(PhantomData<T>);
 
-impl<T> Tag for Set<T> {}
+impl<T: KeyTag> Tag for Set<T> {}
 
 #[derive(Debug)]
 pub struct Sender<T>(PhantomData<T>);
