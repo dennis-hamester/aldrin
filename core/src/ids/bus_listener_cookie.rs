@@ -1,3 +1,7 @@
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Value, ValueKind,
+};
 use std::fmt;
 use uuid::Uuid;
 
@@ -36,6 +40,51 @@ impl BusListenerCookie {
         self.0.is_nil()
     }
 }
+
+impl PrimaryTag for BusListenerCookie {
+    type Tag = Uuid;
+}
+
+impl Serialize<Uuid> for BusListenerCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Uuid> for BusListenerCookie {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl Serialize<Uuid> for &BusListenerCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Uuid, _>(*self)
+    }
+}
+
+impl Serialize<Value> for BusListenerCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Value> for BusListenerCookie {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        match deserializer.peek_value_kind()? {
+            ValueKind::Uuid => deserializer.deserialize_uuid().map(Self),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+}
+
+impl Serialize<Value> for &BusListenerCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Value, _>(*self)
+    }
+}
+
+// TODO introspection?
 
 impl From<Uuid> for BusListenerCookie {
     fn from(cookie: Uuid) -> Self {

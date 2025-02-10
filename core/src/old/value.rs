@@ -30,26 +30,6 @@ impl Deserialize for Skip {
     }
 }
 
-impl<T: Serialize + ?Sized> Serialize for &T {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (**self).serialize(serializer)
-    }
-}
-
-impl<T: AsSerializeArg + ?Sized> AsSerializeArg for &T {
-    type SerializeArg<'a>
-        = T::SerializeArg<'a>
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        (**self).as_serialize_arg()
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for &T {
     fn layout() -> Layout {
@@ -62,26 +42,6 @@ impl<T: Introspectable + ?Sized> Introspectable for &T {
 
     fn add_references(references: &mut References) {
         references.add::<T>();
-    }
-}
-
-impl<T: Serialize + ?Sized> Serialize for &mut T {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (**self).serialize(serializer)
-    }
-}
-
-impl<T: AsSerializeArg + ?Sized> AsSerializeArg for &mut T {
-    type SerializeArg<'a>
-        = T::SerializeArg<'a>
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        (**self).as_serialize_arg()
     }
 }
 
@@ -100,32 +60,6 @@ impl<T: Introspectable + ?Sized> Introspectable for &mut T {
     }
 }
 
-impl<T: Serialize + ?Sized> Serialize for Box<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        (**self).serialize(serializer)
-    }
-}
-
-impl<T: Deserialize> Deserialize for Box<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        T::deserialize(deserializer).map(Self::new)
-    }
-}
-
-impl<T: AsSerializeArg + ?Sized> AsSerializeArg for Box<T> {
-    type SerializeArg<'a>
-        = T::SerializeArg<'a>
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        (**self).as_serialize_arg()
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
     fn layout() -> Layout {
@@ -141,29 +75,6 @@ impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
     }
 }
 
-impl Serialize for () {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_none();
-        Ok(())
-    }
-}
-
-impl Deserialize for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_none()
-    }
-}
-
-impl AsSerializeArg for () {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for () {
     fn layout() -> Layout {
@@ -175,37 +86,6 @@ impl Introspectable for () {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl<T: Serialize> Serialize for Option<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        match self {
-            Some(value) => serializer.serialize_some(value)?,
-            None => serializer.serialize_none(),
-        }
-
-        Ok(())
-    }
-}
-
-impl<T: Deserialize> Deserialize for Option<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_option()
-    }
-}
-
-impl<T: AsSerializeArg> AsSerializeArg for Option<T> {
-    type SerializeArg<'a>
-        = Option<T::SerializeArg<'a>>
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self.as_ref().map(AsSerializeArg::as_serialize_arg)
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -223,30 +103,6 @@ impl<T: Introspectable> Introspectable for Option<T> {
     }
 }
 
-impl Serialize for bool {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bool(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for bool {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_bool()
-    }
-}
-
-impl AsSerializeArg for bool {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for bool {
     fn layout() -> Layout {
@@ -258,30 +114,6 @@ impl Introspectable for bool {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for u8 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u8(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for u8 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_u8()
-    }
-}
-
-impl AsSerializeArg for u8 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -297,30 +129,6 @@ impl Introspectable for u8 {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for i8 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i8(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for i8 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_i8()
-    }
-}
-
-impl AsSerializeArg for i8 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for i8 {
     fn layout() -> Layout {
@@ -332,30 +140,6 @@ impl Introspectable for i8 {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for u16 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u16(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for u16 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_u16()
-    }
-}
-
-impl AsSerializeArg for u16 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -371,30 +155,6 @@ impl Introspectable for u16 {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for i16 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i16(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for i16 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_i16()
-    }
-}
-
-impl AsSerializeArg for i16 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for i16 {
     fn layout() -> Layout {
@@ -406,30 +166,6 @@ impl Introspectable for i16 {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for u32 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u32(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for u32 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_u32()
-    }
-}
-
-impl AsSerializeArg for u32 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -445,30 +181,6 @@ impl Introspectable for u32 {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for i32 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i32(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for i32 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_i32()
-    }
-}
-
-impl AsSerializeArg for i32 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for i32 {
     fn layout() -> Layout {
@@ -480,30 +192,6 @@ impl Introspectable for i32 {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for u64 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_u64(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for u64 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_u64()
-    }
-}
-
-impl AsSerializeArg for u64 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -519,30 +207,6 @@ impl Introspectable for u64 {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for i64 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_i64(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for i64 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_i64()
-    }
-}
-
-impl AsSerializeArg for i64 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for i64 {
     fn layout() -> Layout {
@@ -554,30 +218,6 @@ impl Introspectable for i64 {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for f32 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_f32(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for f32 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_f32()
-    }
-}
-
-impl AsSerializeArg for f32 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -593,30 +233,6 @@ impl Introspectable for f32 {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for f64 {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_f64(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for f64 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_f64()
-    }
-}
-
-impl AsSerializeArg for f64 {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for f64 {
     fn layout() -> Layout {
@@ -628,23 +244,6 @@ impl Introspectable for f64 {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for str {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_string(self)
-    }
-}
-
-impl AsSerializeArg for str {
-    type SerializeArg<'a> = &'a Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -660,29 +259,6 @@ impl Introspectable for str {
     fn add_references(_references: &mut References) {}
 }
 
-impl Serialize for String {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_string(self)
-    }
-}
-
-impl Deserialize for String {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_string()
-    }
-}
-
-impl AsSerializeArg for String {
-    type SerializeArg<'a> = &'a str;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl Introspectable for String {
     fn layout() -> Layout {
@@ -694,30 +270,6 @@ impl Introspectable for String {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-impl Serialize for Uuid {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_uuid(*self);
-        Ok(())
-    }
-}
-
-impl Deserialize for Uuid {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_uuid()
-    }
-}
-
-impl AsSerializeArg for Uuid {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
-    }
 }
 
 #[cfg(feature = "introspection")]
@@ -733,32 +285,6 @@ impl Introspectable for Uuid {
     fn add_references(_references: &mut References) {}
 }
 
-impl<T: Serialize> Serialize for Vec<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
-    }
-}
-
-impl<T: Deserialize> Deserialize for Vec<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_vec_extend_new()
-    }
-}
-
-impl<T: Serialize> AsSerializeArg for Vec<T> {
-    type SerializeArg<'a>
-        = &'a [T]
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for Vec<T> {
     fn layout() -> Layout {
@@ -771,32 +297,6 @@ impl<T: Introspectable> Introspectable for Vec<T> {
 
     fn add_references(references: &mut References) {
         references.add::<T>();
-    }
-}
-
-impl<T: Serialize> Serialize for VecDeque<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
-    }
-}
-
-impl<T: Deserialize> Deserialize for VecDeque<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_vec_extend_new()
-    }
-}
-
-impl<T: Serialize> AsSerializeArg for VecDeque<T> {
-    type SerializeArg<'a>
-        = &'a Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
     }
 }
 
@@ -815,32 +315,6 @@ impl<T: Introspectable> Introspectable for VecDeque<T> {
     }
 }
 
-impl<T: Serialize> Serialize for LinkedList<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
-    }
-}
-
-impl<T: Deserialize> Deserialize for LinkedList<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        deserializer.deserialize_vec_extend_new()
-    }
-}
-
-impl<T: Serialize> AsSerializeArg for LinkedList<T> {
-    type SerializeArg<'a>
-        = &'a Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for LinkedList<T> {
     fn layout() -> Layout {
@@ -856,26 +330,6 @@ impl<T: Introspectable> Introspectable for LinkedList<T> {
     }
 }
 
-impl<T: Serialize> Serialize for [T] {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
-    }
-}
-
-impl<T: Serialize> AsSerializeArg for [T] {
-    type SerializeArg<'a>
-        = &'a Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
-    }
-}
-
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for [T] {
     fn layout() -> Layout {
@@ -888,76 +342,6 @@ impl<T: Introspectable> Introspectable for [T] {
 
     fn add_references(references: &mut References) {
         references.add::<T>();
-    }
-}
-
-impl<T: Serialize, const N: usize> Serialize for [T; N] {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
-    }
-}
-
-impl<T: Deserialize, const N: usize> Deserialize for [T; N] {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_vec()?;
-
-        if deserializer.len() != N {
-            return Err(DeserializeError::UnexpectedValue);
-        }
-
-        // SAFETY: This create an array of MaybeUninit<T>, which don't require initialization.
-        let mut arr: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
-
-        // Manually count number of elements, so that the safety of this function doesn't depend on
-        // the correctness of VecDeserializer.
-        let mut num = 0;
-
-        for elem in &mut arr {
-            match deserializer.deserialize_element() {
-                Ok(value) => {
-                    elem.write(value);
-                    num += 1;
-                }
-
-                Err(e) => {
-                    for elem in &mut arr[..num] {
-                        // SAFETY: The first num elements have been initialized.
-                        unsafe {
-                            elem.assume_init_drop();
-                        }
-                    }
-
-                    return Err(e);
-                }
-            }
-        }
-
-        // Panic, because this would indicate a bug in this crate.
-        assert_eq!(num, N);
-
-        // SAFETY: Exactly num elements have been and num equals N.
-        //
-        // It's currently impossible to transmute [MaybeUninit<T>; N] to [T; N] when T is a generic
-        // or N a const generic. See https://github.com/rust-lang/rust/issues/61956.
-        let value = unsafe {
-            (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[T; N]>)).assume_init_read()
-        };
-
-        deserializer.finish(value)
-    }
-}
-
-impl<T: Serialize, const N: usize> AsSerializeArg for [T; N] {
-    type SerializeArg<'a>
-        = &'a Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
     }
 }
 

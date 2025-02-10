@@ -1,4 +1,8 @@
 use super::{ObjectCookie, ObjectUuid};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Value, ValueKind,
+};
 
 /// Id of an object.
 ///
@@ -36,6 +40,49 @@ impl ObjectId {
     /// Checks if the id is nil (all zeros).
     pub const fn is_nil(self) -> bool {
         self.uuid.is_nil() && self.cookie.is_nil()
+    }
+}
+
+impl PrimaryTag for ObjectId {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for ObjectId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_object_id(self)
+    }
+}
+
+impl Deserialize<Self> for ObjectId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_object_id()
+    }
+}
+
+impl Serialize<ObjectId> for &ObjectId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<ObjectId, _>(*self)
+    }
+}
+
+impl Serialize<Value> for ObjectId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_object_id(self)
+    }
+}
+
+impl Deserialize<Value> for ObjectId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        match deserializer.peek_value_kind()? {
+            ValueKind::ObjectId => deserializer.deserialize_object_id(),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+}
+
+impl Serialize<Value> for &ObjectId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Value, _>(*self)
     }
 }
 

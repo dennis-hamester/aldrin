@@ -1,11 +1,15 @@
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Value, ValueKind,
+};
 use std::fmt;
 use uuid::Uuid;
 
 /// Cookie of a service.
 ///
 /// [`ServiceCookie`s](Self) are chosen by the broker when creating a service. They ensure that
-/// services, created and destroyed over time with the same [`ServiceUuid`] and on the same object,
-/// can still be distinguished.
+/// services, created and destroyed over time with the same [`ServiceUuid`](super::ServiceCookie)
+/// and on the same object, can still be distinguished.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[cfg_attr(
@@ -36,6 +40,49 @@ impl ServiceCookie {
     /// Checks if the id is nil (all zeros).
     pub const fn is_nil(self) -> bool {
         self.0.is_nil()
+    }
+}
+
+impl PrimaryTag for ServiceCookie {
+    type Tag = Uuid;
+}
+
+impl Serialize<Uuid> for ServiceCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Uuid> for ServiceCookie {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl Serialize<Uuid> for &ServiceCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Uuid, _>(*self)
+    }
+}
+
+impl Serialize<Value> for ServiceCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Value> for ServiceCookie {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        match deserializer.peek_value_kind()? {
+            ValueKind::Uuid => deserializer.deserialize_uuid().map(Self),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+}
+
+impl Serialize<Value> for &ServiceCookie {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Value, _>(*self)
     }
 }
 

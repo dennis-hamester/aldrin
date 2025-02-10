@@ -1,4 +1,3 @@
-use crate::tag;
 use std::borrow::Cow;
 use uuid::Uuid;
 
@@ -9,32 +8,32 @@ pub trait KeyTag: Sealed + Sized {
 }
 
 macro_rules! impl_key_tag {
-    { $tag:ty, $key:ty } => {
+    { $tag:ty } => {
         impl Sealed for $tag {}
 
         impl KeyTag for $tag {
-            type Key<'a> = $key;
+            type Key<'a> = Self;
         }
-    }
+    };
 }
 
-impl_key_tag!(tag::U8, u8);
-impl_key_tag!(tag::I8, i8);
-impl_key_tag!(tag::U16, u16);
-impl_key_tag!(tag::I16, i16);
-impl_key_tag!(tag::U32, u32);
-impl_key_tag!(tag::I32, i32);
-impl_key_tag!(tag::U64, u64);
-impl_key_tag!(tag::I64, i64);
+impl_key_tag!(u8);
+impl_key_tag!(i8);
+impl_key_tag!(u16);
+impl_key_tag!(i16);
+impl_key_tag!(u32);
+impl_key_tag!(i32);
+impl_key_tag!(u64);
+impl_key_tag!(i64);
 
-impl Sealed for tag::String {}
+impl Sealed for String {}
 
-impl KeyTag for tag::String {
+impl KeyTag for String {
     type Key<'a> = Cow<'a, str>;
 }
 
-impl Sealed for tag::Uuid {}
+impl Sealed for Uuid {}
 
-impl KeyTag for tag::Uuid {
-    type Key<'a> = Uuid;
+impl KeyTag for Uuid {
+    type Key<'a> = Self;
 }

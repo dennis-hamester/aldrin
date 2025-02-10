@@ -1,3 +1,7 @@
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Tag, Value, ValueKind,
+};
 use bytes::BytesMut;
 use std::borrow::Borrow;
 use std::fmt;
@@ -25,13 +29,19 @@ impl SerializedValue {
         }
     }
 
-    // pub fn serialize<T: Serialize + ?Sized>(value: &T) -> Result<Self, SerializeError> {
-    //     // 4 bytes message length + 1 byte message kind + 4 bytes value length.
-    //     let mut buf = BytesMut::zeroed(MSG_HEADER_LEN);
-    //     let serializer = Serializer::new(&mut buf, 0)?;
-    //     value.serialize(serializer)?;
-    //     Ok(Self { buf })
-    // }
+    pub fn serialize<T: Tag, U: Serialize<T>>(value: U) -> Result<Self, SerializeError> {
+        let mut buf = BytesMut::zeroed(MSG_HEADER_LEN);
+        let serializer = Serializer::new(&mut buf, 0)?;
+        value.serialize(serializer)?;
+        Ok(Self { buf })
+    }
+
+    pub fn serialize_primary<T>(value: T) -> Result<Self, SerializeError>
+    where
+        T: PrimaryTag + Serialize<T::Tag>,
+    {
+        Self::serialize(value)
+    }
 
     pub fn take(&mut self) -> Self {
         mem::take(self)
@@ -151,28 +161,35 @@ impl SerializedValueSlice {
         unsafe { &*self_ptr }
     }
 
-    // pub fn kind(&self) -> Result<ValueKind, DeserializeError> {
-    //     let mut buf = &self.0;
-    //     let deserializer = Deserializer::new(&mut buf, 0)?;
-    //     deserializer.peek_value_kind()
-    // }
+    pub fn kind(&self) -> Result<ValueKind, DeserializeError> {
+        let mut buf = &self.0;
+        let deserializer = Deserializer::new(&mut buf, 0)?;
+        deserializer.peek_value_kind()
+    }
 
-    // pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
-    //     let mut buf = &self.0;
-    //     let deserializer = Deserializer::new(&mut buf, 0)?;
+    pub fn deserialize<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
+        let mut buf = &self.0;
+        let deserializer = Deserializer::new(&mut buf, 0)?;
 
-    //     let res = T::deserialize(deserializer);
+        let res = U::deserialize(deserializer);
 
-    //     if res.is_ok() && !buf.is_empty() {
-    //         return Err(DeserializeError::TrailingData);
-    //     }
+        if res.is_ok() && !buf.is_empty() {
+            return Err(DeserializeError::TrailingData);
+        }
 
-    //     res
-    // }
+        res
+    }
 
-    // pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
-    //     self.deserialize()
-    // }
+    pub fn deserialize_primary<T>(&self) -> Result<T, DeserializeError>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        self.deserialize()
+    }
+
+    pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
+        self.deserialize_primary()
+    }
 }
 
 impl Deref for SerializedValueSlice {

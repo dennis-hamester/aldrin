@@ -1,3 +1,7 @@
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Value, ValueKind,
+};
 use std::fmt;
 use std::str::FromStr;
 use uuid::{Error as UuidError, Uuid};
@@ -20,6 +24,49 @@ impl TypeId {
     /// Checks if the id is nil (all zeros).
     pub const fn is_nil(self) -> bool {
         self.0.is_nil()
+    }
+}
+
+impl PrimaryTag for TypeId {
+    type Tag = Uuid;
+}
+
+impl Serialize<Uuid> for TypeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Uuid> for TypeId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_uuid().map(Self)
+    }
+}
+
+impl Serialize<Uuid> for &TypeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Uuid, _>(*self)
+    }
+}
+
+impl Serialize<Value> for TypeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_uuid(self.0)
+    }
+}
+
+impl Deserialize<Value> for TypeId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        match deserializer.peek_value_kind()? {
+            ValueKind::Uuid => deserializer.deserialize_uuid().map(Self),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+}
+
+impl Serialize<Value> for &TypeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Value, _>(*self)
     }
 }
 

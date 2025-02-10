@@ -8,115 +8,6 @@ use crate::value_serializer::{AsSerializeArg, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
-// Tests are in crate::value::test;
-
-#[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "kebab-case")
-)]
-pub enum Value {
-    None,
-    Some(Box<Value>),
-    Bool(bool),
-    U8(u8),
-    I8(i8),
-    U16(u16),
-    I16(i16),
-    U32(u32),
-    I32(i32),
-    U64(u64),
-    I64(i64),
-    F32(f32),
-    F64(f64),
-    String(String),
-    Uuid(Uuid),
-    ObjectId(ObjectId),
-    ServiceId(ServiceId),
-    Vec(Vec<Value>),
-    Bytes(Bytes),
-    U8Map(HashMap<u8, Value>),
-    I8Map(HashMap<i8, Value>),
-    U16Map(HashMap<u16, Value>),
-    I16Map(HashMap<i16, Value>),
-    U32Map(HashMap<u32, Value>),
-    I32Map(HashMap<i32, Value>),
-    U64Map(HashMap<u64, Value>),
-    I64Map(HashMap<i64, Value>),
-    StringMap(HashMap<String, Value>),
-    UuidMap(HashMap<Uuid, Value>),
-    U8Set(HashSet<u8>),
-    I8Set(HashSet<i8>),
-    U16Set(HashSet<u16>),
-    I16Set(HashSet<i16>),
-    U32Set(HashSet<u32>),
-    I32Set(HashSet<i32>),
-    U64Set(HashSet<u64>),
-    I64Set(HashSet<i64>),
-    StringSet(HashSet<String>),
-    UuidSet(HashSet<Uuid>),
-    Struct(Struct),
-    Enum(Box<Enum>),
-    Sender(ChannelCookie),
-    Receiver(ChannelCookie),
-}
-
-impl Value {
-    pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
-    }
-
-    pub fn kind(&self) -> ValueKind {
-        match self {
-            Self::None => ValueKind::None,
-            Self::Some(_) => ValueKind::Some,
-            Self::Bool(_) => ValueKind::Bool,
-            Self::U8(_) => ValueKind::U8,
-            Self::I8(_) => ValueKind::I8,
-            Self::U16(_) => ValueKind::U16,
-            Self::I16(_) => ValueKind::I16,
-            Self::U32(_) => ValueKind::U32,
-            Self::I32(_) => ValueKind::I32,
-            Self::U64(_) => ValueKind::U64,
-            Self::I64(_) => ValueKind::I64,
-            Self::F32(_) => ValueKind::F32,
-            Self::F64(_) => ValueKind::F64,
-            Self::String(_) => ValueKind::String,
-            Self::Uuid(_) => ValueKind::Uuid,
-            Self::ObjectId(_) => ValueKind::ObjectId,
-            Self::ServiceId(_) => ValueKind::ServiceId,
-            Self::Vec(_) => ValueKind::Vec,
-            Self::Bytes(_) => ValueKind::Bytes,
-            Self::U8Map(_) => ValueKind::U8Map,
-            Self::I8Map(_) => ValueKind::I8Map,
-            Self::U16Map(_) => ValueKind::U16Map,
-            Self::I16Map(_) => ValueKind::I16Map,
-            Self::U32Map(_) => ValueKind::U32Map,
-            Self::I32Map(_) => ValueKind::I32Map,
-            Self::U64Map(_) => ValueKind::U64Map,
-            Self::I64Map(_) => ValueKind::I64Map,
-            Self::StringMap(_) => ValueKind::StringMap,
-            Self::UuidMap(_) => ValueKind::UuidMap,
-            Self::U8Set(_) => ValueKind::U8Set,
-            Self::I8Set(_) => ValueKind::I8Set,
-            Self::U16Set(_) => ValueKind::U16Set,
-            Self::I16Set(_) => ValueKind::I16Set,
-            Self::U32Set(_) => ValueKind::U32Set,
-            Self::I32Set(_) => ValueKind::I32Set,
-            Self::U64Set(_) => ValueKind::U64Set,
-            Self::I64Set(_) => ValueKind::I64Set,
-            Self::StringSet(_) => ValueKind::StringSet,
-            Self::UuidSet(_) => ValueKind::UuidSet,
-            Self::Struct(_) => ValueKind::Struct,
-            Self::Enum(_) => ValueKind::Enum,
-            Self::Sender(_) => ValueKind::Sender,
-            Self::Receiver(_) => ValueKind::Receiver,
-        }
-    }
-}
-
 impl Serialize for Value {
     fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
@@ -228,19 +119,6 @@ impl AsSerializeArg for Value {
     {
         self
     }
-}
-
-#[cfg(feature = "introspection")]
-impl Introspectable for Value {
-    fn layout() -> Layout {
-        BuiltInType::Value.into()
-    }
-
-    fn lexical_id() -> LexicalId {
-        LexicalId::VALUE
-    }
-
-    fn add_references(_references: &mut References) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]

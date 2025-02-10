@@ -1,117 +1,46 @@
-use crate::KeyTag;
+use crate::{Bytes, KeyTag, ObjectId, ServiceId, Value};
 use std::marker::PhantomData;
+use uuid::Uuid;
 
 pub trait Tag: Sized {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct Unit;
+impl Tag for () {}
 
-impl Tag for Unit {}
-
-#[derive(Debug)]
-pub struct Option<T>(PhantomData<T>);
+impl Tag for Value {}
 
 impl<T: Tag> Tag for Option<T> {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct Bool;
+impl Tag for bool {}
 
-impl Tag for Bool {}
+impl Tag for u8 {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct U8;
+impl Tag for i8 {}
 
-impl Tag for U8 {}
+impl Tag for u16 {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct I8;
+impl Tag for i16 {}
 
-impl Tag for I8 {}
+impl Tag for u32 {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct U16;
+impl Tag for i32 {}
 
-impl Tag for U16 {}
+impl Tag for u64 {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct I16;
+impl Tag for i64 {}
 
-impl Tag for I16 {}
+impl Tag for f32 {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct U32;
-
-impl Tag for U32 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct I32;
-
-impl Tag for I32 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct U64;
-
-impl Tag for U64 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct I64;
-
-impl Tag for I64 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct F32;
-
-impl Tag for F32 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct F64;
-
-impl Tag for F64 {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct String;
+impl Tag for f64 {}
 
 impl Tag for String {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct Uuid;
-
 impl Tag for Uuid {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct ObjectId;
 
 impl Tag for ObjectId {}
 
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct ServiceId;
-
 impl Tag for ServiceId {}
 
-#[derive(Debug)]
-pub struct Vec<T>(PhantomData<T>);
-
 impl<T: Tag> Tag for Vec<T> {}
-
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct Bytes;
 
 impl Tag for Bytes {}
 

@@ -1,4 +1,8 @@
 use super::{ObjectId, ServiceCookie, ServiceUuid};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, PrimaryTag, Serialize, SerializeError, Serializer,
+    Value, ValueKind,
+};
 
 /// Id of a service.
 ///
@@ -44,6 +48,49 @@ impl ServiceId {
     /// Checks if the id is nil (all zeros).
     pub const fn is_nil(self) -> bool {
         self.object_id.is_nil() && self.uuid.is_nil() && self.cookie.is_nil()
+    }
+}
+
+impl PrimaryTag for ServiceId {
+    type Tag = Self;
+}
+
+impl Serialize<Self> for ServiceId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_service_id(self)
+    }
+}
+
+impl Deserialize<Self> for ServiceId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer.deserialize_service_id()
+    }
+}
+
+impl Serialize<ServiceId> for &ServiceId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<ServiceId, _>(*self)
+    }
+}
+
+impl Serialize<Value> for ServiceId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_service_id(self)
+    }
+}
+
+impl Deserialize<Value> for ServiceId {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        match deserializer.peek_value_kind()? {
+            ValueKind::ServiceId => deserializer.deserialize_service_id(),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+}
+
+impl Serialize<Value> for &ServiceId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<Value, _>(*self)
     }
 }
 
