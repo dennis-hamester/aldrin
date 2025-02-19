@@ -1,6 +1,7 @@
 use crate::buf_ext::BufMutExt;
 use crate::{
-    ChannelCookie, ObjectId, Serialize, SerializeError, ServiceId, Tag, ValueKind, MAX_VALUE_DEPTH,
+    ChannelCookie, ObjectId, Serialize, SerializeError, SerializedValueSlice, ServiceId, Tag,
+    ValueKind, MAX_VALUE_DEPTH,
 };
 use bytes::{BufMut, BytesMut};
 use uuid::Uuid;
@@ -26,6 +27,14 @@ impl<'a> Serializer<'a> {
         } else {
             Err(SerializeError::TooDeeplyNested)
         }
+    }
+
+    pub fn copy_from_serialized_value(
+        self,
+        value: &SerializedValueSlice,
+    ) -> Result<(), SerializeError> {
+        self.buf.extend_from_slice(value);
+        Ok(())
     }
 
     pub fn serialize<T: Tag, U: Serialize<T>>(self, value: U) -> Result<(), SerializeError> {

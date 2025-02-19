@@ -1,8 +1,9 @@
 use crate::buf_ext::ValueBufExt;
 use crate::{
     ChannelCookie, Deserialize, DeserializeError, ObjectCookie, ObjectId, ObjectUuid,
-    ServiceCookie, ServiceId, ServiceUuid, Tag, ValueKind, MAX_VALUE_DEPTH,
+    SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, Tag, ValueKind, MAX_VALUE_DEPTH,
 };
+use bytes::Buf;
 use std::iter;
 use uuid::Uuid;
 
@@ -28,22 +29,22 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         }
     }
 
-    //     #[allow(clippy::len_without_is_empty)]
-    //     pub fn len(&self) -> Result<usize, DeserializeError> {
-    //         let mut buf = *self.buf;
-    //         Deserializer::new(&mut buf, self.depth - 1)?.skip()?;
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> Result<usize, DeserializeError> {
+        let mut buf = *self.buf;
+        Deserializer::new(&mut buf, self.depth - 1)?.skip()?;
 
-    //         // Determine the length by computing how far `skip()` has advanced `buf` compared to the
-    //         // original buffer `*self.buf`.
-    //         Ok(buf.as_ptr() as usize - (*self.buf).as_ptr() as usize)
-    //     }
+        // Determine the length by computing how far `skip()` has advanced `buf` compared to the
+        // original buffer `*self.buf`.
+        Ok(buf.as_ptr() as usize - (*self.buf).as_ptr() as usize)
+    }
 
-    //     pub fn split_off_serialized_value(self) -> Result<&'b SerializedValueSlice, DeserializeError> {
-    //         let len = self.len()?;
-    //         let res = SerializedValueSlice::new(&self.buf[..len]);
-    //         self.buf.advance(len);
-    //         Ok(res)
-    //     }
+    pub fn split_off_serialized_value(self) -> Result<&'b SerializedValueSlice, DeserializeError> {
+        let len = self.len()?;
+        let res = SerializedValueSlice::new(&self.buf[..len]);
+        self.buf.advance(len);
+        Ok(res)
+    }
 
     pub fn peek_value_kind(&self) -> Result<ValueKind, DeserializeError> {
         self.buf.try_peek_discriminant_u8()

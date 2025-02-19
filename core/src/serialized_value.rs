@@ -123,6 +123,30 @@ impl PartialEq<SerializedValue> for [u8] {
     }
 }
 
+impl PrimaryTag for SerializedValue {
+    type Tag = Value;
+}
+
+impl Serialize<Value> for SerializedValue {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Deserialize<Value> for SerializedValue {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        deserializer
+            .split_off_serialized_value()
+            .map(SerializedValueSlice::to_owned)
+    }
+}
+
+impl Serialize<Value> for &SerializedValue {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&**self)
+    }
+}
+
 // #[cfg(feature = "introspection")]
 // impl Introspectable for SerializedValue {
 //     fn layout() -> Layout {
@@ -233,6 +257,16 @@ impl PartialEq<[u8]> for SerializedValueSlice {
 impl PartialEq<SerializedValueSlice> for [u8] {
     fn eq(&self, other: &SerializedValueSlice) -> bool {
         *self == **other
+    }
+}
+
+impl PrimaryTag for &SerializedValueSlice {
+    type Tag = Value;
+}
+
+impl Serialize<Value> for &SerializedValueSlice {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.copy_from_serialized_value(self)
     }
 }
 
