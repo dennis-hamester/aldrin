@@ -19,7 +19,9 @@ all-features = true
 
 [features]
 channel = ["aldrin-core/channel"]
-codegen = ["dep:aldrin-macros"]
+codegen = [
+    # "dep:aldrin-macros"
+]
 introspection = ["aldrin-core/introspection"]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
 serde = [
@@ -43,11 +45,11 @@ path = "../core"
 default-features = false
 features = ["new-v4-ids"]
 
-[dependencies.aldrin-macros]
-optional = true
-version = "0.12.0"
-path = "../macros"
-default-features = false
+# [dependencies.aldrin-macros]
+# optional = true
+# version = "0.12.0"
+# path = "../macros"
+# default-features = false
 
 [dependencies.futures-channel]
 workspace = true
@@ -70,20 +72,20 @@ features = [
 workspace = true
 features = ["v4"]
 
-[dev-dependencies.aldrin-broker]
-path = "../broker"
-default-features = false
-features = ["statistics"]
+# [dev-dependencies.aldrin-broker]
+# path = "../broker"
+# default-features = false
+# features = ["statistics"]
 
 [dev-dependencies.aldrin-core]
 path = "../core"
 default-features = false
 features = ["channel"]
 
-[dev-dependencies.aldrin-test]
-path = "../test"
-default-features = false
-features = ["tokio"]
+# [dev-dependencies.aldrin-test]
+# path = "../test"
+# default-features = false
+# features = ["tokio"]
 
 [dev-dependencies.futures-util]
 workspace = true

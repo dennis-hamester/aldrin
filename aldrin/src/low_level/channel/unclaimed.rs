@@ -1,8 +1,6 @@
 use super::{RawChannel, Receiver, Sender, UnboundReceiver, UnboundSender};
-use crate::channel as high_level;
-use crate::core::ChannelCookie;
-use crate::error::Error;
-use crate::handle::Handle;
+use crate::{Error, Handle};
+use aldrin_core::ChannelCookie;
 use std::task::{Context, Poll};
 
 /// A sender that hasn't been claimed yet by a client.
@@ -37,10 +35,10 @@ impl UnclaimedSender {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`UnclaimedSender`](high_level::UnclaimedSender) by binding an item
+    /// Casts to a high-level [`UnclaimedSender`](crate::UnclaimedSender) by binding an item
     /// type `T`.
-    pub fn cast<T: ?Sized>(self) -> high_level::UnclaimedSender<T> {
-        high_level::UnclaimedSender::new(self)
+    pub fn cast<T>(self) -> crate::UnclaimedSender<T> {
+        crate::UnclaimedSender::new(self)
     }
 
     /// Initiates closing the sender and polls for progress.
@@ -155,10 +153,10 @@ impl UnclaimedReceiver {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`UnclaimedReceiver`](high_level::UnclaimedReceiver) by binding an
+    /// Casts to a high-level [`UnclaimedReceiver`](crate::UnclaimedReceiver) by binding an
     /// item type `T`.
-    pub fn cast<T>(self) -> high_level::UnclaimedReceiver<T> {
-        high_level::UnclaimedReceiver::new(self)
+    pub fn cast<T>(self) -> crate::UnclaimedReceiver<T> {
+        crate::UnclaimedReceiver::new(self)
     }
 
     /// Initiates closing the receiver and polls for progress.

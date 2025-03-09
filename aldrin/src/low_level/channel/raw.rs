@@ -1,6 +1,6 @@
-use crate::core::{ChannelCookie, ChannelEnd, SerializedValue};
-use crate::error::Error;
-use crate::handle::{CloseChannelEndFuture, Handle};
+use crate::handle::CloseChannelEndFuture;
+use crate::{Error, Handle};
+use aldrin_core::{ChannelCookie, ChannelEnd, SerializedValue};
 use std::future::{self, Future};
 use std::mem;
 use std::pin::Pin;

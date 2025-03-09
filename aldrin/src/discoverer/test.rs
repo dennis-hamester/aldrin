@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use aldrin_core::{ObjectUuid, ServiceUuid};
 use aldrin_test::aldrin::low_level::{Service, ServiceInfo};
 use aldrin_test::aldrin::{Discoverer, DiscovererEvent, DiscovererEventKind, Object};
 use aldrin_test::tokio::TestBroker;

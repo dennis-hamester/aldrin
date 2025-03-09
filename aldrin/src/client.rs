@@ -2,37 +2,7 @@ mod broker_subscriptions;
 mod proxies;
 mod select;
 
-use crate::bus_listener::{BusListener, BusListenerHandle};
-#[cfg(feature = "introspection")]
-use crate::core::introspection::{DynIntrospectable, Introspection, References};
-use crate::core::message::{
-    AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
-    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
-    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
-    ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
-    Connect2, ConnectData, ConnectResult, CreateBusListener, CreateBusListenerReply, CreateChannel,
-    CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult, CreateService,
-    CreateService2, CreateServiceReply, CreateServiceResult, DestroyBusListener,
-    DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject, DestroyObjectReply,
-    DestroyObjectResult, DestroyService, DestroyServiceReply, DestroyServiceResult, EmitBusEvent,
-    EmitEvent, ItemReceived, Message, QueryIntrospection, QueryIntrospectionReply,
-    QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply, QueryServiceInfoResult,
-    QueryServiceVersion, QueryServiceVersionReply, QueryServiceVersionResult,
-    RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown, StartBusListener,
-    StartBusListenerReply, StartBusListenerResult, StopBusListener, StopBusListenerReply,
-    StopBusListenerResult, SubscribeAllEvents, SubscribeAllEventsReply, SubscribeAllEventsResult,
-    SubscribeEvent, SubscribeEventReply, SubscribeEventResult, SubscribeService,
-    SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply, UnsubscribeAllEvents,
-    UnsubscribeAllEventsReply, UnsubscribeAllEventsResult, UnsubscribeEvent, UnsubscribeService,
-};
-use crate::core::transport::{AsyncTransport, AsyncTransportExt};
-#[cfg(feature = "introspection")]
-use crate::core::TypeId;
-use crate::core::{
-    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
-    ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
-    ServiceInfo,
-};
+use crate::bus_listener::BusListenerHandle;
 use crate::error::{ConnectError, RunError};
 use crate::function_call_map::FunctionCallMap;
 #[cfg(feature = "introspection")]
@@ -52,12 +22,47 @@ use crate::low_level::{
     PendingReceiver, PendingSender, ProxyId, RawCall, Service, UnclaimedReceiver, UnclaimedSender,
 };
 use crate::serial_map::SerialMap;
-use crate::{Error, Handle, Object};
+use crate::{BusListener, Error, Handle, Object};
+#[cfg(feature = "introspection")]
+use aldrin_core::adapters::IterAsSet;
+#[cfg(feature = "introspection")]
+use aldrin_core::introspection::{DynIntrospectable, Introspection, References};
+use aldrin_core::message::{
+    AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
+    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
+    Connect2, ConnectData, ConnectReplyData, ConnectResult, CreateBusListener,
+    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
+    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
+    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
+    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply,
+    QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
+    QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
+    StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
+    StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents, SubscribeAllEventsReply,
+    SubscribeAllEventsResult, SubscribeEvent, SubscribeEventReply, SubscribeEventResult,
+    SubscribeService, SubscribeServiceReply, SubscribeServiceResult, Sync, SyncReply,
+    UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult, UnsubscribeEvent,
+    UnsubscribeService,
+};
+use aldrin_core::tags::{self, Tag};
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+#[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
+use aldrin_core::{
+    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
+    ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
+    ServiceInfo,
+};
 use broker_subscriptions::BrokerSubscriptions;
 use futures_channel::{mpsc, oneshot};
 use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::mem;
 use std::time::Instant;
 
@@ -166,7 +171,7 @@ where
     /// # }
     /// ```
     pub async fn connect(t: T) -> Result<Self, ConnectError<T::Error>> {
-        let (client, _) = Self::connect_with_data::<()>(t, None).await?;
+        let (client, _) = Self::connect_with_data::<tags::Unit, Infallible>(t, None).await?;
         Ok(client)
     }
 
@@ -174,21 +179,21 @@ where
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
-    pub async fn connect_with_data<D: Serialize + ?Sized>(
+    pub async fn connect_with_data<D: Tag, E: Serialize<D>>(
         mut t: T,
-        data: Option<&D>,
+        data: Option<E>,
     ) -> Result<(Self, Option<SerializedValue>), ConnectError<T::Error>> {
         let mut connect_data = ConnectData::new();
 
         if let Some(data) = data {
-            connect_data.serialize_user(data)?;
+            connect_data.serialize_user_as(data)?;
         }
 
-        let connect = Connect2::with_serialize_data(
-            PROTOCOL_VERSION.major(),
-            PROTOCOL_VERSION.minor(),
-            &connect_data,
-        )?;
+        let connect = Connect2 {
+            major_version: PROTOCOL_VERSION.major(),
+            minor_version: PROTOCOL_VERSION.minor(),
+            value: SerializedValue::serialize(connect_data)?,
+        };
 
         t.send_and_flush(connect)
             .await
@@ -199,7 +204,7 @@ where
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
         };
 
-        let connect_reply_data = connect_reply.deserialize_connect_data()?;
+        let connect_reply_data = connect_reply.value.deserialize::<ConnectReplyData>()?;
 
         let minor_version = match connect_reply.result {
             ConnectResult::Ok(minor_version) => minor_version,
@@ -283,18 +288,21 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn connect_with_data_and_deserialize<D1, D2>(
+    pub async fn connect_with_data_and_deserialize<D1, E1, D2, E2>(
         t: T,
-        data: Option<&D1>,
-    ) -> Result<(Self, Option<D2>), ConnectError<T::Error>>
+        data: Option<E1>,
+    ) -> Result<(Self, Option<E2>), ConnectError<T::Error>>
     where
-        D1: Serialize + ?Sized,
-        D2: Deserialize,
+        D1: Tag,
+        E1: Serialize<D1>,
+        D2: Tag,
+        E2: Deserialize<D2>,
     {
         let (client, data) = Self::connect_with_data(t, data).await?;
+
         let data = data
             .as_deref()
-            .map(SerializedValueSlice::deserialize)
+            .map(SerializedValueSlice::deserialize_as)
             .transpose()?;
 
         Ok((client, data))
@@ -1340,8 +1348,12 @@ where
 
             let serial = self.create_service.insert(req);
 
-            let msg = CreateService2::with_serialize_info(serial, object_cookie, uuid, info)
-                .map_err(RunError::Serialize)?;
+            let msg = CreateService2 {
+                serial,
+                object_cookie,
+                uuid,
+                value: SerializedValue::serialize(info).map_err(RunError::Serialize)?,
+            };
 
             self.t.send_and_flush(msg).await.map_err(Into::into)
         } else {
@@ -1875,13 +1887,13 @@ where
 
     #[cfg(feature = "introspection")]
     async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {
-        use crate::core::message::RegisterIntrospection;
+        use aldrin_core::message::RegisterIntrospection;
 
         if (self.protocol_version >= ProtocolVersion::V1_17) && !self.introspection.is_empty() {
-            let type_ids = self.introspection.keys().copied().collect();
-
-            let register_introspection = RegisterIntrospection::with_serialize_type_ids(&type_ids)
-                .map_err(RunError::Serialize)?;
+            let register_introspection = RegisterIntrospection {
+                value: SerializedValue::serialize(IterAsSet(self.introspection.keys()))
+                    .map_err(RunError::Serialize)?,
+            };
 
             self.t
                 .send_and_flush(register_introspection)

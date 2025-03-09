@@ -1,18 +1,17 @@
-use crate::core::{AsSerializeArg, Serialize, SerializeArg};
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::promise::Promise;
+use crate::{Error, Handle, Promise};
+use aldrin_core::tags::{self, PrimaryTag};
+use aldrin_core::Serialize;
 use std::fmt;
 use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// Pending call.
-pub struct Call<Args, T: ?Sized, E: ?Sized> {
+pub struct Call<Args, T, E> {
     args: Args,
     promise: Promise<T, E>,
 }
 
-impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
+impl<Args, T, E> Call<Args, T, E> {
     pub(crate) fn new(args: Args, promise: Promise<T, E>) -> Self {
         Self { args, promise }
     }
@@ -63,7 +62,7 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
     }
 
     /// Casts the call to a different result type.
-    pub fn cast<T2: ?Sized, E2: ?Sized>(self) -> Call<Args, T2, E2> {
+    pub fn cast<T2, E2>(self) -> Call<Args, T2, E2> {
         Call::new(self.args, self.promise.cast())
     }
 
@@ -100,85 +99,39 @@ impl<Args, T: ?Sized, E: ?Sized> Call<Args, T, E> {
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: AsSerializeArg + ?Sized,
-    E: ?Sized,
-{
+impl<Args, T: PrimaryTag, E> Call<Args, T, E> {
     /// Signals that the call was successful.
-    pub fn ok(self, value: SerializeArg<T>) -> Result<(), Error> {
+    pub fn ok<U: Serialize<T::Tag>>(self, value: U) -> Result<(), Error> {
         self.promise.ok(value)
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: Serialize + ?Sized,
-    E: ?Sized,
-{
-    /// Signals that the call was successful.
-    pub fn ok_ref(self, value: &T) -> Result<(), Error> {
-        self.promise.ok_ref(value)
-    }
-}
-
-impl<Args, E: ?Sized> Call<Args, (), E> {
+impl<Args, T: PrimaryTag<Tag = tags::Unit>, E> Call<Args, T, E> {
     /// Signals that the call was successful without returning a value.
     pub fn done(self) -> Result<(), Error> {
         self.promise.done()
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: ?Sized,
-    E: AsSerializeArg + ?Sized,
-{
+impl<Args, T, E: PrimaryTag> Call<Args, T, E> {
     /// Signals that the call failed.
-    pub fn err(self, value: SerializeArg<E>) -> Result<(), Error> {
+    pub fn err<F: Serialize<E::Tag>>(self, value: F) -> Result<(), Error> {
         self.promise.err(value)
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: ?Sized,
-    E: Serialize + ?Sized,
-{
-    /// Signals that the call failed.
-    pub fn err_ref(self, value: &E) -> Result<(), Error> {
-        self.promise.err_ref(value)
-    }
-}
-
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: AsSerializeArg + ?Sized,
-    E: AsSerializeArg + ?Sized,
-{
+impl<Args, T: PrimaryTag, E: PrimaryTag> Call<Args, T, E> {
     /// Sets the call's reply.
-    pub fn set(self, res: Result<SerializeArg<T>, SerializeArg<E>>) -> Result<(), Error> {
+    pub fn set<U, F>(self, res: Result<U, F>) -> Result<(), Error>
+    where
+        U: Serialize<T::Tag>,
+        F: Serialize<E::Tag>,
+    {
         self.promise.set(res)
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: Serialize + ?Sized,
-    E: Serialize + ?Sized,
-{
-    /// Sets the call's reply.
-    pub fn set_ref(self, res: Result<&T, &E>) -> Result<(), Error> {
-        self.promise.set_ref(res)
-    }
-}
-
-impl<Args, T, E> fmt::Debug for Call<Args, T, E>
-where
-    Args: fmt::Debug,
-    T: ?Sized,
-    E: ?Sized,
-{
+impl<Args: fmt::Debug, T, E> fmt::Debug for Call<Args, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Call")
             .field("args", &self.args)

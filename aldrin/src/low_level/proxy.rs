@@ -1,9 +1,9 @@
 use super::{Event, PendingReply};
+use crate::{Error, Handle};
 #[cfg(feature = "introspection")]
-use crate::core::introspection::Introspection;
-use crate::core::{Serialize, ServiceId, ServiceInfo, TypeId};
-use crate::error::Error;
-use crate::handle::Handle;
+use aldrin_core::introspection::Introspection;
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Serialize, ServiceId, ServiceInfo, TypeId};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::stream::{FusedStream, Stream};
 use std::future;
@@ -78,11 +78,23 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call<Args>(&self, function: u32, args: &Args, version: Option<u32>) -> PendingReply
-    where
-        Args: Serialize + ?Sized,
-    {
+    pub fn call_as<T: Tag, U: Serialize<T>>(
+        &self,
+        function: u32,
+        args: U,
+        version: Option<u32>,
+    ) -> PendingReply {
         self.client.call(self.svc, function, args, version)
+    }
+
+    /// Calls a function on the service.
+    pub fn call<T: PrimaryTag + Serialize<T::Tag>>(
+        &self,
+        function: u32,
+        args: T,
+        version: Option<u32>,
+    ) -> PendingReply {
+        self.call_as(function, args, version)
     }
 
     /// Subscribes to an event.

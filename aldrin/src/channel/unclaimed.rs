@@ -1,8 +1,6 @@
 use super::{Receiver, Sender, UnboundReceiver, UnboundSender};
-use crate::core::ChannelCookie;
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::low_level;
+use crate::{low_level, Error, Handle};
+use aldrin_core::ChannelCookie;
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
@@ -17,12 +15,12 @@ use std::task::{Context, Poll};
 /// In the first case, the [`UnclaimedSender`] is typically unbound from its client and then handed
 /// over to some other client. The second case appears when receiving an [`UnboundSender`] from
 /// e.g. a function call on a service.
-pub struct UnclaimedSender<T: ?Sized> {
+pub struct UnclaimedSender<T> {
     inner: low_level::UnclaimedSender,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: ?Sized> UnclaimedSender<T> {
+impl<T> UnclaimedSender<T> {
     pub(crate) fn new(inner: low_level::UnclaimedSender) -> Self {
         Self {
             inner,
@@ -46,7 +44,7 @@ impl<T: ?Sized> UnclaimedSender<T> {
     }
 
     /// Casts the item type to a different type `U`.
-    pub fn cast<U: ?Sized>(self) -> UnclaimedSender<U> {
+    pub fn cast<U>(self) -> UnclaimedSender<U> {
         UnclaimedSender::new(self.inner)
     }
 
@@ -128,7 +126,7 @@ impl<T: ?Sized> UnclaimedSender<T> {
     }
 }
 
-impl<T: ?Sized> fmt::Debug for UnclaimedSender<T> {
+impl<T> fmt::Debug for UnclaimedSender<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("UnclaimedSender")
             .field("inner", &self.inner)

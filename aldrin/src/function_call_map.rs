@@ -1,6 +1,6 @@
-use crate::core::message::CallFunctionResult;
 use crate::error::Error;
 use crate::serial_map::SerialMap;
+use aldrin_core::message::CallFunctionResult;
 use futures_channel::oneshot::Sender;
 use std::task::{Context, Poll};
 use std::time::Instant;

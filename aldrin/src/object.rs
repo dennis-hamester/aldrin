@@ -1,6 +1,6 @@
 use super::{Error, Handle};
-use crate::core::{ObjectId, ObjectUuid, ServiceUuid};
 use crate::low_level::{Service, ServiceInfo};
+use aldrin_core::{ObjectId, ObjectUuid, ServiceUuid};
 
 /// Owned object on the bus.
 ///

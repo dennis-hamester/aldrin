@@ -2,15 +2,14 @@
 mod test;
 
 use crate::bus_listener::BusListenerEvent;
+use crate::{Error, Handle, Object};
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
-use crate::core::{
-    AsSerializeArg, BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
+use aldrin_core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use aldrin_core::tags::{self, PrimaryTag};
+use aldrin_core::{
+    BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
     DeserializeError, Deserializer, ObjectId, ObjectUuid, Serialize, SerializeError, Serializer,
 };
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::object::Object;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::future::FusedFuture;
 use futures_core::stream::Stream;
@@ -98,20 +97,19 @@ impl LifetimeScope {
     }
 }
 
-impl Serialize for LifetimeScope {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        self.id().serialize(serializer)
+impl PrimaryTag for LifetimeScope {
+    type Tag = tags::ObjectId;
+}
+
+impl Serialize<tags::ObjectId> for LifetimeScope {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
     }
 }
 
-impl AsSerializeArg for LifetimeScope {
-    type SerializeArg<'a> = &'a Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        self
+impl Serialize<tags::ObjectId> for &LifetimeScope {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(self.id())
     }
 }
 
@@ -144,7 +142,7 @@ impl LifetimeId {
     /// Nil `LifetimeId` (all zeros).
     pub const NIL: Self = Self(ObjectId::NIL);
 
-    /// Bind the id to a client and create a `Lifetime`.
+    /// Binds the id to a client and creates a [`Lifetime`].
     pub async fn bind(self, client: &Handle) -> Result<Lifetime, Error> {
         Lifetime::new(client, self).await
     }
@@ -155,26 +153,25 @@ impl LifetimeId {
     }
 }
 
-impl Serialize for LifetimeId {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        self.0.serialize(serializer)
+impl PrimaryTag for LifetimeId {
+    type Tag = tags::ObjectId;
+}
+
+impl Serialize<tags::ObjectId> for LifetimeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(self.0)
     }
 }
 
-impl Deserialize for LifetimeId {
+impl Serialize<tags::ObjectId> for &LifetimeId {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl Deserialize<tags::ObjectId> for LifetimeId {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        ObjectId::deserialize(deserializer).map(Self)
-    }
-}
-
-impl AsSerializeArg for LifetimeId {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
+        deserializer.deserialize().map(Self)
     }
 }
 

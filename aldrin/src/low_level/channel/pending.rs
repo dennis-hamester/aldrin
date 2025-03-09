@@ -1,8 +1,6 @@
 use super::{RawChannel, Receiver, Sender};
-use crate::channel as high_level;
-use crate::core::{ChannelCookie, SerializedValue};
-use crate::error::Error;
-use crate::handle::Handle;
+use crate::{Error, Handle};
+use aldrin_core::{ChannelCookie, SerializedValue};
 use futures_channel::{mpsc, oneshot};
 use std::fmt;
 use std::future::{self, Future};
@@ -47,10 +45,10 @@ impl PendingSender {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`PendingSender`](high_level::PendingSender) by binding an item type
+    /// Casts to a high-level [`PendingSender`](crate::PendingSender) by binding an item type
     /// `T`.
-    pub fn cast<T: ?Sized>(self) -> high_level::PendingSender<T> {
-        high_level::PendingSender::new(self)
+    pub fn cast<T>(self) -> crate::PendingSender<T> {
+        crate::PendingSender::new(self)
     }
 
     /// Initiates closing the sender and polls for progress.
@@ -192,10 +190,10 @@ impl PendingReceiver {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`PendingSender`](high_level::PendingSender) by binding an item type
+    /// Casts to a high-level [`PendingSender`](crate::PendingSender) by binding an item type
     /// `T`.
-    pub fn cast<T>(self) -> high_level::PendingReceiver<T> {
-        high_level::PendingReceiver::new(self)
+    pub fn cast<T>(self) -> crate::PendingReceiver<T> {
+        crate::PendingReceiver::new(self)
     }
 
     /// Initiates closing the receiver and polls for progress.

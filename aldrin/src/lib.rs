@@ -86,18 +86,6 @@ pub mod low_level;
 pub mod private;
 
 pub use aldrin_core as core;
-#[cfg(feature = "codegen")]
-#[doc(inline)]
-pub use aldrin_macros::{
-    generate, service, AsSerializeArgFromAldrin as AsSerializeArg,
-    DeserializeFromAldrin as Deserialize, DeserializeKeyFromAldrin as DeserializeKey,
-    SerializeFromAldrin as Serialize, SerializeKeyFromAldrin as SerializeKey,
-};
-#[cfg(all(feature = "codegen", feature = "introspection"))]
-#[doc(inline)]
-pub use aldrin_macros::{
-    IntrospectableFromAldrin as Introspectable, KeyTypeOfFromAldrin as KeyTypeOf,
-};
 pub use bus_listener::BusListener;
 pub use call::Call;
 pub use channel::{
@@ -120,3 +108,15 @@ pub use property::Property;
 pub use reply::Reply;
 pub use unknown_call::UnknownCall;
 pub use unknown_event::UnknownEvent;
+// #[cfg(feature = "codegen")]
+// #[doc(inline)]
+// pub use aldrin_macros::{
+//     generate, service, AsSerializeArgFromAldrin as AsSerializeArg,
+//     DeserializeFromAldrin as Deserialize, DeserializeKeyFromAldrin as DeserializeKey,
+//     SerializeFromAldrin as Serialize, SerializeKeyFromAldrin as SerializeKey,
+// };
+// #[cfg(all(feature = "codegen", feature = "introspection"))]
+// #[doc(inline)]
+// pub use aldrin_macros::{
+//     IntrospectableFromAldrin as Introspectable, KeyTypeOfFromAldrin as KeyTypeOf,
+// };

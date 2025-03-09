@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod test;
 
-use crate::core::{BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope};
 use crate::error::Error;
 use crate::handle::Handle;
+use aldrin_core::{BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope};
 use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::HashSet;

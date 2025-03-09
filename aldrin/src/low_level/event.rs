@@ -1,6 +1,6 @@
-use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
-use crate::event::Event as HlEvent;
-use crate::unknown_event::UnknownEvent;
+use crate::UnknownEvent;
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use std::time::Instant;
 
 /// Event emitted by a service.
@@ -47,23 +47,34 @@ impl Event {
     }
 
     /// Deserializes the event's arguments.
-    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
-        self.args.deserialize()
+    pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
+        self.args.deserialize_as()
+    }
+
+    /// Deserializes the event's arguments.
+    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+        self.deserialize_as()
     }
 
     /// Deserializes the event's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
-        self.args.deserialize_as_value()
+        self.deserialize()
     }
 
-    /// Deserializes the arguments and casts the event to a high-level [`Event`](HlEvent).
-    pub fn deserialize_and_cast<T>(&self) -> Result<crate::event::Event<T>, DeserializeError>
-    where
-        T: Deserialize,
-    {
+    /// Deserializes the arguments and casts the event to a high-level [`Event`](crate::Event).
+    pub fn deserialize_and_cast_as<T: Tag, U: Deserialize<T>>(
+        &self,
+    ) -> Result<crate::Event<U>, DeserializeError> {
         self.args
-            .deserialize()
-            .map(|args| HlEvent::new(self.id, self.timestamp, args))
+            .deserialize_as()
+            .map(|args| crate::Event::new(self.id, self.timestamp, args))
+    }
+
+    /// Deserializes the arguments and casts the event to a high-level [`Event`](crate::Event).
+    pub fn deserialize_and_cast<T: PrimaryTag + Deserialize<T::Tag>>(
+        &self,
+    ) -> Result<crate::Event<T>, DeserializeError> {
+        self.deserialize_and_cast_as()
     }
 
     /// Converts this event into an [`UnknownEvent`].

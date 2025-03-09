@@ -1,8 +1,6 @@
 use super::{Receiver, Sender};
-use crate::core::ChannelCookie;
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::low_level;
+use crate::{low_level, Error, Handle};
+use aldrin_core::ChannelCookie;
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
@@ -16,12 +14,12 @@ use std::task::{Context, Poll};
 ///
 /// [`PendingSender`s](Self) are an intermediate step before the channel is fully established. It's
 /// purpose is to wait until the other channel end is claimed as well.
-pub struct PendingSender<T: ?Sized> {
+pub struct PendingSender<T> {
     inner: low_level::PendingSender,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: ?Sized> PendingSender<T> {
+impl<T> PendingSender<T> {
     pub(crate) fn new(inner: low_level::PendingSender) -> Self {
         Self {
             inner,
@@ -45,7 +43,7 @@ impl<T: ?Sized> PendingSender<T> {
     }
 
     /// Casts the item type to a different type `U`.
-    pub fn cast<U: ?Sized>(self) -> PendingSender<U> {
+    pub fn cast<U>(self) -> PendingSender<U> {
         PendingSender::new(self.inner)
     }
 
@@ -142,7 +140,7 @@ impl<T: ?Sized> PendingSender<T> {
     }
 }
 
-impl<T: ?Sized> fmt::Debug for PendingSender<T> {
+impl<T> fmt::Debug for PendingSender<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("PendingSender")
             .field("inner", &self.inner)

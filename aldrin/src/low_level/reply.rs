@@ -1,5 +1,5 @@
-use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
-use crate::reply::Reply as HlReply;
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use std::time::Instant;
 
 /// Reply of a call.
@@ -56,13 +56,26 @@ impl Reply {
     }
 
     /// Deserializes the arguments of the reply.
-    pub fn deserialize<T: Deserialize, E: Deserialize>(
-        &self,
-    ) -> Result<Result<T, E>, DeserializeError> {
+    pub fn deserialize_as<T, U, E, F>(&self) -> Result<Result<U, F>, DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        E: Tag,
+        F: Deserialize<E>,
+    {
         match self.args {
-            Ok(ref ok) => ok.deserialize().map(Ok),
-            Err(ref err) => err.deserialize().map(Err),
+            Ok(ref ok) => ok.deserialize_as().map(Ok),
+            Err(ref err) => err.deserialize_as().map(Err),
         }
+    }
+
+    /// Deserializes the arguments of the reply.
+    pub fn deserialize<T, E>(&self) -> Result<Result<T, E>, DeserializeError>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.deserialize_as()
     }
 
     /// Deserializes the arguments of the reply as generic [`Value`s](Value).
@@ -70,13 +83,26 @@ impl Reply {
         self.deserialize()
     }
 
-    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](HlReply).
-    pub fn deserialize_and_cast<T, E>(&self) -> Result<crate::reply::Reply<T, E>, DeserializeError>
+    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](crate::Reply).
+    pub fn deserialize_and_cast_as<T, U, E, F>(
+        &self,
+    ) -> Result<crate::Reply<U, F>, DeserializeError>
     where
-        T: Deserialize,
-        E: Deserialize,
+        T: Tag,
+        U: Deserialize<T>,
+        E: Tag,
+        F: Deserialize<E>,
     {
-        self.deserialize()
-            .map(|args| HlReply::new(self.id, self.timestamp, args))
+        self.deserialize_as()
+            .map(|args| crate::Reply::new(self.id, self.timestamp, args))
+    }
+
+    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](crate::Reply).
+    pub fn deserialize_and_cast<T, E>(&self) -> Result<crate::Reply<T, E>, DeserializeError>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.deserialize_and_cast_as()
     }
 }

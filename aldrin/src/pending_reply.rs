@@ -1,7 +1,6 @@
-use crate::core::Deserialize;
-use crate::error::Error;
-use crate::low_level::PendingReply as LlPendingReply;
-use crate::reply::Reply;
+use crate::{low_level, Error, Reply};
+use aldrin_core::tags::PrimaryTag;
+use aldrin_core::Deserialize;
 use std::fmt;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -11,12 +10,12 @@ use std::task::{Context, Poll};
 /// Future to await the result of a call.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct PendingReply<T, E> {
-    inner: LlPendingReply,
+    inner: low_level::PendingReply,
     phantom: PhantomData<fn() -> (T, E)>,
 }
 
 impl<T, E> PendingReply<T, E> {
-    pub(crate) fn new(inner: LlPendingReply) -> Self {
+    pub(crate) fn new(inner: low_level::PendingReply) -> Self {
         Self {
             inner,
             phantom: PhantomData,
@@ -38,8 +37,8 @@ impl<T, E> PendingReply<T, E> {
         PendingReply::new(self.inner)
     }
 
-    /// Extracts the inner low-level [`PendingReply`](LlPendingReply).
-    pub fn into_low_level(self) -> crate::low_level::PendingReply {
+    /// Extracts the inner low-level [`PendingReply`](low_level::PendingReply).
+    pub fn into_low_level(self) -> low_level::PendingReply {
         self.inner
     }
 
@@ -51,12 +50,15 @@ impl<T, E> PendingReply<T, E> {
     }
 }
 
-impl<T: Deserialize, E: Deserialize> Future for PendingReply<T, E> {
-    type Output = Result<Reply<T, E>, Error>;
-
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+impl<T: PrimaryTag, E: PrimaryTag> PendingReply<T, E> {
+    /// Polls for the reply.
+    pub fn poll_reply_as<U, F>(&mut self, cx: &mut Context) -> Poll<Result<Reply<U, F>, Error>>
+    where
+        U: Deserialize<T::Tag>,
+        F: Deserialize<E::Tag>,
+    {
         match Pin::new(&mut self.inner).poll(cx) {
-            Poll::Ready(Ok(reply)) => match reply.deserialize_and_cast() {
+            Poll::Ready(Ok(reply)) => match reply.deserialize_and_cast_as() {
                 Ok(reply) => Poll::Ready(Ok(reply)),
                 Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
             },
@@ -64,6 +66,18 @@ impl<T: Deserialize, E: Deserialize> Future for PendingReply<T, E> {
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
             Poll::Pending => Poll::Pending,
         }
+    }
+}
+
+impl<T, E> Future for PendingReply<T, E>
+where
+    T: PrimaryTag + Deserialize<T::Tag>,
+    E: PrimaryTag + Deserialize<E::Tag>,
+{
+    type Output = Result<Reply<T, E>, Error>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        self.poll_reply_as(cx)
     }
 }
 

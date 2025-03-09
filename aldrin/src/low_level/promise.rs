@@ -1,8 +1,7 @@
-use crate::core::message::CallFunctionResult;
-use crate::core::Serialize;
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::Promise as HlPromise;
+use crate::{Error, Handle};
+use aldrin_core::message::CallFunctionResult;
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Serialize, SerializedValue};
 use futures_channel::oneshot::Receiver;
 use futures_core::FusedFuture;
 use std::future::{self, Future};
@@ -61,28 +60,36 @@ impl Promise {
     }
 
     /// Casts the promise to a specific set of result types.
-    pub fn cast<T: ?Sized, E: ?Sized>(self) -> crate::promise::Promise<T, E> {
-        HlPromise::new(self)
+    pub fn cast<T, E>(self) -> crate::promise::Promise<T, E> {
+        crate::Promise::new(self)
     }
 
     /// Sets the call's reply.
-    pub fn set<T, E>(self, res: Result<&T, &E>) -> Result<(), Error>
+    pub fn set_as<T, U, E, F>(self, res: Result<U, F>) -> Result<(), Error>
     where
-        T: Serialize + ?Sized,
-        E: Serialize + ?Sized,
+        T: Tag,
+        U: Serialize<T>,
+        E: Tag,
+        F: Serialize<E>,
     {
         match res {
-            Ok(value) => self.ok(value),
-            Err(value) => self.err(value),
+            Ok(value) => self.ok_as(value),
+            Err(value) => self.err_as(value),
         }
     }
 
-    /// Signals that the call was successful.
-    pub fn ok<T>(mut self, value: &T) -> Result<(), Error>
+    /// Sets the call's reply.
+    pub fn set<T, E>(self, res: Result<T, E>) -> Result<(), Error>
     where
-        T: Serialize + ?Sized,
+        T: PrimaryTag + Serialize<T::Tag>,
+        E: PrimaryTag + Serialize<E::Tag>,
     {
-        let res = CallFunctionResult::ok_with_serialize_value(value)?;
+        self.set_as(res)
+    }
+
+    /// Signals that the call was successful.
+    pub fn ok_as<T: Tag, U: Serialize<T>>(mut self, value: U) -> Result<(), Error> {
+        let res = CallFunctionResult::Ok(SerializedValue::serialize_as(value)?);
 
         self.client
             .take()
@@ -90,9 +97,14 @@ impl Promise {
             .function_call_reply(self.serial, res)
     }
 
+    /// Signals that the call was successful.
+    pub fn ok<T: PrimaryTag + Serialize<T::Tag>>(self, value: T) -> Result<(), Error> {
+        self.ok_as(value)
+    }
+
     /// Signals that the call was successful without returning a value.
     pub fn done(mut self) -> Result<(), Error> {
-        let res = CallFunctionResult::ok_with_serialize_value(&())?;
+        let res = CallFunctionResult::Ok(SerializedValue::serialize(())?);
 
         self.client
             .take()
@@ -101,16 +113,18 @@ impl Promise {
     }
 
     /// Signals that the call failed.
-    pub fn err<E>(mut self, value: &E) -> Result<(), Error>
-    where
-        E: Serialize + ?Sized,
-    {
-        let res = CallFunctionResult::err_with_serialize_value(value)?;
+    pub fn err_as<E: Tag, F: Serialize<E>>(mut self, value: F) -> Result<(), Error> {
+        let res = CallFunctionResult::Err(SerializedValue::serialize_as(value)?);
 
         self.client
             .take()
             .unwrap()
             .function_call_reply(self.serial, res)
+    }
+
+    /// Signals that the call failed.
+    pub fn err<E: PrimaryTag + Serialize<E::Tag>>(self, value: E) -> Result<(), Error> {
+        self.err_as(value)
     }
 
     /// Aborts the call.

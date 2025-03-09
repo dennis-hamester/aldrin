@@ -1,7 +1,6 @@
 use super::Reply;
-use crate::core::message::CallFunctionResult;
-use crate::error::Error;
-use crate::pending_reply::PendingReply as HlPendingReply;
+use crate::Error;
+use aldrin_core::message::CallFunctionResult;
 use futures_channel::oneshot::Receiver;
 use std::future::Future;
 use std::pin::Pin;
@@ -36,9 +35,9 @@ impl PendingReply {
         self.version
     }
 
-    /// Cast the reply to a typed [`PendingReply<T, E>`](HlPendingReply).
+    /// Cast the reply to a typed [`PendingReply<T, E>`](crate::PendingReply).
     pub fn cast<T, E>(self) -> crate::pending_reply::PendingReply<T, E> {
-        HlPendingReply::new(self)
+        crate::PendingReply::new(self)
     }
 
     /// Aborts the call and signals that there is no longer interest in the reply.

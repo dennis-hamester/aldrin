@@ -1,7 +1,5 @@
 use super::{PendingReceiver, PendingSender, UnclaimedReceiver, UnclaimedSender};
-use crate::channel as high_level;
-use crate::error::Error;
-use crate::handle::Handle;
+use crate::{Error, Handle};
 
 /// Builder type for creating channels.
 ///
@@ -46,10 +44,10 @@ impl<'a> ChannelBuilder<'a> {
         self.client
     }
 
-    /// Casts to a high-level [`ChannelBuilder`](high_level::ChannelBuilder) by binding an item type
+    /// Casts to a high-level [`ChannelBuilder`](crate::ChannelBuilder) by binding an item type
     /// `T`.
-    pub fn cast<T>(self) -> high_level::ChannelBuilder<'a, T> {
-        high_level::ChannelBuilder::new(self.client)
+    pub fn cast<T>(self) -> crate::ChannelBuilder<'a, T> {
+        crate::ChannelBuilder::new(self.client)
     }
 
     /// Creates a new channel and claims the sender.

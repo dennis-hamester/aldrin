@@ -2,12 +2,12 @@
 mod test;
 
 use crate::bus_listener::BusListener;
-use crate::core::{
+use crate::error::Error;
+use crate::handle::Handle;
+use aldrin_core::{
     BusEvent, BusListenerFilter, BusListenerScope, ObjectCookie, ObjectId, ObjectUuid,
     ServiceCookie, ServiceId, ServiceUuid,
 };
-use crate::error::Error;
-use crate::handle::Handle;
 use futures_core::stream::{FusedStream, Stream};
 use std::collections::hash_map::{self, HashMap};
 use std::collections::VecDeque;

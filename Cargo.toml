@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    # "aldrin",
+    "aldrin",
     # "broker",
     # "codegen",
     # "conformance-test-broker",

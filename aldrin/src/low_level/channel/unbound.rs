@@ -1,11 +1,10 @@
 use super::{Receiver, Sender, UnclaimedReceiver, UnclaimedSender};
-use crate::channel as high_level;
-use crate::core::{
-    AsSerializeArg, ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize,
-    SerializeError, Serializer,
+use crate::{Error, Handle};
+use aldrin_core::tags::{self, PrimaryTag, Tag};
+use aldrin_core::{
+    ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
+    Serializer,
 };
-use crate::error::Error;
-use crate::handle::Handle;
 
 /// A sender that isn't bound to any client.
 ///
@@ -30,10 +29,9 @@ impl UnboundSender {
         self.cookie
     }
 
-    /// Casts to a high-level [`UnboundSender`](high_level::UnboundSender) by binding an item type
-    /// `T`.
-    pub fn cast<T: ?Sized>(self) -> high_level::UnboundSender<T> {
-        high_level::UnboundSender::new(self.cookie)
+    /// Casts to a high-level [`UnboundSender`](crate::UnboundSender) by binding an item type `T`.
+    pub fn cast<T>(self) -> crate::UnboundSender<T> {
+        crate::UnboundSender::new(self.cookie)
     }
 
     /// Binds the sender to a client and creates an [`UnclaimedSender`].
@@ -98,27 +96,25 @@ impl From<ChannelCookie> for UnboundSender {
     }
 }
 
-impl Serialize for UnboundSender {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_sender(self.cookie);
-        Ok(())
+impl PrimaryTag for UnboundSender {
+    type Tag = tags::Sender<tags::Value>;
+}
+
+impl<T: Tag> Serialize<tags::Sender<T>> for UnboundSender {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_sender(self.cookie)
     }
 }
 
-impl Deserialize for UnboundSender {
+impl<T: Tag> Serialize<tags::Sender<T>> for &UnboundSender {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<tags::Sender<T>, _>(*self)
+    }
+}
+
+impl<T: Tag> Deserialize<tags::Sender<T>> for UnboundSender {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(Self::new)
-    }
-}
-
-impl AsSerializeArg for UnboundSender {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
     }
 }
 
@@ -145,10 +141,10 @@ impl UnboundReceiver {
         self.cookie
     }
 
-    /// Casts to a high-level [`UnboundReceiver`](high_level::UnboundReceiver) by binding an item
-    /// type `T`.
-    pub fn cast<T>(self) -> high_level::UnboundReceiver<T> {
-        high_level::UnboundReceiver::new(self.cookie)
+    /// Casts to a high-level [`UnboundReceiver`](crate::UnboundReceiver) by binding an item type
+    /// `T`.
+    pub fn cast<T>(self) -> crate::UnboundReceiver<T> {
+        crate::UnboundReceiver::new(self.cookie)
     }
 
     /// Binds the receiver to a client and creates an [`UnclaimedReceiver`].
@@ -216,26 +212,24 @@ impl From<ChannelCookie> for UnboundReceiver {
     }
 }
 
-impl Serialize for UnboundReceiver {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_receiver(self.cookie);
-        Ok(())
+impl PrimaryTag for UnboundReceiver {
+    type Tag = tags::Receiver<tags::Value>;
+}
+
+impl<T: Tag> Serialize<tags::Receiver<T>> for UnboundReceiver {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize_receiver(self.cookie)
     }
 }
 
-impl Deserialize for UnboundReceiver {
+impl<T: Tag> Serialize<tags::Receiver<T>> for &UnboundReceiver {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<tags::Receiver<T>, _>(*self)
+    }
+}
+
+impl<T: Tag> Deserialize<tags::Receiver<T>> for UnboundReceiver {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(Self::new)
-    }
-}
-
-impl AsSerializeArg for UnboundReceiver {
-    type SerializeArg<'a> = Self;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
     }
 }

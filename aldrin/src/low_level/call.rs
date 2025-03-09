@@ -1,9 +1,7 @@
 use super::Promise;
-use crate::call::Call as HlCall;
-use crate::core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::unknown_call::UnknownCall;
+use crate::{Error, Handle, UnknownCall};
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use futures_channel::oneshot::Receiver;
 use std::time::Instant;
 
@@ -62,13 +60,18 @@ impl Call {
     }
 
     /// Deserializes the call's arguments.
-    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
-        self.args.deserialize()
+    pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
+        self.args.deserialize_as()
+    }
+
+    /// Deserializes the call's arguments.
+    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+        self.deserialize_as()
     }
 
     /// Deserializes the call's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
-        self.args.deserialize_as_value()
+        self.deserialize()
     }
 
     /// Converts this call into its promise object.
@@ -81,18 +84,17 @@ impl Call {
         (self.args, self.promise)
     }
 
-    /// Deserializes arguments and casts the call to a high-level [`Call`](HlCall).
+    /// Deserializes arguments and casts the call to a high-level [`Call`](crate::Call).
     ///
     /// If deserialization fails, then the call will be replied using [`Promise::invalid_args`] and
     /// [`Error::InvalidArguments`] will be returned.
-    pub fn deserialize_and_cast<Args, T, E>(self) -> Result<crate::call::Call<Args, T, E>, Error>
+    pub fn deserialize_and_cast_as<K, L, T, E>(self) -> Result<crate::Call<L, T, E>, Error>
     where
-        Args: Deserialize,
-        T: ?Sized,
-        E: ?Sized,
+        K: Tag,
+        L: Deserialize<K>,
     {
-        match self.args.deserialize() {
-            Ok(args) => Ok(HlCall::new(args, self.promise.cast())),
+        match self.args.deserialize_as() {
+            Ok(args) => Ok(crate::Call::new(args, self.promise.cast())),
 
             Err(e) => {
                 let id = self.promise.id();
@@ -100,6 +102,17 @@ impl Call {
                 Err(Error::invalid_arguments(id, Some(e)))
             }
         }
+    }
+
+    /// Deserializes arguments and casts the call to a high-level [`Call`](crate::Call).
+    ///
+    /// If deserialization fails, then the call will be replied using [`Promise::invalid_args`] and
+    /// [`Error::InvalidArguments`] will be returned.
+    pub fn deserialize_and_cast<A, T, E>(self) -> Result<crate::Call<A, T, E>, Error>
+    where
+        A: PrimaryTag + Deserialize<A::Tag>,
+    {
+        self.deserialize_and_cast_as()
     }
 
     /// Converts this call into an [`UnknownCall`].

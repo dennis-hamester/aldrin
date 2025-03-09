@@ -1,13 +1,12 @@
 use super::{Receiver, Sender, UnclaimedReceiver, UnclaimedSender};
+use crate::{low_level, Error, Handle};
 #[cfg(feature = "introspection")]
-use crate::core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
-use crate::core::{
-    AsSerializeArg, ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize,
-    SerializeError, Serializer,
+use aldrin_core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use aldrin_core::tags::{self, PrimaryTag, Tag};
+use aldrin_core::{
+    ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
+    Serializer,
 };
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::low_level;
 use std::fmt;
 use std::marker::PhantomData;
 
@@ -18,12 +17,12 @@ use std::marker::PhantomData;
 /// clients.
 ///
 /// Note that this type is [`Copy`] and is thus not consumed by any of its methods.
-pub struct UnboundSender<T: ?Sized> {
+pub struct UnboundSender<T> {
     inner: low_level::UnboundSender,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: ?Sized> UnboundSender<T> {
+impl<T> UnboundSender<T> {
     /// Creates a new [`UnboundSender`] from a [`ChannelCookie`].
     pub fn new(cookie: ChannelCookie) -> Self {
         Self {
@@ -38,7 +37,7 @@ impl<T: ?Sized> UnboundSender<T> {
     }
 
     /// Casts the item type to a different type `U`.
-    pub fn cast<U: ?Sized>(self) -> UnboundSender<U> {
+    pub fn cast<U>(self) -> UnboundSender<U> {
         UnboundSender::new(self.cookie())
     }
 
@@ -103,13 +102,13 @@ impl<T: ?Sized> UnboundSender<T> {
     }
 }
 
-impl<T: ?Sized> From<ChannelCookie> for UnboundSender<T> {
+impl<T> From<ChannelCookie> for UnboundSender<T> {
     fn from(cookie: ChannelCookie) -> Self {
         Self::new(cookie)
     }
 }
 
-impl<T: ?Sized> fmt::Debug for UnboundSender<T> {
+impl<T> fmt::Debug for UnboundSender<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("UnboundSender")
             .field("inner", &self.inner)
@@ -117,42 +116,40 @@ impl<T: ?Sized> fmt::Debug for UnboundSender<T> {
     }
 }
 
-impl<T: ?Sized> Clone for UnboundSender<T> {
+impl<T> Clone for UnboundSender<T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<T: ?Sized> Copy for UnboundSender<T> {}
+impl<T> Copy for UnboundSender<T> {}
 
-impl<T: ?Sized> Serialize for UnboundSender<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        self.inner.serialize(serializer)
+impl<T: PrimaryTag> PrimaryTag for UnboundSender<T> {
+    type Tag = tags::Sender<T::Tag>;
+}
+
+impl<T: Tag, U: Serialize<T>> Serialize<tags::Sender<T>> for UnboundSender<U> {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<tags::Sender<T>, _>(self.inner)
     }
 }
 
-impl<T: ?Sized> Deserialize for UnboundSender<T> {
+impl<T: Tag, U: Serialize<T>> Serialize<tags::Sender<T>> for &UnboundSender<U> {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl<T: Tag, U: Serialize<T>> Deserialize<tags::Sender<T>> for UnboundSender<U> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        low_level::UnboundSender::deserialize(deserializer).map(low_level::UnboundSender::cast)
-    }
-}
-
-impl<T: ?Sized> AsSerializeArg for UnboundSender<T> {
-    type SerializeArg<'a>
-        = Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
+        deserializer
+            .deserialize::<tags::Sender<T>, _>()
+            .map(low_level::UnboundSender::cast)
     }
 }
 
 #[cfg(feature = "introspection")]
-impl<T: Introspectable + ?Sized> Introspectable for UnboundSender<T> {
+impl<T: Introspectable> Introspectable for UnboundSender<T> {
     fn layout() -> Layout {
         BuiltInType::Sender(T::lexical_id()).into()
     }
@@ -283,29 +280,27 @@ impl<T> Clone for UnboundReceiver<T> {
 
 impl<T> Copy for UnboundReceiver<T> {}
 
-impl<T> Serialize for UnboundReceiver<T> {
-    fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
-        self.inner.serialize(serializer)
+impl<T: PrimaryTag> PrimaryTag for UnboundReceiver<T> {
+    type Tag = tags::Receiver<T::Tag>;
+}
+
+impl<T: Tag, U: Deserialize<T>> Serialize<tags::Receiver<T>> for UnboundReceiver<U> {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize::<tags::Receiver<T>, _>(self.inner)
     }
 }
 
-impl<T> Deserialize for UnboundReceiver<T> {
+impl<T: Tag, U: Deserialize<T>> Serialize<tags::Receiver<T>> for &UnboundReceiver<U> {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(*self)
+    }
+}
+
+impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Receiver<T>> for UnboundReceiver<U> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        low_level::UnboundReceiver::deserialize(deserializer).map(low_level::UnboundReceiver::cast)
-    }
-}
-
-impl<T> AsSerializeArg for UnboundReceiver<T> {
-    type SerializeArg<'a>
-        = Self
-    where
-        Self: 'a;
-
-    fn as_serialize_arg<'a>(&'a self) -> Self::SerializeArg<'a>
-    where
-        Self: 'a,
-    {
-        *self
+        deserializer
+            .deserialize::<tags::Receiver<T>, _>()
+            .map(low_level::UnboundReceiver::cast)
     }
 }
 

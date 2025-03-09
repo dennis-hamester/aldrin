@@ -1,8 +1,7 @@
 use super::RawChannel;
-use crate::channel as high_level;
-use crate::core::{ChannelCookie, Deserialize, Serialize, SerializedValue};
-use crate::error::Error;
-use crate::handle::Handle;
+use crate::{Error, Handle};
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{ChannelCookie, Deserialize, Serialize, SerializedValue};
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
 #[cfg(feature = "sink")]
@@ -49,9 +48,9 @@ impl Sender {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`Sender`](high_level::Sender) by binding an item type `T`.
-    pub fn cast<T: ?Sized>(self) -> high_level::Sender<T> {
-        high_level::Sender::new(self)
+    /// Casts to a high-level [`Sender`](crate::Sender) by binding an item type `T`.
+    pub fn cast<T>(self) -> crate::Sender<T> {
+        crate::Sender::new(self)
     }
 
     /// Initiates closing the sender and polls for progress.
@@ -190,16 +189,39 @@ impl Sender {
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
     /// prior to sending an item.
-    pub fn start_send_item<T: Serialize + ?Sized>(&mut self, item: &T) -> Result<(), Error> {
-        let item = SerializedValue::serialize(item)?;
+    pub fn start_send_item_as<T: Tag, U: Serialize<T>>(&mut self, item: U) -> Result<(), Error> {
+        let item = SerializedValue::serialize_as(item)?;
         self.start_send_serialized(item)
     }
 
     /// Sends an item on the channel.
     ///
     /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
+    /// [`start_send_item_as`](Self::start_send_item_as).
+    pub async fn send_item_as<T: Tag, U: Serialize<T>>(&mut self, item: U) -> Result<(), Error> {
+        self.send_ready().await?;
+        self.start_send_item_as(item)
+    }
+
+    /// Starts sending an item on the channel.
+    ///
+    /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
+    /// prior to sending an item.
+    pub fn start_send_item<T: PrimaryTag + Serialize<T::Tag>>(
+        &mut self,
+        item: T,
+    ) -> Result<(), Error> {
+        self.start_send_item_as(item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
     /// [`start_send_item`](Self::start_send_item).
-    pub async fn send_item<T: Serialize + ?Sized>(&mut self, item: &T) -> Result<(), Error> {
+    pub async fn send_item<T: PrimaryTag + Serialize<T::Tag>>(
+        &mut self,
+        item: T,
+    ) -> Result<(), Error> {
         self.send_ready().await?;
         self.start_send_item(item)
     }
@@ -267,9 +289,9 @@ impl Receiver {
         self.inner.cookie()
     }
 
-    /// Casts to a high-level [`Receiver`](high_level::Receiver) by binding an item type `T`.
-    pub fn cast<T>(self) -> high_level::Receiver<T> {
-        high_level::Receiver::new(self)
+    /// Casts to a high-level [`Receiver`](crate::Receiver) by binding an item type `T`.
+    pub fn cast<T>(self) -> crate::Receiver<T> {
+        crate::Receiver::new(self)
     }
 
     /// Initiates closing the sender and polls for progress.
@@ -357,13 +379,13 @@ impl Receiver {
     }
 
     /// Polls the channel for the next item.
-    pub fn poll_next_item<T: Deserialize>(
+    pub fn poll_next_item_as<T: Tag, U: Deserialize<T>>(
         &mut self,
         cx: &mut Context,
-    ) -> Poll<Result<Option<T>, Error>> {
+    ) -> Poll<Result<Option<U>, Error>> {
         match self.poll_next_serialized(cx) {
             Poll::Ready(Some(item)) => {
-                Poll::Ready(item.deserialize().map(Some).map_err(Error::invalid_item))
+                Poll::Ready(item.deserialize_as().map(Some).map_err(Error::invalid_item))
             }
 
             Poll::Ready(None) => Poll::Ready(Ok(None)),
@@ -372,7 +394,22 @@ impl Receiver {
     }
 
     /// Waits for the next item on the channel.
-    pub async fn next_item<T: Deserialize>(&mut self) -> Result<Option<T>, Error> {
+    pub async fn next_item_as<T: Tag, U: Deserialize<T>>(&mut self) -> Result<Option<U>, Error> {
+        future::poll_fn(|cx| self.poll_next_item_as(cx)).await
+    }
+
+    /// Polls the channel for the next item.
+    pub fn poll_next_item<T: PrimaryTag + Deserialize<T::Tag>>(
+        &mut self,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<T>, Error>> {
+        self.poll_next_item_as(cx)
+    }
+
+    /// Waits for the next item on the channel.
+    pub async fn next_item<T: PrimaryTag + Deserialize<T::Tag>>(
+        &mut self,
+    ) -> Result<Option<T>, Error> {
         future::poll_fn(|cx| self.poll_next_item(cx)).await
     }
 }

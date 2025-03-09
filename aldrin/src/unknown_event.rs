@@ -1,16 +1,17 @@
-use crate::core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
-use crate::low_level::Event as LlEvent;
+use crate::low_level;
+use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use std::error::Error as StdError;
 use std::fmt;
 
 /// An unknown event emitted by a service.
 #[derive(Debug, Clone)]
 pub struct UnknownEvent {
-    inner: LlEvent,
+    inner: low_level::Event,
 }
 
 impl UnknownEvent {
-    pub(crate) fn new(inner: LlEvent) -> Self {
+    pub(crate) fn new(inner: low_level::Event) -> Self {
         Self { inner }
     }
 
@@ -30,13 +31,18 @@ impl UnknownEvent {
     }
 
     /// Deserializes the event's arguments.
-    pub fn deserialize<T: Deserialize>(&self) -> Result<T, DeserializeError> {
-        self.inner.deserialize()
+    pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
+        self.inner.deserialize_as()
+    }
+
+    /// Deserializes the event's arguments.
+    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+        self.deserialize_as()
     }
 
     /// Deserializes the events's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
-        self.inner.deserialize_as_value()
+        self.deserialize()
     }
 }
 

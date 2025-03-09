@@ -1,4 +1,4 @@
-use crate::core::{ObjectUuid, ServiceUuid};
+use aldrin_core::{ObjectUuid, ServiceUuid};
 use aldrin_test::aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin_test::tokio::TestBroker;
 use std::future::Future;

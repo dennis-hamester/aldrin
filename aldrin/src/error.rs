@@ -1,9 +1,8 @@
 //! Error types.
 
-use crate::core::message::Message;
-use crate::core::{DeserializeError, SerializeError, SerializedValue};
-use crate::unknown_call::UnknownCall;
-use crate::unknown_event::UnknownEvent;
+use crate::{UnknownCall, UnknownEvent};
+use aldrin_core::message::Message;
+use aldrin_core::{DeserializeError, SerializeError, SerializedValue};
 use thiserror::Error;
 
 /// Error when connecting to a broker.

@@ -95,9 +95,9 @@ optional = true
 workspace = true
 features = ["std"]
 
-# [dev-dependencies.aldrin]
-# path = "../aldrin"
-# default-features = false
+[dev-dependencies.aldrin]
+path = "../aldrin"
+default-features = false
 
 # [dev-dependencies.aldrin-broker]
 # path = "../broker"

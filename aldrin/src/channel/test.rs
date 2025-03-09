@@ -1,4 +1,4 @@
-use crate::core::{ByteSlice, Bytes};
+use aldrin_core::{ByteSlice, Bytes};
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::FusedStream;

@@ -1,23 +1,23 @@
 use crate::bus_listener::BusListener;
-#[cfg(feature = "introspection")]
-use crate::core::introspection::DynIntrospectable;
-use crate::core::message::{
-    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
-    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
-    StopBusListenerResult,
-};
-#[cfg(feature = "introspection")]
-use crate::core::TypeId;
-use crate::core::{
-    BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
-    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
-};
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{
     PendingReceiver, PendingSender, Proxy, ProxyId, Service, ServiceInfo, UnclaimedReceiver,
     UnclaimedSender,
 };
 use crate::{Error, Object};
+#[cfg(feature = "introspection")]
+use aldrin_core::introspection::DynIntrospectable;
+use aldrin_core::message::{
+    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
+    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
+    StopBusListenerResult,
+};
+#[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
+use aldrin_core::{
+    BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
+    ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,
+};
 use futures_channel::{mpsc, oneshot};
 use std::num::NonZeroU32;
 use std::time::Instant;

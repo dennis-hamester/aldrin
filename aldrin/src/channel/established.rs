@@ -1,26 +1,25 @@
-use crate::core::{AsSerializeArg, ChannelCookie, Deserialize, Serialize, SerializeArg};
-use crate::error::Error;
-use crate::handle::Handle;
-use crate::low_level;
+use crate::{low_level, Error, Handle};
+use aldrin_core::tags::PrimaryTag;
+use aldrin_core::{ChannelCookie, Deserialize, Serialize};
 use futures_core::stream::{FusedStream, Stream};
 #[cfg(feature = "sink")]
 use futures_sink::Sink;
-use std::fmt;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{fmt, future};
 
 /// The sending end of an established channel.
 ///
 /// [`Sender`s](Self) are acquired by either
 /// [`PendingSender::establish`](super::PendingSender::establish) or
 /// [`UnclaimedSender::claim`](super::UnclaimedSender::claim).
-pub struct Sender<T: ?Sized> {
+pub struct Sender<T> {
     inner: low_level::Sender,
     phantom: PhantomData<fn(T)>,
 }
 
-impl<T: ?Sized> Sender<T> {
+impl<T> Sender<T> {
     pub(crate) fn new(inner: low_level::Sender) -> Self {
         Self {
             inner,
@@ -44,7 +43,7 @@ impl<T: ?Sized> Sender<T> {
     }
 
     /// Casts the item type to a different type `U`.
-    pub fn cast<U: ?Sized>(self) -> Sender<U> {
+    pub fn cast<U>(self) -> Sender<U> {
         Sender::new(self.inner)
     }
 
@@ -147,43 +146,25 @@ impl<T: ?Sized> Sender<T> {
     }
 }
 
-impl<T: AsSerializeArg + ?Sized> Sender<T> {
+impl<T: PrimaryTag> Sender<T> {
     /// Starts sending an item on the channel.
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
     /// prior to sending an item.
-    pub fn start_send_item(&mut self, item: SerializeArg<T>) -> Result<(), Error> {
-        self.inner.start_send_item(&item)
+    pub fn start_send_item<U: Serialize<T::Tag>>(&mut self, item: U) -> Result<(), Error> {
+        self.inner.start_send_item_as(item)
     }
 
     /// Sends an item on the channel.
     ///
     /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
     /// [`start_send_item`](Self::start_send_item).
-    pub async fn send_item(&mut self, item: SerializeArg<'_, T>) -> Result<(), Error> {
-        self.inner.send_item(&item).await
+    pub async fn send_item<U: Serialize<T::Tag>>(&mut self, item: U) -> Result<(), Error> {
+        self.inner.send_item_as(item).await
     }
 }
 
-impl<T: Serialize + ?Sized> Sender<T> {
-    /// Starts sending an item on the channel.
-    ///
-    /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
-    /// prior to sending an item.
-    pub fn start_send_ref(&mut self, item: &T) -> Result<(), Error> {
-        self.inner.start_send_item(item)
-    }
-
-    /// Sends an item on the channel.
-    ///
-    /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
-    /// [`start_send_ref`](Self::start_send_ref).
-    pub async fn send_ref(&mut self, item: &T) -> Result<(), Error> {
-        self.inner.send_item(item).await
-    }
-}
-
-impl<T: ?Sized> fmt::Debug for Sender<T> {
+impl<T> fmt::Debug for Sender<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Sender")
             .field("inner", &self.inner)
@@ -192,14 +173,14 @@ impl<T: ?Sized> fmt::Debug for Sender<T> {
 }
 
 #[cfg(feature = "sink")]
-impl<T: AsSerializeArg + ?Sized> Sink<SerializeArg<'_, T>> for Sender<T> {
+impl<T: PrimaryTag, U: Serialize<T::Tag>> Sink<U> for Sender<T> {
     type Error = Error;
 
     fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         self.poll_send_ready(cx)
     }
 
-    fn start_send(mut self: Pin<&mut Self>, item: SerializeArg<T>) -> Result<(), Self::Error> {
+    fn start_send(mut self: Pin<&mut Self>, item: U) -> Result<(), Self::Error> {
         self.start_send_item(item)
     }
 
@@ -303,15 +284,30 @@ impl<T> Receiver<T> {
     }
 }
 
-impl<T: Deserialize> Receiver<T> {
+impl<T: PrimaryTag> Receiver<T> {
+    /// Polls the channel for the next item.
+    pub fn poll_next_item_as<U: Deserialize<T::Tag>>(
+        &mut self,
+        cx: &mut Context,
+    ) -> Poll<Result<Option<U>, Error>> {
+        self.inner.poll_next_item_as(cx)
+    }
+
+    /// Waits for the next item on the channel.
+    pub async fn next_item_as<U: Deserialize<T::Tag>>(&mut self) -> Result<Option<U>, Error> {
+        future::poll_fn(|cx| self.poll_next_item_as(cx)).await
+    }
+}
+
+impl<T: PrimaryTag + Deserialize<T::Tag>> Receiver<T> {
     /// Polls the channel for the next item.
     pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
-        self.inner.poll_next_item(cx)
+        self.poll_next_item_as(cx)
     }
 
     /// Waits for the next item on the channel.
     pub async fn next_item(&mut self) -> Result<Option<T>, Error> {
-        self.inner.next_item().await
+        future::poll_fn(|cx| self.poll_next_item(cx)).await
     }
 }
 
@@ -323,7 +319,7 @@ impl<T> fmt::Debug for Receiver<T> {
     }
 }
 
-impl<T: Deserialize> Stream for Receiver<T> {
+impl<T: PrimaryTag + Deserialize<T::Tag>> Stream for Receiver<T> {
     type Item = Result<T, Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
@@ -335,7 +331,7 @@ impl<T: Deserialize> Stream for Receiver<T> {
     }
 }
 
-impl<T: Deserialize> FusedStream for Receiver<T> {
+impl<T: PrimaryTag + Deserialize<T::Tag>> FusedStream for Receiver<T> {
     fn is_terminated(&self) -> bool {
         self.inner.is_terminated()
     }

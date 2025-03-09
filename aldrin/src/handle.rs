@@ -1,29 +1,29 @@
 pub(crate) mod request;
 
-use crate::bus_listener::BusListener;
-use crate::channel::ChannelBuilder;
-#[cfg(feature = "introspection")]
-use crate::core::introspection::{DynIntrospectable, Introspectable, Introspection};
-use crate::core::message::{
-    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
-    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
-    StopBusListenerResult,
-};
-#[cfg(feature = "introspection")]
-use crate::core::TypeId;
-use crate::core::{
-    BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd,
-    ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
-    ServiceUuid,
-};
-use crate::discoverer::{Discoverer, DiscovererBuilder};
-use crate::error::Error;
-use crate::lifetime::{Lifetime, LifetimeId, LifetimeListener, LifetimeScope};
+use crate::lifetime::LifetimeListener;
 use crate::low_level::{
     self, PendingReceiver, PendingReply, PendingSender, Proxy, ProxyId, Service, ServiceInfo,
     UnclaimedReceiver, UnclaimedSender,
 };
-use crate::object::Object;
+use crate::{
+    BusListener, ChannelBuilder, Discoverer, DiscovererBuilder, Error, Lifetime, LifetimeId,
+    LifetimeScope, Object,
+};
+#[cfg(feature = "introspection")]
+use aldrin_core::introspection::{DynIntrospectable, Introspectable, Introspection};
+use aldrin_core::message::{
+    AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
+    DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
+    StopBusListenerResult,
+};
+use aldrin_core::tags::Tag;
+#[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
+use aldrin_core::{
+    BusListenerCookie, BusListenerFilter, BusListenerScope, ChannelCookie, ChannelEnd,
+    ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializedValue, ServiceId,
+    ServiceUuid,
+};
 use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures_channel::oneshot;
 #[cfg(feature = "introspection")]
@@ -217,19 +217,16 @@ impl Handle {
             }));
     }
 
-    pub(crate) fn call<Args>(
+    pub(crate) fn call<T: Tag, U: Serialize<T>>(
         &self,
         id: ServiceId,
         function: u32,
-        args: &Args,
+        args: U,
         version: Option<u32>,
-    ) -> PendingReply
-    where
-        Args: Serialize + ?Sized,
-    {
+    ) -> PendingReply {
         let (send, recv) = oneshot::channel();
 
-        match SerializedValue::serialize(args) {
+        match SerializedValue::serialize_as(args) {
             Ok(value) => {
                 let req = HandleRequest::CallFunction(CallFunctionRequest {
                     service_cookie: id.cookie,
@@ -263,16 +260,13 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    pub(crate) fn emit_event<T>(
+    pub(crate) fn emit_event<T: Tag, U: Serialize<T>>(
         &self,
         service_id: ServiceId,
         event: u32,
-        value: &T,
-    ) -> Result<(), Error>
-    where
-        T: Serialize + ?Sized,
-    {
-        let value = SerializedValue::serialize(value)?;
+        value: U,
+    ) -> Result<(), Error> {
+        let value = SerializedValue::serialize_as(value)?;
         self.send
             .unbounded_send(HandleRequest::EmitEvent(EmitEventRequest {
                 service_cookie: service_id.cookie,
