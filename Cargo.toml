@@ -14,7 +14,7 @@ members = [
     # "examples/media-player",
     # "gen",
     # "macros",
-    # "parser",
+    "parser",
     # "test",
 ]
 resolver = "2"
