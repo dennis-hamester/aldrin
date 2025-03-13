@@ -1,5 +1,5 @@
-use crate::core::{ObjectUuid, ServiceUuid};
 use aldrin::low_level::{Proxy, ServiceInfo};
+use aldrin_core::{ObjectUuid, ServiceUuid};
 use aldrin_test::tokio::TestBroker;
 
 #[tokio::test]

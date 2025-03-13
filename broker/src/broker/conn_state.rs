@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
-use crate::core::message::Message;
-use crate::core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
+use aldrin_core::message::Message;
+use aldrin_core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;

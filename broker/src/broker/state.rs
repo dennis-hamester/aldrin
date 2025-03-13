@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
-use crate::core::message::CallFunctionResult;
-use crate::core::{ObjectId, ServiceCookie, ServiceId};
+use aldrin_core::message::CallFunctionResult;
+use aldrin_core::{ObjectId, ServiceCookie, ServiceId};
 
 #[derive(Debug)]
 pub(super) struct State {

@@ -1,4 +1,4 @@
-use super::ConnectionId;
+use crate::conn_id::ConnectionId;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 

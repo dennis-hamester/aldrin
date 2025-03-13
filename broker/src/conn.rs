@@ -3,8 +3,8 @@ mod event;
 mod handle;
 
 use crate::conn_id::ConnectionId;
-use crate::core::message::{Message, Shutdown};
-use crate::core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::message::{Message, Shutdown};
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
 use futures_channel::mpsc::{Sender, UnboundedReceiver};
 use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};

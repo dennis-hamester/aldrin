@@ -72,10 +72,10 @@ features = [
 workspace = true
 features = ["v4"]
 
-# [dev-dependencies.aldrin-broker]
-# path = "../broker"
-# default-features = false
-# features = ["statistics"]
+[dev-dependencies.aldrin-broker]
+path = "../broker"
+default-features = false
+features = ["statistics"]
 
 [dev-dependencies.aldrin-core]
 path = "../core"

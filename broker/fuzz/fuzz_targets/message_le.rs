@@ -23,9 +23,10 @@ use aldrin_broker::core::message::{
     UnsubscribeEvent, UnsubscribeService,
 };
 use aldrin_broker::core::{
-    BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
-    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
-    SerializedValue, ServiceCookie, ServiceId, ServiceInfo, ServiceUuid, TypeId,
+    adapters, BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope,
+    BusListenerServiceFilter, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie,
+    ObjectId, ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceInfo, ServiceUuid,
+    TypeId,
 };
 use arbitrary::Arbitrary;
 use std::collections::HashSet;
@@ -248,7 +249,10 @@ pub struct ConnectLe {
 
 impl ConnectLe {
     pub fn to_core(&self, _ctx: &Context) -> Connect {
-        Connect::with_serialize_value(self.version as u32, &()).unwrap()
+        Connect {
+            version: self.version as u32,
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 
@@ -266,11 +270,13 @@ pub enum ConnectReplyLe {
 impl ConnectReplyLe {
     pub fn to_core(&self, _ctx: &Context) -> ConnectReply {
         match self {
-            Self::Ok => ConnectReply::ok_with_serialize_value(&()).unwrap(),
+            Self::Ok => ConnectReply::Ok(SerializedValue::serialize(()).unwrap()),
+
             Self::IncompatibleVersion(version) => {
                 ConnectReply::IncompatibleVersion(*version as u32)
             }
-            Self::Rejected => ConnectReply::rejected_with_serialize_value(&()).unwrap(),
+
+            Self::Rejected => ConnectReply::Rejected(SerializedValue::serialize(()).unwrap()),
         }
     }
 }
@@ -574,13 +580,12 @@ pub struct CallFunctionLe {
 
 impl CallFunctionLe {
     pub fn to_core(&self, ctx: &Context) -> CallFunction {
-        CallFunction::with_serialize_value(
-            self.serial.get(ctx),
-            ServiceCookie(self.service_cookie.get(ctx)),
-            self.function as u32,
-            &(),
-        )
-        .unwrap()
+        CallFunction {
+            serial: self.serial.get(ctx),
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+            function: self.function as u32,
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 
@@ -604,8 +609,8 @@ pub enum CallFunctionResultLe {
 impl CallFunctionResultLe {
     pub fn to_core(&self, _ctx: &Context) -> CallFunctionResult {
         match self {
-            Self::Ok => CallFunctionResult::ok_with_serialize_value(&()).unwrap(),
-            Self::Err => CallFunctionResult::err_with_serialize_value(&()).unwrap(),
+            Self::Ok => CallFunctionResult::Ok(SerializedValue::serialize(()).unwrap()),
+            Self::Err => CallFunctionResult::Err(SerializedValue::serialize(()).unwrap()),
             Self::Aborted => CallFunctionResult::Aborted,
             Self::InvalidService => CallFunctionResult::InvalidService,
             Self::InvalidFunction => CallFunctionResult::InvalidFunction,
@@ -736,12 +741,11 @@ pub struct EmitEventLe {
 
 impl EmitEventLe {
     pub fn to_core(&self, ctx: &Context) -> EmitEvent {
-        EmitEvent::with_serialize_value(
-            ServiceCookie(self.service_cookie.get(ctx)),
-            self.event as u32,
-            &(),
-        )
-        .unwrap()
+        EmitEvent {
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+            event: self.event as u32,
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 
@@ -1042,7 +1046,10 @@ pub struct SendItemLe {
 
 impl SendItemLe {
     pub fn to_core(&self, ctx: &Context) -> SendItem {
-        SendItem::with_serialize_value(ChannelCookie(self.cookie.get(ctx)), &()).unwrap()
+        SendItem {
+            cookie: ChannelCookie(self.cookie.get(ctx)),
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 
@@ -1059,7 +1066,10 @@ pub struct ItemReceivedLe {
 
 impl ItemReceivedLe {
     pub fn to_core(&self, ctx: &Context) -> ItemReceived {
-        ItemReceived::with_serialize_value(ChannelCookie(self.cookie.get(ctx)), &()).unwrap()
+        ItemReceived {
+            cookie: ChannelCookie(self.cookie.get(ctx)),
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 
@@ -1746,11 +1756,11 @@ impl RegisterIntrospectionLe {
     pub fn to_core(&self, ctx: &Context) -> RegisterIntrospection {
         match self {
             Self::TypeIds(type_ids) => {
-                let type_ids = type_ids.iter().map(|id| id.get(ctx).into()).collect();
+                let type_ids = type_ids.iter().map(|id| TypeId(id.get(ctx)));
 
-                RegisterIntrospection::with_serialize_type_ids(&type_ids)
-                    .or_else(|_| RegisterIntrospection::with_serialize_type_ids(&HashSet::new()))
-                    .unwrap()
+                RegisterIntrospection {
+                    value: SerializedValue::serialize(adapters::IterAsSet(type_ids)).unwrap(),
+                }
             }
 
             Self::Random(value) => RegisterIntrospection {
@@ -1762,7 +1772,7 @@ impl RegisterIntrospectionLe {
 
 impl UpdateContext for RegisterIntrospection {
     fn update_context(&self, ctx: &mut Context) {
-        let Ok(type_ids) = self.deserialize_type_ids() else {
+        let Ok(type_ids) = self.value.deserialize::<HashSet<TypeId>>() else {
             return;
         };
 
@@ -1803,7 +1813,7 @@ pub enum QueryIntrospectionResultLe {
 impl QueryIntrospectionResultLe {
     pub fn to_core(&self, _ctx: &Context) -> QueryIntrospectionResult {
         match self {
-            Self::Ok => QueryIntrospectionResult::Ok(SerializedValue::serialize(&()).unwrap()),
+            Self::Ok => QueryIntrospectionResult::Ok(SerializedValue::serialize(()).unwrap()),
             Self::Unavailable => QueryIntrospectionResult::Unavailable,
         }
     }
@@ -1867,7 +1877,7 @@ impl ServiceInfoLe {
                 SerializedValue::serialize(&info).unwrap()
             }
 
-            Self::Invalid => SerializedValue::serialize(&()).unwrap(),
+            Self::Invalid => SerializedValue::serialize(()).unwrap(),
         }
     }
 }
@@ -1905,7 +1915,7 @@ impl UpdateContext for CreateService2 {
         ctx.add_uuid(self.object_cookie.0);
         ctx.add_uuid(self.uuid.0);
 
-        if let Ok(info) = self.deserialize_info() {
+        if let Ok(info) = self.value.deserialize::<ServiceInfo>() {
             info.update_context(ctx);
         }
     }
@@ -2206,14 +2216,13 @@ pub struct CallFunction2Le {
 
 impl CallFunction2Le {
     pub fn to_core(&self, ctx: &Context) -> CallFunction2 {
-        CallFunction2::with_serialize_value(
-            self.serial.get(ctx),
-            ServiceCookie(self.service_cookie.get(ctx)),
-            self.function as u32,
-            self.version.map(|v| v as u32),
-            &(),
-        )
-        .unwrap()
+        CallFunction2 {
+            serial: self.serial.get(ctx),
+            service_cookie: ServiceCookie(self.service_cookie.get(ctx)),
+            function: self.function as u32,
+            version: self.version.map(|v| v as u32),
+            value: SerializedValue::serialize(()).unwrap(),
+        }
     }
 }
 

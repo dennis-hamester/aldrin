@@ -13,7 +13,12 @@ mod test;
 use crate::bus_listener::BusListener;
 use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionId;
-use crate::core::message::{
+#[cfg(feature = "introspection")]
+use crate::introspection_database::{
+    IntrospectionDatabase, IntrospectionQueryResult, RemoveConnResult,
+};
+use crate::serial_map::SerialMap;
+use aldrin_core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
     ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
@@ -34,17 +39,12 @@ use crate::core::message::{
     UnsubscribeEvent, UnsubscribeService,
 };
 #[cfg(feature = "introspection")]
-use crate::core::TypeId;
-use crate::core::{
+use aldrin_core::TypeId;
+use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
-    ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, ServiceCookie,
-    ServiceId, ServiceInfo, ServiceUuid,
+    ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, SerializedValue,
+    ServiceCookie, ServiceId, ServiceInfo, ServiceUuid,
 };
-#[cfg(feature = "introspection")]
-use crate::introspection_database::{
-    IntrospectionDatabase, IntrospectionQueryResult, RemoveConnResult,
-};
-use crate::serial_map::SerialMap;
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
 use futures_channel::mpsc::{channel, Receiver};
@@ -1537,7 +1537,7 @@ impl Broker {
             return Err(());
         }
 
-        if let Ok(type_ids) = req.deserialize_type_ids() {
+        if let Ok(type_ids) = req.value.deserialize() {
             self.introspection.register(&type_ids, id);
 
             #[cfg(feature = "statistics")]
@@ -1800,7 +1800,7 @@ impl Broker {
             );
         }
 
-        let Ok(mut info) = req.deserialize_info() else {
+        let Ok(mut info) = req.value.deserialize::<ServiceInfo>() else {
             return Err(());
         };
 
@@ -1844,14 +1844,17 @@ impl Broker {
             return Err(());
         }
 
-        let reply = match self.svc_uuids.get(&req.cookie) {
-            Some(&(_, _, info)) => QueryServiceInfoReply::ok_with_serialize_info(req.serial, info)
-                .expect("failed to serialize ServiceInfo"),
+        let result = match self.svc_uuids.get(&req.cookie) {
+            Some(&(_, _, info)) => QueryServiceInfoResult::Ok(
+                SerializedValue::serialize(info).expect("failed to serialize ServiceInfo"),
+            ),
 
-            None => QueryServiceInfoReply {
-                serial: req.serial,
-                result: QueryServiceInfoResult::InvalidService,
-            },
+            None => QueryServiceInfoResult::InvalidService,
+        };
+
+        let reply = QueryServiceInfoReply {
+            serial: req.serial,
+            result,
         };
 
         send!(self, conn, reply)

@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
-use crate::core::message::{QueryIntrospectionReply, QueryIntrospectionResult};
-use crate::core::{SerializedValue, TypeId};
+use aldrin_core::message::{QueryIntrospectionReply, QueryIntrospectionResult};
+use aldrin_core::{SerializedValue, TypeId};
 use rand::Rng;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;

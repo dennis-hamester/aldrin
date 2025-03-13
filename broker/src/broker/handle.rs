@@ -1,11 +1,15 @@
 use super::BrokerShutdown;
-#[cfg(feature = "statistics")]
-use super::BrokerStatistics;
-use crate::conn::{Connection, ConnectionEvent, ConnectionHandle, EstablishError};
+use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionIdManager;
-use crate::core::message::{ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, Message};
-use crate::core::transport::{AsyncTransport, AsyncTransportExt};
-use crate::core::{
+#[cfg(feature = "statistics")]
+use crate::BrokerStatistics;
+use crate::{Connection, ConnectionHandle, EstablishError};
+use aldrin_core::message::{
+    ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message,
+};
+use aldrin_core::tags::Tag;
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::{
     Deserialize, DeserializeError, ProtocolVersion, Serialize, SerializedValue,
     SerializedValueSlice,
 };
@@ -104,35 +108,28 @@ impl BrokerHandle {
                 }
 
                 Message::Connect2(msg) => {
-                    let data = msg.deserialize_connect_data()?;
+                    let data = msg.value.deserialize()?;
                     (true, data, msg.major_version, msg.minor_version)
                 }
 
                 msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
             };
 
-        let version = match select_protocol_version(major_version, minor_version, connect2) {
-            Some(version) => version,
-
-            None => {
-                if connect2 {
-                    let _ = t
-                        .send_and_flush(Message::ConnectReply2(
-                            ConnectReply2::incompatible_version_with_serialize_data(
-                                &ConnectReplyData::new(),
-                            )?,
-                        ))
-                        .await;
-                } else {
-                    let _ = t
-                        .send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(
-                            14,
-                        )))
-                        .await;
-                }
-
-                return Err(EstablishError::IncompatibleVersion);
+        let Some(version) = select_protocol_version(major_version, minor_version, connect2) else {
+            if connect2 {
+                let _ = t
+                    .send_and_flush(Message::ConnectReply2(ConnectReply2 {
+                        result: ConnectResult::IncompatibleVersion,
+                        value: SerializedValue::serialize(ConnectReplyData::new())?,
+                    }))
+                    .await;
+            } else {
+                let _ = t
+                    .send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(14)))
+                    .await;
             }
+
+            return Err(EstablishError::IncompatibleVersion);
         };
 
         Ok(PendingConnection::new(
@@ -320,8 +317,10 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     }
 
     /// Deserializes the client's user data.
-    pub fn deserialize_client_data<D: Deserialize>(&self) -> Option<Result<D, DeserializeError>> {
-        self.data.deserialize_user()
+    pub fn deserialize_client_data<C: Tag, D: Deserialize<C>>(
+        &self,
+    ) -> Option<Result<D, DeserializeError>> {
+        self.data.deserialize_user_as()
     }
 
     /// Returns the selected protocol version for this connection.
@@ -339,18 +338,16 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     ) -> Result<Connection<T>, EstablishError<T::Error>> {
         if self.connect2 {
             self.t
-                .send_and_flush(Message::ConnectReply2(
-                    ConnectReply2::ok_with_serialize_data(
-                        self.version.minor(),
-                        &ConnectReplyData { user: user_data },
-                    )?,
-                ))
+                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
+                    result: ConnectResult::Ok(self.version.minor()),
+                    value: SerializedValue::serialize(ConnectReplyData { user: user_data })?,
+                }))
                 .await
                 .map_err(EstablishError::Transport)?;
         } else {
             let user_data = user_data
                 .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(&()))?;
+                .unwrap_or_else(|| SerializedValue::serialize(()))?;
 
             self.t
                 .send_and_flush(Message::ConnectReply(ConnectReply::Ok(user_data)))
@@ -380,11 +377,11 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     ///
     /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
     /// like the [`Broker`](crate::Broker) itself.
-    pub async fn accept_serialize<D: Serialize + ?Sized>(
+    pub async fn accept_serialize<C: Tag, D: Serialize<C>>(
         self,
-        user_data: Option<&D>,
+        user_data: Option<D>,
     ) -> Result<Connection<T>, EstablishError<T::Error>> {
-        let user_data = user_data.map(SerializedValue::serialize).transpose()?;
+        let user_data = user_data.map(SerializedValue::serialize_as).transpose()?;
         self.accept(user_data).await
     }
 
@@ -395,17 +392,16 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     ) -> Result<(), EstablishError<T::Error>> {
         if self.connect2 {
             self.t
-                .send_and_flush(Message::ConnectReply2(
-                    ConnectReply2::rejected_with_serialize_data(&ConnectReplyData {
-                        user: user_data,
-                    })?,
-                ))
+                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
+                    result: ConnectResult::Rejected,
+                    value: SerializedValue::serialize(ConnectReplyData { user: user_data })?,
+                }))
                 .await
                 .map_err(EstablishError::Transport)?;
         } else {
             let user_data = user_data
                 .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(&()))?;
+                .unwrap_or_else(|| SerializedValue::serialize(()))?;
 
             self.t
                 .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(user_data)))
@@ -417,11 +413,11 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     }
 
     /// Rejects a client with optional user data.
-    pub async fn reject_serialize<D: Serialize + ?Sized>(
+    pub async fn reject_serialize<C: Tag, D: Serialize<C>>(
         self,
-        user_data: Option<&D>,
+        user_data: Option<D>,
     ) -> Result<(), EstablishError<T::Error>> {
-        let user_data = user_data.map(SerializedValue::serialize).transpose()?;
+        let user_data = user_data.map(SerializedValue::serialize_as).transpose()?;
         self.reject(user_data).await
     }
 }

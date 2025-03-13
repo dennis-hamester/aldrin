@@ -1,5 +1,8 @@
-use crate::core::channel::{self, Disconnected, Unbounded};
-use crate::core::message::{
+use crate::{Broker, BrokerHandle};
+use aldrin::low_level::{Proxy, ServiceInfo};
+use aldrin::Client;
+use aldrin_core::channel::{self, Disconnected, Unbounded};
+use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
     CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData, ConnectReply,
@@ -7,13 +10,10 @@ use crate::core::message::{
     CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem,
     Sync, SyncReply,
 };
-use crate::core::transport::AsyncTransportExt;
-use crate::core::{
+use aldrin_core::transport::AsyncTransportExt;
+use aldrin_core::{
     ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
 };
-use crate::{Broker, BrokerHandle};
-use aldrin::low_level::{Proxy, ServiceInfo};
-use aldrin::Client;
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
 use std::future::Future;

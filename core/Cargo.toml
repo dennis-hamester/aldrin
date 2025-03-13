@@ -99,9 +99,9 @@ features = ["std"]
 path = "../aldrin"
 default-features = false
 
-# [dev-dependencies.aldrin-broker]
-# path = "../broker"
-# default-features = false
+[dev-dependencies.aldrin-broker]
+path = "../broker"
+default-features = false
 
 [dev-dependencies.tokio]
 workspace = true

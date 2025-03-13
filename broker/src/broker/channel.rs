@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
-use crate::core::message::{ClaimChannelEndResult, CloseChannelEndResult};
-use crate::core::ChannelEnd;
+use aldrin_core::message::{ClaimChannelEndResult, CloseChannelEndResult};
+use aldrin_core::ChannelEnd;
 use std::mem;
 
 const LOW_CAPACITY: u32 = 4;

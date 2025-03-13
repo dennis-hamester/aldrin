@@ -1,5 +1,5 @@
-use crate::core::message::Message;
-use crate::core::{DeserializeError, SerializeError};
+use aldrin_core::message::Message;
+use aldrin_core::{DeserializeError, SerializeError};
 use thiserror::Error;
 
 /// Error of an active connection.
