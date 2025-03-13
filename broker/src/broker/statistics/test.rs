@@ -182,23 +182,23 @@ async fn function_calls() {
     assert_eq!(stats.messages_received(), 4);
 
     // Call 2 functions.
-    let reply1 = proxy.call(0, &(), None);
+    let reply1 = proxy.call(0, (), None);
     let call1 = svc.next_call().await.unwrap();
-    let reply2 = proxy.call(0, &(), None);
+    let reply2 = proxy.call(0, (), None);
     let call2 = svc.next_call().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 2);
     assert_eq!(stats.messages_received(), 2);
 
     // Reply 1 function call.
-    call1.into_promise().ok(&()).unwrap();
+    call1.into_promise().ok(()).unwrap();
     reply1.await.unwrap().into_args().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
     assert_eq!(stats.messages_received(), 1);
 
     // Reply 1 function call.
-    call2.into_promise().ok(&()).unwrap();
+    call2.into_promise().ok(()).unwrap();
     reply2.await.unwrap().into_args().unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 1);
@@ -239,9 +239,9 @@ async fn events() {
     assert_eq!(stats.messages_received(), 8);
 
     // Emit 3 events on 0.
-    svc.emit(0, &()).unwrap();
-    svc.emit(0, &()).unwrap();
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(0, ()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 7);
@@ -249,9 +249,9 @@ async fn events() {
 
     // Emit 2 events on 0.
     // Emit 1 event on 1.
-    svc.emit(0, &()).unwrap();
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
     client1.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_sent(), 5);

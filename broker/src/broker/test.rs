@@ -6,13 +6,14 @@ use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
     CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData, ConnectReply,
-    ConnectResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem,
-    Sync, SyncReply,
+    ConnectReplyData, ConnectResult, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
+    Message, SendItem, Sync, SyncReply,
 };
 use aldrin_core::transport::AsyncTransportExt;
 use aldrin_core::{
-    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
+    tags, ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue,
+    ServiceUuid,
 };
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
@@ -36,12 +37,12 @@ async fn disconnect_during_function_call() {
     // client2 calls a function on client1 and disconnects before client1 replies.
     let mut client2 = broker.add_client().await;
     let proxy = Proxy::new(&client2, svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
     mem::drop(reply);
     client2.join().await;
 
     let call = svc.next_call().await.unwrap();
-    call.into_promise().ok(&()).unwrap();
+    call.into_promise().ok(()).unwrap();
     client1.join().await;
 
     broker.join_idle().await
@@ -83,7 +84,7 @@ async fn drop_conn_before_function_call() {
 
     // Calling a function on conn1 must not deadlock, but be immediately replied to with an error.
     let proxy = Proxy::new(&client2, svc.id()).await.unwrap();
-    let res = time::timeout(Duration::from_millis(500), proxy.call(0, &(), None))
+    let res = time::timeout(Duration::from_millis(500), proxy.call(0, (), None))
         .await
         .unwrap();
 
@@ -98,14 +99,23 @@ async fn begin_connect_accept() {
 
     let (mut t1, t2) = channel::unbounded();
 
-    t1.send_and_flush(Connect::with_serialize_value(14, &0u32).unwrap())
-        .await
-        .unwrap();
+    t1.send_and_flush(Connect {
+        version: 14,
+        value: SerializedValue::serialize(0u32).unwrap(),
+    })
+    .await
+    .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
+    assert_eq!(
+        conn.deserialize_client_data::<tags::U32, _>(),
+        Some(Ok(0u32))
+    );
 
-    let _ = conn.accept_serialize(Some(&1u32)).await.unwrap();
+    let _ = conn
+        .accept_serialize::<tags::U32, _>(Some(1u32))
+        .await
+        .unwrap();
     let value = match t1.receive().await.unwrap() {
         Message::ConnectReply(ConnectReply::Ok(value)) => value,
         msg => panic!("invalid msg received {msg:?}"),
@@ -125,22 +135,25 @@ async fn begin_connect_2_accept() {
     let (mut t1, t2) = channel::unbounded();
 
     let mut data = ConnectData::new();
-    data.serialize_user(&0u32).unwrap();
-    t1.send_and_flush(
-        Connect2::with_serialize_data(
-            ProtocolVersion::V1_14.major(),
-            ProtocolVersion::V1_15.minor(),
-            &data,
-        )
-        .unwrap(),
-    )
+    data.serialize_user(0u32).unwrap();
+    t1.send_and_flush(Connect2 {
+        major_version: ProtocolVersion::V1_14.major(),
+        minor_version: ProtocolVersion::V1_15.minor(),
+        value: SerializedValue::serialize(data).unwrap(),
+    })
     .await
     .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
+    assert_eq!(
+        conn.deserialize_client_data::<tags::U32, _>(),
+        Some(Ok(0u32))
+    );
 
-    let _ = conn.accept_serialize(Some(&1u32)).await.unwrap();
+    let _ = conn
+        .accept_serialize::<tags::U32, _>(Some(1u32))
+        .await
+        .unwrap();
     let msg = match t1.receive().await.unwrap() {
         Message::ConnectReply2(msg) => msg,
         msg => panic!("invalid msg received {msg:?}"),
@@ -149,7 +162,7 @@ async fn begin_connect_2_accept() {
         msg.result,
         ConnectResult::Ok(ProtocolVersion::V1_15.minor())
     );
-    let data = msg.deserialize_connect_data().unwrap();
+    let data = msg.value.deserialize::<ConnectReplyData>().unwrap();
     assert_eq!(data.deserialize_user(), Some(Ok(1u32)));
 
     handle.shutdown().await;
@@ -164,14 +177,22 @@ async fn begin_connect_reject() {
 
     let (mut t1, t2) = channel::unbounded();
 
-    t1.send_and_flush(Connect::with_serialize_value(14, &0u32).unwrap())
-        .await
-        .unwrap();
+    t1.send_and_flush(Connect {
+        version: 14,
+        value: SerializedValue::serialize(0u32).unwrap(),
+    })
+    .await
+    .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
+    assert_eq!(
+        conn.deserialize_client_data::<tags::U32, _>(),
+        Some(Ok(0u32))
+    );
 
-    conn.reject_serialize(Some(&1u32)).await.unwrap();
+    conn.reject_serialize::<tags::U32, _>(Some(1u32))
+        .await
+        .unwrap();
     let value = match t1.receive().await.unwrap() {
         Message::ConnectReply(ConnectReply::Rejected(value)) => value,
         msg => panic!("invalid msg received {msg:?}"),
@@ -191,28 +212,30 @@ async fn begin_connect_2_reject() {
     let (mut t1, t2) = channel::unbounded();
 
     let mut data = ConnectData::new();
-    data.serialize_user(&0u32).unwrap();
-    t1.send_and_flush(
-        Connect2::with_serialize_data(
-            ProtocolVersion::V1_14.major(),
-            ProtocolVersion::V1_15.minor(),
-            &data,
-        )
-        .unwrap(),
-    )
+    data.serialize_user(0u32).unwrap();
+    t1.send_and_flush(Connect2 {
+        major_version: ProtocolVersion::V1_14.major(),
+        minor_version: ProtocolVersion::V1_15.minor(),
+        value: SerializedValue::serialize(data).unwrap(),
+    })
     .await
     .unwrap();
 
     let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(conn.deserialize_client_data(), Some(Ok(0u32)));
+    assert_eq!(
+        conn.deserialize_client_data::<tags::U32, _>(),
+        Some(Ok(0u32))
+    );
 
-    conn.reject_serialize(Some(&1u32)).await.unwrap();
+    conn.reject_serialize::<tags::U32, _>(Some(1u32))
+        .await
+        .unwrap();
     let msg = match t1.receive().await.unwrap() {
         Message::ConnectReply2(msg) => msg,
         msg => panic!("invalid msg received {msg:?}"),
     };
     assert_eq!(msg.result, ConnectResult::Rejected);
-    let data = msg.deserialize_connect_data().unwrap();
+    let data = msg.value.deserialize::<ConnectReplyData>().unwrap();
     assert_eq!(data.deserialize_user(), Some(Ok(1u32)));
 
     handle.shutdown().await;
@@ -267,9 +290,12 @@ async fn wrong_client_replies_function_call() {
     };
 
     client1
-        .send(Message::CallFunction(
-            CallFunction::with_serialize_value(0, service_cookie, 0, &()).unwrap(),
-        ))
+        .send(Message::CallFunction(CallFunction {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            value: SerializedValue::serialize(()).unwrap(),
+        }))
         .await
         .unwrap();
 
@@ -280,9 +306,10 @@ async fn wrong_client_replies_function_call() {
 
     // Here, client2 replies to the function call that client1 received.
     client2
-        .send(Message::CallFunctionReply(
-            CallFunctionReply::err_with_serialize_value(serial, &()).unwrap(),
-        ))
+        .send(Message::CallFunctionReply(CallFunctionReply {
+            serial,
+            result: CallFunctionResult::Err(SerializedValue::serialize(()).unwrap()),
+        }))
         .await
         .unwrap();
 
@@ -297,9 +324,10 @@ async fn wrong_client_replies_function_call() {
     };
 
     client1
-        .send(Message::CallFunctionReply(
-            CallFunctionReply::ok_with_serialize_value(serial, &()).unwrap(),
-        ))
+        .send(Message::CallFunctionReply(CallFunctionReply {
+            serial,
+            result: CallFunctionResult::Ok(SerializedValue::serialize(()).unwrap()),
+        }))
         .await
         .unwrap();
 
@@ -366,9 +394,10 @@ async fn send_item_without_capacity() {
     }
 
     client1
-        .send(Message::SendItem(
-            SendItem::with_serialize_value(cookie, &()).unwrap(),
-        ))
+        .send(Message::SendItem(SendItem {
+            cookie,
+            value: SerializedValue::serialize(()).unwrap(),
+        }))
         .await
         .unwrap();
 
@@ -417,7 +446,7 @@ async fn calls_from_multiple_clients() {
 
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
     svc.next_call()
         .await
         .unwrap()
@@ -428,7 +457,7 @@ async fn calls_from_multiple_clients() {
 
     let mut client3 = broker.add_client().await;
     let proxy = client3.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
     svc.next_call()
         .await
         .unwrap()
@@ -494,7 +523,7 @@ async fn duplicate_call_serial() {
             serial: 0,
             service_cookie,
             function: 0,
-            value: SerializedValue::serialize(&()).unwrap(),
+            value: SerializedValue::serialize(()).unwrap(),
         }))
         .await
         .unwrap();
@@ -509,7 +538,7 @@ async fn duplicate_call_serial() {
             serial: 0,
             service_cookie,
             function: 0,
-            value: SerializedValue::serialize(&()).unwrap(),
+            value: SerializedValue::serialize(()).unwrap(),
         }))
         .await
         .unwrap();
@@ -522,10 +551,11 @@ async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
 
     let (mut t1, t2) = channel::unbounded();
 
-    t1.send(
-        Connect2::with_serialize_data(VERSION.major(), VERSION.minor(), &ConnectData::new())
-            .unwrap(),
-    )
+    t1.send(Connect2 {
+        major_version: VERSION.major(),
+        minor_version: VERSION.minor(),
+        value: SerializedValue::serialize(ConnectData::new()).unwrap(),
+    })
     .await
     .unwrap();
 
@@ -555,7 +585,7 @@ async fn destroy_service_after_abort() {
 
     let mut client2 = broker.add_client().await;
     let proxy = client2.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     reply.abort();
     svc.destroy().await.unwrap();
