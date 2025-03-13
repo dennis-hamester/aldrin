@@ -82,10 +82,10 @@ path = "../core"
 default-features = false
 features = ["channel"]
 
-# [dev-dependencies.aldrin-test]
-# path = "../test"
-# default-features = false
-# features = ["tokio"]
+[dev-dependencies.aldrin-test]
+path = "../test"
+default-features = false
+features = ["tokio"]
 
 [dev-dependencies.futures-util]
 workspace = true

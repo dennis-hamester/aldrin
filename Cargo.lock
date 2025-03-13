@@ -23,6 +23,7 @@ version = "0.12.0"
 dependencies = [
  "aldrin-broker",
  "aldrin-core",
+ "aldrin-test",
  "futures-channel",
  "futures-core",
  "futures-sink",
@@ -39,6 +40,7 @@ version = "0.12.0"
 dependencies = [
  "aldrin",
  "aldrin-core",
+ "aldrin-test",
  "anyhow",
  "futures-channel",
  "futures-core",
@@ -77,6 +79,18 @@ dependencies = [
  "unicode-segmentation",
  "unicode-width",
  "uuid",
+]
+
+[[package]]
+name = "aldrin-test"
+version = "0.12.0"
+dependencies = [
+ "aldrin",
+ "aldrin-broker",
+ "aldrin-core",
+ "anyhow",
+ "futures-util",
+ "tokio",
 ]
 
 [[package]]

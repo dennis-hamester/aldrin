@@ -15,7 +15,7 @@ members = [
     # "gen",
     # "macros",
     "parser",
-    # "test",
+    "test",
 ]
 resolver = "2"
 

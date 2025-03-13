@@ -77,10 +77,10 @@ features = [
     "tokio",
 ]
 
-# [dev-dependencies.aldrin-test]
-# path = "../test"
-# default-features = false
-# features = ["tokio"]
+[dev-dependencies.aldrin-test]
+path = "../test"
+default-features = false
+features = ["tokio"]
 
 [dev-dependencies.tokio]
 workspace = true
