@@ -111,11 +111,11 @@ async fn call_ok() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
-    call.into_promise().ok(&()).unwrap();
+    call.into_promise().ok(()).unwrap();
 
     let reply = reply.await.unwrap().into_args();
     assert_eq!(reply.unwrap().deserialize(), Ok(()));
@@ -134,7 +134,7 @@ async fn call_done() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -157,11 +157,11 @@ async fn call_err() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
-    call.into_promise().err(&()).unwrap();
+    call.into_promise().err(()).unwrap();
 
     let reply = reply.await.unwrap().into_args();
     assert_eq!(reply.unwrap_err().deserialize(), Ok(()));
@@ -180,7 +180,7 @@ async fn call_abort_by_callee() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -202,7 +202,7 @@ async fn call_abort_by_caller() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
     reply.abort();
 
     let call = svc.next_call().await.unwrap();
@@ -226,7 +226,7 @@ async fn call_invalid_function() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -248,7 +248,7 @@ async fn call_invalid_args() {
         .unwrap();
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
-    let reply = proxy.call(0, &(), None);
+    let reply = proxy.call(0, (), None);
 
     let call = svc.next_call().await.unwrap();
     assert_eq!(call.deserialize(), Ok(()));
@@ -272,8 +272,8 @@ async fn subscribe_event() {
     let mut proxy = client.create_proxy(svc.id()).await.unwrap();
     proxy.subscribe(0).await.unwrap();
 
-    svc.emit(1, &()).unwrap();
-    svc.emit(0, &()).unwrap();
+    svc.emit(1, ()).unwrap();
+    svc.emit(0, ()).unwrap();
 
     let ev = proxy.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -296,8 +296,8 @@ async fn unsubscribe_event() {
     proxy.subscribe(0).await.unwrap();
     proxy.subscribe(1).await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -310,8 +310,8 @@ async fn unsubscribe_event() {
     proxy.unsubscribe(0).await.unwrap();
     client.sync_broker().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy.next_event().await.unwrap();
     assert_eq!(ev.id(), 1);
@@ -338,7 +338,7 @@ async fn events_mutliple_proxies() {
     proxy2.subscribe(0).await.unwrap();
     proxy2.subscribe(1).await.unwrap();
 
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
 
     let ev = proxy1.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -351,8 +351,8 @@ async fn events_mutliple_proxies() {
     proxy2.unsubscribe(0).await.unwrap();
     client.sync_broker().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy1.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -384,7 +384,7 @@ async fn no_unnecessary_events_emitted() {
     client.sync_broker().await.unwrap();
     broker.take_statistics().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
     client.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_received(), 2);
@@ -393,7 +393,7 @@ async fn no_unnecessary_events_emitted() {
     client.sync_broker().await.unwrap();
     broker.take_statistics().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
     client.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
     assert_eq!(stats.messages_received(), 1);
@@ -463,8 +463,8 @@ async fn subscribe_multiple_services_same_event_id() {
     proxy1.subscribe(0).await.unwrap();
     proxy2.subscribe(0).await.unwrap();
 
-    svc1.emit(0, &1).unwrap();
-    svc2.emit(0, &2).unwrap();
+    svc1.emit(0, 1).unwrap();
+    svc2.emit(0, 2).unwrap();
 
     let event1 = time::timeout(Duration::from_millis(100), proxy1.next_event())
         .await
@@ -483,7 +483,7 @@ async fn subscribe_multiple_services_same_event_id() {
     proxy2.unsubscribe(0).await.unwrap();
     client.sync_broker().await.unwrap();
 
-    svc2.emit(0, &3).unwrap();
+    svc2.emit(0, 3).unwrap();
     assert!(
         time::timeout(Duration::from_millis(100), proxy2.next_event())
             .await
@@ -524,7 +524,7 @@ async fn destroy_proxy() {
     proxy1.subscribe(0).await.unwrap();
     proxy2.subscribe(0).await.unwrap();
 
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
 
     let ev = proxy1.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -537,7 +537,7 @@ async fn destroy_proxy() {
     mem::drop(proxy1);
     client.sync_broker().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
+    svc.emit(0, ()).unwrap();
 
     let ev = time::timeout(Duration::from_millis(100), proxy2.next_event())
         .await
@@ -562,8 +562,8 @@ async fn subscribe_all() {
     let mut proxy = client.create_proxy(svc.id()).await.unwrap();
     proxy.subscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
         .await
@@ -596,8 +596,8 @@ async fn unsubscribe_all() {
     proxy.subscribe(0).await.unwrap();
     proxy.subscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = time::timeout(Duration::from_millis(100), proxy.next_event())
         .await
@@ -615,8 +615,8 @@ async fn unsubscribe_all() {
 
     proxy.unsubscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
     svc.destroy().await.unwrap();
 
     assert!(proxy.next_event().await.is_none());
@@ -642,8 +642,8 @@ async fn unsubscribe_all_multiple_proxies() {
     proxy2.subscribe(1).await.unwrap();
     proxy2.subscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy1.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -663,8 +663,8 @@ async fn unsubscribe_all_multiple_proxies() {
 
     proxy1.unsubscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy2.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -676,8 +676,8 @@ async fn unsubscribe_all_multiple_proxies() {
 
     proxy2.unsubscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
     svc.destroy().await.unwrap();
 
     assert!(proxy1.next_event().await.is_none());
@@ -703,8 +703,8 @@ async fn unsubscribe_all_mixed() {
     let mut proxy2 = client.create_proxy(svc.id()).await.unwrap();
     proxy2.subscribe(0).await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = proxy1.next_event().await.unwrap();
     assert_eq!(ev.id(), 0);
@@ -720,8 +720,8 @@ async fn unsubscribe_all_mixed() {
 
     proxy1.unsubscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
 
     let ev = time::timeout(Duration::from_millis(100), proxy2.next_event())
         .await
@@ -732,8 +732,8 @@ async fn unsubscribe_all_mixed() {
 
     proxy2.unsubscribe_all().await.unwrap();
 
-    svc.emit(0, &()).unwrap();
-    svc.emit(1, &()).unwrap();
+    svc.emit(0, ()).unwrap();
+    svc.emit(1, ()).unwrap();
     svc.destroy().await.unwrap();
 
     assert!(proxy1.next_event().await.is_none());

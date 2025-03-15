@@ -140,7 +140,7 @@ async fn send_and_receive() {
     let mut broker = TestBroker::new();
     let mut client = broker.add_client().await;
 
-    let (sender, receiver) = client.create_channel().claim_sender().await.unwrap();
+    let (sender, receiver) = client.create_channel::<i32>().claim_sender().await.unwrap();
 
     let mut receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.establish().await.unwrap();
