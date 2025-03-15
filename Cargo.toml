@@ -3,7 +3,7 @@ members = [
     "aldrin",
     "broker",
     # "codegen",
-    # "conformance-test-broker",
+    "conformance-test-broker",
     # "conformance-tester",
     "core",
     # "examples/bookmarks",
