@@ -2,7 +2,7 @@ use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
 use crate::value::Value;
-use aldrin_core::message;
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -25,14 +25,16 @@ impl CallFunction2 {
         let serial = self.serial.get(ctx)?;
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
-        message::CallFunction2::with_serialize_value(
+        let value = SerializedValue::serialize(&self.value)
+            .with_context(|| anyhow!("failed to serialize value"))?;
+
+        Ok(message::CallFunction2 {
             serial,
             service_cookie,
-            self.function,
-            self.version,
-            &self.value,
-        )
-        .with_context(|| anyhow!("failed to serialize value"))
+            function: self.function,
+            version: self.version,
+            value,
+        })
     }
 
     pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {

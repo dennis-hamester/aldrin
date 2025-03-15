@@ -1,5 +1,5 @@
 use crate::context::Context;
-use aldrin_core::{message, TypeId};
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -13,10 +13,10 @@ pub struct RegisterIntrospection {
 
 impl RegisterIntrospection {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::RegisterIntrospection> {
-        let type_ids = self.type_ids.iter().copied().map(TypeId).collect();
+        let value = SerializedValue::serialize(&self.type_ids)
+            .with_context(|| anyhow!("failed to serialize value"))?;
 
-        message::RegisterIntrospection::with_serialize_type_ids(&type_ids)
-            .with_context(|| anyhow!("failed to serialize value"))
+        Ok(message::RegisterIntrospection { value })
     }
 
     pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
@@ -36,12 +36,9 @@ impl TryFrom<message::RegisterIntrospection> for RegisterIntrospection {
     type Error = Error;
 
     fn try_from(msg: message::RegisterIntrospection) -> Result<Self> {
-        let type_ids = msg
-            .deserialize_type_ids()
-            .context("failed to deserialize type ids from register-introspection message")?
-            .into_iter()
-            .map(|id| id.0)
-            .collect();
+        let type_ids = msg.value.deserialize().with_context(|| {
+            anyhow!("failed to deserialize type ids from register-introspection message")
+        })?;
 
         Ok(Self { type_ids })
     }

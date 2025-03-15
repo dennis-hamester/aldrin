@@ -1,4 +1,7 @@
-use aldrin_core::{DeserializeError, SerializeError, ValueKind};
+use aldrin_core::tags::{self, PrimaryTag};
+use aldrin_core::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ValueKind,
+};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "value-type", content = "value")]
@@ -25,23 +28,34 @@ impl Value {
     }
 }
 
-impl aldrin_core::Serialize for Value {
-    fn serialize(&self, serializer: aldrin_core::Serializer) -> Result<(), SerializeError> {
+impl PrimaryTag for Value {
+    type Tag = tags::Value;
+}
+
+impl Serialize<tags::Value> for Value {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        serializer.serialize(&self)
+    }
+}
+
+impl Serialize<tags::Value> for &Value {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
-            Self::None | Self::Ignore => serializer.serialize_none(),
-            Self::I32(value) => serializer.serialize_i32(*value),
-            Self::Unsupported { .. } => unreachable!(),
+            Value::None | Value::Ignore => serializer.serialize_none()?,
+            Value::I32(value) => serializer.serialize_i32(*value)?,
+            Value::Unsupported { .. } => unreachable!(),
         }
 
         Ok(())
     }
 }
 
-impl aldrin_core::Deserialize for Value {
-    fn deserialize(deserializer: aldrin_core::Deserializer) -> Result<Self, DeserializeError> {
+impl Deserialize<tags::Value> for Value {
+    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         match deserializer.peek_value_kind()? {
             ValueKind::None => deserializer.deserialize_none().map(|_| Self::None),
             ValueKind::I32 => deserializer.deserialize_i32().map(Self::I32),
+
             kind => deserializer
                 .split_off_serialized_value()
                 .map(|serialized| Self::Unsupported {

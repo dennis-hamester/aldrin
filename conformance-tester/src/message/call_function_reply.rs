@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::value::Value;
-use aldrin_core::message;
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -79,11 +79,19 @@ pub enum CallFunctionResult {
 impl CallFunctionResult {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::CallFunctionResult> {
         match self {
-            Self::Ok { value } => message::CallFunctionResult::ok_with_serialize_value(value)
-                .with_context(|| anyhow!("failed to serialize value")),
+            Self::Ok { value } => {
+                let value = SerializedValue::serialize(value)
+                    .with_context(|| anyhow!("failed to serialize value"))?;
 
-            Self::Err { value } => message::CallFunctionResult::err_with_serialize_value(value)
-                .with_context(|| anyhow!("failed to serialize value")),
+                Ok(message::CallFunctionResult::Ok(value))
+            }
+
+            Self::Err { value } => {
+                let value = SerializedValue::serialize(value)
+                    .with_context(|| anyhow!("failed to serialize value"))?;
+
+                Ok(message::CallFunctionResult::Err(value))
+            }
 
             Self::Aborted => Ok(message::CallFunctionResult::Aborted),
             Self::InvalidService => Ok(message::CallFunctionResult::InvalidService),
@@ -96,10 +104,12 @@ impl CallFunctionResult {
         match (self, other) {
             (Self::Ok { value: v1 }, Self::Ok { value: v2 }) => Ok(v1.matches(v2)),
             (Self::Err { value: v1 }, Self::Err { value: v2 }) => Ok(v1.matches(v2)),
+
             (Self::Aborted, Self::Aborted)
             | (Self::InvalidService, Self::InvalidService)
             | (Self::InvalidFunction, Self::InvalidFunction)
             | (Self::InvalidArgs, Self::InvalidArgs) => Ok(true),
+
             _ => Ok(false),
         }
     }

@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::value::Value;
-use aldrin_core::message;
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,14 +15,23 @@ pub enum ConnectReply {
 impl ConnectReply {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply> {
         match self {
-            Self::Ok => Ok(message::ConnectReply::ok_with_serialize_value(&()).unwrap()),
+            Self::Ok => {
+                let value = SerializedValue::serialize(())
+                    .with_context(|| anyhow!("failed to serialize value"))?;
+
+                Ok(message::ConnectReply::Ok(value))
+            }
 
             Self::IncompatibleVersion { version } => {
                 Ok(message::ConnectReply::IncompatibleVersion(*version))
             }
 
-            Self::Rejected { value } => message::ConnectReply::rejected_with_serialize_value(value)
-                .with_context(|| anyhow!("failed to serialize value")),
+            Self::Rejected { value } => {
+                let value = SerializedValue::serialize(value)
+                    .with_context(|| anyhow!("failed to serialize value"))?;
+
+                Ok(message::ConnectReply::Rejected(value))
+            }
         }
     }
 

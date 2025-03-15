@@ -15,7 +15,7 @@ impl ConnectReply2 {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply2> {
         Ok(message::ConnectReply2 {
             result: self.result.into(),
-            value: SerializedValue::serialize(&ConnectReplyData::new()).unwrap(),
+            value: SerializedValue::serialize(ConnectReplyData::new()).unwrap(),
         })
     }
 

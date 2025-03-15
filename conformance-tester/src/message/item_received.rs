@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
 use crate::value::Value;
-use aldrin_core::message;
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -18,8 +18,10 @@ impl ItemReceived {
     pub fn to_core(&self, ctx: &Context) -> Result<message::ItemReceived> {
         let cookie = self.cookie.get(ctx)?.into();
 
-        message::ItemReceived::with_serialize_value(cookie, &self.value)
-            .with_context(|| anyhow!("failed to serialize value"))
+        let value = SerializedValue::serialize(&self.value)
+            .with_context(|| anyhow!("failed to serialize value"))?;
+
+        Ok(message::ItemReceived { cookie, value })
     }
 
     pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {

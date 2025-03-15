@@ -1,8 +1,7 @@
 use crate::broker::Broker;
-use crate::output;
 use crate::run_error::RunError;
 use crate::test::Test;
-use crate::{BrokerRunArgs, RunArgs};
+use crate::{output, BrokerRunArgs, RunArgs};
 use aldrin_core::ProtocolVersion;
 use anyhow::Result;
 use std::collections::VecDeque;

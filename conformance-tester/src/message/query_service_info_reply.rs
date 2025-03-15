@@ -1,7 +1,7 @@
 use super::ServiceInfo;
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_core::{message, ServiceInfo as CoreServiceInfo};
+use aldrin_core::{message, SerializedValue, ServiceInfo as CoreServiceInfo};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -71,10 +71,14 @@ pub enum QueryServiceInfoResult {
 impl QueryServiceInfoResult {
     pub fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceInfoResult> {
         match self {
-            Self::Ok { info } => info.to_core(ctx).and_then(|info| {
-                message::QueryServiceInfoResult::ok_with_serialize_info(info)
-                    .with_context(|| anyhow!("failed to serialize value"))
-            }),
+            Self::Ok { info } => {
+                let info = info.to_core(ctx)?;
+
+                let value = SerializedValue::serialize(info)
+                    .with_context(|| anyhow!("failed to serialize value"))?;
+
+                Ok(message::QueryServiceInfoResult::Ok(value))
+            }
 
             Self::InvalidService => Ok(message::QueryServiceInfoResult::InvalidService),
         }

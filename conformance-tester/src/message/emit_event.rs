@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
 use crate::value::Value;
-use aldrin_core::message;
+use aldrin_core::{message, SerializedValue};
 use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -19,8 +19,14 @@ impl EmitEvent {
     pub fn to_core(&self, ctx: &Context) -> Result<message::EmitEvent> {
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
-        message::EmitEvent::with_serialize_value(service_cookie, self.event, &self.value)
-            .with_context(|| anyhow!("failed to serialize value"))
+        let value = SerializedValue::serialize(&self.value)
+            .with_context(|| anyhow!("failed to serialize value"))?;
+
+        Ok(message::EmitEvent {
+            service_cookie,
+            event: self.event,
+            value,
+        })
     }
 
     pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {

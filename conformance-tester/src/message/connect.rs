@@ -1,6 +1,6 @@
 use crate::context::Context;
-use aldrin_core::message;
-use anyhow::{Error, Result};
+use aldrin_core::{message, SerializedValue};
+use anyhow::{anyhow, Context as _, Error, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -11,7 +11,13 @@ pub struct Connect {
 
 impl Connect {
     pub fn to_core(&self, _ctx: &Context) -> Result<message::Connect> {
-        Ok(message::Connect::with_serialize_value(self.version, &()).unwrap())
+        let value =
+            SerializedValue::serialize(()).with_context(|| anyhow!("failed to serialize value"))?;
+
+        Ok(message::Connect {
+            version: self.version,
+            value,
+        })
     }
 
     pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {

@@ -2,7 +2,7 @@ use super::ServiceInfo;
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use aldrin_core::{message, SerializedValue};
+use aldrin_core::{message, SerializedValue, ServiceInfo as CoreServiceInfo};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -22,8 +22,8 @@ impl CreateService2 {
         let uuid = self.uuid.get(ctx)?.into();
 
         let value = match self.info {
-            Some(ref info) => SerializedValue::serialize(&info.to_core(ctx)?)?,
-            None => SerializedValue::serialize(&())?,
+            Some(ref info) => SerializedValue::serialize(info.to_core(ctx)?)?,
+            None => SerializedValue::serialize(())?,
         };
 
         Ok(message::CreateService2 {
@@ -89,7 +89,12 @@ impl TryFrom<message::CreateService2> for CreateService2 {
             serial: msg.serial.into(),
             object_cookie: msg.object_cookie.into(),
             uuid: msg.uuid.into(),
-            info: msg.deserialize_info().map(Into::into).ok(),
+
+            info: msg
+                .value
+                .deserialize::<CoreServiceInfo>()
+                .map(Into::into)
+                .ok(),
         })
     }
 }
