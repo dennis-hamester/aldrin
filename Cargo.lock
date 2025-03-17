@@ -23,6 +23,7 @@ version = "0.12.0"
 dependencies = [
  "aldrin-broker",
  "aldrin-core",
+ "aldrin-macros",
  "aldrin-test",
  "futures-channel",
  "futures-core",
@@ -51,6 +52,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "aldrin-codegen"
+version = "0.12.0"
+dependencies = [
+ "aldrin",
+ "aldrin-parser",
+ "aldrin-test",
+ "diffy",
+ "futures-util",
+ "heck",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "aldrin-conformance-tester"
 version = "0.12.0"
 dependencies = [
@@ -75,6 +91,7 @@ version = "0.12.0"
 dependencies = [
  "aldrin",
  "aldrin-broker",
+ "aldrin-macros",
  "arbitrary",
  "bytes",
  "futures-channel",
@@ -84,6 +101,22 @@ dependencies = [
  "serde",
  "thiserror",
  "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "aldrin-macros"
+version = "0.12.0"
+dependencies = [
+ "aldrin",
+ "aldrin-codegen",
+ "aldrin-core",
+ "aldrin-parser",
+ "heck",
+ "manyhow",
+ "proc-macro2",
+ "quote",
+ "syn",
  "uuid",
 ]
 
@@ -333,6 +366,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "diffy"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d3041965b7a63e70447ec818a46b1e5297f7fcae3058356d226c02750c4e6cb"
+dependencies = [
+ "nu-ansi-term",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -457,6 +499,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "969488b55f8ac402214f3f5fd243ebb7206cf82de60d3172994707a4bcc2b829"
 
 [[package]]
+name = "manyhow"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b33efb3ca6d3b07393750d4030418d594ab1139cee518f0dc88db70fec873587"
+dependencies = [
+ "manyhow-macros",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "manyhow-macros"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46fce34d199b78b6e6073abf984c9cf5fd3e9330145a93ee0738a7443e371495"
+dependencies = [
+ "proc-macro-utils",
+ "proc-macro2",
+ "quote",
+]
+
+[[package]]
 name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -479,6 +544,15 @@ checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
 dependencies = [
  "libc",
  "wasi",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "nu-ansi-term"
+version = "0.50.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd2800e1520bdc966782168a627aa5d1ad92e33b984bf7c7615d31280c83ff14"
+dependencies = [
  "windows-sys 0.48.0",
 ]
 
@@ -589,6 +663,17 @@ name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+
+[[package]]
+name = "proc-macro-utils"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eeaf08a13de400bc215877b5bdc088f241b12eb42f0a548d3390dc1c56bb7071"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "smallvec",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -719,6 +804,12 @@ checksum = "d8229b473baa5980ac72ef434c4415e70c4b5e71b423043adb4ba059f89c99a1"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "smallvec"
+version = "1.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "socket2"

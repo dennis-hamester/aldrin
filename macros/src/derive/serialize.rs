@@ -1,294 +1,478 @@
-use super::{add_trait_bounds, ItemOptions, Options};
+use super::{EnumData, FieldData, StructData, VariantData};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Index, Result, Token, Variant};
+use syn::{
+    parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Ident, Path, Result, Token,
+    Variant,
+};
 
 pub fn gen_serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
-    gen_serialize(input, options)
+    gen_serialize(input, parse_quote!(::aldrin_core))
 }
 
 pub fn gen_serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core))?;
-    gen_serialize(input, options)
+    gen_serialize(input, parse_quote!(::aldrin::core))
 }
 
-fn gen_serialize(input: DeriveInput, options: Options) -> Result<TokenStream> {
-    let name = &input.ident;
-    let krate = options.krate();
-
-    let body = match input.data {
-        Data::Struct(data) => match data.fields {
-            Fields::Named(fields) => gen_struct(&fields.named)?,
-            Fields::Unnamed(fields) => gen_struct(&fields.unnamed)?,
-            Fields::Unit => gen_struct(&Punctuated::new())?,
+fn gen_serialize(input: DeriveInput, krate: Path) -> Result<TokenStream> {
+    match input.data {
+        Data::Struct(ref data) => match data.fields {
+            Fields::Named(ref fields) => gen_struct(&input, true, &fields.named, krate),
+            Fields::Unnamed(ref fields) => gen_struct(&input, false, &fields.unnamed, krate),
+            Fields::Unit => gen_struct(&input, false, &Punctuated::new(), krate),
         },
 
-        Data::Enum(data) => gen_enum(&data.variants)?,
+        Data::Enum(ref data) => gen_enum(&input, &data.variants, krate),
 
-        Data::Union(_) => {
-            return Err(Error::new_spanned(
-                input.ident,
-                "unions are not supported by Aldrin",
-            ))
-        }
-    };
-
-    let generics = add_trait_bounds(
-        input.generics,
-        &parse_quote!(#krate::Serialize),
-        options.ser_bounds(),
-    );
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-    Ok(quote! {
-        #[automatically_derived]
-        impl #impl_generics #krate::Serialize for #name #ty_generics #where_clause {
-            fn serialize(
-                &self,
-                serializer: #krate::Serializer
-            ) -> ::std::result::Result<(), #krate::SerializeError> {
-                #body
-            }
-        }
-    })
+        Data::Union(_) => Err(Error::new_spanned(
+            input.ident,
+            "unions are not supported by Aldrin",
+        )),
+    }
 }
 
-fn gen_struct(fields: &Punctuated<Field, Token![,]>) -> Result<TokenStream> {
-    let mut num_required_fields = 0usize;
-    let mut num_optional_fields = Vec::new();
-    let mut body = Vec::new();
-    let mut next_id = 0;
-    let mut fallback = None;
+fn gen_struct(
+    input: &DeriveInput,
+    named: bool,
+    fields: &Punctuated<Field, Token![,]>,
+    krate: Path,
+) -> Result<TokenStream> {
+    StructData::new(input, named, fields, krate)?.gen_serialize()
+}
 
-    for (index, field) in fields.into_iter().enumerate() {
-        let item_options = ItemOptions::new(&field.attrs, next_id)?;
+impl StructData<'_> {
+    fn gen_serialize(&self) -> Result<TokenStream> {
+        let for_self = self.gen_serialize_for_self()?;
+        let for_ref = self.gen_serialize_for_ref()?;
 
-        if item_options.is_fallback() {
-            if fallback.is_some() {
-                return Err(Error::new_spanned(
-                    field,
-                    "only one field can be marked fallback",
-                ));
-            }
-
-            if item_options.is_optional() {
-                return Err(Error::new_spanned(
-                    field,
-                    "fields cannot be marked both optional and fallback",
-                ));
-            }
-
-            fallback = Some((index, field));
+        let for_ref_type = if self.ref_type().is_ok() {
+            self.gen_serialize_for_ref_type().map(Some)?
         } else {
-            if fallback.is_some() {
-                return Err(Error::new_spanned(
-                    field,
-                    "fields after the fallback are not allowed",
-                ));
-            }
+            None
+        };
 
-            next_id = item_options.id() + 1;
-            let (serialize, optional) = gen_field(field, index, &item_options)?;
-            body.push(serialize);
-
-            if let Some(optional) = optional {
-                num_optional_fields.push(optional);
-            } else {
-                num_required_fields += 1;
-            }
-        }
+        Ok(quote! {
+            #for_self
+            #for_ref
+            #for_ref_type
+        })
     }
 
-    let (num_var, num_ref) = match (num_required_fields, num_optional_fields.is_empty()) {
-        (0, true) => (None, quote! { 0 }),
+    fn gen_serialize_for_self(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
 
-        (0, false) => (
-            Some(quote! { let num = #(#num_optional_fields)+*; }),
-            quote! { num },
-        ),
-
-        (num_required_fields, true) => (None, quote! { #num_required_fields }),
-
-        (num_required_fields, false) => (
-            Some(quote! { let num = #num_required_fields + #(#num_optional_fields)+*; }),
-            quote! { num },
-        ),
-    };
-
-    let serializer = match fallback {
-        Some((index, field)) => match field.ident {
-            Some(ref ident) => quote! {
-                let mut serializer =
-                    serializer.serialize_struct_with_unknown_fields(#num_ref, &self.#ident)?;
-            },
-
-            None => {
-                let index = Index::from(index);
+        let serializer = match self.fallback() {
+            Some(fallback) => {
+                let name = fallback.name();
+                let num_fields = self.fields().len() - 1;
 
                 quote! {
-                    let mut serializer =
-                        serializer.serialize_struct_with_unknown_fields(#num_ref, &self.#index)?;
+                    serializer.serialize_struct_with_unknown_fields(#num_fields, self.#name)?
                 }
             }
-        },
 
-        None => quote! { let mut serializer = serializer.serialize_struct(#num_ref)?; },
-    };
+            None => {
+                let num_fields = self.fields().len();
 
-    Ok(quote! {
-        #num_var
-        #serializer
-        #(#body)*
-        serializer.finish()
-    })
+                quote! { serializer.serialize_struct(#num_fields)? }
+            }
+        };
+
+        let fields = self
+            .fields()
+            .iter()
+            .filter_map(|field| field.gen_serialize_for_self(krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    let mut serializer = #serializer;
+                    #(#fields)*
+                    serializer.finish()
+                }
+            }
+        })
+    }
+
+    fn gen_serialize_for_ref(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+
+        let serializer = match self.fallback() {
+            Some(fallback) => {
+                let name = fallback.name();
+                let num_fields = self.fields().len() - 1;
+
+                quote! {
+                    serializer.serialize_struct_with_unknown_fields(#num_fields, &self.#name)?
+                }
+            }
+
+            None => {
+                let num_fields = self.fields().len();
+
+                quote! { serializer.serialize_struct(#num_fields)? }
+            }
+        };
+
+        let fields = self
+            .fields()
+            .iter()
+            .filter_map(|field| field.gen_serialize_for_ref(krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    let mut serializer = #serializer;
+                    #(#fields)*
+                    serializer.finish()
+                }
+            }
+        })
+    }
+
+    fn gen_serialize_for_ref_type(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let ref_type = self.ref_type()?;
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let ty_generics = self.ty_generics();
+
+        let where_bounds = self
+            .fields()
+            .iter()
+            .map(|field| field.serialize_where_bound_for_ref_type(krate));
+
+        let serializer = match self.fallback() {
+            Some(fallback) => {
+                let name = fallback.name();
+                let num_fields = self.fields().len() - 1;
+
+                quote! {
+                    serializer.serialize_struct_with_unknown_fields(#num_fields, self.#name)?
+                }
+            }
+
+            None => {
+                let num_fields = self.fields().len();
+
+                quote! { serializer.serialize_struct(#num_fields)? }
+            }
+        };
+
+        let fields = self
+            .fields()
+            .iter()
+            .filter_map(|field| field.gen_serialize_for_ref_type(krate));
+
+        let impl_generics = self
+            .lifetimes()
+            .iter()
+            .map(|lt| GenericParam::Lifetime((*lt).clone()))
+            .chain(
+                self.ty_generics()
+                    .map(|ty| GenericParam::Type(ty.clone().into())),
+            );
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#impl_generics),*> #krate::Serialize<#name<#(#lifetimes),*>> for #ref_type<#(#ty_generics),*>
+            where
+                #(#where_bounds),*
+            {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    let mut serializer = #serializer;
+                    #(#fields)*
+                    serializer.finish()
+                }
+            }
+        })
+    }
 }
 
-fn gen_field(
-    field: &Field,
-    index: usize,
-    item_options: &ItemOptions,
-) -> Result<(TokenStream, Option<TokenStream>)> {
-    let id = item_options.id();
+impl FieldData<'_> {
+    fn gen_serialize_for_self(&self, krate: &Path) -> Option<TokenStream> {
+        if self.is_fallback() {
+            None
+        } else {
+            let ty = self.ty();
+            let id = self.id();
+            let name = self.name();
 
-    let (serialize, optional) = match (field.ident.as_ref(), item_options.is_optional()) {
-        (Some(ident), true) => {
-            let serialize = quote! {
-                if ::std::option::Option::is_some(&self.#ident) {
-                    serializer.serialize_field(#id, &self.#ident)?;
-                }
-            };
-
-            let optional = Some(quote! { (::std::option::Option::is_some(&self.#ident) as usize) });
-            (serialize, optional)
-        }
-
-        (Some(ident), false) => {
-            let serialize = quote! { serializer.serialize_field(#id, &self.#ident)?; };
-            (serialize, None)
-        }
-
-        (None, true) => {
-            let index = Index::from(index);
-
-            let serialize = quote! {
-                if ::std::option::Option::is_some(&self.#index) {
-                    serializer.serialize_field(#id, &self.#index)?;
-                }
-            };
-
-            let optional = Some(quote! { (::std::option::Option::is_some(&self.#index) as usize) });
-            (serialize, optional)
-        }
-
-        (None, false) => {
-            let index = Index::from(index);
-            let serialize = quote! { serializer.serialize_field(#id, &self.#index)?; };
-            (serialize, None)
-        }
-    };
-
-    Ok((serialize, optional))
-}
-
-fn gen_enum(variants: &Punctuated<Variant, Token![,]>) -> Result<TokenStream> {
-    let body = {
-        let mut next_id = 0;
-        let mut has_fallback = false;
-
-        variants
-            .into_iter()
-            .map(|variant| {
-                let item_options = ItemOptions::new(&variant.attrs, next_id)?;
-
-                if item_options.is_fallback() {
-                    if has_fallback {
-                        return Err(Error::new_spanned(
-                            variant,
-                            "only one variant can be marked fallback",
-                        ));
-                    }
-
-                    has_fallback = true;
-                } else if has_fallback {
-                    return Err(Error::new_spanned(
-                        variant,
-                        "variants after the fallback are not allowed",
-                    ));
-                }
-
-                next_id = item_options.id() + 1;
-                gen_variant(variant, &item_options)
+            Some(quote! {
+                serializer.serialize::<#krate::tags::As<#ty>, _>(#id, self.#name)?;
             })
-            .collect::<Result<Vec<_>>>()?
-    };
-
-    Ok(quote! {
-        match *self {
-            #(#body),*
         }
-    })
-}
-
-fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
-    if item_options.is_optional() {
-        return Err(Error::new_spanned(
-            variant,
-            "enum variants cannot be optional",
-        ));
     }
 
-    if item_options.is_fallback() {
-        gen_fallback_variant(variant)
-    } else {
-        gen_regular_variant(variant, item_options)
+    fn gen_serialize_for_ref(&self, krate: &Path) -> Option<TokenStream> {
+        if self.is_fallback() {
+            None
+        } else {
+            let ty_tag = self.ty_tag();
+            let id = self.id();
+            let name = self.name();
+
+            Some(quote! {
+                serializer.serialize::<#krate::tags::As<#ty_tag>, _>(#id, &self.#name)?;
+            })
+        }
     }
-}
 
-fn gen_regular_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
-    let ident = &variant.ident;
-    let id = item_options.id();
+    fn gen_serialize_for_ref_type(&self, krate: &Path) -> Option<TokenStream> {
+        if self.is_fallback() {
+            None
+        } else {
+            let ty_tag = self.ty_tag();
+            let id = self.id();
+            let name = self.name();
 
-    match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => Ok(quote! {
-            Self::#ident() => serializer.serialize_enum(#id, &())
-        }),
+            Some(quote! {
+                serializer.serialize::<#krate::tags::As<#ty_tag>, _>(#id, self.#name)?;
+            })
+        }
+    }
 
-        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            Self::#ident(ref val) => serializer.serialize_enum(#id, val)
-        }),
+    fn serialize_where_bound_for_ref_type(&self, krate: &Path) -> TokenStream {
+        let ty_generic = self.ty_generic();
 
-        Fields::Unnamed(_) => Err(Error::new_spanned(
-            variant,
-            "tuple-like variants with more than 1 element are not supported by Aldrin",
-        )),
+        if self.is_fallback() {
+            quote! { #ty_generic: #krate::AsUnknownFields }
+        } else {
+            let ty_tag = self.ty_tag();
 
-        Fields::Unit => Ok(quote! { Self::#ident => serializer.serialize_enum(#id, &()) }),
-
-        Fields::Named(_) => Err(Error::new_spanned(
-            variant,
-            "struct-like variants are not supported by Aldrin",
-        )),
+            quote! { #ty_generic: #krate::Serialize<#krate::tags::As<#ty_tag>> }
+        }
     }
 }
 
-fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
-    let ident = &variant.ident;
+fn gen_enum(
+    input: &DeriveInput,
+    variants: &Punctuated<Variant, Token![,]>,
+    krate: Path,
+) -> Result<TokenStream> {
+    EnumData::new(input, variants, krate)?.gen_serialize()
+}
 
-    match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            Self::#ident(ref val) => serializer.serialize_unknown_variant(val)
-        }),
+impl EnumData<'_> {
+    fn gen_serialize(&self) -> Result<TokenStream> {
+        let for_self = self.gen_serialize_for_self()?;
+        let for_ref = self.gen_serialize_for_ref()?;
 
-        Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(
-            variant,
-            "the fallback variant must have exactly 1 element",
-        )),
+        let for_ref_type = if self.ref_type().is_ok() {
+            self.gen_serialize_for_ref_type().map(Some)?
+        } else {
+            None
+        };
 
-        Fields::Named(_) => Err(Error::new_spanned(
-            variant,
-            "struct-like variants are not supported by Aldrin",
-        )),
+        Ok(quote! {
+            #for_self
+            #for_ref
+            #for_ref_type
+        })
+    }
+
+    fn gen_serialize_for_self(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+
+        let variants = self
+            .variants()
+            .iter()
+            .map(|var| var.gen_serialize_for_self(krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    match self {
+                        #(#variants)*
+                    }
+                }
+            }
+        })
+    }
+
+    fn gen_serialize_for_ref(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+
+        let variants = self
+            .variants()
+            .iter()
+            .map(|var| var.gen_serialize_for_ref(name, krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    match *self {
+                        #(#variants)*
+                    }
+                }
+            }
+        })
+    }
+
+    fn gen_serialize_for_ref_type(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let ref_type = self.ref_type()?;
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let ty_generics = self.ty_generics();
+
+        let where_bounds = self
+            .variants()
+            .iter()
+            .filter_map(|var| var.serialize_where_bound_for_ref_type(krate));
+
+        let variants = self
+            .variants()
+            .iter()
+            .map(|var| var.gen_serialize_for_ref_type(krate));
+
+        let impl_generics = self
+            .lifetimes()
+            .iter()
+            .map(|lt| GenericParam::Lifetime((*lt).clone()))
+            .chain(
+                self.ty_generics()
+                    .map(|ty| GenericParam::Type(ty.clone().into())),
+            );
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#impl_generics),*> #krate::Serialize<#name<#(#lifetimes),*>> for #ref_type<#(#ty_generics),*>
+            where
+                #(#where_bounds),*
+            {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    match self {
+                        #(#variants)*
+                    }
+                }
+            }
+        })
+    }
+}
+
+impl VariantData<'_> {
+    fn gen_serialize_for_self(&self, krate: &Path) -> TokenStream {
+        let name = self.name();
+        let id = self.id();
+
+        if self.is_fallback() {
+            quote! {
+                Self::#name(_value) => {
+                    serializer.serialize_unknown_variant(_value)
+                }
+            }
+        } else if let Some(ty) = self.ty() {
+            quote! {
+                Self::#name(_value) => {
+                    serializer.serialize_enum::<#krate::tags::As<#ty>, _>(#id, _value)
+                }
+            }
+        } else {
+            quote! {
+                Self::#name {} => serializer.serialize_unit_enum(#id),
+            }
+        }
+    }
+
+    fn gen_serialize_for_ref(&self, enum_name: &Ident, krate: &Path) -> TokenStream {
+        let name = self.name();
+        let id = self.id();
+
+        if self.is_fallback() {
+            quote! {
+                #enum_name::#name(ref _value) => {
+                    serializer.serialize_unknown_variant(_value)
+                }
+            }
+        } else if let Some(ty_tag) = self.ty_tag() {
+            quote! {
+                #enum_name::#name(ref _value) => {
+                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>, _>(#id, _value)
+                }
+            }
+        } else {
+            quote! {
+                #enum_name::#name {} => serializer.serialize_unit_enum(#id),
+            }
+        }
+    }
+
+    fn gen_serialize_for_ref_type(&self, krate: &Path) -> TokenStream {
+        let name = self.name();
+        let id = self.id();
+
+        if self.is_fallback() {
+            quote! {
+                Self::#name(_value) => {
+                    serializer.serialize_unknown_variant(_value)
+                }
+            }
+        } else if let Some(ty_tag) = self.ty_tag() {
+            quote! {
+                Self::#name(_value) => {
+                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>, _>(#id, _value)
+                }
+            }
+        } else {
+            quote! {
+                Self::#name => serializer.serialize_unit_enum(#id),
+            }
+        }
+    }
+
+    fn serialize_where_bound_for_ref_type(&self, krate: &Path) -> Option<TokenStream> {
+        let ty_generic = self.ty_generic()?;
+
+        if self.is_fallback() {
+            Some(quote! {
+                #ty_generic: #krate::AsUnknownVariant
+            })
+        } else {
+            let ty_tag = self.ty_tag()?;
+
+            Some(quote! {
+                #ty_generic: #krate::Serialize<#krate::tags::As<#ty_tag>>
+            })
+        }
     }
 }

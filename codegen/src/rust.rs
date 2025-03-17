@@ -196,7 +196,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        codeln!(self, "#[derive({DEBUG}, {CLONE}{derive_default}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
+        codeln!(self, "#[derive({DEBUG}, {CLONE}{derive_default}, {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -271,7 +271,7 @@ impl RustGenerator<'_> {
                 String::new()
             };
 
-        codeln!(self, "#[derive({DEBUG}, {CLONE}, {krate}::Serialize, {krate}::Deserialize, {krate}::AsSerializeArg{derive_introspectable}{additional_derives})]");
+        codeln!(self, "#[derive({DEBUG}, {CLONE}, {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize{derive_introspectable}{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {

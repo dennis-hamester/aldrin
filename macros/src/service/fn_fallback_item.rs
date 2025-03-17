@@ -19,7 +19,11 @@ impl FnFallbackItem {
     pub fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
-        quote! { #variant(#ty), }
+
+        quote! {
+            #[allow(dead_code)]
+            #variant(#ty),
+        }
     }
 
     pub fn gen_next_call_match_arm(&self, function: &Ident) -> TokenStream {
@@ -36,6 +40,7 @@ impl FnFallbackItem {
 
     pub fn layout(&self) -> TokenStream {
         let name = self.ident.unraw().to_string();
+
         quote! { .function_fallback(#name) }
     }
 }

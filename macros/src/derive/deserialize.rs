@@ -1,298 +1,213 @@
-use super::{add_trait_bounds, ItemOptions, Options};
+use super::{EnumData, FieldData, StructData, VariantData};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
+use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Path, Result, Token, Variant};
 
 pub fn gen_deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
-    gen_deserialize(input, options)
+    gen_deserialize(input, parse_quote!(::aldrin_core))
 }
 
 pub fn gen_deserialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core))?;
-    gen_deserialize(input, options)
+    gen_deserialize(input, parse_quote!(::aldrin::core))
 }
 
-fn gen_deserialize(input: DeriveInput, options: Options) -> Result<TokenStream> {
-    let name = &input.ident;
-    let krate = options.krate();
-
-    let body = match input.data {
-        Data::Struct(data) => match data.fields {
-            Fields::Named(fields) => gen_struct(&fields.named, &options, true)?,
-            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &options, false)?,
-
-            Fields::Unit => quote! {
-                deserializer.deserialize_struct()?.skip()?;
-                ::std::result::Result::Ok(Self)
-            },
+fn gen_deserialize(input: DeriveInput, krate: Path) -> Result<TokenStream> {
+    match input.data {
+        Data::Struct(ref data) => match data.fields {
+            Fields::Named(ref fields) => gen_struct(&input, true, &fields.named, krate),
+            Fields::Unnamed(ref fields) => gen_struct(&input, false, &fields.unnamed, krate),
+            Fields::Unit => gen_struct(&input, false, &Punctuated::new(), krate),
         },
 
-        Data::Enum(data) => gen_enum(&data.variants, &options)?,
+        Data::Enum(ref data) => gen_enum(&input, &data.variants, krate),
 
-        Data::Union(_) => {
-            return Err(Error::new_spanned(
-                input.ident,
-                "unions are not supported by Aldrin",
-            ))
-        }
-    };
-
-    let generics = add_trait_bounds(
-        input.generics,
-        &parse_quote!(#krate::Deserialize),
-        options.de_bounds(),
-    );
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-    Ok(quote! {
-        #[automatically_derived]
-        impl #impl_generics #krate::Deserialize for #name #ty_generics #where_clause {
-            fn deserialize(
-                deserializer: #krate::Deserializer,
-            ) -> ::std::result::Result<Self, #krate::DeserializeError> {
-                #body
-            }
-        }
-    })
+        Data::Union(_) => Err(Error::new_spanned(
+            input.ident,
+            "unions are not supported by Aldrin",
+        )),
+    }
 }
 
 fn gen_struct(
-    struct_fields: &Punctuated<Field, Token![,]>,
-    options: &Options,
+    input: &DeriveInput,
     named: bool,
+    fields: &Punctuated<Field, Token![,]>,
+    krate: Path,
 ) -> Result<TokenStream> {
-    let krate = options.krate();
-    let mut fields = Vec::new();
-    let mut next_id = 0;
-    let mut fallback = None;
+    StructData::new(input, named, fields, krate)?.gen_deserialize()
+}
 
-    for field in struct_fields {
-        let item_options = ItemOptions::new(&field.attrs, next_id)?;
+impl StructData<'_> {
+    fn gen_deserialize(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let field_vars = self.fields().iter().filter_map(FieldData::deserialize_var);
 
-        if item_options.is_fallback() {
-            if fallback.is_some() {
-                return Err(Error::new_spanned(
-                    field,
-                    "only one field can be marked fallback",
-                ));
+        let fields = self
+            .fields()
+            .iter()
+            .map(|field| field.gen_deserialize(krate));
+
+        let field_finish = self
+            .fields()
+            .iter()
+            .map(|field| field.deserialize_finish(krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
+                fn deserialize(
+                    deserializer: #krate::Deserializer,
+                ) -> ::std::result::Result<Self, #krate::DeserializeError> {
+                    let mut _deserializer = deserializer.deserialize_struct()?;
+
+                    #(#field_vars)*
+
+                    while !_deserializer.is_empty() {
+                        let _deserializer = _deserializer.deserialize()?;
+
+                        match _deserializer.id() {
+                            #(#fields)*
+                            _ => _deserializer.skip()?,
+                        }
+                    }
+
+                    _deserializer.finish_with(|_fallback| {
+                        Ok(Self {
+                            #(#field_finish),*
+                        })
+                    })
+                }
             }
-
-            if item_options.is_optional() {
-                return Err(Error::new_spanned(
-                    field,
-                    "fields cannot be marked both optional and fallback",
-                ));
-            }
-
-            fallback = Some(field);
-        } else {
-            if fallback.is_some() {
-                return Err(Error::new_spanned(
-                    field,
-                    "fields after the fallback are not allowed",
-                ));
-            }
-
-            next_id = item_options.id() + 1;
-
-            let field_ident = if let Some(ref ident) = field.ident {
-                ident.clone()
-            } else {
-                format_ident!("__field{}", item_options.id())
-            };
-
-            fields.push((field, item_options, field_ident));
-        }
+        })
     }
+}
 
-    let field_vars = fields.iter().map(|(_, _, field_ident)| {
-        quote! { let mut #field_ident = ::std::option::Option::None; }
-    });
+impl FieldData<'_> {
+    fn gen_deserialize(&self, krate: &Path) -> TokenStream {
+        if self.is_fallback() {
+            quote! {
+                _ => _deserializer.add_to_unknown_fields()?,
+            }
+        } else if self.is_optional() {
+            let id = self.id();
+            let var = self.var();
+            let ty = self.ty();
 
-    let match_arms = fields.iter().map(|(_, item_options, field_ident)| {
-        let id = item_options.id();
-
-        if item_options.is_optional() {
-            quote! { #id => #field_ident = __deserializer.deserialize()?, }
+            quote! {
+                #id => #var = _deserializer.deserialize::<#krate::tags::As<#ty>, _>()?,
+            }
         } else {
+            let id = self.id();
+            let var = self.var();
+            let ty = self.ty();
+
             quote! {
                 #id => {
-                    #field_ident = __deserializer.deserialize().map(::std::option::Option::Some)?;
+                    #var = _deserializer
+                        .deserialize::<#krate::tags::As<#ty>, _>()
+                        .map(::std::option::Option::Some)?;
                 }
             }
         }
-    });
+    }
 
-    let wildcard = if fallback.is_some() {
-        quote! { _ => __deserializer.add_to_unknown_fields()?, }
-    } else {
-        quote! { _ => __deserializer.skip()?, }
-    };
+    fn deserialize_var(&self) -> Option<TokenStream> {
+        if self.is_fallback() {
+            None
+        } else {
+            let var = self.var();
 
-    let field_inits = fields.iter().map(|(field, item_options, field_ident)| {
-        match (field.ident.as_ref(), item_options.is_optional()) {
-            (Some(ref ident), false) => quote! {
-                #ident: #ident.ok_or(#krate::DeserializeError::InvalidSerialization)?,
-            },
-
-            (Some(ref ident), true) => quote! { #ident, },
-
-            (None, false) => quote! {
-                #field_ident.ok_or(#krate::DeserializeError::InvalidSerialization)?,
-            },
-
-            (None, true) => quote! { #field_ident, },
+            Some(quote! {
+                let mut #var = ::std::option::Option::None;
+            })
         }
-    });
+    }
 
-    let finish = if let Some(fallback) = fallback {
-        if let Some(ref ident) = fallback.ident {
+    fn deserialize_finish(&self, krate: &Path) -> TokenStream {
+        let name = self.name();
+
+        if self.is_fallback() {
+            quote! { #name: _fallback.into() }
+        } else if self.is_optional() {
+            let var = self.var();
+
+            quote! { #name: #var }
+        } else {
+            let var = self.var();
+
+            quote! { #name: #var.ok_or(#krate::DeserializeError::InvalidSerialization)? }
+        }
+    }
+}
+
+fn gen_enum(
+    input: &DeriveInput,
+    variants: &Punctuated<Variant, Token![,]>,
+    krate: Path,
+) -> Result<TokenStream> {
+    EnumData::new(input, variants, krate)?.gen_deserialize()
+}
+
+impl EnumData<'_> {
+    fn gen_deserialize(&self) -> Result<TokenStream> {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let variants = self.variants().iter().map(|var| var.gen_deserialize(krate));
+
+        Ok(quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
+                fn deserialize(
+                    deserializer: #krate::Deserializer,
+                ) -> ::std::result::Result<Self, #krate::DeserializeError> {
+                    let deserializer = deserializer.deserialize_enum()?;
+
+                    match deserializer.variant() {
+                        #(#variants)*
+                        _ => {
+                            ::std::result::Result::Err(
+                                #krate::DeserializeError::InvalidSerialization,
+                            )
+                        }
+                    }
+                }
+            }
+        })
+    }
+}
+
+impl VariantData<'_> {
+    fn gen_deserialize(&self, krate: &Path) -> TokenStream {
+        let name = self.name();
+
+        if self.is_fallback() {
             quote! {
-                __deserializer.finish_with(|#ident| ::std::result::Result::Ok(Self {
-                    #(#field_inits)*
-                    #ident,
-                }))
+                _ => {
+                    deserializer
+                        .into_unknown_variant()
+                        .map(|fallback| Self::#name(fallback.into()))
+                }
+            }
+        } else if let Some(ty) = self.ty() {
+            let id = self.id();
+
+            quote! {
+                #id => deserializer.deserialize::<#krate::tags::As<#ty>, _>().map(Self::#name),
             }
         } else {
+            let id = self.id();
+
             quote! {
-                __deserializer.finish_with(|__fallback| ::std::result::Result::Ok(Self(
-                    #(#field_inits)*
-                    __fallback,
-                )))
+                #id => deserializer.deserialize_unit().map(|()| Self::#name {}),
             }
         }
-    } else if named {
-        quote! {
-            __deserializer.finish_with(|_| ::std::result::Result::Ok(Self { #(#field_inits)* }))
-        }
-    } else {
-        quote! {
-            __deserializer.finish_with(|_| ::std::result::Result::Ok(Self(#(#field_inits)*)))
-        }
-    };
-
-    Ok(quote! {
-        let mut __deserializer = deserializer.deserialize_struct()?;
-        #(#field_vars)*
-
-        while __deserializer.has_more_fields() {
-            let __deserializer = __deserializer.deserialize_field()?;
-
-            match __deserializer.id() {
-                #(#match_arms)*
-                #wildcard
-            }
-        }
-
-        #finish
-    })
-}
-
-fn gen_enum(variants: &Punctuated<Variant, Token![,]>, options: &Options) -> Result<TokenStream> {
-    let krate = options.krate();
-    let mut next_id = 0;
-    let mut has_fallback = false;
-
-    let mut match_arms = Vec::new();
-    for variant in variants {
-        let item_options = ItemOptions::new(&variant.attrs, next_id)?;
-
-        if item_options.is_fallback() {
-            if has_fallback {
-                return Err(Error::new_spanned(
-                    variant,
-                    "only one variant can be marked fallback",
-                ));
-            }
-
-            has_fallback = true;
-        } else if has_fallback {
-            return Err(Error::new_spanned(
-                variant,
-                "variants after the fallback are not allowed",
-            ));
-        }
-
-        next_id = item_options.id() + 1;
-        match_arms.push(gen_variant(variant, &item_options)?);
-    }
-
-    let catch_all = if has_fallback {
-        TokenStream::new()
-    } else {
-        quote! { _ => ::std::result::Result::Err(#krate::DeserializeError::InvalidSerialization), }
-    };
-
-    Ok(quote! {
-        let deserializer = deserializer.deserialize_enum()?;
-
-        match deserializer.variant() {
-            #(#match_arms)*
-            #catch_all
-        }
-    })
-}
-
-fn gen_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
-    if item_options.is_optional() {
-        return Err(Error::new_spanned(
-            variant,
-            "enum variants cannot be optional",
-        ));
-    }
-
-    if item_options.is_fallback() {
-        gen_fallback_variant(variant)
-    } else {
-        gen_regular_variant(variant, item_options)
-    }
-}
-
-fn gen_regular_variant(variant: &Variant, item_options: &ItemOptions) -> Result<TokenStream> {
-    let ident = &variant.ident;
-    let id = item_options.id();
-
-    match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => Ok(quote! {
-            #id => deserializer.deserialize().map(|()| Self::#ident()),
-        }),
-
-        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            #id => deserializer.deserialize().map(Self::#ident),
-        }),
-
-        Fields::Unnamed(_) => Err(Error::new_spanned(
-            variant,
-            "tuple-like variants with more than 1 element are not supported by Aldrin",
-        )),
-
-        Fields::Unit => Ok(quote! { #id => deserializer.deserialize().map(|()| Self::#ident), }),
-
-        Fields::Named(_) => Err(Error::new_spanned(
-            variant,
-            "struct-like variants are not supported by Aldrin",
-        )),
-    }
-}
-
-fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
-    let ident = &variant.ident;
-
-    match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            _ => deserializer.into_unknown_variant().map(Self::#ident),
-        }),
-
-        Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(
-            variant,
-            "the fallback variant must have exactly 1 element",
-        )),
-
-        Fields::Named(_) => Err(Error::new_spanned(
-            variant,
-            "struct-like variants are not supported by Aldrin",
-        )),
     }
 }

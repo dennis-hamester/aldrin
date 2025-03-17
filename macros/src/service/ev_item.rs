@@ -9,7 +9,6 @@ use syn::{Ident, LitInt, Result, Token, Type};
 
 pub(super) struct EvItem {
     ident: Ident,
-    ident_ref: Ident,
     subscribe: Ident,
     unsubscribe: Ident,
     variant: Ident,
@@ -91,26 +90,22 @@ impl EvItem {
     pub fn gen_emitters(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let ident_ref = &self.ident_ref;
         let id = &self.id;
 
-        let (args, args_ref, val) = match self.ty {
-            Some(ref ty) => (
-                Some(quote! { , args: #krate::core::SerializeArg<'_, #ty> }),
-                Some(quote! { , args: &#ty }),
-                quote! { &args },
-            ),
-
-            None => (None, None, quote! { &() }),
-        };
-
-        quote! {
-            pub fn #ident(&self #args) -> ::std::result::Result<(), #krate::Error> {
-                self.inner.emit(#id, #val)
+        if let Some(ref ty) = self.ty {
+            quote! {
+                pub fn #ident(
+                    &self,
+                    args: impl #krate::core::Serialize<#krate::core::tags::As<#ty>>,
+                ) -> ::std::result::Result<(), #krate::Error> {
+                    self.inner.emit_as::<#krate::core::tags::As<#ty>, _>(#id, args)
+                }
             }
-
-            pub fn #ident_ref(&self #args_ref) -> ::std::result::Result<(), #krate::Error> {
-                self.inner.emit(#id, #val)
+        } else {
+            quote! {
+                pub fn #ident(&self) -> ::std::result::Result<(), #krate::Error> {
+                    self.inner.emit(#id, ())
+                }
             }
         }
     }
@@ -157,7 +152,6 @@ impl Parse for EvItem {
 
         input.parse::<Token![;]>()?;
 
-        let ident_ref = Ident::new_raw(&format!("{}_ref", ident.unraw()), ident.span());
         let subscribe = Ident::new_raw(&format!("subscribe_{}", ident.unraw()), ident.span());
         let unsubscribe = Ident::new_raw(&format!("unsubscribe_{}", ident.unraw()), ident.span());
 
@@ -168,7 +162,6 @@ impl Parse for EvItem {
 
         Ok(Self {
             ident,
-            ident_ref,
             subscribe,
             unsubscribe,
             variant,

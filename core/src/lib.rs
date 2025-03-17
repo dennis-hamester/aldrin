@@ -34,6 +34,10 @@ pub mod tokio;
 pub mod transport;
 
 pub use crate::bytes::{ByteSlice, Bytes};
+#[cfg(all(feature = "derive", feature = "introspection"))]
+pub use aldrin_macros::Introspectable;
+#[cfg(feature = "derive")]
+pub use aldrin_macros::{Deserialize, PrimaryTag, RefType, Serialize, Tag};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use deserialize::Deserialize;
@@ -59,9 +63,5 @@ pub use unknown_fields::{AsUnknownFields, UnknownFields, UnknownFieldsRef};
 pub use unknown_variant::{AsUnknownVariant, UnknownVariant, UnknownVariantRef};
 pub use value::{Enum, Struct, Value};
 pub use value_kind::ValueKind;
-// #[cfg(feature = "derive")]
-// pub use aldrin_macros::{AsSerializeArg, Deserialize, DeserializeKey, Serialize, SerializeKey};
-// #[cfg(all(feature = "derive", feature = "introspection"))]
-// pub use aldrin_macros::{Introspectable, KeyTypeOf};
 
 const MAX_VALUE_DEPTH: u8 = 32;

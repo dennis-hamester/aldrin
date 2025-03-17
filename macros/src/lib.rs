@@ -10,13 +10,12 @@
 //!
 //! ## Derive macros
 //!
+//! - [`Tag`]
+//! - [`PrimaryTag`]
+//! - [`RefType`]
 //! - [`Serialize`]
 //! - [`Deserialize`]
 //! - [`Introspectable`]
-//! - [`SerializeKey`]
-//! - [`DeserializeKey`]
-//! - [`KeyTypeOf`]
-//! - [`AsSerializeArg`]
 //!
 //! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
 //!
@@ -41,6 +40,9 @@
 //! }
 //!
 //! #[derive(
+//!     my_reexports::my_aldrin_core::Tag,
+//!     my_reexports::my_aldrin_core::PrimaryTag,
+//!     my_reexports::my_aldrin_core::RefType,
 //!     my_reexports::my_aldrin_core::Serialize,
 //!     my_reexports::my_aldrin_core::Deserialize,
 //! )]
@@ -50,35 +52,9 @@
 //! }
 //! ```
 //!
-//! ##### `{ser,de,intro,ser_key,de_key,key_ty}_bounds`
-//!
-//! Applies to:
-//! - `ser_bounds`: [`Serialize`], [`AsSerializeArg`]
-//! - `de_bounds`: [`Deserialize`]
-//! - `intro_bounds`: [`Introspectable`]
-//! - `ser_key_bounds`: [`SerializeKey`]
-//! - `de_key_bounds`: [`DeserializeKey`]
-//! - `key_ty_bounds`: [`KeyTypeOf`]
-//!
-//! These attributes specify the generic bounds added to `where` clauses The default is to add `T:
-//! Trait` bounds for each type parameter `T` and the respective trait.
-//!
-//! The values of these attributes must be a string of comma-separated bounds, just like they would
-//! appear in a `where` clause.
-//!
-//! ```
-//! # use aldrin_core::{Deserialize, Serialize};
-//! #[derive(Serialize, Deserialize)]
-//! #[aldrin(ser_bounds = "T: aldrin::core::Serialize")]
-//! #[aldrin(de_bounds = "T: aldrin::core::Deserialize")]
-//! struct Person<T> {
-//!     pets: Vec<T>,
-//! }
-//! ```
-//!
 //! ##### `schema`
 //!
-//! - Applies to: `Introspectable`
+//! - Applies to: [`Introspectable`]
 //!
 //! Deriving `Introspectable` requires specifying a schema name. It is an error if this attribute is
 //! missing.
@@ -92,11 +68,21 @@
 //! }
 //! ```
 //!
+//! ##### `ref_type`
+//!
+//! - Applies to: [`RefType`], [`Serialize`]
+//!
+//! Controls the name of the ref type. If the attribute is omitted, then a default is constructed by
+//! appending `Ref` to the type's name.
+//!
+//! The `Serialize` derive macro assume that a ref type exists. If this is not desired, then use
+//! `ref_type = ""` to disable that.
+//!
 //! #### Field and variant attributes
 //!
 //! ##### `id`
 //!
-//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//! - Applies to: [`Serialize`], [`Deserialize`] and [`Introspectable`]
 //!
 //! Use `#[aldrin(id = ...)]` to override the automatically defined id for a field or variant.
 //!
@@ -104,8 +90,8 @@
 //! subsequent field or variant.
 //!
 //! ```
-//! # use aldrin_core::{Deserialize, Introspectable, Serialize};
-//! #[derive(Serialize, Deserialize, Introspectable)]
+//! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
+//! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 //! #[aldrin(schema = "family_tree")]
 //! struct Person {
 //!     age: u8, // id = 0
@@ -118,8 +104,8 @@
 //! ```
 //!
 //! ```
-//! # use aldrin_core::{Deserialize, Introspectable, Serialize};
-//! #[derive(Serialize, Deserialize, Introspectable)]
+//! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
+//! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 //! #[aldrin(schema = "pets")]
 //! enum Pet {
 //!     Dog, // id = 0
@@ -133,7 +119,7 @@
 //!
 //! ##### `optional`
 //!
-//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//! - Applies to: [`Serialize`], [`Deserialize`] and [`Introspectable`]
 //!
 //! Use `#[aldrin(optional)]` to mark fields of a struct as optional. They must be of an `Option<T>`
 //! type.
@@ -142,8 +128,9 @@
 //! value.
 //!
 //! ```
-//! # use aldrin_core::{Deserialize, Serialize};
-//! #[derive(Serialize, Deserialize)]
+//! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
+//! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
+//! #[aldrin(schema = "example")]
 //! struct MyStruct {
 //!     required_field_1: i32,
 //!     required_field_2: Option<i32>,
@@ -159,7 +146,7 @@
 //!
 //! ##### `fallback`
 //!
-//! - Applies to: `Serialize`, `Deserialize` and `Introspectable`
+//! - Applies to: [`Serialize`], [`Deserialize`] and [`Introspectable`]
 //!
 //! The last field of a struct and the last variant of an enum can optionally be marked with
 //! `#[aldrin(fallback)]`. This will enable successful serialization and deserialization of unknown
@@ -170,8 +157,8 @@
 //!
 //! Example of a struct with a fallback field:
 //! ```
-//! # use aldrin_core::{Deserialize, Introspectable, Serialize, SerializedValue, UnknownFields};
-//! #[derive(Serialize, Deserialize, Introspectable)]
+//! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, UnknownFields};
+//! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 //! #[aldrin(schema = "contacts")]
 //! struct Person {
 //!     name: String,
@@ -184,8 +171,8 @@
 //!
 //! Example of an enum with a fallback variant:
 //! ```
-//! # use aldrin_core::{Deserialize, Introspectable, Serialize, UnknownVariant};
-//! #[derive(Serialize, Deserialize, Introspectable)]
+//! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, UnknownVariant};
+//! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 //! #[aldrin(schema = "zoo")]
 //! enum AnimalType {
 //!     Alpaca,
@@ -429,7 +416,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use aldrin_macros::{service, Deserialize, PrimaryTag, RefType, Serialize, Tag};
 /// # use uuid::uuid;
 /// service! {
 ///     pub service Echo {
@@ -451,7 +438,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///     }
 /// }
 ///
-/// #[derive(Serialize, Deserialize, AsSerializeArg)]
+/// #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize)]
 /// pub enum Error {
 ///     EmptyString,
 /// }
@@ -463,7 +450,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use aldrin_macros::service;
 /// # use uuid::uuid;
 /// mod my_reexports {
 ///     pub use aldrin as my_aldrin;
@@ -487,7 +474,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use aldrin_macros::service;
 /// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(no_client)]
@@ -506,7 +493,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use aldrin_macros::service;
 /// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(schema = "ping", introspection)]
@@ -522,7 +509,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
-/// # use aldrin_macros::{service, AsSerializeArg, Deserialize, Serialize};
+/// # use aldrin_macros::service;
 /// # use uuid::uuid;
 /// service! {
 ///     #[aldrin(schema = "ping", introspection_if = "introspection")]
@@ -538,6 +525,89 @@ pub fn service(svc: service::Service) -> TokenStream {
     svc.generate()
 }
 
+/// Derive macro for the `Tag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+#[manyhow::manyhow]
+#[proc_macro_derive(Tag, attributes(aldrin))]
+pub fn tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_tag_from_core(input)
+}
+
+/// Derive macro for the `Tag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(TagFromAldrin, attributes(aldrin))]
+pub fn tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_tag_from_aldrin(input)
+}
+
+/// Derive macro for the `PrimaryTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+#[manyhow::manyhow]
+#[proc_macro_derive(PrimaryTag, attributes(aldrin))]
+pub fn primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_primary_tag_from_core(input)
+}
+
+/// Derive macro for the `PrimaryTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(PrimaryTagFromAldrin, attributes(aldrin))]
+pub fn primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_primary_tag_from_aldrin(input)
+}
+
+/// Derive macro for ref types.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ref_type`](crate#ref_type)
+#[manyhow::manyhow]
+#[proc_macro_derive(RefType, attributes(aldrin))]
+pub fn ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_ref_type_from_core(input)
+}
+
+/// Derive macro for ref types.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`ref_type`](crate#ref_type)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(RefTypeFromAldrin, attributes(aldrin))]
+pub fn ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_ref_type_from_aldrin(input)
+}
+
 /// Derive macro for the `Serialize` trait.
 ///
 /// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
@@ -545,9 +615,10 @@ pub fn service(svc: service::Service) -> TokenStream {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`ref_type`](crate#ref_type)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[manyhow::manyhow]
 #[proc_macro_derive(Serialize, attributes(aldrin))]
 pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
@@ -561,9 +632,10 @@ pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`ref_type`](crate#ref_type)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
@@ -578,9 +650,9 @@ pub fn serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`de_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[manyhow::manyhow]
 #[proc_macro_derive(Deserialize, attributes(aldrin))]
 pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
@@ -594,9 +666,9 @@ pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`de_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
@@ -611,10 +683,10 @@ pub fn deserialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`schema`](crate#crate)
-/// - [`intro_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`schema`](crate#schema)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[manyhow::manyhow]
 #[proc_macro_derive(Introspectable, attributes(aldrin))]
 pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
@@ -628,129 +700,13 @@ pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-/// - [`schema`](crate#crate)
-/// - [`intro_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
+/// - [`schema`](crate#schema)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
+/// - [`fallback`](crate#fallback)
 #[doc(hidden)]
 #[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
 pub fn introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_introspectable_from_aldrin(input)
-}
-
-/// Derive macro for the `SerializeKey` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`ser_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[manyhow::manyhow]
-#[proc_macro_derive(SerializeKey, attributes(aldrin))]
-pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_serialize_key_from_core(input)
-}
-
-/// Derive macro for the `SerializeKey` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`ser_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[doc(hidden)]
-#[manyhow::manyhow]
-#[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
-pub fn serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_serialize_key_from_aldrin(input)
-}
-
-/// Derive macro for the `DeserializeKey` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`de_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[manyhow::manyhow]
-#[proc_macro_derive(DeserializeKey, attributes(aldrin))]
-pub fn deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_deserialize_key_from_core(input)
-}
-
-/// Derive macro for the `DeserializeKey` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`de_key_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[doc(hidden)]
-#[manyhow::manyhow]
-#[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
-pub fn deserialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_deserialize_key_from_aldrin(input)
-}
-
-/// Derive macro for the `KeyTypeOf` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`key_ty_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[manyhow::manyhow]
-#[proc_macro_derive(KeyTypeOf, attributes(aldrin))]
-pub fn key_type_of_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_key_type_of_from_core(input)
-}
-
-/// Derive macro for the `KeyTypeOf` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`key_ty_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[doc(hidden)]
-#[manyhow::manyhow]
-#[proc_macro_derive(KeyTypeOfFromAldrin, attributes(aldrin))]
-pub fn key_type_of_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_key_type_of_from_aldrin(input)
-}
-
-/// Derive macro for the `AsSerializeArg` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[manyhow::manyhow]
-#[proc_macro_derive(AsSerializeArg, attributes(aldrin))]
-pub fn as_serialize_arg_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_as_serialize_arg_from_core(input)
-}
-
-/// Derive macro for the `AsSerializeArg` trait.
-///
-/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
-/// information about the supported attributes.
-///
-/// Relevant attributes:
-/// - [`crate`](crate#crate)
-/// - [`ser_bounds`](crate#serdeintroser_keyde_keykey_ty_bounds)
-#[doc(hidden)]
-#[manyhow::manyhow]
-#[proc_macro_derive(AsSerializeArgFromAldrin, attributes(aldrin))]
-pub fn as_serialize_arg_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_as_serialize_arg_from_aldrin(input)
 }

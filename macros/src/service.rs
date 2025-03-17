@@ -120,11 +120,13 @@ impl Service {
 
         quote! {
             #[derive(::std::fmt::Debug)]
+            #[automatically_derived]
             #vis struct #proxy {
                 #[doc(hidden)]
                 inner: #krate::low_level::Proxy,
             }
 
+            #[automatically_derived]
             impl #proxy {
                 #body_impl
             }
@@ -158,6 +160,7 @@ impl Service {
         let event = &self.event;
 
         quote! {
+            #[automatically_derived]
             #[derive(::std::fmt::Debug, ::std::clone::Clone)]
             #vis enum #event {
                 #vars
@@ -202,12 +205,14 @@ impl Service {
         };
 
         quote! {
+            #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis struct #ident {
                 #[doc(hidden)]
                 inner: #krate::low_level::Service,
             }
 
+            #[automatically_derived]
             impl #ident {
                 #body_impl
             }
@@ -241,6 +246,7 @@ impl Service {
         let function = &self.function;
 
         quote! {
+            #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis enum #function {
                 #vars
@@ -260,6 +266,7 @@ impl Service {
         quote! {
             #introspection_if
             #[doc(hidden)]
+            #[automatically_derived]
             struct #introspection;
 
             #introspection_if

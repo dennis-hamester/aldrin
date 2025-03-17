@@ -32,11 +32,16 @@ impl EvFallbackItem {
     pub fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
-        quote! { #variant(#ty), }
+
+        quote! {
+            #[allow(dead_code)]
+            #variant(#ty),
+        }
     }
 
     pub fn layout(&self) -> TokenStream {
         let name = self.ident.unraw().to_string();
+
         quote! { .event_fallback(#name) }
     }
 }

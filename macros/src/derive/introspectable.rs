@@ -1,4 +1,4 @@
-use super::{add_trait_bounds, ItemOptions, Options};
+use super::{ItemOptions, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ext::IdentExt;
@@ -16,9 +16,7 @@ pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream>
 }
 
 fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStream> {
-    let ident = &input.ident;
-    let name = ident.unraw().to_string();
-    let krate = options.krate();
+    super::ensure_no_type_generics(&input.generics)?;
 
     let schema = options.schema().ok_or_else(|| {
         Error::new_spanned(
@@ -26,6 +24,10 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
             "aldrin(schema = \"...\") must be set to derive Introspectable",
         )
     })?;
+
+    let ident = &input.ident;
+    let name = ident.unraw().to_string();
+    let krate = options.krate();
 
     let (layout, add_references) = match input.data {
         Data::Struct(data) => match data.fields {
@@ -44,18 +46,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
         }
     };
 
-    let generics = add_trait_bounds(
-        input.generics,
-        &parse_quote!(#krate::Introspectable),
-        options.intro_bounds(),
-    );
-
-    let generic_lexical_ids = generics.type_params().map(|ty| {
-        let ty = &ty.ident;
-        quote! { <#ty as #krate::introspection::Introspectable>::lexical_id() }
-    });
-
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     Ok(quote! {
         #[automatically_derived]
@@ -65,11 +56,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
             }
 
             fn lexical_id() -> #krate::introspection::LexicalId {
-                #krate::introspection::LexicalId::custom_generic(
-                    #schema,
-                    #name,
-                    &[#( #generic_lexical_ids ),*],
-                )
+                #krate::introspection::LexicalId::custom(#schema, #name)
             }
 
             fn add_references(references: &mut #krate::introspection::References) {

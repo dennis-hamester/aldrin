@@ -10,7 +10,6 @@ use syn::{braced, Ident, LitInt, Result, Token, Type};
 
 pub(super) struct FnItem {
     ident: Ident,
-    ident_ref: Ident,
     variant: Ident,
     id: LitInt,
     body: FnBody,
@@ -24,18 +23,7 @@ impl FnItem {
     pub fn gen_calls(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let ident_ref = &self.ident_ref;
         let id = &self.id;
-
-        let (args, args_ref, val) = match self.body.args() {
-            Some(args) => (
-                Some(quote! { , args: #krate::core::SerializeArg<#args> }),
-                Some(quote! { , args: &#args }),
-                quote! { &args },
-            ),
-
-            None => (None, None, quote! { &() }),
-        };
 
         let ok = match self.body.ok() {
             Some(ok) => quote! { #ok },
@@ -47,13 +35,25 @@ impl FnItem {
             None => quote! { ::std::convert::Infallible },
         };
 
-        quote! {
-            pub fn #ident(&self #args) -> #krate::PendingReply<#ok, #err> {
-                self.inner.call(#id, #val, ::std::option::Option::Some(Self::VERSION)).cast()
+        if let Some(args) = self.body.args() {
+            quote! {
+                pub fn #ident(
+                    &self,
+                    args: impl #krate::core::Serialize<#krate::core::tags::As<#args>>,
+                ) -> #krate::PendingReply<#ok, #err> {
+                    self.inner
+                        .call_as::<#krate::core::tags::As<#args>, _>(
+                            #id,
+                            args,
+                            ::std::option::Option::Some(Self::VERSION),
+                        ).cast()
+                }
             }
-
-            pub fn #ident_ref(&self #args_ref) -> #krate::PendingReply<#ok, #err> {
-                self.inner.call(#id, #val, ::std::option::Option::Some(Self::VERSION)).cast()
+        } else {
+            quote! {
+                pub fn #ident(&self) -> #krate::PendingReply<#ok, #err> {
+                    self.inner.call(#id, (), ::std::option::Option::Some(Self::VERSION)).cast()
+                }
             }
         }
     }
@@ -183,8 +183,6 @@ impl Parse for FnItem {
             return Err(lookahead.error());
         };
 
-        let ident_ref = Ident::new_raw(&format!("{}_ref", &ident.unraw()), ident.span());
-
         let variant = Ident::new_raw(
             &ident.unraw().to_string().to_upper_camel_case(),
             ident.span(),
@@ -192,7 +190,6 @@ impl Parse for FnItem {
 
         Ok(Self {
             ident,
-            ident_ref,
             variant,
             id,
             body,

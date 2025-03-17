@@ -5,7 +5,7 @@ mod raw_identifiers {
     #![allow(non_camel_case_types)]
 
     use aldrin::core::ServiceUuid;
-    use aldrin::{service, AsSerializeArg, Deserialize, Introspectable, Serialize};
+    use aldrin::{service, Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
     use uuid::uuid;
 
     service! {
@@ -24,7 +24,7 @@ mod raw_identifiers {
         }
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize, AsSerializeArg, Introspectable)]
+    #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
     #[aldrin(schema = "raw_identifiers")]
     struct r#struct {
         r#struct: r#false,
@@ -33,13 +33,13 @@ mod raw_identifiers {
         r#enum: Option<r#enum>,
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize, AsSerializeArg, Introspectable)]
+    #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
     #[aldrin(schema = "raw_identifiers")]
     enum r#enum {
         r#enum(r#false),
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize, AsSerializeArg, Introspectable)]
+    #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
     #[aldrin(schema = "raw_identifiers")]
     enum r#false {}
 }

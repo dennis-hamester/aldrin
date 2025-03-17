@@ -1,3 +1,4 @@
+use aldrin::core::tags::{self, PrimaryTag};
 use aldrin::core::{
     Deserialize, DeserializeError, Deserializer, ObjectUuid, Serialize, SerializeError,
     SerializedValue, Serializer,
@@ -59,10 +60,10 @@ async fn auto_reply_with_invalid_args() {
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let err = proxy.call(1, &0, None).await.unwrap_err();
+    let err = proxy.call(1, 0, None).await.unwrap_err();
     assert_eq!(err, Error::invalid_arguments(1, None));
 
-    let err = proxy.call(2, &(), None).await.unwrap_err();
+    let err = proxy.call(2, (), None).await.unwrap_err();
     assert_eq!(err, Error::invalid_arguments(2, None));
 }
 
@@ -76,7 +77,7 @@ async fn auto_reply_with_invalid_function() {
     let proxy = Proxy::new(&client, svc.id()).await.unwrap();
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
-    let err = proxy.call(3, &(), None).await.unwrap_err();
+    let err = proxy.call(3, (), None).await.unwrap_err();
     assert_eq!(err, Error::invalid_function(3));
 }
 
@@ -174,25 +175,30 @@ async fn unsubscribe_all() {
 async fn before_derive_compat_struct() {
     use before_derive_compat::NewStruct;
 
+    #[derive(Debug)]
     pub struct OldStruct {
         pub f1: i32,
         pub f2: Option<i32>,
         pub f3: Option<i32>,
     }
 
-    impl Serialize for OldStruct {
-        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+    impl PrimaryTag for OldStruct {
+        type Tag = tags::Value;
+    }
+
+    impl Serialize<tags::Value> for &OldStruct {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct(3)?;
 
-            serializer.serialize_field(1u32, &self.f1)?;
-            serializer.serialize_field(2u32, &self.f2)?;
-            serializer.serialize_field(3u32, &self.f3)?;
+            serializer.serialize::<tags::I32, _>(1u32, &self.f1)?;
+            serializer.serialize::<tags::Option<tags::I32>, _>(2u32, &self.f2)?;
+            serializer.serialize::<tags::Option<tags::I32>, _>(3u32, &self.f3)?;
 
             serializer.finish()
         }
     }
 
-    impl Deserialize for OldStruct {
+    impl Deserialize<tags::Value> for OldStruct {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -200,13 +206,19 @@ async fn before_derive_compat_struct() {
             let mut f2 = None;
             let mut f3 = None;
 
-            while deserializer.has_more_fields() {
+            while !deserializer.is_empty() {
                 let deserializer = deserializer.deserialize()?;
 
                 match deserializer.id() {
-                    1 => f1 = deserializer.deserialize().map(Some)?,
-                    2 => f2 = deserializer.deserialize().map(Some)?,
-                    3 => f3 = deserializer.deserialize()?,
+                    1 => f1 = deserializer.deserialize::<tags::I32, _>().map(Some)?,
+
+                    2 => {
+                        f2 = deserializer
+                            .deserialize::<tags::Option<tags::I32>, _>()
+                            .map(Some)?
+                    }
+
+                    3 => f3 = deserializer.deserialize::<tags::Option<tags::I32>, _>()?,
                     _ => deserializer.skip()?,
                 }
             }
@@ -321,24 +333,38 @@ async fn before_derive_compat_enum() {
         Var3(Option<i32>),
     }
 
-    impl Serialize for OldEnum {
-        fn serialize(&self, serializer: Serializer) -> Result<(), SerializeError> {
+    impl PrimaryTag for OldEnum {
+        type Tag = tags::Value;
+    }
+
+    impl Serialize<tags::Value> for &OldEnum {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             match self {
-                Self::Var1 => serializer.serialize_enum(1u32, &()),
-                Self::Var2(v) => serializer.serialize_enum(2u32, v),
-                Self::Var3(v) => serializer.serialize_enum(3u32, v),
+                OldEnum::Var1 => serializer.serialize_enum::<tags::Unit, _>(1u32, &()),
+                OldEnum::Var2(v) => serializer.serialize_enum::<tags::I32, _>(2u32, v),
+
+                OldEnum::Var3(v) => {
+                    serializer.serialize_enum::<tags::Option<tags::I32>, _>(3u32, v)
+                }
             }
         }
     }
 
-    impl Deserialize for OldEnum {
+    impl Deserialize<tags::Value> for OldEnum {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
             match deserializer.variant() {
-                1 => deserializer.deserialize().map(|()| Self::Var1),
-                2 => deserializer.deserialize().map(Self::Var2),
-                3 => deserializer.deserialize().map(Self::Var3),
+                1 => deserializer
+                    .deserialize::<tags::Unit, _>()
+                    .map(|()| Self::Var1),
+
+                2 => deserializer.deserialize::<tags::I32, _>().map(Self::Var2),
+
+                3 => deserializer
+                    .deserialize::<tags::Option<tags::I32>, _>()
+                    .map(Self::Var3),
+
                 _ => Err(DeserializeError::InvalidSerialization),
             }
         }
@@ -409,7 +435,7 @@ fn enum_fallback_new_to_old() {
     assert_eq!(variant.id(), 2);
     assert_eq!(variant.deserialize(), Ok(1u32));
 
-    let serialized = SerializedValue::serialize(&Old::Unknown(variant)).unwrap();
+    let serialized = SerializedValue::serialize(Old::Unknown(variant)).unwrap();
     let new2 = serialized.deserialize().unwrap();
     assert_eq!(new, new2);
 }
