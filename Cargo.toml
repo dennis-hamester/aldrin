@@ -7,7 +7,7 @@ members = [
     "conformance-tester",
     "core",
     # "examples/bookmarks",
-    # "examples/broker",
+    "examples/broker",
     # "examples/downloader",
     # "examples/echo",
     # "examples/introspect",

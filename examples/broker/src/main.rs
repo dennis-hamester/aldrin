@@ -5,8 +5,7 @@ use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::signal;
-use tokio::time;
+use tokio::{signal, time};
 
 const BIND_DEFAULT: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 24940);
 const STATISTICS_INTERVAL: Duration = Duration::from_secs(60);
