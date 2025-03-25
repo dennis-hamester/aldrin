@@ -439,6 +439,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-introspect"
+version = "0.0.0"
+dependencies = [
+ "aldrin",
+ "anyhow",
+ "clap",
+ "tokio",
+]
+
+[[package]]
 name = "example-media-player"
 version = "0.0.0"
 dependencies = [

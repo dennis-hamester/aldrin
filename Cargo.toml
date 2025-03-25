@@ -10,7 +10,7 @@ members = [
     "examples/broker",
     "examples/downloader",
     "examples/echo",
-    # "examples/introspect",
+    "examples/introspect",
     "examples/media-player",
     "gen",
     "macros",
