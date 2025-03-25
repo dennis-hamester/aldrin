@@ -87,17 +87,17 @@ impl Server {
     }
 
     fn get_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok_ref(&self.metadata)?;
+        call.ok(&self.metadata)?;
         Ok(())
     }
 
     fn get_position(&self, call: Call<(), Option<u32>, Infallible>) -> Result<()> {
-        call.ok_ref(&self.position)?;
+        call.ok(self.position)?;
         Ok(())
     }
 
     fn get_last_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok_ref(&self.last_metadata)?;
+        call.ok(&self.last_metadata)?;
         Ok(())
     }
 
@@ -109,11 +109,11 @@ impl Server {
 
         if args.title.is_empty() {
             println!("Rejecting play command with empty title.");
-            promise.err(&Error::InvalidTitle)?;
+            promise.err(Error::InvalidTitle)?;
             return Ok(());
         }
 
-        self.svc.state_changed(&State::Transitioning)?;
+        self.svc.state_changed(State::Transitioning)?;
 
         if let Some(metadata) = self.metadata.take() {
             self.svc.last_metadata_changed(&metadata)?;
@@ -124,7 +124,7 @@ impl Server {
             title: args.title,
             duration,
         });
-        self.svc.metadata_changed_ref(&self.metadata)?;
+        self.svc.metadata_changed(&self.metadata)?;
 
         self.position = Some(0);
         self.svc.position_changed(self.position)?;
@@ -150,16 +150,13 @@ impl Server {
 
         println!("Stopping playback.");
 
-        self.svc.state_changed(&State::Transitioning)?;
+        self.svc.state_changed(State::Transitioning)?;
 
         if let Some(metadata) = self.metadata.take() {
-            self.svc.metadata_changed(None)?;
+            self.svc.metadata_changed(())?;
             self.svc.last_metadata_changed(&metadata)?;
             self.last_metadata = Some(metadata);
         }
-
-        self.position = None;
-        self.svc.position_changed(self.position)?;
 
         self.position = None;
         self.svc.position_changed(self.position)?;
@@ -182,7 +179,7 @@ impl Server {
             call.done()?;
         } else {
             println!("Cannot pause playback.");
-            call.err(&Error::NotPlaying)?;
+            call.err(Error::NotPlaying)?;
         }
 
         Ok(())
@@ -197,7 +194,7 @@ impl Server {
             call.done()?;
         } else {
             println!("Cannot resume playback.");
-            call.err(&Error::NotPaused)?;
+            call.err(Error::NotPaused)?;
         }
 
         Ok(())
@@ -226,18 +223,18 @@ impl Server {
         *position += 1;
 
         if *position <= metadata.duration {
-            self.svc.position_changed(Some(*position))?;
+            self.svc.position_changed(Some(&position))?;
         }
 
         if *position >= metadata.duration {
             println!("Track `{}` finished.", metadata.title);
 
-            self.svc.state_changed(&State::Transitioning)?;
+            self.svc.state_changed(State::Transitioning)?;
 
             self.svc.last_metadata_changed(metadata)?;
             self.last_metadata = self.metadata.take();
 
-            self.svc.metadata_changed_ref(&self.metadata)?;
+            self.svc.metadata_changed(&self.metadata)?;
 
             self.position = None;
             self.svc.position_changed(self.position)?;

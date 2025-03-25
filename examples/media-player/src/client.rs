@@ -141,7 +141,7 @@ impl Listen {
     fn last_metadata_changed(&mut self, ev: Event<Metadata>) -> bool {
         // The last metadata property is special in that it starts out as `None`, then goes to
         // `Some` and will never be reset back to `None`. In the schema, this is expressed by the
-        // fact that the getter returns an `option`, but the event does not.
+        // fact that the getter returns an `Option`, but the event does not.
         self.last_metadata.check_event_some(ev).is_some()
     }
 }
@@ -159,7 +159,7 @@ pub async fn pause(args: ServerArg, bus: &Handle) -> Result<()> {
 pub async fn play(args: Play, bus: &Handle) -> Result<()> {
     get_media_player(bus, args.server.server)
         .await?
-        .play(&MediaPlayerPlayArgs {
+        .play(MediaPlayerPlayArgs {
             title: args.title,
             duration: args.duration,
             paused: Some(args.paused),
