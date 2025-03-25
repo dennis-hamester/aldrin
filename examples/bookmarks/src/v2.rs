@@ -1,6 +1,7 @@
 use crate::bookmarks_v2::{
-    Bookmark, Bookmarks, BookmarksEvent, BookmarksFunction, BookmarksGetV2Args, BookmarksProxy,
-    BookmarksRemoveV2Args, Error as BookmarkError,
+    Bookmark, Bookmarks, BookmarksEvent, BookmarksFunction, BookmarksGetV2Args,
+    BookmarksGetV2ArgsRef, BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef,
+    Error as BookmarkError,
 };
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
@@ -187,9 +188,9 @@ impl Server {
             .iter()
             .filter(|b| b.group.is_none())
             .cloned()
-            .collect();
+            .collect::<Vec<_>>();
 
-        call.ok_ref(&list)?;
+        call.ok(list)?;
 
         Ok(())
     }
@@ -199,7 +200,7 @@ impl Server {
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to get bookmarks due to unknown arguments.");
-            call.err(&BookmarkError::UnknownFields)?;
+            call.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
@@ -214,9 +215,9 @@ impl Server {
             .iter()
             .filter(|b| b.group == args.group)
             .cloned()
-            .collect();
+            .collect::<Vec<_>>();
 
-        call.ok_ref(&list)?;
+        call.ok(list)?;
 
         Ok(())
     }
@@ -226,13 +227,13 @@ impl Server {
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
-            promise.err(&BookmarkError::UnknownFields)?;
+            promise.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
         if bookmark.name.is_empty() {
             println!("Rejecting bookmark because the name is empty.");
-            promise.err(&BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         }
 
@@ -242,20 +243,20 @@ impl Server {
             .any(|b| (b.name == bookmark.name) && (b.group == bookmark.group))
         {
             println!("Rejecting bookmark because the name is used already.");
-            promise.err(&BookmarkError::DuplicateName)?;
+            promise.err(BookmarkError::DuplicateName)?;
             return Ok(());
         }
 
         if bookmark.url.is_empty() {
             println!("Rejecting bookmark because the URL is empty.");
-            promise.err(&BookmarkError::InvalidUrl)?;
+            promise.err(BookmarkError::InvalidUrl)?;
             return Ok(());
         }
 
         if let Some(ref group) = bookmark.group {
             if group.is_empty() {
                 println!("Rejecting bookmark because the group is empty.");
-                promise.err(&BookmarkError::InvalidGroup)?;
+                promise.err(BookmarkError::InvalidGroup)?;
                 return Ok(());
             }
         }
@@ -291,7 +292,7 @@ impl Server {
             .position(|b| (b.name == *name) && b.group.is_none())
         else {
             println!("Failed to remove unknown bookmark `{name}`");
-            call.err(&BookmarkError::InvalidName)?;
+            call.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
@@ -307,7 +308,7 @@ impl Server {
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to remove a bookmark due to unknown arguments.");
-            call.err(&BookmarkError::UnknownFields)?;
+            call.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
@@ -317,7 +318,7 @@ impl Server {
             .position(|b| (b.name == args.name) && (b.group == args.group))
         else {
             println!("Failed to remove unknown bookmark `{}`", args.name);
-            call.err(&BookmarkError::InvalidName)?;
+            call.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
@@ -349,7 +350,7 @@ impl Server {
         groups.sort_unstable();
         groups.dedup();
 
-        call.ok_ref(&groups)?;
+        call.ok(groups)?;
         Ok(())
     }
 
@@ -414,9 +415,9 @@ async fn get(args: Get, bus: &Handle) -> Result<()> {
         }
 
         let list = bookmarks
-            .get_v2(&BookmarksGetV2Args {
-                group: Some(group.clone()),
-                unknown_fields: UnknownFields::new(),
+            .get_v2(BookmarksGetV2ArgsRef {
+                group: Some(&group),
+                unknown_fields: (),
             })
             .await?
             .into_args()?;
@@ -561,10 +562,10 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
         }
 
         bookmarks
-            .remove_v2(&BookmarksRemoveV2Args {
-                name: args.name.clone(),
-                group: Some(group.clone()),
-                unknown_fields: UnknownFields::new(),
+            .remove_v2(BookmarksRemoveV2ArgsRef {
+                name: &args.name,
+                group: Some(&group),
+                unknown_fields: (),
             })
             .await?
             .into_args()?;

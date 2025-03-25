@@ -408,6 +408,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-bookmarks"
+version = "0.0.0"
+dependencies = [
+ "aldrin",
+ "anyhow",
+ "clap",
+ "tokio",
+]
+
+[[package]]
 name = "example-broker"
 version = "0.0.0"
 dependencies = [

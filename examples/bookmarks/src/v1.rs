@@ -134,25 +134,25 @@ impl Server {
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
-            promise.err(&BookmarkError::UnknownFields)?;
+            promise.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
         if bookmark.name.is_empty() {
             println!("Rejecting bookmark because the name is empty.");
-            promise.err(&BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         }
 
         if self.list.iter().any(|b| b.name == bookmark.name) {
             println!("Rejecting bookmark because the name is used already.");
-            promise.err(&BookmarkError::DuplicateName)?;
+            promise.err(BookmarkError::DuplicateName)?;
             return Ok(());
         }
 
         if bookmark.url.is_empty() {
             println!("Rejecting bookmark because the URL is empty.");
-            promise.err(&BookmarkError::InvalidUrl)?;
+            promise.err(BookmarkError::InvalidUrl)?;
             return Ok(());
         }
 
@@ -169,7 +169,7 @@ impl Server {
 
         let Some(idx) = self.list.iter().position(|b| b.name == *name) else {
             println!("Failed to remove unknown bookmark `{name}`");
-            call.err(&BookmarkError::InvalidName)?;
+            call.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
