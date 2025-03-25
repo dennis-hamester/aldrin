@@ -12,7 +12,7 @@ members = [
     # "examples/echo",
     # "examples/introspect",
     # "examples/media-player",
-    # "gen",
+    "gen",
     "macros",
     "parser",
     "test",
