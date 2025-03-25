@@ -9,7 +9,7 @@ members = [
     # "examples/bookmarks",
     "examples/broker",
     # "examples/downloader",
-    # "examples/echo",
+    "examples/echo",
     # "examples/introspect",
     # "examples/media-player",
     "gen",

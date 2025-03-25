@@ -159,10 +159,10 @@ async fn server(bus: &Handle) -> Result<()> {
                 println!("echo(\"{args}\") called.");
 
                 if args.is_empty() {
-                    // Here, we echo the same value back to the caller.
-                    promise.ok(&args)?;
+                    promise.err(EchoEchoError::EmptyString)?;
                 } else {
-                    promise.err(&EchoEchoError::EmptyString)?;
+                    // Here, we echo the same value back to the caller.
+                    promise.ok(args)?;
                 }
             }
 
@@ -171,6 +171,8 @@ async fn server(bus: &Handle) -> Result<()> {
                 println!("echo_all(\"{args}\") called.");
 
                 if args.is_empty() {
+                    call.err(EchoEchoAllError::EmptyString)?;
+                } else {
                     // This emits an event to all subscribed clients. If there is no such client,
                     // then the event will not even be sent to the broker. In any case, the event
                     // will be sent at most once. The broker then dispatches it further to other
@@ -179,8 +181,6 @@ async fn server(bus: &Handle) -> Result<()> {
 
                     // No value is sent back to the caller.
                     call.done()?;
-                } else {
-                    call.err(&EchoEchoAllError::EmptyString)?;
                 }
             }
         }
@@ -224,7 +224,7 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
     // errors on the protocol level, such as when e.g. the server shuts down during any of these
     // calls. The `match` then operates on the reply from the echo server (`Result<String,
     // EchoEchoError>`).
-    match echo.echo(&args.echo).await?.into_args() {
+    match echo.echo(args.echo).await?.into_args() {
         Ok(reply) => {
             println!("Server replied with: \"{reply}\".");
             Ok(())
@@ -245,7 +245,7 @@ async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     // This is just like `echo` above, except that the server returns no value. Instead, it will
     // emit an event with the value we sent. The event can be seen by having another instance of
     // this example running with the `listen` subcommand.
-    match echo.echo_all(&args.echo).await?.into_args() {
+    match echo.echo_all(args.echo).await?.into_args() {
         Ok(()) => Ok(()),
         Err(EchoEchoAllError::EmptyString) => Err(anyhow!("empty string")),
     }
