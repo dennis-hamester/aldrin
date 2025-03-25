@@ -3,7 +3,10 @@ use aldrin::core::ObjectUuid;
 use aldrin::{Call, Client, Handle, Promise, UnboundSender};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use downloader::{Chunk, Downloader, DownloaderDownloadArgs, DownloaderFunction, DownloaderProxy};
+use downloader::{
+    Chunk, ChunkRef, Downloader, DownloaderDownloadArgs, DownloaderDownloadArgsRef,
+    DownloaderFunction, DownloaderProxy,
+};
 use sha2::{Digest, Sha256};
 use std::convert::Infallible;
 use std::fs::File;
@@ -249,10 +252,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
     // When channels ends (here the sender) are sent over an Aldrin bus, they are not bound to any
     // specific client. The type of `sender` here is `UnboundSender<Chunk>`.
     let sender = downloader
-        .download(&DownloaderDownloadArgs {
-            name: name.into_owned(),
-            size,
-        })
+        .download(DownloaderDownloadArgsRef { name, size })
         .await?
         .into_args()?;
 
@@ -277,15 +277,13 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
                 // Sending items can block if the channel's capacity is exhausted. When that
                 // happens, the receiver must first remove some items from its end. There is also an
                 // optional `Sink` trait implementation from the futures crate.
-                sender
-                    .send_item(&Chunk::Data(buf[..n].to_vec().into()))
-                    .await?;
+                sender.send_item(ChunkRef::data(&buf[..n])).await?;
             }
         }
     }
 
     let sha256 = sha256.finalize();
-    sender.send_item(&Chunk::Done(sha256.into())).await?;
+    sender.send_item(Chunk::Done(sha256.into())).await?;
 
     let duration = time.elapsed();
     let mibps = size as f64 / duration.as_secs_f64() / 1024.0 / 1024.0;

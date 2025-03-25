@@ -8,7 +8,7 @@ members = [
     "core",
     # "examples/bookmarks",
     "examples/broker",
-    # "examples/downloader",
+    "examples/downloader",
     "examples/echo",
     # "examples/introspect",
     # "examples/media-player",
