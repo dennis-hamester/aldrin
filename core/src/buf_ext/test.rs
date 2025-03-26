@@ -277,7 +277,7 @@ fn value_try_peek_discriminant_u8() {
 
 #[test]
 fn value_try_get_u8() {
-    use super::ValueBufExt;
+    use bytes::Buf;
 
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_u8(), Ok(0));
@@ -290,7 +290,7 @@ fn value_try_get_u8() {
 
 #[test]
 fn value_try_get_i8() {
-    use super::ValueBufExt;
+    use bytes::Buf;
 
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_i8(), Ok(0));
@@ -311,26 +311,26 @@ fn value_try_get_i8() {
 
 #[test]
 fn value_try_get_u32_le() {
-    use super::ValueBufExt;
+    use bytes::Buf;
 
     let mut buf = &[0x78, 0x56, 0x34, 0x12][..];
     assert_eq!(buf.try_get_u32_le(), Ok(0x12345678));
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0][..];
-    assert_eq!(buf.try_get_u32_le(), Err(DeserializeError::UnexpectedEoi));
+    assert!(buf.try_get_u32_le().is_err());
 }
 
 #[test]
 fn value_try_get_u64_le() {
-    use super::ValueBufExt;
+    use bytes::Buf;
 
     let mut buf = &[0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12][..];
     assert_eq!(buf.try_get_u64_le(), Ok(0x123456789abcdef0));
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0, 0, 0, 0, 0][..];
-    assert_eq!(buf.try_get_u64_le(), Err(DeserializeError::UnexpectedEoi));
+    assert!(buf.try_get_u64_le().is_err());
 }
 
 #[test]
@@ -576,7 +576,7 @@ fn value_try_copy_to_bytes() {
 
 #[test]
 fn value_try_copy_to_slice() {
-    use super::ValueBufExt;
+    use bytes::Buf;
 
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0];
@@ -598,10 +598,7 @@ fn value_try_copy_to_slice() {
 
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0, 0];
-    assert_eq!(
-        src.try_copy_to_slice(&mut dst),
-        Err(DeserializeError::UnexpectedEoi)
-    );
+    assert!(src.try_copy_to_slice(&mut dst).is_err());
 }
 
 #[test]
@@ -645,7 +642,7 @@ fn message_try_get_discriminant_u8() {
 
 #[test]
 fn message_try_get_u8() {
-    use super::MessageBufExt;
+    use bytes::Buf;
 
     let mut buf = &[0][..];
     assert_eq!(buf.try_get_u8(), Ok(0));
@@ -703,7 +700,7 @@ fn message_try_get_varint_u32_le() {
 
 #[test]
 fn message_try_copy_to_slice() {
-    use super::MessageBufExt;
+    use bytes::Buf;
 
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0];
@@ -725,10 +722,7 @@ fn message_try_copy_to_slice() {
 
     let mut src = &[1, 2, 3][..];
     let mut dst = [0, 0, 0, 0];
-    assert_eq!(
-        src.try_copy_to_slice(&mut dst),
-        Err(MessageDeserializeError::UnexpectedEoi)
-    );
+    assert!(src.try_copy_to_slice(&mut dst).is_err());
 }
 
 #[test]

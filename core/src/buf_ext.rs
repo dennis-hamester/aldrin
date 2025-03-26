@@ -55,7 +55,8 @@ impl<T: BufMut + ?Sized> BufMutExt for T {}
 
 pub(crate) trait ValueBufExt: Buf {
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, DeserializeError> {
-        self.try_get_u8()?
+        self.try_get_u8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)?
             .try_into()
             .map_err(|_| DeserializeError::InvalidSerialization)
     }
@@ -78,38 +79,6 @@ pub(crate) trait ValueBufExt: Buf {
             Ok(())
         } else {
             Err(DeserializeError::UnexpectedValue)
-        }
-    }
-
-    fn try_get_u8(&mut self) -> Result<u8, DeserializeError> {
-        if self.remaining() >= 1 {
-            Ok(self.get_u8())
-        } else {
-            Err(DeserializeError::UnexpectedEoi)
-        }
-    }
-
-    fn try_get_i8(&mut self) -> Result<i8, DeserializeError> {
-        if self.remaining() >= 1 {
-            Ok(self.get_i8())
-        } else {
-            Err(DeserializeError::UnexpectedEoi)
-        }
-    }
-
-    fn try_get_u32_le(&mut self) -> Result<u32, DeserializeError> {
-        if self.remaining() >= 4 {
-            Ok(self.get_u32_le())
-        } else {
-            Err(DeserializeError::UnexpectedEoi)
-        }
-    }
-
-    fn try_get_u64_le(&mut self) -> Result<u64, DeserializeError> {
-        if self.remaining() >= 8 {
-            Ok(self.get_u64_le())
-        } else {
-            Err(DeserializeError::UnexpectedEoi)
         }
     }
 
@@ -139,11 +108,16 @@ pub(crate) trait ValueBufExt: Buf {
 
     fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], DeserializeError> {
         let mut bytes = [0; N];
-        let first = self.try_get_u8()?;
+
+        let first = self
+            .try_get_u8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
 
         if first > 255 - N as u8 {
             let num_bytes = first as usize + N - 255;
-            self.try_copy_to_slice(&mut bytes[..num_bytes])?;
+
+            self.try_copy_to_slice(&mut bytes[..num_bytes])
+                .map_err(|_| DeserializeError::UnexpectedEoi)?;
         } else {
             bytes[0] = first;
         }
@@ -159,15 +133,6 @@ pub(crate) trait ValueBufExt: Buf {
         }
     }
 
-    fn try_copy_to_slice(&mut self, dst: &mut [u8]) -> Result<(), DeserializeError> {
-        if self.remaining() >= dst.len() {
-            self.copy_to_slice(dst);
-            Ok(())
-        } else {
-            Err(DeserializeError::UnexpectedEoi)
-        }
-    }
-
     fn try_skip(&mut self, len: usize) -> Result<(), DeserializeError> {
         if self.remaining() >= len {
             self.advance(len);
@@ -178,7 +143,9 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_skip_varint_le<const N: usize>(&mut self) -> Result<(), DeserializeError> {
-        let first = self.try_get_u8()?;
+        let first = self
+            .try_get_u8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
 
         if first > 255 - N as u8 {
             let num_bytes = first as usize + N - 255;
@@ -193,7 +160,8 @@ impl<T: Buf + ?Sized> ValueBufExt for T {}
 
 pub(crate) trait MessageBufExt: Buf {
     fn try_get_discriminant_u8<T: TryFrom<u8>>(&mut self) -> Result<T, MessageDeserializeError> {
-        self.try_get_u8()?
+        self.try_get_u8()
+            .map_err(|_| MessageDeserializeError::UnexpectedEoi)?
             .try_into()
             .map_err(|_| MessageDeserializeError::InvalidSerialization)
     }
@@ -209,39 +177,27 @@ pub(crate) trait MessageBufExt: Buf {
         }
     }
 
-    fn try_get_u8(&mut self) -> Result<u8, MessageDeserializeError> {
-        if self.remaining() >= 1 {
-            Ok(self.get_u8())
-        } else {
-            Err(MessageDeserializeError::UnexpectedEoi)
-        }
-    }
-
     fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
         self.try_get_varint_le().map(u32::from_le_bytes)
     }
 
     fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], MessageDeserializeError> {
         let mut bytes = [0; N];
-        let first = self.try_get_u8()?;
+
+        let first = self
+            .try_get_u8()
+            .map_err(|_| MessageDeserializeError::UnexpectedEoi)?;
 
         if first > 255 - N as u8 {
             let num_bytes = first as usize + N - 255;
-            self.try_copy_to_slice(&mut bytes[..num_bytes])?;
+
+            self.try_copy_to_slice(&mut bytes[..num_bytes])
+                .map_err(|_| MessageDeserializeError::UnexpectedEoi)?;
         } else {
             bytes[0] = first;
         }
 
         Ok(bytes)
-    }
-
-    fn try_copy_to_slice(&mut self, dst: &mut [u8]) -> Result<(), MessageDeserializeError> {
-        if self.remaining() >= dst.len() {
-            self.copy_to_slice(dst);
-            Ok(())
-        } else {
-            Err(MessageDeserializeError::UnexpectedEoi)
-        }
     }
 }
 

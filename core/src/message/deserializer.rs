@@ -39,7 +39,11 @@ impl MessageWithoutValueDeserializer {
 
     pub fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
-        self.buf.try_copy_to_slice(&mut bytes)?;
+
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| MessageDeserializeError::UnexpectedEoi)?;
+
         Ok(Uuid::from_bytes(bytes))
     }
 
@@ -104,7 +108,11 @@ impl MessageWithValueDeserializer {
 
     pub fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
-        self.msg.try_copy_to_slice(&mut bytes)?;
+
+        self.msg
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| MessageDeserializeError::UnexpectedEoi)?;
+
         Ok(Uuid::from_bytes(bytes))
     }
 

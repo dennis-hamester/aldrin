@@ -59,6 +59,7 @@ impl KeyTagImpl for U8 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_u8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -94,6 +95,7 @@ impl KeyTagImpl for I8 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_i8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -385,7 +387,10 @@ impl KeyTagImpl for Uuid {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         let mut bytes = uuid::Bytes::default();
-        buf.try_copy_to_slice(&mut bytes)?;
+
+        buf.try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
+
         Ok(uuid::Uuid::from_bytes(bytes))
     }
 

@@ -201,17 +201,27 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_bool(self) -> Result<bool, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Bool)?;
-        self.buf.try_get_u8().map(|v| v != 0)
+
+        self.buf
+            .try_get_u8()
+            .map(|v| v != 0)
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     pub fn deserialize_u8(self) -> Result<u8, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::U8)?;
-        self.buf.try_get_u8()
+
+        self.buf
+            .try_get_u8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     pub fn deserialize_i8(self) -> Result<i8, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::I8)?;
-        self.buf.try_get_i8()
+
+        self.buf
+            .try_get_i8()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     pub fn deserialize_u16(self) -> Result<u16, DeserializeError> {
@@ -246,12 +256,18 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_f32(self) -> Result<f32, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::F32)?;
-        self.buf.try_get_u32_le().map(f32::from_bits)
+
+        self.buf
+            .try_get_f32_le()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     pub fn deserialize_f64(self) -> Result<f64, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::F64)?;
-        self.buf.try_get_u64_le().map(f64::from_bits)
+
+        self.buf
+            .try_get_f64_le()
+            .map_err(|_| DeserializeError::UnexpectedEoi)
     }
 
     pub fn deserialize_string(self) -> Result<String, DeserializeError> {
@@ -264,7 +280,11 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     pub fn deserialize_uuid(self) -> Result<Uuid, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Uuid)?;
         let mut bytes = uuid::Bytes::default();
-        self.buf.try_copy_to_slice(&mut bytes)?;
+
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
+
         Ok(Uuid::from_bytes(bytes))
     }
 
@@ -272,10 +292,14 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         self.buf.ensure_discriminant_u8(ValueKind::ObjectId)?;
         let mut bytes = uuid::Bytes::default();
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let uuid = ObjectUuid(Uuid::from_bytes(bytes));
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let cookie = ObjectCookie(Uuid::from_bytes(bytes));
 
         Ok(ObjectId::new(uuid, cookie))
@@ -285,16 +309,24 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         self.buf.ensure_discriminant_u8(ValueKind::ServiceId)?;
         let mut bytes = uuid::Bytes::default();
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let object_uuid = ObjectUuid(Uuid::from_bytes(bytes));
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let object_cookie = ObjectCookie(Uuid::from_bytes(bytes));
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let service_uuid = ServiceUuid(Uuid::from_bytes(bytes));
 
-        self.buf.try_copy_to_slice(&mut bytes)?;
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
         let service_cookie = ServiceCookie(Uuid::from_bytes(bytes));
 
         Ok(ServiceId::new(
@@ -415,14 +447,22 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     pub fn deserialize_sender(self) -> Result<ChannelCookie, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Sender)?;
         let mut bytes = uuid::Bytes::default();
-        self.buf.try_copy_to_slice(&mut bytes)?;
+
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
+
         Ok(ChannelCookie(Uuid::from_bytes(bytes)))
     }
 
     pub fn deserialize_receiver(self) -> Result<ChannelCookie, DeserializeError> {
         self.buf.ensure_discriminant_u8(ValueKind::Receiver)?;
         let mut bytes = uuid::Bytes::default();
-        self.buf.try_copy_to_slice(&mut bytes)?;
+
+        self.buf
+            .try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
+
         Ok(ChannelCookie(Uuid::from_bytes(bytes)))
     }
 }
