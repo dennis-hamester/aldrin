@@ -1,62 +1,32 @@
-use crate::error::ProtocolVersionErrorKind;
-use crate::ProtocolVersionError;
 use std::fmt;
 use std::str::FromStr;
+use thiserror::Error;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ProtocolVersion {
-    minor: Minor,
+    major: u32,
+    minor: u32,
 }
 
 impl ProtocolVersion {
-    pub const MAJOR: u32 = 1;
-    pub const V1_14: Self = Self { minor: Minor::V14 };
-    pub const V1_15: Self = Self { minor: Minor::V15 };
-    pub const V1_16: Self = Self { minor: Minor::V16 };
-    pub const V1_17: Self = Self { minor: Minor::V17 };
-    pub const V1_18: Self = Self { minor: Minor::V18 };
-    pub const V1_19: Self = Self { minor: Minor::V19 };
-    pub const MIN: Self = Self::V1_14;
-    pub const MAX: Self = Self::V1_19;
+    pub const V1_14: Self = Self::new(1, 14);
+    pub const V1_15: Self = Self::new(1, 15);
+    pub const V1_16: Self = Self::new(1, 16);
+    pub const V1_17: Self = Self::new(1, 17);
+    pub const V1_18: Self = Self::new(1, 18);
+    pub const V1_19: Self = Self::new(1, 19);
 
-    pub const fn new(major: u32, minor: u32) -> Result<Self, ProtocolVersionError> {
-        if major != Self::MAJOR {
-            return Err(ProtocolVersionError {
-                kind: ProtocolVersionErrorKind::InvalidMajor,
-            });
-        }
-
-        match minor {
-            14 => Ok(Self { minor: Minor::V14 }),
-            15 => Ok(Self { minor: Minor::V15 }),
-            16 => Ok(Self { minor: Minor::V16 }),
-            17 => Ok(Self { minor: Minor::V17 }),
-            18 => Ok(Self { minor: Minor::V18 }),
-            19 => Ok(Self { minor: Minor::V19 }),
-
-            _ => Err(ProtocolVersionError {
-                kind: ProtocolVersionErrorKind::InvalidMinor,
-            }),
-        }
+    pub const fn new(major: u32, minor: u32) -> Self {
+        Self { major, minor }
     }
 
-    pub const fn major(&self) -> u32 {
-        Self::MAJOR
+    pub const fn major(self) -> u32 {
+        self.major
     }
 
-    pub const fn minor(&self) -> u32 {
-        self.minor as u32
+    pub const fn minor(self) -> u32 {
+        self.minor
     }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-enum Minor {
-    V14 = 14,
-    V15 = 15,
-    V16 = 16,
-    V17 = 17,
-    V18 = 18,
-    V19 = 19,
 }
 
 impl fmt::Display for ProtocolVersion {
@@ -66,20 +36,25 @@ impl fmt::Display for ProtocolVersion {
 }
 
 impl FromStr for ProtocolVersion {
-    type Err = ProtocolVersionError;
+    type Err = ProtocolVersionParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (major, minor) = s.split_once('.').ok_or(ProtocolVersionErrorKind::Parse)?;
-        let major = major.parse().map_err(|_| ProtocolVersionErrorKind::Parse)?;
-        let minor = minor.parse().map_err(|_| ProtocolVersionErrorKind::Parse)?;
-        Self::new(major, minor)
+        let (major, minor) = s.split_once('.').ok_or(ProtocolVersionParseError)?;
+
+        let major = major.parse().map_err(|_| ProtocolVersionParseError)?;
+        let minor = minor.parse().map_err(|_| ProtocolVersionParseError)?;
+
+        Ok(Self::new(major, minor))
     }
 }
 
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[error("failed to parse protocol version")]
+pub struct ProtocolVersionParseError;
+
 #[cfg(test)]
 mod test {
-    use super::ProtocolVersion;
-    use crate::error::ProtocolVersionErrorKind;
+    use super::{ProtocolVersion, ProtocolVersionParseError};
 
     #[test]
     fn parse_protocol_version() {
@@ -91,38 +66,23 @@ mod test {
         assert_eq!("1.19".parse(), Ok(ProtocolVersion::V1_19));
 
         assert_eq!(
-            "1.13".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::InvalidMinor.into())
-        );
-        assert_eq!(
-            "1.20".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::InvalidMinor.into())
-        );
-
-        assert_eq!(
-            "0.14".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::InvalidMajor.into())
-        );
-        assert_eq!(
-            "1.0".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::InvalidMinor.into())
-        );
-        assert_eq!(
-            "1.4294967295".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::InvalidMinor.into())
+            "1.4294967296".parse::<ProtocolVersion>(),
+            Err(ProtocolVersionParseError)
         );
 
         assert_eq!(
             "1.".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::Parse.into())
+            Err(ProtocolVersionParseError)
         );
+
         assert_eq!(
             ".14".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::Parse.into())
+            Err(ProtocolVersionParseError)
         );
+
         assert_eq!(
             "".parse::<ProtocolVersion>(),
-            Err(ProtocolVersionErrorKind::Parse.into())
+            Err(ProtocolVersionParseError)
         );
     }
 }

@@ -18,9 +18,6 @@ use futures_channel::mpsc;
 use futures_channel::oneshot;
 use futures_util::sink::SinkExt;
 
-const PROTOCOL_VERSION_MIN: ProtocolVersion = ProtocolVersion::V1_14;
-const PROTOCOL_VERSION_MAX: ProtocolVersion = ProtocolVersion::V1_19;
-
 /// Handle of an active broker.
 ///
 /// `BrokerHandle`s are used to interact with an active [`Broker`](crate::Broker). The first
@@ -97,25 +94,27 @@ impl BrokerHandle {
     where
         T: AsyncTransport + Unpin,
     {
-        let (connect2, data, major_version, minor_version) =
+        let (connect2, data, version) =
             match t.receive().await.map_err(EstablishError::Transport)? {
                 Message::Connect(msg) => {
                     let data = ConnectData {
                         user: Some(msg.value),
                     };
 
-                    (false, data, ProtocolVersion::MAJOR, msg.version)
+                    (false, data, ProtocolVersion::new(1, msg.version))
                 }
 
                 Message::Connect2(msg) => {
                     let data = msg.value.deserialize()?;
-                    (true, data, msg.major_version, msg.minor_version)
+                    let version = ProtocolVersion::new(msg.major_version, msg.minor_version);
+
+                    (true, data, version)
                 }
 
                 msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
             };
 
-        let Some(version) = select_protocol_version(major_version, minor_version, connect2) else {
+        let Some(version) = select_protocol_version(version, connect2) else {
             if connect2 {
                 let _ = t
                     .send_and_flush(Message::ConnectReply2(ConnectReply2 {
@@ -422,16 +421,21 @@ impl<T: AsyncTransport + Unpin> PendingConnection<T> {
     }
 }
 
-fn select_protocol_version(major: u32, minor: u32, connect2: bool) -> Option<ProtocolVersion> {
-    if connect2 {
-        if (major == ProtocolVersion::MAJOR) && (minor >= PROTOCOL_VERSION_MIN.minor()) {
-            let minor = minor.min(PROTOCOL_VERSION_MAX.minor());
-            Some(ProtocolVersion::new(ProtocolVersion::MAJOR, minor).unwrap())
+fn select_protocol_version(version: ProtocolVersion, connect2: bool) -> Option<ProtocolVersion> {
+    const MAJOR: u32 = 1;
+    const MINOR_MIN: u32 = 14;
+    const MINOR_MAX: u32 = 19;
+
+    if version.major() != 1 {
+        None
+    } else if connect2 {
+        if version.minor() >= MINOR_MIN {
+            let minor = version.minor().min(MINOR_MAX);
+            Some(ProtocolVersion::new(MAJOR, minor))
         } else {
             None
         }
-    } else if (major == ProtocolVersion::V1_14.major()) && (minor == ProtocolVersion::V1_14.minor())
-    {
+    } else if version.minor() == ProtocolVersion::V1_14.minor() {
         Some(ProtocolVersion::V1_14)
     } else {
         None
@@ -441,49 +445,86 @@ fn select_protocol_version(major: u32, minor: u32, connect2: bool) -> Option<Pro
 #[cfg(test)]
 mod test {
     use super::select_protocol_version;
-    use aldrin::core::ProtocolVersion;
+    use aldrin_core::ProtocolVersion;
 
     #[test]
-    fn test_select_protocol_version() {
+    fn test_select_protocol_version_connect1() {
         assert_eq!(
-            select_protocol_version(1, 14, true),
+            select_protocol_version(ProtocolVersion::new(1, 14), false),
             Some(ProtocolVersion::V1_14)
         );
-        assert_eq!(
-            select_protocol_version(1, 15, true),
-            Some(ProtocolVersion::V1_15)
-        );
-        assert_eq!(
-            select_protocol_version(1, 16, true),
-            Some(ProtocolVersion::V1_16)
-        );
-        assert_eq!(
-            select_protocol_version(1, 17, true),
-            Some(ProtocolVersion::V1_17)
-        );
-        assert_eq!(
-            select_protocol_version(1, 18, true),
-            Some(ProtocolVersion::V1_18)
-        );
-        assert_eq!(
-            select_protocol_version(1, 19, true),
-            Some(ProtocolVersion::V1_19)
-        );
-        assert_eq!(
-            select_protocol_version(1, 20, true),
-            Some(ProtocolVersion::V1_19)
-        );
-        assert_eq!(select_protocol_version(1, 13, true), None);
-        assert_eq!(select_protocol_version(2, 0, true), None);
-        assert_eq!(select_protocol_version(2, 14, true), None);
 
         assert_eq!(
-            select_protocol_version(1, 14, false),
+            select_protocol_version(ProtocolVersion::new(1, 15), false),
+            None
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 13), false),
+            None
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(2, 0), false),
+            None
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(2, 14), false),
+            None
+        );
+    }
+
+    #[test]
+    fn test_select_protocol_version_connect2() {
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 14), true),
             Some(ProtocolVersion::V1_14)
         );
-        assert_eq!(select_protocol_version(1, 15, false), None);
-        assert_eq!(select_protocol_version(1, 13, false), None);
-        assert_eq!(select_protocol_version(2, 0, false), None);
-        assert_eq!(select_protocol_version(2, 14, false), None);
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 15), true),
+            Some(ProtocolVersion::V1_15)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 16), true),
+            Some(ProtocolVersion::V1_16)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 17), true),
+            Some(ProtocolVersion::V1_17)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 18), true),
+            Some(ProtocolVersion::V1_18)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 19), true),
+            Some(ProtocolVersion::V1_19)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 20), true),
+            Some(ProtocolVersion::V1_19)
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(1, 13), true),
+            None
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(2, 0), true),
+            None
+        );
+
+        assert_eq!(
+            select_protocol_version(ProtocolVersion::new(2, 14), true),
+            None
+        );
     }
 }

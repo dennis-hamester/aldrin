@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Serialize` and `Deserialize` have been re-worked. They are now generic traits over a type `T`
   (called tag), which describes how a value is serialized. This is a breaking change that affects
   almost all parts of Aldrin.
+- `ProtocolVersion` is now able to represent all possible versions, not just known versions.
+  `ProtocolVersionError` has been replace by `ProtocolVersionParseError`.
 
 ## [0.12.0] - 2025-01-26
 

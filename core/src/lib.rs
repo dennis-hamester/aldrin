@@ -7,7 +7,6 @@ mod channel_end;
 mod deserialize;
 mod deserialize_key;
 mod deserializer;
-mod error;
 mod ids;
 mod impls;
 mod key_impls;
@@ -40,19 +39,18 @@ pub use aldrin_macros::Introspectable;
 pub use aldrin_macros::{Deserialize, PrimaryTag, RefType, Serialize, Tag};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
-pub use deserialize::Deserialize;
+pub use deserialize::{Deserialize, DeserializeError};
 pub use deserialize_key::DeserializeKey;
 pub use deserializer::{
     BytesDeserializer, Deserializer, EnumDeserializer, FieldDeserializer, MapDeserializer,
     MapElementDeserializer, SetDeserializer, StructDeserializer, VecDeserializer,
 };
-pub use error::{DeserializeError, ProtocolVersionError, SerializeError};
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid, TypeId,
 };
 pub use protocol_version::ProtocolVersion;
-pub use serialize::Serialize;
+pub use serialize::{Serialize, SerializeError};
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use serializer::{

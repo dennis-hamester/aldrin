@@ -66,8 +66,6 @@ use std::convert::Infallible;
 use std::mem;
 use std::time::Instant;
 
-const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_19;
-
 /// Aldrin client used to connect to a broker.
 ///
 /// This is the first entry point to Aldrin. A [`Client`] is used to establish a connection to an
@@ -183,6 +181,8 @@ where
         mut t: T,
         data: Option<E>,
     ) -> Result<(Self, Option<SerializedValue>), ConnectError<T::Error>> {
+        const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_19;
+
         let mut connect_data = ConnectData::new();
 
         if let Some(data) = data {
@@ -212,9 +212,7 @@ where
             ConnectResult::IncompatibleVersion => return Err(ConnectError::IncompatibleVersion),
         };
 
-        let protocol_version = ProtocolVersion::new(PROTOCOL_VERSION.major(), minor_version)
-            .map_err(|_| ConnectError::IncompatibleVersion)?;
-
+        let protocol_version = ProtocolVersion::new(PROTOCOL_VERSION.major(), minor_version);
         if protocol_version > PROTOCOL_VERSION {
             return Err(ConnectError::IncompatibleVersion);
         }
