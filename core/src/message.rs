@@ -69,7 +69,9 @@ mod unsubscribe_all_events_reply;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
-use crate::{SerializedValue, SerializedValueSlice};
+use crate::{
+    convert_value, ProtocolVersion, SerializedValue, SerializedValueSlice, ValueConversionError,
+};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -153,6 +155,14 @@ pub trait MessageOps: Sized + message_ops::Sealed {
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError>;
     fn value(&self) -> Option<&SerializedValueSlice>;
     fn value_mut(&mut self) -> Option<&mut SerializedValue>;
+
+    fn convert_value(
+        &mut self,
+        from: Option<ProtocolVersion>,
+        to: ProtocolVersion,
+    ) -> Result<(), ValueConversionError> {
+        convert_value::convert_in_message(self, from, to)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

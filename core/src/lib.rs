@@ -4,6 +4,7 @@ mod buf_ext;
 mod bus_listener;
 mod bytes;
 mod channel_end;
+mod convert_value;
 mod deserialize;
 mod deserialize_key;
 mod deserializer;
@@ -39,6 +40,7 @@ pub use aldrin_macros::Introspectable;
 pub use aldrin_macros::{Deserialize, PrimaryTag, RefType, Serialize, Tag};
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
+pub use convert_value::ValueConversionError;
 pub use deserialize::{Deserialize, DeserializeError};
 pub use deserialize_key::DeserializeKey;
 pub use deserializer::{

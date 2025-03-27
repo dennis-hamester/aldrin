@@ -5,11 +5,11 @@ mod test;
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, Value,
-    ValueKind,
+    convert_value, Deserialize, DeserializeError, Deserializer, ProtocolVersion, Serialize,
+    SerializeError, Serializer, Value, ValueConversionError, ValueKind,
 };
 use bytes::BytesMut;
-use std::borrow::Borrow;
+use std::borrow::{Borrow, Cow};
 use std::ops::Deref;
 use std::{fmt, mem};
 
@@ -48,6 +48,14 @@ impl SerializedValue {
 
     pub fn take(&mut self) -> Self {
         mem::take(self)
+    }
+
+    pub fn convert(
+        &mut self,
+        from: Option<ProtocolVersion>,
+        to: ProtocolVersion,
+    ) -> Result<(), ValueConversionError> {
+        convert_value::convert_mut(self, from, to)
     }
 
     pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {
@@ -213,6 +221,14 @@ impl SerializedValueSlice {
 
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
         self.deserialize()
+    }
+
+    pub fn convert(
+        &self,
+        from: Option<ProtocolVersion>,
+        to: ProtocolVersion,
+    ) -> Result<Cow<Self>, ValueConversionError> {
+        convert_value::convert(self, from, to)
     }
 }
 
