@@ -56,7 +56,7 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
 pub use error::BrokerShutdown;
-pub use handle::{BrokerHandle, PendingConnection};
+pub use handle::BrokerHandle;
 #[cfg(feature = "statistics")]
 pub use statistics::BrokerStatistics;
 

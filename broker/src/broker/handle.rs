@@ -3,16 +3,9 @@ use crate::conn::ConnectionEvent;
 use crate::conn_id::ConnectionIdManager;
 #[cfg(feature = "statistics")]
 use crate::BrokerStatistics;
-use crate::{Connection, ConnectionHandle, EstablishError};
-use aldrin_core::message::{
-    ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message,
-};
-use aldrin_core::tags::Tag;
-use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_core::{
-    Deserialize, DeserializeError, ProtocolVersion, Serialize, SerializedValue,
-    SerializedValueSlice,
-};
+use crate::{AcceptError, Acceptor, Connection, ConnectionHandle};
+use aldrin_core::transport::AsyncTransport;
+use aldrin_core::ProtocolVersion;
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;
@@ -40,6 +33,22 @@ impl BrokerHandle {
         }
     }
 
+    pub(crate) async fn add_connection<T: AsyncTransport + Unpin>(
+        &mut self,
+        transport: T,
+        version: ProtocolVersion,
+    ) -> Result<Connection<T>, BrokerShutdown> {
+        let id = self.ids.acquire();
+        let (send, recv) = mpsc::unbounded();
+
+        self.send
+            .send(ConnectionEvent::NewConnection(id.clone(), version, send))
+            .await
+            .map_err(|_| BrokerShutdown)?;
+
+        Ok(Connection::new(transport, id, self.send.clone(), recv))
+    }
+
     /// Establishes a new connection.
     ///
     /// This method performs the initial connection setup and Aldrin handshake between broker and
@@ -48,7 +57,7 @@ impl BrokerHandle {
     ///
     /// The Aldrin protocol allows client and broker to exchange custom user data during the
     /// handshake. This function will ignore the client's user data. If you need to inspect the data
-    /// and possibly reject some clients, then use [`begin_connect`](Self::begin_connect).
+    /// and possibly reject some clients, then use [`Acceptor`].
     ///
     /// # Examples
     ///
@@ -75,69 +84,11 @@ impl BrokerHandle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn connect<T>(&mut self, t: T) -> Result<Connection<T>, EstablishError<T::Error>>
+    pub async fn connect<T>(&mut self, transport: T) -> Result<Connection<T>, AcceptError<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
-        self.begin_connect(t).await?.accept(None).await
-    }
-
-    /// Begins establishing a new connection.
-    ///
-    /// Unlike [`connect`](Self::connect), this function will not automatically establish a
-    /// connection. It will only receive the client's initial connection message. This allows you to
-    /// inspect the client's user data and accept or reject the client.
-    pub async fn begin_connect<T>(
-        &mut self,
-        mut t: T,
-    ) -> Result<PendingConnection<T>, EstablishError<T::Error>>
-    where
-        T: AsyncTransport + Unpin,
-    {
-        let (connect2, data, version) =
-            match t.receive().await.map_err(EstablishError::Transport)? {
-                Message::Connect(msg) => {
-                    let data = ConnectData {
-                        user: Some(msg.value),
-                    };
-
-                    (false, data, ProtocolVersion::new(1, msg.version))
-                }
-
-                Message::Connect2(msg) => {
-                    let data = msg.value.deserialize()?;
-                    let version = ProtocolVersion::new(msg.major_version, msg.minor_version);
-
-                    (true, data, version)
-                }
-
-                msg => return Err(EstablishError::UnexpectedMessageReceived(msg)),
-            };
-
-        let Some(version) = select_protocol_version(version, connect2) else {
-            if connect2 {
-                let _ = t
-                    .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                        result: ConnectResult::IncompatibleVersion,
-                        value: SerializedValue::serialize(ConnectReplyData::new())?,
-                    }))
-                    .await;
-            } else {
-                let _ = t
-                    .send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(14)))
-                    .await;
-            }
-
-            return Err(EstablishError::IncompatibleVersion);
-        };
-
-        Ok(PendingConnection::new(
-            self.clone(),
-            t,
-            connect2,
-            data,
-            version,
-        ))
+        Acceptor::new(transport).await?.accept(self).await
     }
 
     /// Shuts down the broker.
@@ -274,257 +225,5 @@ impl BrokerHandle {
             .await
             .map_err(|_| BrokerShutdown)?;
         recv.await.map_err(|_| BrokerShutdown)
-    }
-}
-
-/// A pending client connection, that hasn't been accepted or rejected yet.
-///
-/// This type is acquired by [`BrokerHandle::begin_connect`]. It allows inspection of the [client's
-/// user data](Self::user_data) and to [accept](Self::accept) or [reject](Self::reject) a client.
-///
-/// Dropping this type will simply also drop the transport. No message will be sent back to the
-/// client in this case.
-#[derive(Debug)]
-pub struct PendingConnection<T: AsyncTransport + Unpin> {
-    handle: BrokerHandle,
-    t: T,
-    connect2: bool,
-    data: ConnectData,
-    version: ProtocolVersion,
-}
-
-impl<T: AsyncTransport + Unpin> PendingConnection<T> {
-    fn new(
-        handle: BrokerHandle,
-        t: T,
-        connect2: bool,
-        data: ConnectData,
-        version: ProtocolVersion,
-    ) -> Self {
-        Self {
-            handle,
-            t,
-            connect2,
-            data,
-            version,
-        }
-    }
-
-    /// Returns the client's user data.
-    pub fn user_data(&self) -> Option<&SerializedValueSlice> {
-        self.data.user.as_deref()
-    }
-
-    /// Deserializes the client's user data.
-    pub fn deserialize_client_data<C: Tag, D: Deserialize<C>>(
-        &self,
-    ) -> Option<Result<D, DeserializeError>> {
-        self.data.deserialize_user_as()
-    }
-
-    /// Returns the selected protocol version for this connection.
-    pub fn protocol_version(&self) -> ProtocolVersion {
-        self.version
-    }
-
-    /// Accepts a client with optional user data.
-    ///
-    /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
-    /// like the [`Broker`](crate::Broker) itself.
-    pub async fn accept(
-        mut self,
-        user_data: Option<SerializedValue>,
-    ) -> Result<Connection<T>, EstablishError<T::Error>> {
-        if self.connect2 {
-            self.t
-                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                    result: ConnectResult::Ok(self.version.minor()),
-                    value: SerializedValue::serialize(ConnectReplyData { user: user_data })?,
-                }))
-                .await
-                .map_err(EstablishError::Transport)?;
-        } else {
-            let user_data = user_data
-                .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(()))?;
-
-            self.t
-                .send_and_flush(Message::ConnectReply(ConnectReply::Ok(user_data)))
-                .await
-                .map_err(EstablishError::Transport)?;
-        }
-
-        let id = self.handle.ids.acquire();
-        let (send, recv) = mpsc::unbounded();
-
-        self.handle
-            .send
-            .send(ConnectionEvent::NewConnection(
-                id.clone(),
-                self.version,
-                send,
-            ))
-            .await
-            .map_err(|_| EstablishError::Shutdown)?;
-
-        let conn = Connection::new(self.t, id, self.handle.send, recv);
-
-        Ok(conn)
-    }
-
-    /// Accepts a client with optional user data.
-    ///
-    /// The resulting [`Connection`] must be [`run`](Connection::run) and polled to completion, much
-    /// like the [`Broker`](crate::Broker) itself.
-    pub async fn accept_serialize<C: Tag, D: Serialize<C>>(
-        self,
-        user_data: Option<D>,
-    ) -> Result<Connection<T>, EstablishError<T::Error>> {
-        let user_data = user_data.map(SerializedValue::serialize_as).transpose()?;
-        self.accept(user_data).await
-    }
-
-    /// Rejects a client with optional user data.
-    pub async fn reject(
-        mut self,
-        user_data: Option<SerializedValue>,
-    ) -> Result<(), EstablishError<T::Error>> {
-        if self.connect2 {
-            self.t
-                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                    result: ConnectResult::Rejected,
-                    value: SerializedValue::serialize(ConnectReplyData { user: user_data })?,
-                }))
-                .await
-                .map_err(EstablishError::Transport)?;
-        } else {
-            let user_data = user_data
-                .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(()))?;
-
-            self.t
-                .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(user_data)))
-                .await
-                .map_err(EstablishError::Transport)?;
-        }
-
-        Ok(())
-    }
-
-    /// Rejects a client with optional user data.
-    pub async fn reject_serialize<C: Tag, D: Serialize<C>>(
-        self,
-        user_data: Option<D>,
-    ) -> Result<(), EstablishError<T::Error>> {
-        let user_data = user_data.map(SerializedValue::serialize_as).transpose()?;
-        self.reject(user_data).await
-    }
-}
-
-fn select_protocol_version(version: ProtocolVersion, connect2: bool) -> Option<ProtocolVersion> {
-    const MAJOR: u32 = 1;
-    const MINOR_MIN: u32 = 14;
-    const MINOR_MAX: u32 = 19;
-
-    if version.major() != 1 {
-        None
-    } else if connect2 {
-        if version.minor() >= MINOR_MIN {
-            let minor = version.minor().min(MINOR_MAX);
-            Some(ProtocolVersion::new(MAJOR, minor))
-        } else {
-            None
-        }
-    } else if version.minor() == ProtocolVersion::V1_14.minor() {
-        Some(ProtocolVersion::V1_14)
-    } else {
-        None
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::select_protocol_version;
-    use aldrin_core::ProtocolVersion;
-
-    #[test]
-    fn test_select_protocol_version_connect1() {
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 14), false),
-            Some(ProtocolVersion::V1_14)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 15), false),
-            None
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 13), false),
-            None
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(2, 0), false),
-            None
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(2, 14), false),
-            None
-        );
-    }
-
-    #[test]
-    fn test_select_protocol_version_connect2() {
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 14), true),
-            Some(ProtocolVersion::V1_14)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 15), true),
-            Some(ProtocolVersion::V1_15)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 16), true),
-            Some(ProtocolVersion::V1_16)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 17), true),
-            Some(ProtocolVersion::V1_17)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 18), true),
-            Some(ProtocolVersion::V1_18)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 19), true),
-            Some(ProtocolVersion::V1_19)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 20), true),
-            Some(ProtocolVersion::V1_19)
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(1, 13), true),
-            None
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(2, 0), true),
-            None
-        );
-
-        assert_eq!(
-            select_protocol_version(ProtocolVersion::new(2, 14), true),
-            None
-        );
     }
 }

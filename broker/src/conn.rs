@@ -13,7 +13,7 @@ use futures_util::stream::StreamExt;
 
 pub(crate) use event::ConnectionEvent;
 
-pub use error::{ConnectionError, EstablishError};
+pub use error::ConnectionError;
 pub use handle::ConnectionHandle;
 
 /// Connection between a broker and a client.

@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `Acceptor` type.
+
 ### Changed
 
 - Adapt to the new `Serialize` and `Deserialize` traits.
+- `PendingConnection` has been replaced with `Acceptor`.
 
 ## [0.12.0] - 2025-01-26
 

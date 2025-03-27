@@ -52,6 +52,7 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 
+mod acceptor;
 mod broker;
 mod bus_listener;
 mod conn;
@@ -60,8 +61,9 @@ mod conn_id;
 mod introspection_database;
 mod serial_map;
 
+pub use acceptor::{AcceptError, Acceptor};
 pub use aldrin_core as core;
 #[cfg(feature = "statistics")]
 pub use broker::BrokerStatistics;
-pub use broker::{Broker, BrokerHandle, BrokerShutdown, PendingConnection};
-pub use conn::{Connection, ConnectionError, ConnectionHandle, EstablishError};
+pub use broker::{Broker, BrokerHandle, BrokerShutdown};
+pub use conn::{Connection, ConnectionError, ConnectionHandle};

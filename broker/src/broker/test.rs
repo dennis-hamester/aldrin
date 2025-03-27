@@ -5,15 +5,13 @@ use aldrin_core::channel::{self, Disconnected, Unbounded};
 use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
     ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect, Connect2, ConnectData, ConnectReply,
-    ConnectReplyData, ConnectResult, CreateChannel, CreateChannelReply, CreateObject,
-    CreateObjectReply, CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult,
-    Message, SendItem, Sync, SyncReply,
+    CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData, ConnectResult,
+    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
+    CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem, Sync, SyncReply,
 };
 use aldrin_core::transport::AsyncTransportExt;
 use aldrin_core::{
-    tags, ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue,
-    ServiceUuid,
+    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
 };
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
@@ -89,157 +87,6 @@ async fn drop_conn_before_function_call() {
         .unwrap();
 
     assert!(res.is_err());
-}
-
-#[tokio::test]
-async fn begin_connect_accept() {
-    let broker = Broker::new();
-    let mut handle = broker.handle().clone();
-    let join = tokio::spawn(broker.run());
-
-    let (mut t1, t2) = channel::unbounded();
-
-    t1.send_and_flush(Connect {
-        version: 14,
-        value: SerializedValue::serialize(0u32).unwrap(),
-    })
-    .await
-    .unwrap();
-
-    let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(
-        conn.deserialize_client_data::<tags::U32, _>(),
-        Some(Ok(0u32))
-    );
-
-    let _ = conn
-        .accept_serialize::<tags::U32, _>(Some(1u32))
-        .await
-        .unwrap();
-    let value = match t1.receive().await.unwrap() {
-        Message::ConnectReply(ConnectReply::Ok(value)) => value,
-        msg => panic!("invalid msg received {msg:?}"),
-    };
-    assert_eq!(value.deserialize(), Ok(1u32));
-
-    handle.shutdown().await;
-    join.await.unwrap();
-}
-
-#[tokio::test]
-async fn begin_connect_2_accept() {
-    let broker = Broker::new();
-    let mut handle = broker.handle().clone();
-    let join = tokio::spawn(broker.run());
-
-    let (mut t1, t2) = channel::unbounded();
-
-    let mut data = ConnectData::new();
-    data.serialize_user(0u32).unwrap();
-    t1.send_and_flush(Connect2 {
-        major_version: ProtocolVersion::V1_14.major(),
-        minor_version: ProtocolVersion::V1_15.minor(),
-        value: SerializedValue::serialize(data).unwrap(),
-    })
-    .await
-    .unwrap();
-
-    let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(
-        conn.deserialize_client_data::<tags::U32, _>(),
-        Some(Ok(0u32))
-    );
-
-    let _ = conn
-        .accept_serialize::<tags::U32, _>(Some(1u32))
-        .await
-        .unwrap();
-    let msg = match t1.receive().await.unwrap() {
-        Message::ConnectReply2(msg) => msg,
-        msg => panic!("invalid msg received {msg:?}"),
-    };
-    assert_eq!(
-        msg.result,
-        ConnectResult::Ok(ProtocolVersion::V1_15.minor())
-    );
-    let data = msg.value.deserialize::<ConnectReplyData>().unwrap();
-    assert_eq!(data.deserialize_user(), Some(Ok(1u32)));
-
-    handle.shutdown().await;
-    join.await.unwrap();
-}
-
-#[tokio::test]
-async fn begin_connect_reject() {
-    let broker = Broker::new();
-    let mut handle = broker.handle().clone();
-    let join = tokio::spawn(broker.run());
-
-    let (mut t1, t2) = channel::unbounded();
-
-    t1.send_and_flush(Connect {
-        version: 14,
-        value: SerializedValue::serialize(0u32).unwrap(),
-    })
-    .await
-    .unwrap();
-
-    let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(
-        conn.deserialize_client_data::<tags::U32, _>(),
-        Some(Ok(0u32))
-    );
-
-    conn.reject_serialize::<tags::U32, _>(Some(1u32))
-        .await
-        .unwrap();
-    let value = match t1.receive().await.unwrap() {
-        Message::ConnectReply(ConnectReply::Rejected(value)) => value,
-        msg => panic!("invalid msg received {msg:?}"),
-    };
-    assert_eq!(value.deserialize(), Ok(1u32));
-
-    handle.shutdown().await;
-    join.await.unwrap();
-}
-
-#[tokio::test]
-async fn begin_connect_2_reject() {
-    let broker = Broker::new();
-    let mut handle = broker.handle().clone();
-    let join = tokio::spawn(broker.run());
-
-    let (mut t1, t2) = channel::unbounded();
-
-    let mut data = ConnectData::new();
-    data.serialize_user(0u32).unwrap();
-    t1.send_and_flush(Connect2 {
-        major_version: ProtocolVersion::V1_14.major(),
-        minor_version: ProtocolVersion::V1_15.minor(),
-        value: SerializedValue::serialize(data).unwrap(),
-    })
-    .await
-    .unwrap();
-
-    let conn = handle.begin_connect(t2).await.unwrap();
-    assert_eq!(
-        conn.deserialize_client_data::<tags::U32, _>(),
-        Some(Ok(0u32))
-    );
-
-    conn.reject_serialize::<tags::U32, _>(Some(1u32))
-        .await
-        .unwrap();
-    let msg = match t1.receive().await.unwrap() {
-        Message::ConnectReply2(msg) => msg,
-        msg => panic!("invalid msg received {msg:?}"),
-    };
-    assert_eq!(msg.result, ConnectResult::Rejected);
-    let data = msg.value.deserialize::<ConnectReplyData>().unwrap();
-    assert_eq!(data.deserialize_user(), Some(Ok(1u32)));
-
-    handle.shutdown().await;
-    join.await.unwrap();
 }
 
 #[tokio::test]
