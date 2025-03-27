@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_core::message::Message;
+use crate::versioned_message::VersionedMessage;
 use aldrin_core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
 use std::collections::hash_map::{Entry, HashMap};
@@ -7,8 +7,8 @@ use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {
-    protocol_version: ProtocolVersion,
-    send: UnboundedSender<Message>,
+    version: ProtocolVersion,
+    send: UnboundedSender<VersionedMessage>,
     objects: HashSet<ObjectCookie>,
     events: HashMap<ServiceCookie, HashSet<u32>>,
     all_events: HashSet<ServiceCookie>,
@@ -20,9 +20,9 @@ pub(super) struct ConnectionState {
 }
 
 impl ConnectionState {
-    pub fn new(protocol_version: ProtocolVersion, send: UnboundedSender<Message>) -> Self {
+    pub fn new(version: ProtocolVersion, send: UnboundedSender<VersionedMessage>) -> Self {
         Self {
-            protocol_version,
+            version,
             send,
             objects: HashSet::new(),
             events: HashMap::new(),
@@ -35,8 +35,8 @@ impl ConnectionState {
         }
     }
 
-    pub fn protocol_version(&self) -> ProtocolVersion {
-        self.protocol_version
+    pub fn version(&self) -> ProtocolVersion {
+        self.version
     }
 
     pub fn add_object(&mut self, cookie: ObjectCookie) {
@@ -53,7 +53,7 @@ impl ConnectionState {
         self.objects.iter().copied()
     }
 
-    pub fn send(&self, msg: Message) -> Result<(), ()> {
+    pub fn send(&self, msg: VersionedMessage) -> Result<(), ()> {
         self.send.unbounded_send(msg).map_err(|_| ())
     }
 

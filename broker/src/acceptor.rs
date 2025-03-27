@@ -3,13 +3,13 @@ mod test;
 
 use crate::{BrokerHandle, BrokerShutdown, Connection};
 use aldrin_core::message::{
-    ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message,
+    ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message, MessageOps,
 };
 use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
 use aldrin_core::{
     Deserialize, DeserializeError, ProtocolVersion, Serialize, SerializeError, SerializedValue,
-    SerializedValueSlice,
+    SerializedValueSlice, ValueConversionError,
 };
 use thiserror::Error;
 
@@ -48,16 +48,19 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
 
         let Some(version) = select_protocol_version(version, connect2) else {
             if connect2 {
-                let _ = transport
-                    .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                        result: ConnectResult::IncompatibleVersion,
-                        value: SerializedValue::serialize(ConnectReplyData::new())?,
-                    }))
-                    .await;
+                let msg = ConnectReply2 {
+                    result: ConnectResult::IncompatibleVersion,
+                    value: SerializedValue::serialize(ConnectReplyData::new())?,
+                };
+
+                let _ = send(transport, msg, ProtocolVersion::V1_14).await;
             } else {
-                let _ = transport
-                    .send_and_flush(Message::ConnectReply(ConnectReply::IncompatibleVersion(14)))
-                    .await;
+                let _ = send(
+                    transport,
+                    ConnectReply::IncompatibleVersion(14),
+                    ProtocolVersion::V1_14,
+                )
+                .await;
             }
 
             return Err(AcceptError::IncompatibleVersion(version));
@@ -135,13 +138,12 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
         broker: &mut BrokerHandle,
     ) -> Result<Connection<T>, AcceptError<T::Error>> {
         if self.connect2 {
-            self.transport
-                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                    result: ConnectResult::Ok(self.version.minor()),
-                    value: SerializedValue::serialize(self.reply_data)?,
-                }))
-                .await
-                .map_err(AcceptError::Transport)?;
+            let msg = ConnectReply2 {
+                result: ConnectResult::Ok(self.version.minor()),
+                value: SerializedValue::serialize(self.reply_data)?,
+            };
+
+            send(&mut self.transport, msg, self.version).await?;
         } else {
             let user_data = self
                 .reply_data
@@ -149,10 +151,8 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
                 .map(Ok)
                 .unwrap_or_else(|| SerializedValue::serialize(()))?;
 
-            self.transport
-                .send_and_flush(Message::ConnectReply(ConnectReply::Ok(user_data)))
-                .await
-                .map_err(AcceptError::Transport)?;
+            let msg = ConnectReply::Ok(user_data);
+            send(&mut self.transport, msg, self.version).await?;
         }
 
         broker
@@ -162,15 +162,14 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
     }
 
     /// Rejects the connection.
-    pub async fn reject(mut self) -> Result<(), AcceptError<T::Error>> {
+    pub async fn reject(self) -> Result<(), AcceptError<T::Error>> {
         if self.connect2 {
-            self.transport
-                .send_and_flush(Message::ConnectReply2(ConnectReply2 {
-                    result: ConnectResult::Rejected,
-                    value: SerializedValue::serialize(self.reply_data)?,
-                }))
-                .await
-                .map_err(AcceptError::Transport)?;
+            let msg = ConnectReply2 {
+                result: ConnectResult::Rejected,
+                value: SerializedValue::serialize(self.reply_data)?,
+            };
+
+            send(self.transport, msg, self.version).await
         } else {
             let user_data = self
                 .reply_data
@@ -178,14 +177,24 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
                 .map(Ok)
                 .unwrap_or_else(|| SerializedValue::serialize(()))?;
 
-            self.transport
-                .send_and_flush(Message::ConnectReply(ConnectReply::Rejected(user_data)))
-                .await
-                .map_err(AcceptError::Transport)?;
+            let msg = ConnectReply::Rejected(user_data);
+            send(self.transport, msg, self.version).await
         }
-
-        Ok(())
     }
+}
+
+async fn send<T: AsyncTransport + Unpin>(
+    mut transport: T,
+    msg: impl Into<Message>,
+    version: ProtocolVersion,
+) -> Result<(), AcceptError<T::Error>> {
+    let mut msg = msg.into();
+    msg.convert_value(None, version)?;
+
+    transport
+        .send_and_flush(msg)
+        .await
+        .map_err(AcceptError::Transport)
 }
 
 /// Error while establishing a new connection.
@@ -219,6 +228,15 @@ pub enum AcceptError<T> {
 impl<T> From<BrokerShutdown> for AcceptError<T> {
     fn from(_: BrokerShutdown) -> Self {
         Self::Shutdown
+    }
+}
+
+impl<T> From<ValueConversionError> for AcceptError<T> {
+    fn from(err: ValueConversionError) -> Self {
+        match err {
+            // Conversion here is always passed a valid version.
+            ValueConversionError::InvalidVersion => unreachable!(),
+        }
     }
 }
 

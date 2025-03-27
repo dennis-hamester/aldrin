@@ -2,6 +2,7 @@ use super::{select_protocol_version, Acceptor};
 use crate::Broker;
 use aldrin_core::message::{
     Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
+    MessageOps,
 };
 use aldrin_core::transport::AsyncTransportExt;
 use aldrin_core::{channel, ProtocolVersion, SerializedValue};
@@ -128,13 +129,15 @@ async fn begin_connect_2_accept() {
 
     let mut data = ConnectData::new();
     data.serialize_user(0u32).unwrap();
-    t1.send_and_flush(Connect2 {
+
+    let mut msg = Connect2 {
         major_version: ProtocolVersion::V1_15.major(),
         minor_version: ProtocolVersion::V1_15.minor(),
         value: SerializedValue::serialize(data).unwrap(),
-    })
-    .await
-    .unwrap();
+    };
+
+    msg.convert_value(None, ProtocolVersion::V1_15).unwrap();
+    t1.send_and_flush(msg).await.unwrap();
 
     let mut acceptor = Acceptor::new(t2).await.unwrap();
     assert_eq!(acceptor.deserialize_client_data(), Some(Ok(0u32)));
@@ -199,13 +202,15 @@ async fn begin_connect_2_reject() {
 
     let mut data = ConnectData::new();
     data.serialize_user(0u32).unwrap();
-    t1.send_and_flush(Connect2 {
+
+    let mut msg = Connect2 {
         major_version: ProtocolVersion::V1_15.major(),
         minor_version: ProtocolVersion::V1_15.minor(),
         value: SerializedValue::serialize(data).unwrap(),
-    })
-    .await
-    .unwrap();
+    };
+
+    msg.convert_value(None, ProtocolVersion::V1_15).unwrap();
+    t1.send_and_flush(msg).await.unwrap();
 
     let mut acceptor = Acceptor::new(t2).await.unwrap();
     assert_eq!(acceptor.deserialize_client_data(), Some(Ok(0u32)));

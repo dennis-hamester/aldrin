@@ -1,4 +1,5 @@
 use crate::conn_id::ConnectionId;
+use crate::versioned_message::VersionedMessage;
 #[cfg(feature = "statistics")]
 use crate::BrokerStatistics;
 use aldrin_core::message::Message;
@@ -13,7 +14,7 @@ pub(crate) enum ConnectionEvent {
     NewConnection(
         ConnectionId,
         ProtocolVersion,
-        mpsc::UnboundedSender<Message>,
+        mpsc::UnboundedSender<VersionedMessage>,
     ),
 
     ConnectionShutdown(ConnectionId),

@@ -1,3 +1,4 @@
+use aldrin_core::ValueConversionError;
 use thiserror::Error;
 
 /// Error of an active connection.
@@ -9,5 +10,14 @@ pub enum ConnectionError<T> {
 
     /// The transport encountered an error.
     #[error(transparent)]
-    Transport(#[from] T),
+    Transport(T),
+}
+
+impl<T> From<ValueConversionError> for ConnectionError<T> {
+    fn from(err: ValueConversionError) -> Self {
+        match err {
+            // Conversion here is always passed a valid version.
+            ValueConversionError::InvalidVersion => unreachable!(),
+        }
+    }
 }

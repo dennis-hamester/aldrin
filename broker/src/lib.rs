@@ -60,6 +60,7 @@ mod conn_id;
 #[cfg(feature = "introspection")]
 mod introspection_database;
 mod serial_map;
+mod versioned_message;
 
 pub use acceptor::{AcceptError, Acceptor};
 pub use aldrin_core as core;

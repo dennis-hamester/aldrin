@@ -3,8 +3,10 @@ mod event;
 mod handle;
 
 use crate::conn_id::ConnectionId;
+use crate::versioned_message::VersionedMessage;
 use aldrin_core::message::{Message, Shutdown};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::ProtocolVersion;
 use futures_channel::mpsc::{Sender, UnboundedReceiver};
 use futures_core::stream::FusedStream;
 use futures_util::future::{select, Either};
@@ -29,9 +31,10 @@ pub struct Connection<T>
 where
     T: AsyncTransport + Unpin,
 {
-    t: T,
+    transport: T,
+    version: ProtocolVersion,
     send: Sender<ConnectionEvent>,
-    recv: UnboundedReceiver<Message>,
+    recv: UnboundedReceiver<VersionedMessage>,
     handle: Option<ConnectionHandle>,
 }
 
@@ -40,13 +43,15 @@ where
     T: AsyncTransport + Unpin,
 {
     pub(crate) fn new(
-        t: T,
+        transport: T,
+        version: ProtocolVersion,
         id: ConnectionId,
         send: Sender<ConnectionEvent>,
-        recv: UnboundedReceiver<Message>,
+        recv: UnboundedReceiver<VersionedMessage>,
     ) -> Self {
         Self {
-            t,
+            transport,
+            version,
             send,
             recv,
             handle: Some(ConnectionHandle::new(id)),
@@ -72,39 +77,73 @@ where
         let id = self.handle.take().unwrap().into_id();
 
         loop {
-            match select(self.recv.next(), self.t.receive()).await {
-                Either::Left((Some(Message::Shutdown(Shutdown)), _)) => {
-                    self.t.send_and_flush(Shutdown).await?;
-                    self.drain_client_recv().await?;
-                    return Ok(());
+            match select(self.recv.next(), self.transport.receive()).await {
+                Either::Left((
+                    Some(VersionedMessage {
+                        msg: Message::Shutdown(Shutdown),
+                        version: _,
+                    }),
+                    _,
+                )) => {
+                    break self.broker_shutdown().await;
                 }
 
                 Either::Left((Some(msg), _)) => {
-                    if let Err(e) = self.t.send_and_flush(msg).await {
+                    if let Err(e) = self.send_message(msg).await {
                         self.send_broker_shutdown(id).await?;
                         self.drain_broker_recv().await;
-                        return Err(e.into());
+                        break Err(e);
                     }
                 }
 
-                Either::Left((None, _)) => return Err(ConnectionError::UnexpectedShutdown),
+                Either::Left((None, _)) => break Err(ConnectionError::UnexpectedShutdown),
 
                 Either::Right((Ok(Message::Shutdown(Shutdown)), _)) => {
-                    self.send_broker_shutdown(id).await?;
-                    self.t.send_and_flush(Shutdown).await?;
-                    self.drain_broker_recv().await;
-                    return Ok(());
+                    break self.client_shutdown(id).await
                 }
 
                 Either::Right((Ok(msg), _)) => self.send_broker_msg(id.clone(), msg).await?,
 
                 Either::Right((Err(e), _)) => {
-                    self.send_broker_shutdown(id).await?;
-                    self.drain_broker_recv().await;
-                    return Err(e.into());
+                    self.client_error(id).await?;
+                    break Err(ConnectionError::Transport(e));
                 }
             }
         }
+    }
+
+    async fn broker_shutdown(&mut self) -> Result<(), ConnectionError<T::Error>> {
+        self.send_message(Shutdown).await?;
+        self.drain_client_recv().await?;
+
+        Ok(())
+    }
+
+    async fn send_message(
+        &mut self,
+        msg: impl Into<VersionedMessage>,
+    ) -> Result<(), ConnectionError<T::Error>> {
+        let msg = msg.into().convert_value(self.version)?;
+
+        self.transport
+            .send_and_flush(msg)
+            .await
+            .map_err(ConnectionError::Transport)
+    }
+
+    async fn client_shutdown(&mut self, id: ConnectionId) -> Result<(), ConnectionError<T::Error>> {
+        self.send_broker_shutdown(id).await?;
+        self.send_message(Shutdown).await?;
+        self.drain_broker_recv().await;
+
+        Ok(())
+    }
+
+    async fn client_error(&mut self, id: ConnectionId) -> Result<(), ConnectionError<T::Error>> {
+        self.send_broker_shutdown(id).await?;
+        self.drain_broker_recv().await;
+
+        Ok(())
     }
 
     async fn send_broker_msg(
@@ -134,8 +173,14 @@ where
 
     async fn drain_client_recv(&mut self) -> Result<(), ConnectionError<T::Error>> {
         loop {
-            if let Message::Shutdown(Shutdown) = self.t.receive().await? {
-                return Ok(());
+            let msg = self
+                .transport
+                .receive()
+                .await
+                .map_err(ConnectionError::Transport)?;
+
+            if let Message::Shutdown(Shutdown) = msg {
+                break Ok(());
             }
         }
     }

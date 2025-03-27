@@ -46,7 +46,13 @@ impl BrokerHandle {
             .await
             .map_err(|_| BrokerShutdown)?;
 
-        Ok(Connection::new(transport, id, self.send.clone(), recv))
+        Ok(Connection::new(
+            transport,
+            version,
+            id,
+            self.send.clone(),
+            recv,
+        ))
     }
 
     /// Establishes a new connection.

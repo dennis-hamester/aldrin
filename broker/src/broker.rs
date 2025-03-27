@@ -18,6 +18,7 @@ use crate::introspection_database::{
     IntrospectionDatabase, IntrospectionQueryResult, RemoveConnResult,
 };
 use crate::serial_map::SerialMap;
+use crate::versioned_message::VersionedMessage;
 use aldrin_core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
@@ -63,8 +64,8 @@ pub use statistics::BrokerStatistics;
 const FIFO_SIZE: usize = 32;
 
 macro_rules! send {
-    ($self:expr, $conn:expr, $msg:expr $(,)?) => {{
-        let res = $conn.send($msg.into());
+    (done: $self:expr, $conn:expr, $msg:expr $(,)?) => {{
+        let res = $conn.send($msg);
 
         #[cfg(feature = "statistics")]
         {
@@ -72,6 +73,14 @@ macro_rules! send {
         }
 
         res
+    }};
+
+    ($self:expr, $conn:expr, $msg:expr, $ver:expr $(,)?) => {{
+        send!(done: $self, $conn, VersionedMessage::with_version($msg, $ver))
+    }};
+
+    ($self:expr, $conn:expr, $msg:expr $(,)?) => {{
+        send!(done: $self, $conn, VersionedMessage::new($msg, None))
     }};
 }
 
@@ -210,10 +219,8 @@ impl Broker {
 
     fn handle_event(&mut self, state: &mut State, ev: ConnectionEvent) {
         match ev {
-            ConnectionEvent::NewConnection(id, protocol_version, sender) => {
-                let dup = self
-                    .conns
-                    .insert(id, ConnectionState::new(protocol_version, sender));
+            ConnectionEvent::NewConnection(id, version, sender) => {
+                let dup = self.conns.insert(id, ConnectionState::new(version, sender));
                 debug_assert!(dup.is_none());
 
                 #[cfg(feature = "statistics")]
@@ -733,7 +740,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_19 {
+        if conn.version() < ProtocolVersion::V1_19 {
             return Err(());
         }
 
@@ -780,6 +787,7 @@ impl Broker {
             return Err(());
         }
 
+        let version = conn.version();
         let callee_conn = self.conns.get(callee_id).expect("inconsistent state");
 
         self.svcs
@@ -787,7 +795,7 @@ impl Broker {
             .expect("inconsistent state")
             .add_function_call(serial);
 
-        let res = if callee_conn.protocol_version() >= ProtocolVersion::V1_19 {
+        let res = if callee_conn.version() >= ProtocolVersion::V1_19 {
             send!(
                 self,
                 callee_conn,
@@ -797,7 +805,8 @@ impl Broker {
                     function: req.function,
                     version: req.version,
                     value: req.value,
-                }
+                },
+                version,
             )
         } else {
             send!(
@@ -808,7 +817,8 @@ impl Broker {
                     service_cookie: req.service_cookie,
                     function: req.function,
                     value: req.value,
-                }
+                },
+                version,
             )
         };
 
@@ -825,6 +835,10 @@ impl Broker {
         id: &ConnectionId,
         req: CallFunctionReply,
     ) {
+        let Some(version) = self.conns.get(id).map(ConnectionState::version) else {
+            return;
+        };
+
         let Some(call) = self.function_calls.get(req.serial) else {
             return;
         };
@@ -847,19 +861,20 @@ impl Broker {
             return;
         }
 
-        let Some(conn) = self.conns.get_mut(&call.caller_conn_id) else {
+        let Some(caller_conn) = self.conns.get_mut(&call.caller_conn_id) else {
             return;
         };
 
-        conn.remove_call(call.caller_serial);
+        caller_conn.remove_call(call.caller_serial);
 
         let res = send!(
             self,
-            conn,
+            caller_conn,
             CallFunctionReply {
                 serial: call.caller_serial,
                 result: req.result,
             },
+            version,
         );
 
         if res.is_err() {
@@ -955,6 +970,10 @@ impl Broker {
     }
 
     fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: EmitEvent) {
+        let Some(emitter_conn) = self.conns.get(id) else {
+            return;
+        };
+
         let Some(obj_uuid) = self
             .svc_uuids
             .get(&req.service_cookie)
@@ -970,7 +989,7 @@ impl Broker {
 
         for (conn_id, conn) in self.conns.iter() {
             if conn.is_subscribed_to_event(req.service_cookie, req.event)
-                && send!(self, conn, req.clone()).is_err()
+                && send!(self, conn, req.clone(), emitter_conn.version()).is_err()
             {
                 state.push_remove_conn(conn_id.clone(), false);
             }
@@ -1240,6 +1259,7 @@ impl Broker {
                 cookie: req.cookie,
                 value: req.value,
             },
+            sender.version(),
         );
 
         if res.is_err() {
@@ -1511,7 +1531,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_16 {
+        if conn.version() < ProtocolVersion::V1_16 {
             return Err(());
         }
 
@@ -1533,7 +1553,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1558,7 +1578,7 @@ impl Broker {
         _req: RegisterIntrospection,
     ) -> Result<(), ()> {
         if let Some(conn) = self.conns.get(id) {
-            if conn.protocol_version() >= ProtocolVersion::V1_17 {
+            if conn.version() >= ProtocolVersion::V1_17 {
                 Ok(())
             } else {
                 Err(())
@@ -1579,7 +1599,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1636,7 +1656,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1661,7 +1681,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1762,7 +1782,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1804,7 +1824,7 @@ impl Broker {
             return Err(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_18 {
+        if conn.version() < ProtocolVersion::V1_18 {
             info = info.set_subscribe_all(false);
         }
 
@@ -1840,7 +1860,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_17 {
+        if conn.version() < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1865,7 +1885,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_18 {
+        if conn.version() < ProtocolVersion::V1_18 {
             return Err(());
         }
 
@@ -1912,7 +1932,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_18 {
+        if conn.version() < ProtocolVersion::V1_18 {
             return Err(());
         }
 
@@ -1937,7 +1957,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_18 {
+        if conn.version() < ProtocolVersion::V1_18 {
             return Err(());
         }
 
@@ -1975,7 +1995,7 @@ impl Broker {
 
         let target_conn = self.conns.get(target_conn_id).expect("inconsistent state");
 
-        if target_conn.protocol_version() < ProtocolVersion::V1_18 {
+        if target_conn.version() < ProtocolVersion::V1_18 {
             return send!(
                 self,
                 conn,
@@ -2027,7 +2047,7 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.protocol_version() < ProtocolVersion::V1_18 {
+        if conn.version() < ProtocolVersion::V1_18 {
             return Err(());
         }
 
@@ -2054,7 +2074,7 @@ impl Broker {
 
         let target_conn = self.conns.get(target_conn_id).expect("inconsistent state");
 
-        if target_conn.protocol_version() < ProtocolVersion::V1_18 {
+        if target_conn.version() < ProtocolVersion::V1_18 {
             if let Some(serial) = req.serial {
                 return send!(
                     self,
@@ -2357,7 +2377,7 @@ impl Broker {
         call.aborted = true;
 
         if let Some(conn) = self.conns.get(&callee_id) {
-            if conn.protocol_version() >= ProtocolVersion::V1_16 {
+            if conn.version() >= ProtocolVersion::V1_16 {
                 let res = send!(
                     self,
                     conn,
