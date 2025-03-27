@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::SerializedValueSlice;
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -82,6 +82,10 @@ impl MessageOps for ClaimChannelEndReply {
     }
 
     fn value(&self) -> Option<&SerializedValueSlice> {
+        None
+    }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
         None
     }
 }

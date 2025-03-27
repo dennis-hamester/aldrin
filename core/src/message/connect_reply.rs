@@ -75,6 +75,13 @@ impl MessageOps for ConnectReply {
             Self::IncompatibleVersion(_) => None,
         }
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        match self {
+            Self::Ok(value) | Self::Rejected(value) => Some(value),
+            Self::IncompatibleVersion(_) => None,
+        }
+    }
 }
 
 impl Sealed for ConnectReply {}

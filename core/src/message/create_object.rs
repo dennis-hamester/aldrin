@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::{ObjectUuid, SerializedValueSlice};
+use crate::{ObjectUuid, SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -39,6 +39,10 @@ impl MessageOps for CreateObject {
     }
 
     fn value(&self) -> Option<&SerializedValueSlice> {
+        None
+    }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
         None
     }
 }

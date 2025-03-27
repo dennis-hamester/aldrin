@@ -92,6 +92,13 @@ impl MessageOps for QueryServiceInfoReply {
             QueryServiceInfoResult::InvalidService => None,
         }
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        match self.result {
+            QueryServiceInfoResult::Ok(ref mut value) => Some(value),
+            QueryServiceInfoResult::InvalidService => None,
+        }
+    }
 }
 
 impl Sealed for QueryServiceInfoReply {}

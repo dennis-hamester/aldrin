@@ -92,6 +92,13 @@ impl MessageOps for QueryIntrospectionReply {
             QueryIntrospectionResult::Unavailable => None,
         }
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        match self.result {
+            QueryIntrospectionResult::Ok(ref mut value) => Some(value),
+            QueryIntrospectionResult::Unavailable => None,
+        }
+    }
 }
 
 impl Sealed for QueryIntrospectionReply {}

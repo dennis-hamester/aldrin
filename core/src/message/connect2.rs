@@ -136,6 +136,10 @@ impl MessageOps for Connect2 {
     fn value(&self) -> Option<&SerializedValueSlice> {
         Some(&self.value)
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        Some(&mut self.value)
+    }
 }
 
 impl Sealed for Connect2 {}

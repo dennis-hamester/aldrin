@@ -42,11 +42,15 @@ where
     V: Tag,
     W: Deserialize<V> + PartialEq + Debug,
 {
-    let deserialized = assert_deserialize_eq(expected, serialized);
+    let mut deserialized = assert_deserialize_eq(expected, serialized);
 
     assert!(deserialized.kind().has_value());
-    let serialized_value = deserialized.value().unwrap();
 
+    let serialized_value = deserialized.value().unwrap();
+    let deserialized_value: W = serialized_value.deserialize_as().unwrap();
+    assert_eq!(deserialized_value, *value);
+
+    let serialized_value = deserialized.value_mut().unwrap();
     let deserialized_value: W = serialized_value.deserialize_as().unwrap();
     assert_eq!(deserialized_value, *value);
 }

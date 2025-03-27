@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `MessageOps::value_mut()`, which returns a mutable reference to a message's value, if any.
+
 ### Changed
 
 - `Serialize` and `Deserialize` have been re-worked. They are now generic traits over a type `T`

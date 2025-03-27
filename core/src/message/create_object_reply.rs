@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::{ObjectCookie, SerializedValueSlice};
+use crate::{ObjectCookie, SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -72,6 +72,10 @@ impl MessageOps for CreateObjectReply {
     }
 
     fn value(&self) -> Option<&SerializedValueSlice> {
+        None
+    }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
         None
     }
 }

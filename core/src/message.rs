@@ -69,7 +69,7 @@ mod unsubscribe_all_events_reply;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
-use crate::SerializedValueSlice;
+use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -152,6 +152,7 @@ pub trait MessageOps: Sized + message_ops::Sealed {
     fn serialize_message(self) -> Result<BytesMut, MessageSerializeError>;
     fn deserialize_message(buf: BytesMut) -> Result<Self, MessageDeserializeError>;
     fn value(&self) -> Option<&SerializedValueSlice>;
+    fn value_mut(&mut self) -> Option<&mut SerializedValue>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -676,6 +677,73 @@ impl MessageOps for Message {
             Self::UnsubscribeAllEvents(msg) => msg.value(),
             Self::UnsubscribeAllEventsReply(msg) => msg.value(),
             Self::CallFunction2(msg) => msg.value(),
+        }
+    }
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        match self {
+            Self::Connect(msg) => msg.value_mut(),
+            Self::ConnectReply(msg) => msg.value_mut(),
+            Self::Shutdown(msg) => msg.value_mut(),
+            Self::CreateObject(msg) => msg.value_mut(),
+            Self::CreateObjectReply(msg) => msg.value_mut(),
+            Self::DestroyObject(msg) => msg.value_mut(),
+            Self::DestroyObjectReply(msg) => msg.value_mut(),
+            Self::CreateService(msg) => msg.value_mut(),
+            Self::CreateServiceReply(msg) => msg.value_mut(),
+            Self::DestroyService(msg) => msg.value_mut(),
+            Self::DestroyServiceReply(msg) => msg.value_mut(),
+            Self::CallFunction(msg) => msg.value_mut(),
+            Self::CallFunctionReply(msg) => msg.value_mut(),
+            Self::SubscribeEvent(msg) => msg.value_mut(),
+            Self::SubscribeEventReply(msg) => msg.value_mut(),
+            Self::UnsubscribeEvent(msg) => msg.value_mut(),
+            Self::EmitEvent(msg) => msg.value_mut(),
+            Self::QueryServiceVersion(msg) => msg.value_mut(),
+            Self::QueryServiceVersionReply(msg) => msg.value_mut(),
+            Self::CreateChannel(msg) => msg.value_mut(),
+            Self::CreateChannelReply(msg) => msg.value_mut(),
+            Self::CloseChannelEnd(msg) => msg.value_mut(),
+            Self::CloseChannelEndReply(msg) => msg.value_mut(),
+            Self::ChannelEndClosed(msg) => msg.value_mut(),
+            Self::ClaimChannelEnd(msg) => msg.value_mut(),
+            Self::ClaimChannelEndReply(msg) => msg.value_mut(),
+            Self::ChannelEndClaimed(msg) => msg.value_mut(),
+            Self::SendItem(msg) => msg.value_mut(),
+            Self::ItemReceived(msg) => msg.value_mut(),
+            Self::AddChannelCapacity(msg) => msg.value_mut(),
+            Self::Sync(msg) => msg.value_mut(),
+            Self::SyncReply(msg) => msg.value_mut(),
+            Self::ServiceDestroyed(msg) => msg.value_mut(),
+            Self::CreateBusListener(msg) => msg.value_mut(),
+            Self::CreateBusListenerReply(msg) => msg.value_mut(),
+            Self::DestroyBusListener(msg) => msg.value_mut(),
+            Self::DestroyBusListenerReply(msg) => msg.value_mut(),
+            Self::AddBusListenerFilter(msg) => msg.value_mut(),
+            Self::RemoveBusListenerFilter(msg) => msg.value_mut(),
+            Self::ClearBusListenerFilters(msg) => msg.value_mut(),
+            Self::StartBusListener(msg) => msg.value_mut(),
+            Self::StartBusListenerReply(msg) => msg.value_mut(),
+            Self::StopBusListener(msg) => msg.value_mut(),
+            Self::StopBusListenerReply(msg) => msg.value_mut(),
+            Self::EmitBusEvent(msg) => msg.value_mut(),
+            Self::BusListenerCurrentFinished(msg) => msg.value_mut(),
+            Self::Connect2(msg) => msg.value_mut(),
+            Self::ConnectReply2(msg) => msg.value_mut(),
+            Self::AbortFunctionCall(msg) => msg.value_mut(),
+            Self::RegisterIntrospection(msg) => msg.value_mut(),
+            Self::QueryIntrospection(msg) => msg.value_mut(),
+            Self::QueryIntrospectionReply(msg) => msg.value_mut(),
+            Self::CreateService2(msg) => msg.value_mut(),
+            Self::QueryServiceInfo(msg) => msg.value_mut(),
+            Self::QueryServiceInfoReply(msg) => msg.value_mut(),
+            Self::SubscribeService(msg) => msg.value_mut(),
+            Self::SubscribeServiceReply(msg) => msg.value_mut(),
+            Self::UnsubscribeService(msg) => msg.value_mut(),
+            Self::SubscribeAllEvents(msg) => msg.value_mut(),
+            Self::SubscribeAllEventsReply(msg) => msg.value_mut(),
+            Self::UnsubscribeAllEvents(msg) => msg.value_mut(),
+            Self::UnsubscribeAllEventsReply(msg) => msg.value_mut(),
+            Self::CallFunction2(msg) => msg.value_mut(),
         }
     }
 }

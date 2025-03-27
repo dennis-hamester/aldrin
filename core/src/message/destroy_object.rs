@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
-use crate::{ObjectCookie, SerializedValueSlice};
+use crate::{ObjectCookie, SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -39,6 +39,10 @@ impl MessageOps for DestroyObject {
     }
 
     fn value(&self) -> Option<&SerializedValueSlice> {
+        None
+    }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
         None
     }
 }

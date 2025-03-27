@@ -162,6 +162,19 @@ impl MessageOps for CallFunctionReply {
             | CallFunctionResult::InvalidArgs => None,
         }
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        match self.result {
+            CallFunctionResult::Ok(ref mut value) | CallFunctionResult::Err(ref mut value) => {
+                Some(value)
+            }
+
+            CallFunctionResult::Aborted
+            | CallFunctionResult::InvalidService
+            | CallFunctionResult::InvalidFunction
+            | CallFunctionResult::InvalidArgs => None,
+        }
+    }
 }
 
 impl Sealed for CallFunctionReply {}

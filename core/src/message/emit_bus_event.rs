@@ -3,7 +3,9 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
 };
-use crate::{BusEvent, BusListenerCookie, ObjectId, SerializedValueSlice, ServiceId};
+use crate::{
+    BusEvent, BusListenerCookie, ObjectId, SerializedValue, SerializedValueSlice, ServiceId,
+};
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -125,6 +127,10 @@ impl MessageOps for EmitBusEvent {
     }
 
     fn value(&self) -> Option<&SerializedValueSlice> {
+        None
+    }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
         None
     }
 }

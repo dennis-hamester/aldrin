@@ -49,6 +49,10 @@ impl MessageOps for CallFunction {
     fn value(&self) -> Option<&SerializedValueSlice> {
         Some(&self.value)
     }
+
+    fn value_mut(&mut self) -> Option<&mut SerializedValue> {
+        Some(&mut self.value)
+    }
 }
 
 impl Sealed for CallFunction {}
