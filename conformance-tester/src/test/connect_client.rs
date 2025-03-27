@@ -44,12 +44,13 @@ impl ConnectClient {
     }
 
     async fn run_impl(&self, broker: &Broker, ctx: &mut Context, timeout: Instant) -> Result<()> {
-        let client = Client::connect(broker.port(), timeout, self.sync, self.shutdown).await?;
+        let version = self.version.unwrap_or_else(|| ctx.version());
+
+        let client =
+            Client::connect(broker.port(), timeout, self.sync, self.shutdown, version).await?;
         ctx.set_client(self.client.clone(), client)?;
 
         if self.handshake {
-            let version = self.version.unwrap_or_else(|| ctx.version());
-
             if version == ProtocolVersion::V1_14 {
                 self.connect(ctx, timeout).await?;
             } else {

@@ -1,7 +1,8 @@
 use crate::util::FutureExt;
-use aldrin_core::message::Message;
+use aldrin_core::message::{Message, MessageOps};
 use aldrin_core::tokio::{TokioTransport, TokioTransportError};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::ProtocolVersion;
 use anyhow::{anyhow, Context, Error, Result};
 use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddrV4};
@@ -14,10 +15,17 @@ pub struct Client {
     transport: TransportBox,
     sync: bool,
     shutdown: bool,
+    version: ProtocolVersion,
 }
 
 impl Client {
-    pub async fn connect(port: u16, timeout: Instant, sync: bool, shutdown: bool) -> Result<Self> {
+    pub async fn connect(
+        port: u16,
+        timeout: Instant,
+        sync: bool,
+        shutdown: bool,
+        version: ProtocolVersion,
+    ) -> Result<Self> {
         let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, port);
 
         let stream = TcpStream::connect(addr)
@@ -27,10 +35,12 @@ impl Client {
             .with_context(|| anyhow!("failed to connect to broker at {}", addr))?;
 
         let transport = Box::new(TokioTransport::new(stream));
+
         Ok(Self {
             transport,
             sync,
             shutdown,
+            version,
         })
     }
 
@@ -42,7 +52,9 @@ impl Client {
         self.shutdown
     }
 
-    pub async fn send(&mut self, msg: Message) -> Result<()> {
+    pub async fn send(&mut self, mut msg: Message) -> Result<()> {
+        msg.convert_value(None, self.version)?;
+
         self.transport
             .send_and_flush(msg)
             .await
