@@ -2,7 +2,7 @@
 
 use crate::{UnknownCall, UnknownEvent};
 use aldrin_core::message::Message;
-use aldrin_core::{DeserializeError, SerializeError, SerializedValue};
+use aldrin_core::{DeserializeError, SerializeError, SerializedValue, ValueConversionError};
 use thiserror::Error;
 
 /// Error when connecting to a broker.
@@ -37,6 +37,15 @@ pub enum ConnectError<T> {
     Deserialize(#[from] DeserializeError),
 }
 
+impl<T> From<ValueConversionError> for ConnectError<T> {
+    fn from(err: ValueConversionError) -> Self {
+        match err {
+            // Conversion here is always passed a valid version.
+            ValueConversionError::InvalidVersion => unreachable!(),
+        }
+    }
+}
+
 /// Error while running a client.
 #[derive(Error, Debug, Clone)]
 pub enum RunError<T> {
@@ -48,15 +57,24 @@ pub enum RunError<T> {
     ///
     /// This error indicates some issue with the lower-level transport mechanism, e.g. an I/O error.
     #[error(transparent)]
-    Transport(#[from] T),
+    Transport(T),
 
     /// A value failed to serialize.
     #[error(transparent)]
-    Serialize(SerializeError),
+    Serialize(#[from] SerializeError),
 
     /// A value failed to deserialize.
     #[error(transparent)]
-    Deserialize(DeserializeError),
+    Deserialize(#[from] DeserializeError),
+}
+
+impl<T> From<ValueConversionError> for RunError<T> {
+    fn from(err: ValueConversionError) -> Self {
+        match err {
+            // Conversion here is always passed a valid version.
+            ValueConversionError::InvalidVersion => unreachable!(),
+        }
+    }
 }
 
 /// Standard error type used for most functions.

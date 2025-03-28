@@ -5,6 +5,7 @@ use crate::error::ConnectError;
 use crate::Client;
 use aldrin_core::message::{
     Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
+    MessageOps,
 };
 use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
@@ -34,11 +35,13 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
 
         let connect_data = ConnectData { user: self.data };
 
-        let connect = Connect2 {
+        let mut connect = Connect2 {
             major_version: PROTOCOL_VERSION.major(),
             minor_version: PROTOCOL_VERSION.minor(),
             value: SerializedValue::serialize(connect_data)?,
         };
+
+        connect.convert_value(None, ProtocolVersion::V1_14)?;
 
         self.transport
             .send_and_flush(connect)
@@ -92,10 +95,12 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
             .map(Ok)
             .unwrap_or_else(|| SerializedValue::serialize(()))?;
 
-        let connect = Connect {
+        let mut connect = Connect {
             version: PROTOCOL_VERSION.minor(),
             value,
         };
+
+        connect.convert_value(None, PROTOCOL_VERSION)?;
 
         self.transport
             .send_and_flush(connect)

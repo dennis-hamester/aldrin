@@ -36,9 +36,9 @@ use aldrin_core::message::{
     CreateObjectReply, CreateObjectResult, CreateService, CreateService2, CreateServiceReply,
     CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
     DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
-    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
-    QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply,
-    QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
+    DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, MessageOps,
+    QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo,
+    QueryServiceInfoReply, QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
     QueryServiceVersionResult, RemoveBusListenerFilter, SendItem, ServiceDestroyed, Shutdown,
     StartBusListener, StartBusListenerReply, StartBusListenerResult, StopBusListener,
     StopBusListenerReply, StopBusListenerResult, SubscribeAllEvents, SubscribeAllEventsReply,
@@ -84,8 +84,8 @@ where
     T: AsyncTransport + Unpin,
 {
     select: Select,
-    t: T,
-    protocol_version: ProtocolVersion,
+    transport: T,
+    version: ProtocolVersion,
     recv: mpsc::UnboundedReceiver<HandleRequest>,
     handle: Handle,
     num_handles: usize,
@@ -123,17 +123,33 @@ where
     query_introspection: SerialMap<QueryIntrospectionRequest>,
 }
 
+macro_rules! send {
+    { $self:expr, $msg:expr } => {{
+        let mut msg = $msg;
+        msg.convert_value(None, $self.version)?;
+        $self.transport.send(msg).await.map_err(RunError::Transport)
+    }};
+}
+
+macro_rules! send_and_flush {
+    { $self:expr, $msg:expr } => {{
+        let mut msg = $msg;
+        msg.convert_value(None, $self.version)?;
+        $self.transport.send_and_flush(msg).await.map_err(RunError::Transport)
+    }};
+}
+
 impl<T> Client<T>
 where
     T: AsyncTransport + Unpin,
 {
-    pub(crate) fn new(t: T, protocol_version: ProtocolVersion) -> Self {
+    pub(crate) fn new(transport: T, version: ProtocolVersion) -> Self {
         let (send, recv) = mpsc::unbounded();
 
         Self {
             select: Select::new(),
-            t,
-            protocol_version,
+            transport,
+            version,
             recv,
             handle: Handle::new(send),
             num_handles: 1,
@@ -230,8 +246,8 @@ where
     }
 
     /// Returns the protocol version that was negotiated with the broker.
-    pub fn protocol_version(self) -> ProtocolVersion {
-        self.protocol_version
+    pub fn version(self) -> ProtocolVersion {
+        self.version
     }
 
     /// Runs the client until it shuts down.
@@ -252,13 +268,9 @@ where
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
         loop {
             match self.select().await {
-                Selected::Transport(Ok(Message::Shutdown(Shutdown))) => {
-                    self.t.send_and_flush(Shutdown).await?;
-                    return Ok(());
-                }
-
+                Selected::Transport(Ok(Message::Shutdown(Shutdown))) => break,
                 Selected::Transport(Ok(msg)) => self.handle_message(msg).await?,
-                Selected::Transport(Err(e)) => return Err(e.into()),
+                Selected::Transport(Err(e)) => return Err(RunError::Transport(e)),
                 Selected::Handle(HandleRequest::Shutdown) => break,
                 Selected::Handle(req) => self.handle_request(req).await?,
                 Selected::AbortFunctionCall(serial) => self.abort_function_call(serial).await?,
@@ -269,21 +281,31 @@ where
             }
         }
 
-        self.t.send_and_flush(Shutdown).await?;
+        send_and_flush!(self, Shutdown)?;
         self.drain_transport().await?;
         Ok(())
     }
 
     async fn select(&mut self) -> Selected<T> {
         self.select
-            .select(&mut self.t, &mut self.recv, &mut self.function_calls)
+            .select(
+                &mut self.transport,
+                &mut self.recv,
+                &mut self.function_calls,
+            )
             .await
     }
 
     async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
         loop {
-            if let Message::Shutdown(Shutdown) = self.t.receive().await? {
-                return Ok(());
+            let msg = self
+                .transport
+                .receive()
+                .await
+                .map_err(RunError::Transport)?;
+
+            if let Message::Shutdown(Shutdown) = msg {
+                break Ok(());
             }
         }
     }
@@ -484,12 +506,12 @@ where
             let dup = self.abort_call_handles.insert(msg.serial, abort_send);
             assert!(dup.is_none());
         } else {
-            self.t
-                .send_and_flush(CallFunctionReply {
-                    serial: msg.serial,
-                    result: CallFunctionResult::InvalidService,
-                })
-                .await?;
+            let msg = CallFunctionReply {
+                serial: msg.serial,
+                result: CallFunctionResult::InvalidService,
+            };
+
+            send_and_flush!(self, msg)?;
         }
 
         Ok(())
@@ -880,7 +902,7 @@ where
         &mut self,
         msg: AbortFunctionCall,
     ) -> Result<(), RunError<T::Error>> {
-        if self.protocol_version >= ProtocolVersion::V1_16 {
+        if self.version >= ProtocolVersion::V1_16 {
             self.abort_call_handles.remove(&msg.serial);
             Ok(())
         } else {
@@ -893,20 +915,19 @@ where
         &mut self,
         msg: QueryIntrospection,
     ) -> Result<(), RunError<T::Error>> {
-        if self.protocol_version >= ProtocolVersion::V1_17 {
+        if self.version >= ProtocolVersion::V1_17 {
             let result = if let Some(introspection) = self.introspection.get(&msg.type_id) {
                 QueryIntrospectionResult::Ok(introspection.clone())
             } else {
                 QueryIntrospectionResult::Unavailable
             };
 
-            self.t
-                .send_and_flush(QueryIntrospectionReply {
-                    serial: msg.serial,
-                    result,
-                })
-                .await
-                .map_err(Into::into)
+            let msg = QueryIntrospectionReply {
+                serial: msg.serial,
+                result,
+            };
+
+            send_and_flush!(self, msg)
         } else {
             Err(RunError::UnexpectedMessageReceived(msg.into()))
         }
@@ -917,13 +938,12 @@ where
         &mut self,
         msg: QueryIntrospection,
     ) -> Result<(), RunError<T::Error>> {
-        self.t
-            .send_and_flush(QueryIntrospectionReply {
-                serial: msg.serial,
-                result: QueryIntrospectionResult::Unavailable,
-            })
-            .await
-            .map_err(Into::into)
+        let msg = QueryIntrospectionReply {
+            serial: msg.serial,
+            result: QueryIntrospectionResult::Unavailable,
+        };
+
+        send_and_flush!(self, msg)
     }
 
     #[cfg(feature = "introspection")]
@@ -931,7 +951,7 @@ where
         &mut self,
         msg: QueryIntrospectionReply,
     ) -> Result<(), RunError<T::Error>> {
-        if self.protocol_version < ProtocolVersion::V1_17 {
+        if self.version < ProtocolVersion::V1_17 {
             return Err(RunError::UnexpectedMessageReceived(msg.into()));
         }
 
@@ -968,13 +988,10 @@ where
             return Err(RunError::UnexpectedMessageReceived(msg.into()));
         };
 
-        debug_assert!(self.protocol_version >= ProtocolVersion::V1_17);
+        debug_assert!(self.version >= ProtocolVersion::V1_17);
 
         let info = match msg.result {
-            QueryServiceInfoResult::Ok(info) => {
-                info.deserialize().map_err(RunError::Deserialize).map(Ok)?
-            }
-
+            QueryServiceInfoResult::Ok(info) => info.deserialize().map(Ok)?,
             QueryServiceInfoResult::InvalidService => Err(Error::InvalidService),
         };
 
@@ -991,7 +1008,7 @@ where
         };
 
         // We never send QueryServiceVersion on protocol versions >= 1.17.
-        debug_assert!(self.protocol_version < ProtocolVersion::V1_17);
+        debug_assert!(self.version < ProtocolVersion::V1_17);
 
         let info = match msg.result {
             QueryServiceVersionResult::Ok(version) => Ok(ServiceInfo::new(version)),
@@ -1020,15 +1037,13 @@ where
             self.proxies.create(self.handle.clone(), req.service, info);
         let _ = req.reply.send(Ok(proxy));
 
-        if subscribe_service && (self.protocol_version >= ProtocolVersion::V1_18) {
-            let serial = self.subscribe_service.insert(req.service.cookie);
+        if subscribe_service && (self.version >= ProtocolVersion::V1_18) {
+            let msg = SubscribeService {
+                serial: self.subscribe_service.insert(req.service.cookie),
+                service_cookie: req.service.cookie,
+            };
 
-            self.t
-                .send_and_flush(SubscribeService {
-                    serial,
-                    service_cookie: req.service.cookie,
-                })
-                .await?;
+            send_and_flush!(self, msg)?;
         }
 
         Ok(())
@@ -1065,7 +1080,7 @@ where
         msg: SubscribeServiceReply,
     ) -> Result<(), RunError<T::Error>> {
         if let Some(service) = self.subscribe_service.remove(msg.serial) {
-            debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
+            debug_assert!(self.version >= ProtocolVersion::V1_18);
 
             if msg.result == SubscribeServiceResult::InvalidService {
                 self.proxies.remove_service(service);
@@ -1081,7 +1096,7 @@ where
         &mut self,
         msg: SubscribeAllEvents,
     ) -> Result<(), RunError<T::Error>> {
-        if (self.protocol_version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
+        if (self.version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
             self.broker_subscriptions.subscribe_all(msg.service_cookie);
             Ok(())
         } else {
@@ -1114,7 +1129,7 @@ where
         &mut self,
         msg: UnsubscribeAllEvents,
     ) -> Result<(), RunError<T::Error>> {
-        if (self.protocol_version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
+        if (self.version >= ProtocolVersion::V1_18) && msg.serial.is_none() {
             self.broker_subscriptions
                 .unsubscribe_all(msg.service_cookie);
             Ok(())
@@ -1183,7 +1198,7 @@ where
                 self.req_create_lifetime_listener(req).await?
             }
             HandleRequest::GetProtocolVersion(req) => {
-                let _ = req.send(self.protocol_version);
+                let _ = req.send(self.version);
             }
             HandleRequest::CreateProxy(req) => self.req_create_proxy(req).await?,
             HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy).await?,
@@ -1222,26 +1237,21 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let uuid = req.uuid;
         let serial = self.create_object.insert(req);
+        let msg = CreateObject { serial, uuid };
 
-        self.t
-            .send_and_flush(CreateObject { serial, uuid })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_destroy_object(
         &mut self,
         req: DestroyObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.destroy_object.insert(req.reply);
+        let msg = DestroyObject {
+            serial: self.destroy_object.insert(req.reply),
+            cookie: req.cookie,
+        };
 
-        self.t
-            .send_and_flush(DestroyObject {
-                serial,
-                cookie: req.cookie,
-            })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_create_service(
@@ -1251,35 +1261,29 @@ where
         let object_cookie = req.object_id.cookie;
         let uuid = req.service_uuid;
 
-        if self.protocol_version >= ProtocolVersion::V1_17 {
+        if self.version >= ProtocolVersion::V1_17 {
             let mut info = req.info.to_core();
-            if self.protocol_version >= ProtocolVersion::V1_18 {
+            if self.version >= ProtocolVersion::V1_18 {
                 info = info.set_subscribe_all(true);
             }
 
-            let serial = self.create_service.insert(req);
-
             let msg = CreateService2 {
-                serial,
+                serial: self.create_service.insert(req),
                 object_cookie,
                 uuid,
-                value: SerializedValue::serialize(info).map_err(RunError::Serialize)?,
+                value: SerializedValue::serialize(info)?,
             };
 
-            self.t.send_and_flush(msg).await.map_err(Into::into)
+            send_and_flush!(self, msg)
         } else {
-            let version = req.info.version();
-            let serial = self.create_service.insert(req);
+            let msg = CreateService {
+                version: req.info.version(),
+                serial: self.create_service.insert(req),
+                object_cookie,
+                uuid,
+            };
 
-            self.t
-                .send_and_flush(CreateService {
-                    serial,
-                    object_cookie,
-                    uuid,
-                    version,
-                })
-                .await
-                .map_err(Into::into)
+            send_and_flush!(self, msg)
         }
     }
 
@@ -1287,13 +1291,12 @@ where
         &mut self,
         req: DestroyServiceRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.id.cookie;
-        let serial = self.destroy_service.insert(req);
+        let msg = DestroyService {
+            cookie: req.id.cookie,
+            serial: self.destroy_service.insert(req),
+        };
 
-        self.t
-            .send_and_flush(DestroyService { serial, cookie })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_call_function(
@@ -1302,27 +1305,25 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(req.reply);
 
-        if self.protocol_version >= ProtocolVersion::V1_19 {
-            self.t
-                .send_and_flush(CallFunction2 {
-                    serial,
-                    service_cookie: req.service_cookie,
-                    function: req.function,
-                    version: req.version,
-                    value: req.value,
-                })
-                .await
-                .map_err(Into::into)
+        if self.version >= ProtocolVersion::V1_19 {
+            let msg = CallFunction2 {
+                serial,
+                service_cookie: req.service_cookie,
+                function: req.function,
+                version: req.version,
+                value: req.value,
+            };
+
+            send_and_flush!(self, msg)
         } else {
-            self.t
-                .send_and_flush(CallFunction {
-                    serial,
-                    service_cookie: req.service_cookie,
-                    function: req.function,
-                    value: req.value,
-                })
-                .await
-                .map_err(Into::into)
+            let msg = CallFunction {
+                serial,
+                service_cookie: req.service_cookie,
+                function: req.function,
+                value: req.value,
+            };
+
+            send_and_flush!(self, msg)
         }
     }
 
@@ -1332,13 +1333,12 @@ where
     ) -> Result<(), RunError<T::Error>> {
         self.abort_call_handles.remove(&req.serial);
 
-        self.t
-            .send_and_flush(CallFunctionReply {
-                serial: req.serial,
-                result: req.result,
-            })
-            .await
-            .map_err(Into::into)
+        let msg = CallFunctionReply {
+            serial: req.serial,
+            result: req.result,
+        };
+
+        send_and_flush!(self, msg)
     }
 
     async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
@@ -1346,13 +1346,13 @@ where
             .broker_subscriptions
             .emit(req.service_cookie, req.event)
         {
-            self.t
-                .send_and_flush(EmitEvent {
-                    service_cookie: req.service_cookie,
-                    event: req.event,
-                    value: req.value,
-                })
-                .await?
+            let msg = EmitEvent {
+                service_cookie: req.service_cookie,
+                event: req.event,
+                value: req.value,
+            };
+
+            send_and_flush!(self, msg)?;
         }
 
         Ok(())
@@ -1362,50 +1362,37 @@ where
         &mut self,
         req: CreateClaimedSenderRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let serial = self.create_channel.insert(CreateChannelData::Sender(req));
+        let msg = CreateChannel {
+            serial: self.create_channel.insert(CreateChannelData::Sender(req)),
+            end: ChannelEndWithCapacity::Sender,
+        };
 
-        self.t
-            .send_and_flush(CreateChannel {
-                serial,
-                end: ChannelEndWithCapacity::Sender,
-            })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_create_claimed_receiver(
         &mut self,
         req: CreateClaimedReceiverRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let capacity = req.capacity.get();
-        let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
+        let msg = CreateChannel {
+            end: ChannelEndWithCapacity::Receiver(req.capacity.get()),
+            serial: self.create_channel.insert(CreateChannelData::Receiver(req)),
+        };
 
-        self.t
-            .send_and_flush(CreateChannel {
-                serial,
-                end: ChannelEndWithCapacity::Receiver(capacity),
-            })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_close_channel_end(
         &mut self,
         req: CloseChannelEndRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.cookie;
-        let end = req.end;
+        let msg = CloseChannelEnd {
+            cookie: req.cookie,
+            end: req.end,
+            serial: self.close_channel_end.insert(req),
+        };
 
-        let serial = self.close_channel_end.insert(req);
-
-        self.t
-            .send_and_flush(CloseChannelEnd {
-                serial,
-                cookie,
-                end,
-            })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_claim_sender(
@@ -1418,14 +1405,13 @@ where
             .claim_channel_end
             .insert(ClaimChannelEndData::Sender(req));
 
-        self.t
-            .send_and_flush(ClaimChannelEnd {
-                serial,
-                cookie,
-                end: ChannelEndWithCapacity::Sender,
-            })
-            .await
-            .map_err(Into::into)
+        let msg = ClaimChannelEnd {
+            serial,
+            cookie,
+            end: ChannelEndWithCapacity::Sender,
+        };
+
+        send_and_flush!(self, msg)
     }
 
     async fn req_claim_receiver(
@@ -1439,26 +1425,24 @@ where
             .claim_channel_end
             .insert(ClaimChannelEndData::Receiver(req));
 
-        self.t
-            .send_and_flush(ClaimChannelEnd {
-                serial,
-                cookie,
-                end: ChannelEndWithCapacity::Receiver(capacity),
-            })
-            .await
-            .map_err(Into::into)
+        let msg = ClaimChannelEnd {
+            serial,
+            cookie,
+            end: ChannelEndWithCapacity::Receiver(capacity),
+        };
+
+        send_and_flush!(self, msg)
     }
 
     async fn req_send_item(&mut self, req: SendItemRequest) -> Result<(), RunError<T::Error>> {
         debug_assert!(self.senders.contains_key(&req.cookie));
 
-        self.t
-            .send_and_flush(SendItem {
-                cookie: req.cookie,
-                value: req.value,
-            })
-            .await
-            .map_err(Into::into)
+        let msg = SendItem {
+            cookie: req.cookie,
+            value: req.value,
+        };
+
+        send_and_flush!(self, msg)
     }
 
     async fn req_add_channel_capacity(
@@ -1466,7 +1450,7 @@ where
         req: AddChannelCapacity,
     ) -> Result<(), RunError<T::Error>> {
         debug_assert!(self.receivers.contains_key(&req.cookie));
-        self.t.send_and_flush(req).await.map_err(Into::into)
+        send_and_flush!(self, req)
     }
 
     fn req_sync_client(&self, req: SyncClientRequest) {
@@ -1474,12 +1458,11 @@ where
     }
 
     async fn req_sync_broker(&mut self, req: SyncBrokerRequest) -> Result<(), RunError<T::Error>> {
-        let serial = self.sync.insert(req);
+        let msg = Sync {
+            serial: self.sync.insert(req),
+        };
 
-        self.t
-            .send_and_flush(Sync { serial })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_create_bus_listener(
@@ -1490,23 +1473,20 @@ where
             .create_bus_listener
             .insert(CreateBusListenerData::BusListener(req));
 
-        self.t
-            .send_and_flush(CreateBusListener { serial })
-            .await
-            .map_err(Into::into)
+        let msg = CreateBusListener { serial };
+        send_and_flush!(self, msg)
     }
 
     async fn req_destroy_bus_listener(
         &mut self,
         req: DestroyBusListenerRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.cookie;
-        let serial = self.destroy_bus_listener.insert(req);
+        let msg = DestroyBusListener {
+            cookie: req.cookie,
+            serial: self.destroy_bus_listener.insert(req),
+        };
 
-        self.t
-            .send_and_flush(DestroyBusListener { serial, cookie })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_add_bus_listener_filter(
@@ -1517,7 +1497,7 @@ where
             return Ok(());
         };
 
-        self.t.send_and_flush(req).await?;
+        send_and_flush!(self, req)?;
         bus_listener.add_filter(req.filter);
 
         Ok(())
@@ -1531,7 +1511,7 @@ where
             return Ok(());
         };
 
-        self.t.send_and_flush(req).await?;
+        send_and_flush!(self, req)?;
         bus_listener.remove_filter(req.filter);
 
         Ok(())
@@ -1545,7 +1525,7 @@ where
             return Ok(());
         };
 
-        self.t.send_and_flush(req).await?;
+        send_and_flush!(self, req)?;
         bus_listener.clear_filters();
 
         Ok(())
@@ -1555,31 +1535,25 @@ where
         &mut self,
         req: StartBusListenerRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.cookie;
-        let scope = req.scope;
-        let serial = self.start_bus_listener.insert(req);
+        let msg = StartBusListener {
+            cookie: req.cookie,
+            scope: req.scope,
+            serial: self.start_bus_listener.insert(req),
+        };
 
-        self.t
-            .send_and_flush(StartBusListener {
-                serial,
-                cookie,
-                scope,
-            })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_stop_bus_listener(
         &mut self,
         req: StopBusListenerRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let cookie = req.cookie;
-        let serial = self.stop_bus_listener.insert(req);
+        let msg = StopBusListener {
+            cookie: req.cookie,
+            serial: self.stop_bus_listener.insert(req),
+        };
 
-        self.t
-            .send_and_flush(StopBusListener { serial, cookie })
-            .await
-            .map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_create_lifetime_listener(
@@ -1590,59 +1564,60 @@ where
             .create_bus_listener
             .insert(CreateBusListenerData::LifetimeListener(req));
 
-        self.t
-            .send_and_flush(CreateBusListener { serial })
-            .await
-            .map_err(Into::into)
+        let msg = CreateBusListener { serial };
+        send_and_flush!(self, msg)
     }
 
     async fn req_create_proxy(
         &mut self,
         req: CreateProxyRequest,
     ) -> Result<(), RunError<T::Error>> {
-        let msg = if self.protocol_version >= ProtocolVersion::V1_17 {
-            let cookie = req.service.cookie;
-            let serial = self.query_service_info.insert(req);
-            Message::QueryServiceInfo(QueryServiceInfo { serial, cookie })
+        let msg = if self.version >= ProtocolVersion::V1_17 {
+            Message::QueryServiceInfo(QueryServiceInfo {
+                cookie: req.service.cookie,
+                serial: self.query_service_info.insert(req),
+            })
         } else {
-            let cookie = req.service.cookie;
-            let serial = self.query_service_version.insert(req);
-            Message::QueryServiceVersion(QueryServiceVersion { serial, cookie })
+            Message::QueryServiceVersion(QueryServiceVersion {
+                cookie: req.service.cookie,
+                serial: self.query_service_version.insert(req),
+            })
         };
 
-        self.t.send_and_flush(msg).await.map_err(Into::into)
+        send_and_flush!(self, msg)
     }
 
     async fn req_destroy_proxy(&mut self, proxy: ProxyId) -> Result<(), RunError<T::Error>> {
         if let Some(res) = self.proxies.remove(proxy) {
-            if res.unsubscribe && (self.protocol_version >= ProtocolVersion::V1_18) {
-                self.t
-                    .send(UnsubscribeService {
-                        service_cookie: res.service,
-                    })
-                    .await?;
+            if res.unsubscribe && (self.version >= ProtocolVersion::V1_18) {
+                let msg = UnsubscribeService {
+                    service_cookie: res.service,
+                };
+
+                send!(self, msg)?;
             }
 
             for event in res.events {
-                self.t
-                    .send(UnsubscribeEvent {
-                        service_cookie: res.service,
-                        event,
-                    })
-                    .await?;
+                let msg = UnsubscribeEvent {
+                    service_cookie: res.service,
+                    event,
+                };
+
+                send!(self, msg)?;
             }
 
             if res.all_events {
-                debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
-                self.t
-                    .send(UnsubscribeAllEvents {
-                        serial: None,
-                        service_cookie: res.service,
-                    })
-                    .await?;
+                debug_assert!(self.version >= ProtocolVersion::V1_18);
+
+                let msg = UnsubscribeAllEvents {
+                    serial: None,
+                    service_cookie: res.service,
+                };
+
+                send!(self, msg)?;
             }
 
-            self.t.flush().await?;
+            self.transport.flush().await.map_err(RunError::Transport)?;
         }
 
         Ok(())
@@ -1654,16 +1629,13 @@ where
     ) -> Result<(), RunError<T::Error>> {
         match self.proxies.subscribe(req.proxy, req.event) {
             SubscribeResult::Forward(service_cookie) => {
-                let event = req.event;
-                let serial = self.subscribe_event.insert(req);
+                let msg = SubscribeEvent {
+                    service_cookie,
+                    event: req.event,
+                    serial: Some(self.subscribe_event.insert(req)),
+                };
 
-                self.t
-                    .send_and_flush(SubscribeEvent {
-                        serial: Some(serial),
-                        service_cookie,
-                        event,
-                    })
-                    .await?;
+                send_and_flush!(self, msg)?;
             }
 
             SubscribeResult::Noop => {
@@ -1684,13 +1656,12 @@ where
     ) -> Result<(), RunError<T::Error>> {
         match self.proxies.unsubscribe(req.proxy, req.event) {
             SubscribeResult::Forward(service_cookie) => {
-                self.t
-                    .send_and_flush(UnsubscribeEvent {
-                        service_cookie,
-                        event: req.event,
-                    })
-                    .await?;
+                let msg = UnsubscribeEvent {
+                    service_cookie,
+                    event: req.event,
+                };
 
+                send_and_flush!(self, msg)?;
                 let _ = req.reply.send(Ok(()));
             }
 
@@ -1710,17 +1681,15 @@ where
         &mut self,
         req: SubscribeAllEventsRequest,
     ) -> Result<(), RunError<T::Error>> {
-        if self.protocol_version >= ProtocolVersion::V1_18 {
+        if self.version >= ProtocolVersion::V1_18 {
             match self.proxies.subscribe_all(req.proxy) {
                 SubscribeResult::Forward(service_cookie) => {
-                    let serial = self.subscribe_all_events.insert(req);
+                    let msg = SubscribeAllEvents {
+                        serial: Some(self.subscribe_all_events.insert(req)),
+                        service_cookie,
+                    };
 
-                    self.t
-                        .send_and_flush(SubscribeAllEvents {
-                            serial: Some(serial),
-                            service_cookie,
-                        })
-                        .await?;
+                    send_and_flush!(self, msg)?;
                 }
 
                 SubscribeResult::Noop => {
@@ -1748,29 +1717,28 @@ where
         };
 
         for event in res.events {
-            self.t
-                .send(UnsubscribeEvent {
-                    service_cookie: res.service,
-                    event,
-                })
-                .await?;
+            let msg = UnsubscribeEvent {
+                service_cookie: res.service,
+                event,
+            };
+
+            send!(self, msg)?;
         }
 
         if res.all_events {
-            debug_assert!(self.protocol_version >= ProtocolVersion::V1_18);
-            let serial = self.unsubscribe_all_events.insert(req);
+            debug_assert!(self.version >= ProtocolVersion::V1_18);
 
-            self.t
-                .send(UnsubscribeAllEvents {
-                    serial: Some(serial),
-                    service_cookie: res.service,
-                })
-                .await?;
+            let msg = UnsubscribeAllEvents {
+                serial: Some(self.unsubscribe_all_events.insert(req)),
+                service_cookie: res.service,
+            };
+
+            send!(self, msg)?;
         } else {
             let _ = req.reply.send(Ok(()));
         }
 
-        self.t.flush().await?;
+        self.transport.flush().await.map_err(RunError::Transport)?;
         Ok(())
     }
 
@@ -1800,16 +1768,12 @@ where
     async fn req_submit_introspection(&mut self) -> Result<(), RunError<T::Error>> {
         use aldrin_core::message::RegisterIntrospection;
 
-        if (self.protocol_version >= ProtocolVersion::V1_17) && !self.introspection.is_empty() {
-            let register_introspection = RegisterIntrospection {
-                value: SerializedValue::serialize(IterAsSet(self.introspection.keys()))
-                    .map_err(RunError::Serialize)?,
+        if (self.version >= ProtocolVersion::V1_17) && !self.introspection.is_empty() {
+            let msg = RegisterIntrospection {
+                value: SerializedValue::serialize(IterAsSet(self.introspection.keys()))?,
             };
 
-            self.t
-                .send_and_flush(register_introspection)
-                .await
-                .map_err(Into::into)
+            send_and_flush!(self, msg)
         } else {
             Ok(())
         }
@@ -1823,14 +1787,13 @@ where
         if let Some(introspection) = self.introspection.get(&req.type_id) {
             let _ = req.reply.send(Some(introspection.clone()));
             Ok(())
-        } else if self.protocol_version >= ProtocolVersion::V1_17 {
-            let type_id = req.type_id;
-            let serial = self.query_introspection.insert(req);
+        } else if self.version >= ProtocolVersion::V1_17 {
+            let msg = QueryIntrospection {
+                type_id: req.type_id,
+                serial: self.query_introspection.insert(req),
+            };
 
-            self.t
-                .send_and_flush(QueryIntrospection { serial, type_id })
-                .await
-                .map_err(Into::into)
+            send_and_flush!(self, msg)
         } else {
             let _ = req.reply.send(None);
             Ok(())
@@ -1840,8 +1803,9 @@ where
     async fn abort_function_call(&mut self, serial: u32) -> Result<(), RunError<T::Error>> {
         self.function_calls.abort(serial);
 
-        if self.protocol_version >= ProtocolVersion::V1_16 {
-            self.t.send_and_flush(AbortFunctionCall { serial }).await?;
+        if self.version >= ProtocolVersion::V1_16 {
+            let msg = AbortFunctionCall { serial };
+            send_and_flush!(self, msg)?;
         }
 
         Ok(())

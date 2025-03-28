@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Adapt to the new `Serialize` and `Deserialize` traits.
 - `ClientBuilder` replaces most of the connection methods of `Client`.
+- `RunError<T>` no longer implements `From<T>`.
+- `RunError<T>` now implements `From<SerializeError>` and `From<DeserializeError>`.
 
 ## [0.12.0] - 2025-01-26
 
