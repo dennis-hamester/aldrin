@@ -5,20 +5,30 @@ mod message_le;
 mod runtime;
 mod serial_le;
 mod uuid_le;
+mod value_epoch;
 
 use aldrin_broker::core::channel::{self, Unbounded};
+use aldrin_broker::core::message::MessageOps;
 use aldrin_broker::{Broker, BrokerHandle};
 use arbitrary::Arbitrary;
 use context::Context;
 use libfuzzer_sys::fuzz_target;
 use message_le::{MessageLe, UpdateContext};
 use runtime::Runtime;
+use value_epoch::ValueEpoch;
 
 #[derive(Debug, Arbitrary)]
 enum Step {
     Connect,
     Disconnect(u8),
-    Send { client: u8, msg: MessageLe },
+    Send(Send),
+}
+
+#[derive(Debug, Arbitrary)]
+struct Send {
+    client: u8,
+    msg: MessageLe,
+    value_epoch: Option<ValueEpoch>,
 }
 
 struct Fuzzer {
@@ -56,7 +66,7 @@ impl Fuzzer {
         match step {
             Step::Connect => self.connect(),
             Step::Disconnect(client) => self.disconnect(client),
-            Step::Send { client, msg } => self.send(client, msg),
+            Step::Send(send) => self.send(send),
         }
     }
 
@@ -79,8 +89,8 @@ impl Fuzzer {
         }
     }
 
-    fn send(&mut self, client: u8, msg: MessageLe) {
-        let Some(client) = self.clients.get_mut(client as usize) else {
+    fn send(&mut self, send: Send) {
+        let Some(client) = self.clients.get_mut(send.client as usize) else {
             return;
         };
 
@@ -88,7 +98,11 @@ impl Fuzzer {
             return;
         };
 
-        let msg = msg.to_core(&self.context);
+        let mut msg = send.msg.to_core(&self.context);
+
+        if let Some(value_epoch) = send.value_epoch {
+            let _ = msg.convert_value(None, value_epoch.into());
+        }
 
         if self.runtime.send(inner, msg).is_err() {
             *client = None;
