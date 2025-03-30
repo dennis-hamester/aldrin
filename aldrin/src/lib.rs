@@ -63,6 +63,7 @@ mod bus_listener;
 mod call;
 mod channel;
 mod client;
+mod client_builder;
 mod discoverer;
 mod event;
 mod function_call_map;
@@ -102,6 +103,7 @@ pub use channel::{
     UnboundSender, UnclaimedReceiver, UnclaimedSender,
 };
 pub use client::Client;
+pub use client_builder::ClientBuilder;
 pub use discoverer::{
     Discoverer, DiscovererBuilder, DiscovererEntry, DiscovererEntryIter, DiscovererEvent,
     DiscovererEventKind, DiscovererIter, DiscovererIterEntry,

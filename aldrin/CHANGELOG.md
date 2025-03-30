@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `ClientBuilder` type.
+
 ### Changed
 
 - Adapt to the new `Serialize` and `Deserialize` traits.
+- `ClientBuilder` replaces most of the connection methods of `Client`.
 
 ## [0.12.0] - 2025-01-26
 

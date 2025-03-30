@@ -22,7 +22,7 @@ use crate::low_level::{
     PendingReceiver, PendingSender, ProxyId, RawCall, Service, UnclaimedReceiver, UnclaimedSender,
 };
 use crate::serial_map::SerialMap;
-use crate::{BusListener, Error, Handle, Object};
+use crate::{BusListener, ClientBuilder, Error, Handle, Object};
 #[cfg(feature = "introspection")]
 use aldrin_core::adapters::IterAsSet;
 #[cfg(feature = "introspection")]
@@ -32,11 +32,10 @@ use aldrin_core::message::{
     CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
     ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
     ClearBusListenerFilters, CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult,
-    Connect2, ConnectData, ConnectReplyData, ConnectResult, CreateBusListener,
-    CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
-    CreateObjectResult, CreateService, CreateService2, CreateServiceReply, CreateServiceResult,
-    DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult, DestroyObject,
-    DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
+    CreateBusListener, CreateBusListenerReply, CreateChannel, CreateChannelReply, CreateObject,
+    CreateObjectReply, CreateObjectResult, CreateService, CreateService2, CreateServiceReply,
+    CreateServiceResult, DestroyBusListener, DestroyBusListenerReply, DestroyBusListenerResult,
+    DestroyObject, DestroyObjectReply, DestroyObjectResult, DestroyService, DestroyServiceReply,
     DestroyServiceResult, EmitBusEvent, EmitEvent, ItemReceived, Message, QueryIntrospection,
     QueryIntrospectionReply, QueryIntrospectionResult, QueryServiceInfo, QueryServiceInfoReply,
     QueryServiceInfoResult, QueryServiceVersion, QueryServiceVersionReply,
@@ -48,21 +47,18 @@ use aldrin_core::message::{
     UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult, UnsubscribeEvent,
     UnsubscribeService,
 };
-use aldrin_core::tags::{self, Tag};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
 #[cfg(feature = "introspection")]
 use aldrin_core::TypeId;
 use aldrin_core::{
-    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
-    ProtocolVersion, Serialize, SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId,
-    ServiceInfo,
+    BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectId,
+    ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceInfo,
 };
 use broker_subscriptions::BrokerSubscriptions;
 use futures_channel::{mpsc, oneshot};
 use proxies::{Proxies, SubscribeResult};
 use select::{Select, Selected};
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::mem;
 use std::time::Instant;
 
@@ -119,8 +115,10 @@ where
     subscribe_all_events: SerialMap<SubscribeAllEventsRequest>,
     unsubscribe_all_events: SerialMap<UnsubscribeAllEventsRequest>,
     proxies: Proxies,
+
     #[cfg(feature = "introspection")]
     introspection: HashMap<TypeId, SerializedValue>,
+
     #[cfg(feature = "introspection")]
     query_introspection: SerialMap<QueryIntrospectionRequest>,
 }
@@ -129,11 +127,60 @@ impl<T> Client<T>
 where
     T: AsyncTransport + Unpin,
 {
+    pub(crate) fn new(t: T, protocol_version: ProtocolVersion) -> Self {
+        let (send, recv) = mpsc::unbounded();
+
+        Self {
+            select: Select::new(),
+            t,
+            protocol_version,
+            recv,
+            handle: Handle::new(send),
+            num_handles: 1,
+            create_object: SerialMap::new(),
+            destroy_object: SerialMap::new(),
+            create_service: SerialMap::new(),
+            destroy_service: SerialMap::new(),
+            function_calls: FunctionCallMap::new(),
+            services: HashMap::new(),
+            broker_subscriptions: BrokerSubscriptions::new(),
+            create_channel: SerialMap::new(),
+            close_channel_end: SerialMap::new(),
+            claim_channel_end: SerialMap::new(),
+            senders: HashMap::new(),
+            receivers: HashMap::new(),
+            sync: SerialMap::new(),
+            create_bus_listener: SerialMap::new(),
+            destroy_bus_listener: SerialMap::new(),
+            start_bus_listener: SerialMap::new(),
+            stop_bus_listener: SerialMap::new(),
+            bus_listeners: HashMap::new(),
+            abort_call_handles: HashMap::new(),
+            query_service_info: SerialMap::new(),
+            query_service_version: SerialMap::new(),
+            subscribe_event: SerialMap::new(),
+            subscribe_service: SerialMap::new(),
+            subscribe_all_events: SerialMap::new(),
+            unsubscribe_all_events: SerialMap::new(),
+            proxies: Proxies::new(),
+
+            #[cfg(feature = "introspection")]
+            introspection: HashMap::new(),
+
+            #[cfg(feature = "introspection")]
+            query_introspection: SerialMap::new(),
+        }
+    }
+
+    /// Creates a [`ClientBuilder`].
+    pub fn builder(transport: T) -> ClientBuilder<T> {
+        ClientBuilder::new(transport)
+    }
+
     /// Creates a client and connects to an Aldrin broker.
     ///
-    /// If you need to send custom data to the broker, then use
-    /// [`connect_with_data`](Self::connect_with_data) instead. This function sends `()` and
-    /// discards the broker's data.
+    /// If you need more control over how the connection is established, then use a
+    /// [`ClientBuilder`].
     ///
     /// After creating a client, it must be continuously polled and run to completion with the
     /// [`run`](Client::run) method.
@@ -168,142 +215,8 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn connect(t: T) -> Result<Self, ConnectError<T::Error>> {
-        let (client, _) = Self::connect_with_data::<tags::Unit, Infallible>(t, None).await?;
-        Ok(client)
-    }
-
-    /// Creates a client and connects to an Aldrin broker. Allows to send and receive custom data.
-    ///
-    /// After creating a client, it must be continuously polled and run to completion with the
-    /// [`run`](Client::run) method.
-    pub async fn connect_with_data<D: Tag, E: Serialize<D>>(
-        mut t: T,
-        data: Option<E>,
-    ) -> Result<(Self, Option<SerializedValue>), ConnectError<T::Error>> {
-        const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_19;
-
-        let mut connect_data = ConnectData::new();
-
-        if let Some(data) = data {
-            connect_data.serialize_user_as(data)?;
-        }
-
-        let connect = Connect2 {
-            major_version: PROTOCOL_VERSION.major(),
-            minor_version: PROTOCOL_VERSION.minor(),
-            value: SerializedValue::serialize(connect_data)?,
-        };
-
-        t.send_and_flush(connect)
-            .await
-            .map_err(ConnectError::Transport)?;
-
-        let connect_reply = match t.receive().await.map_err(ConnectError::Transport)? {
-            Message::ConnectReply2(connect_reply) => connect_reply,
-            msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
-        };
-
-        let connect_reply_data = connect_reply.value.deserialize::<ConnectReplyData>()?;
-
-        let minor_version = match connect_reply.result {
-            ConnectResult::Ok(minor_version) => minor_version,
-            ConnectResult::Rejected => return Err(ConnectError::Rejected(connect_reply_data.user)),
-            ConnectResult::IncompatibleVersion => return Err(ConnectError::IncompatibleVersion),
-        };
-
-        let protocol_version = ProtocolVersion::new(PROTOCOL_VERSION.major(), minor_version);
-        if protocol_version > PROTOCOL_VERSION {
-            return Err(ConnectError::IncompatibleVersion);
-        }
-
-        let (send, recv) = mpsc::unbounded();
-        let client = Self {
-            select: Select::new(),
-            t,
-            protocol_version,
-            recv,
-            handle: Handle::new(send),
-            num_handles: 1,
-            create_object: SerialMap::new(),
-            destroy_object: SerialMap::new(),
-            create_service: SerialMap::new(),
-            destroy_service: SerialMap::new(),
-            function_calls: FunctionCallMap::new(),
-            services: HashMap::new(),
-            broker_subscriptions: BrokerSubscriptions::new(),
-            create_channel: SerialMap::new(),
-            close_channel_end: SerialMap::new(),
-            claim_channel_end: SerialMap::new(),
-            senders: HashMap::new(),
-            receivers: HashMap::new(),
-            sync: SerialMap::new(),
-            create_bus_listener: SerialMap::new(),
-            destroy_bus_listener: SerialMap::new(),
-            start_bus_listener: SerialMap::new(),
-            stop_bus_listener: SerialMap::new(),
-            bus_listeners: HashMap::new(),
-            abort_call_handles: HashMap::new(),
-            query_service_info: SerialMap::new(),
-            query_service_version: SerialMap::new(),
-            subscribe_event: SerialMap::new(),
-            subscribe_service: SerialMap::new(),
-            subscribe_all_events: SerialMap::new(),
-            unsubscribe_all_events: SerialMap::new(),
-            proxies: Proxies::new(),
-            #[cfg(feature = "introspection")]
-            introspection: HashMap::new(),
-            #[cfg(feature = "introspection")]
-            query_introspection: SerialMap::new(),
-        };
-
-        Ok((client, connect_reply_data.user))
-    }
-
-    /// Creates a client and connects to an Aldrin broker. Allows to send and receive custom data.
-    ///
-    /// After creating a client, it must be continuously polled and run to completion with the
-    /// [`run`](Client::run) method.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aldrin::Client;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let broker = aldrin_test::tokio::TestBroker::new();
-    /// # let mut handle = broker.clone();
-    /// # let (async_transport, t2) = aldrin::core::channel::unbounded();
-    /// # tokio::spawn(async move { handle.connect(t2).await });
-    /// // Create an AsyncTransport for connecting to the broker.
-    /// // let async_transport = ...
-    ///
-    /// // Connect to the broker, sending some custom data.
-    /// let (client, data) = Client::connect_with_data(async_transport, Some("Hi!")).await?;
-    ///
-    /// println!("Data the broker sent back: {:?}.", data);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn connect_with_data_and_deserialize<D1, E1, D2, E2>(
-        t: T,
-        data: Option<E1>,
-    ) -> Result<(Self, Option<E2>), ConnectError<T::Error>>
-    where
-        D1: Tag,
-        E1: Serialize<D1>,
-        D2: Tag,
-        E2: Deserialize<D2>,
-    {
-        let (client, data) = Self::connect_with_data(t, data).await?;
-
-        let data = data
-            .as_deref()
-            .map(SerializedValueSlice::deserialize_as)
-            .transpose()?;
-
-        Ok((client, data))
+    pub async fn connect(transport: T) -> Result<Self, ConnectError<T::Error>> {
+        Self::builder(transport).connect().await
     }
 
     /// Returns a handle to the client.
