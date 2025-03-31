@@ -69,7 +69,12 @@ fn select_protocol_version_connect2() {
 
     assert_eq!(
         select_protocol_version(ProtocolVersion::new(1, 20), true),
-        Some(ProtocolVersion::V1_19)
+        Some(ProtocolVersion::V1_20)
+    );
+
+    assert_eq!(
+        select_protocol_version(ProtocolVersion::new(1, 21), true),
+        Some(ProtocolVersion::V1_20)
     );
 
     assert_eq!(

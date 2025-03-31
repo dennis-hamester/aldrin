@@ -31,7 +31,7 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
     pub async fn connect_with_data(
         mut self,
     ) -> Result<(Client<T>, Option<SerializedValue>), ConnectError<T::Error>> {
-        const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_19;
+        const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V1_20;
 
         let connect_data = ConnectData { user: self.data };
 

@@ -8,16 +8,13 @@ pub(crate) fn convert(
     from: Option<ProtocolVersion>,
     to: ProtocolVersion,
 ) -> Result<Cow<SerializedValueSlice>, ValueConversionError> {
-    const MAX: ProtocolVersion = ProtocolVersion::V1_19;
+    const MAX: ProtocolVersion = ProtocolVersion::V1_20;
 
-    let from = Epoch::try_from(from.unwrap_or(MAX))?;
-    let to = Epoch::try_from(to)?;
+    let _from = Epoch::try_from(from.unwrap_or(MAX))?;
+    let _to = Epoch::try_from(to)?;
 
-    if from == to {
-        Ok(Cow::Borrowed(value))
-    } else {
-        unreachable!()
-    }
+    // Epochs v1 and v2 are currently identical.
+    Ok(Cow::Borrowed(value))
 }
 
 pub(crate) fn convert_mut(
@@ -57,6 +54,7 @@ pub enum ValueConversionError {
 #[derive(PartialEq, Eq)]
 enum Epoch {
     V1,
+    V2,
 }
 
 impl TryFrom<ProtocolVersion> for Epoch {
@@ -65,9 +63,13 @@ impl TryFrom<ProtocolVersion> for Epoch {
     fn try_from(version: ProtocolVersion) -> Result<Self, Self::Error> {
         const V1_MIN: ProtocolVersion = ProtocolVersion::V1_14;
         const V1_MAX: ProtocolVersion = ProtocolVersion::V1_19;
+        const V2_MIN: ProtocolVersion = ProtocolVersion::V1_20;
+        const V2_MAX: ProtocolVersion = ProtocolVersion::V1_20;
 
         if (version >= V1_MIN) && (version <= V1_MAX) {
             Ok(Self::V1)
+        } else if (version >= V2_MIN) && (version <= V2_MAX) {
+            Ok(Self::V2)
         } else {
             Err(ValueConversionError::InvalidVersion)
         }

@@ -15,6 +15,7 @@ impl ProtocolVersion {
     pub const V1_17: Self = Self::new(1, 17);
     pub const V1_18: Self = Self::new(1, 18);
     pub const V1_19: Self = Self::new(1, 19);
+    pub const V1_20: Self = Self::new(1, 20);
 
     pub const fn new(major: u32, minor: u32) -> Self {
         Self { major, minor }
@@ -64,6 +65,7 @@ mod test {
         assert_eq!("1.17".parse(), Ok(ProtocolVersion::V1_17));
         assert_eq!("1.18".parse(), Ok(ProtocolVersion::V1_18));
         assert_eq!("1.19".parse(), Ok(ProtocolVersion::V1_19));
+        assert_eq!("1.20".parse(), Ok(ProtocolVersion::V1_20));
 
         assert_eq!(
             "1.4294967296".parse::<ProtocolVersion>(),

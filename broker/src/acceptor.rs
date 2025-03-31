@@ -241,16 +241,17 @@ impl<T> From<ValueConversionError> for AcceptError<T> {
 }
 
 fn select_protocol_version(version: ProtocolVersion, connect2: bool) -> Option<ProtocolVersion> {
-    const MAJOR: u32 = 1;
-    const MINOR_MIN: u32 = 14;
-    const MINOR_MAX: u32 = 19;
+    const MIN: ProtocolVersion = ProtocolVersion::V1_14;
+    const MAX: ProtocolVersion = ProtocolVersion::V1_20;
 
-    if version.major() != 1 {
+    debug_assert!(MIN.major() == MAX.major());
+
+    if version.major() != MIN.major() {
         None
     } else if connect2 {
-        if version.minor() >= MINOR_MIN {
-            let minor = version.minor().min(MINOR_MAX);
-            Some(ProtocolVersion::new(MAJOR, minor))
+        if version.minor() >= MIN.minor() {
+            let minor = version.minor().min(MAX.minor());
+            Some(ProtocolVersion::new(MIN.major(), minor))
         } else {
             None
         }
