@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   almost all parts of Aldrin.
 - `ProtocolVersion` is now able to represent all possible versions, not just known versions.
   `ProtocolVersionError` has been replace by `ProtocolVersionParseError`.
+- Remove `Value::kind()`.
 
 ## [0.12.0] - 2025-01-26
 

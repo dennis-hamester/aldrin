@@ -65,54 +65,6 @@ impl Value {
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
-
-    pub fn kind(&self) -> ValueKind {
-        match self {
-            Self::None => ValueKind::None,
-            Self::Some(_) => ValueKind::Some,
-            Self::Bool(_) => ValueKind::Bool,
-            Self::U8(_) => ValueKind::U8,
-            Self::I8(_) => ValueKind::I8,
-            Self::U16(_) => ValueKind::U16,
-            Self::I16(_) => ValueKind::I16,
-            Self::U32(_) => ValueKind::U32,
-            Self::I32(_) => ValueKind::I32,
-            Self::U64(_) => ValueKind::U64,
-            Self::I64(_) => ValueKind::I64,
-            Self::F32(_) => ValueKind::F32,
-            Self::F64(_) => ValueKind::F64,
-            Self::String(_) => ValueKind::String,
-            Self::Uuid(_) => ValueKind::Uuid,
-            Self::ObjectId(_) => ValueKind::ObjectId,
-            Self::ServiceId(_) => ValueKind::ServiceId,
-            Self::Vec(_) => ValueKind::Vec,
-            Self::Bytes(_) => ValueKind::Bytes,
-            Self::U8Map(_) => ValueKind::U8Map,
-            Self::I8Map(_) => ValueKind::I8Map,
-            Self::U16Map(_) => ValueKind::U16Map,
-            Self::I16Map(_) => ValueKind::I16Map,
-            Self::U32Map(_) => ValueKind::U32Map,
-            Self::I32Map(_) => ValueKind::I32Map,
-            Self::U64Map(_) => ValueKind::U64Map,
-            Self::I64Map(_) => ValueKind::I64Map,
-            Self::StringMap(_) => ValueKind::StringMap,
-            Self::UuidMap(_) => ValueKind::UuidMap,
-            Self::U8Set(_) => ValueKind::U8Set,
-            Self::I8Set(_) => ValueKind::I8Set,
-            Self::U16Set(_) => ValueKind::U16Set,
-            Self::I16Set(_) => ValueKind::I16Set,
-            Self::U32Set(_) => ValueKind::U32Set,
-            Self::I32Set(_) => ValueKind::I32Set,
-            Self::U64Set(_) => ValueKind::U64Set,
-            Self::I64Set(_) => ValueKind::I64Set,
-            Self::StringSet(_) => ValueKind::StringSet,
-            Self::UuidSet(_) => ValueKind::UuidSet,
-            Self::Struct(_) => ValueKind::Struct,
-            Self::Enum(_) => ValueKind::Enum,
-            Self::Sender(_) => ValueKind::Sender,
-            Self::Receiver(_) => ValueKind::Receiver,
-        }
-    }
 }
 
 impl PrimaryTag for Value {
