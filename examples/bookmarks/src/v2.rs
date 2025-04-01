@@ -3,6 +3,7 @@ use crate::bookmarks_v2::{
     BookmarksGetV2ArgsRef, BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef,
     Error as BookmarkError,
 };
+use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
 use anyhow::{anyhow, Result};
@@ -183,24 +184,18 @@ impl Server {
     fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks in the unspecified group.");
 
-        let list = self
-            .list
-            .iter()
-            .filter(|b| b.group.is_none())
-            .cloned()
-            .collect::<Vec<_>>();
-
-        call.ok(list)?;
+        let list = self.list.iter().filter(|b| b.group.is_none());
+        call.ok(IterAsVec(list))?;
 
         Ok(())
     }
 
     fn get_v2(&self, call: Call<BookmarksGetV2Args, Vec<Bookmark>, BookmarkError>) -> Result<()> {
-        let args = call.args();
+        let (args, promise) = call.into_args_and_promise();
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to get bookmarks due to unknown arguments.");
-            call.err(BookmarkError::UnknownFields)?;
+            promise.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
@@ -210,14 +205,8 @@ impl Server {
             println!("Getting all bookmarks in the unspecified group.");
         }
 
-        let list = self
-            .list
-            .iter()
-            .filter(|b| b.group == args.group)
-            .cloned()
-            .collect::<Vec<_>>();
-
-        call.ok(list)?;
+        let list = self.list.iter().filter(|b| b.group == args.group);
+        promise.ok(IterAsVec(list))?;
 
         Ok(())
     }
