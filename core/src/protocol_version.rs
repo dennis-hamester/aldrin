@@ -3,6 +3,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 pub struct ProtocolVersion {
     major: u32,
     minor: u32,

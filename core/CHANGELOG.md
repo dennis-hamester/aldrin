@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `MessageOps::value_mut()`, which returns a mutable reference to a message's value, if any.
 - Add `SerializedValue::convert()`, `SerializedValueSlice::convert()` and
   `MessageOps::convert_value()`.
+- Derive `Arbitrary` for `ProtocolVersion`.
 
 ### Changed
 
