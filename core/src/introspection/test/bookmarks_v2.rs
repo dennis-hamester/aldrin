@@ -1,0 +1,178 @@
+use super::super::{
+    DynIntrospectable, Enum, Introspectable, Layout, LexicalId, References, Service, Struct,
+};
+use crate::ServiceUuid;
+use uuid::uuid;
+
+pub struct Bookmarks;
+
+impl Introspectable for Bookmarks {
+    fn layout() -> Layout {
+        Service::builder(
+            "bookmarks_v2",
+            "Bookmarks",
+            ServiceUuid(uuid!("35660342-8ecb-4101-903a-d1ba49d66f29")),
+            2,
+        )
+        .function(1, "get", None, Some(Vec::<Bookmark>::lexical_id()), None)
+        .function(
+            4,
+            "get_v2",
+            Some(BookmarksGetV2Args::lexical_id()),
+            Some(Vec::<Bookmark>::lexical_id()),
+            Some(Error::lexical_id()),
+        )
+        .function(
+            2,
+            "add",
+            Some(Bookmark::lexical_id()),
+            None,
+            Some(Error::lexical_id()),
+        )
+        .function(
+            3,
+            "remove",
+            Some(String::lexical_id()),
+            None,
+            Some(Error::lexical_id()),
+        )
+        .function(
+            5,
+            "remove_v2",
+            Some(BookmarksRemoveV2Args::lexical_id()),
+            None,
+            Some(Error::lexical_id()),
+        )
+        .function(
+            6,
+            "get_groups",
+            None,
+            Some(Vec::<Option<String>>::lexical_id()),
+            None,
+        )
+        .event(1, "added", Some(Bookmark::lexical_id()))
+        .event(3, "added_v2", Some(Bookmark::lexical_id()))
+        .event(2, "removed", Some(Bookmark::lexical_id()))
+        .event(4, "removed_v2", Some(Bookmark::lexical_id()))
+        .function_fallback("unknown_function")
+        .event_fallback("unknown_event")
+        .finish()
+        .into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::service("bookmarks_v2", "Bookmarks")
+    }
+
+    fn add_references(references: &mut References) {
+        let types = [
+            DynIntrospectable::new::<Error>(),
+            DynIntrospectable::new::<Bookmark>(),
+            DynIntrospectable::new::<BookmarksGetV2Args>(),
+            DynIntrospectable::new::<BookmarksRemoveV2Args>(),
+            DynIntrospectable::new::<Vec<Bookmark>>(),
+            DynIntrospectable::new::<Vec<Option<String>>>(),
+            DynIntrospectable::new::<String>(),
+        ];
+
+        references.extend(types);
+    }
+}
+
+pub struct BookmarksGetV2Args;
+
+impl Introspectable for BookmarksGetV2Args {
+    fn layout() -> Layout {
+        Struct::builder("bookmarks_v2", "BookmarksGetV2Args")
+            .field(1, "group", false, String::lexical_id())
+            .fallback("unknown_fields")
+            .finish()
+            .into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::custom("bookmarks_v2", "BookmarksGetV2Args")
+    }
+
+    fn add_references(references: &mut References) {
+        let types = [DynIntrospectable::new::<String>()];
+
+        references.extend(types);
+    }
+}
+
+pub struct BookmarksRemoveV2Args;
+
+impl Introspectable for BookmarksRemoveV2Args {
+    fn layout() -> Layout {
+        Struct::builder("bookmarks_v2", "BookmarksRemoveV2Args")
+            .field(1, "name", true, String::lexical_id())
+            .field(2, "group", false, String::lexical_id())
+            .fallback("unknown_fields")
+            .finish()
+            .into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::custom("bookmarks_v2", "BookmarksRemoveV2Args")
+    }
+
+    fn add_references(references: &mut References) {
+        let types = [
+            DynIntrospectable::new::<String>(),
+            DynIntrospectable::new::<String>(),
+        ];
+
+        references.extend(types);
+    }
+}
+
+pub struct Bookmark;
+
+impl Introspectable for Bookmark {
+    fn layout() -> Layout {
+        Struct::builder("bookmarks_v2", "Bookmark")
+            .field(1, "name", true, String::lexical_id())
+            .field(2, "url", true, String::lexical_id())
+            .field(3, "group", false, String::lexical_id())
+            .fallback("unknown_fields")
+            .finish()
+            .into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::custom("bookmarks_v2", "Bookmark")
+    }
+
+    fn add_references(references: &mut References) {
+        let types = [
+            DynIntrospectable::new::<String>(),
+            DynIntrospectable::new::<String>(),
+            DynIntrospectable::new::<String>(),
+        ];
+
+        references.extend(types);
+    }
+}
+
+pub enum Error {}
+
+impl Introspectable for Error {
+    fn layout() -> Layout {
+        Enum::builder("bookmarks_v2", "Error")
+            .unit_variant(1, "InvalidName")
+            .unit_variant(2, "DuplicateName")
+            .unit_variant(3, "InvalidUrl")
+            .unit_variant(4, "UnknownFields")
+            .unit_variant(5, "InvalidGroup")
+            .fallback("Unknown")
+            .finish()
+            .into()
+    }
+
+    fn lexical_id() -> LexicalId {
+        LexicalId::custom("bookmarks_v2", "Error")
+    }
+
+    fn add_references(_references: &mut References) {}
+}
