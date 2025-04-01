@@ -23,7 +23,7 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
         &mut self,
     ) -> Result<Option<U>, DeserializeError> {
         match self {
-            Self::V1(deserializer) => deserializer.deserialize().map(Some),
+            Self::V1(deserializer) => deserializer.deserialize(),
             Self::V2(deserializer) => deserializer.deserialize(),
         }
     }
@@ -55,7 +55,10 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     }
 
     pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
-        self.finish_with(|| Ok(t))
+        match self {
+            Self::V1(deserializer) => deserializer.finish(t),
+            Self::V2(deserializer) => deserializer.finish(t),
+        }
     }
 
     pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
@@ -69,7 +72,10 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
     }
 
     pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
-        self.skip_and_finish_with(|| Ok(t))
+        match self {
+            Self::V1(deserializer) => deserializer.skip_and_finish(t),
+            Self::V2(deserializer) => deserializer.skip_and_finish(t),
+        }
     }
 
     pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
@@ -112,13 +118,15 @@ impl<'a, 'b> Vec1Deserializer<'a, 'b> {
         self.len == 0
     }
 
-    pub fn deserialize<T: Tag, U: Deserialize<T>>(&mut self) -> Result<U, DeserializeError> {
+    pub fn deserialize<T: Tag, U: Deserialize<T>>(
+        &mut self,
+    ) -> Result<Option<U>, DeserializeError> {
         if self.is_empty() {
-            Err(DeserializeError::NoMoreElements)
+            Ok(None)
         } else {
             self.len -= 1;
             let deserializer = Deserializer::new(self.buf, self.depth)?;
-            deserializer.deserialize()
+            deserializer.deserialize().map(Some)
         }
     }
 
@@ -128,8 +136,7 @@ impl<'a, 'b> Vec1Deserializer<'a, 'b> {
         U: Deserialize<T>,
         V: Extend<U>,
     {
-        while !self.is_empty() {
-            let elem = self.deserialize()?;
+        while let Some(elem) = self.deserialize()? {
             vec.extend(iter::once(elem));
         }
 
@@ -138,7 +145,7 @@ impl<'a, 'b> Vec1Deserializer<'a, 'b> {
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
         if self.is_empty() {
-            Err(DeserializeError::NoMoreElements)
+            Ok(())
         } else {
             self.len -= 1;
             let deserializer = Deserializer::new(self.buf, self.depth)?;
