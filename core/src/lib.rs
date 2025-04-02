@@ -44,9 +44,9 @@ pub use convert_value::ValueConversionError;
 pub use deserialize::{Deserialize, DeserializeError};
 pub use deserialize_key::DeserializeKey;
 pub use deserializer::{
-    BytesDeserializer, Deserializer, EnumDeserializer, FieldDeserializer, MapDeserializer,
-    MapElementDeserializer, SetDeserializer, StructDeserializer, Vec1Deserializer,
-    Vec2Deserializer, VecDeserializer,
+    Bytes1Deserializer, Bytes2Deserializer, BytesDeserializer, Deserializer, EnumDeserializer,
+    FieldDeserializer, MapDeserializer, MapElementDeserializer, SetDeserializer,
+    StructDeserializer, Vec1Deserializer, Vec2Deserializer, VecDeserializer,
 };
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
@@ -57,8 +57,8 @@ pub use serialize::{Serialize, SerializeError};
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use serializer::{
-    BytesSerializer, MapSerializer, Serializer, SetSerializer, StructSerializer, Vec1Serializer,
-    Vec2Serializer,
+    Bytes1Serializer, Bytes2Serializer, MapSerializer, Serializer, SetSerializer, StructSerializer,
+    Vec1Serializer, Vec2Serializer,
 };
 pub use service_info::ServiceInfo;
 pub use unknown_fields::{AsUnknownFields, UnknownFields, UnknownFieldsRef};

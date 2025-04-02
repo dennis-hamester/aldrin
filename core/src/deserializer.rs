@@ -15,7 +15,7 @@ use crate::{
 use ::bytes::Buf;
 use uuid::Uuid;
 
-pub use self::bytes::BytesDeserializer;
+pub use self::bytes::{Bytes1Deserializer, Bytes2Deserializer, BytesDeserializer};
 pub use enum_::EnumDeserializer;
 pub use map::{MapDeserializer, MapElementDeserializer};
 pub use set::SetDeserializer;
@@ -94,7 +94,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
                 Vec1Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip(),
+            ValueKind::Bytes1 => Bytes1Deserializer::new_without_value_kind(self.buf)?.skip(),
 
             ValueKind::U8Map => {
                 MapDeserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth)?.skip()
@@ -188,6 +188,8 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             ValueKind::Vec2 => {
                 Vec2Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
             }
+
+            ValueKind::Bytes2 => Bytes2Deserializer::new_without_value_kind(self.buf)?.skip(),
         }
     }
 
@@ -445,6 +447,46 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     {
         let mut bytes = T::default();
         self.deserialize_bytes()?.deserialize_extend(&mut bytes)?;
+        Ok(bytes)
+    }
+
+    pub fn deserialize_bytes1(self) -> Result<Bytes1Deserializer<'a, 'b>, DeserializeError> {
+        Bytes1Deserializer::new(self.buf)
+    }
+
+    pub fn deserialize_bytes1_extend<T>(self, bytes: &mut T) -> Result<(), DeserializeError>
+    where
+        T: Extend<u8>,
+    {
+        self.deserialize_bytes1()?.deserialize_extend(bytes)
+    }
+
+    pub fn deserialize_bytes1_extend_new<T>(self) -> Result<T, DeserializeError>
+    where
+        T: Default + Extend<u8>,
+    {
+        let mut bytes = T::default();
+        self.deserialize_bytes1()?.deserialize_extend(&mut bytes)?;
+        Ok(bytes)
+    }
+
+    pub fn deserialize_bytes2(self) -> Result<Bytes2Deserializer<'a, 'b>, DeserializeError> {
+        Bytes2Deserializer::new(self.buf)
+    }
+
+    pub fn deserialize_bytes2_extend<T>(self, bytes: &mut T) -> Result<(), DeserializeError>
+    where
+        T: Extend<u8>,
+    {
+        self.deserialize_bytes2()?.deserialize_extend(bytes)
+    }
+
+    pub fn deserialize_bytes2_extend_new<T>(self) -> Result<T, DeserializeError>
+    where
+        T: Default + Extend<u8>,
+    {
+        let mut bytes = T::default();
+        self.deserialize_bytes2()?.deserialize_extend(&mut bytes)?;
         Ok(bytes)
     }
 

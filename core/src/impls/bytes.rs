@@ -2,18 +2,18 @@
 use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
-use std::cmp::Ordering;
 use std::collections::{LinkedList, VecDeque};
+use std::mem::{self, MaybeUninit};
 
 impl Serialize<tags::Bytes> for Vec<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(&self)
+        serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl Serialize<tags::Bytes> for &Vec<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
@@ -25,36 +25,62 @@ impl Deserialize<tags::Bytes> for Vec<u8> {
 
 impl Serialize<tags::Bytes> for &[u8] {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
 impl<const N: usize> Serialize<tags::Bytes> for [u8; N] {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(&self)
+        serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl<const N: usize> Serialize<tags::Bytes> for &[u8; N] {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
 impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_bytes()?;
-        let bytes = deserializer.as_slice();
 
-        match bytes.len().cmp(&N) {
-            Ordering::Equal => {
-                let bytes = bytes.try_into().unwrap();
-                deserializer.advance(N)?;
-                deserializer.finish(bytes)
+        // SAFETY: This creates an array of MaybeUninit<U>, which doesn't require initialization.
+        let mut arr: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut done = 0;
+
+        loop {
+            let slice = deserializer.as_slice()?;
+            let len = slice.len();
+
+            if len == 0 {
+                if done == N {
+                    // SAFETY: Exactly done elements have been initialized and done equals N.
+                    //
+                    // It's currently impossible to transmute [MaybeUninit<u8>; N] to [u8; N] when N
+                    // is a const generic. See https://github.com/rust-lang/rust/issues/61956.
+                    let value = unsafe {
+                        (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[u8; N]>))
+                            .assume_init_read()
+                    };
+
+                    break deserializer.finish(value);
+                } else {
+                    break Err(DeserializeError::InvalidSerialization);
+                }
             }
 
-            Ordering::Less => Err(DeserializeError::NoMoreElements),
-            Ordering::Greater => Err(DeserializeError::MoreElementsRemain),
+            if done + len <= N {
+                // SAFETY: &[u8] and &[MaybeUninit<u8>] have the same layout
+                let slice: &[MaybeUninit<u8>] = unsafe { mem::transmute(slice) };
+
+                arr[done..(done + len)].copy_from_slice(slice);
+
+                done += len;
+                deserializer.advance(len)?;
+            } else {
+                break Err(DeserializeError::InvalidSerialization);
+            }
         }
     }
 }
@@ -67,7 +93,7 @@ impl Serialize<tags::Bytes> for VecDeque<u8> {
 
 impl Serialize<tags::Bytes> for &VecDeque<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_bytes(self.len())?;
+        let mut serializer = serializer.serialize_bytes2()?;
 
         let (a, b) = self.as_slices();
         serializer.serialize(a)?;
@@ -91,7 +117,7 @@ impl Serialize<tags::Bytes> for LinkedList<u8> {
 
 impl Serialize<tags::Bytes> for &LinkedList<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_bytes(self.len())?;
+        let mut serializer = serializer.serialize_bytes1(self.len())?;
 
         for byte in self {
             serializer.serialize(&[*byte])?;
@@ -113,25 +139,21 @@ impl PrimaryTag for bytes::Bytes {
 
 impl Serialize<tags::Bytes> for bytes::Bytes {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(&self)
+        serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl Serialize<tags::Bytes> for &bytes::Bytes {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
 impl Deserialize<tags::Bytes> for bytes::Bytes {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_bytes()?;
-
-        let bytes = deserializer.as_slice();
-        let bytes = Self::copy_from_slice(bytes);
-        deserializer.advance(bytes.len())?;
-
-        deserializer.finish(bytes)
+        deserializer
+            .deserialize::<tags::Bytes, bytes::BytesMut>()
+            .map(bytes::BytesMut::freeze)
     }
 }
 
@@ -154,24 +176,31 @@ impl PrimaryTag for bytes::BytesMut {
 
 impl Serialize<tags::Bytes> for bytes::BytesMut {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(&self)
+        serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl Serialize<tags::Bytes> for &bytes::BytesMut {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
 impl Deserialize<tags::Bytes> for bytes::BytesMut {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_bytes()?;
+        let mut bytes = Self::new();
 
-        let bytes = Self::from(deserializer.as_slice());
-        deserializer.advance(bytes.len())?;
+        loop {
+            let slice = deserializer.as_slice()?;
 
-        deserializer.finish(bytes)
+            if slice.is_empty() {
+                break deserializer.finish(bytes);
+            } else {
+                bytes.extend_from_slice(slice);
+                deserializer.advance(slice.len())?;
+            }
+        }
     }
 }
 
@@ -190,13 +219,13 @@ impl Introspectable for bytes::BytesMut {
 
 impl Serialize<tags::Bytes> for () {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(0)?.finish()
+        serializer.serialize_bytes2()?.finish()
     }
 }
 
 impl Serialize<tags::Bytes> for &() {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_bytes(0)?.finish()
+        serializer.serialize_bytes2()?.finish()
     }
 }
 

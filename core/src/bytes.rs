@@ -83,13 +83,13 @@ impl PrimaryTag for Bytes {
 
 impl Serialize<tags::Bytes> for Bytes {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(&self)
+        serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl Serialize<tags::Bytes> for &Bytes {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 
@@ -215,7 +215,7 @@ impl PrimaryTag for &ByteSlice {
 
 impl Serialize<tags::Bytes> for &ByteSlice {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_byte_slice(self)
+        serializer.serialize_byte_slice2(self)
     }
 }
 

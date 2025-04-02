@@ -737,46 +737,87 @@ fn test_vec_empty() {
 fn test_bytes() {
     type Tag = tags::Bytes;
     let bytes = [1, 2, 3];
-    let serialized = [18, 3, 1, 2, 3];
+    let v1 = [18, 3, 1, 2, 3];
+    let v2 = [44, 3, 1, 2, 3, 0];
 
     let value = Bytes::new(bytes);
-    assert_serde::<Tag, Bytes, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, Bytes, _, _>(&value, v1, v2);
 
     let value = ByteSlice::new(&bytes);
-    assert_serialize::<Tag, &ByteSlice, _>(&value, serialized);
+    assert_serialize::<Tag, &ByteSlice, _>(&value, v2);
 
     let value = Value::Bytes(Bytes::new(bytes));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = Vec::from(bytes);
-    assert_serde::<Tag, Vec<u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, Vec<u8>, _, _>(&value, v1, v2);
 
     let value = VecDeque::from_iter(bytes);
-    assert_serde::<Tag, VecDeque<u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, VecDeque<u8>, _, _>(&value, v1, v2);
+
+    let value = &bytes[..];
+    assert_serialize::<Tag, &[u8], _>(&value, v2);
+
+    let value = bytes;
+    assert_serde::<Tag, [u8; 3], _, _>(&value, v1, v2);
+
+    let value = bytes::Bytes::from_iter(bytes);
+    assert_serde::<Tag, bytes::Bytes, _, _>(&value, v1, v2);
+
+    let value = bytes::BytesMut::from_iter(bytes);
+    assert_serde::<Tag, bytes::BytesMut, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_bytes_linked_list() {
+    type Tag = tags::Bytes;
+    let bytes = [1, 2, 3];
+    let serialized = [18, 3, 1, 2, 3];
 
     let value = LinkedList::from_iter(bytes);
     assert_serde::<Tag, LinkedList<u8>, _, _>(&value, serialized, serialized);
+}
 
-    let value = &bytes[..];
-    assert_serialize::<Tag, &[u8], _>(&value, serialized);
+#[test]
+fn test_bytes_segmented() {
+    type Tag = tags::Bytes;
+    let bytes = [1, 2, 3];
+    let v1 = [18, 3, 1, 2, 3];
+    let v2 = [44, 1, 1, 1, 2, 1, 3, 0];
+
+    let value = Bytes::new(bytes);
+    assert_deserialize::<Tag, Bytes, _, _>(&value, v1, v2);
+
+    let value = Value::Bytes(Bytes::new(bytes));
+    assert_deserialize::<_, Value, _, _>(&value, v1, v2);
+
+    let value = Vec::from(bytes);
+    assert_deserialize::<Tag, Vec<u8>, _, _>(&value, v1, v2);
+
+    let value = VecDeque::from_iter(bytes);
+    assert_deserialize::<Tag, VecDeque<u8>, _, _>(&value, v1, v2);
+
+    let value = LinkedList::from_iter(bytes);
+    assert_deserialize::<Tag, LinkedList<u8>, _, _>(&value, v1, v2);
 
     let value = bytes;
-    assert_serde::<Tag, [u8; 3], _, _>(&value, serialized, serialized);
+    assert_deserialize::<Tag, [u8; 3], _, _>(&value, v1, v2);
 
     let value = bytes::Bytes::from_iter(bytes);
-    assert_serde::<Tag, bytes::Bytes, _, _>(&value, serialized, serialized);
+    assert_deserialize::<Tag, bytes::Bytes, _, _>(&value, v1, v2);
 
     let value = bytes::BytesMut::from_iter(bytes);
-    assert_serde::<Tag, bytes::BytesMut, _, _>(&value, serialized, serialized);
+    assert_deserialize::<Tag, bytes::BytesMut, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_bytes_empty() {
     type Tag = tags::Bytes;
-    let serialized = [18, 0];
+    let v1 = [18, 0];
+    let v2 = [44, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, (), _, _>(&value, v1, v2);
 }
 
 #[test]

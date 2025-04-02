@@ -13,7 +13,7 @@ use crate::{
 use ::bytes::{BufMut, BytesMut};
 use uuid::Uuid;
 
-pub use self::bytes::BytesSerializer;
+pub use self::bytes::{Bytes1Serializer, Bytes2Serializer};
 pub use map::MapSerializer;
 pub use set::SetSerializer;
 pub use struct_::StructSerializer;
@@ -207,12 +207,25 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_bytes(self, num_elems: usize) -> Result<BytesSerializer<'a>, SerializeError> {
-        BytesSerializer::new(self.buf, num_elems)
+    pub fn serialize_bytes1(
+        self,
+        num_elems: usize,
+    ) -> Result<Bytes1Serializer<'a>, SerializeError> {
+        Bytes1Serializer::new(self.buf, num_elems)
     }
 
-    pub fn serialize_byte_slice(self, bytes: &[u8]) -> Result<(), SerializeError> {
-        let mut serializer = self.serialize_bytes(bytes.len())?;
+    pub fn serialize_byte_slice1(self, bytes: &[u8]) -> Result<(), SerializeError> {
+        let mut serializer = self.serialize_bytes1(bytes.len())?;
+        serializer.serialize(bytes)?;
+        serializer.finish()
+    }
+
+    pub fn serialize_bytes2(self) -> Result<Bytes2Serializer<'a>, SerializeError> {
+        Bytes2Serializer::new(self.buf)
+    }
+
+    pub fn serialize_byte_slice2(self, bytes: &[u8]) -> Result<(), SerializeError> {
+        let mut serializer = self.serialize_bytes2()?;
         serializer.serialize(bytes)?;
         serializer.finish()
     }

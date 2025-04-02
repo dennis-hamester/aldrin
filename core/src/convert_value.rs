@@ -164,7 +164,7 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::ObjectId => self.convert_object_id(),
             ValueKind::ServiceId => self.convert_service_id(),
             ValueKind::Vec1 => self.convert_vec1(),
-            ValueKind::Bytes => self.convert_bytes(),
+            ValueKind::Bytes1 => self.convert_bytes1(),
             ValueKind::U8Map => self.convert_u8_map(),
             ValueKind::I8Map => self.convert_i8_map(),
             ValueKind::U16Map => self.convert_u16_map(),
@@ -190,6 +190,7 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::Sender => self.convert_sender(),
             ValueKind::Receiver => self.convert_receiver(),
             ValueKind::Vec2 => self.convert_vec2(),
+            ValueKind::Bytes2 => self.convert_bytes2(),
         }
     }
 
@@ -397,8 +398,8 @@ impl<'a, 'b> Convert<'a, 'b> {
         Ok(())
     }
 
-    fn convert_bytes(self) -> Result<(), ValueConversionError> {
-        self.dst.put_discriminant_u8(ValueKind::Bytes);
+    fn convert_bytes1(self) -> Result<(), ValueConversionError> {
+        self.dst.put_discriminant_u8(ValueKind::Bytes1);
         let len = self.src.try_get_varint_u32_le()? as usize;
 
         if self.src.len() >= len {
@@ -608,6 +609,42 @@ impl<'a, 'b> Convert<'a, 'b> {
                     ));
                 }
             }
+        }
+    }
+
+    fn convert_bytes2(self) -> Result<(), ValueConversionError> {
+        match self.epoch {
+            Epoch::V1 => self.convert_bytes2_to_bytes1(),
+            Epoch::V2 => unreachable!(),
+        }
+    }
+
+    fn convert_bytes2_to_bytes1(self) -> Result<(), ValueConversionError> {
+        let mut tmp = Vec::new();
+
+        loop {
+            let len = self.src.try_get_varint_u32_le()? as usize;
+
+            if len == 0 {
+                let Ok(len) = tmp.len().try_into() else {
+                    return Err(ValueConversionError::Serialize(SerializeError::Overflow));
+                };
+
+                self.dst.put_discriminant_u8(ValueKind::Bytes1);
+                self.dst.put_varint_u32_le(len);
+                self.dst.extend_from_slice(&tmp);
+
+                break Ok(());
+            }
+
+            if self.src.len() < len {
+                break Err(ValueConversionError::Deserialize(
+                    DeserializeError::InvalidSerialization,
+                ));
+            }
+
+            tmp.extend_from_slice(&self.src[..len]);
+            self.src.advance(len);
         }
     }
 }

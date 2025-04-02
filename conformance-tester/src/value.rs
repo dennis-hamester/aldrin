@@ -89,7 +89,7 @@ where
         ValueKind::ObjectId => "object-id",
         ValueKind::ServiceId => "service-id",
         ValueKind::Vec1 => "vec1",
-        ValueKind::Bytes => "bytes",
+        ValueKind::Bytes1 => "bytes1",
         ValueKind::U8Map => "u8-map",
         ValueKind::I8Map => "i8-map",
         ValueKind::U16Map => "u16-map",
@@ -115,6 +115,7 @@ where
         ValueKind::Sender => "sender",
         ValueKind::Receiver => "receiver",
         ValueKind::Vec2 => "vec2",
+        ValueKind::Bytes2 => "bytes2",
     };
 
     serializer.serialize_str(kind_str)
