@@ -39,7 +39,7 @@ impl PrimaryTag for ArrayType {
 
 impl Serialize<Self> for ArrayType {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(2)?;
+        let mut serializer = serializer.serialize_struct1(2)?;
 
         serializer.serialize::<LexicalId, _>(ArrayTypeField::ElemType, self.elem_type)?;
         serializer.serialize::<tags::U32, _>(ArrayTypeField::Len, self.len)?;
@@ -61,9 +61,7 @@ impl Deserialize<Self> for ArrayType {
         let mut elem_type = None;
         let mut len = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ArrayTypeField::ElemType) => {
                     elem_type = deserializer.deserialize::<LexicalId, _>().map(Some)?;

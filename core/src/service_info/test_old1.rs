@@ -50,7 +50,7 @@ impl PrimaryTag for ServiceInfoOld {
 
 impl Serialize<Self> for ServiceInfoOld {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(2)?;
+        let mut serializer = serializer.serialize_struct1(2)?;
 
         serializer.serialize::<tags::U32, _>(ServiceInfoFieldOld::Version, self.version)?;
 
@@ -74,9 +74,7 @@ impl Deserialize<Self> for ServiceInfoOld {
         let mut version = None;
         let mut type_id = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ServiceInfoFieldOld::Version) => {
                     version = deserializer.deserialize::<tags::U32, _>().map(Some)?;

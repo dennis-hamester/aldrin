@@ -241,7 +241,7 @@ impl Deserialize<tags::Value> for Value {
                 .deserialize_set1_extend_new::<tags::Uuid, Uuid, _>()
                 .map(Self::UuidSet),
 
-            ValueKind::Struct => deserializer.deserialize().map(Self::Struct),
+            ValueKind::Struct1 | ValueKind::Struct2 => deserializer.deserialize().map(Self::Struct),
             ValueKind::Enum => deserializer.deserialize().map(Self::Enum),
             ValueKind::Sender => deserializer.deserialize_sender().map(Self::Sender),
             ValueKind::Receiver => deserializer.deserialize_receiver().map(Self::Receiver),
@@ -369,14 +369,24 @@ impl Serialize<Self> for Struct {
     }
 }
 
+impl Serialize<Struct> for &Struct {
+    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        let mut serializer = serializer.serialize_struct2()?;
+
+        for (&id, field) in &self.0 {
+            serializer.serialize(id, field)?;
+        }
+
+        serializer.finish()
+    }
+}
+
 impl Deserialize<Self> for Struct {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
-
         let mut value = HashMap::new();
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
 
+        while let Some(deserializer) = deserializer.deserialize()? {
             let id = deserializer.id();
             let field = deserializer.deserialize()?;
 
@@ -384,18 +394,6 @@ impl Deserialize<Self> for Struct {
         }
 
         deserializer.finish(Self(value))
-    }
-}
-
-impl Serialize<Struct> for &Struct {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(self.0.len())?;
-
-        for (&id, field) in &self.0 {
-            serializer.serialize(id, field)?;
-        }
-
-        serializer.finish()
     }
 }
 

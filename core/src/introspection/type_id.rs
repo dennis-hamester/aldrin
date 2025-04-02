@@ -66,7 +66,7 @@ impl PrimaryTag for Compute {
 
 impl Serialize<Compute> for &Compute {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(3)?;
+        let mut serializer = serializer.serialize_struct1(3)?;
 
         serializer.serialize::<tags::U32, _>(ComputeField::Version, VERSION)?;
         serializer.serialize::<Layout, _>(ComputeField::Layout, &self.layout)?;

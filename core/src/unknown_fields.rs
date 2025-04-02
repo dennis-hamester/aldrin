@@ -8,7 +8,7 @@ use std::ops::{Deref, DerefMut};
 
 pub trait AsUnknownFields {
     type Field: Serialize<tags::Value>;
-    type FieldsIter: ExactSizeIterator<Item = (u32, Self::Field)>;
+    type FieldsIter: Iterator<Item = (u32, Self::Field)>;
 
     fn fields(self) -> Self::FieldsIter;
 }
@@ -100,7 +100,6 @@ pub struct UnknownFieldsRef<Fields>(pub Fields);
 impl<Fields, Field> AsUnknownFields for UnknownFieldsRef<Fields>
 where
     Fields: IntoIterator<Item = (u32, Field)>,
-    Fields::IntoIter: ExactSizeIterator,
     Field: Serialize<tags::Value>,
 {
     type Field = Field;

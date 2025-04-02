@@ -185,7 +185,7 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::I64Set1 => self.convert_set1::<tags::I64>(),
             ValueKind::StringSet1 => self.convert_set1::<tags::String>(),
             ValueKind::UuidSet1 => self.convert_set1::<tags::Uuid>(),
-            ValueKind::Struct => self.convert_struct(),
+            ValueKind::Struct1 => self.convert_struct1(),
             ValueKind::Enum => self.convert_enum(),
             ValueKind::Sender => self.convert_sender(),
             ValueKind::Receiver => self.convert_receiver(),
@@ -211,6 +211,7 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::I64Set2 => self.convert_set2::<tags::I64>(),
             ValueKind::StringSet2 => self.convert_set2::<tags::String>(),
             ValueKind::UuidSet2 => self.convert_set2::<tags::Uuid>(),
+            ValueKind::Struct2 => self.convert_struct2(),
         }
     }
 
@@ -462,8 +463,8 @@ impl<'a, 'b> Convert<'a, 'b> {
         Ok(())
     }
 
-    fn convert_struct(mut self) -> Result<(), ValueConversionError> {
-        self.dst.put_discriminant_u8(ValueKind::Struct);
+    fn convert_struct1(mut self) -> Result<(), ValueConversionError> {
+        self.dst.put_discriminant_u8(ValueKind::Struct1);
 
         let len = self.src.try_get_varint_u32_le()?;
         self.dst.put_varint_u32_le(len);
@@ -658,6 +659,50 @@ impl<'a, 'b> Convert<'a, 'b> {
 
                 ValueKind::Some => {
                     K::convert(self.src, &mut tmp)?;
+                    len += 1;
+                }
+
+                _ => {
+                    break Err(ValueConversionError::Deserialize(
+                        DeserializeError::InvalidSerialization,
+                    ));
+                }
+            }
+        }
+    }
+
+    fn convert_struct2(self) -> Result<(), ValueConversionError> {
+        match self.epoch {
+            Epoch::V1 => self.convert_struct2_to_struct1(),
+            Epoch::V2 => unreachable!(),
+        }
+    }
+
+    fn convert_struct2_to_struct1(self) -> Result<(), ValueConversionError> {
+        let mut tmp = BytesMut::new();
+        let mut len = 0usize;
+
+        loop {
+            match self.src.try_get_discriminant_u8()? {
+                ValueKind::None => {
+                    let Ok(len) = len.try_into() else {
+                        return Err(ValueConversionError::Serialize(SerializeError::Overflow));
+                    };
+
+                    self.dst.put_discriminant_u8(ValueKind::Struct1);
+                    self.dst.put_varint_u32_le(len);
+                    self.dst.extend_from_slice(&tmp);
+
+                    break Ok(());
+                }
+
+                ValueKind::Some => {
+                    let id = self.src.try_get_varint_u32_le()?;
+                    tmp.put_varint_u32_le(id);
+
+                    let convert = Convert::new(self.src, &mut tmp, self.epoch, self.depth)?;
+                    convert.convert()?;
+
                     len += 1;
                 }
 

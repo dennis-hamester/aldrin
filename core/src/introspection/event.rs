@@ -54,7 +54,7 @@ impl Serialize<Self> for Event {
 
 impl Serialize<Event> for &Event {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(3)?;
+        let mut serializer = serializer.serialize_struct1(3)?;
 
         serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
@@ -74,9 +74,7 @@ impl Deserialize<Self> for Event {
         let mut name = None;
         let mut event_type = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(EventField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
 

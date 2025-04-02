@@ -66,7 +66,7 @@ impl Serialize<Self> for Struct {
 impl Serialize<Struct> for &Struct {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 3 + (self.fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct(num)?;
+        let mut serializer = serializer.serialize_struct1(num)?;
 
         serializer.serialize::<tags::String, _>(StructField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
@@ -96,9 +96,7 @@ impl Deserialize<Self> for Struct {
         let mut fields = None;
         let mut fallback = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(StructField::Schema) => {
                     schema = deserializer.deserialize::<tags::String, _>().map(Some)?

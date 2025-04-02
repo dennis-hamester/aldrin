@@ -69,18 +69,11 @@ impl StructData<'_> {
         let serializer = match self.fallback() {
             Some(fallback) => {
                 let name = fallback.name();
-                let num_fields = self.fields().len() - 1;
 
-                quote! {
-                    serializer.serialize_struct_with_unknown_fields(#num_fields, self.#name)?
-                }
+                quote! { serializer.serialize_struct2_with_unknown_fields(self.#name)? }
             }
 
-            None => {
-                let num_fields = self.fields().len();
-
-                quote! { serializer.serialize_struct(#num_fields)? }
-            }
+            None => quote! { serializer.serialize_struct2()? },
         };
 
         let fields = self
@@ -113,18 +106,11 @@ impl StructData<'_> {
         let serializer = match self.fallback() {
             Some(fallback) => {
                 let name = fallback.name();
-                let num_fields = self.fields().len() - 1;
 
-                quote! {
-                    serializer.serialize_struct_with_unknown_fields(#num_fields, &self.#name)?
-                }
+                quote! { serializer.serialize_struct2_with_unknown_fields(&self.#name)? }
             }
 
-            None => {
-                let num_fields = self.fields().len();
-
-                quote! { serializer.serialize_struct(#num_fields)? }
-            }
+            None => quote! { serializer.serialize_struct2()? },
         };
 
         let fields = self
@@ -162,18 +148,11 @@ impl StructData<'_> {
         let serializer = match self.fallback() {
             Some(fallback) => {
                 let name = fallback.name();
-                let num_fields = self.fields().len() - 1;
 
-                quote! {
-                    serializer.serialize_struct_with_unknown_fields(#num_fields, self.#name)?
-                }
+                quote! { serializer.serialize_struct2_with_unknown_fields(self.#name)? }
             }
 
-            None => {
-                let num_fields = self.fields().len();
-
-                quote! { serializer.serialize_struct(#num_fields)? }
-            }
+            None => quote! { serializer.serialize_struct2()? },
         };
 
         let fields = self

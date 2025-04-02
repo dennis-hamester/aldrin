@@ -66,7 +66,7 @@ impl Serialize<Self> for Field {
 
 impl Serialize<Field> for &Field {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(4)?;
+        let mut serializer = serializer.serialize_struct1(4)?;
 
         serializer.serialize::<tags::U32, _>(FieldField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;
@@ -86,9 +86,7 @@ impl Deserialize<Self> for Field {
         let mut is_required = None;
         let mut field_type = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(FieldField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
 

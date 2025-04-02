@@ -44,7 +44,7 @@ pub enum ValueKind {
     I64Set1 = 36,
     StringSet1 = 37,
     UuidSet1 = 38,
-    Struct = 39,
+    Struct1 = 39,
     Enum = 40,
     Sender = 41,
     Receiver = 42,
@@ -70,4 +70,5 @@ pub enum ValueKind {
     I64Set2 = 62,
     StringSet2 = 63,
     UuidSet2 = 64,
+    Struct2 = 65,
 }

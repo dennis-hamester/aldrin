@@ -24,7 +24,7 @@ fn concrete_vs_vague() {
         U2: Serialize<T2>,
     {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            let mut serializer = serializer.serialize_struct(2)?;
+            let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize(1u32, self.field1)?;
             serializer.serialize(2u32, self.field2)?;
@@ -41,7 +41,7 @@ fn concrete_vs_vague() {
         &'a U2: Serialize<T2>,
     {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            let mut serializer = serializer.serialize_struct(2)?;
+            let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize(1u32, &self.field1)?;
             serializer.serialize(2u32, &self.field2)?;
@@ -63,9 +63,7 @@ fn concrete_vs_vague() {
             let mut field1 = None;
             let mut field2 = None;
 
-            while !deserializer.is_empty() {
-                let deserializer = deserializer.deserialize()?;
-
+            while let Some(deserializer) = deserializer.deserialize()? {
                 match deserializer.id() {
                     1 => field1 = deserializer.deserialize().map(Some)?,
                     2 => field2 = deserializer.deserialize().map(Some)?,

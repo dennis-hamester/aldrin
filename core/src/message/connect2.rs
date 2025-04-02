@@ -72,7 +72,7 @@ impl Serialize<Self> for ConnectData {
 
 impl Serialize<ConnectData> for &ConnectData {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(1)?;
+        let mut serializer = serializer.serialize_struct2()?;
         serializer.serialize(ConnectDataField::User, &self.user)?;
         serializer.finish()
     }
@@ -84,9 +84,7 @@ impl Deserialize<Self> for ConnectData {
 
         let mut user = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ConnectDataField::User) => user = deserializer.deserialize()?,
                 Err(_) => deserializer.skip()?,
@@ -158,8 +156,8 @@ mod test {
     use crate::SerializedValue;
 
     #[test]
-    fn connect() {
-        let serialized = [15, 0, 0, 0, 46, 4, 0, 0, 0, 39, 1, 0, 0, 1, 2];
+    fn connect2() {
+        let serialized = [16, 0, 0, 0, 46, 5, 0, 0, 0, 65, 1, 0, 0, 0, 1, 2];
         let value = ConnectData::new();
 
         let msg = Connect2 {

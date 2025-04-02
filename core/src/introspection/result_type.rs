@@ -38,7 +38,7 @@ impl PrimaryTag for ResultType {
 
 impl Serialize<Self> for ResultType {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(2)?;
+        let mut serializer = serializer.serialize_struct1(2)?;
 
         serializer.serialize::<LexicalId, _>(ResultTypeField::Ok, self.ok)?;
         serializer.serialize::<LexicalId, _>(ResultTypeField::Err, self.err)?;
@@ -60,9 +60,7 @@ impl Deserialize<Self> for ResultType {
         let mut ok = None;
         let mut err = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ResultTypeField::Ok) => {
                     ok = deserializer.deserialize::<LexicalId, _>().map(Some)?

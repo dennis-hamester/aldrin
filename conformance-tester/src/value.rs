@@ -110,7 +110,7 @@ where
         ValueKind::I64Set1 => "i64-set1",
         ValueKind::StringSet1 => "string-set1",
         ValueKind::UuidSet1 => "uuid-set1",
-        ValueKind::Struct => "struct",
+        ValueKind::Struct1 => "struct1",
         ValueKind::Enum => "enum",
         ValueKind::Sender => "sender",
         ValueKind::Receiver => "receiver",
@@ -136,6 +136,7 @@ where
         ValueKind::I64Set2 => "i64-set2",
         ValueKind::StringSet2 => "string-set2",
         ValueKind::UuidSet2 => "uuid-set2",
+        ValueKind::Struct2 => "struct2",
     };
 
     serializer.serialize_str(kind_str)

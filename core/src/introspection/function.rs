@@ -74,7 +74,7 @@ impl Serialize<Self> for Function {
 
 impl Serialize<Function> for &Function {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(5)?;
+        let mut serializer = serializer.serialize_struct1(5)?;
 
         serializer.serialize::<tags::U32, _>(FunctionField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
@@ -96,9 +96,7 @@ impl Deserialize<Self> for Function {
         let mut ok = None;
         let mut err = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(FunctionField::Id) => {
                     id = deserializer.deserialize::<tags::U32, _>().map(Some)?

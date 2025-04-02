@@ -67,9 +67,9 @@ impl StructData<'_> {
 
                     #(#field_vars)*
 
-                    while !_deserializer.is_empty() {
-                        let _deserializer = _deserializer.deserialize()?;
-
+                    while let ::std::option::Option::Some(_deserializer) =
+                        _deserializer.deserialize()?
+                    {
                         match _deserializer.id() {
                             #(#fields)*
                             _ => _deserializer.skip()?,

@@ -188,7 +188,7 @@ async fn before_derive_compat_struct() {
 
     impl Serialize<tags::Value> for &OldStruct {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            let mut serializer = serializer.serialize_struct(3)?;
+            let mut serializer = serializer.serialize_struct1(3)?;
 
             serializer.serialize::<tags::I32, _>(1u32, &self.f1)?;
             serializer.serialize::<tags::Option<tags::I32>, _>(2u32, &self.f2)?;
@@ -206,9 +206,7 @@ async fn before_derive_compat_struct() {
             let mut f2 = None;
             let mut f3 = None;
 
-            while !deserializer.is_empty() {
-                let deserializer = deserializer.deserialize()?;
-
+            while let Some(deserializer) = deserializer.deserialize()? {
                 match deserializer.id() {
                     1 => f1 = deserializer.deserialize::<tags::I32, _>().map(Some)?,
 

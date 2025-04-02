@@ -99,7 +99,7 @@ impl Serialize<Service> for &Service {
         let num = 6
             + (self.function_fallback.is_some() as usize)
             + (self.event_fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct(num)?;
+        let mut serializer = serializer.serialize_struct1(num)?;
 
         serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
@@ -147,9 +147,7 @@ impl Deserialize<Self> for Service {
         let mut function_fallback = None;
         let mut event_fallback = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ServiceField::Schema) => {
                     schema = deserializer.deserialize::<tags::String, _>().map(Some)?

@@ -72,7 +72,7 @@ impl Serialize<Self> for ConnectReplyData {
 
 impl Serialize<ConnectReplyData> for &ConnectReplyData {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(1)?;
+        let mut serializer = serializer.serialize_struct2()?;
         serializer.serialize(ConnectReplyDataField::User, &self.user)?;
         serializer.finish()
     }
@@ -84,9 +84,7 @@ impl Deserialize<Self> for ConnectReplyData {
 
         let mut user = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ConnectReplyDataField::User) => user = deserializer.deserialize()?,
                 Err(_) => deserializer.skip()?,
@@ -207,7 +205,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [15, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 0, 1];
+        let serialized = [16, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 0, 1];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {
@@ -224,7 +222,7 @@ mod test {
 
     #[test]
     fn rejected() {
-        let serialized = [14, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 1];
+        let serialized = [15, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 1];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {
@@ -241,7 +239,7 @@ mod test {
 
     #[test]
     fn incompatible_version() {
-        let serialized = [14, 0, 0, 0, 47, 4, 0, 0, 0, 39, 1, 0, 0, 2];
+        let serialized = [15, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 2];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {

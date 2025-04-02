@@ -21,7 +21,7 @@ macro_rules! impl_tuple {
             )+
         {
             fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-                let mut serializer = serializer.serialize_struct($len)?;
+                let mut serializer = serializer.serialize_struct2()?;
 
                 $(
                     serializer.serialize($idx as u32, self.$idx)?;
@@ -46,9 +46,7 @@ macro_rules! impl_tuple {
                     let mut $gen = None;
                 )+
 
-                while !deserializer.is_empty() {
-                    let deserializer = deserializer.deserialize()?;
-
+                while let Some(deserializer) = deserializer.deserialize()? {
                     match deserializer.id() {
                         $( $idx => $gen = deserializer.deserialize().map(Some)?, )+
                         _ => return Err(DeserializeError::InvalidSerialization),
@@ -69,7 +67,7 @@ macro_rules! impl_tuple {
             )+
         {
             fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-                let mut serializer = serializer.serialize_struct($len)?;
+                let mut serializer = serializer.serialize_struct2()?;
 
                 $(
                     serializer.serialize($idx as u32, &self.$idx)?;

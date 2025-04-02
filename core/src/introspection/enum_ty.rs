@@ -66,7 +66,7 @@ impl Serialize<Self> for Enum {
 impl Serialize<Enum> for &Enum {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 3 + (self.fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct(num)?;
+        let mut serializer = serializer.serialize_struct1(num)?;
 
         serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
@@ -94,9 +94,7 @@ impl Deserialize<Self> for Enum {
         let mut variants = None;
         let mut fallback = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(EnumField::Schema) => {
                     schema = deserializer.deserialize::<tags::String, _>().map(Some)?

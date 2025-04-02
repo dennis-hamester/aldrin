@@ -137,7 +137,7 @@ impl Serialize<Self> for Introspection {
 
 impl Serialize<Introspection> for &Introspection {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct(4)?;
+        let mut serializer = serializer.serialize_struct1(4)?;
 
         serializer.serialize::<tags::U32, _>(IntrospectionField::Version, VERSION)?;
         serializer.serialize::<TypeId, _>(IntrospectionField::TypeId, self.type_id)?;
@@ -160,9 +160,7 @@ impl Deserialize<Self> for Introspection {
         let mut layout = None;
         let mut references = None;
 
-        while !deserializer.is_empty() {
-            let deserializer = deserializer.deserialize()?;
-
+        while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(IntrospectionField::Version) => {
                     if deserializer.deserialize::<tags::U32, u32>()? != VERSION {

@@ -19,7 +19,9 @@ pub use self::bytes::{Bytes1Deserializer, Bytes2Deserializer, BytesDeserializer}
 pub use enum_::EnumDeserializer;
 pub use map::{Map1Deserializer, Map2Deserializer, MapDeserializer, MapElementDeserializer};
 pub use set::{Set1Deserializer, Set2Deserializer, SetDeserializer};
-pub use struct_::{FieldDeserializer, StructDeserializer};
+pub use struct_::{
+    FieldDeserializer, Struct1Deserializer, Struct2Deserializer, StructDeserializer,
+};
 pub use vec::{Vec1Deserializer, Vec2Deserializer, VecDeserializer};
 
 #[derive(Debug)]
@@ -177,8 +179,8 @@ impl<'a, 'b> Deserializer<'a, 'b> {
                 Set1Deserializer::<tags::Uuid>::new_without_value_kind(self.buf)?.skip()
             }
 
-            ValueKind::Struct => {
-                StructDeserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::Struct1 => {
+                Struct1Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
             ValueKind::Enum => {
@@ -270,6 +272,10 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
             ValueKind::UuidSet2 => {
                 Set2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf)?.skip()
+            }
+
+            ValueKind::Struct2 => {
+                Struct2Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
             }
         }
     }
@@ -741,6 +747,14 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
     pub fn deserialize_struct(self) -> Result<StructDeserializer<'a, 'b>, DeserializeError> {
         StructDeserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_struct1(self) -> Result<Struct1Deserializer<'a, 'b>, DeserializeError> {
+        Struct1Deserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_struct2(self) -> Result<Struct2Deserializer<'a, 'b>, DeserializeError> {
+        Struct2Deserializer::new(self.buf, self.depth)
     }
 
     pub fn deserialize_enum(self) -> Result<EnumDeserializer<'a, 'b>, DeserializeError> {

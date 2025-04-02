@@ -16,7 +16,7 @@ use uuid::Uuid;
 pub use self::bytes::{Bytes1Serializer, Bytes2Serializer};
 pub use map::{Map1Serializer, Map2Serializer};
 pub use set::{Set1Serializer, Set2Serializer};
-pub use struct_::StructSerializer;
+pub use struct_::{Struct1Serializer, Struct2Serializer};
 pub use vec::{Vec1Serializer, Vec2Serializer};
 
 #[derive(Debug)]
@@ -320,19 +320,34 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_struct(
+    pub fn serialize_struct1(
         self,
         num_fields: usize,
-    ) -> Result<StructSerializer<'a>, SerializeError> {
-        StructSerializer::new(self.buf, num_fields, self.depth)
+    ) -> Result<Struct1Serializer<'a>, SerializeError> {
+        Struct1Serializer::new(self.buf, num_fields, self.depth)
     }
 
-    pub fn serialize_struct_with_unknown_fields(
+    pub fn serialize_struct1_with_unknown_fields<T>(
         self,
         num_fields: usize,
+        unknown_fields: T,
+    ) -> Result<Struct1Serializer<'a>, SerializeError>
+    where
+        T: AsUnknownFields,
+        T::FieldsIter: ExactSizeIterator,
+    {
+        Struct1Serializer::with_unknown_fields(self.buf, num_fields, unknown_fields, self.depth)
+    }
+
+    pub fn serialize_struct2(self) -> Result<Struct2Serializer<'a>, SerializeError> {
+        Struct2Serializer::new(self.buf, self.depth)
+    }
+
+    pub fn serialize_struct2_with_unknown_fields(
+        self,
         unknown_fields: impl AsUnknownFields,
-    ) -> Result<StructSerializer<'a>, SerializeError> {
-        StructSerializer::with_unknown_fields(self.buf, num_fields, unknown_fields, self.depth)
+    ) -> Result<Struct2Serializer<'a>, SerializeError> {
+        Struct2Serializer::with_unknown_fields(self.buf, unknown_fields, self.depth)
     }
 
     pub fn serialize_enum<T: Tag, U: Serialize<T>>(
