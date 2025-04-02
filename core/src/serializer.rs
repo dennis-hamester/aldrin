@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 pub use self::bytes::{Bytes1Serializer, Bytes2Serializer};
 pub use map::{Map1Serializer, Map2Serializer};
-pub use set::SetSerializer;
+pub use set::{Set1Serializer, Set2Serializer};
 pub use struct_::StructSerializer;
 pub use vec::{Vec1Serializer, Vec2Serializer};
 
@@ -277,14 +277,14 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_set<K: KeyTag>(
+    pub fn serialize_set1<K: KeyTag>(
         self,
         num_elems: usize,
-    ) -> Result<SetSerializer<'a, K>, SerializeError> {
-        SetSerializer::new(self.buf, num_elems)
+    ) -> Result<Set1Serializer<'a, K>, SerializeError> {
+        Set1Serializer::new(self.buf, num_elems)
     }
 
-    pub fn serialize_set_iter<K, T>(self, set: T) -> Result<(), SerializeError>
+    pub fn serialize_set1_iter<K, T>(self, set: T) -> Result<(), SerializeError>
     where
         K: KeyTag,
         T: IntoIterator,
@@ -292,7 +292,26 @@ impl<'a> Serializer<'a> {
         T::Item: SerializeKey<K>,
     {
         let set = set.into_iter();
-        let mut serializer = self.serialize_set(set.len())?;
+        let mut serializer = self.serialize_set1(set.len())?;
+
+        for value in set {
+            serializer.serialize(&value)?;
+        }
+
+        serializer.finish()
+    }
+
+    pub fn serialize_set2<K: KeyTag>(self) -> Result<Set2Serializer<'a, K>, SerializeError> {
+        Set2Serializer::new(self.buf)
+    }
+
+    pub fn serialize_set2_iter<K, T>(self, set: T) -> Result<(), SerializeError>
+    where
+        K: KeyTag,
+        T: IntoIterator,
+        T::Item: SerializeKey<K>,
+    {
+        let mut serializer = self.serialize_set2()?;
 
         for value in set {
             serializer.serialize(&value)?;

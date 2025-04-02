@@ -1,20 +1,20 @@
 use crate::buf_ext::BufMutExt;
 use crate::tags::{KeyTag, KeyTagImpl};
-use crate::{SerializeError, SerializeKey};
+use crate::{SerializeError, SerializeKey, ValueKind};
 use bytes::BytesMut;
 use std::fmt;
 use std::marker::PhantomData;
 
-pub struct SetSerializer<'a, K> {
+pub struct Set1Serializer<'a, K> {
     buf: &'a mut BytesMut,
     num_elems: u32,
     _key: PhantomData<K>,
 }
 
-impl<'a, K: KeyTag> SetSerializer<'a, K> {
-    pub(super) fn new(mut buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
+impl<'a, K: KeyTag> Set1Serializer<'a, K> {
+    pub(super) fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            K::Impl::serialize_set_value_kind(&mut buf);
+            buf.put_discriminant_u8(K::Impl::VALUE_KIND_SET1);
             buf.put_varint_u32_le(num_elems as u32);
 
             Ok(Self {
@@ -57,12 +57,52 @@ impl<'a, K: KeyTag> SetSerializer<'a, K> {
     }
 }
 
-impl<T> fmt::Debug for SetSerializer<'_, T> {
+impl<T> fmt::Debug for Set1Serializer<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut f = f.debug_struct("SetSerializer");
+        let mut f = f.debug_struct("Set1Serializer");
 
         f.field("buf", &self.buf);
         f.field("num_elems", &self.num_elems);
+
+        f.finish()
+    }
+}
+
+pub struct Set2Serializer<'a, K> {
+    buf: &'a mut BytesMut,
+    _key: PhantomData<K>,
+}
+
+impl<'a, K: KeyTag> Set2Serializer<'a, K> {
+    pub(super) fn new(buf: &'a mut BytesMut) -> Result<Self, SerializeError> {
+        buf.put_discriminant_u8(K::Impl::VALUE_KIND_SET2);
+
+        Ok(Self {
+            buf,
+            _key: PhantomData,
+        })
+    }
+
+    pub fn serialize<T: SerializeKey<K> + ?Sized>(
+        &mut self,
+        value: &T,
+    ) -> Result<&mut Self, SerializeError> {
+        self.buf.put_discriminant_u8(ValueKind::Some);
+        K::Impl::serialize_key(value.try_as_key()?, self.buf)?;
+        Ok(self)
+    }
+
+    pub fn finish(self) -> Result<(), SerializeError> {
+        self.buf.put_discriminant_u8(ValueKind::None);
+        Ok(())
+    }
+}
+
+impl<T> fmt::Debug for Set2Serializer<'_, T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut f = f.debug_struct("Set2Serializer");
+
+        f.field("buf", &self.buf);
 
         f.finish()
     }

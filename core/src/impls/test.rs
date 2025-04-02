@@ -1018,181 +1018,196 @@ fn test_uuid_map() {
 #[test]
 fn test_u8_set() {
     type Tag = tags::Set<tags::U8>;
-    let serialized1 = [29, 2, 3, 4];
-    let serialized2 = [29, 2, 4, 3];
+    let v1_1 = [29, 2, 3, 4];
+    let v1_2 = [29, 2, 4, 3];
+    let v2_1 = [55, 1, 3, 1, 4, 0];
+    let v2_2 = [55, 1, 4, 1, 3, 0];
 
     let value = HashSet::from_iter([3, 4]);
     if value.iter().next() == Some(&3) {
-        assert_serde::<Tag, HashSet<u8>, _, _>(&value, serialized1, serialized1);
+        assert_serde::<Tag, HashSet<u8>, _, _>(&value, v1_1, v2_1);
     } else {
-        assert_serde::<Tag, HashSet<u8>, _, _>(&value, serialized2, serialized2);
+        assert_serde::<Tag, HashSet<u8>, _, _>(&value, v1_2, v2_2);
     }
 
     let value = HashSet::from_iter([3, 4]);
     if value.iter().next() == Some(&3) {
         let value = Value::U8Set(value);
-        assert_serde::<_, Value, _, _>(&value, serialized1, serialized1);
+        assert_serde::<_, Value, _, _>(&value, v1_1, v2_1);
     } else {
         let value = Value::U8Set(value);
-        assert_serde::<_, Value, _, _>(&value, serialized2, serialized2);
+        assert_serde::<_, Value, _, _>(&value, v1_2, v2_2);
     }
 
     let value = BTreeSet::from_iter([3, 4]);
-    assert_serde::<Tag, BTreeSet<u8>, _, _>(&value, serialized1, serialized1);
+    assert_serde::<Tag, BTreeSet<u8>, _, _>(&value, v1_1, v2_1);
 }
 
 #[test]
 fn test_u8_set_empty() {
     type Tag = tags::Set<tags::U8>;
-    let serialized = [29, 0];
+    let v1 = [29, 0];
+    let v2 = [55, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, (), _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i8_set() {
     type Tag = tags::Set<tags::I8>;
-    let serialized = [30, 1, 2];
+    let v1 = [30, 1, 2];
+    let v2 = [56, 1, 2, 0];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<i8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<i8>, _, _>(&value, v1, v2);
 
     let value = Value::I8Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<i8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<i8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u16_set() {
     type Tag = tags::Set<tags::U16>;
-    let serialized = [31, 1, 2];
+    let v1 = [31, 1, 2];
+    let v2 = [57, 1, 2, 0];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<u16>, _, _>(&value, v1, v2);
 
     let value = Value::U16Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<u16>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i16_set() {
     type Tag = tags::Set<tags::I16>;
-    let serialized = [32, 1, 2];
+    let v1 = [32, 1, 2];
+    let v2 = [58, 1, 2, 0];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<i16>, _, _>(&value, v1, v2);
 
     let value = Value::I16Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<i16>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u32_set() {
     type Tag = tags::Set<tags::U32>;
-    let serialized = [33, 1, 2];
+    let v1 = [33, 1, 2];
+    let v2 = [59, 1, 2, 0];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u32>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<u32>, _, _>(&value, v1, v2);
 
     let value = Value::U32Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u32>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<u32>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i32_set() {
     type Tag = tags::Set<tags::I32>;
-    let serialized = [34, 1, 2];
+    let v1 = [34, 1, 2];
+    let v2 = [60, 1, 2, 0];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i32>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<i32>, _, _>(&value, v1, v2);
 
     let value = Value::I32Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i32>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<i32>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u64_set() {
     type Tag = tags::Set<tags::U64>;
-    let serialized = [35, 1, 2];
+    let v1 = [35, 1, 2];
+    let v2 = [61, 1, 2, 0];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u64>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<u64>, _, _>(&value, v1, v2);
 
     let value = Value::U64Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u64>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<u64>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i64_set() {
     type Tag = tags::Set<tags::I64>;
-    let serialized = [36, 1, 2];
+    let v1 = [36, 1, 2];
+    let v2 = [62, 1, 2, 0];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i64>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<i64>, _, _>(&value, v1, v2);
 
     let value = Value::I64Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i64>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<i64>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_string_set() {
     type Tag = tags::Set<tags::String>;
-    let serialized = [37, 1, 2, b'3', b'4'];
+    let v1 = [37, 1, 2, b'3', b'4'];
+    let v2 = [63, 1, 2, b'3', b'4', 0];
 
     let value = HashSet::from_iter(["34".to_owned()]);
-    assert_serde::<Tag, HashSet<String>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<String>, _, _>(&value, v1, v2);
 
     let value = HashSet::from_iter(["34"]);
-    assert_serialize::<Tag, HashSet<&str>, _>(&value, serialized);
+    assert_serialize::<Tag, HashSet<&str>, _>(&value, v2);
 
     let value = Value::StringSet(HashSet::from_iter(["34".to_owned()]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter(["34".to_owned()]);
-    assert_serde::<Tag, BTreeSet<String>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<String>, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter(["34"]);
-    assert_serialize::<Tag, BTreeSet<&str>, _>(&value, serialized);
+    assert_serialize::<Tag, BTreeSet<&str>, _>(&value, v2);
 }
 
 #[test]
 fn test_uuid_set() {
     type Tag = tags::Set<tags::Uuid>;
     let uuid = uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29");
-    let serialized = [
+    let v1 = [
         38, 1, 0x81, 0x49, 0x4c, 0x44, 0x3b, 0xed, 0x48, 0xe6, 0xb0, 0x78, 0x1a, 0x93, 0xa1, 0xae,
         0x0e, 0x29,
     ];
+    let v2 = [
+        64, 1, 0x81, 0x49, 0x4c, 0x44, 0x3b, 0xed, 0x48, 0xe6, 0xb0, 0x78, 0x1a, 0x93, 0xa1, 0xae,
+        0x0e, 0x29, 0,
+    ];
 
     let value = HashSet::from_iter([uuid]);
-    assert_serde::<Tag, HashSet<Uuid>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashSet<Uuid>, _, _>(&value, v1, v2);
 
     let value = Value::UuidSet(HashSet::from_iter([uuid]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([uuid]);
-    assert_serde::<Tag, BTreeSet<Uuid>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeSet<Uuid>, _, _>(&value, v1, v2);
 }
 
 #[test]

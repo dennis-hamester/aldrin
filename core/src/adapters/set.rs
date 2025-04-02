@@ -16,11 +16,10 @@ impl<T, U> Serialize<Set<T>> for IterAsSet<U>
 where
     T: KeyTag,
     U: IntoIterator,
-    U::IntoIter: ExactSizeIterator,
     U::Item: SerializeKey<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self.0)
+        serializer.serialize_set2_iter(self.0)
     }
 }
 
@@ -28,10 +27,9 @@ impl<'a, T, U> Serialize<Set<T>> for &'a IterAsSet<U>
 where
     T: KeyTag,
     &'a U: IntoIterator,
-    <&'a U as IntoIterator>::IntoIter: ExactSizeIterator,
     <&'a U as IntoIterator>::Item: SerializeKey<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(&self.0)
+        serializer.serialize_set2_iter(&self.0)
     }
 }

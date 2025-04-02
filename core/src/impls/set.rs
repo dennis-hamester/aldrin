@@ -18,7 +18,7 @@ where
     T: SerializeKey<K>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self)
+        serializer.serialize_set2_iter(self)
     }
 }
 
@@ -28,7 +28,7 @@ where
     &'a T: SerializeKey<K>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self)
+        serializer.serialize_set2_iter(self)
     }
 }
 
@@ -66,7 +66,7 @@ where
     T: SerializeKey<K>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self)
+        serializer.serialize_set2_iter(self)
     }
 }
 
@@ -76,7 +76,7 @@ where
     &'a T: SerializeKey<K>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set_iter(self)
+        serializer.serialize_set2_iter(self)
     }
 }
 
@@ -105,13 +105,13 @@ impl<T: KeyTypeOf> Introspectable for BTreeSet<T> {
 
 impl<T: KeyTag> Serialize<Set<T>> for () {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set::<T>(0)?.finish()
+        serializer.serialize_set2::<T>()?.finish()
     }
 }
 
 impl<T: KeyTag> Serialize<Set<T>> for &() {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_set::<T>(0)?.finish()
+        serializer.serialize_set2::<T>()?.finish()
     }
 }
 

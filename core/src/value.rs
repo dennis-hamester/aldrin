@@ -116,16 +116,16 @@ impl Serialize<tags::Value> for &Value {
                 serializer.serialize_map2_iter::<tags::Uuid, _, _, _, _>(value)
             }
 
-            Value::U8Set(value) => serializer.serialize_set_iter::<tags::U8, _>(value),
-            Value::I8Set(value) => serializer.serialize_set_iter::<tags::I8, _>(value),
-            Value::U16Set(value) => serializer.serialize_set_iter::<tags::U16, _>(value),
-            Value::I16Set(value) => serializer.serialize_set_iter::<tags::I16, _>(value),
-            Value::U32Set(value) => serializer.serialize_set_iter::<tags::U32, _>(value),
-            Value::I32Set(value) => serializer.serialize_set_iter::<tags::I32, _>(value),
-            Value::U64Set(value) => serializer.serialize_set_iter::<tags::U64, _>(value),
-            Value::I64Set(value) => serializer.serialize_set_iter::<tags::I64, _>(value),
-            Value::StringSet(value) => serializer.serialize_set_iter::<tags::String, _>(value),
-            Value::UuidSet(value) => serializer.serialize_set_iter::<tags::Uuid, _>(value),
+            Value::U8Set(value) => serializer.serialize_set2_iter::<tags::U8, _>(value),
+            Value::I8Set(value) => serializer.serialize_set2_iter::<tags::I8, _>(value),
+            Value::U16Set(value) => serializer.serialize_set2_iter::<tags::U16, _>(value),
+            Value::I16Set(value) => serializer.serialize_set2_iter::<tags::I16, _>(value),
+            Value::U32Set(value) => serializer.serialize_set2_iter::<tags::U32, _>(value),
+            Value::I32Set(value) => serializer.serialize_set2_iter::<tags::I32, _>(value),
+            Value::U64Set(value) => serializer.serialize_set2_iter::<tags::U64, _>(value),
+            Value::I64Set(value) => serializer.serialize_set2_iter::<tags::I64, _>(value),
+            Value::StringSet(value) => serializer.serialize_set2_iter::<tags::String, _>(value),
+            Value::UuidSet(value) => serializer.serialize_set2_iter::<tags::Uuid, _>(value),
             Value::Struct(value) => serializer.serialize::<_, _>(value),
             Value::Enum(value) => serializer.serialize::<_, _>(value),
             Value::Sender(value) => serializer.serialize_sender(*value),
@@ -201,44 +201,44 @@ impl Deserialize<tags::Value> for Value {
                 .deserialize_map1_extend_new::<tags::Uuid, _, _, _, _>()
                 .map(Self::UuidMap),
 
-            ValueKind::U8Set => deserializer
-                .deserialize_set_extend_new::<tags::U8, u8, _>()
+            ValueKind::U8Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::U8, u8, _>()
                 .map(Self::U8Set),
 
-            ValueKind::I8Set => deserializer
-                .deserialize_set_extend_new::<tags::I8, i8, _>()
+            ValueKind::I8Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::I8, i8, _>()
                 .map(Self::I8Set),
 
-            ValueKind::U16Set => deserializer
-                .deserialize_set_extend_new::<tags::U16, u16, _>()
+            ValueKind::U16Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::U16, u16, _>()
                 .map(Self::U16Set),
 
-            ValueKind::I16Set => deserializer
-                .deserialize_set_extend_new::<tags::I16, i16, _>()
+            ValueKind::I16Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::I16, i16, _>()
                 .map(Self::I16Set),
 
-            ValueKind::U32Set => deserializer
-                .deserialize_set_extend_new::<tags::U32, u32, _>()
+            ValueKind::U32Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::U32, u32, _>()
                 .map(Self::U32Set),
 
-            ValueKind::I32Set => deserializer
-                .deserialize_set_extend_new::<tags::I32, i32, _>()
+            ValueKind::I32Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::I32, i32, _>()
                 .map(Self::I32Set),
 
-            ValueKind::U64Set => deserializer
-                .deserialize_set_extend_new::<tags::U64, u64, _>()
+            ValueKind::U64Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::U64, u64, _>()
                 .map(Self::U64Set),
 
-            ValueKind::I64Set => deserializer
-                .deserialize_set_extend_new::<tags::I64, i64, _>()
+            ValueKind::I64Set1 => deserializer
+                .deserialize_set1_extend_new::<tags::I64, i64, _>()
                 .map(Self::I64Set),
 
-            ValueKind::StringSet => deserializer
-                .deserialize_set_extend_new::<tags::String, _, _>()
+            ValueKind::StringSet1 => deserializer
+                .deserialize_set1_extend_new::<tags::String, _, _>()
                 .map(Self::StringSet),
 
-            ValueKind::UuidSet => deserializer
-                .deserialize_set_extend_new::<tags::Uuid, Uuid, _>()
+            ValueKind::UuidSet1 => deserializer
+                .deserialize_set1_extend_new::<tags::Uuid, Uuid, _>()
                 .map(Self::UuidSet),
 
             ValueKind::Struct => deserializer.deserialize().map(Self::Struct),
@@ -291,6 +291,46 @@ impl Deserialize<tags::Value> for Value {
             ValueKind::UuidMap2 => deserializer
                 .deserialize_map2_extend_new::<tags::Uuid, _, _, _, _>()
                 .map(Self::UuidMap),
+
+            ValueKind::U8Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::U8, u8, _>()
+                .map(Self::U8Set),
+
+            ValueKind::I8Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::I8, i8, _>()
+                .map(Self::I8Set),
+
+            ValueKind::U16Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::U16, u16, _>()
+                .map(Self::U16Set),
+
+            ValueKind::I16Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::I16, i16, _>()
+                .map(Self::I16Set),
+
+            ValueKind::U32Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::U32, u32, _>()
+                .map(Self::U32Set),
+
+            ValueKind::I32Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::I32, i32, _>()
+                .map(Self::I32Set),
+
+            ValueKind::U64Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::U64, u64, _>()
+                .map(Self::U64Set),
+
+            ValueKind::I64Set2 => deserializer
+                .deserialize_set2_extend_new::<tags::I64, i64, _>()
+                .map(Self::I64Set),
+
+            ValueKind::StringSet2 => deserializer
+                .deserialize_set2_extend_new::<tags::String, _, _>()
+                .map(Self::StringSet),
+
+            ValueKind::UuidSet2 => deserializer
+                .deserialize_set2_extend_new::<tags::Uuid, Uuid, _>()
+                .map(Self::UuidSet),
         }
     }
 }
