@@ -97,7 +97,7 @@ impl Serialize<tags::Value> for &Value {
             Value::Uuid(value) => serializer.serialize_uuid(*value),
             Value::ObjectId(value) => serializer.serialize_object_id(*value),
             Value::ServiceId(value) => serializer.serialize_service_id(*value),
-            Value::Vec(value) => serializer.serialize_vec_iter(value),
+            Value::Vec(value) => serializer.serialize_vec2_iter(value),
             Value::Bytes(value) => serializer.serialize_byte_slice(value),
             Value::U8Map(value) => serializer.serialize_map_iter::<tags::U8, _, _, _, _>(value),
             Value::I8Map(value) => serializer.serialize_map_iter::<tags::I8, _, _, _, _>(value),
@@ -151,7 +151,7 @@ impl Deserialize<tags::Value> for Value {
             ValueKind::Uuid => deserializer.deserialize_uuid().map(Self::Uuid),
             ValueKind::ObjectId => deserializer.deserialize_object_id().map(Self::ObjectId),
             ValueKind::ServiceId => deserializer.deserialize_service_id().map(Self::ServiceId),
-            ValueKind::Vec => deserializer.deserialize_vec_extend_new().map(Self::Vec),
+            ValueKind::Vec1 => deserializer.deserialize_vec1_extend_new().map(Self::Vec),
 
             ValueKind::Bytes => deserializer
                 .deserialize_bytes_extend_new()
@@ -242,6 +242,7 @@ impl Deserialize<tags::Value> for Value {
             ValueKind::Enum => deserializer.deserialize().map(Self::Enum),
             ValueKind::Sender => deserializer.deserialize_sender().map(Self::Sender),
             ValueKind::Receiver => deserializer.deserialize_receiver().map(Self::Receiver),
+            ValueKind::Vec2 => deserializer.deserialize_vec2_extend_new().map(Self::Vec),
         }
     }
 }

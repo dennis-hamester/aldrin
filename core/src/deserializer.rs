@@ -77,7 +77,11 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             ValueKind::Uuid | ValueKind::Sender | ValueKind::Receiver => self.buf.try_skip(16),
             ValueKind::ObjectId => self.buf.try_skip(32),
             ValueKind::ServiceId => self.buf.try_skip(64),
-            ValueKind::Vec => VecDeserializer::new_without_value_kind(self.buf, self.depth)?.skip(),
+
+            ValueKind::Vec1 => {
+                Vec1Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
             ValueKind::Bytes => BytesDeserializer::new_without_value_kind(self.buf)?.skip(),
 
             ValueKind::U8Map => {
@@ -167,6 +171,10 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
             ValueKind::Enum => {
                 EnumDeserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::Vec2 => {
+                Vec2Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
             }
         }
     }
@@ -360,6 +368,54 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         Ok(vec)
     }
 
+    pub fn deserialize_vec1(self) -> Result<Vec1Deserializer<'a, 'b>, DeserializeError> {
+        Vec1Deserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_vec1_extend<T, U, V>(self, vec: &mut V) -> Result<(), DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<U>,
+    {
+        self.deserialize_vec1()?.deserialize_extend(vec)
+    }
+
+    pub fn deserialize_vec1_extend_new<T, U, V>(self) -> Result<V, DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Default + Extend<U>,
+    {
+        let mut vec = V::default();
+        self.deserialize_vec1_extend(&mut vec)?;
+        Ok(vec)
+    }
+
+    pub fn deserialize_vec2(self) -> Result<Vec2Deserializer<'a, 'b>, DeserializeError> {
+        Vec2Deserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_vec2_extend<T, U, V>(self, vec: &mut V) -> Result<(), DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<U>,
+    {
+        self.deserialize_vec2()?.deserialize_extend(vec)
+    }
+
+    pub fn deserialize_vec2_extend_new<T, U, V>(self) -> Result<V, DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Default + Extend<U>,
+    {
+        let mut vec = V::default();
+        self.deserialize_vec2_extend(&mut vec)?;
+        Ok(vec)
+    }
+
     pub fn deserialize_bytes(self) -> Result<BytesDeserializer<'a, 'b>, DeserializeError> {
         BytesDeserializer::new(self.buf)
     }
@@ -468,15 +524,94 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct VecDeserializer<'a, 'b> {
+pub enum VecDeserializer<'a, 'b> {
+    V1(Vec1Deserializer<'a, 'b>),
+    V2(Vec2Deserializer<'a, 'b>),
+}
+
+impl<'a, 'b> VecDeserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        match buf.try_get_discriminant_u8()? {
+            ValueKind::Vec1 => Vec1Deserializer::new_without_value_kind(buf, depth).map(Self::V1),
+            ValueKind::Vec2 => Vec2Deserializer::new_without_value_kind(buf, depth).map(Self::V2),
+            _ => Err(DeserializeError::UnexpectedValue),
+        }
+    }
+
+    pub fn deserialize<T: Tag, U: Deserialize<T>>(
+        &mut self,
+    ) -> Result<Option<U>, DeserializeError> {
+        match self {
+            Self::V1(deserializer) => deserializer.deserialize().map(Some),
+            Self::V2(deserializer) => deserializer.deserialize(),
+        }
+    }
+
+    pub fn deserialize_extend<T, U, V>(self, vec: &mut V) -> Result<(), DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<U>,
+    {
+        match self {
+            Self::V1(deserializer) => deserializer.deserialize_extend(vec),
+            Self::V2(deserializer) => deserializer.deserialize_extend(vec),
+        }
+    }
+
+    pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
+        match self {
+            Self::V1(deserializer) => deserializer.skip_element(),
+            Self::V2(deserializer) => deserializer.skip_element(),
+        }
+    }
+
+    pub fn skip(self) -> Result<(), DeserializeError> {
+        match self {
+            Self::V1(deserializer) => deserializer.skip(),
+            Self::V2(deserializer) => deserializer.skip(),
+        }
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.finish_with(|| Ok(t))
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        match self {
+            Self::V1(deserializer) => deserializer.finish_with(f),
+            Self::V2(deserializer) => deserializer.finish_with(f),
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip_and_finish_with(|| Ok(t))
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        match self {
+            Self::V1(deserializer) => deserializer.skip_and_finish_with(f),
+            Self::V2(deserializer) => deserializer.skip_and_finish_with(f),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Vec1Deserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
     len: u32,
     depth: u8,
 }
 
-impl<'a, 'b> VecDeserializer<'a, 'b> {
+impl<'a, 'b> Vec1Deserializer<'a, 'b> {
     fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::Vec)?;
+        buf.ensure_discriminant_u8(ValueKind::Vec1)?;
         Self::new_without_value_kind(buf, depth)
     }
 
@@ -547,6 +682,114 @@ impl<'a, 'b> VecDeserializer<'a, 'b> {
             f()
         } else {
             Err(DeserializeError::MoreElementsRemain)
+        }
+    }
+
+    pub fn skip_and_finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.skip_and_finish_with(|| Ok(t))
+    }
+
+    pub fn skip_and_finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        self.skip()?;
+        f()
+    }
+}
+
+#[derive(Debug)]
+pub struct Vec2Deserializer<'a, 'b> {
+    buf: &'a mut &'b [u8],
+    empty: bool,
+    depth: u8,
+}
+
+impl<'a, 'b> Vec2Deserializer<'a, 'b> {
+    fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        buf.ensure_discriminant_u8(ValueKind::Vec2)?;
+        Self::new_without_value_kind(buf, depth)
+    }
+
+    fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        Ok(Self {
+            buf,
+            empty: false,
+            depth,
+        })
+    }
+
+    pub fn deserialize<T: Tag, U: Deserialize<T>>(
+        &mut self,
+    ) -> Result<Option<U>, DeserializeError> {
+        if self.empty {
+            Ok(None)
+        } else {
+            match self.buf.try_get_discriminant_u8()? {
+                ValueKind::None => {
+                    self.empty = true;
+                    Ok(None)
+                }
+
+                ValueKind::Some => {
+                    let deserializer = Deserializer::new(self.buf, self.depth)?;
+                    deserializer.deserialize().map(Some)
+                }
+
+                _ => Err(DeserializeError::InvalidSerialization),
+            }
+        }
+    }
+
+    pub fn deserialize_extend<T, U, V>(mut self, vec: &mut V) -> Result<(), DeserializeError>
+    where
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<U>,
+    {
+        while let Some(elem) = self.deserialize()? {
+            vec.extend(iter::once(elem));
+        }
+
+        Ok(())
+    }
+
+    pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
+        if !self.empty {
+            match self.buf.try_get_discriminant_u8()? {
+                ValueKind::None => self.empty = true,
+                ValueKind::Some => Deserializer::new(self.buf, self.depth)?.skip()?,
+                _ => return Err(DeserializeError::InvalidSerialization),
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn skip(mut self) -> Result<(), DeserializeError> {
+        while !self.empty {
+            self.skip_element()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn finish<T>(self, t: T) -> Result<T, DeserializeError> {
+        self.finish_with(|| Ok(t))
+    }
+
+    pub fn finish_with<T, F>(self, f: F) -> Result<T, DeserializeError>
+    where
+        F: FnOnce() -> Result<T, DeserializeError>,
+    {
+        if self.empty {
+            f()
+        } else {
+            match self.buf.try_get_discriminant_u8()? {
+                ValueKind::None => f(),
+                ValueKind::Some => Err(DeserializeError::MoreElementsRemain),
+                _ => Err(DeserializeError::InvalidSerialization),
+            }
         }
     }
 

@@ -236,6 +236,9 @@ impl<T> From<ValueConversionError> for AcceptError<T> {
         match err {
             // Conversion here is always passed a valid version.
             ValueConversionError::InvalidVersion => unreachable!(),
+
+            ValueConversionError::Serialize(e) => Self::Serialize(e),
+            ValueConversionError::Deserialize(e) => Self::Deserialize(e),
         }
     }
 }

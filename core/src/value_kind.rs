@@ -22,7 +22,7 @@ pub enum ValueKind {
     Uuid = 14,
     ObjectId = 15,
     ServiceId = 16,
-    Vec = 17,
+    Vec1 = 17,
     Bytes = 18,
     U8Map = 19,
     I8Map = 20,
@@ -48,4 +48,5 @@ pub enum ValueKind {
     Enum = 40,
     Sender = 41,
     Receiver = 42,
+    Vec2 = 43,
 }

@@ -33,10 +33,12 @@ impl SerializedValue {
     }
 
     pub fn serialize_as<T: Tag, U: Serialize<T>>(value: U) -> Result<Self, SerializeError> {
-        let mut buf = BytesMut::zeroed(MSG_HEADER_LEN);
-        let serializer = Serializer::new(&mut buf, 0)?;
+        let mut this = Self::new();
+
+        let serializer = Serializer::new(&mut this.buf, 0)?;
         value.serialize(serializer)?;
-        Ok(Self { buf })
+
+        Ok(this)
     }
 
     pub fn serialize<T>(value: T) -> Result<Self, SerializeError>
@@ -56,6 +58,12 @@ impl SerializedValue {
         to: ProtocolVersion,
     ) -> Result<(), ValueConversionError> {
         convert_value::convert_mut(self, from, to)
+    }
+
+    pub(crate) fn new() -> Self {
+        Self {
+            buf: BytesMut::zeroed(MSG_HEADER_LEN),
+        }
     }
 
     pub(crate) fn from_bytes_mut(buf: BytesMut) -> Self {

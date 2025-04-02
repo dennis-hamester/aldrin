@@ -13,7 +13,7 @@ macro_rules! impl_vec {
 
         impl<T: Tag, U: Serialize<T>> Serialize<tags::Vec<T>> for $ty<U> {
             fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-                serializer.serialize_vec_iter(self)
+                serializer.serialize_vec2_iter(self)
             }
         }
 
@@ -23,7 +23,7 @@ macro_rules! impl_vec {
             &'a U: Serialize<T>,
         {
             fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-                serializer.serialize_vec_iter(self)
+                serializer.serialize_vec2_iter(self)
             }
         }
 
@@ -64,7 +64,7 @@ where
     &'a U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
+        serializer.serialize_vec2_iter(self)
     }
 }
 
@@ -89,7 +89,7 @@ impl<T: PrimaryTag, const N: usize> PrimaryTag for [T; N] {
 
 impl<T: Tag, U: Serialize<T>, const N: usize> Serialize<tags::Vec<T>> for [U; N] {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
+        serializer.serialize_vec2_iter(self)
     }
 }
 
@@ -99,7 +99,7 @@ where
     &'a U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
+        serializer.serialize_vec2_iter(self)
     }
 }
 
@@ -111,25 +111,38 @@ impl<T: Tag, U: Deserialize<T>, const N: usize> Deserialize<tags::Vec<T>> for [U
         let mut arr: [MaybeUninit<U>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
         let mut num = 0;
+        let mut err = None;
 
         for elem in &mut arr {
             match deserializer.deserialize() {
-                Ok(value) => {
+                Ok(Some(value)) => {
                     elem.write(value);
                     num += 1;
                 }
 
-                Err(e) => {
-                    for elem in &mut arr[..num] {
-                        // SAFETY: The first num elements have been initialized.
-                        unsafe {
-                            elem.assume_init_drop();
-                        }
-                    }
+                Ok(None) => {
+                    err = Some(DeserializeError::NoMoreElements);
+                    break;
+                }
 
-                    return Err(e);
+                Err(e) => {
+                    err = Some(e);
+                    break;
                 }
             }
+        }
+
+        // err is Some, iff num < N. And when that's the case, num is the number of elements in arr
+        // that have ben initialized.
+        if let Some(err) = err {
+            for elem in &mut arr[..num] {
+                // SAFETY: The first num elements have been initialized.
+                unsafe {
+                    elem.assume_init_drop();
+                }
+            }
+
+            return Err(err);
         }
 
         // SAFETY: Exactly num elements have been initialized and num equals N.
@@ -165,7 +178,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
+        serializer.serialize_vec2_iter(self)
     }
 }
 
@@ -175,7 +188,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self.iter().copied())
+        serializer.serialize_vec2_iter(self.iter().copied())
     }
 }
 
@@ -197,7 +210,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self)
+        serializer.serialize_vec2_iter(self)
     }
 }
 
@@ -207,7 +220,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self.iter().copied())
+        serializer.serialize_vec2_iter(self.iter().copied())
     }
 }
 
@@ -223,13 +236,13 @@ where
 
 impl<T: Tag> Serialize<tags::Vec<T>> for () {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec(0)?.finish()
+        serializer.serialize_vec2()?.finish()
     }
 }
 
 impl<T: Tag> Serialize<tags::Vec<T>> for &() {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec(0)?.finish()
+        serializer.serialize_vec2()?.finish()
     }
 }
 

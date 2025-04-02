@@ -5,6 +5,9 @@ mod set;
 mod value;
 mod vec;
 
+#[cfg(feature = "introspection")]
+pub(crate) use vec::IterAsVec1;
+
 pub use map::IterAsMap;
 pub use primary::AsPrimary;
 pub use result::{AsErr, AsOk};

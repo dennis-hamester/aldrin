@@ -105,7 +105,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self.0.iter().copied())
+        serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
 
@@ -115,7 +115,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter(self.0.iter().copied())
+        serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
 
@@ -225,7 +225,7 @@ where
     u8: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_vec_iter::<T, _>(self.0.iter().copied())
+        serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
 

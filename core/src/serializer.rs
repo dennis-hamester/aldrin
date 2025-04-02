@@ -157,11 +157,11 @@ impl<'a> Serializer<'a> {
         Ok(())
     }
 
-    pub fn serialize_vec(self, num_elems: usize) -> Result<VecSerializer<'a>, SerializeError> {
-        VecSerializer::new(self.buf, num_elems, self.depth)
+    pub fn serialize_vec1(self, num_elems: usize) -> Result<Vec1Serializer<'a>, SerializeError> {
+        Vec1Serializer::new(self.buf, num_elems, self.depth)
     }
 
-    pub fn serialize_vec_iter<T, U>(self, vec: U) -> Result<(), SerializeError>
+    pub fn serialize_vec1_iter<T, U>(self, vec: U) -> Result<(), SerializeError>
     where
         T: Tag,
         U: IntoIterator,
@@ -169,7 +169,26 @@ impl<'a> Serializer<'a> {
         U::Item: Serialize<T>,
     {
         let vec = vec.into_iter();
-        let mut serializer = self.serialize_vec(vec.len())?;
+        let mut serializer = self.serialize_vec1(vec.len())?;
+
+        for elem in vec {
+            serializer.serialize(elem)?;
+        }
+
+        serializer.finish()
+    }
+
+    pub fn serialize_vec2(self) -> Result<Vec2Serializer<'a>, SerializeError> {
+        Vec2Serializer::new(self.buf, self.depth)
+    }
+
+    pub fn serialize_vec2_iter<T, U>(self, vec: U) -> Result<(), SerializeError>
+    where
+        T: Tag,
+        U: IntoIterator,
+        U::Item: Serialize<T>,
+    {
+        let mut serializer = self.serialize_vec2()?;
 
         for elem in vec {
             serializer.serialize(elem)?;
@@ -289,16 +308,16 @@ impl<'a> Serializer<'a> {
 }
 
 #[derive(Debug)]
-pub struct VecSerializer<'a> {
+pub struct Vec1Serializer<'a> {
     buf: &'a mut BytesMut,
     num_elems: u32,
     depth: u8,
 }
 
-impl<'a> VecSerializer<'a> {
+impl<'a> Vec1Serializer<'a> {
     fn new(buf: &'a mut BytesMut, num_elems: usize, depth: u8) -> Result<Self, SerializeError> {
         if num_elems <= u32::MAX as usize {
-            buf.put_discriminant_u8(ValueKind::Vec);
+            buf.put_discriminant_u8(ValueKind::Vec1);
             buf.put_varint_u32_le(num_elems as u32);
 
             Ok(Self {
@@ -341,6 +360,36 @@ impl<'a> VecSerializer<'a> {
         } else {
             Err(SerializeError::TooFewElements)
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Vec2Serializer<'a> {
+    buf: &'a mut BytesMut,
+    depth: u8,
+}
+
+impl<'a> Vec2Serializer<'a> {
+    fn new(buf: &'a mut BytesMut, depth: u8) -> Result<Self, SerializeError> {
+        buf.put_discriminant_u8(ValueKind::Vec2);
+        Ok(Self { buf, depth })
+    }
+
+    pub fn serialize<T: Tag, U: Serialize<T>>(
+        &mut self,
+        value: U,
+    ) -> Result<&mut Self, SerializeError> {
+        self.buf.put_discriminant_u8(ValueKind::Some);
+
+        let serializer = Serializer::new(self.buf, self.depth)?;
+        serializer.serialize(value)?;
+
+        Ok(self)
+    }
+
+    pub fn finish(self) -> Result<(), SerializeError> {
+        self.buf.put_discriminant_u8(ValueKind::None);
+        Ok(())
     }
 }
 

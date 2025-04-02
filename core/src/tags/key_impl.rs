@@ -1,7 +1,7 @@
 use super::{String, Uuid, I16, I32, I64, I8, U16, U32, U64, U8};
 use crate::buf_ext::{BufMutExt, ValueBufExt};
-use crate::{DeserializeError, SerializeError, ValueKind};
-use bytes::{Buf, BufMut};
+use crate::{DeserializeError, SerializeError, ValueConversionError, ValueKind};
+use bytes::{Buf, BufMut, BytesMut};
 use std::borrow::Cow;
 use std::mem;
 
@@ -37,6 +37,10 @@ pub trait KeyTagImpl: Sized + Sealed {
     // Not part of the public API.
     #[doc(hidden)]
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError>;
+
+    // Not part of the public API.
+    #[doc(hidden)]
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError>;
 }
 
 impl Sealed for U8 {}
@@ -72,6 +76,15 @@ impl KeyTagImpl for U8 {
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip(1)
+    }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src
+            .try_get_u8()
+            .map_err(|_| ValueConversionError::Deserialize(DeserializeError::UnexpectedEoi))?;
+
+        dst.put_u8(key);
+        Ok(())
     }
 }
 
@@ -109,6 +122,15 @@ impl KeyTagImpl for I8 {
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip(1)
     }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src
+            .try_get_i8()
+            .map_err(|_| ValueConversionError::Deserialize(DeserializeError::UnexpectedEoi))?;
+
+        dst.put_i8(key);
+        Ok(())
+    }
 }
 
 impl Sealed for U16 {}
@@ -143,6 +165,12 @@ impl KeyTagImpl for U16 {
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+    }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_u16_le()?;
+        dst.put_varint_u16_le(key);
+        Ok(())
     }
 }
 
@@ -179,6 +207,12 @@ impl KeyTagImpl for I16 {
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_i16_le()?;
+        dst.put_varint_i16_le(key);
+        Ok(())
+    }
 }
 
 impl Sealed for U32 {}
@@ -213,6 +247,12 @@ impl KeyTagImpl for U32 {
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+    }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_u32_le()?;
+        dst.put_varint_u32_le(key);
+        Ok(())
     }
 }
 
@@ -249,6 +289,12 @@ impl KeyTagImpl for I32 {
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_i32_le()?;
+        dst.put_varint_i32_le(key);
+        Ok(())
+    }
 }
 
 impl Sealed for U64 {}
@@ -284,6 +330,12 @@ impl KeyTagImpl for U64 {
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
     }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_u64_le()?;
+        dst.put_varint_u64_le(key);
+        Ok(())
+    }
 }
 
 impl Sealed for I64 {}
@@ -318,6 +370,12 @@ impl KeyTagImpl for I64 {
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+    }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let key = src.try_get_varint_i64_le()?;
+        dst.put_varint_i64_le(key);
+        Ok(())
     }
 }
 
@@ -365,6 +423,22 @@ impl KeyTagImpl for String {
         let len = buf.try_get_varint_u32_le()? as usize;
         buf.try_skip(len)
     }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let len = src.try_get_varint_u32_le()? as usize;
+
+        if src.len() >= len {
+            dst.put_varint_u32_le(len as u32);
+            dst.put_slice(&src[..len]);
+            src.advance(len);
+
+            Ok(())
+        } else {
+            Err(ValueConversionError::Deserialize(
+                DeserializeError::UnexpectedEoi,
+            ))
+        }
+    }
 }
 
 impl Sealed for Uuid {}
@@ -404,5 +478,15 @@ impl KeyTagImpl for Uuid {
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
         buf.try_skip(16)
+    }
+
+    fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
+        let mut bytes = uuid::Bytes::default();
+
+        src.try_copy_to_slice(&mut bytes)
+            .map_err(|_| DeserializeError::UnexpectedEoi)?;
+
+        dst.put_slice(&bytes);
+        Ok(())
     }
 }

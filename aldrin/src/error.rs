@@ -42,6 +42,9 @@ impl<T> From<ValueConversionError> for ConnectError<T> {
         match err {
             // Conversion here is always passed a valid version.
             ValueConversionError::InvalidVersion => unreachable!(),
+
+            ValueConversionError::Serialize(e) => Self::Serialize(e),
+            ValueConversionError::Deserialize(e) => Self::Deserialize(e),
         }
     }
 }
@@ -73,6 +76,9 @@ impl<T> From<ValueConversionError> for RunError<T> {
         match err {
             // Conversion here is always passed a valid version.
             ValueConversionError::InvalidVersion => unreachable!(),
+
+            ValueConversionError::Serialize(e) => Self::Serialize(e),
+            ValueConversionError::Deserialize(e) => Self::Deserialize(e),
         }
     }
 }

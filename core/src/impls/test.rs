@@ -1,8 +1,9 @@
 use crate::tags::{self, Tag};
 use crate::{
     BusListenerCookie, ByteSlice, Bytes, ChannelCookie, Deserialize, DeserializeError,
-    Deserializer, ObjectCookie, ObjectId, ObjectUuid, Serialize, SerializeError, SerializedValue,
-    SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, TypeId, Value,
+    Deserializer, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializeError,
+    SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, TypeId, Value,
+    ValueConversionError,
 };
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
@@ -25,7 +26,7 @@ where
 }
 
 #[track_caller]
-fn assert_deserialize<T, U, B>(expected: &U, serialized: B)
+fn assert_deserialize_impl<T, U, B>(expected: &U, serialized: B)
 where
     T: Tag,
     U: Deserialize<T> + PartialEq + Debug,
@@ -48,15 +49,48 @@ where
 }
 
 #[track_caller]
-fn assert_serde<'a, T, U, B>(value: &'a U, serialized: B)
+fn assert_deserialize<T, U, V1, V2>(expected: &U, v1: V1, v2: V2)
+where
+    T: Tag,
+    U: Deserialize<T> + PartialEq + Debug,
+    V1: AsRef<[u8]>,
+    V2: AsRef<[u8]>,
+{
+    assert_deserialize_impl(expected, v1);
+    assert_deserialize_impl(expected, v2);
+}
+
+#[track_caller]
+fn assert_convert<V1, V2>(v1: V1, v2: V2)
+where
+    V1: AsRef<[u8]>,
+    V2: AsRef<[u8]>,
+{
+    const V1: ProtocolVersion = ProtocolVersion::V1_14;
+    const V2: ProtocolVersion = ProtocolVersion::V1_20;
+
+    let v1 = SerializedValueSlice::new(&v1);
+    let v2 = SerializedValueSlice::new(&v2);
+
+    let v2_to_v1 = v2.convert(Some(V2), V1).unwrap();
+    assert_eq!(v2_to_v1.as_ref(), v1);
+
+    let v1_to_v1 = v1.convert(None, V1).unwrap();
+    assert_eq!(v1_to_v1.as_ref(), v1);
+}
+
+#[track_caller]
+fn assert_serde<'a, T, U, V1, V2>(value: &'a U, v1: V1, v2: V2)
 where
     T: Tag,
     U: Serialize<T> + Deserialize<T> + Clone + PartialEq + Debug,
     &'a U: Serialize<T>,
-    B: AsRef<[u8]>,
+    V1: AsRef<[u8]>,
+    V2: AsRef<[u8]>,
 {
-    assert_serialize::<T, U, _>(value, &serialized);
-    assert_deserialize::<T, U, _>(value, &serialized);
+    assert_serialize::<T, U, _>(value, &v2);
+    assert_deserialize::<T, U, _, _>(value, &v1, &v2);
+    assert_convert(&v1, &v2);
 }
 
 #[test]
@@ -65,10 +99,10 @@ fn test_unit() {
     let serialized = [0];
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
 
     let value = Value::None;
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -77,13 +111,13 @@ fn test_option_none() {
     let serialized = [0];
 
     let value = None;
-    assert_serde::<Tag, Option<()>, _>(&value, serialized);
+    assert_serde::<Tag, Option<()>, _, _>(&value, serialized, serialized);
 
     let value = Value::None;
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -92,10 +126,10 @@ fn test_option_some() {
     let serialized = [1, 0];
 
     let value = Some(());
-    assert_serde::<Tag, Option<()>, _>(&value, serialized);
+    assert_serde::<Tag, Option<()>, _, _>(&value, serialized, serialized);
 
     let value = Value::Some(Box::new(Value::None));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -104,10 +138,10 @@ fn test_bool_false() {
     let serialized = [2, 0];
 
     let value = false;
-    assert_serde::<Tag, bool, _>(&value, serialized);
+    assert_serde::<Tag, bool, _, _>(&value, serialized, serialized);
 
     let value = Value::Bool(false);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -116,10 +150,10 @@ fn test_bool_true() {
     let serialized = [2, 1];
 
     let value = true;
-    assert_serde::<Tag, bool, _>(&value, serialized);
+    assert_serde::<Tag, bool, _, _>(&value, serialized, serialized);
 
     let value = Value::Bool(true);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -128,10 +162,10 @@ fn test_bool_non_zero() {
     let serialized = [2, 2];
 
     let value = true;
-    assert_deserialize::<Tag, bool, _>(&value, serialized);
+    assert_deserialize::<Tag, bool, _, _>(&value, serialized, serialized);
 
     let value = Value::Bool(true);
-    assert_deserialize::<_, Value, _>(&value, serialized);
+    assert_deserialize::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -140,10 +174,10 @@ fn test_u8_0() {
     let serialized = [3, 0];
 
     let value = 0u8;
-    assert_serde::<Tag, u8, _>(&value, serialized);
+    assert_serde::<Tag, u8, _, _>(&value, serialized, serialized);
 
     let value = Value::U8(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -152,10 +186,10 @@ fn test_u8_255() {
     let serialized = [3, 255];
 
     let value = 255u8;
-    assert_serde::<Tag, u8, _>(&value, serialized);
+    assert_serde::<Tag, u8, _, _>(&value, serialized, serialized);
 
     let value = Value::U8(255);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -164,10 +198,10 @@ fn test_i8_0() {
     let serialized = [4, 0];
 
     let value = 0i8;
-    assert_serde::<Tag, i8, _>(&value, serialized);
+    assert_serde::<Tag, i8, _, _>(&value, serialized, serialized);
 
     let value = Value::I8(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -176,10 +210,10 @@ fn test_i8_1() {
     let serialized = [4, 1];
 
     let value = 1i8;
-    assert_serde::<Tag, i8, _>(&value, serialized);
+    assert_serde::<Tag, i8, _, _>(&value, serialized, serialized);
 
     let value = Value::I8(1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -188,10 +222,10 @@ fn test_i8_minus_1() {
     let serialized = [4, 255];
 
     let value = -1i8;
-    assert_serde::<Tag, i8, _>(&value, serialized);
+    assert_serde::<Tag, i8, _, _>(&value, serialized, serialized);
 
     let value = Value::I8(-1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -200,10 +234,10 @@ fn test_i8_127() {
     let serialized = [4, 127];
 
     let value = 127i8;
-    assert_serde::<Tag, i8, _>(&value, serialized);
+    assert_serde::<Tag, i8, _, _>(&value, serialized, serialized);
 
     let value = Value::I8(127);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -212,10 +246,10 @@ fn test_i8_minus_128() {
     let serialized = [4, 128];
 
     let value = -128i8;
-    assert_serde::<Tag, i8, _>(&value, serialized);
+    assert_serde::<Tag, i8, _, _>(&value, serialized, serialized);
 
     let value = Value::I8(-128);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -224,10 +258,10 @@ fn test_u16_0() {
     let serialized = [5, 0];
 
     let value = 0u16;
-    assert_serde::<Tag, u16, _>(&value, serialized);
+    assert_serde::<Tag, u16, _, _>(&value, serialized, serialized);
 
     let value = Value::U16(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -236,10 +270,10 @@ fn test_u16_max() {
     let serialized = [5, 255, 255, 255];
 
     let value = u16::MAX;
-    assert_serde::<Tag, u16, _>(&value, serialized);
+    assert_serde::<Tag, u16, _, _>(&value, serialized, serialized);
 
     let value = Value::U16(u16::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -248,10 +282,10 @@ fn test_i16_0() {
     let serialized = [6, 0];
 
     let value = 0i16;
-    assert_serde::<Tag, i16, _>(&value, serialized);
+    assert_serde::<Tag, i16, _, _>(&value, serialized, serialized);
 
     let value = Value::I16(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -260,10 +294,10 @@ fn test_i16_1() {
     let serialized = [6, 2];
 
     let value = 1i16;
-    assert_serde::<Tag, i16, _>(&value, serialized);
+    assert_serde::<Tag, i16, _, _>(&value, serialized, serialized);
 
     let value = Value::I16(1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -272,10 +306,10 @@ fn test_i16_minus_1() {
     let serialized = [6, 1];
 
     let value = -1i16;
-    assert_serde::<Tag, i16, _>(&value, serialized);
+    assert_serde::<Tag, i16, _, _>(&value, serialized, serialized);
 
     let value = Value::I16(-1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -284,10 +318,10 @@ fn test_i16_max() {
     let serialized = [6, 255, 254, 255];
 
     let value = i16::MAX;
-    assert_serde::<Tag, i16, _>(&value, serialized);
+    assert_serde::<Tag, i16, _, _>(&value, serialized, serialized);
 
     let value = Value::I16(i16::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -296,10 +330,10 @@ fn test_i16_min() {
     let serialized = [6, 255, 255, 255];
 
     let value = i16::MIN;
-    assert_serde::<Tag, i16, _>(&value, serialized);
+    assert_serde::<Tag, i16, _, _>(&value, serialized, serialized);
 
     let value = Value::I16(i16::MIN);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -308,10 +342,10 @@ fn test_u32_0() {
     let serialized = [7, 0];
 
     let value = 0u32;
-    assert_serde::<Tag, u32, _>(&value, serialized);
+    assert_serde::<Tag, u32, _, _>(&value, serialized, serialized);
 
     let value = Value::U32(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -320,10 +354,10 @@ fn test_u32_max() {
     let serialized = [7, 255, 255, 255, 255, 255];
 
     let value = u32::MAX;
-    assert_serde::<Tag, u32, _>(&value, serialized);
+    assert_serde::<Tag, u32, _, _>(&value, serialized, serialized);
 
     let value = Value::U32(u32::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -332,10 +366,10 @@ fn test_i32_0() {
     let serialized = [8, 0];
 
     let value = 0i32;
-    assert_serde::<Tag, i32, _>(&value, serialized);
+    assert_serde::<Tag, i32, _, _>(&value, serialized, serialized);
 
     let value = Value::I32(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -344,10 +378,10 @@ fn test_i32_1() {
     let serialized = [8, 2];
 
     let value = 1i32;
-    assert_serde::<Tag, i32, _>(&value, serialized);
+    assert_serde::<Tag, i32, _, _>(&value, serialized, serialized);
 
     let value = Value::I32(1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -356,10 +390,10 @@ fn test_i32_minus_1() {
     let serialized = [8, 1];
 
     let value = -1i32;
-    assert_serde::<Tag, i32, _>(&value, serialized);
+    assert_serde::<Tag, i32, _, _>(&value, serialized, serialized);
 
     let value = Value::I32(-1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -368,10 +402,10 @@ fn test_i32_max() {
     let serialized = [8, 255, 254, 255, 255, 255];
 
     let value = i32::MAX;
-    assert_serde::<Tag, i32, _>(&value, serialized);
+    assert_serde::<Tag, i32, _, _>(&value, serialized, serialized);
 
     let value = Value::I32(i32::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -380,10 +414,10 @@ fn test_i32_min() {
     let serialized = [8, 255, 255, 255, 255, 255];
 
     let value = i32::MIN;
-    assert_serde::<Tag, i32, _>(&value, serialized);
+    assert_serde::<Tag, i32, _, _>(&value, serialized, serialized);
 
     let value = Value::I32(i32::MIN);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -392,10 +426,10 @@ fn test_u64_0() {
     let serialized = [9, 0];
 
     let value = 0u64;
-    assert_serde::<Tag, u64, _>(&value, serialized);
+    assert_serde::<Tag, u64, _, _>(&value, serialized, serialized);
 
     let value = Value::U64(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -404,10 +438,10 @@ fn test_u64_max() {
     let serialized = [9, 255, 255, 255, 255, 255, 255, 255, 255, 255];
 
     let value = u64::MAX;
-    assert_serde::<Tag, u64, _>(&value, serialized);
+    assert_serde::<Tag, u64, _, _>(&value, serialized, serialized);
 
     let value = Value::U64(u64::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -416,10 +450,10 @@ fn test_i64_0() {
     let serialized = [10, 0];
 
     let value = 0i64;
-    assert_serde::<Tag, i64, _>(&value, serialized);
+    assert_serde::<Tag, i64, _, _>(&value, serialized, serialized);
 
     let value = Value::I64(0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -428,10 +462,10 @@ fn test_i64_1() {
     let serialized = [10, 2];
 
     let value = 1i64;
-    assert_serde::<Tag, i64, _>(&value, serialized);
+    assert_serde::<Tag, i64, _, _>(&value, serialized, serialized);
 
     let value = Value::I64(1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -440,10 +474,10 @@ fn test_i64_minux_1() {
     let serialized = [10, 1];
 
     let value = -1i64;
-    assert_serde::<Tag, i64, _>(&value, serialized);
+    assert_serde::<Tag, i64, _, _>(&value, serialized, serialized);
 
     let value = Value::I64(-1);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -452,10 +486,10 @@ fn test_i64_max() {
     let serialized = [10, 255, 254, 255, 255, 255, 255, 255, 255, 255];
 
     let value = i64::MAX;
-    assert_serde::<Tag, i64, _>(&value, serialized);
+    assert_serde::<Tag, i64, _, _>(&value, serialized, serialized);
 
     let value = Value::I64(i64::MAX);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -464,10 +498,10 @@ fn test_i64_min() {
     let serialized = [10, 255, 255, 255, 255, 255, 255, 255, 255, 255];
 
     let value = i64::MIN;
-    assert_serde::<Tag, i64, _>(&value, serialized);
+    assert_serde::<Tag, i64, _, _>(&value, serialized, serialized);
 
     let value = Value::I64(i64::MIN);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -476,10 +510,10 @@ fn test_f32_0() {
     let serialized = [11, 0, 0, 0, 0];
 
     let value = 0f32;
-    assert_serde::<Tag, f32, _>(&value, serialized);
+    assert_serde::<Tag, f32, _, _>(&value, serialized, serialized);
 
     let value = Value::F32(0.0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -488,10 +522,10 @@ fn test_f32_pi() {
     let serialized = [11, 219, 15, 73, 64];
 
     let value = f32::consts::PI;
-    assert_serde::<Tag, f32, _>(&value, serialized);
+    assert_serde::<Tag, f32, _, _>(&value, serialized, serialized);
 
     let value = Value::F32(f32::consts::PI);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -500,10 +534,10 @@ fn test_f64_0() {
     let serialized = [12, 0, 0, 0, 0, 0, 0, 0, 0];
 
     let value = 0f64;
-    assert_serde::<Tag, f64, _>(&value, serialized);
+    assert_serde::<Tag, f64, _, _>(&value, serialized, serialized);
 
     let value = Value::F64(0.0);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -512,10 +546,10 @@ fn test_f64_pi() {
     let serialized = [12, 24, 45, 68, 84, 251, 33, 9, 64];
 
     let value = f64::consts::PI;
-    assert_serde::<Tag, f64, _>(&value, serialized);
+    assert_serde::<Tag, f64, _, _>(&value, serialized, serialized);
 
     let value = Value::F64(f64::consts::PI);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -524,10 +558,10 @@ fn test_string_1() {
     let serialized = [13, 4, b'a', b'b', b'c', b'd'];
 
     let value = "abcd".to_owned();
-    assert_serde::<Tag, String, _>(&value, serialized);
+    assert_serde::<Tag, String, _, _>(&value, serialized, serialized);
 
     let value = Value::String("abcd".to_owned());
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = "abcd";
     assert_serialize::<Tag, &str, _>(&value, serialized);
@@ -539,10 +573,10 @@ fn test_string_2() {
     let serialized = [13, 6, 195, 164, 195, 182, 195, 188];
 
     let value = "äöü".to_owned();
-    assert_serde::<Tag, String, _>(&value, serialized);
+    assert_serde::<Tag, String, _, _>(&value, serialized, serialized);
 
     let value = Value::String("äöü".to_owned());
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = "äöü";
     assert_serialize::<Tag, &str, _>(&value, serialized);
@@ -554,10 +588,10 @@ fn test_string_empty() {
     let serialized = [13, 0];
 
     let value = String::new();
-    assert_serde::<Tag, String, _>(&value, serialized);
+    assert_serde::<Tag, String, _, _>(&value, serialized, serialized);
 
     let value = Value::String(String::new());
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = "";
     assert_serialize::<Tag, &str, _>(&value, serialized);
@@ -573,31 +607,31 @@ fn test_uuid() {
     ];
 
     let value = uuid;
-    assert_serde::<Tag, Uuid, _>(&value, serialized);
+    assert_serde::<Tag, Uuid, _, _>(&value, serialized, serialized);
 
     let value = Value::Uuid(uuid);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BusListenerCookie(uuid);
-    assert_serde::<Tag, BusListenerCookie, _>(&value, serialized);
+    assert_serde::<Tag, BusListenerCookie, _, _>(&value, serialized, serialized);
 
     let value = ChannelCookie(uuid);
-    assert_serde::<Tag, ChannelCookie, _>(&value, serialized);
+    assert_serde::<Tag, ChannelCookie, _, _>(&value, serialized, serialized);
 
     let value = ObjectCookie(uuid);
-    assert_serde::<Tag, ObjectCookie, _>(&value, serialized);
+    assert_serde::<Tag, ObjectCookie, _, _>(&value, serialized, serialized);
 
     let value = ObjectUuid(uuid);
-    assert_serde::<Tag, ObjectUuid, _>(&value, serialized);
+    assert_serde::<Tag, ObjectUuid, _, _>(&value, serialized, serialized);
 
     let value = ServiceCookie(uuid);
-    assert_serde::<Tag, ServiceCookie, _>(&value, serialized);
+    assert_serde::<Tag, ServiceCookie, _, _>(&value, serialized, serialized);
 
     let value = ServiceUuid(uuid);
-    assert_serde::<Tag, ServiceUuid, _>(&value, serialized);
+    assert_serde::<Tag, ServiceUuid, _, _>(&value, serialized, serialized);
 
     let value = TypeId(uuid);
-    assert_serde::<Tag, TypeId, _>(&value, serialized);
+    assert_serde::<Tag, TypeId, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -613,10 +647,10 @@ fn test_object_id() {
     ];
 
     let value = id;
-    assert_serde::<Tag, ObjectId, _>(&value, serialized);
+    assert_serde::<Tag, ObjectId, _, _>(&value, serialized, serialized);
 
     let value = Value::ObjectId(id);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -637,63 +671,66 @@ fn test_service_id() {
     ];
 
     let value = id;
-    assert_serde::<Tag, ServiceId, _>(&value, serialized);
+    assert_serde::<Tag, ServiceId, _, _>(&value, serialized, serialized);
 
     let value = Value::ServiceId(id);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 }
 
 #[test]
 fn test_vec() {
     type Tag = tags::Vec<tags::U8>;
-    let serialized = [17, 2, 3, 7, 3, 8];
+    let v1 = [17, 2, 3, 7, 3, 8];
+    let v2 = [43, 1, 3, 7, 1, 3, 8, 0];
 
     let value = vec![7, 8];
-    assert_serde::<Tag, Vec<u8>, _>(&value, serialized);
+    assert_serde::<Tag, Vec<u8>, _, _>(&value, v1, v2);
 
     let value = Value::Vec(vec![Value::U8(7), Value::U8(8)]);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = VecDeque::from_iter([7, 8]);
-    assert_serde::<Tag, VecDeque<u8>, _>(&value, serialized);
+    assert_serde::<Tag, VecDeque<u8>, _, _>(&value, v1, v2);
 
     let value = LinkedList::from_iter([7, 8]);
-    assert_serde::<Tag, LinkedList<u8>, _>(&value, serialized);
+    assert_serde::<Tag, LinkedList<u8>, _, _>(&value, v1, v2);
 
     let value = &[7, 8][..];
-    assert_serialize::<Tag, &[u8], _>(&value, serialized);
+    assert_serialize::<Tag, &[u8], _>(&value, v2);
 
     let value = [7, 8];
-    assert_serde::<Tag, [u8; 2], _>(&value, serialized);
+    assert_serde::<Tag, [u8; 2], _, _>(&value, v1, v2);
 
     let value = Bytes::new([7, 8]);
-    assert_serde::<Tag, Bytes, _>(&value, serialized);
+    assert_serde::<Tag, Bytes, _, _>(&value, v1, v2);
 
     let value = ByteSlice::new(&[7, 8]);
-    assert_serialize::<Tag, &ByteSlice, _>(&value, serialized);
+    assert_serialize::<Tag, &ByteSlice, _>(&value, v2);
 
     let value = bytes::Bytes::from(&[7, 8][..]);
-    assert_serde::<Tag, bytes::Bytes, _>(&value, serialized);
+    assert_serde::<Tag, bytes::Bytes, _, _>(&value, v1, v2);
 
     let value = bytes::BytesMut::from(&[7, 8][..]);
-    assert_serde::<Tag, bytes::BytesMut, _>(&value, serialized);
+    assert_serde::<Tag, bytes::BytesMut, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_vec_value() {
-    let serialized = [17, 2, 0, 3, 4];
+    let v1 = [17, 2, 0, 3, 4];
+    let v2 = [43, 1, 0, 1, 3, 4, 0];
 
     let value = Value::Vec(vec![Value::None, Value::U8(4)]);
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_vec_empty() {
     type Tag = tags::Vec<tags::Value>;
-    let serialized = [17, 0];
+    let v1 = [17, 0];
+    let v2 = [43, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, v1, v2);
 }
 
 #[test]
@@ -703,34 +740,34 @@ fn test_bytes() {
     let serialized = [18, 3, 1, 2, 3];
 
     let value = Bytes::new(bytes);
-    assert_serde::<Tag, Bytes, _>(&value, serialized);
+    assert_serde::<Tag, Bytes, _, _>(&value, serialized, serialized);
 
     let value = ByteSlice::new(&bytes);
     assert_serialize::<Tag, &ByteSlice, _>(&value, serialized);
 
     let value = Value::Bytes(Bytes::new(bytes));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = Vec::from(bytes);
-    assert_serde::<Tag, Vec<u8>, _>(&value, serialized);
+    assert_serde::<Tag, Vec<u8>, _, _>(&value, serialized, serialized);
 
     let value = VecDeque::from_iter(bytes);
-    assert_serde::<Tag, VecDeque<u8>, _>(&value, serialized);
+    assert_serde::<Tag, VecDeque<u8>, _, _>(&value, serialized, serialized);
 
     let value = LinkedList::from_iter(bytes);
-    assert_serde::<Tag, LinkedList<u8>, _>(&value, serialized);
+    assert_serde::<Tag, LinkedList<u8>, _, _>(&value, serialized, serialized);
 
     let value = &bytes[..];
     assert_serialize::<Tag, &[u8], _>(&value, serialized);
 
     let value = bytes;
-    assert_serde::<Tag, [u8; 3], _>(&value, serialized);
+    assert_serde::<Tag, [u8; 3], _, _>(&value, serialized, serialized);
 
     let value = bytes::Bytes::from_iter(bytes);
-    assert_serde::<Tag, bytes::Bytes, _>(&value, serialized);
+    assert_serde::<Tag, bytes::Bytes, _, _>(&value, serialized, serialized);
 
     let value = bytes::BytesMut::from_iter(bytes);
-    assert_serde::<Tag, bytes::BytesMut, _>(&value, serialized);
+    assert_serde::<Tag, bytes::BytesMut, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -739,7 +776,7 @@ fn test_bytes_empty() {
     let serialized = [18, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -750,22 +787,22 @@ fn test_u8_map() {
 
     let value = HashMap::from_iter([(0, 1), (2, 3)]);
     if value.keys().next() == Some(&0) {
-        assert_serde::<Tag, HashMap<u8, u8>, _>(&value, serialized1);
+        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, serialized1, serialized1);
     } else {
-        assert_serde::<Tag, HashMap<u8, u8>, _>(&value, serialized2);
+        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, serialized2, serialized2);
     }
 
     let value = HashMap::from_iter([(0, Value::U8(1)), (2, Value::U8(3))]);
     if value.keys().next() == Some(&0) {
         let value = Value::U8Map(value);
-        assert_serde::<_, Value, _>(&value, serialized1);
+        assert_serde::<_, Value, _, _>(&value, serialized1, serialized1);
     } else {
         let value = Value::U8Map(value);
-        assert_serde::<_, Value, _>(&value, serialized2);
+        assert_serde::<_, Value, _, _>(&value, serialized2, serialized2);
     }
 
     let value = BTreeMap::from_iter([(0, 1), (2, 3)]);
-    assert_serde::<Tag, BTreeMap<u8, u8>, _>(&value, serialized1);
+    assert_serde::<Tag, BTreeMap<u8, u8>, _, _>(&value, serialized1, serialized1);
 }
 
 #[test]
@@ -774,7 +811,7 @@ fn test_u8_map_empty() {
     let serialized = [19, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -783,13 +820,13 @@ fn test_i8_map() {
     let serialized = [20, 1, 2, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i8, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<i8, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::I8Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i8, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<i8, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -798,13 +835,13 @@ fn test_u16_map() {
     let serialized = [21, 1, 2, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u16, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<u16, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::U16Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u16, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<u16, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -813,13 +850,13 @@ fn test_i16_map() {
     let serialized = [22, 1, 4, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i16, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<i16, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::I16Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i16, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<i16, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -828,13 +865,13 @@ fn test_u32_map() {
     let serialized = [23, 1, 2, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u32, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<u32, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::U32Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u32, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<u32, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -843,13 +880,13 @@ fn test_i32_map() {
     let serialized = [24, 1, 4, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i32, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<i32, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::I32Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i32, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<i32, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -858,13 +895,13 @@ fn test_u64_map() {
     let serialized = [25, 1, 2, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u64, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<u64, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::U64Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u64, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<u64, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -873,13 +910,13 @@ fn test_i64_map() {
     let serialized = [26, 1, 4, 3, 4];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i64, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<i64, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::I64Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i64, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<i64, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -888,16 +925,16 @@ fn test_string_map() {
     let serialized = [27, 1, 2, b'3', b'4', 5, 6];
 
     let value = HashMap::from_iter([("34".to_owned(), 6)]);
-    assert_serde::<Tag, HashMap<String, u16>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<String, u16>, _, _>(&value, serialized, serialized);
 
     let value = HashMap::from_iter([("34", 6)]);
     assert_serialize::<Tag, HashMap<&str, u16>, _>(&value, serialized);
 
     let value = Value::StringMap(HashMap::from_iter([("34".to_owned(), Value::U16(6))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([("34".to_owned(), 6)]);
-    assert_serde::<Tag, BTreeMap<String, u16>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<String, u16>, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([("34", 6)]);
     assert_serialize::<Tag, BTreeMap<&str, u16>, _>(&value, serialized);
@@ -913,13 +950,13 @@ fn test_uuid_map() {
     ];
 
     let value = HashMap::from_iter([(uuid, 0)]);
-    assert_serde::<Tag, HashMap<Uuid, u8>, _>(&value, serialized);
+    assert_serde::<Tag, HashMap<Uuid, u8>, _, _>(&value, serialized, serialized);
 
     let value = Value::UuidMap(HashMap::from_iter([(uuid, Value::U8(0))]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeMap::from_iter([(uuid, 0)]);
-    assert_serde::<Tag, BTreeMap<Uuid, u8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeMap<Uuid, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -930,22 +967,22 @@ fn test_u8_set() {
 
     let value = HashSet::from_iter([3, 4]);
     if value.iter().next() == Some(&3) {
-        assert_serde::<Tag, HashSet<u8>, _>(&value, serialized1);
+        assert_serde::<Tag, HashSet<u8>, _, _>(&value, serialized1, serialized1);
     } else {
-        assert_serde::<Tag, HashSet<u8>, _>(&value, serialized2);
+        assert_serde::<Tag, HashSet<u8>, _, _>(&value, serialized2, serialized2);
     }
 
     let value = HashSet::from_iter([3, 4]);
     if value.iter().next() == Some(&3) {
         let value = Value::U8Set(value);
-        assert_serde::<_, Value, _>(&value, serialized1);
+        assert_serde::<_, Value, _, _>(&value, serialized1, serialized1);
     } else {
         let value = Value::U8Set(value);
-        assert_serde::<_, Value, _>(&value, serialized2);
+        assert_serde::<_, Value, _, _>(&value, serialized2, serialized2);
     }
 
     let value = BTreeSet::from_iter([3, 4]);
-    assert_serde::<Tag, BTreeSet<u8>, _>(&value, serialized1);
+    assert_serde::<Tag, BTreeSet<u8>, _, _>(&value, serialized1, serialized1);
 }
 
 #[test]
@@ -954,7 +991,7 @@ fn test_u8_set_empty() {
     let serialized = [29, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _>(&value, serialized);
+    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -963,13 +1000,13 @@ fn test_i8_set() {
     let serialized = [30, 1, 2];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<i8>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<i8>, _, _>(&value, serialized, serialized);
 
     let value = Value::I8Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<i8>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<i8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -978,13 +1015,13 @@ fn test_u16_set() {
     let serialized = [31, 1, 2];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u16>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<u16>, _, _>(&value, serialized, serialized);
 
     let value = Value::U16Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u16>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<u16>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -993,13 +1030,13 @@ fn test_i16_set() {
     let serialized = [32, 1, 2];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i16>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<i16>, _, _>(&value, serialized, serialized);
 
     let value = Value::I16Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i16>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<i16>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1008,13 +1045,13 @@ fn test_u32_set() {
     let serialized = [33, 1, 2];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u32>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<u32>, _, _>(&value, serialized, serialized);
 
     let value = Value::U32Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u32>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<u32>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1023,13 +1060,13 @@ fn test_i32_set() {
     let serialized = [34, 1, 2];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i32>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<i32>, _, _>(&value, serialized, serialized);
 
     let value = Value::I32Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i32>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<i32>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1038,13 +1075,13 @@ fn test_u64_set() {
     let serialized = [35, 1, 2];
 
     let value = HashSet::from_iter([2]);
-    assert_serde::<Tag, HashSet<u64>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<u64>, _, _>(&value, serialized, serialized);
 
     let value = Value::U64Set(HashSet::from_iter([2]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([2]);
-    assert_serde::<Tag, BTreeSet<u64>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<u64>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1053,13 +1090,13 @@ fn test_i64_set() {
     let serialized = [36, 1, 2];
 
     let value = HashSet::from_iter([1]);
-    assert_serde::<Tag, HashSet<i64>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<i64>, _, _>(&value, serialized, serialized);
 
     let value = Value::I64Set(HashSet::from_iter([1]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([1]);
-    assert_serde::<Tag, BTreeSet<i64>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<i64>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1068,16 +1105,16 @@ fn test_string_set() {
     let serialized = [37, 1, 2, b'3', b'4'];
 
     let value = HashSet::from_iter(["34".to_owned()]);
-    assert_serde::<Tag, HashSet<String>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<String>, _, _>(&value, serialized, serialized);
 
     let value = HashSet::from_iter(["34"]);
     assert_serialize::<Tag, HashSet<&str>, _>(&value, serialized);
 
     let value = Value::StringSet(HashSet::from_iter(["34".to_owned()]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter(["34".to_owned()]);
-    assert_serde::<Tag, BTreeSet<String>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<String>, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter(["34"]);
     assert_serialize::<Tag, BTreeSet<&str>, _>(&value, serialized);
@@ -1093,13 +1130,13 @@ fn test_uuid_set() {
     ];
 
     let value = HashSet::from_iter([uuid]);
-    assert_serde::<Tag, HashSet<Uuid>, _>(&value, serialized);
+    assert_serde::<Tag, HashSet<Uuid>, _, _>(&value, serialized, serialized);
 
     let value = Value::UuidSet(HashSet::from_iter([uuid]));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = BTreeSet::from_iter([uuid]);
-    assert_serde::<Tag, BTreeSet<Uuid>, _>(&value, serialized);
+    assert_serde::<Tag, BTreeSet<Uuid>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1112,13 +1149,13 @@ fn test_sender() {
     ];
 
     let value = uuid;
-    assert_serde::<Tag, Uuid, _>(&value, serialized);
+    assert_serde::<Tag, Uuid, _, _>(&value, serialized, serialized);
 
     let value = Value::Sender(ChannelCookie(uuid));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = ChannelCookie(uuid);
-    assert_serde::<Tag, ChannelCookie, _>(&value, serialized);
+    assert_serde::<Tag, ChannelCookie, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1131,13 +1168,13 @@ fn test_receiver() {
     ];
 
     let value = uuid;
-    assert_serde::<Tag, Uuid, _>(&value, serialized);
+    assert_serde::<Tag, Uuid, _, _>(&value, serialized, serialized);
 
     let value = Value::Receiver(ChannelCookie(uuid));
-    assert_serde::<_, Value, _>(&value, serialized);
+    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
 
     let value = ChannelCookie(uuid);
-    assert_serde::<Tag, ChannelCookie, _>(&value, serialized);
+    assert_serde::<Tag, ChannelCookie, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1146,7 +1183,7 @@ fn test_result_ok() {
     let serialized = [40, 0, 3, 1];
 
     let value = Ok(1);
-    assert_serde::<Tag, Result<u8, u8>, _>(&value, serialized);
+    assert_serde::<Tag, Result<u8, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1155,7 +1192,7 @@ fn test_result_err() {
     let serialized = [40, 1, 3, 2];
 
     let value = Err(2);
-    assert_serde::<Tag, Result<u8, u8>, _>(&value, serialized);
+    assert_serde::<Tag, Result<u8, u8>, _, _>(&value, serialized, serialized);
 }
 
 #[test]
@@ -1182,5 +1219,20 @@ fn test_deserialize_too_deep() {
     assert_eq!(
         serialized.deserialize::<Value>(),
         Err(DeserializeError::TooDeeplyNested)
+    );
+}
+
+#[test]
+fn test_convert_too_deep() {
+    let serialized = SerializedValueSlice::new(&[
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 0,
+    ]);
+
+    assert_eq!(
+        serialized
+            .convert(None, ProtocolVersion::V1_14)
+            .unwrap_err(),
+        ValueConversionError::Deserialize(DeserializeError::TooDeeplyNested),
     );
 }

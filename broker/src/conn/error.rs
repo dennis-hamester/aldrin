@@ -1,4 +1,4 @@
-use aldrin_core::ValueConversionError;
+use aldrin_core::{DeserializeError, SerializeError, ValueConversionError};
 use thiserror::Error;
 
 /// Error of an active connection.
@@ -11,6 +11,14 @@ pub enum ConnectionError<T> {
     /// The transport encountered an error.
     #[error(transparent)]
     Transport(T),
+
+    /// A value failed to serialize.
+    #[error(transparent)]
+    Serialize(#[from] SerializeError),
+
+    /// A value failed to deserialize.
+    #[error(transparent)]
+    Deserialize(#[from] DeserializeError),
 }
 
 impl<T> From<ValueConversionError> for ConnectionError<T> {
@@ -18,6 +26,9 @@ impl<T> From<ValueConversionError> for ConnectionError<T> {
         match err {
             // Conversion here is always passed a valid version.
             ValueConversionError::InvalidVersion => unreachable!(),
+
+            ValueConversionError::Serialize(e) => Self::Serialize(e),
+            ValueConversionError::Deserialize(e) => Self::Deserialize(e),
         }
     }
 }
