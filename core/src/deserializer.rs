@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 pub use self::bytes::{Bytes1Deserializer, Bytes2Deserializer, BytesDeserializer};
 pub use enum_::EnumDeserializer;
-pub use map::{MapDeserializer, MapElementDeserializer};
+pub use map::{Map1Deserializer, Map2Deserializer, MapDeserializer, MapElementDeserializer};
 pub use set::SetDeserializer;
 pub use struct_::{FieldDeserializer, StructDeserializer};
 pub use vec::{Vec1Deserializer, Vec2Deserializer, VecDeserializer};
@@ -96,45 +96,45 @@ impl<'a, 'b> Deserializer<'a, 'b> {
 
             ValueKind::Bytes1 => Bytes1Deserializer::new_without_value_kind(self.buf)?.skip(),
 
-            ValueKind::U8Map => {
-                MapDeserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::U8Map1 => {
+                Map1Deserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::I8Map => {
-                MapDeserializer::<tags::I8>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::I8Map1 => {
+                Map1Deserializer::<tags::I8>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::U16Map => {
-                MapDeserializer::<tags::U16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::U16Map1 => {
+                Map1Deserializer::<tags::U16>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::I16Map => {
-                MapDeserializer::<tags::I16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::I16Map1 => {
+                Map1Deserializer::<tags::I16>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::U32Map => {
-                MapDeserializer::<tags::U32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::U32Map1 => {
+                Map1Deserializer::<tags::U32>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::I32Map => {
-                MapDeserializer::<tags::I32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::I32Map1 => {
+                Map1Deserializer::<tags::I32>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::U64Map => {
-                MapDeserializer::<tags::U64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::U64Map1 => {
+                Map1Deserializer::<tags::U64>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::I64Map => {
-                MapDeserializer::<tags::I64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::I64Map1 => {
+                Map1Deserializer::<tags::I64>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
-            ValueKind::StringMap => {
-                MapDeserializer::<tags::String>::new_without_value_kind(self.buf, self.depth)?
+            ValueKind::StringMap1 => {
+                Map1Deserializer::<tags::String>::new_without_value_kind(self.buf, self.depth)?
                     .skip()
             }
 
-            ValueKind::UuidMap => {
-                MapDeserializer::<tags::Uuid>::new_without_value_kind(self.buf, self.depth)?.skip()
+            ValueKind::UuidMap1 => {
+                Map1Deserializer::<tags::Uuid>::new_without_value_kind(self.buf, self.depth)?.skip()
             }
 
             ValueKind::U8Set => {
@@ -190,6 +190,47 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             }
 
             ValueKind::Bytes2 => Bytes2Deserializer::new_without_value_kind(self.buf)?.skip(),
+
+            ValueKind::U8Map2 => {
+                Map2Deserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::I8Map2 => {
+                Map2Deserializer::<tags::I8>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::U16Map2 => {
+                Map2Deserializer::<tags::U16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::I16Map2 => {
+                Map2Deserializer::<tags::I16>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::U32Map2 => {
+                Map2Deserializer::<tags::U32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::I32Map2 => {
+                Map2Deserializer::<tags::I32>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::U64Map2 => {
+                Map2Deserializer::<tags::U64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::I64Map2 => {
+                Map2Deserializer::<tags::I64>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
+
+            ValueKind::StringMap2 => {
+                Map2Deserializer::<tags::String>::new_without_value_kind(self.buf, self.depth)?
+                    .skip()
+            }
+
+            ValueKind::UuidMap2 => {
+                Map2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf, self.depth)?.skip()
+            }
         }
     }
 
@@ -517,6 +558,66 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     {
         let mut map = V::default();
         self.deserialize_map_extend(&mut map)?;
+        Ok(map)
+    }
+
+    pub fn deserialize_map1<K: KeyTag>(
+        self,
+    ) -> Result<Map1Deserializer<'a, 'b, K>, DeserializeError> {
+        Map1Deserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_map1_extend<K, L, T, U, V>(self, map: &mut V) -> Result<(), DeserializeError>
+    where
+        K: KeyTag,
+        L: DeserializeKey<K>,
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<(L, U)>,
+    {
+        Map1Deserializer::new(self.buf, self.depth)?.deserialize_extend(map)
+    }
+
+    pub fn deserialize_map1_extend_new<K, L, T, U, V>(self) -> Result<V, DeserializeError>
+    where
+        K: KeyTag,
+        L: DeserializeKey<K>,
+        T: Tag,
+        U: Deserialize<T>,
+        V: Default + Extend<(L, U)>,
+    {
+        let mut map = V::default();
+        self.deserialize_map1_extend(&mut map)?;
+        Ok(map)
+    }
+
+    pub fn deserialize_map2<K: KeyTag>(
+        self,
+    ) -> Result<Map2Deserializer<'a, 'b, K>, DeserializeError> {
+        Map2Deserializer::new(self.buf, self.depth)
+    }
+
+    pub fn deserialize_map2_extend<K, L, T, U, V>(self, map: &mut V) -> Result<(), DeserializeError>
+    where
+        K: KeyTag,
+        L: DeserializeKey<K>,
+        T: Tag,
+        U: Deserialize<T>,
+        V: Extend<(L, U)>,
+    {
+        Map2Deserializer::new(self.buf, self.depth)?.deserialize_extend(map)
+    }
+
+    pub fn deserialize_map2_extend_new<K, L, T, U, V>(self) -> Result<V, DeserializeError>
+    where
+        K: KeyTag,
+        L: DeserializeKey<K>,
+        T: Tag,
+        U: Deserialize<T>,
+        V: Default + Extend<(L, U)>,
+    {
+        let mut map = V::default();
+        self.deserialize_map2_extend(&mut map)?;
         Ok(map)
     }
 

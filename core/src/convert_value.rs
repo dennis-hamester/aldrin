@@ -165,16 +165,16 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::ServiceId => self.convert_service_id(),
             ValueKind::Vec1 => self.convert_vec1(),
             ValueKind::Bytes1 => self.convert_bytes1(),
-            ValueKind::U8Map => self.convert_u8_map(),
-            ValueKind::I8Map => self.convert_i8_map(),
-            ValueKind::U16Map => self.convert_u16_map(),
-            ValueKind::I16Map => self.convert_i16_map(),
-            ValueKind::U32Map => self.convert_u32_map(),
-            ValueKind::I32Map => self.convert_i32_map(),
-            ValueKind::U64Map => self.convert_u64_map(),
-            ValueKind::I64Map => self.convert_i64_map(),
-            ValueKind::StringMap => self.convert_string_map(),
-            ValueKind::UuidMap => self.convert_uuid_map(),
+            ValueKind::U8Map1 => self.convert_map1::<tags::U8>(),
+            ValueKind::I8Map1 => self.convert_map1::<tags::I8>(),
+            ValueKind::U16Map1 => self.convert_map1::<tags::U16>(),
+            ValueKind::I16Map1 => self.convert_map1::<tags::I16>(),
+            ValueKind::U32Map1 => self.convert_map1::<tags::U32>(),
+            ValueKind::I32Map1 => self.convert_map1::<tags::I32>(),
+            ValueKind::U64Map1 => self.convert_map1::<tags::U64>(),
+            ValueKind::I64Map1 => self.convert_map1::<tags::I64>(),
+            ValueKind::StringMap1 => self.convert_map1::<tags::String>(),
+            ValueKind::UuidMap1 => self.convert_map1::<tags::Uuid>(),
             ValueKind::U8Set => self.convert_u8_set(),
             ValueKind::I8Set => self.convert_i8_set(),
             ValueKind::U16Set => self.convert_u16_set(),
@@ -191,6 +191,16 @@ impl<'a, 'b> Convert<'a, 'b> {
             ValueKind::Receiver => self.convert_receiver(),
             ValueKind::Vec2 => self.convert_vec2(),
             ValueKind::Bytes2 => self.convert_bytes2(),
+            ValueKind::U8Map2 => self.convert_map2::<tags::U8>(),
+            ValueKind::I8Map2 => self.convert_map2::<tags::I8>(),
+            ValueKind::U16Map2 => self.convert_map2::<tags::U16>(),
+            ValueKind::I16Map2 => self.convert_map2::<tags::I16>(),
+            ValueKind::U32Map2 => self.convert_map2::<tags::U32>(),
+            ValueKind::I32Map2 => self.convert_map2::<tags::I32>(),
+            ValueKind::U64Map2 => self.convert_map2::<tags::U64>(),
+            ValueKind::I64Map2 => self.convert_map2::<tags::I64>(),
+            ValueKind::StringMap2 => self.convert_map2::<tags::String>(),
+            ValueKind::UuidMap2 => self.convert_map2::<tags::Uuid>(),
         }
     }
 
@@ -415,8 +425,8 @@ impl<'a, 'b> Convert<'a, 'b> {
         }
     }
 
-    fn convert_map<K: KeyTagImpl>(mut self) -> Result<(), ValueConversionError> {
-        K::serialize_map_value_kind(self.dst);
+    fn convert_map1<K: KeyTagImpl>(mut self) -> Result<(), ValueConversionError> {
+        self.dst.put_discriminant_u8(K::VALUE_KIND_MAP1);
 
         let len = self.src.try_get_varint_u32_le()?;
         self.dst.put_varint_u32_le(len);
@@ -427,46 +437,6 @@ impl<'a, 'b> Convert<'a, 'b> {
         }
 
         Ok(())
-    }
-
-    fn convert_u8_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::U8>()
-    }
-
-    fn convert_i8_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::I8>()
-    }
-
-    fn convert_u16_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::U16>()
-    }
-
-    fn convert_i16_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::I16>()
-    }
-
-    fn convert_u32_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::U32>()
-    }
-
-    fn convert_i32_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::I32>()
-    }
-
-    fn convert_u64_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::U64>()
-    }
-
-    fn convert_i64_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::I64>()
-    }
-
-    fn convert_string_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::String>()
-    }
-
-    fn convert_uuid_map(self) -> Result<(), ValueConversionError> {
-        self.convert_map::<tags::Uuid>()
     }
 
     fn convert_set<K: KeyTagImpl>(self) -> Result<(), ValueConversionError> {
@@ -645,6 +615,49 @@ impl<'a, 'b> Convert<'a, 'b> {
 
             tmp.extend_from_slice(&self.src[..len]);
             self.src.advance(len);
+        }
+    }
+
+    fn convert_map2<K: KeyTagImpl>(self) -> Result<(), ValueConversionError> {
+        match self.epoch {
+            Epoch::V1 => self.convert_map2_to_map1::<K>(),
+            Epoch::V2 => unreachable!(),
+        }
+    }
+
+    fn convert_map2_to_map1<K: KeyTagImpl>(self) -> Result<(), ValueConversionError> {
+        let mut tmp = BytesMut::new();
+        let mut len = 0usize;
+
+        loop {
+            match self.src.try_get_discriminant_u8()? {
+                ValueKind::None => {
+                    let Ok(len) = len.try_into() else {
+                        return Err(ValueConversionError::Serialize(SerializeError::Overflow));
+                    };
+
+                    self.dst.put_discriminant_u8(K::VALUE_KIND_MAP1);
+                    self.dst.put_varint_u32_le(len);
+                    self.dst.extend_from_slice(&tmp);
+
+                    break Ok(());
+                }
+
+                ValueKind::Some => {
+                    K::convert(self.src, &mut tmp)?;
+
+                    let convert = Convert::new(self.src, &mut tmp, self.epoch, self.depth)?;
+                    convert.convert()?;
+
+                    len += 1;
+                }
+
+                _ => {
+                    break Err(ValueConversionError::Deserialize(
+                        DeserializeError::InvalidSerialization,
+                    ));
+                }
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ where
     U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map_iter(self)
+        serializer.serialize_map2_iter(self)
     }
 }
 
@@ -34,7 +34,7 @@ where
     &'a U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map_iter(self)
+        serializer.serialize_map2_iter(self)
     }
 }
 
@@ -82,7 +82,7 @@ where
     U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map_iter(self)
+        serializer.serialize_map2_iter(self)
     }
 }
 
@@ -94,7 +94,7 @@ where
     &'a U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map_iter(self)
+        serializer.serialize_map2_iter(self)
     }
 }
 
@@ -127,13 +127,13 @@ impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
 
 impl<K: KeyTag, T: Tag> Serialize<Map<K, T>> for () {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map::<K>(0)?.finish()
+        serializer.serialize_map2::<K>()?.finish()
     }
 }
 
 impl<K: KeyTag, T: Tag> Serialize<Map<K, T>> for &() {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_map::<K>(0)?.finish()
+        serializer.serialize_map2::<K>()?.finish()
     }
 }
 

@@ -12,11 +12,15 @@ pub trait KeyTagImpl: Sized + Sealed {
 
     // Not part of the public API.
     #[doc(hidden)]
-    fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError>;
+    const VALUE_KIND_MAP1: ValueKind;
 
     // Not part of the public API.
     #[doc(hidden)]
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B);
+    const VALUE_KIND_MAP2: ValueKind;
+
+    // Not part of the public API.
+    #[doc(hidden)]
+    fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError>;
 
     // Not part of the public API.
     #[doc(hidden)]
@@ -25,10 +29,6 @@ pub trait KeyTagImpl: Sized + Sealed {
     // Not part of the public API.
     #[doc(hidden)]
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError>;
-
-    // Not part of the public API.
-    #[doc(hidden)]
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError>;
 
     // Not part of the public API.
     #[doc(hidden)]
@@ -48,13 +48,12 @@ impl Sealed for U8 {}
 impl KeyTagImpl for U8 {
     type Key<'a> = u8;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::U8Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::U8Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_u8(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::U8Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -64,10 +63,6 @@ impl KeyTagImpl for U8 {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_u8()
             .map_err(|_| DeserializeError::UnexpectedEoi)
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::U8Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -93,13 +88,12 @@ impl Sealed for I8 {}
 impl KeyTagImpl for I8 {
     type Key<'a> = i8;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::I8Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::I8Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_i8(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::I8Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -109,10 +103,6 @@ impl KeyTagImpl for I8 {
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_i8()
             .map_err(|_| DeserializeError::UnexpectedEoi)
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::I8Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -138,13 +128,12 @@ impl Sealed for U16 {}
 impl KeyTagImpl for U16 {
     type Key<'a> = u16;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::U16Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::U16Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_u16_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::U16Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -153,10 +142,6 @@ impl KeyTagImpl for U16 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_u16_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::U16Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -179,13 +164,12 @@ impl Sealed for I16 {}
 impl KeyTagImpl for I16 {
     type Key<'a> = i16;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::I16Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::I16Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_i16_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::I16Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -194,10 +178,6 @@ impl KeyTagImpl for I16 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_i16_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::I16Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -220,13 +200,12 @@ impl Sealed for U32 {}
 impl KeyTagImpl for U32 {
     type Key<'a> = u32;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::U32Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::U32Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_u32_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::U32Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -235,10 +214,6 @@ impl KeyTagImpl for U32 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_u32_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::U32Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -261,13 +236,12 @@ impl Sealed for I32 {}
 impl KeyTagImpl for I32 {
     type Key<'a> = i32;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::I32Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::I32Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_i32_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::I32Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -276,10 +250,6 @@ impl KeyTagImpl for I32 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_i32_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::I32Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -302,13 +272,12 @@ impl Sealed for U64 {}
 impl KeyTagImpl for U64 {
     type Key<'a> = u64;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::U64Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::U64Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_u64_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::U64Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -317,10 +286,6 @@ impl KeyTagImpl for U64 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_u64_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::U64Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -343,13 +308,12 @@ impl Sealed for I64 {}
 impl KeyTagImpl for I64 {
     type Key<'a> = i64;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::I64Map1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::I64Map2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_varint_i64_le(key);
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::I64Map);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -358,10 +322,6 @@ impl KeyTagImpl for I64 {
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {
         buf.try_get_varint_i64_le()
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::I64Map)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -384,6 +344,9 @@ impl Sealed for String {}
 impl KeyTagImpl for String {
     type Key<'a> = Cow<'a, str>;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::StringMap1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::StringMap2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         if key.len() <= u32::MAX as usize {
             buf.put_varint_u32_le(key.len() as u32);
@@ -392,10 +355,6 @@ impl KeyTagImpl for String {
         } else {
             Err(SerializeError::Overflow)
         }
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::StringMap);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -409,10 +368,6 @@ impl KeyTagImpl for String {
         std::string::String::from_utf8(bytes)
             .map(Cow::Owned)
             .map_err(|_| DeserializeError::InvalidSerialization)
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::StringMap)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
@@ -446,13 +401,12 @@ impl Sealed for Uuid {}
 impl KeyTagImpl for Uuid {
     type Key<'a> = uuid::Uuid;
 
+    const VALUE_KIND_MAP1: ValueKind = ValueKind::UuidMap1;
+    const VALUE_KIND_MAP2: ValueKind = ValueKind::UuidMap2;
+
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
         buf.put_slice(key.as_bytes());
         Ok(())
-    }
-
-    fn serialize_map_value_kind<B: BufMut>(buf: &mut B) {
-        buf.put_discriminant_u8(ValueKind::UuidMap);
     }
 
     fn serialize_set_value_kind<B: BufMut>(buf: &mut B) {
@@ -466,10 +420,6 @@ impl KeyTagImpl for Uuid {
             .map_err(|_| DeserializeError::UnexpectedEoi)?;
 
         Ok(uuid::Uuid::from_bytes(bytes))
-    }
-
-    fn deserialize_map_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.ensure_discriminant_u8(ValueKind::UuidMap)
     }
 
     fn deserialize_set_value_kind<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {

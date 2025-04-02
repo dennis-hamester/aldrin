@@ -1,4 +1,5 @@
 use super::{LexicalId, Variant};
+use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -70,8 +71,10 @@ impl Serialize<Enum> for &Enum {
         serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
 
-        serializer
-            .serialize::<tags::Map<tags::U32, Variant>, _>(EnumField::Variants, &self.variants)?;
+        serializer.serialize::<tags::Map<tags::U32, Variant>, _>(
+            EnumField::Variants,
+            IterAsMap1(&self.variants),
+        )?;
 
         if self.fallback.is_some() {
             serializer

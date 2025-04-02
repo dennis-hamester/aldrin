@@ -1,4 +1,5 @@
 use super::{Event, Function, LexicalId};
+use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ServiceUuid,
@@ -107,11 +108,13 @@ impl Serialize<Service> for &Service {
 
         serializer.serialize::<tags::Map<tags::U32, Function>, _>(
             ServiceField::Functions,
-            &self.functions,
+            IterAsMap1(&self.functions),
         )?;
 
-        serializer
-            .serialize::<tags::Map<tags::U32, Event>, _>(ServiceField::Events, &self.events)?;
+        serializer.serialize::<tags::Map<tags::U32, Event>, _>(
+            ServiceField::Events,
+            IterAsMap1(&self.events),
+        )?;
 
         if self.function_fallback.is_some() {
             serializer.serialize::<tags::Option<tags::String>, _>(

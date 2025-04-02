@@ -1,4 +1,5 @@
 use super::{Field, LexicalId};
+use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -70,8 +71,10 @@ impl Serialize<Struct> for &Struct {
         serializer.serialize::<tags::String, _>(StructField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
 
-        serializer
-            .serialize::<tags::Map<tags::U32, Field>, _>(StructField::Fields, &self.fields)?;
+        serializer.serialize::<tags::Map<tags::U32, Field>, _>(
+            StructField::Fields,
+            IterAsMap1(&self.fields),
+        )?;
 
         if self.fallback.is_some() {
             serializer.serialize::<tags::Option<tags::String>, _>(

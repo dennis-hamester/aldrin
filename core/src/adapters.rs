@@ -6,6 +6,8 @@ mod value;
 mod vec;
 
 #[cfg(feature = "introspection")]
+pub(crate) use map::IterAsMap1;
+#[cfg(feature = "introspection")]
 pub(crate) use vec::IterAsVec1;
 
 pub use map::IterAsMap;

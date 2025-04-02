@@ -823,181 +823,196 @@ fn test_bytes_empty() {
 #[test]
 fn test_u8_map() {
     type Tag = tags::Map<tags::U8, tags::U8>;
-    let serialized1 = [19, 2, 0, 3, 1, 2, 3, 3];
-    let serialized2 = [19, 2, 2, 3, 3, 0, 3, 1];
+    let v1_1 = [19, 2, 0, 3, 1, 2, 3, 3];
+    let v1_2 = [19, 2, 2, 3, 3, 0, 3, 1];
+    let v2_1 = [45, 1, 0, 3, 1, 1, 2, 3, 3, 0];
+    let v2_2 = [45, 1, 2, 3, 3, 1, 0, 3, 1, 0];
 
     let value = HashMap::from_iter([(0, 1), (2, 3)]);
     if value.keys().next() == Some(&0) {
-        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, serialized1, serialized1);
+        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, v1_1, v2_1);
     } else {
-        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, serialized2, serialized2);
+        assert_serde::<Tag, HashMap<u8, u8>, _, _>(&value, v1_2, v2_2);
     }
 
     let value = HashMap::from_iter([(0, Value::U8(1)), (2, Value::U8(3))]);
     if value.keys().next() == Some(&0) {
         let value = Value::U8Map(value);
-        assert_serde::<_, Value, _, _>(&value, serialized1, serialized1);
+        assert_serde::<_, Value, _, _>(&value, v1_1, v2_1);
     } else {
         let value = Value::U8Map(value);
-        assert_serde::<_, Value, _, _>(&value, serialized2, serialized2);
+        assert_serde::<_, Value, _, _>(&value, v1_2, v2_2);
     }
 
     let value = BTreeMap::from_iter([(0, 1), (2, 3)]);
-    assert_serde::<Tag, BTreeMap<u8, u8>, _, _>(&value, serialized1, serialized1);
+    assert_serde::<Tag, BTreeMap<u8, u8>, _, _>(&value, v1_1, v2_1);
 }
 
 #[test]
 fn test_u8_map_empty() {
     type Tag = tags::Map<tags::U8, tags::U8>;
-    let serialized = [19, 0];
+    let v1 = [19, 0];
+    let v2 = [45, 0];
 
     let value = ();
-    assert_serde::<Tag, (), _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, (), _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i8_map() {
     type Tag = tags::Map<tags::I8, tags::U8>;
-    let serialized = [20, 1, 2, 3, 4];
+    let v1 = [20, 1, 2, 3, 4];
+    let v2 = [46, 1, 2, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i8, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<i8, u8>, _, _>(&value, v1, v2);
 
     let value = Value::I8Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i8, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<i8, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u16_map() {
     type Tag = tags::Map<tags::U16, tags::U8>;
-    let serialized = [21, 1, 2, 3, 4];
+    let v1 = [21, 1, 2, 3, 4];
+    let v2 = [47, 1, 2, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u16, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<u16, u8>, _, _>(&value, v1, v2);
 
     let value = Value::U16Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u16, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<u16, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i16_map() {
     type Tag = tags::Map<tags::I16, tags::U8>;
-    let serialized = [22, 1, 4, 3, 4];
+    let v1 = [22, 1, 4, 3, 4];
+    let v2 = [48, 1, 4, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i16, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<i16, u8>, _, _>(&value, v1, v2);
 
     let value = Value::I16Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i16, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<i16, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u32_map() {
     type Tag = tags::Map<tags::U32, tags::U8>;
-    let serialized = [23, 1, 2, 3, 4];
+    let v1 = [23, 1, 2, 3, 4];
+    let v2 = [49, 1, 2, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u32, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<u32, u8>, _, _>(&value, v1, v2);
 
     let value = Value::U32Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u32, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<u32, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i32_map() {
     type Tag = tags::Map<tags::I32, tags::U8>;
-    let serialized = [24, 1, 4, 3, 4];
+    let v1 = [24, 1, 4, 3, 4];
+    let v2 = [50, 1, 4, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i32, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<i32, u8>, _, _>(&value, v1, v2);
 
     let value = Value::I32Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i32, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<i32, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_u64_map() {
     type Tag = tags::Map<tags::U64, tags::U8>;
-    let serialized = [25, 1, 2, 3, 4];
+    let v1 = [25, 1, 2, 3, 4];
+    let v2 = [51, 1, 2, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<u64, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<u64, u8>, _, _>(&value, v1, v2);
 
     let value = Value::U64Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<u64, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<u64, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_i64_map() {
     type Tag = tags::Map<tags::I64, tags::U8>;
-    let serialized = [26, 1, 4, 3, 4];
+    let v1 = [26, 1, 4, 3, 4];
+    let v2 = [52, 1, 4, 3, 4, 0];
 
     let value = HashMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, HashMap<i64, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<i64, u8>, _, _>(&value, v1, v2);
 
     let value = Value::I64Map(HashMap::from_iter([(2, Value::U8(4))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
-    assert_serde::<Tag, BTreeMap<i64, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<i64, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]
 fn test_string_map() {
     type Tag = tags::Map<tags::String, tags::U16>;
-    let serialized = [27, 1, 2, b'3', b'4', 5, 6];
+    let v1 = [27, 1, 2, b'3', b'4', 5, 6];
+    let v2 = [53, 1, 2, b'3', b'4', 5, 6, 0];
 
     let value = HashMap::from_iter([("34".to_owned(), 6)]);
-    assert_serde::<Tag, HashMap<String, u16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<String, u16>, _, _>(&value, v1, v2);
 
     let value = HashMap::from_iter([("34", 6)]);
-    assert_serialize::<Tag, HashMap<&str, u16>, _>(&value, serialized);
+    assert_serialize::<Tag, HashMap<&str, u16>, _>(&value, v2);
 
     let value = Value::StringMap(HashMap::from_iter([("34".to_owned(), Value::U16(6))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([("34".to_owned(), 6)]);
-    assert_serde::<Tag, BTreeMap<String, u16>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<String, u16>, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([("34", 6)]);
-    assert_serialize::<Tag, BTreeMap<&str, u16>, _>(&value, serialized);
+    assert_serialize::<Tag, BTreeMap<&str, u16>, _>(&value, v2);
 }
 
 #[test]
 fn test_uuid_map() {
     type Tag = tags::Map<tags::Uuid, tags::U8>;
     let uuid = uuid!("81494c44-3bed-48e6-b078-1a93a1ae0e29");
-    let serialized = [
+    let v1 = [
         28, 1, 0x81, 0x49, 0x4c, 0x44, 0x3b, 0xed, 0x48, 0xe6, 0xb0, 0x78, 0x1a, 0x93, 0xa1, 0xae,
         0x0e, 0x29, 3, 0,
     ];
+    let v2 = [
+        54, 1, 0x81, 0x49, 0x4c, 0x44, 0x3b, 0xed, 0x48, 0xe6, 0xb0, 0x78, 0x1a, 0x93, 0xa1, 0xae,
+        0x0e, 0x29, 3, 0, 0,
+    ];
 
     let value = HashMap::from_iter([(uuid, 0)]);
-    assert_serde::<Tag, HashMap<Uuid, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, HashMap<Uuid, u8>, _, _>(&value, v1, v2);
 
     let value = Value::UuidMap(HashMap::from_iter([(uuid, Value::U8(0))]));
-    assert_serde::<_, Value, _, _>(&value, serialized, serialized);
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(uuid, 0)]);
-    assert_serde::<Tag, BTreeMap<Uuid, u8>, _, _>(&value, serialized, serialized);
+    assert_serde::<Tag, BTreeMap<Uuid, u8>, _, _>(&value, v1, v2);
 }
 
 #[test]

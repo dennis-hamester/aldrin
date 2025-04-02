@@ -99,20 +99,23 @@ impl Serialize<tags::Value> for &Value {
             Value::ServiceId(value) => serializer.serialize_service_id(*value),
             Value::Vec(value) => serializer.serialize_vec2_iter(value),
             Value::Bytes(value) => serializer.serialize_byte_slice2(value),
-            Value::U8Map(value) => serializer.serialize_map_iter::<tags::U8, _, _, _, _>(value),
-            Value::I8Map(value) => serializer.serialize_map_iter::<tags::I8, _, _, _, _>(value),
-            Value::U16Map(value) => serializer.serialize_map_iter::<tags::U16, _, _, _, _>(value),
-            Value::I16Map(value) => serializer.serialize_map_iter::<tags::I16, _, _, _, _>(value),
-            Value::U32Map(value) => serializer.serialize_map_iter::<tags::U32, _, _, _, _>(value),
-            Value::I32Map(value) => serializer.serialize_map_iter::<tags::I32, _, _, _, _>(value),
-            Value::U64Map(value) => serializer.serialize_map_iter::<tags::U64, _, _, _, _>(value),
-            Value::I64Map(value) => serializer.serialize_map_iter::<tags::I64, _, _, _, _>(value),
+            Value::U8Map(value) => serializer.serialize_map2_iter::<tags::U8, _, _, _, _>(value),
+            Value::I8Map(value) => serializer.serialize_map2_iter::<tags::I8, _, _, _, _>(value),
+            Value::U16Map(value) => serializer.serialize_map2_iter::<tags::U16, _, _, _, _>(value),
+            Value::I16Map(value) => serializer.serialize_map2_iter::<tags::I16, _, _, _, _>(value),
+            Value::U32Map(value) => serializer.serialize_map2_iter::<tags::U32, _, _, _, _>(value),
+            Value::I32Map(value) => serializer.serialize_map2_iter::<tags::I32, _, _, _, _>(value),
+            Value::U64Map(value) => serializer.serialize_map2_iter::<tags::U64, _, _, _, _>(value),
+            Value::I64Map(value) => serializer.serialize_map2_iter::<tags::I64, _, _, _, _>(value),
 
             Value::StringMap(value) => {
-                serializer.serialize_map_iter::<tags::String, _, _, _, _>(value)
+                serializer.serialize_map2_iter::<tags::String, _, _, _, _>(value)
             }
 
-            Value::UuidMap(value) => serializer.serialize_map_iter::<tags::Uuid, _, _, _, _>(value),
+            Value::UuidMap(value) => {
+                serializer.serialize_map2_iter::<tags::Uuid, _, _, _, _>(value)
+            }
+
             Value::U8Set(value) => serializer.serialize_set_iter::<tags::U8, _>(value),
             Value::I8Set(value) => serializer.serialize_set_iter::<tags::I8, _>(value),
             Value::U16Set(value) => serializer.serialize_set_iter::<tags::U16, _>(value),
@@ -158,44 +161,44 @@ impl Deserialize<tags::Value> for Value {
                 .map(Bytes)
                 .map(Self::Bytes),
 
-            ValueKind::U8Map => deserializer
-                .deserialize_map_extend_new::<tags::U8, _, _, _, _>()
+            ValueKind::U8Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::U8, _, _, _, _>()
                 .map(Self::U8Map),
 
-            ValueKind::I8Map => deserializer
-                .deserialize_map_extend_new::<tags::I8, _, _, _, _>()
+            ValueKind::I8Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::I8, _, _, _, _>()
                 .map(Self::I8Map),
 
-            ValueKind::U16Map => deserializer
-                .deserialize_map_extend_new::<tags::U16, _, _, _, _>()
+            ValueKind::U16Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::U16, _, _, _, _>()
                 .map(Self::U16Map),
 
-            ValueKind::I16Map => deserializer
-                .deserialize_map_extend_new::<tags::I16, _, _, _, _>()
+            ValueKind::I16Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::I16, _, _, _, _>()
                 .map(Self::I16Map),
 
-            ValueKind::U32Map => deserializer
-                .deserialize_map_extend_new::<tags::U32, _, _, _, _>()
+            ValueKind::U32Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::U32, _, _, _, _>()
                 .map(Self::U32Map),
 
-            ValueKind::I32Map => deserializer
-                .deserialize_map_extend_new::<tags::I32, _, _, _, _>()
+            ValueKind::I32Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::I32, _, _, _, _>()
                 .map(Self::I32Map),
 
-            ValueKind::U64Map => deserializer
-                .deserialize_map_extend_new::<tags::U64, _, _, _, _>()
+            ValueKind::U64Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::U64, _, _, _, _>()
                 .map(Self::U64Map),
 
-            ValueKind::I64Map => deserializer
-                .deserialize_map_extend_new::<tags::I64, _, _, _, _>()
+            ValueKind::I64Map1 => deserializer
+                .deserialize_map1_extend_new::<tags::I64, _, _, _, _>()
                 .map(Self::I64Map),
 
-            ValueKind::StringMap => deserializer
-                .deserialize_map_extend_new::<tags::String, _, _, _, _>()
+            ValueKind::StringMap1 => deserializer
+                .deserialize_map1_extend_new::<tags::String, _, _, _, _>()
                 .map(Self::StringMap),
 
-            ValueKind::UuidMap => deserializer
-                .deserialize_map_extend_new::<tags::Uuid, _, _, _, _>()
+            ValueKind::UuidMap1 => deserializer
+                .deserialize_map1_extend_new::<tags::Uuid, _, _, _, _>()
                 .map(Self::UuidMap),
 
             ValueKind::U8Set => deserializer
@@ -248,6 +251,46 @@ impl Deserialize<tags::Value> for Value {
                 .deserialize_bytes2_extend_new()
                 .map(Bytes)
                 .map(Self::Bytes),
+
+            ValueKind::U8Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::U8, _, _, _, _>()
+                .map(Self::U8Map),
+
+            ValueKind::I8Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::I8, _, _, _, _>()
+                .map(Self::I8Map),
+
+            ValueKind::U16Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::U16, _, _, _, _>()
+                .map(Self::U16Map),
+
+            ValueKind::I16Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::I16, _, _, _, _>()
+                .map(Self::I16Map),
+
+            ValueKind::U32Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::U32, _, _, _, _>()
+                .map(Self::U32Map),
+
+            ValueKind::I32Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::I32, _, _, _, _>()
+                .map(Self::I32Map),
+
+            ValueKind::U64Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::U64, _, _, _, _>()
+                .map(Self::U64Map),
+
+            ValueKind::I64Map2 => deserializer
+                .deserialize_map2_extend_new::<tags::I64, _, _, _, _>()
+                .map(Self::I64Map),
+
+            ValueKind::StringMap2 => deserializer
+                .deserialize_map2_extend_new::<tags::String, _, _, _, _>()
+                .map(Self::StringMap),
+
+            ValueKind::UuidMap2 => deserializer
+                .deserialize_map2_extend_new::<tags::Uuid, _, _, _, _>()
+                .map(Self::UuidMap),
         }
     }
 }

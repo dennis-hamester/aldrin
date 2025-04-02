@@ -14,7 +14,7 @@ use ::bytes::{BufMut, BytesMut};
 use uuid::Uuid;
 
 pub use self::bytes::{Bytes1Serializer, Bytes2Serializer};
-pub use map::MapSerializer;
+pub use map::{Map1Serializer, Map2Serializer};
 pub use set::SetSerializer;
 pub use struct_::StructSerializer;
 pub use vec::{Vec1Serializer, Vec2Serializer};
@@ -230,14 +230,14 @@ impl<'a> Serializer<'a> {
         serializer.finish()
     }
 
-    pub fn serialize_map<K: KeyTag>(
+    pub fn serialize_map1<K: KeyTag>(
         self,
         num_elems: usize,
-    ) -> Result<MapSerializer<'a, K>, SerializeError> {
-        MapSerializer::new(self.buf, num_elems, self.depth)
+    ) -> Result<Map1Serializer<'a, K>, SerializeError> {
+        Map1Serializer::new(self.buf, num_elems, self.depth)
     }
 
-    pub fn serialize_map_iter<K, L, T, U, I>(self, map: I) -> Result<(), SerializeError>
+    pub fn serialize_map1_iter<K, L, T, U, I>(self, map: I) -> Result<(), SerializeError>
     where
         K: KeyTag,
         L: SerializeKey<K>,
@@ -247,7 +247,28 @@ impl<'a> Serializer<'a> {
         I::IntoIter: ExactSizeIterator,
     {
         let map = map.into_iter();
-        let mut serializer = self.serialize_map(map.len())?;
+        let mut serializer = self.serialize_map1(map.len())?;
+
+        for (key, value) in map {
+            serializer.serialize(&key, value)?;
+        }
+
+        serializer.finish()
+    }
+
+    pub fn serialize_map2<K: KeyTag>(self) -> Result<Map2Serializer<'a, K>, SerializeError> {
+        Map2Serializer::new(self.buf, self.depth)
+    }
+
+    pub fn serialize_map2_iter<K, L, T, U, I>(self, map: I) -> Result<(), SerializeError>
+    where
+        K: KeyTag,
+        L: SerializeKey<K>,
+        T: Tag,
+        U: Serialize<T>,
+        I: IntoIterator<Item = (L, U)>,
+    {
+        let mut serializer = self.serialize_map2()?;
 
         for (key, value) in map {
             serializer.serialize(&key, value)?;
