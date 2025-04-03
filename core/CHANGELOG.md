@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ProtocolVersion` is now able to represent all possible versions, not just known versions.
   `ProtocolVersionError` has been replace by `ProtocolVersionParseError`.
 - Remove `Value::kind()`.
+- Serializer and deserializer types (such as e.g. `StructDeserializer`) are now in sub-modules
+  `serializer` and `deserializer`.
 
 ## [0.12.0] - 2025-01-26
 

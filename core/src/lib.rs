@@ -7,7 +7,6 @@ mod channel_end;
 mod convert_value;
 mod deserialize;
 mod deserialize_key;
-mod deserializer;
 mod ids;
 mod impls;
 mod key_impls;
@@ -15,7 +14,6 @@ mod protocol_version;
 mod serialize;
 mod serialize_key;
 mod serialized_value;
-mod serializer;
 mod service_info;
 mod unknown_fields;
 mod unknown_variant;
@@ -25,9 +23,11 @@ mod value_kind;
 pub mod adapters;
 #[cfg(feature = "channel")]
 pub mod channel;
+pub mod deserializer;
 #[cfg(feature = "introspection")]
 pub mod introspection;
 pub mod message;
+pub mod serializer;
 pub mod tags;
 #[cfg(feature = "tokio")]
 pub mod tokio;
@@ -43,12 +43,7 @@ pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use convert_value::ValueConversionError;
 pub use deserialize::{Deserialize, DeserializeError};
 pub use deserialize_key::DeserializeKey;
-pub use deserializer::{
-    Bytes1Deserializer, Bytes2Deserializer, BytesDeserializer, Deserializer, EnumDeserializer,
-    FieldDeserializer, Map1Deserializer, Map2Deserializer, MapDeserializer, MapElementDeserializer,
-    Set1Deserializer, Set2Deserializer, SetDeserializer, Struct1Deserializer, Struct2Deserializer,
-    StructDeserializer, Vec1Deserializer, Vec2Deserializer, VecDeserializer,
-};
+pub use deserializer::Deserializer;
 pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid, TypeId,
@@ -57,10 +52,7 @@ pub use protocol_version::ProtocolVersion;
 pub use serialize::{Serialize, SerializeError};
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
-pub use serializer::{
-    Bytes1Serializer, Bytes2Serializer, Map1Serializer, Map2Serializer, Serializer, Set1Serializer,
-    Set2Serializer, Struct1Serializer, Struct2Serializer, Vec1Serializer, Vec2Serializer,
-};
+pub use serializer::Serializer;
 pub use service_info::ServiceInfo;
 pub use unknown_fields::{AsUnknownFields, UnknownFields, UnknownFieldsRef};
 pub use unknown_variant::{AsUnknownVariant, UnknownVariant, UnknownVariantRef};
