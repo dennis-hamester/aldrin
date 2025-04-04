@@ -146,3 +146,29 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check ${{ matrix.checks }}
+
+  miri-aldrin:
+    name: Test aldrin under Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: miri, rust-src
+      - name: Run tests under miri
+        run: cargo miri test --all-features -p aldrin
+
+  miri-aldrin-core:
+    name: Test aldrin-core under Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: miri, rust-src
+      - name: Run tests under miri
+        run: cargo miri test --all-features -p aldrin-core
