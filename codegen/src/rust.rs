@@ -397,7 +397,7 @@ impl RustGenerator<'_> {
                     code!(self, "        event {ident} @ {id}");
 
                     if let Some(ty) = ev.event_type() {
-                        let ty = self.event_variant_type(svc_name, name, ty, true);
+                        let ty = self.event_args_type_name(svc_name, name, ty, true);
                         code!(self, " = {ty}");
                     }
 
@@ -498,14 +498,14 @@ impl RustGenerator<'_> {
 
                         match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
-                                &self.event_variant_type(svc_name, ev_name, ty, false),
+                                &self.event_args_type_name(svc_name, ev_name, ty, false),
                                 None,
                                 s.fields(),
                                 s.fallback(),
                             ),
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
-                                &self.event_variant_type(svc_name, ev_name, ty, false),
+                                &self.event_args_type_name(svc_name, ev_name, ty, false),
                                 None,
                                 e.variants(),
                                 e.fallback(),
@@ -742,7 +742,7 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn event_variant_type(
+    fn event_args_type_name(
         &self,
         svc_name: &str,
         ev_name: &str,
@@ -754,9 +754,9 @@ impl RustGenerator<'_> {
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
-                    format!("r#{svc_name}{}Event", service_event_variant(ev_name))
+                    format!("r#{svc_name}{}Args", service_event_variant(ev_name))
                 } else {
-                    format!("{svc_name}{}Event", service_event_variant(ev_name))
+                    format!("{svc_name}{}Args", service_event_variant(ev_name))
                 }
             }
         }
