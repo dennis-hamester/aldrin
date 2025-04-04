@@ -76,12 +76,9 @@ impl Serialize<tags::Value> for &New {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
-
-        if self.field2.is_some() {
-            serializer.serialize::<tags::Option<tags::U32>, _>(2u32, &self.field2)?;
-        }
-
+        serializer.serialize_if_some::<tags::Option<tags::U32>, _>(2u32, &self.field2)?;
         serializer.serialize_unknown_fields(&self.fallback)?;
+
         serializer.finish()
     }
 }

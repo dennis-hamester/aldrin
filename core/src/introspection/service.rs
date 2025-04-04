@@ -116,19 +116,15 @@ impl Serialize<Service> for &Service {
             IterAsMap1(&self.events),
         )?;
 
-        if self.function_fallback.is_some() {
-            serializer.serialize::<tags::Option<tags::String>, _>(
-                ServiceField::FunctionFallback,
-                &self.function_fallback,
-            )?;
-        }
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+            ServiceField::FunctionFallback,
+            &self.function_fallback,
+        )?;
 
-        if self.event_fallback.is_some() {
-            serializer.serialize::<tags::Option<tags::String>, _>(
-                ServiceField::EventFallback,
-                &self.event_fallback,
-            )?;
-        }
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+            ServiceField::EventFallback,
+            &self.event_fallback,
+        )?;
 
         serializer.finish()
     }

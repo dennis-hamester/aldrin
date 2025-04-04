@@ -74,6 +74,18 @@ impl<'a> Struct1Serializer<'a> {
         }
     }
 
+    pub fn serialize_if_some<T: Tag, U: Serialize<T>>(
+        &mut self,
+        id: impl Into<u32>,
+        value: U,
+    ) -> Result<&mut Self, SerializeError> {
+        if value.serializes_as_some() {
+            self.serialize(id, value)
+        } else {
+            Ok(self)
+        }
+    }
+
     pub fn serialize_unknown_fields(
         &mut self,
         unknown_fields: impl AsUnknownFields,
@@ -136,6 +148,18 @@ impl<'a> Struct2Serializer<'a> {
         serializer.serialize(value)?;
 
         Ok(self)
+    }
+
+    pub fn serialize_if_some<T: Tag, U: Serialize<T>>(
+        &mut self,
+        id: impl Into<u32>,
+        value: U,
+    ) -> Result<&mut Self, SerializeError> {
+        if value.serializes_as_some() {
+            self.serialize(id, value)
+        } else {
+            Ok(self)
+        }
     }
 
     pub fn serialize_unknown_fields(

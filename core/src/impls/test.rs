@@ -1329,10 +1329,7 @@ fn test_struct() {
             let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
-
-            if self.field2.is_some() {
-                serializer.serialize::<tags::Option<tags::I32>, _>(2u32, &self.field2)?;
-            }
+            serializer.serialize_if_some::<tags::Option<tags::I32>, _>(2u32, &self.field2)?;
 
             serializer.finish()
         }

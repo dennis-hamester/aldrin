@@ -14,6 +14,10 @@ impl<T: Tag, U: Serialize<T>> Serialize<tags::Option<T>> for Option<U> {
             Self::None => serializer.serialize_none(),
         }
     }
+
+    fn serializes_as_some(&self) -> bool {
+        self.is_some()
+    }
 }
 
 impl<'a, T, U> Serialize<tags::Option<T>> for &'a Option<U>
@@ -27,6 +31,10 @@ where
             Option::None => serializer.serialize_none(),
         }
     }
+
+    fn serializes_as_some(&self) -> bool {
+        self.is_some()
+    }
 }
 
 impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Option<T>> for Option<U> {
@@ -39,11 +47,19 @@ impl<T: Tag> Serialize<tags::Option<T>> for () {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
+
+    fn serializes_as_some(&self) -> bool {
+        false
+    }
 }
 
 impl<T: Tag> Serialize<tags::Option<T>> for &() {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize_none()
+    }
+
+    fn serializes_as_some(&self) -> bool {
+        false
     }
 }
 

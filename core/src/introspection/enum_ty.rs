@@ -76,10 +76,10 @@ impl Serialize<Enum> for &Enum {
             IterAsMap1(&self.variants),
         )?;
 
-        if self.fallback.is_some() {
-            serializer
-                .serialize::<tags::Option<tags::String>, _>(EnumField::Fallback, &self.fallback)?;
-        }
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+            EnumField::Fallback,
+            &self.fallback,
+        )?;
 
         serializer.finish()
     }

@@ -4,6 +4,10 @@ use thiserror::Error;
 
 pub trait Serialize<T: Tag>: Sized {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError>;
+
+    fn serializes_as_some(&self) -> bool {
+        true
+    }
 }
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]

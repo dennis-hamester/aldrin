@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
-use crate::tags::{PrimaryTag, Tag};
+use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
     SerializedValueSlice, Serializer,
@@ -73,7 +73,12 @@ impl Serialize<Self> for ConnectReplyData {
 impl Serialize<ConnectReplyData> for &ConnectReplyData {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
-        serializer.serialize(ConnectReplyDataField::User, &self.user)?;
+
+        serializer.serialize_if_some::<tags::Option<tags::Value>, _>(
+            ConnectReplyDataField::User,
+            &self.user,
+        )?;
+
         serializer.finish()
     }
 }
@@ -205,7 +210,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let serialized = [16, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 0, 1];
+        let serialized = [13, 0, 0, 0, 47, 2, 0, 0, 0, 65, 0, 0, 1];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {
@@ -222,7 +227,7 @@ mod test {
 
     #[test]
     fn rejected() {
-        let serialized = [15, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 1];
+        let serialized = [12, 0, 0, 0, 47, 2, 0, 0, 0, 65, 0, 1];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {
@@ -239,7 +244,7 @@ mod test {
 
     #[test]
     fn incompatible_version() {
-        let serialized = [15, 0, 0, 0, 47, 5, 0, 0, 0, 65, 1, 0, 0, 0, 2];
+        let serialized = [12, 0, 0, 0, 47, 2, 0, 0, 0, 65, 0, 2];
         let value = ConnectReplyData::new();
 
         let msg = ConnectReply2 {

@@ -73,9 +73,11 @@ impl Serialize<Self> for ServiceInfo {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32, _>(ServiceInfoField::Version, self.version)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(ServiceInfoField::TypeId, self.type_id)?;
 
-        serializer.serialize::<tags::Option<tags::Bool>, _>(
+        serializer
+            .serialize_if_some::<tags::Option<TypeId>, _>(ServiceInfoField::TypeId, self.type_id)?;
+
+        serializer.serialize_if_some::<tags::Option<tags::Bool>, _>(
             ServiceInfoField::SubscribeAll,
             self.subscribe_all,
         )?;

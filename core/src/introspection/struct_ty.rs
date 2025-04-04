@@ -76,12 +76,10 @@ impl Serialize<Struct> for &Struct {
             IterAsMap1(&self.fields),
         )?;
 
-        if self.fallback.is_some() {
-            serializer.serialize::<tags::Option<tags::String>, _>(
-                StructField::Fallback,
-                &self.fallback,
-            )?;
-        }
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+            StructField::Fallback,
+            &self.fallback,
+        )?;
 
         serializer.finish()
     }

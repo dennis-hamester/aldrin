@@ -3,7 +3,7 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
-use crate::tags::{PrimaryTag, Tag};
+use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
     SerializedValueSlice, Serializer,
@@ -73,7 +73,12 @@ impl Serialize<Self> for ConnectData {
 impl Serialize<ConnectData> for &ConnectData {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
-        serializer.serialize(ConnectDataField::User, &self.user)?;
+
+        serializer.serialize_if_some::<tags::Option<tags::Value>, _>(
+            ConnectDataField::User,
+            &self.user,
+        )?;
+
         serializer.finish()
     }
 }
@@ -157,7 +162,7 @@ mod test {
 
     #[test]
     fn connect2() {
-        let serialized = [16, 0, 0, 0, 46, 5, 0, 0, 0, 65, 1, 0, 0, 0, 1, 2];
+        let serialized = [13, 0, 0, 0, 46, 2, 0, 0, 0, 65, 0, 1, 2];
         let value = ConnectData::new();
 
         let msg = Connect2 {
