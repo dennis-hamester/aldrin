@@ -2,8 +2,8 @@ use crate::tags::{self, Tag};
 use crate::{
     BusListenerCookie, ByteSlice, Bytes, ChannelCookie, Deserialize, DeserializeError,
     Deserializer, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, Serialize, SerializeError,
-    SerializedValue, SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, TypeId, Value,
-    ValueConversionError,
+    SerializedValue, SerializedValueSlice, Serializer, ServiceCookie, ServiceId, ServiceUuid,
+    TypeId, UnknownFields, UnknownVariant, Value, ValueConversionError,
 };
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
@@ -1306,4 +1306,254 @@ fn test_convert_too_deep() {
             .unwrap_err(),
         ValueConversionError::Deserialize(DeserializeError::TooDeeplyNested),
     );
+}
+
+#[test]
+fn test_struct() {
+    type Tag = tags::Value;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct TestStruct {
+        field1: u32,
+        field2: Option<i32>,
+    }
+
+    impl Serialize<Tag> for TestStruct {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            serializer.serialize::<Tag, _>(&self)
+        }
+    }
+
+    impl Serialize<Tag> for &TestStruct {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer = serializer.serialize_struct2()?;
+
+            serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
+
+            if self.field2.is_some() {
+                serializer.serialize::<tags::Option<tags::I32>, _>(2u32, &self.field2)?;
+            }
+
+            serializer.finish()
+        }
+    }
+
+    impl Deserialize<Tag> for TestStruct {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let mut deserializer = deserializer.deserialize_struct()?;
+
+            let mut field1 = None;
+            let mut field2 = None;
+
+            while let Some(deserializer) = deserializer.deserialize()? {
+                match deserializer.id() {
+                    1 => field1 = deserializer.deserialize::<tags::U32, _>().map(Some)?,
+                    2 => field2 = deserializer.deserialize::<tags::Option<tags::I32>, _>()?,
+                    _ => deserializer.skip()?,
+                }
+            }
+
+            deserializer.finish(Self {
+                field1: field1.ok_or(DeserializeError::InvalidSerialization)?,
+                field2,
+            })
+        }
+    }
+
+    let v1 = [39, 2, 1, 7, 2, 2, 1, 8, 6];
+    let v2 = [65, 1, 1, 7, 2, 1, 2, 1, 8, 6, 0];
+
+    let value = TestStruct {
+        field1: 2,
+        field2: Some(3),
+    };
+
+    assert_serde::<Tag, TestStruct, _, _>(&value, v1, v2);
+    assert_serialize::<Tag, &TestStruct, _>(&&value, v2);
+
+    let v1 = [39, 1, 1, 7, 1];
+    let v2 = [65, 1, 1, 7, 1, 0];
+
+    let value = TestStruct {
+        field1: 1,
+        field2: None,
+    };
+
+    assert_serde::<Tag, TestStruct, _, _>(&value, v1, v2);
+    assert_serialize::<Tag, &TestStruct, _>(&&value, v2);
+}
+
+#[test]
+fn test_struct_fallback() {
+    type Tag = tags::Value;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct TestStruct {
+        field1: u32,
+        fallback: UnknownFields,
+    }
+
+    impl Serialize<Tag> for TestStruct {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            serializer.serialize::<Tag, _>(&self)
+        }
+    }
+
+    impl Serialize<Tag> for &TestStruct {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            let mut serializer =
+                serializer.serialize_struct2_with_unknown_fields(&self.fallback)?;
+
+            serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
+
+            serializer.finish()
+        }
+    }
+
+    impl Deserialize<Tag> for TestStruct {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let mut deserializer = deserializer.deserialize_struct()?;
+
+            let mut field1 = None;
+
+            while let Some(deserializer) = deserializer.deserialize()? {
+                match deserializer.id() {
+                    1 => field1 = deserializer.deserialize::<tags::U32, _>().map(Some)?,
+                    _ => deserializer.add_to_unknown_fields()?,
+                }
+            }
+
+            deserializer.finish_with(|fallback| {
+                Ok(Self {
+                    field1: field1.ok_or(DeserializeError::InvalidSerialization)?,
+                    fallback,
+                })
+            })
+        }
+    }
+
+    let v1 = [39, 1, 1, 7, 1];
+    let v2 = [65, 1, 1, 7, 1, 0];
+
+    let value = TestStruct {
+        field1: 1,
+        fallback: UnknownFields::new(),
+    };
+
+    assert_serde::<Tag, TestStruct, _, _>(&value, v1, v2);
+    assert_serialize::<Tag, &TestStruct, _>(&&value, v2);
+
+    let v1 = [39, 2, 2, 1, 8, 4, 1, 7, 1];
+    let v2 = [65, 1, 2, 1, 8, 4, 1, 1, 7, 1, 0];
+
+    let mut fallback = UnknownFields::new();
+    fallback.insert(2, SerializedValue::serialize(Some(2i32)).unwrap());
+
+    let value = TestStruct {
+        field1: 1,
+        fallback,
+    };
+
+    assert_serde::<Tag, TestStruct, _, _>(&value, v1, v2);
+    assert_serialize::<Tag, &TestStruct, _>(&&value, v2);
+}
+
+#[test]
+fn test_enum() {
+    type Tag = tags::Value;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    enum TestEnum {
+        Var1,
+        Var2(u8),
+    }
+
+    impl Serialize<Tag> for TestEnum {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            serializer.serialize::<Tag, _>(&self)
+        }
+    }
+
+    impl Serialize<Tag> for &TestEnum {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            match self {
+                TestEnum::Var1 => serializer.serialize_unit_enum(1u32),
+                TestEnum::Var2(value) => serializer.serialize_enum::<tags::U8, _>(2u32, value),
+            }
+        }
+    }
+
+    impl Deserialize<Tag> for TestEnum {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let deserializer = deserializer.deserialize_enum()?;
+
+            match deserializer.variant() {
+                1 => deserializer.deserialize_unit().map(|()| Self::Var1),
+                2 => deserializer.deserialize::<tags::U8, _>().map(Self::Var2),
+                _ => Err(DeserializeError::InvalidSerialization),
+            }
+        }
+    }
+
+    let serialized = [40, 1, 0];
+    let value = TestEnum::Var1;
+    assert_serde::<Tag, TestEnum, _, _>(&value, serialized, serialized);
+    assert_serialize::<Tag, &TestEnum, _>(&&value, serialized);
+
+    let serialized = [40, 2, 3, 4];
+    let value = TestEnum::Var2(4);
+    assert_serde::<Tag, TestEnum, _, _>(&value, serialized, serialized);
+    assert_serialize::<Tag, &TestEnum, _>(&&value, serialized);
+}
+
+#[test]
+fn test_enum_fallback() {
+    type Tag = tags::Value;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    enum TestEnum {
+        Var1,
+        Fallback(UnknownVariant),
+    }
+
+    impl Serialize<Tag> for TestEnum {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            serializer.serialize::<Tag, _>(&self)
+        }
+    }
+
+    impl Serialize<Tag> for &TestEnum {
+        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            match self {
+                TestEnum::Var1 => serializer.serialize_unit_enum(1u32),
+                TestEnum::Fallback(fallback) => serializer.serialize_unknown_variant(fallback),
+            }
+        }
+    }
+
+    impl Deserialize<Tag> for TestEnum {
+        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            let deserializer = deserializer.deserialize_enum()?;
+
+            match deserializer.variant() {
+                1 => deserializer.deserialize_unit().map(|()| Self::Var1),
+                _ => deserializer.into_unknown_variant().map(Self::Fallback),
+            }
+        }
+    }
+
+    let serialized = [40, 1, 0];
+    let value = TestEnum::Var1;
+    assert_serde::<Tag, TestEnum, _, _>(&value, serialized, serialized);
+    assert_serialize::<Tag, &TestEnum, _>(&&value, serialized);
+
+    let serialized = [40, 2, 3, 4];
+
+    let value = TestEnum::Fallback(UnknownVariant::new(
+        2,
+        SerializedValue::serialize(4u8).unwrap(),
+    ));
+
+    assert_serde::<Tag, TestEnum, _, _>(&value, serialized, serialized);
+    assert_serialize::<Tag, &TestEnum, _>(&&value, serialized);
 }
