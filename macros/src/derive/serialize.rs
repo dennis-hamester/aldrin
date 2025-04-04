@@ -191,44 +191,62 @@ impl StructData<'_> {
 impl FieldData<'_> {
     fn gen_serialize_for_self(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
-            None
-        } else {
-            let ty = self.ty();
-            let id = self.id();
-            let name = self.name();
-
-            Some(quote! {
-                serializer.serialize::<#krate::tags::As<#ty>, _>(#id, self.#name)?;
-            })
+            return None;
         }
+
+        let ty = self.ty();
+        let id = self.id();
+        let name = self.name();
+
+        let serialize = if self.is_optional() {
+            quote! { serialize_if_some }
+        } else {
+            quote! { serialize }
+        };
+
+        Some(quote! {
+            serializer.#serialize::<#krate::tags::As<#ty>, _>(#id, self.#name)?;
+        })
     }
 
     fn gen_serialize_for_ref(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
-            None
-        } else {
-            let ty_tag = self.ty_tag();
-            let id = self.id();
-            let name = self.name();
-
-            Some(quote! {
-                serializer.serialize::<#krate::tags::As<#ty_tag>, _>(#id, &self.#name)?;
-            })
+            return None;
         }
+
+        let ty_tag = self.ty_tag();
+        let id = self.id();
+        let name = self.name();
+
+        let serialize = if self.is_optional() {
+            quote! { serialize_if_some }
+        } else {
+            quote! { serialize }
+        };
+
+        Some(quote! {
+            serializer.#serialize::<#krate::tags::As<#ty_tag>, _>(#id, &self.#name)?;
+        })
     }
 
     fn gen_serialize_for_ref_type(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
-            None
-        } else {
-            let ty_tag = self.ty_tag();
-            let id = self.id();
-            let name = self.name();
-
-            Some(quote! {
-                serializer.serialize::<#krate::tags::As<#ty_tag>, _>(#id, self.#name)?;
-            })
+            return None;
         }
+
+        let ty_tag = self.ty_tag();
+        let id = self.id();
+        let name = self.name();
+
+        let serialize = if self.is_optional() {
+            quote! { serialize_if_some }
+        } else {
+            quote! { serialize }
+        };
+
+        Some(quote! {
+            serializer.#serialize::<#krate::tags::As<#ty_tag>, _>(#id, self.#name)?;
+        })
     }
 
     fn serialize_where_bound_for_ref_type(&self, krate: &Path) -> TokenStream {
