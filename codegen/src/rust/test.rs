@@ -352,11 +352,8 @@ async fn before_derive_compat_enum() {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
-            match deserializer.variant() {
-                1 => deserializer
-                    .deserialize::<tags::Unit, _>()
-                    .map(|()| Self::Var1),
-
+            match deserializer.id() {
+                1 => deserializer.deserialize_unit().map(|()| Self::Var1),
                 2 => deserializer.deserialize::<tags::I32, _>().map(Self::Var2),
 
                 3 => deserializer

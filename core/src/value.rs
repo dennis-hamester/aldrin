@@ -405,13 +405,13 @@ impl Deserialize<Self> for Struct {
     serde(rename_all = "kebab-case")
 )]
 pub struct Enum {
-    pub variant: u32,
+    pub id: u32,
     pub value: Value,
 }
 
 impl Enum {
-    pub fn new(variant: u32, value: Value) -> Self {
-        Self { variant, value }
+    pub fn new(id: u32, value: Value) -> Self {
+        Self { id, value }
     }
 }
 
@@ -431,15 +431,15 @@ impl Deserialize<Self> for Enum {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        let variant = deserializer.variant();
+        let id = deserializer.id();
         let value = deserializer.deserialize()?;
 
-        Ok(Self::new(variant, value))
+        Ok(Self::new(id, value))
     }
 }
 
 impl Serialize<Enum> for &Enum {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize_enum(self.variant, &self.value)
+        serializer.serialize_enum(self.id, &self.value)
     }
 }

@@ -170,7 +170,7 @@ impl EnumData<'_> {
                 ) -> ::std::result::Result<Self, #krate::DeserializeError> {
                     let deserializer = deserializer.deserialize_enum()?;
 
-                    match deserializer.variant() {
+                    match deserializer.id() {
                         #(#variants)*
                         _ => {
                             ::std::result::Result::Err(

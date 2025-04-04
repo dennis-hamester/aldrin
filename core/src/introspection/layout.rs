@@ -126,7 +126,7 @@ impl Deserialize<Self> for Layout {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        match deserializer.try_variant()? {
+        match deserializer.try_id()? {
             LayoutVariant::BuiltIn => deserializer
                 .deserialize::<BuiltInType, _>()
                 .map(Self::BuiltIn),

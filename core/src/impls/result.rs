@@ -59,7 +59,7 @@ where
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        match deserializer.try_variant()? {
+        match deserializer.try_id()? {
             ResultVariant::Ok => deserializer.deserialize().map(Ok),
             ResultVariant::Err => deserializer.deserialize().map(Err),
         }

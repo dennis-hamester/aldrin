@@ -70,7 +70,7 @@ impl Serialize<KeyType> for &KeyType {
 impl Deserialize<Self> for KeyType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
-        let variant = deserializer.try_variant()?;
+        let variant = deserializer.try_id()?;
         deserializer.deserialize_unit().map(|()| variant)
     }
 }

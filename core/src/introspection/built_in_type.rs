@@ -174,7 +174,7 @@ impl Deserialize<Self> for BuiltInType {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
-        match deserializer.try_variant()? {
+        match deserializer.try_id()? {
             BuiltInTypeVariant::Bool => deserializer.deserialize_unit().map(|()| Self::Bool),
             BuiltInTypeVariant::U8 => deserializer.deserialize_unit().map(|()| Self::U8),
             BuiltInTypeVariant::I8 => deserializer.deserialize_unit().map(|()| Self::I8),

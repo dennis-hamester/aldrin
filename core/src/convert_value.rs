@@ -482,8 +482,8 @@ impl<'a, 'b> Convert<'a, 'b> {
     fn convert_enum(mut self) -> Result<(), ValueConversionError> {
         self.dst.put_discriminant_u8(ValueKind::Enum);
 
-        let variant = self.src.try_get_varint_u32_le()?;
-        self.dst.put_varint_u32_le(variant);
+        let id = self.src.try_get_varint_u32_le()?;
+        self.dst.put_varint_u32_le(id);
 
         self.convert_next()
     }

@@ -352,17 +352,17 @@ impl<'a> Serializer<'a> {
 
     pub fn serialize_enum<T: Tag, U: Serialize<T>>(
         mut self,
-        variant: impl Into<u32>,
+        id: impl Into<u32>,
         value: U,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Enum);
-        self.buf.put_varint_u32_le(variant.into());
+        self.buf.put_varint_u32_le(id.into());
         self.serialize(value)
     }
 
-    pub fn serialize_unit_enum(self, variant: impl Into<u32>) -> Result<(), SerializeError> {
-        self.serialize_enum::<tags::Unit, _>(variant, ())
+    pub fn serialize_unit_enum(self, id: impl Into<u32>) -> Result<(), SerializeError> {
+        self.serialize_enum::<tags::Unit, _>(id, ())
     }
 
     pub fn serialize_unknown_variant(

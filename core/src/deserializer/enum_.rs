@@ -6,7 +6,7 @@ use crate::{Deserialize, DeserializeError, UnknownVariant, ValueKind};
 #[derive(Debug)]
 pub struct EnumDeserializer<'a, 'b> {
     buf: &'a mut &'b [u8],
-    variant: u32,
+    id: u32,
     depth: u8,
 }
 
@@ -20,21 +20,17 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
         buf: &'a mut &'b [u8],
         depth: u8,
     ) -> Result<Self, DeserializeError> {
-        let variant = buf.try_get_varint_u32_le()?;
+        let id = buf.try_get_varint_u32_le()?;
 
-        Ok(Self {
-            buf,
-            variant,
-            depth,
-        })
+        Ok(Self { buf, id, depth })
     }
 
-    pub fn variant(&self) -> u32 {
-        self.variant
+    pub fn id(&self) -> u32 {
+        self.id
     }
 
-    pub fn try_variant<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
-        self.variant
+    pub fn try_id<T: TryFrom<u32>>(&self) -> Result<T, DeserializeError> {
+        self.id
             .try_into()
             .map_err(|_| DeserializeError::InvalidSerialization)
     }
@@ -48,7 +44,7 @@ impl<'a, 'b> EnumDeserializer<'a, 'b> {
     }
 
     pub fn into_unknown_variant(self) -> Result<UnknownVariant, DeserializeError> {
-        let id = self.variant;
+        let id = self.id;
         let value = self.deserialize()?;
         Ok(UnknownVariant::new(id, value))
     }

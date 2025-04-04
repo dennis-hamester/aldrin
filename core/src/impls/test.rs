@@ -1484,7 +1484,7 @@ fn test_enum() {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
-            match deserializer.variant() {
+            match deserializer.id() {
                 1 => deserializer.deserialize_unit().map(|()| Self::Var1),
                 2 => deserializer.deserialize::<tags::U8, _>().map(Self::Var2),
                 _ => Err(DeserializeError::InvalidSerialization),
@@ -1532,7 +1532,7 @@ fn test_enum_fallback() {
         fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
-            match deserializer.variant() {
+            match deserializer.id() {
                 1 => deserializer.deserialize_unit().map(|()| Self::Var1),
                 _ => deserializer.into_unknown_variant().map(Self::Fallback),
             }
