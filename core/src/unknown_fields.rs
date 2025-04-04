@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use crate::{
     tags, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Struct, ValueKind,
 };

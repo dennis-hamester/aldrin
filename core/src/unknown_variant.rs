@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Enum, Serialize, SerializedValue, SerializedValueSlice,
