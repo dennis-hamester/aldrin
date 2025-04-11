@@ -3,7 +3,7 @@ use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeErr
 use std::convert::Infallible;
 
 impl PrimaryTag for Infallible {
-    type Tag = tags::Value;
+    type Tag = tags::Infallible;
 }
 
 impl<T: Tag> Serialize<T> for Infallible {

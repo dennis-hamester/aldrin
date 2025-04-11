@@ -79,3 +79,6 @@ pub struct Sender<T>(PhantomData<T>);
 
 #[derive(Debug)]
 pub struct Receiver<T>(PhantomData<T>);
+
+#[derive(Debug)]
+pub struct Infallible(());
