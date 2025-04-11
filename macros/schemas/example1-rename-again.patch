@@ -1,17 +1,18 @@
 --- example1-orig.rs
 +++ example1-patched.rs
-@@ -1,6 +1,6 @@
+@@ -1,7 +1,7 @@
  #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default, ::aldrin::Tag, ::aldrin::PrimaryTag, ::aldrin::RefType, ::aldrin::Serialize, ::aldrin::Deserialize)]
  #[aldrin(crate = "::aldrin::core", schema = "example1")]
+ #[automatically_derived]
 -pub struct r#MyStructRenamed {
 +pub struct r#MyStructRenamedAgain {
      #[aldrin(id = 1, optional)]
      pub r#field1: ::std::option::Option<::std::primitive::u32>,
  
-@@ -8,7 +8,7 @@
-     pub r#field2: ::std::option::Option<::std::primitive::u32>,
+@@ -10,7 +10,7 @@
  }
  
+ #[automatically_derived]
 -impl r#MyStructRenamed {
 +impl r#MyStructRenamedAgain {
      pub fn new() -> Self {

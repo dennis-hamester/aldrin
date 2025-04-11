@@ -121,6 +121,7 @@ impl RustGenerator<'_> {
                 codeln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
+            codeln!(self, "#[automatically_derived]");
             codeln!(self, "pub fn register_introspection(client: &{krate}::Handle) -> {RESULT}<(), {krate}::Error> {{");
 
             for def in self.schema.definitions() {
@@ -205,6 +206,7 @@ impl RustGenerator<'_> {
         }
 
         codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
+        codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
         for field in fields {
@@ -239,6 +241,7 @@ impl RustGenerator<'_> {
         codeln!(self);
 
         if !has_required_fields {
+            codeln!(self, "#[automatically_derived]");
             codeln!(self, "impl {ident} {{");
             codeln!(self, "    pub fn new() -> Self {{");
             codeln!(self, "        <Self as {DEFAULT}>::default()");
@@ -280,6 +283,7 @@ impl RustGenerator<'_> {
         }
 
         codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\")]");
+        codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
         for var in vars {
