@@ -1,7 +1,7 @@
 use super::{FnBody, Options};
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
@@ -10,6 +10,8 @@ use syn::{braced, Ident, LitInt, Result, Token, Type};
 
 pub(super) struct FnItem {
     ident: Ident,
+    ident_val: Ident,
+    ident_ref: Ident,
     variant: Ident,
     id: LitInt,
     body: FnBody,
@@ -23,6 +25,8 @@ impl FnItem {
     pub fn gen_calls(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
+        let ident_val = &self.ident_val;
+        let ident_ref = &self.ident_ref;
         let id = &self.id;
 
         let ok = match self.body.ok() {
@@ -37,16 +41,24 @@ impl FnItem {
 
         if let Some(args) = self.body.args() {
             quote! {
-                pub fn #ident(
-                    &self,
-                    args: impl #krate::core::Serialize<#krate::core::tags::As<#args>>,
-                ) -> #krate::PendingReply<#ok, #err> {
+                pub fn #ident<T>(&self, args: T) -> #krate::PendingReply<#ok, #err>
+                where
+                    T: #krate::core::Serialize<#krate::core::tags::As<#args>>,
+                {
                     self.inner
                         .call_as::<#krate::core::tags::As<#args>, _>(
                             #id,
                             args,
                             ::std::option::Option::Some(Self::VERSION),
                         ).cast()
+                }
+
+                pub fn #ident_val(&self, args: #args) -> #krate::PendingReply<#ok, #err> {
+                    self.#ident(args)
+                }
+
+                pub fn #ident_ref(&self, args: &#args) -> #krate::PendingReply<#ok, #err> {
+                    self.#ident(args)
                 }
             }
         } else {
@@ -183,6 +195,9 @@ impl Parse for FnItem {
             return Err(lookahead.error());
         };
 
+        let ident_val = format_ident!("r#{}_val", ident);
+        let ident_ref = format_ident!("r#{}_ref", ident);
+
         let variant = Ident::new_raw(
             &ident.unraw().to_string().to_upper_camel_case(),
             ident.span(),
@@ -190,6 +205,8 @@ impl Parse for FnItem {
 
         Ok(Self {
             ident,
+            ident_val,
+            ident_ref,
             variant,
             id,
             body,
