@@ -164,6 +164,46 @@ impl<T: PrimaryTag> Sender<T> {
     }
 }
 
+impl<T: PrimaryTag + Serialize<T::Tag>> Sender<T> {
+    /// Starts sending an item on the channel.
+    ///
+    /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
+    /// prior to sending an item.
+    pub fn start_send_item_val(&mut self, item: T) -> Result<(), Error> {
+        self.start_send_item(item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
+    /// [`start_send_item_val`](Self::start_send_item_val).
+    pub async fn send_item_val(&mut self, item: T) -> Result<(), Error> {
+        self.send_item(item).await
+    }
+}
+
+impl<'a, T> Sender<T>
+where
+    T: PrimaryTag + 'a,
+    &'a T: Serialize<T::Tag>,
+{
+    /// Starts sending an item on the channel.
+    ///
+    /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
+    /// prior to sending an item.
+    pub fn start_send_item_ref(&mut self, item: &'a T) -> Result<(), Error> {
+        self.start_send_item(item)
+    }
+
+    /// Sends an item on the channel.
+    ///
+    /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
+    /// [`start_send_item_ref`](Self::start_send_item_ref).
+    pub async fn send_item_ref(&mut self, item: &'a T) -> Result<(), Error> {
+        self.send_item(item).await
+    }
+}
+
 impl<T> fmt::Debug for Sender<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Sender")
