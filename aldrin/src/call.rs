@@ -106,6 +106,24 @@ impl<Args, T: PrimaryTag, E> Call<Args, T, E> {
     }
 }
 
+impl<Args, T: PrimaryTag + Serialize<T::Tag>, E> Call<Args, T, E> {
+    /// Signals that the call was successful.
+    pub fn ok_val(self, value: T) -> Result<(), Error> {
+        self.promise.ok_val(value)
+    }
+}
+
+impl<'a, Args, T, E> Call<Args, T, E>
+where
+    T: PrimaryTag + 'a,
+    &'a T: Serialize<T::Tag>,
+{
+    /// Signals that the call was successful.
+    pub fn ok_ref(self, value: &'a T) -> Result<(), Error> {
+        self.promise.ok_ref(value)
+    }
+}
+
 impl<Args, T: PrimaryTag<Tag = tags::Unit>, E> Call<Args, T, E> {
     /// Signals that the call was successful without returning a value.
     pub fn done(self) -> Result<(), Error> {
@@ -120,6 +138,24 @@ impl<Args, T, E: PrimaryTag> Call<Args, T, E> {
     }
 }
 
+impl<Args, T, E: PrimaryTag + Serialize<E::Tag>> Call<Args, T, E> {
+    /// Signals that the call failed.
+    pub fn err_val(self, value: E) -> Result<(), Error> {
+        self.promise.err_val(value)
+    }
+}
+
+impl<'a, Args, T, E> Call<Args, T, E>
+where
+    E: PrimaryTag + 'a,
+    &'a E: Serialize<E::Tag>,
+{
+    /// Signals that the call failed.
+    pub fn err_ref(self, value: &'a E) -> Result<(), Error> {
+        self.promise.err_ref(value)
+    }
+}
+
 impl<Args, T: PrimaryTag, E: PrimaryTag> Call<Args, T, E> {
     /// Sets the call's reply.
     pub fn set<U, F>(self, res: Result<U, F>) -> Result<(), Error>
@@ -128,6 +164,30 @@ impl<Args, T: PrimaryTag, E: PrimaryTag> Call<Args, T, E> {
         F: Serialize<E::Tag>,
     {
         self.promise.set(res)
+    }
+}
+
+impl<Args, T, E> Call<Args, T, E>
+where
+    T: PrimaryTag + Serialize<T::Tag>,
+    E: PrimaryTag + Serialize<E::Tag>,
+{
+    /// Sets the call's reply.
+    pub fn set_val(self, res: Result<T, E>) -> Result<(), Error> {
+        self.promise.set_val(res)
+    }
+}
+
+impl<'a, Args, T, E> Call<Args, T, E>
+where
+    T: PrimaryTag + 'a,
+    &'a T: Serialize<T::Tag>,
+    E: PrimaryTag + 'a,
+    &'a E: Serialize<E::Tag>,
+{
+    /// Sets the call's reply.
+    pub fn set_ref(self, res: Result<&'a T, &'a E>) -> Result<(), Error> {
+        self.promise.set_ref(res)
     }
 }
 
