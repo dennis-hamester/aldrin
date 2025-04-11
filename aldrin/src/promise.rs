@@ -90,6 +90,24 @@ impl<T: PrimaryTag, E> Promise<T, E> {
     }
 }
 
+impl<T: PrimaryTag + Serialize<T::Tag>, E> Promise<T, E> {
+    /// Signals that the call was successful.
+    pub fn ok_val(self, value: T) -> Result<(), Error> {
+        self.ok(value)
+    }
+}
+
+impl<'a, T, E> Promise<T, E>
+where
+    T: PrimaryTag + 'a,
+    &'a T: Serialize<T::Tag>,
+{
+    /// Signals that the call was successful.
+    pub fn ok_ref(self, value: &'a T) -> Result<(), Error> {
+        self.ok(value)
+    }
+}
+
 impl<T: PrimaryTag<Tag = tags::Unit>, E> Promise<T, E> {
     /// Signals that the call was successful without returning a value.
     pub fn done(self) -> Result<(), Error> {
@@ -104,6 +122,24 @@ impl<T, E: PrimaryTag> Promise<T, E> {
     }
 }
 
+impl<T, E: PrimaryTag + Serialize<E::Tag>> Promise<T, E> {
+    /// Signals that the call failed.
+    pub fn err_val(self, value: E) -> Result<(), Error> {
+        self.err(value)
+    }
+}
+
+impl<'a, T, E> Promise<T, E>
+where
+    E: PrimaryTag + 'a,
+    &'a E: Serialize<E::Tag>,
+{
+    /// Signals that the call failed.
+    pub fn err_ref(self, value: &'a E) -> Result<(), Error> {
+        self.err(value)
+    }
+}
+
 impl<T: PrimaryTag, E: PrimaryTag> Promise<T, E> {
     /// Sets the call's reply.
     pub fn set<U, F>(self, res: Result<U, F>) -> Result<(), Error>
@@ -112,6 +148,30 @@ impl<T: PrimaryTag, E: PrimaryTag> Promise<T, E> {
         F: Serialize<E::Tag>,
     {
         self.inner.set_as(res)
+    }
+}
+
+impl<T, E> Promise<T, E>
+where
+    T: PrimaryTag + Serialize<T::Tag>,
+    E: PrimaryTag + Serialize<E::Tag>,
+{
+    /// Sets the call's reply.
+    pub fn set_val(self, res: Result<T, E>) -> Result<(), Error> {
+        self.set(res)
+    }
+}
+
+impl<'a, T, E> Promise<T, E>
+where
+    T: PrimaryTag + 'a,
+    &'a T: Serialize<T::Tag>,
+    E: PrimaryTag + 'a,
+    &'a E: Serialize<E::Tag>,
+{
+    /// Sets the call's reply.
+    pub fn set_ref(self, res: Result<&'a T, &'a E>) -> Result<(), Error> {
+        self.set(res)
     }
 }
 
