@@ -1,7 +1,7 @@
 use super::{kw, Options};
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
@@ -9,6 +9,8 @@ use syn::{Ident, LitInt, Result, Token, Type};
 
 pub(super) struct EvItem {
     ident: Ident,
+    ident_val: Ident,
+    ident_ref: Ident,
     subscribe: Ident,
     unsubscribe: Ident,
     variant: Ident,
@@ -90,15 +92,25 @@ impl EvItem {
     pub fn gen_emitters(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
+        let ident_val = &self.ident_val;
+        let ident_ref = &self.ident_ref;
         let id = &self.id;
 
         if let Some(ref ty) = self.ty {
             quote! {
-                pub fn #ident(
-                    &self,
-                    args: impl #krate::core::Serialize<#krate::core::tags::As<#ty>>,
-                ) -> ::std::result::Result<(), #krate::Error> {
+                pub fn #ident<T>(&self, args: T) -> ::std::result::Result<(), #krate::Error>
+                where
+                    T: #krate::core::Serialize<#krate::core::tags::As<#ty>>,
+                {
                     self.inner.emit_as::<#krate::core::tags::As<#ty>, _>(#id, args)
+                }
+
+                pub fn #ident_val(&self, args: #ty) -> ::std::result::Result<(), #krate::Error> {
+                    self.#ident(args)
+                }
+
+                pub fn #ident_ref(&self, args: &#ty) -> ::std::result::Result<(), #krate::Error> {
+                    self.#ident(args)
                 }
             }
         } else {
@@ -152,8 +164,11 @@ impl Parse for EvItem {
 
         input.parse::<Token![;]>()?;
 
-        let subscribe = Ident::new_raw(&format!("subscribe_{}", ident.unraw()), ident.span());
-        let unsubscribe = Ident::new_raw(&format!("unsubscribe_{}", ident.unraw()), ident.span());
+        let ident_val = format_ident!("r#{}_val", ident);
+        let ident_ref = format_ident!("r#{}_ref", ident);
+
+        let subscribe = format_ident!("r#subscribe_{}", ident);
+        let unsubscribe = format_ident!("r#unsubscribe_{}", ident);
 
         let variant = Ident::new_raw(
             &ident.unraw().to_string().to_upper_camel_case(),
@@ -162,6 +177,8 @@ impl Parse for EvItem {
 
         Ok(Self {
             ident,
+            ident_val,
+            ident_ref,
             subscribe,
             unsubscribe,
             variant,
