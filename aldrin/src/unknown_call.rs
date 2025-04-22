@@ -3,6 +3,7 @@ use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use std::error::Error as StdError;
 use std::fmt;
+use std::time::Instant;
 
 /// An unknown pending call.
 #[derive(Debug)]
@@ -28,6 +29,16 @@ impl UnknownCall {
     /// Returns the call's function id.
     pub fn id(&self) -> u32 {
         self.inner.as_ref().unwrap().id()
+    }
+
+    /// Returns the version number used to make the call, if any.
+    pub fn version(&self) -> Option<u32> {
+        self.inner.as_ref().unwrap().version()
+    }
+
+    /// Returns the timestamp when the call was received.
+    pub fn timestamp(&self) -> Instant {
+        self.inner.as_ref().unwrap().timestamp()
     }
 
     /// Returns a slice to the call's serialized arguments.
