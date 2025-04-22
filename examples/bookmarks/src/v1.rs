@@ -125,12 +125,13 @@ impl Server {
 
     fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks.");
-        call.ok(&self.list)?;
+        let (_, promise) = call.deserialize()?;
+        promise.ok(&self.list)?;
         Ok(())
     }
 
     fn add(&mut self, call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
-        let (bookmark, promise) = call.into_args_and_promise();
+        let (bookmark, promise) = call.deserialize()?;
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
@@ -165,18 +166,18 @@ impl Server {
     }
 
     fn remove(&mut self, call: Call<String, (), BookmarkError>) -> Result<()> {
-        let name = call.args();
+        let (name, promise) = call.deserialize()?;
 
         let Some(idx) = self.list.iter().position(|b| b.name == *name) else {
             println!("Failed to remove unknown bookmark `{name}`");
-            call.err(BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
         println!("Bookmark `{name}` removed.");
         let bookmark = self.list.remove(idx);
         self.svc.removed(&bookmark)?;
-        call.done()?;
+        promise.done()?;
 
         Ok(())
     }

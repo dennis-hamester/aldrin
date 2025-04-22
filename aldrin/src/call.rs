@@ -1,19 +1,25 @@
-use crate::{Error, Handle, Promise};
-use aldrin_core::tags::{self, PrimaryTag};
-use aldrin_core::Serialize;
+use crate::{low_level, Error, Handle, Promise, UnknownCall};
+use aldrin_core::tags::PrimaryTag;
+use aldrin_core::{Deserialize, SerializedValue, SerializedValueSlice};
 use std::fmt;
+use std::marker::PhantomData;
 use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// Pending call.
 pub struct Call<Args, T, E> {
-    args: Args,
+    args: SerializedValue,
     promise: Promise<T, E>,
+    phantom: PhantomData<fn() -> Args>,
 }
 
 impl<Args, T, E> Call<Args, T, E> {
-    pub(crate) fn new(args: Args, promise: Promise<T, E>) -> Self {
-        Self { args, promise }
+    pub(crate) fn new(args: SerializedValue, promise: Promise<T, E>) -> Self {
+        Self {
+            args,
+            promise,
+            phantom: PhantomData,
+        }
     }
 
     /// Returns a handle to the client that was used to create the call.
@@ -36,34 +42,30 @@ impl<Args, T, E> Call<Args, T, E> {
         self.promise.timestamp()
     }
 
-    /// Returns a reference to the call's arguments.
-    pub fn args(&self) -> &Args {
+    /// Casts the call to a different result type.
+    pub fn cast<Args2, T2, E2>(self) -> Call<Args2, T2, E2> {
+        Call::new(self.args, self.promise.cast())
+    }
+
+    /// Converts this call into a low-level [`Call`](low_level::Call).
+    pub fn into_low_level(self) -> low_level::Call {
+        low_level::Call::new(self.args, self.promise.into_low_level())
+    }
+
+    /// Converts this call into an [`UnknownCall`].
+    pub fn into_unknown_call(self) -> UnknownCall {
+        self.into_low_level().into_unknown_call()
+    }
+
+    /// Returns a slice to the call's serialized arguments.
+    pub fn args(&self) -> &SerializedValueSlice {
         &self.args
     }
 
-    /// Returns a mutable reference to the call's arguments.
-    pub fn args_mut(&mut self) -> &mut Args {
-        &mut self.args
-    }
-
-    /// Returns a reference to the call's promise object.
-    pub fn promise(&self) -> &Promise<T, E> {
-        &self.promise
-    }
-
-    /// Returns a mutable reference to the call's promise object.
-    pub fn promise_mut(&mut self) -> &mut Promise<T, E> {
-        &mut self.promise
-    }
-
-    /// Converts the call into a tuple of its arguments and promise.
-    pub fn into_args_and_promise(self) -> (Args, Promise<T, E>) {
-        (self.args, self.promise)
-    }
-
-    /// Casts the call to a different result type.
-    pub fn cast<T2, E2>(self) -> Call<Args, T2, E2> {
-        Call::new(self.args, self.promise.cast())
+    /// Takes out the call's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> SerializedValue {
+        self.args.take()
     }
 
     /// Aborts the call.
@@ -76,11 +78,6 @@ impl<Args, T, E> Call<Args, T, E> {
     /// Signals that an invalid function was called.
     pub fn invalid_function(self) -> Result<(), Error> {
         self.promise.invalid_function()
-    }
-
-    /// Signals that invalid arguments were passed to the function.
-    pub fn invalid_args(self) -> Result<(), Error> {
-        self.promise.invalid_args()
     }
 
     /// Returns whether the call was aborted by the caller.
@@ -99,99 +96,32 @@ impl<Args, T, E> Call<Args, T, E> {
     }
 }
 
-impl<Args, T: PrimaryTag, E> Call<Args, T, E> {
-    /// Signals that the call was successful.
-    pub fn ok<U: Serialize<T::Tag>>(self, value: U) -> Result<(), Error> {
-        self.promise.ok(value)
+impl<Args: PrimaryTag + Deserialize<Args::Tag>, T, E> Call<Args, T, E> {
+    /// Deserializes and returns the arguments and the [`Promise`].
+    pub fn deserialize(self) -> Result<(Args, Promise<T, E>), Error> {
+        self.deserialize_as()
     }
 }
 
-impl<Args, T: PrimaryTag + Serialize<T::Tag>, E> Call<Args, T, E> {
-    /// Signals that the call was successful.
-    pub fn ok_val(self, value: T) -> Result<(), Error> {
-        self.promise.ok_val(value)
-    }
-}
-
-impl<'a, Args, T, E> Call<Args, T, E>
-where
-    T: PrimaryTag + 'a,
-    &'a T: Serialize<T::Tag>,
-{
-    /// Signals that the call was successful.
-    pub fn ok_ref(self, value: &'a T) -> Result<(), Error> {
-        self.promise.ok_ref(value)
-    }
-}
-
-impl<Args, T: PrimaryTag<Tag = tags::Unit>, E> Call<Args, T, E> {
-    /// Signals that the call was successful without returning a value.
-    pub fn done(self) -> Result<(), Error> {
-        self.promise.done()
-    }
-}
-
-impl<Args, T, E: PrimaryTag> Call<Args, T, E> {
-    /// Signals that the call failed.
-    pub fn err<F: Serialize<E::Tag>>(self, value: F) -> Result<(), Error> {
-        self.promise.err(value)
-    }
-}
-
-impl<Args, T, E: PrimaryTag + Serialize<E::Tag>> Call<Args, T, E> {
-    /// Signals that the call failed.
-    pub fn err_val(self, value: E) -> Result<(), Error> {
-        self.promise.err_val(value)
-    }
-}
-
-impl<'a, Args, T, E> Call<Args, T, E>
-where
-    E: PrimaryTag + 'a,
-    &'a E: Serialize<E::Tag>,
-{
-    /// Signals that the call failed.
-    pub fn err_ref(self, value: &'a E) -> Result<(), Error> {
-        self.promise.err_ref(value)
-    }
-}
-
-impl<Args, T: PrimaryTag, E: PrimaryTag> Call<Args, T, E> {
-    /// Sets the call's reply.
-    pub fn set<U, F>(self, res: Result<U, F>) -> Result<(), Error>
+impl<Args: PrimaryTag, T, E> Call<Args, T, E> {
+    /// Deserializes and returns the arguments and the [`Promise`].
+    pub fn deserialize_as<Args2>(self) -> Result<(Args2, Promise<T, E>), Error>
     where
-        U: Serialize<T::Tag>,
-        F: Serialize<E::Tag>,
+        Args2: Deserialize<Args::Tag>,
     {
-        self.promise.set(res)
+        match self.args.deserialize_as() {
+            Ok(args) => Ok((args, self.promise)),
+
+            Err(e) => {
+                let id = self.id();
+                let _ = self.promise.invalid_args();
+                Err(Error::invalid_arguments(id, Some(e)))
+            }
+        }
     }
 }
 
-impl<Args, T, E> Call<Args, T, E>
-where
-    T: PrimaryTag + Serialize<T::Tag>,
-    E: PrimaryTag + Serialize<E::Tag>,
-{
-    /// Sets the call's reply.
-    pub fn set_val(self, res: Result<T, E>) -> Result<(), Error> {
-        self.promise.set_val(res)
-    }
-}
-
-impl<'a, Args, T, E> Call<Args, T, E>
-where
-    T: PrimaryTag + 'a,
-    &'a T: Serialize<T::Tag>,
-    E: PrimaryTag + 'a,
-    &'a E: Serialize<E::Tag>,
-{
-    /// Sets the call's reply.
-    pub fn set_ref(self, res: Result<&'a T, &'a E>) -> Result<(), Error> {
-        self.promise.set_ref(res)
-    }
-}
-
-impl<Args: fmt::Debug, T, E> fmt::Debug for Call<Args, T, E> {
+impl<Args, T, E> fmt::Debug for Call<Args, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Call")
             .field("args", &self.args)

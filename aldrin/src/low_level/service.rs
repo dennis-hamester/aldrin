@@ -1,4 +1,4 @@
-use super::{Call, ServiceInfo};
+use super::{Call, Promise, ServiceInfo};
 use crate::{Error, Handle, Object};
 #[cfg(feature = "introspection")]
 use aldrin_core::introspection::Introspection;
@@ -81,13 +81,15 @@ impl Service {
     pub fn poll_next_call(&mut self, cx: &mut Context) -> Poll<Option<Call>> {
         match Pin::new(&mut self.calls).poll_next(cx) {
             Poll::Ready(Some(call)) => Poll::Ready(Some(Call::new(
-                self.client.clone(),
-                call.aborted,
-                call.serial,
-                call.function,
-                call.version,
-                call.timestamp,
                 call.args,
+                Promise::new(
+                    self.client.clone(),
+                    call.function,
+                    call.version,
+                    call.timestamp,
+                    call.aborted,
+                    call.serial,
+                ),
             ))),
 
             Poll::Ready(None) => Poll::Ready(None),

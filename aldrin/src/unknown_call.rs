@@ -1,4 +1,4 @@
-use crate::{low_level, Call, Error, Handle};
+use crate::{low_level, Call, Handle};
 use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use std::error::Error as StdError;
@@ -41,6 +41,11 @@ impl UnknownCall {
         self.inner.as_ref().unwrap().timestamp()
     }
 
+    /// Casts the call to a known [`Call`].
+    pub fn cast<Args, T, E>(mut self) -> Call<Args, T, E> {
+        self.inner.take().unwrap().cast()
+    }
+
     /// Returns a slice to the call's serialized arguments.
     pub fn args(&self) -> &SerializedValueSlice {
         self.inner.as_ref().unwrap().args()
@@ -59,31 +64,6 @@ impl UnknownCall {
     /// Deserializes the call's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
         self.deserialize()
-    }
-
-    /// Deserializes arguments and casts the call to a known [`Call`].
-    ///
-    /// If deserialization fails, then the call will be replied using
-    /// [`Promise::invalid_args`](crate::low_level::Promise::invalid_args) and
-    /// [`Error::InvalidArguments`] will be returned.
-    pub fn deserialize_and_cast_as<K, L, T, E>(mut self) -> Result<Call<L, T, E>, Error>
-    where
-        K: Tag,
-        L: Deserialize<K>,
-    {
-        self.inner.take().unwrap().deserialize_and_cast_as()
-    }
-
-    /// Deserializes arguments and casts the call to a known [`Call`].
-    ///
-    /// If deserialization fails, then the call will be replied using
-    /// [`Promise::invalid_args`](crate::low_level::Promise::invalid_args) and
-    /// [`Error::InvalidArguments`] will be returned.
-    pub fn deserialize_and_cast<A, T, E>(self) -> Result<Call<A, T, E>, Error>
-    where
-        A: PrimaryTag + Deserialize<A::Tag>,
-    {
-        self.deserialize_and_cast_as()
     }
 }
 

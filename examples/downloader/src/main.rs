@@ -122,8 +122,7 @@ async fn server(bus: &Handle) -> Result<()> {
                         tokio::spawn(download(call));
                     }
 
-                    // Function calls can be invalid either because their id is unknown or because
-                    // the arguments to the call failed to deserialize.
+                    // Function calls can be invalid if their id is unknown.
                     Some(Err(e)) => {
                         println!("Received an invalid function call: {e}.");
                         continue;
@@ -144,7 +143,14 @@ async fn server(bus: &Handle) -> Result<()> {
 }
 
 async fn download(call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infallible>) {
-    let (args, promise) = call.into_args_and_promise();
+    let (args, promise) = match call.deserialize() {
+        Ok((args, promise)) => (args, promise),
+
+        Err(e) => {
+            println!("Failed to deserialize download arguments: {e}.");
+            return;
+        }
+    };
 
     println!("Downloading `{}` ({} bytes).", args.name, args.size);
 

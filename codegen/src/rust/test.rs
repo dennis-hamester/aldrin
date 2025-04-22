@@ -51,7 +51,7 @@ mod empty_introspection {
 }
 
 #[tokio::test]
-async fn auto_reply_with_invalid_args() {
+async fn auto_reply_with_call_aborted() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
@@ -61,10 +61,10 @@ async fn auto_reply_with_invalid_args() {
     tokio::spawn(async move { while svc.next().await.is_some() {} });
 
     let err = proxy.call(1, 0, None).await.unwrap_err();
-    assert_eq!(err, Error::invalid_arguments(1, None));
+    assert_eq!(err, Error::CallAborted);
 
     let err = proxy.call(2, (), None).await.unwrap_err();
-    assert_eq!(err, Error::invalid_arguments(2, None));
+    assert_eq!(err, Error::CallAborted);
 }
 
 #[tokio::test]

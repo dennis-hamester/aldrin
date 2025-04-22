@@ -128,8 +128,7 @@ async fn server(bus: &Handle) -> Result<()> {
                 match function {
                     Some(Ok(function)) => function,
 
-                    // Function calls can be invalid either because their id is unknown or because
-                    // the arguments to the call failed to deserialize.
+                    // Function calls can be invalid if their id is unknown.
                     Some(Err(e)) => {
                         println!("Received an invalid function call: {e}.");
                         continue;
@@ -155,7 +154,7 @@ async fn server(bus: &Handle) -> Result<()> {
         // that the call has been aborted.
         match function {
             EchoFunction::Echo(call) => {
-                let (args, promise) = call.into_args_and_promise();
+                let (args, promise) = call.deserialize()?;
                 println!("echo(\"{args}\") called.");
 
                 if args.is_empty() {
@@ -167,11 +166,11 @@ async fn server(bus: &Handle) -> Result<()> {
             }
 
             EchoFunction::EchoAll(call) => {
-                let args = call.args();
+                let (args, promise) = call.deserialize()?;
                 println!("echo_all(\"{args}\") called.");
 
                 if args.is_empty() {
-                    call.err(EchoEchoAllError::EmptyString)?;
+                    promise.err(EchoEchoAllError::EmptyString)?;
                 } else {
                     // This emits an event to all subscribed clients. If there is no such client,
                     // then the event will not even be sent to the broker. In any case, the event
@@ -180,7 +179,7 @@ async fn server(bus: &Handle) -> Result<()> {
                     echo.echoed_to_all(args)?;
 
                     // No value is sent back to the caller.
-                    call.done()?;
+                    promise.done()?;
                 }
             }
         }

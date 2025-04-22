@@ -184,14 +184,15 @@ impl Server {
     fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks in the unspecified group.");
 
+        let (_, promise) = call.deserialize()?;
         let list = self.list.iter().filter(|b| b.group.is_none());
-        call.ok(IterAsVec(list))?;
+        promise.ok(IterAsVec(list))?;
 
         Ok(())
     }
 
     fn get_v2(&self, call: Call<BookmarksGetV2Args, Vec<Bookmark>, BookmarkError>) -> Result<()> {
-        let (args, promise) = call.into_args_and_promise();
+        let (args, promise) = call.deserialize()?;
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to get bookmarks due to unknown arguments.");
@@ -212,7 +213,7 @@ impl Server {
     }
 
     fn add(&mut self, call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
-        let (bookmark, promise) = call.into_args_and_promise();
+        let (bookmark, promise) = call.deserialize()?;
 
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
@@ -273,7 +274,7 @@ impl Server {
     }
 
     fn remove(&mut self, call: Call<String, (), BookmarkError>) -> Result<()> {
-        let name = call.args();
+        let (name, promise) = call.deserialize()?;
 
         let Some(idx) = self
             .list
@@ -281,23 +282,23 @@ impl Server {
             .position(|b| (b.name == *name) && b.group.is_none())
         else {
             println!("Failed to remove unknown bookmark `{name}`");
-            call.err(BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
         let bookmark = self.list.remove(idx);
         self.svc.removed(&bookmark)?;
-        call.done()?;
+        promise.done()?;
 
         Ok(())
     }
 
     fn remove_v2(&mut self, call: Call<BookmarksRemoveV2Args, (), BookmarkError>) -> Result<()> {
-        let args = call.args();
+        let (args, promise) = call.deserialize()?;
 
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to remove a bookmark due to unknown arguments.");
-            call.err(BookmarkError::UnknownFields)?;
+            promise.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
@@ -307,7 +308,7 @@ impl Server {
             .position(|b| (b.name == args.name) && (b.group == args.group))
         else {
             println!("Failed to remove unknown bookmark `{}`", args.name);
-            call.err(BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
@@ -325,11 +326,13 @@ impl Server {
             self.svc.removed(&bookmark)?;
         }
 
-        call.done()?;
+        promise.done()?;
         Ok(())
     }
 
     fn get_groups(&mut self, call: Call<(), Vec<Option<String>>, Infallible>) -> Result<()> {
+        let (_, promise) = call.deserialize()?;
+
         let mut groups = self
             .list
             .iter()
@@ -339,7 +342,7 @@ impl Server {
         groups.sort_unstable();
         groups.dedup();
 
-        call.ok(groups)?;
+        promise.ok(groups)?;
         Ok(())
     }
 

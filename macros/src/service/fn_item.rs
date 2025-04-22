@@ -99,20 +99,12 @@ impl FnItem {
         let variant = &self.variant;
 
         quote! {
-            #id => match call.deserialize_and_cast() {
-                ::std::result::Result::Ok((call)) => {
-                    ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(
-                            ::std::result::Result::Ok(#function::#variant(call)),
-                        ),
-                    )
-                }
-
-                ::std::result::Result::Err(e) => {
-                    ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(::std::result::Result::Err(e)),
-                    )
-                }
+            #id => {
+                ::std::task::Poll::Ready(
+                    ::std::option::Option::Some(
+                        ::std::result::Result::Ok(#function::#variant(call.cast())),
+                    ),
+                )
             }
         }
     }

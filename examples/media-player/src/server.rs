@@ -82,27 +82,31 @@ impl Server {
     }
 
     fn get_state(&self, call: Call<(), State, Infallible>) -> Result<()> {
-        call.ok(&self.state)?;
+        let (_, promise) = call.deserialize()?;
+        promise.ok(&self.state)?;
         Ok(())
     }
 
     fn get_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok(&self.metadata)?;
+        let (_, promise) = call.deserialize()?;
+        promise.ok(&self.metadata)?;
         Ok(())
     }
 
     fn get_position(&self, call: Call<(), Option<u32>, Infallible>) -> Result<()> {
-        call.ok(self.position)?;
+        let (_, promise) = call.deserialize()?;
+        promise.ok(self.position)?;
         Ok(())
     }
 
     fn get_last_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok(&self.last_metadata)?;
+        let (_, promise) = call.deserialize()?;
+        promise.ok(&self.last_metadata)?;
         Ok(())
     }
 
     fn play(&mut self, call: Call<MediaPlayerPlayArgs, (), Error>) -> Result<()> {
-        let (args, promise) = call.into_args_and_promise();
+        let (args, promise) = call.deserialize()?;
         let duration = args.duration.unwrap_or(10);
 
         println!("Starting `{}` with a duration of {duration}s.", args.title);
@@ -142,9 +146,11 @@ impl Server {
     }
 
     fn stop(&mut self, call: Call<(), (), Infallible>) -> Result<()> {
+        let (_, promise) = call.deserialize()?;
+
         if self.state == State::Stopped {
             println!("Playback is already stopped.");
-            call.done()?;
+            promise.done()?;
             return Ok(());
         }
 
@@ -166,35 +172,39 @@ impl Server {
 
         self.timer = None;
 
-        call.done()?;
+        promise.done()?;
         Ok(())
     }
 
     fn pause(&mut self, call: Call<(), (), Error>) -> Result<()> {
+        let (_, promise) = call.deserialize()?;
+
         if self.state == State::Playing {
             println!("Pausing playback.");
             self.state = State::Paused;
             self.svc.state_changed(&self.state)?;
             self.timer = None;
-            call.done()?;
+            promise.done()?;
         } else {
             println!("Cannot pause playback.");
-            call.err(Error::NotPlaying)?;
+            promise.err(Error::NotPlaying)?;
         }
 
         Ok(())
     }
 
     fn resume(&mut self, call: Call<(), (), Error>) -> Result<()> {
+        let (_, promise) = call.deserialize()?;
+
         if self.state == State::Paused {
             println!("Resuming playback.");
             self.state = State::Playing;
             self.svc.state_changed(&self.state)?;
             self.start_timer(true);
-            call.done()?;
+            promise.done()?;
         } else {
             println!("Cannot resume playback.");
-            call.err(Error::NotPaused)?;
+            promise.err(Error::NotPaused)?;
         }
 
         Ok(())
