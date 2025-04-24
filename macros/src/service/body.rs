@@ -73,7 +73,7 @@ impl Body {
             .items
             .iter()
             .filter_map(ServiceItem::as_event)
-            .map(|ev| ev.gen_next_event_match_arm(event, options))
+            .map(|ev| ev.gen_next_event_match_arm(event))
             .collect::<TokenStream>();
 
         let next_event_fallback = match self.event_fallback() {

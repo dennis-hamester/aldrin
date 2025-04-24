@@ -55,7 +55,7 @@ impl Listen {
                 ev = self.media_player.next_event() => {
                     match ev {
                         Some(Ok(ev)) => {
-                            if self.handle_event(ev) {
+                            if self.handle_event(ev)? {
                                 self.print_state();
                             }
                         }
@@ -117,7 +117,7 @@ impl Listen {
 
     // This function returns `true` if the event caused some state to change its value. To achieve
     // that, we use the `check_*` family of methods on `Property`.
-    fn handle_event(&mut self, ev: MediaPlayerEvent) -> bool {
+    fn handle_event(&mut self, ev: MediaPlayerEvent) -> Result<bool> {
         match ev {
             MediaPlayerEvent::StateChanged(ev) => self.state_changed(ev),
             MediaPlayerEvent::MetadataChanged(ev) => self.metadata_changed(ev),
@@ -126,23 +126,27 @@ impl Listen {
         }
     }
 
-    fn state_changed(&mut self, ev: Event<State>) -> bool {
-        self.state.check_event(ev).is_some()
+    fn state_changed(&mut self, ev: Event<State>) -> Result<bool> {
+        let changed = self.state.check_event(&ev)?.is_some();
+        Ok(changed)
     }
 
-    fn metadata_changed(&mut self, ev: Event<Option<Metadata>>) -> bool {
-        self.metadata.check_event(ev).is_some()
+    fn metadata_changed(&mut self, ev: Event<Option<Metadata>>) -> Result<bool> {
+        let changed = self.metadata.check_event(&ev)?.is_some();
+        Ok(changed)
     }
 
-    fn position_changed(&mut self, ev: Event<Option<u32>>) -> bool {
-        self.position.check_event(ev).is_some()
+    fn position_changed(&mut self, ev: Event<Option<u32>>) -> Result<bool> {
+        let changed = self.position.check_event(&ev)?.is_some();
+        Ok(changed)
     }
 
-    fn last_metadata_changed(&mut self, ev: Event<Metadata>) -> bool {
+    fn last_metadata_changed(&mut self, ev: Event<Metadata>) -> Result<bool> {
         // The last metadata property is special in that it starts out as `None`, then goes to
         // `Some` and will never be reset back to `None`. In the schema, this is expressed by the
         // fact that the getter returns an `Option`, but the event does not.
-        self.last_metadata.check_event_some(ev).is_some()
+        let changed = self.last_metadata.check_event_some(&ev)?.is_some();
+        Ok(changed)
     }
 }
 

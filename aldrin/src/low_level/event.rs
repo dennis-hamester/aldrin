@@ -46,6 +46,11 @@ impl Event {
         self.args
     }
 
+    /// Casts the event to a high-level [`Event`](crate::Event).
+    pub fn cast<T>(self) -> crate::Event<T> {
+        crate::Event::new(self)
+    }
+
     /// Deserializes the event's arguments.
     pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
         self.args.deserialize_as()
@@ -59,22 +64,6 @@ impl Event {
     /// Deserializes the event's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
         self.deserialize()
-    }
-
-    /// Deserializes the arguments and casts the event to a high-level [`Event`](crate::Event).
-    pub fn deserialize_and_cast_as<T: Tag, U: Deserialize<T>>(
-        &self,
-    ) -> Result<crate::Event<U>, DeserializeError> {
-        self.args
-            .deserialize_as()
-            .map(|args| crate::Event::new(self.id, self.timestamp, args))
-    }
-
-    /// Deserializes the arguments and casts the event to a high-level [`Event`](crate::Event).
-    pub fn deserialize_and_cast<T: PrimaryTag + Deserialize<T::Tag>>(
-        &self,
-    ) -> Result<crate::Event<T>, DeserializeError> {
-        self.deserialize_and_cast_as()
     }
 
     /// Converts this event into an [`UnknownEvent`].

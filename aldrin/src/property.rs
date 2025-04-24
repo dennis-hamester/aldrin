@@ -68,10 +68,21 @@ impl<T> Property<T> {
     }
 
     /// Creates a new [`Property`] from an [`Event`].
-    pub fn from_event(ev: Event<T>) -> Self {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        Self::with_value_and_timestamp(val, timestamp)
+    pub fn from_event(ev: &Event<T>) -> Result<Self, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        Self::from_event_as(ev)
+    }
+
+    /// Creates a new [`Property`] from an [`Event`].
+    pub fn from_event_as<T2>(ev: &Event<T2>) -> Result<Self, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| Self::with_value_and_timestamp(val, ev.timestamp()))
     }
 }
 
@@ -118,10 +129,21 @@ impl<T> Property<Option<T>> {
     }
 
     /// Creates a new [`Property`] from an [`Event`] by wrapping the value in [`Some(_)`](Some).
-    pub fn from_event_some(ev: Event<T>) -> Self {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        Self::with_value_and_timestamp_some(val, timestamp)
+    pub fn from_event_some(ev: &Event<T>) -> Result<Self, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        Self::from_event_some_as(ev)
+    }
+
+    /// Creates a new [`Property`] from an [`Event`] by wrapping the value in [`Some(_)`](Some).
+    pub fn from_event_some_as<T2>(ev: &Event<T2>) -> Result<Self, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| Self::with_value_and_timestamp_some(val, ev.timestamp()))
     }
 }
 
@@ -229,10 +251,23 @@ impl<T> Property<T> {
     /// Updates the value from an [`Event`], if its timestamp is newer.
     ///
     /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update_event(&mut self, ev: Event<T>) -> Option<&T> {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        self.update(val, timestamp)
+    pub fn update_event(&mut self, ev: &Event<T>) -> Result<Option<&T>, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        self.update_event_as(ev)
+    }
+
+    /// Updates the value from an [`Event`], if its timestamp is newer.
+    ///
+    /// Returns [`Some(_)`](Some), if the value was updated.
+    pub fn update_event_as<T2>(&mut self, ev: &Event<T2>) -> Result<Option<&T>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| self.update(val, ev.timestamp()))
     }
 }
 
@@ -315,10 +350,24 @@ impl<T> Property<Option<T>> {
     /// newer.
     ///
     /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update_event_some(&mut self, ev: Event<T>) -> Option<&T> {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        self.update_some(val, timestamp)
+    pub fn update_event_some(&mut self, ev: &Event<T>) -> Result<Option<&T>, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        self.update_event_some_as(ev)
+    }
+
+    /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its timestamp is
+    /// newer.
+    ///
+    /// Returns [`Some(_)`](Some), if the value was updated.
+    pub fn update_event_some_as<T2>(&mut self, ev: &Event<T2>) -> Result<Option<&T>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| self.update_some(val, ev.timestamp()))
     }
 }
 
@@ -398,10 +447,21 @@ impl<T: PartialEq> Property<T> {
     }
 
     /// Updates the value from an [`Event`], if it's different and its timestamp is newer.
-    pub fn check_event(&mut self, ev: Event<T>) -> Option<&T> {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        self.check(val, timestamp)
+    pub fn check_event(&mut self, ev: &Event<T>) -> Result<Option<&T>, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        self.check_event_as(ev)
+    }
+
+    /// Updates the value from an [`Event`], if it's different and its timestamp is newer.
+    pub fn check_event_as<T2>(&mut self, ev: &Event<T2>) -> Result<Option<&T>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| self.check(val, ev.timestamp()))
     }
 }
 
@@ -504,10 +564,24 @@ impl<T: PartialEq> Property<Option<T>> {
     /// and its timestamp is newer.
     ///
     /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn check_event_some(&mut self, ev: Event<T>) -> Option<&T> {
-        let timestamp = ev.timestamp();
-        let val = ev.into_args();
-        self.check_some(val, timestamp)
+    pub fn check_event_some(&mut self, ev: &Event<T>) -> Result<Option<&T>, Error>
+    where
+        T: PrimaryTag + Deserialize<T::Tag>,
+    {
+        self.check_event_some_as(ev)
+    }
+
+    /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its different
+    /// and its timestamp is newer.
+    ///
+    /// Returns [`Some(_)`](Some), if the value was updated.
+    pub fn check_event_some_as<T2>(&mut self, ev: &Event<T2>) -> Result<Option<&T>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+    {
+        ev.deserialize_as()
+            .map(|val| self.check_some(val, ev.timestamp()))
     }
 }
 

@@ -5,7 +5,7 @@ use crate::bookmarks_v2::{
 };
 use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
-use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
+use aldrin::{Call, Error, Event, Handle, Object, UnknownCall, UnknownEvent};
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use std::convert::Infallible;
@@ -481,12 +481,10 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
 
     while let Some(event) = bookmarks.next_event().await {
         match event {
-            Ok(BookmarksEvent::Added(ev)) | Ok(BookmarksEvent::AddedV2(ev)) => {
-                bookmark_added(ev.into_args())
-            }
+            Ok(BookmarksEvent::Added(ev)) | Ok(BookmarksEvent::AddedV2(ev)) => bookmark_added(ev)?,
 
             Ok(BookmarksEvent::Removed(ev)) | Ok(BookmarksEvent::RemovedV2(ev)) => {
-                bookmark_removed(ev.into_args())
+                bookmark_removed(ev)?;
             }
 
             Ok(BookmarksEvent::UnknownEvent(event)) => unknown_event(event),
@@ -497,7 +495,9 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-fn bookmark_added(bookmark: Bookmark) {
+fn bookmark_added(bookmark: Event<Bookmark>) -> Result<()> {
+    let bookmark = bookmark.deserialize()?;
+
     if let Some(group) = bookmark.group {
         println!(
             "Bookmark `{}` ({}) added to the group `{group}`.",
@@ -509,9 +509,13 @@ fn bookmark_added(bookmark: Bookmark) {
             bookmark.name, bookmark.url
         );
     }
+
+    Ok(())
 }
 
-fn bookmark_removed(bookmark: Bookmark) {
+fn bookmark_removed(bookmark: Event<Bookmark>) -> Result<()> {
+    let bookmark = bookmark.deserialize()?;
+
     if let Some(group) = bookmark.group {
         println!(
             "Bookmark `{}` ({}) removed from the group `{group}`.",
@@ -523,6 +527,8 @@ fn bookmark_removed(bookmark: Bookmark) {
             bookmark.name, bookmark.url
         );
     }
+
+    Ok(())
 }
 
 fn unknown_event(event: UnknownEvent) {

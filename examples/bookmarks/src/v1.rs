@@ -2,7 +2,7 @@ use crate::bookmarks_v1::{
     Bookmark, Bookmarks, BookmarksEvent, BookmarksFunction, BookmarksProxy, Error as BookmarkError,
 };
 use aldrin::core::{ObjectUuid, UnknownFields};
-use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
+use aldrin::{Call, Error, Event, Handle, Object, UnknownCall, UnknownEvent};
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use std::convert::Infallible;
@@ -250,8 +250,8 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
 
     while let Some(event) = bookmarks.next_event().await {
         match event {
-            Ok(BookmarksEvent::Added(ev)) => bookmark_added(ev.into_args()),
-            Ok(BookmarksEvent::Removed(ev)) => bookmark_removed(ev.into_args()),
+            Ok(BookmarksEvent::Added(ev)) => bookmark_added(ev)?,
+            Ok(BookmarksEvent::Removed(ev)) => bookmark_removed(ev)?,
             Ok(BookmarksEvent::UnknownEvent(ev)) => unknown_event(ev),
             Err(e) => invalid_event(e),
         }
@@ -260,12 +260,16 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-fn bookmark_added(bookmark: Bookmark) {
+fn bookmark_added(bookmark: Event<Bookmark>) -> Result<()> {
+    let bookmark = bookmark.deserialize()?;
     println!("Bookmark `{}` ({}) added.", bookmark.name, bookmark.url);
+    Ok(())
 }
 
-fn bookmark_removed(bookmark: Bookmark) {
+fn bookmark_removed(bookmark: Event<Bookmark>) -> Result<()> {
+    let bookmark = bookmark.deserialize()?;
     println!("Bookmark `{}` ({}) removed.", bookmark.name, bookmark.url);
+    Ok(())
 }
 
 fn unknown_event(event: UnknownEvent) {

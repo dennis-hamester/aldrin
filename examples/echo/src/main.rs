@@ -269,8 +269,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
                 match event {
                     Some(Ok(event)) => event,
 
-                    // As with functions, events can be invalid, either because they have an unknown
-                    // id or because their associated value failed to deserialize.
+                    // As with functions, events can be invalid if their id is unknown.
                     Some(Err(e)) => {
                         println!("Received an invalid event: {e}.");
                         continue;
@@ -291,7 +290,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
         // `EchoEvent` is a generated enum that has one variant for each event.
         match event {
             EchoEvent::EchoedToAll(event) => {
-                println!("Received event: EchoedToAll(\"{}\").", event.args())
+                println!("Received event: EchoedToAll(\"{}\").", event.deserialize()?)
             }
         }
     }

@@ -52,27 +52,15 @@ impl EvItem {
         }
     }
 
-    pub fn gen_next_event_match_arm(&self, event: &Ident, options: &Options) -> TokenStream {
-        let krate = options.krate();
+    pub fn gen_next_event_match_arm(&self, event: &Ident) -> TokenStream {
         let id = &self.id;
         let variant = &self.variant;
 
         quote! {
             #id => {
-                break match ev.deserialize_and_cast() {
-                    ::std::result::Result::Ok(ev) => ::std::task::Poll::Ready(
-                        ::std::option::Option::Some(::std::result::Result::Ok(#event::#variant(ev))),
-                    ),
-
-                    ::std::result::Result::Err(e) => {
-                        ::std::task::Poll::Ready(::std::option::Option::Some(
-                            ::std::result::Result::Err(#krate::Error::invalid_arguments(
-                                ev.id(),
-                                ::std::option::Option::Some(e),
-                            )),
-                        ))
-                    }
-                };
+                break ::std::task::Poll::Ready(::std::option::Option::Some(
+                    ::std::result::Result::Ok(#event::#variant(ev.cast())),
+                ));
             }
         }
     }
