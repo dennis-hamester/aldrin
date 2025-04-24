@@ -36,7 +36,7 @@ impl PendingReply {
     }
 
     /// Cast the reply to a typed [`PendingReply<T, E>`](crate::PendingReply).
-    pub fn cast<T, E>(self) -> crate::pending_reply::PendingReply<T, E> {
+    pub fn cast<T, E>(self) -> crate::PendingReply<T, E> {
         crate::PendingReply::new(self)
     }
 

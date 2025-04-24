@@ -382,10 +382,10 @@ async fn add(args: Add, bus: &Handle) -> Result<()> {
             return Err(anyhow!("server doesn't support groups"));
         }
 
-        bookmarks.add(&bookmark).await?.into_args()?;
+        bookmarks.add(&bookmark).await?.deserialize()??;
         println!("Bookmark `{}` added to the group `{group}`.", bookmark.name);
     } else {
-        bookmarks.add(&bookmark).await?.into_args()?;
+        bookmarks.add(&bookmark).await?.deserialize()??;
 
         println!(
             "Bookmark `{}` added to the unspecified group.",
@@ -412,7 +412,7 @@ async fn get(args: Get, bus: &Handle) -> Result<()> {
                 unknown_fields: (),
             })
             .await?
-            .into_args()?;
+            .deserialize()??;
 
         if list.is_empty() {
             println!("No bookmarks found in the group `{group}`.");
@@ -422,7 +422,7 @@ async fn get(args: Get, bus: &Handle) -> Result<()> {
 
         list
     } else {
-        let list = bookmarks.get().await?.into_args()?;
+        let list = bookmarks.get().await?.deserialize()??;
 
         if list.is_empty() {
             println!("No bookmarks found in the unspecified group.");
@@ -449,7 +449,7 @@ async fn get_groups(args: GetGroups, bus: &Handle) -> Result<()> {
         return Err(anyhow!("server doesn't support groups"));
     }
 
-    let groups = bookmarks.get_groups().await?.into_args()?;
+    let groups = bookmarks.get_groups().await?.deserialize()??;
 
     if groups.is_empty() {
         println!("No groups found.");
@@ -560,11 +560,11 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
                 unknown_fields: (),
             })
             .await?
-            .into_args()?;
+            .deserialize()??;
 
         println!("Bookmark `{}` removed from the group `{group}`.", args.name);
     } else {
-        bookmarks.remove(&args.name).await?.into_args()?;
+        bookmarks.remove(&args.name).await?.deserialize()??;
 
         println!(
             "Bookmark `{}` removed from the unspecified group.",

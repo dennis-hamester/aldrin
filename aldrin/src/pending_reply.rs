@@ -58,11 +58,7 @@ impl<T: PrimaryTag, E: PrimaryTag> PendingReply<T, E> {
         F: Deserialize<E::Tag>,
     {
         match Pin::new(&mut self.inner).poll(cx) {
-            Poll::Ready(Ok(reply)) => match reply.deserialize_and_cast_as() {
-                Ok(reply) => Poll::Ready(Ok(reply)),
-                Err(e) => Poll::Ready(Err(Error::invalid_reply(e))),
-            },
-
+            Poll::Ready(Ok(reply)) => Poll::Ready(Ok(reply.cast())),
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
             Poll::Pending => Poll::Pending,
         }

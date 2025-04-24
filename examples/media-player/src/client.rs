@@ -28,10 +28,10 @@ impl Listen {
 
         // State is initialized by reading it from the media player. `Property` can be constructed
         // directly from `Reply`.
-        let state = Property::from_reply(media_player.get_state().await?)?;
-        let metadata = Property::from_reply(media_player.get_metadata().await?)?;
-        let position = Property::from_reply(media_player.get_position().await?)?;
-        let last_metadata = Property::from_reply(media_player.get_last_metadata().await?)?;
+        let state = Property::from_reply(&media_player.get_state().await?)??;
+        let metadata = Property::from_reply(&media_player.get_metadata().await?)??;
+        let position = Property::from_reply(&media_player.get_position().await?)??;
+        let last_metadata = Property::from_reply(&media_player.get_last_metadata().await?)??;
 
         Ok(Self {
             media_player,
@@ -151,7 +151,7 @@ pub async fn pause(args: ServerArg, bus: &Handle) -> Result<()> {
         .await?
         .pause()
         .await?
-        .into_args()?;
+        .deserialize()??;
 
     Ok(())
 }
@@ -165,7 +165,7 @@ pub async fn play(args: Play, bus: &Handle) -> Result<()> {
             paused: Some(args.paused),
         })
         .await?
-        .into_args()?;
+        .deserialize()??;
 
     Ok(())
 }
@@ -175,7 +175,7 @@ pub async fn resume(args: ServerArg, bus: &Handle) -> Result<()> {
         .await?
         .resume()
         .await?
-        .into_args()?;
+        .deserialize()??;
 
     Ok(())
 }
@@ -185,7 +185,7 @@ pub async fn stop(args: ServerArg, bus: &Handle) -> Result<()> {
         .await?
         .stop()
         .await?
-        .into_args()?;
+        .deserialize()??;
 
     Ok(())
 }

@@ -212,7 +212,7 @@ async fn add(args: Add, bus: &Handle) -> Result<()> {
         unknown_fields: UnknownFields::new(),
     };
 
-    bookmarks.add(&bookmark).await?.into_args()?;
+    bookmarks.add(&bookmark).await?.deserialize()??;
     println!("Bookmark `{}` added.", bookmark.name);
     Ok(())
 }
@@ -222,7 +222,7 @@ async fn get(server: Option<ObjectUuid>, bus: &Handle) -> Result<()> {
     let id = bookmarks.id().object_id.uuid;
     println!("Using server {id}.");
 
-    let list = bookmarks.get().await?.into_args()?;
+    let list = bookmarks.get().await?.deserialize()??;
 
     if list.is_empty() {
         println!("No bookmarks found.");
@@ -291,7 +291,7 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
     let id = bookmarks.id().object_id.uuid;
     println!("Using server {id}.");
 
-    bookmarks.remove(&args.name).await?.into_args()?;
+    bookmarks.remove(&args.name).await?.deserialize()??;
     println!("Bookmark `{}` removed.", args.name);
     Ok(())
 }

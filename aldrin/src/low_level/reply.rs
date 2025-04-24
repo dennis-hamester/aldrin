@@ -55,6 +55,11 @@ impl Reply {
         self.args
     }
 
+    /// Casts the reply to a high-level [`Reply`](crate::Reply).
+    pub fn cast<T, E>(self) -> crate::Reply<T, E> {
+        crate::Reply::new(self)
+    }
+
     /// Deserializes the arguments of the reply.
     pub fn deserialize_as<T, U, E, F>(&self) -> Result<Result<U, F>, DeserializeError>
     where
@@ -81,28 +86,5 @@ impl Reply {
     /// Deserializes the arguments of the reply as generic [`Value`s](Value).
     pub fn deserialize_as_value(&self) -> Result<Result<Value, Value>, DeserializeError> {
         self.deserialize()
-    }
-
-    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](crate::Reply).
-    pub fn deserialize_and_cast_as<T, U, E, F>(
-        &self,
-    ) -> Result<crate::Reply<U, F>, DeserializeError>
-    where
-        T: Tag,
-        U: Deserialize<T>,
-        E: Tag,
-        F: Deserialize<E>,
-    {
-        self.deserialize_as()
-            .map(|args| crate::Reply::new(self.id, self.timestamp, args))
-    }
-
-    /// Deserializes the arguments and casts the reply to a high-level [`Reply`](crate::Reply).
-    pub fn deserialize_and_cast<T, E>(&self) -> Result<crate::Reply<T, E>, DeserializeError>
-    where
-        T: PrimaryTag + Deserialize<T::Tag>,
-        E: PrimaryTag + Deserialize<E::Tag>,
-    {
-        self.deserialize_and_cast_as()
     }
 }

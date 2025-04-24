@@ -1,78 +1,86 @@
+use crate::{low_level, Error};
+use aldrin_core::tags::PrimaryTag;
+use aldrin_core::{Deserialize, SerializedValue, SerializedValueSlice};
+use std::fmt;
+use std::marker::PhantomData;
 use std::time::Instant;
 
 /// Reply of a call.
-#[derive(Debug, Clone)]
 pub struct Reply<T, E> {
-    id: u32,
-    timestamp: Instant,
-    args: Result<T, E>,
+    inner: low_level::Reply,
+    phantom: PhantomData<fn() -> (T, E)>,
 }
 
 impl<T, E> Reply<T, E> {
-    pub(crate) fn new(id: u32, timestamp: Instant, args: Result<T, E>) -> Self {
+    pub(crate) fn new(inner: low_level::Reply) -> Self {
         Self {
-            id,
-            timestamp,
-            args,
+            inner,
+            phantom: PhantomData,
         }
+    }
+
+    /// Casts the reply to a different result type.
+    pub fn cast<T2, E2>(self) -> Reply<T2, E2> {
+        Reply::new(self.inner)
+    }
+
+    /// Extracts the inner low-level [`Reply`](low_level::Reply).
+    pub fn into_low_level(self) -> low_level::Reply {
+        self.inner
     }
 
     /// Returns the reply's function id.
     pub fn id(&self) -> u32 {
-        self.id
+        self.inner.id()
     }
 
     /// Returns the timestamp when the reply was received.
     pub fn timestamp(&self) -> Instant {
-        self.timestamp
+        self.inner.timestamp()
     }
 
-    /// Returns the reply's arguments as references.
-    pub fn args(&self) -> Result<&T, &E> {
-        self.args.as_ref()
+    /// Returns the reply's arguments as slices.
+    pub fn args(&self) -> Result<&SerializedValueSlice, &SerializedValueSlice> {
+        self.inner.args()
     }
 
-    /// Returns the reply's arguments as mutable references.
-    pub fn args_mut(&mut self) -> Result<&mut T, &mut E> {
-        self.args.as_mut()
+    /// Takes out the reply's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> Result<SerializedValue, SerializedValue> {
+        self.inner.take_args()
     }
+}
 
-    /// Converts the reply to its arguments.
-    pub fn into_args(self) -> Result<T, E> {
-        self.args
+impl<T, E> Reply<T, E>
+where
+    T: PrimaryTag + Deserialize<T::Tag>,
+    E: PrimaryTag + Deserialize<E::Tag>,
+{
+    /// Deserializes the reply's arguments.
+    pub fn deserialize(&self) -> Result<Result<T, E>, Error> {
+        self.deserialize_as()
     }
+}
 
-    /// Converts from `&Reply<T, E>` to `Reply<&T, &E>`.
-    pub fn as_ref(&self) -> Reply<&T, &E> {
-        Reply::new(self.id, self.timestamp, self.args.as_ref())
-    }
-
-    /// Converts from `&mut Reply<T, E>` to `Reply<&mut T, &mut E>`.
-    pub fn as_mut(&mut self) -> Reply<&mut T, &mut E> {
-        Reply::new(self.id, self.timestamp, self.args.as_mut())
-    }
-
-    /// Maps a `Reply<T, E>` to `Reply<U, F>` by applying a function to the arguments.
-    pub fn map_args<O, U, F>(self, op: O) -> Reply<U, F>
+impl<T: PrimaryTag, E: PrimaryTag> Reply<T, E> {
+    /// Deserializes the reply's arguments.
+    pub fn deserialize_as<T2, E2>(&self) -> Result<Result<T2, E2>, Error>
     where
-        O: FnOnce(Result<T, E>) -> Result<U, F>,
+        T2: Deserialize<T::Tag>,
+        E2: Deserialize<E::Tag>,
     {
-        Reply::new(self.id, self.timestamp, op(self.args))
+        self.inner.deserialize_as().map_err(Error::invalid_reply)
     }
+}
 
-    /// Maps a `Reply<T, E>` to `Reply<U, E>` by applying a function to the `Ok` arguments.
-    pub fn map<F, U>(self, op: F) -> Reply<U, E>
-    where
-        F: FnOnce(T) -> U,
-    {
-        Reply::new(self.id, self.timestamp, self.args.map(op))
+impl<T, E> Clone for Reply<T, E> {
+    fn clone(&self) -> Self {
+        Self::new(self.inner.clone())
     }
+}
 
-    /// Maps a `Reply<T, E>` to `Reply<T, F>` by applying a function to the `Err` arguments.
-    pub fn map_err<O, F>(self, op: O) -> Reply<T, F>
-    where
-        O: FnOnce(E) -> F,
-    {
-        Reply::new(self.id, self.timestamp, self.args.map_err(op))
+impl<T, E> fmt::Debug for Reply<T, E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Reply").field("inner", &self.inner).finish()
     }
 }

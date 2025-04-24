@@ -221,9 +221,11 @@ async fn echo(bus: &Handle, args: EchoArgs) -> Result<()> {
 
     // This is what a function call in Aldrin looks like on the client's side. The `?` handles
     // errors on the protocol level, such as when e.g. the server shuts down during any of these
-    // calls. The `match` then operates on the reply from the echo server (`Result<String,
-    // EchoEchoError>`).
-    match echo.echo(args.echo).await?.into_args() {
+    // calls. The type returned here is a `Reply<String, EchoEchoError>`.
+    let reply = echo.echo(args.echo).await?;
+
+    // Replies need to be deserialized first, here to a `Result<String, EchoEchoError>`.
+    match reply.deserialize()? {
         Ok(reply) => {
             println!("Server replied with: \"{reply}\".");
             Ok(())
@@ -244,7 +246,7 @@ async fn echo_all(bus: &Handle, args: EchoArgs) -> Result<()> {
     // This is just like `echo` above, except that the server returns no value. Instead, it will
     // emit an event with the value we sent. The event can be seen by having another instance of
     // this example running with the `listen` subcommand.
-    match echo.echo_all(args.echo).await?.into_args() {
+    match echo.echo_all(args.echo).await?.deserialize()? {
         Ok(()) => Ok(()),
         Err(EchoEchoAllError::EmptyString) => Err(anyhow!("empty string")),
     }

@@ -1,5 +1,6 @@
-use crate::event::Event;
-use crate::reply::Reply;
+use crate::{Error, Event, Reply};
+use aldrin_core::tags::PrimaryTag;
+use aldrin_core::Deserialize;
 use std::time::Instant;
 
 /// Tracks some state of a service.
@@ -37,10 +38,33 @@ impl<T> Property<T> {
     /// Creates a new [`Property`] from a [`Reply`].
     ///
     /// An [`Err(_)`](Err) in the [`Reply`] is propagated back.
-    pub fn from_reply<E>(reply: Reply<T, E>) -> Result<Self, E> {
+    pub fn from_reply<T2, E>(reply: &Reply<T2, E>) -> Result<Result<Self, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        Self::from_reply_as(reply)
+    }
+
+    /// Creates a new [`Property`] from a [`Reply`].
+    ///
+    /// An [`Err(_)`](Err) in the [`Reply`] is propagated back.
+    pub fn from_reply_as<T2, E, E2>(reply: &Reply<T2, E>) -> Result<Result<Self, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(Self::with_value_and_timestamp(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(Self::with_value_and_timestamp(val, timestamp)))
     }
 
     /// Creates a new [`Property`] from an [`Event`].
@@ -66,10 +90,31 @@ impl<T> Property<Option<T>> {
     }
 
     /// Creates a new [`Property`] from a [`Reply`] by wrapping the value in [`Some(_)`](Some).
-    pub fn from_reply_some<E>(reply: Reply<T, E>) -> Result<Self, E> {
+    pub fn from_reply_some<T2, E>(reply: &Reply<T2, E>) -> Result<Result<Self, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        Self::from_reply_some_as(reply)
+    }
+
+    /// Creates a new [`Property`] from a [`Reply`] by wrapping the value in [`Some(_)`](Some).
+    pub fn from_reply_some_as<T2, E, E2>(reply: &Reply<T2, E>) -> Result<Result<Self, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(Self::with_value_and_timestamp_some(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(Self::with_value_and_timestamp_some(val, timestamp)))
     }
 
     /// Creates a new [`Property`] from an [`Event`] by wrapping the value in [`Some(_)`](Some).
@@ -141,10 +186,44 @@ impl<T> Property<T> {
     ///   that is newer than the stored one.
     /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
     ///   is older than the stored one.
-    pub fn update_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn update_reply<T2, E>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.update_reply_as(reply)
+    }
+
+    /// Updates the value from a [`Reply`], if its timestamp is newer.
+    ///
+    /// Returns:
+    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
+    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
+    ///   that is newer than the stored one.
+    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
+    ///   is older than the stored one.
+    pub fn update_reply_as<T2, E, E2>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(self.update(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(self.update(val, timestamp)))
     }
 
     /// Updates the value from an [`Event`], if its timestamp is newer.
@@ -191,10 +270,45 @@ impl<T> Property<Option<T>> {
     ///   that is newer than the stored one.
     /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
     ///   is older than the stored one.
-    pub fn update_reply_some<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn update_reply_some<T2, E>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.update_reply_some_as(reply)
+    }
+
+    /// Updates the value from a [`Reply`] by wrapping it in [`Some(_)`](Some), if its timestamp is
+    /// newer.
+    ///
+    /// Returns:
+    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
+    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
+    ///   that is newer than the stored one.
+    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
+    ///   is older than the stored one.
+    pub fn update_reply_some_as<T2, E, E2>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(self.update_some(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(self.update_some(val, timestamp)))
     }
 
     /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its timestamp is
@@ -240,10 +354,47 @@ impl<T: PartialEq> Property<T> {
     ///
     /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
     /// regardless of the [`Reply`s](Reply) value.
-    pub fn check_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn check_reply<T2, E>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.check_reply_as(reply)
+    }
+
+    /// Updates the value from a [`Reply`] if it's different and its timestamp is newer.
+    ///
+    /// Returns:
+    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
+    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
+    ///   that is different and newer than the stored one.
+    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
+    ///   is either older than or equal to the stored one.
+    ///
+    /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
+    /// regardless of the [`Reply`s](Reply) value.
+    pub fn check_reply_as<T2, E, E2>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(self.check(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(self.check(val, timestamp)))
     }
 
     /// Updates the value from an [`Event`], if it's different and its timestamp is newer.
@@ -305,10 +456,48 @@ impl<T: PartialEq> Property<Option<T>> {
     ///
     /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
     /// regardless of the [`Reply`s](Reply) value.
-    pub fn check_reply_some<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn check_reply_some<T2, E>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag + Deserialize<E::Tag>,
+    {
+        self.check_reply_some_as(reply)
+    }
+
+    /// Updates the value from a [`Reply`] by wrapping it in [`Some(_)`](Some) if it's different and
+    /// its timestamp is newer.
+    ///
+    /// Returns:
+    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
+    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
+    ///   that is different and newer than the stored one.
+    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
+    ///   is either older than or equal to the stored one.
+    ///
+    /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
+    /// regardless of the [`Reply`s](Reply) value.
+    pub fn check_reply_some_as<T2, E, E2>(
+        &mut self,
+        reply: &Reply<T2, E>,
+    ) -> Result<Result<Option<&T>, E2>, Error>
+    where
+        T: Deserialize<T2::Tag>,
+        T2: PrimaryTag,
+        E: PrimaryTag,
+        E2: Deserialize<E::Tag>,
+    {
         let timestamp = reply.timestamp();
-        let val = reply.into_args()?;
-        Ok(self.check_some(val, timestamp))
+
+        let val = match reply.deserialize_as()? {
+            Ok(val) => val,
+            Err(e) => return Ok(Err(e)),
+        };
+
+        Ok(Ok(self.check_some(val, timestamp)))
     }
 
     /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its different

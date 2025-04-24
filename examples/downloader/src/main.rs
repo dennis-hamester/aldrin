@@ -260,7 +260,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
     let sender = downloader
         .download(DownloaderDownloadArgsRef { name, size })
         .await?
-        .into_args()?;
+        .deserialize()??;
 
     // In order to use the sender, it must be bound to a client and claimed. The `claim()` function
     // on `UnboundSender` will perform both steps and return a `Sender<Chunk>`. This will also
