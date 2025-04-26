@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
             Ok(new_conn) => new_conn,
 
             Err(e) => {
-                println!("Failed to accept new connection: {}.", e);
+                println!("Failed to accept new connection: {e}.");
                 continue;
             }
         };
@@ -87,12 +87,12 @@ async fn main() -> Result<()> {
         stream.set_nodelay(true)?;
 
         // New connections are handled in a new task, so as to not block this loop.
-        println!("New connection from {}.", addr);
+        println!("New connection from {addr}.");
         let handle = handle.clone();
         tokio::spawn(async move {
             match handle_connection(handle, stream).await {
-                Ok(()) => println!("Connection from {} shut down.", addr),
-                Err(e) => println!("Error on connection from {}: {:#}", addr, e),
+                Ok(()) => println!("Connection from {addr} shut down."),
+                Err(e) => println!("Error on connection from {addr}: {e:#}"),
             }
         });
     }

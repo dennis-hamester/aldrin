@@ -134,7 +134,7 @@ async fn list(bus: &Handle) -> Result<()> {
             println!("|    Name:    N/A");
 
             if let Some(type_id) = proxy.type_id() {
-                println!("|    Type id: {}", type_id);
+                println!("|    Type id: {type_id}");
             } else {
                 println!("|    Type id: N/A");
             }
@@ -478,7 +478,7 @@ fn print_built_in_type_name(
             print!(">");
         }
 
-        BuiltInType::Set(ty) => print!("set<{}>", ty),
+        BuiltInType::Set(ty) => print!("set<{ty}>"),
 
         BuiltInType::Sender(ty) => {
             print!("sender<");
