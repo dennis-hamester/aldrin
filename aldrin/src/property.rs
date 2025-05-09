@@ -1,5 +1,6 @@
 use crate::event::Event;
 use crate::reply::Reply;
+use std::mem;
 use std::time::Instant;
 
 /// Tracks some state of a service.
@@ -91,43 +92,51 @@ impl<T> Property<T> {
         &self.val
     }
 
-    /// Sets the value to `val` and returns a reference to it.
+    /// Sets the value to `val` and returns a tuple of the new and old values.
     ///
     /// The timestamp will be set to [`Instant::now()`].
-    pub fn set(&mut self, val: T) -> &T {
+    pub fn set(&mut self, val: T) -> (&T, T) {
         self.timestamp = Instant::now();
-        self.val = val;
-        &self.val
+        let old = mem::replace(&mut self.val, val);
+        (&self.val, old)
     }
 }
 
 impl<T> Property<Option<T>> {
-    /// Sets the value to [`Some(val)`](Some) and returns a reference to the inner value.
+    /// Sets the value to `Some(val)` and returns a tuple of the new and old values.
     ///
     /// The timestamp will be set to [`Instant::now()`].
-    pub fn set_some(&mut self, val: T) -> &T {
+    pub fn set_some(&mut self, val: T) -> (&T, Option<T>) {
         self.timestamp = Instant::now();
-        self.val.insert(val)
+
+        match self.val {
+            Some(ref mut inner) => {
+                let old = mem::replace(inner, val);
+                (inner, Some(old))
+            }
+
+            None => (self.val.insert(val), None),
+        }
     }
 
-    /// Sets the value to [`None`].
+    /// Sets the value to `None` and returns the old value.
     ///
     /// The timestamp will be set to [`Instant::now()`].
-    pub fn set_none(&mut self) {
+    pub fn set_none(&mut self) -> Option<T> {
         self.timestamp = Instant::now();
-        self.val = None;
+        self.val.take()
     }
 }
 
 impl<T> Property<T> {
     /// Updates the value to `val` if `timestamp` is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update(&mut self, val: T, timestamp: Instant) -> Option<&T> {
+    /// Returns a tuple of the new and old values, if the value was updated.
+    pub fn update(&mut self, val: T, timestamp: Instant) -> Option<(&T, T)> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
-            self.val = val;
-            Some(&self.val)
+            let old = mem::replace(&mut self.val, val);
+            Some((&self.val, old))
         } else {
             None
         }
@@ -136,12 +145,11 @@ impl<T> Property<T> {
     /// Updates the value from a [`Reply`], if its timestamp is newer.
     ///
     /// Returns:
-    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
-    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
-    ///   that is newer than the stored one.
-    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
-    ///   is older than the stored one.
-    pub fn update_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    /// - `Err(_)`, if the [`Reply`] contains an error.
+    /// - `Ok(Some(new, old))`, if the [`Reply`] contains an `Ok(_)` value that is newer than the
+    ///   stored one.
+    /// - `Ok(None)`, if the [`Reply`] contains an `Ok(_)` value that is older than the stored one.
+    pub fn update_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<(&T, T)>, E> {
         let timestamp = reply.timestamp();
         let val = reply.into_args()?;
         Ok(self.update(val, timestamp))
@@ -149,8 +157,8 @@ impl<T> Property<T> {
 
     /// Updates the value from an [`Event`], if its timestamp is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update_event(&mut self, ev: Event<T>) -> Option<&T> {
+    /// Returns a tuple of the new and old values, if the value was updated.
+    pub fn update_event(&mut self, ev: Event<T>) -> Option<(&T, T)> {
         let timestamp = ev.timestamp();
         let val = ev.into_args();
         self.update(val, timestamp)
@@ -158,50 +166,58 @@ impl<T> Property<T> {
 }
 
 impl<T> Property<Option<T>> {
-    /// Updates the value to [`Some(val)`](Some) if `timestamp` is newer.
+    /// Updates the value to `Some(val)` if `timestamp` is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update_some(&mut self, val: T, timestamp: Instant) -> Option<&T> {
+    /// Returns a tuple of the new and old values, if the value was updated.
+    pub fn update_some(&mut self, val: T, timestamp: Instant) -> Option<(&T, Option<T>)> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
-            Some(self.val.insert(val))
+
+            match self.val {
+                Some(ref mut inner) => {
+                    let old = mem::replace(inner, val);
+                    Some((inner, Some(old)))
+                }
+
+                None => Some((self.val.insert(val), None)),
+            }
         } else {
             None
         }
     }
 
-    /// Updates the value to [`None`] if `timestamp` is newer.
+    /// Updates the value to `None` if `timestamp` is newer.
     ///
-    /// Returns [`true`] if the value was updated.
-    pub fn update_none(&mut self, timestamp: Instant) -> bool {
+    /// Returns `Some(_)` with the old value if it was updated and `None` otherwise.
+    pub fn update_none(&mut self, timestamp: Instant) -> Option<Option<T>> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
-            true
+            Some(self.val.take())
         } else {
-            false
+            None
         }
     }
 
-    /// Updates the value from a [`Reply`] by wrapping it in [`Some(_)`](Some), if its timestamp is
-    /// newer.
+    /// Updates the value from a [`Reply`] by wrapping it in `Some(_)`, if its timestamp is newer.
     ///
     /// Returns:
-    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
-    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
-    ///   that is newer than the stored one.
-    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
-    ///   is older than the stored one.
-    pub fn update_reply_some<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    /// - `Err(_)`, if the [`Reply`] contains an error.
+    /// - `Ok(Some(new, old))`, if the [`Reply`] contains an `Ok(_)` value that is newer than the
+    ///   stored one.
+    /// - `Ok(None)`, if the [`Reply`] contains an `Ok(_)` value that is older than the stored one.
+    pub fn update_reply_some<E>(
+        &mut self,
+        reply: Reply<T, E>,
+    ) -> Result<Option<(&T, Option<T>)>, E> {
         let timestamp = reply.timestamp();
         let val = reply.into_args()?;
         Ok(self.update_some(val, timestamp))
     }
 
-    /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its timestamp is
-    /// newer.
+    /// Updates the value from an [`Event`] by wrapping it in `Some(_)`, if its timestamp is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn update_event_some(&mut self, ev: Event<T>) -> Option<&T> {
+    /// Returns a tuple of the new and old values, if the value was updated.
+    pub fn update_event_some(&mut self, ev: Event<T>) -> Option<(&T, Option<T>)> {
         let timestamp = ev.timestamp();
         let val = ev.into_args();
         self.update_some(val, timestamp)
@@ -211,16 +227,16 @@ impl<T> Property<Option<T>> {
 impl<T: PartialEq> Property<T> {
     /// Updates the value to `val` if it's different and `timestamp` is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
+    /// Returns a tuple of the new and old values, if the value was updated.
     ///
     /// If `timestamp` is newer, then the stored timestamp is always updated, regardless of `val`.
-    pub fn check(&mut self, val: T, timestamp: Instant) -> Option<&T> {
+    pub fn check(&mut self, val: T, timestamp: Instant) -> Option<(&T, T)> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
 
             if self.val != val {
-                self.val = val;
-                Some(&self.val)
+                let old = mem::replace(&mut self.val, val);
+                Some((&self.val, old))
             } else {
                 None
             }
@@ -232,22 +248,27 @@ impl<T: PartialEq> Property<T> {
     /// Updates the value from a [`Reply`] if it's different and its timestamp is newer.
     ///
     /// Returns:
-    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
-    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
-    ///   that is different and newer than the stored one.
-    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
-    ///   is either older than or equal to the stored one.
+    /// - `Err(_)`, if the [`Reply`] contains an error.
+    /// - `Ok(Some(new, old))`, if the [`Reply`] contains an `Ok(_)` value that is different and
+    ///   newer than the stored one.
+    /// - `Ok(None)`, if the [`Reply`] contains an `Ok(_)` value that is either older than or equal
+    ///   to the stored one.
     ///
     /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
     /// regardless of the [`Reply`s](Reply) value.
-    pub fn check_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn check_reply<E>(&mut self, reply: Reply<T, E>) -> Result<Option<(&T, T)>, E> {
         let timestamp = reply.timestamp();
         let val = reply.into_args()?;
         Ok(self.check(val, timestamp))
     }
 
     /// Updates the value from an [`Event`], if it's different and its timestamp is newer.
-    pub fn check_event(&mut self, ev: Event<T>) -> Option<&T> {
+    ///
+    /// Returns a tuple of the new and old values, if the value was updated.
+    ///
+    /// If the [`Event`s](Event) `timestamp` is newer, then the stored timestamp is always updated,
+    /// regardless of the [`Reply`s](Reply) value.
+    pub fn check_event(&mut self, ev: Event<T>) -> Option<(&T, T)> {
         let timestamp = ev.timestamp();
         let val = ev.into_args();
         self.check(val, timestamp)
@@ -255,18 +276,26 @@ impl<T: PartialEq> Property<T> {
 }
 
 impl<T: PartialEq> Property<Option<T>> {
-    /// Updates the value to [`Some(val)`](Some) if it's different and `timestamp` is newer.
+    /// Updates the value to `Some(val)` if it's different and `timestamp` is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
+    /// Returns a tuple of the new and old values, if the value was updated.
     ///
     /// If `timestamp` is newer, then the stored timestamp is always updated, regardless of `val`.
-    pub fn check_some(&mut self, val: T, timestamp: Instant) -> Option<&T> {
+    pub fn check_some(&mut self, val: T, timestamp: Instant) -> Option<(&T, Option<T>)> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
 
             match self.val {
-                Some(ref cur) if *cur == val => None,
-                _ => Some(self.val.insert(val)),
+                Some(ref mut inner) => {
+                    if val != *inner {
+                        let old = mem::replace(inner, val);
+                        Some((inner, Some(old)))
+                    } else {
+                        None
+                    }
+                }
+
+                None => Some((self.val.insert(val), None)),
             }
         } else {
             None
@@ -275,47 +304,52 @@ impl<T: PartialEq> Property<Option<T>> {
 }
 
 impl<T> Property<Option<T>> {
-    /// Updates the value to [`None`] if it's currently [`Some(_)`](Some) and if `timestamp` is
-    /// newer.
+    /// Updates the value to `None` if it's currently `Some(_)` and if `timestamp` is newer.
     ///
-    /// Returns [`true`] if the value was updated.
+    /// Returns the old value if it was updated.
     ///
     /// If `timestamp` is newer, then the stored timestamp is always updated, regardless of the
     /// current value.
-    pub fn check_none(&mut self, timestamp: Instant) -> bool {
+    pub fn check_none(&mut self, timestamp: Instant) -> Option<T> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
-            self.val.take().is_some()
+            self.val.take()
         } else {
-            false
+            None
         }
     }
 }
 
 impl<T: PartialEq> Property<Option<T>> {
-    /// Updates the value from a [`Reply`] by wrapping it in [`Some(_)`](Some) if it's different and
-    /// its timestamp is newer.
+    /// Updates the value from a [`Reply`] by wrapping it in `Some(_)` if it's different and its
+    /// timestamp is newer.
     ///
     /// Returns:
-    /// - [`Err(_)`](Err), if the [`Reply`] contains an error.
-    /// - [`Ok(`](Ok)[`Some(_)`](Some)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value
-    ///   that is different and newer than the stored one.
-    /// - [`Ok(`](Ok)[`None`](None)[`)`](Ok), if the [`Reply`] contains an [`Ok(_)`](Ok) value that
-    ///   is either older than or equal to the stored one.
+    /// - `Err(_)`, if the [`Reply`] contains an error.
+    /// - `Ok(Some(new, old))`, if the [`Reply`] contains an `Ok(_)` value that is different and
+    ///   newer than the stored one.
+    /// - `Ok(None)`, if the [`Reply`] contains an `Ok(_)` value that is either older than or equal
+    ///   to the stored one.
     ///
     /// If the [`Reply`s](Reply) `timestamp` is newer, then the stored timestamp is always updated,
     /// regardless of the [`Reply`s](Reply) value.
-    pub fn check_reply_some<E>(&mut self, reply: Reply<T, E>) -> Result<Option<&T>, E> {
+    pub fn check_reply_some<E>(
+        &mut self,
+        reply: Reply<T, E>,
+    ) -> Result<Option<(&T, Option<T>)>, E> {
         let timestamp = reply.timestamp();
         let val = reply.into_args()?;
         Ok(self.check_some(val, timestamp))
     }
 
-    /// Updates the value from an [`Event`] by wrapping it in [`Some(_)`](Some), if its different
-    /// and its timestamp is newer.
+    /// Updates the value from an [`Event`] by wrapping it in `Some(_)`, if its different and its
+    /// timestamp is newer.
     ///
-    /// Returns [`Some(_)`](Some), if the value was updated.
-    pub fn check_event_some(&mut self, ev: Event<T>) -> Option<&T> {
+    /// Returns a tuple of the new and old values, if the value was updated.
+    ///
+    /// If the [`Event`s](Event) `timestamp` is newer, then the stored timestamp is always updated,
+    /// regardless of the [`Reply`s](Reply) value.
+    pub fn check_event_some(&mut self, ev: Event<T>) -> Option<(&T, Option<T>)> {
         let timestamp = ev.timestamp();
         let val = ev.into_args();
         self.check_some(val, timestamp)
