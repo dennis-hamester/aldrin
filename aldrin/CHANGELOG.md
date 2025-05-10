@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support protocol version 1.20.
 - Add `ClientBuilder` type.
+- Add `DiscovererEvent::is_created()` and `is_destroyed()` methods.
 
 ### Changed
 

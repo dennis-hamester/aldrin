@@ -1123,6 +1123,16 @@ where
         self.kind
     }
 
+    /// Checks if this is a [`DiscovererEventKind::Created`] event.
+    pub fn is_created(self) -> bool {
+        self.kind == DiscovererEventKind::Created
+    }
+
+    /// Checks if this is a [`DiscovererEventKind::Destroyed`] event.
+    pub fn is_destroyed(self) -> bool {
+        self.kind == DiscovererEventKind::Destroyed
+    }
+
     /// Returns the object id that prompted this event.
     pub fn object_id(self) -> ObjectId {
         self.object
