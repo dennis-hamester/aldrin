@@ -443,3 +443,29 @@ async fn restart_current_only_specific() {
     client.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn finish_on_shutdown() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj_uuid = ObjectUuid::new_v4();
+
+    let mut discoverer = client
+        .create_discoverer()
+        .specific((), obj_uuid, [])
+        .build()
+        .await
+        .unwrap();
+
+    let obj = client.create_object(obj_uuid).await.unwrap();
+    let ev = discoverer.next_event().await.unwrap();
+    test_created(&discoverer, ev, (), &obj, None, None);
+
+    client.join().await;
+
+    assert!(discoverer.next_event().await.is_none());
+    assert!(discoverer.is_finished());
+
+    broker.join().await;
+}
