@@ -469,3 +469,116 @@ async fn finish_on_shutdown() {
 
     broker.join().await;
 }
+
+#[tokio::test]
+#[should_panic]
+async fn query_invalid_object_uuid1() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj_uuid = ObjectUuid::new_v4();
+    let svc_uuid = ServiceUuid::new_v4();
+
+    let mut discoverer = client
+        .create_discoverer()
+        .specific((), obj_uuid, [svc_uuid])
+        .build()
+        .await
+        .unwrap();
+
+    let obj = client.create_object(obj_uuid).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(svc_uuid, info).await.unwrap();
+
+    let ev = discoverer.next_event().await.unwrap();
+    test_created(&discoverer, ev, (), &obj, Some(&svc), None);
+
+    // This should panic because it queries an invalid object UUID.
+    discoverer.object_id((), ObjectUuid::NIL);
+    assert_eq!(discoverer.service_id((), ObjectUuid::NIL, svc_uuid), None);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn query_invalid_object_uuid2() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj_uuid = ObjectUuid::new_v4();
+    let svc_uuid = ServiceUuid::new_v4();
+
+    let mut discoverer = client
+        .create_discoverer()
+        .specific((), obj_uuid, [svc_uuid])
+        .build()
+        .await
+        .unwrap();
+
+    let obj = client.create_object(obj_uuid).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(svc_uuid, info).await.unwrap();
+
+    let ev = discoverer.next_event().await.unwrap();
+    test_created(&discoverer, ev, (), &obj, Some(&svc), None);
+
+    // This should panic because it queries an invalid object UUID.
+    discoverer.service_id((), ObjectUuid::NIL, svc_uuid);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn query_entry_invalid_object_uuid1() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj_uuid = ObjectUuid::new_v4();
+    let svc_uuid = ServiceUuid::new_v4();
+
+    let mut discoverer = client
+        .create_discoverer()
+        .specific((), obj_uuid, [svc_uuid])
+        .build()
+        .await
+        .unwrap();
+
+    let obj = client.create_object(obj_uuid).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(svc_uuid, info).await.unwrap();
+
+    let ev = discoverer.next_event().await.unwrap();
+    test_created(&discoverer, ev, (), &obj, Some(&svc), None);
+
+    let entry = discoverer.entry(()).unwrap();
+
+    // This should panic because it queries an invalid object UUID.
+    entry.object_id(ObjectUuid::NIL);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn query_entry_invalid_object_uuid2() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj_uuid = ObjectUuid::new_v4();
+    let svc_uuid = ServiceUuid::new_v4();
+
+    let mut discoverer = client
+        .create_discoverer()
+        .specific((), obj_uuid, [svc_uuid])
+        .build()
+        .await
+        .unwrap();
+
+    let obj = client.create_object(obj_uuid).await.unwrap();
+    let info = ServiceInfo::new(0);
+    let svc = obj.create_service(svc_uuid, info).await.unwrap();
+
+    let ev = discoverer.next_event().await.unwrap();
+    test_created(&discoverer, ev, (), &obj, Some(&svc), None);
+
+    let entry = discoverer.entry(()).unwrap();
+
+    // This should panic because it queries an invalid object UUID.
+    entry.service_id(ObjectUuid::NIL, svc_uuid);
+}

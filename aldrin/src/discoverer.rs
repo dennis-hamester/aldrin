@@ -461,7 +461,7 @@ where
     /// Queries the `ObjectId` of an existing object.
     pub fn object_id(&self, object: impl Into<ObjectUuid>) -> Option<ObjectId> {
         match self.inner {
-            EntryInner::Specific(ref specific) => specific.object_id(),
+            EntryInner::Specific(ref specific) => specific.object_id(object.into()),
             EntryInner::Any(ref any) => any.object_id(object.into()),
         }
     }
@@ -473,7 +473,10 @@ where
         service: impl Into<ServiceUuid>,
     ) -> Option<ServiceId> {
         match self.inner {
-            EntryInner::Specific(ref specific) => specific.service_id(service.into()),
+            EntryInner::Specific(ref specific) => {
+                specific.service_id(object.into(), service.into())
+            }
+
             EntryInner::Any(ref any) => any.service_id(object.into(), service.into()),
         }
     }
@@ -684,21 +687,31 @@ where
         self.key
     }
 
-    fn object_id(&self) -> Option<ObjectId> {
-        if self.created {
-            Some(ObjectId::new(self.object, self.cookie.unwrap()))
-        } else {
-            None
-        }
+    fn object_id_unchecked(&self) -> ObjectId {
+        ObjectId::new(self.object, self.cookie.unwrap())
     }
 
-    fn service_id(&self, service: ServiceUuid) -> Option<ServiceId> {
-        self.object_id().map(|object_id| {
-            ServiceId::new(
-                object_id,
-                service,
-                self.services.get(&service).expect("invalid UUID").unwrap(),
-            )
+    fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+        assert_eq!(object, self.object);
+        self.created.then(|| self.object_id_unchecked())
+    }
+
+    fn service_cookie_unchecked(&self, service: ServiceUuid) -> ServiceCookie {
+        self.services
+            .get(&service)
+            .expect("valid service UUID")
+            .unwrap()
+    }
+
+    fn service_id_unchecked(&self, service: ServiceUuid) -> ServiceId {
+        let object_id = self.object_id_unchecked();
+        let service_cookie = self.service_cookie_unchecked(service);
+        ServiceId::new(object_id, service, service_cookie)
+    }
+
+    fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+        self.object_id(object).map(|object_id| {
+            ServiceId::new(object_id, service, self.service_cookie_unchecked(service))
         })
     }
 
@@ -868,11 +881,11 @@ where
     }
 
     fn object_id(self) -> ObjectId {
-        self.object.object_id().unwrap()
+        self.object.object_id_unchecked()
     }
 
     fn service_id(self, service: ServiceUuid) -> ServiceId {
-        self.object.service_id(service).unwrap()
+        self.object.service_id_unchecked(service)
     }
 }
 
