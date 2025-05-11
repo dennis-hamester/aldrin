@@ -192,7 +192,7 @@ where
     }
 
     /// Queries a specific object id.
-    pub fn object_id(&self, key: Key, object: ObjectUuid) -> Option<ObjectId> {
+    pub fn object_id(&self, key: Key, object: impl Into<ObjectUuid>) -> Option<ObjectId> {
         self.entries
             .get(&key)
             .expect("invalid key")
@@ -203,8 +203,8 @@ where
     pub fn service_id(
         &self,
         key: Key,
-        object: ObjectUuid,
-        service: ServiceUuid,
+        object: impl Into<ObjectUuid>,
+        service: impl Into<ServiceUuid>,
     ) -> Option<ServiceId> {
         self.entries
             .get(&key)
@@ -459,18 +459,22 @@ where
     }
 
     /// Queries the `ObjectId` of an existing object.
-    pub fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+    pub fn object_id(&self, object: impl Into<ObjectUuid>) -> Option<ObjectId> {
         match self.inner {
             EntryInner::Specific(ref specific) => specific.object_id(),
-            EntryInner::Any(ref any) => any.object_id(object),
+            EntryInner::Any(ref any) => any.object_id(object.into()),
         }
     }
 
     /// Queries a `ServiceId` of an existing object.
-    pub fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+    pub fn service_id(
+        &self,
+        object: impl Into<ObjectUuid>,
+        service: impl Into<ServiceUuid>,
+    ) -> Option<ServiceId> {
         match self.inner {
-            EntryInner::Specific(ref specific) => specific.service_id(service),
-            EntryInner::Any(ref any) => any.service_id(object, service),
+            EntryInner::Specific(ref specific) => specific.service_id(service.into()),
+            EntryInner::Any(ref any) => any.service_id(object.into(), service.into()),
         }
     }
 
@@ -601,10 +605,10 @@ where
     }
 
     /// Returns one of the object's service ids.
-    pub fn service_id(self, service: ServiceUuid) -> ServiceId {
+    pub fn service_id(self, service: impl Into<ServiceUuid>) -> ServiceId {
         match self.inner {
-            IterEntryInner::Specific(specific) => specific.service_id(service),
-            IterEntryInner::Any(any) => any.service_id(service),
+            IterEntryInner::Specific(specific) => specific.service_id(service.into()),
+            IterEntryInner::Any(any) => any.service_id(service.into()),
         }
     }
 }
@@ -1145,7 +1149,11 @@ where
     ///
     /// This function will also panic if `service` is not one of the UUIDs specified when
     /// [`object`](DiscovererBuilder::object) was called.
-    pub fn service_id(self, discoverer: &Discoverer<Key>, service: ServiceUuid) -> ServiceId {
+    pub fn service_id(
+        self,
+        discoverer: &Discoverer<Key>,
+        service: impl Into<ServiceUuid>,
+    ) -> ServiceId {
         assert_eq!(self.kind, DiscovererEventKind::Created);
 
         discoverer

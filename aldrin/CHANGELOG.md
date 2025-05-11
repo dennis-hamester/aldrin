@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RunError<T>` no longer implements `From<T>`.
 - `RunError<T>` now implements `From<SerializeError>` and `From<DeserializeError>`.
 - `Propery` setters now return both new and old values.
+- `Discoverer` now takes `impl Into<ObjectUuid>` and `impl Into<ServiceUuid>` in more places.
 
 ## [0.12.0] - 2025-01-26
 
