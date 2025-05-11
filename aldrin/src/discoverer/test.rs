@@ -104,7 +104,7 @@ async fn any_object_no_services() {
 
     let mut discoverer = client
         .create_discoverer()
-        .any(0, None)
+        .add(0, None, None)
         .build()
         .await
         .unwrap();
@@ -135,7 +135,7 @@ async fn specific_object_no_services() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific(0, obj.id().uuid, None)
+        .bare_object(0, obj.id().uuid)
         .build()
         .await
         .unwrap();
@@ -172,7 +172,7 @@ async fn specific_object() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific(0, obj.id().uuid, [svc1.id().uuid, svc2.id().uuid])
+        .object_with_services(0, obj.id().uuid, [svc1.id().uuid, svc2.id().uuid])
         .build()
         .await
         .unwrap();
@@ -209,7 +209,7 @@ async fn any_object() {
 
     let mut discoverer = client
         .create_discoverer()
-        .any(0, [svc1.id().uuid, svc2.id().uuid])
+        .any_object_with_services(0, [svc1.id().uuid, svc2.id().uuid])
         .build()
         .await
         .unwrap();
@@ -274,7 +274,7 @@ async fn current_only() {
 
     let mut discoverer = client
         .create_discoverer()
-        .any(0, [svc1.id().uuid, svc2.id().uuid])
+        .any_object_with_services(0, [svc1.id().uuid, svc2.id().uuid])
         .build_current_only()
         .await
         .unwrap();
@@ -315,7 +315,7 @@ async fn restart_any() {
 
     let mut discoverer = client
         .create_discoverer()
-        .any(0, [svc.id().uuid])
+        .any_object_with_services(0, [svc.id().uuid])
         .build()
         .await
         .unwrap();
@@ -350,7 +350,7 @@ async fn restart_specific() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific(0, obj.id().uuid, [svc.id().uuid])
+        .object_with_services(0, obj.id().uuid, [svc.id().uuid])
         .build()
         .await
         .unwrap();
@@ -380,7 +380,7 @@ async fn restart_current_only_any() {
 
     let mut discoverer = client
         .create_discoverer()
-        .any(0, [uuid])
+        .any_object_with_services(0, [uuid])
         .build_current_only()
         .await
         .unwrap();
@@ -416,7 +416,7 @@ async fn restart_current_only_specific() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific(0, obj_uuid, [svc_uuid])
+        .object_with_services(0, obj_uuid, [svc_uuid])
         .build_current_only()
         .await
         .unwrap();
@@ -451,7 +451,7 @@ async fn finish_on_shutdown() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific((), obj_uuid, [])
+        .bare_object((), obj_uuid)
         .build()
         .await
         .unwrap();
@@ -479,7 +479,7 @@ async fn query_invalid_object_uuid1() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific((), obj_uuid, [svc_uuid])
+        .object_with_services((), obj_uuid, [svc_uuid])
         .build()
         .await
         .unwrap();
@@ -507,7 +507,7 @@ async fn query_invalid_object_uuid2() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific((), obj_uuid, [svc_uuid])
+        .object_with_services((), obj_uuid, [svc_uuid])
         .build()
         .await
         .unwrap();
@@ -534,7 +534,7 @@ async fn query_entry_invalid_object_uuid1() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific((), obj_uuid, [svc_uuid])
+        .object_with_services((), obj_uuid, [svc_uuid])
         .build()
         .await
         .unwrap();
@@ -563,7 +563,7 @@ async fn query_entry_invalid_object_uuid2() {
 
     let mut discoverer = client
         .create_discoverer()
-        .specific((), obj_uuid, [svc_uuid])
+        .object_with_services((), obj_uuid, [svc_uuid])
         .build()
         .await
         .unwrap();
@@ -589,7 +589,7 @@ async fn query_invalid_entry() {
 
     let discoverer = client
         .create_discoverer()
-        .specific(1, ObjectUuid::new_v4(), None)
+        .bare_object(1, ObjectUuid::new_v4())
         .build()
         .await
         .unwrap();
@@ -606,7 +606,7 @@ async fn query_invalid_entry_iter() {
 
     let discoverer = client
         .create_discoverer()
-        .specific(1, ObjectUuid::new_v4(), None)
+        .bare_object(1, ObjectUuid::new_v4())
         .build()
         .await
         .unwrap();

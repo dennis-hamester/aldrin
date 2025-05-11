@@ -676,7 +676,7 @@ impl Handle {
     ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
         let mut discoverer = self
             .create_discoverer()
-            .object((), object, services.iter().copied())
+            .add((), object, services.iter().copied())
             .build_current_only()
             .await?;
 
@@ -742,7 +742,7 @@ impl Handle {
     ) -> Result<(ObjectId, [ServiceId; N]), Error> {
         let mut discoverer = self
             .create_discoverer()
-            .object((), object, services.iter().copied())
+            .add((), object, services.iter().copied())
             .build()
             .await?;
 

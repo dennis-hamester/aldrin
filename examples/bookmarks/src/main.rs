@@ -94,7 +94,7 @@ async fn main() -> Result<()> {
 async fn list(bus: &Handle) -> Result<()> {
     let mut discoverer = bus
         .create_discoverer()
-        .any((), [Bookmarks::UUID])
+        .any_object_with_services((), [Bookmarks::UUID])
         .build_current_only()
         .await?;
 

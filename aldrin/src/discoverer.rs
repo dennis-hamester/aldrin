@@ -75,8 +75,8 @@ use std::{future, option};
 /// const SERVICE_UUID_2: ServiceUuid = ServiceUuid(uuid!("5456b1f9-5c2e-46b0-b0d7-bad82cbc957b"));
 ///
 /// let mut discoverer = Discoverer::builder(&handle)
-///     .specific(1, OBJECT_UUID, [SERVICE_UUID_1, SERVICE_UUID_2])
-///     .any(2, [SERVICE_UUID_1])
+///     .object_with_services(1, OBJECT_UUID, [SERVICE_UUID_1, SERVICE_UUID_2])
+///     .any_object_with_services(2, [SERVICE_UUID_1])
 ///     .build()
 ///     .await?;
 ///
@@ -207,10 +207,6 @@ where
     }
 
     /// Returns an entry of the `Discoverer`.
-    ///
-    /// Entries are directly associated with the keys and correspond to the
-    /// [`object`](DiscovererBuilder::object), [`specific`](DiscovererBuilder::specific) and
-    /// [`any`](DiscovererBuilder::any) calls on the [`DiscovererBuilder`].
     pub fn entry(&self, key: Key) -> &DiscovererEntry<Key> {
         self.entries.get(&key).expect("valid key")
     }
@@ -324,7 +320,7 @@ where
         Discoverer::new(self.client, self.entries, true).await
     }
 
-    /// Add an object to the discoverer.
+    /// Adds an object to the discoverer.
     ///
     /// The `key` is an arbitrary value that can later be queried again on
     /// [`DiscovererEvent`s](DiscovererEvent). It can be used to distinguish events when more than
@@ -332,43 +328,57 @@ where
     ///
     /// When specifying an [`ObjectUuid`], the discoverer will match only on that UUID. Otherwise,
     /// the discoverer will emit events for every object that matches the set of services.
-    pub fn object(
-        self,
+    pub fn add(
+        mut self,
         key: Key,
         object: Option<ObjectUuid>,
         services: impl IntoIterator<Item = ServiceUuid>,
     ) -> Self {
-        match object {
-            Some(object) => self.specific(key, object, services),
-            None => self.any(key, services),
-        }
+        let entry = match object {
+            Some(object) => SpecificObject::new(key, object, services).into(),
+            None => AnyObject::new(key, services).into(),
+        };
+
+        self.entries.insert(key, entry);
+        self
     }
 
     /// Registers interest in a specific object implementing a set of services.
     ///
-    /// This is a shorthand for calling `object(key, Some(object), services)`.
-    pub fn specific(
-        mut self,
+    /// This is a shorthand for calling `add(key, Some(object), services)`.
+    pub fn object_with_services<S>(
+        self,
         key: Key,
         object: impl Into<ObjectUuid>,
-        services: impl IntoIterator<Item = ServiceUuid>,
-    ) -> Self {
-        self.entries.insert(
+        services: S,
+    ) -> Self
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.add(
             key,
-            SpecificObject::new(key, object.into(), services).into(),
-        );
-
-        self
+            Some(object.into()),
+            services.into_iter().map(Into::into),
+        )
     }
 
-    /// Registers interest in any object implementing a set of services.
+    /// Registers interest in a specific object without any services.
     ///
-    /// This is a shorthand for calling `object(key, None, services)`.
-    pub fn any(mut self, key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
-        self.entries
-            .insert(key, AnyObject::new(key, services).into());
+    /// This is a shorthand for calling `add(key, Some(object), [])`.
+    pub fn bare_object(self, key: Key, object: impl Into<ObjectUuid>) -> Self {
+        self.add(key, Some(object.into()), None)
+    }
 
-        self
+    /// Registers interest in a any object implementing a set of services.
+    ///
+    /// This is a shorthand for calling `add(key, None, services)`.
+    pub fn any_object_with_services<S>(self, key: Key, services: S) -> Self
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.add(key, None, services.into_iter().map(Into::into))
     }
 }
 
@@ -1159,7 +1169,7 @@ where
     /// ([`kind`](Self::kind) returns [`DiscovererEventKind::Created`]). It will panic otherwise.
     ///
     /// This function will also panic if `service` is not one of the UUIDs specified when
-    /// [`object`](DiscovererBuilder::object) was called.
+    /// [`add`](DiscovererBuilder::add) was called.
     pub fn service_id(
         self,
         discoverer: &Discoverer<Key>,
