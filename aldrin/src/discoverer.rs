@@ -193,10 +193,7 @@ where
 
     /// Queries a specific object id.
     pub fn object_id(&self, key: Key, object: impl Into<ObjectUuid>) -> Option<ObjectId> {
-        self.entries
-            .get(&key)
-            .expect("invalid key")
-            .object_id(object)
+        self.entry(key).object_id(object)
     }
 
     /// Queries a specific service id.
@@ -206,10 +203,7 @@ where
         object: impl Into<ObjectUuid>,
         service: impl Into<ServiceUuid>,
     ) -> Option<ServiceId> {
-        self.entries
-            .get(&key)
-            .expect("invalid key")
-            .service_id(object, service)
+        self.entry(key).service_id(object, service)
     }
 
     /// Returns an entry of the `Discoverer`.
@@ -217,8 +211,8 @@ where
     /// Entries are directly associated with the keys and correspond to the
     /// [`object`](DiscovererBuilder::object), [`specific`](DiscovererBuilder::specific) and
     /// [`any`](DiscovererBuilder::any) calls on the [`DiscovererBuilder`].
-    pub fn entry(&self, key: Key) -> Option<&DiscovererEntry<Key>> {
-        self.entries.get(&key)
+    pub fn entry(&self, key: Key) -> &DiscovererEntry<Key> {
+        self.entries.get(&key).expect("valid key")
     }
 
     /// Returns an iterator over all found objects.
@@ -227,8 +221,8 @@ where
     }
 
     /// Returns an iterator over all found objects corresponding to a specific key.
-    pub fn entry_iter(&self, key: Key) -> Option<DiscovererEntryIter<Key>> {
-        self.entry(key).map(DiscovererEntry::iter)
+    pub fn entry_iter(&self, key: Key) -> DiscovererEntryIter<Key> {
+        self.entry(key).iter()
     }
 
     /// Polls the discoverer for an event.

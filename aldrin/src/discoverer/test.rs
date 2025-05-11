@@ -19,7 +19,7 @@ fn test_created<Key>(
     assert_eq!(event.key(), key);
     assert_eq!(event.object_id(), object.id());
 
-    let entry = discoverer.entry(key).unwrap();
+    let entry = discoverer.entry(key);
     assert_eq!(entry.key(), key);
     assert_eq!(entry.object_id(object.id().uuid), Some(object.id()));
 
@@ -81,7 +81,7 @@ fn test_destroyed<Key>(
     assert_eq!(event.key(), key);
     assert_eq!(event.object_id(), object.id());
 
-    let entry = discoverer.entry(key).unwrap();
+    let entry = discoverer.entry(key);
     assert_eq!(entry.key(), key);
     assert_eq!(entry.object_id(object.id().uuid), None);
 
@@ -250,9 +250,7 @@ async fn empty() {
     let mut discoverer = client.create_discoverer::<()>().build().await.unwrap();
     assert!(discoverer.next_event().await.is_none());
     assert!(discoverer.is_finished());
-    assert!(discoverer.entry(()).is_none());
     assert!(discoverer.iter().next().is_none());
-    assert!(discoverer.entry_iter(()).is_none());
 
     client.join().await;
     broker.join().await;
@@ -548,7 +546,7 @@ async fn query_entry_invalid_object_uuid1() {
     let ev = discoverer.next_event().await.unwrap();
     test_created(&discoverer, ev, (), &obj, Some(&svc), None);
 
-    let entry = discoverer.entry(()).unwrap();
+    let entry = discoverer.entry(());
 
     // This should panic because it queries an invalid object UUID.
     entry.object_id(ObjectUuid::NIL);
@@ -577,8 +575,42 @@ async fn query_entry_invalid_object_uuid2() {
     let ev = discoverer.next_event().await.unwrap();
     test_created(&discoverer, ev, (), &obj, Some(&svc), None);
 
-    let entry = discoverer.entry(()).unwrap();
+    let entry = discoverer.entry(());
 
     // This should panic because it queries an invalid object UUID.
     entry.service_id(ObjectUuid::NIL, svc_uuid);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn query_invalid_entry() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let discoverer = client
+        .create_discoverer()
+        .specific(1, ObjectUuid::new_v4(), None)
+        .build()
+        .await
+        .unwrap();
+
+    // This should panic because it queries an invald key.
+    discoverer.entry(2);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn query_invalid_entry_iter() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let discoverer = client
+        .create_discoverer()
+        .specific(1, ObjectUuid::new_v4(), None)
+        .build()
+        .await
+        .unwrap();
+
+    // This should panic because it queries an invald key.
+    discoverer.entry_iter(2);
 }
