@@ -932,17 +932,21 @@ where
             .map(|&cookie| ObjectId::new(object, cookie))
     }
 
+    fn service_cookie_unchecked(&self, object: ObjectUuid, service: ServiceUuid) -> ServiceCookie {
+        *self
+            .services
+            .get(&service)
+            .expect("valid service UUID")
+            .get(&object)
+            .unwrap()
+    }
+
     fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
         self.object_id(object).map(|object_id| {
             ServiceId::new(
                 object_id,
                 service,
-                *self
-                    .services
-                    .get(&service)
-                    .expect("invalid UUID")
-                    .get(&object)
-                    .unwrap(),
+                self.service_cookie_unchecked(object, service),
             )
         })
     }
