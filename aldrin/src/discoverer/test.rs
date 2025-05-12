@@ -5,6 +5,7 @@ use aldrin_test::tokio::TestBroker;
 use std::fmt::Debug;
 use std::hash::Hash;
 
+#[track_caller]
 fn test_created<Key>(
     discoverer: &Discoverer<Key>,
     event: DiscovererEvent<Key>,
@@ -15,6 +16,11 @@ fn test_created<Key>(
 ) where
     Key: Copy + Eq + Hash + Debug,
 {
+    assert_eq!(
+        discoverer.object_id(key, object.id().uuid),
+        Some(object.id())
+    );
+
     assert_eq!(event.kind(), DiscovererEventKind::Created);
     assert_eq!(event.key(), key);
     assert_eq!(event.object_id(), object.id());
@@ -35,8 +41,33 @@ fn test_created<Key>(
 
     if let Some(service1) = service1 {
         assert_eq!(
+            discoverer.service_id(key, object.id().uuid, service1.id().uuid),
+            Some(service1.id())
+        );
+
+        assert_eq!(
+            discoverer.service_ids(key, object.id().uuid, [service1.id().uuid]),
+            Some(vec![service1.id()])
+        );
+
+        assert_eq!(
+            discoverer.service_ids_n(key, object.id().uuid, &[service1.id().uuid]),
+            Some([service1.id()])
+        );
+
+        assert_eq!(
             event.service_id(discoverer, service1.id().uuid),
             service1.id()
+        );
+
+        assert_eq!(
+            event.service_ids(discoverer, [service1.id().uuid]),
+            vec![service1.id()]
+        );
+
+        assert_eq!(
+            event.service_ids_n(discoverer, &[service1.id().uuid]),
+            [service1.id()]
         );
 
         assert_eq!(
@@ -44,14 +75,70 @@ fn test_created<Key>(
             Some(service1.id())
         );
 
+        assert_eq!(
+            entry.service_ids(object.id().uuid, [service1.id().uuid]),
+            Some(vec![service1.id()])
+        );
+
+        assert_eq!(
+            entry.service_ids_n(object.id().uuid, &[service1.id().uuid]),
+            Some([service1.id()])
+        );
+
         assert_eq!(iter_entry1.service_id(service1.id().uuid), service1.id());
+
+        assert_eq!(
+            iter_entry1.service_ids([service1.id().uuid]),
+            vec![service1.id()]
+        );
+
+        assert_eq!(
+            iter_entry1.service_ids_n(&[service1.id().uuid]),
+            [service1.id()]
+        );
+
         assert_eq!(iter_entry2.service_id(service1.id().uuid), service1.id());
+
+        assert_eq!(
+            iter_entry2.service_ids([service1.id().uuid]),
+            vec![service1.id()]
+        );
+
+        assert_eq!(
+            iter_entry2.service_ids_n(&[service1.id().uuid]),
+            [service1.id()]
+        );
     }
 
     if let Some(service2) = service2 {
         assert_eq!(
+            discoverer.service_id(key, object.id().uuid, service2.id().uuid),
+            Some(service2.id())
+        );
+
+        assert_eq!(
+            discoverer.service_ids(key, object.id().uuid, [service2.id().uuid]),
+            Some(vec![service2.id()])
+        );
+
+        assert_eq!(
+            discoverer.service_ids_n(key, object.id().uuid, &[service2.id().uuid]),
+            Some([service2.id()])
+        );
+
+        assert_eq!(
             event.service_id(discoverer, service2.id().uuid),
             service2.id()
+        );
+
+        assert_eq!(
+            event.service_ids(discoverer, [service2.id().uuid]),
+            vec![service2.id()]
+        );
+
+        assert_eq!(
+            event.service_ids_n(discoverer, &[service2.id().uuid]),
+            [service2.id()]
         );
 
         assert_eq!(
@@ -59,8 +146,99 @@ fn test_created<Key>(
             Some(service2.id())
         );
 
+        assert_eq!(
+            entry.service_ids(object.id().uuid, [service2.id().uuid]),
+            Some(vec![service2.id()])
+        );
+
+        assert_eq!(
+            entry.service_ids_n(object.id().uuid, &[service2.id().uuid]),
+            Some([service2.id()])
+        );
+
         assert_eq!(iter_entry1.service_id(service2.id().uuid), service2.id());
+
+        assert_eq!(
+            iter_entry1.service_ids([service2.id().uuid]),
+            vec![service2.id()]
+        );
+
+        assert_eq!(
+            iter_entry1.service_ids_n(&[service2.id().uuid]),
+            [service2.id()]
+        );
+
         assert_eq!(iter_entry2.service_id(service2.id().uuid), service2.id());
+
+        assert_eq!(
+            iter_entry2.service_ids([service2.id().uuid]),
+            vec![service2.id()]
+        );
+
+        assert_eq!(
+            iter_entry2.service_ids_n(&[service2.id().uuid]),
+            [service2.id()]
+        );
+    }
+
+    if let (Some(service1), Some(service2)) = (service1, service2) {
+        assert_eq!(
+            discoverer.service_ids(
+                key,
+                object.id().uuid,
+                [service1.id().uuid, service2.id().uuid]
+            ),
+            Some(vec![service1.id(), service2.id()])
+        );
+
+        assert_eq!(
+            discoverer.service_ids_n(
+                key,
+                object.id().uuid,
+                &[service1.id().uuid, service2.id().uuid]
+            ),
+            Some([service1.id(), service2.id()])
+        );
+
+        assert_eq!(
+            event.service_ids(discoverer, [service1.id().uuid, service2.id().uuid]),
+            vec![service1.id(), service2.id()]
+        );
+
+        assert_eq!(
+            event.service_ids_n(discoverer, &[service1.id().uuid, service2.id().uuid]),
+            [service1.id(), service2.id()]
+        );
+
+        assert_eq!(
+            entry.service_ids(object.id().uuid, [service1.id().uuid, service2.id().uuid]),
+            Some(vec![service1.id(), service2.id()])
+        );
+
+        assert_eq!(
+            entry.service_ids_n(object.id().uuid, &[service1.id().uuid, service2.id().uuid]),
+            Some([service1.id(), service2.id()])
+        );
+
+        assert_eq!(
+            iter_entry1.service_ids([service1.id().uuid, service2.id().uuid]),
+            vec![service1.id(), service2.id()]
+        );
+
+        assert_eq!(
+            iter_entry1.service_ids_n(&[service1.id().uuid, service2.id().uuid]),
+            [service1.id(), service2.id()]
+        );
+
+        assert_eq!(
+            iter_entry2.service_ids([service1.id().uuid, service2.id().uuid]),
+            vec![service1.id(), service2.id()]
+        );
+
+        assert_eq!(
+            iter_entry2.service_ids_n(&[service1.id().uuid, service2.id().uuid]),
+            [service1.id(), service2.id()]
+        );
     }
 
     assert!(iter.next().is_none());

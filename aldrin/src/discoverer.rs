@@ -13,6 +13,7 @@ use std::collections::hash_map::{self, HashMap};
 use std::collections::VecDeque;
 use std::hash::Hash;
 use std::iter::{FlatMap, FusedIterator};
+use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::{future, option};
@@ -204,6 +205,34 @@ where
         service: impl Into<ServiceUuid>,
     ) -> Option<ServiceId> {
         self.entry(key).service_id(object, service)
+    }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids<S>(
+        &self,
+        key: Key,
+        object: impl Into<ObjectUuid>,
+        services: S,
+    ) -> Option<Vec<ServiceId>>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.entry(key).service_ids(object, services)
+    }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids_n<const N: usize>(
+        &self,
+        key: Key,
+        object: impl Into<ObjectUuid>,
+        services: &[ServiceUuid; N],
+    ) -> Option<[ServiceId; N]> {
+        self.entry(key).service_ids_n(object, services)
     }
 
     /// Returns an entry of the `Discoverer`.
@@ -485,6 +514,43 @@ where
         }
     }
 
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids<S>(
+        &self,
+        object: impl Into<ObjectUuid>,
+        services: S,
+    ) -> Option<Vec<ServiceId>>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        match self.inner {
+            EntryInner::Specific(ref specific) => {
+                specific.service_ids(object.into(), services.into_iter().map(Into::into))
+            }
+
+            EntryInner::Any(ref any) => {
+                any.service_ids(object.into(), services.into_iter().map(Into::into))
+            }
+        }
+    }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids_n<const N: usize>(
+        &self,
+        object: impl Into<ObjectUuid>,
+        services: &[ServiceUuid; N],
+    ) -> Option<[ServiceId; N]> {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.service_ids_n(object.into(), services),
+            EntryInner::Any(ref any) => any.service_ids_n(object.into(), services),
+        }
+    }
+
     /// Returns an iterator over all found objects corresponding to this entry.
     pub fn iter(&self) -> DiscovererEntryIter<Key> {
         match self.inner {
@@ -618,6 +684,33 @@ where
             IterEntryInner::Any(any) => any.service_id(service.into()),
         }
     }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids<S>(self, services: S) -> Vec<ServiceId>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        match self.inner {
+            IterEntryInner::Specific(specific) => {
+                specific.service_ids(services.into_iter().map(Into::into))
+            }
+
+            IterEntryInner::Any(any) => any.service_ids(services.into_iter().map(Into::into)),
+        }
+    }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids_n<const N: usize>(self, services: &[ServiceUuid; N]) -> [ServiceId; N] {
+        match self.inner {
+            IterEntryInner::Specific(specific) => specific.service_ids_n(services),
+            IterEntryInner::Any(any) => any.service_ids_n(services),
+        }
+    }
 }
 
 impl<'a, Key> From<SpecificObjectIterEntry<'a, Key>> for DiscovererIterEntry<'a, Key> {
@@ -716,6 +809,62 @@ where
     fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
         self.object_id(object).map(|object_id| {
             ServiceId::new(object_id, service, self.service_cookie_unchecked(service))
+        })
+    }
+
+    fn service_ids_unchecked(
+        &self,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Vec<ServiceId> {
+        let object_id = self.object_id_unchecked();
+
+        services
+            .into_iter()
+            .map(|service_uuid| {
+                let service_cookie = self.service_cookie_unchecked(service_uuid);
+                ServiceId::new(object_id, service_uuid, service_cookie)
+            })
+            .collect()
+    }
+
+    fn service_ids(
+        &self,
+        object: ObjectUuid,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Option<Vec<ServiceId>> {
+        self.object_id(object).map(|object_id| {
+            services
+                .into_iter()
+                .map(|service_uuid| {
+                    let service_cookie = self.service_cookie_unchecked(service_uuid);
+                    ServiceId::new(object_id, service_uuid, service_cookie)
+                })
+                .collect()
+        })
+    }
+
+    fn service_ids_n_unchecked<const N: usize>(
+        &self,
+        services: &[ServiceUuid; N],
+    ) -> [ServiceId; N] {
+        let object_id = self.object_id_unchecked();
+
+        fill_service_id_array(services, |service_uuid| {
+            let service_cookie = self.service_cookie_unchecked(service_uuid);
+            ServiceId::new(object_id, service_uuid, service_cookie)
+        })
+    }
+
+    fn service_ids_n<const N: usize>(
+        &self,
+        object: ObjectUuid,
+        services: &[ServiceUuid; N],
+    ) -> Option<[ServiceId; N]> {
+        self.object_id(object).map(|object_id| {
+            fill_service_id_array(services, |service_uuid| {
+                let service_cookie = self.service_cookie_unchecked(service_uuid);
+                ServiceId::new(object_id, service_uuid, service_cookie)
+            })
         })
     }
 
@@ -891,6 +1040,14 @@ where
     fn service_id(self, service: ServiceUuid) -> ServiceId {
         self.object.service_id_unchecked(service)
     }
+
+    fn service_ids(self, services: impl IntoIterator<Item = ServiceUuid>) -> Vec<ServiceId> {
+        self.object.service_ids_unchecked(services)
+    }
+
+    fn service_ids_n<const N: usize>(self, services: &[ServiceUuid; N]) -> [ServiceId; N] {
+        self.object.service_ids_n_unchecked(services)
+    }
 }
 
 #[derive(Debug)]
@@ -958,6 +1115,35 @@ where
                 service,
                 self.service_cookie_unchecked(object, service),
             )
+        })
+    }
+
+    fn service_ids(
+        &self,
+        object: ObjectUuid,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Option<Vec<ServiceId>> {
+        self.object_id(object).map(|object_id| {
+            services
+                .into_iter()
+                .map(|service_uuid| {
+                    let service_cookie = self.service_cookie_unchecked(object, service_uuid);
+                    ServiceId::new(object_id, service_uuid, service_cookie)
+                })
+                .collect()
+        })
+    }
+
+    fn service_ids_n<const N: usize>(
+        &self,
+        object: ObjectUuid,
+        services: &[ServiceUuid; N],
+    ) -> Option<[ServiceId; N]> {
+        self.object_id(object).map(|object_id| {
+            fill_service_id_array(services, |service_uuid| {
+                let service_cookie = self.service_cookie_unchecked(object, service_uuid);
+                ServiceId::new(object_id, service_uuid, service_cookie)
+            })
         })
     }
 
@@ -1110,6 +1296,18 @@ where
             .service_id(self.object_id.uuid, service)
             .unwrap()
     }
+
+    fn service_ids(self, services: impl IntoIterator<Item = ServiceUuid>) -> Vec<ServiceId> {
+        self.object
+            .service_ids(self.object_id.uuid, services)
+            .unwrap()
+    }
+
+    fn service_ids_n<const N: usize>(self, services: &[ServiceUuid; N]) -> [ServiceId; N] {
+        self.object
+            .service_ids_n(self.object_id.uuid, services)
+            .unwrap()
+    }
 }
 
 /// Specifies whether an object was created or destroyed.
@@ -1181,6 +1379,36 @@ where
             .service_id(self.key, self.object.uuid, service)
             .unwrap()
     }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids<S>(self, discoverer: &Discoverer<Key>, services: S) -> Vec<ServiceId>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        assert_eq!(self.kind, DiscovererEventKind::Created);
+
+        discoverer
+            .service_ids(self.key, self.object.uuid, services)
+            .unwrap()
+    }
+
+    /// Queries multiple service ids.
+    ///
+    /// The ids are returned in the same order as specified in `services`.
+    pub fn service_ids_n<const N: usize>(
+        self,
+        discoverer: &Discoverer<Key>,
+        services: &[ServiceUuid; N],
+    ) -> [ServiceId; N] {
+        assert_eq!(self.kind, DiscovererEventKind::Created);
+
+        discoverer
+            .service_ids_n(self.key, self.object.uuid, services)
+            .unwrap()
+    }
 }
 
 impl<Key> From<DiscovererIterEntry<'_, Key>> for DiscovererEvent<Key>
@@ -1189,5 +1417,27 @@ where
 {
     fn from(entry: DiscovererIterEntry<Key>) -> Self {
         Self::new(entry.key(), DiscovererEventKind::Created, entry.object_id())
+    }
+}
+
+fn fill_service_id_array<const N: usize>(
+    service_uuids: &[ServiceUuid; N],
+    get_id: impl Fn(ServiceUuid) -> ServiceId,
+) -> [ServiceId; N] {
+    // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
+    let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+
+    for (&uuid, id) in service_uuids.iter().zip(&mut ids) {
+        id.write(get_id(uuid));
+    }
+
+    // SAFETY: All N elements have been initialized in the loop above.
+    //
+    // In some future version of Rust, all this can be simplified; see:
+    // https://github.com/rust-lang/rust/issues/96097
+    // https://github.com/rust-lang/rust/issues/61956
+    unsafe {
+        (*(&MaybeUninit::new(ids) as *const _ as *const MaybeUninit<[ServiceId; N]>))
+            .assume_init_read()
     }
 }
