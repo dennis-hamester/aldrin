@@ -16,7 +16,7 @@ impl UnknownEvent {
     }
 
     /// Extracts the inner low-level event.
-    pub fn into_low_level(self) -> crate::low_level::Event {
+    pub fn into_low_level(self) -> low_level::Event {
         self.inner
     }
 

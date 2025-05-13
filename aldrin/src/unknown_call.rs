@@ -16,8 +16,8 @@ impl UnknownCall {
         Self { inner: Some(inner) }
     }
 
-    /// Extracts the inner low-level [`Call`](crate::low_level::Call).
-    pub fn into_low_level(mut self) -> crate::low_level::Call {
+    /// Extracts the inner low-level [`Call`](low_level::Call).
+    pub fn into_low_level(mut self) -> low_level::Call {
         self.inner.take().unwrap()
     }
 
@@ -64,7 +64,7 @@ impl UnknownCall {
     /// Deserializes arguments and casts the call to a known [`Call`].
     ///
     /// If deserialization fails, then the call will be replied using
-    /// [`Promise::invalid_args`](crate::low_level::Promise::invalid_args) and
+    /// [`Promise::invalid_args`](low_level::Promise::invalid_args) and
     /// [`Error::InvalidArguments`] will be returned.
     pub fn deserialize_and_cast_as<K, L, T, E>(mut self) -> Result<Call<L, T, E>, Error>
     where
@@ -77,8 +77,8 @@ impl UnknownCall {
     /// Deserializes arguments and casts the call to a known [`Call`].
     ///
     /// If deserialization fails, then the call will be replied using
-    /// [`Promise::invalid_args`](crate::low_level::Promise::invalid_args) and
-    /// [`Error::InvalidArguments`] will be returned.
+    /// [`Promise::invalid_args`](low_level::Promise::invalid_args) and [`Error::InvalidArguments`]
+    /// will be returned.
     pub fn deserialize_and_cast<A, T, E>(self) -> Result<Call<A, T, E>, Error>
     where
         A: PrimaryTag + Deserialize<A::Tag>,
