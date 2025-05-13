@@ -192,7 +192,7 @@ pub async fn stop(args: ServerArg, bus: &Handle) -> Result<()> {
 
 async fn get_media_player(bus: &Handle, uuid: Option<ObjectUuid>) -> Result<MediaPlayerProxy> {
     let (_, [id]) = bus
-        .find_object(uuid, &[MediaPlayerProxy::UUID])
+        .find_object_n(uuid, &[MediaPlayerProxy::UUID])
         .await?
         .ok_or_else(|| anyhow!("media player not found"))?;
 

@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Discoverer` now takes `impl Into<ObjectUuid>` and `impl Into<ServiceUuid>` in more places.
 - The `DiscovererBuilder` methods `object()`, `specific()` and `any()` have been replaced by
   `add()`, `object_with_services()`, `bare_object()` and `any_object_with_services()`.
+- The `Handle` methods `find_object()`, `find_any_object()` and `find_specific_object()` have been
+  replaced by `find_object()` (different arguments), `find_object_with_services()`,
+  `find_bare_object()` and `find_any_object_with_services()`.
+- Similarly, the `Handle` methods `wait_for_object()`, `wait_for_any_object()` and
+  `wait_for_specific_object()` have been replaced by `wait_for_object()` (different arguments),
+  `wait_for_object_with_services()`, `wait_for_bare_object()` and
+  `wait_for_any_object_with_services()`.
+- The `Handle` methods mentioned above for finding and waiting for objects come in 2 variants, one
+  which takes arbitrarily many services and one that uses arrays with a static number of services.
 
 ## [0.12.0] - 2025-01-26
 

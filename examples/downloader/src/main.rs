@@ -302,7 +302,7 @@ async fn get_downloader(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result
     // Downloader service. The `find_object` function is a convenience wrapper for `Discoverer`,
     // which is more concise when looking for a single object as a one-shot operation.
     let (_, [service_id]) = bus
-        .find_object(object_uuid, &[DownloaderProxy::UUID])
+        .find_object_n(object_uuid, &[DownloaderProxy::UUID])
         .await?
         .ok_or_else(|| anyhow!("downloader server not found"))?;
 

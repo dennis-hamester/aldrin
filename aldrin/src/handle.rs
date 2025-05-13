@@ -599,13 +599,13 @@ impl Handle {
         Discoverer::builder(self)
     }
 
-    /// Find an object with a specific set of services.
+    /// Finds an object with a specific set of services.
     ///
     /// If `object` is `None`, then any object that has all required services may be
     /// returned. Repeated calls to this function can return different objects.
     ///
-    /// This is a convenience function for using a [`Discoverer`] to find a single object among all
-    /// current objects on the bus.
+    /// This is a convenience function for using a [`Discoverer`] to find a single object on the
+    /// bus.
     ///
     /// # Examples
     ///
@@ -624,7 +624,7 @@ impl Handle {
     ///
     /// // Find the object.
     /// let (object_id, service_ids) = client
-    ///     .find_object(Some(obj.id().uuid), &[svc1.id().uuid, svc2.id().uuid])
+    ///     .find_object(Some(obj.id().uuid), [svc1.id().uuid, svc2.id().uuid])
     ///     .await?
     ///     .unwrap();
     ///
@@ -657,7 +657,7 @@ impl Handle {
     ///
     /// // Find any one of the objects above.
     /// let (object_id, service_ids) = client
-    ///     .find_object(None, &[svc11.id().uuid, svc12.id().uuid])
+    ///     .find_object(None, [svc11.id().uuid, svc12.id().uuid])
     ///     .await?
     ///     .unwrap();
     ///
@@ -668,7 +668,34 @@ impl Handle {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn find_object<const N: usize>(
+    pub async fn find_object<S>(
+        &self,
+        object: Option<ObjectUuid>,
+        services: S,
+    ) -> Result<Option<(ObjectId, Vec<ServiceId>)>, Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        let services = Vec::from_iter(services.into_iter().map(Into::into));
+
+        let mut discoverer = self
+            .create_discoverer()
+            .add((), object, services.iter().copied())
+            .build_current_only()
+            .await?;
+
+        Ok(discoverer
+            .next_event()
+            .await
+            .map(|ev| (ev.object_id(), ev.service_ids(&discoverer, services))))
+    }
+
+    /// Finds an object with a specific set of services.
+    ///
+    /// This method is similar to [`find_object`](Self::find_object), but uses arrays for list of
+    /// services.
+    pub async fn find_object_n<const N: usize>(
         &self,
         object: Option<ObjectUuid>,
         services: &[ServiceUuid; N],
@@ -685,25 +712,70 @@ impl Handle {
             .map(|ev| (ev.object_id(), ev.service_ids_n(&discoverer, services))))
     }
 
-    /// Finds any object implementing a set of services.
+    /// Finds an object with a specific set of services.
     ///
-    /// This is a shorthand for calling `find_object(None, services)`.
-    pub async fn find_any_object<const N: usize>(
+    /// This is a shorthand for calling [`find_object`](Self::find_object) with `Some(object)`.
+    pub async fn find_object_with_services<S>(
         &self,
-        services: &[ServiceUuid; N],
-    ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
-        self.find_object(None, services).await
+        object: impl Into<ObjectUuid>,
+        services: S,
+    ) -> Result<Option<(ObjectId, Vec<ServiceId>)>, Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.find_object(Some(object.into()), services).await
     }
 
-    /// Finds a specific object implementing a set of services.
+    /// Finds an object with a specific set of services.
     ///
-    /// This is a shorthand for calling `find_object(Some(object), services)`.
-    pub async fn find_specific_object<const N: usize>(
+    /// This is a shorthand for calling [`find_object_n`](Self::find_object_n) with `Some(object)`.
+    pub async fn find_object_with_services_n<const N: usize>(
         &self,
         object: impl Into<ObjectUuid>,
         services: &[ServiceUuid; N],
     ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
-        self.find_object(Some(object.into()), services).await
+        self.find_object_n(Some(object.into()), services).await
+    }
+
+    /// Finds a bare object without any associated services.
+    ///
+    /// This is a shorthand for calling [`find_object`](Self::find_object) with `Some(object)` and
+    /// an empty set of services.
+    pub async fn find_bare_object(
+        &self,
+        object: impl Into<ObjectUuid>,
+    ) -> Result<Option<ObjectId>, Error> {
+        self.find_object_n(Some(object.into()), &[])
+            .await?
+            .map(|(id, [])| Ok(id))
+            .transpose()
+    }
+
+    /// Finds any object with a specific set of services.
+    ///
+    /// This is a shorthand for calling [`find_object`](Self::find_object) with `None` for the
+    /// object.
+    pub async fn find_any_object_with_services<S>(
+        &self,
+        services: S,
+    ) -> Result<Option<(ObjectId, Vec<ServiceId>)>, Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.find_object(None, services).await
+    }
+
+    /// Finds any object with a specific set of services.
+    ///
+    /// This is a shorthand for calling [`find_object_n`](Self::find_object_n) with `None` for the
+    /// object.
+    pub async fn find_any_object_with_services_n<const N: usize>(
+        &self,
+        services: &[ServiceUuid; N],
+    ) -> Result<Option<(ObjectId, [ServiceId; N])>, Error> {
+        self.find_object_n(None, services).await
     }
 
     /// Waits for an object with a specific set of services.
@@ -711,8 +783,37 @@ impl Handle {
     /// If `object` is `None`, then any object that has all required services may be
     /// returned. Repeated calls to this function can return different objects.
     ///
-    /// This is a convenience function for using a [`Discoverer`] to find a single object.
-    pub async fn wait_for_object<const N: usize>(
+    /// This is a convenience function for using a [`Discoverer`] to wait for a single object on the
+    /// bus.
+    pub async fn wait_for_object<S>(
+        &self,
+        object: Option<ObjectUuid>,
+        services: S,
+    ) -> Result<(ObjectId, Vec<ServiceId>), Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        let services = Vec::from_iter(services.into_iter().map(Into::into));
+
+        let mut discoverer = self
+            .create_discoverer()
+            .add((), object, services.iter().copied())
+            .build()
+            .await?;
+
+        discoverer
+            .next_event()
+            .await
+            .map(|ev| (ev.object_id(), ev.service_ids(&discoverer, services)))
+            .ok_or(Error::Shutdown)
+    }
+
+    /// Waits for an object with a specific set of services.
+    ///
+    /// This method is similar to [`wait_for_object`](Self::wait_for_object), but uses arrays for
+    /// set of services.
+    pub async fn wait_for_object_n<const N: usize>(
         &self,
         object: Option<ObjectUuid>,
         services: &[ServiceUuid; N],
@@ -730,25 +831,71 @@ impl Handle {
             .ok_or(Error::Shutdown)
     }
 
-    /// Wait for any object implementing a set of services.
+    /// Waits for an object with a specific set of services.
     ///
-    /// This is a shorthand for calling `wait_for_object(None, services)`.
-    pub async fn wait_for_any_object<const N: usize>(
+    /// This is a shorthand for calling [`wait_for_object`](Self::wait_for_object) with
+    /// `Some(object)`.
+    pub async fn wait_for_object_with_services<S>(
         &self,
-        services: &[ServiceUuid; N],
-    ) -> Result<(ObjectId, [ServiceId; N]), Error> {
-        self.wait_for_object(None, services).await
+        object: impl Into<ObjectUuid>,
+        services: S,
+    ) -> Result<(ObjectId, Vec<ServiceId>), Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.wait_for_object(Some(object.into()), services).await
     }
 
-    /// Wait for a specific object implementing a set of services.
+    /// Waits for an object with a specific set of services.
     ///
-    /// This is a shorthand for calling `wait_for_object(Some(object), services)`.
-    pub async fn wait_for_specific_object<const N: usize>(
+    /// This is a shorthand for calling [`wait_for_object_n`](Self::wait_for_object_n) with
+    /// `Some(object)`.
+    pub async fn wait_for_object_with_services_n<const N: usize>(
         &self,
         object: impl Into<ObjectUuid>,
         services: &[ServiceUuid; N],
     ) -> Result<(ObjectId, [ServiceId; N]), Error> {
-        self.wait_for_object(Some(object.into()), services).await
+        self.wait_for_object_n(Some(object.into()), services).await
+    }
+
+    /// Waits for a bare object without any associated services.
+    ///
+    /// This is a shorthand for calling [`wait_for_object`](Self::wait_for_object) with
+    /// `Some(object)` and an empty set of services.
+    pub async fn wait_for_bare_object(
+        &self,
+        object: impl Into<ObjectUuid>,
+    ) -> Result<ObjectId, Error> {
+        self.wait_for_object_n(Some(object.into()), &[])
+            .await
+            .map(|(id, [])| id)
+    }
+
+    /// Waits for any object with a specific set of services.
+    ///
+    /// This is a shorthand for calling [`wait_for_object`](Self::wait_for_object) with `None` for
+    /// the object.
+    pub async fn wait_for_any_object_with_services<S>(
+        &self,
+        services: S,
+    ) -> Result<(ObjectId, Vec<ServiceId>), Error>
+    where
+        S: IntoIterator,
+        S::Item: Into<ServiceUuid>,
+    {
+        self.wait_for_object(None, services).await
+    }
+
+    /// Waits for any object with a specific set of services.
+    ///
+    /// This is a shorthand for calling [`wait_for_object_n`](Self::wait_for_object_n) with `None`
+    /// for the object.
+    pub async fn wait_for_any_object_with_services_n<const N: usize>(
+        &self,
+        services: &[ServiceUuid; N],
+    ) -> Result<(ObjectId, [ServiceId; N]), Error> {
+        self.wait_for_object_n(None, services).await
     }
 
     /// Creates a new lifetime scope.

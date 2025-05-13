@@ -574,7 +574,7 @@ async fn remove(args: Remove, bus: &Handle) -> Result<()> {
 
 async fn get_bookmarks(id: Option<ObjectUuid>, bus: &Handle) -> Result<BookmarksProxy> {
     let (_, [id]) = bus
-        .find_object(id, &[Bookmarks::UUID])
+        .find_object_n(id, &[Bookmarks::UUID])
         .await?
         .ok_or_else(|| anyhow!("server not found"))?;
 

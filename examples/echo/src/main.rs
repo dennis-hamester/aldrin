@@ -301,7 +301,7 @@ async fn get_echo(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<EchoP
     // Echo service. The `find_object` function is a convenience wrapper for `Discoverer`, which is
     // more concise when looking for a single object as a one-shot operation.
     let (_, [service_id]) = bus
-        .find_object(object_uuid, &[EchoProxy::UUID])
+        .find_object_n(object_uuid, &[EchoProxy::UUID])
         .await?
         .ok_or_else(|| anyhow!("echo server not found"))?;
 
