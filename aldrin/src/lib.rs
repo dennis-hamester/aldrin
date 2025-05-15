@@ -64,7 +64,6 @@ mod call;
 mod channel;
 mod client;
 mod client_builder;
-mod discoverer;
 mod event;
 mod function_call_map;
 mod handle;
@@ -80,6 +79,7 @@ mod test;
 mod unknown_call;
 mod unknown_event;
 
+pub mod discoverer;
 pub mod error;
 pub mod low_level;
 #[cfg(feature = "codegen")]
@@ -104,10 +104,7 @@ pub use channel::{
 };
 pub use client::Client;
 pub use client_builder::ClientBuilder;
-pub use discoverer::{
-    Discoverer, DiscovererBuilder, DiscovererEntry, DiscovererEntryIter, DiscovererEvent,
-    DiscovererEventKind, DiscovererIter, DiscovererIterEntry,
-};
+pub use discoverer::{Discoverer, DiscovererEvent, DiscovererEventKind};
 pub use error::Error;
 pub use event::Event;
 pub use handle::Handle;

@@ -1,3 +1,5 @@
+//! Contains the [`Discoverer`] and its related types.
+
 mod any;
 mod builder;
 mod entry;
@@ -37,7 +39,8 @@ pub use event::{DiscovererEvent, DiscovererEventKind};
 /// advance through a [`DiscovererBuilder`], which can be created directly from a [`Handle`]:
 ///
 /// ```
-/// # use aldrin::{Discoverer, DiscovererBuilder};
+/// # use aldrin::Discoverer;
+/// # use aldrin::discoverer::DiscovererBuilder;
 /// # use aldrin_test::tokio::TestBroker;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

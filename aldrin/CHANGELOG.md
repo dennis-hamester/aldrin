@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `wait_for_any_object_with_services()`.
 - The `Handle` methods mentioned above for finding and waiting for objects come in 2 variants, one
   which takes arbitrarily many services and one that uses arrays with a static number of services.
+- Most types related to the `Discoverer` are now in a module `discoverer`. Only `Discoverer`,
+  `DiscovererEvent` and `DiscovererEventKind` are re-exported at the crate-level.
 
 ## [0.12.0] - 2025-01-26
 

@@ -1,13 +1,13 @@
 pub(crate) mod request;
 
+use crate::discoverer::DiscovererBuilder;
 use crate::lifetime::LifetimeListener;
 use crate::low_level::{
     self, PendingReceiver, PendingReply, PendingSender, Proxy, ProxyId, Service, ServiceInfo,
     UnclaimedReceiver, UnclaimedSender,
 };
 use crate::{
-    BusListener, ChannelBuilder, Discoverer, DiscovererBuilder, Error, Lifetime, LifetimeId,
-    LifetimeScope, Object,
+    BusListener, ChannelBuilder, Discoverer, Error, Lifetime, LifetimeId, LifetimeScope, Object,
 };
 #[cfg(feature = "introspection")]
 use aldrin_core::introspection::{DynIntrospectable, Introspectable, Introspection};
