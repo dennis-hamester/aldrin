@@ -1,4 +1,4 @@
-use super::{kw, EvFallbackItem, EvItem, FnFallbackItem, Options, ServiceItem};
+use super::{kw, EvFallbackItem, EvItem, FnFallbackItem, FnItem, Options, ServiceItem};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
@@ -346,6 +346,78 @@ impl Body {
         }
 
         variants
+    }
+
+    pub fn gen_function_impl(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+
+        let variants = |f, args, borrow, wait| {
+            self.items
+                .iter()
+                .filter_map(ServiceItem::as_function)
+                .map(FnItem::variant)
+                .chain(self.function_fallback().map(FnFallbackItem::variant))
+                .map(move |func| quote! { Self::#func(#borrow call) => call.#f(#args) #wait, })
+        };
+
+        let client = variants(quote!(client), quote!(), quote!(ref), quote!());
+        let id = variants(quote!(id), quote!(), quote!(ref), quote!());
+        let version = variants(quote!(version), quote!(), quote!(ref), quote!());
+        let timestamp = variants(quote!(timestamp), quote!(), quote!(ref), quote!());
+        let abort = variants(quote!(abort), quote!(), quote!(), quote!());
+        let is_aborted = variants(quote!(is_aborted), quote!(), quote!(ref mut), quote!());
+        let poll_aborted = variants(quote!(poll_aborted), quote!(cx), quote!(ref mut), quote!());
+        let aborted = variants(quote!(aborted), quote!(), quote!(ref mut), quote!(.await));
+
+        quote! {
+            pub fn client(&self) -> &#krate::Handle {
+                match *self {
+                    #( #client )*
+                }
+            }
+
+            pub fn id(&self) -> ::std::primitive::u32 {
+                match *self {
+                    #( #id )*
+                }
+            }
+
+            pub fn version(&self) -> ::std::option::Option<::std::primitive::u32> {
+                match *self {
+                    #( #version )*
+                }
+            }
+
+            pub fn timestamp(&self) -> ::std::time::Instant {
+                match *self {
+                    #( #timestamp )*
+                }
+            }
+
+            pub fn abort(self) -> ::std::result::Result<(), #krate::Error> {
+                match self {
+                    #( #abort )*
+                }
+            }
+
+            pub fn is_abort(&mut self) -> ::std::primitive::bool {
+                match *self {
+                    #( #is_aborted )*
+                }
+            }
+
+            pub fn poll_aborted(&mut self, cx: &mut ::std::task::Context) -> ::std::task::Poll<()> {
+                match *self {
+                    #( #poll_aborted )*
+                }
+            }
+
+            pub async fn aborted(&mut self) {
+                match *self {
+                    #( #aborted )*
+                }
+            }
+        }
     }
 
     pub fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {

@@ -22,6 +22,10 @@ impl FnItem {
         &self.ident
     }
 
+    pub fn variant(&self) -> &Ident {
+        &self.variant
+    }
+
     pub fn gen_calls(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;

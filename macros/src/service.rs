@@ -244,12 +244,18 @@ impl Service {
         let vis = &self.vis;
         let vars = self.body.gen_function(&self.options);
         let function = &self.function;
+        let function_impl = self.body.gen_function_impl(&self.options);
 
         quote! {
             #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis enum #function {
                 #vars
+            }
+
+            #[automatically_derived]
+            impl #function {
+                #function_impl
             }
         }
     }

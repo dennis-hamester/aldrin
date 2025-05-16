@@ -16,6 +16,10 @@ impl FnFallbackItem {
         &self.ident
     }
 
+    pub fn variant(&self) -> &Ident {
+        &self.variant
+    }
+
     pub fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
