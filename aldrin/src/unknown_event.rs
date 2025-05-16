@@ -1,6 +1,6 @@
 use crate::low_level;
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use std::error::Error as StdError;
 use std::fmt;
 use std::time::Instant;
@@ -34,6 +34,17 @@ impl UnknownEvent {
     /// Returns a slice to the event's serialized arguments.
     pub fn args(&self) -> &SerializedValueSlice {
         self.inner.args()
+    }
+
+    /// Takes out the event's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> SerializedValue {
+        self.inner.take_args()
+    }
+
+    /// Returns the event's arguments.
+    pub fn into_args(self) -> SerializedValue {
+        self.inner.into_args()
     }
 
     /// Deserializes the event's arguments.
