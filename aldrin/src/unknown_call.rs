@@ -1,6 +1,8 @@
 use crate::{low_level, Call, Error, Handle};
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use aldrin_core::{
+    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Value,
+};
 use std::error::Error as StdError;
 use std::fmt;
 use std::time::Instant;
@@ -110,6 +112,51 @@ impl UnknownCall {
         A: PrimaryTag + Deserialize<A::Tag>,
     {
         self.deserialize_and_cast_as()
+    }
+
+    /// Sets the call's reply.
+    pub fn set_as<T, U, E, F>(mut self, res: Result<U, F>) -> Result<(), Error>
+    where
+        T: Tag,
+        U: Serialize<T>,
+        E: Tag,
+        F: Serialize<E>,
+    {
+        self.inner.take().unwrap().set_as(res)
+    }
+
+    /// Sets the call's reply.
+    pub fn set<T, E>(mut self, res: Result<T, E>) -> Result<(), Error>
+    where
+        T: PrimaryTag + Serialize<T::Tag>,
+        E: PrimaryTag + Serialize<E::Tag>,
+    {
+        self.inner.take().unwrap().set(res)
+    }
+
+    /// Signals that the call was successful.
+    pub fn ok_as<T: Tag, U: Serialize<T>>(mut self, value: U) -> Result<(), Error> {
+        self.inner.take().unwrap().ok_as(value)
+    }
+
+    /// Signals that the call was successful.
+    pub fn ok<T: PrimaryTag + Serialize<T::Tag>>(mut self, value: T) -> Result<(), Error> {
+        self.inner.take().unwrap().ok(value)
+    }
+
+    /// Signals that the call was successful without returning a value.
+    pub fn done(mut self) -> Result<(), Error> {
+        self.inner.take().unwrap().done()
+    }
+
+    /// Signals that the call failed.
+    pub fn err_as<E: Tag, F: Serialize<E>>(mut self, value: F) -> Result<(), Error> {
+        self.inner.take().unwrap().err_as(value)
+    }
+
+    /// Signals that the call failed.
+    pub fn err<E: PrimaryTag + Serialize<E::Tag>>(mut self, value: E) -> Result<(), Error> {
+        self.inner.take().unwrap().err(value)
     }
 }
 
