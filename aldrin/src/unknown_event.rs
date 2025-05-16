@@ -3,6 +3,7 @@ use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
 use std::error::Error as StdError;
 use std::fmt;
+use std::time::Instant;
 
 /// An unknown event emitted by a service.
 #[derive(Debug, Clone)]
@@ -23,6 +24,11 @@ impl UnknownEvent {
     /// Returns the event's id.
     pub fn id(&self) -> u32 {
         self.inner.id()
+    }
+
+    /// Returns the timestamp when the event was received.
+    pub fn timestamp(&self) -> Instant {
+        self.inner.timestamp()
     }
 
     /// Returns a slice to the event's serialized arguments.

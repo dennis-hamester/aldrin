@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `UnknownCall::set_as()`, `set()`, `ok_as()`, `ok()`, `done()`, `err_as()` and `err()`.
 - Add `UnknownCall::abort()`, `invalid_function()`, `invalid_args()`, `is_aborted()`,
   `poll_aborted()` and `aborted()`.
+- Add `UnknownEvent::timestamp()`.
 
 ### Changed
 
