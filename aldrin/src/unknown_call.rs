@@ -1,6 +1,6 @@
 use crate::{low_level, Call, Error, Handle};
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValueSlice, Value};
+use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
 use std::error::Error as StdError;
 use std::fmt;
 use std::time::Instant;
@@ -46,6 +46,12 @@ impl UnknownCall {
         self.inner.as_ref().unwrap().args()
     }
 
+    /// Takes out the call's arguments and leaves an
+    /// [empty `SerializedValue`](SerializedValue::empty) in its place.
+    pub fn take_args(&mut self) -> SerializedValue {
+        self.inner.as_mut().unwrap().take_args()
+    }
+
     /// Deserializes the call's arguments.
     pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
         self.inner.as_ref().unwrap().deserialize_as()
@@ -59,6 +65,16 @@ impl UnknownCall {
     /// Deserializes the call's arguments into a generic [`Value`].
     pub fn deserialize_as_value(&self) -> Result<Value, DeserializeError> {
         self.deserialize()
+    }
+
+    /// Converts this call into its promise object.
+    pub fn into_promise(mut self) -> low_level::Promise {
+        self.inner.take().unwrap().into_promise()
+    }
+
+    /// Converts this call into its serialized arguments and a promise object.
+    pub fn into_args_and_promise(mut self) -> (SerializedValue, low_level::Promise) {
+        self.inner.take().unwrap().into_args_and_promise()
     }
 
     /// Deserializes arguments and casts the call to a known [`Call`].
