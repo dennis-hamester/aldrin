@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `DiscovererEvent::is_created()` and `is_destroyed()` methods.
 - Multiple service ids can now be queried on `Discoverer` and related types.
 - Add `UnknownCall::take_args()`, `into_promise()` and `into_args_and_promise()`.
+- Add `low_level::Call::promise()` and `promise_mut()`.
 
 ### Changed
 

@@ -74,6 +74,16 @@ impl Call {
         self.deserialize()
     }
 
+    /// Returns a reference to the call's promise object.
+    pub fn promise(&self) -> &Promise {
+        &self.promise
+    }
+
+    /// Returns a mutable reference to the call's promise object.
+    pub fn promise_mut(&mut self) -> &mut Promise {
+        &mut self.promise
+    }
+
     /// Converts this call into its promise object.
     pub fn into_promise(self) -> Promise {
         self.promise
