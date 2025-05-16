@@ -67,6 +67,16 @@ impl UnknownCall {
         self.deserialize()
     }
 
+    /// Returns a reference to the call's promise object.
+    pub fn promise(&self) -> &low_level::Promise {
+        self.inner.as_ref().unwrap().promise()
+    }
+
+    /// Returns a mutable reference to the call's promise object.
+    pub fn promise_mut(&mut self) -> &mut low_level::Promise {
+        self.inner.as_mut().unwrap().promise_mut()
+    }
+
     /// Converts this call into its promise object.
     pub fn into_promise(mut self) -> low_level::Promise {
         self.inner.take().unwrap().into_promise()
