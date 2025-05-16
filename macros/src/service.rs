@@ -158,12 +158,18 @@ impl Service {
         let vis = &self.vis;
         let vars = self.body.gen_event(&self.options);
         let event = &self.event;
+        let event_impl = self.body.gen_event_impl();
 
         quote! {
             #[automatically_derived]
             #[derive(::std::fmt::Debug, ::std::clone::Clone)]
             #vis enum #event {
                 #vars
+            }
+
+            #[automatically_derived]
+            impl #event {
+                #event_impl
             }
         }
     }

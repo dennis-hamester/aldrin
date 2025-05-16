@@ -188,6 +188,34 @@ impl Body {
         variants
     }
 
+    pub fn gen_event_impl(&self) -> TokenStream {
+        let variants = |f| {
+            self.items
+                .iter()
+                .filter_map(ServiceItem::as_event)
+                .map(EvItem::variant)
+                .chain(self.event_fallback().map(EvFallbackItem::variant))
+                .map(move |ev| quote! { Self::#ev(ref event) => event.#f(), })
+        };
+
+        let id = variants(quote!(id));
+        let timestamp = variants(quote!(timestamp));
+
+        quote! {
+            pub fn id(&self) -> ::std::primitive::u32 {
+                match *self {
+                    #( #id )*
+                }
+            }
+
+            pub fn timestamp(&self) -> ::std::time::Instant {
+                match *self {
+                    #( #timestamp )*
+                }
+            }
+        }
+    }
+
     pub fn gen_service(&self, function: &Ident, options: &Options) -> TokenStream {
         let uuid = &self.uuid;
         let version = &self.version;

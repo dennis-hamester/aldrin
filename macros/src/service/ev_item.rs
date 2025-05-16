@@ -23,6 +23,10 @@ impl EvItem {
         &self.ident
     }
 
+    pub fn variant(&self) -> &Ident {
+        &self.variant
+    }
+
     pub fn gen_subscribe_call(&self) -> TokenStream {
         let subscribe = &self.subscribe;
         quote! { self.#subscribe().await?; }

@@ -17,6 +17,10 @@ impl EvFallbackItem {
         &self.ident
     }
 
+    pub fn variant(&self) -> &Ident {
+        &self.variant
+    }
+
     pub fn gen_next_event_match_arm(&self, event: &Ident) -> TokenStream {
         let variant = &self.variant;
 
