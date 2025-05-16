@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `UnknownCall::take_args()`, `into_promise()` and `into_args_and_promise()`.
 - Add `low_level::Call::promise()` and `promise_mut()`.
 - Add `low_level::Call::set_as()`, `set()`, `ok_as()`, `ok()`, `done()`, `err_as()` and `err()`.
+- Add `low_level::Call::abort()`, `invalid_function()`, `invalid_args()`, `is_aborted()`,
+  `poll_aborted()` and `aborted()`.
 
 ### Changed
 

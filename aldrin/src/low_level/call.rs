@@ -5,6 +5,7 @@ use aldrin_core::{
     Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Value,
 };
 use futures_channel::oneshot::Receiver;
+use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// Pending call.
@@ -175,6 +176,38 @@ impl Call {
     /// Signals that the call failed.
     pub fn err<E: PrimaryTag + Serialize<E::Tag>>(self, value: E) -> Result<(), Error> {
         self.promise.err(value)
+    }
+
+    /// Aborts the call.
+    ///
+    /// The caller will be notified that the call was aborted.
+    pub fn abort(self) -> Result<(), Error> {
+        self.promise.abort()
+    }
+
+    /// Signals that an invalid function was called.
+    pub fn invalid_function(self) -> Result<(), Error> {
+        self.promise.invalid_function()
+    }
+
+    /// Signals that invalid arguments were passed to the function.
+    pub fn invalid_args(self) -> Result<(), Error> {
+        self.promise.invalid_args()
+    }
+
+    /// Returns whether the call was aborted by the caller.
+    pub fn is_aborted(&mut self) -> bool {
+        self.promise.is_aborted()
+    }
+
+    /// Polls whether the call was aborted by the caller.
+    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+        self.promise.poll_aborted(cx)
+    }
+
+    /// Resolves if the call was aborted by the caller.
+    pub async fn aborted(&mut self) {
+        self.promise.aborted().await
     }
 
     pub(crate) fn invalid_function_ref(&mut self) {
