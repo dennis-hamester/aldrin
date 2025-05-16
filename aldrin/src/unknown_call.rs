@@ -5,6 +5,7 @@ use aldrin_core::{
 };
 use std::error::Error as StdError;
 use std::fmt;
+use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// An unknown pending call.
@@ -157,6 +158,38 @@ impl UnknownCall {
     /// Signals that the call failed.
     pub fn err<E: PrimaryTag + Serialize<E::Tag>>(mut self, value: E) -> Result<(), Error> {
         self.inner.take().unwrap().err(value)
+    }
+
+    /// Aborts the call.
+    ///
+    /// The caller will be notified that the call was aborted.
+    pub fn abort(mut self) -> Result<(), Error> {
+        self.inner.take().unwrap().abort()
+    }
+
+    /// Signals that an invalid function was called.
+    pub fn invalid_function(mut self) -> Result<(), Error> {
+        self.inner.take().unwrap().invalid_function()
+    }
+
+    /// Signals that invalid arguments were passed to the function.
+    pub fn invalid_args(mut self) -> Result<(), Error> {
+        self.inner.take().unwrap().invalid_args()
+    }
+
+    /// Returns whether the call was aborted by the caller.
+    pub fn is_aborted(&mut self) -> bool {
+        self.inner.as_mut().unwrap().is_aborted()
+    }
+
+    /// Polls whether the call was aborted by the caller.
+    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+        self.inner.as_mut().unwrap().poll_aborted(cx)
+    }
+
+    /// Resolves if the call was aborted by the caller.
+    pub async fn aborted(&mut self) {
+        self.inner.as_mut().unwrap().aborted().await
     }
 }
 
