@@ -1,7 +1,9 @@
 use super::Promise;
 use crate::{Error, Handle, UnknownCall};
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use aldrin_core::{
+    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Value,
+};
 use futures_channel::oneshot::Receiver;
 use std::time::Instant;
 
@@ -128,6 +130,51 @@ impl Call {
     /// Converts this call into an [`UnknownCall`].
     pub fn into_unknown_call(self) -> UnknownCall {
         UnknownCall::new(self)
+    }
+
+    /// Sets the call's reply.
+    pub fn set_as<T, U, E, F>(self, res: Result<U, F>) -> Result<(), Error>
+    where
+        T: Tag,
+        U: Serialize<T>,
+        E: Tag,
+        F: Serialize<E>,
+    {
+        self.promise.set_as(res)
+    }
+
+    /// Sets the call's reply.
+    pub fn set<T, E>(self, res: Result<T, E>) -> Result<(), Error>
+    where
+        T: PrimaryTag + Serialize<T::Tag>,
+        E: PrimaryTag + Serialize<E::Tag>,
+    {
+        self.promise.set_as(res)
+    }
+
+    /// Signals that the call was successful.
+    pub fn ok_as<T: Tag, U: Serialize<T>>(self, value: U) -> Result<(), Error> {
+        self.promise.ok_as(value)
+    }
+
+    /// Signals that the call was successful.
+    pub fn ok<T: PrimaryTag + Serialize<T::Tag>>(self, value: T) -> Result<(), Error> {
+        self.promise.ok(value)
+    }
+
+    /// Signals that the call was successful without returning a value.
+    pub fn done(self) -> Result<(), Error> {
+        self.promise.done()
+    }
+
+    /// Signals that the call failed.
+    pub fn err_as<E: Tag, F: Serialize<E>>(self, value: F) -> Result<(), Error> {
+        self.promise.err_as(value)
+    }
+
+    /// Signals that the call failed.
+    pub fn err<E: PrimaryTag + Serialize<E::Tag>>(self, value: E) -> Result<(), Error> {
+        self.promise.err(value)
     }
 
     pub(crate) fn invalid_function_ref(&mut self) {
