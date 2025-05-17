@@ -3,7 +3,7 @@ use aldrin::core::ObjectUuid;
 use aldrin::{Client, Handle};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use echo::{Echo, EchoEchoAllError, EchoEchoError, EchoEvent, EchoFunction, EchoProxy};
+use echo::{Echo, EchoCall, EchoEchoAllError, EchoEchoError, EchoEvent, EchoProxy};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tokio::net::TcpStream;
 use tokio::signal;
@@ -121,12 +121,12 @@ async fn server(bus: &Handle) -> Result<()> {
     println!("Starting echo server {}.", object.id().uuid);
 
     loop {
-        let function = tokio::select! {
+        let call = tokio::select! {
             // Services are essentially asynchronous streams of incoming function calls. They also
             // implement the `Stream` trait from the `future` crate, which is however not used here.
-            function = echo.next_call() => {
-                match function {
-                    Some(Ok(function)) => function,
+            call = echo.next_call() => {
+                match call {
+                    Some(Ok(call)) => call,
 
                     // Function calls can be invalid either because their id is unknown or because
                     // the arguments to the call failed to deserialize.
@@ -147,14 +147,14 @@ async fn server(bus: &Handle) -> Result<()> {
             }
         };
 
-        // `EchoFunction` is a generated enum, that has one variant for each defined function.
-        // Function arguments (if any) and a promise object are contained in the call object. Aldrin
-        // does not impose any restrictions on when the reply is sent. If e.g. processing the
-        // function call takes some time, then it is fine to hang onto the call or the inner promise
-        // object until then. If the promise object is dropped, then the caller will be notified
-        // that the call has been aborted.
-        match function {
-            EchoFunction::Echo(call) => {
+        // `EchoCall` is a generated enum, that has one variant for each defined function. Call
+        // arguments (if any) and a promise object are contained in the call object. Aldrin does not
+        // impose any restrictions on when the reply is sent. If e.g. processing the call takes some
+        // time, then it is fine to hang onto the call or the inner promise object until then. If
+        // the promise object is dropped, then the caller will be notified that the call has been
+        // aborted.
+        match call {
+            EchoCall::Echo(call) => {
                 let (args, promise) = call.into_args_and_promise();
                 println!("echo(\"{args}\") called.");
 
@@ -166,7 +166,7 @@ async fn server(bus: &Handle) -> Result<()> {
                 }
             }
 
-            EchoFunction::EchoAll(call) => {
+            EchoCall::EchoAll(call) => {
                 let args = call.args();
                 println!("echo_all(\"{args}\") called.");
 
@@ -298,8 +298,8 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
 
 async fn get_echo(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<EchoProxy> {
     // Find either a specific object (when `object_uuid` is `Some`) or any object implementing the
-    // Echo service. The `find_object` function is a convenience wrapper for `Discoverer`, which is
-    // more concise when looking for a single object as a one-shot operation.
+    // Echo service. The `find_object_n` function is a convenience wrapper for `Discoverer`, which
+    // is more concise when looking for a single object as a one-shot operation.
     let (_, [service_id]) = bus
         .find_object_n(object_uuid, &[EchoProxy::UUID])
         .await?

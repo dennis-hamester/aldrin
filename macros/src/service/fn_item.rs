@@ -98,7 +98,7 @@ impl FnItem {
         }
     }
 
-    pub fn gen_next_call_match_arm(&self, function: &Ident) -> TokenStream {
+    pub fn gen_next_call_match_arm(&self, call: &Ident) -> TokenStream {
         let id = &self.id;
         let variant = &self.variant;
 
@@ -107,7 +107,7 @@ impl FnItem {
                 ::std::result::Result::Ok((call)) => {
                     ::std::task::Poll::Ready(
                         ::std::option::Option::Some(
-                            ::std::result::Result::Ok(#function::#variant(call)),
+                            ::std::result::Result::Ok(#call::#variant(call)),
                         ),
                     )
                 }

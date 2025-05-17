@@ -1,5 +1,5 @@
 use crate::bookmarks_v1::{
-    Bookmark, Bookmarks, BookmarksEvent, BookmarksFunction, BookmarksProxy, Error as BookmarkError,
+    Bookmark, Bookmarks, BookmarksCall, BookmarksEvent, BookmarksProxy, Error as BookmarkError,
 };
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
@@ -99,9 +99,9 @@ impl Server {
     async fn run(mut self) -> Result<()> {
         loop {
             tokio::select! {
-                func = self.svc.next_call() => {
-                    match func {
-                        Some(Ok(func)) => self.handle_call(func)?,
+                call = self.svc.next_call() => {
+                    match call {
+                        Some(Ok(call)) => self.handle_call(call)?,
                         Some(Err(e)) => self.invalid_call(e),
                         None => break Err(anyhow!("broker shut down")),
                     }
@@ -112,12 +112,12 @@ impl Server {
         }
     }
 
-    fn handle_call(&mut self, func: BookmarksFunction) -> Result<()> {
-        match func {
-            BookmarksFunction::Get(call) => self.get(call)?,
-            BookmarksFunction::Add(call) => self.add(call)?,
-            BookmarksFunction::Remove(call) => self.remove(call)?,
-            BookmarksFunction::UnknownFunction(call) => self.unknown_function(call),
+    fn handle_call(&mut self, call: BookmarksCall) -> Result<()> {
+        match call {
+            BookmarksCall::Get(call) => self.get(call)?,
+            BookmarksCall::Add(call) => self.add(call)?,
+            BookmarksCall::Remove(call) => self.remove(call)?,
+            BookmarksCall::UnknownFunction(call) => self.unknown_function(call),
         }
 
         Ok(())

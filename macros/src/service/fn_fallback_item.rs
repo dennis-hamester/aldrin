@@ -30,13 +30,13 @@ impl FnFallbackItem {
         }
     }
 
-    pub fn gen_next_call_match_arm(&self, function: &Ident) -> TokenStream {
+    pub fn gen_next_call_match_arm(&self, call: &Ident) -> TokenStream {
         let variant = &self.variant;
 
         quote! {
             _ => ::std::task::Poll::Ready(
                 ::std::option::Option::Some(
-                    ::std::result::Result::Ok(#function::#variant(call.into_unknown_call()))
+                    ::std::result::Result::Ok(#call::#variant(call.into_unknown_call()))
                 ),
             ),
         }

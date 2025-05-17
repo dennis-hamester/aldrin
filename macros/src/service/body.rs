@@ -216,7 +216,7 @@ impl Body {
         }
     }
 
-    pub fn gen_service(&self, function: &Ident, options: &Options) -> TokenStream {
+    pub fn gen_service(&self, call: &Ident, options: &Options) -> TokenStream {
         let uuid = &self.uuid;
         let version = &self.version;
         let krate = options.krate();
@@ -262,11 +262,11 @@ impl Body {
             .items
             .iter()
             .filter_map(ServiceItem::as_function)
-            .map(|func| func.gen_next_call_match_arm(function))
+            .map(|func| func.gen_next_call_match_arm(call))
             .collect::<TokenStream>();
 
         let next_call_fallback = match self.function_fallback() {
-            Some(fallback) => fallback.gen_next_call_match_arm(function),
+            Some(fallback) => fallback.gen_next_call_match_arm(call),
 
             None => quote! {
                 id => {
@@ -335,7 +335,7 @@ impl Body {
                 &mut self,
                 cx: &mut ::std::task::Context,
             ) -> ::std::task::Poll<
-                ::std::option::Option<::std::result::Result<#function, #krate::Error>>,
+                ::std::option::Option<::std::result::Result<#call, #krate::Error>>,
             > {
                 let call = match self.inner.poll_next_call(cx) {
                     ::std::task::Poll::Ready(::std::option::Option::Some(call)) => call,
@@ -355,13 +355,13 @@ impl Body {
 
             pub async fn next_call(
                 &mut self,
-            ) -> ::std::option::Option<::std::result::Result<#function, #krate::Error>> {
+            ) -> ::std::option::Option<::std::result::Result<#call, #krate::Error>> {
                 ::std::future::poll_fn(|cx| self.poll_next_call(cx)).await
             }
         }
     }
 
-    pub fn gen_function(&self, options: &Options) -> TokenStream {
+    pub fn gen_call(&self, options: &Options) -> TokenStream {
         let mut variants = self
             .items
             .iter()
@@ -376,7 +376,7 @@ impl Body {
         variants
     }
 
-    pub fn gen_function_impl(&self, options: &Options) -> TokenStream {
+    pub fn gen_call_impl(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
 
         let variants = |f, args, borrow, wait| {

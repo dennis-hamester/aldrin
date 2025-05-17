@@ -10,12 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add methods `client()`, `id()`, `version()`, `timestamp()`, `abort()`, `is_aborted()`,
-  `poll_aborted()` and `aborted()` to generated function enums.
+  `poll_aborted()` and `aborted()` to generated call enums.
 - Add methods `id()` and `timestamp()` to generated event enums.
 
 ### Changed
 
 - Adapt to the new `Serialize` and `Deserialize` traits.
+- Rename the generated enum for function calls from `[..]Function` to `[..]Call`.
 
 ## [0.12.0] - 2025-01-26
 

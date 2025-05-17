@@ -1,7 +1,6 @@
 use crate::bookmarks_v2::{
-    Bookmark, Bookmarks, BookmarksEvent, BookmarksFunction, BookmarksGetV2Args,
-    BookmarksGetV2ArgsRef, BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef,
-    Error as BookmarkError,
+    Bookmark, Bookmarks, BookmarksCall, BookmarksEvent, BookmarksGetV2Args, BookmarksGetV2ArgsRef,
+    BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef, Error as BookmarkError,
 };
 use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
@@ -154,9 +153,9 @@ impl Server {
     async fn run(mut self) -> Result<()> {
         loop {
             tokio::select! {
-                func = self.svc.next_call() => {
-                    match func {
-                        Some(Ok(func)) => self.handle_call(func)?,
+                call = self.svc.next_call() => {
+                    match call {
+                        Some(Ok(call)) => self.handle_call(call)?,
                         Some(Err(e)) => self.invalid_call(e),
                         None => break Err(anyhow!("broker shut down")),
                     }
@@ -167,15 +166,15 @@ impl Server {
         }
     }
 
-    fn handle_call(&mut self, func: BookmarksFunction) -> Result<()> {
-        match func {
-            BookmarksFunction::Get(call) => self.get(call)?,
-            BookmarksFunction::GetV2(call) => self.get_v2(call)?,
-            BookmarksFunction::Add(call) => self.add(call)?,
-            BookmarksFunction::Remove(call) => self.remove(call)?,
-            BookmarksFunction::RemoveV2(call) => self.remove_v2(call)?,
-            BookmarksFunction::GetGroups(call) => self.get_groups(call)?,
-            BookmarksFunction::UnknownFunction(call) => self.unknown_function(call),
+    fn handle_call(&mut self, call: BookmarksCall) -> Result<()> {
+        match call {
+            BookmarksCall::Get(call) => self.get(call)?,
+            BookmarksCall::GetV2(call) => self.get_v2(call)?,
+            BookmarksCall::Add(call) => self.add(call)?,
+            BookmarksCall::Remove(call) => self.remove(call)?,
+            BookmarksCall::RemoveV2(call) => self.remove_v2(call)?,
+            BookmarksCall::GetGroups(call) => self.get_groups(call)?,
+            BookmarksCall::UnknownFunction(call) => self.unknown_function(call),
         }
 
         Ok(())

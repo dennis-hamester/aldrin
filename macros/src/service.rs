@@ -41,7 +41,7 @@ pub struct Service {
     ident: Ident,
     proxy: Ident,
     event: Ident,
-    function: Ident,
+    call: Ident,
     introspection: Ident,
     body: Body,
 }
@@ -74,11 +74,11 @@ impl Service {
 
     fn gen_server(&self) -> TokenStream {
         let service = self.gen_service();
-        let function = self.gen_function();
+        let call = self.gen_call();
 
         quote! {
             #service
-            #function
+            #call
         }
     }
 
@@ -177,9 +177,9 @@ impl Service {
     fn gen_service(&self) -> TokenStream {
         let vis = &self.vis;
         let ident = &self.ident;
-        let function = &self.function;
+        let call = &self.call;
         let krate = self.options.krate();
-        let body_impl = self.body.gen_service(&self.function, &self.options);
+        let body_impl = self.body.gen_service(&self.call, &self.options);
 
         let introspection_if = self.options.introspection_if().map(|feature| {
             quote! { #[cfg(feature = #feature)] }
@@ -225,7 +225,7 @@ impl Service {
 
             #[automatically_derived]
             impl #krate::private::futures_core::stream::Stream for #ident {
-                type Item = ::std::result::Result<#function, #krate::Error>;
+                type Item = ::std::result::Result<#call, #krate::Error>;
 
                 fn poll_next(
                     mut self: ::std::pin::Pin<&mut Self>,
@@ -246,22 +246,22 @@ impl Service {
         }
     }
 
-    fn gen_function(&self) -> TokenStream {
+    fn gen_call(&self) -> TokenStream {
         let vis = &self.vis;
-        let vars = self.body.gen_function(&self.options);
-        let function = &self.function;
-        let function_impl = self.body.gen_function_impl(&self.options);
+        let vars = self.body.gen_call(&self.options);
+        let call = &self.call;
+        let call_impl = self.body.gen_call_impl(&self.options);
 
         quote! {
             #[automatically_derived]
             #[derive(::std::fmt::Debug)]
-            #vis enum #function {
+            #vis enum #call {
                 #vars
             }
 
             #[automatically_derived]
-            impl #function {
-                #function_impl
+            impl #call {
+                #call_impl
             }
         }
     }
@@ -305,7 +305,8 @@ impl Parse for Service {
 
         let proxy = Ident::new_raw(&format!("{}Proxy", ident.unraw()), ident.span());
         let event = Ident::new_raw(&format!("{}Event", ident.unraw()), ident.span());
-        let function = Ident::new_raw(&format!("{}Function", ident.unraw()), ident.span());
+        let call = Ident::new_raw(&format!("{}Call", ident.unraw()), ident.span());
+
         let introspection =
             Ident::new_raw(&format!("{}Introspection", ident.unraw()), ident.span());
 
@@ -315,7 +316,7 @@ impl Parse for Service {
             ident,
             proxy,
             event,
-            function,
+            call,
             introspection,
             body,
         })

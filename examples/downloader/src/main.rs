@@ -4,8 +4,8 @@ use aldrin::{Call, Client, Handle, Promise, UnboundSender};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use downloader::{
-    Chunk, ChunkRef, Downloader, DownloaderDownloadArgs, DownloaderDownloadArgsRef,
-    DownloaderFunction, DownloaderProxy,
+    Chunk, ChunkRef, Downloader, DownloaderCall, DownloaderDownloadArgs, DownloaderDownloadArgsRef,
+    DownloaderProxy,
 };
 use sha2::{Digest, Sha256};
 use std::convert::Infallible;
@@ -116,9 +116,9 @@ async fn server(bus: &Handle) -> Result<()> {
 
     loop {
         tokio::select! {
-            function = downloader.next_call() => {
-                match function {
-                    Some(Ok(DownloaderFunction::Download(call))) => {
+            call = downloader.next_call() => {
+                match call {
+                    Some(Ok(DownloaderCall::Download(call))) => {
                         tokio::spawn(download(call));
                     }
 
@@ -299,7 +299,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
 
 async fn get_downloader(bus: &Handle, object_uuid: Option<ObjectUuid>) -> Result<DownloaderProxy> {
     // Find either a specific object (when `object_uuid` is `Some`) or any object implementing the
-    // Downloader service. The `find_object` function is a convenience wrapper for `Discoverer`,
+    // Downloader service. The `find_object_n` function is a convenience wrapper for `Discoverer`,
     // which is more concise when looking for a single object as a one-shot operation.
     let (_, [service_id]) = bus
         .find_object_n(object_uuid, &[DownloaderProxy::UUID])

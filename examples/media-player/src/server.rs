@@ -1,5 +1,5 @@
 use crate::media_player::{
-    Error, MediaPlayer, MediaPlayerFunction, MediaPlayerPlayArgs, Metadata, State,
+    Error, MediaPlayer, MediaPlayerCall, MediaPlayerPlayArgs, Metadata, State,
 };
 use aldrin::core::ObjectUuid;
 use aldrin::{Call, Handle, Object};
@@ -44,9 +44,9 @@ impl Server {
 
         loop {
             tokio::select! {
-                func = self.svc.next_call() => {
-                    match func {
-                        Some(Ok(func)) => self.handle_call(func)?,
+                call = self.svc.next_call() => {
+                    match call {
+                        Some(Ok(call)) => self.handle_call(call)?,
                         Some(Err(e)) => println!("Received an invalid call: {e}."),
                         None => return Err(anyhow!("broker shut down")),
                     }
@@ -68,16 +68,16 @@ impl Server {
         timer.unwrap().tick().await;
     }
 
-    fn handle_call(&mut self, func: MediaPlayerFunction) -> Result<()> {
-        match func {
-            MediaPlayerFunction::GetState(call) => self.get_state(call),
-            MediaPlayerFunction::GetMetadata(call) => self.get_metadata(call),
-            MediaPlayerFunction::GetPosition(call) => self.get_position(call),
-            MediaPlayerFunction::GetLastMetadata(call) => self.get_last_metadata(call),
-            MediaPlayerFunction::Play(call) => self.play(call),
-            MediaPlayerFunction::Stop(call) => self.stop(call),
-            MediaPlayerFunction::Pause(call) => self.pause(call),
-            MediaPlayerFunction::Resume(call) => self.resume(call),
+    fn handle_call(&mut self, call: MediaPlayerCall) -> Result<()> {
+        match call {
+            MediaPlayerCall::GetState(call) => self.get_state(call),
+            MediaPlayerCall::GetMetadata(call) => self.get_metadata(call),
+            MediaPlayerCall::GetPosition(call) => self.get_position(call),
+            MediaPlayerCall::GetLastMetadata(call) => self.get_last_metadata(call),
+            MediaPlayerCall::Play(call) => self.play(call),
+            MediaPlayerCall::Stop(call) => self.stop(call),
+            MediaPlayerCall::Pause(call) => self.pause(call),
+            MediaPlayerCall::Resume(call) => self.resume(call),
         }
     }
 
