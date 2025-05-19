@@ -1,0 +1,36 @@
+service Bookmarks {
+    uuid = 35660342-8ecb-4101-903a-d1ba49d66f29;
+    version = 1;
+
+    fn get @ 1 = vec<Bookmark>;
+
+    fn add @ 2 {
+        args = Bookmark;
+        err = Error;
+    }
+
+    fn remove @ 3 {
+        args = string;
+        err = Error;
+    }
+
+    event added @ 1 = Bookmark;
+    event removed @ 2 = Bookmark;
+
+    fn unknown_function = fallback;
+    event unknown_event = fallback;
+}
+
+struct Bookmark {
+    required name @ 1 = string;
+    required url @ 2 = string;
+    unknown_fields = fallback;
+}
+
+enum Error {
+    InvalidName @ 1;
+    DuplicateName @ 2;
+    InvalidUrl @ 3;
+    UnknownFields @ 4;
+    Unknown = fallback;
+}

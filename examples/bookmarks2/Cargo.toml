@@ -1,0 +1,36 @@
+[package]
+name = "example-bookmarks2"
+version = "0.0.0"
+publish = false
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[features]
+introspection = ["aldrin/introspection"]
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+
+[dependencies.aldrin]
+path = "../../aldrin"
+default-features = false
+features = [
+    "codegen",
+    "new-v4-ids",
+    "tokio",
+]
+
+[dependencies.tokio]
+workspace = true
+features = [
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "signal",
+]
