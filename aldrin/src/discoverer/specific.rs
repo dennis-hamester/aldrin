@@ -146,6 +146,14 @@ where
         })
     }
 
+    pub fn contains(&self, object: ObjectUuid) -> bool {
+        self.created && (object == self.object)
+    }
+
+    pub fn contains_any(&self) -> bool {
+        self.created
+    }
+
     pub fn iter(&self) -> SpecificObjectIter<Key> {
         if self.created {
             SpecificObjectIter::new(Some(SpecificObjectIterEntry::new(self)))

@@ -20,6 +20,8 @@ fn test_created<Key>(
         discoverer.object_id(key, object.id().uuid),
         Some(object.id())
     );
+    assert!(discoverer.contains(key, object.id().uuid));
+    assert!(discoverer.contains_any(key));
 
     assert_eq!(event.kind(), DiscovererEventKind::Created);
     assert_eq!(event.key(), key);
@@ -28,6 +30,8 @@ fn test_created<Key>(
     let entry = discoverer.entry(key);
     assert_eq!(entry.key(), key);
     assert_eq!(entry.object_id(object.id().uuid), Some(object.id()));
+    assert!(entry.contains(object.id().uuid));
+    assert!(entry.contains_any());
 
     let mut iter = discoverer.iter();
     let iter_entry1 = iter.next().unwrap();
@@ -290,6 +294,8 @@ async fn any_object_no_services() {
     let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
 
     assert!(!discoverer.is_finished());
+    assert!(!discoverer.contains(0, obj.id().uuid));
+    assert!(!discoverer.contains_any(0));
     let ev = discoverer.next_event().await.unwrap();
     test_created(&discoverer, ev, 0, &obj, None, None);
 

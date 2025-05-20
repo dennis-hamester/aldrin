@@ -105,6 +105,14 @@ where
         })
     }
 
+    pub fn contains(&self, object: ObjectUuid) -> bool {
+        self.created.contains_key(&object)
+    }
+
+    pub fn contains_any(&self) -> bool {
+        !self.created.is_empty()
+    }
+
     pub fn iter(&self) -> AnyObjectIter<Key> {
         AnyObjectIter::new(self, self.created.iter())
     }

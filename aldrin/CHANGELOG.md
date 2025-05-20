@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deserialize_and_cast()`.
 - Add `Discoverer::wait_finished()`, `poll_finished()` and `restart_current_only_and_wait()`.
 - Add `DiscovererBuilder::build_current_only_and_wait()`.
+- Add `Discoverer::contains()` and `contains_any()`.
+- Add `DiscovererEntry::contains()` and `contains_any()`.
 
 ### Changed
 

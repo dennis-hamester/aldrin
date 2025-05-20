@@ -107,6 +107,22 @@ where
         }
     }
 
+    /// Checks if there is a specific object associated with this entry.
+    pub fn contains(&self, object: impl Into<ObjectUuid>) -> bool {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.contains(object.into()),
+            EntryInner::Any(ref any) => any.contains(object.into()),
+        }
+    }
+
+    /// Checks if there are any known objects associated with this entry.
+    pub fn contains_any(&self) -> bool {
+        match self.inner {
+            EntryInner::Specific(ref specific) => specific.contains_any(),
+            EntryInner::Any(ref any) => any.contains_any(),
+        }
+    }
+
     /// Returns an iterator over all found objects corresponding to this entry.
     pub fn iter(&self) -> DiscovererEntryIter<Key> {
         match self.inner {

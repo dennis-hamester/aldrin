@@ -275,6 +275,16 @@ where
         self.entry(key).service_ids_n(object, services)
     }
 
+    /// Checks if there is a specific object associated with a key.
+    pub fn contains(&self, key: Key, object: impl Into<ObjectUuid>) -> bool {
+        self.entry(key).contains(object)
+    }
+
+    /// Checks if the specified key has any known objects.
+    pub fn contains_any(&self, key: Key) -> bool {
+        self.entry(key).contains_any()
+    }
+
     /// Returns an entry of the `Discoverer`.
     pub fn entry(&self, key: Key) -> &DiscovererEntry<Key> {
         self.entries.get(&key).expect("valid key")
