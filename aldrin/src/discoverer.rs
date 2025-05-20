@@ -268,13 +268,13 @@ where
 
         loop {
             if let Some(event) = self.events.pop_front() {
-                return Poll::Ready(Some(event));
+                break Poll::Ready(Some(event));
             }
 
             let event = match self.listener.poll_next_event(cx) {
                 Poll::Ready(Some(event)) => event,
-                Poll::Ready(None) => return Poll::Ready(None),
-                Poll::Pending => return Poll::Pending,
+                Poll::Ready(None) => break Poll::Ready(None),
+                Poll::Pending => break Poll::Pending,
             };
 
             for entry in self.entries.values_mut() {
