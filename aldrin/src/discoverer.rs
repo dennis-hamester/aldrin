@@ -193,6 +193,13 @@ where
         Ok(())
     }
 
+    /// Restarts the discoverer for only current objects and waits until it finishes.
+    pub async fn restart_current_only_and_wait(&mut self) -> Result<(), Error> {
+        self.restart_current_only().await?;
+        self.wait_finished().await;
+        Ok(())
+    }
+
     /// Indicates whether the discoverer can return more events.
     ///
     /// Discoverers can only finish if they are considering only current objects and services,
@@ -200,6 +207,29 @@ where
     /// with [`restart_current_only`](Self::restart_current_only`).
     pub fn is_finished(&self) -> bool {
         self.entries.is_empty() || self.listener.is_finished()
+    }
+
+    /// Polls whether the discoverer has finished.
+    ///
+    /// See [`wait_finished`](Self::wait_finished) for more information.
+    pub fn poll_finished(&mut self, cx: &mut Context) -> Poll<()> {
+        loop {
+            match self.poll_next_event(cx) {
+                Poll::Ready(Some(_)) => {}
+                Poll::Ready(None) => break Poll::Ready(()),
+                Poll::Pending => break Poll::Pending,
+            }
+        }
+    }
+
+    /// Waits until the discoverer finishes.
+    ///
+    /// This method will effectively discard all events. It is mostly useful when the discoverer
+    /// considers only current objects (e.g. via [`DiscovererBuilder::build_current_only`]). When
+    /// the discoverer then finishes, it will have built up a complete database of all matching
+    /// objects.
+    pub async fn wait_finished(&mut self) {
+        future::poll_fn(|cx| self.poll_finished(cx)).await
     }
 
     /// Queries a specific object id.

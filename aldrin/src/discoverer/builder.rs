@@ -38,6 +38,13 @@ where
         Discoverer::new(self.client, self.entries, true).await
     }
 
+    /// Builds the discoverer for only current objects and waits until it finishes.
+    pub async fn build_current_only_and_wait(self) -> Result<Discoverer<Key>, Error> {
+        let mut discoverer = self.build_current_only().await?;
+        discoverer.wait_finished().await;
+        Ok(discoverer)
+    }
+
     /// Adds an object to the discoverer.
     ///
     /// The `key` is an arbitrary value that can later be queried again on

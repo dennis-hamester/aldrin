@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `poll_aborted()` and `aborted()`.
 - Add `UnknownEvent::timestamp()`, `take_args()`, `into_args()`, `deserialize_and_cast_as()` and
   `deserialize_and_cast()`.
+- Add `Discoverer::wait_finished()`, `poll_finished()` and `restart_current_only_and_wait()`.
+- Add `DiscovererBuilder::build_current_only_and_wait()`.
 
 ### Changed
 
