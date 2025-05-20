@@ -290,9 +290,14 @@ where
         self.entries.get(&key).expect("valid key")
     }
 
+    /// Returns an iterator over all entries.
+    pub fn entries(&self) -> DiscovererEntries<Key> {
+        DiscovererEntries::new(self.entries.values())
+    }
+
     /// Returns an iterator over all found objects.
     pub fn iter(&self) -> DiscovererIter<Key> {
-        DiscovererIter::new(self.entries.values().flat_map(DiscovererEntry::iter))
+        DiscovererIter::new(self.entries())
     }
 
     /// Returns an iterator over all found objects corresponding to a specific key.
@@ -365,11 +370,48 @@ where
     }
 }
 
-type DiscovererIterInner<'a, Key> = FlatMap<
-    hash_map::Values<'a, Key, DiscovererEntry<Key>>,
-    DiscovererEntryIter<'a, Key>,
-    fn(&'a DiscovererEntry<Key>) -> DiscovererEntryIter<'a, Key>,
->;
+/// Iterator over the entries of a [`Discoverer`].
+#[derive(Debug, Clone)]
+pub struct DiscovererEntries<'a, Key> {
+    inner: DiscovererEntriesInner<'a, Key>,
+}
+
+type DiscovererEntriesInner<'a, Key> = hash_map::Values<'a, Key, DiscovererEntry<Key>>;
+
+impl<'a, Key> DiscovererEntries<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn new(inner: DiscovererEntriesInner<'a, Key>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<'a, Key> Iterator for DiscovererEntries<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    type Item = &'a DiscovererEntry<Key>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'a, Key> ExactSizeIterator for DiscovererEntries<'a, Key>
+where
+    Key: Copy + Eq + Hash,
+{
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+}
+
+impl<Key> FusedIterator for DiscovererEntries<'_, Key> where Key: Copy + Eq + Hash {}
 
 /// Iterator over all found objects of a [`Discoverer`].
 #[derive(Debug, Clone)]
@@ -380,12 +422,20 @@ where
     inner: DiscovererIterInner<'a, Key>,
 }
 
+type DiscovererIterInner<'a, Key> = FlatMap<
+    DiscovererEntries<'a, Key>,
+    DiscovererEntryIter<'a, Key>,
+    fn(&'a DiscovererEntry<Key>) -> DiscovererEntryIter<'a, Key>,
+>;
+
 impl<'a, Key> DiscovererIter<'a, Key>
 where
     Key: Copy + Eq + Hash,
 {
-    fn new(inner: DiscovererIterInner<'a, Key>) -> Self {
-        Self { inner }
+    fn new(inner: DiscovererEntries<'a, Key>) -> Self {
+        Self {
+            inner: inner.flat_map(DiscovererEntry::iter),
+        }
     }
 }
 

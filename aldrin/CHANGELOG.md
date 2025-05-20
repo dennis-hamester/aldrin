@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `DiscovererBuilder::build_current_only_and_wait()`.
 - Add `Discoverer::contains()` and `contains_any()`.
 - Add `DiscovererEntry::contains()` and `contains_any()`.
+- Add `Discoverer::entries()`, which returns a `DiscovererEntries` to iterate over all entries.
 
 ### Changed
 
