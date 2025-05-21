@@ -1,6 +1,6 @@
 use crate::{low_level, Error, Handle};
 use aldrin_core::tags::{self, PrimaryTag};
-use aldrin_core::Serialize;
+use aldrin_core::{Serialize, ServiceId};
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
@@ -38,6 +38,11 @@ impl<T, E> Promise<T, E> {
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
         self.inner.timestamp()
+    }
+
+    /// Returns the id of the service that the call was received for.
+    pub fn service(&self) -> ServiceId {
+        self.inner.service()
     }
 
     /// Casts the promise to a different result type.

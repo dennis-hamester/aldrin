@@ -1,7 +1,7 @@
 use crate::{Error, Handle};
 use aldrin_core::message::CallFunctionResult;
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Serialize, SerializedValue};
+use aldrin_core::{Serialize, SerializedValue, ServiceId};
 use futures_channel::oneshot::Receiver;
 use futures_core::FusedFuture;
 use std::future::{self, Future};
@@ -18,6 +18,7 @@ pub struct Promise {
     timestamp: Instant,
     aborted: Receiver<()>,
     serial: u32,
+    service: ServiceId,
 }
 
 impl Promise {
@@ -28,6 +29,7 @@ impl Promise {
         timestamp: Instant,
         aborted: Receiver<()>,
         serial: u32,
+        service: ServiceId,
     ) -> Self {
         Self {
             client: Some(client),
@@ -36,6 +38,7 @@ impl Promise {
             timestamp,
             aborted,
             serial,
+            service,
         }
     }
 
@@ -57,6 +60,11 @@ impl Promise {
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
         self.timestamp
+    }
+
+    /// Returns the id of the service that the call was received for.
+    pub fn service(&self) -> ServiceId {
+        self.service
     }
 
     /// Casts the promise to a specific set of result types.

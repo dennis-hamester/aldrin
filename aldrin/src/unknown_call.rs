@@ -1,7 +1,8 @@
 use crate::{low_level, Call, Error, Handle};
 use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::{
-    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Value,
+    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, ServiceId,
+    Value,
 };
 use std::error::Error as StdError;
 use std::fmt;
@@ -42,6 +43,11 @@ impl UnknownCall {
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
         self.inner.as_ref().unwrap().timestamp()
+    }
+
+    /// Returns the id of the service that the call was received for.
+    pub fn service(&self) -> ServiceId {
+        self.inner.as_ref().unwrap().service()
     }
 
     /// Returns a slice to the call's serialized arguments.

@@ -2,7 +2,8 @@ use super::Promise;
 use crate::{Error, Handle, UnknownCall};
 use aldrin_core::tags::{PrimaryTag, Tag};
 use aldrin_core::{
-    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Value,
+    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, ServiceId,
+    Value,
 };
 use futures_channel::oneshot::Receiver;
 use std::task::{Context, Poll};
@@ -16,6 +17,7 @@ pub struct Call {
 }
 
 impl Call {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         client: Handle,
         aborted: Receiver<()>,
@@ -24,10 +26,11 @@ impl Call {
         version: Option<u32>,
         timestamp: Instant,
         args: SerializedValue,
+        service: ServiceId,
     ) -> Self {
         Self {
             args,
-            promise: Promise::new(client, id, version, timestamp, aborted, serial),
+            promise: Promise::new(client, id, version, timestamp, aborted, serial, service),
         }
     }
 
@@ -49,6 +52,11 @@ impl Call {
     /// Returns the timestamp when the call was received.
     pub fn timestamp(&self) -> Instant {
         self.promise.timestamp()
+    }
+
+    /// Returns the id of the service that the call was received for.
+    pub fn service(&self) -> ServiceId {
+        self.promise.service()
     }
 
     /// Returns a slice to the call's serialized arguments.
