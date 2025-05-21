@@ -1,3 +1,4 @@
+use aldrin_core::ServiceId;
 use std::time::Instant;
 
 /// Event emitted by a service.
@@ -6,14 +7,16 @@ pub struct Event<T> {
     id: u32,
     timestamp: Instant,
     args: T,
+    service: ServiceId,
 }
 
 impl<T> Event<T> {
-    pub(crate) fn new(id: u32, timestamp: Instant, args: T) -> Self {
+    pub(crate) fn new(id: u32, timestamp: Instant, args: T, service: ServiceId) -> Self {
         Self {
             id,
             timestamp,
             args,
+            service,
         }
     }
 
@@ -25,6 +28,11 @@ impl<T> Event<T> {
     /// Returns the timestamp when the event was received.
     pub fn timestamp(&self) -> Instant {
         self.timestamp
+    }
+
+    /// Returns the id of the service that the event was received for.
+    pub fn service(&self) -> ServiceId {
+        self.service
     }
 
     /// Returns a reference to the event's arguments.
@@ -44,12 +52,12 @@ impl<T> Event<T> {
 
     /// Converts from `&Event<T>` to `Event<&T>`.
     pub fn as_ref(&self) -> Event<&T> {
-        Event::new(self.id, self.timestamp, &self.args)
+        Event::new(self.id, self.timestamp, &self.args, self.service)
     }
 
     /// Converts from `&mut Event<T>` to `Event<&mut T>`.
     pub fn as_mut(&mut self) -> Event<&mut T> {
-        Event::new(self.id, self.timestamp, &mut self.args)
+        Event::new(self.id, self.timestamp, &mut self.args, self.service)
     }
 
     /// Maps an `Event<T>` to `Event<U>` by applying a function to the arguments.
@@ -57,6 +65,6 @@ impl<T> Event<T> {
     where
         F: FnOnce(T) -> U,
     {
-        Event::new(self.id, self.timestamp, f(self.args))
+        Event::new(self.id, self.timestamp, f(self.args), self.service)
     }
 }

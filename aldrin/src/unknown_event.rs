@@ -1,6 +1,8 @@
 use crate::{low_level, Event};
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use aldrin_core::{
+    Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, ServiceId, Value,
+};
 use std::error::Error as StdError;
 use std::fmt;
 use std::time::Instant;
@@ -29,6 +31,11 @@ impl UnknownEvent {
     /// Returns the timestamp when the event was received.
     pub fn timestamp(&self) -> Instant {
         self.inner.timestamp()
+    }
+
+    /// Returns the id of the service that the event was received for.
+    pub fn service(&self) -> ServiceId {
+        self.inner.service()
     }
 
     /// Returns a slice to the event's serialized arguments.

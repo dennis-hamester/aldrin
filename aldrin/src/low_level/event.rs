@@ -1,6 +1,8 @@
 use crate::UnknownEvent;
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use aldrin_core::{
+    Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, ServiceId, Value,
+};
 use std::time::Instant;
 
 /// Event emitted by a service.
@@ -9,14 +11,21 @@ pub struct Event {
     id: u32,
     timestamp: Instant,
     args: SerializedValue,
+    service: ServiceId,
 }
 
 impl Event {
-    pub(crate) fn new(id: u32, timestamp: Instant, args: SerializedValue) -> Self {
+    pub(crate) fn new(
+        id: u32,
+        timestamp: Instant,
+        args: SerializedValue,
+        service: ServiceId,
+    ) -> Self {
         Self {
             id,
             timestamp,
             args,
+            service,
         }
     }
 
@@ -28,6 +37,11 @@ impl Event {
     /// Returns the timestamp when the event was received.
     pub fn timestamp(&self) -> Instant {
         self.timestamp
+    }
+
+    /// Returns the id of the service that the event was received for.
+    pub fn service(&self) -> ServiceId {
+        self.service
     }
 
     /// Returns a slice to the event's serialized arguments.
@@ -67,7 +81,7 @@ impl Event {
     ) -> Result<crate::Event<U>, DeserializeError> {
         self.args
             .deserialize_as()
-            .map(|args| crate::Event::new(self.id, self.timestamp, args))
+            .map(|args| crate::Event::new(self.id, self.timestamp, args, self.service))
     }
 
     /// Deserializes the arguments and casts the event to a high-level [`Event`](crate::Event).

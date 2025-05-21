@@ -30,8 +30,7 @@ impl Proxies {
         let id = ProxyId::new_v4();
         let (send, recv) = mpsc::unbounded();
 
-        self.entries
-            .insert(id, ProxyEntry::new(service.cookie, send));
+        self.entries.insert(id, ProxyEntry::new(service, send));
 
         let subscribe_service = match self.services.entry(service.cookie) {
             Entry::Occupied(mut entries) => {
@@ -213,14 +212,14 @@ impl Proxies {
 
 #[derive(Debug)]
 struct ProxyEntry {
-    service: ServiceCookie,
+    service: ServiceId,
     send: UnboundedSender<Event>,
     events: HashSet<u32>,
     all_events: bool,
 }
 
 impl ProxyEntry {
-    fn new(service: ServiceCookie, send: UnboundedSender<Event>) -> Self {
+    fn new(service: ServiceId, send: UnboundedSender<Event>) -> Self {
         Self {
             service,
             send,
@@ -230,12 +229,12 @@ impl ProxyEntry {
     }
 
     fn service(&self) -> ServiceCookie {
-        self.service
+        self.service.cookie
     }
 
     fn remove(self) -> RemoveProxyResult {
         RemoveProxyResult {
-            service: self.service,
+            service: self.service.cookie,
             unsubscribe: true,
             events: self.events,
             all_events: self.all_events,
@@ -265,7 +264,7 @@ impl ProxyEntry {
 
     fn unsubscribe_all(&mut self) -> UnsubscribeAllResult {
         UnsubscribeAllResult {
-            service: self.service,
+            service: self.service.cookie,
             events: mem::take(&mut self.events),
             all_events: mem::take(&mut self.all_events),
         }
@@ -277,7 +276,10 @@ impl ProxyEntry {
 
     fn emit(&self, event: u32, timestamp: Instant, args: SerializedValue) {
         debug_assert!(self.all_events || self.events.contains(&event));
-        let _ = self.send.unbounded_send(Event::new(event, timestamp, args));
+
+        let _ = self
+            .send
+            .unbounded_send(Event::new(event, timestamp, args, self.service));
     }
 }
 
