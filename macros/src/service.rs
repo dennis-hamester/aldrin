@@ -158,7 +158,7 @@ impl Service {
         let vis = &self.vis;
         let vars = self.body.gen_event(&self.options);
         let event = &self.event;
-        let event_impl = self.body.gen_event_impl();
+        let event_impl = self.body.gen_event_impl(&self.options);
 
         quote! {
             #[automatically_derived]

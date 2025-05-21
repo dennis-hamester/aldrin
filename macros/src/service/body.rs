@@ -188,7 +188,9 @@ impl Body {
         variants
     }
 
-    pub fn gen_event_impl(&self) -> TokenStream {
+    pub fn gen_event_impl(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+
         let variants = |f| {
             self.items
                 .iter()
@@ -200,6 +202,7 @@ impl Body {
 
         let id = variants(quote!(id));
         let timestamp = variants(quote!(timestamp));
+        let service = variants(quote!(service));
 
         quote! {
             pub fn id(&self) -> ::std::primitive::u32 {
@@ -211,6 +214,12 @@ impl Body {
             pub fn timestamp(&self) -> ::std::time::Instant {
                 match *self {
                     #( #timestamp )*
+                }
+            }
+
+            pub fn service(&self) -> #krate::core::ServiceId {
+                match *self {
+                    #( #service )*
                 }
             }
         }
