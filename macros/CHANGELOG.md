@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add methods `client()`, `id()`, `version()`, `timestamp()`, `abort()`, `is_aborted()`,
-  `poll_aborted()` and `aborted()` to generated call enums.
+- Add methods `client()`, `id()`, `version()`, `timestamp()`, `service()`, `abort()`,
+  `is_aborted()`, `poll_aborted()` and `aborted()` to generated call enums.
 - Add methods `id()` and `timestamp()` to generated event enums.
 
 ### Changed

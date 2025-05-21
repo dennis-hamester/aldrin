@@ -392,6 +392,7 @@ impl Body {
         let id = variants(quote!(id), quote!(), quote!(ref), quote!());
         let version = variants(quote!(version), quote!(), quote!(ref), quote!());
         let timestamp = variants(quote!(timestamp), quote!(), quote!(ref), quote!());
+        let service = variants(quote!(service), quote!(), quote!(ref), quote!());
         let abort = variants(quote!(abort), quote!(), quote!(), quote!());
         let is_aborted = variants(quote!(is_aborted), quote!(), quote!(ref mut), quote!());
         let poll_aborted = variants(quote!(poll_aborted), quote!(cx), quote!(ref mut), quote!());
@@ -419,6 +420,12 @@ impl Body {
             pub fn timestamp(&self) -> ::std::time::Instant {
                 match *self {
                     #( #timestamp )*
+                }
+            }
+
+            pub fn service(&self) -> #krate::core::ServiceId {
+                match *self {
+                    #( #service )*
                 }
             }
 
