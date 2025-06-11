@@ -96,7 +96,7 @@ impl<'a> StructData<'a> {
         }
     }
 
-    pub fn fields(&self) -> &[FieldData] {
+    pub fn fields(&self) -> &[FieldData<'_>] {
         &self.fields
     }
 
@@ -108,7 +108,7 @@ impl<'a> StructData<'a> {
         &self.lifetimes
     }
 
-    pub fn fallback(&self) -> Option<&FieldData> {
+    pub fn fallback(&self) -> Option<&FieldData<'_>> {
         match self.fields.last() {
             Some(field) if field.is_fallback() => Some(field),
             _ => None,
@@ -170,7 +170,7 @@ impl<'a> FieldData<'a> {
         matches!(self.name, FieldName::Ident(_))
     }
 
-    pub fn name(&self) -> &FieldName {
+    pub fn name(&self) -> &FieldName<'_> {
         &self.name
     }
 

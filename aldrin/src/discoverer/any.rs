@@ -113,7 +113,7 @@ where
         !self.created.is_empty()
     }
 
-    pub fn iter(&self) -> AnyObjectIter<Key> {
+    pub fn iter(&self) -> AnyObjectIter<'_, Key> {
         AnyObjectIter::new(self, self.created.iter())
     }
 

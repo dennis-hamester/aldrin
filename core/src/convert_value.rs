@@ -13,7 +13,7 @@ pub(crate) fn convert(
     value: &SerializedValueSlice,
     from: Option<ProtocolVersion>,
     to: ProtocolVersion,
-) -> Result<Cow<SerializedValueSlice>, ValueConversionError> {
+) -> Result<Cow<'_, SerializedValueSlice>, ValueConversionError> {
     const MAX: ProtocolVersion = ProtocolVersion::V1_20;
 
     let from = Epoch::try_from(from.unwrap_or(MAX))?;

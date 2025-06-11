@@ -62,7 +62,7 @@ impl Span {
         }
     }
 
-    pub fn lines(self, text: &str) -> SpanLines {
+    pub fn lines(self, text: &str) -> SpanLines<'_> {
         SpanLines {
             span: self,
             lines: text.lines().skip(self.from.line_col.line - 1),

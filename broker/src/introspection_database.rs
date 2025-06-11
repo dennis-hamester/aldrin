@@ -63,7 +63,7 @@ impl IntrospectionDatabase {
         type_id: TypeId,
         conn_id: &ConnectionId,
         reply: QueryIntrospectionReply,
-    ) -> Option<IntrospectionQueryResult> {
+    ) -> Option<IntrospectionQueryResult<'_>> {
         let Entry::Occupied(mut entry) = self.entries.entry(type_id) else {
             panic!("inconsistent state");
         };

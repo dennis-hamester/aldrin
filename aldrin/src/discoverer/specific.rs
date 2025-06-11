@@ -154,7 +154,7 @@ where
         self.created
     }
 
-    pub fn iter(&self) -> SpecificObjectIter<Key> {
+    pub fn iter(&self) -> SpecificObjectIter<'_, Key> {
         if self.created {
             SpecificObjectIter::new(Some(SpecificObjectIterEntry::new(self)))
         } else {

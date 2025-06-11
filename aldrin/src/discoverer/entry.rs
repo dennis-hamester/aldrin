@@ -124,7 +124,7 @@ where
     }
 
     /// Returns an iterator over all found objects corresponding to this entry.
-    pub fn iter(&self) -> DiscovererEntryIter<Key> {
+    pub fn iter(&self) -> DiscovererEntryIter<'_, Key> {
         match self.inner {
             EntryInner::Specific(ref specific) => specific.iter().into(),
             EntryInner::Any(ref any) => any.iter().into(),

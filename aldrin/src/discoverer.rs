@@ -151,7 +151,7 @@ where
     }
 
     /// Create a builder for a `Discoverer`.
-    pub fn builder(client: &Handle) -> DiscovererBuilder<Key> {
+    pub fn builder(client: &Handle) -> DiscovererBuilder<'_, Key> {
         DiscovererBuilder::new(client)
     }
 
@@ -291,17 +291,17 @@ where
     }
 
     /// Returns an iterator over all entries.
-    pub fn entries(&self) -> DiscovererEntries<Key> {
+    pub fn entries(&self) -> DiscovererEntries<'_, Key> {
         DiscovererEntries::new(self.entries.values())
     }
 
     /// Returns an iterator over all found objects.
-    pub fn iter(&self) -> DiscovererIter<Key> {
+    pub fn iter(&self) -> DiscovererIter<'_, Key> {
         DiscovererIter::new(self.entries())
     }
 
     /// Returns an iterator over all found objects corresponding to a specific key.
-    pub fn entry_iter(&self, key: Key) -> DiscovererEntryIter<Key> {
+    pub fn entry_iter(&self, key: Key) -> DiscovererEntryIter<'_, Key> {
         self.entry(key).iter()
     }
 

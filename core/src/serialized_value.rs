@@ -235,7 +235,7 @@ impl SerializedValueSlice {
         &self,
         from: Option<ProtocolVersion>,
         to: ProtocolVersion,
-    ) -> Result<Cow<Self>, ValueConversionError> {
+    ) -> Result<Cow<'_, Self>, ValueConversionError> {
         convert_value::convert(self, from, to)
     }
 }

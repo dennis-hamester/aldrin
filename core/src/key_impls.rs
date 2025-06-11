@@ -53,7 +53,7 @@ impl PrimaryKeyTag for String {
 }
 
 impl SerializeKey<tags::String> for String {
-    fn try_as_key(&self) -> Result<Cow<str>, SerializeError> {
+    fn try_as_key(&self) -> Result<Cow<'_, str>, SerializeError> {
         Ok(Cow::Borrowed(self))
     }
 }
@@ -69,7 +69,7 @@ impl PrimaryKeyTag for str {
 }
 
 impl SerializeKey<tags::String> for str {
-    fn try_as_key(&self) -> Result<Cow<Self>, SerializeError> {
+    fn try_as_key(&self) -> Result<Cow<'_, Self>, SerializeError> {
         Ok(Cow::Borrowed(self))
     }
 }

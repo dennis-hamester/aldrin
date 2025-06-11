@@ -75,7 +75,7 @@ impl<'a> EnumData<'a> {
         }
     }
 
-    pub fn variants(&self) -> &[VariantData] {
+    pub fn variants(&self) -> &[VariantData<'_>] {
         &self.variants
     }
 

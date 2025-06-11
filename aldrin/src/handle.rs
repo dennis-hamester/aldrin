@@ -278,14 +278,14 @@ impl Handle {
     /// Creates a low-level [`ChannelBuilder`](low_level::ChannelBuilder).
     ///
     /// Alternatively, [`ChannelBuilder::new`](low_level::ChannelBuilder::new) can be used as well.
-    pub fn create_low_level_channel(&self) -> low_level::ChannelBuilder {
+    pub fn create_low_level_channel(&self) -> low_level::ChannelBuilder<'_> {
         low_level::ChannelBuilder::new(self)
     }
 
     /// Creates a [`ChannelBuilder`].
     ///
     /// Alternatively, [`ChannelBuilder::new`] can be used as well.
-    pub fn create_channel<T>(&self) -> ChannelBuilder<T> {
+    pub fn create_channel<T>(&self) -> ChannelBuilder<'_, T> {
         ChannelBuilder::new(self)
     }
 
@@ -592,7 +592,7 @@ impl Handle {
     }
 
     /// Create a new `DiscovererBuilder`.
-    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key>
+    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<'_, Key>
     where
         Key: Copy + Eq + Hash,
     {
