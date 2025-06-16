@@ -232,7 +232,7 @@ pub trait Introspectable {
     fn add_references(references: &mut References);
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone)]
 pub struct DynIntrospectable {
     layout: fn() -> Layout,
     lexical_id: fn() -> LexicalId,

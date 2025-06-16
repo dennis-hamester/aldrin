@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `Value::kind()`.
 - Serializer and deserializer types (such as e.g. `StructDeserializer`) are now in sub-modules
   `serializer` and `deserializer`.
+- `DynIntrospectable` no longer implements `PartialEq`, `Eq` and `Hash`.
 
 ## [0.12.0] - 2025-01-26
 
