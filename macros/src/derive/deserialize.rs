@@ -35,11 +35,12 @@ fn gen_struct(
     fields: &Punctuated<Field, Token![,]>,
     krate: Path,
 ) -> Result<TokenStream> {
-    StructData::new(input, named, fields, krate)?.gen_deserialize()
+    let struct_data = StructData::new(input, named, fields, krate)?;
+    Ok(struct_data.gen_deserialize())
 }
 
 impl StructData<'_> {
-    fn gen_deserialize(&self) -> Result<TokenStream> {
+    fn gen_deserialize(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -57,7 +58,7 @@ impl StructData<'_> {
             .iter()
             .map(|field| field.deserialize_finish(krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
                 fn deserialize(
@@ -83,7 +84,7 @@ impl StructData<'_> {
                     })
                 }
             }
-        })
+        }
     }
 }
 
@@ -150,11 +151,12 @@ fn gen_enum(
     variants: &Punctuated<Variant, Token![,]>,
     krate: Path,
 ) -> Result<TokenStream> {
-    EnumData::new(input, variants, krate)?.gen_deserialize()
+    let enum_data = EnumData::new(input, variants, krate)?;
+    Ok(enum_data.gen_deserialize())
 }
 
 impl EnumData<'_> {
-    fn gen_deserialize(&self) -> Result<TokenStream> {
+    fn gen_deserialize(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -162,7 +164,7 @@ impl EnumData<'_> {
         let lifetimes = self.lifetimes();
         let variants = self.variants().iter().map(|var| var.gen_deserialize(krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
                 fn deserialize(
@@ -180,7 +182,7 @@ impl EnumData<'_> {
                     }
                 }
             }
-        })
+        }
     }
 }
 

@@ -38,23 +38,24 @@ fn gen_struct(
     fields: &Punctuated<Field, Token![,]>,
     krate: Path,
 ) -> Result<TokenStream> {
-    StructData::new(input, named, fields, krate)?.gen_serialize()
+    let struct_data = StructData::new(input, named, fields, krate)?;
+    Ok(struct_data.gen_serialize())
 }
 
 impl StructData<'_> {
-    fn gen_serialize(&self) -> Result<TokenStream> {
-        let for_self = self.gen_serialize_for_self()?;
-        let for_ref = self.gen_serialize_for_ref()?;
+    fn gen_serialize(&self) -> TokenStream {
+        let for_self = self.gen_serialize_for_self();
+        let for_ref = self.gen_serialize_for_ref();
         let for_ref_type = self.gen_serialize_for_ref_type();
 
-        Ok(quote! {
+        quote! {
             #for_self
             #for_ref
             #for_ref_type
-        })
+        }
     }
 
-    fn gen_serialize_for_self(&self) -> Result<TokenStream> {
+    fn gen_serialize_for_self(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -76,7 +77,7 @@ impl StructData<'_> {
             .iter()
             .filter_map(|field| field.gen_serialize_for_self(krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
                 fn serialize(
@@ -88,10 +89,10 @@ impl StructData<'_> {
                     serializer.finish()
                 }
             }
-        })
+        }
     }
 
-    fn gen_serialize_for_ref(&self) -> Result<TokenStream> {
+    fn gen_serialize_for_ref(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -113,7 +114,7 @@ impl StructData<'_> {
             .iter()
             .filter_map(|field| field.gen_serialize_for_ref(krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
                 fn serialize(
@@ -125,7 +126,7 @@ impl StructData<'_> {
                     serializer.finish()
                 }
             }
-        })
+        }
     }
 
     fn gen_serialize_for_ref_type(&self) -> Option<TokenStream> {
@@ -262,23 +263,24 @@ fn gen_enum(
     variants: &Punctuated<Variant, Token![,]>,
     krate: Path,
 ) -> Result<TokenStream> {
-    EnumData::new(input, variants, krate)?.gen_serialize()
+    let enum_data = EnumData::new(input, variants, krate)?;
+    Ok(enum_data.gen_serialize())
 }
 
 impl EnumData<'_> {
-    fn gen_serialize(&self) -> Result<TokenStream> {
-        let for_self = self.gen_serialize_for_self()?;
-        let for_ref = self.gen_serialize_for_ref()?;
+    fn gen_serialize(&self) -> TokenStream {
+        let for_self = self.gen_serialize_for_self();
+        let for_ref = self.gen_serialize_for_ref();
         let for_ref_type = self.gen_serialize_for_ref_type();
 
-        Ok(quote! {
+        quote! {
             #for_self
             #for_ref
             #for_ref_type
-        })
+        }
     }
 
-    fn gen_serialize_for_self(&self) -> Result<TokenStream> {
+    fn gen_serialize_for_self(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -290,7 +292,7 @@ impl EnumData<'_> {
             .iter()
             .map(|var| var.gen_serialize_for_self(krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
                 fn serialize(
@@ -302,10 +304,10 @@ impl EnumData<'_> {
                     }
                 }
             }
-        })
+        }
     }
 
-    fn gen_serialize_for_ref(&self) -> Result<TokenStream> {
+    fn gen_serialize_for_ref(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -317,7 +319,7 @@ impl EnumData<'_> {
             .iter()
             .map(|var| var.gen_serialize_for_ref(name, krate));
 
-        Ok(quote! {
+        quote! {
             #[automatically_derived]
             impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
                 fn serialize(
@@ -329,7 +331,7 @@ impl EnumData<'_> {
                     }
                 }
             }
-        })
+        }
     }
 
     fn gen_serialize_for_ref_type(&self) -> Option<TokenStream> {

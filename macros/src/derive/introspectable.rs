@@ -111,7 +111,7 @@ fn gen_struct(
 
             next_id = item_options.id() + 1;
 
-            let (field_layout, field_references) = gen_field(field, index, options, &item_options)?;
+            let (field_layout, field_references) = gen_field(field, index, options, &item_options);
 
             layout.push(field_layout);
             references.push(field_references);
@@ -150,7 +150,7 @@ fn gen_field(
     index: usize,
     options: &Options,
     item_options: &ItemOptions,
-) -> Result<(TokenStream, TokenStream)> {
+) -> (TokenStream, TokenStream) {
     let krate = options.krate();
     let id = item_options.id();
     let is_required = !item_options.is_optional();
@@ -177,7 +177,7 @@ fn gen_field(
         }
     };
 
-    Ok((layout, references))
+    (layout, references)
 }
 
 fn gen_enum(
