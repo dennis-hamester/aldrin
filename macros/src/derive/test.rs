@@ -125,30 +125,30 @@ fn enum_fallback() {
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "UnitRef")]
+#[aldrin(schema = "test", ref_type = UnitRef)]
 struct Unit;
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EmptyStructRef")]
+#[aldrin(schema = "test", ref_type = EmptyStructRef)]
 struct EmptyStruct {}
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EmptyTupleStrucRef")]
+#[aldrin(schema = "test", ref_type = EmptyTupleStrucRef)]
 struct EmptyTupleStruct();
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EmptyStructWithFallbackRef")]
+#[aldrin(schema = "test", ref_type = EmptyStructWithFallbackRef)]
 struct EmptyStructWithFallback {
     #[aldrin(fallback)]
     unknown: UnknownFields,
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EmptyTupleStructWithFallbacRef")]
+#[aldrin(schema = "test", ref_type = EmptyTupleStructWithFallbacRef)]
 struct EmptyTupleStructWithFallback(#[aldrin(fallback)] UnknownFields);
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularStructRef")]
+#[aldrin(schema = "test", ref_type = RegularStructRef)]
 struct RegularStruct {
     foo: u32,
 
@@ -157,11 +157,11 @@ struct RegularStruct {
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularTupleStrucRef")]
+#[aldrin(schema = "test", ref_type = RegularTupleStrucRef)]
 struct RegularTupleStruct(u32, #[aldrin(id = 2, optional)] Option<String>);
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularStructWithFallbackRef")]
+#[aldrin(schema = "test", ref_type = RegularStructWithFallbackRef)]
 struct RegularStructWithFallback {
     foo: u32,
 
@@ -173,7 +173,7 @@ struct RegularStructWithFallback {
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularTupleStructWithFallbacRef")]
+#[aldrin(schema = "test", ref_type = RegularTupleStructWithFallbacRef)]
 struct RegularTupleStructWithFallback(
     u32,
     #[aldrin(id = 2, optional)] Option<String>,
@@ -181,24 +181,24 @@ struct RegularTupleStructWithFallback(
 );
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EmptyEnumRef")]
+#[aldrin(schema = "test", ref_type = EmptyEnumRef)]
 enum EmptyEnum {}
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "EnumWithFallbackRef")]
+#[aldrin(schema = "test", ref_type = EnumWithFallbackRef)]
 enum EnumWithFallback {
     #[aldrin(fallback)]
     Unknown(UnknownVariant),
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularEnumRef")]
+#[aldrin(schema = "test", ref_type = RegularEnumRef)]
 enum RegularEnum {
     Variant1(u32),
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-#[aldrin(schema = "test", ref_type = "RegularEnumWithFallbackRef")]
+#[aldrin(schema = "test", ref_type = RegularEnumWithFallbackRef)]
 enum RegularEnumWithFallback {
     Variant1(u32),
 

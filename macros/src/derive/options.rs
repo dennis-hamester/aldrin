@@ -21,7 +21,7 @@ impl Options {
                     krate = meta.value()?.parse()?;
                     Ok(())
                 } else if meta.path.is_ident("ref_type") {
-                    ref_type = meta.value()?.parse::<LitStr>()?.parse().map(Some)?;
+                    ref_type = meta.value()?.parse().map(Some)?;
                     Ok(())
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;

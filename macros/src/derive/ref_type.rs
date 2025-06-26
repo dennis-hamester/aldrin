@@ -48,7 +48,7 @@ impl StructData<'_> {
         let ref_type = self.ref_type().ok_or_else(|| {
             Error::new(
                 Span::call_site(),
-                "#[aldrin(ref_type = \"...\")] is required to derive `RefType`",
+                "#[aldrin(ref_type = ...)] is required to derive `RefType`",
             )
         })?;
 
@@ -106,7 +106,7 @@ impl EnumData<'_> {
         let ref_type = self.ref_type().ok_or_else(|| {
             Error::new(
                 Span::call_site(),
-                "#[aldrin(ref_type = \"...\")] is required to derive `RefType`",
+                "#[aldrin(ref_type = ...)] is required to derive `RefType`",
             )
         })?;
 

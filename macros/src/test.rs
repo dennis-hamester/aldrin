@@ -25,7 +25,7 @@ mod raw_identifiers {
     }
 
     #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-    #[aldrin(schema = "raw_identifiers", ref_type = "r#for")]
+    #[aldrin(schema = "raw_identifiers", ref_type = r#for)]
     struct r#struct {
         r#struct: r#false,
 
@@ -34,13 +34,13 @@ mod raw_identifiers {
     }
 
     #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-    #[aldrin(schema = "raw_identifiers", ref_type = "r#while")]
+    #[aldrin(schema = "raw_identifiers", ref_type = r#while)]
     enum r#enum {
         r#enum(r#false),
     }
 
     #[derive(Debug, Clone, Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-    #[aldrin(schema = "raw_identifiers", ref_type = "r#loop")]
+    #[aldrin(schema = "raw_identifiers", ref_type = r#loop)]
     enum r#false {}
 }
 
