@@ -444,7 +444,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// # Overriding the path to the `aldrin` crate
 ///
-/// Use the `#[aldrin(crate = "...")]` attribute to override the path to the `aldrin` crate.
+/// Use the `#[aldrin(crate = ...)]` attribute to override the path to the `aldrin` crate.
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
@@ -455,7 +455,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 /// }
 ///
 /// service! {
-///     #[aldrin(crate = "my_reexports::my_aldrin")]
+///     #[aldrin(crate = my_reexports::my_aldrin)]
 ///     pub service Ping {
 ///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
 ///         version = 1;

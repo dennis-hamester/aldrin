@@ -54,8 +54,7 @@ impl Parse for Options {
 
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("crate") {
-                    let value = meta.value()?.parse::<LitStr>()?;
-                    krate = value.parse().map_err(|e| Error::new_spanned(value, e))?;
+                    krate = meta.value()?.parse()?;
                     Ok(())
                 } else if meta.path.is_ident("no_client") {
                     client = false;

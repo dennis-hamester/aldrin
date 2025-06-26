@@ -332,7 +332,7 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{krate}::service! {{");
 
-        code!(self, "    #[aldrin(crate = \"{krate}\", schema = \"{schema}\"");
+        code!(self, "    #[aldrin(crate = {krate}, schema = \"{schema}\"");
 
         if !self.options.client {
             code!(self, ", no_client");
