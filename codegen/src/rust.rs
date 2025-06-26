@@ -335,11 +335,11 @@ impl RustGenerator<'_> {
         code!(self, "    #[aldrin(crate = {krate}, schema = \"{schema}\"");
 
         if !self.options.client {
-            code!(self, ", no_client");
+            code!(self, ", client = false");
         }
 
         if !self.options.server {
-            code!(self, ", no_server");
+            code!(self, ", server = false");
         }
 
         if self.options.introspection {

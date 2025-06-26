@@ -465,17 +465,17 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///
 /// # Generating only client or server code
 ///
-/// Client and server code generation can be disabled individually with the `#[aldrin(no_client)]`
-/// and `#[aldrin(no_server)]` attributes.
+/// Client and server code generation can be disabled individually with the
+/// `#[aldrin(client = false)]` and `#[aldrin(server = false)]` attributes.
 ///
-/// The following examples uses `no_client` and thus no `PingProxy` type will be generated.
+/// The following examples uses `client = false` and thus no `PingProxy` type will be generated.
 ///
 /// ```
 /// # use aldrin::core::ServiceUuid;
 /// # use aldrin_macros::service;
 /// # use uuid::uuid;
 /// service! {
-///     #[aldrin(no_client)]
+///     #[aldrin(client = false)]
 ///     pub service Ping {
 ///         uuid = ServiceUuid(uuid!("b6633b9f-c26d-4987-8ec0-5c8e526290f9"));
 ///         version = 1;

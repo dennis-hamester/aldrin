@@ -1,5 +1,5 @@
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_quote, Attribute, Error, LitStr, Path, Result};
+use syn::{parse_quote, Attribute, Error, LitBool, LitStr, Path, Result};
 
 pub(super) struct Options {
     krate: Path,
@@ -56,11 +56,11 @@ impl Parse for Options {
                 if meta.path.is_ident("crate") {
                     krate = meta.value()?.parse()?;
                     Ok(())
-                } else if meta.path.is_ident("no_client") {
-                    client = false;
+                } else if meta.path.is_ident("client") {
+                    client = meta.value()?.parse::<LitBool>()?.value;
                     Ok(())
-                } else if meta.path.is_ident("no_server") {
-                    server = false;
+                } else if meta.path.is_ident("server") {
+                    server = meta.value()?.parse::<LitBool>()?.value;
                     Ok(())
                 } else if meta.path.is_ident("introspection") {
                     introspection = true;
