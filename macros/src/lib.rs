@@ -385,7 +385,7 @@ use syn::{DeriveInput, Result};
 /// # Overriding the path of the `aldrin` crate
 ///
 /// The macro assumes per default that the `aldrin` crate is available as `::aldrin`. This can be
-/// overridden with the `krate` attribute. Note that [`generate!`] creates a new module and that
+/// overridden with the `crate` attribute. Note that [`generate!`] creates a new module and that
 /// path resolution starts inside that module.
 ///
 /// ```
@@ -397,7 +397,7 @@ use syn::{DeriveInput, Result};
 ///
 /// generate! {
 ///     "schemas/example1.aldrin",
-///     crate = "super::my_reexports::my_aldrin",
+///     crate = super::my_reexports::my_aldrin,
 /// }
 /// ```
 #[manyhow::manyhow]

@@ -2,12 +2,13 @@ use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{Diagnostic, Parsed, Parser};
 use manyhow::{emit, Emitter};
 use proc_macro2::Span;
+use quote::ToTokens;
 use std::env;
 use std::fmt::Write;
 use std::path::PathBuf;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
-use syn::{Error, Ident, LitBool, LitStr, Result, Token};
+use syn::{Error, Ident, LitBool, LitStr, Path, Result, Token};
 
 pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
     let mut parser = Parser::new();
@@ -144,8 +145,8 @@ impl Parse for Args {
                 args.introspection_if = Some(lit_str.value());
                 args.options.introspection = true;
             } else if opt == "crate" {
-                let lit_str = input.parse::<LitStr>()?;
-                args.krate = Some(lit_str.value());
+                let krate = input.parse::<Path>()?;
+                args.krate = Some(krate.into_token_stream().to_string());
             } else {
                 return Err(Error::new_spanned(opt, "invalid option"));
             }
