@@ -75,6 +75,23 @@
 //! Deriving `RefType` requires specifying an identifier for the type with the `#[ref_type = ...]`
 //! attribute. The `Serialize` derive macro will then also generate implementations for that type.
 //!
+//! ##### `newtype`
+//!
+//! - Applies to: [`Serialize`] and [`Deserialize`]
+//!
+//! Specifying `#[aldrin(newtype)]` is possible for structs with exactly 1 field and makes them
+//! behave like that field. E.g., the type will no longer serialize as a struct, but directly as
+//! that field instead.
+//!
+//! ```
+//! # use aldrin_core::{Deserialize, PrimaryTag, Serialize, Tag};
+//! #[derive(Tag, PrimaryTag, Serialize, Deserialize)]
+//! #[aldrin(newtype)]
+//! struct Name {
+//!     inner: String,
+//! }
+//! ```
+//!
 //! #### Field and variant attributes
 //!
 //! ##### `id`
@@ -614,6 +631,7 @@ pub fn ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`ref_type`](crate#ref_type)
+/// - [`newtype`](crate#newtype)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
@@ -631,6 +649,7 @@ pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`ref_type`](crate#ref_type)
+/// - [`newtype`](crate#newtype)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
@@ -648,6 +667,7 @@ pub fn serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
@@ -664,6 +684,7 @@ pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)

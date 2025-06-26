@@ -29,10 +29,11 @@ impl<'a> StructData<'a> {
         super::ensure_no_type_generics(&input.generics)?;
 
         let name = &input.ident;
-
+        let options = Options::new(&input.attrs, krate, true)?;
         let mut field_datas = Vec::with_capacity(fields.len());
         let mut fallback = false;
         let mut default_id = 0;
+
         for (index, field) in fields.into_iter().enumerate() {
             if fallback {
                 return Err(Error::new_spanned(
@@ -43,6 +44,22 @@ impl<'a> StructData<'a> {
 
             let field_data =
                 FieldData::new(field, index, name, input.generics.lifetimes(), default_id)?;
+
+            if options.newtype() {
+                if field_data.is_fallback() {
+                    return Err(Error::new_spanned(
+                        field,
+                        "a fallback field is not supported for newtype structs",
+                    ));
+                }
+
+                if field_data.is_optional() {
+                    return Err(Error::new_spanned(
+                        field,
+                        "an optional field is not supported for newtype structs",
+                    ));
+                }
+            }
 
             if field_data.is_fallback() {
                 if field_data.is_optional() {
@@ -59,7 +76,12 @@ impl<'a> StructData<'a> {
             field_datas.push(field_data);
         }
 
-        let options = Options::new(&input.attrs, krate)?;
+        if options.newtype() && (field_datas.len() != 1) {
+            return Err(Error::new_spanned(
+                input,
+                "newtype structs must have exactly 1 field",
+            ));
+        }
 
         Ok(Self {
             name,
@@ -89,6 +111,10 @@ impl<'a> StructData<'a> {
 
     pub fn ref_type(&self) -> Option<&Ident> {
         self.options.ref_type()
+    }
+
+    pub fn is_newtype(&self) -> bool {
+        self.options.newtype()
     }
 
     pub fn fields(&self) -> &[FieldData<'_>] {

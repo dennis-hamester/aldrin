@@ -6,12 +6,14 @@ use syn::punctuated::Punctuated;
 use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
 
 pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
+    let is_struct = matches!(input.data, Data::Struct(_));
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core), is_struct)?;
     gen_introspectable(input, options)
 }
 
 pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core))?;
+    let is_struct = matches!(input.data, Data::Struct(_));
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core), is_struct)?;
     gen_introspectable(input, options)
 }
 

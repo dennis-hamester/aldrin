@@ -41,6 +41,14 @@ fn gen_struct(
 
 impl StructData<'_> {
     fn gen_deserialize(&self) -> TokenStream {
+        if self.is_newtype() {
+            self.gen_deserialize_newtype()
+        } else {
+            self.gen_deserialize_regular()
+        }
+    }
+
+    fn gen_deserialize_regular(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -51,7 +59,7 @@ impl StructData<'_> {
         let fields = self
             .fields()
             .iter()
-            .map(|field| field.gen_deserialize(krate));
+            .map(|field| field.gen_deserialize_regular(krate));
 
         let field_finish = self
             .fields()
@@ -86,10 +94,30 @@ impl StructData<'_> {
             }
         }
     }
+
+    fn gen_deserialize_newtype(&self) -> TokenStream {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let body = self.fields()[0].gen_deserialize_newtype(krate);
+
+        quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
+                fn deserialize(
+                    deserializer: #krate::Deserializer,
+                ) -> ::std::result::Result<Self, #krate::DeserializeError> {
+                    #body
+                }
+            }
+        }
+    }
 }
 
 impl FieldData<'_> {
-    fn gen_deserialize(&self, krate: &Path) -> TokenStream {
+    fn gen_deserialize_regular(&self, krate: &Path) -> TokenStream {
         if self.is_fallback() {
             quote! {
                 _ => _deserializer.add_to_unknown_fields()?,
@@ -114,6 +142,18 @@ impl FieldData<'_> {
                         .map(::std::option::Option::Some)?;
                 }
             }
+        }
+    }
+
+    fn gen_deserialize_newtype(&self, krate: &Path) -> TokenStream {
+        let ty = self.ty();
+        let name = self.name();
+        let var = self.var();
+
+        quote! {
+            deserializer.deserialize::<#krate::tags::As<#ty>, _>().map(|#var| {
+                Self { #name: #var }
+            })
         }
     }
 

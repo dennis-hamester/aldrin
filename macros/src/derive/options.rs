@@ -4,12 +4,14 @@ pub(crate) struct Options {
     krate: Path,
     ref_type: Option<Ident>,
     schema: Option<LitStr>,
+    newtype: bool,
 }
 
 impl Options {
-    pub fn new(attrs: &[Attribute], mut krate: Path) -> Result<Self> {
+    pub fn new(attrs: &[Attribute], mut krate: Path, is_struct: bool) -> Result<Self> {
         let mut ref_type = None;
         let mut schema = None;
+        let mut newtype = false;
 
         for attr in attrs {
             if !attr.path().is_ident("aldrin") {
@@ -26,6 +28,13 @@ impl Options {
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;
                     Ok(())
+                } else if meta.path.is_ident("newtype") {
+                    if is_struct {
+                        newtype = true;
+                        Ok(())
+                    } else {
+                        Err(meta.error("`newtype` is supported only for structs"))
+                    }
                 } else {
                     Err(meta.error("unknown attribute"))
                 }
@@ -36,6 +45,7 @@ impl Options {
             krate,
             ref_type,
             schema,
+            newtype,
         })
     }
 
@@ -49,6 +59,10 @@ impl Options {
 
     pub fn schema(&self) -> Option<&LitStr> {
         self.schema.as_ref()
+    }
+
+    pub fn newtype(&self) -> bool {
+        self.newtype
     }
 }
 

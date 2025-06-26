@@ -56,6 +56,14 @@ impl StructData<'_> {
     }
 
     fn gen_serialize_for_self(&self) -> TokenStream {
+        if self.is_newtype() {
+            self.gen_serialize_for_newtype_self()
+        } else {
+            self.gen_serialize_for_regular_self()
+        }
+    }
+
+    fn gen_serialize_for_regular_self(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -75,7 +83,7 @@ impl StructData<'_> {
         let fields = self
             .fields()
             .iter()
-            .filter_map(|field| field.gen_serialize_for_self(krate));
+            .filter_map(|field| field.gen_serialize_for_regular_self(krate));
 
         quote! {
             #[automatically_derived]
@@ -92,7 +100,36 @@ impl StructData<'_> {
         }
     }
 
+    fn gen_serialize_for_newtype_self(&self) -> TokenStream {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let body = self.fields()[0].gen_serialize_for_newtype_self(krate);
+
+        quote! {
+            #[automatically_derived]
+            impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    #body
+                }
+            }
+        }
+    }
+
     fn gen_serialize_for_ref(&self) -> TokenStream {
+        if self.is_newtype() {
+            self.gen_serialize_for_newtype_ref()
+        } else {
+            self.gen_serialize_for_regular_ref()
+        }
+    }
+
+    fn gen_serialize_for_regular_ref(&self) -> TokenStream {
         let name = self.name();
         let lifetimes = self.lifetimes();
         let ty = quote! { #name<#(#lifetimes),*> };
@@ -112,7 +149,7 @@ impl StructData<'_> {
         let fields = self
             .fields()
             .iter()
-            .filter_map(|field| field.gen_serialize_for_ref(krate));
+            .filter_map(|field| field.gen_serialize_for_regular_ref(krate));
 
         quote! {
             #[automatically_derived]
@@ -129,7 +166,36 @@ impl StructData<'_> {
         }
     }
 
+    fn gen_serialize_for_newtype_ref(&self) -> TokenStream {
+        let name = self.name();
+        let lifetimes = self.lifetimes();
+        let ty = quote! { #name<#(#lifetimes),*> };
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let body = self.fields()[0].gen_serialize_for_newtype_ref(krate);
+
+        quote! {
+            #[automatically_derived]
+            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    #body
+                }
+            }
+        }
+    }
+
     fn gen_serialize_for_ref_type(&self) -> Option<TokenStream> {
+        if self.is_newtype() {
+            self.gen_serialize_for_newtype_ref_type()
+        } else {
+            self.gen_serialize_for_regular_ref_type()
+        }
+    }
+
+    fn gen_serialize_for_regular_ref_type(&self) -> Option<TokenStream> {
         let ref_type = self.ref_type()?;
         let name = self.name();
         let krate = self.krate();
@@ -154,7 +220,7 @@ impl StructData<'_> {
         let fields = self
             .fields()
             .iter()
-            .filter_map(|field| field.gen_serialize_for_ref_type(krate));
+            .filter_map(|field| field.gen_serialize_for_regular_ref_type(krate));
 
         let impl_generics = self
             .lifetimes()
@@ -182,10 +248,45 @@ impl StructData<'_> {
             }
         })
     }
+
+    fn gen_serialize_for_newtype_ref_type(&self) -> Option<TokenStream> {
+        let ref_type = self.ref_type()?;
+        let name = self.name();
+        let krate = self.krate();
+        let lifetimes = self.lifetimes();
+        let ty_generics = self.ty_generics();
+        let field = &self.fields()[0];
+        let where_bound = field.serialize_where_bound_for_ref_type(krate);
+        let body = field.gen_serialize_for_newtype_ref_type(krate);
+
+        let impl_generics = self
+            .lifetimes()
+            .iter()
+            .map(|lt| GenericParam::Lifetime((*lt).clone()))
+            .chain(
+                self.ty_generics()
+                    .map(|ty| GenericParam::Type(ty.clone().into())),
+            );
+
+        Some(quote! {
+            #[automatically_derived]
+            impl<#(#impl_generics),*> #krate::Serialize<#name<#(#lifetimes),*>> for #ref_type<#(#ty_generics),*>
+            where
+                #where_bound
+            {
+                fn serialize(
+                    self,
+                    serializer: #krate::Serializer,
+                ) -> ::std::result::Result<(), #krate::SerializeError> {
+                    #body
+                }
+            }
+        })
+    }
 }
 
 impl FieldData<'_> {
-    fn gen_serialize_for_self(&self, krate: &Path) -> Option<TokenStream> {
+    fn gen_serialize_for_regular_self(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
             return None;
         }
@@ -205,7 +306,16 @@ impl FieldData<'_> {
         })
     }
 
-    fn gen_serialize_for_ref(&self, krate: &Path) -> Option<TokenStream> {
+    fn gen_serialize_for_newtype_self(&self, krate: &Path) -> TokenStream {
+        let ty = self.ty();
+        let name = self.name();
+
+        quote! {
+            serializer.serialize::<#krate::tags::As<#ty>, _>(self.#name)
+        }
+    }
+
+    fn gen_serialize_for_regular_ref(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
             return None;
         }
@@ -225,7 +335,16 @@ impl FieldData<'_> {
         })
     }
 
-    fn gen_serialize_for_ref_type(&self, krate: &Path) -> Option<TokenStream> {
+    fn gen_serialize_for_newtype_ref(&self, krate: &Path) -> TokenStream {
+        let ty_tag = self.ty_tag();
+        let name = self.name();
+
+        quote! {
+            serializer.serialize::<#krate::tags::As<#ty_tag>, _>(&self.#name)
+        }
+    }
+
+    fn gen_serialize_for_regular_ref_type(&self, krate: &Path) -> Option<TokenStream> {
         if self.is_fallback() {
             return None;
         }
@@ -243,6 +362,15 @@ impl FieldData<'_> {
         Some(quote! {
             serializer.#serialize::<#krate::tags::As<#ty_tag>, _>(#id, self.#name)?;
         })
+    }
+
+    fn gen_serialize_for_newtype_ref_type(&self, krate: &Path) -> TokenStream {
+        let ty_tag = self.ty_tag();
+        let name = self.name();
+
+        quote! {
+            serializer.serialize::<#krate::tags::As<#ty_tag>, _>(self.#name)
+        }
     }
 
     fn serialize_where_bound_for_ref_type(&self, krate: &Path) -> TokenStream {

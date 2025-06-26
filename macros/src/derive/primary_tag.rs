@@ -1,15 +1,17 @@
 use super::{ensure_no_type_generics, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, DeriveInput, Result};
+use syn::{parse_quote, Data, DeriveInput, Result};
 
 pub fn gen_primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core))?;
+    let is_struct = matches!(input.data, Data::Struct(_));
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core), is_struct)?;
     gen_primary_tag(input, options)
 }
 
 pub fn gen_primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core))?;
+    let is_struct = matches!(input.data, Data::Struct(_));
+    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core), is_struct)?;
     gen_primary_tag(input, options)
 }
 
