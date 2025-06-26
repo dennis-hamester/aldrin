@@ -185,20 +185,19 @@ impl RustGenerator<'_> {
         let schema_name = self.schema.name();
         let additional_derives = attrs.additional_derives();
 
-        let derive_default = if has_required_fields {
-            String::new()
-        } else {
-            format!(", {DEFAULT}")
-        };
+        code!(self, "#[derive({DEBUG}, {CLONE}");
 
-        let derive_introspectable =
-            if self.options.introspection && self.rust_options.introspection_if.is_none() {
-                format!(", {krate}::Introspectable")
-            } else {
-                String::new()
-            };
+        if !has_required_fields {
+            code!(self, ", {DEFAULT}");
+        }
 
-        codeln!(self, "#[derive({DEBUG}, {CLONE}{derive_default}, {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize{derive_introspectable}{additional_derives})]");
+        code!(self, ", {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize");
+
+        if self.options.introspection && self.rust_options.introspection_if.is_none() {
+            code!(self, ", {krate}::Introspectable");
+        }
+
+        codeln!(self, "{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
@@ -269,14 +268,14 @@ impl RustGenerator<'_> {
             .unwrap_or_else(RustAttributes::new);
         let additional_derives = attrs.additional_derives();
 
-        let derive_introspectable =
-            if self.options.introspection && self.rust_options.introspection_if.is_none() {
-                format!(", {krate}::Introspectable")
-            } else {
-                String::new()
-            };
+        code!(self, "#[derive({DEBUG}, {CLONE}");
+        code!(self, ", {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize");
 
-        codeln!(self, "#[derive({DEBUG}, {CLONE}, {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize{derive_introspectable}{additional_derives})]");
+        if self.options.introspection && self.rust_options.introspection_if.is_none() {
+            code!(self, ", {krate}::Introspectable");
+        }
+
+        codeln!(self, "{additional_derives})]");
 
         if self.options.introspection {
             if let Some(feature) = self.rust_options.introspection_if {
