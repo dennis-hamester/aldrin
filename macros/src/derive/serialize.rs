@@ -45,12 +45,7 @@ impl StructData<'_> {
     fn gen_serialize(&self) -> Result<TokenStream> {
         let for_self = self.gen_serialize_for_self()?;
         let for_ref = self.gen_serialize_for_ref()?;
-
-        let for_ref_type = if self.ref_type().is_ok() {
-            self.gen_serialize_for_ref_type().map(Some)?
-        } else {
-            None
-        };
+        let for_ref_type = self.gen_serialize_for_ref_type();
 
         Ok(quote! {
             #for_self
@@ -133,9 +128,9 @@ impl StructData<'_> {
         })
     }
 
-    fn gen_serialize_for_ref_type(&self) -> Result<TokenStream> {
-        let name = self.name();
+    fn gen_serialize_for_ref_type(&self) -> Option<TokenStream> {
         let ref_type = self.ref_type()?;
+        let name = self.name();
         let krate = self.krate();
         let lifetimes = self.lifetimes();
         let ty_generics = self.ty_generics();
@@ -169,7 +164,7 @@ impl StructData<'_> {
                     .map(|ty| GenericParam::Type(ty.clone().into())),
             );
 
-        Ok(quote! {
+        Some(quote! {
             #[automatically_derived]
             impl<#(#impl_generics),*> #krate::Serialize<#name<#(#lifetimes),*>> for #ref_type<#(#ty_generics),*>
             where
@@ -274,12 +269,7 @@ impl EnumData<'_> {
     fn gen_serialize(&self) -> Result<TokenStream> {
         let for_self = self.gen_serialize_for_self()?;
         let for_ref = self.gen_serialize_for_ref()?;
-
-        let for_ref_type = if self.ref_type().is_ok() {
-            self.gen_serialize_for_ref_type().map(Some)?
-        } else {
-            None
-        };
+        let for_ref_type = self.gen_serialize_for_ref_type();
 
         Ok(quote! {
             #for_self
@@ -342,9 +332,9 @@ impl EnumData<'_> {
         })
     }
 
-    fn gen_serialize_for_ref_type(&self) -> Result<TokenStream> {
-        let name = self.name();
+    fn gen_serialize_for_ref_type(&self) -> Option<TokenStream> {
         let ref_type = self.ref_type()?;
+        let name = self.name();
         let krate = self.krate();
         let lifetimes = self.lifetimes();
         let ty_generics = self.ty_generics();
@@ -368,7 +358,7 @@ impl EnumData<'_> {
                     .map(|ty| GenericParam::Type(ty.clone().into())),
             );
 
-        Ok(quote! {
+        Some(quote! {
             #[automatically_derived]
             impl<#(#impl_generics),*> #krate::Serialize<#name<#(#lifetimes),*>> for #ref_type<#(#ty_generics),*>
             where

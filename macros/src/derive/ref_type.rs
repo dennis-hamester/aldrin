@@ -1,6 +1,6 @@
 use super::{EnumData, FieldData, StructData, VariantData};
 use heck::ToSnakeCase;
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::ptr;
 use syn::ext::IdentExt;
@@ -45,7 +45,13 @@ fn gen_struct(
 
 impl StructData<'_> {
     fn gen_ref_type(&self) -> Result<TokenStream> {
-        let ref_type = self.ref_type()?;
+        let ref_type = self.ref_type().ok_or_else(|| {
+            Error::new(
+                Span::call_site(),
+                "#[aldrin(ref_type = \"...\")] is required to derive `RefType`",
+            )
+        })?;
+
         let vis = self.vis();
         let ty_generics = self.ty_generics();
         let fields = self.fields().iter().map(FieldData::gen_ref_type);
@@ -97,11 +103,17 @@ fn gen_enum(
 
 impl EnumData<'_> {
     fn gen_ref_type(&self) -> Result<TokenStream> {
-        let ref_type = self.ref_type()?;
+        let ref_type = self.ref_type().ok_or_else(|| {
+            Error::new(
+                Span::call_site(),
+                "#[aldrin(ref_type = \"...\")] is required to derive `RefType`",
+            )
+        })?;
+
         let vis = self.vis();
         let ty_generics = self.ty_generics();
         let variants = self.variants().iter().map(VariantData::gen_ref_type);
-        let ctors = self.ctors()?;
+        let ctors = self.ctors();
 
         Ok(quote! {
             #[automatically_derived]
@@ -114,13 +126,10 @@ impl EnumData<'_> {
         })
     }
 
-    fn ctors(&self) -> Result<impl Iterator<Item = TokenStream> + '_> {
-        let ref_type = self.ref_type()?;
-
-        Ok(self
-            .variants()
+    fn ctors(&self) -> impl Iterator<Item = TokenStream> + '_ {
+        self.variants()
             .iter()
-            .map(|var| var.ctor(ref_type, self.variants())))
+            .map(|var| var.ctor(self.ref_type().unwrap(), self.variants()))
     }
 }
 

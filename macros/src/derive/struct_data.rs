@@ -15,7 +15,6 @@ pub(crate) struct StructData<'a> {
     options: Options,
     named: bool,
     vis: &'a Visibility,
-    ref_type: Result<Ident>,
     fields: Vec<FieldData<'a>>,
     lifetimes: Vec<&'a LifetimeParam>,
 }
@@ -66,7 +65,6 @@ impl<'a> StructData<'a> {
             name,
             named,
             vis: &input.vis,
-            ref_type: options.ref_type(&input.ident),
             options,
             fields: field_datas,
             lifetimes: input.generics.lifetimes().collect(),
@@ -89,11 +87,8 @@ impl<'a> StructData<'a> {
         self.vis
     }
 
-    pub fn ref_type(&self) -> Result<&Ident> {
-        match self.ref_type {
-            Ok(ref ref_type) => Ok(ref_type),
-            Err(ref e) => Err(e.clone()),
-        }
+    pub fn ref_type(&self) -> Option<&Ident> {
+        self.options.ref_type()
     }
 
     pub fn fields(&self) -> &[FieldData<'_>] {

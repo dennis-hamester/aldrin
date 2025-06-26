@@ -10,7 +10,6 @@ pub(crate) struct EnumData<'a> {
     name: &'a Ident,
     options: Options,
     vis: &'a Visibility,
-    ref_type: Result<Ident>,
     variants: Vec<VariantData<'a>>,
     lifetimes: Vec<&'a LifetimeParam>,
 }
@@ -49,7 +48,6 @@ impl<'a> EnumData<'a> {
         Ok(Self {
             name,
             vis: &input.vis,
-            ref_type: options.ref_type(&input.ident),
             options,
             variants: variant_datas,
             lifetimes: input.generics.lifetimes().collect(),
@@ -68,11 +66,8 @@ impl<'a> EnumData<'a> {
         self.vis
     }
 
-    pub fn ref_type(&self) -> Result<&Ident> {
-        match self.ref_type {
-            Ok(ref ref_type) => Ok(ref_type),
-            Err(ref e) => Err(e.clone()),
-        }
+    pub fn ref_type(&self) -> Option<&Ident> {
+        self.options.ref_type()
     }
 
     pub fn variants(&self) -> &[VariantData<'_>] {

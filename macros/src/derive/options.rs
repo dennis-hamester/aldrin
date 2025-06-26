@@ -1,15 +1,14 @@
-use syn::ext::IdentExt;
-use syn::{Attribute, Error, Ident, LitInt, LitStr, Path, Result};
+use syn::{Attribute, Ident, LitInt, LitStr, Path, Result};
 
 pub(crate) struct Options {
     krate: Path,
-    ref_type: RefType,
+    ref_type: Option<Ident>,
     schema: Option<LitStr>,
 }
 
 impl Options {
     pub fn new(attrs: &[Attribute], mut krate: Path) -> Result<Self> {
-        let mut ref_type = RefType::Default;
+        let mut ref_type = None;
         let mut schema = None;
 
         for attr in attrs {
@@ -22,16 +21,7 @@ impl Options {
                     krate = meta.value()?.parse::<LitStr>()?.parse()?;
                     Ok(())
                 } else if meta.path.is_ident("ref_type") {
-                    let value: LitStr = meta.value()?.parse()?;
-
-                    match value.parse()? {
-                        Some(ident) => ref_type = RefType::Custom(ident),
-
-                        None => {
-                            ref_type = RefType::Disabled(meta.error("ref type has been disabled"))
-                        }
-                    }
-
+                    ref_type = meta.value()?.parse::<LitStr>()?.parse().map(Some)?;
                     Ok(())
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;
@@ -53,23 +43,13 @@ impl Options {
         &self.krate
     }
 
-    pub fn ref_type(&self, base: &Ident) -> Result<Ident> {
-        match self.ref_type {
-            RefType::Default => Ok(Ident::new_raw(&format!("{}Ref", base.unraw()), base.span())),
-            RefType::Disabled(ref err) => Err(err.clone()),
-            RefType::Custom(ref ident) => Ok(ident.clone()),
-        }
+    pub fn ref_type(&self) -> Option<&Ident> {
+        self.ref_type.as_ref()
     }
 
     pub fn schema(&self) -> Option<&LitStr> {
         self.schema.as_ref()
     }
-}
-
-enum RefType {
-    Default,
-    Disabled(Error),
-    Custom(Ident),
 }
 
 pub(crate) struct ItemOptions {
