@@ -18,7 +18,7 @@ impl Options {
 
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("crate") {
-                    krate = meta.value()?.parse::<LitStr>()?.parse()?;
+                    krate = meta.value()?.parse()?;
                     Ok(())
                 } else if meta.path.is_ident("ref_type") {
                     ref_type = meta.value()?.parse::<LitStr>()?.parse().map(Some)?;

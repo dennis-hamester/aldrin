@@ -205,7 +205,7 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\", ref_type = \"{ref_type}\")]");
+        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type = \"{ref_type}\")]");
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
@@ -283,7 +283,7 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = \"{krate}::core\", schema = \"{schema_name}\", ref_type = \"{ref_type}\")]");
+        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type = \"{ref_type}\")]");
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
