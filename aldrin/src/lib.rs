@@ -93,8 +93,9 @@ pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
 #[cfg(feature = "codegen")]
 #[doc(inline)]
 pub use aldrin_macros::{
-    generate, service, DeserializeFromAldrin as Deserialize, PrimaryTagFromAldrin as PrimaryTag,
-    RefTypeFromAldrin as RefType, SerializeFromAldrin as Serialize, TagFromAldrin as Tag,
+    generate, service, DeserializeFromAldrin as Deserialize, KeyTagFromAldrin as KeyTag,
+    PrimaryTagFromAldrin as PrimaryTag, RefTypeFromAldrin as RefType,
+    SerializeFromAldrin as Serialize, TagFromAldrin as Tag,
 };
 pub use bus_listener::BusListener;
 pub use call::Call;

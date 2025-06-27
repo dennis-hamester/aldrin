@@ -1,6 +1,7 @@
 mod deserialize;
 mod enum_data;
 mod introspectable;
+mod key_tag;
 mod options;
 mod primary_tag;
 mod ref_type;
@@ -19,6 +20,7 @@ use syn::{Error, Generics, Result};
 
 pub use deserialize::{gen_deserialize_from_aldrin, gen_deserialize_from_core};
 pub use introspectable::{gen_introspectable_from_aldrin, gen_introspectable_from_core};
+pub use key_tag::{gen_key_tag_from_aldrin, gen_key_tag_from_core};
 pub use primary_tag::{gen_primary_tag_from_aldrin, gen_primary_tag_from_core};
 pub use ref_type::{gen_ref_type_from_aldrin, gen_ref_type_from_core};
 pub use serialize::{gen_serialize_from_aldrin, gen_serialize_from_core};

@@ -16,6 +16,7 @@
 //! - [`Serialize`]
 //! - [`Deserialize`]
 //! - [`Introspectable`]
+//! - [`KeyTag`]
 //!
 //! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
 //!
@@ -77,15 +78,15 @@
 //!
 //! ##### `newtype`
 //!
-//! - Applies to: [`Serialize`] and [`Deserialize`]
+//! - Applies to: [`Serialize`], [`Deserialize`] and [`KeyTag`]
 //!
 //! Specifying `#[aldrin(newtype)]` is possible for structs with exactly 1 field and makes them
 //! behave like that field. E.g., the type will no longer serialize as a struct, but directly as
 //! that field instead.
 //!
 //! ```
-//! # use aldrin_core::{Deserialize, PrimaryTag, Serialize, Tag};
-//! #[derive(Tag, PrimaryTag, Serialize, Deserialize)]
+//! # use aldrin_core::{Deserialize, KeyTag, PrimaryTag, Serialize, Tag};
+//! #[derive(Tag, KeyTag, PrimaryTag, Serialize, Deserialize)]
 //! #[aldrin(newtype)]
 //! struct Name {
 //!     inner: String,
@@ -728,4 +729,33 @@ pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
 pub fn introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_introspectable_from_aldrin(input)
+}
+
+/// Derive macro for the `KeyTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[manyhow::manyhow]
+#[proc_macro_derive(KeyTag, attributes(aldrin))]
+pub fn key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_key_tag_from_core(input)
+}
+
+/// Derive macro for the `KeyTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(KeyTagFromAldrin, attributes(aldrin))]
+pub fn key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_key_tag_from_aldrin(input)
 }
