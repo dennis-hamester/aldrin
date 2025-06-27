@@ -8,6 +8,7 @@ mod primary_tag;
 mod ref_type;
 mod replace_self_ty;
 mod serialize;
+mod serialize_key;
 mod struct_data;
 mod tag;
 #[cfg(test)]
@@ -26,6 +27,7 @@ pub use primary_key_tag::{gen_primary_key_tag_from_aldrin, gen_primary_key_tag_f
 pub use primary_tag::{gen_primary_tag_from_aldrin, gen_primary_tag_from_core};
 pub use ref_type::{gen_ref_type_from_aldrin, gen_ref_type_from_core};
 pub use serialize::{gen_serialize_from_aldrin, gen_serialize_from_core};
+pub use serialize_key::{gen_serialize_key_from_aldrin, gen_serialize_key_from_core};
 pub use tag::{gen_tag_from_aldrin, gen_tag_from_core};
 
 fn ensure_no_type_generics(generics: &Generics) -> Result<()> {

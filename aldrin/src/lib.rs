@@ -95,7 +95,8 @@ pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
 pub use aldrin_macros::{
     generate, service, DeserializeFromAldrin as Deserialize, KeyTagFromAldrin as KeyTag,
     PrimaryKeyTagFromAldrin as PrimaryKeyTag, PrimaryTagFromAldrin as PrimaryTag,
-    RefTypeFromAldrin as RefType, SerializeFromAldrin as Serialize, TagFromAldrin as Tag,
+    RefTypeFromAldrin as RefType, SerializeFromAldrin as Serialize,
+    SerializeKeyFromAldrin as SerializeKey, TagFromAldrin as Tag,
 };
 pub use bus_listener::BusListener;
 pub use call::Call;
