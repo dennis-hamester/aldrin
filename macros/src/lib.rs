@@ -80,8 +80,8 @@
 //!
 //! ##### `newtype`
 //!
-//! - Applies to: [`Serialize`], [`Deserialize`], [`KeyTag`], [`PrimaryKeyTag`] and
-//!   [`SerializeKey`].
+//! - Applies to: [`Serialize`], [`Deserialize`], [`KeyTag`], [`PrimaryKeyTag`], [`SerializeKey`],
+//!   and [`DeserializeKey`].
 //!
 //! Specifying `#[aldrin(newtype)]` is possible for structs with exactly 1 field and makes them
 //! behave like that field. E.g., the type will no longer serialize as a struct, but directly as
@@ -89,9 +89,19 @@
 //!
 //! ```
 //! # use aldrin_core::{
-//! #     Deserialize, KeyTag, PrimaryKeyTag, PrimaryTag, Serialize, SerializeKey, Tag,
+//! #     Deserialize, DeserializeKey, KeyTag, PrimaryKeyTag, PrimaryTag, Serialize, SerializeKey,
+//! #     Tag,
 //! # };
-//! #[derive(Tag, KeyTag, PrimaryTag, PrimaryKeyTag, Serialize, SerializeKey, Deserialize)]
+//! #[derive(
+//!     Tag,
+//!     KeyTag,
+//!     PrimaryTag,
+//!     PrimaryKeyTag,
+//!     Serialize,
+//!     SerializeKey,
+//!     Deserialize,
+//!     DeserializeKey,
+//! )]
 //! #[aldrin(newtype)]
 //! struct Name {
 //!     inner: String,
@@ -821,4 +831,33 @@ pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
 pub fn serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_serialize_key_from_aldrin(input)
+}
+
+/// Derive macro for the `DeserializeKey` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[manyhow::manyhow]
+#[proc_macro_derive(DeserializeKey, attributes(aldrin))]
+pub fn deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_deserialize_key_from_core(input)
+}
+
+/// Derive macro for the `DeserializeKey` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
+pub fn deserialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_deserialize_key_from_aldrin(input)
 }

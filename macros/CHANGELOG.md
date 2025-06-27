@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - There is now special support for newtypes via the attribute `#[aldrin(newtype)]`, which can be
   applied to structs with a single field. Such types will then serialize directly as their inner
   field.
+- Add derive macros for `KeyTag`, `PrimaryKeyTag`, `SerializeKey` and `DeserializeKey`. They can
+  only be used with newtypes.
 
 ### Changed
 

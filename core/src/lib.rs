@@ -38,7 +38,8 @@ pub use crate::bytes::{ByteSlice, Bytes};
 pub use aldrin_macros::Introspectable;
 #[cfg(feature = "derive")]
 pub use aldrin_macros::{
-    Deserialize, KeyTag, PrimaryKeyTag, PrimaryTag, RefType, Serialize, SerializeKey, Tag,
+    Deserialize, DeserializeKey, KeyTag, PrimaryKeyTag, PrimaryTag, RefType, Serialize,
+    SerializeKey, Tag,
 };
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};

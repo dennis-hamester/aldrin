@@ -93,7 +93,8 @@ pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
 #[cfg(feature = "codegen")]
 #[doc(inline)]
 pub use aldrin_macros::{
-    generate, service, DeserializeFromAldrin as Deserialize, KeyTagFromAldrin as KeyTag,
+    generate, service, DeserializeFromAldrin as Deserialize,
+    DeserializeKeyFromAldrin as DeserializeKey, KeyTagFromAldrin as KeyTag,
     PrimaryKeyTagFromAldrin as PrimaryKeyTag, PrimaryTagFromAldrin as PrimaryTag,
     RefTypeFromAldrin as RefType, SerializeFromAldrin as Serialize,
     SerializeKeyFromAldrin as SerializeKey, TagFromAldrin as Tag,

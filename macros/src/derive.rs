@@ -1,4 +1,5 @@
 mod deserialize;
+mod deserialize_key;
 mod enum_data;
 mod introspectable;
 mod key_tag;
@@ -21,6 +22,7 @@ use struct_data::{FieldData, StructData};
 use syn::{Error, Generics, Result};
 
 pub use deserialize::{gen_deserialize_from_aldrin, gen_deserialize_from_core};
+pub use deserialize_key::{gen_deserialize_key_from_aldrin, gen_deserialize_key_from_core};
 pub use introspectable::{gen_introspectable_from_aldrin, gen_introspectable_from_core};
 pub use key_tag::{gen_key_tag_from_aldrin, gen_key_tag_from_core};
 pub use primary_key_tag::{gen_primary_key_tag_from_aldrin, gen_primary_key_tag_from_core};
