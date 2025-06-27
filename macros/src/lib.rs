@@ -17,6 +17,7 @@
 //! - [`Deserialize`]
 //! - [`Introspectable`]
 //! - [`KeyTag`]
+//! - [`PrimaryKeyTag`]
 //!
 //! All derive macros are re-exported in both `aldrin` and `aldrin-core`.
 //!
@@ -78,15 +79,15 @@
 //!
 //! ##### `newtype`
 //!
-//! - Applies to: [`Serialize`], [`Deserialize`] and [`KeyTag`]
+//! - Applies to: [`Serialize`], [`Deserialize`], [`KeyTag`] and [`PrimaryKeyTag`]
 //!
 //! Specifying `#[aldrin(newtype)]` is possible for structs with exactly 1 field and makes them
 //! behave like that field. E.g., the type will no longer serialize as a struct, but directly as
 //! that field instead.
 //!
 //! ```
-//! # use aldrin_core::{Deserialize, KeyTag, PrimaryTag, Serialize, Tag};
-//! #[derive(Tag, KeyTag, PrimaryTag, Serialize, Deserialize)]
+//! # use aldrin_core::{Deserialize, KeyTag, PrimaryKeyTag, PrimaryTag, Serialize, Tag};
+//! #[derive(Tag, KeyTag, PrimaryTag, PrimaryKeyTag, Serialize, Deserialize)]
 //! #[aldrin(newtype)]
 //! struct Name {
 //!     inner: String,
@@ -758,4 +759,33 @@ pub fn key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 #[proc_macro_derive(KeyTagFromAldrin, attributes(aldrin))]
 pub fn key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     derive::gen_key_tag_from_aldrin(input)
+}
+
+/// Derive macro for the `PrimaryKeyTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[manyhow::manyhow]
+#[proc_macro_derive(PrimaryKeyTag, attributes(aldrin))]
+pub fn primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_primary_key_tag_from_core(input)
+}
+
+/// Derive macro for the `PrimaryKeyTag` trait.
+///
+/// See the [crate-level](crate#attributes) documentation in the `aldrin-macros` crate for more
+/// information about the supported attributes.
+///
+/// Relevant attributes:
+/// - [`crate`](crate#crate)
+/// - [`newtype`](crate#newtype)
+#[doc(hidden)]
+#[manyhow::manyhow]
+#[proc_macro_derive(PrimaryKeyTagFromAldrin, attributes(aldrin))]
+pub fn primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+    derive::gen_primary_key_tag_from_aldrin(input)
 }
