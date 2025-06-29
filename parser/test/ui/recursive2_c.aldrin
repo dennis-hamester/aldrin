@@ -1,0 +1,3 @@
+import recursive2_a;
+
+newtype N = recursive2_a::S;

@@ -1,6 +1,7 @@
 use super::Error;
 use crate::ast::{
-    Definition, EnumDef, Ident, NamedRef, NamedRefKind, StructDef, TypeName, TypeNameKind,
+    Definition, EnumDef, Ident, NamedRef, NamedRefKind, NewtypeDef, StructDef, TypeName,
+    TypeNameKind,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
@@ -112,10 +113,64 @@ impl From<RecursiveEnum> for Error {
     }
 }
 
+#[derive(Debug)]
+pub struct RecursiveNewtype {
+    schema_name: String,
+    ident: Ident,
+}
+
+impl RecursiveNewtype {
+    pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate) {
+        let context = Context::new_newtype(newtype_def, validate);
+
+        if !context.visit_newtype(newtype_def) {
+            return;
+        }
+
+        validate.add_error(Self {
+            schema_name: validate.schema_name().to_owned(),
+            ident: newtype_def.name().clone(),
+        });
+    }
+
+    pub fn ident(&self) -> &Ident {
+        &self.ident
+    }
+}
+
+impl Diagnostic for RecursiveNewtype {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        &self.schema_name
+    }
+
+    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
+        let mut fmt = Formatter::new(self, format!("recursive newtype `{}`", self.ident.value()));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
+        }
+
+        fmt.note("recursive newtypes are not supported")
+            .help("use box<T> to break the recursion");
+        fmt.format()
+    }
+}
+
+impl From<RecursiveNewtype> for Error {
+    fn from(e: RecursiveNewtype) -> Self {
+        Self::RecursiveNewtype(e)
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 enum Type<'a> {
     Struct(&'a Ident),
     Enum(&'a Ident),
+    Newtype(&'a Ident),
 }
 
 #[derive(Copy, Clone)]
@@ -145,6 +200,15 @@ impl<'a> Context<'a> {
         }
     }
 
+    fn new_newtype(newtype_def: &'a NewtypeDef, validate: &'a Validate<'a>) -> Self {
+        Self {
+            type_schema: validate.schema_name(),
+            type_name: Type::Newtype(newtype_def.name()),
+            current_schema: validate.schema_name(),
+            validate,
+        }
+    }
+
     fn with_current_schema(self, current_schema: &'a str) -> Self {
         Self {
             type_schema: self.type_schema,
@@ -167,6 +231,10 @@ impl<'a> Context<'a> {
                 .map(|type_name| self.visit_type_name(type_name))
                 .unwrap_or(false)
         })
+    }
+
+    fn visit_newtype(self, newtype_def: &NewtypeDef) -> bool {
+        self.visit_type_name(newtype_def.target_type())
     }
 
     fn visit_external_type(self, schema_name: &'a str, ident: &'a Ident) -> bool {
@@ -200,6 +268,15 @@ impl<'a> Context<'a> {
                 }
             }
 
+            (Type::Newtype(ident), Definition::Newtype(newtype_def)) => {
+                if ident.value() == newtype_def.name().value() {
+                    true
+                } else {
+                    self.with_current_schema(schema_name)
+                        .visit_newtype(newtype_def)
+                }
+            }
+
             (_, Definition::Struct(struct_def)) => self
                 .with_current_schema(schema_name)
                 .visit_struct(struct_def),
@@ -207,6 +284,10 @@ impl<'a> Context<'a> {
             (_, Definition::Enum(enum_def)) => {
                 self.with_current_schema(schema_name).visit_enum(enum_def)
             }
+
+            (_, Definition::Newtype(newtype_def)) => self
+                .with_current_schema(schema_name)
+                .visit_newtype(newtype_def),
 
             _ => false,
         }

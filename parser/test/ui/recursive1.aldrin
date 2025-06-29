@@ -5,3 +5,5 @@ struct S {
 enum E {
     V @ 1 = E;
 }
+
+newtype N = N;

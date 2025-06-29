@@ -1,0 +1,8 @@
+error: recursive newtype `N`
+  --> test/ui/recursive2_c.aldrin:3:9
+   |
+ 3 | newtype N = recursive2_a::S;
+   |         ^
+   |
+   = note: recursive newtypes are not supported
+   = help: use box<T> to break the recursion

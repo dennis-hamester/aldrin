@@ -66,7 +66,7 @@ pub use invalid_struct_field_id::InvalidStructFieldId;
 pub use invalid_syntax::{Expected, InvalidSyntax};
 pub use io_error::IoError;
 pub use missing_import::MissingImport;
-pub use recursive_type::{RecursiveEnum, RecursiveStruct};
+pub use recursive_type::{RecursiveEnum, RecursiveNewtype, RecursiveStruct};
 pub use type_not_found::TypeNotFound;
 
 #[derive(Debug)]
@@ -104,6 +104,7 @@ pub enum Error {
     IoError(IoError),
     MissingImport(MissingImport),
     RecursiveEnum(RecursiveEnum),
+    RecursiveNewtype(RecursiveNewtype),
     RecursiveStruct(RecursiveStruct),
     TypeNotFound(TypeNotFound),
 }
@@ -147,6 +148,7 @@ impl Diagnostic for Error {
             Self::IoError(e) => e.schema_name(),
             Self::MissingImport(e) => e.schema_name(),
             Self::RecursiveEnum(e) => e.schema_name(),
+            Self::RecursiveNewtype(e) => e.schema_name(),
             Self::RecursiveStruct(e) => e.schema_name(),
             Self::TypeNotFound(e) => e.schema_name(),
         }
@@ -186,6 +188,7 @@ impl Diagnostic for Error {
             Self::IoError(e) => e.format(parsed),
             Self::MissingImport(e) => e.format(parsed),
             Self::RecursiveEnum(e) => e.format(parsed),
+            Self::RecursiveNewtype(e) => e.format(parsed),
             Self::RecursiveStruct(e) => e.format(parsed),
             Self::TypeNotFound(e) => e.format(parsed),
         }

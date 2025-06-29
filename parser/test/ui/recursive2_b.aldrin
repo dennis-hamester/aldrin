@@ -1,5 +1,5 @@
-import recursive2_a;
+import recursive2_c;
 
 enum E {
-    V @ 1 = recursive2_a::S;
+    V @ 1 = recursive2_c::N;
 }
