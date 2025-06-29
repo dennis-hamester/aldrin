@@ -1,6 +1,7 @@
 mod duplicate_import;
 mod non_camel_case_enum;
 mod non_camel_case_enum_variant;
+mod non_camel_case_newtype;
 mod non_camel_case_service;
 mod non_camel_case_struct;
 mod non_shouty_snake_case_const;
@@ -16,6 +17,7 @@ use crate::Parsed;
 pub use duplicate_import::DuplicateImport;
 pub use non_camel_case_enum::NonCamelCaseEnum;
 pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
+pub use non_camel_case_newtype::NonCamelCaseNewtype;
 pub use non_camel_case_service::NonCamelCaseService;
 pub use non_camel_case_struct::NonCamelCaseStruct;
 pub use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
@@ -31,6 +33,7 @@ pub enum Warning {
     DuplicateImport(DuplicateImport),
     NonCamelCaseEnum(NonCamelCaseEnum),
     NonCamelCaseEnumVariant(NonCamelCaseEnumVariant),
+    NonCamelCaseNewtype(NonCamelCaseNewtype),
     NonCamelCaseService(NonCamelCaseService),
     NonCamelCaseStruct(NonCamelCaseStruct),
     NonShoutySnakeCaseConst(NonShoutySnakeCaseConst),
@@ -51,6 +54,7 @@ impl Diagnostic for Warning {
             Self::DuplicateImport(w) => w.schema_name(),
             Self::NonCamelCaseEnum(w) => w.schema_name(),
             Self::NonCamelCaseEnumVariant(w) => w.schema_name(),
+            Self::NonCamelCaseNewtype(w) => w.schema_name(),
             Self::NonCamelCaseService(w) => w.schema_name(),
             Self::NonCamelCaseStruct(w) => w.schema_name(),
             Self::NonShoutySnakeCaseConst(w) => w.schema_name(),
@@ -67,6 +71,7 @@ impl Diagnostic for Warning {
             Self::DuplicateImport(w) => w.format(parsed),
             Self::NonCamelCaseEnum(w) => w.format(parsed),
             Self::NonCamelCaseEnumVariant(w) => w.format(parsed),
+            Self::NonCamelCaseNewtype(w) => w.format(parsed),
             Self::NonCamelCaseService(w) => w.format(parsed),
             Self::NonCamelCaseStruct(w) => w.format(parsed),
             Self::NonShoutySnakeCaseConst(w) => w.format(parsed),

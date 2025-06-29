@@ -1,0 +1,7 @@
+warning: newtype `foo` should have a camel-case name
+  --> test/ui/non_camel_case_newtype.aldrin:1:9
+   |
+ 1 | newtype foo = unit;
+   |         ^^^
+   |
+   = help: consider renaming newtype `foo` to `Foo`

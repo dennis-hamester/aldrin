@@ -2,6 +2,7 @@ use super::{Attribute, Ident, TypeName};
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
+use crate::warning::NonCamelCaseNewtype;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -48,6 +49,7 @@ impl NewtypeDef {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         RecursiveNewtype::validate(self, validate);
+        NonCamelCaseNewtype::validate(self, validate);
 
         self.name.validate(validate);
         self.target_type.validate(validate);
