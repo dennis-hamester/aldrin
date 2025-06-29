@@ -73,6 +73,18 @@ fn gen_struct(
     name: &str,
     options: &Options,
 ) -> Result<(TokenStream, TokenStream)> {
+    if options.newtype() {
+        gen_newtype_struct(fields, name, options)
+    } else {
+        gen_regular_struct(fields, name, options)
+    }
+}
+
+fn gen_regular_struct(
+    fields: &Punctuated<Field, Token![,]>,
+    name: &str,
+    options: &Options,
+) -> Result<(TokenStream, TokenStream)> {
     let krate = options.krate();
     let schema = options.schema().unwrap();
 
@@ -180,6 +192,14 @@ fn gen_field(
     };
 
     (layout, references)
+}
+
+fn gen_newtype_struct(
+    _fields: &Punctuated<Field, Token![,]>,
+    _name: &str,
+    _options: &Options,
+) -> Result<(TokenStream, TokenStream)> {
+    todo!()
 }
 
 fn gen_enum(
