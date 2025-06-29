@@ -1,8 +1,8 @@
 use super::Warning;
 use crate::ast::{
     ArrayLen, ArrayLenValue, Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart,
-    ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, SchemaName, ServiceDef,
-    ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, SchemaName,
+    ServiceDef, ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
@@ -38,6 +38,7 @@ impl UnusedImport {
             Definition::Struct(d) => Self::visit_struct(d, schema_name),
             Definition::Enum(d) => Self::visit_enum(d, schema_name),
             Definition::Service(d) => Self::visit_service(d, schema_name),
+            Definition::Newtype(d) => Self::visit_newtype(d, schema_name),
             Definition::Const(_) => false,
         }
     }
@@ -125,6 +126,10 @@ impl UnusedImport {
             Some(event_type) => Self::visit_type_name_or_inline(event_type, schema_name),
             None => false,
         }
+    }
+
+    fn visit_newtype(newtype_def: &NewtypeDef, schema_name: &SchemaName) -> bool {
+        Self::visit_type_name(newtype_def.target_type(), schema_name)
     }
 
     fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {

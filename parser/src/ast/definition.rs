@@ -1,4 +1,4 @@
-use crate::ast::{ConstDef, EnumDef, Ident, ServiceDef, StructDef};
+use crate::ast::{ConstDef, EnumDef, Ident, NewtypeDef, ServiceDef, StructDef};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -11,6 +11,7 @@ pub enum Definition {
     Enum(EnumDef),
     Service(ServiceDef),
     Const(ConstDef),
+    Newtype(NewtypeDef),
 }
 
 impl Definition {
@@ -23,6 +24,7 @@ impl Definition {
             Rule::enum_def => Self::Enum(EnumDef::parse(pair)),
             Rule::service_def => Self::Service(ServiceDef::parse(pair)),
             Rule::const_def => Self::Const(ConstDef::parse(pair)),
+            Rule::newtype_def => Self::Newtype(NewtypeDef::parse(pair)),
             _ => unreachable!(),
         }
     }
@@ -33,6 +35,7 @@ impl Definition {
             Self::Enum(d) => d.validate(validate),
             Self::Service(d) => d.validate(validate),
             Self::Const(d) => d.validate(validate),
+            Self::Newtype(d) => d.validate(validate),
         }
     }
 
@@ -42,6 +45,7 @@ impl Definition {
             Self::Enum(d) => d.span(),
             Self::Service(d) => d.span(),
             Self::Const(d) => d.span(),
+            Self::Newtype(d) => d.span(),
         }
     }
 
@@ -51,6 +55,7 @@ impl Definition {
             Self::Enum(d) => d.name(),
             Self::Service(d) => d.name(),
             Self::Const(d) => d.name(),
+            Self::Newtype(d) => d.name(),
         }
     }
 
@@ -78,6 +83,13 @@ impl Definition {
     pub fn as_const(&self) -> Option<&ConstDef> {
         match self {
             Self::Const(d) => Some(d),
+            _ => None,
+        }
+    }
+
+    pub fn as_newtype(&self) -> Option<&NewtypeDef> {
+        match self {
+            Self::Newtype(d) => Some(d),
             _ => None,
         }
     }

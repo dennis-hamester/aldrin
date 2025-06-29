@@ -29,7 +29,10 @@ impl ExpectedConstIntFoundType {
         for def in schema.definitions() {
             if def.name().value() == ident.value() {
                 match def {
-                    Definition::Struct(_) | Definition::Enum(_) => found = true,
+                    Definition::Struct(_) | Definition::Enum(_) | Definition::Newtype(_) => {
+                        found = true
+                    }
+
                     Definition::Service(_) | Definition::Const(_) => return,
                 }
             }

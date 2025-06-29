@@ -155,6 +155,7 @@ impl Expected {
         const DEF: &[Expected] = &[
             Expected::Keyword("const"),
             Expected::Keyword("enum"),
+            Expected::Keyword("newtype"),
             Expected::Keyword("service"),
             Expected::Keyword("struct"),
             Expected::Token("#"),

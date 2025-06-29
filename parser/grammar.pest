@@ -40,6 +40,7 @@ kw_service = @{ "service" ~ &ws }
 kw_fn = @{ "fn" ~ &ws }
 kw_event = @{ "event" ~ &ws }
 kw_const = @{ "const" ~ &ws }
+kw_newtype = @{ "newtype" ~ &ws }
 kw_u8 = @{ "u8" }
 kw_i8 = @{ "i8" }
 kw_u16 = @{ "u16" }
@@ -149,7 +150,7 @@ attribute = {
 
 import_stmt = { kw_import ~ schema_name ~ tok_term }
 
-def = { struct_def | enum_def | service_def | const_def }
+def = { struct_def | enum_def | service_def | const_def | newtype_def }
 
 struct_def = { attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
 struct_inline = { kw_struct ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
@@ -209,3 +210,5 @@ const_u64 = { kw_u64 ~ tok_par_open ~ lit_int ~ tok_par_close }
 const_i64 = { kw_i64 ~ tok_par_open ~ lit_int ~ tok_par_close }
 const_string = { kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
 const_uuid = { kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }
+
+newtype_def = { attribute* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }

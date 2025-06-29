@@ -54,6 +54,7 @@ pub fn did_you_mean_type<'a>(
     let candidates = schema.definitions().iter().filter_map(|d| match d {
         Definition::Struct(d) => Some(d.name().value()),
         Definition::Enum(d) => Some(d.name().value()),
+        Definition::Newtype(d) => Some(d.name().value()),
         Definition::Service(_) | Definition::Const(_) => None,
     });
 

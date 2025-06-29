@@ -164,6 +164,7 @@ impl RustGenerator<'_> {
 
             ast::Definition::Service(s) => self.service_def(s),
             ast::Definition::Const(c) => self.const_def(c),
+            ast::Definition::Newtype(_) => todo!(),
         }
     }
 
@@ -602,6 +603,7 @@ impl RustGenerator<'_> {
                 }
             }
 
+            ast::Definition::Newtype(_) => todo!(),
             ast::Definition::Const(_) => {}
         }
     }

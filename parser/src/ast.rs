@@ -10,6 +10,7 @@ mod lit_int;
 mod lit_string;
 mod lit_uuid;
 mod named_ref;
+mod newtype_def;
 mod schema_name;
 mod service_def;
 mod struct_def;
@@ -28,6 +29,7 @@ pub use lit_int::{LitInt, LitPosInt};
 pub use lit_string::LitString;
 pub use lit_uuid::LitUuid;
 pub use named_ref::{NamedRef, NamedRefKind};
+pub use newtype_def::NewtypeDef;
 pub use schema_name::SchemaName;
 pub use service_def::{
     EventDef, EventFallbackDef, FunctionDef, FunctionFallbackDef, FunctionPart, ServiceDef,
