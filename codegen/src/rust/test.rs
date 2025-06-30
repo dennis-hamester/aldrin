@@ -17,6 +17,7 @@ aldrin::generate!("test/enum_fallback.aldrin");
 aldrin::generate!("test/extern.aldrin", introspection = true);
 aldrin::generate!("test/generic_struct.aldrin");
 aldrin::generate!("test/introspection.aldrin", introspection = true);
+aldrin::generate!("test/newtype.aldrin");
 aldrin::generate!("test/old_new.aldrin");
 aldrin::generate!("test/options.aldrin");
 aldrin::generate!("test/result.aldrin");
@@ -433,4 +434,25 @@ fn enum_fallback_new_to_old() {
     let serialized = SerializedValue::serialize(Old::Unknown(variant)).unwrap();
     let new2 = serialized.deserialize().unwrap();
     assert_eq!(new, new2);
+}
+
+#[test]
+fn newtype_equivalence() {
+    use newtype::{MyInt, MyString, WithNewtypes, WithoutNewtypes};
+
+    let with_newtypes1 = WithNewtypes {
+        s: MyString("foo".to_owned()),
+        i: Some(MyInt(1)),
+    };
+
+    let serialized = SerializedValue::serialize(&with_newtypes1).unwrap();
+    let without_newtypes = serialized.deserialize::<WithoutNewtypes>().unwrap();
+
+    assert_eq!(without_newtypes.s, "foo");
+    assert_eq!(without_newtypes.i, Some(1));
+
+    let serialized = SerializedValue::serialize(&without_newtypes).unwrap();
+    let with_newtypes2 = serialized.deserialize::<WithNewtypes>().unwrap();
+
+    assert_eq!(with_newtypes1, with_newtypes2);
 }

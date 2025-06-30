@@ -1,0 +1,13 @@
+newtype MyString = string;
+newtype MyInt = i32;
+
+#[rust(impl_partial_eq, impl_eq)]
+struct WithNewtypes {
+    required s @ 1 = MyString;
+    i @ 2 = MyInt;
+}
+
+struct WithoutNewtypes {
+    required s @ 1 = string;
+    i @ 2 = i32;
+}

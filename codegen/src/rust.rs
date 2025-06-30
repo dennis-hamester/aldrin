@@ -15,8 +15,10 @@ const BOX: &str = "::std::boxed::Box";
 const CLONE: &str = "::std::clone::Clone";
 const DEBUG: &str = "::std::fmt::Debug";
 const DEFAULT: &str = "::std::default::Default";
+const EQ: &str = "::std::cmp::Eq";
 const F32: &str = "::std::primitive::f32";
 const F64: &str = "::std::primitive::f64";
+const HASH: &str = "::std::hash::Hash";
 const HASH_MAP: &str = "::std::collections::HashMap";
 const HASH_SET: &str = "::std::collections::HashSet";
 const I16: &str = "::std::primitive::i16";
@@ -25,6 +27,9 @@ const I64: &str = "::std::primitive::i64";
 const I8: &str = "::std::primitive::i8";
 const OK: &str = "::std::result::Result::Ok";
 const OPTION: &str = "::std::option::Option";
+const ORD: &str = "::std::cmp::Ord";
+const PARTIAL_EQ: &str = "::std::cmp::PartialEq";
+const PARTIAL_ORD: &str = "::std::cmp::PartialOrd";
 const RESULT: &str = "::std::result::Result";
 const STR: &str = "::std::primitive::str";
 const STRING: &str = "::std::string::String";
@@ -72,6 +77,7 @@ pub(crate) fn generate(
     let schema = parsed.main_schema();
 
     let generator = RustGenerator {
+        parsed,
         schema,
         options,
         rust_options,
@@ -85,6 +91,7 @@ pub(crate) fn generate(
 }
 
 struct RustGenerator<'a> {
+    parsed: &'a Parsed,
     schema: &'a Schema,
     options: &'a Options,
     rust_options: &'a RustOptions<'a>,
@@ -164,7 +171,7 @@ impl RustGenerator<'_> {
 
             ast::Definition::Service(s) => self.service_def(s),
             ast::Definition::Const(c) => self.const_def(c),
-            ast::Definition::Newtype(_) => todo!(),
+            ast::Definition::Newtype(n) => self.newtype_def(n),
         }
     }
 
@@ -584,15 +591,58 @@ impl RustGenerator<'_> {
         codeln!(self);
     }
 
+    fn newtype_def(&mut self, newtype_def: &ast::NewtypeDef) {
+        let krate = self.rust_options.krate;
+        let name = newtype_def.name().value();
+        let ident = format!("r#{name}");
+        let ref_type = format!("r#{name}Ref");
+        let ty = self.type_name(newtype_def.target_type());
+        let schema_name = self.schema.name();
+        let additional_derives =
+            RustAttributes::parse(newtype_def.attributes()).additional_derives();
+        let (is_key_type, derive_default) =
+            self.newtype_properties(self.schema, newtype_def.target_type());
+
+        code!(self, "#[derive({DEBUG}, {CLONE}");
+
+        if derive_default {
+            code!(self, ", {DEFAULT}");
+        }
+
+        if is_key_type {
+            code!(self, ", {PARTIAL_EQ}, {EQ}, {PARTIAL_ORD}, {ORD}, {HASH}");
+        }
+
+        code!(self, ", {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize");
+
+        if self.options.introspection && self.rust_options.introspection_if.is_none() {
+            code!(self, ", {krate}::Introspectable");
+        }
+
+        if is_key_type {
+            code!(self, ", {krate}::KeyTag, {krate}::PrimaryKeyTag, {krate}::SerializeKey, {krate}::DeserializeKey");
+        }
+
+        codeln!(self, "{additional_derives})]");
+
+        if self.options.introspection {
+            if let Some(feature) = self.rust_options.introspection_if {
+                codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
+            }
+        }
+
+        codeln!(self, "#[aldrin(crate = {krate}::core, newtype, schema = \"{schema_name}\", ref_type = {ref_type})]");
+        codeln!(self, "#[automatically_derived]");
+        codeln!(self, "pub struct {ident}(pub {ty});");
+        codeln!(self);
+    }
+
     fn register_introspection(&mut self, def: &ast::Definition) {
         match def {
-            ast::Definition::Struct(d) => {
-                let ident = format!("r#{}", d.name().value());
-                codeln!(self, "    client.register_introspection::<{ident}>()?;");
-            }
-
-            ast::Definition::Enum(e) => {
-                let ident = format!("r#{}", e.name().value());
+            def @ (ast::Definition::Struct(_)
+            | ast::Definition::Enum(_)
+            | ast::Definition::Newtype(_)) => {
+                let ident = format!("r#{}", def.name().value());
                 codeln!(self, "    client.register_introspection::<{ident}>()?;");
             }
 
@@ -603,7 +653,6 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ast::Definition::Newtype(_) => todo!(),
             ast::Definition::Const(_) => {}
         }
     }
@@ -785,6 +834,79 @@ impl RustGenerator<'_> {
             ast::KeyTypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
         }
     }
+
+    fn newtype_properties(&self, schema: &Schema, ty: &ast::TypeName) -> (bool, bool) {
+        match ty.kind() {
+            ast::TypeNameKind::U8
+            | ast::TypeNameKind::I8
+            | ast::TypeNameKind::U16
+            | ast::TypeNameKind::I16
+            | ast::TypeNameKind::U32
+            | ast::TypeNameKind::I32
+            | ast::TypeNameKind::U64
+            | ast::TypeNameKind::I64
+            | ast::TypeNameKind::String
+            | ast::TypeNameKind::Uuid => (true, false),
+
+            ast::TypeNameKind::Bool
+            | ast::TypeNameKind::F32
+            | ast::TypeNameKind::F64
+            | ast::TypeNameKind::ObjectId
+            | ast::TypeNameKind::ServiceId
+            | ast::TypeNameKind::Value
+            | ast::TypeNameKind::Option(_)
+            | ast::TypeNameKind::Box(_)
+            | ast::TypeNameKind::Vec(_)
+            | ast::TypeNameKind::Bytes
+            | ast::TypeNameKind::Map(_, _)
+            | ast::TypeNameKind::Set(_)
+            | ast::TypeNameKind::Sender(_)
+            | ast::TypeNameKind::Receiver(_)
+            | ast::TypeNameKind::Lifetime
+            | ast::TypeNameKind::Unit
+            | ast::TypeNameKind::Result(_, _)
+            | ast::TypeNameKind::Array(_, _) => (false, false),
+
+            ast::TypeNameKind::Ref(ty) => {
+                let (schema, name) = match ty.kind() {
+                    ast::NamedRefKind::Intern(name) => (schema, name.value()),
+
+                    ast::NamedRefKind::Extern(schema, name) => {
+                        if let Some(schema) = self.parsed.get_schema(schema.value()) {
+                            (schema, name.value())
+                        } else {
+                            return (false, false);
+                        }
+                    }
+                };
+
+                let Some(def) = schema
+                    .definitions()
+                    .iter()
+                    .find(|def| def.name().value() == name)
+                else {
+                    return (false, false);
+                };
+
+                match def {
+                    ast::Definition::Struct(struct_def) => {
+                        let has_required_fields =
+                            struct_def.fields().iter().any(ast::StructField::required);
+
+                        (false, !has_required_fields)
+                    }
+
+                    ast::Definition::Newtype(newtype_def) => {
+                        self.newtype_properties(schema, newtype_def.target_type())
+                    }
+
+                    ast::Definition::Enum(_)
+                    | ast::Definition::Service(_)
+                    | ast::Definition::Const(_) => (false, false),
+                }
+            }
+        }
+    }
 }
 
 fn service_event_variant(ev_name: &str) -> String {
@@ -844,23 +966,28 @@ impl RustAttributes {
         }
 
         if self.impl_partial_eq {
-            derives.push_str(", ::std::cmp::PartialEq");
+            derives.push_str(", ");
+            derives.push_str(PARTIAL_EQ);
         }
 
         if self.impl_eq {
-            derives.push_str(", ::std::cmp::Eq");
+            derives.push_str(", ");
+            derives.push_str(EQ);
         }
 
         if self.impl_partial_ord {
-            derives.push_str(", ::std::cmp::PartialOrd");
+            derives.push_str(", ");
+            derives.push_str(PARTIAL_ORD);
         }
 
         if self.impl_ord {
-            derives.push_str(", ::std::cmp::Ord");
+            derives.push_str(", ");
+            derives.push_str(ORD);
         }
 
         if self.impl_hash {
-            derives.push_str(", ::std::hash::Hash");
+            derives.push_str(", ");
+            derives.push_str(HASH);
         }
 
         derives
