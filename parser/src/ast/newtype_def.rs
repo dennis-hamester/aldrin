@@ -52,7 +52,7 @@ impl NewtypeDef {
         NonCamelCaseNewtype::validate(self, validate);
 
         self.name.validate(validate);
-        self.target_type.validate(validate);
+        self.target_type.validate(false, validate);
     }
 
     pub fn span(&self) -> Span {

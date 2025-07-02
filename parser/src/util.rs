@@ -1,4 +1,6 @@
-use crate::ast::{ConstValue, Definition, EnumDef, NamedRefKind, StructDef, TypeNameKind};
+use crate::ast::{
+    ConstValue, Definition, EnumDef, NamedRef, NamedRefKind, StructDef, TypeNameKind,
+};
 use crate::validate::Validate;
 use crate::Schema;
 use std::cmp::Ordering;
@@ -30,6 +32,10 @@ const BUILTIN_TYPES: &[&str] = &[
     "value",
 ];
 
+const BUILTIN_KEY_TYPES: &[&str] = &[
+    "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "string", "uuid",
+];
+
 pub fn did_you_mean<'a, I>(candidates: I, value: &str) -> Option<&'a str>
 where
     I: IntoIterator<Item = &'a str>,
@@ -55,6 +61,31 @@ pub fn did_you_mean_type<'a>(
 
     if with_builtins {
         did_you_mean(candidates.chain(BUILTIN_TYPES.iter().copied()), name)
+    } else {
+        did_you_mean(candidates, name)
+    }
+}
+
+pub(crate) fn did_you_mean_key_type<'a>(
+    schema: &'a Schema,
+    name: &str,
+    with_builtins: bool,
+    validate: &Validate,
+) -> Option<&'a str> {
+    let candidates = schema
+        .definitions()
+        .iter()
+        .filter_map(Definition::as_newtype)
+        .filter_map(|newtype| {
+            let kind = TypeNameKind::Ref(NamedRef::dummy_intern(newtype.name().clone()));
+
+            resolves_to_key_type(&kind, schema, validate)
+                .ok()
+                .map(|_| newtype.name().value())
+        });
+
+    if with_builtins {
+        did_you_mean(candidates.chain(BUILTIN_KEY_TYPES.iter().copied()), name)
     } else {
         did_you_mean(candidates, name)
     }

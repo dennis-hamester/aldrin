@@ -260,7 +260,7 @@ impl StructField {
         NonSnakeCaseStructField::validate(&self.name, validate);
 
         self.name.validate(validate);
-        self.field_type.validate(validate);
+        self.field_type.validate(false, validate);
     }
 
     pub fn span(&self) -> Span {

@@ -1,0 +1,21 @@
+service Service {
+    uuid = 542df5cf-ead9-42a6-a344-2550e6415e63;
+    version = 1;
+}
+
+struct SeRvice {
+}
+
+newtype SeRvIce = u8;
+
+const Const = u8(0);
+
+struct ConSt {
+}
+
+newtype CoNst = u8;
+
+struct Struct {
+}
+
+newtype StrUct = u8;

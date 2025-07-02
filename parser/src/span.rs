@@ -14,6 +14,10 @@ impl LineCol {
         let (line, column) = pos.line_col();
         Self { line, column }
     }
+
+    fn dummy() -> Self {
+        Self { line: 0, column: 0 }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -45,6 +49,13 @@ impl Position {
 
         Self { index, line_col }
     }
+
+    fn dummy() -> Self {
+        Self {
+            index: 0,
+            line_col: LineCol::dummy(),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -59,6 +70,13 @@ impl Span {
         Self {
             from: Position::from_pest(&span.start_pos()),
             to: Position::from_pest(&span.end_pos()),
+        }
+    }
+
+    pub(crate) fn dummy() -> Self {
+        Self {
+            from: Position::dummy(),
+            to: Position::dummy(),
         }
     }
 

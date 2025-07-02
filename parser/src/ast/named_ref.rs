@@ -25,6 +25,13 @@ impl NamedRef {
         Self { span, kind }
     }
 
+    pub(crate) fn dummy_intern(ident: Ident) -> Self {
+        Self {
+            span: Span::dummy(),
+            kind: NamedRefKind::Intern(ident),
+        }
+    }
+
     pub(crate) fn validate(&self, validate: &mut Validate) {
         self.kind.validate(validate);
     }

@@ -27,7 +27,7 @@ impl TypeNameOrInline {
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
         match self {
-            Self::TypeName(ty) => ty.validate(validate),
+            Self::TypeName(ty) => ty.validate(false, validate),
             Self::Struct(s) => s.validate(validate),
             Self::Enum(e) => e.validate(validate),
         }

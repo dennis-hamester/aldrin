@@ -12,7 +12,7 @@ pub struct TypeNotFound {
 }
 
 impl TypeNotFound {
-    pub(crate) fn validate(named_ref: &NamedRef, validate: &mut Validate) {
+    pub(crate) fn validate(named_ref: &NamedRef, is_key_type: bool, validate: &mut Validate) {
         let (schema, ident, intern) = match named_ref.kind() {
             NamedRefKind::Intern(ident) => (validate.get_current_schema(), ident, true),
 
@@ -31,8 +31,12 @@ impl TypeNotFound {
             }
         }
 
-        let candidate =
-            util::did_you_mean_type(schema, ident.value(), intern).map(ToOwned::to_owned);
+        let candidate = if is_key_type {
+            util::did_you_mean_key_type(schema, ident.value(), intern, validate)
+                .map(ToOwned::to_owned)
+        } else {
+            util::did_you_mean_type(schema, ident.value(), intern).map(ToOwned::to_owned)
+        };
 
         validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),

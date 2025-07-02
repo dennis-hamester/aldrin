@@ -4,4 +4,3 @@ error: expected type; found service `Service`
  28 | newtype Set3 = set<Service>;
     |                    ^^^^^^^ type expected here
     |
-    = help: did you mean `service_id`?

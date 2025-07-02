@@ -260,8 +260,9 @@ impl EnumVariant {
         NonCamelCaseEnumVariant::validate(&self.name, validate);
 
         self.name.validate(validate);
+
         if let Some(ref var_type) = self.var_type {
-            var_type.validate(validate);
+            var_type.validate(false, validate);
         }
     }
 

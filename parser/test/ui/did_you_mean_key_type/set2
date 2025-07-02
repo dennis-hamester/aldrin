@@ -1,0 +1,7 @@
+error: expected type; found constant `Const`
+   --> test/ui/did_you_mean_key_type.aldrin:26:20
+    |
+ 26 | newtype Set2 = set<Const>;
+    |                    ^^^^^ type expected here
+    |
+    = help: did you mean `CoNst`?

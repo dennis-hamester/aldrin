@@ -27,8 +27,8 @@ impl TypeName {
         Self { span, kind }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
-        self.kind.validate(validate);
+    pub(crate) fn validate(&self, is_key_type: bool, validate: &mut Validate) {
+        self.kind.validate(is_key_type, validate);
     }
 
     pub fn span(&self) -> Span {
@@ -198,39 +198,39 @@ impl TypeNameKind {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, is_key_type: bool, validate: &mut Validate) {
         match self {
             Self::Option(ty)
             | Self::Box(ty)
             | Self::Vec(ty)
             | Self::Sender(ty)
-            | Self::Receiver(ty) => ty.validate(validate),
+            | Self::Receiver(ty) => ty.validate(false, validate),
 
             Self::Map(k, t) => {
                 InvalidKeyType::validate(k, validate);
-                k.validate(validate);
-                t.validate(validate);
+                k.validate(true, validate);
+                t.validate(false, validate);
             }
 
             Self::Set(ty) => {
                 InvalidKeyType::validate(ty, validate);
-                ty.validate(validate);
+                ty.validate(true, validate);
             }
 
             Self::Result(ok, err) => {
-                ok.validate(validate);
-                err.validate(validate);
+                ok.validate(false, validate);
+                err.validate(false, validate);
             }
 
             Self::Array(ty, len) => {
-                ty.validate(validate);
+                ty.validate(false, validate);
                 len.validate(validate);
             }
 
             Self::Ref(ty) => {
-                TypeNotFound::validate(ty, validate);
-                ExpectedTypeFoundService::validate(ty, validate);
-                ExpectedTypeFoundConst::validate(ty, validate);
+                TypeNotFound::validate(ty, is_key_type, validate);
+                ExpectedTypeFoundService::validate(ty, is_key_type, validate);
+                ExpectedTypeFoundConst::validate(ty, is_key_type, validate);
                 ty.validate(validate);
             }
 

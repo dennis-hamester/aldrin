@@ -1,0 +1,7 @@
+warning: constant `Const` should have an upper-case name
+   --> test/ui/did_you_mean_key_type_import.aldrin:11:7
+    |
+ 11 | const Const = u8(0);
+    |       ^^^^^
+    |
+    = help: consider renaming constant `Const` to `CONST`

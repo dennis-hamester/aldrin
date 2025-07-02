@@ -1,0 +1,30 @@
+import did_you_mean_key_type_import;
+
+service Service {
+    uuid = ee4a242a-d547-4ec9-b8fb-667789939987;
+    version = 1;
+}
+
+struct SeRvice {
+}
+
+newtype SeRvIce = u8;
+
+const Const = u8(0);
+
+struct ConSt {
+}
+
+newtype CoNst = u8;
+
+struct Struct {
+}
+
+newtype StrUct = u8;
+
+newtype Set1 = set<Service>;
+newtype Set2 = set<Const>;
+newtype Set3 = set<StRuct>;
+newtype Set4 = set<did_you_mean_key_type_import::Service>;
+newtype Set5 = set<did_you_mean_key_type_import::Const>;
+newtype Set6 = set<did_you_mean_key_type_import::StRuct>;
