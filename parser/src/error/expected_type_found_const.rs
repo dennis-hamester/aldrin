@@ -13,15 +13,15 @@ pub struct ExpectedTypeFoundConst {
 
 impl ExpectedTypeFoundConst {
     pub(crate) fn validate(named_ref: &NamedRef, validate: &mut Validate) {
-        let (schema, ident) = match named_ref.kind() {
-            NamedRefKind::Intern(ident) => (validate.get_current_schema(), ident),
+        let (schema, ident, intern) = match named_ref.kind() {
+            NamedRefKind::Intern(ident) => (validate.get_current_schema(), ident, true),
 
             NamedRefKind::Extern(schema, ident) => {
                 let Some(schema) = validate.get_schema(schema.value()) else {
                     return;
                 };
 
-                (schema, ident)
+                (schema, ident, false)
             }
         };
 
@@ -38,7 +38,7 @@ impl ExpectedTypeFoundConst {
 
         if found {
             let candidate =
-                util::did_you_mean_type(schema, ident.value(), true).map(ToOwned::to_owned);
+                util::did_you_mean_type(schema, ident.value(), intern).map(ToOwned::to_owned);
 
             validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),

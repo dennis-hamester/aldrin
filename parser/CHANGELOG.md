@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add warning type `NonCamelCaseNewtype`.
 - Support newtypes as the key type in `set<T>` and `map<K -> T>`.
 
+### Fixed
+
+- Built-in types are no longer suggested in error messages when an external references points to a
+  service or const.
+
 ## [0.12.0] - 2025-01-26
 
 - Bump for Aldrin 0.12.0 release.

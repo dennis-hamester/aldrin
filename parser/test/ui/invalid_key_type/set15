@@ -4,4 +4,3 @@ error: expected type; found service `Service`
  40 | newtype Set15 = set<invalid_key_type_import::Service>;
     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type expected here
     |
-    = help: did you mean `invalid_key_type_import::service_id`?
