@@ -7,6 +7,7 @@ use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct ArrayLen {
@@ -70,6 +71,15 @@ impl ArrayLenValue {
 
                 ty.validate(validate);
             }
+        }
+    }
+}
+
+impl fmt::Display for ArrayLenValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Literal(lit) => lit.value().fmt(f),
+            Self::Ref(named_ref) => named_ref.kind().fmt(f),
         }
     }
 }

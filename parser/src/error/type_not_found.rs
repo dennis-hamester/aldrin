@@ -60,20 +60,7 @@ impl Diagnostic for TypeNotFound {
     }
 
     fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let (mut fmt, schema) = match self.named_ref.kind() {
-            NamedRefKind::Intern(ident) => (
-                Formatter::new(self, format!("type `{}` not found", ident.value())),
-                None,
-            ),
-
-            NamedRefKind::Extern(schema, ident) => (
-                Formatter::new(
-                    self,
-                    format!("type `{}::{}` not found", schema.value(), ident.value()),
-                ),
-                Some(schema),
-            ),
-        };
+        let mut fmt = Formatter::new(self, format!("type `{}` not found", self.named_ref.kind()));
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
             fmt.main_block(
@@ -85,7 +72,7 @@ impl Diagnostic for TypeNotFound {
         }
 
         if let Some(ref candidate) = self.candidate {
-            match schema {
+            match self.named_ref.schema() {
                 Some(schema) => {
                     fmt.help(format!("did you mean `{}::{candidate}`?", schema.value()));
                 }

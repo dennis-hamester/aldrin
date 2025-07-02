@@ -4,6 +4,7 @@ use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct TypeName {
@@ -248,6 +249,42 @@ impl TypeNameKind {
             | Self::Bytes
             | Self::Lifetime
             | Self::Unit => {}
+        }
+    }
+}
+
+impl fmt::Display for TypeNameKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Bool => write!(f, "bool"),
+            Self::U8 => write!(f, "u8"),
+            Self::I8 => write!(f, "i8"),
+            Self::U16 => write!(f, "u16"),
+            Self::I16 => write!(f, "i16"),
+            Self::U32 => write!(f, "u32"),
+            Self::I32 => write!(f, "i32"),
+            Self::U64 => write!(f, "u64"),
+            Self::I64 => write!(f, "i64"),
+            Self::F32 => write!(f, "f32"),
+            Self::F64 => write!(f, "f64"),
+            Self::String => write!(f, "string"),
+            Self::Uuid => write!(f, "uuid"),
+            Self::ObjectId => write!(f, "object_id"),
+            Self::ServiceId => write!(f, "service_id"),
+            Self::Value => write!(f, "value"),
+            Self::Option(ty) => write!(f, "option<{}>", ty.kind()),
+            Self::Box(ty) => write!(f, "box<{}>", ty.kind()),
+            Self::Vec(ty) => write!(f, "vec<{}>", ty.kind()),
+            Self::Bytes => write!(f, "bytes"),
+            Self::Map(k, t) => write!(f, "map<{} -> {}>", k.kind(), t.kind()),
+            Self::Set(ty) => write!(f, "set<{}>", ty.kind()),
+            Self::Sender(ty) => write!(f, "sender<{}>", ty.kind()),
+            Self::Receiver(ty) => write!(f, "receiver<{}>", ty.kind()),
+            Self::Lifetime => write!(f, "lifetime"),
+            Self::Unit => write!(f, "unit"),
+            Self::Result(ok, err) => write!(f, "result<{}, {}>", ok.kind(), err.kind()),
+            Self::Array(ty, len) => write!(f, "[{}; {}]", ty.kind(), len.value()),
+            Self::Ref(ty) => ty.kind().fmt(f),
         }
     }
 }

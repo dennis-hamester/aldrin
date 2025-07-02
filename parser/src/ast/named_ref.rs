@@ -4,6 +4,7 @@ use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
 use pest::iterators::Pair;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct NamedRef {
@@ -91,6 +92,15 @@ impl NamedRefKind {
         match self {
             Self::Intern(ident) => ident,
             Self::Extern(_, ident) => ident,
+        }
+    }
+}
+
+impl fmt::Display for NamedRefKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Intern(ident) => write!(f, "{}", ident.value()),
+            Self::Extern(schema, ident) => write!(f, "{}::{}", schema.value(), ident.value()),
         }
     }
 }
