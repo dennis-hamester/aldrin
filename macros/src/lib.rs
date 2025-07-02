@@ -73,7 +73,7 @@
 //!
 //! ##### `ref_type`
 //!
-//! - Applies to: [`RefType`], [`Serialize`]
+//! - Applies to: [`RefType`], [`Serialize`] and [`SerializeKey`]
 //!
 //! Deriving `RefType` requires specifying an identifier for the type with the `#[ref_type = ...]`
 //! attribute. The `Serialize` derive macro will then also generate implementations for that type.
@@ -812,6 +812,7 @@ pub fn primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
+/// - [`ref_type`](crate#ref_type)
 #[manyhow::manyhow]
 #[proc_macro_derive(SerializeKey, attributes(aldrin))]
 pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
