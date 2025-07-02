@@ -145,16 +145,16 @@ impl UnusedImport {
             TypeNameKind::Option(ty)
             | TypeNameKind::Box(ty)
             | TypeNameKind::Vec(ty)
-            | TypeNameKind::Map(_, ty)
+            | TypeNameKind::Set(ty)
             | TypeNameKind::Sender(ty)
             | TypeNameKind::Receiver(ty) => Self::visit_type_name(ty, schema_name),
 
-            TypeNameKind::Array(ty, len) => {
-                Self::visit_type_name(ty, schema_name) || Self::visit_array_len(len, schema_name)
+            TypeNameKind::Map(ty1, ty2) | TypeNameKind::Result(ty1, ty2) => {
+                Self::visit_type_name(ty1, schema_name) || Self::visit_type_name(ty2, schema_name)
             }
 
-            TypeNameKind::Result(ok, err) => {
-                Self::visit_type_name(ok, schema_name) || Self::visit_type_name(err, schema_name)
+            TypeNameKind::Array(ty, len) => {
+                Self::visit_type_name(ty, schema_name) || Self::visit_array_len(len, schema_name)
             }
 
             TypeNameKind::Ref(ty) => Self::visit_named_ref(ty, schema_name),
@@ -176,7 +176,6 @@ impl UnusedImport {
             | TypeNameKind::ServiceId
             | TypeNameKind::Value
             | TypeNameKind::Bytes
-            | TypeNameKind::Set(_)
             | TypeNameKind::Lifetime
             | TypeNameKind::Unit => false,
         }

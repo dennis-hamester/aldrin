@@ -687,13 +687,11 @@ impl RustGenerator<'_> {
 
             ast::TypeNameKind::Bytes => format!("{krate}::core::Bytes"),
 
-            ast::TypeNameKind::Map(k, v) => format!(
-                "{HASH_MAP}<{}, {}>",
-                self.key_type_name(k),
-                self.type_name(v)
-            ),
+            ast::TypeNameKind::Map(k, v) => {
+                format!("{HASH_MAP}<{}, {}>", self.type_name(k), self.type_name(v))
+            }
 
-            ast::TypeNameKind::Set(ty) => format!("{HASH_SET}<{}>", self.key_type_name(ty)),
+            ast::TypeNameKind::Set(ty) => format!("{HASH_SET}<{}>", self.type_name(ty)),
 
             ast::TypeNameKind::Sender(ty) => {
                 format!("{krate}::UnboundSender<{}>", self.type_name(ty))
@@ -733,7 +731,7 @@ impl RustGenerator<'_> {
 
     fn named_ref_name(&self, ty: &ast::NamedRef) -> String {
         match ty.kind() {
-            ast::NamedRefKind::Intern(ty) => format!("r#{}", ty.value().to_owned()),
+            ast::NamedRefKind::Intern(ty) => format!("r#{}", ty.value()),
             ast::NamedRefKind::Extern(m, ty) => format!("super::r#{}::r#{}", m.value(), ty.value()),
         }
     }
@@ -815,23 +813,6 @@ impl RustGenerator<'_> {
                     format!("{svc_name}{}Args", service_event_variant(ev_name))
                 }
             }
-        }
-    }
-
-    fn key_type_name(&self, ty: &ast::KeyTypeName) -> String {
-        let krate = self.rust_options.krate;
-
-        match ty.kind() {
-            ast::KeyTypeNameKind::U8 => U8.to_owned(),
-            ast::KeyTypeNameKind::I8 => I8.to_owned(),
-            ast::KeyTypeNameKind::U16 => U16.to_owned(),
-            ast::KeyTypeNameKind::I16 => I16.to_owned(),
-            ast::KeyTypeNameKind::U32 => U32.to_owned(),
-            ast::KeyTypeNameKind::I32 => I32.to_owned(),
-            ast::KeyTypeNameKind::U64 => U64.to_owned(),
-            ast::KeyTypeNameKind::I64 => I64.to_owned(),
-            ast::KeyTypeNameKind::String => STRING.to_owned(),
-            ast::KeyTypeNameKind::Uuid => format!("{krate}::private::uuid::Uuid"),
         }
     }
 

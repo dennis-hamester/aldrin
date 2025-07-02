@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support parsing newtypes of the form `newtype IDENT = TYPE;`.
 - Add error type `RecursiveNewtype`.
 - Add warning type `NonCamelCaseNewtype`.
+- Support newtypes as the key type in `set<T>` and `map<K -> T>`.
 
 ## [0.12.0] - 2025-01-26
 

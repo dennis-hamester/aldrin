@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add support for newtypes.
+- Support newtypes as the key type in sets and maps.
 
 ### Changed
 

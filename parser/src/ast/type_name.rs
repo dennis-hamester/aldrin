@@ -1,4 +1,4 @@
-use super::{ArrayLen, KeyTypeName, NamedRef};
+use super::{ArrayLen, NamedRef};
 use crate::error::{ExpectedTypeFoundConst, ExpectedTypeFoundService, TypeNotFound};
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -59,8 +59,8 @@ pub enum TypeNameKind {
     Box(Box<TypeName>),
     Vec(Box<TypeName>),
     Bytes,
-    Map(KeyTypeName, Box<TypeName>),
-    Set(KeyTypeName),
+    Map(Box<TypeName>, Box<TypeName>),
+    Set(Box<TypeName>),
     Sender(Box<TypeName>),
     Receiver(Box<TypeName>),
     Lifetime,
@@ -130,7 +130,7 @@ impl TypeNameKind {
                 let type_pair = pairs.next().unwrap();
 
                 Self::Map(
-                    KeyTypeName::parse(key_pair),
+                    Box::new(TypeName::parse(key_pair)),
                     Box::new(TypeName::parse(type_pair)),
                 )
             }
@@ -141,7 +141,7 @@ impl TypeNameKind {
                 pairs.next().unwrap(); // Skip <.
                 let pair = pairs.next().unwrap();
 
-                Self::Set(KeyTypeName::parse(pair))
+                Self::Set(Box::new(TypeName::parse(pair)))
             }
 
             Rule::sender_type => {
@@ -200,9 +200,17 @@ impl TypeNameKind {
             Self::Option(ty)
             | Self::Box(ty)
             | Self::Vec(ty)
-            | Self::Map(_, ty)
             | Self::Sender(ty)
             | Self::Receiver(ty) => ty.validate(validate),
+
+            Self::Map(k, t) => {
+                k.validate(validate);
+                t.validate(validate);
+            }
+
+            Self::Set(ty) => {
+                ty.validate(validate);
+            }
 
             Self::Result(ok, err) => {
                 ok.validate(validate);
@@ -238,7 +246,6 @@ impl TypeNameKind {
             | Self::ServiceId
             | Self::Value
             | Self::Bytes
-            | Self::Set(_)
             | Self::Lifetime
             | Self::Unit => {}
         }

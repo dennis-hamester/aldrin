@@ -195,19 +195,6 @@ impl Expected {
 
         const INLINE: &[Expected] = &[Expected::Keyword("enum"), Expected::Keyword("struct")];
 
-        const KEY_TYPE_NAME: &[Expected] = &[
-            Expected::Keyword("i16"),
-            Expected::Keyword("i32"),
-            Expected::Keyword("i64"),
-            Expected::Keyword("i8"),
-            Expected::Keyword("string"),
-            Expected::Keyword("u16"),
-            Expected::Keyword("u32"),
-            Expected::Keyword("u64"),
-            Expected::Keyword("u8"),
-            Expected::Keyword("uuid"),
-        ];
-
         const ARRAY_LEN: &[Expected] =
             &[Expected::Ident, Expected::LitPosInt, Expected::SchemaName];
 
@@ -218,7 +205,6 @@ impl Expected {
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],
             Rule::ident => &[&[Expected::Ident]],
-            Rule::key_type_name => &[KEY_TYPE_NAME],
             Rule::kw_args => &[&[Expected::Keyword("args")]],
             Rule::kw_enum => &[&[Expected::Keyword("enum")]],
             Rule::kw_err => &[&[Expected::Keyword("err")]],
