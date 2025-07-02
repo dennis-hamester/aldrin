@@ -33,17 +33,11 @@ pub fn did_you_mean<'a, I>(candidates: I, value: &str) -> Option<&'a str>
 where
     I: IntoIterator<Item = &'a str>,
 {
-    if let Some((candidate, score)) = candidates
+    candidates
         .into_iter()
         .map(|s| (s, strsim::jaro_winkler(s, value)))
         .max_by(|s1, s2| s1.1.partial_cmp(&s2.1).unwrap_or(Ordering::Equal))
-    {
-        if score > THRESHOLD {
-            return Some(candidate);
-        }
-    }
-
-    None
+        .and_then(|(candidate, score)| (score > THRESHOLD).then_some(candidate))
 }
 
 pub fn did_you_mean_type<'a>(
