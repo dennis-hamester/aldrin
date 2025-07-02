@@ -1,9 +1,9 @@
 use super::Error;
-use crate::ast::{Definition, NamedRefKind, TypeName, TypeNameKind};
+use crate::ast::TypeName;
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::util::{self, InvalidKeyTypeKind};
 use crate::validate::Validate;
-use crate::{Parsed, Schema};
-use std::collections::HashSet;
+use crate::Parsed;
 
 #[derive(Debug)]
 pub struct InvalidKeyType {
@@ -14,13 +14,51 @@ pub struct InvalidKeyType {
 
 impl InvalidKeyType {
     pub(crate) fn validate(ty: &TypeName, validate: &mut Validate) {
-        if let Some(kind) = resolve_key_type(ty, validate.get_current_schema(), validate) {
-            validate.add_error(Self {
-                schema_name: validate.schema_name().to_owned(),
-                ty: ty.clone(),
-                kind,
-            });
-        }
+        let Err(kind) =
+            util::resolves_to_key_type(ty.kind(), validate.get_current_schema(), validate)
+        else {
+            return;
+        };
+
+        let kind = match kind {
+            InvalidKeyTypeKind::BuiltIn => InvalidKind::BuiltIn,
+            InvalidKeyTypeKind::Struct => InvalidKind::Struct,
+            InvalidKeyTypeKind::Enum => InvalidKind::Enum,
+
+            InvalidKeyTypeKind::NewtypeToBuiltIn(kind) => {
+                InvalidKind::NewtypeToBuiltIn(kind.to_string())
+            }
+
+            InvalidKeyTypeKind::NewtypeToStruct(schema, def) => {
+                if schema.name() == validate.schema_name() {
+                    InvalidKind::NewtypeToStruct(def.name().value().to_owned())
+                } else {
+                    InvalidKind::NewtypeToStruct(format!(
+                        "{}::{}",
+                        schema.name(),
+                        def.name().value(),
+                    ))
+                }
+            }
+
+            InvalidKeyTypeKind::NewtypeToEnum(schema, def) => {
+                if schema.name() == validate.schema_name() {
+                    InvalidKind::NewtypeToEnum(def.name().value().to_owned())
+                } else {
+                    InvalidKind::NewtypeToEnum(
+                        format!("{}::{}", schema.name(), def.name().value(),),
+                    )
+                }
+            }
+
+            InvalidKeyTypeKind::Other => return,
+        };
+
+        validate.add_error(Self {
+            schema_name: validate.schema_name().to_owned(),
+            ty: ty.clone(),
+            kind,
+        });
     }
 
     pub fn type_name(&self) -> &TypeName {
@@ -36,110 +74,6 @@ enum InvalidKind {
     NewtypeToBuiltIn(String),
     NewtypeToStruct(String),
     NewtypeToEnum(String),
-}
-
-fn resolve_key_type<'a>(
-    mut ty: &'a TypeName,
-    main_schema: &'a Schema,
-    validate: &'a Validate,
-) -> Option<InvalidKind> {
-    let mut schema = main_schema;
-    let mut seen = HashSet::new();
-    let mut is_newtype = false;
-
-    loop {
-        let named_ref = match ty.kind() {
-            TypeNameKind::U8
-            | TypeNameKind::I8
-            | TypeNameKind::U16
-            | TypeNameKind::I16
-            | TypeNameKind::U32
-            | TypeNameKind::I32
-            | TypeNameKind::U64
-            | TypeNameKind::I64
-            | TypeNameKind::String
-            | TypeNameKind::Uuid => break None,
-
-            TypeNameKind::Bool
-            | TypeNameKind::F32
-            | TypeNameKind::F64
-            | TypeNameKind::ObjectId
-            | TypeNameKind::ServiceId
-            | TypeNameKind::Value
-            | TypeNameKind::Option(_)
-            | TypeNameKind::Box(_)
-            | TypeNameKind::Vec(_)
-            | TypeNameKind::Bytes
-            | TypeNameKind::Map(_, _)
-            | TypeNameKind::Set(_)
-            | TypeNameKind::Sender(_)
-            | TypeNameKind::Receiver(_)
-            | TypeNameKind::Lifetime
-            | TypeNameKind::Unit
-            | TypeNameKind::Result(_, _)
-            | TypeNameKind::Array(_, _) => {
-                if is_newtype {
-                    break Some(InvalidKind::NewtypeToBuiltIn(ty.kind().to_string()));
-                } else {
-                    break Some(InvalidKind::BuiltIn);
-                }
-            }
-
-            TypeNameKind::Ref(named_ref) => named_ref,
-        };
-
-        let (new_schema, ident) = match named_ref.kind() {
-            NamedRefKind::Intern(ident) => (schema, ident),
-            NamedRefKind::Extern(schema, ident) => (validate.get_schema(schema.value())?, ident),
-        };
-
-        if !seen.insert((new_schema.name(), ident.value())) {
-            break None;
-        }
-
-        let def = new_schema
-            .definitions()
-            .iter()
-            .find(|def| def.name().value() == ident.value())?;
-
-        match def {
-            Definition::Struct(_) => {
-                if is_newtype {
-                    let name = if new_schema.name() == main_schema.name() {
-                        ident.value().to_owned()
-                    } else {
-                        format!("{}::{}", new_schema.name(), ident.value())
-                    };
-
-                    break Some(InvalidKind::NewtypeToStruct(name));
-                } else {
-                    break Some(InvalidKind::Struct);
-                }
-            }
-
-            Definition::Enum(_) => {
-                if is_newtype {
-                    let name = if new_schema.name() == main_schema.name() {
-                        ident.value().to_owned()
-                    } else {
-                        format!("{}::{}", new_schema.name(), ident.value())
-                    };
-
-                    break Some(InvalidKind::NewtypeToEnum(name));
-                } else {
-                    break Some(InvalidKind::Enum);
-                }
-            }
-
-            Definition::Newtype(def) => {
-                is_newtype = true;
-                ty = def.target_type();
-                schema = new_schema;
-            }
-
-            Definition::Service(_) | Definition::Const(_) => break None,
-        }
-    }
 }
 
 impl Diagnostic for InvalidKeyType {
