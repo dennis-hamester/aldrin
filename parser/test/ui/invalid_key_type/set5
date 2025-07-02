@@ -1,0 +1,9 @@
+error: invalid key type `Enum`
+   --> test/ui/invalid_key_type.aldrin:30:20
+    |
+ 30 | newtype Set5 = set<Enum>;
+    |                    ^^^^ type used here
+    |
+    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+    = help: `string`, `uuid` and newtypes resolving to one of those
+    = note: `Enum` is an enum

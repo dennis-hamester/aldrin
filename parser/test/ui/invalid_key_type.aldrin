@@ -1,0 +1,47 @@
+import invalid_key_type_import;
+
+service Service {
+    uuid = 3f0623d7-8b09-4fcd-b32e-0b292b0b1f1d;
+    version = 1;
+}
+
+struct Struct {
+}
+
+enum Enum {
+    Dummy @ 1;
+}
+
+const CONST = u8(0);
+
+newtype Newtype1 = u8;
+newtype Newtype2 = unit;
+newtype Newtype3 = Struct;
+newtype Newtype4 = Enum;
+newtype Newtype5 = invalid_key_type_import::Newtype1;
+newtype Newtype6 = invalid_key_type_import::Newtype2;
+newtype Newtype7 = invalid_key_type_import::Newtype3;
+newtype Newtype8 = invalid_key_type_import::Newtype4;
+
+newtype Set1 = set<u8>;
+newtype Set2 = set<unit>;
+newtype Set3 = set<Service>;
+newtype Set4 = set<Struct>;
+newtype Set5 = set<Enum>;
+newtype Set6 = set<CONST>;
+newtype Set7 = set<Newtype1>;
+newtype Set8 = set<Newtype2>;
+newtype Set9 = set<Newtype3>;
+newtype Set10 = set<Newtype4>;
+newtype Set11 = set<Newtype5>;
+newtype Set12 = set<Newtype6>;
+newtype Set13 = set<Newtype7>;
+newtype Set14 = set<Newtype8>;
+newtype Set15 = set<invalid_key_type_import::Service>;
+newtype Set16 = set<invalid_key_type_import::Struct>;
+newtype Set17 = set<invalid_key_type_import::Enum>;
+newtype Set18 = set<invalid_key_type_import::CONST>;
+newtype Set19 = set<invalid_key_type_import::Newtype1>;
+newtype Set20 = set<invalid_key_type_import::Newtype2>;
+newtype Set21 = set<invalid_key_type_import::Newtype3>;
+newtype Set22 = set<invalid_key_type_import::Newtype4>;

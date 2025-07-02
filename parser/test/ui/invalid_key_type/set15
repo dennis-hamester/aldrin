@@ -1,0 +1,7 @@
+error: expected type; found service `Service`
+   --> test/ui/invalid_key_type.aldrin:40:21
+    |
+ 40 | newtype Set15 = set<invalid_key_type_import::Service>;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type expected here
+    |
+    = help: did you mean `invalid_key_type_import::service_id`?

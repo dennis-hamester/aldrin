@@ -22,6 +22,7 @@ mod invalid_const_value;
 mod invalid_enum_variant_id;
 mod invalid_event_id;
 mod invalid_function_id;
+mod invalid_key_type;
 mod invalid_schema_name;
 mod invalid_service_uuid;
 mod invalid_service_version;
@@ -59,6 +60,7 @@ pub use invalid_const_value::InvalidConstValue;
 pub use invalid_enum_variant_id::InvalidEnumVariantId;
 pub use invalid_event_id::InvalidEventId;
 pub use invalid_function_id::InvalidFunctionId;
+pub use invalid_key_type::InvalidKeyType;
 pub use invalid_schema_name::InvalidSchemaName;
 pub use invalid_service_uuid::InvalidServiceUuid;
 pub use invalid_service_version::InvalidServiceVersion;
@@ -96,6 +98,7 @@ pub enum Error {
     InvalidEnumVariantId(InvalidEnumVariantId),
     InvalidEventId(InvalidEventId),
     InvalidFunctionId(InvalidFunctionId),
+    InvalidKeyType(InvalidKeyType),
     InvalidSchemaName(InvalidSchemaName),
     InvalidServiceUuid(InvalidServiceUuid),
     InvalidServiceVersion(InvalidServiceVersion),
@@ -140,6 +143,7 @@ impl Diagnostic for Error {
             Self::InvalidEnumVariantId(e) => e.schema_name(),
             Self::InvalidEventId(e) => e.schema_name(),
             Self::InvalidFunctionId(e) => e.schema_name(),
+            Self::InvalidKeyType(e) => e.schema_name(),
             Self::InvalidSchemaName(e) => e.schema_name(),
             Self::InvalidServiceUuid(e) => e.schema_name(),
             Self::InvalidServiceVersion(e) => e.schema_name(),
@@ -180,6 +184,7 @@ impl Diagnostic for Error {
             Self::InvalidEnumVariantId(e) => e.format(parsed),
             Self::InvalidEventId(e) => e.format(parsed),
             Self::InvalidFunctionId(e) => e.format(parsed),
+            Self::InvalidKeyType(e) => e.format(parsed),
             Self::InvalidSchemaName(e) => e.format(parsed),
             Self::InvalidServiceUuid(e) => e.format(parsed),
             Self::InvalidServiceVersion(e) => e.format(parsed),

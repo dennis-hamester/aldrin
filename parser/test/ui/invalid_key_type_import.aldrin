@@ -1,0 +1,18 @@
+service Service {
+    uuid = 7cdd60cf-f355-47d7-80ac-ff81ab0a5552;
+    version = 1;
+}
+
+struct Struct {
+}
+
+enum Enum {
+    Dummy @ 1;
+}
+
+const CONST = u8(0);
+
+newtype Newtype1 = u8;
+newtype Newtype2 = unit;
+newtype Newtype3 = Struct;
+newtype Newtype4 = Enum;

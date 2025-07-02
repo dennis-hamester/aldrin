@@ -15,6 +15,7 @@ ui_test!(grapheme_width);
 ui_test!(invalid_array_len);
 ui_test!(invalid_event_id);
 ui_test!(invalid_function_id);
+ui_test!(invalid_key_type);
 ui_test!(non_camel_case_enum_variant);
 ui_test!(non_camel_case_newtype);
 ui_test!(non_snake_case_struct_field);

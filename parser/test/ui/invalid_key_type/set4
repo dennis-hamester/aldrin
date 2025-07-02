@@ -1,0 +1,9 @@
+error: invalid key type `Struct`
+   --> test/ui/invalid_key_type.aldrin:29:20
+    |
+ 29 | newtype Set4 = set<Struct>;
+    |                    ^^^^^^ type used here
+    |
+    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+    = help: `string`, `uuid` and newtypes resolving to one of those
+    = note: `Struct` is a struct

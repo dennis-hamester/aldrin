@@ -1,5 +1,7 @@
 use super::{ArrayLen, NamedRef};
-use crate::error::{ExpectedTypeFoundConst, ExpectedTypeFoundService, TypeNotFound};
+use crate::error::{
+    ExpectedTypeFoundConst, ExpectedTypeFoundService, InvalidKeyType, TypeNotFound,
+};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::Span;
@@ -205,11 +207,13 @@ impl TypeNameKind {
             | Self::Receiver(ty) => ty.validate(validate),
 
             Self::Map(k, t) => {
+                InvalidKeyType::validate(k, validate);
                 k.validate(validate);
                 t.validate(validate);
             }
 
             Self::Set(ty) => {
+                InvalidKeyType::validate(ty, validate);
                 ty.validate(validate);
             }
 

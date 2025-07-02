@@ -1,0 +1,6 @@
+error: expected type; found constant `CONST`
+   --> test/ui/invalid_key_type.aldrin:31:20
+    |
+ 31 | newtype Set6 = set<CONST>;
+    |                    ^^^^^ type expected here
+    |

@@ -1,0 +1,7 @@
+error: expected type; found service `Service`
+   --> test/ui/invalid_key_type.aldrin:28:20
+    |
+ 28 | newtype Set3 = set<Service>;
+    |                    ^^^^^^^ type expected here
+    |
+    = help: did you mean `service_id`?
