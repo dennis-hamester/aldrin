@@ -184,7 +184,6 @@ impl RustGenerator<'_> {
     ) {
         let krate = self.rust_options.krate;
         let ident = format!("r#{name}");
-        let ref_type = format!("r#{name}Ref");
         let attrs = attrs
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
@@ -213,7 +212,7 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type = {ref_type})]");
+        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type)]");
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
@@ -267,7 +266,6 @@ impl RustGenerator<'_> {
         fallback: Option<&ast::Ident>,
     ) {
         let ident = format!("r#{name}");
-        let ref_type = format!("r#{name}Ref");
         let krate = &self.rust_options.krate;
         let schema_name = self.schema.name();
 
@@ -291,7 +289,7 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type = {ref_type})]");
+        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type)]");
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
@@ -595,7 +593,6 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate;
         let name = newtype_def.name().value();
         let ident = format!("r#{name}");
-        let ref_type = format!("r#{name}Ref");
         let ty = self.type_name(newtype_def.target_type());
         let schema_name = self.schema.name();
         let additional_derives =
@@ -631,7 +628,7 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, newtype, schema = \"{schema_name}\", ref_type = {ref_type})]");
+        codeln!(self, "#[aldrin(crate = {krate}::core, newtype, schema = \"{schema_name}\", ref_type)]");
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident}(pub {ty});");
         codeln!(self);

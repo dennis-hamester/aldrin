@@ -49,7 +49,7 @@
 //!     my_reexports::my_aldrin_core::Serialize,
 //!     my_reexports::my_aldrin_core::Deserialize,
 //! )]
-//! #[aldrin(crate = my_reexports::my_aldrin_core, ref_type = PersonRef)]
+//! #[aldrin(crate = my_reexports::my_aldrin_core, ref_type)]
 //! struct Person {
 //!     name: String,
 //! }
@@ -75,8 +75,12 @@
 //!
 //! - Applies to: [`RefType`], [`Serialize`] and [`SerializeKey`]
 //!
-//! Deriving `RefType` requires specifying an identifier for the type with the `#[ref_type = ...]`
-//! attribute. The `Serialize` derive macro will then also generate implementations for that type.
+//! Deriving `RefType` requires specifying an identifier for the type with the
+//! `#[aldrin(ref_type = ...)]` attribute. The `Serialize` and `SerializeKey` derive macro will then
+//! also generate implementations for that type.
+//!
+//! It is also possible to specifiy just `#[aldrin(ref_type)]` without an identifer. In this case, a
+//! default will be chosen by appending `Ref` to the name of the annotated type.
 //!
 //! ##### `newtype`
 //!
@@ -122,7 +126,7 @@
 //! ```
 //! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
 //! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-//! #[aldrin(schema = "family_tree", ref_type = PersonRef)]
+//! #[aldrin(schema = "family_tree", ref_type)]
 //! struct Person {
 //!     age: u8, // id = 0
 //!
@@ -136,7 +140,7 @@
 //! ```
 //! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
 //! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-//! #[aldrin(schema = "pets", ref_type = PetRef)]
+//! #[aldrin(schema = "pets", ref_type)]
 //! enum Pet {
 //!     Dog, // id = 0
 //!
@@ -160,7 +164,7 @@
 //! ```
 //! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
 //! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-//! #[aldrin(schema = "example", ref_type = MyStructRef)]
+//! #[aldrin(schema = "example", ref_type)]
 //! struct MyStruct {
 //!     required_field_1: i32,
 //!     required_field_2: Option<i32>,
@@ -189,7 +193,7 @@
 //! ```
 //! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, UnknownFields};
 //! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-//! #[aldrin(schema = "contacts", ref_type = PersonRef)]
+//! #[aldrin(schema = "contacts", ref_type)]
 //! struct Person {
 //!     name: String,
 //!     age: u8,
@@ -203,7 +207,7 @@
 //! ```
 //! # use aldrin_core::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, UnknownVariant};
 //! #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
-//! #[aldrin(schema = "zoo", ref_type = AnimalTypeRef)]
+//! #[aldrin(schema = "zoo", ref_type)]
 //! enum AnimalType {
 //!     Alpaca,
 //!     Pig,
@@ -469,7 +473,7 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 /// }
 ///
 /// #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize)]
-/// #[aldrin(ref_type = ErrorRef)]
+/// #[aldrin(ref_type)]
 /// pub enum Error {
 ///     EmptyString,
 /// }

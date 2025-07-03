@@ -29,7 +29,7 @@ impl<'a> StructData<'a> {
         super::ensure_no_type_generics(&input.generics)?;
 
         let name = &input.ident;
-        let options = Options::new(&input.attrs, krate, true)?;
+        let options = Options::new(name, &input.attrs, krate, true)?;
         let mut field_datas = Vec::with_capacity(fields.len());
         let mut fallback = false;
         let mut default_id = 0;

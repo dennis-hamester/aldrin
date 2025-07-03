@@ -7,13 +7,27 @@ use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, V
 
 pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core), is_struct)?;
+
+    let options = Options::new(
+        &input.ident,
+        &input.attrs,
+        parse_quote!(::aldrin_core),
+        is_struct,
+    )?;
+
     gen_introspectable(input, options)
 }
 
 pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core), is_struct)?;
+
+    let options = Options::new(
+        &input.ident,
+        &input.attrs,
+        parse_quote!(::aldrin::core),
+        is_struct,
+    )?;
+
     gen_introspectable(input, options)
 }
 

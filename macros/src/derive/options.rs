@@ -1,3 +1,4 @@
+use quote::format_ident;
 use syn::{Attribute, Ident, LitInt, LitStr, Path, Result};
 
 pub(crate) struct Options {
@@ -8,7 +9,12 @@ pub(crate) struct Options {
 }
 
 impl Options {
-    pub fn new(attrs: &[Attribute], mut krate: Path, is_struct: bool) -> Result<Self> {
+    pub fn new(
+        name: &Ident,
+        attrs: &[Attribute],
+        mut krate: Path,
+        is_struct: bool,
+    ) -> Result<Self> {
         let mut ref_type = None;
         let mut schema = None;
         let mut newtype = false;
@@ -23,7 +29,11 @@ impl Options {
                     krate = meta.value()?.parse()?;
                     Ok(())
                 } else if meta.path.is_ident("ref_type") {
-                    ref_type = meta.value()?.parse().map(Some)?;
+                    if meta.input.is_empty() {
+                        ref_type = Some(format_ident!("r#{}Ref", name));
+                    } else {
+                        ref_type = meta.value()?.parse().map(Some)?;
+                    }
                     Ok(())
                 } else if meta.path.is_ident("schema") {
                     schema = meta.value()?.parse().map(Some)?;

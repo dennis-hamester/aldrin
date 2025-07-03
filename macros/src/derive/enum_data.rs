@@ -43,7 +43,7 @@ impl<'a> EnumData<'a> {
             variant_datas.push(variant_data);
         }
 
-        let options = Options::new(&input.attrs, krate, false)?;
+        let options = Options::new(name, &input.attrs, krate, false)?;
 
         Ok(Self {
             name,

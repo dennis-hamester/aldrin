@@ -2,8 +2,7 @@
 +++ example1-patched.rs
 @@ -1,7 +1,7 @@
  #[derive(::std::fmt::Debug, ::std::clone::Clone, ::std::default::Default, ::aldrin::Tag, ::aldrin::PrimaryTag, ::aldrin::RefType, ::aldrin::Serialize, ::aldrin::Deserialize)]
--#[aldrin(crate = ::aldrin::core, schema = "example1", ref_type = r#MyStructRef)]
-+#[aldrin(crate = ::aldrin::core, schema = "example1", ref_type = r#MyStructRenamedRef)]
+ #[aldrin(crate = ::aldrin::core, schema = "example1", ref_type)]
  #[automatically_derived]
 -pub struct r#MyStruct {
 +pub struct r#MyStructRenamed {

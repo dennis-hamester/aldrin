@@ -5,13 +5,27 @@ use syn::{parse_quote, Data, DeriveInput, Result};
 
 pub fn gen_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin_core), is_struct)?;
+
+    let options = Options::new(
+        &input.ident,
+        &input.attrs,
+        parse_quote!(::aldrin_core),
+        is_struct,
+    )?;
+
     gen_tag(input, options)
 }
 
 pub fn gen_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
-    let options = Options::new(&input.attrs, parse_quote!(::aldrin::core), is_struct)?;
+
+    let options = Options::new(
+        &input.ident,
+        &input.attrs,
+        parse_quote!(::aldrin::core),
+        is_struct,
+    )?;
+
     gen_tag(input, options)
 }
 
