@@ -14,5 +14,5 @@ error: file not found for schema `bar`
  6 | bar;
    | ^^^^
    |
+   = help: an include directory may be missing or incorrect
    = note: tried `test/ui/bar.aldrin`
-   = note: an include directory may be missing or incorrect

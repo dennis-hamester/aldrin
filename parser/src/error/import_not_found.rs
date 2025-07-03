@@ -70,15 +70,16 @@ impl Diagnostic for ImportNotFound {
             fmt.main_block(schema, self.import.span().from, self.import.span(), "");
         }
 
+        if self.tried.is_empty() {
+            fmt.help("no include directories were specified");
+        } else {
+            fmt.help("an include directory may be missing or incorrect");
+        }
+
         for tried in &self.tried {
             fmt.note(format!("tried `{}`", tried.display()));
         }
 
-        if self.tried.is_empty() {
-            fmt.note("an include directory may be missing");
-        } else {
-            fmt.note("an include directory may be missing or incorrect");
-        }
         fmt.format()
     }
 }
