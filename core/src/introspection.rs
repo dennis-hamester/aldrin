@@ -7,6 +7,7 @@ mod function;
 mod layout;
 mod lexical_id;
 mod map_type;
+mod newtype;
 mod result_type;
 mod service;
 mod struct_ty;
@@ -34,6 +35,7 @@ pub use function::Function;
 pub use layout::Layout;
 pub use lexical_id::LexicalId;
 pub use map_type::MapType;
+pub use newtype::Newtype;
 pub use result_type::ResultType;
 pub use service::{Service, ServiceBuilder};
 pub use struct_ty::{Struct, StructBuilder};
@@ -109,6 +111,10 @@ impl Introspection {
 
     pub fn as_service_layout(&self) -> Option<&Service> {
         self.layout.as_service()
+    }
+
+    pub fn as_newtype_layout(&self) -> Option<&Newtype> {
+        self.layout.as_newtype()
     }
 }
 

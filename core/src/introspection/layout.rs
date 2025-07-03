@@ -1,4 +1,4 @@
-use super::{BuiltInType, Enum, LexicalId, Service, Struct};
+use super::{BuiltInType, Enum, LexicalId, Newtype, Service, Struct};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -10,6 +10,7 @@ pub enum Layout {
     Struct(Struct),
     Enum(Enum),
     Service(Service),
+    Newtype(Newtype),
 }
 
 impl Layout {
@@ -19,6 +20,7 @@ impl Layout {
             Self::Struct(_) => Struct::NAMESPACE,
             Self::Enum(_) => Enum::NAMESPACE,
             Self::Service(_) => Service::NAMESPACE,
+            Self::Newtype(_) => Newtype::NAMESPACE,
         }
     }
 
@@ -28,6 +30,7 @@ impl Layout {
             Self::Struct(ty) => ty.lexical_id(),
             Self::Enum(ty) => ty.lexical_id(),
             Self::Service(ty) => ty.lexical_id(),
+            Self::Newtype(ty) => ty.lexical_id(),
         }
     }
 
@@ -58,6 +61,13 @@ impl Layout {
             _ => None,
         }
     }
+
+    pub fn as_newtype(&self) -> Option<&Newtype> {
+        match self {
+            Self::Newtype(ty) => Some(ty),
+            _ => None,
+        }
+    }
 }
 
 impl From<BuiltInType> for Layout {
@@ -84,6 +94,12 @@ impl From<Service> for Layout {
     }
 }
 
+impl From<Newtype> for Layout {
+    fn from(ty: Newtype) -> Self {
+        Self::Newtype(ty)
+    }
+}
+
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 enum LayoutVariant {
@@ -91,6 +107,7 @@ enum LayoutVariant {
     Struct = 1,
     Enum = 2,
     Service = 3,
+    Newtype = 4,
 }
 
 impl Tag for Layout {}
@@ -118,6 +135,10 @@ impl Serialize<Layout> for &Layout {
             Layout::Service(ty) => {
                 serializer.serialize_enum::<Service, _>(LayoutVariant::Service, ty)
             }
+
+            Layout::Newtype(ty) => {
+                serializer.serialize_enum::<Newtype, _>(LayoutVariant::Newtype, ty)
+            }
         }
     }
 }
@@ -134,6 +155,7 @@ impl Deserialize<Self> for Layout {
             LayoutVariant::Struct => deserializer.deserialize::<Struct, _>().map(Self::Struct),
             LayoutVariant::Enum => deserializer.deserialize::<Enum, _>().map(Self::Enum),
             LayoutVariant::Service => deserializer.deserialize::<Service, _>().map(Self::Service),
+            LayoutVariant::Newtype => deserializer.deserialize::<Newtype, _>().map(Self::Newtype),
         }
     }
 }

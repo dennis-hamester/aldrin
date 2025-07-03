@@ -1,6 +1,6 @@
 #[cfg(feature = "introspection")]
 use aldrin::core::introspection::{
-    BuiltInType, Enum, Event, Function, Introspection, Layout, LexicalId, Service, Struct,
+    BuiltInType, Enum, Event, Function, Introspection, Layout, LexicalId, Newtype, Service, Struct,
 };
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
@@ -218,6 +218,7 @@ fn print_introspection(
         Layout::Struct(ty) => print_struct(ty, introspection, db, full),
         Layout::Enum(ty) => print_enum(ty, introspection, db, full),
         Layout::Service(ty) => print_service(ty, introspection, db, full),
+        Layout::Newtype(ty) => print_newtype(ty, introspection, db, full),
     }
 
     if !full {
@@ -398,6 +399,19 @@ fn print_event(
 }
 
 #[cfg(feature = "introspection")]
+fn print_newtype(
+    ty: &Newtype,
+    introspection: &Introspection,
+    db: &BTreeMap<TypeId, Introspection>,
+    full: bool,
+) {
+    print!("newtype {}::{} = ", ty.schema(), ty.name());
+    print_type_name(ty.target_type(), introspection, db, full);
+    println!(";");
+    println!();
+}
+
+#[cfg(feature = "introspection")]
 fn print_type_name(
     ty: LexicalId,
     introspection: &Introspection,
@@ -424,6 +438,7 @@ fn print_type_name(
         Layout::Struct(ty) => print!("{}::{}", ty.schema(), ty.name()),
         Layout::Enum(ty) => print!("{}::{}", ty.schema(), ty.name()),
         Layout::Service(ty) => print!("{}::{}", ty.schema(), ty.name()),
+        Layout::Newtype(ty) => print!("{}::{}", ty.schema(), ty.name()),
     }
 }
 
