@@ -209,11 +209,29 @@ fn gen_field(
 }
 
 fn gen_newtype_struct(
-    _fields: &Punctuated<Field, Token![,]>,
-    _name: &str,
-    _options: &Options,
+    fields: &Punctuated<Field, Token![,]>,
+    name: &str,
+    options: &Options,
 ) -> Result<(TokenStream, TokenStream)> {
-    todo!()
+    let krate = options.krate();
+    let schema = options.schema().unwrap();
+    let field = &fields[0];
+    let field_type = &field.ty;
+
+    let layout = quote! {
+        #krate::introspection::Newtype::new(
+            #schema,
+            #name,
+            <#field_type as #krate::introspection::Introspectable>::lexical_id(),
+        )
+        .into()
+    };
+
+    let add_references = quote! {
+        references.add::<#field_type>();
+    };
+
+    Ok((layout, add_references))
 }
 
 fn gen_enum(
