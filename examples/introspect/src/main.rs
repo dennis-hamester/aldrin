@@ -473,7 +473,9 @@ fn print_built_in_type_name(
         BuiltInType::Bytes => print!("bytes"),
 
         BuiltInType::Map(ty) => {
-            print!("map<{} -> ", ty.key());
+            print!("map<");
+            print_type_name(ty.key(), introspection, db, full);
+            print!(" -> ");
             print_type_name(ty.value(), introspection, db, full);
             print!(">");
         }

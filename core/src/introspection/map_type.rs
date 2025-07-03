@@ -1,20 +1,20 @@
-use super::{KeyType, LexicalId};
+use super::LexicalId;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MapType {
-    key: KeyType,
+    key: LexicalId,
     value: LexicalId,
 }
 
 impl MapType {
-    pub fn new(key: KeyType, value: LexicalId) -> Self {
+    pub fn new(key: LexicalId, value: LexicalId) -> Self {
         Self { key, value }
     }
 
-    pub fn key(self) -> KeyType {
+    pub fn key(self) -> LexicalId {
         self.key
     }
 
@@ -40,7 +40,7 @@ impl Serialize<Self> for MapType {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(2)?;
 
-        serializer.serialize::<KeyType, _>(MapTypeField::Key, self.key)?;
+        serializer.serialize::<LexicalId, _>(MapTypeField::Key, self.key)?;
         serializer.serialize::<LexicalId, _>(MapTypeField::Value, self.value)?;
 
         serializer.finish()
@@ -63,7 +63,7 @@ impl Deserialize<Self> for MapType {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(MapTypeField::Key) => {
-                    key = deserializer.deserialize::<KeyType, _>().map(Some)?
+                    key = deserializer.deserialize::<LexicalId, _>().map(Some)?
                 }
 
                 Ok(MapTypeField::Value) => {

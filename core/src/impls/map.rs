@@ -1,7 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{
-    BuiltInType, Introspectable, KeyTypeOf, Layout, LexicalId, MapType, References,
-};
+use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, MapType, References};
 use crate::tags::{KeyTag, Map, PrimaryKeyTag, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -54,18 +52,19 @@ where
 #[cfg(feature = "introspection")]
 impl<K, V, S> Introspectable for HashMap<K, V, S>
 where
-    K: KeyTypeOf,
+    K: Introspectable,
     V: Introspectable,
 {
     fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::KEY_TYPE, V::lexical_id())).into()
+        BuiltInType::Map(MapType::new(K::lexical_id(), V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::map(K::KEY_TYPE, V::lexical_id())
+        LexicalId::map(K::lexical_id(), V::lexical_id())
     }
 
     fn add_references(references: &mut References) {
+        references.add::<K>();
         references.add::<V>();
     }
 }
@@ -111,16 +110,17 @@ where
 }
 
 #[cfg(feature = "introspection")]
-impl<K: KeyTypeOf, V: Introspectable> Introspectable for BTreeMap<K, V> {
+impl<K: Introspectable, V: Introspectable> Introspectable for BTreeMap<K, V> {
     fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::KEY_TYPE, V::lexical_id())).into()
+        BuiltInType::Map(MapType::new(K::lexical_id(), V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::map(K::KEY_TYPE, V::lexical_id())
+        LexicalId::map(K::lexical_id(), V::lexical_id())
     }
 
     fn add_references(references: &mut References) {
+        references.add::<K>();
         references.add::<V>();
     }
 }
