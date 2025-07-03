@@ -478,7 +478,11 @@ fn print_built_in_type_name(
             print!(">");
         }
 
-        BuiltInType::Set(ty) => print!("set<{ty}>"),
+        BuiltInType::Set(ty) => {
+            print!("set<");
+            print_type_name(ty, introspection, db, full);
+            print!(">");
+        }
 
         BuiltInType::Sender(ty) => {
             print!("sender<");

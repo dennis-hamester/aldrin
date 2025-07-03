@@ -63,8 +63,8 @@ impl LexicalId {
         Self::new_v5_2(Self::NAMESPACE_MAP, key.id(), ty.0)
     }
 
-    pub fn set(key: KeyType) -> Self {
-        Self::new_v5(Self::NAMESPACE_SET, key.id())
+    pub fn set(ty: Self) -> Self {
+        Self::new_v5(Self::NAMESPACE_SET, ty.0)
     }
 
     pub fn sender(ty: Self) -> Self {

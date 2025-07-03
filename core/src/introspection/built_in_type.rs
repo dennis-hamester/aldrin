@@ -1,4 +1,4 @@
-use super::{ArrayType, KeyType, LexicalId, MapType, ResultType};
+use super::{ArrayType, LexicalId, MapType, ResultType};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -27,7 +27,7 @@ pub enum BuiltInType {
     Vec(LexicalId),
     Bytes,
     Map(MapType),
-    Set(KeyType),
+    Set(LexicalId),
     Sender(LexicalId),
     Receiver(LexicalId),
     Lifetime,
@@ -140,7 +140,7 @@ impl Serialize<Self> for BuiltInType {
             Self::Vec(t) => serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Vec, t),
             Self::Bytes => serializer.serialize_unit_enum(BuiltInTypeVariant::Bytes),
             Self::Map(t) => serializer.serialize_enum::<MapType, _>(BuiltInTypeVariant::Map, t),
-            Self::Set(t) => serializer.serialize_enum::<KeyType, _>(BuiltInTypeVariant::Set, t),
+            Self::Set(t) => serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Set, t),
 
             Self::Sender(t) => {
                 serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Sender, t)
@@ -207,7 +207,7 @@ impl Deserialize<Self> for BuiltInType {
             BuiltInTypeVariant::Vec => deserializer.deserialize::<LexicalId, _>().map(Self::Vec),
             BuiltInTypeVariant::Bytes => deserializer.deserialize_unit().map(|()| Self::Bytes),
             BuiltInTypeVariant::Map => deserializer.deserialize::<MapType, _>().map(Self::Map),
-            BuiltInTypeVariant::Set => deserializer.deserialize::<KeyType, _>().map(Self::Set),
+            BuiltInTypeVariant::Set => deserializer.deserialize::<LexicalId, _>().map(Self::Set),
 
             BuiltInTypeVariant::Sender => {
                 deserializer.deserialize::<LexicalId, _>().map(Self::Sender)

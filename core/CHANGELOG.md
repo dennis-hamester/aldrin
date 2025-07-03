@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Serializer and deserializer types (such as e.g. `StructDeserializer`) are now in sub-modules
   `serializer` and `deserializer`.
 - `DynIntrospectable` no longer implements `PartialEq`, `Eq` and `Hash`.
+- The introspection for sets now references arbitrary types instead of just a `KeyType`.
 
 ## [0.12.0] - 2025-01-26
 

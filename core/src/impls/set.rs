@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, KeyTypeOf, Layout, LexicalId, References};
+use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::tags::{KeyTag, PrimaryKeyTag, PrimaryTag, Set};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -44,16 +44,18 @@ where
 }
 
 #[cfg(feature = "introspection")]
-impl<T: KeyTypeOf, S> Introspectable for HashSet<T, S> {
+impl<T: Introspectable, S> Introspectable for HashSet<T, S> {
     fn layout() -> Layout {
-        BuiltInType::Set(T::KEY_TYPE).into()
+        BuiltInType::Set(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::set(T::KEY_TYPE)
+        LexicalId::set(T::lexical_id())
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(references: &mut References) {
+        references.add::<T>()
+    }
 }
 
 impl<K: PrimaryKeyTag> PrimaryTag for BTreeSet<K> {
@@ -91,16 +93,18 @@ where
 }
 
 #[cfg(feature = "introspection")]
-impl<T: KeyTypeOf> Introspectable for BTreeSet<T> {
+impl<T: Introspectable> Introspectable for BTreeSet<T> {
     fn layout() -> Layout {
-        BuiltInType::Set(T::KEY_TYPE).into()
+        BuiltInType::Set(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
-        LexicalId::set(T::KEY_TYPE)
+        LexicalId::set(T::lexical_id())
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(references: &mut References) {
+        references.add::<T>()
+    }
 }
 
 impl<T: KeyTag> Serialize<Set<T>> for () {
