@@ -607,6 +607,13 @@ impl<'a> Formatter<'a> {
         self.info_impl("help", text)
     }
 
+    pub fn help_cont<S>(&mut self, text: S) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        self.info_cont_impl(4, text)
+    }
+
     fn info_impl<K, S>(&mut self, kind: K, text: S) -> &mut Self
     where
         K: Into<Cow<'a, str>>,
@@ -619,6 +626,22 @@ impl<'a> Formatter<'a> {
             (kind.into(), Style::Emphasized),
             (":".into(), Style::Emphasized),
             (" ".into(), Style::Regular),
+            (text.into(), Style::Regular),
+        ]));
+
+        self
+    }
+
+    fn info_cont_impl<S>(&mut self, kind_len: usize, text: S) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        let padding = gen_padding(kind_len + 3);
+
+        self.lines.push(UnpaddedLine::new(vec![
+            ("  ".into(), Style::Regular),
+            ("=".into(), Style::Separator),
+            (padding, Style::Regular),
             (text.into(), Style::Regular),
         ]));
 

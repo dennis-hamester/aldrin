@@ -98,8 +98,8 @@ impl Diagnostic for InvalidKeyType {
             );
         }
 
-        fmt.help("allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,");
-        fmt.help("`string`, `uuid` and newtypes resolving to one of those");
+        fmt.help("allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,")
+            .help_cont("`string`, `uuid` and newtypes resolving to one of those");
 
         match self.kind {
             InvalidKind::BuiltIn => {}

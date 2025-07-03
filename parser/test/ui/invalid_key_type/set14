@@ -5,5 +5,5 @@ error: invalid key type `Newtype8`
     |                     ^^^^^^^^ type used here
     |
     = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    = help: `string`, `uuid` and newtypes resolving to one of those
+    =       `string`, `uuid` and newtypes resolving to one of those
     = note: `Newtype8` is a newtype, that resolves to the enum `invalid_key_type_import::Enum`
