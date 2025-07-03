@@ -600,6 +600,13 @@ impl<'a> Formatter<'a> {
         self.info_impl("note", text)
     }
 
+    pub fn note_cont<S>(&mut self, text: S) -> &mut Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        self.info_cont_impl(4, text)
+    }
+
     pub fn help<S>(&mut self, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,

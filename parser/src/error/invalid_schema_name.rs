@@ -31,8 +31,9 @@ impl Diagnostic for InvalidSchemaName {
         let mut fmt = Formatter::new(self, format!("invalid schema name `{}`", self.schema_name));
 
         fmt.note("schema names are parsed from the file name");
+
         if self.schema_name.contains('-') {
-            fmt.note("hyphens `-` are not allowed in schema names");
+            fmt.note_cont("hyphens `-` are not allowed in schema names");
         }
 
         fmt.format()
