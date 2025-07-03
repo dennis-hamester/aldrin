@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `serializer` and `deserializer`.
 - `DynIntrospectable` no longer implements `PartialEq`, `Eq` and `Hash`.
 - The introspection for sets and maps now references arbitrary types instead of just a `KeyType`.
+- Remove `KeyType` and `KeyTypeOf`.
 
 ## [0.12.0] - 2025-01-26
 

@@ -1,4 +1,4 @@
-use super::{Introspection, KeyType, KeyTypeOf};
+use super::Introspection;
 use crate::tags::{self, KeyTag, PrimaryKeyTag, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -221,10 +221,6 @@ impl DeserializeKey<tags::Uuid> for LexicalId {
     fn try_from_key(key: Uuid) -> Result<Self, DeserializeError> {
         Ok(Self(key))
     }
-}
-
-impl KeyTypeOf for LexicalId {
-    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for LexicalId {

@@ -1,7 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{
-    BuiltInType, Introspectable, KeyType, KeyTypeOf, Layout, LexicalId, References,
-};
+use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
 use crate::tags::{self, KeyTag, PrimaryKeyTag, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -134,11 +132,6 @@ impl Introspectable for ServiceCookie {
     }
 
     fn add_references(_references: &mut References) {}
-}
-
-#[cfg(feature = "introspection")]
-impl KeyTypeOf for ServiceCookie {
-    const KEY_TYPE: KeyType = KeyType::Uuid;
 }
 
 impl From<Uuid> for ServiceCookie {
