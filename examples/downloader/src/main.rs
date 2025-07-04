@@ -5,9 +5,9 @@ use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use downloader::{
     Chunk, ChunkRef, Downloader, DownloaderCall, DownloaderDownloadArgs, DownloaderDownloadArgsRef,
-    DownloaderProxy,
+    DownloaderProxy, Sha256,
 };
-use sha2::{Digest, Sha256};
+use sha2::{Digest, Sha256 as Sha256Sum};
 use std::convert::Infallible;
 use std::fs::File;
 use std::io::Read;
@@ -175,7 +175,7 @@ async fn download_impl(
     // other client.
     let mut receiver = receiver.establish().await?;
 
-    let mut sha256 = Sha256::new();
+    let mut sha256 = Sha256Sum::new();
     let mut size = 0u64;
 
     loop {
@@ -195,7 +195,7 @@ async fn download_impl(
                     ));
                 }
 
-                if sha256.finalize()[..] != expected_sha256 {
+                if sha256.finalize()[..] != expected_sha256.0 {
                     break Err(anyhow!("SHA-256 mismatch"));
                 }
 
@@ -262,7 +262,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
     let mut sender = sender.claim(bus.clone()).await?;
 
     let mut buf = vec![0; CHUNK_SIZE];
-    let mut sha256 = Sha256::new();
+    let mut sha256 = Sha256Sum::new();
     let time = Instant::now();
 
     println!("Uploading file `{}` ({} bytes).", args.path.display(), size);
@@ -283,7 +283,7 @@ async fn upload(bus: &Handle, args: UploadArgs) -> Result<()> {
     }
 
     let sha256 = sha256.finalize();
-    sender.send_item(Chunk::Done(sha256.into())).await?;
+    sender.send_item(Chunk::Done(Sha256(sha256.into()))).await?;
 
     let duration = time.elapsed();
     let mibps = size as f64 / duration.as_secs_f64() / 1024.0 / 1024.0;
