@@ -9,3 +9,8 @@ fn trimmed_span() {
     };
     e.format(&parsed).to_string();
 }
+
+#[test]
+fn recursive_types_used() {
+    issue!(recursive_types_used);
+}

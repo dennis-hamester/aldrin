@@ -5,7 +5,8 @@ use crate::ast::{
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::{Parsed, Schema};
+use std::ops::ControlFlow;
 
 #[derive(Debug)]
 pub struct RecursiveStruct {
@@ -15,16 +16,12 @@ pub struct RecursiveStruct {
 
 impl RecursiveStruct {
     pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate) {
-        let context = Context::new_struct(struct_def, validate);
-
-        if !context.visit_struct(struct_def) {
-            return;
+        if Visitor::check_struct(struct_def, validate) {
+            validate.add_error(Self {
+                schema_name: validate.schema_name().to_owned(),
+                ident: struct_def.name().clone(),
+            });
         }
-
-        validate.add_error(Self {
-            schema_name: validate.schema_name().to_owned(),
-            ident: struct_def.name().clone(),
-        });
     }
 
     pub fn ident(&self) -> &Ident {
@@ -68,16 +65,12 @@ pub struct RecursiveEnum {
 
 impl RecursiveEnum {
     pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate) {
-        let context = Context::new_enum(enum_def, validate);
-
-        if !context.visit_enum(enum_def) {
-            return;
+        if Visitor::check_enum(enum_def, validate) {
+            validate.add_error(Self {
+                schema_name: validate.schema_name().to_owned(),
+                ident: enum_def.name().clone(),
+            });
         }
-
-        validate.add_error(Self {
-            schema_name: validate.schema_name().to_owned(),
-            ident: enum_def.name().clone(),
-        });
     }
 
     pub fn ident(&self) -> &Ident {
@@ -121,16 +114,12 @@ pub struct RecursiveNewtype {
 
 impl RecursiveNewtype {
     pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate) {
-        let context = Context::new_newtype(newtype_def, validate);
-
-        if !context.visit_newtype(newtype_def) {
-            return;
+        if Visitor::check_newtype(newtype_def, validate) {
+            validate.add_error(Self {
+                schema_name: validate.schema_name().to_owned(),
+                ident: newtype_def.name().clone(),
+            });
         }
-
-        validate.add_error(Self {
-            schema_name: validate.schema_name().to_owned(),
-            ident: newtype_def.name().clone(),
-        });
     }
 
     pub fn ident(&self) -> &Ident {
@@ -166,154 +155,110 @@ impl From<RecursiveNewtype> for Error {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Type<'a> {
-    Struct(&'a Ident),
-    Enum(&'a Ident),
-    Newtype(&'a Ident),
-}
-
-#[derive(Copy, Clone)]
-struct Context<'a> {
-    type_schema: &'a str,
-    type_name: Type<'a>,
-    current_schema: &'a str,
+struct Visitor<'a> {
+    stack: Vec<(&'a str, Type<'a>)>,
     validate: &'a Validate<'a>,
 }
 
-impl<'a> Context<'a> {
-    fn new_struct(struct_def: &'a StructDef, validate: &'a Validate<'a>) -> Self {
+impl<'a> Visitor<'a> {
+    fn check_struct(struct_def: &'a StructDef, validate: &'a Validate) -> bool {
+        match Self::new(validate).visit_struct(struct_def, validate.get_current_schema()) {
+            ControlFlow::Continue(()) => false,
+            ControlFlow::Break(raise_error) => raise_error,
+        }
+    }
+
+    fn check_enum(enum_def: &'a EnumDef, validate: &'a Validate) -> bool {
+        match Self::new(validate).visit_enum(enum_def, validate.get_current_schema()) {
+            ControlFlow::Continue(()) => false,
+            ControlFlow::Break(raise_error) => raise_error,
+        }
+    }
+
+    fn check_newtype(newtype_def: &'a NewtypeDef, validate: &'a Validate) -> bool {
+        match Self::new(validate).visit_newtype(newtype_def, validate.get_current_schema()) {
+            ControlFlow::Continue(()) => false,
+            ControlFlow::Break(raise_error) => raise_error,
+        }
+    }
+
+    fn new(validate: &'a Validate<'a>) -> Self {
         Self {
-            type_schema: validate.schema_name(),
-            type_name: Type::Struct(struct_def.name()),
-            current_schema: validate.schema_name(),
+            stack: Vec::new(),
             validate,
         }
     }
 
-    fn new_enum(enum_def: &'a EnumDef, validate: &'a Validate<'a>) -> Self {
-        Self {
-            type_schema: validate.schema_name(),
-            type_name: Type::Enum(enum_def.name()),
-            current_schema: validate.schema_name(),
-            validate,
-        }
-    }
-
-    fn new_newtype(newtype_def: &'a NewtypeDef, validate: &'a Validate<'a>) -> Self {
-        Self {
-            type_schema: validate.schema_name(),
-            type_name: Type::Newtype(newtype_def.name()),
-            current_schema: validate.schema_name(),
-            validate,
-        }
-    }
-
-    fn with_current_schema(self, current_schema: &'a str) -> Self {
-        Self {
-            type_schema: self.type_schema,
-            type_name: self.type_name,
-            current_schema,
-            validate: self.validate,
-        }
-    }
-
-    fn visit_struct(self, struct_def: &StructDef) -> bool {
-        struct_def
-            .fields()
+    fn push(&mut self, schema: &'a Schema, ty: Type<'a>) -> ControlFlow<bool> {
+        let matched = self
+            .stack
             .iter()
-            .any(|field| self.visit_type_name(field.field_type()))
-    }
+            .enumerate()
+            .filter_map(|(idx, (schema_name, other_ty))| {
+                if (*schema_name == schema.name()) && (other_ty.name() == ty.name()) {
+                    let is_first = idx == 0;
 
-    fn visit_enum(self, enum_def: &EnumDef) -> bool {
-        enum_def.variants().iter().any(|var| {
-            var.variant_type()
-                .map(|type_name| self.visit_type_name(type_name))
-                .unwrap_or(false)
-        })
-    }
+                    let is_same_kind = matches!(
+                        (other_ty, ty),
+                        (Type::Struct(_), Type::Struct(_))
+                            | (Type::Enum(_), Type::Enum(_))
+                            | (Type::Newtype(_), Type::Newtype(_))
+                    );
 
-    fn visit_newtype(self, newtype_def: &NewtypeDef) -> bool {
-        self.visit_type_name(newtype_def.target_type())
-    }
-
-    fn visit_external_type(self, schema_name: &'a str, ident: &'a Ident) -> bool {
-        let Some(schema) = self.validate.get_schema(schema_name) else {
-            return false;
-        };
-
-        let Some(def) = schema
-            .definitions()
-            .iter()
-            .find(|def| def.name().value() == ident.value())
-        else {
-            return false;
-        };
-
-        match (self.type_name, def) {
-            (Type::Struct(ident), Definition::Struct(struct_def)) => {
-                if ident.value() == struct_def.name().value() {
-                    true
+                    Some(is_first && is_same_kind)
                 } else {
-                    self.with_current_schema(schema_name)
-                        .visit_struct(struct_def)
+                    None
                 }
-            }
+            })
+            .next();
 
-            (Type::Enum(ident), Definition::Enum(enum_def)) => {
-                if ident.value() == enum_def.name().value() {
-                    true
-                } else {
-                    self.with_current_schema(schema_name).visit_enum(enum_def)
-                }
-            }
-
-            (Type::Newtype(ident), Definition::Newtype(newtype_def)) => {
-                if ident.value() == newtype_def.name().value() {
-                    true
-                } else {
-                    self.with_current_schema(schema_name)
-                        .visit_newtype(newtype_def)
-                }
-            }
-
-            (_, Definition::Struct(struct_def)) => self
-                .with_current_schema(schema_name)
-                .visit_struct(struct_def),
-
-            (_, Definition::Enum(enum_def)) => {
-                self.with_current_schema(schema_name).visit_enum(enum_def)
-            }
-
-            (_, Definition::Newtype(newtype_def)) => self
-                .with_current_schema(schema_name)
-                .visit_newtype(newtype_def),
-
-            _ => false,
+        if let Some(raise_error) = matched {
+            ControlFlow::Break(raise_error)
+        } else {
+            self.stack.push((schema.name(), ty));
+            ControlFlow::Continue(())
         }
     }
 
-    fn visit_internal_type(self, ident: &'a Ident) -> bool {
-        self.visit_external_type(self.current_schema, ident)
+    fn pop(&mut self) -> ControlFlow<bool> {
+        self.stack.pop();
+        ControlFlow::Continue(())
     }
 
-    fn visit_named_ref(self, named_ref: &NamedRef) -> bool {
-        match named_ref.kind() {
-            NamedRefKind::Intern(ident) => self.visit_internal_type(ident),
+    fn visit_struct(&mut self, struct_def: &'a StructDef, schema: &'a Schema) -> ControlFlow<bool> {
+        self.push(schema, Type::Struct(struct_def.name().value()))?;
 
-            NamedRefKind::Extern(schema_name, ident) => {
-                self.visit_external_type(schema_name.value(), ident)
+        for field in struct_def.fields() {
+            self.visit_type_name(field.field_type(), schema)?;
+        }
+
+        self.pop()
+    }
+
+    fn visit_enum(&mut self, enum_def: &'a EnumDef, schema: &'a Schema) -> ControlFlow<bool> {
+        self.push(schema, Type::Enum(enum_def.name().value()))?;
+
+        for variant in enum_def.variants() {
+            if let Some(ty) = variant.variant_type() {
+                self.visit_type_name(ty, schema)?;
             }
         }
+
+        self.pop()
     }
 
-    fn visit_type_name(self, type_name: &TypeName) -> bool {
-        match type_name.kind() {
-            TypeNameKind::Option(type_name) => self.visit_type_name(type_name),
-            TypeNameKind::Result(ok, err) => self.visit_type_name(ok) || self.visit_type_name(err),
-            TypeNameKind::Array(type_name, _) => self.visit_type_name(type_name),
-            TypeNameKind::Ref(named_ref) => self.visit_named_ref(named_ref),
+    fn visit_newtype(
+        &mut self,
+        newtype_def: &'a NewtypeDef,
+        schema: &'a Schema,
+    ) -> ControlFlow<bool> {
+        self.push(schema, Type::Newtype(newtype_def.name().value()))?;
+        self.visit_type_name(newtype_def.target_type(), schema)?;
+        self.pop()
+    }
 
+    fn visit_type_name(&mut self, ty: &'a TypeName, schema: &'a Schema) -> ControlFlow<bool> {
+        match ty.kind() {
             TypeNameKind::Bool
             | TypeNameKind::U8
             | TypeNameKind::I8
@@ -330,15 +275,85 @@ impl<'a> Context<'a> {
             | TypeNameKind::ObjectId
             | TypeNameKind::ServiceId
             | TypeNameKind::Value
+            | TypeNameKind::Bytes
+            | TypeNameKind::Lifetime
+            | TypeNameKind::Unit
             | TypeNameKind::Box(_)
             | TypeNameKind::Vec(_)
-            | TypeNameKind::Bytes
             | TypeNameKind::Map(_, _)
             | TypeNameKind::Set(_)
             | TypeNameKind::Sender(_)
-            | TypeNameKind::Receiver(_)
-            | TypeNameKind::Lifetime
-            | TypeNameKind::Unit => false,
+            | TypeNameKind::Receiver(_) => ControlFlow::Continue(()),
+
+            TypeNameKind::Option(ty) | TypeNameKind::Array(ty, _) => {
+                self.visit_type_name(ty, schema)
+            }
+
+            TypeNameKind::Result(ok, err) => {
+                self.visit_type_name(ok, schema)?;
+                self.visit_type_name(err, schema)?;
+                ControlFlow::Continue(())
+            }
+
+            TypeNameKind::Ref(named_ref) => self.visit_named_ref(named_ref, schema),
+        }
+    }
+
+    fn visit_named_ref(
+        &mut self,
+        named_ref: &'a NamedRef,
+        schema: &'a Schema,
+    ) -> ControlFlow<bool> {
+        let (schema, name) = match named_ref.kind() {
+            NamedRefKind::Intern(name) => (schema, name.value()),
+
+            NamedRefKind::Extern(schema_name, name) => {
+                let schema = self
+                    .validate
+                    .get_schema(schema_name.value())
+                    .map(ControlFlow::Continue)
+                    .unwrap_or(ControlFlow::Break(false))?;
+
+                (schema, name.value())
+            }
+        };
+
+        let mut defs = schema
+            .definitions()
+            .iter()
+            .filter(|def| def.name().value() == name);
+
+        match (defs.next(), defs.next()) {
+            (Some(Definition::Struct(struct_def)), None) => self.visit_struct(struct_def, schema),
+            (Some(Definition::Enum(enum_def)), None) => self.visit_enum(enum_def, schema),
+
+            (Some(Definition::Newtype(newtype_def)), None) => {
+                self.visit_newtype(newtype_def, schema)
+            }
+
+            (Some(Definition::Service(_)), _)
+            | (Some(Definition::Const(_)), _)
+            | (Some(_), Some(_))
+            | (None, None) => ControlFlow::Break(false),
+
+            (None, Some(_)) => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+enum Type<'a> {
+    Struct(&'a str),
+    Enum(&'a str),
+    Newtype(&'a str),
+}
+
+impl<'a> Type<'a> {
+    fn name(self) -> &'a str {
+        match self {
+            Self::Struct(name) => name,
+            Self::Enum(name) => name,
+            Self::Newtype(name) => name,
         }
     }
 }

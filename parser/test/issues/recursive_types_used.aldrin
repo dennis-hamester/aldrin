@@ -1,0 +1,25 @@
+struct RecursiveStruct {
+    field @ 1 = RecursiveStruct;
+}
+
+enum RecursiveEnum {
+    Variant @ 1 = RecursiveEnum;
+}
+
+newtype RecursiveNewtype = RecursiveNewtype;
+
+struct UsedInStruct {
+    struct_used @ 1 = RecursiveStruct;
+    enum_used @ 2 = RecursiveEnum;
+    newtype_used @ 3 = RecursiveNewtype;
+}
+
+enum UsedInEnum {
+    StructUsed @ 1 = RecursiveStruct;
+    EnumUsed @ 2 = RecursiveEnum;
+    NewtypeUsed @ 3 = RecursiveNewtype;
+}
+
+newtype StructUsedInNewtype = RecursiveStruct;
+newtype EnumUsedInNewtype = RecursiveEnum;
+newtype NewtypeUsedInNewtype = RecursiveNewtype;
