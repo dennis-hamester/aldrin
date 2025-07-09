@@ -42,7 +42,7 @@ pub use service::Service;
 pub use struct_ty::Struct;
 pub use variant::Variant;
 
-pub const VERSION: u32 = 1;
+pub const VERSION: u32 = 2;
 
 #[derive(Debug, Clone)]
 pub struct Introspection {
