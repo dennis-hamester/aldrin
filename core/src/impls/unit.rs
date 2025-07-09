@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
@@ -27,8 +27,8 @@ impl Deserialize<tags::Unit> for () {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for () {
-    fn layout() -> Layout {
-        BuiltInType::Unit.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Unit.into()
     }
 
     fn lexical_id() -> LexicalId {

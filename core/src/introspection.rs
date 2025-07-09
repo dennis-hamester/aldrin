@@ -16,6 +16,7 @@ mod test;
 mod type_id;
 mod variant;
 
+pub mod ir;
 #[doc(hidden)]
 pub mod private;
 
@@ -24,11 +25,11 @@ use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 pub use array_type::ArrayType;
 pub use built_in_type::BuiltInType;
-pub use enum_ty::{Enum, EnumBuilder};
+pub use enum_ty::Enum;
 pub use event::Event;
 pub use field::Field;
 pub use function::Function;
@@ -37,8 +38,8 @@ pub use lexical_id::LexicalId;
 pub use map_type::MapType;
 pub use newtype::Newtype;
 pub use result_type::ResultType;
-pub use service::{Service, ServiceBuilder};
-pub use struct_ty::{Struct, StructBuilder};
+pub use service::Service;
+pub use struct_ty::Struct;
 pub use variant::Variant;
 
 pub const VERSION: u32 = 1;
@@ -47,7 +48,7 @@ pub const VERSION: u32 = 1;
 pub struct Introspection {
     type_id: TypeId,
     layout: Layout,
-    references: BTreeMap<LexicalId, TypeId>,
+    references: HashSet<TypeId>,
 }
 
 impl Introspection {
@@ -56,25 +57,19 @@ impl Introspection {
     }
 
     pub fn from_dyn(ty: DynIntrospectable) -> Self {
-        let mut types = Vec::new();
-        ty.add_references(&mut References::new(&mut types));
-
-        let mut references = BTreeMap::new();
-        for ty in types {
-            let type_id = TypeId::compute_from_dyn(ty);
-            let dup = references.insert(ty.lexical_id(), type_id);
-            assert!(dup.is_none() || (dup == Some(type_id)));
-        }
-
-        Self {
-            type_id: TypeId::compute_from_dyn(ty),
-            layout: ty.layout(),
-            references,
-        }
+        let introspection = ir::IntrospectionIr::from_dyn(ty);
+        Self::from_ir(introspection)
     }
 
-    pub fn lexical_id(&self) -> LexicalId {
-        self.layout.lexical_id()
+    pub fn from_ir(introspection: ir::IntrospectionIr) -> Self {
+        let layout = Layout::from_ir(introspection.layout, &introspection.references);
+        let references = introspection.references.into_values().collect();
+
+        Self {
+            type_id: introspection.type_id,
+            layout,
+            references,
+        }
     }
 
     pub fn type_id(&self) -> TypeId {
@@ -85,16 +80,12 @@ impl Introspection {
         &self.layout
     }
 
-    pub fn references(&self) -> &BTreeMap<LexicalId, TypeId> {
+    pub fn references(&self) -> &HashSet<TypeId> {
         &self.references
     }
 
-    pub fn resolve(&self, lexical_id: LexicalId) -> Option<TypeId> {
-        self.references.get(&lexical_id).copied()
-    }
-
-    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = (LexicalId, TypeId)> + '_ {
-        self.references.iter().map(|(k, v)| (*k, *v))
+    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = TypeId> + '_ {
+        self.references.iter().copied()
     }
 
     pub fn as_built_in_layout(&self) -> Option<BuiltInType> {
@@ -115,6 +106,12 @@ impl Introspection {
 
     pub fn as_newtype_layout(&self) -> Option<&Newtype> {
         self.layout.as_newtype()
+    }
+}
+
+impl From<ir::IntrospectionIr> for Introspection {
+    fn from(introspection: ir::IntrospectionIr) -> Self {
+        Self::from_ir(introspection)
     }
 }
 
@@ -147,10 +144,8 @@ impl Serialize<Introspection> for &Introspection {
         serializer.serialize::<TypeId, _>(IntrospectionField::TypeId, self.type_id)?;
         serializer.serialize::<Layout, _>(IntrospectionField::Layout, &self.layout)?;
 
-        serializer.serialize::<tags::Map<LexicalId, TypeId>, _>(
-            IntrospectionField::References,
-            &self.references,
-        )?;
+        serializer
+            .serialize::<tags::Set<TypeId>, _>(IntrospectionField::References, &self.references)?;
 
         serializer.finish()
     }
@@ -182,7 +177,7 @@ impl Deserialize<Self> for Introspection {
 
                 Ok(IntrospectionField::References) => {
                     references = deserializer
-                        .deserialize::<tags::Map<LexicalId, TypeId>, _>()
+                        .deserialize::<tags::Set<TypeId>, _>()
                         .map(Some)?;
                 }
 
@@ -231,14 +226,14 @@ impl Extend<DynIntrospectable> for References<'_> {
 }
 
 pub trait Introspectable {
-    fn layout() -> Layout;
+    fn layout() -> ir::LayoutIr;
     fn lexical_id() -> LexicalId;
     fn add_references(references: &mut References);
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct DynIntrospectable {
-    layout: fn() -> Layout,
+    layout: fn() -> ir::LayoutIr,
     lexical_id: fn() -> LexicalId,
     add_references: fn(&mut References),
 }
@@ -252,7 +247,7 @@ impl DynIntrospectable {
         }
     }
 
-    pub fn layout(self) -> Layout {
+    pub fn layout(self) -> ir::LayoutIr {
         (self.layout)()
     }
 
@@ -263,4 +258,12 @@ impl DynIntrospectable {
     pub fn add_references(self, references: &mut References) {
         (self.add_references)(references)
     }
+}
+
+#[track_caller]
+fn resolve_ir(lexical_id: LexicalId, references: &BTreeMap<LexicalId, TypeId>) -> TypeId {
+    references
+        .get(&lexical_id)
+        .copied()
+        .expect("incomplete introspection references")
 }

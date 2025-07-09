@@ -14,7 +14,7 @@ mod uuid;
 mod vec;
 
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::borrow::Cow;
@@ -62,8 +62,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for &T {
-    fn layout() -> Layout {
-        BuiltInType::Box(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Box(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -77,8 +77,8 @@ impl<T: Introspectable + ?Sized> Introspectable for &T {
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for &mut T {
-    fn layout() -> Layout {
-        BuiltInType::Box(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Box(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -127,8 +127,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
-    fn layout() -> Layout {
-        BuiltInType::Box(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Box(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {

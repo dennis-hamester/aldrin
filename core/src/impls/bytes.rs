@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::collections::{LinkedList, VecDeque};
@@ -159,8 +159,8 @@ impl Deserialize<tags::Bytes> for bytes::Bytes {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for bytes::Bytes {
-    fn layout() -> Layout {
-        BuiltInType::Bytes.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Bytes.into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -206,8 +206,8 @@ impl Deserialize<tags::Bytes> for bytes::BytesMut {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for bytes::BytesMut {
-    fn layout() -> Layout {
-        BuiltInType::Bytes.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Bytes.into()
     }
 
     fn lexical_id() -> LexicalId {

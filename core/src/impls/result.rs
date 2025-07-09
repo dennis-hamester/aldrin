@@ -1,7 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{
-    BuiltInType, Introspectable, Layout, LexicalId, References, ResultType,
-};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -68,8 +66,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, E: Introspectable> Introspectable for Result<T, E> {
-    fn layout() -> Layout {
-        BuiltInType::Result(ResultType::new(T::lexical_id(), E::lexical_id())).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Result(ir::ResultTypeIr::new(T::lexical_id(), E::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {

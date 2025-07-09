@@ -1,24 +1,21 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Event {
-    id: u32,
-    name: String,
-    event_type: Option<TypeId>,
+pub struct EventIr {
+    pub(crate) id: u32,
+    pub(crate) name: String,
+    pub(crate) event_type: Option<LexicalId>,
 }
 
-impl Event {
-    pub fn from_ir(ev: ir::EventIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
+impl EventIr {
+    pub(super) fn new(id: u32, name: impl Into<String>, event_type: Option<LexicalId>) -> Self {
         Self {
-            id: ev.id,
-            name: ev.name,
-            event_type: ev.event_type.map(|ty| resolve_ir(ty, references)),
+            id,
+            name: name.into(),
+            event_type,
         }
     }
 
@@ -30,7 +27,7 @@ impl Event {
         &self.name
     }
 
-    pub fn event_type(&self) -> Option<TypeId> {
+    pub fn event_type(&self) -> Option<LexicalId> {
         self.event_type
     }
 }
@@ -43,31 +40,33 @@ enum EventField {
     EventType = 2,
 }
 
-impl Tag for Event {}
+impl Tag for EventIr {}
 
-impl PrimaryTag for Event {
+impl PrimaryTag for EventIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for Event {
+impl Serialize<Self> for EventIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
-impl Serialize<Event> for &Event {
+impl Serialize<EventIr> for &EventIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(3)?;
 
         serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(EventField::EventType, self.event_type)?;
+
+        serializer
+            .serialize::<tags::Option<LexicalId>, _>(EventField::EventType, self.event_type)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize<Self> for Event {
+impl Deserialize<Self> for EventIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -84,7 +83,7 @@ impl Deserialize<Self> for Event {
                 }
 
                 Ok(EventField::EventType) => {
-                    event_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    event_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,

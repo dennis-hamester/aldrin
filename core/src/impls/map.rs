@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, MapType, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{KeyTag, Map, PrimaryKeyTag, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -55,8 +55,8 @@ where
     K: Introspectable,
     V: Introspectable,
 {
-    fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::lexical_id(), V::lexical_id())).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Map(ir::MapTypeIr::new(K::lexical_id(), V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -111,8 +111,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<K: Introspectable, V: Introspectable> Introspectable for BTreeMap<K, V> {
-    fn layout() -> Layout {
-        BuiltInType::Map(MapType::new(K::lexical_id(), V::lexical_id())).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Map(ir::MapTypeIr::new(K::lexical_id(), V::lexical_id())).into()
     }
 
     fn lexical_id() -> LexicalId {

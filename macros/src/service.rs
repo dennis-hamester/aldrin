@@ -99,7 +99,7 @@ impl Service {
                 #introspection_if
                 #[automatically_derived]
                 impl #krate::core::introspection::Introspectable for #proxy {
-                    fn layout() -> #krate::core::introspection::Layout {
+                    fn layout() -> #krate::core::introspection::ir::LayoutIr {
                         <#introspection as #krate::core::introspection::Introspectable>::layout()
                     }
 
@@ -191,7 +191,7 @@ impl Service {
                 #introspection_if
                 #[automatically_derived]
                 impl #krate::core::introspection::Introspectable for #ident {
-                    fn layout() -> #krate::core::introspection::Layout {
+                    fn layout() -> #krate::core::introspection::ir::LayoutIr {
                         <#introspection as #krate::core::introspection::Introspectable>::layout()
                     }
 

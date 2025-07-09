@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::borrow::Borrow;
@@ -133,8 +133,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl Introspectable for Bytes {
-    fn layout() -> Layout {
-        BuiltInType::Bytes.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Bytes.into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -231,8 +231,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl Introspectable for ByteSlice {
-    fn layout() -> Layout {
-        BuiltInType::Bytes.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Bytes.into()
     }
 
     fn lexical_id() -> LexicalId {

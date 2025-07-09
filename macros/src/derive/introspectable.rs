@@ -67,7 +67,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
     Ok(quote! {
         #[automatically_derived]
         impl #impl_generics #krate::introspection::Introspectable for #ident #ty_generics #where_clause {
-            fn layout() -> #krate::introspection::Layout {
+            fn layout() -> #krate::introspection::ir::LayoutIr {
                 #layout
             }
 
@@ -149,7 +149,7 @@ fn gen_regular_struct(
     let fallback = fallback.map(|ident| quote! { .fallback(#ident) });
 
     let layout = quote! {
-        #krate::introspection::Struct::builder(#schema, #name)
+        #krate::introspection::ir::StructIr::builder(#schema, #name)
             #(#layout)*
             #fallback
             .finish()
@@ -219,7 +219,7 @@ fn gen_newtype_struct(
     let field_type = &field.ty;
 
     let layout = quote! {
-        #krate::introspection::Newtype::new(
+        #krate::introspection::ir::NewtypeIr::new(
             #schema,
             #name,
             <#field_type as #krate::introspection::Introspectable>::lexical_id(),
@@ -277,7 +277,7 @@ fn gen_enum(
     }
 
     let layout = quote! {
-        #krate::introspection::Enum::builder(#schema, #name)
+        #krate::introspection::ir::EnumIr::builder(#schema, #name)
             #(#layout)*
             .finish()
             .into()

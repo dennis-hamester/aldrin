@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{KeyTag, PrimaryKeyTag, PrimaryTag, Set};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -45,8 +45,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, S> Introspectable for HashSet<T, S> {
-    fn layout() -> Layout {
-        BuiltInType::Set(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Set(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -94,8 +94,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for BTreeSet<T> {
-    fn layout() -> Layout {
-        BuiltInType::Set(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Set(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {

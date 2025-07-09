@@ -1,7 +1,7 @@
 use super::{Receiver, Sender, UnclaimedReceiver, UnclaimedSender};
 use crate::{low_level, Error, Handle};
 #[cfg(feature = "introspection")]
-use aldrin_core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use aldrin_core::introspection::{ir, Introspectable, LexicalId, References};
 use aldrin_core::tags::{self, PrimaryTag, Tag};
 use aldrin_core::{
     ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
@@ -150,8 +150,8 @@ impl<T: Tag, U: Serialize<T>> Deserialize<tags::Sender<T>> for UnboundSender<U> 
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for UnboundSender<T> {
-    fn layout() -> Layout {
-        BuiltInType::Sender(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Sender(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -306,8 +306,8 @@ impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Receiver<T>> for UnboundReceiv
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for UnboundReceiver<T> {
-    fn layout() -> Layout {
-        BuiltInType::Receiver(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Receiver(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {

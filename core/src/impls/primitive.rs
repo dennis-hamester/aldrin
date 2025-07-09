@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
@@ -20,8 +20,8 @@ macro_rules! impl_primitive {
 
             #[cfg(feature = "introspection")]
             impl Introspectable for $primary {
-                fn layout() -> Layout {
-                    BuiltInType::$layout.into()
+                fn layout() -> ir::LayoutIr {
+                    ir::BuiltInTypeIr::$layout.into()
                 }
 
                 fn lexical_id() -> LexicalId {

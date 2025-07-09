@@ -2,7 +2,7 @@
 mod test;
 
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     convert_value, Deserialize, DeserializeError, Deserializer, ProtocolVersion, Serialize,
@@ -168,8 +168,8 @@ impl Deserialize<tags::Value> for SerializedValue {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for SerializedValue {
-    fn layout() -> Layout {
-        BuiltInType::Value.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Value.into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -296,8 +296,8 @@ impl Serialize<tags::Value> for &SerializedValueSlice {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for SerializedValueSlice {
-    fn layout() -> Layout {
-        BuiltInType::Value.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Value.into()
     }
 
     fn lexical_id() -> LexicalId {

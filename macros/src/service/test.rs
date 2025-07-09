@@ -1,3 +1,4 @@
+use aldrin::core::introspection::ir::IntrospectionIr;
 use aldrin::core::introspection::{Introspectable, LexicalId};
 use aldrin::core::{ServiceUuid, TypeId};
 use aldrin::service;
@@ -27,7 +28,7 @@ mod raw_identifiers {
 
 #[test]
 fn raw_identifiers() {
-    let introspection = raw_identifiers::r#extern::introspection();
+    let introspection = IntrospectionIr::new::<raw_identifiers::r#extern>();
     assert_eq!(
         introspection.lexical_id(),
         LexicalId::service("test", "extern")
@@ -79,7 +80,7 @@ fn parse_simplified_fn_item() {
         }
     }
 
-    let introspection = Foo::introspection();
+    let introspection = IntrospectionIr::new::<Foo>();
     assert_eq!(
         introspection.lexical_id(),
         LexicalId::service("test", "Foo")

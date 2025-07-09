@@ -1,48 +1,39 @@
-use super::{ir, Event, Function, LexicalId};
+use super::{EventIr, FunctionIr, LexicalId};
 use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer,
-    ServiceUuid, TypeId,
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ServiceUuid,
 };
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
+use uuid::{uuid, Uuid};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Service {
-    schema: String,
-    name: String,
-    uuid: ServiceUuid,
-    version: u32,
-    functions: BTreeMap<u32, Function>,
-    events: BTreeMap<u32, Event>,
-    function_fallback: Option<String>,
-    event_fallback: Option<String>,
+pub struct ServiceIr {
+    pub(crate) schema: String,
+    pub(crate) name: String,
+    pub(crate) uuid: ServiceUuid,
+    pub(crate) version: u32,
+    pub(crate) functions: BTreeMap<u32, FunctionIr>,
+    pub(crate) events: BTreeMap<u32, EventIr>,
+    pub(crate) function_fallback: Option<String>,
+    pub(crate) event_fallback: Option<String>,
 }
 
-impl Service {
-    pub fn from_ir(ty: ir::ServiceIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
-        Self {
-            schema: ty.schema,
-            name: ty.name,
-            uuid: ty.uuid,
-            version: ty.version,
+impl ServiceIr {
+    pub const NAMESPACE: Uuid = uuid!("de06b048-55f7-43b9-8d34-555795c2f4c6");
 
-            functions: ty
-                .functions
-                .into_iter()
-                .map(|(id, func)| (id, Function::from_ir(func, references)))
-                .collect(),
+    pub fn builder(
+        schema: impl Into<String>,
+        name: impl Into<String>,
+        uuid: ServiceUuid,
+        version: u32,
+    ) -> ServiceIrBuilder {
+        ServiceIrBuilder::new(schema, name, uuid, version)
+    }
 
-            events: ty
-                .events
-                .into_iter()
-                .map(|(id, ev)| (id, Event::from_ir(ev, references)))
-                .collect(),
-
-            function_fallback: ty.function_fallback,
-            event_fallback: ty.event_fallback,
-        }
+    pub fn lexical_id(&self) -> LexicalId {
+        LexicalId::service(&self.schema, &self.name)
     }
 
     pub fn schema(&self) -> &str {
@@ -61,11 +52,11 @@ impl Service {
         self.version
     }
 
-    pub fn functions(&self) -> &BTreeMap<u32, Function> {
+    pub fn functions(&self) -> &BTreeMap<u32, FunctionIr> {
         &self.functions
     }
 
-    pub fn events(&self) -> &BTreeMap<u32, Event> {
+    pub fn events(&self) -> &BTreeMap<u32, EventIr> {
         &self.events
     }
 
@@ -91,19 +82,19 @@ enum ServiceField {
     EventFallback = 7,
 }
 
-impl Tag for Service {}
+impl Tag for ServiceIr {}
 
-impl PrimaryTag for Service {
+impl PrimaryTag for ServiceIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for Service {
+impl Serialize<Self> for ServiceIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
-impl Serialize<Service> for &Service {
+impl Serialize<ServiceIr> for &ServiceIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 6
             + (self.function_fallback.is_some() as usize)
@@ -115,12 +106,12 @@ impl Serialize<Service> for &Service {
         serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, self.uuid)?;
         serializer.serialize::<tags::U32, _>(ServiceField::Version, self.version)?;
 
-        serializer.serialize::<tags::Map<tags::U32, Function>, _>(
+        serializer.serialize::<tags::Map<tags::U32, FunctionIr>, _>(
             ServiceField::Functions,
             IterAsMap1(&self.functions),
         )?;
 
-        serializer.serialize::<tags::Map<tags::U32, Event>, _>(
+        serializer.serialize::<tags::Map<tags::U32, EventIr>, _>(
             ServiceField::Events,
             IterAsMap1(&self.events),
         )?;
@@ -139,7 +130,7 @@ impl Serialize<Service> for &Service {
     }
 }
 
-impl Deserialize<Self> for Service {
+impl Deserialize<Self> for ServiceIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -172,13 +163,13 @@ impl Deserialize<Self> for Service {
 
                 Ok(ServiceField::Functions) => {
                     functions = deserializer
-                        .deserialize::<tags::Map<tags::U32, Function>, _>()
+                        .deserialize::<tags::Map<tags::U32, FunctionIr>, _>()
                         .map(Some)?
                 }
 
                 Ok(ServiceField::Events) => {
                     events = deserializer
-                        .deserialize::<tags::Map<tags::U32, Event>, _>()
+                        .deserialize::<tags::Map<tags::U32, EventIr>, _>()
                         .map(Some)?
                 }
 
@@ -205,5 +196,83 @@ impl Deserialize<Self> for Service {
             function_fallback,
             event_fallback,
         })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceIrBuilder {
+    schema: String,
+    name: String,
+    uuid: ServiceUuid,
+    version: u32,
+    functions: BTreeMap<u32, FunctionIr>,
+    events: BTreeMap<u32, EventIr>,
+    function_fallback: Option<String>,
+    event_fallback: Option<String>,
+}
+
+impl ServiceIrBuilder {
+    pub fn new(
+        schema: impl Into<String>,
+        name: impl Into<String>,
+        uuid: ServiceUuid,
+        version: u32,
+    ) -> Self {
+        Self {
+            schema: schema.into(),
+            name: name.into(),
+            uuid,
+            version,
+            functions: BTreeMap::new(),
+            events: BTreeMap::new(),
+            function_fallback: None,
+            event_fallback: None,
+        }
+    }
+
+    pub fn function(
+        mut self,
+        id: u32,
+        name: impl Into<String>,
+        args: Option<LexicalId>,
+        ok: Option<LexicalId>,
+        err: Option<LexicalId>,
+    ) -> Self {
+        self.functions
+            .insert(id, FunctionIr::new(id, name, args, ok, err));
+        self
+    }
+
+    pub fn event(
+        mut self,
+        id: u32,
+        name: impl Into<String>,
+        event_type: Option<LexicalId>,
+    ) -> Self {
+        self.events.insert(id, EventIr::new(id, name, event_type));
+        self
+    }
+
+    pub fn function_fallback(mut self, name: impl Into<String>) -> Self {
+        self.function_fallback = Some(name.into());
+        self
+    }
+
+    pub fn event_fallback(mut self, name: impl Into<String>) -> Self {
+        self.event_fallback = Some(name.into());
+        self
+    }
+
+    pub fn finish(self) -> ServiceIr {
+        ServiceIr {
+            schema: self.schema,
+            name: self.name,
+            uuid: self.uuid,
+            version: self.version,
+            functions: self.functions,
+            events: self.events,
+            function_fallback: self.function_fallback,
+            event_fallback: self.event_fallback,
+        }
     }
 }

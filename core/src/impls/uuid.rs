@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Receiver, Sender, Tag};
 use crate::{
     ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,
@@ -67,8 +67,8 @@ impl<T: Tag> Deserialize<Receiver<T>> for Uuid {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for Uuid {
-    fn layout() -> Layout {
-        BuiltInType::Uuid.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Uuid.into()
     }
 
     fn lexical_id() -> LexicalId {

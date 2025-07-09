@@ -485,17 +485,16 @@ impl Body {
         let references = references.into_iter();
 
         quote! {
-            fn layout() -> #krate::core::introspection::Layout {
-                #krate::core::introspection::Layout::Service(
-                    #krate::core::introspection::Service::builder(
-                        #schema,
-                        #service,
-                        #uuid,
-                        #version,
-                    )
-                    #items
-                    .finish(),
+            fn layout() -> #krate::core::introspection::ir::LayoutIr {
+                #krate::core::introspection::ir::ServiceIr::builder(
+                    #schema,
+                    #service,
+                    #uuid,
+                    #version,
                 )
+                #items
+                .finish()
+                .into()
             }
 
             fn lexical_id() -> #krate::core::introspection::LexicalId {

@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{ArrayType, BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::collections::{LinkedList, VecDeque};
@@ -35,8 +35,8 @@ macro_rules! impl_vec {
 
         #[cfg(feature = "introspection")]
         impl<T: Introspectable> Introspectable for $ty<T> {
-            fn layout() -> Layout {
-                BuiltInType::Vec(T::lexical_id()).into()
+            fn layout() -> ir::LayoutIr {
+                ir::BuiltInTypeIr::Vec(T::lexical_id()).into()
             }
 
             fn lexical_id() -> LexicalId {
@@ -70,8 +70,8 @@ where
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable> Introspectable for [T] {
-    fn layout() -> Layout {
-        BuiltInType::Vec(T::lexical_id()).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Vec(T::lexical_id()).into()
     }
 
     fn lexical_id() -> LexicalId {
@@ -159,8 +159,8 @@ impl<T: Tag, U: Deserialize<T>, const N: usize> Deserialize<tags::Vec<T>> for [U
 
 #[cfg(feature = "introspection")]
 impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
-    fn layout() -> Layout {
-        BuiltInType::Array(ArrayType::new(T::lexical_id(), N as u32)).into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Array(ir::ArrayTypeIr::new(T::lexical_id(), N as u32)).into()
     }
 
     fn lexical_id() -> LexicalId {

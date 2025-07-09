@@ -1,26 +1,20 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ArrayType {
-    elem_type: TypeId,
-    len: u32,
+pub struct ArrayTypeIr {
+    pub(crate) elem_type: LexicalId,
+    pub(crate) len: u32,
 }
 
-impl ArrayType {
-    pub fn from_ir(ty: ir::ArrayTypeIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
-        Self {
-            elem_type: resolve_ir(ty.elem_type, references),
-            len: ty.len,
-        }
+impl ArrayTypeIr {
+    pub fn new(elem_type: LexicalId, len: u32) -> Self {
+        Self { elem_type, len }
     }
 
-    pub fn elem_type(self) -> TypeId {
+    pub fn elem_type(self) -> LexicalId {
         self.elem_type
     }
 
@@ -37,30 +31,30 @@ enum ArrayTypeField {
     Len = 1,
 }
 
-impl Tag for ArrayType {}
+impl Tag for ArrayTypeIr {}
 
-impl PrimaryTag for ArrayType {
+impl PrimaryTag for ArrayTypeIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for ArrayType {
+impl Serialize<Self> for ArrayTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(2)?;
 
-        serializer.serialize::<TypeId, _>(ArrayTypeField::ElemType, self.elem_type)?;
+        serializer.serialize::<LexicalId, _>(ArrayTypeField::ElemType, self.elem_type)?;
         serializer.serialize::<tags::U32, _>(ArrayTypeField::Len, self.len)?;
 
         serializer.finish()
     }
 }
 
-impl Serialize<ArrayType> for &ArrayType {
+impl Serialize<ArrayTypeIr> for &ArrayTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
-impl Deserialize<Self> for ArrayType {
+impl Deserialize<Self> for ArrayTypeIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -70,7 +64,7 @@ impl Deserialize<Self> for ArrayType {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ArrayTypeField::ElemType) => {
-                    elem_type = deserializer.deserialize::<TypeId, _>().map(Some)?;
+                    elem_type = deserializer.deserialize::<LexicalId, _>().map(Some)?;
                 }
 
                 Ok(ArrayTypeField::Len) => {

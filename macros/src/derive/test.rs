@@ -1,4 +1,5 @@
-use aldrin_core::introspection::{Introspectable, Introspection, LexicalId};
+use aldrin_core::introspection::ir::IntrospectionIr;
+use aldrin_core::introspection::{Introspectable, LexicalId};
 use aldrin_core::{
     Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, TypeId, UnknownFields,
     UnknownVariant,
@@ -18,7 +19,7 @@ fn raw_identifiers_struct() {
         r#else: Option<u32>,
     }
 
-    let introspection = Introspection::new::<r#struct>();
+    let introspection = IntrospectionIr::new::<r#struct>();
     assert_eq!(
         introspection.lexical_id(),
         LexicalId::custom("test", "struct")
@@ -60,7 +61,7 @@ fn raw_identifiers_enum() {
         r#else(u32),
     }
 
-    let introspection = Introspection::new::<r#enum>();
+    let introspection = IntrospectionIr::new::<r#enum>();
     assert_eq!(
         introspection.lexical_id(),
         LexicalId::custom("test", "enum")
@@ -101,7 +102,7 @@ fn enum_fallback() {
         Fallback(UnknownVariant),
     }
 
-    let introspection = Introspection::new::<Foo>();
+    let introspection = IntrospectionIr::new::<Foo>();
     assert_eq!(introspection.lexical_id(), LexicalId::custom("test", "Foo"));
     assert_eq!(
         introspection.type_id(),

@@ -1,6 +1,6 @@
 #[cfg(feature = "introspection")]
 use aldrin::core::introspection::{
-    BuiltInType, Enum, Event, Function, Introspection, Layout, LexicalId, Newtype, Service, Struct,
+    BuiltInType, Enum, Event, Function, Introspection, Layout, Newtype, Service, Struct,
 };
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
@@ -181,9 +181,9 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
             continue;
         };
 
-        for type_id in introspection.references().values() {
-            if !db.contains_key(type_id) && !unavailable.contains(type_id) {
-                pending.push(*type_id);
+        for type_id in introspection.iter_references() {
+            if !db.contains_key(&type_id) && !unavailable.contains(&type_id) {
+                pending.push(type_id);
             }
         }
 
@@ -214,48 +214,23 @@ fn print_introspection(
     full: bool,
 ) {
     match introspection.layout() {
-        Layout::BuiltIn(ty) => print_built_in(*ty, introspection, db),
-        Layout::Struct(ty) => print_struct(ty, introspection, db, full),
-        Layout::Enum(ty) => print_enum(ty, introspection, db, full),
-        Layout::Service(ty) => print_service(ty, introspection, db, full),
-        Layout::Newtype(ty) => print_newtype(ty, introspection, db, full),
-    }
-
-    if !full {
-        let references = introspection.references();
-        if !references.is_empty() {
-            println!(" lexical_id                             type_id");
-            println!(
-                "-------------------------------------- --------------------------------------"
-            );
-
-            for (lexical_id, type_id) in references {
-                println!(" {lexical_id}   {type_id}");
-            }
-
-            println!();
-        }
+        Layout::BuiltIn(ty) => print_built_in(*ty, db, full),
+        Layout::Struct(ty) => print_struct(ty, db, full),
+        Layout::Enum(ty) => print_enum(ty, db, full),
+        Layout::Service(ty) => print_service(ty, db, full),
+        Layout::Newtype(ty) => print_newtype(ty, db, full),
     }
 }
 
 #[cfg(feature = "introspection")]
-fn print_built_in(
-    ty: BuiltInType,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-) {
-    print_built_in_type_name(ty, introspection, db, false);
+fn print_built_in(ty: BuiltInType, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    print_built_in_type_name(ty, db, full);
     println!();
     println!();
 }
 
 #[cfg(feature = "introspection")]
-fn print_struct(
-    ty: &Struct,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_struct(ty: &Struct, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     println!("struct {}::{} {{", ty.schema(), ty.name());
 
     for field in ty.fields().values() {
@@ -266,7 +241,7 @@ fn print_struct(
         }
 
         print!("{} @ {} = ", field.name(), field.id());
-        print_type_name(field.field_type(), introspection, db, full);
+        print_type_name(field.field_type(), db, full);
         println!(";");
     }
 
@@ -279,12 +254,7 @@ fn print_struct(
 }
 
 #[cfg(feature = "introspection")]
-fn print_enum(
-    ty: &Enum,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_enum(ty: &Enum, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     println!("enum {}::{} {{", ty.schema(), ty.name());
 
     for var in ty.variants().values() {
@@ -292,7 +262,7 @@ fn print_enum(
 
         if let Some(var_type) = var.variant_type() {
             print!(" = ");
-            print_type_name(var_type, introspection, db, full);
+            print_type_name(var_type, db, full);
         }
 
         println!(";");
@@ -307,24 +277,19 @@ fn print_enum(
 }
 
 #[cfg(feature = "introspection")]
-fn print_service(
-    ty: &Service,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_service(ty: &Service, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     println!("service {}::{} {{", ty.schema(), ty.name());
     println!("    uuid = {};", ty.uuid());
     println!("    version = {};", ty.version());
 
     for func in ty.functions().values() {
         println!();
-        print_function(func, introspection, db, full);
+        print_function(func, db, full);
     }
 
     for ev in ty.events().values() {
         println!();
-        print_event(ev, introspection, db, full);
+        print_event(ev, db, full);
     }
 
     if let Some(fallback) = ty.function_fallback() {
@@ -342,36 +307,31 @@ fn print_service(
 }
 
 #[cfg(feature = "introspection")]
-fn print_function(
-    func: &Function,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_function(func: &Function, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     print!("    fn {} @ {}", func.name(), func.id());
 
     if let (None, Some(ty), None) = (func.args(), func.ok(), func.err()) {
         print!(" = ");
-        print_type_name(ty, introspection, db, full);
+        print_type_name(ty, db, full);
         println!(";");
     } else if func.args().is_some() || func.ok().is_some() || func.err().is_some() {
         println!(" {{");
 
         if let Some(ty) = func.args() {
             print!("        args = ");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             println!(";");
         }
 
         if let Some(ty) = func.ok() {
             print!("        ok = ");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             println!(";");
         }
 
         if let Some(ty) = func.err() {
             print!("        err = ");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             println!(";");
         }
 
@@ -382,59 +342,39 @@ fn print_function(
 }
 
 #[cfg(feature = "introspection")]
-fn print_event(
-    ev: &Event,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_event(ev: &Event, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     print!("    event {} @ {}", ev.name(), ev.id());
 
     if let Some(ty) = ev.event_type() {
         print!(" = ");
-        print_type_name(ty, introspection, db, full);
+        print_type_name(ty, db, full);
     }
 
     println!(";");
 }
 
 #[cfg(feature = "introspection")]
-fn print_newtype(
-    ty: &Newtype,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
+fn print_newtype(ty: &Newtype, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     print!("newtype {}::{} = ", ty.schema(), ty.name());
-    print_type_name(ty.target_type(), introspection, db, full);
+    print_type_name(ty.target_type(), db, full);
     println!(";");
     println!();
 }
 
 #[cfg(feature = "introspection")]
-fn print_type_name(
-    ty: LexicalId,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
-    let Some(type_id) = introspection.resolve(ty) else {
-        print!("lexical_id({ty})");
+fn print_type_name(ty: TypeId, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if !full {
+        print!("type_id({ty})");
         return;
-    };
+    }
 
-    let Some(introspection) = db.get(&type_id) else {
-        if full {
-            print!("type_id({type_id})");
-        } else {
-            print!("lexical_id({ty})");
-        }
-
+    let Some(introspection) = db.get(&ty) else {
+        print!("type_id({ty})");
         return;
     };
 
     match introspection.layout() {
-        Layout::BuiltIn(ty) => print_built_in_type_name(*ty, introspection, db, full),
+        Layout::BuiltIn(ty) => print_built_in_type_name(*ty, db, full),
         Layout::Struct(ty) => print!("{}::{}", ty.schema(), ty.name()),
         Layout::Enum(ty) => print!("{}::{}", ty.schema(), ty.name()),
         Layout::Service(ty) => print!("{}::{}", ty.schema(), ty.name()),
@@ -443,13 +383,8 @@ fn print_type_name(
 }
 
 #[cfg(feature = "introspection")]
-fn print_built_in_type_name(
-    built_in: BuiltInType,
-    introspection: &Introspection,
-    db: &BTreeMap<TypeId, Introspection>,
-    full: bool,
-) {
-    match built_in {
+fn print_built_in_type_name(ty: BuiltInType, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    match ty {
         BuiltInType::Bool => print!("bool"),
         BuiltInType::U8 => print!("u8"),
         BuiltInType::I8 => print!("i8"),
@@ -469,19 +404,19 @@ fn print_built_in_type_name(
 
         BuiltInType::Option(ty) => {
             print!("option<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
         BuiltInType::Box(ty) => {
             print!("box<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
         BuiltInType::Vec(ty) => {
             print!("vec<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
@@ -489,27 +424,27 @@ fn print_built_in_type_name(
 
         BuiltInType::Map(ty) => {
             print!("map<");
-            print_type_name(ty.key(), introspection, db, full);
+            print_type_name(ty.key(), db, full);
             print!(" -> ");
-            print_type_name(ty.value(), introspection, db, full);
+            print_type_name(ty.value(), db, full);
             print!(">");
         }
 
         BuiltInType::Set(ty) => {
             print!("set<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
         BuiltInType::Sender(ty) => {
             print!("sender<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
         BuiltInType::Receiver(ty) => {
             print!("receiver<");
-            print_type_name(ty, introspection, db, full);
+            print_type_name(ty, db, full);
             print!(">");
         }
 
@@ -518,15 +453,15 @@ fn print_built_in_type_name(
 
         BuiltInType::Result(ty) => {
             print!("result<");
-            print_type_name(ty.ok(), introspection, db, full);
+            print_type_name(ty.ok(), db, full);
             print!(", ");
-            print_type_name(ty.err(), introspection, db, full);
+            print_type_name(ty.err(), db, full);
             print!(">");
         }
 
         BuiltInType::Array(ty) => {
             print!("[");
-            print_type_name(ty.elem_type(), introspection, db, full);
+            print_type_name(ty.elem_type(), db, full);
             print!("; {}]", ty.len());
         }
     }

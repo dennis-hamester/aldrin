@@ -1,24 +1,21 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Event {
-    id: u32,
-    name: String,
-    event_type: Option<TypeId>,
+pub struct VariantIr {
+    pub(crate) id: u32,
+    pub(crate) name: String,
+    pub(crate) variant_type: Option<LexicalId>,
 }
 
-impl Event {
-    pub fn from_ir(ev: ir::EventIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
+impl VariantIr {
+    pub(super) fn new(id: u32, name: impl Into<String>, variant_type: Option<LexicalId>) -> Self {
         Self {
-            id: ev.id,
-            name: ev.name,
-            event_type: ev.event_type.map(|ty| resolve_ir(ty, references)),
+            id,
+            name: name.into(),
+            variant_type,
         }
     }
 
@@ -30,61 +27,67 @@ impl Event {
         &self.name
     }
 
-    pub fn event_type(&self) -> Option<TypeId> {
-        self.event_type
+    pub fn variant_type(&self) -> Option<LexicalId> {
+        self.variant_type
     }
 }
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
-enum EventField {
+enum VariantField {
     Id = 0,
     Name = 1,
-    EventType = 2,
+    VariantType = 2,
 }
 
-impl Tag for Event {}
+impl Tag for VariantIr {}
 
-impl PrimaryTag for Event {
+impl PrimaryTag for VariantIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for Event {
+impl Serialize<Self> for VariantIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
-impl Serialize<Event> for &Event {
+impl Serialize<VariantIr> for &VariantIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(3)?;
 
-        serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
-        serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(EventField::EventType, self.event_type)?;
+        serializer.serialize::<tags::U32, _>(VariantField::Id, self.id)?;
+        serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
+
+        serializer.serialize::<tags::Option<LexicalId>, _>(
+            VariantField::VariantType,
+            self.variant_type,
+        )?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize<Self> for Event {
+impl Deserialize<Self> for VariantIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut id = None;
         let mut name = None;
-        let mut event_type = None;
+        let mut variant_type = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
-                Ok(EventField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
+                Ok(VariantField::Id) => {
+                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                }
 
-                Ok(EventField::Name) => {
+                Ok(VariantField::Name) => {
                     name = deserializer.deserialize::<tags::String, _>().map(Some)?
                 }
 
-                Ok(EventField::EventType) => {
-                    event_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                Ok(VariantField::VariantType) => {
+                    variant_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -94,7 +97,7 @@ impl Deserialize<Self> for Event {
         deserializer.finish(Self {
             id: id.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
-            event_type,
+            variant_type,
         })
     }
 }

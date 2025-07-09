@@ -1,6 +1,6 @@
 use super::{ObjectCookie, ObjectUuid};
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
@@ -67,8 +67,8 @@ impl Deserialize<tags::ObjectId> for ObjectId {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for ObjectId {
-    fn layout() -> Layout {
-        BuiltInType::ObjectId.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::ObjectId.into()
     }
 
     fn lexical_id() -> LexicalId {

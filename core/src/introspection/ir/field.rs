@@ -1,26 +1,28 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Field {
-    id: u32,
-    name: String,
-    is_required: bool,
-    field_type: TypeId,
+pub struct FieldIr {
+    pub(crate) id: u32,
+    pub(crate) name: String,
+    pub(crate) is_required: bool,
+    pub(crate) field_type: LexicalId,
 }
 
-impl Field {
-    pub fn from_ir(ty: ir::FieldIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
+impl FieldIr {
+    pub(super) fn new(
+        id: u32,
+        name: impl Into<String>,
+        is_required: bool,
+        field_type: LexicalId,
+    ) -> Self {
         Self {
-            id: ty.id,
-            name: ty.name,
-            is_required: ty.is_required,
-            field_type: resolve_ir(ty.field_type, references),
+            id,
+            name: name.into(),
+            is_required,
+            field_type,
         }
     }
 
@@ -36,7 +38,7 @@ impl Field {
         self.is_required
     }
 
-    pub fn field_type(&self) -> TypeId {
+    pub fn field_type(&self) -> LexicalId {
         self.field_type
     }
 }
@@ -50,32 +52,32 @@ enum FieldField {
     FieldType = 3,
 }
 
-impl Tag for Field {}
+impl Tag for FieldIr {}
 
-impl PrimaryTag for Field {
+impl PrimaryTag for FieldIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for Field {
+impl Serialize<Self> for FieldIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
-impl Serialize<Field> for &Field {
+impl Serialize<FieldIr> for &FieldIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(4)?;
 
         serializer.serialize::<tags::U32, _>(FieldField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;
         serializer.serialize::<tags::Bool, _>(FieldField::IsRequired, self.is_required)?;
-        serializer.serialize::<TypeId, _>(FieldField::FieldType, self.field_type)?;
+        serializer.serialize::<LexicalId, _>(FieldField::FieldType, self.field_type)?;
 
         serializer.finish()
     }
 }
 
-impl Deserialize<Self> for Field {
+impl Deserialize<Self> for FieldIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -97,7 +99,7 @@ impl Deserialize<Self> for Field {
                 }
 
                 Ok(FieldField::FieldType) => {
-                    field_type = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    field_type = deserializer.deserialize::<LexicalId, _>().map(Some)?
                 }
 
                 Err(_) => deserializer.skip()?,

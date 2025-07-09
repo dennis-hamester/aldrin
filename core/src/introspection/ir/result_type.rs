@@ -1,30 +1,24 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::LexicalId;
 use crate::tags::{PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ResultType {
-    ok: TypeId,
-    err: TypeId,
+pub struct ResultTypeIr {
+    pub(crate) ok: LexicalId,
+    pub(crate) err: LexicalId,
 }
 
-impl ResultType {
-    pub fn from_ir(ty: ir::ResultTypeIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
-        Self {
-            ok: resolve_ir(ty.ok, references),
-            err: resolve_ir(ty.err, references),
-        }
+impl ResultTypeIr {
+    pub fn new(ok: LexicalId, err: LexicalId) -> Self {
+        Self { ok, err }
     }
 
-    pub fn ok(self) -> TypeId {
+    pub fn ok(self) -> LexicalId {
         self.ok
     }
 
-    pub fn err(self) -> TypeId {
+    pub fn err(self) -> LexicalId {
         self.err
     }
 }
@@ -36,30 +30,30 @@ enum ResultTypeField {
     Err = 1,
 }
 
-impl Tag for ResultType {}
+impl Tag for ResultTypeIr {}
 
-impl PrimaryTag for ResultType {
+impl PrimaryTag for ResultTypeIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for ResultType {
+impl Serialize<Self> for ResultTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(2)?;
 
-        serializer.serialize::<TypeId, _>(ResultTypeField::Ok, self.ok)?;
-        serializer.serialize::<TypeId, _>(ResultTypeField::Err, self.err)?;
+        serializer.serialize::<LexicalId, _>(ResultTypeField::Ok, self.ok)?;
+        serializer.serialize::<LexicalId, _>(ResultTypeField::Err, self.err)?;
 
         serializer.finish()
     }
 }
 
-impl Serialize<ResultType> for &ResultType {
+impl Serialize<ResultTypeIr> for &ResultTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
-impl Deserialize<Self> for ResultType {
+impl Deserialize<Self> for ResultTypeIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -69,11 +63,11 @@ impl Deserialize<Self> for ResultType {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ResultTypeField::Ok) => {
-                    ok = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    ok = deserializer.deserialize::<LexicalId, _>().map(Some)?
                 }
 
                 Ok(ResultTypeField::Err) => {
-                    err = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    err = deserializer.deserialize::<LexicalId, _>().map(Some)?
                 }
 
                 Err(_) => deserializer.skip()?,

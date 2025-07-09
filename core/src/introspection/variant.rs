@@ -1,21 +1,24 @@
-use super::LexicalId;
+use super::{ir, resolve_ir, LexicalId};
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Variant {
     id: u32,
     name: String,
-    variant_type: Option<LexicalId>,
+    variant_type: Option<TypeId>,
 }
 
 impl Variant {
-    pub(super) fn new(id: u32, name: impl Into<String>, variant_type: Option<LexicalId>) -> Self {
+    pub fn from_ir(ty: ir::VariantIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
         Self {
-            id,
-            name: name.into(),
-            variant_type,
+            id: ty.id,
+            name: ty.name,
+            variant_type: ty.variant_type.map(|ty| resolve_ir(ty, references)),
         }
     }
 
@@ -27,7 +30,7 @@ impl Variant {
         &self.name
     }
 
-    pub fn variant_type(&self) -> Option<LexicalId> {
+    pub fn variant_type(&self) -> Option<TypeId> {
         self.variant_type
     }
 }
@@ -59,10 +62,8 @@ impl Serialize<Variant> for &Variant {
         serializer.serialize::<tags::U32, _>(VariantField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
 
-        serializer.serialize::<tags::Option<LexicalId>, _>(
-            VariantField::VariantType,
-            self.variant_type,
-        )?;
+        serializer
+            .serialize::<tags::Option<TypeId>, _>(VariantField::VariantType, self.variant_type)?;
 
         serializer.finish()
     }
@@ -87,7 +88,7 @@ impl Deserialize<Self> for Variant {
                 }
 
                 Ok(VariantField::VariantType) => {
-                    variant_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
+                    variant_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,

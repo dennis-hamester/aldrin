@@ -1,4 +1,4 @@
-use super::Introspection;
+use super::ir;
 use crate::tags::{self, KeyTag, PrimaryKeyTag, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
@@ -106,7 +106,7 @@ impl LexicalId {
         self.0.is_nil()
     }
 
-    pub fn resolve(self, introspection: &Introspection) -> Option<TypeId> {
+    pub fn resolve(self, introspection: &ir::IntrospectionIr) -> Option<TypeId> {
         introspection.resolve(self)
     }
 

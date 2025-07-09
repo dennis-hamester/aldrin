@@ -1,14 +1,12 @@
-use super::super::{
-    DynIntrospectable, Enum, Introspectable, Layout, LexicalId, References, Service, Struct,
-};
+use super::super::{ir, DynIntrospectable, Introspectable, LexicalId, References};
 use crate::ServiceUuid;
 use uuid::uuid;
 
 pub struct Bookmarks;
 
 impl Introspectable for Bookmarks {
-    fn layout() -> Layout {
-        Service::builder(
+    fn layout() -> ir::LayoutIr {
+        ir::ServiceIr::builder(
             "bookmarks_v2",
             "Bookmarks",
             ServiceUuid(uuid!("35660342-8ecb-4101-903a-d1ba49d66f29")),
@@ -82,8 +80,8 @@ impl Introspectable for Bookmarks {
 pub struct BookmarksGetV2Args;
 
 impl Introspectable for BookmarksGetV2Args {
-    fn layout() -> Layout {
-        Struct::builder("bookmarks_v2", "BookmarksGetV2Args")
+    fn layout() -> ir::LayoutIr {
+        ir::StructIr::builder("bookmarks_v2", "BookmarksGetV2Args")
             .field(1, "group", false, String::lexical_id())
             .fallback("unknown_fields")
             .finish()
@@ -104,8 +102,8 @@ impl Introspectable for BookmarksGetV2Args {
 pub struct BookmarksRemoveV2Args;
 
 impl Introspectable for BookmarksRemoveV2Args {
-    fn layout() -> Layout {
-        Struct::builder("bookmarks_v2", "BookmarksRemoveV2Args")
+    fn layout() -> ir::LayoutIr {
+        ir::StructIr::builder("bookmarks_v2", "BookmarksRemoveV2Args")
             .field(1, "name", true, String::lexical_id())
             .field(2, "group", false, String::lexical_id())
             .fallback("unknown_fields")
@@ -130,8 +128,8 @@ impl Introspectable for BookmarksRemoveV2Args {
 pub struct Bookmark;
 
 impl Introspectable for Bookmark {
-    fn layout() -> Layout {
-        Struct::builder("bookmarks_v2", "Bookmark")
+    fn layout() -> ir::LayoutIr {
+        ir::StructIr::builder("bookmarks_v2", "Bookmark")
             .field(1, "name", true, String::lexical_id())
             .field(2, "url", true, String::lexical_id())
             .field(3, "group", false, String::lexical_id())
@@ -158,8 +156,8 @@ impl Introspectable for Bookmark {
 pub enum Error {}
 
 impl Introspectable for Error {
-    fn layout() -> Layout {
-        Enum::builder("bookmarks_v2", "Error")
+    fn layout() -> ir::LayoutIr {
+        ir::EnumIr::builder("bookmarks_v2", "Error")
             .unit_variant(1, "InvalidName")
             .unit_variant(2, "DuplicateName")
             .unit_variant(3, "InvalidUrl")

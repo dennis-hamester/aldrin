@@ -1,32 +1,28 @@
-use super::{ir, LexicalId, Variant};
+use super::{LexicalId, VariantIr};
 use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
+use uuid::{uuid, Uuid};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Enum {
-    schema: String,
-    name: String,
-    variants: BTreeMap<u32, Variant>,
-    fallback: Option<String>,
+pub struct EnumIr {
+    pub(crate) schema: String,
+    pub(crate) name: String,
+    pub(crate) variants: BTreeMap<u32, VariantIr>,
+    pub(crate) fallback: Option<String>,
 }
 
-impl Enum {
-    pub fn from_ir(ty: ir::EnumIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
-        Self {
-            schema: ty.schema,
-            name: ty.name,
-            variants: ty
-                .variants
-                .into_iter()
-                .map(|(id, var)| (id, Variant::from_ir(var, references)))
-                .collect(),
-            fallback: ty.fallback,
-        }
+impl EnumIr {
+    pub const NAMESPACE: Uuid = uuid!("642bf73e-991f-406a-b55a-ce914d77480b");
+
+    pub fn builder(schema: impl Into<String>, name: impl Into<String>) -> EnumIrBuilder {
+        EnumIrBuilder::new(schema, name)
+    }
+
+    pub fn lexical_id(&self) -> LexicalId {
+        LexicalId::custom(&self.schema, &self.name)
     }
 
     pub fn schema(&self) -> &str {
@@ -37,7 +33,7 @@ impl Enum {
         &self.name
     }
 
-    pub fn variants(&self) -> &BTreeMap<u32, Variant> {
+    pub fn variants(&self) -> &BTreeMap<u32, VariantIr> {
         &self.variants
     }
 
@@ -55,19 +51,19 @@ enum EnumField {
     Fallback = 3,
 }
 
-impl Tag for Enum {}
+impl Tag for EnumIr {}
 
-impl PrimaryTag for Enum {
+impl PrimaryTag for EnumIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for Enum {
+impl Serialize<Self> for EnumIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
-impl Serialize<Enum> for &Enum {
+impl Serialize<EnumIr> for &EnumIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let num = 3 + (self.fallback.is_some() as usize);
         let mut serializer = serializer.serialize_struct1(num)?;
@@ -75,7 +71,7 @@ impl Serialize<Enum> for &Enum {
         serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
 
-        serializer.serialize::<tags::Map<tags::U32, Variant>, _>(
+        serializer.serialize::<tags::Map<tags::U32, VariantIr>, _>(
             EnumField::Variants,
             IterAsMap1(&self.variants),
         )?;
@@ -89,7 +85,7 @@ impl Serialize<Enum> for &Enum {
     }
 }
 
-impl Deserialize<Self> for Enum {
+impl Deserialize<Self> for EnumIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
@@ -110,7 +106,7 @@ impl Deserialize<Self> for Enum {
 
                 Ok(EnumField::Variants) => {
                     variants = deserializer
-                        .deserialize::<tags::Map<tags::U32, Variant>, _>()
+                        .deserialize::<tags::Map<tags::U32, VariantIr>, _>()
                         .map(Some)?
                 }
 
@@ -128,5 +124,62 @@ impl Deserialize<Self> for Enum {
             variants: variants.ok_or(DeserializeError::InvalidSerialization)?,
             fallback,
         })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EnumIrBuilder {
+    schema: String,
+    name: String,
+    variants: BTreeMap<u32, VariantIr>,
+    fallback: Option<String>,
+}
+
+impl EnumIrBuilder {
+    pub fn new(schema: impl Into<String>, name: impl Into<String>) -> Self {
+        Self {
+            schema: schema.into(),
+            name: name.into(),
+            variants: BTreeMap::new(),
+            fallback: None,
+        }
+    }
+
+    pub fn variant(
+        mut self,
+        id: u32,
+        name: impl Into<String>,
+        variant_type: Option<LexicalId>,
+    ) -> Self {
+        self.variants
+            .insert(id, VariantIr::new(id, name, variant_type));
+        self
+    }
+
+    pub fn variant_with_type(
+        self,
+        id: u32,
+        name: impl Into<String>,
+        variant_type: LexicalId,
+    ) -> Self {
+        self.variant(id, name, Some(variant_type))
+    }
+
+    pub fn unit_variant(self, id: u32, name: impl Into<String>) -> Self {
+        self.variant(id, name, None)
+    }
+
+    pub fn fallback(mut self, name: impl Into<String>) -> Self {
+        self.fallback = Some(name.into());
+        self
+    }
+
+    pub fn finish(self) -> EnumIr {
+        EnumIr {
+            schema: self.schema,
+            name: self.name,
+            variants: self.variants,
+            fallback: self.fallback,
+        }
     }
 }

@@ -1,13 +1,11 @@
-use super::{ir, resolve_ir, ArrayType, LexicalId, MapType, ResultType};
+use super::{ArrayTypeIr, LexicalId, MapTypeIr, ResultTypeIr};
 use crate::tags::{PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
-};
+use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
+use uuid::{uuid, Uuid};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum BuiltInType {
+pub enum BuiltInTypeIr {
     Bool,
     U8,
     I8,
@@ -24,51 +22,53 @@ pub enum BuiltInType {
     ObjectId,
     ServiceId,
     Value,
-    Option(TypeId),
-    Box(TypeId),
-    Vec(TypeId),
+    Option(LexicalId),
+    Box(LexicalId),
+    Vec(LexicalId),
     Bytes,
-    Map(MapType),
-    Set(TypeId),
-    Sender(TypeId),
-    Receiver(TypeId),
+    Map(MapTypeIr),
+    Set(LexicalId),
+    Sender(LexicalId),
+    Receiver(LexicalId),
     Lifetime,
     Unit,
-    Result(ResultType),
-    Array(ArrayType),
+    Result(ResultTypeIr),
+    Array(ArrayTypeIr),
 }
 
-impl BuiltInType {
-    pub fn from_ir(ty: ir::BuiltInTypeIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
-        match ty {
-            ir::BuiltInTypeIr::Bool => Self::Bool,
-            ir::BuiltInTypeIr::U8 => Self::U8,
-            ir::BuiltInTypeIr::I8 => Self::I8,
-            ir::BuiltInTypeIr::U16 => Self::U16,
-            ir::BuiltInTypeIr::I16 => Self::I16,
-            ir::BuiltInTypeIr::U32 => Self::U32,
-            ir::BuiltInTypeIr::I32 => Self::I32,
-            ir::BuiltInTypeIr::U64 => Self::U64,
-            ir::BuiltInTypeIr::I64 => Self::I64,
-            ir::BuiltInTypeIr::F32 => Self::F32,
-            ir::BuiltInTypeIr::F64 => Self::F64,
-            ir::BuiltInTypeIr::String => Self::String,
-            ir::BuiltInTypeIr::Uuid => Self::Uuid,
-            ir::BuiltInTypeIr::ObjectId => Self::ObjectId,
-            ir::BuiltInTypeIr::ServiceId => Self::ServiceId,
-            ir::BuiltInTypeIr::Value => Self::Value,
-            ir::BuiltInTypeIr::Option(ty) => Self::Option(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Box(ty) => Self::Box(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Vec(ty) => Self::Vec(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Bytes => Self::Bytes,
-            ir::BuiltInTypeIr::Map(ty) => Self::Map(MapType::from_ir(ty, references)),
-            ir::BuiltInTypeIr::Set(ty) => Self::Set(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Sender(ty) => Self::Sender(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Receiver(ty) => Self::Receiver(resolve_ir(ty, references)),
-            ir::BuiltInTypeIr::Lifetime => Self::Lifetime,
-            ir::BuiltInTypeIr::Unit => Self::Unit,
-            ir::BuiltInTypeIr::Result(ty) => Self::Result(ResultType::from_ir(ty, references)),
-            ir::BuiltInTypeIr::Array(ty) => Self::Array(ArrayType::from_ir(ty, references)),
+impl BuiltInTypeIr {
+    pub const NAMESPACE: Uuid = uuid!("43852cf9-014c-44f1-86d7-0b1b753eeb02");
+
+    pub fn lexical_id(self) -> LexicalId {
+        match self {
+            Self::Bool => LexicalId::BOOL,
+            Self::U8 => LexicalId::U8,
+            Self::I8 => LexicalId::I8,
+            Self::U16 => LexicalId::U16,
+            Self::I16 => LexicalId::I16,
+            Self::U32 => LexicalId::U32,
+            Self::I32 => LexicalId::I32,
+            Self::U64 => LexicalId::U64,
+            Self::I64 => LexicalId::I64,
+            Self::F32 => LexicalId::F32,
+            Self::F64 => LexicalId::F64,
+            Self::String => LexicalId::STRING,
+            Self::Uuid => LexicalId::UUID,
+            Self::ObjectId => LexicalId::OBJECT_ID,
+            Self::ServiceId => LexicalId::SERVICE_ID,
+            Self::Value => LexicalId::VALUE,
+            Self::Option(ty) => LexicalId::option(ty),
+            Self::Box(ty) => LexicalId::box_ty(ty),
+            Self::Vec(ty) => LexicalId::vec(ty),
+            Self::Bytes => LexicalId::BYTES,
+            Self::Map(ty) => LexicalId::map(ty.key(), ty.value()),
+            Self::Set(ty) => LexicalId::set(ty),
+            Self::Sender(ty) => LexicalId::sender(ty),
+            Self::Receiver(ty) => LexicalId::receiver(ty),
+            Self::Lifetime => LexicalId::LIFETIME,
+            Self::Unit => LexicalId::UNIT,
+            Self::Result(ty) => LexicalId::result(ty.ok(), ty.err()),
+            Self::Array(arr) => LexicalId::array(arr.elem_type(), arr.len()),
         }
     }
 }
@@ -106,13 +106,13 @@ enum BuiltInTypeVariant {
     Array = 27,
 }
 
-impl Tag for BuiltInType {}
+impl Tag for BuiltInTypeIr {}
 
-impl PrimaryTag for BuiltInType {
+impl PrimaryTag for BuiltInTypeIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for BuiltInType {
+impl Serialize<Self> for BuiltInTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Self::Bool => serializer.serialize_unit_enum(BuiltInTypeVariant::Bool),
@@ -133,44 +133,44 @@ impl Serialize<Self> for BuiltInType {
             Self::Value => serializer.serialize_unit_enum(BuiltInTypeVariant::Value),
 
             Self::Option(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Option, t)
+                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Option, t)
             }
 
-            Self::Box(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Box, t),
-            Self::Vec(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Vec, t),
+            Self::Box(t) => serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Box, t),
+            Self::Vec(t) => serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Vec, t),
             Self::Bytes => serializer.serialize_unit_enum(BuiltInTypeVariant::Bytes),
-            Self::Map(t) => serializer.serialize_enum::<MapType, _>(BuiltInTypeVariant::Map, t),
-            Self::Set(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Set, t),
+            Self::Map(t) => serializer.serialize_enum::<MapTypeIr, _>(BuiltInTypeVariant::Map, t),
+            Self::Set(t) => serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Set, t),
 
             Self::Sender(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Sender, t)
+                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Sender, t)
             }
 
             Self::Receiver(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Receiver, t)
+                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Receiver, t)
             }
 
             Self::Lifetime => serializer.serialize_unit_enum(BuiltInTypeVariant::Lifetime),
             Self::Unit => serializer.serialize_unit_enum(BuiltInTypeVariant::Unit),
 
             Self::Result(t) => {
-                serializer.serialize_enum::<ResultType, _>(BuiltInTypeVariant::Result, t)
+                serializer.serialize_enum::<ResultTypeIr, _>(BuiltInTypeVariant::Result, t)
             }
 
             Self::Array(t) => {
-                serializer.serialize_enum::<ArrayType, _>(BuiltInTypeVariant::Array, t)
+                serializer.serialize_enum::<ArrayTypeIr, _>(BuiltInTypeVariant::Array, t)
             }
         }
     }
 }
 
-impl Serialize<BuiltInType> for &BuiltInType {
+impl Serialize<BuiltInTypeIr> for &BuiltInTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
-impl Deserialize<Self> for BuiltInType {
+impl Deserialize<Self> for BuiltInTypeIr {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
@@ -199,19 +199,23 @@ impl Deserialize<Self> for BuiltInType {
 
             BuiltInTypeVariant::Value => deserializer.deserialize_unit().map(|()| Self::Value),
 
-            BuiltInTypeVariant::Option => deserializer.deserialize::<TypeId, _>().map(Self::Option),
-
-            BuiltInTypeVariant::Box => deserializer.deserialize::<TypeId, _>().map(Self::Box),
-            BuiltInTypeVariant::Vec => deserializer.deserialize::<TypeId, _>().map(Self::Vec),
-            BuiltInTypeVariant::Bytes => deserializer.deserialize_unit().map(|()| Self::Bytes),
-            BuiltInTypeVariant::Map => deserializer.deserialize::<MapType, _>().map(Self::Map),
-            BuiltInTypeVariant::Set => deserializer.deserialize::<TypeId, _>().map(Self::Set),
-
-            BuiltInTypeVariant::Sender => deserializer.deserialize::<TypeId, _>().map(Self::Sender),
-
-            BuiltInTypeVariant::Receiver => {
-                deserializer.deserialize::<TypeId, _>().map(Self::Receiver)
+            BuiltInTypeVariant::Option => {
+                deserializer.deserialize::<LexicalId, _>().map(Self::Option)
             }
+
+            BuiltInTypeVariant::Box => deserializer.deserialize::<LexicalId, _>().map(Self::Box),
+            BuiltInTypeVariant::Vec => deserializer.deserialize::<LexicalId, _>().map(Self::Vec),
+            BuiltInTypeVariant::Bytes => deserializer.deserialize_unit().map(|()| Self::Bytes),
+            BuiltInTypeVariant::Map => deserializer.deserialize::<MapTypeIr, _>().map(Self::Map),
+            BuiltInTypeVariant::Set => deserializer.deserialize::<LexicalId, _>().map(Self::Set),
+
+            BuiltInTypeVariant::Sender => {
+                deserializer.deserialize::<LexicalId, _>().map(Self::Sender)
+            }
+
+            BuiltInTypeVariant::Receiver => deserializer
+                .deserialize::<LexicalId, _>()
+                .map(Self::Receiver),
 
             BuiltInTypeVariant::Lifetime => {
                 deserializer.deserialize_unit().map(|()| Self::Lifetime)
@@ -220,12 +224,12 @@ impl Deserialize<Self> for BuiltInType {
             BuiltInTypeVariant::Unit => deserializer.deserialize_unit().map(|()| Self::Unit),
 
             BuiltInTypeVariant::Result => deserializer
-                .deserialize::<ResultType, _>()
+                .deserialize::<ResultTypeIr, _>()
                 .map(Self::Result),
 
-            BuiltInTypeVariant::Array => {
-                deserializer.deserialize::<ArrayType, _>().map(Self::Array)
-            }
+            BuiltInTypeVariant::Array => deserializer
+                .deserialize::<ArrayTypeIr, _>()
+                .map(Self::Array),
         }
     }
 }

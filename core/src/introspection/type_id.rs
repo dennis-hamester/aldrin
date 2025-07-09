@@ -1,4 +1,4 @@
-use super::{DynIntrospectable, Introspectable, Layout, References, VERSION};
+use super::{ir, DynIntrospectable, Introspectable, References, VERSION};
 use crate::adapters::IterAsVec1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, SerializedValue, Serializer, TypeId};
@@ -29,12 +29,12 @@ impl TypeId {
 }
 
 struct Compute {
-    layout: Layout,
-    referenced: BTreeSet<Layout>,
+    layout: ir::LayoutIr,
+    referenced: BTreeSet<ir::LayoutIr>,
 }
 
 impl Compute {
-    fn new(layout: Layout) -> Self {
+    fn new(layout: ir::LayoutIr) -> Self {
         Self {
             layout,
             referenced: BTreeSet::new(),
@@ -45,7 +45,7 @@ impl Compute {
         self.layout.namespace()
     }
 
-    fn add(&mut self, layout: Layout) -> bool {
+    fn add(&mut self, layout: ir::LayoutIr) -> bool {
         self.referenced.insert(layout)
     }
 }
@@ -69,9 +69,9 @@ impl Serialize<Compute> for &Compute {
         let mut serializer = serializer.serialize_struct1(3)?;
 
         serializer.serialize::<tags::U32, _>(ComputeField::Version, VERSION)?;
-        serializer.serialize::<Layout, _>(ComputeField::Layout, &self.layout)?;
+        serializer.serialize::<ir::LayoutIr, _>(ComputeField::Layout, &self.layout)?;
 
-        serializer.serialize::<tags::Vec<Layout>, _>(
+        serializer.serialize::<tags::Vec<ir::LayoutIr>, _>(
             ComputeField::Referenced,
             IterAsVec1(&self.referenced),
         )?;

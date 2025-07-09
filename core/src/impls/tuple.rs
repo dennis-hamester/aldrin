@@ -1,7 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{
-    DynIntrospectable, Introspectable, Layout, LexicalId, References, Struct,
-};
+use crate::introspection::{ir, DynIntrospectable, Introspectable, LexicalId, References};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
@@ -82,8 +80,8 @@ macro_rules! impl_tuple {
         where
             $( $gen: Introspectable ),+
         {
-            fn layout() -> Layout {
-                Struct::builder("std", concat!("Tuple", $len))
+            fn layout() -> ir::LayoutIr {
+                ir::StructIr::builder("std", concat!("Tuple", $len))
                     $( .field($idx, concat!("field", $idx), true, $gen::lexical_id()) )+
                     .finish()
                     .into()

@@ -4,7 +4,7 @@ mod test;
 use crate::bus_listener::BusListenerEvent;
 use crate::{Error, Handle, Object};
 #[cfg(feature = "introspection")]
-use aldrin_core::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use aldrin_core::introspection::{ir, Introspectable, LexicalId, References};
 use aldrin_core::tags::{self, PrimaryTag};
 use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,
@@ -115,7 +115,7 @@ impl Serialize<tags::ObjectId> for &LifetimeScope {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for LifetimeScope {
-    fn layout() -> Layout {
+    fn layout() -> ir::LayoutIr {
         LifetimeId::layout()
     }
 
@@ -177,8 +177,8 @@ impl Deserialize<tags::ObjectId> for LifetimeId {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for LifetimeId {
-    fn layout() -> Layout {
-        BuiltInType::Lifetime.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::Lifetime.into()
     }
 
     fn lexical_id() -> LexicalId {

@@ -1,8 +1,10 @@
-use super::{BuiltInType, Enum, LexicalId, Newtype, Service, Struct};
+use super::{ir, BuiltInType, Enum, LexicalId, Newtype, Service, Struct};
 use crate::tags::{PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
+};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use uuid::Uuid;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Layout {
@@ -14,23 +16,13 @@ pub enum Layout {
 }
 
 impl Layout {
-    pub fn namespace(&self) -> Uuid {
-        match self {
-            Self::BuiltIn(_) => BuiltInType::NAMESPACE,
-            Self::Struct(_) => Struct::NAMESPACE,
-            Self::Enum(_) => Enum::NAMESPACE,
-            Self::Service(_) => Service::NAMESPACE,
-            Self::Newtype(_) => Newtype::NAMESPACE,
-        }
-    }
-
-    pub fn lexical_id(&self) -> LexicalId {
-        match self {
-            Self::BuiltIn(ty) => ty.lexical_id(),
-            Self::Struct(ty) => ty.lexical_id(),
-            Self::Enum(ty) => ty.lexical_id(),
-            Self::Service(ty) => ty.lexical_id(),
-            Self::Newtype(ty) => ty.lexical_id(),
+    pub fn from_ir(layout: ir::LayoutIr, references: &BTreeMap<LexicalId, TypeId>) -> Self {
+        match layout {
+            ir::LayoutIr::BuiltIn(ty) => Self::BuiltIn(BuiltInType::from_ir(ty, references)),
+            ir::LayoutIr::Struct(ty) => Self::Struct(Struct::from_ir(ty, references)),
+            ir::LayoutIr::Enum(ty) => Self::Enum(Enum::from_ir(ty, references)),
+            ir::LayoutIr::Service(ty) => Self::Service(Service::from_ir(ty, references)),
+            ir::LayoutIr::Newtype(ty) => Self::Newtype(Newtype::from_ir(ty, references)),
         }
     }
 

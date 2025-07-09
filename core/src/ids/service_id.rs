@@ -1,6 +1,6 @@
 use super::{ObjectId, ServiceCookie, ServiceUuid};
 #[cfg(feature = "introspection")]
-use crate::introspection::{BuiltInType, Introspectable, Layout, LexicalId, References};
+use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 
@@ -75,8 +75,8 @@ impl Deserialize<tags::ServiceId> for ServiceId {
 
 #[cfg(feature = "introspection")]
 impl Introspectable for ServiceId {
-    fn layout() -> Layout {
-        BuiltInType::ServiceId.into()
+    fn layout() -> ir::LayoutIr {
+        ir::BuiltInTypeIr::ServiceId.into()
     }
 
     fn lexical_id() -> LexicalId {
