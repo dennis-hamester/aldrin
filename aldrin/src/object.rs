@@ -1,5 +1,5 @@
-use super::{Error, Handle};
 use crate::low_level::{Service, ServiceInfo};
+use crate::{Error, Handle, LifetimeId};
 use aldrin_core::{ObjectId, ObjectUuid, ServiceUuid};
 
 /// Owned object on the bus.
@@ -58,6 +58,11 @@ impl Object {
     /// Returns the id of the object.
     pub fn id(&self) -> ObjectId {
         self.id
+    }
+
+    /// Returns the [`LifetimeId`] associated with the object.
+    pub fn lifetime_id(&self) -> LifetimeId {
+        self.id.into()
     }
 
     /// Returns a handle to the client that was used to create the object.
