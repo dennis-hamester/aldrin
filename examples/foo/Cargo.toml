@@ -1,0 +1,48 @@
+[package]
+name = "example-foo"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[profile.release]
+lto = true
+debug = true
+
+[dependencies.aldrin]
+path = "../../aldrin"
+default-features = false
+features = [
+    "codegen",
+    "new-v4-ids",
+    "tokio",
+]
+
+[dependencies.aldrin-broker]
+path = "../../broker"
+default-features = false
+features = ["statistics"]
+
+[dependencies.anyhow]
+version = "1.0.75"
+default-features = false
+features = ["std"]
+
+[dependencies.futures-util]
+version = "0.3.31"
+default-features = false
+features = ["std"]
+
+[dependencies.tokio]
+version = "1.38.2"
+default-features = false
+features = [
+    "io-util",
+    "macros",
+    "rt-multi-thread",
+]
+
+[dependencies.uuid]
+version = "1.6.1"
+default-features = false
