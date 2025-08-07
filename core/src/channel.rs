@@ -123,8 +123,14 @@ impl AsyncTransport for Bounded {
         self.sender.start_send(msg).map_err(|_| Disconnected)
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
-        Poll::Ready(Ok(()))
+    fn send_poll_flush(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Result<(), Disconnected>> {
+        match self.sender.poll_ready(cx) {
+            Poll::Ready(_) => Poll::Ready(Ok(())),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }
 
@@ -181,7 +187,10 @@ impl AsyncTransport for Unbounded {
         self.sender.start_send(msg).map_err(|_| Disconnected)
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Disconnected>> {
-        Poll::Ready(Ok(()))
+    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+        match self.sender.poll_ready(cx) {
+            Poll::Ready(_) => Poll::Ready(Ok(())),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }
