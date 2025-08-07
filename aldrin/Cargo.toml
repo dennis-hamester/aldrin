@@ -63,6 +63,10 @@ version = "1.6.1"
 default-features = false
 features = ["v4"]
 
+[dev-dependencies.aldrin-broker]
+path = "../broker"
+default-features = false
+
 [dev-dependencies.aldrin-core]
 path = "../core"
 features = ["channel"]

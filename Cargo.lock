@@ -30,6 +30,7 @@ dependencies = [
 name = "aldrin"
 version = "0.4.0"
 dependencies = [
+ "aldrin-broker",
  "aldrin-core",
  "aldrin-macros",
  "aldrin-test",
