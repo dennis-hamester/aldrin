@@ -1,4 +1,6 @@
-use aldrin_core::{ObjectUuid, ServiceUuid};
+use crate::Client;
+use aldrin_broker::Broker;
+use aldrin_core::{channel, ObjectUuid, ServiceUuid};
 use aldrin_test::aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin_test::tokio::TestBroker;
 use std::future::Future;
@@ -177,4 +179,53 @@ async fn clean_shutdown_from_broker() {
 
     broker.join().await;
     client.join().await;
+}
+
+#[tokio::test]
+async fn bounded_channel_deadlock() {
+    let (mut broker, broker_join) = {
+        let broker = Broker::new();
+        let handle = broker.handle().clone();
+        (handle, tokio::spawn(broker.run()))
+    };
+
+    let (client, client_join) = {
+        let (ch1, ch2) = channel::bounded(1);
+        let (client, conn) = tokio::join!(Client::connect(ch1), broker.connect(ch2));
+
+        let client = client.unwrap();
+        let handle = client.handle().clone();
+        let client_join = tokio::spawn(client.run());
+
+        let conn = conn.unwrap();
+        tokio::spawn(conn.run());
+
+        (handle, client_join)
+    };
+
+    let _obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+
+    let deadlock = async {
+        tokio::try_join!(
+            client.find_object_n(None, &[]),
+            client.find_object_n(None, &[]),
+            client.find_object_n(None, &[]),
+            client.find_object_n(None, &[]),
+        )
+        .unwrap();
+    };
+
+    let timeout = if cfg!(miri) {
+        Duration::from_millis(1000)
+    } else {
+        Duration::from_millis(100)
+    };
+
+    time::timeout(timeout, deadlock).await.unwrap();
+
+    client.shutdown();
+    client_join.await.unwrap().unwrap();
+
+    broker.shutdown().await;
+    broker_join.await.unwrap();
 }
