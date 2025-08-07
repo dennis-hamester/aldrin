@@ -1,3 +1,5 @@
+mod buffered;
+
 use crate::message::Message;
 use pin_project_lite::pin_project;
 use std::future::Future;
@@ -5,6 +7,8 @@ use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::{fmt, mem};
+
+pub use buffered::Buffered;
 
 /// Boxed [`AsyncTransport`] type returned by [`AsyncTransportExt::boxed`].
 pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;
@@ -246,6 +250,13 @@ pub trait AsyncTransportExt: AsyncTransport {
         Self: Sized + std::marker::Send + 'a,
     {
         Box::pin(self)
+    }
+
+    fn buffered(self) -> Buffered<Self>
+    where
+        Self: Sized,
+    {
+        Buffered::new(self)
     }
 }
 
