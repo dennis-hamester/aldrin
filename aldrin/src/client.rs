@@ -1,3 +1,5 @@
+mod select;
+
 use crate::bus_listener::{BusListener, BusListenerHandle};
 use crate::channel::{
     PendingReceiverInner, PendingSenderInner, ReceiverInner, SenderInner, UnclaimedReceiverInner,
@@ -18,7 +20,7 @@ use crate::core::message::{
     StopBusListenerReply, StopBusListenerResult, SubscribeEvent, SubscribeEventReply,
     SubscribeEventResult, Sync, SyncReply, UnsubscribeEvent,
 };
-use crate::core::transport::{AsyncTransport, AsyncTransportExt};
+use crate::core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
 use crate::core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, Deserialize, ObjectId,
     Serialize, SerializedValue, ServiceCookie, ServiceId,
@@ -39,8 +41,7 @@ use crate::serial_map::SerialMap;
 use crate::service::RawFunctionCall;
 use crate::{Error, Handle, Object, Service};
 use futures_channel::{mpsc, oneshot};
-use futures_util::future::{select, Either};
-use futures_util::stream::StreamExt;
+use select::{Select, Selected};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 use std::mem;
@@ -68,7 +69,9 @@ pub struct Client<T>
 where
     T: AsyncTransport + Unpin,
 {
-    t: T,
+    select: Select,
+    transport: Buffered<T>,
+    flush_transport: bool,
     recv: mpsc::UnboundedReceiver<HandleRequest>,
     handle: Handle,
     num_handles: usize,
@@ -98,6 +101,15 @@ where
     start_bus_listener: SerialMap<StartBusListenerRequest>,
     stop_bus_listener: SerialMap<StopBusListenerRequest>,
     bus_listeners: HashMap<BusListenerCookie, BusListenerHandle>,
+}
+
+macro_rules! send {
+    { $self:expr, $msg:expr } => {{
+        let msg = Message::from($msg);
+        $self.transport.send(msg).await.map_err(RunError::Transport)?;
+        $self.flush_transport = true;
+        Ok::<_, RunError<_>>(())
+    }};
 }
 
 impl<T> Client<T>
@@ -176,7 +188,9 @@ where
 
         let (send, recv) = mpsc::unbounded();
         let client = Client {
-            t,
+            select: Select::new(),
+            transport: t.buffered(),
+            flush_transport: false,
             recv,
             handle: Handle::new(send),
             num_handles: 1,
@@ -271,38 +285,57 @@ where
     /// types (such as e.g. [`Service`]) hold an internal [`Handle`] and will thus keep the
     /// [`Client`] running. [`Client`s](Client) can also be instructed by the broker to shut down.
     pub async fn run(mut self) -> Result<(), RunError<T::Error>> {
-        loop {
-            match select(self.t.receive(), self.recv.next()).await {
-                Either::Left((Ok(Message::Shutdown(Shutdown)), _)) => {
-                    self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
-                    return Ok(());
+        let wait_for_shutdown = loop {
+            match self.select().await {
+                Selected::Transport(Ok(Message::Shutdown(Shutdown))) => break false,
+                Selected::Transport(Ok(msg)) => self.handle_message(msg).await?,
+                Selected::Handle(HandleRequest::Shutdown) => break true,
+
+                Selected::Handle(req) => {
+                    self.handle_request(req).await?;
                 }
 
-                Either::Left((Ok(msg), _)) => self.handle_message(msg).await?,
-                Either::Left((Err(e), _)) => return Err(e.into()),
-                Either::Right((Some(HandleRequest::Shutdown), _)) => break,
-                Either::Right((Some(req), _)) => self.handle_request(req).await?,
+                Selected::TransportFlushed(Ok(())) => self.flush_transport = false,
 
-                // Unreachable, because Client holds a sender.
-                Either::Right((None, _)) => unreachable!(),
+                Selected::Transport(Err(e)) | Selected::TransportFlushed(Err(e)) => {
+                    return Err(RunError::Transport(e));
+                }
             }
 
             if self.num_handles == 1 {
-                break;
+                break true;
             }
-        }
+        };
 
-        self.t.send_and_flush(Message::Shutdown(Shutdown)).await?;
-        self.drain_transport().await?;
+        send!(self, Shutdown)?;
+        self.drain_transport(wait_for_shutdown).await?;
         Ok(())
     }
 
-    async fn drain_transport(&mut self) -> Result<(), RunError<T::Error>> {
-        loop {
-            if let Message::Shutdown(Shutdown) = self.t.receive().await? {
-                return Ok(());
+    async fn select(&mut self) -> Selected<T::Error> {
+        self.select
+            .select(&mut self.transport, &mut self.recv, self.flush_transport)
+            .await
+    }
+
+    async fn drain_transport(
+        &mut self,
+        mut wait_for_shutdown: bool,
+    ) -> Result<(), RunError<T::Error>> {
+        while wait_for_shutdown || self.flush_transport {
+            match self.select().await {
+                Selected::Transport(Ok(Message::Shutdown(Shutdown))) => wait_for_shutdown = false,
+                Selected::TransportFlushed(Ok(())) => self.flush_transport = false,
+
+                Selected::Transport(Err(e)) | Selected::TransportFlushed(Err(e)) => {
+                    return Err(RunError::Transport(e))
+                }
+
+                Selected::Transport(Ok(_)) | Selected::Handle(_) => {}
             }
         }
+
+        Ok(())
     }
 
     async fn handle_message(&mut self, msg: Message) -> Result<(), RunError<T::Error>> {
@@ -461,12 +494,13 @@ where
         };
 
         if send.unbounded_send(req).is_err() {
-            self.t
-                .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
+            send!(
+                self,
+                CallFunctionReply {
                     serial: msg.serial,
                     result: CallFunctionResult::InvalidService,
-                }))
-                .await?;
+                }
+            )?;
         }
 
         Ok(())
@@ -1055,10 +1089,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let uuid = req.uuid;
         let serial = self.create_object.insert(req);
-        self.t
-            .send_and_flush(Message::CreateObject(CreateObject { serial, uuid }))
-            .await
-            .map_err(Into::into)
+        send!(self, CreateObject { serial, uuid })
     }
 
     async fn req_destroy_object(
@@ -1066,13 +1097,13 @@ where
         req: DestroyObjectRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.destroy_object.insert(req.reply);
-        self.t
-            .send_and_flush(Message::DestroyObject(DestroyObject {
+        send!(
+            self,
+            DestroyObject {
                 serial,
                 cookie: req.cookie,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_create_service(
@@ -1083,15 +1114,15 @@ where
         let uuid = req.service_uuid;
         let version = req.version;
         let serial = self.create_service.insert(req);
-        self.t
-            .send_and_flush(Message::CreateService(CreateService {
+        send!(
+            self,
+            CreateService {
                 serial,
                 object_cookie,
                 uuid,
                 version,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_destroy_service(
@@ -1100,10 +1131,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.id.cookie;
         let serial = self.destroy_service.insert(req);
-        self.t
-            .send_and_flush(Message::DestroyService(DestroyService { serial, cookie }))
-            .await
-            .map_err(Into::into)
+        send!(self, DestroyService { serial, cookie })
     }
 
     async fn req_call_function(
@@ -1111,28 +1139,28 @@ where
         req: CallFunctionRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.function_calls.insert(req.reply);
-        self.t
-            .send_and_flush(Message::CallFunction(CallFunction {
+        send!(
+            self,
+            CallFunction {
                 serial,
                 service_cookie: req.service_cookie,
                 function: req.function,
                 value: req.value,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_call_function_reply(
         &mut self,
         req: CallFunctionReplyRequest,
     ) -> Result<(), RunError<T::Error>> {
-        self.t
-            .send_and_flush(Message::CallFunctionReply(CallFunctionReply {
+        send!(
+            self,
+            CallFunctionReply {
                 serial: req.serial,
                 result: req.result,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_subscribe_event(
@@ -1156,14 +1184,14 @@ where
                 req.reply,
             )));
 
-            self.t
-                .send_and_flush(Message::SubscribeEvent(SubscribeEvent {
+            send!(
+                self,
+                SubscribeEvent {
                     serial,
                     service_cookie: req.service_cookie,
                     event: req.id,
-                }))
-                .await
-                .map_err(Into::into)
+                }
+            )
         } else {
             if req.reply.send(SubscribeEventResult::Ok).is_err() && !duplicate {
                 subs.remove(&req.events_id);
@@ -1200,24 +1228,24 @@ where
             subs.remove();
         }
 
-        self.t
-            .send_and_flush(Message::UnsubscribeEvent(UnsubscribeEvent {
+        send!(
+            self,
+            UnsubscribeEvent {
                 service_cookie: req.service_cookie,
                 event: req.id,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_emit_event(&mut self, req: EmitEventRequest) -> Result<(), RunError<T::Error>> {
-        self.t
-            .send_and_flush(Message::EmitEvent(EmitEvent {
+        send!(
+            self,
+            EmitEvent {
                 service_cookie: req.service_cookie,
                 event: req.event,
                 value: req.value,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_query_service_version(
@@ -1225,13 +1253,13 @@ where
         req: QueryServiceVersionRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.query_service_version.insert(req.reply);
-        self.t
-            .send_and_flush(Message::QueryServiceVersion(QueryServiceVersion {
+        send!(
+            self,
+            QueryServiceVersion {
                 serial,
                 cookie: req.cookie,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_create_claimed_sender(
@@ -1239,13 +1267,13 @@ where
         req: CreateClaimedSenderRequest,
     ) -> Result<(), RunError<T::Error>> {
         let serial = self.create_channel.insert(CreateChannelData::Sender(req));
-        self.t
-            .send_and_flush(Message::CreateChannel(CreateChannel {
+        send!(
+            self,
+            CreateChannel {
                 serial,
                 end: ChannelEndWithCapacity::Sender,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_create_claimed_receiver(
@@ -1254,13 +1282,13 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let capacity = req.capacity.get();
         let serial = self.create_channel.insert(CreateChannelData::Receiver(req));
-        self.t
-            .send_and_flush(Message::CreateChannel(CreateChannel {
+        send!(
+            self,
+            CreateChannel {
                 serial,
                 end: ChannelEndWithCapacity::Receiver(capacity),
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_close_channel_end(
@@ -1272,14 +1300,14 @@ where
 
         let serial = self.close_channel_end.insert(req);
 
-        self.t
-            .send_and_flush(Message::CloseChannelEnd(CloseChannelEnd {
+        send!(
+            self,
+            CloseChannelEnd {
                 serial,
                 cookie,
                 end,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_claim_sender(
@@ -1292,14 +1320,14 @@ where
             .claim_channel_end
             .insert(ClaimChannelEndData::Sender(req));
 
-        self.t
-            .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
+        send!(
+            self,
+            ClaimChannelEnd {
                 serial,
                 cookie,
                 end: ChannelEndWithCapacity::Sender,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_claim_receiver(
@@ -1313,26 +1341,26 @@ where
             .claim_channel_end
             .insert(ClaimChannelEndData::Receiver(req));
 
-        self.t
-            .send_and_flush(Message::ClaimChannelEnd(ClaimChannelEnd {
+        send!(
+            self,
+            ClaimChannelEnd {
                 serial,
                 cookie,
                 end: ChannelEndWithCapacity::Receiver(capacity),
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_send_item(&mut self, req: SendItemRequest) -> Result<(), RunError<T::Error>> {
         debug_assert!(self.senders.contains_key(&req.cookie));
 
-        self.t
-            .send_and_flush(Message::SendItem(SendItem {
+        send!(
+            self,
+            SendItem {
                 cookie: req.cookie,
                 value: req.value,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_add_channel_capacity(
@@ -1340,11 +1368,7 @@ where
         req: AddChannelCapacity,
     ) -> Result<(), RunError<T::Error>> {
         debug_assert!(self.receivers.contains_key(&req.cookie));
-
-        self.t
-            .send_and_flush(Message::AddChannelCapacity(req))
-            .await
-            .map_err(Into::into)
+        send!(self, req)
     }
 
     fn req_sync_client(&self, req: SyncClientRequest) {
@@ -1353,10 +1377,7 @@ where
 
     async fn req_sync_broker(&mut self, req: SyncBrokerRequest) -> Result<(), RunError<T::Error>> {
         let serial = self.sync.insert(req);
-        self.t
-            .send_and_flush(Message::Sync(Sync { serial }))
-            .await
-            .map_err(Into::into)
+        send!(self, Sync { serial })
     }
 
     async fn req_create_bus_listener(
@@ -1366,10 +1387,7 @@ where
         let serial = self
             .create_bus_listener
             .insert(CreateBusListenerData::BusListener(req));
-        self.t
-            .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
-            .await
-            .map_err(Into::into)
+        send!(self, CreateBusListener { serial })
     }
 
     async fn req_destroy_bus_listener(
@@ -1378,13 +1396,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.cookie;
         let serial = self.destroy_bus_listener.insert(req);
-        self.t
-            .send_and_flush(Message::DestroyBusListener(DestroyBusListener {
-                serial,
-                cookie,
-            }))
-            .await
-            .map_err(Into::into)
+        send!(self, DestroyBusListener { serial, cookie })
     }
 
     async fn req_add_bus_listener_filter(
@@ -1395,10 +1407,7 @@ where
             return Ok(());
         };
 
-        self.t
-            .send_and_flush(Message::AddBusListenerFilter(req))
-            .await?;
-
+        send!(self, req)?;
         bus_listener.add_filter(req.filter);
         Ok(())
     }
@@ -1411,10 +1420,7 @@ where
             return Ok(());
         };
 
-        self.t
-            .send_and_flush(Message::RemoveBusListenerFilter(req))
-            .await?;
-
+        send!(self, req)?;
         bus_listener.remove_filter(req.filter);
         Ok(())
     }
@@ -1427,10 +1433,7 @@ where
             return Ok(());
         };
 
-        self.t
-            .send_and_flush(Message::ClearBusListenerFilters(req))
-            .await?;
-
+        send!(self, req)?;
         bus_listener.clear_filters();
         Ok(())
     }
@@ -1442,14 +1445,14 @@ where
         let cookie = req.cookie;
         let scope = req.scope;
         let serial = self.start_bus_listener.insert(req);
-        self.t
-            .send_and_flush(Message::StartBusListener(StartBusListener {
+        send!(
+            self,
+            StartBusListener {
                 serial,
                 cookie,
                 scope,
-            }))
-            .await
-            .map_err(Into::into)
+            }
+        )
     }
 
     async fn req_stop_bus_listener(
@@ -1458,10 +1461,7 @@ where
     ) -> Result<(), RunError<T::Error>> {
         let cookie = req.cookie;
         let serial = self.stop_bus_listener.insert(req);
-        self.t
-            .send_and_flush(Message::StopBusListener(StopBusListener { serial, cookie }))
-            .await
-            .map_err(Into::into)
+        send!(self, StopBusListener { serial, cookie })
     }
 
     async fn req_create_lifetime_listener(
@@ -1471,10 +1471,7 @@ where
         let serial = self
             .create_bus_listener
             .insert(CreateBusListenerData::LifetimeListener(req));
-        self.t
-            .send_and_flush(Message::CreateBusListener(CreateBusListener { serial }))
-            .await
-            .map_err(Into::into)
+        send!(self, CreateBusListener { serial })
     }
 
     fn shutdown_all_events(&self) {
