@@ -8,13 +8,13 @@ use aldrin_core::message::{
     MessageOps,
 };
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
 use aldrin_core::{ProtocolVersion, Serialize, SerializedValue};
 
 /// Connects to a broker and constructs a [`Client`].
 #[derive(Debug)]
 pub struct ClientBuilder<T> {
-    transport: T,
+    transport: Buffered<T>,
     data: Option<SerializedValue>,
 }
 
@@ -22,7 +22,7 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
     /// Creates a new [`ClientBuilder`].
     pub fn new(transport: T) -> Self {
         Self {
-            transport,
+            transport: transport.buffered(),
             data: None,
         }
     }

@@ -13,6 +13,7 @@ pub(crate) enum Select {
     Transport,
     Handle,
     AbortFunctionCall,
+    TransportFlushed,
 }
 
 impl Select {
@@ -25,11 +26,15 @@ impl Select {
         transport: &mut T,
         handle: &mut UnboundedReceiver<HandleRequest>,
         function_calls: &mut FunctionCallMap,
-    ) -> Selected<T>
+        flush_transport: bool,
+    ) -> Selected<T::Error>
     where
         T: AsyncTransport + Unpin,
     {
-        future::poll_fn(|cx| self.poll_select(transport, handle, function_calls, cx)).await
+        future::poll_fn(|cx| {
+            self.poll_select(transport, handle, function_calls, flush_transport, cx)
+        })
+        .await
     }
 
     fn poll_select<T>(
@@ -37,12 +42,13 @@ impl Select {
         transport: &mut T,
         handle: &mut UnboundedReceiver<HandleRequest>,
         function_calls: &mut FunctionCallMap,
+        flush_transport: bool,
         cx: &mut Context,
-    ) -> Poll<Selected<T>>
+    ) -> Poll<Selected<T::Error>>
     where
         T: AsyncTransport + Unpin,
     {
-        for _ in 0..3 {
+        for _ in 0..4 {
             match self.next() {
                 Self::Transport => {
                     if let Poll::Ready(res) = transport.receive_poll_unpin(cx) {
@@ -62,6 +68,14 @@ impl Select {
                         return Poll::Ready(Selected::AbortFunctionCall(serial));
                     }
                 }
+
+                Self::TransportFlushed => {
+                    if flush_transport {
+                        if let Poll::Ready(res) = transport.send_poll_flush_unpin(cx) {
+                            return Poll::Ready(Selected::TransportFlushed(res));
+                        }
+                    }
+                }
             }
         }
 
@@ -72,7 +86,8 @@ impl Select {
         let next = match self {
             Self::Transport => Self::Handle,
             Self::Handle => Self::AbortFunctionCall,
-            Self::AbortFunctionCall => Self::Transport,
+            Self::AbortFunctionCall => Self::TransportFlushed,
+            Self::TransportFlushed => Self::Transport,
         };
 
         mem::replace(self, next)
@@ -80,11 +95,9 @@ impl Select {
 }
 
 #[derive(Debug)]
-pub(crate) enum Selected<T>
-where
-    T: AsyncTransport,
-{
-    Transport(Result<Message, T::Error>),
+pub(crate) enum Selected<E> {
+    Transport(Result<Message, E>),
     Handle(HandleRequest),
     AbortFunctionCall(u32),
+    TransportFlushed(Result<(), E>),
 }
