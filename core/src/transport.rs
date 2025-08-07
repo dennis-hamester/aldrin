@@ -1,3 +1,5 @@
+mod buffered;
+
 use crate::message::Message;
 use pin_project_lite::pin_project;
 use std::future::Future;
@@ -5,6 +7,8 @@ use std::mem;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+
+pub use buffered::Buffered;
 
 /// Bidirectional asynchronous message transport.
 ///
@@ -230,6 +234,13 @@ pub trait AsyncTransportExt: AsyncTransport {
             transport: self,
             map_err: f,
         }
+    }
+
+    fn buffered(self) -> Buffered<Self>
+    where
+        Self: Sized,
+    {
+        Buffered::new(self)
     }
 }
 
