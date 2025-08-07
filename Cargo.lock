@@ -44,7 +44,6 @@ dependencies = [
  "aldrin-test",
  "anyhow",
  "futures-channel",
- "futures-core",
  "futures-util",
  "rand",
  "thiserror",

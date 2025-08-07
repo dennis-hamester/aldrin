@@ -4,7 +4,7 @@ use crate::conn_id::ConnectionIdManager;
 #[cfg(feature = "statistics")]
 use crate::BrokerStatistics;
 use crate::{AcceptError, Acceptor, Connection, ConnectionHandle};
-use aldrin_core::transport::AsyncTransport;
+use aldrin_core::transport::{AsyncTransport, Buffered};
 use aldrin_core::ProtocolVersion;
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
@@ -35,7 +35,7 @@ impl BrokerHandle {
 
     pub(crate) async fn add_connection<T: AsyncTransport + Unpin>(
         &mut self,
-        transport: T,
+        transport: Buffered<T>,
         version: ProtocolVersion,
     ) -> Result<Connection<T>, BrokerShutdown> {
         let id = self.ids.acquire();

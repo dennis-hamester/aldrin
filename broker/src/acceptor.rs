@@ -6,7 +6,7 @@ use aldrin_core::message::{
     ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message, MessageOps,
 };
 use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
+use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
 use aldrin_core::{
     Deserialize, DeserializeError, ProtocolVersion, Serialize, SerializeError, SerializedValue,
     SerializedValueSlice, ValueConversionError,
@@ -16,7 +16,7 @@ use thiserror::Error;
 /// Accepts or rejects new connections.
 #[derive(Debug)]
 pub struct Acceptor<T> {
-    transport: T,
+    transport: Buffered<T>,
     connect2: bool,
     version: ProtocolVersion,
     data: ConnectData,
@@ -25,7 +25,9 @@ pub struct Acceptor<T> {
 
 impl<T: AsyncTransport + Unpin> Acceptor<T> {
     /// Creates a new [`Acceptor`].
-    pub async fn new(mut transport: T) -> Result<Self, AcceptError<T::Error>> {
+    pub async fn new(transport: T) -> Result<Self, AcceptError<T::Error>> {
+        let mut transport = transport.buffered();
+
         let (connect2, data, version) =
             match transport.receive().await.map_err(AcceptError::Transport)? {
                 Message::Connect(msg) => {
@@ -73,16 +75,6 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
             data,
             reply_data: ConnectReplyData::new(),
         })
-    }
-
-    /// Returns a reference to the transport.
-    pub fn transport(&self) -> &T {
-        &self.transport
-    }
-
-    /// Returns a mutable reference to the transport.
-    pub fn transport_mut(&mut self) -> &mut T {
-        &mut self.transport
     }
 
     /// Returns the [`ProtocolVersion`] this connection will use.

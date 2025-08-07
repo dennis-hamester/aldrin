@@ -33,7 +33,6 @@ tokio = ["aldrin-core/tokio"]
 workspace = true
 
 [dependencies]
-futures-core = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-core]
