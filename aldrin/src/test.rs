@@ -169,3 +169,12 @@ async fn reply_aborted_call() {
     client.join().await;
     broker.join().await;
 }
+
+#[tokio::test]
+async fn clean_shutdown_from_broker() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    broker.join().await;
+    client.join().await;
+}
