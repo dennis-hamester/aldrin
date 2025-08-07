@@ -115,3 +115,12 @@ async fn transport_error_after_client_shutdown() {
     let res = join.await.unwrap();
     assert!(res.is_err());
 }
+
+#[tokio::test]
+async fn clean_shutdown_from_broker() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    broker.join().await;
+    client.join().await;
+}
