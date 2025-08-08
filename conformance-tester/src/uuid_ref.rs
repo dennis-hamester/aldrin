@@ -10,14 +10,14 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(into = "String", try_from = "String")]
-pub enum UuidRef {
+pub(crate) enum UuidRef {
     Const(Uuid),
     Get(String),
     Set(String),
 }
 
 impl UuidRef {
-    pub fn get(&self, ctx: &Context) -> Result<Uuid> {
+    pub(crate) fn get(&self, ctx: &Context) -> Result<Uuid> {
         match self {
             Self::Const(uuid) => Ok(*uuid),
             Self::Get(id) => ctx.get_uuid(id),
@@ -25,19 +25,7 @@ impl UuidRef {
         }
     }
 
-    pub fn match_and_update_context(&self, other: &Self, ctx: &mut Context) -> Result<bool> {
-        let Self::Const(u2) = other else {
-            unreachable!();
-        };
-
-        match self {
-            Self::Const(u1) => Ok(u1 == u2),
-            Self::Get(id) => ctx.get_uuid(id).map(|u1| u1 == *u2),
-            Self::Set(id) => ctx.set_uuid(id.clone(), *u2).map(|_| true),
-        }
-    }
-
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let u1 = match self {
             Self::Const(u1) => *u1,
             Self::Get(id) => ctx.get_uuid(id)?,
@@ -51,7 +39,7 @@ impl UuidRef {
         Ok(u1 == *u2)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         let Self::Set(id) = self else {
             return Ok(());
         };
@@ -63,7 +51,7 @@ impl UuidRef {
         ctx.set_uuid(id.clone(), *u)
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Const(uuid) => Ok(Self::Const(*uuid)),
             Self::Get(id) => ctx.get_uuid(id).map(Self::Const),

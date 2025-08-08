@@ -146,6 +146,7 @@ pub use unsubscribe_event::UnsubscribeEvent;
 pub use unsubscribe_service::UnsubscribeService;
 
 mod message_ops {
+    #[allow(unnameable_types)]
     pub trait Sealed {}
 }
 

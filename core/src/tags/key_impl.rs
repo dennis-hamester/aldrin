@@ -5,6 +5,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use std::borrow::Cow;
 use std::mem;
 
+#[allow(unnameable_types)]
 pub trait Sealed {}
 
 pub trait KeyTagImpl: Sized + Sealed {

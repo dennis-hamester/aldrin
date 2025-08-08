@@ -177,7 +177,7 @@ async fn before_derive_compat_struct() {
     use before_derive_compat::NewStruct;
 
     #[derive(Debug)]
-    pub struct OldStruct {
+    struct OldStruct {
         pub f1: i32,
         pub f2: Option<i32>,
         pub f3: Option<i32>,
@@ -326,7 +326,7 @@ async fn before_derive_compat_enum() {
     use before_derive_compat::NewEnum;
 
     #[derive(Debug)]
-    pub enum OldEnum {
+    enum OldEnum {
         Var1,
         Var2(i32),
         Var3(Option<i32>),

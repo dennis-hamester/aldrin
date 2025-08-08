@@ -4,10 +4,10 @@ use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone, Default, Eq, Deserialize)]
 #[serde(from = "String")]
-pub struct ClientId(Option<String>);
+pub(crate) struct ClientId(Option<String>);
 
 impl ClientId {
-    pub fn get(&self) -> &str {
+    pub(crate) fn get(&self) -> &str {
         self.0.as_deref().unwrap_or("default")
     }
 }

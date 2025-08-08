@@ -5,7 +5,7 @@ use aldrin_core::{
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "value-type", content = "value")]
-pub enum Value {
+pub(crate) enum Value {
     None,
     I32(i32),
     Ignore,
@@ -19,7 +19,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn matches(&self, other: &Self) -> bool {
+    pub(crate) fn matches(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::None, Self::None) | (Self::Ignore, _) | (_, Self::Ignore) => true,
             (Self::I32(v1), Self::I32(v2)) => v1 == v2,

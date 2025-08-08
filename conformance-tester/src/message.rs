@@ -837,7 +837,7 @@ impl TryFrom<ProtoMessage> for Message {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum ChannelEnd {
+pub(crate) enum ChannelEnd {
     Sender,
     Receiver,
 }
@@ -871,7 +871,7 @@ impl fmt::Display for ChannelEnd {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "end", deny_unknown_fields)]
-pub enum ChannelEndWithCapacity {
+pub(crate) enum ChannelEndWithCapacity {
     Sender,
     Receiver { capacity: u32 },
 }

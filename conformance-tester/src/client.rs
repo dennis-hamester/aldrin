@@ -11,7 +11,7 @@ use tokio::time::Instant;
 
 type TransportBox = Box<dyn AsyncTransport<Error = TokioTransportError> + Unpin + Send + Sync>;
 
-pub struct Client {
+pub(crate) struct Client {
     transport: TransportBox,
     sync: bool,
     shutdown: bool,
@@ -19,7 +19,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn connect(
+    pub(crate) async fn connect(
         port: u16,
         timeout: Instant,
         sync: bool,
@@ -44,15 +44,15 @@ impl Client {
         })
     }
 
-    pub fn sync(&self) -> bool {
+    pub(crate) fn sync(&self) -> bool {
         self.sync
     }
 
-    pub fn shutdown(&self) -> bool {
+    pub(crate) fn shutdown(&self) -> bool {
         self.shutdown
     }
 
-    pub async fn send(&mut self, mut msg: Message) -> Result<()> {
+    pub(crate) async fn send(&mut self, mut msg: Message) -> Result<()> {
         msg.convert_value(None, self.version)?;
 
         self.transport
@@ -61,11 +61,11 @@ impl Client {
             .map_err(Error::from)
     }
 
-    pub async fn receive(&mut self) -> Result<Message> {
+    pub(crate) async fn receive(&mut self) -> Result<Message> {
         self.transport.receive().await.map_err(Error::from)
     }
 
-    pub async fn expect_closed(&mut self) -> Result<(), Result<Message>> {
+    pub(crate) async fn expect_closed(&mut self) -> Result<(), Result<Message>> {
         match self.transport.receive().await {
             Ok(msg) => Err(Ok(msg)),
             Err(TokioTransportError::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(()),

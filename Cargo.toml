@@ -37,6 +37,7 @@ repository = "https://github.com/dennis-hamester/aldrin"
 rust-version = "1.71.1"
 
 [workspace.lints.rust]
+unnameable_types = "deny"
 unreachable_pub = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
