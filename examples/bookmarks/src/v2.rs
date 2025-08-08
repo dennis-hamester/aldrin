@@ -13,7 +13,7 @@ use std::fmt;
 use tokio::signal;
 
 #[derive(Parser)]
-pub enum Args {
+pub(crate) enum Args {
     /// Add a bookmark.
     Add(Add),
 
@@ -34,7 +34,7 @@ pub enum Args {
 }
 
 #[derive(Parser)]
-pub struct Add {
+pub(crate) struct Add {
     /// The name of the bookmark to add.
     name: String,
 
@@ -54,7 +54,7 @@ pub struct Add {
 }
 
 #[derive(Parser)]
-pub struct Get {
+pub(crate) struct Get {
     /// Optional group to get bookmarks from.
     ///
     /// If this is not specified, then the unspecified group is queried.
@@ -68,7 +68,7 @@ pub struct Get {
 }
 
 #[derive(Parser)]
-pub struct GetGroups {
+pub(crate) struct GetGroups {
     #[clap(flatten)]
     server: ServerArg,
 
@@ -77,7 +77,7 @@ pub struct GetGroups {
 }
 
 #[derive(Parser)]
-pub struct Listen {
+pub(crate) struct Listen {
     /// Also subscribe to unknown events.
     #[clap(short, long)]
     unknown: bool,
@@ -87,7 +87,7 @@ pub struct Listen {
 }
 
 #[derive(Parser)]
-pub struct Remove {
+pub(crate) struct Remove {
     /// The name of the bookmark to remove.
     name: String,
 
@@ -121,7 +121,7 @@ struct IgnoreVersionArg {
     ignore_version: bool,
 }
 
-pub async fn run(args: Args, bus: &Handle) -> Result<()> {
+pub(crate) async fn run(args: Args, bus: &Handle) -> Result<()> {
     match args {
         Args::Add(args) => add(args, bus).await,
         Args::Get(args) => get(args, bus).await,

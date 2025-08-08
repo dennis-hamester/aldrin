@@ -177,7 +177,7 @@ impl FusedStream for Proxy {
 pub(crate) struct ProxyId(Uuid);
 
 impl ProxyId {
-    pub fn new_v4() -> Self {
+    pub(crate) fn new_v4() -> Self {
         Self(Uuid::new_v4())
     }
 }

@@ -25,7 +25,7 @@ const STYLE_EMPHASIZED: AnStyle = style(None, true);
 const STYLE_SEPARATOR: AnStyle = style(Some(AnsiColor::Cyan), true);
 const STYLE_LINE_NUMBER: AnStyle = style(Some(AnsiColor::Cyan), true);
 
-pub fn print_diagnostics(parsed: &Parsed) {
+pub(crate) fn print_diagnostics(parsed: &Parsed) {
     for error in parsed.errors() {
         let formatted = error.format(parsed);
         print_formatted(&formatted);

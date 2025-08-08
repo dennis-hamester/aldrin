@@ -11,27 +11,27 @@ pub(super) struct Options {
 }
 
 impl Options {
-    pub fn krate(&self) -> &Path {
+    pub(crate) fn krate(&self) -> &Path {
         &self.krate
     }
 
-    pub fn client(&self) -> bool {
+    pub(crate) fn client(&self) -> bool {
         self.client
     }
 
-    pub fn server(&self) -> bool {
+    pub(crate) fn server(&self) -> bool {
         self.server
     }
 
-    pub fn introspection(&self) -> bool {
+    pub(crate) fn introspection(&self) -> bool {
         self.introspection
     }
 
-    pub fn introspection_if(&self) -> Option<&LitStr> {
+    pub(crate) fn introspection_if(&self) -> Option<&LitStr> {
         self.introspection_if.as_ref()
     }
 
-    pub fn schema(&self) -> Option<&LitStr> {
+    pub(crate) fn schema(&self) -> Option<&LitStr> {
         self.schema.as_ref()
     }
 }

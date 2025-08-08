@@ -5,11 +5,11 @@ use std::sync::{Arc, Mutex};
 pub(crate) struct ConnectionIdManager(Arc<Mutex<Inner>>);
 
 impl ConnectionIdManager {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self(Arc::new(Mutex::new(Inner::new())))
     }
 
-    pub fn acquire(&self) -> ConnectionId {
+    pub(crate) fn acquire(&self) -> ConnectionId {
         let id = {
             let mut this = self.0.lock().expect("mutex poisoned");
             this.acquire()

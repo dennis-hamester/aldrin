@@ -24,27 +24,27 @@ impl<const SENDER: bool> RawChannel<SENDER> {
         }
     }
 
-    pub fn unclaimed(client: Handle, cookie: ChannelCookie) -> Self {
+    pub(crate) fn unclaimed(client: Handle, cookie: ChannelCookie) -> Self {
         Self::new(client, cookie, false)
     }
 
-    pub fn claimed(client: Handle, cookie: ChannelCookie) -> Self {
+    pub(crate) fn claimed(client: Handle, cookie: ChannelCookie) -> Self {
         Self::new(client, cookie, true)
     }
 
-    pub fn client(&self) -> &Handle {
+    pub(crate) fn client(&self) -> &Handle {
         &self.client
     }
 
-    pub fn cookie(&self) -> ChannelCookie {
+    pub(crate) fn cookie(&self) -> ChannelCookie {
         self.cookie
     }
 
-    pub fn is_open(&self) -> bool {
+    pub(crate) fn is_open(&self) -> bool {
         self.state.is_open()
     }
 
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub(crate) fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
         let mut closing = match mem::replace(&mut self.state, State::Closed) {
             State::Open => self.begin_close()?,
             State::Closing(closing) => closing,
@@ -61,17 +61,17 @@ impl<const SENDER: bool> RawChannel<SENDER> {
         }
     }
 
-    pub async fn close(&mut self) -> Result<(), Error> {
+    pub(crate) async fn close(&mut self) -> Result<(), Error> {
         future::poll_fn(|cx| self.poll_close(cx)).await
     }
 
-    pub fn unbind(mut self) -> ChannelCookie {
+    pub(crate) fn unbind(mut self) -> ChannelCookie {
         debug_assert!(!self.claimed);
         self.state = State::Closed;
         self.cookie
     }
 
-    pub fn set_claimed(&mut self) {
+    pub(crate) fn set_claimed(&mut self) {
         debug_assert!(!self.claimed);
         self.claimed = true;
     }
@@ -91,7 +91,7 @@ impl<const SENDER: bool> RawChannel<SENDER> {
 }
 
 impl RawChannel<true> {
-    pub fn send_item(&self, item: SerializedValue) -> Result<(), Error> {
+    pub(crate) fn send_item(&self, item: SerializedValue) -> Result<(), Error> {
         if self.is_open() {
             self.client.send_item(self.cookie, item)
         } else {
@@ -101,7 +101,7 @@ impl RawChannel<true> {
 }
 
 impl RawChannel<false> {
-    pub fn add_channel_capacity(&self, capacity: u32) {
+    pub(crate) fn add_channel_capacity(&self, capacity: u32) {
         if self.is_open() {
             let _ = self.client.add_channel_capacity(self.cookie, capacity);
         }

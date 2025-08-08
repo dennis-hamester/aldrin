@@ -11,7 +11,7 @@ use std::fmt;
 use tokio::signal;
 
 #[derive(Parser)]
-pub enum Args {
+pub(crate) enum Args {
     /// Add a bookmark.
     Add(Add),
 
@@ -29,7 +29,7 @@ pub enum Args {
 }
 
 #[derive(Parser)]
-pub struct Add {
+pub(crate) struct Add {
     /// The name of the bookmark to add.
     name: String,
 
@@ -41,7 +41,7 @@ pub struct Add {
 }
 
 #[derive(Parser)]
-pub struct Listen {
+pub(crate) struct Listen {
     /// Also subscribe to unknown events.
     #[clap(short, long)]
     unknown: bool,
@@ -51,7 +51,7 @@ pub struct Listen {
 }
 
 #[derive(Parser)]
-pub struct Remove {
+pub(crate) struct Remove {
     /// The name of the bookmark to remove.
     name: String,
 
@@ -60,7 +60,7 @@ pub struct Remove {
 }
 
 #[derive(Parser)]
-pub struct ServerArg {
+pub(crate) struct ServerArg {
     /// UUID of the server to use.
     ///
     /// If this is not specified, then the first server is used that is found.
@@ -68,7 +68,7 @@ pub struct ServerArg {
     server: Option<ObjectUuid>,
 }
 
-pub async fn run(args: Args, bus: &Handle) -> Result<()> {
+pub(crate) async fn run(args: Args, bus: &Handle) -> Result<()> {
     match args {
         Args::Add(args) => add(args, bus).await,
         Args::Get(args) => get(args.server, bus).await,

@@ -41,35 +41,35 @@ use std::fs::{self, File};
 use std::path::Path;
 use tokio::time::Instant;
 
-pub use claim_channel_end::ClaimChannelEndStep;
-pub use close_channel::CloseChannel;
-pub use close_channel_end::CloseChannelEndStep;
-pub use connect_client::ConnectClient;
-pub use connection_closed::ConnectionClosed;
-pub use create_bus_listener::CreateBusListenerStep;
-pub use create_channel::CreateChannelStep;
-pub use create_object::CreateObjectStep;
-pub use create_service::CreateServiceStep;
-pub use create_service2::CreateService2Step;
-pub use destroy_bus_listener::DestroyBusListenerStep;
-pub use destroy_object::DestroyObjectStep;
-pub use destroy_service::DestroyServiceStep;
-pub use receive::Receive;
-pub use receive_discard_until::ReceiveDiscardUntil;
-pub use receive_unordered::ReceiveUnordered;
-pub use remove_client::RemoveClient;
-pub use send::Send;
-pub use send_item::SendItemStep;
-pub use shutdown::ShutdownStep;
-pub use start_bus_listener::StartBusListenerStep;
-pub use step::Step;
-pub use stop_bus_listener::StopBusListenerStep;
-pub use subscribe_all_events::SubscribeAllEventsStep;
-pub use subscribe_event::SubscribeEventStep;
-pub use sync::SyncStep;
-pub use unsubscribe_event::UnsubscribeEventStep;
+pub(crate) use claim_channel_end::ClaimChannelEndStep;
+pub(crate) use close_channel::CloseChannel;
+pub(crate) use close_channel_end::CloseChannelEndStep;
+pub(crate) use connect_client::ConnectClient;
+pub(crate) use connection_closed::ConnectionClosed;
+pub(crate) use create_bus_listener::CreateBusListenerStep;
+pub(crate) use create_channel::CreateChannelStep;
+pub(crate) use create_object::CreateObjectStep;
+pub(crate) use create_service::CreateServiceStep;
+pub(crate) use create_service2::CreateService2Step;
+pub(crate) use destroy_bus_listener::DestroyBusListenerStep;
+pub(crate) use destroy_object::DestroyObjectStep;
+pub(crate) use destroy_service::DestroyServiceStep;
+pub(crate) use receive::Receive;
+pub(crate) use receive_discard_until::ReceiveDiscardUntil;
+pub(crate) use receive_unordered::ReceiveUnordered;
+pub(crate) use remove_client::RemoveClient;
+pub(crate) use send::Send;
+pub(crate) use send_item::SendItemStep;
+pub(crate) use shutdown::ShutdownStep;
+pub(crate) use start_bus_listener::StartBusListenerStep;
+pub(crate) use step::Step;
+pub(crate) use stop_bus_listener::StopBusListenerStep;
+pub(crate) use subscribe_all_events::SubscribeAllEventsStep;
+pub(crate) use subscribe_event::SubscribeEventStep;
+pub(crate) use sync::SyncStep;
+pub(crate) use unsubscribe_event::UnsubscribeEventStep;
 
-pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
+pub(crate) static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     let sources = [
         include_str!("../tests/abort-call-1.json"),
         include_str!("../tests/abort-call-2.json"),
@@ -185,7 +185,7 @@ pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     tests
 });
 
-pub fn get_tests(custom: Option<&Path>) -> Result<Cow<'_, [Test]>> {
+pub(crate) fn get_tests(custom: Option<&Path>) -> Result<Cow<'_, [Test]>> {
     let Some(custom) = custom else {
         return Ok(Cow::Borrowed(&*BUILT_IN_TESTS));
     };
@@ -243,7 +243,7 @@ pub fn get_tests(custom: Option<&Path>) -> Result<Cow<'_, [Test]>> {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Test {
+pub(crate) struct Test {
     pub name: String,
     pub description: Option<String>,
     pub long_description: Option<String>,
@@ -261,7 +261,7 @@ pub struct Test {
 }
 
 impl Test {
-    pub async fn run(
+    pub(crate) async fn run(
         &self,
         broker: &Broker,
         timeout: Instant,

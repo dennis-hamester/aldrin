@@ -12,18 +12,18 @@ pub(crate) struct IntrospectionDatabase {
 }
 
 impl IntrospectionDatabase {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             entries: HashMap::new(),
         }
     }
 
     #[cfg(feature = "statistics")]
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.entries.len()
     }
 
-    pub fn register(&mut self, type_ids: &HashSet<TypeId>, conn_id: &ConnectionId) {
+    pub(crate) fn register(&mut self, type_ids: &HashSet<TypeId>, conn_id: &ConnectionId) {
         for type_id in type_ids {
             self.entries
                 .entry(*type_id)
@@ -32,7 +32,7 @@ impl IntrospectionDatabase {
         }
     }
 
-    pub fn remove_conn(&mut self, conn_id: &ConnectionId) -> Vec<RemoveConn> {
+    pub(crate) fn remove_conn(&mut self, conn_id: &ConnectionId) -> Vec<RemoveConn> {
         let mut result = Vec::new();
 
         self.entries.retain(|&type_id, entry| {
@@ -54,11 +54,11 @@ impl IntrospectionDatabase {
         result
     }
 
-    pub fn get_mut(&mut self, type_id: TypeId) -> Option<&mut IntrospectionEntry> {
+    pub(crate) fn get_mut(&mut self, type_id: TypeId) -> Option<&mut IntrospectionEntry> {
         self.entries.get_mut(&type_id)
     }
 
-    pub fn query_replied(
+    pub(crate) fn query_replied(
         &mut self,
         type_id: TypeId,
         conn_id: &ConnectionId,
@@ -148,20 +148,20 @@ impl IntrospectionEntry {
         }
     }
 
-    pub fn introspection(&self) -> Option<&SerializedValue> {
+    pub(crate) fn introspection(&self) -> Option<&SerializedValue> {
         self.introspection.as_ref()
     }
 
-    pub fn queried(&self) -> Option<u32> {
+    pub(crate) fn queried(&self) -> Option<u32> {
         self.queried.as_ref().map(|queried| queried.serial)
     }
 
-    pub fn add_pending(&mut self, conn_id: ConnectionId, serial: u32) {
+    pub(crate) fn add_pending(&mut self, conn_id: ConnectionId, serial: u32) {
         debug_assert!(self.introspection.is_none());
         self.pending.push(IntrospectionQuery::new(conn_id, serial));
     }
 
-    pub fn query_random_conn(&mut self, serial: u32) -> &ConnectionId {
+    pub(crate) fn query_random_conn(&mut self, serial: u32) -> &ConnectionId {
         debug_assert!(self.queried.is_none());
         debug_assert!(!self.conn_id_idxs.is_empty());
         debug_assert!(!self.conn_ids.is_empty());

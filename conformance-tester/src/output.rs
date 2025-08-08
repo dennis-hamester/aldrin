@@ -38,7 +38,7 @@ fn get_termwidth() -> usize {
         .max(MIN_TERMWIDTH)
 }
 
-pub fn list_tests(args: FilterArgs, tests: &[Test]) {
+pub(crate) fn list_tests(args: FilterArgs, tests: &[Test]) {
     for test in tests.iter().filter(|test| args.matches(test)) {
         print!("{style}{}{style:#}", test.name, style = STYLE_TEST_NAME);
 
@@ -67,7 +67,7 @@ pub fn list_tests(args: FilterArgs, tests: &[Test]) {
     }
 }
 
-pub fn describe_test(test: &Test) {
+pub(crate) fn describe_test(test: &Test) {
     print!("{style}{}{style:#}", test.name, style = STYLE_TEST_NAME);
 
     if let Some(ref description) = test.description {
@@ -99,7 +99,7 @@ pub fn describe_test(test: &Test) {
     }
 }
 
-pub fn prepare_report(name: &str) {
+pub(crate) fn prepare_report(name: &str) {
     print!("{style}{name}{style:#} ... ", style = STYLE_TEST_NAME);
     let _ = anstream::stdout().flush();
 }
@@ -108,7 +108,7 @@ fn print_seperator() {
     print!("{style}|{style:#} ", style = STYLE_SEPARATOR);
 }
 
-pub fn finish_report(res: Result<Duration, RunError>) {
+pub(crate) fn finish_report(res: Result<Duration, RunError>) {
     let err = match res {
         Ok(dur) => {
             println!(
@@ -154,7 +154,7 @@ pub fn finish_report(res: Result<Duration, RunError>) {
     println!();
 }
 
-pub fn summary(passed: usize, total: usize) {
+pub(crate) fn summary(passed: usize, total: usize) {
     println!();
     println!("{style}Summary{style:#}:", style = STYLE_TEST_NAME);
 

@@ -9,7 +9,7 @@ use std::time::Duration;
 use tokio::signal;
 use tokio::time::{self, Instant, Interval, MissedTickBehavior};
 
-pub async fn run(bus: &Handle) -> Result<()> {
+pub(crate) async fn run(bus: &Handle) -> Result<()> {
     Server::new(bus).await?.run().await
 }
 

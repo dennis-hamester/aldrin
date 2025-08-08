@@ -7,34 +7,34 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CreateObject {
+pub(crate) struct CreateObject {
     pub serial: Serial,
     pub uuid: UuidRef,
 }
 
 impl CreateObject {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateObject> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CreateObject> {
         let serial = self.serial.get(ctx)?;
         let uuid = self.uuid.get(ctx)?.into();
 
         Ok(message::CreateObject { serial, uuid })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.uuid.matches(&other.uuid, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.uuid.update_context(&other.uuid, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let uuid = self.uuid.apply_context(ctx)?;
 

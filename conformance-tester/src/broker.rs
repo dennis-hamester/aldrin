@@ -9,14 +9,14 @@ use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
 #[derive(Debug)]
-pub struct Broker {
+pub(crate) struct Broker {
     child: Child,
     stderr: JoinHandle<Vec<u8>>,
     port: u16,
 }
 
 impl Broker {
-    pub async fn new(broker: &OsStr, startup_timeout: Duration) -> Result<Self> {
+    pub(crate) async fn new(broker: &OsStr, startup_timeout: Duration) -> Result<Self> {
         let mut child = Command::new(broker)
             .kill_on_drop(true)
             .stdout(Stdio::piped())
@@ -51,11 +51,11 @@ impl Broker {
         })
     }
 
-    pub fn port(&self) -> u16 {
+    pub(crate) fn port(&self) -> u16 {
         self.port
     }
 
-    pub async fn shut_down(&mut self, timeout: Instant) -> Result<()> {
+    pub(crate) async fn shut_down(&mut self, timeout: Instant) -> Result<()> {
         match self.child.wait().timeout_at(timeout).await {
             Ok(Ok(status)) => {
                 if status.success() {
@@ -72,7 +72,7 @@ impl Broker {
         }
     }
 
-    pub async fn take_stderr(&mut self, timeout: Instant) -> Result<Vec<u8>> {
+    pub(crate) async fn take_stderr(&mut self, timeout: Instant) -> Result<Vec<u8>> {
         match (&mut self.stderr).timeout_at(timeout).await {
             Ok(Ok(stderr)) => Ok(stderr),
             Ok(Err(e)) => Err(Error::new(e).context(anyhow!("failed to capture stderr"))),

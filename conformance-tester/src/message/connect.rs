@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Connect {
+pub(crate) struct Connect {
     pub version: u32,
 }
 
 impl Connect {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::Connect> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::Connect> {
         let value =
             SerializedValue::serialize(()).with_context(|| anyhow!("failed to serialize value"))?;
 
@@ -20,15 +20,15 @@ impl Connect {
         })
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self.version == other.version)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

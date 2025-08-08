@@ -9,7 +9,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct UnsubscribeEventStep {
+pub(crate) struct UnsubscribeEventStep {
     #[serde(default)]
     pub client: ClientId,
 
@@ -27,7 +27,7 @@ fn default_true() -> bool {
 }
 
 impl UnsubscribeEventStep {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout).await.with_context(|| {
             anyhow!(
                 "failed to unsubscribe from event {} for client `{}`",

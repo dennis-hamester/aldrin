@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CreateServiceReply {
+pub(crate) struct CreateServiceReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -15,27 +15,27 @@ pub struct CreateServiceReply {
 }
 
 impl CreateServiceReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateServiceReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CreateServiceReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::CreateServiceReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -56,7 +56,7 @@ impl TryFrom<message::CreateServiceReply> for CreateServiceReply {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum CreateServiceResult {
+pub(crate) enum CreateServiceResult {
     Ok { cookie: UuidRef },
     DuplicateService,
     InvalidObject,
@@ -64,7 +64,7 @@ pub enum CreateServiceResult {
 }
 
 impl CreateServiceResult {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateServiceResult> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CreateServiceResult> {
         match self {
             Self::Ok { cookie } => {
                 let cookie = cookie.get(ctx)?.into();
@@ -77,7 +77,7 @@ impl CreateServiceResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Ok { cookie: c1 }, Self::Ok { cookie: c2 }) => c1.matches(c2, ctx),
             (Self::DuplicateService, Self::DuplicateService)
@@ -87,7 +87,7 @@ impl CreateServiceResult {
         }
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (Self::Ok { cookie: c1 }, Self::Ok { cookie: c2 }) => c1.update_context(c2, ctx),
             (Self::DuplicateService, Self::DuplicateService)
@@ -97,7 +97,7 @@ impl CreateServiceResult {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Ok { cookie } => {
                 let cookie = cookie.apply_context(ctx)?;

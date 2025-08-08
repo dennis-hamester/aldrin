@@ -13,15 +13,15 @@ pub(super) struct EvFallbackItem {
 }
 
 impl EvFallbackItem {
-    pub fn ident(&self) -> &Ident {
+    pub(crate) fn ident(&self) -> &Ident {
         &self.ident
     }
 
-    pub fn variant(&self) -> &Ident {
+    pub(crate) fn variant(&self) -> &Ident {
         &self.variant
     }
 
-    pub fn gen_next_event_match_arm(&self, event: &Ident) -> TokenStream {
+    pub(crate) fn gen_next_event_match_arm(&self, event: &Ident) -> TokenStream {
         let variant = &self.variant;
 
         quote! {
@@ -33,7 +33,7 @@ impl EvFallbackItem {
         }
     }
 
-    pub fn gen_variant(&self) -> TokenStream {
+    pub(crate) fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
 
@@ -43,7 +43,7 @@ impl EvFallbackItem {
         }
     }
 
-    pub fn layout(&self) -> TokenStream {
+    pub(crate) fn layout(&self) -> TokenStream {
         let name = self.ident.unraw().to_string();
 
         quote! { .event_fallback(#name) }

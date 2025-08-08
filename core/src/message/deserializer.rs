@@ -9,7 +9,10 @@ pub(crate) struct MessageWithoutValueDeserializer {
 }
 
 impl MessageWithoutValueDeserializer {
-    pub fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, MessageDeserializeError> {
+    pub(crate) fn new(
+        mut buf: BytesMut,
+        kind: MessageKind,
+    ) -> Result<Self, MessageDeserializeError> {
         let buf_len = buf.len();
 
         // 4 bytes message length + 1 byte message kind.
@@ -27,17 +30,17 @@ impl MessageWithoutValueDeserializer {
         Ok(Self { buf })
     }
 
-    pub fn try_get_discriminant_u8<T: TryFrom<u8>>(
+    pub(crate) fn try_get_discriminant_u8<T: TryFrom<u8>>(
         &mut self,
     ) -> Result<T, MessageDeserializeError> {
         self.buf.try_get_discriminant_u8()
     }
 
-    pub fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+    pub(crate) fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
         self.buf.try_get_varint_u32_le()
     }
 
-    pub fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
+    pub(crate) fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
 
         self.buf
@@ -47,7 +50,7 @@ impl MessageWithoutValueDeserializer {
         Ok(Uuid::from_bytes(bytes))
     }
 
-    pub fn finish(self) -> Result<(), MessageDeserializeError> {
+    pub(crate) fn finish(self) -> Result<(), MessageDeserializeError> {
         if self.buf.is_empty() {
             Ok(())
         } else {
@@ -62,7 +65,10 @@ pub(crate) struct MessageWithValueDeserializer {
 }
 
 impl MessageWithValueDeserializer {
-    pub fn new(mut buf: BytesMut, kind: MessageKind) -> Result<Self, MessageDeserializeError> {
+    pub(crate) fn new(
+        mut buf: BytesMut,
+        kind: MessageKind,
+    ) -> Result<Self, MessageDeserializeError> {
         debug_assert!(kind.has_value());
 
         // 4 bytes message length + 1 byte message kind + 4 bytes value length + at least 1 byte
@@ -96,17 +102,17 @@ impl MessageWithValueDeserializer {
         })
     }
 
-    pub fn try_get_discriminant_u8<T: TryFrom<u8>>(
+    pub(crate) fn try_get_discriminant_u8<T: TryFrom<u8>>(
         &mut self,
     ) -> Result<T, MessageDeserializeError> {
         self.msg.try_get_discriminant_u8()
     }
 
-    pub fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
+    pub(crate) fn try_get_varint_u32_le(&mut self) -> Result<u32, MessageDeserializeError> {
         self.msg.try_get_varint_u32_le()
     }
 
-    pub fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
+    pub(crate) fn try_get_uuid(&mut self) -> Result<Uuid, MessageDeserializeError> {
         let mut bytes = uuid::Bytes::default();
 
         self.msg
@@ -116,7 +122,7 @@ impl MessageWithValueDeserializer {
         Ok(Uuid::from_bytes(bytes))
     }
 
-    pub fn finish(mut self) -> Result<SerializedValue, MessageDeserializeError> {
+    pub(crate) fn finish(mut self) -> Result<SerializedValue, MessageDeserializeError> {
         if self.msg.is_empty() {
             self.header_and_value.unsplit(self.msg);
             self.header_and_value[0..9].fill(0);
@@ -126,7 +132,7 @@ impl MessageWithValueDeserializer {
         }
     }
 
-    pub fn finish_discard_value(self) -> Result<(), MessageDeserializeError> {
+    pub(crate) fn finish_discard_value(self) -> Result<(), MessageDeserializeError> {
         if self.msg.is_empty() {
             Ok(())
         } else {

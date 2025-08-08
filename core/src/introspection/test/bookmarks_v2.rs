@@ -2,7 +2,7 @@ use super::super::{ir, DynIntrospectable, Introspectable, LexicalId, References}
 use crate::ServiceUuid;
 use uuid::uuid;
 
-pub struct Bookmarks;
+pub(crate) struct Bookmarks;
 
 impl Introspectable for Bookmarks {
     fn layout() -> ir::LayoutIr {
@@ -77,7 +77,7 @@ impl Introspectable for Bookmarks {
     }
 }
 
-pub struct BookmarksGetV2Args;
+pub(crate) struct BookmarksGetV2Args;
 
 impl Introspectable for BookmarksGetV2Args {
     fn layout() -> ir::LayoutIr {
@@ -99,7 +99,7 @@ impl Introspectable for BookmarksGetV2Args {
     }
 }
 
-pub struct BookmarksRemoveV2Args;
+pub(crate) struct BookmarksRemoveV2Args;
 
 impl Introspectable for BookmarksRemoveV2Args {
     fn layout() -> ir::LayoutIr {
@@ -125,7 +125,7 @@ impl Introspectable for BookmarksRemoveV2Args {
     }
 }
 
-pub struct Bookmark;
+pub(crate) struct Bookmark;
 
 impl Introspectable for Bookmark {
     fn layout() -> ir::LayoutIr {
@@ -153,7 +153,7 @@ impl Introspectable for Bookmark {
     }
 }
 
-pub enum Error {}
+pub(crate) enum Error {}
 
 impl Introspectable for Error {
     fn layout() -> ir::LayoutIr {

@@ -13,35 +13,35 @@ pub(super) enum ServiceItem {
 }
 
 impl ServiceItem {
-    pub fn as_event(&self) -> Option<&EvItem> {
+    pub(crate) fn as_event(&self) -> Option<&EvItem> {
         match self {
             Self::Event(ev) => Some(ev),
             Self::EventFallback(_) | Self::Function(_) | Self::FunctionFallback(_) => None,
         }
     }
 
-    pub fn as_fallback_event(&self) -> Option<&EvFallbackItem> {
+    pub(crate) fn as_fallback_event(&self) -> Option<&EvFallbackItem> {
         match self {
             Self::EventFallback(ev) => Some(ev),
             Self::Event(_) | Self::Function(_) | Self::FunctionFallback(_) => None,
         }
     }
 
-    pub fn as_function(&self) -> Option<&FnItem> {
+    pub(crate) fn as_function(&self) -> Option<&FnItem> {
         match self {
             Self::Function(func) => Some(func),
             Self::Event(_) | Self::EventFallback(_) | Self::FunctionFallback(_) => None,
         }
     }
 
-    pub fn as_fallback_function(&self) -> Option<&FnFallbackItem> {
+    pub(crate) fn as_fallback_function(&self) -> Option<&FnFallbackItem> {
         match self {
             Self::FunctionFallback(func) => Some(func),
             Self::Event(_) | Self::EventFallback(_) | Self::Function(_) => None,
         }
     }
 
-    pub fn layout(&self, options: &Options) -> TokenStream {
+    pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         match self {
             Self::Event(ev) => ev.layout(options),
             Self::EventFallback(ev) => ev.layout(),
@@ -50,7 +50,7 @@ impl ServiceItem {
         }
     }
 
-    pub fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
+    pub(crate) fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
         match self {
             Self::Event(ev) => ev.add_references(references),
             Self::Function(func) => func.add_references(references),

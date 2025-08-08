@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct AddChannelCapacity {
+pub(crate) struct AddChannelCapacity {
     pub cookie: UuidRef,
     pub capacity: u32,
 }
 
 impl AddChannelCapacity {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::AddChannelCapacity> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::AddChannelCapacity> {
         let cookie = self.cookie.get(ctx)?.into();
 
         Ok(message::AddChannelCapacity {
@@ -21,19 +21,19 @@ impl AddChannelCapacity {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.cookie.matches(&other.cookie, ctx)? && (self.capacity == other.capacity);
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.cookie.update_context(&other.cookie, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let cookie = self.cookie.apply_context(ctx)?;
 
         Ok(Self {

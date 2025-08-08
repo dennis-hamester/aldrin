@@ -7,13 +7,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ChannelEndClosed {
+pub(crate) struct ChannelEndClosed {
     pub cookie: UuidRef,
     pub end: ChannelEnd,
 }
 
 impl ChannelEndClosed {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::ChannelEndClosed> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::ChannelEndClosed> {
         let cookie = self.cookie.get(ctx)?.into();
 
         Ok(message::ChannelEndClosed {
@@ -22,19 +22,19 @@ impl ChannelEndClosed {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.cookie.matches(&other.cookie, ctx)? && (self.end == other.end);
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.cookie.update_context(&other.cookie, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let cookie = self.cookie.apply_context(ctx)?;
 
         Ok(Self {

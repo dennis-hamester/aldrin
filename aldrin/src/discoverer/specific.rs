@@ -22,7 +22,7 @@ impl<Key> SpecificObject<Key>
 where
     Key: Copy + Eq + Hash,
 {
-    pub fn new(
+    pub(crate) fn new(
         key: Key,
         object: ObjectUuid,
         services: impl IntoIterator<Item = ServiceUuid>,
@@ -36,7 +36,7 @@ where
         }
     }
 
-    pub fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
+    pub(crate) fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
         listener.add_filter(BusListenerFilter::object(self.object))?;
 
         for service in self.services.keys() {
@@ -49,7 +49,7 @@ where
         Ok(())
     }
 
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.cookie = None;
         self.created = false;
 
@@ -58,7 +58,7 @@ where
         }
     }
 
-    pub fn key(&self) -> Key {
+    pub(crate) fn key(&self) -> Key {
         self.key
     }
 
@@ -66,7 +66,7 @@ where
         ObjectId::new(self.object, self.cookie.unwrap())
     }
 
-    pub fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+    pub(crate) fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
         assert_eq!(object, self.object);
         self.created.then(|| self.object_id_unchecked())
     }
@@ -84,7 +84,7 @@ where
         ServiceId::new(object_id, service, service_cookie)
     }
 
-    pub fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+    pub(crate) fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
         self.object_id(object).map(|object_id| {
             ServiceId::new(object_id, service, self.service_cookie_unchecked(service))
         })
@@ -105,7 +105,7 @@ where
             .collect()
     }
 
-    pub fn service_ids(
+    pub(crate) fn service_ids(
         &self,
         object: ObjectUuid,
         services: impl IntoIterator<Item = ServiceUuid>,
@@ -133,7 +133,7 @@ where
         })
     }
 
-    pub fn service_ids_n<const N: usize>(
+    pub(crate) fn service_ids_n<const N: usize>(
         &self,
         object: ObjectUuid,
         services: &[ServiceUuid; N],
@@ -146,15 +146,15 @@ where
         })
     }
 
-    pub fn contains(&self, object: ObjectUuid) -> bool {
+    pub(crate) fn contains(&self, object: ObjectUuid) -> bool {
         self.created && (object == self.object)
     }
 
-    pub fn contains_any(&self) -> bool {
+    pub(crate) fn contains_any(&self) -> bool {
         self.created
     }
 
-    pub fn iter(&self) -> SpecificObjectIter<'_, Key> {
+    pub(crate) fn iter(&self) -> SpecificObjectIter<'_, Key> {
         if self.created {
             SpecificObjectIter::new(Some(SpecificObjectIterEntry::new(self)))
         } else {
@@ -162,7 +162,7 @@ where
         }
     }
 
-    pub fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
+    pub(crate) fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
             BusEvent::ObjectDestroyed(id) => self.object_destroyed(id),
@@ -315,23 +315,29 @@ where
         Self { object }
     }
 
-    pub fn key(self) -> Key {
+    pub(crate) fn key(self) -> Key {
         self.object.key()
     }
 
-    pub fn object_id(self) -> ObjectId {
+    pub(crate) fn object_id(self) -> ObjectId {
         self.object.object_id_unchecked()
     }
 
-    pub fn service_id(self, service: ServiceUuid) -> ServiceId {
+    pub(crate) fn service_id(self, service: ServiceUuid) -> ServiceId {
         self.object.service_id_unchecked(service)
     }
 
-    pub fn service_ids(self, services: impl IntoIterator<Item = ServiceUuid>) -> Vec<ServiceId> {
+    pub(crate) fn service_ids(
+        self,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Vec<ServiceId> {
         self.object.service_ids_unchecked(services)
     }
 
-    pub fn service_ids_n<const N: usize>(self, services: &[ServiceUuid; N]) -> [ServiceId; N] {
+    pub(crate) fn service_ids_n<const N: usize>(
+        self,
+        services: &[ServiceUuid; N],
+    ) -> [ServiceId; N] {
         self.object.service_ids_n_unchecked(services)
     }
 }

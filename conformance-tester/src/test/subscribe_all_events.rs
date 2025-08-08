@@ -12,7 +12,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SubscribeAllEventsStep {
+pub(crate) struct SubscribeAllEventsStep {
     #[serde(default)]
     pub client: ClientId,
 
@@ -30,7 +30,7 @@ fn default_true() -> bool {
 }
 
 impl SubscribeAllEventsStep {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout).await.with_context(|| {
             anyhow!(
                 "failed to subscribe to all events for client `{}`",

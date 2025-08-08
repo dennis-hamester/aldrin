@@ -36,7 +36,7 @@ const BUILTIN_KEY_TYPES: &[&str] = &[
     "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "string", "uuid",
 ];
 
-pub fn did_you_mean<'a, I>(candidates: I, value: &str) -> Option<&'a str>
+pub(crate) fn did_you_mean<'a, I>(candidates: I, value: &str) -> Option<&'a str>
 where
     I: IntoIterator<Item = &'a str>,
 {
@@ -47,7 +47,7 @@ where
         .and_then(|(candidate, score)| (score > THRESHOLD).then_some(candidate))
 }
 
-pub fn did_you_mean_type<'a>(
+pub(crate) fn did_you_mean_type<'a>(
     schema: &'a Schema,
     name: &str,
     with_builtins: bool,
@@ -91,7 +91,7 @@ pub(crate) fn did_you_mean_key_type<'a>(
     }
 }
 
-pub fn did_you_mean_const_int<'a>(schema: &'a Schema, name: &str) -> Option<&'a str> {
+pub(crate) fn did_you_mean_const_int<'a>(schema: &'a Schema, name: &str) -> Option<&'a str> {
     let candidates = schema
         .definitions()
         .iter()
@@ -114,7 +114,7 @@ pub fn did_you_mean_const_int<'a>(schema: &'a Schema, name: &str) -> Option<&'a 
     did_you_mean(candidates, name)
 }
 
-pub fn find_duplicates<I, KFN, K, DFN>(iter: I, mut key_fn: KFN, mut dup_fn: DFN)
+pub(crate) fn find_duplicates<I, KFN, K, DFN>(iter: I, mut key_fn: KFN, mut dup_fn: DFN)
 where
     I: IntoIterator,
     KFN: FnMut(&I::Item) -> K,
@@ -239,7 +239,7 @@ pub(crate) fn resolves_to_key_type<'a>(
 }
 
 #[derive(Debug)]
-pub enum InvalidKeyTypeKind<'a> {
+pub(crate) enum InvalidKeyTypeKind<'a> {
     BuiltIn,
     Struct,
     Enum,

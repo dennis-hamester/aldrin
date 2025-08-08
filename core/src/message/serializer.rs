@@ -5,11 +5,11 @@ use bytes::{BufMut, BytesMut};
 use uuid::Uuid;
 
 pub(crate) struct MessageSerializer {
-    buf: BytesMut,
+    pub buf: BytesMut,
 }
 
 impl MessageSerializer {
-    pub fn without_value(kind: MessageKind) -> Self {
+    pub(crate) fn without_value(kind: MessageKind) -> Self {
         debug_assert!(!kind.has_value());
 
         let mut buf = BytesMut::zeroed(4);
@@ -18,7 +18,7 @@ impl MessageSerializer {
         Self { buf }
     }
 
-    pub fn with_value(
+    pub(crate) fn with_value(
         value: SerializedValue,
         kind: MessageKind,
     ) -> Result<Self, MessageSerializeError> {
@@ -43,23 +43,23 @@ impl MessageSerializer {
         Ok(Self { buf })
     }
 
-    pub fn with_none_value(kind: MessageKind) -> Self {
+    pub(crate) fn with_none_value(kind: MessageKind) -> Self {
         Self::with_value(SerializedValue::serialize(()).unwrap(), kind).unwrap()
     }
 
-    pub fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
+    pub(crate) fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
         self.buf.put_discriminant_u8(discriminant);
     }
 
-    pub fn put_varint_u32_le(&mut self, n: u32) {
+    pub(crate) fn put_varint_u32_le(&mut self, n: u32) {
         self.buf.put_varint_u32_le(n);
     }
 
-    pub fn put_uuid(&mut self, uuid: Uuid) {
+    pub(crate) fn put_uuid(&mut self, uuid: Uuid) {
         self.buf.put_slice(uuid.as_ref());
     }
 
-    pub fn finish(mut self) -> Result<BytesMut, MessageSerializeError> {
+    pub(crate) fn finish(mut self) -> Result<BytesMut, MessageSerializeError> {
         let len = self.buf.len();
         if len <= u32::MAX as usize {
             self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());

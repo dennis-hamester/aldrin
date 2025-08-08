@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct EmitEvent {
+pub(crate) struct EmitEvent {
     pub service_cookie: UuidRef,
     pub event: u32,
 
@@ -16,7 +16,7 @@ pub struct EmitEvent {
 }
 
 impl EmitEvent {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::EmitEvent> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::EmitEvent> {
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
         let value = SerializedValue::serialize(&self.value)
@@ -29,20 +29,20 @@ impl EmitEvent {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.service_cookie.matches(&other.service_cookie, ctx)? && (self.event == other.event);
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.service_cookie
             .update_context(&other.service_cookie, ctx)?;
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let service_cookie = self.service_cookie.apply_context(ctx)?;
 
         Ok(Self {

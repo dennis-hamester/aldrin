@@ -9,7 +9,7 @@ pub(crate) struct Options {
 }
 
 impl Options {
-    pub fn new(
+    pub(crate) fn new(
         name: &Ident,
         attrs: &[Attribute],
         mut krate: Path,
@@ -59,19 +59,19 @@ impl Options {
         })
     }
 
-    pub fn krate(&self) -> &Path {
+    pub(crate) fn krate(&self) -> &Path {
         &self.krate
     }
 
-    pub fn ref_type(&self) -> Option<&Ident> {
+    pub(crate) fn ref_type(&self) -> Option<&Ident> {
         self.ref_type.as_ref()
     }
 
-    pub fn schema(&self) -> Option<&LitStr> {
+    pub(crate) fn schema(&self) -> Option<&LitStr> {
         self.schema.as_ref()
     }
 
-    pub fn newtype(&self) -> bool {
+    pub(crate) fn newtype(&self) -> bool {
         self.newtype
     }
 }
@@ -83,7 +83,7 @@ pub(crate) struct ItemOptions {
 }
 
 impl ItemOptions {
-    pub fn new(attrs: &[Attribute], default_id: u32) -> Result<Self> {
+    pub(crate) fn new(attrs: &[Attribute], default_id: u32) -> Result<Self> {
         let mut id = default_id;
         let mut optional = false;
         let mut fallback = false;
@@ -116,15 +116,15 @@ impl ItemOptions {
         })
     }
 
-    pub fn id(&self) -> u32 {
+    pub(crate) fn id(&self) -> u32 {
         self.id
     }
 
-    pub fn is_optional(&self) -> bool {
+    pub(crate) fn is_optional(&self) -> bool {
         self.optional
     }
 
-    pub fn is_fallback(&self) -> bool {
+    pub(crate) fn is_fallback(&self) -> bool {
         self.fallback
     }
 }

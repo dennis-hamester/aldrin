@@ -6,11 +6,11 @@ use syn::{
     parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Path, Result, Token,
 };
 
-pub fn gen_serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_serialize_key(input, parse_quote!(::aldrin_core))
 }
 
-pub fn gen_serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     gen_serialize_key(input, parse_quote!(::aldrin::core))
 }
 

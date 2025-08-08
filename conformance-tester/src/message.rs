@@ -71,73 +71,73 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-pub use abort_function_call::AbortFunctionCall;
-pub use add_bus_listener_filter::AddBusListenerFilter;
-pub use add_channel_capacity::AddChannelCapacity;
-pub use bus_listener_current_finished::BusListenerCurrentFinished;
-pub use call_function::CallFunction;
-pub use call_function2::CallFunction2;
-pub use call_function_reply::CallFunctionReply;
-pub use channel_end_claimed::ChannelEndClaimed;
-pub use channel_end_closed::ChannelEndClosed;
-pub use claim_channel_end::ClaimChannelEnd;
-pub use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
-pub use clear_bus_listener_filters::ClearBusListenerFilters;
-pub use close_channel_end::CloseChannelEnd;
-pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
-pub use connect::Connect;
-pub use connect2::Connect2;
-pub use connect_reply::ConnectReply;
-pub use connect_reply2::{ConnectReply2, ConnectResult};
-pub use create_bus_listener::CreateBusListener;
-pub use create_bus_listener_reply::CreateBusListenerReply;
-pub use create_channel::CreateChannel;
-pub use create_channel_reply::CreateChannelReply;
-pub use create_object::CreateObject;
-pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
-pub use create_service::CreateService;
-pub use create_service2::CreateService2;
-pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
-pub use destroy_bus_listener::DestroyBusListener;
-pub use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
-pub use destroy_object::DestroyObject;
-pub use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
-pub use destroy_service::DestroyService;
-pub use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
-pub use emit_bus_event::EmitBusEvent;
-pub use emit_event::EmitEvent;
-pub use item_received::ItemReceived;
-pub use query_introspection::QueryIntrospection;
-pub use query_introspection_reply::QueryIntrospectionReply;
-pub use query_service_info::QueryServiceInfo;
-pub use query_service_info_reply::QueryServiceInfoReply;
-pub use query_service_version::QueryServiceVersion;
-pub use query_service_version_reply::QueryServiceVersionReply;
-pub use register_introspection::RegisterIntrospection;
-pub use remove_bus_listener_filter::RemoveBusListenerFilter;
-pub use send_item::SendItem;
-pub use service_destroyed::ServiceDestroyed;
-pub use shutdown::Shutdown;
-pub use start_bus_listener::StartBusListener;
-pub use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult};
-pub use stop_bus_listener::StopBusListener;
-pub use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
-pub use subscribe_all_events::SubscribeAllEvents;
-pub use subscribe_all_events_reply::{SubscribeAllEventsReply, SubscribeAllEventsResult};
-pub use subscribe_event::SubscribeEvent;
-pub use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
-pub use subscribe_service::SubscribeService;
-pub use subscribe_service_reply::SubscribeServiceReply;
-pub use sync::Sync;
-pub use sync_reply::SyncReply;
-pub use unsubscribe_all_events::UnsubscribeAllEvents;
-pub use unsubscribe_all_events_reply::UnsubscribeAllEventsReply;
-pub use unsubscribe_event::UnsubscribeEvent;
-pub use unsubscribe_service::UnsubscribeService;
+pub(crate) use abort_function_call::AbortFunctionCall;
+pub(crate) use add_bus_listener_filter::AddBusListenerFilter;
+pub(crate) use add_channel_capacity::AddChannelCapacity;
+pub(crate) use bus_listener_current_finished::BusListenerCurrentFinished;
+pub(crate) use call_function::CallFunction;
+pub(crate) use call_function2::CallFunction2;
+pub(crate) use call_function_reply::CallFunctionReply;
+pub(crate) use channel_end_claimed::ChannelEndClaimed;
+pub(crate) use channel_end_closed::ChannelEndClosed;
+pub(crate) use claim_channel_end::ClaimChannelEnd;
+pub(crate) use claim_channel_end_reply::{ClaimChannelEndReply, ClaimChannelEndResult};
+pub(crate) use clear_bus_listener_filters::ClearBusListenerFilters;
+pub(crate) use close_channel_end::CloseChannelEnd;
+pub(crate) use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
+pub(crate) use connect::Connect;
+pub(crate) use connect2::Connect2;
+pub(crate) use connect_reply::ConnectReply;
+pub(crate) use connect_reply2::{ConnectReply2, ConnectResult};
+pub(crate) use create_bus_listener::CreateBusListener;
+pub(crate) use create_bus_listener_reply::CreateBusListenerReply;
+pub(crate) use create_channel::CreateChannel;
+pub(crate) use create_channel_reply::CreateChannelReply;
+pub(crate) use create_object::CreateObject;
+pub(crate) use create_object_reply::{CreateObjectReply, CreateObjectResult};
+pub(crate) use create_service::CreateService;
+pub(crate) use create_service2::CreateService2;
+pub(crate) use create_service_reply::{CreateServiceReply, CreateServiceResult};
+pub(crate) use destroy_bus_listener::DestroyBusListener;
+pub(crate) use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
+pub(crate) use destroy_object::DestroyObject;
+pub(crate) use destroy_object_reply::{DestroyObjectReply, DestroyObjectResult};
+pub(crate) use destroy_service::DestroyService;
+pub(crate) use destroy_service_reply::{DestroyServiceReply, DestroyServiceResult};
+pub(crate) use emit_bus_event::EmitBusEvent;
+pub(crate) use emit_event::EmitEvent;
+pub(crate) use item_received::ItemReceived;
+pub(crate) use query_introspection::QueryIntrospection;
+pub(crate) use query_introspection_reply::QueryIntrospectionReply;
+pub(crate) use query_service_info::QueryServiceInfo;
+pub(crate) use query_service_info_reply::QueryServiceInfoReply;
+pub(crate) use query_service_version::QueryServiceVersion;
+pub(crate) use query_service_version_reply::QueryServiceVersionReply;
+pub(crate) use register_introspection::RegisterIntrospection;
+pub(crate) use remove_bus_listener_filter::RemoveBusListenerFilter;
+pub(crate) use send_item::SendItem;
+pub(crate) use service_destroyed::ServiceDestroyed;
+pub(crate) use shutdown::Shutdown;
+pub(crate) use start_bus_listener::StartBusListener;
+pub(crate) use start_bus_listener_reply::{StartBusListenerReply, StartBusListenerResult};
+pub(crate) use stop_bus_listener::StopBusListener;
+pub(crate) use stop_bus_listener_reply::{StopBusListenerReply, StopBusListenerResult};
+pub(crate) use subscribe_all_events::SubscribeAllEvents;
+pub(crate) use subscribe_all_events_reply::{SubscribeAllEventsReply, SubscribeAllEventsResult};
+pub(crate) use subscribe_event::SubscribeEvent;
+pub(crate) use subscribe_event_reply::{SubscribeEventReply, SubscribeEventResult};
+pub(crate) use subscribe_service::SubscribeService;
+pub(crate) use subscribe_service_reply::SubscribeServiceReply;
+pub(crate) use sync::Sync;
+pub(crate) use sync_reply::SyncReply;
+pub(crate) use unsubscribe_all_events::UnsubscribeAllEvents;
+pub(crate) use unsubscribe_all_events_reply::UnsubscribeAllEventsReply;
+pub(crate) use unsubscribe_event::UnsubscribeEvent;
+pub(crate) use unsubscribe_service::UnsubscribeService;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "message")]
-pub enum Message {
+pub(crate) enum Message {
     Connect(Connect),
     ConnectReply(ConnectReply),
     Shutdown(Shutdown),
@@ -204,7 +204,7 @@ pub enum Message {
 }
 
 impl Message {
-    pub fn to_core(&self, ctx: &Context) -> Result<ProtoMessage> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<ProtoMessage> {
         match self {
             Self::Connect(msg) => msg.to_core(ctx).map(ProtoMessage::Connect),
             Self::ConnectReply(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply),
@@ -314,7 +314,7 @@ impl Message {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
@@ -451,7 +451,7 @@ impl Message {
         }
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
             (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
@@ -622,7 +622,7 @@ impl Message {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
             Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
@@ -906,14 +906,14 @@ impl fmt::Display for ChannelEndWithCapacity {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ServiceInfo {
+pub(crate) struct ServiceInfo {
     pub version: u32,
     pub type_id: Option<UuidRef>,
     pub subscribe_all: Option<bool>,
 }
 
 impl ServiceInfo {
-    pub fn to_core(&self, ctx: &Context) -> Result<CoreServiceInfo> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<CoreServiceInfo> {
         let mut info = CoreServiceInfo::new(self.version);
 
         if let Some(ref type_id) = self.type_id {
@@ -938,7 +938,7 @@ impl ServiceInfo {
         Ok(res && (self.version == other.version) && (self.subscribe_all == other.subscribe_all))
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         if let (Some(type_id), Some(other)) = (self.type_id.as_ref(), other.type_id.as_ref()) {
             type_id.update_context(other, ctx)
         } else {
@@ -946,7 +946,7 @@ impl ServiceInfo {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let type_id = self
             .type_id
             .as_ref()

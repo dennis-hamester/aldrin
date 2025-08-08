@@ -3,14 +3,16 @@ use serde::de::{Error, Unexpected, Visitor};
 use serde::Deserializer;
 use std::fmt;
 
-pub fn deserialize<'de, D>(deserializer: D) -> Result<ProtocolVersion, D::Error>
+pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<ProtocolVersion, D::Error>
 where
     D: Deserializer<'de>,
 {
     deserializer.deserialize_string(VersionVisitor)
 }
 
-pub fn deserialize_option<'de, D>(deserializer: D) -> Result<Option<ProtocolVersion>, D::Error>
+pub(crate) fn deserialize_option<'de, D>(
+    deserializer: D,
+) -> Result<Option<ProtocolVersion>, D::Error>
 where
     D: Deserializer<'de>,
 {

@@ -20,7 +20,7 @@ pub(super) struct ConnectionState {
 }
 
 impl ConnectionState {
-    pub fn new(version: ProtocolVersion, send: UnboundedSender<VersionedMessage>) -> Self {
+    pub(crate) fn new(version: ProtocolVersion, send: UnboundedSender<VersionedMessage>) -> Self {
         Self {
             version,
             send,
@@ -35,33 +35,33 @@ impl ConnectionState {
         }
     }
 
-    pub fn version(&self) -> ProtocolVersion {
+    pub(crate) fn version(&self) -> ProtocolVersion {
         self.version
     }
 
-    pub fn add_object(&mut self, cookie: ObjectCookie) {
+    pub(crate) fn add_object(&mut self, cookie: ObjectCookie) {
         let unique = self.objects.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_object(&mut self, cookie: ObjectCookie) {
+    pub(crate) fn remove_object(&mut self, cookie: ObjectCookie) {
         let contained = self.objects.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn objects(&self) -> impl Iterator<Item = ObjectCookie> + '_ {
+    pub(crate) fn objects(&self) -> impl Iterator<Item = ObjectCookie> + '_ {
         self.objects.iter().copied()
     }
 
-    pub fn send(&self, msg: VersionedMessage) -> Result<(), ()> {
+    pub(crate) fn send(&self, msg: VersionedMessage) -> Result<(), ()> {
         self.send.unbounded_send(msg).map_err(|_| ())
     }
 
-    pub fn subscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
+    pub(crate) fn subscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
         self.events.entry(svc_cookie).or_default().insert(event);
     }
 
-    pub fn unsubscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
+    pub(crate) fn unsubscribe_event(&mut self, svc_cookie: ServiceCookie, event: u32) {
         if let Entry::Occupied(mut subs) = self.events.entry(svc_cookie) {
             subs.get_mut().remove(&event);
             if subs.get().is_empty() {
@@ -70,13 +70,13 @@ impl ConnectionState {
         }
     }
 
-    pub fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
+    pub(crate) fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
         self.events
             .iter()
             .flat_map(|(&c, ids)| ids.iter().map(move |&event| (c, event)))
     }
 
-    pub fn is_subscribed_to_event(&self, svc_cookie: ServiceCookie, event: u32) -> bool {
+    pub(crate) fn is_subscribed_to_event(&self, svc_cookie: ServiceCookie, event: u32) -> bool {
         self.all_events.contains(&svc_cookie)
             || self
                 .events
@@ -85,78 +85,78 @@ impl ConnectionState {
                 .unwrap_or(false)
     }
 
-    pub fn subscribe_all_events(&mut self, svc_cookie: ServiceCookie) {
+    pub(crate) fn subscribe_all_events(&mut self, svc_cookie: ServiceCookie) {
         self.all_events.insert(svc_cookie);
     }
 
-    pub fn unsubscribe_all_events(&mut self, svc_cookie: ServiceCookie) {
+    pub(crate) fn unsubscribe_all_events(&mut self, svc_cookie: ServiceCookie) {
         self.all_events.remove(&svc_cookie);
     }
 
-    pub fn all_event_subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
+    pub(crate) fn all_event_subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
         self.all_events.iter().copied()
     }
 
-    pub fn subscribe(&mut self, svc_cookie: ServiceCookie) {
+    pub(crate) fn subscribe(&mut self, svc_cookie: ServiceCookie) {
         self.subscriptions.insert(svc_cookie);
     }
 
-    pub fn unsubscribe(&mut self, svc_cookie: ServiceCookie) {
+    pub(crate) fn unsubscribe(&mut self, svc_cookie: ServiceCookie) {
         self.subscriptions.remove(&svc_cookie);
     }
 
-    pub fn subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
+    pub(crate) fn subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
         self.subscriptions.iter().copied()
     }
 
-    pub fn unsubscribe_all(&mut self, svc_cookie: ServiceCookie) {
+    pub(crate) fn unsubscribe_all(&mut self, svc_cookie: ServiceCookie) {
         self.events.remove(&svc_cookie);
         self.subscriptions.remove(&svc_cookie);
     }
 
-    pub fn add_sender(&mut self, cookie: ChannelCookie) {
+    pub(crate) fn add_sender(&mut self, cookie: ChannelCookie) {
         let unique = self.senders.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_sender(&mut self, cookie: ChannelCookie) {
+    pub(crate) fn remove_sender(&mut self, cookie: ChannelCookie) {
         let contained = self.senders.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn senders(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+    pub(crate) fn senders(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
         self.senders.iter().copied()
     }
 
-    pub fn add_receiver(&mut self, cookie: ChannelCookie) {
+    pub(crate) fn add_receiver(&mut self, cookie: ChannelCookie) {
         let unique = self.receivers.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_receiver(&mut self, cookie: ChannelCookie) {
+    pub(crate) fn remove_receiver(&mut self, cookie: ChannelCookie) {
         let contained = self.receivers.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn receivers(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+    pub(crate) fn receivers(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
         self.receivers.iter().copied()
     }
 
-    pub fn add_bus_listener(&mut self, cookie: BusListenerCookie) {
+    pub(crate) fn add_bus_listener(&mut self, cookie: BusListenerCookie) {
         let unique = self.bus_listeners.insert(cookie);
         debug_assert!(unique);
     }
 
-    pub fn remove_bus_listener(&mut self, cookie: BusListenerCookie) {
+    pub(crate) fn remove_bus_listener(&mut self, cookie: BusListenerCookie) {
         let contained = self.bus_listeners.remove(&cookie);
         debug_assert!(contained);
     }
 
-    pub fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> + '_ {
+    pub(crate) fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> + '_ {
         self.bus_listeners.iter().copied()
     }
 
-    pub fn add_call(
+    pub(crate) fn add_call(
         &mut self,
         caller_serial: u32,
         callee_serial: u32,
@@ -172,18 +172,18 @@ impl ConnectionState {
         }
     }
 
-    pub fn remove_call(&mut self, caller_serial: u32) {
+    pub(crate) fn remove_call(&mut self, caller_serial: u32) {
         let call = self.calls.remove(&caller_serial);
         debug_assert!(call.is_some());
     }
 
-    pub fn call_data(&self, caller_serial: u32) -> Option<(u32, &ConnectionId)> {
+    pub(crate) fn call_data(&self, caller_serial: u32) -> Option<(u32, &ConnectionId)> {
         self.calls
             .get(&caller_serial)
             .map(|(callee_serial, callee_id)| (*callee_serial, callee_id))
     }
 
-    pub fn calls(&self) -> impl Iterator<Item = (u32, &ConnectionId)> {
+    pub(crate) fn calls(&self) -> impl Iterator<Item = (u32, &ConnectionId)> {
         self.calls
             .values()
             .map(|(callee_serial, callee_id)| (*callee_serial, callee_id))

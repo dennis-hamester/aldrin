@@ -4,7 +4,7 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
-pub enum MessageType {
+pub(crate) enum MessageType {
     AbortFunctionCall,
     AddBusListenerFilter,
     AddChannelCapacity,

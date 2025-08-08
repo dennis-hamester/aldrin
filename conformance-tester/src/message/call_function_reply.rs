@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CallFunctionReply {
+pub(crate) struct CallFunctionReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -15,28 +15,28 @@ pub struct CallFunctionReply {
 }
 
 impl CallFunctionReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CallFunctionReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CallFunctionReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::CallFunctionReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -59,7 +59,7 @@ impl TryFrom<message::CallFunctionReply> for CallFunctionReply {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum CallFunctionResult {
+pub(crate) enum CallFunctionResult {
     Ok {
         #[serde(flatten)]
         value: Value,
@@ -77,7 +77,7 @@ pub enum CallFunctionResult {
 }
 
 impl CallFunctionResult {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::CallFunctionResult> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::CallFunctionResult> {
         match self {
             Self::Ok { value } => {
                 let value = SerializedValue::serialize(value)
@@ -100,7 +100,7 @@ impl CallFunctionResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Ok { value: v1 }, Self::Ok { value: v2 }) => Ok(v1.matches(v2)),
             (Self::Err { value: v1 }, Self::Err { value: v2 }) => Ok(v1.matches(v2)),
@@ -114,11 +114,11 @@ impl CallFunctionResult {
         }
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

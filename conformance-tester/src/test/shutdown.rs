@@ -8,13 +8,13 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ShutdownStep {
+pub(crate) struct ShutdownStep {
     #[serde(default)]
     pub client: ClientId,
 }
 
 impl ShutdownStep {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to shut down client `{}`", self.client))

@@ -10,7 +10,7 @@ use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{Error, Ident, LitBool, LitStr, Path, Result, Token};
 
-pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
+pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
     let mut parser = Parser::new();
     for include in args.includes {
         parser.add_schema_path(include);
@@ -86,7 +86,7 @@ pub fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
         .map_err(manyhow::Error::from)
 }
 
-pub struct Args {
+pub(crate) struct Args {
     schemas: Vec<PathBuf>,
     includes: Vec<PathBuf>,
     options: Options,

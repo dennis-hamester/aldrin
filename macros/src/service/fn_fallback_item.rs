@@ -12,15 +12,15 @@ pub(super) struct FnFallbackItem {
 }
 
 impl FnFallbackItem {
-    pub fn ident(&self) -> &Ident {
+    pub(crate) fn ident(&self) -> &Ident {
         &self.ident
     }
 
-    pub fn variant(&self) -> &Ident {
+    pub(crate) fn variant(&self) -> &Ident {
         &self.variant
     }
 
-    pub fn gen_variant(&self) -> TokenStream {
+    pub(crate) fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
 
@@ -30,7 +30,7 @@ impl FnFallbackItem {
         }
     }
 
-    pub fn gen_next_call_match_arm(&self, call: &Ident) -> TokenStream {
+    pub(crate) fn gen_next_call_match_arm(&self, call: &Ident) -> TokenStream {
         let variant = &self.variant;
 
         quote! {
@@ -42,7 +42,7 @@ impl FnFallbackItem {
         }
     }
 
-    pub fn layout(&self) -> TokenStream {
+    pub(crate) fn layout(&self) -> TokenStream {
         let name = self.ident.unraw().to_string();
 
         quote! { .function_fallback(#name) }

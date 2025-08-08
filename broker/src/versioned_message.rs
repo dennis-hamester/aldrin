@@ -7,18 +7,21 @@ pub(crate) struct VersionedMessage {
 }
 
 impl VersionedMessage {
-    pub fn new(msg: impl Into<Message>, version: Option<ProtocolVersion>) -> Self {
+    pub(crate) fn new(msg: impl Into<Message>, version: Option<ProtocolVersion>) -> Self {
         Self {
             msg: msg.into(),
             version,
         }
     }
 
-    pub fn with_version(msg: impl Into<Message>, version: ProtocolVersion) -> Self {
+    pub(crate) fn with_version(msg: impl Into<Message>, version: ProtocolVersion) -> Self {
         Self::new(msg, Some(version))
     }
 
-    pub fn convert_value(mut self, to: ProtocolVersion) -> Result<Message, ValueConversionError> {
+    pub(crate) fn convert_value(
+        mut self,
+        to: ProtocolVersion,
+    ) -> Result<Message, ValueConversionError> {
         self.msg.convert_value(self.version, to)?;
         Ok(self.msg)
     }

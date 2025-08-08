@@ -12,7 +12,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ConnectClient {
+pub(crate) struct ConnectClient {
     #[serde(default)]
     pub client: ClientId,
 
@@ -37,7 +37,12 @@ fn default_true() -> bool {
 }
 
 impl ConnectClient {
-    pub async fn run(&self, broker: &Broker, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(
+        &self,
+        broker: &Broker,
+        ctx: &mut Context,
+        timeout: Instant,
+    ) -> Result<()> {
         self.run_impl(broker, ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to connect client `{}`", self.client))

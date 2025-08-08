@@ -21,16 +21,16 @@ use replace_self_ty::replace_self_ty;
 use struct_data::{FieldData, StructData};
 use syn::{Error, Generics, Result};
 
-pub use deserialize::{gen_deserialize_from_aldrin, gen_deserialize_from_core};
-pub use deserialize_key::{gen_deserialize_key_from_aldrin, gen_deserialize_key_from_core};
-pub use introspectable::{gen_introspectable_from_aldrin, gen_introspectable_from_core};
-pub use key_tag::{gen_key_tag_from_aldrin, gen_key_tag_from_core};
-pub use primary_key_tag::{gen_primary_key_tag_from_aldrin, gen_primary_key_tag_from_core};
-pub use primary_tag::{gen_primary_tag_from_aldrin, gen_primary_tag_from_core};
-pub use ref_type::{gen_ref_type_from_aldrin, gen_ref_type_from_core};
-pub use serialize::{gen_serialize_from_aldrin, gen_serialize_from_core};
-pub use serialize_key::{gen_serialize_key_from_aldrin, gen_serialize_key_from_core};
-pub use tag::{gen_tag_from_aldrin, gen_tag_from_core};
+pub(crate) use deserialize::{gen_deserialize_from_aldrin, gen_deserialize_from_core};
+pub(crate) use deserialize_key::{gen_deserialize_key_from_aldrin, gen_deserialize_key_from_core};
+pub(crate) use introspectable::{gen_introspectable_from_aldrin, gen_introspectable_from_core};
+pub(crate) use key_tag::{gen_key_tag_from_aldrin, gen_key_tag_from_core};
+pub(crate) use primary_key_tag::{gen_primary_key_tag_from_aldrin, gen_primary_key_tag_from_core};
+pub(crate) use primary_tag::{gen_primary_tag_from_aldrin, gen_primary_tag_from_core};
+pub(crate) use ref_type::{gen_ref_type_from_aldrin, gen_ref_type_from_core};
+pub(crate) use serialize::{gen_serialize_from_aldrin, gen_serialize_from_core};
+pub(crate) use serialize_key::{gen_serialize_key_from_aldrin, gen_serialize_key_from_core};
+pub(crate) use tag::{gen_tag_from_aldrin, gen_tag_from_core};
 
 fn ensure_no_type_generics(generics: &Generics) -> Result<()> {
     match generics.type_params().next() {

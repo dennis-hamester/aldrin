@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 #[derive(clap::Parser)]
 #[clap(arg_required_else_help = true)]
-pub struct CheckArgs {
+pub(crate) struct CheckArgs {
     #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
@@ -14,7 +14,7 @@ pub struct CheckArgs {
     schemata: Vec<PathBuf>,
 }
 
-pub fn run(args: CheckArgs) -> Result<bool> {
+pub(crate) fn run(args: CheckArgs) -> Result<bool> {
     let mut parser = Parser::new();
 
     for include in args.common_read_args.include {

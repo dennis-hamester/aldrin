@@ -19,20 +19,20 @@ pub(super) struct EvItem {
 }
 
 impl EvItem {
-    pub fn ident(&self) -> &Ident {
+    pub(crate) fn ident(&self) -> &Ident {
         &self.ident
     }
 
-    pub fn variant(&self) -> &Ident {
+    pub(crate) fn variant(&self) -> &Ident {
         &self.variant
     }
 
-    pub fn gen_subscribe_call(&self) -> TokenStream {
+    pub(crate) fn gen_subscribe_call(&self) -> TokenStream {
         let subscribe = &self.subscribe;
         quote! { self.#subscribe().await?; }
     }
 
-    pub fn gen_subscribe_fn(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_subscribe_fn(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let subscribe = &self.subscribe;
         let id = &self.id;
@@ -44,7 +44,7 @@ impl EvItem {
         }
     }
 
-    pub fn gen_unsubscribe_fn(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_unsubscribe_fn(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let unsubscribe = &self.unsubscribe;
         let id = &self.id;
@@ -56,7 +56,7 @@ impl EvItem {
         }
     }
 
-    pub fn gen_next_event_match_arm(&self, event: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_next_event_match_arm(&self, event: &Ident, options: &Options) -> TokenStream {
         let krate = options.krate();
         let id = &self.id;
         let variant = &self.variant;
@@ -81,7 +81,7 @@ impl EvItem {
         }
     }
 
-    pub fn gen_variant(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
 
@@ -93,7 +93,7 @@ impl EvItem {
         quote! { #variant(#krate::Event<#ty>), }
     }
 
-    pub fn gen_emitters(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_emitters(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
         let ident_val = &self.ident_val;
@@ -126,7 +126,7 @@ impl EvItem {
         }
     }
 
-    pub fn layout(&self, options: &Options) -> TokenStream {
+    pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         let id = &self.id;
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
@@ -146,7 +146,7 @@ impl EvItem {
         }
     }
 
-    pub fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
+    pub(crate) fn add_references<'a>(&'a self, references: &mut HashSet<&'a Type>) {
         if let Some(ref ty) = self.ty {
             references.insert(ty);
         }

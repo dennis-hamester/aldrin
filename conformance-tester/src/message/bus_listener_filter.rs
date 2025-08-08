@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "filter", deny_unknown_fields)]
-pub enum BusListenerFilter {
+pub(crate) enum BusListenerFilter {
     AnyObject,
     SpecificObject { object: UuidRef },
     AnyObjectAnyService,
@@ -15,7 +15,7 @@ pub enum BusListenerFilter {
 }
 
 impl BusListenerFilter {
-    pub fn to_core(&self, ctx: &Context) -> Result<aldrin_core::BusListenerFilter> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<aldrin_core::BusListenerFilter> {
         match self {
             Self::AnyObject => Ok(aldrin_core::BusListenerFilter::any_object()),
 
@@ -55,7 +55,7 @@ impl BusListenerFilter {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::AnyObject, Self::AnyObject)
             | (Self::AnyObjectAnyService, Self::AnyObjectAnyService) => Ok(true),
@@ -93,7 +93,7 @@ impl BusListenerFilter {
         }
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (Self::AnyObject, Self::AnyObject)
             | (Self::AnyObjectAnyService, Self::AnyObjectAnyService) => Ok(()),
@@ -133,7 +133,7 @@ impl BusListenerFilter {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::AnyObject => Ok(Self::AnyObject),
 

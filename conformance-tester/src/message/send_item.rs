@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SendItem {
+pub(crate) struct SendItem {
     pub cookie: UuidRef,
 
     #[serde(flatten)]
@@ -15,7 +15,7 @@ pub struct SendItem {
 }
 
 impl SendItem {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::SendItem> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::SendItem> {
         let cookie = self.cookie.get(ctx)?.into();
 
         let value = SerializedValue::serialize(&self.value)
@@ -24,17 +24,17 @@ impl SendItem {
         Ok(message::SendItem { cookie, value })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         self.cookie.matches(&other.cookie, ctx)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.cookie.update_context(&other.cookie, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let cookie = self.cookie.apply_context(ctx)?;
 
         Ok(Self {

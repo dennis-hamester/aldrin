@@ -17,7 +17,7 @@ pub(crate) struct Service {
 }
 
 impl Service {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             function_calls: HashSet::new(),
             events: HashMap::new(),
@@ -26,21 +26,21 @@ impl Service {
         }
     }
 
-    pub fn add_function_call(&mut self, serial: u32) {
+    pub(crate) fn add_function_call(&mut self, serial: u32) {
         let unique = self.function_calls.insert(serial);
         debug_assert!(unique);
     }
 
-    pub fn remove_function_call(&mut self, serial: u32) {
+    pub(crate) fn remove_function_call(&mut self, serial: u32) {
         let contained = self.function_calls.remove(&serial);
         debug_assert!(contained);
     }
 
-    pub fn function_calls(&self) -> impl Iterator<Item = u32> + '_ {
+    pub(crate) fn function_calls(&self) -> impl Iterator<Item = u32> + '_ {
         self.function_calls.iter().copied()
     }
 
-    pub fn subscribe_event(&mut self, event: u32, conn_id: ConnectionId) -> bool {
+    pub(crate) fn subscribe_event(&mut self, event: u32, conn_id: ConnectionId) -> bool {
         match self.events.entry(event) {
             Entry::Occupied(mut subs) => {
                 subs.get_mut().insert(conn_id);
@@ -58,7 +58,7 @@ impl Service {
     ///
     /// Returns `true` if a subscription was removed *and* it was the last one of `event`, `false`
     /// otherwise.
-    pub fn unsubscribe_event(&mut self, event: u32, conn_id: &ConnectionId) -> bool {
+    pub(crate) fn unsubscribe_event(&mut self, event: u32, conn_id: &ConnectionId) -> bool {
         match self.events.entry(event) {
             Entry::Occupied(mut subs) => {
                 subs.get_mut().remove(conn_id);
@@ -74,27 +74,27 @@ impl Service {
         }
     }
 
-    pub fn subscribe_all_events(&mut self, conn_id: ConnectionId) -> bool {
+    pub(crate) fn subscribe_all_events(&mut self, conn_id: ConnectionId) -> bool {
         let was_empty = self.all_events.is_empty();
         self.all_events.insert(conn_id);
         was_empty
     }
 
-    pub fn unsubscribe_all_events(&mut self, conn_id: &ConnectionId) -> bool {
+    pub(crate) fn unsubscribe_all_events(&mut self, conn_id: &ConnectionId) -> bool {
         let was_empty = self.all_events.is_empty();
         self.all_events.remove(conn_id);
         !was_empty && self.all_events.is_empty()
     }
 
-    pub fn subscribe(&mut self, conn_id: ConnectionId) {
+    pub(crate) fn subscribe(&mut self, conn_id: ConnectionId) {
         self.subscriptions.insert(conn_id);
     }
 
-    pub fn unsubscribe(&mut self, conn_id: &ConnectionId) {
+    pub(crate) fn unsubscribe(&mut self, conn_id: &ConnectionId) {
         self.subscriptions.remove(conn_id);
     }
 
-    pub fn subscribed_conn_ids(&self) -> impl Iterator<Item = &ConnectionId> {
+    pub(crate) fn subscribed_conn_ids(&self) -> impl Iterator<Item = &ConnectionId> {
         #[allow(clippy::mutable_key_type)]
         let mut res = HashSet::new();
 

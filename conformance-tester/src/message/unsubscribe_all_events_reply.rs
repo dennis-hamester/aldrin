@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct UnsubscribeAllEventsReply {
+pub(crate) struct UnsubscribeAllEventsReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -14,26 +14,26 @@ pub struct UnsubscribeAllEventsReply {
 }
 
 impl UnsubscribeAllEventsReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::UnsubscribeAllEventsReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::UnsubscribeAllEventsReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::UnsubscribeAllEventsReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -54,14 +54,14 @@ impl TryFrom<message::UnsubscribeAllEventsReply> for UnsubscribeAllEventsReply {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum UnsubscribeAllEventsResult {
+pub(crate) enum UnsubscribeAllEventsResult {
     Ok,
     InvalidService,
     NotSupported,
 }
 
 impl UnsubscribeAllEventsResult {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::UnsubscribeAllEventsResult> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::UnsubscribeAllEventsResult> {
         match self {
             Self::Ok => Ok(message::UnsubscribeAllEventsResult::Ok),
             Self::InvalidService => Ok(message::UnsubscribeAllEventsResult::InvalidService),
@@ -69,15 +69,15 @@ impl UnsubscribeAllEventsResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self == other)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

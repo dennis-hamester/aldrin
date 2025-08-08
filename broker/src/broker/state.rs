@@ -19,7 +19,7 @@ pub(super) struct State {
 }
 
 impl State {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             shutdown_now: false,
             shutdown_idle: false,
@@ -36,23 +36,23 @@ impl State {
         }
     }
 
-    pub fn set_shutdown_now(&mut self) {
+    pub(crate) fn set_shutdown_now(&mut self) {
         self.shutdown_now = true;
     }
 
-    pub fn shutdown_now(&self) -> bool {
+    pub(crate) fn shutdown_now(&self) -> bool {
         self.shutdown_now
     }
 
-    pub fn set_shutdown_idle(&mut self) {
+    pub(crate) fn set_shutdown_idle(&mut self) {
         self.shutdown_idle = true;
     }
 
-    pub fn shutdown_idle(&self) -> bool {
+    pub(crate) fn shutdown_idle(&self) -> bool {
         self.shutdown_idle
     }
 
-    pub fn has_work_left(&self) -> bool {
+    pub(crate) fn has_work_left(&self) -> bool {
         !self.remove_conns.is_empty()
             || !self.remove_function_calls.is_empty()
             || !self.services_destroyed.is_empty()
@@ -65,22 +65,22 @@ impl State {
             || !self.abort_function_calls.is_empty()
     }
 
-    pub fn push_remove_conn(&mut self, id: ConnectionId, send_shutdown: bool) {
+    pub(crate) fn push_remove_conn(&mut self, id: ConnectionId, send_shutdown: bool) {
         self.remove_conns.push((id, send_shutdown));
     }
 
-    pub fn push_remove_conns<I>(&mut self, ids: I)
+    pub(crate) fn push_remove_conns<I>(&mut self, ids: I)
     where
         I: IntoIterator<Item = (ConnectionId, bool)>,
     {
         self.remove_conns.extend(ids);
     }
 
-    pub fn pop_remove_conn(&mut self) -> Option<(ConnectionId, bool)> {
+    pub(crate) fn pop_remove_conn(&mut self) -> Option<(ConnectionId, bool)> {
         self.remove_conns.pop()
     }
 
-    pub fn push_remove_function_call(
+    pub(crate) fn push_remove_function_call(
         &mut self,
         serial: u32,
         conn_id: ConnectionId,
@@ -89,19 +89,25 @@ impl State {
         self.remove_function_calls.push((serial, conn_id, res));
     }
 
-    pub fn pop_remove_function_call(&mut self) -> Option<(u32, ConnectionId, CallFunctionResult)> {
+    pub(crate) fn pop_remove_function_call(
+        &mut self,
+    ) -> Option<(u32, ConnectionId, CallFunctionResult)> {
         self.remove_function_calls.pop()
     }
 
-    pub fn push_services_destroyed(&mut self, conn_id: ConnectionId, svc_cookie: ServiceCookie) {
+    pub(crate) fn push_services_destroyed(
+        &mut self,
+        conn_id: ConnectionId,
+        svc_cookie: ServiceCookie,
+    ) {
         self.services_destroyed.push((conn_id, svc_cookie));
     }
 
-    pub fn pop_services_destroyed(&mut self) -> Option<(ConnectionId, ServiceCookie)> {
+    pub(crate) fn pop_services_destroyed(&mut self) -> Option<(ConnectionId, ServiceCookie)> {
         self.services_destroyed.pop()
     }
 
-    pub fn push_unsubscribe_event(
+    pub(crate) fn push_unsubscribe_event(
         &mut self,
         conn_id: ConnectionId,
         svc_cookie: ServiceCookie,
@@ -110,11 +116,11 @@ impl State {
         self.unsubscribe_event.push((conn_id, svc_cookie, event));
     }
 
-    pub fn pop_unsubscribe_event(&mut self) -> Option<(ConnectionId, ServiceCookie, u32)> {
+    pub(crate) fn pop_unsubscribe_event(&mut self) -> Option<(ConnectionId, ServiceCookie, u32)> {
         self.unsubscribe_event.pop()
     }
 
-    pub fn push_unsubscribe_all_events(
+    pub(crate) fn push_unsubscribe_all_events(
         &mut self,
         conn_id: ConnectionId,
         svc_cookie: ServiceCookie,
@@ -122,47 +128,47 @@ impl State {
         self.unsubscribe_all_events.push((conn_id, svc_cookie));
     }
 
-    pub fn pop_unsubscribe_all_events(&mut self) -> Option<(ConnectionId, ServiceCookie)> {
+    pub(crate) fn pop_unsubscribe_all_events(&mut self) -> Option<(ConnectionId, ServiceCookie)> {
         self.unsubscribe_all_events.pop()
     }
 
-    pub fn push_create_object(&mut self, object: ObjectId) {
+    pub(crate) fn push_create_object(&mut self, object: ObjectId) {
         self.create_object.push(object);
     }
 
-    pub fn pop_create_object(&mut self) -> Option<ObjectId> {
+    pub(crate) fn pop_create_object(&mut self) -> Option<ObjectId> {
         self.create_object.pop()
     }
 
-    pub fn push_destroy_object(&mut self, object: ObjectId) {
+    pub(crate) fn push_destroy_object(&mut self, object: ObjectId) {
         self.destroy_object.push(object);
     }
 
-    pub fn pop_destroy_object(&mut self) -> Option<ObjectId> {
+    pub(crate) fn pop_destroy_object(&mut self) -> Option<ObjectId> {
         self.destroy_object.pop()
     }
 
-    pub fn push_create_service(&mut self, service: ServiceId) {
+    pub(crate) fn push_create_service(&mut self, service: ServiceId) {
         self.create_service.push(service);
     }
 
-    pub fn pop_create_service(&mut self) -> Option<ServiceId> {
+    pub(crate) fn pop_create_service(&mut self) -> Option<ServiceId> {
         self.create_service.pop()
     }
 
-    pub fn push_destroy_service(&mut self, service: ServiceId) {
+    pub(crate) fn push_destroy_service(&mut self, service: ServiceId) {
         self.destroy_service.push(service);
     }
 
-    pub fn pop_destroy_service(&mut self) -> Option<ServiceId> {
+    pub(crate) fn pop_destroy_service(&mut self) -> Option<ServiceId> {
         self.destroy_service.pop()
     }
 
-    pub fn push_abort_function_call(&mut self, callee_serial: u32, callee_id: ConnectionId) {
+    pub(crate) fn push_abort_function_call(&mut self, callee_serial: u32, callee_id: ConnectionId) {
         self.abort_function_calls.push((callee_serial, callee_id));
     }
 
-    pub fn pop_abort_function_call(&mut self) -> Option<(u32, ConnectionId)> {
+    pub(crate) fn pop_abort_function_call(&mut self) -> Option<(u32, ConnectionId)> {
         self.abort_function_calls.pop()
     }
 }

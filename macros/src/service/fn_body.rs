@@ -9,7 +9,7 @@ pub(super) struct FnBody {
 }
 
 impl FnBody {
-    pub fn empty() -> Self {
+    pub(crate) fn empty() -> Self {
         Self {
             args: None,
             ok: None,
@@ -17,7 +17,7 @@ impl FnBody {
         }
     }
 
-    pub fn parse_simplified(input: ParseStream) -> Result<Self> {
+    pub(crate) fn parse_simplified(input: ParseStream) -> Result<Self> {
         input.parse::<Token![=]>()?;
         let ok = input.parse()?;
 
@@ -28,15 +28,15 @@ impl FnBody {
         })
     }
 
-    pub fn args(&self) -> Option<&Type> {
+    pub(crate) fn args(&self) -> Option<&Type> {
         self.args.as_ref()
     }
 
-    pub fn ok(&self) -> Option<&Type> {
+    pub(crate) fn ok(&self) -> Option<&Type> {
         self.ok.as_ref()
     }
 
-    pub fn err(&self) -> Option<&Type> {
+    pub(crate) fn err(&self) -> Option<&Type> {
         self.err.as_ref()
     }
 }

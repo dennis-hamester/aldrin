@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct QueryServiceInfoReply {
+pub(crate) struct QueryServiceInfoReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -15,28 +15,28 @@ pub struct QueryServiceInfoReply {
 }
 
 impl QueryServiceInfoReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceInfoReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceInfoReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::QueryServiceInfoReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -59,7 +59,7 @@ impl TryFrom<message::QueryServiceInfoReply> for QueryServiceInfoReply {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum QueryServiceInfoResult {
+pub(crate) enum QueryServiceInfoResult {
     Ok {
         #[serde(flatten)]
         info: ServiceInfo,
@@ -69,7 +69,7 @@ pub enum QueryServiceInfoResult {
 }
 
 impl QueryServiceInfoResult {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceInfoResult> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceInfoResult> {
         match self {
             Self::Ok { info } => {
                 let info = info.to_core(ctx)?;
@@ -84,7 +84,7 @@ impl QueryServiceInfoResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Ok { info: i1 }, Self::Ok { info: i2 }) => i1.matches(i2, ctx),
             (Self::InvalidService, Self::InvalidService) => Ok(true),
@@ -92,7 +92,7 @@ impl QueryServiceInfoResult {
         }
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         if let (Self::Ok { info: i1 }, Self::Ok { info: i2 }) = (self, other) {
             i1.update_context(i2, ctx)
         } else {
@@ -100,7 +100,7 @@ impl QueryServiceInfoResult {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Ok { info } => {
                 let info = info.apply_context(ctx)?;

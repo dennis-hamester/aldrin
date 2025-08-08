@@ -10,7 +10,7 @@ pub(crate) struct BusListener {
 }
 
 impl BusListener {
-    pub fn new(conn_id: ConnectionId) -> Self {
+    pub(crate) fn new(conn_id: ConnectionId) -> Self {
         Self {
             conn_id,
             filters: HashSet::new(),
@@ -18,23 +18,23 @@ impl BusListener {
         }
     }
 
-    pub fn conn_id(&self) -> &ConnectionId {
+    pub(crate) fn conn_id(&self) -> &ConnectionId {
         &self.conn_id
     }
 
-    pub fn add_filter(&mut self, filter: BusListenerFilter) {
+    pub(crate) fn add_filter(&mut self, filter: BusListenerFilter) {
         self.filters.insert(filter);
     }
 
-    pub fn remove_filter(&mut self, filter: BusListenerFilter) {
+    pub(crate) fn remove_filter(&mut self, filter: BusListenerFilter) {
         self.filters.remove(&filter);
     }
 
-    pub fn clear_filters(&mut self) {
+    pub(crate) fn clear_filters(&mut self) {
         self.filters.clear();
     }
 
-    pub fn start(&mut self, scope: BusListenerScope) -> bool {
+    pub(crate) fn start(&mut self, scope: BusListenerScope) -> bool {
         if self.scope.is_none() {
             self.scope = Some(scope);
             true
@@ -43,25 +43,25 @@ impl BusListener {
         }
     }
 
-    pub fn stop(&mut self) -> bool {
+    pub(crate) fn stop(&mut self) -> bool {
         self.scope.take().is_some()
     }
 
-    pub fn matches_object(&self, object: ObjectId) -> bool {
+    pub(crate) fn matches_object(&self, object: ObjectId) -> bool {
         self.filters
             .iter()
             .copied()
             .any(|filter| filter.matches_object(object))
     }
 
-    pub fn matches_service(&self, service: ServiceId) -> bool {
+    pub(crate) fn matches_service(&self, service: ServiceId) -> bool {
         self.filters
             .iter()
             .copied()
             .any(|filter| filter.matches_service(service))
     }
 
-    pub fn matches_new_event(&self, event: BusEvent) -> bool {
+    pub(crate) fn matches_new_event(&self, event: BusEvent) -> bool {
         self.scope
             .map(BusListenerScope::includes_new)
             .unwrap_or(false)

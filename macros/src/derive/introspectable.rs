@@ -5,7 +5,7 @@ use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
 
-pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
 
     let options = Options::new(
@@ -18,7 +18,7 @@ pub fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_introspectable(input, options)
 }
 
-pub fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
 
     let options = Options::new(

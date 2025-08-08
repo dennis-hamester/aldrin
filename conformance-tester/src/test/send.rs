@@ -8,7 +8,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Send {
+pub(crate) struct Send {
     #[serde(default)]
     pub client: ClientId,
 
@@ -17,7 +17,7 @@ pub struct Send {
 }
 
 impl Send {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to send a message for client `{}`", self.client))

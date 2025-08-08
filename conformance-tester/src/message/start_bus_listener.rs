@@ -8,14 +8,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct StartBusListener {
+pub(crate) struct StartBusListener {
     pub serial: Serial,
     pub cookie: UuidRef,
     pub scope: BusListenerScope,
 }
 
 impl StartBusListener {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::StartBusListener> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::StartBusListener> {
         let serial = self.serial.get(ctx)?;
         let cookie = self.cookie.get(ctx)?.into();
 
@@ -26,7 +26,7 @@ impl StartBusListener {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.serial.matches(&other.serial, ctx)?
             && self.cookie.matches(&other.cookie, ctx)?
             && (self.scope == other.scope);
@@ -34,14 +34,14 @@ impl StartBusListener {
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.cookie.update_context(&other.cookie, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let cookie = self.cookie.apply_context(ctx)?;
 

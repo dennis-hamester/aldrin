@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ClaimChannelEndReply {
+pub(crate) struct ClaimChannelEndReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -14,27 +14,27 @@ pub struct ClaimChannelEndReply {
 }
 
 impl ClaimChannelEndReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::ClaimChannelEndReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::ClaimChannelEndReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::ClaimChannelEndReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
 
         Ok(Self {
@@ -57,7 +57,7 @@ impl TryFrom<message::ClaimChannelEndReply> for ClaimChannelEndReply {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum ClaimChannelEndResult {
+pub(crate) enum ClaimChannelEndResult {
     SenderClaimed { capacity: u32 },
     ReceiverClaimed,
     InvalidChannel,
@@ -65,7 +65,7 @@ pub enum ClaimChannelEndResult {
 }
 
 impl ClaimChannelEndResult {
-    pub fn to_core(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
         match self {
             Self::SenderClaimed { capacity } => {
                 Ok(message::ClaimChannelEndResult::SenderClaimed(capacity))
@@ -77,7 +77,7 @@ impl ClaimChannelEndResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self == other)
     }
 }

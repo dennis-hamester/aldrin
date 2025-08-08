@@ -14,14 +14,14 @@ pub(crate) struct Proxies {
 }
 
 impl Proxies {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             entries: HashMap::new(),
             services: HashMap::new(),
         }
     }
 
-    pub fn create(
+    pub(crate) fn create(
         &mut self,
         client: Handle,
         service: ServiceId,
@@ -52,7 +52,7 @@ impl Proxies {
         )
     }
 
-    pub fn remove(&mut self, proxy: ProxyId) -> Option<RemoveProxyResult> {
+    pub(crate) fn remove(&mut self, proxy: ProxyId) -> Option<RemoveProxyResult> {
         let mut res = self.entries.remove(&proxy)?.remove();
 
         let Entry::Occupied(mut entries) = self.services.entry(res.service) else {
@@ -83,7 +83,7 @@ impl Proxies {
         Some(res)
     }
 
-    pub fn remove_service(&mut self, service: ServiceCookie) {
+    pub(crate) fn remove_service(&mut self, service: ServiceCookie) {
         if let Some(proxies) = self.services.remove(&service) {
             for proxy in proxies {
                 let entry = self.entries.remove(&proxy);
@@ -92,7 +92,7 @@ impl Proxies {
         }
     }
 
-    pub fn subscribe(&mut self, proxy: ProxyId, event: u32) -> SubscribeResult {
+    pub(crate) fn subscribe(&mut self, proxy: ProxyId, event: u32) -> SubscribeResult {
         let Some(entry) = self.entries.get_mut(&proxy) else {
             return SubscribeResult::InvalidProxy;
         };
@@ -105,7 +105,7 @@ impl Proxies {
         }
     }
 
-    pub fn unsubscribe(&mut self, proxy: ProxyId, event: u32) -> SubscribeResult {
+    pub(crate) fn unsubscribe(&mut self, proxy: ProxyId, event: u32) -> SubscribeResult {
         let Some(entry) = self.entries.get_mut(&proxy) else {
             return SubscribeResult::InvalidProxy;
         };
@@ -137,7 +137,7 @@ impl Proxies {
             .any(|(_, entry)| entry.is_subscribed_to(event))
     }
 
-    pub fn subscribe_all(&mut self, proxy: ProxyId) -> SubscribeResult {
+    pub(crate) fn subscribe_all(&mut self, proxy: ProxyId) -> SubscribeResult {
         let Some(entry) = self.entries.get_mut(&proxy) else {
             return SubscribeResult::InvalidProxy;
         };
@@ -150,7 +150,7 @@ impl Proxies {
         }
     }
 
-    pub fn unsubscribe_all(&mut self, proxy: ProxyId) -> Option<UnsubscribeAllResult> {
+    pub(crate) fn unsubscribe_all(&mut self, proxy: ProxyId) -> Option<UnsubscribeAllResult> {
         let mut res = self.entries.get_mut(&proxy)?.unsubscribe_all();
         let entries = self.services.get(&res.service).expect("inconsistent state");
 
@@ -183,7 +183,7 @@ impl Proxies {
             .any(|(_, entry)| entry.is_subscribed_to_all())
     }
 
-    pub fn emit(
+    pub(crate) fn emit(
         &self,
         service: ServiceCookie,
         event: u32,

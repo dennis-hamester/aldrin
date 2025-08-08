@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse_quote, Data, DeriveInput, Result};
 
-pub fn gen_primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
 
     let options = Options::new(
@@ -16,7 +16,7 @@ pub fn gen_primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_primary_tag(input, options)
 }
 
-pub fn gen_primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
 
     let options = Options::new(

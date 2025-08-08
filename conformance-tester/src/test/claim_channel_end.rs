@@ -13,7 +13,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ClaimChannelEndStep {
+pub(crate) struct ClaimChannelEndStep {
     #[serde(default)]
     pub client: ClientId,
 
@@ -33,7 +33,7 @@ fn default_true() -> bool {
 }
 
 impl ClaimChannelEndStep {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to claim {} for client `{}`", self.end, self.client))

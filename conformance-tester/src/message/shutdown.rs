@@ -5,22 +5,22 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Shutdown;
+pub(crate) struct Shutdown;
 
 impl Shutdown {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::Shutdown> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::Shutdown> {
         Ok(message::Shutdown)
     }
 
-    pub fn matches(&self, _other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, _other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(true)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

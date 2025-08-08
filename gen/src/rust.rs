@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 #[derive(clap::Parser)]
 #[clap(arg_required_else_help = true)]
-pub struct RustArgs {
+pub(crate) struct RustArgs {
     #[clap(flatten)]
     common_read_args: CommonReadArgs,
 
@@ -34,7 +34,7 @@ pub struct RustArgs {
     schema: PathBuf,
 }
 
-pub fn run(args: RustArgs) -> Result<bool> {
+pub(crate) fn run(args: RustArgs) -> Result<bool> {
     let output_dir = match args.common_gen_args.output_dir {
         Some(output_dir) => output_dir,
         None => {

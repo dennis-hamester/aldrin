@@ -10,7 +10,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct DestroyObjectStep {
+pub(crate) struct DestroyObjectStep {
     #[serde(default)]
     pub client: ClientId,
 
@@ -19,7 +19,7 @@ pub struct DestroyObjectStep {
 }
 
 impl DestroyObjectStep {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to destroy object for client `{}`", self.client))

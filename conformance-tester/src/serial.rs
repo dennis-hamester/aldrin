@@ -5,14 +5,14 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Serial {
+pub(crate) enum Serial {
     Const(u32),
     Get(String),
     Set(String),
 }
 
 impl Serial {
-    pub fn get(&self, ctx: &Context) -> Result<u32> {
+    pub(crate) fn get(&self, ctx: &Context) -> Result<u32> {
         match self {
             Self::Const(serial) => Ok(*serial),
             Self::Get(id) => ctx.get_serial(id),
@@ -20,7 +20,7 @@ impl Serial {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let s1 = match self {
             Self::Const(s1) => *s1,
             Self::Get(id) => ctx.get_serial(id)?,
@@ -34,7 +34,7 @@ impl Serial {
         Ok(s1 == *s2)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         let Self::Set(id) = self else {
             return Ok(());
         };
@@ -46,7 +46,7 @@ impl Serial {
         ctx.set_serial(id.clone(), *s)
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::Const(serial) => Ok(Self::Const(*serial)),
             Self::Get(id) => ctx.get_serial(id).map(Self::Const),

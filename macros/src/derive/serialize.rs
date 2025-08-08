@@ -7,11 +7,11 @@ use syn::{
     Variant,
 };
 
-pub fn gen_serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_serialize(input, parse_quote!(::aldrin_core))
 }
 
-pub fn gen_serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     gen_serialize(input, parse_quote!(::aldrin::core))
 }
 

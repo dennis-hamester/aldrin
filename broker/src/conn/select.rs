@@ -14,11 +14,11 @@ pub(crate) enum Select {
 }
 
 impl Select {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::Broker
     }
 
-    pub async fn select<T>(
+    pub(crate) async fn select<T>(
         &mut self,
         mut broker: Option<&mut UnboundedReceiver<VersionedMessage>>,
         mut transport: Option<&mut T>,

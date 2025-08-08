@@ -15,7 +15,7 @@ impl VisitMut for ReplaceSelfTy {
     }
 }
 
-pub fn replace_self_ty(mut ty: Type, replace_with: Type) -> Type {
+pub(crate) fn replace_self_ty(mut ty: Type, replace_with: Type) -> Type {
     ReplaceSelfTy(replace_with).visit_type_mut(&mut ty);
     ty
 }

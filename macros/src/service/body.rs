@@ -13,7 +13,7 @@ pub(super) struct Body {
 }
 
 impl Body {
-    pub fn gen_proxy(&self, event: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_proxy(&self, event: &Ident, options: &Options) -> TokenStream {
         let krate = options.krate();
         let uuid = &self.uuid;
         let version = &self.version;
@@ -173,7 +173,7 @@ impl Body {
         }
     }
 
-    pub fn gen_event(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_event(&self, options: &Options) -> TokenStream {
         let mut variants = self
             .items
             .iter()
@@ -188,7 +188,7 @@ impl Body {
         variants
     }
 
-    pub fn gen_event_impl(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_event_impl(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
 
         let variants = |f| {
@@ -225,7 +225,7 @@ impl Body {
         }
     }
 
-    pub fn gen_service(&self, call: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_service(&self, call: &Ident, options: &Options) -> TokenStream {
         let uuid = &self.uuid;
         let version = &self.version;
         let krate = options.krate();
@@ -370,7 +370,7 @@ impl Body {
         }
     }
 
-    pub fn gen_call(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_call(&self, options: &Options) -> TokenStream {
         let mut variants = self
             .items
             .iter()
@@ -385,7 +385,7 @@ impl Body {
         variants
     }
 
-    pub fn gen_call_impl(&self, options: &Options) -> TokenStream {
+    pub(crate) fn gen_call_impl(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
 
         let variants = |f, args, borrow, wait| {
@@ -464,7 +464,7 @@ impl Body {
         }
     }
 
-    pub fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {
         let krate = options.krate();
         let schema = options.schema().unwrap();
         let service = service.unraw().to_string();

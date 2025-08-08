@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CreateChannel {
+pub(crate) struct CreateChannel {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -15,7 +15,7 @@ pub struct CreateChannel {
 }
 
 impl CreateChannel {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateChannel> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CreateChannel> {
         let serial = self.serial.get(ctx)?;
 
         Ok(message::CreateChannel {
@@ -24,19 +24,19 @@ impl CreateChannel {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.serial.matches(&other.serial, ctx)? && (self.end == other.end);
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
 
         Ok(Self {

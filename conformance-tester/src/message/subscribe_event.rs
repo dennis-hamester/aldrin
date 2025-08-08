@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SubscribeEvent {
+pub(crate) struct SubscribeEvent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serial: Option<Serial>,
 
@@ -16,7 +16,7 @@ pub struct SubscribeEvent {
 }
 
 impl SubscribeEvent {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEvent> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEvent> {
         let serial = self.serial.as_ref().map(|s| s.get(ctx)).transpose()?;
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
@@ -27,7 +27,7 @@ impl SubscribeEvent {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = match (self.serial.as_ref(), other.serial.as_ref()) {
             (Some(s1), Some(s2)) => s1.matches(s2, ctx)?,
             (Some(_), None) | (None, Some(_)) => return Ok(false),
@@ -41,7 +41,7 @@ impl SubscribeEvent {
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self.serial.as_ref(), other.serial.as_ref()) {
             (Some(s1), Some(s2)) => s1.update_context(s2, ctx)?,
             (Some(_), None) | (None, Some(_)) => unreachable!(),
@@ -54,7 +54,7 @@ impl SubscribeEvent {
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self
             .serial
             .as_ref()

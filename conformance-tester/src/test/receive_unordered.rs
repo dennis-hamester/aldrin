@@ -8,7 +8,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ReceiveUnordered {
+pub(crate) struct ReceiveUnordered {
     #[serde(default)]
     pub client: ClientId,
 
@@ -16,7 +16,7 @@ pub struct ReceiveUnordered {
 }
 
 impl ReceiveUnordered {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         let mut received = Vec::new();
         let mut missing = Vec::from_iter(&self.messages);
 

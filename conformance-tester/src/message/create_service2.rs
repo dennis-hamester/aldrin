@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CreateService2 {
+pub(crate) struct CreateService2 {
     pub serial: Serial,
     pub object_cookie: UuidRef,
     pub uuid: UuidRef,
@@ -16,7 +16,7 @@ pub struct CreateService2 {
 }
 
 impl CreateService2 {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CreateService2> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CreateService2> {
         let serial = self.serial.get(ctx)?;
         let object_cookie = self.object_cookie.get(ctx)?.into();
         let uuid = self.uuid.get(ctx)?.into();
@@ -34,7 +34,7 @@ impl CreateService2 {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.serial.matches(&other.serial, ctx)?
             && self.object_cookie.matches(&other.object_cookie, ctx)?
             && self.uuid.matches(&other.uuid, ctx)?;
@@ -48,7 +48,7 @@ impl CreateService2 {
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.object_cookie
             .update_context(&other.object_cookie, ctx)?;
@@ -61,7 +61,7 @@ impl CreateService2 {
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let object_cookie = self.object_cookie.apply_context(ctx)?;
         let uuid = self.uuid.apply_context(ctx)?;

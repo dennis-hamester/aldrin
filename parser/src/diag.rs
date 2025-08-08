@@ -262,7 +262,7 @@ pub(crate) struct Formatter<'a> {
 }
 
 impl<'a> Formatter<'a> {
-    pub fn new<D, S>(diagnostic: &'a D, summary: S) -> Self
+    pub(crate) fn new<D, S>(diagnostic: &'a D, summary: S) -> Self
     where
         D: Diagnostic,
         S: Into<Cow<'a, str>>,
@@ -292,7 +292,7 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    pub fn format(self) -> Formatted<'a> {
+    pub(crate) fn format(self) -> Formatted<'a> {
         let mut lines = Vec::with_capacity(self.lines.len());
         for line in self.lines {
             lines.push(Line {
@@ -308,7 +308,7 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    pub fn block<S>(
+    pub(crate) fn block<S>(
         &mut self,
         schema: &'a Schema,
         location: Position,
@@ -387,7 +387,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn main_block<S>(
+    pub(crate) fn main_block<S>(
         &mut self,
         schema: &'a Schema,
         location: Position,
@@ -400,7 +400,7 @@ impl<'a> Formatter<'a> {
         self.block(schema, location, span, text, true)
     }
 
-    pub fn info_block<S>(
+    pub(crate) fn info_block<S>(
         &mut self,
         schema: &'a Schema,
         location: Position,
@@ -413,7 +413,12 @@ impl<'a> Formatter<'a> {
         self.block(schema, location, span, text, false)
     }
 
-    pub fn location<P>(&mut self, path: P, location: Position, is_main_location: bool) -> &mut Self
+    pub(crate) fn location<P>(
+        &mut self,
+        path: P,
+        location: Position,
+        is_main_location: bool,
+    ) -> &mut Self
     where
         P: AsRef<Path>,
     {
@@ -424,14 +429,14 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    pub fn main_location<P>(&mut self, path: P, location: Position) -> &mut Self
+    pub(crate) fn main_location<P>(&mut self, path: P, location: Position) -> &mut Self
     where
         P: AsRef<Path>,
     {
         self.location_impl(path, location, "-->")
     }
 
-    pub fn info_location<P>(&mut self, path: P, location: Position) -> &mut Self
+    pub(crate) fn info_location<P>(&mut self, path: P, location: Position) -> &mut Self
     where
         P: AsRef<Path>,
     {
@@ -459,7 +464,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn empty_context(&mut self) -> &mut Self {
+    pub(crate) fn empty_context(&mut self) -> &mut Self {
         self.lines.push(UnpaddedLine::new(vec![
             ("  ".into(), Style::Regular),
             ("|".into(), Style::Separator),
@@ -468,7 +473,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn context<S>(&mut self, line: usize, source: S) -> &mut Self
+    pub(crate) fn context<S>(&mut self, line: usize, source: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
@@ -492,7 +497,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn trimmed_context<S>(&mut self, line: usize, source: S) -> &mut Self
+    pub(crate) fn trimmed_context<S>(&mut self, line: usize, source: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
@@ -516,7 +521,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn skipped_context(&mut self) -> &mut Self {
+    pub(crate) fn skipped_context(&mut self) -> &mut Self {
         let skip = "..";
         if skip.len() > self.padding {
             self.padding = skip.len();
@@ -535,7 +540,7 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn indicator<S>(
+    pub(crate) fn indicator<S>(
         &mut self,
         from: usize,
         to: usize,
@@ -552,7 +557,7 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    pub fn main_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
+    pub(crate) fn main_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
@@ -564,7 +569,7 @@ impl<'a> Formatter<'a> {
         self.indicator_impl(from, text, gen_main_indicator(to - from), style)
     }
 
-    pub fn info_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
+    pub(crate) fn info_indicator<S>(&mut self, from: usize, to: usize, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
@@ -593,28 +598,28 @@ impl<'a> Formatter<'a> {
         self
     }
 
-    pub fn note<S>(&mut self, text: S) -> &mut Self
+    pub(crate) fn note<S>(&mut self, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
         self.info_impl("note", text)
     }
 
-    pub fn note_cont<S>(&mut self, text: S) -> &mut Self
+    pub(crate) fn note_cont<S>(&mut self, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
         self.info_cont_impl(4, text)
     }
 
-    pub fn help<S>(&mut self, text: S) -> &mut Self
+    pub(crate) fn help<S>(&mut self, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {
         self.info_impl("help", text)
     }
 
-    pub fn help_cont<S>(&mut self, text: S) -> &mut Self
+    pub(crate) fn help_cont<S>(&mut self, text: S) -> &mut Self
     where
         S: Into<Cow<'a, str>>,
     {

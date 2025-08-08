@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum ConnectReply {
+pub(crate) enum ConnectReply {
     Ok,
     IncompatibleVersion { version: u32 },
     Rejected { value: Value },
 }
 
 impl ConnectReply {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply> {
         match self {
             Self::Ok => {
                 let value = SerializedValue::serialize(())
@@ -35,7 +35,7 @@ impl ConnectReply {
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Ok, Self::Ok) => Ok(true),
 
@@ -52,11 +52,11 @@ impl ConnectReply {
         }
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

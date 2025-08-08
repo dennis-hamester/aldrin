@@ -20,7 +20,7 @@ pub(crate) struct StructData<'a> {
 }
 
 impl<'a> StructData<'a> {
-    pub fn new(
+    pub(crate) fn new(
         input: &'a DeriveInput,
         named: bool,
         fields: &'a Punctuated<Field, Token![,]>,
@@ -93,43 +93,43 @@ impl<'a> StructData<'a> {
         })
     }
 
-    pub fn name(&self) -> &Ident {
+    pub(crate) fn name(&self) -> &Ident {
         self.name
     }
 
-    pub fn krate(&self) -> &Path {
+    pub(crate) fn krate(&self) -> &Path {
         self.options.krate()
     }
 
-    pub fn is_named(&self) -> bool {
+    pub(crate) fn is_named(&self) -> bool {
         self.named
     }
 
-    pub fn vis(&self) -> &Visibility {
+    pub(crate) fn vis(&self) -> &Visibility {
         self.vis
     }
 
-    pub fn ref_type(&self) -> Option<&Ident> {
+    pub(crate) fn ref_type(&self) -> Option<&Ident> {
         self.options.ref_type()
     }
 
-    pub fn is_newtype(&self) -> bool {
+    pub(crate) fn is_newtype(&self) -> bool {
         self.options.newtype()
     }
 
-    pub fn fields(&self) -> &[FieldData<'_>] {
+    pub(crate) fn fields(&self) -> &[FieldData<'_>] {
         &self.fields
     }
 
-    pub fn ty_generics(&self) -> impl Iterator<Item = &Ident> {
+    pub(crate) fn ty_generics(&self) -> impl Iterator<Item = &Ident> {
         self.fields.iter().map(FieldData::ty_generic)
     }
 
-    pub fn lifetimes(&self) -> &[&LifetimeParam] {
+    pub(crate) fn lifetimes(&self) -> &[&LifetimeParam] {
         &self.lifetimes
     }
 
-    pub fn fallback(&self) -> Option<&FieldData<'_>> {
+    pub(crate) fn fallback(&self) -> Option<&FieldData<'_>> {
         match self.fields.last() {
             Some(field) if field.is_fallback() => Some(field),
             _ => None,
@@ -187,39 +187,39 @@ impl<'a> FieldData<'a> {
         })
     }
 
-    pub fn is_named(&self) -> bool {
+    pub(crate) fn is_named(&self) -> bool {
         matches!(self.name, FieldName::Ident(_))
     }
 
-    pub fn name(&self) -> &FieldName<'_> {
+    pub(crate) fn name(&self) -> &FieldName<'_> {
         &self.name
     }
 
-    pub fn id(&self) -> u32 {
+    pub(crate) fn id(&self) -> u32 {
         self.options.id()
     }
 
-    pub fn is_fallback(&self) -> bool {
+    pub(crate) fn is_fallback(&self) -> bool {
         self.options.is_fallback()
     }
 
-    pub fn is_optional(&self) -> bool {
+    pub(crate) fn is_optional(&self) -> bool {
         self.options.is_optional()
     }
 
-    pub fn ty(&self) -> &Type {
+    pub(crate) fn ty(&self) -> &Type {
         self.ty
     }
 
-    pub fn ty_generic(&self) -> &Ident {
+    pub(crate) fn ty_generic(&self) -> &Ident {
         &self.ty_generic
     }
 
-    pub fn ty_tag(&self) -> &Type {
+    pub(crate) fn ty_tag(&self) -> &Type {
         &self.ty_tag
     }
 
-    pub fn var(&self) -> &Ident {
+    pub(crate) fn var(&self) -> &Ident {
         &self.var
     }
 }

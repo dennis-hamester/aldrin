@@ -12,7 +12,7 @@ pub(crate) struct Validate<'a> {
 }
 
 impl<'a> Validate<'a> {
-    pub fn new(
+    pub(crate) fn new(
         schema_name: &'a str,
         issues: &'a mut Issues,
         schemas: &'a HashMap<String, Schema>,
@@ -28,18 +28,18 @@ impl<'a> Validate<'a> {
         }
     }
 
-    pub fn schema_name(&self) -> &'a str {
+    pub(crate) fn schema_name(&self) -> &'a str {
         self.schema_name
     }
 
-    pub fn add_error<E>(&mut self, e: E)
+    pub(crate) fn add_error<E>(&mut self, e: E)
     where
         E: Into<Error>,
     {
         self.issues.add_error(e);
     }
 
-    pub fn add_warning<W>(&mut self, w: W)
+    pub(crate) fn add_warning<W>(&mut self, w: W)
     where
         W: Into<Warning>,
     {
@@ -50,15 +50,15 @@ impl<'a> Validate<'a> {
         }
     }
 
-    pub fn get_schema(&self, schema_name: &str) -> Option<&'a Schema> {
+    pub(crate) fn get_schema(&self, schema_name: &str) -> Option<&'a Schema> {
         self.schemas.get(schema_name)
     }
 
-    pub fn get_current_schema(&self) -> &'a Schema {
+    pub(crate) fn get_current_schema(&self) -> &'a Schema {
         self.get_schema(self.schema_name).unwrap()
     }
 
-    pub fn schema_paths(&self) -> &'a [PathBuf] {
+    pub(crate) fn schema_paths(&self) -> &'a [PathBuf] {
         self.schema_paths
     }
 }

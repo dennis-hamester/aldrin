@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct StartBusListenerReply {
+pub(crate) struct StartBusListenerReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -14,26 +14,26 @@ pub struct StartBusListenerReply {
 }
 
 impl StartBusListenerReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::StartBusListenerReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::StartBusListenerReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::StartBusListenerReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -54,14 +54,14 @@ impl TryFrom<message::StartBusListenerReply> for StartBusListenerReply {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum StartBusListenerResult {
+pub(crate) enum StartBusListenerResult {
     Ok,
     InvalidBusListener,
     AlreadyStarted,
 }
 
 impl StartBusListenerResult {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::StartBusListenerResult> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::StartBusListenerResult> {
         match self {
             Self::Ok => Ok(message::StartBusListenerResult::Ok),
             Self::InvalidBusListener => Ok(message::StartBusListenerResult::InvalidBusListener),
@@ -69,15 +69,15 @@ impl StartBusListenerResult {
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self == other)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

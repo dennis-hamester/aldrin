@@ -6,27 +6,27 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ServiceDestroyed {
+pub(crate) struct ServiceDestroyed {
     pub service_cookie: UuidRef,
 }
 
 impl ServiceDestroyed {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::ServiceDestroyed> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::ServiceDestroyed> {
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
         Ok(message::ServiceDestroyed { service_cookie })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         self.service_cookie.matches(&other.service_cookie, ctx)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.service_cookie
             .update_context(&other.service_cookie, ctx)
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let service_cookie = self.service_cookie.apply_context(ctx)?;
 
         Ok(Self { service_cookie })

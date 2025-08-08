@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SubscribeEventReply {
+pub(crate) struct SubscribeEventReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -14,26 +14,26 @@ pub struct SubscribeEventReply {
 }
 
 impl SubscribeEventReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEventReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::SubscribeEventReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::SubscribeEventReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.result.update_context(&other.result, ctx)?;
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let result = self.result.apply_context(ctx)?;
 
@@ -54,28 +54,28 @@ impl TryFrom<message::SubscribeEventReply> for SubscribeEventReply {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum SubscribeEventResult {
+pub(crate) enum SubscribeEventResult {
     Ok,
     InvalidService,
 }
 
 impl SubscribeEventResult {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::SubscribeEventResult> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::SubscribeEventResult> {
         match self {
             Self::Ok => Ok(message::SubscribeEventResult::Ok),
             Self::InvalidService => Ok(message::SubscribeEventResult::InvalidService),
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self == other)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }

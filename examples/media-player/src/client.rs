@@ -7,7 +7,7 @@ use aldrin::{Event, Handle, Property};
 use anyhow::{anyhow, Result};
 use tokio::signal;
 
-pub async fn listen(args: ServerArg, bus: &Handle) -> Result<()> {
+pub(crate) async fn listen(args: ServerArg, bus: &Handle) -> Result<()> {
     Listen::new(bus, args.server).await?.run().await
 }
 
@@ -146,7 +146,7 @@ impl Listen {
     }
 }
 
-pub async fn pause(args: ServerArg, bus: &Handle) -> Result<()> {
+pub(crate) async fn pause(args: ServerArg, bus: &Handle) -> Result<()> {
     get_media_player(bus, args.server)
         .await?
         .pause()
@@ -156,7 +156,7 @@ pub async fn pause(args: ServerArg, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-pub async fn play(args: Play, bus: &Handle) -> Result<()> {
+pub(crate) async fn play(args: Play, bus: &Handle) -> Result<()> {
     get_media_player(bus, args.server.server)
         .await?
         .play(MediaPlayerPlayArgs {
@@ -170,7 +170,7 @@ pub async fn play(args: Play, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-pub async fn resume(args: ServerArg, bus: &Handle) -> Result<()> {
+pub(crate) async fn resume(args: ServerArg, bus: &Handle) -> Result<()> {
     get_media_player(bus, args.server)
         .await?
         .resume()
@@ -180,7 +180,7 @@ pub async fn resume(args: ServerArg, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-pub async fn stop(args: ServerArg, bus: &Handle) -> Result<()> {
+pub(crate) async fn stop(args: ServerArg, bus: &Handle) -> Result<()> {
     get_media_player(bus, args.server)
         .await?
         .stop()

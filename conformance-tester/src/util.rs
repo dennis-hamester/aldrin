@@ -2,7 +2,7 @@ use std::future::Future;
 use std::time::Duration;
 use tokio::time::{self, Instant, Timeout};
 
-pub trait FutureExt: Future + Sized {
+pub(crate) trait FutureExt: Future + Sized {
     fn timeout(self, duration: Duration) -> Timeout<Self> {
         time::timeout(duration, self)
     }

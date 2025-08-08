@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct RemoveBusListenerFilter {
+pub(crate) struct RemoveBusListenerFilter {
     pub cookie: UuidRef,
 
     #[serde(flatten)]
@@ -15,28 +15,28 @@ pub struct RemoveBusListenerFilter {
 }
 
 impl RemoveBusListenerFilter {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::RemoveBusListenerFilter> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::RemoveBusListenerFilter> {
         let cookie = self.cookie.get(ctx)?.into();
         let filter = self.filter.to_core(ctx)?;
 
         Ok(message::RemoveBusListenerFilter { cookie, filter })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.cookie.matches(&other.cookie, ctx)? && self.filter.matches(&other.filter, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.cookie.update_context(&other.cookie, ctx)?;
         self.filter.update_context(&other.filter, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let cookie = self.cookie.apply_context(ctx)?;
         let filter = self.filter.apply_context(ctx)?;
 

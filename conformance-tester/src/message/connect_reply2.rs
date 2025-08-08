@@ -6,28 +6,28 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ConnectReply2 {
+pub(crate) struct ConnectReply2 {
     #[serde(flatten)]
     pub result: ConnectResult,
 }
 
 impl ConnectReply2 {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply2> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply2> {
         Ok(message::ConnectReply2 {
             result: self.result.into(),
             value: SerializedValue::serialize(ConnectReplyData::new()).unwrap(),
         })
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         Ok(self.result == other.result)
     }
 
-    pub fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
         Ok(())
     }
 
-    pub fn apply_context(&self, _ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
         Ok(self.clone())
     }
 }
@@ -44,7 +44,7 @@ impl TryFrom<message::ConnectReply2> for ConnectReply2 {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum ConnectResult {
+pub(crate) enum ConnectResult {
     #[serde(rename_all = "kebab-case")]
     Ok {
         minor_version: u32,

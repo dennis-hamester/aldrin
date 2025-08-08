@@ -35,7 +35,7 @@ mod kw {
     custom_keyword!(version);
 }
 
-pub struct Service {
+pub(crate) struct Service {
     options: Options,
     vis: Visibility,
     ident: Ident,
@@ -47,7 +47,7 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn generate(&self) -> TokenStream {
+    pub(crate) fn generate(&self) -> TokenStream {
         let client = self.options.client().then(|| self.gen_client());
         let server = self.options.server().then(|| self.gen_server());
 

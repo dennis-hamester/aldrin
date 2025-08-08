@@ -12,7 +12,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CreateService2Step {
+pub(crate) struct CreateService2Step {
     #[serde(default)]
     pub client: ClientId,
 
@@ -26,7 +26,7 @@ pub struct CreateService2Step {
 }
 
 impl CreateService2Step {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("failed to create service for client `{}`", self.client))

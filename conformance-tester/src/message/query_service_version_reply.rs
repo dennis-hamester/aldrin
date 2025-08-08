@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct QueryServiceVersionReply {
+pub(crate) struct QueryServiceVersionReply {
     pub serial: Serial,
 
     #[serde(flatten)]
@@ -14,25 +14,25 @@ pub struct QueryServiceVersionReply {
 }
 
 impl QueryServiceVersionReply {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceVersionReply> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceVersionReply> {
         let serial = self.serial.get(ctx)?;
         let result = self.result.to_core(ctx)?;
 
         Ok(message::QueryServiceVersionReply { serial, result })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
 
         Ok(Self {
@@ -55,20 +55,20 @@ impl TryFrom<message::QueryServiceVersionReply> for QueryServiceVersionReply {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
-pub enum QueryServiceVersionResult {
+pub(crate) enum QueryServiceVersionResult {
     Ok { version: u32 },
     InvalidService,
 }
 
 impl QueryServiceVersionResult {
-    pub fn to_core(&self, _ctx: &Context) -> Result<message::QueryServiceVersionResult> {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::QueryServiceVersionResult> {
         match self {
             Self::Ok { version } => Ok(message::QueryServiceVersionResult::Ok(*version)),
             Self::InvalidService => Ok(message::QueryServiceVersionResult::InvalidService),
         }
     }
 
-    pub fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
         match (self, other) {
             (Self::Ok { version: v1 }, Self::Ok { version: v2 }) => Ok(v1 == v2),
             (Self::InvalidService, Self::InvalidService) => Ok(true),

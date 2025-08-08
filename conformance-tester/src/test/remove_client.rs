@@ -6,13 +6,13 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct RemoveClient {
+pub(crate) struct RemoveClient {
     #[serde(default)]
     pub client: ClientId,
 }
 
 impl RemoveClient {
-    pub async fn run(&self, ctx: &mut Context, _timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, _timeout: Instant) -> Result<()> {
         ctx.remove_client(&self.client)
             .with_context(|| anyhow!("failed to remove client `{}`", self.client))
     }

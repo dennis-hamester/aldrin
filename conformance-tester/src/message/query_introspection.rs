@@ -7,34 +7,34 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct QueryIntrospection {
+pub(crate) struct QueryIntrospection {
     pub serial: Serial,
     pub type_id: UuidRef,
 }
 
 impl QueryIntrospection {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::QueryIntrospection> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::QueryIntrospection> {
         let serial = self.serial.get(ctx)?;
         let type_id = self.type_id.get(ctx)?.into();
 
         Ok(message::QueryIntrospection { serial, type_id })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.serial.matches(&other.serial, ctx)?
             && self.type_id.matches(&other.type_id, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.type_id.update_context(&other.type_id, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let type_id = self.type_id.apply_context(ctx)?;
 

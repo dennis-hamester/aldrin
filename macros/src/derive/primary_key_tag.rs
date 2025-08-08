@@ -4,11 +4,11 @@ use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Path, Result, Token};
 
-pub fn gen_primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_primary_key_tag(input, parse_quote!(::aldrin_core))
 }
 
-pub fn gen_primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     gen_primary_key_tag(input, parse_quote!(::aldrin::core))
 }
 

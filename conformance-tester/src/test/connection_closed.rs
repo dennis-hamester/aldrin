@@ -8,13 +8,13 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ConnectionClosed {
+pub(crate) struct ConnectionClosed {
     #[serde(default)]
     pub client: ClientId,
 }
 
 impl ConnectionClosed {
-    pub async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(&self, ctx: &mut Context, timeout: Instant) -> Result<()> {
         self.run_impl(ctx, timeout)
             .await
             .with_context(|| anyhow!("the connection of client `{}` did not close", self.client))

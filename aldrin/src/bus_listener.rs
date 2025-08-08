@@ -462,7 +462,7 @@ pub(crate) struct BusListenerHandle {
 }
 
 impl BusListenerHandle {
-    pub fn new(events: UnboundedSender<BusListenerEvent>) -> Self {
+    pub(crate) fn new(events: UnboundedSender<BusListenerEvent>) -> Self {
         Self {
             filters: HashSet::new(),
             events,
@@ -471,19 +471,19 @@ impl BusListenerHandle {
         }
     }
 
-    pub fn add_filter(&mut self, filter: BusListenerFilter) {
+    pub(crate) fn add_filter(&mut self, filter: BusListenerFilter) {
         self.filters.insert(filter);
     }
 
-    pub fn remove_filter(&mut self, filter: BusListenerFilter) {
+    pub(crate) fn remove_filter(&mut self, filter: BusListenerFilter) {
         self.filters.remove(&filter);
     }
 
-    pub fn clear_filters(&mut self) {
+    pub(crate) fn clear_filters(&mut self) {
         self.filters.clear();
     }
 
-    pub fn start(&mut self, scope: BusListenerScope) -> bool {
+    pub(crate) fn start(&mut self, scope: BusListenerScope) -> bool {
         if self.scope.is_none() {
             self.scope = Some(scope);
             self.current_finished = !scope.includes_current();
@@ -494,7 +494,7 @@ impl BusListenerHandle {
         }
     }
 
-    pub fn stop(&mut self) -> bool {
+    pub(crate) fn stop(&mut self) -> bool {
         if self.scope.is_some() {
             self.scope = None;
             let _ = self.events.unbounded_send(BusListenerEvent::Stopped);
@@ -504,7 +504,7 @@ impl BusListenerHandle {
         }
     }
 
-    pub fn current_finished(&mut self) -> bool {
+    pub(crate) fn current_finished(&mut self) -> bool {
         if !self.current_finished {
             let _ = self
                 .events
@@ -516,7 +516,7 @@ impl BusListenerHandle {
         }
     }
 
-    pub fn emit_current(&self, event: BusEvent) -> bool {
+    pub(crate) fn emit_current(&self, event: BusEvent) -> bool {
         if self.includes_current() && !self.current_finished {
             let _ = self.events.unbounded_send(BusListenerEvent::Event(event));
             true
@@ -525,7 +525,7 @@ impl BusListenerHandle {
         }
     }
 
-    pub fn emit_new_if_matches(&self, event: BusEvent) {
+    pub(crate) fn emit_new_if_matches(&self, event: BusEvent) {
         if self.includes_new() && self.matches_filters(event) {
             let _ = self.events.unbounded_send(BusListenerEvent::Event(event));
         }

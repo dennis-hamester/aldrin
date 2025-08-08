@@ -15,7 +15,7 @@ pub(crate) struct EnumData<'a> {
 }
 
 impl<'a> EnumData<'a> {
-    pub fn new(
+    pub(crate) fn new(
         input: &'a DeriveInput,
         variants: &'a Punctuated<Variant, Token![,]>,
         krate: Path,
@@ -54,31 +54,31 @@ impl<'a> EnumData<'a> {
         })
     }
 
-    pub fn name(&self) -> &Ident {
+    pub(crate) fn name(&self) -> &Ident {
         self.name
     }
 
-    pub fn krate(&self) -> &Path {
+    pub(crate) fn krate(&self) -> &Path {
         self.options.krate()
     }
 
-    pub fn vis(&self) -> &Visibility {
+    pub(crate) fn vis(&self) -> &Visibility {
         self.vis
     }
 
-    pub fn ref_type(&self) -> Option<&Ident> {
+    pub(crate) fn ref_type(&self) -> Option<&Ident> {
         self.options.ref_type()
     }
 
-    pub fn variants(&self) -> &[VariantData<'_>] {
+    pub(crate) fn variants(&self) -> &[VariantData<'_>] {
         &self.variants
     }
 
-    pub fn ty_generics(&self) -> impl Iterator<Item = &Ident> {
+    pub(crate) fn ty_generics(&self) -> impl Iterator<Item = &Ident> {
         self.variants.iter().filter_map(VariantData::ty_generic)
     }
 
-    pub fn lifetimes(&self) -> &[&LifetimeParam] {
+    pub(crate) fn lifetimes(&self) -> &[&LifetimeParam] {
         &self.lifetimes
     }
 }
@@ -164,27 +164,27 @@ impl<'a> VariantData<'a> {
         })
     }
 
-    pub fn name(&self) -> &Ident {
+    pub(crate) fn name(&self) -> &Ident {
         self.name
     }
 
-    pub fn id(&self) -> u32 {
+    pub(crate) fn id(&self) -> u32 {
         self.options.id()
     }
 
-    pub fn is_fallback(&self) -> bool {
+    pub(crate) fn is_fallback(&self) -> bool {
         self.options.is_fallback()
     }
 
-    pub fn ty(&self) -> Option<&Type> {
+    pub(crate) fn ty(&self) -> Option<&Type> {
         self.ty
     }
 
-    pub fn ty_generic(&self) -> Option<&Ident> {
+    pub(crate) fn ty_generic(&self) -> Option<&Ident> {
         self.ty_generic.as_ref()
     }
 
-    pub fn ty_tag(&self) -> Option<&Type> {
+    pub(crate) fn ty_tag(&self) -> Option<&Type> {
         self.ty_tag.as_ref()
     }
 }

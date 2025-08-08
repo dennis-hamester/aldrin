@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "event")]
-pub enum EmitBusEvent {
+pub(crate) enum EmitBusEvent {
     #[serde(rename_all = "kebab-case")]
     ObjectCreated {
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -49,7 +49,7 @@ pub enum EmitBusEvent {
 }
 
 impl EmitBusEvent {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::EmitBusEvent> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::EmitBusEvent> {
         match self {
             Self::ObjectCreated {
                 cookie,
@@ -129,7 +129,7 @@ impl EmitBusEvent {
         }
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
             (
                 Self::ObjectCreated {
@@ -247,7 +247,7 @@ impl EmitBusEvent {
         }
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
             (
                 Self::ObjectCreated {
@@ -353,7 +353,7 @@ impl EmitBusEvent {
         }
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
             Self::ObjectCreated {
                 cookie,

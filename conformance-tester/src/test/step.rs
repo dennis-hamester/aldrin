@@ -14,7 +14,7 @@ use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "type")]
-pub enum Step {
+pub(crate) enum Step {
     Connect(ConnectClient),
     RemoveClient(RemoveClient),
     Shutdown(ShutdownStep),
@@ -44,7 +44,12 @@ pub enum Step {
 }
 
 impl Step {
-    pub async fn run(&self, broker: &Broker, ctx: &mut Context, timeout: Instant) -> Result<()> {
+    pub(crate) async fn run(
+        &self,
+        broker: &Broker,
+        ctx: &mut Context,
+        timeout: Instant,
+    ) -> Result<()> {
         match self {
             Self::Connect(step) => step.run(broker, ctx, timeout).await,
             Self::RemoveClient(step) => step.run(ctx, timeout).await,

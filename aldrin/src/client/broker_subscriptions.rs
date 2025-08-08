@@ -8,17 +8,17 @@ pub(crate) struct BrokerSubscriptions {
 }
 
 impl BrokerSubscriptions {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             entries: HashMap::new(),
         }
     }
 
-    pub fn subscribe(&mut self, service: ServiceCookie, event: u32) {
+    pub(crate) fn subscribe(&mut self, service: ServiceCookie, event: u32) {
         self.entries.entry(service).or_default().subscribe(event);
     }
 
-    pub fn unsubscribe(&mut self, service: ServiceCookie, event: u32) {
+    pub(crate) fn unsubscribe(&mut self, service: ServiceCookie, event: u32) {
         if let Entry::Occupied(mut entry) = self.entries.entry(service) {
             entry.get_mut().unsubscribe(event);
 
@@ -28,11 +28,11 @@ impl BrokerSubscriptions {
         }
     }
 
-    pub fn subscribe_all(&mut self, service: ServiceCookie) {
+    pub(crate) fn subscribe_all(&mut self, service: ServiceCookie) {
         self.entries.entry(service).or_default().subscribe_all();
     }
 
-    pub fn unsubscribe_all(&mut self, service: ServiceCookie) {
+    pub(crate) fn unsubscribe_all(&mut self, service: ServiceCookie) {
         if let Entry::Occupied(mut entry) = self.entries.entry(service) {
             entry.get_mut().unsubscribe_all();
 
@@ -42,14 +42,14 @@ impl BrokerSubscriptions {
         }
     }
 
-    pub fn emit(&self, service: ServiceCookie, event: u32) -> bool {
+    pub(crate) fn emit(&self, service: ServiceCookie, event: u32) -> bool {
         self.entries
             .get(&service)
             .map(|entry| entry.emit(event))
             .unwrap_or(false)
     }
 
-    pub fn remove_service(&mut self, service: ServiceCookie) {
+    pub(crate) fn remove_service(&mut self, service: ServiceCookie) {
         self.entries.remove(&service);
     }
 }

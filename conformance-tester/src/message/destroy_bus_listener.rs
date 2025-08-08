@@ -7,34 +7,34 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct DestroyBusListener {
+pub(crate) struct DestroyBusListener {
     pub serial: Serial,
     pub cookie: UuidRef,
 }
 
 impl DestroyBusListener {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::DestroyBusListener> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::DestroyBusListener> {
         let serial = self.serial.get(ctx)?;
         let cookie = self.cookie.get(ctx)?.into();
 
         Ok(message::DestroyBusListener { serial, cookie })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
             self.serial.matches(&other.serial, ctx)? && self.cookie.matches(&other.cookie, ctx)?;
 
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.cookie.update_context(&other.cookie, ctx)?;
 
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let cookie = self.cookie.apply_context(ctx)?;
 

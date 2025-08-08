@@ -12,21 +12,21 @@ pub(crate) struct Channel {
 }
 
 impl Channel {
-    pub fn with_claimed_sender(owner: ConnectionId) -> Self {
+    pub(crate) fn with_claimed_sender(owner: ConnectionId) -> Self {
         Self {
             sender: ChannelEndState::Claimed { owner, capacity: 0 },
             receiver: ChannelEndState::Unclaimed,
         }
     }
 
-    pub fn with_claimed_receiver(owner: ConnectionId, capacity: u32) -> Self {
+    pub(crate) fn with_claimed_receiver(owner: ConnectionId, capacity: u32) -> Self {
         Self {
             sender: ChannelEndState::Unclaimed,
             receiver: ChannelEndState::Claimed { owner, capacity },
         }
     }
 
-    pub fn check_close(
+    pub(crate) fn check_close(
         &self,
         conn_id: &ConnectionId,
         end: ChannelEnd,
@@ -46,7 +46,7 @@ impl Channel {
         }
     }
 
-    pub fn close(&mut self, end: ChannelEnd) -> Option<&ConnectionId> {
+    pub(crate) fn close(&mut self, end: ChannelEnd) -> Option<&ConnectionId> {
         let (owner, other) = match end {
             ChannelEnd::Sender => (&mut self.sender, &self.receiver),
             ChannelEnd::Receiver => (&mut self.receiver, &self.sender),
@@ -75,7 +75,7 @@ impl Channel {
         }
     }
 
-    pub fn claim_sender(
+    pub(crate) fn claim_sender(
         &mut self,
         conn_id: &ConnectionId,
     ) -> Result<(&ConnectionId, u32), ClaimChannelEndResult> {
@@ -102,7 +102,7 @@ impl Channel {
         Ok((receiver, capacity))
     }
 
-    pub fn claim_receiver(
+    pub(crate) fn claim_receiver(
         &mut self,
         conn_id: &ConnectionId,
         capacity: u32,
@@ -132,7 +132,7 @@ impl Channel {
         Ok(sender)
     }
 
-    pub fn send_item(
+    pub(crate) fn send_item(
         &mut self,
         conn_id: &ConnectionId,
     ) -> Result<(&ConnectionId, Option<u32>), SendItemError> {
@@ -179,7 +179,7 @@ impl Channel {
         Ok((receiver, add_capacity))
     }
 
-    pub fn add_capacity(
+    pub(crate) fn add_capacity(
         &mut self,
         conn_id: &ConnectionId,
         capacity: u32,

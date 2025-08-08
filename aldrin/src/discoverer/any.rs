@@ -19,7 +19,7 @@ impl<Key> AnyObject<Key>
 where
     Key: Copy + Eq + Hash,
 {
-    pub fn new(key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
+    pub(crate) fn new(key: Key, services: impl IntoIterator<Item = ServiceUuid>) -> Self {
         Self {
             key,
             services: services.into_iter().map(|s| (s, HashMap::new())).collect(),
@@ -27,7 +27,7 @@ where
         }
     }
 
-    pub fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
+    pub(crate) fn add_filter(&self, listener: &mut BusListener) -> Result<(), Error> {
         if self.services.is_empty() {
             listener.add_filter(BusListenerFilter::any_object())?;
         } else {
@@ -39,7 +39,7 @@ where
         Ok(())
     }
 
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.created.clear();
 
         for cookies in self.services.values_mut() {
@@ -47,11 +47,11 @@ where
         }
     }
 
-    pub fn key(&self) -> Key {
+    pub(crate) fn key(&self) -> Key {
         self.key
     }
 
-    pub fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
+    pub(crate) fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
         self.created
             .get(&object)
             .map(|&cookie| ObjectId::new(object, cookie))
@@ -66,7 +66,7 @@ where
             .unwrap()
     }
 
-    pub fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
+    pub(crate) fn service_id(&self, object: ObjectUuid, service: ServiceUuid) -> Option<ServiceId> {
         self.object_id(object).map(|object_id| {
             ServiceId::new(
                 object_id,
@@ -76,7 +76,7 @@ where
         })
     }
 
-    pub fn service_ids(
+    pub(crate) fn service_ids(
         &self,
         object: ObjectUuid,
         services: impl IntoIterator<Item = ServiceUuid>,
@@ -92,7 +92,7 @@ where
         })
     }
 
-    pub fn service_ids_n<const N: usize>(
+    pub(crate) fn service_ids_n<const N: usize>(
         &self,
         object: ObjectUuid,
         services: &[ServiceUuid; N],
@@ -105,19 +105,19 @@ where
         })
     }
 
-    pub fn contains(&self, object: ObjectUuid) -> bool {
+    pub(crate) fn contains(&self, object: ObjectUuid) -> bool {
         self.created.contains_key(&object)
     }
 
-    pub fn contains_any(&self) -> bool {
+    pub(crate) fn contains_any(&self) -> bool {
         !self.created.is_empty()
     }
 
-    pub fn iter(&self) -> AnyObjectIter<'_, Key> {
+    pub(crate) fn iter(&self) -> AnyObjectIter<'_, Key> {
         AnyObjectIter::new(self, self.created.iter())
     }
 
-    pub fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
+    pub(crate) fn handle_event(&mut self, event: BusEvent) -> Option<DiscovererEvent<Key>> {
         match event {
             BusEvent::ObjectCreated(id) => self.object_created(id),
             BusEvent::ObjectDestroyed(id) => self.object_destroyed(id),
@@ -249,27 +249,33 @@ where
         }
     }
 
-    pub fn key(self) -> Key {
+    pub(crate) fn key(self) -> Key {
         self.object.key()
     }
 
-    pub fn object_id(self) -> ObjectId {
+    pub(crate) fn object_id(self) -> ObjectId {
         self.object_id
     }
 
-    pub fn service_id(self, service: ServiceUuid) -> ServiceId {
+    pub(crate) fn service_id(self, service: ServiceUuid) -> ServiceId {
         self.object
             .service_id(self.object_id.uuid, service)
             .unwrap()
     }
 
-    pub fn service_ids(self, services: impl IntoIterator<Item = ServiceUuid>) -> Vec<ServiceId> {
+    pub(crate) fn service_ids(
+        self,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Vec<ServiceId> {
         self.object
             .service_ids(self.object_id.uuid, services)
             .unwrap()
     }
 
-    pub fn service_ids_n<const N: usize>(self, services: &[ServiceUuid; N]) -> [ServiceId; N] {
+    pub(crate) fn service_ids_n<const N: usize>(
+        self,
+        services: &[ServiceUuid; N],
+    ) -> [ServiceId; N] {
         self.object
             .service_ids_n(self.object_id.uuid, services)
             .unwrap()

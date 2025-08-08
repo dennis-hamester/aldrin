@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct CallFunction2 {
+pub(crate) struct CallFunction2 {
     pub serial: Serial,
     pub service_cookie: UuidRef,
     pub function: u32,
@@ -21,7 +21,7 @@ pub struct CallFunction2 {
 }
 
 impl CallFunction2 {
-    pub fn to_core(&self, ctx: &Context) -> Result<message::CallFunction2> {
+    pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CallFunction2> {
         let serial = self.serial.get(ctx)?;
         let service_cookie = self.service_cookie.get(ctx)?.into();
 
@@ -37,7 +37,7 @@ impl CallFunction2 {
         })
     }
 
-    pub fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res = self.serial.matches(&other.serial, ctx)?
             && self.service_cookie.matches(&other.service_cookie, ctx)?
             && (self.function == other.function)
@@ -47,7 +47,7 @@ impl CallFunction2 {
         Ok(res)
     }
 
-    pub fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
+    pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
         self.service_cookie
             .update_context(&other.service_cookie, ctx)?;
@@ -55,7 +55,7 @@ impl CallFunction2 {
         Ok(())
     }
 
-    pub fn apply_context(&self, ctx: &Context) -> Result<Self> {
+    pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
         let service_cookie = self.service_cookie.apply_context(ctx)?;
 

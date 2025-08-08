@@ -17,11 +17,11 @@ pub(crate) enum Select {
 }
 
 impl Select {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::Transport
     }
 
-    pub async fn select<T>(
+    pub(crate) async fn select<T>(
         &mut self,
         transport: &mut T,
         handle: &mut UnboundedReceiver<HandleRequest>,

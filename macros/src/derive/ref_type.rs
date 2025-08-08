@@ -9,11 +9,11 @@ use syn::{
     parse_quote, Data, DeriveInput, Error, Field, Fields, Ident, Path, Result, Token, Variant,
 };
 
-pub fn gen_ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_ref_type(input, parse_quote!(::aldrin_core))
 }
 
-pub fn gen_ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn gen_ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
     gen_ref_type(input, parse_quote!(::aldrin::core))
 }
 

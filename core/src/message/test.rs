@@ -5,7 +5,7 @@ use bytes::BytesMut;
 use std::fmt::Debug;
 
 #[track_caller]
-pub fn assert_serialize_eq<T, B>(msg: &T, expected: B)
+pub(crate) fn assert_serialize_eq<T, B>(msg: &T, expected: B)
 where
     T: MessageOps + Clone + Debug,
     B: AsRef<[u8]>,
@@ -22,7 +22,7 @@ where
 }
 
 #[track_caller]
-pub fn assert_deserialize_eq<T, B>(expected: &T, serialized: B) -> T
+pub(crate) fn assert_deserialize_eq<T, B>(expected: &T, serialized: B) -> T
 where
     T: MessageOps + PartialEq + Debug,
     B: AsRef<[u8]>,
@@ -35,7 +35,7 @@ where
 }
 
 #[track_caller]
-pub fn assert_deserialize_eq_with_value<T, B, V, W>(expected: &T, serialized: B, value: &W)
+pub(crate) fn assert_deserialize_eq_with_value<T, B, V, W>(expected: &T, serialized: B, value: &W)
 where
     T: MessageOps + PartialEq + Debug,
     B: AsRef<[u8]>,

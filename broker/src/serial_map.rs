@@ -7,14 +7,14 @@ pub(crate) struct SerialMap<T> {
 }
 
 impl<T> SerialMap<T> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             next: 0,
             elems: HashMap::new(),
         }
     }
 
-    pub fn insert(&mut self, obj: T) -> u32 {
+    pub(crate) fn insert(&mut self, obj: T) -> u32 {
         loop {
             let serial = self.next;
             self.next = self.next.wrapping_add(1);
@@ -25,19 +25,19 @@ impl<T> SerialMap<T> {
         }
     }
 
-    pub fn get(&self, serial: u32) -> Option<&T> {
+    pub(crate) fn get(&self, serial: u32) -> Option<&T> {
         self.elems.get(&serial)
     }
 
-    pub fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
+    pub(crate) fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
         self.elems.get_mut(&serial)
     }
 
-    pub fn remove(&mut self, serial: u32) -> Option<T> {
+    pub(crate) fn remove(&mut self, serial: u32) -> Option<T> {
         self.elems.remove(&serial)
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.elems.is_empty()
     }
 }
