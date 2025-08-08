@@ -51,7 +51,7 @@ pub use ids::{
     BusListenerCookie, ChannelCookie, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid, TypeId,
 };
-pub use protocol_version::ProtocolVersion;
+pub use protocol_version::{ProtocolVersion, ProtocolVersionParseError};
 pub use serialize::{Serialize, SerializeError};
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
