@@ -402,7 +402,7 @@ where
     }
 }
 
-impl<'a, Key> ExactSizeIterator for DiscovererEntries<'a, Key>
+impl<Key> ExactSizeIterator for DiscovererEntries<'_, Key>
 where
     Key: Copy + Eq + Hash,
 {
