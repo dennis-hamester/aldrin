@@ -1,0 +1,3 @@
+warning: the schema name `str` is reserved in some language(s)
+  = note: the schema is located here at `test/ui/str.aldrin`
+  = note: `str` is a built-in type in Rust

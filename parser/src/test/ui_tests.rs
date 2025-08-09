@@ -1,3 +1,4 @@
+ui_test!(as: test_as);
 ui_test!(const_int_not_found);
 ui_test!(did_you_mean_builtin);
 ui_test!(did_you_mean_key_type);

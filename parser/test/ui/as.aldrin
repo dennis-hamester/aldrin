@@ -1,0 +1,5 @@
+import str;
+
+struct Foo {
+    foo @ 1 = str::Foo;
+}

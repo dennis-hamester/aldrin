@@ -1,7 +1,11 @@
 macro_rules! ui_test {
     ($name:ident) => {
+        ui_test!($name: $name);
+    };
+
+    ($name:ident: $ident:ident) => {
         #[test]
-        fn $name() {
+        fn $ident() {
             $crate::test::ui_test_impl(stringify!($name));
         }
     };

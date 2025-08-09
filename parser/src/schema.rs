@@ -3,7 +3,7 @@ use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoErro
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
-use crate::warning::{DuplicateImport, NonSnakeCaseSchemaName};
+use crate::warning::{DuplicateImport, NonSnakeCaseSchemaName, ReservedSchemaName};
 use pest::Parser;
 use std::fs::File;
 use std::io::Read;
@@ -120,8 +120,9 @@ impl Schema {
         }
 
         DuplicateDefinition::validate(self, validate);
-        NonSnakeCaseSchemaName::validate(&self.name, validate);
         DuplicateImport::validate(self, validate);
+        NonSnakeCaseSchemaName::validate(&self.name, validate);
+        ReservedSchemaName::validate(&self.name, validate);
 
         for import in &self.imports {
             import.validate(validate);
