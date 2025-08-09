@@ -1,0 +1,7 @@
+warning: the identifer `as` is reserved in some language(s)
+  --> test/ui/reserved_ident.aldrin:5:5
+   |
+ 5 |     as @ 1 = unit;
+   |     ^^ keyword used here
+   |
+   = note: `as` is a keyword in Rust

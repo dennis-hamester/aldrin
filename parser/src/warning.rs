@@ -9,6 +9,7 @@ mod non_snake_case_event;
 mod non_snake_case_function;
 mod non_snake_case_schema_name;
 mod non_snake_case_struct_field;
+mod reserved_ident;
 mod unused_import;
 
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
@@ -25,6 +26,7 @@ pub use non_snake_case_event::NonSnakeCaseEvent;
 pub use non_snake_case_function::NonSnakeCaseFunction;
 pub use non_snake_case_schema_name::NonSnakeCaseSchemaName;
 pub use non_snake_case_struct_field::NonSnakeCaseStructField;
+pub use reserved_ident::ReservedIdent;
 pub use unused_import::UnusedImport;
 
 #[derive(Debug)]
@@ -41,6 +43,7 @@ pub enum Warning {
     NonSnakeCaseFunction(NonSnakeCaseFunction),
     NonSnakeCaseSchemaName(NonSnakeCaseSchemaName),
     NonSnakeCaseStructField(NonSnakeCaseStructField),
+    ReservedIdent(ReservedIdent),
     UnusedImport(UnusedImport),
 }
 
@@ -62,6 +65,7 @@ impl Diagnostic for Warning {
             Self::NonSnakeCaseFunction(w) => w.schema_name(),
             Self::NonSnakeCaseSchemaName(w) => w.schema_name(),
             Self::NonSnakeCaseStructField(w) => w.schema_name(),
+            Self::ReservedIdent(w) => w.schema_name(),
             Self::UnusedImport(w) => w.schema_name(),
         }
     }
@@ -79,6 +83,7 @@ impl Diagnostic for Warning {
             Self::NonSnakeCaseFunction(w) => w.format(parsed),
             Self::NonSnakeCaseSchemaName(w) => w.format(parsed),
             Self::NonSnakeCaseStructField(w) => w.format(parsed),
+            Self::ReservedIdent(w) => w.format(parsed),
             Self::UnusedImport(w) => w.format(parsed),
         }
     }

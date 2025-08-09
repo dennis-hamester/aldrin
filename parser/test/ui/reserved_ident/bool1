@@ -1,0 +1,7 @@
+warning: the identifer `bool` is reserved in some language(s)
+  --> test/ui/reserved_ident.aldrin:6:5
+   |
+ 6 |     bool @ 2 = unit;
+   |     ^^^^ keyword used here
+   |
+   = note: `bool` is a built-in type in Rust

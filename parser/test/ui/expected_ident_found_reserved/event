@@ -1,7 +1,0 @@
-error: expected identifer; found reserved name `event`
-   --> test/ui/expected_ident_found_reserved.aldrin:23:11
-    |
- 23 |     event event @ 1 = [bool; bool];
-    |           ^^^^^ identifier expected here
-    |
-    = note: the name `event` is reserved and cannot be used as an identifer

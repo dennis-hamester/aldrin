@@ -1,0 +1,7 @@
+import reserved_ident_import;
+
+struct Foo {
+    foo @ 0 = reserved_ident_import::Foo;
+    as @ 1 = unit;
+    bool @ 2 = unit;
+}

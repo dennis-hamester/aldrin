@@ -1,6 +1,6 @@
-use crate::error::ExpectedIdentFoundReserved;
 use crate::grammar::Rule;
 use crate::validate::Validate;
+use crate::warning::ReservedIdent;
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -21,7 +21,7 @@ impl Ident {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        ExpectedIdentFoundReserved::validate(self, validate);
+        ReservedIdent::validate(self, validate);
     }
 
     pub fn span(&self) -> Span {

@@ -1,7 +1,0 @@
-warning: struct `struct` should have a camel-case name
-   --> test/ui/expected_ident_found_reserved.aldrin:27:8
-    |
- 27 | struct struct {
-    |        ^^^^^^
-    |
-    = help: consider renaming struct `struct` to `Struct`

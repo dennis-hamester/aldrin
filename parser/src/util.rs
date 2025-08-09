@@ -5,7 +5,10 @@ use crate::validate::Validate;
 use crate::Schema;
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::hash::Hash;
+use Language::Rust;
+use ReservedKind::{Builtin, Keyword};
 
 const THRESHOLD: f64 = 0.8;
 
@@ -35,6 +38,69 @@ const BUILTIN_TYPES: &[&str] = &[
 const BUILTIN_KEY_TYPES: &[&str] = &[
     "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "string", "uuid",
 ];
+
+const RESERVED_NAMES: &[(&str, ReservedUsage)] = &[
+    ("Self", &[(Keyword, &[Rust])]),
+    ("as", &[(Keyword, &[Rust])]),
+    ("async", &[(Keyword, &[Rust])]),
+    ("await", &[(Keyword, &[Rust])]),
+    ("bool", &[(Builtin, &[Rust])]),
+    ("break", &[(Keyword, &[Rust])]),
+    ("char", &[(Builtin, &[Rust])]),
+    ("const", &[(Keyword, &[Rust])]),
+    ("continue", &[(Keyword, &[Rust])]),
+    ("crate", &[(Keyword, &[Rust])]),
+    ("dyn", &[(Keyword, &[Rust])]),
+    ("else", &[(Keyword, &[Rust])]),
+    ("enum", &[(Keyword, &[Rust])]),
+    ("extern", &[(Keyword, &[Rust])]),
+    ("f128", &[(Builtin, &[Rust])]),
+    ("f16", &[(Builtin, &[Rust])]),
+    ("f32", &[(Builtin, &[Rust])]),
+    ("f64", &[(Builtin, &[Rust])]),
+    ("false", &[(Keyword, &[Rust])]),
+    ("fn", &[(Keyword, &[Rust])]),
+    ("for", &[(Keyword, &[Rust])]),
+    ("i128", &[(Builtin, &[Rust])]),
+    ("i16", &[(Builtin, &[Rust])]),
+    ("i32", &[(Builtin, &[Rust])]),
+    ("i64", &[(Builtin, &[Rust])]),
+    ("i8", &[(Builtin, &[Rust])]),
+    ("if", &[(Keyword, &[Rust])]),
+    ("impl", &[(Keyword, &[Rust])]),
+    ("in", &[(Keyword, &[Rust])]),
+    ("isize", &[(Builtin, &[Rust])]),
+    ("let", &[(Keyword, &[Rust])]),
+    ("loop", &[(Keyword, &[Rust])]),
+    ("match", &[(Keyword, &[Rust])]),
+    ("mod", &[(Keyword, &[Rust])]),
+    ("move", &[(Keyword, &[Rust])]),
+    ("mut", &[(Keyword, &[Rust])]),
+    ("pub", &[(Keyword, &[Rust])]),
+    ("ref", &[(Keyword, &[Rust])]),
+    ("return", &[(Keyword, &[Rust])]),
+    ("self", &[(Keyword, &[Rust])]),
+    ("static", &[(Keyword, &[Rust])]),
+    ("str", &[(Builtin, &[Rust])]),
+    ("struct", &[(Keyword, &[Rust])]),
+    ("super", &[(Keyword, &[Rust])]),
+    ("trait", &[(Keyword, &[Rust])]),
+    ("true", &[(Keyword, &[Rust])]),
+    ("type", &[(Keyword, &[Rust])]),
+    ("u128", &[(Builtin, &[Rust])]),
+    ("u16", &[(Builtin, &[Rust])]),
+    ("u32", &[(Builtin, &[Rust])]),
+    ("u64", &[(Builtin, &[Rust])]),
+    ("u8", &[(Builtin, &[Rust])]),
+    ("union", &[(Keyword, &[Rust])]),
+    ("unsafe", &[(Keyword, &[Rust])]),
+    ("use", &[(Keyword, &[Rust])]),
+    ("usize", &[(Builtin, &[Rust])]),
+    ("where", &[(Keyword, &[Rust])]),
+    ("while", &[(Keyword, &[Rust])]),
+];
+
+pub(crate) type ReservedUsage = &'static [(ReservedKind, &'static [Language])];
 
 pub(crate) fn did_you_mean<'a, I>(candidates: I, value: &str) -> Option<&'a str>
 where
@@ -247,4 +313,75 @@ pub(crate) enum InvalidKeyTypeKind<'a> {
     NewtypeToStruct(&'a Schema, &'a StructDef),
     NewtypeToEnum(&'a Schema, &'a EnumDef),
     Other,
+}
+
+pub(crate) fn is_reserved_name(name: &str) -> Option<ReservedUsage> {
+    RESERVED_NAMES
+        .binary_search_by_key(&name, |reserved| reserved.0)
+        .ok()
+        .map(|idx| RESERVED_NAMES[idx].1)
+}
+
+#[derive(Debug)]
+pub(crate) enum Language {
+    Rust,
+}
+
+impl Language {
+    pub(crate) fn fmt_list(langs: &'static [Self]) -> impl fmt::Display {
+        struct FmtList(&'static [Language]);
+
+        impl fmt::Display for FmtList {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                for (i, lang) in self.0.iter().enumerate() {
+                    if i > 0 {
+                        if i < (self.0.len() - 1) {
+                            write!(f, ", ")?;
+                        } else {
+                            write!(f, " and ")?;
+                        }
+                    }
+
+                    lang.fmt(f)?;
+                }
+
+                Ok(())
+            }
+        }
+
+        FmtList(langs)
+    }
+}
+
+impl fmt::Display for Language {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Rust => write!(f, "Rust"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum ReservedKind {
+    Builtin,
+    Keyword,
+}
+
+impl fmt::Display for ReservedKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Builtin => write!(f, "a built-in type"),
+            Self::Keyword => write!(f, "a keyword"),
+        }
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn reserved_names_are_sorted_and_unique() {
+    let mut last = RESERVED_NAMES[0].0;
+    for reserved in RESERVED_NAMES.iter().skip(1).map(|reserved| reserved.0) {
+        assert!(reserved > last);
+        last = reserved;
+    }
 }

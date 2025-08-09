@@ -1,0 +1,4 @@
+struct Foo {
+    as @ 1 = unit;
+    bool @ 2 = unit;
+}

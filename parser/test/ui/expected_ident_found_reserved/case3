@@ -1,7 +1,0 @@
-warning: variant `bool` should have a camel-case name
-   --> test/ui/expected_ident_found_reserved.aldrin:18:13
-    |
- 18 | ... bool @ 1;
-    |     ^^^^
-    |
-    = help: consider renaming variant `bool` to `Bool`

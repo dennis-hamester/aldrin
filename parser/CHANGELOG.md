@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add warning type `NonCamelCaseNewtype`.
 - Support newtypes as the key type in `set<T>` and `map<K -> T>`.
 
+### Changed
+
+- The new `ReservedIdent` warning replaces the `ExpectedIdentFoundReserved` error.
+
 ### Fixed
 
 - Built-in types are no longer suggested in error messages when an external references points to a

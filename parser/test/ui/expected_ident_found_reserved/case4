@@ -1,7 +1,0 @@
-warning: variant `const` should have a camel-case name
-   --> test/ui/expected_ident_found_reserved.aldrin:19:13
-    |
- 19 | ... const = fallback;
-    |     ^^^^^
-    |
-    = help: consider renaming variant `const` to `Const`

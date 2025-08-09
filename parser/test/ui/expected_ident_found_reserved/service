@@ -1,7 +1,0 @@
-error: expected identifer; found reserved name `service`
-  --> test/ui/expected_ident_found_reserved.aldrin:5:9
-   |
- 5 | service service {
-   |         ^^^^^^^ identifier expected here
-   |
-   = note: the name `service` is reserved and cannot be used as an identifer
