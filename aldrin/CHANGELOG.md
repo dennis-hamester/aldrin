@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which takes arbitrarily many services and one that uses arrays with a static number of services.
 - Most types related to the `Discoverer` are now in a module `discoverer`. Only `Discoverer`,
   `DiscovererEvent` and `DiscovererEventKind` are re-exported at the crate-level.
+- `Discoverer` has been optimized to exchange fewer messages with the broker.
 
 ## [0.12.0] - 2025-01-26
 

@@ -5,6 +5,8 @@ mod builder;
 mod entry;
 mod event;
 mod specific;
+mod specific_with_services;
+mod specific_without_services;
 #[cfg(test)]
 mod test;
 
@@ -14,6 +16,13 @@ use aldrin_core::{BusListenerScope, ObjectId, ObjectUuid, ServiceId, ServiceUuid
 use any::{AnyObject, AnyObjectIter, AnyObjectIterEntry};
 use futures_core::stream::{FusedStream, Stream};
 use specific::{SpecificObject, SpecificObjectIter, SpecificObjectIterEntry};
+use specific_with_services::{
+    SpecificObjectWithServices, SpecificObjectWithServicesIter, SpecificObjectWithServicesIterEntry,
+};
+use specific_without_services::{
+    SpecificObjectWithoutServices, SpecificObjectWithoutServicesIter,
+    SpecificObjectWithoutServicesIterEntry,
+};
 use std::collections::hash_map::{self, HashMap};
 use std::collections::VecDeque;
 use std::future;
