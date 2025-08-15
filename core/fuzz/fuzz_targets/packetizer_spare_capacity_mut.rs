@@ -6,6 +6,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: Vec<Vec<u8>>| {
     let mut packetizer = Packetizer::new();
+    let mut msgs = Vec::new();
 
     for data in data {
         let len = data.len();
@@ -22,7 +23,9 @@ fuzz_target!(|data: Vec<Vec<u8>>| {
                 packetizer.bytes_written(to_write);
             }
 
-            while let Some(_) = packetizer.next_message() {}
+            while let Some(msg) = packetizer.next_message() {
+                msgs.push(msg);
+            }
         }
     }
 });
