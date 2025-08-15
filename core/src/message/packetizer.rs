@@ -73,7 +73,8 @@ impl Packetizer {
         };
 
         if self.buf.len() >= len {
-            let msg = self.buf.split_to(len);
+            let mut msg = self.buf.split_to(len.max(4));
+            msg.truncate(len);
             self.len = None;
             Some(msg)
         } else {

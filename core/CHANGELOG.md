@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Add missing export `ProtocolVersionParseError`.
+- Guard `Packetizer` against messages that supposedly have a length < 4.
 
 ## [0.12.0] - 2025-01-26
 
