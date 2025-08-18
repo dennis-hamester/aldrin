@@ -1,7 +1,9 @@
 use super::{DiscovererEvent, DiscovererEventKind};
 use crate::bus_listener::BusListener;
 use crate::Error;
-use aldrin_core::{BusEvent, BusListenerFilter, ObjectCookie, ObjectId, ObjectUuid};
+use aldrin_core::{
+    BusEvent, BusListenerFilter, ObjectCookie, ObjectId, ObjectUuid, ServiceId, ServiceUuid,
+};
 use std::hash::Hash;
 use std::option;
 
@@ -44,6 +46,34 @@ where
     pub(crate) fn object_id(&self, object: ObjectUuid) -> Option<ObjectId> {
         assert_eq!(object, self.object);
         self.cookie.map(|cookie| ObjectId::new(self.object, cookie))
+    }
+
+    pub(crate) fn service_ids(
+        &self,
+        object: ObjectUuid,
+        services: impl IntoIterator<Item = ServiceUuid>,
+    ) -> Option<Vec<ServiceId>> {
+        assert_eq!(object, self.object);
+
+        if services.into_iter().next().is_none() {
+            Some(Vec::new())
+        } else {
+            panic!("invalid service UUID")
+        }
+    }
+
+    pub(crate) fn service_ids_n<const N: usize>(
+        &self,
+        object: ObjectUuid,
+        services: &[ServiceUuid; N],
+    ) -> Option<[ServiceId; N]> {
+        assert_eq!(object, self.object);
+
+        if services.is_empty() {
+            Some(super::fill_service_id_array(services, |_| unreachable!()))
+        } else {
+            panic!("invalid service UUID")
+        }
     }
 
     pub(crate) fn contains(&self, object: ObjectUuid) -> bool {

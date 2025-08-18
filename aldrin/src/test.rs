@@ -229,3 +229,36 @@ async fn bounded_channel_deadlock() {
     broker.shutdown().await;
     broker_join.await.unwrap();
 }
+
+#[tokio::test]
+async fn find_bare_object() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+
+    let id = client
+        .find_bare_object(obj.id().uuid)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(id, obj.id());
+
+    broker.join().await;
+    client.join().await;
+}
+
+#[tokio::test]
+async fn wait_for_bare_object() {
+    let mut broker = TestBroker::new();
+    let mut client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+
+    let id = client.wait_for_bare_object(obj.id().uuid).await.unwrap();
+    assert_eq!(id, obj.id());
+
+    broker.join().await;
+    client.join().await;
+}
