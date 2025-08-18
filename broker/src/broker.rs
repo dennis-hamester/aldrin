@@ -533,7 +533,7 @@ impl Broker {
 
                 let dup = self.obj_uuids.insert(cookie, req.uuid);
                 debug_assert!(dup.is_none());
-                entry.insert(Object::new(id.clone()));
+                entry.insert(Object::new(id.clone(), cookie));
                 conn.add_object(cookie);
                 state.push_create_object(ObjectId::new(req.uuid, cookie));
 
@@ -1433,18 +1433,35 @@ impl Broker {
         )?;
 
         if req.scope != BusListenerScope::New {
-            for (&cookie, &uuid) in &self.obj_uuids {
-                let object = ObjectId::new(uuid, cookie);
+            if let Some(uuids) = bus_listener.specific_objects() {
+                for uuid in uuids {
+                    if let Some(obj) = self.objs.get(&uuid) {
+                        let object = ObjectId::new(uuid, obj.cookie());
 
-                if bus_listener.matches_object(object) {
-                    send!(
-                        self,
-                        conn,
-                        EmitBusEvent {
-                            cookie: Some(req.cookie),
-                            event: BusEvent::ObjectCreated(object),
-                        },
-                    )?;
+                        send!(
+                            self,
+                            conn,
+                            EmitBusEvent {
+                                cookie: Some(req.cookie),
+                                event: BusEvent::ObjectCreated(object),
+                            },
+                        )?;
+                    }
+                }
+            } else {
+                for (&cookie, &uuid) in &self.obj_uuids {
+                    let object = ObjectId::new(uuid, cookie);
+
+                    if bus_listener.matches_object(object) {
+                        send!(
+                            self,
+                            conn,
+                            EmitBusEvent {
+                                cookie: Some(req.cookie),
+                                event: BusEvent::ObjectCreated(object),
+                            },
+                        )?;
+                    }
                 }
             }
 

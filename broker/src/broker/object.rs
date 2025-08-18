@@ -1,23 +1,29 @@
 use crate::conn_id::ConnectionId;
-use aldrin_core::ServiceCookie;
+use aldrin_core::{ObjectCookie, ServiceCookie};
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(crate) struct Object {
     conn_id: ConnectionId,
+    cookie: ObjectCookie,
     svcs: HashSet<ServiceCookie>,
 }
 
 impl Object {
-    pub(crate) fn new(conn_id: ConnectionId) -> Self {
+    pub(crate) fn new(conn_id: ConnectionId, cookie: ObjectCookie) -> Self {
         Self {
             conn_id,
             svcs: HashSet::new(),
+            cookie,
         }
     }
 
     pub(crate) fn conn_id(&self) -> &ConnectionId {
         &self.conn_id
+    }
+
+    pub(crate) fn cookie(&self) -> ObjectCookie {
+        self.cookie
     }
 
     pub(crate) fn add_service(&mut self, cookie: ServiceCookie) {

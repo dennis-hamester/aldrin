@@ -1,5 +1,5 @@
 use crate::conn_id::ConnectionId;
-use aldrin_core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ServiceId};
+use aldrin_core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ObjectUuid, ServiceId};
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -7,6 +7,7 @@ pub(crate) struct BusListener {
     conn_id: ConnectionId,
     filters: HashSet<BusListenerFilter>,
     scope: Option<BusListenerScope>,
+    matches_all_objects: bool,
 }
 
 impl BusListener {
@@ -15,6 +16,7 @@ impl BusListener {
             conn_id,
             filters: HashSet::new(),
             scope: None,
+            matches_all_objects: false,
         }
     }
 
@@ -24,14 +26,21 @@ impl BusListener {
 
     pub(crate) fn add_filter(&mut self, filter: BusListenerFilter) {
         self.filters.insert(filter);
+        self.matches_all_objects |= filter == BusListenerFilter::Object(None);
     }
 
     pub(crate) fn remove_filter(&mut self, filter: BusListenerFilter) {
         self.filters.remove(&filter);
+
+        self.matches_all_objects = self
+            .filters
+            .iter()
+            .any(|&f| f == BusListenerFilter::Object(None));
     }
 
     pub(crate) fn clear_filters(&mut self) {
         self.filters.clear();
+        self.matches_all_objects = false;
     }
 
     pub(crate) fn start(&mut self, scope: BusListenerScope) -> bool {
@@ -48,10 +57,12 @@ impl BusListener {
     }
 
     pub(crate) fn matches_object(&self, object: ObjectId) -> bool {
-        self.filters
-            .iter()
-            .copied()
-            .any(|filter| filter.matches_object(object))
+        self.matches_all_objects
+            || self
+                .filters
+                .iter()
+                .copied()
+                .any(|filter| filter.matches_object(object))
     }
 
     pub(crate) fn matches_service(&self, service: ServiceId) -> bool {
@@ -70,5 +81,17 @@ impl BusListener {
                 .iter()
                 .copied()
                 .any(|filter| filter.matches_event(event))
+    }
+
+    pub(crate) fn specific_objects(&self) -> Option<impl Iterator<Item = ObjectUuid> + '_> {
+        if self.matches_all_objects {
+            None
+        } else {
+            Some(self.filters.iter().filter_map(|f| match f {
+                BusListenerFilter::Object(Some(obj)) => Some(*obj),
+                BusListenerFilter::Object(None) => unreachable!(),
+                BusListenerFilter::Service(_) => None,
+            }))
+        }
     }
 }
