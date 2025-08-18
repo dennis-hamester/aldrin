@@ -1,9 +1,12 @@
 use crate::conn_id::ConnectionId;
+use aldrin_core::{ObjectCookie, ServiceCookie};
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub(crate) struct Service {
+    cookie: ServiceCookie,
+    object_cookie: ObjectCookie,
     function_calls: HashSet<u32>,
 
     /// Map of events subscribed by a set of connections.
@@ -17,13 +20,23 @@ pub(crate) struct Service {
 }
 
 impl Service {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(cookie: ServiceCookie, object_cookie: ObjectCookie) -> Self {
         Self {
+            cookie,
+            object_cookie,
             function_calls: HashSet::new(),
             events: HashMap::new(),
             all_events: HashSet::new(),
             subscriptions: HashSet::new(),
         }
+    }
+
+    pub(crate) fn cookie(&self) -> ServiceCookie {
+        self.cookie
+    }
+
+    pub(crate) fn object_cookie(&self) -> ObjectCookie {
+        self.object_cookie
     }
 
     pub(crate) fn add_function_call(&mut self, serial: u32) {

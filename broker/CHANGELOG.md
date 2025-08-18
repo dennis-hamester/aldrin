@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adapt to the new `Serialize` and `Deserialize` traits.
 - `PendingConnection` has been replaced with `Acceptor`.
 - `ConnectionError<T>` no longer implements `From<T>`.
-- Improve performance when using bus listeners to search for specific objects without services.
+- Improve performance when using bus listeners to search for specific objects.
 
 ## [0.12.0] - 2025-01-26
 

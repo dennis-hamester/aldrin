@@ -1,5 +1,8 @@
 use crate::conn_id::ConnectionId;
-use aldrin_core::{BusEvent, BusListenerFilter, BusListenerScope, ObjectId, ObjectUuid, ServiceId};
+use aldrin_core::{
+    BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter, ObjectId, ObjectUuid,
+    ServiceId, ServiceUuid,
+};
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -8,6 +11,7 @@ pub(crate) struct BusListener {
     filters: HashSet<BusListenerFilter>,
     scope: Option<BusListenerScope>,
     matches_all_objects: bool,
+    matches_specific_services: bool,
 }
 
 impl BusListener {
@@ -17,6 +21,7 @@ impl BusListener {
             filters: HashSet::new(),
             scope: None,
             matches_all_objects: false,
+            matches_specific_services: true,
         }
     }
 
@@ -27,6 +32,14 @@ impl BusListener {
     pub(crate) fn add_filter(&mut self, filter: BusListenerFilter) {
         self.filters.insert(filter);
         self.matches_all_objects |= filter == BusListenerFilter::Object(None);
+
+        self.matches_specific_services &= matches!(
+            filter,
+            BusListenerFilter::Service(BusListenerServiceFilter {
+                object: Some(_),
+                service: Some(_),
+            })
+        );
     }
 
     pub(crate) fn remove_filter(&mut self, filter: BusListenerFilter) {
@@ -36,11 +49,22 @@ impl BusListener {
             .filters
             .iter()
             .any(|&f| f == BusListenerFilter::Object(None));
+
+        self.matches_specific_services = self.filters.iter().all(|f| {
+            matches!(
+                f,
+                BusListenerFilter::Service(BusListenerServiceFilter {
+                    object: Some(_),
+                    service: Some(_),
+                })
+            )
+        });
     }
 
     pub(crate) fn clear_filters(&mut self) {
         self.filters.clear();
         self.matches_all_objects = false;
+        self.matches_specific_services = true;
     }
 
     pub(crate) fn start(&mut self, scope: BusListenerScope) -> bool {
@@ -92,6 +116,24 @@ impl BusListener {
                 BusListenerFilter::Object(None) => unreachable!(),
                 BusListenerFilter::Service(_) => None,
             }))
+        }
+    }
+
+    pub(crate) fn specific_services(
+        &self,
+    ) -> Option<impl Iterator<Item = (ObjectUuid, ServiceUuid)> + '_> {
+        if self.matches_specific_services {
+            Some(self.filters.iter().filter_map(|f| match f {
+                BusListenerFilter::Service(BusListenerServiceFilter {
+                    object: Some(obj),
+                    service: Some(svc),
+                }) => Some((*obj, *svc)),
+
+                BusListenerFilter::Object(_) => None,
+                BusListenerFilter::Service(_) => unreachable!(),
+            }))
+        } else {
+            None
         }
     }
 }

@@ -655,7 +655,7 @@ impl Broker {
             .svc_uuids
             .insert(svc_cookie, (object_id, req.uuid, info));
         debug_assert!(dup.is_none());
-        entry.insert(Service::new());
+        entry.insert(Service::new(svc_cookie, req.object_cookie));
         obj.add_service(svc_cookie);
         state.push_create_service(ServiceId::new(object_id, req.uuid, svc_cookie));
 
@@ -1465,18 +1465,36 @@ impl Broker {
                 }
             }
 
-            for (&service_cookie, &(object, service_uuid, _)) in &self.svc_uuids {
-                let service = ServiceId::new(object, service_uuid, service_cookie);
+            if let Some(uuids) = bus_listener.specific_services() {
+                for (object_uuid, service_uuid) in uuids {
+                    if let Some(svc) = self.svcs.get(&(object_uuid, service_uuid)) {
+                        let object = ObjectId::new(object_uuid, svc.object_cookie());
+                        let service = ServiceId::new(object, service_uuid, svc.cookie());
 
-                if bus_listener.matches_service(service) {
-                    send!(
-                        self,
-                        conn,
-                        EmitBusEvent {
-                            cookie: Some(req.cookie),
-                            event: BusEvent::ServiceCreated(service),
-                        },
-                    )?;
+                        send!(
+                            self,
+                            conn,
+                            EmitBusEvent {
+                                cookie: Some(req.cookie),
+                                event: BusEvent::ServiceCreated(service),
+                            },
+                        )?;
+                    }
+                }
+            } else {
+                for (&service_cookie, &(object, service_uuid, _)) in &self.svc_uuids {
+                    let service = ServiceId::new(object, service_uuid, service_cookie);
+
+                    if bus_listener.matches_service(service) {
+                        send!(
+                            self,
+                            conn,
+                            EmitBusEvent {
+                                cookie: Some(req.cookie),
+                                event: BusEvent::ServiceCreated(service),
+                            },
+                        )?;
+                    }
                 }
             }
 
@@ -1860,7 +1878,7 @@ impl Broker {
             .svc_uuids
             .insert(svc_cookie, (object_id, req.uuid, info));
         debug_assert!(dup.is_none());
-        entry.insert(Service::new());
+        entry.insert(Service::new(svc_cookie, req.object_cookie));
         obj.add_service(svc_cookie);
         state.push_create_service(ServiceId::new(object_id, req.uuid, svc_cookie));
 
