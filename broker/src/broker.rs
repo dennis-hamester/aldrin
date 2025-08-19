@@ -839,16 +839,20 @@ impl Broker {
             return;
         };
 
-        let Some(call) = self.function_calls.get(req.serial) else {
+        let Some(call) = self.function_calls.entry(req.serial) else {
             return;
         };
 
-        let obj = self.objs.get(&call.callee_obj).expect("inconsistent state");
+        let obj = self
+            .objs
+            .get(&call.get().callee_obj)
+            .expect("inconsistent state");
+
         if obj.conn_id() != id {
             return;
         }
 
-        let call = self.function_calls.remove(req.serial).unwrap();
+        let call = call.remove();
 
         let svc = self
             .svcs
@@ -1722,11 +1726,11 @@ impl Broker {
 
         let serial = req.serial;
 
-        let Some(&type_id) = self.query_introspection.get(serial) else {
+        let Some(type_id) = self.query_introspection.entry(serial) else {
             return Err(());
         };
 
-        let Some(res) = self.introspection.query_replied(type_id, id, req) else {
+        let Some(res) = self.introspection.query_replied(*type_id.get(), id, req) else {
             #[cfg(feature = "statistics")]
             {
                 self.statistics.num_introspections = self.introspection.len();
@@ -1735,7 +1739,7 @@ impl Broker {
             return Err(());
         };
 
-        self.query_introspection.remove(serial);
+        let type_id = type_id.remove();
 
         match res {
             IntrospectionQueryResult::Available {

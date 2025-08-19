@@ -1,4 +1,4 @@
-use std::collections::hash_map::{Entry, HashMap};
+use std::collections::hash_map::{Entry, HashMap, OccupiedEntry};
 
 #[derive(Debug)]
 pub(crate) struct SerialMap<T> {
@@ -26,10 +26,6 @@ impl<T> SerialMap<T> {
         }
     }
 
-    pub(crate) fn get(&self, serial: u32) -> Option<&T> {
-        self.elems.get(&serial)
-    }
-
     pub(crate) fn get_mut(&mut self, serial: u32) -> Option<&mut T> {
         self.elems.get_mut(&serial)
     }
@@ -40,5 +36,12 @@ impl<T> SerialMap<T> {
 
     pub(crate) fn is_empty(&self) -> bool {
         self.elems.is_empty()
+    }
+
+    pub(crate) fn entry(&mut self, serial: u32) -> Option<OccupiedEntry<'_, u32, T>> {
+        match self.elems.entry(serial) {
+            Entry::Occupied(entry) => Some(entry),
+            Entry::Vacant(_) => None,
+        }
     }
 }
