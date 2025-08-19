@@ -18,9 +18,10 @@ impl<T> SerialMap<T> {
         loop {
             let serial = self.next;
             self.next = self.next.wrapping_add(1);
+
             if let Entry::Vacant(entry) = self.elems.entry(serial) {
                 entry.insert(obj);
-                return serial;
+                break serial;
             }
         }
     }
