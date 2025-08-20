@@ -1,5 +1,4 @@
 use super::{ir, LexicalId, Variant};
-use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
@@ -69,16 +68,13 @@ impl Serialize<Self> for Enum {
 
 impl Serialize<Enum> for &Enum {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let num = 3 + (self.fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct1(num)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
 
-        serializer.serialize::<tags::Map<tags::U32, Variant>, _>(
-            EnumField::Variants,
-            IterAsMap1(&self.variants),
-        )?;
+        serializer
+            .serialize::<tags::Map<tags::U32, Variant>, _>(EnumField::Variants, &self.variants)?;
 
         serializer.serialize_if_some::<tags::Option<tags::String>, _>(
             EnumField::Fallback,

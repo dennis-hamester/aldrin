@@ -57,7 +57,7 @@ impl Serialize<Self> for Variant {
 
 impl Serialize<Variant> for &Variant {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(3)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32, _>(VariantField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;

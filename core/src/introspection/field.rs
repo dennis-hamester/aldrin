@@ -64,7 +64,7 @@ impl Serialize<Self> for Field {
 
 impl Serialize<Field> for &Field {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(4)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32, _>(FieldField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;

@@ -39,7 +39,7 @@ impl PrimaryTag for ArrayTypeIr {
 
 impl Serialize<Self> for ArrayTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(2)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<LexicalId, _>(ArrayTypeField::ElemType, self.elem_type)?;
         serializer.serialize::<tags::U32, _>(ArrayTypeField::Len, self.len)?;

@@ -54,7 +54,7 @@ impl Serialize<Self> for EventIr {
 
 impl Serialize<EventIr> for &EventIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(3)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;

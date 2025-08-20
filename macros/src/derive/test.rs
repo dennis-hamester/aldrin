@@ -26,7 +26,7 @@ fn raw_identifiers_struct() {
     );
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("eee388d0-4079-518b-aa05-88e296e0b4e4"))
+        TypeId(uuid!("1b237b7b-d3a1-5675-bf92-cce504239f51"))
     );
     assert_eq!(r#struct::lexical_id(), introspection.lexical_id());
 
@@ -68,7 +68,7 @@ fn raw_identifiers_enum() {
     );
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("9bc18d41-946f-538e-a8fb-7ce28ed9ffa3"))
+        TypeId(uuid!("dfefe6aa-d423-595d-b170-a0b5b648aa0d"))
     );
     assert_eq!(r#enum::lexical_id(), introspection.lexical_id());
 
@@ -106,7 +106,7 @@ fn enum_fallback() {
     assert_eq!(introspection.lexical_id(), LexicalId::custom("test", "Foo"));
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("0a64a5f4-1b6e-5c54-80c4-be35d1d475ca"))
+        TypeId(uuid!("b31bf766-49be-5037-a567-857d29fc4cb3"))
     );
     assert_eq!(Foo::lexical_id(), introspection.lexical_id());
 

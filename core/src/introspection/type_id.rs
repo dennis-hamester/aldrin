@@ -1,5 +1,5 @@
 use super::{ir, DynIntrospectable, Introspectable, References, VERSION};
-use crate::adapters::IterAsVec1;
+use crate::adapters::IterAsVec;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, SerializedValue, Serializer, TypeId};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -73,7 +73,7 @@ impl Serialize<Compute> for &Compute {
 
         serializer.serialize::<tags::Vec<ir::LayoutIr>, _>(
             ComputeField::Referenced,
-            IterAsVec1(&self.referenced),
+            IterAsVec(&self.referenced),
         )?;
 
         serializer.finish()

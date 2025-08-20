@@ -57,7 +57,7 @@ impl Serialize<Self> for Newtype {
 
 impl Serialize<Newtype> for &Newtype {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(3)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String, _>(NewtypeField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(NewtypeField::Name, &self.name)?;

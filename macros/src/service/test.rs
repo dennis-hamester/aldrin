@@ -35,7 +35,7 @@ fn raw_identifiers() {
     );
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("f286e830-01f4-5c25-a356-14dd1dde6a7a"))
+        TypeId(uuid!("82501d05-1ed7-5bcd-946d-e992b6683c41"))
     );
     assert_eq!(
         raw_identifiers::r#extern::lexical_id(),
@@ -87,7 +87,7 @@ fn parse_simplified_fn_item() {
     );
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("ab83c702-c4ee-5821-8667-ec428ebf6fb8"))
+        TypeId(uuid!("ab95a16b-7d42-5a96-87c4-bc4b3620f711"))
     );
     assert_eq!(Foo::lexical_id(), introspection.lexical_id());
 

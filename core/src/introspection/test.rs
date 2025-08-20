@@ -100,36 +100,36 @@ fn basic_enum_type_id() {
     let type_id = TypeId::compute::<Foo>();
     assert_eq!(
         type_id,
-        TypeId(uuid!("4b28ad18-acac-586c-b22e-2925b81a60a9"))
+        TypeId(uuid!("3f6b9fd9-b4fc-5f1a-b4e9-1e9d9cd39044"))
     );
 }
 
 #[test]
 fn bookmarks_v2_type_id_bookmarks() {
     let type_id = TypeId::compute::<bookmarks_v2::Bookmarks>();
-    assert_eq!(type_id.0, uuid!("01e7e006-0e70-51bd-b61f-235b5eb0e85a"));
+    assert_eq!(type_id.0, uuid!("c852e542-75bf-5c0f-ab48-0ccdb48c458a"));
 }
 
 #[test]
 fn bookmarks_v2_type_id_get_v2_args() {
     let type_id = TypeId::compute::<bookmarks_v2::BookmarksGetV2Args>();
-    assert_eq!(type_id.0, uuid!("696c5864-7fe9-5c69-8715-f2f1d85cf974"));
+    assert_eq!(type_id.0, uuid!("fadcae92-8d38-5cb7-ab2c-3d0703e06369"));
 }
 
 #[test]
 fn bookmarks_v2_type_id_remove_v2_args() {
     let type_id = TypeId::compute::<bookmarks_v2::BookmarksRemoveV2Args>();
-    assert_eq!(type_id.0, uuid!("13fb1907-9763-5dae-87cb-eb8037503f4c"));
+    assert_eq!(type_id.0, uuid!("1c57ff98-35cc-51da-a019-0f608dbdc784"));
 }
 
 #[test]
 fn bookmarks_v2_type_id_bookmark() {
     let type_id = TypeId::compute::<bookmarks_v2::Bookmark>();
-    assert_eq!(type_id.0, uuid!("fedb0528-1c1d-55d9-9d47-508e12465e90"));
+    assert_eq!(type_id.0, uuid!("f594c0ac-a43d-53e9-a4c2-6c2cc6d50f63"));
 }
 
 #[test]
 fn bookmarks_v2_type_id_error() {
     let type_id = TypeId::compute::<bookmarks_v2::Error>();
-    assert_eq!(type_id.0, uuid!("f573e670-b7a6-59d0-89fa-8bac5f5d2f16"));
+    assert_eq!(type_id.0, uuid!("12f3c8e0-d0d1-50d3-91fe-be2497b30ee3"));
 }

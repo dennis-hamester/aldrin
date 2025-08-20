@@ -1,5 +1,4 @@
 use super::{ir, Event, Function, LexicalId};
-use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer,
@@ -105,10 +104,7 @@ impl Serialize<Self> for Service {
 
 impl Serialize<Service> for &Service {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let num = 6
-            + (self.function_fallback.is_some() as usize)
-            + (self.event_fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct1(num)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
@@ -117,13 +113,11 @@ impl Serialize<Service> for &Service {
 
         serializer.serialize::<tags::Map<tags::U32, Function>, _>(
             ServiceField::Functions,
-            IterAsMap1(&self.functions),
+            &self.functions,
         )?;
 
-        serializer.serialize::<tags::Map<tags::U32, Event>, _>(
-            ServiceField::Events,
-            IterAsMap1(&self.events),
-        )?;
+        serializer
+            .serialize::<tags::Map<tags::U32, Event>, _>(ServiceField::Events, &self.events)?;
 
         serializer.serialize_if_some::<tags::Option<tags::String>, _>(
             ServiceField::FunctionFallback,

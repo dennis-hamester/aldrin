@@ -38,7 +38,7 @@ impl PrimaryTag for MapTypeIr {
 
 impl Serialize<Self> for MapTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let mut serializer = serializer.serialize_struct1(2)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<LexicalId, _>(MapTypeField::Key, self.key)?;
         serializer.serialize::<LexicalId, _>(MapTypeField::Value, self.value)?;

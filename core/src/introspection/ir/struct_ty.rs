@@ -1,5 +1,4 @@
 use super::{FieldIr, LexicalId};
-use crate::adapters::IterAsMap1;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -65,16 +64,13 @@ impl Serialize<Self> for StructIr {
 
 impl Serialize<StructIr> for &StructIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        let num = 3 + (self.fallback.is_some() as usize);
-        let mut serializer = serializer.serialize_struct1(num)?;
+        let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String, _>(StructField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
 
-        serializer.serialize::<tags::Map<tags::U32, FieldIr>, _>(
-            StructField::Fields,
-            IterAsMap1(&self.fields),
-        )?;
+        serializer
+            .serialize::<tags::Map<tags::U32, FieldIr>, _>(StructField::Fields, &self.fields)?;
 
         serializer.serialize_if_some::<tags::Option<tags::String>, _>(
             StructField::Fallback,
