@@ -5,9 +5,9 @@ use crate::{
     ServiceUuid, TypeId,
 };
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
@@ -21,15 +21,15 @@ pub struct Service {
 
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "BTreeMap::is_empty")
+        serde(default, skip_serializing_if = "HashMap::is_empty")
     )]
-    functions: BTreeMap<u32, Function>,
+    functions: HashMap<u32, Function>,
 
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "BTreeMap::is_empty")
+        serde(default, skip_serializing_if = "HashMap::is_empty")
     )]
-    events: BTreeMap<u32, Event>,
+    events: HashMap<u32, Event>,
 
     #[cfg_attr(
         feature = "serde",
@@ -85,11 +85,11 @@ impl Service {
         self.version
     }
 
-    pub fn functions(&self) -> &BTreeMap<u32, Function> {
+    pub fn functions(&self) -> &HashMap<u32, Function> {
         &self.functions
     }
 
-    pub fn events(&self) -> &BTreeMap<u32, Event> {
+    pub fn events(&self) -> &HashMap<u32, Event> {
         &self.events
     }
 

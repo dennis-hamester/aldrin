@@ -4,9 +4,9 @@ use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
@@ -18,9 +18,9 @@ pub struct Enum {
 
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "BTreeMap::is_empty")
+        serde(default, skip_serializing_if = "HashMap::is_empty")
     )]
-    variants: BTreeMap<u32, Variant>,
+    variants: HashMap<u32, Variant>,
 
     #[cfg_attr(
         feature = "serde",
@@ -51,7 +51,7 @@ impl Enum {
         &self.name
     }
 
-    pub fn variants(&self) -> &BTreeMap<u32, Variant> {
+    pub fn variants(&self) -> &HashMap<u32, Variant> {
         &self.variants
     }
 
