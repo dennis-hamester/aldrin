@@ -7,8 +7,15 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct ArrayType {
+    #[cfg_attr(feature = "serde", serde(rename = "type"))]
     elem_type: TypeId,
+
     len: u32,
 }
 

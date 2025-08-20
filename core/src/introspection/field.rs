@@ -7,10 +7,18 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct Field {
     id: u32,
     name: String,
+
+    #[cfg_attr(feature = "serde", serde(rename = "required"))]
     is_required: bool,
+
     field_type: TypeId,
 }
 

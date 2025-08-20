@@ -45,9 +45,19 @@ pub use variant::Variant;
 pub const VERSION: u32 = 2;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct Introspection {
     type_id: TypeId,
     layout: Layout,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "HashSet::is_empty")
+    )]
     references: HashSet<TypeId>,
 }
 

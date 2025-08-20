@@ -7,9 +7,19 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub struct Event {
     id: u32,
     name: String,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(rename = "type", default, skip_serializing_if = "Option::is_none")
+    )]
     event_type: Option<TypeId>,
 }
 

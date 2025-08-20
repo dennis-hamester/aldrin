@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Derive `Arbitrary` for `ProtocolVersion`.
 - Add introspection support for newtypes.
 - Add `Buffered<T>` adapter for transports, which adds an unbounded buffer to the sender side.
+- Add Serde support for introspection types.
 
 ### Changed
 
