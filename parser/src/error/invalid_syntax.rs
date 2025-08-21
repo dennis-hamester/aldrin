@@ -64,10 +64,13 @@ impl Diagnostic for InvalidSyntax {
         let mut eof = false;
         while let Some(expected) = iter.next() {
             let expected: Cow<'static, str> = match expected {
+                Expected::Attribute => "an attribute".into(),
+
                 Expected::Eof => {
                     eof = true;
                     continue;
                 }
+
                 Expected::Ident => "an identifier".into(),
                 Expected::Keyword(kw) => format!("`{kw}`").into(),
                 Expected::LitInt => "an integer literal".into(),
@@ -126,6 +129,7 @@ impl From<InvalidSyntax> for Error {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expected {
+    Attribute,
     Eof,
     Ident,
     Keyword(&'static str),
@@ -153,12 +157,12 @@ impl Expected {
         ];
 
         const DEF: &[Expected] = &[
+            Expected::Attribute,
             Expected::Keyword("const"),
             Expected::Keyword("enum"),
             Expected::Keyword("newtype"),
             Expected::Keyword("service"),
             Expected::Keyword("struct"),
-            Expected::Token("#"),
         ];
 
         const TYPE_NAME: &[Expected] = &[
@@ -231,7 +235,7 @@ impl Expected {
             Rule::tok_cur_close => &[&[Expected::Token("}")]],
             Rule::tok_cur_open => &[&[Expected::Token("{")]],
             Rule::tok_eq => &[&[Expected::Token("=")]],
-            Rule::tok_hash => &[&[Expected::Token("#")]],
+            Rule::tok_hash => &[&[Expected::Attribute]],
             Rule::tok_par_close => &[&[Expected::Token(")")]],
             Rule::tok_par_open => &[&[Expected::Token("(")]],
             Rule::tok_scope => &[&[Expected::Token("::")]],
