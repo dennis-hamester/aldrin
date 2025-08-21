@@ -178,7 +178,7 @@ async fn download_impl(
     let mut sha256 = Sha256Sum::new();
     let mut size = 0u64;
 
-    loop {
+    let expected_sha256 = loop {
         // Receivers are asynchronous streams of the item type. Here, `next_item()` returns
         // `Result<Option<Chunk>>`. An implementation of the `Stream` trait from the futures crate
         // is also provided.
@@ -188,22 +188,19 @@ async fn download_impl(
                 size += data.len() as u64;
             }
 
-            Some(Chunk::Done(expected_sha256)) => {
-                if size != expected_size {
-                    break Err(anyhow!(
-                        "size mismatch; expected {expected_size}, got {size}"
-                    ));
-                }
-
-                if sha256.finalize()[..] != expected_sha256.0 {
-                    break Err(anyhow!("SHA-256 mismatch"));
-                }
-
-                break Ok(());
-            }
-
-            None => break Err(anyhow!("channel closed unexpectedly")),
+            Some(Chunk::Done(expected_sha256)) => break expected_sha256,
+            None => return Err(anyhow!("channel closed unexpectedly")),
         }
+    };
+
+    if size != expected_size {
+        Err(anyhow!(
+            "size mismatch; expected {expected_size}, got {size}"
+        ))
+    } else if sha256.finalize()[..] != expected_sha256.0 {
+        Err(anyhow!("SHA-256 mismatch"))
+    } else {
+        Ok(())
     }
 }
 
