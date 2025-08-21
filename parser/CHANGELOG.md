@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built-in types are no longer suggested in error messages when an external references points to a
   service or const.
 - Fix a crash when a recursive type is used.
+- Require whitespace after the `required` keyword in a struct field.
 
 ## [0.12.0] - 2025-01-26
 
