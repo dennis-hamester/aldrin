@@ -1,4 +1,5 @@
 use super::kw;
+use crate::doc_string::DocString;
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -7,6 +8,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Ident, Result, Token, Type};
 
 pub(super) struct EvFallbackItem {
+    doc: DocString,
     ident: Ident,
     variant: Ident,
     ty: Type,
@@ -36,8 +38,10 @@ impl EvFallbackItem {
     pub(crate) fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
+        let doc = &self.doc;
 
         quote! {
+            #doc
             #[allow(dead_code)]
             #variant(#ty),
         }
@@ -52,6 +56,7 @@ impl EvFallbackItem {
 
 impl Parse for EvFallbackItem {
     fn parse(input: ParseStream) -> Result<Self> {
+        let doc = input.parse()?;
         input.parse::<kw::event>()?;
         let ident = input.parse::<Ident>()?;
         input.parse::<Token![=]>()?;
@@ -63,6 +68,11 @@ impl Parse for EvFallbackItem {
             ident.span(),
         );
 
-        Ok(Self { ident, variant, ty })
+        Ok(Self {
+            doc,
+            ident,
+            variant,
+            ty,
+        })
     }
 }

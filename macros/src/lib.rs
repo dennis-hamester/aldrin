@@ -223,6 +223,7 @@ extern crate proc_macro;
 
 mod codegen;
 mod derive;
+mod doc_string;
 mod service;
 #[cfg(test)]
 mod test;

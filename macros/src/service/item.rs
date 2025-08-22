@@ -60,6 +60,7 @@ impl ServiceItem {
 
     fn parse_ev(input: ParseStream) -> Result<Self> {
         let begin = input.fork();
+        begin.call(Attribute::parse_outer)?;
 
         begin.parse::<kw::event>()?;
         begin.parse::<Ident>()?;
@@ -76,6 +77,7 @@ impl ServiceItem {
 
     fn parse_fn(input: ParseStream) -> Result<Self> {
         let begin = input.fork();
+        begin.call(Attribute::parse_outer)?;
 
         begin.parse::<Token![fn]>()?;
         begin.parse::<Ident>()?;

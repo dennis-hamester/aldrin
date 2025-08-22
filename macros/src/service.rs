@@ -88,6 +88,7 @@ impl Service {
         let proxy = &self.proxy;
         let event = &self.event;
         let body_impl = self.body.gen_proxy(&self.event, &self.options);
+        let doc = self.options.doc();
 
         let introspection_if = self.options.introspection_if().map(|feature| {
             quote! { #[cfg(feature = #feature)] }
@@ -119,6 +120,7 @@ impl Service {
         };
 
         quote! {
+            #doc
             #[derive(::std::fmt::Debug)]
             #[automatically_derived]
             #vis struct #proxy {
@@ -180,6 +182,7 @@ impl Service {
         let call = &self.call;
         let krate = self.options.krate();
         let body_impl = self.body.gen_service(&self.call, &self.options);
+        let doc = self.options.doc();
 
         let introspection_if = self.options.introspection_if().map(|feature| {
             quote! { #[cfg(feature = #feature)] }
@@ -211,6 +214,7 @@ impl Service {
         };
 
         quote! {
+            #doc
             #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis struct #ident {

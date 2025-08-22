@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add derive macros for `KeyTag`, `PrimaryKeyTag`, `SerializeKey` and `DeserializeKey`. They can
   only be used with newtypes.
 - `Introspectable` now also supports newtypes.
+- `service!()` now supports doc comments.
 
 ### Changed
 

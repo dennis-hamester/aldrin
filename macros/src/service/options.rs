@@ -1,7 +1,9 @@
+use crate::doc_string::DocString;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_quote, Attribute, Error, LitBool, LitStr, Path, Result};
 
 pub(super) struct Options {
+    doc: DocString,
     krate: Path,
     client: bool,
     server: bool,
@@ -11,6 +13,10 @@ pub(super) struct Options {
 }
 
 impl Options {
+    pub(crate) fn doc(&self) -> &DocString {
+        &self.doc
+    }
+
     pub(crate) fn krate(&self) -> &Path {
         &self.krate
     }
@@ -40,6 +46,7 @@ impl Parse for Options {
     fn parse(input: ParseStream) -> Result<Self> {
         let attrs = input.call(Attribute::parse_outer)?;
 
+        let mut doc = DocString::new();
         let mut krate = parse_quote!(::aldrin);
         let mut client = true;
         let mut server = true;
@@ -48,8 +55,16 @@ impl Parse for Options {
         let mut schema = None;
 
         for attr in attrs {
+            if attr.path().is_ident("doc") {
+                doc.push(attr)?;
+                continue;
+            }
+
             if !attr.path().is_ident("aldrin") {
-                return Err(Error::new_spanned(attr, "extected attribute `aldrin`"));
+                return Err(Error::new_spanned(
+                    attr,
+                    "extected attributes `aldrin` or `doc`",
+                ));
             }
 
             attr.parse_nested_meta(|meta| {
@@ -80,6 +95,7 @@ impl Parse for Options {
 
         if !introspection || schema.is_some() {
             Ok(Self {
+                doc,
                 krate,
                 client,
                 server,
