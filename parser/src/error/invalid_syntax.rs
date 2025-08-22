@@ -65,6 +65,8 @@ impl Diagnostic for InvalidSyntax {
         while let Some(expected) = iter.next() {
             let expected: Cow<'static, str> = match expected {
                 Expected::Attribute => "an attribute".into(),
+                Expected::DocString => "a doc string".into(),
+                Expected::DocStringInline => "an inline doc string".into(),
 
                 Expected::Eof => {
                     eof = true;
@@ -130,6 +132,8 @@ impl From<InvalidSyntax> for Error {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expected {
     Attribute,
+    DocString,
+    DocStringInline,
     Eof,
     Ident,
     Keyword(&'static str),
@@ -158,6 +162,7 @@ impl Expected {
 
         const DEF: &[Expected] = &[
             Expected::Attribute,
+            Expected::DocString,
             Expected::Keyword("const"),
             Expected::Keyword("enum"),
             Expected::Keyword("newtype"),
@@ -208,6 +213,8 @@ impl Expected {
             Rule::array_len => &[ARRAY_LEN],
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],
+            Rule::doc_string => &[&[Expected::DocString]],
+            Rule::doc_string_inline => &[&[Expected::DocStringInline]],
             Rule::ident => &[&[Expected::Ident]],
             Rule::kw_args => &[&[Expected::Keyword("args")]],
             Rule::kw_enum => &[&[Expected::Keyword("enum")]],

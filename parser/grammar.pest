@@ -1,5 +1,5 @@
 WHITESPACE = _{ WHITE_SPACE }
-COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+COMMENT = _{ !"///" ~ !"//!" ~ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 ws = _{ WHITESPACE | COMMENT | EOI }
 
 lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
@@ -134,6 +134,9 @@ attribute = {
     ~ (tok_par_open ~ ident ~ (tok_comma ~ ident)* ~ tok_comma? ~ tok_par_close)?
     ~ tok_squ_close
 }
+
+doc_string = @{ "///" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+doc_string_inline = @{ "//!" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 
 import_stmt = { kw_import ~ schema_name ~ tok_term }
 
