@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitPosInt, TypeName};
+use super::{Attribute, DocString, Ident, LitPosInt, TypeName};
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
@@ -11,6 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct EnumDef {
     span: Span,
+    doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
     vars: Vec<EnumVariant>,
@@ -23,12 +24,14 @@ impl EnumDef {
 
         let span = Span::from_pair(&pair);
 
+        let mut doc = DocString::new();
         let mut pairs = pair.into_inner();
 
         let mut attrs = Vec::new();
         for pair in &mut pairs {
             match pair.as_rule() {
                 Rule::attribute => attrs.push(Attribute::parse(pair)),
+                Rule::doc_string => doc.push(pair),
                 Rule::kw_enum => break,
                 _ => unreachable!(),
             }
@@ -53,6 +56,7 @@ impl EnumDef {
 
         Self {
             span,
+            doc: doc.into(),
             attrs,
             name,
             vars,
@@ -96,6 +100,10 @@ impl EnumDef {
         self.span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn attributes(&self) -> &[Attribute] {
         &self.attrs
     }
@@ -117,6 +125,7 @@ impl EnumDef {
 pub struct InlineEnum {
     span: Span,
     kw_span: Span,
+    doc: Option<String>,
     vars: Vec<EnumVariant>,
     fallback: Option<EnumFallback>,
 }
@@ -134,11 +143,13 @@ impl InlineEnum {
 
         pairs.next().unwrap(); // Skip {.
 
+        let mut doc = DocString::new();
         let mut vars = Vec::new();
         let mut fallback = None;
 
         for pair in pairs {
             match pair.as_rule() {
+                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
                 Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
                 Rule::tok_cur_close => break,
@@ -149,6 +160,7 @@ impl InlineEnum {
         Self {
             span,
             kw_span,
+            doc: doc.into(),
             vars,
             fallback,
         }
@@ -190,6 +202,10 @@ impl InlineEnum {
         self.kw_span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn variants(&self) -> &[EnumVariant] {
         &self.vars
     }
@@ -202,6 +218,7 @@ impl InlineEnum {
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     span: Span,
+    doc: Option<String>,
     name: Ident,
     id: LitPosInt,
     var_type: Option<TypeName>,
@@ -212,11 +229,19 @@ impl EnumVariant {
         assert_eq!(pair.as_rule(), Rule::enum_variant);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
-        let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let mut doc = DocString::new();
+
+        let name = loop {
+            let pair = pairs.next().unwrap();
+
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::ident => break Ident::parse(pair),
+                _ => unreachable!(),
+            }
+        };
 
         pairs.next().unwrap(); // Skip @.
 
@@ -235,6 +260,7 @@ impl EnumVariant {
 
         Self {
             span,
+            doc: doc.into(),
             name,
             id,
             var_type,
@@ -256,6 +282,10 @@ impl EnumVariant {
         self.span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn name(&self) -> &Ident {
         &self.name
     }
@@ -272,6 +302,7 @@ impl EnumVariant {
 #[derive(Debug, Clone)]
 pub struct EnumFallback {
     span: Span,
+    doc: Option<String>,
     name: Ident,
 }
 
@@ -281,9 +312,24 @@ impl EnumFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let name = Ident::parse(pairs.next().unwrap());
 
-        Self { span, name }
+        let mut doc = DocString::new();
+
+        let name = loop {
+            let pair = pairs.next().unwrap();
+
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::ident => break Ident::parse(pair),
+                _ => unreachable!(),
+            }
+        };
+
+        Self {
+            span,
+            doc: doc.into(),
+            name,
+        }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -293,6 +339,10 @@ impl EnumFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {

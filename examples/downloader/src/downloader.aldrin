@@ -13,10 +13,10 @@ service Downloader {
 }
 
 enum Chunk {
-    // Consecutive chunks of the file.
+    /// Consecutive chunks of the file.
     Data @ 1 = bytes;
 
-    // The SHA-256 of the file.
+    /// The SHA-256 of the file.
     Done @ 2 = Sha256;
 }
 
