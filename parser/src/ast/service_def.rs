@@ -17,7 +17,7 @@ pub struct ServiceDef {
     ver: LitPosInt,
     items: Vec<ServiceItem>,
     fn_fallback: Option<FunctionFallback>,
-    ev_fallback: Option<EventFallbackDef>,
+    ev_fallback: Option<EventFallback>,
 }
 
 impl ServiceDef {
@@ -52,11 +52,7 @@ impl ServiceDef {
                     for pair in pair.into_inner() {
                         match pair.as_rule() {
                             Rule::fn_fallback => fn_fallback = Some(FunctionFallback::parse(pair)),
-
-                            Rule::event_fallback => {
-                                ev_fallback = Some(EventFallbackDef::parse(pair))
-                            }
-
+                            Rule::event_fallback => ev_fallback = Some(EventFallback::parse(pair)),
                             _ => unreachable!(),
                         }
                     }
@@ -143,7 +139,7 @@ impl ServiceDef {
         self.fn_fallback.as_ref()
     }
 
-    pub fn event_fallback(&self) -> Option<&EventFallbackDef> {
+    pub fn event_fallback(&self) -> Option<&EventFallback> {
         self.ev_fallback.as_ref()
     }
 }
@@ -436,12 +432,12 @@ impl FunctionFallback {
 }
 
 #[derive(Debug, Clone)]
-pub struct EventFallbackDef {
+pub struct EventFallback {
     span: Span,
     name: Ident,
 }
 
-impl EventFallbackDef {
+impl EventFallback {
     fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::event_fallback);
 
