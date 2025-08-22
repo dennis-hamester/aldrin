@@ -1,4 +1,4 @@
-use super::{Ident, LitInt, LitString, LitUuid};
+use super::{DocString, Ident, LitInt, LitString, LitUuid};
 use crate::error::InvalidConstValue;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,6 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ConstDef {
     span: Span,
+    doc: Option<String>,
     name: Ident,
     value_span: Span,
     value: ConstValue,
@@ -19,9 +20,16 @@ impl ConstDef {
         assert_eq!(pair.as_rule(), Rule::const_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
-        pairs.next().unwrap(); // Skip keyword.
+
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_const => break,
+                _ => unreachable!(),
+            }
+        }
 
         let name = Ident::parse(pairs.next().unwrap());
 
@@ -33,6 +41,7 @@ impl ConstDef {
 
         Self {
             span,
+            doc: doc.into(),
             name,
             value_span,
             value,
@@ -48,6 +57,10 @@ impl ConstDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
