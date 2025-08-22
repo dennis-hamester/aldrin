@@ -117,6 +117,11 @@ macro_rules! codeln {
 #[rustfmt::skip::macros(code, codeln)]
 impl RustGenerator<'_> {
     fn generate(mut self) -> Result<RustOutput, Error> {
+        let doc = Self::doc_string_inner(self.schema.doc(), 0);
+        if !doc.is_empty() {
+            codeln!(self, "{doc}");
+        }
+
         for def in self.schema.definitions() {
             self.definition(def);
         }
@@ -157,6 +162,7 @@ impl RustGenerator<'_> {
         match def {
             ast::Definition::Struct(d) => self.struct_def(
                 d.name().value(),
+                d.doc(),
                 Some(d.attributes()),
                 d.fields(),
                 d.fallback(),
@@ -164,6 +170,7 @@ impl RustGenerator<'_> {
 
             ast::Definition::Enum(e) => self.enum_def(
                 e.name().value(),
+                e.doc(),
                 Some(e.attributes()),
                 e.variants(),
                 e.fallback(),
@@ -178,6 +185,7 @@ impl RustGenerator<'_> {
     fn struct_def(
         &mut self,
         name: &str,
+        doc: Option<&str>,
         attrs: Option<&[ast::Attribute]>,
         fields: &[ast::StructField],
         fallback: Option<&ast::StructFallback>,
@@ -191,6 +199,9 @@ impl RustGenerator<'_> {
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
         let additional_derives = attrs.additional_derives();
+
+        let doc = Self::doc_string(doc, 0);
+        code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
 
@@ -227,6 +238,9 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
+            let doc = Self::doc_string(field.doc(), 4);
+            code!(self, "{doc}");
+
             if field.required() {
                 codeln!(self, "    #[aldrin(id = {id})]");
                 codeln!(self, "    pub {ident}: {ty},");
@@ -239,6 +253,9 @@ impl RustGenerator<'_> {
             if !first {
                 codeln!(self);
             }
+
+            let doc = Self::doc_string(fallback.doc(), 4);
+            code!(self, "{doc}");
 
             let ident = format!("r#{}", fallback.name().value());
             codeln!(self, "    #[aldrin(fallback)]");
@@ -261,6 +278,7 @@ impl RustGenerator<'_> {
     fn enum_def(
         &mut self,
         name: &str,
+        doc: Option<&str>,
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
         fallback: Option<&ast::EnumFallback>,
@@ -273,6 +291,9 @@ impl RustGenerator<'_> {
             .map(RustAttributes::parse)
             .unwrap_or_else(RustAttributes::new);
         let additional_derives = attrs.additional_derives();
+
+        let doc = Self::doc_string(doc, 0);
+        code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
         code!(self, ", {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize");
@@ -303,6 +324,9 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
+            let doc = Self::doc_string(var.doc(), 4);
+            code!(self, "{doc}");
+
             codeln!(self, "    #[aldrin(id = {id})]");
             if let Some(ty) = var.variant_type() {
                 let ty = self.type_name(ty);
@@ -315,6 +339,9 @@ impl RustGenerator<'_> {
             if !first {
                 codeln!(self);
             }
+
+            let doc = Self::doc_string(fallback.doc(), 4);
+            code!(self, "{doc}");
 
             let ident = format!("r#{}", fallback.name().value());
             codeln!(self, "    #[aldrin(fallback)]");
@@ -337,6 +364,9 @@ impl RustGenerator<'_> {
         let version = svc.version().value();
 
         codeln!(self, "{krate}::service! {{");
+
+        let doc = Self::doc_string(svc.doc(), 4);
+        code!(self, "{doc}");
 
         code!(self, "    #[aldrin(crate = {krate}, schema = \"{schema}\"");
 
@@ -370,6 +400,9 @@ impl RustGenerator<'_> {
                     let name = func.name().value();
                     let ident = format!("r#{name}");
                     let id = func.id().value();
+
+                    let doc = Self::doc_string(func.doc(), 8);
+                    code!(self, "{doc}");
 
                     code!(self, "        fn {ident} @ {id}");
 
@@ -405,6 +438,9 @@ impl RustGenerator<'_> {
                     let ident = format!("r#{name}");
                     let id = ev.id().value();
 
+                    let doc = Self::doc_string(ev.doc(), 8);
+                    code!(self, "{doc}");
+
                     code!(self, "        event {ident} @ {id}");
 
                     if let Some(ty) = ev.event_type() {
@@ -422,6 +458,10 @@ impl RustGenerator<'_> {
             let ident = format!("r#{name}");
 
             codeln!(self);
+
+            let doc = Self::doc_string(fallback.doc(), 8);
+            code!(self, "{doc}");
+
             codeln!(self, "        fn {ident} = {krate}::UnknownCall;");
         }
 
@@ -430,6 +470,10 @@ impl RustGenerator<'_> {
             let ident = format!("r#{name}");
 
             codeln!(self);
+
+            let doc = Self::doc_string(fallback.doc(), 8);
+            code!(self, "{doc}");
+
             codeln!(self, "        event {ident} = {krate}::UnknownEvent;");
         }
 
@@ -446,6 +490,7 @@ impl RustGenerator<'_> {
                         match args.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_args_type_name(svc_name, func_name, args, false),
+                                s.doc(),
                                 None,
                                 s.fields(),
                                 s.fallback(),
@@ -453,6 +498,7 @@ impl RustGenerator<'_> {
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_args_type_name(svc_name, func_name, args, false),
+                                e.doc(),
                                 None,
                                 e.variants(),
                                 e.fallback(),
@@ -466,6 +512,7 @@ impl RustGenerator<'_> {
                         match ok.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
+                                s.doc(),
                                 None,
                                 s.fields(),
                                 s.fallback(),
@@ -473,6 +520,7 @@ impl RustGenerator<'_> {
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
+                                e.doc(),
                                 None,
                                 e.variants(),
                                 e.fallback(),
@@ -486,6 +534,7 @@ impl RustGenerator<'_> {
                         match err.part_type() {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_err_type_name(svc_name, func_name, err, false),
+                                s.doc(),
                                 None,
                                 s.fields(),
                                 s.fallback(),
@@ -493,6 +542,7 @@ impl RustGenerator<'_> {
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_err_type_name(svc_name, func_name, err, false),
+                                e.doc(),
                                 None,
                                 e.variants(),
                                 e.fallback(),
@@ -510,6 +560,7 @@ impl RustGenerator<'_> {
                         match ty {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.event_args_type_name(svc_name, ev_name, ty, false),
+                                s.doc(),
                                 None,
                                 s.fields(),
                                 s.fallback(),
@@ -517,6 +568,7 @@ impl RustGenerator<'_> {
 
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.event_args_type_name(svc_name, ev_name, ty, false),
+                                e.doc(),
                                 None,
                                 e.variants(),
                                 e.fallback(),
@@ -533,6 +585,9 @@ impl RustGenerator<'_> {
     fn const_def(&mut self, const_def: &ast::ConstDef) {
         let krate = self.rust_options.krate;
         let name = const_def.name().value();
+
+        let doc = Self::doc_string(const_def.doc(), 0);
+        code!(self, "{doc}");
 
         match const_def.value() {
             ast::ConstValue::U8(v) => {
@@ -599,6 +654,9 @@ impl RustGenerator<'_> {
             RustAttributes::parse(newtype_def.attributes()).additional_derives();
         let (is_key_type, derive_default) =
             self.newtype_properties(self.schema, newtype_def.target_type());
+
+        let doc = Self::doc_string(newtype_def.doc(), 0);
+        code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
 
@@ -884,6 +942,36 @@ impl RustGenerator<'_> {
                 }
             }
         }
+    }
+
+    fn doc_string(doc: Option<&str>, indent: usize) -> String {
+        Self::doc_string_impl(doc, indent, "///")
+    }
+
+    fn doc_string_inner(doc: Option<&str>, indent: usize) -> String {
+        Self::doc_string_impl(doc, indent, "//!")
+    }
+
+    fn doc_string_impl(doc: Option<&str>, indent: usize, style: &'static str) -> String {
+        const INDENT: &str = "        ";
+
+        assert!(indent <= INDENT.len());
+        let Some(doc) = doc else { return String::new() };
+        let mut doc_string = String::new();
+
+        for line in doc.lines() {
+            doc_string.push_str(&INDENT[..indent]);
+            doc_string.push_str(style);
+
+            if !line.is_empty() {
+                doc_string.push(' ');
+                doc_string.push_str(line);
+            }
+
+            doc_string.push('\n');
+        }
+
+        doc_string
     }
 }
 
