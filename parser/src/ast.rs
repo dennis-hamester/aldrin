@@ -2,6 +2,7 @@ mod array_len;
 mod attribute;
 mod const_def;
 mod definition;
+mod doc_string;
 mod enum_def;
 mod ident;
 mod import_stmt;
@@ -15,6 +16,8 @@ mod service_def;
 mod struct_def;
 mod type_name;
 mod type_name_or_inline;
+
+use doc_string::DocString;
 
 pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;

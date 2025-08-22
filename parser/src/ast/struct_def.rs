@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitPosInt, TypeName};
+use super::{Attribute, DocString, Ident, LitPosInt, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -11,6 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct StructDef {
     span: Span,
+    doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
     fields: Vec<StructField>,
@@ -25,10 +26,13 @@ impl StructDef {
 
         let mut pairs = pair.into_inner();
 
+        let mut doc = DocString::new();
         let mut attrs = Vec::new();
+
         for pair in &mut pairs {
             match pair.as_rule() {
                 Rule::attribute => attrs.push(Attribute::parse(pair)),
+                Rule::doc_string => doc.push(pair),
                 Rule::kw_struct => break,
                 _ => unreachable!(),
             }
@@ -53,6 +57,7 @@ impl StructDef {
 
         Self {
             span,
+            doc: doc.into(),
             attrs,
             name,
             fields,
@@ -94,6 +99,10 @@ impl StructDef {
         self.span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn attributes(&self) -> &[Attribute] {
         &self.attrs
     }
@@ -115,6 +124,7 @@ impl StructDef {
 pub struct InlineStruct {
     span: Span,
     kw_span: Span,
+    doc: Option<String>,
     fields: Vec<StructField>,
     fallback: Option<StructFallback>,
 }
@@ -132,11 +142,13 @@ impl InlineStruct {
 
         pairs.next().unwrap(); // Skip {.
 
+        let mut doc = DocString::new();
         let mut fields = Vec::new();
         let mut fallback = None;
 
         for pair in pairs {
             match pair.as_rule() {
+                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::struct_field => fields.push(StructField::parse(pair)),
                 Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
                 Rule::tok_cur_close => break,
@@ -147,6 +159,7 @@ impl InlineStruct {
         Self {
             span,
             kw_span,
+            doc: doc.into(),
             fields,
             fallback,
         }
@@ -180,6 +193,10 @@ impl InlineStruct {
         self.kw_span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn fields(&self) -> &[StructField] {
         &self.fields
     }
@@ -192,6 +209,7 @@ impl InlineStruct {
 #[derive(Debug, Clone)]
 pub struct StructField {
     span: Span,
+    doc: Option<String>,
     req: bool,
     name: Ident,
     id: LitPosInt,
@@ -206,21 +224,19 @@ impl StructField {
 
         let mut pairs = pair.into_inner();
 
-        let pair = pairs.next().unwrap();
-        let req;
-        let name;
-        match pair.as_rule() {
-            Rule::kw_required => {
-                req = true;
-                let pair = pairs.next().unwrap();
-                name = Ident::parse(pair);
+        let mut doc = DocString::new();
+        let mut req = false;
+
+        let name = loop {
+            let pair = pairs.next().unwrap();
+
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_required => req = true,
+                Rule::ident => break Ident::parse(pair),
+                _ => unreachable!(),
             }
-            Rule::ident => {
-                req = false;
-                name = Ident::parse(pair);
-            }
-            _ => unreachable!(),
-        }
+        };
 
         pairs.next().unwrap(); // Skip @.
 
@@ -234,6 +250,7 @@ impl StructField {
 
         Self {
             span,
+            doc: doc.into(),
             req,
             name,
             id,
@@ -251,6 +268,10 @@ impl StructField {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn required(&self) -> bool {
@@ -273,6 +294,7 @@ impl StructField {
 #[derive(Debug, Clone)]
 pub struct StructFallback {
     span: Span,
+    doc: Option<String>,
     name: Ident,
 }
 
@@ -281,10 +303,25 @@ impl StructFallback {
         assert_eq!(pair.as_rule(), Rule::struct_fallback);
 
         let span = Span::from_pair(&pair);
-        let mut pairs = pair.into_inner();
-        let name = Ident::parse(pairs.next().unwrap());
 
-        Self { span, name }
+        let mut pairs = pair.into_inner();
+        let mut doc = DocString::new();
+
+        let name = loop {
+            let pair = pairs.next().unwrap();
+
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::ident => break Ident::parse(pair),
+                _ => unreachable!(),
+            }
+        };
+
+        Self {
+            span,
+            doc: doc.into(),
+            name,
+        }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -294,6 +331,10 @@ impl StructFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
