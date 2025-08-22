@@ -263,7 +263,7 @@ impl RustGenerator<'_> {
         name: &str,
         attrs: Option<&[ast::Attribute]>,
         vars: &[ast::EnumVariant],
-        fallback: Option<&ast::Ident>,
+        fallback: Option<&ast::EnumFallback>,
     ) {
         let ident = format!("r#{name}");
         let krate = &self.rust_options.krate;
@@ -316,7 +316,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let ident = format!("r#{}", fallback.value());
+            let ident = format!("r#{}", fallback.name().value());
             codeln!(self, "    #[aldrin(fallback)]");
             codeln!(self, "    {ident}({krate}::core::UnknownVariant),");
         }

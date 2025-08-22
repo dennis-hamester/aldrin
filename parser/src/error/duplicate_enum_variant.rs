@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{EnumVariant, Ident};
+use crate::ast::{EnumFallback, EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
@@ -16,7 +16,7 @@ pub struct DuplicateEnumVariant {
 impl DuplicateEnumVariant {
     pub(crate) fn validate(
         vars: &[EnumVariant],
-        fallback: Option<&Ident>,
+        fallback: Option<&EnumFallback>,
         enum_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
@@ -37,10 +37,10 @@ impl DuplicateEnumVariant {
 
         if let Some(fallback) = fallback {
             for var in vars {
-                if fallback.value() == var.name().value() {
+                if fallback.name().value() == var.name().value() {
                     validate.add_error(Self {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: fallback.clone(),
+                        duplicate: fallback.name().clone(),
                         first: var.span(),
                         enum_span,
                         enum_ident: ident.cloned(),

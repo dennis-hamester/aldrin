@@ -14,7 +14,7 @@ pub struct EnumDef {
     attrs: Vec<Attribute>,
     name: Ident,
     vars: Vec<EnumVariant>,
-    fallback: Option<Ident>,
+    fallback: Option<EnumFallback>,
 }
 
 impl EnumDef {
@@ -45,13 +45,7 @@ impl EnumDef {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
-
-                Rule::enum_fallback => {
-                    let mut pairs = pair.into_inner();
-                    let pair = pairs.next().unwrap();
-                    fallback = Some(Ident::parse(pair));
-                }
-
+                Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -95,7 +89,6 @@ impl EnumDef {
 
         if let Some(ref fallback) = self.fallback {
             fallback.validate(validate);
-            NonCamelCaseEnumVariant::validate(fallback, validate);
         }
     }
 
@@ -115,7 +108,7 @@ impl EnumDef {
         &self.vars
     }
 
-    pub fn fallback(&self) -> Option<&Ident> {
+    pub fn fallback(&self) -> Option<&EnumFallback> {
         self.fallback.as_ref()
     }
 }
@@ -125,7 +118,7 @@ pub struct InlineEnum {
     span: Span,
     kw_span: Span,
     vars: Vec<EnumVariant>,
-    fallback: Option<Ident>,
+    fallback: Option<EnumFallback>,
 }
 
 impl InlineEnum {
@@ -147,13 +140,7 @@ impl InlineEnum {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
-
-                Rule::enum_fallback => {
-                    let mut pairs = pair.into_inner();
-                    let pair = pairs.next().unwrap();
-                    fallback = Some(Ident::parse(pair));
-                }
-
+                Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -192,7 +179,6 @@ impl InlineEnum {
 
         if let Some(ref fallback) = self.fallback {
             fallback.validate(validate);
-            NonCamelCaseEnumVariant::validate(fallback, validate);
         }
     }
 
@@ -208,7 +194,7 @@ impl InlineEnum {
         &self.vars
     }
 
-    pub fn fallback(&self) -> Option<&Ident> {
+    pub fn fallback(&self) -> Option<&EnumFallback> {
         self.fallback.as_ref()
     }
 }
@@ -280,5 +266,36 @@ impl EnumVariant {
 
     pub fn variant_type(&self) -> Option<&TypeName> {
         self.var_type.as_ref()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EnumFallback {
+    span: Span,
+    name: Ident,
+}
+
+impl EnumFallback {
+    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::enum_fallback);
+
+        let span = Span::from_pair(&pair);
+        let mut pairs = pair.into_inner();
+        let name = Ident::parse(pairs.next().unwrap());
+
+        Self { span, name }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        self.name.validate(validate);
+        NonCamelCaseEnumVariant::validate(&self.name, validate);
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
     }
 }

@@ -20,7 +20,7 @@ pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
 pub use definition::Definition;
-pub use enum_def::{EnumDef, EnumVariant, InlineEnum};
+pub use enum_def::{EnumDef, EnumFallback, EnumVariant, InlineEnum};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;
 pub use lit_int::{LitInt, LitPosInt};

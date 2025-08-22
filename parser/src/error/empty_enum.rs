@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{EnumVariant, Ident};
+use crate::ast::{EnumFallback, EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::{Parsed, Span};
@@ -14,7 +14,7 @@ pub struct EmptyEnum {
 impl EmptyEnum {
     pub(crate) fn validate(
         vars: &[EnumVariant],
-        fallback: Option<&Ident>,
+        fallback: Option<&EnumFallback>,
         span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
