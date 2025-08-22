@@ -30,7 +30,7 @@ pub use named_ref::{NamedRef, NamedRefKind};
 pub use newtype_def::NewtypeDef;
 pub use schema_name::SchemaName;
 pub use service_def::{
-    EventDef, EventFallbackDef, FunctionDef, FunctionFallbackDef, FunctionPart, ServiceDef,
+    EventDef, EventFallbackDef, FunctionDef, FunctionFallback, FunctionPart, ServiceDef,
     ServiceItem,
 };
 pub use struct_def::{InlineStruct, StructDef, StructFallback, StructField};

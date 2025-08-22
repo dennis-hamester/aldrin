@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve error message when an attribute is expected.
 - Struct fallbacks are now represented by a new AST type `StructFallback`.
 - Enum fallbacks are now represented by a new AST type `EnumFallback`.
+- `FunctionFallbackDef` is renamed to `FunctionFallback`.
 
 ### Fixed
 
