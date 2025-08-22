@@ -170,6 +170,12 @@ impl Expected {
             Expected::Keyword("struct"),
         ];
 
+        const SERVICE_ITEM: &[Expected] = &[
+            Expected::DocString,
+            Expected::Keyword("event"),
+            Expected::Keyword("fn"),
+        ];
+
         const TYPE_NAME: &[Expected] = &[
             Expected::Ident,
             Expected::Keyword("bool"),
@@ -215,6 +221,8 @@ impl Expected {
             Rule::def => &[DEF],
             Rule::doc_string => &[&[Expected::DocString]],
             Rule::doc_string_inline => &[&[Expected::DocStringInline]],
+            Rule::event_fallback => &[&[Expected::DocString, Expected::Keyword("event")]],
+            Rule::fn_fallback => &[&[Expected::DocString, Expected::Keyword("fn")]],
             Rule::ident => &[&[Expected::Ident]],
             Rule::kw_args => &[&[Expected::Keyword("args")]],
             Rule::kw_enum => &[&[Expected::Keyword("enum")]],
@@ -232,7 +240,7 @@ impl Expected {
             Rule::lit_string => &[&[Expected::LitString]],
             Rule::lit_uuid => &[&[Expected::LitUuid]],
             Rule::schema_name => &[&[Expected::SchemaName]],
-            Rule::service_item => &[&[Expected::Keyword("fn"), Expected::Keyword("event")]],
+            Rule::service_item | Rule::service_fallback => &[SERVICE_ITEM],
             Rule::struct_field => &[&[Expected::Keyword("required"), Expected::Ident]],
             Rule::tok_ang_close => &[&[Expected::Token(">")]],
             Rule::tok_ang_open => &[&[Expected::Token("<")]],

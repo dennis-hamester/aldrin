@@ -1,4 +1,4 @@
-use super::{Ident, LitPosInt, LitUuid, TypeNameOrInline};
+use super::{DocString, Ident, LitPosInt, LitUuid, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceUuid, InvalidServiceVersion,
@@ -12,6 +12,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ServiceDef {
     span: Span,
+    doc: Option<String>,
     name: Ident,
     uuid: LitUuid,
     ver: LitPosInt,
@@ -25,9 +26,16 @@ impl ServiceDef {
         assert_eq!(pair.as_rule(), Rule::service_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
-        pairs.next().unwrap(); // Skip keyword.
+
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_service => break,
+                _ => unreachable!(),
+            }
+        }
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -65,6 +73,7 @@ impl ServiceDef {
 
         Self {
             span,
+            doc: doc.into(),
             name,
             uuid,
             ver,
@@ -117,6 +126,10 @@ impl ServiceDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
@@ -177,6 +190,13 @@ impl ServiceItem {
         }
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        match self {
+            Self::Function(i) => i.doc(),
+            Self::Event(i) => i.doc(),
+        }
+    }
+
     pub fn name(&self) -> &Ident {
         match self {
             Self::Function(i) => i.name(),
@@ -188,6 +208,7 @@ impl ServiceItem {
 #[derive(Debug, Clone)]
 pub struct FunctionDef {
     span: Span,
+    doc: Option<String>,
     name: Ident,
     id: LitPosInt,
     args: Option<FunctionPart>,
@@ -200,10 +221,16 @@ impl FunctionDef {
         assert_eq!(pair.as_rule(), Rule::fn_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_fn => break,
+                _ => unreachable!(),
+            }
+        }
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -230,6 +257,7 @@ impl FunctionDef {
 
         Self {
             span,
+            doc: doc.into(),
             name,
             id,
             args,
@@ -259,6 +287,10 @@ impl FunctionDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
@@ -328,6 +360,7 @@ impl FunctionPart {
 #[derive(Debug, Clone)]
 pub struct EventDef {
     span: Span,
+    doc: Option<String>,
     name: Ident,
     id: LitPosInt,
     event_type: Option<TypeNameOrInline>,
@@ -338,10 +371,16 @@ impl EventDef {
         assert_eq!(pair.as_rule(), Rule::event_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_event => break,
+                _ => unreachable!(),
+            }
+        }
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -363,6 +402,7 @@ impl EventDef {
 
         Self {
             span,
+            doc: doc.into(),
             name,
             id,
             event_type,
@@ -383,6 +423,10 @@ impl EventDef {
         self.span
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn name(&self) -> &Ident {
         &self.name
     }
@@ -399,6 +443,7 @@ impl EventDef {
 #[derive(Debug, Clone)]
 pub struct FunctionFallback {
     span: Span,
+    doc: Option<String>,
     name: Ident,
 }
 
@@ -407,15 +452,25 @@ impl FunctionFallback {
         assert_eq!(pair.as_rule(), Rule::fn_fallback);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_fn => break,
+                _ => unreachable!(),
+            }
+        }
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
 
-        Self { span, name }
+        Self {
+            span,
+            doc: doc.into(),
+            name,
+        }
     }
 
     fn validate(&self, validate: &mut Validate) {
@@ -424,6 +479,10 @@ impl FunctionFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
@@ -434,6 +493,7 @@ impl FunctionFallback {
 #[derive(Debug, Clone)]
 pub struct EventFallback {
     span: Span,
+    doc: Option<String>,
     name: Ident,
 }
 
@@ -442,15 +502,25 @@ impl EventFallback {
         assert_eq!(pair.as_rule(), Rule::event_fallback);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
-        pairs.next().unwrap(); // Skip keyword.
+        let mut doc = DocString::new();
+        for pair in &mut pairs {
+            match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
+                Rule::kw_event => break,
+                _ => unreachable!(),
+            }
+        }
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
 
-        Self { span, name }
+        Self {
+            span,
+            doc: doc.into(),
+            name,
+        }
     }
 
     fn validate(&self, validate: &mut Validate) {
@@ -459,6 +529,10 @@ impl EventFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn name(&self) -> &Ident {
