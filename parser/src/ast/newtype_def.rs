@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, TypeName};
+use super::{Attribute, DocString, Ident, TypeName};
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,6 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct NewtypeDef {
     span: Span,
+    doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
     target_type: TypeName,
@@ -19,12 +20,14 @@ impl NewtypeDef {
         assert_eq!(pair.as_rule(), Rule::newtype_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
+        let mut doc = DocString::new();
         let mut attrs = Vec::new();
+
         for pair in &mut pairs {
             match pair.as_rule() {
+                Rule::doc_string => doc.push(pair),
                 Rule::attribute => attrs.push(Attribute::parse(pair)),
                 Rule::kw_newtype => break,
                 _ => unreachable!(),
@@ -41,6 +44,7 @@ impl NewtypeDef {
 
         Self {
             span,
+            doc: doc.into(),
             attrs,
             name,
             target_type,
@@ -57,6 +61,10 @@ impl NewtypeDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn attributes(&self) -> &[Attribute] {

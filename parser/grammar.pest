@@ -201,4 +201,4 @@ const_i64 = { kw_i64 ~ tok_par_open ~ lit_int ~ tok_par_close }
 const_string = { kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
 const_uuid = { kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }
 
-newtype_def = { attribute* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }
+newtype_def = { doc_string* ~ attribute* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }
