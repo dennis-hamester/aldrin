@@ -127,7 +127,7 @@ type_name = {
 
 type_name_or_inline = { (type_name ~ tok_term) | struct_inline | enum_inline }
 
-file = _{ SOI ~ import_stmt* ~ def* ~ EOI }
+file = _{ SOI ~ doc_string_inline* ~ import_stmt* ~ def* ~ EOI }
 
 attribute = {
     tok_hash ~ tok_squ_open ~ ident

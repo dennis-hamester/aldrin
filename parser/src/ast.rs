@@ -17,7 +17,7 @@ mod struct_def;
 mod type_name;
 mod type_name_or_inline;
 
-use doc_string::DocString;
+pub(crate) use doc_string::DocString;
 
 pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;

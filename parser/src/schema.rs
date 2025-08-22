@@ -1,4 +1,4 @@
-use crate::ast::{Definition, ImportStmt, SchemaName};
+use crate::ast::{Definition, DocString, ImportStmt, SchemaName};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -14,6 +14,7 @@ pub struct Schema {
     name: String,
     path: PathBuf,
     source: Option<String>,
+    doc: Option<String>,
     imports: Vec<ImportStmt>,
     defs: Vec<Definition>,
 }
@@ -29,6 +30,7 @@ impl Schema {
             name: Self::parse_file_name(schema_path, issues),
             path: schema_path.to_owned(),
             source: None,
+            doc: None,
             imports: Vec::new(),
             defs: Vec::new(),
         };
@@ -53,6 +55,7 @@ impl Schema {
 
         let pairs = match Grammar::parse(Rule::file, &source) {
             Ok(pairs) => pairs,
+
             Err(e) => {
                 schema.source = Some(source);
                 issues.add_error(InvalidSyntax::new(&schema.name, e));
@@ -60,8 +63,11 @@ impl Schema {
             }
         };
 
+        let mut doc = DocString::new();
+
         for pair in pairs {
             match pair.as_rule() {
+                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair)),
                 Rule::def => schema.defs.push(Definition::parse(pair)),
                 Rule::EOI => break,
@@ -70,6 +76,8 @@ impl Schema {
         }
 
         schema.source = Some(source);
+        schema.doc = doc.into();
+
         schema
     }
 
@@ -143,6 +151,10 @@ impl Schema {
 
     pub fn source(&self) -> Option<&str> {
         self.source.as_deref()
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn imports(&self) -> &[ImportStmt] {
