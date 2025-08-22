@@ -1,5 +1,5 @@
 use super::Error;
-use crate::ast::{Ident, StructField};
+use crate::ast::{Ident, StructFallback, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
@@ -16,7 +16,7 @@ pub struct DuplicateStructField {
 impl DuplicateStructField {
     pub(crate) fn validate(
         fields: &[StructField],
-        fallback: Option<&Ident>,
+        fallback: Option<&StructFallback>,
         struct_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
@@ -37,10 +37,10 @@ impl DuplicateStructField {
 
         if let Some(fallback) = fallback {
             for field in fields {
-                if fallback.value() == field.name().value() {
+                if fallback.name().value() == field.name().value() {
                     validate.add_error(Self {
                         schema_name: validate.schema_name().to_owned(),
-                        duplicate: fallback.clone(),
+                        duplicate: fallback.name().clone(),
                         first: field.name().span(),
                         struct_span,
                         struct_ident: ident.cloned(),

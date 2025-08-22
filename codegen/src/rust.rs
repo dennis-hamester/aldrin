@@ -180,7 +180,7 @@ impl RustGenerator<'_> {
         name: &str,
         attrs: Option<&[ast::Attribute]>,
         fields: &[ast::StructField],
-        fallback: Option<&ast::Ident>,
+        fallback: Option<&ast::StructFallback>,
     ) {
         let krate = self.rust_options.krate;
         let ident = format!("r#{name}");
@@ -240,7 +240,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let ident = format!("r#{}", fallback.value());
+            let ident = format!("r#{}", fallback.name().value());
             codeln!(self, "    #[aldrin(fallback)]");
             codeln!(self, "    pub {ident}: {krate}::core::UnknownFields,");
         }

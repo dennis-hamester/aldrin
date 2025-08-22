@@ -33,6 +33,6 @@ pub use service_def::{
     EventDef, EventFallbackDef, FunctionDef, FunctionFallbackDef, FunctionPart, ServiceDef,
     ServiceItem,
 };
-pub use struct_def::{InlineStruct, StructDef, StructField};
+pub use struct_def::{InlineStruct, StructDef, StructFallback, StructField};
 pub use type_name::{TypeName, TypeNameKind};
 pub use type_name_or_inline::TypeNameOrInline;

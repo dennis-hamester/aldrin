@@ -14,7 +14,7 @@ pub struct StructDef {
     attrs: Vec<Attribute>,
     name: Ident,
     fields: Vec<StructField>,
-    fallback: Option<Ident>,
+    fallback: Option<StructFallback>,
 }
 
 impl StructDef {
@@ -45,13 +45,7 @@ impl StructDef {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
-
-                Rule::struct_fallback => {
-                    let mut pairs = pair.into_inner();
-                    let pair = pairs.next().unwrap();
-                    fallback = Some(Ident::parse(pair));
-                }
-
+                Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -93,7 +87,6 @@ impl StructDef {
 
         if let Some(ref fallback) = self.fallback {
             fallback.validate(validate);
-            NonSnakeCaseStructField::validate(fallback, validate);
         }
     }
 
@@ -113,7 +106,7 @@ impl StructDef {
         &self.fields
     }
 
-    pub fn fallback(&self) -> Option<&Ident> {
+    pub fn fallback(&self) -> Option<&StructFallback> {
         self.fallback.as_ref()
     }
 }
@@ -123,7 +116,7 @@ pub struct InlineStruct {
     span: Span,
     kw_span: Span,
     fields: Vec<StructField>,
-    fallback: Option<Ident>,
+    fallback: Option<StructFallback>,
 }
 
 impl InlineStruct {
@@ -145,13 +138,7 @@ impl InlineStruct {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
-
-                Rule::struct_fallback => {
-                    let mut pairs = pair.into_inner();
-                    let pair = pairs.next().unwrap();
-                    fallback = Some(Ident::parse(pair));
-                }
-
+                Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
                 Rule::tok_cur_close => break,
                 _ => unreachable!(),
             }
@@ -182,7 +169,6 @@ impl InlineStruct {
 
         if let Some(ref fallback) = self.fallback {
             fallback.validate(validate);
-            NonSnakeCaseStructField::validate(fallback, validate);
         }
     }
 
@@ -198,7 +184,7 @@ impl InlineStruct {
         &self.fields
     }
 
-    pub fn fallback(&self) -> Option<&Ident> {
+    pub fn fallback(&self) -> Option<&StructFallback> {
         self.fallback.as_ref()
     }
 }
@@ -281,5 +267,36 @@ impl StructField {
 
     pub fn field_type(&self) -> &TypeName {
         &self.field_type
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StructFallback {
+    span: Span,
+    name: Ident,
+}
+
+impl StructFallback {
+    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+        assert_eq!(pair.as_rule(), Rule::struct_fallback);
+
+        let span = Span::from_pair(&pair);
+        let mut pairs = pair.into_inner();
+        let name = Ident::parse(pairs.next().unwrap());
+
+        Self { span, name }
+    }
+
+    pub(crate) fn validate(&self, validate: &mut Validate) {
+        self.name.validate(validate);
+        NonSnakeCaseStructField::validate(&self.name, validate);
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
     }
 }
