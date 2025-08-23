@@ -12,18 +12,13 @@ pub struct FieldIr {
 }
 
 impl FieldIr {
-    pub(super) fn new(
+    pub fn builder(
         id: u32,
         name: impl Into<String>,
         is_required: bool,
         field_type: LexicalId,
-    ) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            is_required,
-            field_type,
-        }
+    ) -> FieldIrBuilder {
+        FieldIrBuilder::new(id, name, is_required, field_type)
     }
 
     pub fn id(&self) -> u32 {
@@ -68,5 +63,33 @@ impl Serialize<FieldIr> for &FieldIr {
         serializer.serialize::<LexicalId, _>(FieldField::FieldType, &self.field_type)?;
 
         serializer.finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldIrBuilder {
+    id: u32,
+    name: String,
+    is_required: bool,
+    field_type: LexicalId,
+}
+
+impl FieldIrBuilder {
+    pub fn new(id: u32, name: impl Into<String>, is_required: bool, field_type: LexicalId) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            is_required,
+            field_type,
+        }
+    }
+
+    pub fn finish(self) -> FieldIr {
+        FieldIr {
+            id: self.id,
+            name: self.name,
+            is_required: self.is_required,
+            field_type: self.field_type,
+        }
     }
 }

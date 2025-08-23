@@ -82,7 +82,17 @@ macro_rules! impl_tuple {
         {
             fn layout() -> ir::LayoutIr {
                 ir::StructIr::builder("std", concat!("Tuple", $len))
-                    $( .field($idx, concat!("field", $idx), true, $gen::lexical_id()) )+
+                    $(
+                        .field(
+                            ir::FieldIr::builder(
+                                $idx,
+                                concat!("field", $idx),
+                                true,
+                                $gen::lexical_id(),
+                            )
+                            .finish(),
+                        )
+                    )+
                     .finish()
                     .into()
             }

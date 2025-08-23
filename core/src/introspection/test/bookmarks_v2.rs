@@ -98,7 +98,7 @@ pub(crate) struct BookmarksGetV2Args;
 impl Introspectable for BookmarksGetV2Args {
     fn layout() -> ir::LayoutIr {
         ir::StructIr::builder("bookmarks_v2", "BookmarksGetV2Args")
-            .field(1, "group", false, String::lexical_id())
+            .field(ir::FieldIr::builder(1, "group", false, String::lexical_id()).finish())
             .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()
@@ -120,8 +120,8 @@ pub(crate) struct BookmarksRemoveV2Args;
 impl Introspectable for BookmarksRemoveV2Args {
     fn layout() -> ir::LayoutIr {
         ir::StructIr::builder("bookmarks_v2", "BookmarksRemoveV2Args")
-            .field(1, "name", true, String::lexical_id())
-            .field(2, "group", false, String::lexical_id())
+            .field(ir::FieldIr::builder(1, "name", true, String::lexical_id()).finish())
+            .field(ir::FieldIr::builder(2, "group", false, String::lexical_id()).finish())
             .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()
@@ -146,9 +146,9 @@ pub(crate) struct Bookmark;
 impl Introspectable for Bookmark {
     fn layout() -> ir::LayoutIr {
         ir::StructIr::builder("bookmarks_v2", "Bookmark")
-            .field(1, "name", true, String::lexical_id())
-            .field(2, "url", true, String::lexical_id())
-            .field(3, "group", false, String::lexical_id())
+            .field(ir::FieldIr::builder(1, "name", true, String::lexical_id()).finish())
+            .field(ir::FieldIr::builder(2, "url", true, String::lexical_id()).finish())
+            .field(ir::FieldIr::builder(3, "group", false, String::lexical_id()).finish())
             .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()

@@ -199,7 +199,12 @@ fn gen_field(
         quote! { <#field_type as #krate::introspection::private::OptionHelper>::lexical_id() }
     };
 
-    let layout = quote! { .field(#id, #name, #is_required, #lexical_id) };
+    let layout = quote! {
+        .field(
+            #krate::introspection::ir::FieldIr::builder(#id, #name, #is_required, #lexical_id)
+                .finish(),
+        )
+    };
 
     let references = if is_required {
         quote! { #krate::introspection::DynIntrospectable::new::<#field_type>() }

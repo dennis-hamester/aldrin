@@ -93,15 +93,8 @@ impl StructIrBuilder {
         }
     }
 
-    pub fn field(
-        mut self,
-        id: u32,
-        name: impl Into<String>,
-        is_required: bool,
-        field_type: LexicalId,
-    ) -> Self {
-        self.fields
-            .insert(id, FieldIr::new(id, name, is_required, field_type));
+    pub fn field(mut self, field: FieldIr) -> Self {
+        self.fields.insert(field.id(), field);
         self
     }
 
