@@ -72,8 +72,10 @@ impl Serialize<Variant> for &Variant {
         serializer.serialize::<tags::U32, _>(VariantField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
 
-        serializer
-            .serialize::<tags::Option<TypeId>, _>(VariantField::VariantType, &self.variant_type)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>, _>(
+            VariantField::VariantType,
+            &self.variant_type,
+        )?;
 
         serializer.finish()
     }

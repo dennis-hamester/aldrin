@@ -95,9 +95,9 @@ impl Serialize<Function> for &Function {
 
         serializer.serialize::<tags::U32, _>(FunctionField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Args, &self.args)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Ok, &self.ok)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Err, &self.err)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Args, &self.args)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Ok, &self.ok)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Err, &self.err)?;
 
         serializer.finish()
     }

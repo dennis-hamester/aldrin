@@ -71,7 +71,11 @@ impl Serialize<Event> for &Event {
 
         serializer.serialize::<tags::U32, _>(EventField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(EventField::EventType, &self.event_type)?;
+
+        serializer.serialize_if_some::<tags::Option<TypeId>, _>(
+            EventField::EventType,
+            &self.event_type,
+        )?;
 
         serializer.finish()
     }
