@@ -4,7 +4,7 @@ use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone)]
 pub enum LayoutIr {
     BuiltIn(BuiltInTypeIr),
     Struct(StructIr),

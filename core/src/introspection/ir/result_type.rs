@@ -3,7 +3,7 @@ use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone)]
 pub struct ResultTypeIr {
     pub(crate) ok: LexicalId,
     pub(crate) err: LexicalId,
