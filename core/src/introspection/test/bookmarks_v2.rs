@@ -48,10 +48,26 @@ impl Introspectable for Bookmarks {
             Some(Vec::<Option<String>>::lexical_id()),
             None,
         )
-        .event(1, "added", Some(Bookmark::lexical_id()))
-        .event(3, "added_v2", Some(Bookmark::lexical_id()))
-        .event(2, "removed", Some(Bookmark::lexical_id()))
-        .event(4, "removed_v2", Some(Bookmark::lexical_id()))
+        .event(
+            ir::EventIr::builder(1, "added")
+                .event_type(Bookmark::lexical_id())
+                .finish(),
+        )
+        .event(
+            ir::EventIr::builder(3, "added_v2")
+                .event_type(Bookmark::lexical_id())
+                .finish(),
+        )
+        .event(
+            ir::EventIr::builder(2, "removed")
+                .event_type(Bookmark::lexical_id())
+                .finish(),
+        )
+        .event(
+            ir::EventIr::builder(4, "removed_v2")
+                .event_type(Bookmark::lexical_id())
+                .finish(),
+        )
         .function_fallback(ir::FunctionFallbackIr::builder("unknown_function").finish())
         .event_fallback(ir::EventFallbackIr::builder("unknown_event").finish())
         .finish()

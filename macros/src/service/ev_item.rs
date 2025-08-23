@@ -146,18 +146,18 @@ impl EvItem {
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
 
-        let ty = match self.ty {
-            Some(ref ty) => quote! {
-                ::std::option::Option::Some(
-                    <#ty as #krate::core::introspection::Introspectable>::lexical_id(),
-                )
-            },
-
-            None => quote! { ::std::option::Option::None },
-        };
+        let ty = self.ty.as_ref().map(|ty| {
+            quote! {
+                .event_type(<#ty as #krate::core::introspection::Introspectable>::lexical_id())
+            }
+        });
 
         quote! {
-            .event(#id, #name, #ty)
+            .event(
+                #krate::core::introspection::ir::EventIr::builder(#id, #name)
+                    #ty
+                    .finish(),
+            )
         }
     }
 

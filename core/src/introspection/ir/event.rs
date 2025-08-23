@@ -11,12 +11,8 @@ pub struct EventIr {
 }
 
 impl EventIr {
-    pub(super) fn new(id: u32, name: impl Into<String>, event_type: Option<LexicalId>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            event_type,
-        }
+    pub fn builder(id: u32, name: impl Into<String>) -> EventIrBuilder {
+        EventIrBuilder::new(id, name)
     }
 
     pub fn id(&self) -> u32 {
@@ -59,5 +55,35 @@ impl Serialize<EventIr> for &EventIr {
         )?;
 
         serializer.finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EventIrBuilder {
+    id: u32,
+    name: String,
+    event_type: Option<LexicalId>,
+}
+
+impl EventIrBuilder {
+    pub fn new(id: u32, name: impl Into<String>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            event_type: None,
+        }
+    }
+
+    pub fn event_type(mut self, event_type: LexicalId) -> Self {
+        self.event_type = Some(event_type);
+        self
+    }
+
+    pub fn finish(self) -> EventIr {
+        EventIr {
+            id: self.id,
+            name: self.name,
+            event_type: self.event_type,
+        }
     }
 }

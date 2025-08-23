@@ -24,7 +24,7 @@ pub use array_type::ArrayTypeIr;
 pub use built_in_type::BuiltInTypeIr;
 pub use enum_fallback::{EnumFallbackIr, EnumFallbackIrBuilder};
 pub use enum_ty::{EnumIr, EnumIrBuilder};
-pub use event::EventIr;
+pub use event::{EventIr, EventIrBuilder};
 pub use event_fallback::{EventFallbackIr, EventFallbackIrBuilder};
 pub use field::FieldIr;
 pub use function::FunctionIr;

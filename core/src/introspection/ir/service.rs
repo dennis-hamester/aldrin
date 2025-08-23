@@ -160,13 +160,8 @@ impl ServiceIrBuilder {
         self
     }
 
-    pub fn event(
-        mut self,
-        id: u32,
-        name: impl Into<String>,
-        event_type: Option<LexicalId>,
-    ) -> Self {
-        self.events.insert(id, EventIr::new(id, name, event_type));
+    pub fn event(mut self, event: EventIr) -> Self {
+        self.events.insert(event.id(), event);
         self
     }
 
