@@ -100,14 +100,14 @@ fn basic_enum_type_id() {
     let type_id = TypeId::compute::<Foo>();
     assert_eq!(
         type_id,
-        TypeId(uuid!("3f6b9fd9-b4fc-5f1a-b4e9-1e9d9cd39044"))
+        TypeId(uuid!("f30f4a47-62a0-56b4-ad40-27a922b75098"))
     );
 }
 
 #[test]
 fn bookmarks_v2_type_id_bookmarks() {
     let type_id = TypeId::compute::<bookmarks_v2::Bookmarks>();
-    assert_eq!(type_id.0, uuid!("c852e542-75bf-5c0f-ab48-0ccdb48c458a"));
+    assert_eq!(type_id.0, uuid!("77907e0f-6a51-5e7f-a01c-82f332f9e050"));
 }
 
 #[test]
@@ -131,5 +131,5 @@ fn bookmarks_v2_type_id_bookmark() {
 #[test]
 fn bookmarks_v2_type_id_error() {
     let type_id = TypeId::compute::<bookmarks_v2::Error>();
-    assert_eq!(type_id.0, uuid!("12f3c8e0-d0d1-50d3-91fe-be2497b30ee3"));
+    assert_eq!(type_id.0, uuid!("85a13b5b-aa55-5678-9b68-1cc70ecfdc51"));
 }

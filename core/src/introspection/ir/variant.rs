@@ -53,7 +53,7 @@ impl Serialize<VariantIr> for &VariantIr {
         serializer.serialize::<tags::U32, _>(VariantField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
 
-        serializer.serialize::<tags::Option<LexicalId>, _>(
+        serializer.serialize_if_some::<tags::Option<LexicalId>, _>(
             VariantField::VariantType,
             &self.variant_type,
         )?;

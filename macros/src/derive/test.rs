@@ -68,7 +68,7 @@ fn raw_identifiers_enum() {
     );
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("dfefe6aa-d423-595d-b170-a0b5b648aa0d"))
+        TypeId(uuid!("e9b5ac02-15c0-5d01-8b40-cebbbbe8c1b4"))
     );
     assert_eq!(r#enum::lexical_id(), introspection.lexical_id());
 
