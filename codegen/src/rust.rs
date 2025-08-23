@@ -44,16 +44,20 @@ const VEC: &str = "::std::vec::Vec";
 pub struct RustOptions<'a> {
     pub patches: Vec<&'a Path>,
     pub introspection_if: Option<&'a str>,
-    pub krate: &'a str,
+    pub krate: Option<&'a str>,
 }
 
-impl RustOptions<'_> {
+impl<'a> RustOptions<'a> {
     pub fn new() -> Self {
         RustOptions {
             patches: Vec::new(),
             introspection_if: None,
-            krate: "::aldrin",
+            krate: None,
         }
+    }
+
+    pub fn krate_or_default(&self) -> &'a str {
+        self.krate.unwrap_or("::aldrin")
     }
 }
 
@@ -127,7 +131,7 @@ impl RustGenerator<'_> {
         }
 
         if self.options.introspection {
-            let krate = self.rust_options.krate;
+            let krate = self.rust_options.krate_or_default();
 
             if let Some(feature) = self.rust_options.introspection_if {
                 codeln!(self, "#[cfg(feature = \"{feature}\")]");
@@ -190,7 +194,7 @@ impl RustGenerator<'_> {
         fields: &[ast::StructField],
         fallback: Option<&ast::StructFallback>,
     ) {
-        let krate = self.rust_options.krate;
+        let krate = self.rust_options.krate_or_default();
         let ident = format!("r#{name}");
         let attrs = attrs
             .map(RustAttributes::parse)
@@ -223,7 +227,12 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type)]");
+        code!(self, "#[aldrin(");
+        if let Some(krate) = self.rust_options.krate {
+            code!(self, "crate = {krate}::core, ");
+        }
+        codeln!(self, "schema = \"{schema_name}\", ref_type)]");
+
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
@@ -284,7 +293,7 @@ impl RustGenerator<'_> {
         fallback: Option<&ast::EnumFallback>,
     ) {
         let ident = format!("r#{name}");
-        let krate = &self.rust_options.krate;
+        let krate = &self.rust_options.krate_or_default();
         let schema_name = self.schema.name();
 
         let attrs = attrs
@@ -310,7 +319,12 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, schema = \"{schema_name}\", ref_type)]");
+        code!(self, "#[aldrin(");
+        if let Some(krate) = self.rust_options.krate {
+            code!(self, "crate = {krate}::core, ");
+        }
+        codeln!(self, "schema = \"{schema_name}\", ref_type)]");
+
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
@@ -356,7 +370,7 @@ impl RustGenerator<'_> {
             return;
         }
 
-        let krate = self.rust_options.krate;
+        let krate = self.rust_options.krate_or_default();
         let schema = self.schema.name();
         let svc_name = svc.name().value();
         let ident = format!("r#{svc_name}");
@@ -368,7 +382,13 @@ impl RustGenerator<'_> {
         let doc = Self::doc_string(svc.doc(), 4);
         code!(self, "{doc}");
 
-        code!(self, "    #[aldrin(crate = {krate}, schema = \"{schema}\"");
+        code!(self, "    #[aldrin(");
+
+        if let Some(krate) = self.rust_options.krate {
+            code!(self, "crate = {krate}, ");
+        }
+
+        code!(self, "schema = \"{schema}\"");
 
         if !self.options.client {
             code!(self, ", client = false");
@@ -583,7 +603,7 @@ impl RustGenerator<'_> {
     }
 
     fn const_def(&mut self, const_def: &ast::ConstDef) {
-        let krate = self.rust_options.krate;
+        let krate = self.rust_options.krate_or_default();
         let name = const_def.name().value();
 
         let doc = Self::doc_string(const_def.doc(), 0);
@@ -645,7 +665,7 @@ impl RustGenerator<'_> {
     }
 
     fn newtype_def(&mut self, newtype_def: &ast::NewtypeDef) {
-        let krate = self.rust_options.krate;
+        let krate = self.rust_options.krate_or_default();
         let name = newtype_def.name().value();
         let ident = format!("r#{name}");
         let ty = self.type_name(newtype_def.target_type());
@@ -686,7 +706,12 @@ impl RustGenerator<'_> {
             }
         }
 
-        codeln!(self, "#[aldrin(crate = {krate}::core, newtype, schema = \"{schema_name}\", ref_type)]");
+        code!(self, "#[aldrin(");
+        if let Some(krate) = self.rust_options.krate {
+            code!(self, "crate = {krate}::core, ");
+        }
+        codeln!(self, "newtype, schema = \"{schema_name}\", ref_type)]");
+
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident}(pub {ty});");
         codeln!(self);
@@ -713,7 +738,7 @@ impl RustGenerator<'_> {
     }
 
     fn type_name(&self, ty: &ast::TypeName) -> String {
-        let krate = self.rust_options.krate;
+        let krate = self.rust_options.krate_or_default();
 
         match ty.kind() {
             ast::TypeNameKind::Bool => BOOL.to_owned(),

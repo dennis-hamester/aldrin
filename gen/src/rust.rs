@@ -71,9 +71,7 @@ pub(crate) fn run(args: RustArgs) -> Result<bool> {
     }
     rust_options.introspection_if = args.introspection_if.as_deref();
 
-    if let Some(ref krate) = args.krate {
-        rust_options.krate = krate;
-    }
+    rust_options.krate = args.krate.as_deref();
 
     let generator = Generator::new(&options, &parsed);
     let output = generator.generate_rust(&rust_options)?;

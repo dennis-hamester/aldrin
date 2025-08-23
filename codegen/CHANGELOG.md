@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adapt to the new `Serialize` and `Deserialize` traits.
 - Inline structs and enum, when used for events, are now named by suffixing the event's name with
   `Args` instead of `Event`.
+- `RustOptions::krate` is now an `Option<&str>`. The previous default value is available via
+  `RustOptions::krate_or_default()`.
+- If `RustOptions::krate` is `None`, then `#[aldrin(crate = ...)]` is no longer emitted. In that
+  case, codegen relies on the default values used by the `aldrin-macros` crate.
 
 ## [0.12.0] - 2025-01-26
 
