@@ -147,16 +147,8 @@ impl ServiceIrBuilder {
         }
     }
 
-    pub fn function(
-        mut self,
-        id: u32,
-        name: impl Into<String>,
-        args: Option<LexicalId>,
-        ok: Option<LexicalId>,
-        err: Option<LexicalId>,
-    ) -> Self {
-        self.functions
-            .insert(id, FunctionIr::new(id, name, args, ok, err));
+    pub fn function(mut self, function: FunctionIr) -> Self {
+        self.functions.insert(function.id(), function);
         self
     }
 

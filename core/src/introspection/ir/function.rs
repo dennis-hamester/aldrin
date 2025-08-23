@@ -13,20 +13,8 @@ pub struct FunctionIr {
 }
 
 impl FunctionIr {
-    pub(super) fn new(
-        id: u32,
-        name: impl Into<String>,
-        args: Option<LexicalId>,
-        ok: Option<LexicalId>,
-        err: Option<LexicalId>,
-    ) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            args,
-            ok,
-            err,
-        }
+    pub fn builder(id: u32, name: impl Into<String>) -> FunctionIrBuilder {
+        FunctionIrBuilder::new(id, name)
     }
 
     pub fn id(&self) -> u32 {
@@ -82,5 +70,51 @@ impl Serialize<FunctionIr> for &FunctionIr {
             .serialize_if_some::<tags::Option<LexicalId>, _>(FunctionField::Err, &self.err)?;
 
         serializer.finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionIrBuilder {
+    id: u32,
+    name: String,
+    args: Option<LexicalId>,
+    ok: Option<LexicalId>,
+    err: Option<LexicalId>,
+}
+
+impl FunctionIrBuilder {
+    pub fn new(id: u32, name: impl Into<String>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            args: None,
+            ok: None,
+            err: None,
+        }
+    }
+
+    pub fn args(mut self, args: LexicalId) -> Self {
+        self.args = Some(args);
+        self
+    }
+
+    pub fn ok(mut self, ok: LexicalId) -> Self {
+        self.ok = Some(ok);
+        self
+    }
+
+    pub fn err(mut self, err: LexicalId) -> Self {
+        self.err = Some(err);
+        self
+    }
+
+    pub fn finish(self) -> FunctionIr {
+        FunctionIr {
+            id: self.id,
+            name: self.name,
+            args: self.args,
+            ok: self.ok,
+            err: self.err,
+        }
     }
 }

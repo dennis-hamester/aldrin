@@ -135,38 +135,32 @@ impl FnItem {
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
 
-        let args = match self.body.args() {
-            Some(args) => quote! {
-                ::std::option::Option::Some(
-                    <#args as #krate::core::introspection::Introspectable>::lexical_id(),
-                )
-            },
+        let args = self.body.args().map(|args| {
+            quote! {
+                .args(<#args as #krate::core::introspection::Introspectable>::lexical_id())
+            }
+        });
 
-            None => quote! { ::std::option::Option::None },
-        };
+        let ok = self.body.ok().map(|ok| {
+            quote! {
+                .ok(<#ok as #krate::core::introspection::Introspectable>::lexical_id())
+            }
+        });
 
-        let ok = match self.body.ok() {
-            Some(ok) => quote! {
-                ::std::option::Option::Some(
-                    <#ok as #krate::core::introspection::Introspectable>::lexical_id(),
-                )
-            },
-
-            None => quote! { ::std::option::Option::None },
-        };
-
-        let err = match self.body.err() {
-            Some(err) => quote! {
-                ::std::option::Option::Some(
-                    <#err as #krate::core::introspection::Introspectable>::lexical_id(),
-                )
-            },
-
-            None => quote! { ::std::option::Option::None },
-        };
+        let err = self.body.err().map(|err| {
+            quote! {
+                .err(<#err as #krate::core::introspection::Introspectable>::lexical_id())
+            }
+        });
 
         quote! {
-            .function(#id, #name, #args, #ok, #err)
+            .function(
+                #krate::core::introspection::ir::FunctionIr::builder(#id, #name)
+                    #args
+                    #ok
+                    #err
+                    .finish(),
+            )
         }
     }
 

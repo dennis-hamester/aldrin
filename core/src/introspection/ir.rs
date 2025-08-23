@@ -27,7 +27,7 @@ pub use enum_ty::{EnumIr, EnumIrBuilder};
 pub use event::{EventIr, EventIrBuilder};
 pub use event_fallback::{EventFallbackIr, EventFallbackIrBuilder};
 pub use field::{FieldIr, FieldIrBuilder};
-pub use function::FunctionIr;
+pub use function::{FunctionIr, FunctionIrBuilder};
 pub use function_fallback::{FunctionFallbackIr, FunctionFallbackIrBuilder};
 pub use layout::LayoutIr;
 pub use map_type::MapTypeIr;

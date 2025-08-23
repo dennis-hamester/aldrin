@@ -12,41 +12,40 @@ impl Introspectable for Bookmarks {
             ServiceUuid(uuid!("35660342-8ecb-4101-903a-d1ba49d66f29")),
             2,
         )
-        .function(1, "get", None, Some(Vec::<Bookmark>::lexical_id()), None)
         .function(
-            4,
-            "get_v2",
-            Some(BookmarksGetV2Args::lexical_id()),
-            Some(Vec::<Bookmark>::lexical_id()),
-            Some(Error::lexical_id()),
+            ir::FunctionIr::builder(1, "get")
+                .ok(Vec::<Bookmark>::lexical_id())
+                .finish(),
         )
         .function(
-            2,
-            "add",
-            Some(Bookmark::lexical_id()),
-            None,
-            Some(Error::lexical_id()),
+            ir::FunctionIr::builder(4, "get_v2")
+                .args(BookmarksGetV2Args::lexical_id())
+                .ok(Vec::<Bookmark>::lexical_id())
+                .err(Error::lexical_id())
+                .finish(),
         )
         .function(
-            3,
-            "remove",
-            Some(String::lexical_id()),
-            None,
-            Some(Error::lexical_id()),
+            ir::FunctionIr::builder(2, "add")
+                .args(Bookmark::lexical_id())
+                .err(Error::lexical_id())
+                .finish(),
         )
         .function(
-            5,
-            "remove_v2",
-            Some(BookmarksRemoveV2Args::lexical_id()),
-            None,
-            Some(Error::lexical_id()),
+            ir::FunctionIr::builder(3, "remove")
+                .args(String::lexical_id())
+                .err(Error::lexical_id())
+                .finish(),
         )
         .function(
-            6,
-            "get_groups",
-            None,
-            Some(Vec::<Option<String>>::lexical_id()),
-            None,
+            ir::FunctionIr::builder(5, "remove_v2")
+                .args(BookmarksRemoveV2Args::lexical_id())
+                .err(Error::lexical_id())
+                .finish(),
+        )
+        .function(
+            ir::FunctionIr::builder(6, "get_groups")
+                .ok(Vec::<Option<String>>::lexical_id())
+                .finish(),
         )
         .event(
             ir::EventIr::builder(1, "added")
