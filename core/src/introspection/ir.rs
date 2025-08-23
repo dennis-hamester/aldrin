@@ -36,7 +36,7 @@ pub use result_type::ResultTypeIr;
 pub use service::{ServiceIr, ServiceIrBuilder};
 pub use struct_fallback::{StructFallbackIr, StructFallbackIrBuilder};
 pub use struct_ty::{StructIr, StructIrBuilder};
-pub use variant::VariantIr;
+pub use variant::{VariantIr, VariantIrBuilder};
 
 #[derive(Debug, Clone)]
 pub struct IntrospectionIr {

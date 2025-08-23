@@ -84,8 +84,12 @@ fn basic_enum_type_id() {
     impl Introspectable for Foo {
         fn layout() -> ir::LayoutIr {
             ir::EnumIr::builder("test", "Foo")
-                .variant_with_type(0, "Var1", LexicalId::U8)
-                .unit_variant(1, "Var2")
+                .variant(
+                    ir::VariantIr::builder(0, "Var1")
+                        .variant_type(LexicalId::U8)
+                        .finish(),
+                )
+                .variant(ir::VariantIr::builder(1, "Var2").finish())
                 .finish()
                 .into()
         }

@@ -338,22 +338,14 @@ fn gen_regular_variant(
     let id = item_options.id();
     let name = variant.ident.unraw().to_string();
 
-    let (layout, references) = match variant.fields {
-        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => {
-            (quote! { .unit_variant(#id, #name) }, None)
-        }
+    let (variant_type, references) = match variant.fields {
+        Fields::Unnamed(ref fields) if fields.unnamed.is_empty() => (None, None),
 
         Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => {
             let var_type = &fields.unnamed[0].ty;
 
             (
-                quote! {
-                    .variant_with_type(
-                        #id,
-                        #name,
-                        <#var_type as #krate::introspection::Introspectable>::lexical_id()
-                    )
-                },
+                Some(var_type),
                 Some(quote! { #krate::introspection::DynIntrospectable::new::<#var_type>() }),
             )
         }
@@ -365,7 +357,7 @@ fn gen_regular_variant(
             ));
         }
 
-        Fields::Unit => (quote! { .unit_variant(#id, #name) }, None),
+        Fields::Unit => (None, None),
 
         Fields::Named(_) => {
             return Err(Error::new_spanned(
@@ -373,6 +365,20 @@ fn gen_regular_variant(
                 "struct-like variants are not supported by Aldrin",
             ));
         }
+    };
+
+    let variant_type = variant_type.map(|ty| {
+        quote! {
+            .variant_type(<#ty as #krate::introspection::Introspectable>::lexical_id())
+        }
+    });
+
+    let layout = quote! {
+        .variant(
+            #krate::introspection::ir::VariantIr::builder(#id, #name)
+                #variant_type
+                .finish(),
+        )
     };
 
     Ok((layout, references))

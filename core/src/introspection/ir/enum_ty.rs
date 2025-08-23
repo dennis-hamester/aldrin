@@ -93,28 +93,9 @@ impl EnumIrBuilder {
         }
     }
 
-    pub fn variant(
-        mut self,
-        id: u32,
-        name: impl Into<String>,
-        variant_type: Option<LexicalId>,
-    ) -> Self {
-        self.variants
-            .insert(id, VariantIr::new(id, name, variant_type));
+    pub fn variant(mut self, variant: VariantIr) -> Self {
+        self.variants.insert(variant.id(), variant);
         self
-    }
-
-    pub fn variant_with_type(
-        self,
-        id: u32,
-        name: impl Into<String>,
-        variant_type: LexicalId,
-    ) -> Self {
-        self.variant(id, name, Some(variant_type))
-    }
-
-    pub fn unit_variant(self, id: u32, name: impl Into<String>) -> Self {
-        self.variant(id, name, None)
     }
 
     pub fn fallback(mut self, fallback: EnumFallbackIr) -> Self {

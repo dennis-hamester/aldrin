@@ -173,11 +173,11 @@ pub(crate) enum Error {}
 impl Introspectable for Error {
     fn layout() -> ir::LayoutIr {
         ir::EnumIr::builder("bookmarks_v2", "Error")
-            .unit_variant(1, "InvalidName")
-            .unit_variant(2, "DuplicateName")
-            .unit_variant(3, "InvalidUrl")
-            .unit_variant(4, "UnknownFields")
-            .unit_variant(5, "InvalidGroup")
+            .variant(ir::VariantIr::builder(1, "InvalidName").finish())
+            .variant(ir::VariantIr::builder(2, "DuplicateName").finish())
+            .variant(ir::VariantIr::builder(3, "InvalidUrl").finish())
+            .variant(ir::VariantIr::builder(4, "UnknownFields").finish())
+            .variant(ir::VariantIr::builder(5, "InvalidGroup").finish())
             .fallback(ir::EnumFallbackIr::builder("Unknown").finish())
             .finish()
             .into()

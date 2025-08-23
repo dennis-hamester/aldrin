@@ -11,12 +11,8 @@ pub struct VariantIr {
 }
 
 impl VariantIr {
-    pub(super) fn new(id: u32, name: impl Into<String>, variant_type: Option<LexicalId>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-            variant_type,
-        }
+    pub fn builder(id: u32, name: impl Into<String>) -> VariantIrBuilder {
+        VariantIrBuilder::new(id, name)
     }
 
     pub fn id(&self) -> u32 {
@@ -59,5 +55,35 @@ impl Serialize<VariantIr> for &VariantIr {
         )?;
 
         serializer.finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantIrBuilder {
+    id: u32,
+    name: String,
+    variant_type: Option<LexicalId>,
+}
+
+impl VariantIrBuilder {
+    pub fn new(id: u32, name: impl Into<String>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            variant_type: None,
+        }
+    }
+
+    pub fn variant_type(mut self, variant_type: LexicalId) -> Self {
+        self.variant_type = Some(variant_type);
+        self
+    }
+
+    pub fn finish(self) -> VariantIr {
+        VariantIr {
+            id: self.id,
+            name: self.name,
+            variant_type: self.variant_type,
+        }
     }
 }
