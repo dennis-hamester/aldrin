@@ -228,11 +228,12 @@ fn gen_newtype_struct(
     let field_type = &field.ty;
 
     let layout = quote! {
-        #krate::introspection::ir::NewtypeIr::new(
+        #krate::introspection::ir::NewtypeIr::builder(
             #schema,
             #name,
             <#field_type as #krate::introspection::Introspectable>::lexical_id(),
         )
+        .finish()
         .into()
     };
 

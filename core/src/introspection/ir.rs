@@ -31,7 +31,7 @@ pub use function::{FunctionIr, FunctionIrBuilder};
 pub use function_fallback::{FunctionFallbackIr, FunctionFallbackIrBuilder};
 pub use layout::LayoutIr;
 pub use map_type::MapTypeIr;
-pub use newtype::NewtypeIr;
+pub use newtype::{NewtypeIr, NewtypeIrBuilder};
 pub use result_type::ResultTypeIr;
 pub use service::{ServiceIr, ServiceIrBuilder};
 pub use struct_fallback::{StructFallbackIr, StructFallbackIrBuilder};
