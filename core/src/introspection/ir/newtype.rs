@@ -4,7 +4,7 @@ use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::{uuid, Uuid};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct NewtypeIr {
     pub(crate) schema: String,
     pub(crate) name: String,

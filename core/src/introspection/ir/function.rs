@@ -3,7 +3,7 @@ use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FunctionIr {
     pub(crate) id: u32,
     pub(crate) name: String,
