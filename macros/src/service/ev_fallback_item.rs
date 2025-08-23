@@ -1,4 +1,4 @@
-use super::kw;
+use super::{kw, Options};
 use crate::doc_string::DocString;
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
@@ -47,10 +47,16 @@ impl EvFallbackItem {
         }
     }
 
-    pub(crate) fn layout(&self) -> TokenStream {
+    pub(crate) fn layout(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
         let name = self.ident.unraw().to_string();
 
-        quote! { .event_fallback(#name) }
+        quote! {
+            .event_fallback(
+                #krate::core::introspection::ir::EventFallbackIr::builder(#name)
+                .finish(),
+            )
+        }
     }
 }
 

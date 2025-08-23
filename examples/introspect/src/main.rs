@@ -246,7 +246,7 @@ fn print_struct(ty: &Struct, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     }
 
     if let Some(fallback) = ty.fallback() {
-        println!("    {fallback} = fallback;");
+        println!("    {} = fallback;", fallback.name());
     }
 
     println!("}}");
@@ -269,7 +269,7 @@ fn print_enum(ty: &Enum, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     }
 
     if let Some(fallback) = ty.fallback() {
-        println!("    {fallback} = fallback;");
+        println!("    {} = fallback;", fallback.name());
     }
 
     println!("}}");
@@ -294,12 +294,12 @@ fn print_service(ty: &Service, db: &BTreeMap<TypeId, Introspection>, full: bool)
 
     if let Some(fallback) = ty.function_fallback() {
         println!();
-        println!("    {fallback} = fallback;");
+        println!("    {} = fallback;", fallback.name());
     }
 
     if let Some(fallback) = ty.event_fallback() {
         println!();
-        println!("    {fallback} = fallback;");
+        println!("    {} = fallback;", fallback.name());
     }
 
     println!("}}");

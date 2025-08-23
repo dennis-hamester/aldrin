@@ -1,14 +1,18 @@
 mod array_type;
 mod built_in_type;
+mod enum_fallback;
 mod enum_ty;
 mod event;
+mod event_fallback;
 mod field;
 mod function;
+mod function_fallback;
 mod layout;
 mod map_type;
 mod newtype;
 mod result_type;
 mod service;
+mod struct_fallback;
 mod struct_ty;
 mod variant;
 
@@ -18,15 +22,19 @@ use std::collections::BTreeMap;
 
 pub use array_type::ArrayTypeIr;
 pub use built_in_type::BuiltInTypeIr;
+pub use enum_fallback::{EnumFallbackIr, EnumFallbackIrBuilder};
 pub use enum_ty::{EnumIr, EnumIrBuilder};
 pub use event::EventIr;
+pub use event_fallback::{EventFallbackIr, EventFallbackIrBuilder};
 pub use field::FieldIr;
 pub use function::FunctionIr;
+pub use function_fallback::{FunctionFallbackIr, FunctionFallbackIrBuilder};
 pub use layout::LayoutIr;
 pub use map_type::MapTypeIr;
 pub use newtype::NewtypeIr;
 pub use result_type::ResultTypeIr;
 pub use service::{ServiceIr, ServiceIrBuilder};
+pub use struct_fallback::{StructFallbackIr, StructFallbackIrBuilder};
 pub use struct_ty::{StructIr, StructIrBuilder};
 pub use variant::VariantIr;
 

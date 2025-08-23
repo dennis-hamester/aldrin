@@ -146,7 +146,11 @@ fn gen_regular_struct(
         }
     }
 
-    let fallback = fallback.map(|ident| quote! { .fallback(#ident) });
+    let fallback = fallback.map(|ident| {
+        quote! {
+            .fallback(#krate::introspection::ir::StructFallbackIr::builder(#ident).finish())
+        }
+    });
 
     let layout = quote! {
         #krate::introspection::ir::StructIr::builder(#schema, #name)
@@ -313,7 +317,7 @@ fn gen_variant(
     }
 
     if item_options.is_fallback() {
-        gen_fallback_variant(variant).map(|toks| (toks, None))
+        gen_fallback_variant(variant, options).map(|toks| (toks, None))
     } else {
         gen_regular_variant(variant, options, item_options)
     }
@@ -368,12 +372,13 @@ fn gen_regular_variant(
     Ok((layout, references))
 }
 
-fn gen_fallback_variant(variant: &Variant) -> Result<TokenStream> {
+fn gen_fallback_variant(variant: &Variant, options: &Options) -> Result<TokenStream> {
+    let krate = options.krate();
     let name = variant.ident.unraw().to_string();
 
     match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            .fallback(#name)
+            .fallback(#krate::introspection::ir::EnumFallbackIr::builder(#name).finish())
         }),
 
         Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(

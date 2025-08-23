@@ -1,3 +1,4 @@
+use super::Options;
 use crate::doc_string::DocString;
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
@@ -46,10 +47,16 @@ impl FnFallbackItem {
         }
     }
 
-    pub(crate) fn layout(&self) -> TokenStream {
+    pub(crate) fn layout(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
         let name = self.ident.unraw().to_string();
 
-        quote! { .function_fallback(#name) }
+        quote! {
+            .function_fallback(
+                #krate::core::introspection::ir::FunctionFallbackIr::builder(#name)
+                .finish(),
+            )
+        }
     }
 }
 

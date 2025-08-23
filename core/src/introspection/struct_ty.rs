@@ -1,4 +1,4 @@
-use super::{ir, Field, LexicalId};
+use super::{ir, Field, LexicalId, StructFallback};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
@@ -26,7 +26,7 @@ pub struct Struct {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    fallback: Option<String>,
+    fallback: Option<StructFallback>,
 }
 
 impl Struct {
@@ -39,7 +39,7 @@ impl Struct {
                 .into_iter()
                 .map(|(id, field)| (id, Field::from_ir(field, references)))
                 .collect(),
-            fallback: ty.fallback,
+            fallback: ty.fallback.map(StructFallback::from_ir),
         }
     }
 
@@ -55,8 +55,8 @@ impl Struct {
         &self.fields
     }
 
-    pub fn fallback(&self) -> Option<&str> {
-        self.fallback.as_deref()
+    pub fn fallback(&self) -> Option<&StructFallback> {
+        self.fallback.as_ref()
     }
 }
 
@@ -91,7 +91,7 @@ impl Serialize<Struct> for &Struct {
         serializer
             .serialize::<tags::Map<tags::U32, Field>, _>(StructField::Fields, &self.fields)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<StructFallback>, _>(
             StructField::Fallback,
             &self.fallback,
         )?;
@@ -125,7 +125,7 @@ impl Deserialize<Self> for Struct {
                 }
 
                 Ok(StructField::Fallback) => {
-                    fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                    fallback = deserializer.deserialize::<tags::Option<StructFallback>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,

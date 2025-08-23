@@ -1,4 +1,4 @@
-use super::{FieldIr, LexicalId};
+use super::{FieldIr, LexicalId, StructFallbackIr};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -10,7 +10,7 @@ pub struct StructIr {
     pub(crate) schema: String,
     pub(crate) name: String,
     pub(crate) fields: BTreeMap<u32, FieldIr>,
-    pub(crate) fallback: Option<String>,
+    pub(crate) fallback: Option<StructFallbackIr>,
 }
 
 impl StructIr {
@@ -36,8 +36,8 @@ impl StructIr {
         &self.fields
     }
 
-    pub fn fallback(&self) -> Option<&str> {
-        self.fallback.as_deref()
+    pub fn fallback(&self) -> Option<&StructFallbackIr> {
+        self.fallback.as_ref()
     }
 }
 
@@ -66,7 +66,7 @@ impl Serialize<StructIr> for &StructIr {
         serializer
             .serialize::<tags::Map<tags::U32, FieldIr>, _>(StructField::Fields, &self.fields)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<StructFallbackIr>, _>(
             StructField::Fallback,
             &self.fallback,
         )?;
@@ -80,7 +80,7 @@ pub struct StructIrBuilder {
     schema: String,
     name: String,
     fields: BTreeMap<u32, FieldIr>,
-    fallback: Option<String>,
+    fallback: Option<StructFallbackIr>,
 }
 
 impl StructIrBuilder {
@@ -105,8 +105,8 @@ impl StructIrBuilder {
         self
     }
 
-    pub fn fallback(mut self, name: impl Into<String>) -> Self {
-        self.fallback = Some(name.into());
+    pub fn fallback(mut self, fallback: StructFallbackIr) -> Self {
+        self.fallback = Some(fallback);
         self
     }
 

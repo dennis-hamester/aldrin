@@ -1,4 +1,4 @@
-use super::{ir, Event, Function, LexicalId};
+use super::{ir, Event, EventFallback, Function, FunctionFallback, LexicalId};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer,
@@ -35,13 +35,13 @@ pub struct Service {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    function_fallback: Option<String>,
+    function_fallback: Option<FunctionFallback>,
 
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    event_fallback: Option<String>,
+    event_fallback: Option<EventFallback>,
 }
 
 impl Service {
@@ -64,8 +64,8 @@ impl Service {
                 .map(|(id, ev)| (id, Event::from_ir(ev, references)))
                 .collect(),
 
-            function_fallback: ty.function_fallback,
-            event_fallback: ty.event_fallback,
+            function_fallback: ty.function_fallback.map(FunctionFallback::from_ir),
+            event_fallback: ty.event_fallback.map(EventFallback::from_ir),
         }
     }
 
@@ -93,12 +93,12 @@ impl Service {
         &self.events
     }
 
-    pub fn function_fallback(&self) -> Option<&str> {
-        self.function_fallback.as_deref()
+    pub fn function_fallback(&self) -> Option<&FunctionFallback> {
+        self.function_fallback.as_ref()
     }
 
-    pub fn event_fallback(&self) -> Option<&str> {
-        self.event_fallback.as_deref()
+    pub fn event_fallback(&self) -> Option<&EventFallback> {
+        self.event_fallback.as_ref()
     }
 }
 
@@ -144,12 +144,12 @@ impl Serialize<Service> for &Service {
         serializer
             .serialize::<tags::Map<tags::U32, Event>, _>(ServiceField::Events, &self.events)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<FunctionFallback>, _>(
             ServiceField::FunctionFallback,
             &self.function_fallback,
         )?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<EventFallback>, _>(
             ServiceField::EventFallback,
             &self.event_fallback,
         )?;
@@ -203,11 +203,11 @@ impl Deserialize<Self> for Service {
 
                 Ok(ServiceField::FunctionFallback) => {
                     function_fallback =
-                        deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                        deserializer.deserialize::<tags::Option<FunctionFallback>, _>()?
                 }
 
                 Ok(ServiceField::EventFallback) => {
-                    event_fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                    event_fallback = deserializer.deserialize::<tags::Option<EventFallback>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,

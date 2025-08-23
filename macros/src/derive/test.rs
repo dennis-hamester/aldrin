@@ -106,7 +106,7 @@ fn enum_fallback() {
     assert_eq!(introspection.lexical_id(), LexicalId::custom("test", "Foo"));
     assert_eq!(
         introspection.type_id(),
-        TypeId(uuid!("b31bf766-49be-5037-a567-857d29fc4cb3"))
+        TypeId(uuid!("c23d7a69-083d-5f90-a179-0ed84245ecfa"))
     );
     assert_eq!(Foo::lexical_id(), introspection.lexical_id());
 
@@ -122,7 +122,8 @@ fn enum_fallback() {
     assert_eq!(var.name(), "Var1");
     assert_eq!(var.variant_type(), Some(LexicalId::U32));
 
-    assert_eq!(layout.fallback(), Some("Fallback"));
+    let fallback = layout.fallback().unwrap();
+    assert_eq!(fallback.name(), "Fallback");
 }
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]

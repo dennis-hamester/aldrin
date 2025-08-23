@@ -1,4 +1,4 @@
-use super::{LexicalId, VariantIr};
+use super::{EnumFallbackIr, LexicalId, VariantIr};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -10,7 +10,7 @@ pub struct EnumIr {
     pub(crate) schema: String,
     pub(crate) name: String,
     pub(crate) variants: BTreeMap<u32, VariantIr>,
-    pub(crate) fallback: Option<String>,
+    pub(crate) fallback: Option<EnumFallbackIr>,
 }
 
 impl EnumIr {
@@ -36,8 +36,8 @@ impl EnumIr {
         &self.variants
     }
 
-    pub fn fallback(&self) -> Option<&str> {
-        self.fallback.as_deref()
+    pub fn fallback(&self) -> Option<&EnumFallbackIr> {
+        self.fallback.as_ref()
     }
 }
 
@@ -66,7 +66,7 @@ impl Serialize<EnumIr> for &EnumIr {
         serializer
             .serialize::<tags::Map<tags::U32, VariantIr>, _>(EnumField::Variants, &self.variants)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<EnumFallbackIr>, _>(
             EnumField::Fallback,
             &self.fallback,
         )?;
@@ -80,7 +80,7 @@ pub struct EnumIrBuilder {
     schema: String,
     name: String,
     variants: BTreeMap<u32, VariantIr>,
-    fallback: Option<String>,
+    fallback: Option<EnumFallbackIr>,
 }
 
 impl EnumIrBuilder {
@@ -117,8 +117,8 @@ impl EnumIrBuilder {
         self.variant(id, name, None)
     }
 
-    pub fn fallback(mut self, name: impl Into<String>) -> Self {
-        self.fallback = Some(name.into());
+    pub fn fallback(mut self, fallback: EnumFallbackIr) -> Self {
+        self.fallback = Some(fallback);
         self
     }
 

@@ -1,4 +1,4 @@
-use super::{EventIr, FunctionIr, LexicalId};
+use super::{EventFallbackIr, EventIr, FunctionFallbackIr, FunctionIr, LexicalId};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer, ServiceUuid};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -13,8 +13,8 @@ pub struct ServiceIr {
     pub(crate) version: u32,
     pub(crate) functions: BTreeMap<u32, FunctionIr>,
     pub(crate) events: BTreeMap<u32, EventIr>,
-    pub(crate) function_fallback: Option<String>,
-    pub(crate) event_fallback: Option<String>,
+    pub(crate) function_fallback: Option<FunctionFallbackIr>,
+    pub(crate) event_fallback: Option<EventFallbackIr>,
 }
 
 impl ServiceIr {
@@ -57,12 +57,12 @@ impl ServiceIr {
         &self.events
     }
 
-    pub fn function_fallback(&self) -> Option<&str> {
-        self.function_fallback.as_deref()
+    pub fn function_fallback(&self) -> Option<&FunctionFallbackIr> {
+        self.function_fallback.as_ref()
     }
 
-    pub fn event_fallback(&self) -> Option<&str> {
-        self.event_fallback.as_deref()
+    pub fn event_fallback(&self) -> Option<&EventFallbackIr> {
+        self.event_fallback.as_ref()
     }
 }
 
@@ -102,12 +102,12 @@ impl Serialize<ServiceIr> for &ServiceIr {
         serializer
             .serialize::<tags::Map<tags::U32, EventIr>, _>(ServiceField::Events, &self.events)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<FunctionFallbackIr>, _>(
             ServiceField::FunctionFallback,
             &self.function_fallback,
         )?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<EventFallbackIr>, _>(
             ServiceField::EventFallback,
             &self.event_fallback,
         )?;
@@ -124,8 +124,8 @@ pub struct ServiceIrBuilder {
     version: u32,
     functions: BTreeMap<u32, FunctionIr>,
     events: BTreeMap<u32, EventIr>,
-    function_fallback: Option<String>,
-    event_fallback: Option<String>,
+    function_fallback: Option<FunctionFallbackIr>,
+    event_fallback: Option<EventFallbackIr>,
 }
 
 impl ServiceIrBuilder {
@@ -170,13 +170,13 @@ impl ServiceIrBuilder {
         self
     }
 
-    pub fn function_fallback(mut self, name: impl Into<String>) -> Self {
-        self.function_fallback = Some(name.into());
+    pub fn function_fallback(mut self, fallback: FunctionFallbackIr) -> Self {
+        self.function_fallback = Some(fallback);
         self
     }
 
-    pub fn event_fallback(mut self, name: impl Into<String>) -> Self {
-        self.event_fallback = Some(name.into());
+    pub fn event_fallback(mut self, fallback: EventFallbackIr) -> Self {
+        self.event_fallback = Some(fallback);
         self
     }
 

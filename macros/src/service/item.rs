@@ -44,9 +44,9 @@ impl ServiceItem {
     pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         match self {
             Self::Event(ev) => ev.layout(options),
-            Self::EventFallback(ev) => ev.layout(),
+            Self::EventFallback(ev) => ev.layout(options),
             Self::Function(func) => func.layout(options),
-            Self::FunctionFallback(func) => func.layout(),
+            Self::FunctionFallback(func) => func.layout(options),
         }
     }
 

@@ -1,15 +1,19 @@
 mod array_type;
 mod built_in_type;
+mod enum_fallback;
 mod enum_ty;
 mod event;
+mod event_fallback;
 mod field;
 mod function;
+mod function_fallback;
 mod layout;
 mod lexical_id;
 mod map_type;
 mod newtype;
 mod result_type;
 mod service;
+mod struct_fallback;
 mod struct_ty;
 #[cfg(test)]
 mod test;
@@ -29,16 +33,20 @@ use std::collections::{BTreeMap, HashSet};
 
 pub use array_type::ArrayType;
 pub use built_in_type::BuiltInType;
+pub use enum_fallback::EnumFallback;
 pub use enum_ty::Enum;
 pub use event::Event;
+pub use event_fallback::EventFallback;
 pub use field::Field;
 pub use function::Function;
+pub use function_fallback::FunctionFallback;
 pub use layout::Layout;
 pub use lexical_id::LexicalId;
 pub use map_type::MapType;
 pub use newtype::Newtype;
 pub use result_type::ResultType;
 pub use service::Service;
+pub use struct_fallback::StructFallback;
 pub use struct_ty::Struct;
 pub use variant::Variant;
 

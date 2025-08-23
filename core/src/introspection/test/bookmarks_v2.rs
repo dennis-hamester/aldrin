@@ -52,8 +52,8 @@ impl Introspectable for Bookmarks {
         .event(3, "added_v2", Some(Bookmark::lexical_id()))
         .event(2, "removed", Some(Bookmark::lexical_id()))
         .event(4, "removed_v2", Some(Bookmark::lexical_id()))
-        .function_fallback("unknown_function")
-        .event_fallback("unknown_event")
+        .function_fallback(ir::FunctionFallbackIr::builder("unknown_function").finish())
+        .event_fallback(ir::EventFallbackIr::builder("unknown_event").finish())
         .finish()
         .into()
     }
@@ -83,7 +83,7 @@ impl Introspectable for BookmarksGetV2Args {
     fn layout() -> ir::LayoutIr {
         ir::StructIr::builder("bookmarks_v2", "BookmarksGetV2Args")
             .field(1, "group", false, String::lexical_id())
-            .fallback("unknown_fields")
+            .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()
     }
@@ -106,7 +106,7 @@ impl Introspectable for BookmarksRemoveV2Args {
         ir::StructIr::builder("bookmarks_v2", "BookmarksRemoveV2Args")
             .field(1, "name", true, String::lexical_id())
             .field(2, "group", false, String::lexical_id())
-            .fallback("unknown_fields")
+            .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()
     }
@@ -133,7 +133,7 @@ impl Introspectable for Bookmark {
             .field(1, "name", true, String::lexical_id())
             .field(2, "url", true, String::lexical_id())
             .field(3, "group", false, String::lexical_id())
-            .fallback("unknown_fields")
+            .fallback(ir::StructFallbackIr::builder("unknown_fields").finish())
             .finish()
             .into()
     }
@@ -163,7 +163,7 @@ impl Introspectable for Error {
             .unit_variant(3, "InvalidUrl")
             .unit_variant(4, "UnknownFields")
             .unit_variant(5, "InvalidGroup")
-            .fallback("Unknown")
+            .fallback(ir::EnumFallbackIr::builder("Unknown").finish())
             .finish()
             .into()
     }

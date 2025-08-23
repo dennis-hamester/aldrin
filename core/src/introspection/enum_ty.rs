@@ -1,4 +1,4 @@
-use super::{ir, LexicalId, Variant};
+use super::{ir, EnumFallback, LexicalId, Variant};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
@@ -26,7 +26,7 @@ pub struct Enum {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    fallback: Option<String>,
+    fallback: Option<EnumFallback>,
 }
 
 impl Enum {
@@ -39,7 +39,7 @@ impl Enum {
                 .into_iter()
                 .map(|(id, var)| (id, Variant::from_ir(var, references)))
                 .collect(),
-            fallback: ty.fallback,
+            fallback: ty.fallback.map(EnumFallback::from_ir),
         }
     }
 
@@ -55,8 +55,8 @@ impl Enum {
         &self.variants
     }
 
-    pub fn fallback(&self) -> Option<&str> {
-        self.fallback.as_deref()
+    pub fn fallback(&self) -> Option<&EnumFallback> {
+        self.fallback.as_ref()
     }
 }
 
@@ -91,7 +91,7 @@ impl Serialize<Enum> for &Enum {
         serializer
             .serialize::<tags::Map<tags::U32, Variant>, _>(EnumField::Variants, &self.variants)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+        serializer.serialize_if_some::<tags::Option<EnumFallback>, _>(
             EnumField::Fallback,
             &self.fallback,
         )?;
@@ -126,7 +126,7 @@ impl Deserialize<Self> for Enum {
                 }
 
                 Ok(EnumField::Fallback) => {
-                    fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
+                    fallback = deserializer.deserialize::<tags::Option<EnumFallback>, _>()?
                 }
 
                 Err(_) => deserializer.skip()?,
