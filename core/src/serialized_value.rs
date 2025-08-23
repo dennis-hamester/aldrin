@@ -10,6 +10,7 @@ use crate::{
 };
 use bytes::BytesMut;
 use std::borrow::{Borrow, Cow};
+use std::cmp::Ordering;
 use std::ops::Deref;
 use std::{fmt, mem};
 
@@ -142,6 +143,36 @@ impl PartialEq<SerializedValue> for [u8] {
     }
 }
 
+impl PartialOrd for SerializedValue {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SerializedValue {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (***self).cmp(&***other)
+    }
+}
+
+impl PartialOrd<SerializedValueSlice> for SerializedValue {
+    fn partial_cmp(&self, other: &SerializedValueSlice) -> Option<Ordering> {
+        (***self).partial_cmp(&**other)
+    }
+}
+
+impl PartialOrd<[u8]> for SerializedValue {
+    fn partial_cmp(&self, other: &[u8]) -> Option<Ordering> {
+        (***self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedValue> for [u8] {
+    fn partial_cmp(&self, other: &SerializedValue) -> Option<Ordering> {
+        (*self).partial_cmp(&***other)
+    }
+}
+
 impl PrimaryTag for SerializedValue {
     type Tag = tags::Value;
 }
@@ -193,7 +224,7 @@ impl<'a> arbitrary::Arbitrary<'a> for SerializedValue {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct SerializedValueSlice([u8]);
 
@@ -281,6 +312,24 @@ impl PartialEq<[u8]> for SerializedValueSlice {
 impl PartialEq<SerializedValueSlice> for [u8] {
     fn eq(&self, other: &SerializedValueSlice) -> bool {
         *self == **other
+    }
+}
+
+impl PartialOrd<SerializedValue> for SerializedValueSlice {
+    fn partial_cmp(&self, other: &SerializedValue) -> Option<Ordering> {
+        (**self).partial_cmp(&***other)
+    }
+}
+
+impl PartialOrd<[u8]> for SerializedValueSlice {
+    fn partial_cmp(&self, other: &[u8]) -> Option<Ordering> {
+        (**self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedValueSlice> for [u8] {
+    fn partial_cmp(&self, other: &SerializedValueSlice) -> Option<Ordering> {
+        (*self).partial_cmp(&**other)
     }
 }
 
