@@ -93,11 +93,11 @@ impl Serialize<Function> for &Function {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(FunctionField::Id, self.id)?;
+        serializer.serialize::<tags::U32, _>(FunctionField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Args, self.args)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Ok, self.ok)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Err, self.err)?;
+        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Args, &self.args)?;
+        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Ok, &self.ok)?;
+        serializer.serialize::<tags::Option<TypeId>, _>(FunctionField::Err, &self.err)?;
 
         serializer.finish()
     }

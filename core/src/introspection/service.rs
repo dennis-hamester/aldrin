@@ -133,8 +133,8 @@ impl Serialize<Service> for &Service {
 
         serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
-        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, self.uuid)?;
-        serializer.serialize::<tags::U32, _>(ServiceField::Version, self.version)?;
+        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, &self.uuid)?;
+        serializer.serialize::<tags::U32, _>(ServiceField::Version, &self.version)?;
 
         serializer.serialize::<tags::Map<tags::U32, Function>, _>(
             ServiceField::Functions,

@@ -69,9 +69,9 @@ impl Serialize<Event> for &Event {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
+        serializer.serialize::<tags::U32, _>(EventField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
-        serializer.serialize::<tags::Option<TypeId>, _>(EventField::EventType, self.event_type)?;
+        serializer.serialize::<tags::Option<TypeId>, _>(EventField::EventType, &self.event_type)?;
 
         serializer.finish()
     }
