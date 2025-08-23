@@ -12,13 +12,13 @@ impl TypeId {
     }
 
     pub fn compute_from_dyn(ty: DynIntrospectable) -> Self {
-        let mut compute = Compute::new(ty.layout());
+        let mut compute = Compute::new(&ty.layout());
 
         let mut references = Vec::new();
         ty.add_references(&mut References::new(&mut references));
 
         while let Some(ty) = references.pop() {
-            if compute.add(ty.layout()) {
+            if compute.add(&ty.layout()) {
                 ty.add_references(&mut References::new(&mut references));
             }
         }
@@ -29,24 +29,27 @@ impl TypeId {
 }
 
 struct Compute {
-    layout: ir::LayoutIr,
-    referenced: BTreeSet<ir::LayoutIr>,
+    namespace: Uuid,
+    layout: SerializedValue,
+    referenced: BTreeSet<SerializedValue>,
 }
 
 impl Compute {
-    fn new(layout: ir::LayoutIr) -> Self {
+    fn new(layout: &ir::LayoutIr) -> Self {
         Self {
-            layout,
+            namespace: layout.namespace(),
+            layout: SerializedValue::serialize(layout).unwrap(),
             referenced: BTreeSet::new(),
         }
     }
 
     fn namespace(&self) -> Uuid {
-        self.layout.namespace()
+        self.namespace
     }
 
-    fn add(&mut self, layout: ir::LayoutIr) -> bool {
-        self.referenced.insert(layout)
+    fn add(&mut self, layout: &ir::LayoutIr) -> bool {
+        self.referenced
+            .insert(SerializedValue::serialize(layout).unwrap())
     }
 }
 
@@ -69,9 +72,9 @@ impl Serialize<Compute> for &Compute {
         let mut serializer = serializer.serialize_struct1(3)?;
 
         serializer.serialize::<tags::U32, _>(ComputeField::Version, VERSION)?;
-        serializer.serialize::<ir::LayoutIr, _>(ComputeField::Layout, &self.layout)?;
+        serializer.serialize::<tags::Value, _>(ComputeField::Layout, &self.layout)?;
 
-        serializer.serialize::<tags::Vec<ir::LayoutIr>, _>(
+        serializer.serialize::<tags::Vec<tags::Value>, _>(
             ComputeField::Referenced,
             IterAsVec(&self.referenced),
         )?;
