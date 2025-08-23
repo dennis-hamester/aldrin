@@ -1,6 +1,6 @@
 use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -46,54 +46,16 @@ impl PrimaryTag for EventIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for EventIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(&self)
-    }
-}
-
 impl Serialize<EventIr> for &EventIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(EventField::Id, self.id)?;
+        serializer.serialize::<tags::U32, _>(EventField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
 
         serializer
-            .serialize::<tags::Option<LexicalId>, _>(EventField::EventType, self.event_type)?;
+            .serialize::<tags::Option<LexicalId>, _>(EventField::EventType, &self.event_type)?;
 
         serializer.finish()
-    }
-}
-
-impl Deserialize<Self> for EventIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_struct()?;
-
-        let mut id = None;
-        let mut name = None;
-        let mut event_type = None;
-
-        while let Some(deserializer) = deserializer.deserialize()? {
-            match deserializer.try_id() {
-                Ok(EventField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
-
-                Ok(EventField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-
-                Ok(EventField::EventType) => {
-                    event_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
-                }
-
-                Err(_) => deserializer.skip()?,
-            }
-        }
-
-        deserializer.finish(Self {
-            id: id.ok_or(DeserializeError::InvalidSerialization)?,
-            name: name.ok_or(DeserializeError::InvalidSerialization)?,
-            event_type,
-        })
     }
 }

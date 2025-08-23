@@ -1,6 +1,6 @@
 use super::{FieldIr, LexicalId};
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
@@ -56,12 +56,6 @@ impl PrimaryTag for StructIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for StructIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(&self)
-    }
-}
-
 impl Serialize<StructIr> for &StructIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
@@ -78,47 +72,6 @@ impl Serialize<StructIr> for &StructIr {
         )?;
 
         serializer.finish()
-    }
-}
-
-impl Deserialize<Self> for StructIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_struct()?;
-
-        let mut schema = None;
-        let mut name = None;
-        let mut fields = None;
-        let mut fallback = None;
-
-        while let Some(deserializer) = deserializer.deserialize()? {
-            match deserializer.try_id() {
-                Ok(StructField::Schema) => {
-                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-                Ok(StructField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-
-                Ok(StructField::Fields) => {
-                    fields = deserializer
-                        .deserialize::<tags::Map<tags::U32, FieldIr>, _>()
-                        .map(Some)?
-                }
-
-                Ok(StructField::Fallback) => {
-                    fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
-                }
-
-                Err(_) => deserializer.skip()?,
-            }
-        }
-
-        deserializer.finish(Self {
-            schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
-            name: name.ok_or(DeserializeError::InvalidSerialization)?,
-            fields: fields.ok_or(DeserializeError::InvalidSerialization)?,
-            fallback,
-        })
     }
 }
 

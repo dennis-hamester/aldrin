@@ -1,6 +1,6 @@
 use super::LexicalId;
 use crate::tags::{PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -36,47 +36,13 @@ impl PrimaryTag for MapTypeIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for MapTypeIr {
+impl Serialize<MapTypeIr> for &MapTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<LexicalId, _>(MapTypeField::Key, self.key)?;
-        serializer.serialize::<LexicalId, _>(MapTypeField::Value, self.value)?;
+        serializer.serialize::<LexicalId, _>(MapTypeField::Key, &self.key)?;
+        serializer.serialize::<LexicalId, _>(MapTypeField::Value, &self.value)?;
 
         serializer.finish()
-    }
-}
-
-impl Serialize<MapTypeIr> for &MapTypeIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(*self)
-    }
-}
-
-impl Deserialize<Self> for MapTypeIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_struct()?;
-
-        let mut key = None;
-        let mut value = None;
-
-        while let Some(deserializer) = deserializer.deserialize()? {
-            match deserializer.try_id() {
-                Ok(MapTypeField::Key) => {
-                    key = deserializer.deserialize::<LexicalId, _>().map(Some)?
-                }
-
-                Ok(MapTypeField::Value) => {
-                    value = deserializer.deserialize::<LexicalId, _>().map(Some)?
-                }
-
-                Err(_) => deserializer.skip()?,
-            }
-        }
-
-        deserializer.finish(Self {
-            key: key.ok_or(DeserializeError::InvalidSerialization)?,
-            value: value.ok_or(DeserializeError::InvalidSerialization)?,
-        })
     }
 }

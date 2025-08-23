@@ -1,6 +1,6 @@
 use super::LexicalId;
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -46,58 +46,18 @@ impl PrimaryTag for VariantIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for VariantIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(&self)
-    }
-}
-
 impl Serialize<VariantIr> for &VariantIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(VariantField::Id, self.id)?;
+        serializer.serialize::<tags::U32, _>(VariantField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
 
         serializer.serialize::<tags::Option<LexicalId>, _>(
             VariantField::VariantType,
-            self.variant_type,
+            &self.variant_type,
         )?;
 
         serializer.finish()
-    }
-}
-
-impl Deserialize<Self> for VariantIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_struct()?;
-
-        let mut id = None;
-        let mut name = None;
-        let mut variant_type = None;
-
-        while let Some(deserializer) = deserializer.deserialize()? {
-            match deserializer.try_id() {
-                Ok(VariantField::Id) => {
-                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?
-                }
-
-                Ok(VariantField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-
-                Ok(VariantField::VariantType) => {
-                    variant_type = deserializer.deserialize::<tags::Option<LexicalId>, _>()?
-                }
-
-                Err(_) => deserializer.skip()?,
-            }
-        }
-
-        deserializer.finish(Self {
-            id: id.ok_or(DeserializeError::InvalidSerialization)?,
-            name: name.ok_or(DeserializeError::InvalidSerialization)?,
-            variant_type,
-        })
     }
 }

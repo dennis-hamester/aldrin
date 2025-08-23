@@ -1,8 +1,6 @@
 use super::{EventIr, FunctionIr, LexicalId};
 use crate::tags::{self, PrimaryTag, Tag};
-use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ServiceUuid,
-};
+use crate::{Serialize, SerializeError, Serializer, ServiceUuid};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
@@ -87,20 +85,14 @@ impl PrimaryTag for ServiceIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for ServiceIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(&self)
-    }
-}
-
 impl Serialize<ServiceIr> for &ServiceIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
-        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, self.uuid)?;
-        serializer.serialize::<tags::U32, _>(ServiceField::Version, self.version)?;
+        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, &self.uuid)?;
+        serializer.serialize::<tags::U32, _>(ServiceField::Version, &self.version)?;
 
         serializer.serialize::<tags::Map<tags::U32, FunctionIr>, _>(
             ServiceField::Functions,
@@ -121,75 +113,6 @@ impl Serialize<ServiceIr> for &ServiceIr {
         )?;
 
         serializer.finish()
-    }
-}
-
-impl Deserialize<Self> for ServiceIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let mut deserializer = deserializer.deserialize_struct()?;
-
-        let mut schema = None;
-        let mut name = None;
-        let mut uuid = None;
-        let mut version = None;
-        let mut functions = None;
-        let mut events = None;
-        let mut function_fallback = None;
-        let mut event_fallback = None;
-
-        while let Some(deserializer) = deserializer.deserialize()? {
-            match deserializer.try_id() {
-                Ok(ServiceField::Schema) => {
-                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-
-                Ok(ServiceField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
-                }
-
-                Ok(ServiceField::Uuid) => {
-                    uuid = deserializer.deserialize::<ServiceUuid, _>().map(Some)?
-                }
-
-                Ok(ServiceField::Version) => {
-                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?
-                }
-
-                Ok(ServiceField::Functions) => {
-                    functions = deserializer
-                        .deserialize::<tags::Map<tags::U32, FunctionIr>, _>()
-                        .map(Some)?
-                }
-
-                Ok(ServiceField::Events) => {
-                    events = deserializer
-                        .deserialize::<tags::Map<tags::U32, EventIr>, _>()
-                        .map(Some)?
-                }
-
-                Ok(ServiceField::FunctionFallback) => {
-                    function_fallback =
-                        deserializer.deserialize::<tags::Option<tags::String>, _>()?
-                }
-
-                Ok(ServiceField::EventFallback) => {
-                    event_fallback = deserializer.deserialize::<tags::Option<tags::String>, _>()?
-                }
-
-                Err(_) => deserializer.skip()?,
-            }
-        }
-
-        deserializer.finish(Self {
-            schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
-            name: name.ok_or(DeserializeError::InvalidSerialization)?,
-            uuid: uuid.ok_or(DeserializeError::InvalidSerialization)?,
-            version: version.ok_or(DeserializeError::InvalidSerialization)?,
-            functions: functions.ok_or(DeserializeError::InvalidSerialization)?,
-            events: events.ok_or(DeserializeError::InvalidSerialization)?,
-            function_fallback,
-            event_fallback,
-        })
     }
 }
 

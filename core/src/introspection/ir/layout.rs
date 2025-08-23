@@ -1,6 +1,6 @@
 use super::{BuiltInTypeIr, EnumIr, LexicalId, NewtypeIr, ServiceIr, StructIr};
 use crate::tags::{PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::Uuid;
 
@@ -116,12 +116,6 @@ impl PrimaryTag for LayoutIr {
     type Tag = Self;
 }
 
-impl Serialize<Self> for LayoutIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize(&self)
-    }
-}
-
 impl Serialize<LayoutIr> for &LayoutIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
@@ -142,29 +136,6 @@ impl Serialize<LayoutIr> for &LayoutIr {
             LayoutIr::Newtype(ty) => {
                 serializer.serialize_enum::<NewtypeIr, _>(LayoutVariant::Newtype, ty)
             }
-        }
-    }
-}
-
-impl Deserialize<Self> for LayoutIr {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
-        let deserializer = deserializer.deserialize_enum()?;
-
-        match deserializer.try_id()? {
-            LayoutVariant::BuiltIn => deserializer
-                .deserialize::<BuiltInTypeIr, _>()
-                .map(Self::BuiltIn),
-
-            LayoutVariant::Struct => deserializer.deserialize::<StructIr, _>().map(Self::Struct),
-            LayoutVariant::Enum => deserializer.deserialize::<EnumIr, _>().map(Self::Enum),
-
-            LayoutVariant::Service => deserializer
-                .deserialize::<ServiceIr, _>()
-                .map(Self::Service),
-
-            LayoutVariant::Newtype => deserializer
-                .deserialize::<NewtypeIr, _>()
-                .map(Self::Newtype),
         }
     }
 }
