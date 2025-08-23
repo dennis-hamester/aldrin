@@ -1,4 +1,5 @@
 use super::{ItemOptions, Options};
+use crate::doc_string::DocString;
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, ToTokens};
@@ -97,6 +98,10 @@ impl<'a> StructData<'a> {
         self.name
     }
 
+    pub(crate) fn doc(&self) -> &DocString {
+        self.options.doc()
+    }
+
     pub(crate) fn krate(&self) -> &Path {
         self.options.krate()
     }
@@ -193,6 +198,10 @@ impl<'a> FieldData<'a> {
 
     pub(crate) fn name(&self) -> &FieldName<'_> {
         &self.name
+    }
+
+    pub(crate) fn doc(&self) -> &DocString {
+        self.options.doc()
     }
 
     pub(crate) fn id(&self) -> u32 {

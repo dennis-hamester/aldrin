@@ -55,15 +55,18 @@ impl StructData<'_> {
         let vis = self.vis();
         let ty_generics = self.ty_generics();
         let fields = self.fields().iter().map(FieldData::gen_ref_type);
+        let doc = &self.doc();
 
         if self.fields().is_empty() {
             Ok(quote! {
+                #doc
                 #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*>;
             })
         } else if self.is_named() {
             Ok(quote! {
+                #doc
                 #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*> {
@@ -72,6 +75,7 @@ impl StructData<'_> {
             })
         } else {
             Ok(quote! {
+                #doc
                 #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*>(#(#fields),*);
@@ -83,12 +87,19 @@ impl StructData<'_> {
 impl FieldData<'_> {
     fn gen_ref_type(&self) -> TokenStream {
         let ty_generic = self.ty_generic();
+        let doc = self.doc();
 
         if self.is_named() {
             let name = self.name();
-            quote! { pub #name: #ty_generic }
+            quote! {
+                #doc
+                pub #name: #ty_generic
+            }
         } else {
-            quote! { pub #ty_generic }
+            quote! {
+                #doc
+                pub #ty_generic
+            }
         }
     }
 }
@@ -114,8 +125,10 @@ impl EnumData<'_> {
         let ty_generics = self.ty_generics();
         let variants = self.variants().iter().map(VariantData::gen_ref_type);
         let ctors = self.ctors();
+        let doc = self.doc();
 
         Ok(quote! {
+            #doc
             #[automatically_derived]
             #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
             #vis enum #ref_type<#(#ty_generics),*> {
@@ -136,17 +149,25 @@ impl EnumData<'_> {
 impl VariantData<'_> {
     fn gen_ref_type(&self) -> TokenStream {
         let name = self.name();
+        let doc = self.doc();
 
         if let Some(ref ty_generic) = self.ty_generic() {
-            quote! { #name(#ty_generic) }
+            quote! {
+                #doc
+                #name(#ty_generic)
+            }
         } else {
-            quote! { #name }
+            quote! {
+                #doc
+                #name
+            }
         }
     }
 
     fn ctor(&self, enum_name: &Ident, variants: &[Self]) -> TokenStream {
         let name = self.name();
         let ctor = Ident::new_raw(&name.unraw().to_string().to_snake_case(), name.span());
+        let doc = self.doc();
 
         let ty_generics = variants.iter().filter_map(|var| {
             if ptr::eq(var, self) {
@@ -161,6 +182,7 @@ impl VariantData<'_> {
             quote! {
                 #[automatically_derived]
                 impl<#ty_generic> #enum_name<#(#ty_generics),*> {
+                    #doc
                     pub fn #ctor(#ctor: #ty_generic) -> Self {
                         Self::#name(#ctor)
                     }
@@ -170,6 +192,7 @@ impl VariantData<'_> {
             quote! {
                 #[automatically_derived]
                 impl #enum_name<#(#ty_generics),*> {
+                    #doc
                     pub fn #ctor() -> Self {
                         Self::#name
                     }

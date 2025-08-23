@@ -1,4 +1,5 @@
 use super::{ItemOptions, Options};
+use crate::doc_string::DocString;
 use quote::format_ident;
 use syn::punctuated::Punctuated;
 use syn::{
@@ -56,6 +57,10 @@ impl<'a> EnumData<'a> {
 
     pub(crate) fn name(&self) -> &Ident {
         self.name
+    }
+
+    pub(crate) fn doc(&self) -> &DocString {
+        self.options.doc()
     }
 
     pub(crate) fn krate(&self) -> &Path {
@@ -166,6 +171,10 @@ impl<'a> VariantData<'a> {
 
     pub(crate) fn name(&self) -> &Ident {
         self.name
+    }
+
+    pub(crate) fn doc(&self) -> &DocString {
+        self.options.doc()
     }
 
     pub(crate) fn id(&self) -> u32 {

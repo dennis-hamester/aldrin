@@ -1,7 +1,9 @@
+use crate::doc_string::DocString;
 use quote::format_ident;
 use syn::{Attribute, Ident, LitInt, LitStr, Path, Result};
 
 pub(crate) struct Options {
+    doc: DocString,
     krate: Path,
     ref_type: Option<Ident>,
     schema: Option<LitStr>,
@@ -15,11 +17,17 @@ impl Options {
         mut krate: Path,
         is_struct: bool,
     ) -> Result<Self> {
+        let mut doc = DocString::new();
         let mut ref_type = None;
         let mut schema = None;
         let mut newtype = false;
 
         for attr in attrs {
+            if attr.path().is_ident("doc") {
+                let _ = doc.push(attr.clone());
+                continue;
+            }
+
             if !attr.path().is_ident("aldrin") {
                 continue;
             }
@@ -52,11 +60,16 @@ impl Options {
         }
 
         Ok(Self {
+            doc,
             krate,
             ref_type,
             schema,
             newtype,
         })
+    }
+
+    pub(crate) fn doc(&self) -> &DocString {
+        &self.doc
     }
 
     pub(crate) fn krate(&self) -> &Path {
@@ -77,6 +90,7 @@ impl Options {
 }
 
 pub(crate) struct ItemOptions {
+    doc: DocString,
     id: u32,
     optional: bool,
     fallback: bool,
@@ -84,11 +98,17 @@ pub(crate) struct ItemOptions {
 
 impl ItemOptions {
     pub(crate) fn new(attrs: &[Attribute], default_id: u32) -> Result<Self> {
+        let mut doc = DocString::new();
         let mut id = default_id;
         let mut optional = false;
         let mut fallback = false;
 
         for attr in attrs {
+            if attr.path().is_ident("doc") {
+                let _ = doc.push(attr.clone());
+                continue;
+            }
+
             if !attr.path().is_ident("aldrin") {
                 continue;
             }
@@ -110,10 +130,15 @@ impl ItemOptions {
         }
 
         Ok(Self {
+            doc,
             id,
             optional,
             fallback,
         })
+    }
+
+    pub(crate) fn doc(&self) -> &DocString {
+        &self.doc
     }
 
     pub(crate) fn id(&self) -> u32 {
