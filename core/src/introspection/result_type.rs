@@ -74,11 +74,11 @@ impl Deserialize<Self> for ResultType {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ResultTypeField::Ok) => {
-                    ok = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    ok = deserializer.deserialize::<TypeId, _>().map(Some)?;
                 }
 
                 Ok(ResultTypeField::Err) => {
-                    err = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    err = deserializer.deserialize::<TypeId, _>().map(Some)?;
                 }
 
                 Err(_) => deserializer.skip()?,

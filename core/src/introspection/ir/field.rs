@@ -7,6 +7,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct FieldIr {
     pub(crate) id: u32,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) is_required: bool,
     pub(crate) field_type: LexicalId,
 }
@@ -27,6 +28,10 @@ impl FieldIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn is_required(&self) -> bool {
@@ -70,6 +75,7 @@ impl Serialize<FieldIr> for &FieldIr {
 pub struct FieldIrBuilder {
     id: u32,
     name: String,
+    doc: Option<String>,
     is_required: bool,
     field_type: LexicalId,
 }
@@ -79,15 +85,22 @@ impl FieldIrBuilder {
         Self {
             id,
             name: name.into(),
+            doc: None,
             is_required,
             field_type,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn finish(self) -> FieldIr {
         FieldIr {
             id: self.id,
             name: self.name,
+            doc: self.doc,
             is_required: self.is_required,
             field_type: self.field_type,
         }

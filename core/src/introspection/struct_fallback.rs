@@ -11,15 +11,28 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 )]
 pub struct StructFallback {
     name: String,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
 }
 
 impl StructFallback {
-    pub fn from_ir(func: ir::StructFallbackIr) -> Self {
-        Self { name: func.name }
+    pub fn from_ir(fallback: ir::StructFallbackIr) -> Self {
+        Self {
+            name: fallback.name,
+            doc: fallback.doc,
+        }
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 }
 
@@ -27,6 +40,7 @@ impl StructFallback {
 #[repr(u32)]
 enum StructFallbackField {
     Name = 0,
+    Doc = 1,
 }
 
 impl Tag for StructFallback {}
@@ -47,6 +61,11 @@ impl Serialize<StructFallback> for &StructFallback {
 
         serializer.serialize::<tags::String, _>(StructFallbackField::Name, &self.name)?;
 
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
+            StructFallbackField::Doc,
+            &self.doc,
+        )?;
+
         serializer.finish()
     }
 }
@@ -56,11 +75,16 @@ impl Deserialize<Self> for StructFallback {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut name = None;
+        let mut doc = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(StructFallbackField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(StructFallbackField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -69,6 +93,7 @@ impl Deserialize<Self> for StructFallback {
 
         deserializer.finish(Self {
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
         })
     }
 }

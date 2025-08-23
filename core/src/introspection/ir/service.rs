@@ -9,6 +9,7 @@ use uuid::{uuid, Uuid};
 pub struct ServiceIr {
     pub(crate) schema: String,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) uuid: ServiceUuid,
     pub(crate) version: u32,
     pub(crate) functions: BTreeMap<u32, FunctionIr>,
@@ -39,6 +40,10 @@ impl ServiceIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn uuid(&self) -> ServiceUuid {
@@ -120,6 +125,7 @@ impl Serialize<ServiceIr> for &ServiceIr {
 pub struct ServiceIrBuilder {
     schema: String,
     name: String,
+    doc: Option<String>,
     uuid: ServiceUuid,
     version: u32,
     functions: BTreeMap<u32, FunctionIr>,
@@ -138,6 +144,7 @@ impl ServiceIrBuilder {
         Self {
             schema: schema.into(),
             name: name.into(),
+            doc: None,
             uuid,
             version,
             functions: BTreeMap::new(),
@@ -145,6 +152,11 @@ impl ServiceIrBuilder {
             function_fallback: None,
             event_fallback: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn function(mut self, function: FunctionIr) -> Self {
@@ -171,6 +183,7 @@ impl ServiceIrBuilder {
         ServiceIr {
             schema: self.schema,
             name: self.name,
+            doc: self.doc,
             uuid: self.uuid,
             version: self.version,
             functions: self.functions,

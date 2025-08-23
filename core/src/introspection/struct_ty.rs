@@ -18,6 +18,12 @@ pub struct Struct {
 
     #[cfg_attr(
         feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
         serde(default, skip_serializing_if = "HashMap::is_empty")
     )]
     fields: HashMap<u32, Field>,
@@ -34,6 +40,7 @@ impl Struct {
         Self {
             schema: ty.schema,
             name: ty.name,
+            doc: ty.doc,
             fields: ty
                 .fields
                 .into_iter()
@@ -51,6 +58,10 @@ impl Struct {
         &self.name
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn fields(&self) -> &HashMap<u32, Field> {
         &self.fields
     }
@@ -65,8 +76,9 @@ impl Struct {
 enum StructField {
     Schema = 0,
     Name = 1,
-    Fields = 2,
-    Fallback = 3,
+    Doc = 2,
+    Fields = 3,
+    Fallback = 4,
 }
 
 impl Tag for Struct {}
@@ -89,6 +101,9 @@ impl Serialize<Struct> for &Struct {
         serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
 
         serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(StructField::Doc, &self.doc)?;
+
+        serializer
             .serialize::<tags::Map<tags::U32, Field>, _>(StructField::Fields, &self.fields)?;
 
         serializer.serialize_if_some::<tags::Option<StructFallback>, _>(
@@ -106,26 +121,32 @@ impl Deserialize<Self> for Struct {
 
         let mut schema = None;
         let mut name = None;
+        let mut doc = None;
         let mut fields = None;
         let mut fallback = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(StructField::Schema) => {
-                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?;
                 }
+
                 Ok(StructField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(StructField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(StructField::Fields) => {
                     fields = deserializer
                         .deserialize::<tags::Map<tags::U32, Field>, _>()
-                        .map(Some)?
+                        .map(Some)?;
                 }
 
                 Ok(StructField::Fallback) => {
-                    fallback = deserializer.deserialize::<tags::Option<StructFallback>, _>()?
+                    fallback = deserializer.deserialize::<tags::Option<StructFallback>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -135,6 +156,7 @@ impl Deserialize<Self> for Struct {
         deserializer.finish(Self {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             fields: fields.ok_or(DeserializeError::InvalidSerialization)?,
             fallback,
         })

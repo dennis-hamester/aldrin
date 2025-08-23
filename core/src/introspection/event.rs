@@ -18,6 +18,12 @@ pub struct Event {
 
     #[cfg_attr(
         feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
         serde(rename = "type", default, skip_serializing_if = "Option::is_none")
     )]
     event_type: Option<TypeId>,
@@ -28,6 +34,7 @@ impl Event {
         Self {
             id: ev.id,
             name: ev.name,
+            doc: ev.doc,
             event_type: ev.event_type.map(|ty| resolve_ir(ty, references)),
         }
     }
@@ -40,6 +47,10 @@ impl Event {
         &self.name
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn event_type(&self) -> Option<TypeId> {
         self.event_type
     }
@@ -50,7 +61,8 @@ impl Event {
 enum EventField {
     Id = 0,
     Name = 1,
-    EventType = 2,
+    Doc = 2,
+    EventType = 3,
 }
 
 impl Tag for Event {}
@@ -72,6 +84,9 @@ impl Serialize<Event> for &Event {
         serializer.serialize::<tags::U32, _>(EventField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(EventField::Name, &self.name)?;
 
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(EventField::Doc, &self.doc)?;
+
         serializer.serialize_if_some::<tags::Option<TypeId>, _>(
             EventField::EventType,
             &self.event_type,
@@ -87,6 +102,7 @@ impl Deserialize<Self> for Event {
 
         let mut id = None;
         let mut name = None;
+        let mut doc = None;
         let mut event_type = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
@@ -94,11 +110,15 @@ impl Deserialize<Self> for Event {
                 Ok(EventField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
 
                 Ok(EventField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(EventField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(EventField::EventType) => {
-                    event_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    event_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -108,6 +128,7 @@ impl Deserialize<Self> for Event {
         deserializer.finish(Self {
             id: id.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             event_type,
         })
     }

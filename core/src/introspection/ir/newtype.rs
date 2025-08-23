@@ -8,6 +8,7 @@ use uuid::{uuid, Uuid};
 pub struct NewtypeIr {
     pub(crate) schema: String,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) target_type: LexicalId,
 }
 
@@ -32,6 +33,10 @@ impl NewtypeIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn target_type(&self) -> LexicalId {
@@ -69,6 +74,7 @@ impl Serialize<NewtypeIr> for &NewtypeIr {
 pub struct NewtypeIrBuilder {
     schema: String,
     name: String,
+    doc: Option<String>,
     target_type: LexicalId,
 }
 
@@ -77,14 +83,21 @@ impl NewtypeIrBuilder {
         Self {
             schema: schema.into(),
             name: name.into(),
+            doc: None,
             target_type,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn finish(self) -> NewtypeIr {
         NewtypeIr {
             schema: self.schema,
             name: self.name,
+            doc: self.doc,
             target_type: self.target_type,
         }
     }

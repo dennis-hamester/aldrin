@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Buffered<T>` adapter for transports, which adds an unbounded buffer to the sender side.
 - Add Serde support for introspection types.
 - Implement `PartialOrd` and `Ord` for `SerializedValue` and `SerializedValueSlice`.
+- Add support for adding documentation to introspection.
 
 ### Changed
 

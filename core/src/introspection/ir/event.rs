@@ -7,6 +7,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct EventIr {
     pub(crate) id: u32,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) event_type: Option<LexicalId>,
 }
 
@@ -21,6 +22,10 @@ impl EventIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn event_type(&self) -> Option<LexicalId> {
@@ -62,6 +67,7 @@ impl Serialize<EventIr> for &EventIr {
 pub struct EventIrBuilder {
     id: u32,
     name: String,
+    doc: Option<String>,
     event_type: Option<LexicalId>,
 }
 
@@ -70,8 +76,14 @@ impl EventIrBuilder {
         Self {
             id,
             name: name.into(),
+            doc: None,
             event_type: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn event_type(mut self, event_type: LexicalId) -> Self {
@@ -83,6 +95,7 @@ impl EventIrBuilder {
         EventIr {
             id: self.id,
             name: self.name,
+            doc: self.doc,
             event_type: self.event_type,
         }
     }

@@ -9,6 +9,7 @@ use uuid::{uuid, Uuid};
 pub struct EnumIr {
     pub(crate) schema: String,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) variants: BTreeMap<u32, VariantIr>,
     pub(crate) fallback: Option<EnumFallbackIr>,
 }
@@ -30,6 +31,10 @@ impl EnumIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn variants(&self) -> &BTreeMap<u32, VariantIr> {
@@ -79,6 +84,7 @@ impl Serialize<EnumIr> for &EnumIr {
 pub struct EnumIrBuilder {
     schema: String,
     name: String,
+    doc: Option<String>,
     variants: BTreeMap<u32, VariantIr>,
     fallback: Option<EnumFallbackIr>,
 }
@@ -88,9 +94,15 @@ impl EnumIrBuilder {
         Self {
             schema: schema.into(),
             name: name.into(),
+            doc: None,
             variants: BTreeMap::new(),
             fallback: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn variant(mut self, variant: VariantIr) -> Self {
@@ -107,6 +119,7 @@ impl EnumIrBuilder {
         EnumIr {
             schema: self.schema,
             name: self.name,
+            doc: self.doc,
             variants: self.variants,
             fallback: self.fallback,
         }

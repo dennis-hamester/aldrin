@@ -20,6 +20,12 @@ pub struct Function {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
+    doc: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     args: Option<TypeId>,
 
     #[cfg_attr(
@@ -40,6 +46,7 @@ impl Function {
         Self {
             id: func.id,
             name: func.name,
+            doc: func.doc,
             args: func.args.map(|ty| resolve_ir(ty, references)),
             ok: func.ok.map(|ty| resolve_ir(ty, references)),
             err: func.err.map(|ty| resolve_ir(ty, references)),
@@ -52,6 +59,10 @@ impl Function {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn args(&self) -> Option<TypeId> {
@@ -72,9 +83,10 @@ impl Function {
 enum FunctionField {
     Id = 0,
     Name = 1,
-    Args = 2,
-    Ok = 3,
-    Err = 4,
+    Doc = 2,
+    Args = 3,
+    Ok = 4,
+    Err = 5,
 }
 
 impl Tag for Function {}
@@ -95,6 +107,10 @@ impl Serialize<Function> for &Function {
 
         serializer.serialize::<tags::U32, _>(FunctionField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
+
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(FunctionField::Doc, &self.doc)?;
+
         serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Args, &self.args)?;
         serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Ok, &self.ok)?;
         serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Err, &self.err)?;
@@ -109,6 +125,7 @@ impl Deserialize<Self> for Function {
 
         let mut id = None;
         let mut name = None;
+        let mut doc = None;
         let mut args = None;
         let mut ok = None;
         let mut err = None;
@@ -116,23 +133,27 @@ impl Deserialize<Self> for Function {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(FunctionField::Id) => {
-                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?;
                 }
 
                 Ok(FunctionField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(FunctionField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(FunctionField::Args) => {
-                    args = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    args = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Ok(FunctionField::Ok) => {
-                    ok = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    ok = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Ok(FunctionField::Err) => {
-                    err = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    err = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -142,6 +163,7 @@ impl Deserialize<Self> for Function {
         deserializer.finish(Self {
             id: id.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             args,
             ok,
             err,

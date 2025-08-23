@@ -9,6 +9,7 @@ use uuid::{uuid, Uuid};
 pub struct StructIr {
     pub(crate) schema: String,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) fields: BTreeMap<u32, FieldIr>,
     pub(crate) fallback: Option<StructFallbackIr>,
 }
@@ -30,6 +31,10 @@ impl StructIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn fields(&self) -> &BTreeMap<u32, FieldIr> {
@@ -79,6 +84,7 @@ impl Serialize<StructIr> for &StructIr {
 pub struct StructIrBuilder {
     schema: String,
     name: String,
+    doc: Option<String>,
     fields: BTreeMap<u32, FieldIr>,
     fallback: Option<StructFallbackIr>,
 }
@@ -88,9 +94,15 @@ impl StructIrBuilder {
         Self {
             schema: schema.into(),
             name: name.into(),
+            doc: None,
             fields: BTreeMap::new(),
             fallback: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn field(mut self, field: FieldIr) -> Self {
@@ -107,6 +119,7 @@ impl StructIrBuilder {
         StructIr {
             schema: self.schema,
             name: self.name,
+            doc: self.doc,
             fields: self.fields,
             fallback: self.fallback,
         }

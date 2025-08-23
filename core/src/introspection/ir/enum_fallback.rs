@@ -5,6 +5,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Clone)]
 pub struct EnumFallbackIr {
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
 }
 
 impl EnumFallbackIr {
@@ -14,6 +15,10 @@ impl EnumFallbackIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 }
 
@@ -42,14 +47,26 @@ impl Serialize<EnumFallbackIr> for &EnumFallbackIr {
 #[derive(Debug, Clone)]
 pub struct EnumFallbackIrBuilder {
     name: String,
+    doc: Option<String>,
 }
 
 impl EnumFallbackIrBuilder {
     fn new(name: impl Into<String>) -> Self {
-        Self { name: name.into() }
+        Self {
+            name: name.into(),
+            doc: None,
+        }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn finish(self) -> EnumFallbackIr {
-        EnumFallbackIr { name: self.name }
+        EnumFallbackIr {
+            name: self.name,
+            doc: self.doc,
+        }
     }
 }

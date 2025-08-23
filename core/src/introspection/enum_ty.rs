@@ -18,6 +18,12 @@ pub struct Enum {
 
     #[cfg_attr(
         feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
         serde(default, skip_serializing_if = "HashMap::is_empty")
     )]
     variants: HashMap<u32, Variant>,
@@ -34,6 +40,7 @@ impl Enum {
         Self {
             schema: ty.schema,
             name: ty.name,
+            doc: ty.doc,
             variants: ty
                 .variants
                 .into_iter()
@@ -51,6 +58,10 @@ impl Enum {
         &self.name
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn variants(&self) -> &HashMap<u32, Variant> {
         &self.variants
     }
@@ -65,8 +76,9 @@ impl Enum {
 enum EnumField {
     Schema = 0,
     Name = 1,
-    Variants = 2,
-    Fallback = 3,
+    Doc = 2,
+    Variants = 3,
+    Fallback = 4,
 }
 
 impl Tag for Enum {}
@@ -87,6 +99,7 @@ impl Serialize<Enum> for &Enum {
 
         serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
+        serializer.serialize_if_some::<tags::Option<tags::String>, _>(EnumField::Doc, &self.doc)?;
 
         serializer
             .serialize::<tags::Map<tags::U32, Variant>, _>(EnumField::Variants, &self.variants)?;
@@ -106,27 +119,32 @@ impl Deserialize<Self> for Enum {
 
         let mut schema = None;
         let mut name = None;
+        let mut doc = None;
         let mut variants = None;
         let mut fallback = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(EnumField::Schema) => {
-                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?;
                 }
 
                 Ok(EnumField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(EnumField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(EnumField::Variants) => {
                     variants = deserializer
                         .deserialize::<tags::Map<tags::U32, Variant>, _>()
-                        .map(Some)?
+                        .map(Some)?;
                 }
 
                 Ok(EnumField::Fallback) => {
-                    fallback = deserializer.deserialize::<tags::Option<EnumFallback>, _>()?
+                    fallback = deserializer.deserialize::<tags::Option<EnumFallback>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -136,6 +154,7 @@ impl Deserialize<Self> for Enum {
         deserializer.finish(Self {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             variants: variants.ok_or(DeserializeError::InvalidSerialization)?,
             fallback,
         })

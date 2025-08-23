@@ -16,6 +16,12 @@ use std::collections::{BTreeMap, HashMap};
 pub struct Service {
     schema: String,
     name: String,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
     uuid: ServiceUuid,
     version: u32,
 
@@ -49,6 +55,7 @@ impl Service {
         Self {
             schema: ty.schema,
             name: ty.name,
+            doc: ty.doc,
             uuid: ty.uuid,
             version: ty.version,
 
@@ -75,6 +82,10 @@ impl Service {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn uuid(&self) -> ServiceUuid {
@@ -107,12 +118,13 @@ impl Service {
 enum ServiceField {
     Schema = 0,
     Name = 1,
-    Uuid = 2,
-    Version = 3,
-    Functions = 4,
-    Events = 5,
-    FunctionFallback = 6,
-    EventFallback = 7,
+    Doc = 2,
+    Uuid = 3,
+    Version = 4,
+    Functions = 5,
+    Events = 6,
+    FunctionFallback = 7,
+    EventFallback = 8,
 }
 
 impl Tag for Service {}
@@ -133,6 +145,10 @@ impl Serialize<Service> for &Service {
 
         serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
+
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(ServiceField::Doc, &self.doc)?;
+
         serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, &self.uuid)?;
         serializer.serialize::<tags::U32, _>(ServiceField::Version, &self.version)?;
 
@@ -164,6 +180,7 @@ impl Deserialize<Self> for Service {
 
         let mut schema = None;
         let mut name = None;
+        let mut doc = None;
         let mut uuid = None;
         let mut version = None;
         let mut functions = None;
@@ -174,40 +191,45 @@ impl Deserialize<Self> for Service {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ServiceField::Schema) => {
-                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    schema = deserializer.deserialize::<tags::String, _>().map(Some)?;
                 }
 
                 Ok(ServiceField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(ServiceField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(ServiceField::Uuid) => {
-                    uuid = deserializer.deserialize::<ServiceUuid, _>().map(Some)?
+                    uuid = deserializer.deserialize::<ServiceUuid, _>().map(Some)?;
                 }
 
                 Ok(ServiceField::Version) => {
-                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?;
                 }
 
                 Ok(ServiceField::Functions) => {
                     functions = deserializer
                         .deserialize::<tags::Map<tags::U32, Function>, _>()
-                        .map(Some)?
+                        .map(Some)?;
                 }
 
                 Ok(ServiceField::Events) => {
                     events = deserializer
                         .deserialize::<tags::Map<tags::U32, Event>, _>()
-                        .map(Some)?
+                        .map(Some)?;
                 }
 
                 Ok(ServiceField::FunctionFallback) => {
                     function_fallback =
-                        deserializer.deserialize::<tags::Option<FunctionFallback>, _>()?
+                        deserializer.deserialize::<tags::Option<FunctionFallback>, _>()?;
                 }
 
                 Ok(ServiceField::EventFallback) => {
-                    event_fallback = deserializer.deserialize::<tags::Option<EventFallback>, _>()?
+                    event_fallback =
+                        deserializer.deserialize::<tags::Option<EventFallback>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -217,6 +239,7 @@ impl Deserialize<Self> for Service {
         deserializer.finish(Self {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             uuid: uuid.ok_or(DeserializeError::InvalidSerialization)?,
             version: version.ok_or(DeserializeError::InvalidSerialization)?,
             functions: functions.ok_or(DeserializeError::InvalidSerialization)?,

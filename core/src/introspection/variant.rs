@@ -18,6 +18,12 @@ pub struct Variant {
 
     #[cfg_attr(
         feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
         serde(rename = "type", default, skip_serializing_if = "Option::is_none")
     )]
     variant_type: Option<TypeId>,
@@ -28,6 +34,7 @@ impl Variant {
         Self {
             id: ty.id,
             name: ty.name,
+            doc: ty.doc,
             variant_type: ty.variant_type.map(|ty| resolve_ir(ty, references)),
         }
     }
@@ -40,6 +47,10 @@ impl Variant {
         &self.name
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn variant_type(&self) -> Option<TypeId> {
         self.variant_type
     }
@@ -50,7 +61,8 @@ impl Variant {
 enum VariantField {
     Id = 0,
     Name = 1,
-    VariantType = 2,
+    Doc = 2,
+    VariantType = 3,
 }
 
 impl Tag for Variant {}
@@ -72,6 +84,9 @@ impl Serialize<Variant> for &Variant {
         serializer.serialize::<tags::U32, _>(VariantField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
 
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(VariantField::Doc, &self.doc)?;
+
         serializer.serialize_if_some::<tags::Option<TypeId>, _>(
             VariantField::VariantType,
             &self.variant_type,
@@ -87,16 +102,21 @@ impl Deserialize<Self> for Variant {
 
         let mut id = None;
         let mut name = None;
+        let mut doc = None;
         let mut variant_type = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(VariantField::Id) => {
-                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                    id = deserializer.deserialize::<tags::U32, _>().map(Some)?;
                 }
 
                 Ok(VariantField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(VariantField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(VariantField::VariantType) => {
@@ -110,6 +130,7 @@ impl Deserialize<Self> for Variant {
         deserializer.finish(Self {
             id: id.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             variant_type,
         })
     }

@@ -16,6 +16,12 @@ pub struct Field {
     id: u32,
     name: String,
 
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
     #[cfg_attr(feature = "serde", serde(rename = "required"))]
     is_required: bool,
 
@@ -27,6 +33,7 @@ impl Field {
         Self {
             id: ty.id,
             name: ty.name,
+            doc: ty.doc,
             is_required: ty.is_required,
             field_type: resolve_ir(ty.field_type, references),
         }
@@ -38,6 +45,10 @@ impl Field {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn is_required(&self) -> bool {
@@ -54,8 +65,9 @@ impl Field {
 enum FieldField {
     Id = 0,
     Name = 1,
-    IsRequired = 2,
-    FieldType = 3,
+    Doc = 2,
+    IsRequired = 3,
+    FieldType = 4,
 }
 
 impl Tag for Field {}
@@ -76,6 +88,10 @@ impl Serialize<Field> for &Field {
 
         serializer.serialize::<tags::U32, _>(FieldField::Id, &self.id)?;
         serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;
+
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(FieldField::Doc, &self.doc)?;
+
         serializer.serialize::<tags::Bool, _>(FieldField::IsRequired, &self.is_required)?;
         serializer.serialize::<TypeId, _>(FieldField::FieldType, &self.field_type)?;
 
@@ -89,6 +105,7 @@ impl Deserialize<Self> for Field {
 
         let mut id = None;
         let mut name = None;
+        let mut doc = None;
         let mut is_required = None;
         let mut field_type = None;
 
@@ -97,15 +114,19 @@ impl Deserialize<Self> for Field {
                 Ok(FieldField::Id) => id = deserializer.deserialize::<tags::U32, _>().map(Some)?,
 
                 Ok(FieldField::Name) => {
-                    name = deserializer.deserialize::<tags::String, _>().map(Some)?
+                    name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(FieldField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(FieldField::IsRequired) => {
-                    is_required = deserializer.deserialize::<tags::Bool, _>().map(Some)?
+                    is_required = deserializer.deserialize::<tags::Bool, _>().map(Some)?;
                 }
 
                 Ok(FieldField::FieldType) => {
-                    field_type = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    field_type = deserializer.deserialize::<TypeId, _>().map(Some)?;
                 }
 
                 Err(_) => deserializer.skip()?,
@@ -115,6 +136,7 @@ impl Deserialize<Self> for Field {
         deserializer.finish(Self {
             id: id.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             is_required: is_required.ok_or(DeserializeError::InvalidSerialization)?,
             field_type: field_type.ok_or(DeserializeError::InvalidSerialization)?,
         })

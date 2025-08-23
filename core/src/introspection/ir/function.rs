@@ -7,6 +7,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct FunctionIr {
     pub(crate) id: u32,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) args: Option<LexicalId>,
     pub(crate) ok: Option<LexicalId>,
     pub(crate) err: Option<LexicalId>,
@@ -23,6 +24,10 @@ impl FunctionIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn args(&self) -> Option<LexicalId> {
@@ -77,6 +82,7 @@ impl Serialize<FunctionIr> for &FunctionIr {
 pub struct FunctionIrBuilder {
     id: u32,
     name: String,
+    doc: Option<String>,
     args: Option<LexicalId>,
     ok: Option<LexicalId>,
     err: Option<LexicalId>,
@@ -87,10 +93,16 @@ impl FunctionIrBuilder {
         Self {
             id,
             name: name.into(),
+            doc: None,
             args: None,
             ok: None,
             err: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn args(mut self, args: LexicalId) -> Self {
@@ -112,6 +124,7 @@ impl FunctionIrBuilder {
         FunctionIr {
             id: self.id,
             name: self.name,
+            doc: self.doc,
             args: self.args,
             ok: self.ok,
             err: self.err,

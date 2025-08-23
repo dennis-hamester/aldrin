@@ -76,7 +76,7 @@ impl Deserialize<Self> for MapType {
                 Ok(MapTypeField::Key) => key = deserializer.deserialize::<TypeId, _>().map(Some)?,
 
                 Ok(MapTypeField::Value) => {
-                    value = deserializer.deserialize::<TypeId, _>().map(Some)?
+                    value = deserializer.deserialize::<TypeId, _>().map(Some)?;
                 }
 
                 Err(_) => deserializer.skip()?,

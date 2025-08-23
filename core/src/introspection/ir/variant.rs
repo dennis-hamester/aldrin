@@ -7,6 +7,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct VariantIr {
     pub(crate) id: u32,
     pub(crate) name: String,
+    pub(crate) doc: Option<String>,
     pub(crate) variant_type: Option<LexicalId>,
 }
 
@@ -21,6 +22,10 @@ impl VariantIr {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
     }
 
     pub fn variant_type(&self) -> Option<LexicalId> {
@@ -62,6 +67,7 @@ impl Serialize<VariantIr> for &VariantIr {
 pub struct VariantIrBuilder {
     id: u32,
     name: String,
+    doc: Option<String>,
     variant_type: Option<LexicalId>,
 }
 
@@ -70,8 +76,14 @@ impl VariantIrBuilder {
         Self {
             id,
             name: name.into(),
+            doc: None,
             variant_type: None,
         }
+    }
+
+    pub fn doc(mut self, doc: impl Into<String>) -> Self {
+        self.doc = Some(doc.into());
+        self
     }
 
     pub fn variant_type(mut self, variant_type: LexicalId) -> Self {
@@ -83,6 +95,7 @@ impl VariantIrBuilder {
         VariantIr {
             id: self.id,
             name: self.name,
+            doc: self.doc,
             variant_type: self.variant_type,
         }
     }

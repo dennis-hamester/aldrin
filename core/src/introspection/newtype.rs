@@ -16,6 +16,12 @@ pub struct Newtype {
     schema: String,
     name: String,
 
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    doc: Option<String>,
+
     #[cfg_attr(feature = "serde", serde(rename = "type"))]
     target_type: TypeId,
 }
@@ -25,6 +31,7 @@ impl Newtype {
         Self {
             schema: ty.schema,
             name: ty.name,
+            doc: ty.doc,
             target_type: resolve_ir(ty.target_type, references),
         }
     }
@@ -37,6 +44,10 @@ impl Newtype {
         &self.name
     }
 
+    pub fn doc(&self) -> Option<&str> {
+        self.doc.as_deref()
+    }
+
     pub fn target_type(&self) -> TypeId {
         self.target_type
     }
@@ -47,7 +58,8 @@ impl Newtype {
 enum NewtypeField {
     Schema = 0,
     Name = 1,
-    TargetType = 2,
+    Doc = 2,
+    TargetType = 3,
 }
 
 impl Tag for Newtype {}
@@ -68,6 +80,10 @@ impl Serialize<Newtype> for &Newtype {
 
         serializer.serialize::<tags::String, _>(NewtypeField::Schema, &self.schema)?;
         serializer.serialize::<tags::String, _>(NewtypeField::Name, &self.name)?;
+
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>, _>(NewtypeField::Doc, &self.doc)?;
+
         serializer.serialize::<TypeId, _>(NewtypeField::TargetType, &self.target_type)?;
 
         serializer.finish()
@@ -80,6 +96,7 @@ impl Deserialize<Self> for Newtype {
 
         let mut schema = None;
         let mut name = None;
+        let mut doc = None;
         let mut target_type = None;
 
         while let Some(deserializer) = deserializer.deserialize()? {
@@ -90,6 +107,10 @@ impl Deserialize<Self> for Newtype {
 
                 Ok(NewtypeField::Name) => {
                     name = deserializer.deserialize::<tags::String, _>().map(Some)?;
+                }
+
+                Ok(NewtypeField::Doc) => {
+                    doc = deserializer.deserialize::<tags::Option<tags::String>, _>()?;
                 }
 
                 Ok(NewtypeField::TargetType) => {
@@ -103,6 +124,7 @@ impl Deserialize<Self> for Newtype {
         deserializer.finish(Self {
             schema: schema.ok_or(DeserializeError::InvalidSerialization)?,
             name: name.ok_or(DeserializeError::InvalidSerialization)?,
+            doc,
             target_type: target_type.ok_or(DeserializeError::InvalidSerialization)?,
         })
     }
