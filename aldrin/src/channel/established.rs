@@ -1,6 +1,6 @@
 use crate::{low_level, Error, Handle};
 use aldrin_core::tags::PrimaryTag;
-use aldrin_core::{ChannelCookie, Deserialize, Serialize};
+use aldrin_core::{ChannelCookie, Deserialize, DeserializePrimary, Serialize, SerializePrimary};
 use futures_core::stream::{FusedStream, Stream};
 #[cfg(feature = "sink")]
 use futures_sink::Sink;
@@ -164,7 +164,7 @@ impl<T: PrimaryTag> Sender<T> {
     }
 }
 
-impl<T: PrimaryTag + Serialize<T::Tag>> Sender<T> {
+impl<T: SerializePrimary> Sender<T> {
     /// Starts sending an item on the channel.
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
@@ -339,7 +339,7 @@ impl<T: PrimaryTag> Receiver<T> {
     }
 }
 
-impl<T: PrimaryTag + Deserialize<T::Tag>> Receiver<T> {
+impl<T: DeserializePrimary> Receiver<T> {
     /// Polls the channel for the next item.
     pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
         self.poll_next_item_as(cx)
@@ -359,7 +359,7 @@ impl<T> fmt::Debug for Receiver<T> {
     }
 }
 
-impl<T: PrimaryTag + Deserialize<T::Tag>> Stream for Receiver<T> {
+impl<T: DeserializePrimary> Stream for Receiver<T> {
     type Item = Result<T, Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
@@ -371,7 +371,7 @@ impl<T: PrimaryTag + Deserialize<T::Tag>> Stream for Receiver<T> {
     }
 }
 
-impl<T: PrimaryTag + Deserialize<T::Tag>> FusedStream for Receiver<T> {
+impl<T: DeserializePrimary> FusedStream for Receiver<T> {
     fn is_terminated(&self) -> bool {
         self.inner.is_terminated()
     }

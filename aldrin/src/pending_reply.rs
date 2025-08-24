@@ -1,6 +1,6 @@
 use crate::{low_level, Error, Reply};
 use aldrin_core::tags::PrimaryTag;
-use aldrin_core::Deserialize;
+use aldrin_core::{Deserialize, DeserializePrimary};
 use std::fmt;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -69,11 +69,7 @@ impl<T: PrimaryTag, E: PrimaryTag> PendingReply<T, E> {
     }
 }
 
-impl<T, E> Future for PendingReply<T, E>
-where
-    T: PrimaryTag + Deserialize<T::Tag>,
-    E: PrimaryTag + Deserialize<E::Tag>,
-{
+impl<T: DeserializePrimary, E: DeserializePrimary> Future for PendingReply<T, E> {
     type Output = Result<Reply<T, E>, Error>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {

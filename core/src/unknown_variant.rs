@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod test;
 
-use crate::tags::{self, PrimaryTag, Tag};
+use crate::tags::{self, Tag};
 use crate::{
-    Deserialize, DeserializeError, Enum, Serialize, SerializedValue, SerializedValueSlice,
+    Deserialize, DeserializeError, DeserializePrimary, Enum, Serialize, SerializedValue,
+    SerializedValueSlice,
 };
 use std::convert::Infallible;
 
@@ -41,7 +42,7 @@ impl UnknownVariant {
         self.value.deserialize_as()
     }
 
-    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+    pub fn deserialize<T: DeserializePrimary>(&self) -> Result<T, DeserializeError> {
         self.deserialize_as()
     }
 

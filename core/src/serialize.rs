@@ -1,4 +1,4 @@
-use crate::tags::Tag;
+use crate::tags::{PrimaryTag, Tag};
 use crate::Serializer;
 use thiserror::Error;
 
@@ -9,6 +9,10 @@ pub trait Serialize<T: Tag>: Sized {
         true
     }
 }
+
+pub trait SerializePrimary: PrimaryTag + Serialize<Self::Tag> {}
+
+impl<T: PrimaryTag + Serialize<T::Tag>> SerializePrimary for T {}
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SerializeError {

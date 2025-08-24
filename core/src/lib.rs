@@ -44,7 +44,7 @@ pub use aldrin_macros::{
 pub use bus_listener::{BusEvent, BusListenerFilter, BusListenerScope, BusListenerServiceFilter};
 pub use channel_end::{ChannelEnd, ChannelEndWithCapacity};
 pub use convert_value::ValueConversionError;
-pub use deserialize::{Deserialize, DeserializeError};
+pub use deserialize::{Deserialize, DeserializeError, DeserializePrimary};
 pub use deserialize_key::DeserializeKey;
 pub use deserializer::Deserializer;
 pub use ids::{
@@ -52,7 +52,7 @@ pub use ids::{
     ServiceUuid, TypeId,
 };
 pub use protocol_version::{ProtocolVersion, ProtocolVersionParseError};
-pub use serialize::{Serialize, SerializeError};
+pub use serialize::{Serialize, SerializeError, SerializePrimary};
 pub use serialize_key::SerializeKey;
 pub use serialized_value::{SerializedValue, SerializedValueSlice};
 pub use serializer::Serializer;

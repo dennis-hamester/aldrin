@@ -5,11 +5,11 @@ use crate::{BrokerHandle, BrokerShutdown, Connection};
 use aldrin_core::message::{
     ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult, Message, MessageOps,
 };
-use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::tags::Tag;
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
 use aldrin_core::{
-    Deserialize, DeserializeError, ProtocolVersion, Serialize, SerializeError, SerializedValue,
-    SerializedValueSlice, ValueConversionError,
+    Deserialize, DeserializeError, DeserializePrimary, ProtocolVersion, Serialize, SerializeError,
+    SerializePrimary, SerializedValue, SerializedValueSlice, ValueConversionError,
 };
 use thiserror::Error;
 
@@ -95,7 +95,7 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
     }
 
     /// Deserializes the client's data.
-    pub fn deserialize_client_data<U: PrimaryTag + Deserialize<U::Tag>>(
+    pub fn deserialize_client_data<U: DeserializePrimary>(
         &self,
     ) -> Option<Result<U, DeserializeError>> {
         self.data.deserialize_user()
@@ -116,9 +116,9 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
     }
 
     /// Sets the data, that will be sent back to the client, by serializing some value.
-    pub fn serialize_reply_data<U: PrimaryTag + Serialize<U::Tag>>(
+    pub fn serialize_reply_data(
         &mut self,
-        data: U,
+        data: impl SerializePrimary,
     ) -> Result<(), SerializeError> {
         self.reply_data.serialize_user(data)?;
         Ok(())

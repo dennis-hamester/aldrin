@@ -1,10 +1,14 @@
-use crate::tags::Tag;
+use crate::tags::{PrimaryTag, Tag};
 use crate::Deserializer;
 use thiserror::Error;
 
 pub trait Deserialize<T: Tag>: Sized {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError>;
 }
+
+pub trait DeserializePrimary: PrimaryTag + Deserialize<Self::Tag> {}
+
+impl<T: PrimaryTag + Deserialize<T::Tag>> DeserializePrimary for T {}
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum DeserializeError {

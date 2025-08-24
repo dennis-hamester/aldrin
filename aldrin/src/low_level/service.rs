@@ -2,8 +2,8 @@ use super::{Call, ServiceInfo};
 use crate::{Error, Handle, Object};
 #[cfg(feature = "introspection")]
 use aldrin_core::introspection::Introspection;
-use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Serialize, SerializedValue, ServiceId, ServiceUuid, TypeId};
+use aldrin_core::tags::Tag;
+use aldrin_core::{Serialize, SerializePrimary, SerializedValue, ServiceId, ServiceUuid, TypeId};
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_channel::oneshot::Receiver;
 use futures_core::stream::{FusedStream, Stream};
@@ -107,11 +107,7 @@ impl Service {
     }
 
     /// Emits an event.
-    pub fn emit<T: PrimaryTag + Serialize<T::Tag>>(
-        &self,
-        event: u32,
-        args: T,
-    ) -> Result<(), Error> {
+    pub fn emit(&self, event: u32, args: impl SerializePrimary) -> Result<(), Error> {
         self.emit_as(event, args)
     }
 }

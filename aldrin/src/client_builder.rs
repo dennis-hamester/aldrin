@@ -7,9 +7,9 @@ use aldrin_core::message::{
     Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
     MessageOps,
 };
-use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::tags::Tag;
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
-use aldrin_core::{ProtocolVersion, Serialize, SerializedValue};
+use aldrin_core::{ProtocolVersion, Serialize, SerializePrimary, SerializedValue};
 
 /// Connects to a broker and constructs a [`Client`].
 #[derive(Debug)]
@@ -147,9 +147,9 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
     }
 
     /// Sets the data, that will be sent to the broker, by serializing some value.
-    pub fn serialize_data<U: PrimaryTag + Serialize<U::Tag>>(
+    pub fn serialize_data(
         &mut self,
-        data: U,
+        data: impl SerializePrimary,
     ) -> Result<(), ConnectError<T::Error>> {
         self.data = SerializedValue::serialize(data).map(Some)?;
         Ok(())

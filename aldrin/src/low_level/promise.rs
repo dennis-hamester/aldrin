@@ -1,7 +1,7 @@
 use crate::{Error, Handle};
 use aldrin_core::message::CallFunctionResult;
-use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Serialize, SerializedValue, ServiceId};
+use aldrin_core::tags::Tag;
+use aldrin_core::{Serialize, SerializePrimary, SerializedValue, ServiceId};
 use futures_channel::oneshot::Receiver;
 use futures_core::FusedFuture;
 use std::future::{self, Future};
@@ -88,11 +88,10 @@ impl Promise {
     }
 
     /// Sets the call's reply.
-    pub fn set<T, E>(self, res: Result<T, E>) -> Result<(), Error>
-    where
-        T: PrimaryTag + Serialize<T::Tag>,
-        E: PrimaryTag + Serialize<E::Tag>,
-    {
+    pub fn set(
+        self,
+        res: Result<impl SerializePrimary, impl SerializePrimary>,
+    ) -> Result<(), Error> {
         self.set_as(res)
     }
 
@@ -107,7 +106,7 @@ impl Promise {
     }
 
     /// Signals that the call was successful.
-    pub fn ok<T: PrimaryTag + Serialize<T::Tag>>(self, value: T) -> Result<(), Error> {
+    pub fn ok(self, value: impl SerializePrimary) -> Result<(), Error> {
         self.ok_as(value)
     }
 
@@ -132,7 +131,7 @@ impl Promise {
     }
 
     /// Signals that the call failed.
-    pub fn err<E: PrimaryTag + Serialize<E::Tag>>(self, value: E) -> Result<(), Error> {
+    pub fn err(self, value: impl SerializePrimary) -> Result<(), Error> {
         self.err_as(value)
     }
 

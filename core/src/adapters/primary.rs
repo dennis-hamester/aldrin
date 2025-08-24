@@ -1,7 +1,7 @@
 use crate::tags::{KeyTag, KeyTagImpl, PrimaryKeyTag, PrimaryTag};
 use crate::{
-    Deserialize, DeserializeError, DeserializeKey, Deserializer, Serialize, SerializeError,
-    SerializeKey, Serializer,
+    Deserialize, DeserializeError, DeserializeKey, DeserializePrimary, Deserializer, Serialize,
+    SerializeError, SerializeKey, SerializePrimary, Serializer,
 };
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ impl<T: PrimaryTag> PrimaryTag for AsPrimary<T> {
     type Tag = T::Tag;
 }
 
-impl<T: PrimaryTag + Serialize<T::Tag>> Serialize<T::Tag> for AsPrimary<T> {
+impl<T: SerializePrimary> Serialize<T::Tag> for AsPrimary<T> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         serializer.serialize(self.0)
     }
@@ -27,7 +27,7 @@ where
     }
 }
 
-impl<T: PrimaryTag + Deserialize<T::Tag>> Deserialize<T::Tag> for AsPrimary<T> {
+impl<T: DeserializePrimary> Deserialize<T::Tag> for AsPrimary<T> {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         deserializer.deserialize().map(Self)
     }

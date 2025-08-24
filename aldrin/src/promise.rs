@@ -1,6 +1,6 @@
 use crate::{low_level, Error, Handle};
 use aldrin_core::tags::{self, PrimaryTag};
-use aldrin_core::{Serialize, ServiceId};
+use aldrin_core::{Serialize, SerializePrimary, ServiceId};
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
@@ -95,7 +95,7 @@ impl<T: PrimaryTag, E> Promise<T, E> {
     }
 }
 
-impl<T: PrimaryTag + Serialize<T::Tag>, E> Promise<T, E> {
+impl<T: SerializePrimary, E> Promise<T, E> {
     /// Signals that the call was successful.
     pub fn ok_val(self, value: T) -> Result<(), Error> {
         self.ok(value)
@@ -127,7 +127,7 @@ impl<T, E: PrimaryTag> Promise<T, E> {
     }
 }
 
-impl<T, E: PrimaryTag + Serialize<E::Tag>> Promise<T, E> {
+impl<T, E: SerializePrimary> Promise<T, E> {
     /// Signals that the call failed.
     pub fn err_val(self, value: E) -> Result<(), Error> {
         self.err(value)
@@ -155,11 +155,7 @@ impl<T: PrimaryTag, E: PrimaryTag> Promise<T, E> {
     }
 }
 
-impl<T, E> Promise<T, E>
-where
-    T: PrimaryTag + Serialize<T::Tag>,
-    E: PrimaryTag + Serialize<E::Tag>,
-{
+impl<T: SerializePrimary, E: SerializePrimary> Promise<T, E> {
     /// Sets the call's reply.
     pub fn set_val(self, res: Result<T, E>) -> Result<(), Error> {
         self.set(res)

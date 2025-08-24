@@ -5,8 +5,8 @@ use super::{
 };
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
-    SerializedValueSlice, Serializer,
+    Deserialize, DeserializeError, DeserializePrimary, Deserializer, Serialize, SerializeError,
+    SerializePrimary, SerializedValue, SerializedValueSlice, Serializer,
 };
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -30,9 +30,9 @@ impl ConnectReplyData {
         Ok(self)
     }
 
-    pub fn serialize_user<T: PrimaryTag + Serialize<T::Tag>>(
+    pub fn serialize_user(
         &mut self,
-        user: T,
+        user: impl SerializePrimary,
     ) -> Result<&mut Self, SerializeError> {
         self.serialize_user_as(user)
     }
@@ -45,9 +45,7 @@ impl ConnectReplyData {
             .map(SerializedValueSlice::deserialize_as)
     }
 
-    pub fn deserialize_user<T: PrimaryTag + Deserialize<T::Tag>>(
-        &self,
-    ) -> Option<Result<T, DeserializeError>> {
+    pub fn deserialize_user<T: DeserializePrimary>(&self) -> Option<Result<T, DeserializeError>> {
         self.deserialize_user_as()
     }
 }

@@ -1,7 +1,9 @@
 use super::RawChannel;
 use crate::{Error, Handle};
-use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{ChannelCookie, Deserialize, Serialize, SerializedValue};
+use aldrin_core::tags::Tag;
+use aldrin_core::{
+    ChannelCookie, Deserialize, DeserializePrimary, Serialize, SerializePrimary, SerializedValue,
+};
 use futures_channel::mpsc;
 use futures_core::stream::{FusedStream, Stream};
 #[cfg(feature = "sink")]
@@ -207,10 +209,7 @@ impl Sender {
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
     /// prior to sending an item.
-    pub fn start_send_item<T: PrimaryTag + Serialize<T::Tag>>(
-        &mut self,
-        item: T,
-    ) -> Result<(), Error> {
+    pub fn start_send_item(&mut self, item: impl SerializePrimary) -> Result<(), Error> {
         self.start_send_item_as(item)
     }
 
@@ -218,10 +217,7 @@ impl Sender {
     ///
     /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
     /// [`start_send_item`](Self::start_send_item).
-    pub async fn send_item<T: PrimaryTag + Serialize<T::Tag>>(
-        &mut self,
-        item: T,
-    ) -> Result<(), Error> {
+    pub async fn send_item(&mut self, item: impl SerializePrimary) -> Result<(), Error> {
         self.send_ready().await?;
         self.start_send_item(item)
     }
@@ -399,7 +395,7 @@ impl Receiver {
     }
 
     /// Polls the channel for the next item.
-    pub fn poll_next_item<T: PrimaryTag + Deserialize<T::Tag>>(
+    pub fn poll_next_item<T: DeserializePrimary>(
         &mut self,
         cx: &mut Context,
     ) -> Poll<Result<Option<T>, Error>> {
@@ -407,9 +403,7 @@ impl Receiver {
     }
 
     /// Waits for the next item on the channel.
-    pub async fn next_item<T: PrimaryTag + Deserialize<T::Tag>>(
-        &mut self,
-    ) -> Result<Option<T>, Error> {
+    pub async fn next_item<T: DeserializePrimary>(&mut self) -> Result<Option<T>, Error> {
         future::poll_fn(|cx| self.poll_next_item(cx)).await
     }
 }

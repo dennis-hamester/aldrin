@@ -1,7 +1,8 @@
 use crate::{low_level, Event};
-use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::tags::Tag;
 use aldrin_core::{
-    Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, ServiceId, Value,
+    Deserialize, DeserializeError, DeserializePrimary, SerializedValue, SerializedValueSlice,
+    ServiceId, Value,
 };
 use std::error::Error as StdError;
 use std::fmt;
@@ -60,7 +61,7 @@ impl UnknownEvent {
     }
 
     /// Deserializes the event's arguments.
-    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+    pub fn deserialize<T: DeserializePrimary>(&self) -> Result<T, DeserializeError> {
         self.deserialize_as()
     }
 
@@ -77,7 +78,7 @@ impl UnknownEvent {
     }
 
     /// Deserializes the arguments and casts the event to a high-level [`Event`].
-    pub fn deserialize_and_cast<T: PrimaryTag + Deserialize<T::Tag>>(
+    pub fn deserialize_and_cast<T: DeserializePrimary>(
         &self,
     ) -> Result<Event<T>, DeserializeError> {
         self.inner.deserialize_and_cast()

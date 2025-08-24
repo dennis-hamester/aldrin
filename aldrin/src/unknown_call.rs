@@ -1,8 +1,8 @@
 use crate::{low_level, Call, Error, Handle};
-use aldrin_core::tags::{PrimaryTag, Tag};
+use aldrin_core::tags::Tag;
 use aldrin_core::{
-    Deserialize, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, ServiceId,
-    Value,
+    Deserialize, DeserializeError, DeserializePrimary, Serialize, SerializePrimary,
+    SerializedValue, SerializedValueSlice, ServiceId, Value,
 };
 use std::error::Error as StdError;
 use std::fmt;
@@ -67,7 +67,7 @@ impl UnknownCall {
     }
 
     /// Deserializes the call's arguments.
-    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+    pub fn deserialize<T: DeserializePrimary>(&self) -> Result<T, DeserializeError> {
         self.deserialize_as()
     }
 
@@ -114,10 +114,7 @@ impl UnknownCall {
     /// If deserialization fails, then the call will be replied using
     /// [`Promise::invalid_args`](low_level::Promise::invalid_args) and [`Error::InvalidArguments`]
     /// will be returned.
-    pub fn deserialize_and_cast<A, T, E>(self) -> Result<Call<A, T, E>, Error>
-    where
-        A: PrimaryTag + Deserialize<A::Tag>,
-    {
+    pub fn deserialize_and_cast<A: DeserializePrimary, T, E>(self) -> Result<Call<A, T, E>, Error> {
         self.deserialize_and_cast_as()
     }
 
@@ -134,11 +131,10 @@ impl UnknownCall {
     }
 
     /// Sets the call's reply.
-    pub fn set<T, E>(mut self, res: Result<T, E>) -> Result<(), Error>
-    where
-        T: PrimaryTag + Serialize<T::Tag>,
-        E: PrimaryTag + Serialize<E::Tag>,
-    {
+    pub fn set(
+        mut self,
+        res: Result<impl SerializePrimary, impl SerializePrimary>,
+    ) -> Result<(), Error> {
         self.inner.take().unwrap().set(res)
     }
 
@@ -148,7 +144,7 @@ impl UnknownCall {
     }
 
     /// Signals that the call was successful.
-    pub fn ok<T: PrimaryTag + Serialize<T::Tag>>(mut self, value: T) -> Result<(), Error> {
+    pub fn ok(mut self, value: impl SerializePrimary) -> Result<(), Error> {
         self.inner.take().unwrap().ok(value)
     }
 
@@ -163,7 +159,7 @@ impl UnknownCall {
     }
 
     /// Signals that the call failed.
-    pub fn err<E: PrimaryTag + Serialize<E::Tag>>(mut self, value: E) -> Result<(), Error> {
+    pub fn err(mut self, value: impl SerializePrimary) -> Result<(), Error> {
         self.inner.take().unwrap().err(value)
     }
 

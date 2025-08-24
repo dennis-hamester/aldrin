@@ -1,5 +1,7 @@
-use aldrin_core::tags::{PrimaryTag, Tag};
-use aldrin_core::{Deserialize, DeserializeError, SerializedValue, SerializedValueSlice, Value};
+use aldrin_core::tags::Tag;
+use aldrin_core::{
+    Deserialize, DeserializeError, DeserializePrimary, SerializedValue, SerializedValueSlice, Value,
+};
 use std::time::Instant;
 
 /// Reply of a call.
@@ -70,11 +72,9 @@ impl Reply {
     }
 
     /// Deserializes the arguments of the reply.
-    pub fn deserialize<T, E>(&self) -> Result<Result<T, E>, DeserializeError>
-    where
-        T: PrimaryTag + Deserialize<T::Tag>,
-        E: PrimaryTag + Deserialize<E::Tag>,
-    {
+    pub fn deserialize<T: DeserializePrimary, E: DeserializePrimary>(
+        &self,
+    ) -> Result<Result<T, E>, DeserializeError> {
         self.deserialize_as()
     }
 
@@ -98,11 +98,9 @@ impl Reply {
     }
 
     /// Deserializes the arguments and casts the reply to a high-level [`Reply`](crate::Reply).
-    pub fn deserialize_and_cast<T, E>(&self) -> Result<crate::Reply<T, E>, DeserializeError>
-    where
-        T: PrimaryTag + Deserialize<T::Tag>,
-        E: PrimaryTag + Deserialize<E::Tag>,
-    {
+    pub fn deserialize_and_cast<T: DeserializePrimary, E: DeserializePrimary>(
+        &self,
+    ) -> Result<crate::Reply<T, E>, DeserializeError> {
         self.deserialize_and_cast_as()
     }
 }

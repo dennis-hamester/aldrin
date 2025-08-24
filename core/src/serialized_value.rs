@@ -5,8 +5,9 @@ mod test;
 use crate::introspection::{ir, Introspectable, LexicalId, References};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
-    convert_value, Deserialize, DeserializeError, Deserializer, ProtocolVersion, Serialize,
-    SerializeError, Serializer, Value, ValueConversionError, ValueKind,
+    convert_value, Deserialize, DeserializeError, DeserializePrimary, Deserializer,
+    ProtocolVersion, Serialize, SerializeError, SerializePrimary, Serializer, Value,
+    ValueConversionError, ValueKind,
 };
 use bytes::BytesMut;
 use std::borrow::{Borrow, Cow};
@@ -42,10 +43,7 @@ impl SerializedValue {
         Ok(this)
     }
 
-    pub fn serialize<T>(value: T) -> Result<Self, SerializeError>
-    where
-        T: PrimaryTag + Serialize<T::Tag>,
-    {
+    pub fn serialize(value: impl SerializePrimary) -> Result<Self, SerializeError> {
         Self::serialize_as(value)
     }
 
@@ -254,7 +252,7 @@ impl SerializedValueSlice {
         res
     }
 
-    pub fn deserialize<T: PrimaryTag + Deserialize<T::Tag>>(&self) -> Result<T, DeserializeError> {
+    pub fn deserialize<T: DeserializePrimary>(&self) -> Result<T, DeserializeError> {
         self.deserialize_as()
     }
 
