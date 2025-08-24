@@ -126,8 +126,8 @@ fn gen_regular_struct(
             }
 
             fallback = match field.ident {
-                Some(ref ident) => Some(ident.unraw().to_string()),
-                None => Some("fallback".to_owned()),
+                Some(ref ident) => Some((ident.unraw().to_string(), item_options)),
+                None => Some(("fallback".to_owned(), item_options)),
             };
         } else {
             if fallback.is_some() {
@@ -146,14 +146,23 @@ fn gen_regular_struct(
         }
     }
 
-    let fallback = fallback.map(|ident| {
+    let fallback = fallback.map(|(ident, options)| {
+        let doc = options.doc().to_introspection();
+
         quote! {
-            .fallback(#krate::introspection::ir::StructFallbackIr::builder(#ident).finish())
+            .fallback(
+                #krate::introspection::ir::StructFallbackIr::builder(#ident)
+                    #doc
+                    .finish(),
+            )
         }
     });
 
+    let doc = options.doc().to_introspection();
+
     let layout = quote! {
         #krate::introspection::ir::StructIr::builder(#schema, #name)
+            #doc
             #(#layout)*
             #fallback
             .finish()
@@ -199,9 +208,12 @@ fn gen_field(
         quote! { <#field_type as #krate::introspection::private::OptionHelper>::lexical_id() }
     };
 
+    let doc = item_options.doc().to_introspection();
+
     let layout = quote! {
         .field(
             #krate::introspection::ir::FieldIr::builder(#id, #name, #is_required, #lexical_id)
+                #doc
                 .finish(),
         )
     };
@@ -226,6 +238,7 @@ fn gen_newtype_struct(
     let schema = options.schema().unwrap();
     let field = &fields[0];
     let field_type = &field.ty;
+    let doc = options.doc().to_introspection();
 
     let layout = quote! {
         #krate::introspection::ir::NewtypeIr::builder(
@@ -233,6 +246,7 @@ fn gen_newtype_struct(
             #name,
             <#field_type as #krate::introspection::Introspectable>::lexical_id(),
         )
+        #doc
         .finish()
         .into()
     };
@@ -286,8 +300,11 @@ fn gen_enum(
         }
     }
 
+    let doc = options.doc().to_introspection();
+
     let layout = quote! {
         #krate::introspection::ir::EnumIr::builder(#schema, #name)
+            #doc
             #(#layout)*
             .finish()
             .into()
@@ -323,7 +340,7 @@ fn gen_variant(
     }
 
     if item_options.is_fallback() {
-        gen_fallback_variant(variant, options).map(|toks| (toks, None))
+        gen_fallback_variant(variant, options, item_options).map(|toks| (toks, None))
     } else {
         gen_regular_variant(variant, options, item_options)
     }
@@ -373,9 +390,12 @@ fn gen_regular_variant(
         }
     });
 
+    let doc = item_options.doc().to_introspection();
+
     let layout = quote! {
         .variant(
             #krate::introspection::ir::VariantIr::builder(#id, #name)
+                #doc
                 #variant_type
                 .finish(),
         )
@@ -384,13 +404,22 @@ fn gen_regular_variant(
     Ok((layout, references))
 }
 
-fn gen_fallback_variant(variant: &Variant, options: &Options) -> Result<TokenStream> {
+fn gen_fallback_variant(
+    variant: &Variant,
+    options: &Options,
+    item_options: &ItemOptions,
+) -> Result<TokenStream> {
     let krate = options.krate();
     let name = variant.ident.unraw().to_string();
+    let doc = item_options.doc().to_introspection();
 
     match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {
-            .fallback(#krate::introspection::ir::EnumFallbackIr::builder(#name).finish())
+            .fallback(
+                #krate::introspection::ir::EnumFallbackIr::builder(#name)
+                    #doc
+                    .finish(),
+            )
         }),
 
         Fields::Unnamed(_) | Fields::Unit => Err(Error::new_spanned(

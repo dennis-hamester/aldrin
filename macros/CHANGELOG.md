@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Introspectable` now also supports newtypes.
 - `service!()` now supports doc comments.
 - The `RefType` derive macro now supports doc comments.
+- `Introspectable` now also supports doc string.
 
 ### Changed
 

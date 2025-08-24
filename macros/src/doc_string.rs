@@ -30,6 +30,32 @@ impl DocString {
             Err(Error::new_spanned(attr, "only doc comments are supported"))
         }
     }
+
+    pub(crate) fn to_introspection(&self) -> Option<TokenStream> {
+        let mut doc_string = String::new();
+
+        for doc in &self.inner {
+            let doc = doc.value();
+
+            if doc.is_empty() {
+                doc_string.push('\n');
+                continue;
+            }
+
+            for line in doc.lines() {
+                let line = line.strip_prefix(' ').unwrap_or(line).trim_end();
+
+                doc_string.push_str(line);
+                doc_string.push('\n');
+            }
+        }
+
+        if doc_string.is_empty() {
+            None
+        } else {
+            Some(quote! { .doc(#doc_string) })
+        }
+    }
 }
 
 impl Parse for DocString {
