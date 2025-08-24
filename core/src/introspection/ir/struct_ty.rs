@@ -65,13 +65,11 @@ impl Serialize<StructIr> for &StructIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(StructField::Schema, &self.schema)?;
-        serializer.serialize::<tags::String, _>(StructField::Name, &self.name)?;
+        serializer.serialize::<tags::String>(StructField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String>(StructField::Name, &self.name)?;
+        serializer.serialize::<tags::Map<tags::U32, FieldIr>>(StructField::Fields, &self.fields)?;
 
-        serializer
-            .serialize::<tags::Map<tags::U32, FieldIr>, _>(StructField::Fields, &self.fields)?;
-
-        serializer.serialize_if_some::<tags::Option<StructFallbackIr>, _>(
+        serializer.serialize_if_some::<tags::Option<StructFallbackIr>>(
             StructField::Fallback,
             &self.fallback,
         )?;

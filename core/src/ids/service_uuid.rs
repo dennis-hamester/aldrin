@@ -60,7 +60,7 @@ impl Serialize<Self> for ServiceUuid {
 
 impl Serialize<ServiceUuid> for &ServiceUuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<ServiceUuid, _>(*self)
+        serializer.serialize::<ServiceUuid>(*self)
     }
 }
 
@@ -72,13 +72,13 @@ impl Deserialize<Self> for ServiceUuid {
 
 impl Serialize<tags::Uuid> for ServiceUuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Self, _>(self)
+        serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &ServiceUuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 

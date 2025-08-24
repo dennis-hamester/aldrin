@@ -154,7 +154,7 @@ where
     for<'b> &'b U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<T, _>(self.as_ref())
+        serializer.serialize::<T>(self.as_ref())
     }
 }
 
@@ -165,7 +165,7 @@ where
     &'a U: Serialize<T>,
 {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<T, _>(self.as_ref())
+        serializer.serialize::<T>(self.as_ref())
     }
 }
 

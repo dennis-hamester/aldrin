@@ -51,8 +51,8 @@ impl Serialize<Self> for MapType {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<TypeId, _>(MapTypeField::Key, self.key)?;
-        serializer.serialize::<TypeId, _>(MapTypeField::Value, self.value)?;
+        serializer.serialize::<TypeId>(MapTypeField::Key, self.key)?;
+        serializer.serialize::<TypeId>(MapTypeField::Value, self.value)?;
 
         serializer.finish()
     }

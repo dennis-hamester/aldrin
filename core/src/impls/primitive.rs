@@ -42,7 +42,7 @@ macro_rules! impl_primitive {
 
             impl Serialize<$tag> for & $ser_for {
                 fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-                    serializer.serialize::<$tag, _>(*self)
+                    serializer.serialize::<$tag>(*self)
                 }
             }
         )+

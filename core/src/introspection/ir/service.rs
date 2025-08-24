@@ -94,25 +94,25 @@ impl Serialize<ServiceIr> for &ServiceIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(ServiceField::Schema, &self.schema)?;
-        serializer.serialize::<tags::String, _>(ServiceField::Name, &self.name)?;
-        serializer.serialize::<ServiceUuid, _>(ServiceField::Uuid, &self.uuid)?;
-        serializer.serialize::<tags::U32, _>(ServiceField::Version, &self.version)?;
+        serializer.serialize::<tags::String>(ServiceField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String>(ServiceField::Name, &self.name)?;
+        serializer.serialize::<ServiceUuid>(ServiceField::Uuid, &self.uuid)?;
+        serializer.serialize::<tags::U32>(ServiceField::Version, &self.version)?;
 
-        serializer.serialize::<tags::Map<tags::U32, FunctionIr>, _>(
+        serializer.serialize::<tags::Map<tags::U32, FunctionIr>>(
             ServiceField::Functions,
             &self.functions,
         )?;
 
         serializer
-            .serialize::<tags::Map<tags::U32, EventIr>, _>(ServiceField::Events, &self.events)?;
+            .serialize::<tags::Map<tags::U32, EventIr>>(ServiceField::Events, &self.events)?;
 
-        serializer.serialize_if_some::<tags::Option<FunctionFallbackIr>, _>(
+        serializer.serialize_if_some::<tags::Option<FunctionFallbackIr>>(
             ServiceField::FunctionFallback,
             &self.function_fallback,
         )?;
 
-        serializer.serialize_if_some::<tags::Option<EventFallbackIr>, _>(
+        serializer.serialize_if_some::<tags::Option<EventFallbackIr>>(
             ServiceField::EventFallback,
             &self.event_fallback,
         )?;

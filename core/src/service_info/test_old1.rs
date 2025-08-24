@@ -52,10 +52,8 @@ impl Serialize<Self> for ServiceInfoOld {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(2)?;
 
-        serializer.serialize::<tags::U32, _>(ServiceInfoFieldOld::Version, self.version)?;
-
-        serializer
-            .serialize::<tags::Option<TypeId>, _>(ServiceInfoFieldOld::TypeId, self.type_id)?;
+        serializer.serialize::<tags::U32>(ServiceInfoFieldOld::Version, self.version)?;
+        serializer.serialize::<tags::Option<TypeId>>(ServiceInfoFieldOld::TypeId, self.type_id)?;
 
         serializer.finish()
     }

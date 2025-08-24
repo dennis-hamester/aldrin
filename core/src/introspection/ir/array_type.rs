@@ -41,8 +41,8 @@ impl Serialize<ArrayTypeIr> for &ArrayTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<LexicalId, _>(ArrayTypeField::ElemType, &self.elem_type)?;
-        serializer.serialize::<tags::U32, _>(ArrayTypeField::Len, &self.len)?;
+        serializer.serialize::<LexicalId>(ArrayTypeField::ElemType, &self.elem_type)?;
+        serializer.serialize::<tags::U32>(ArrayTypeField::Len, &self.len)?;
 
         serializer.finish()
     }

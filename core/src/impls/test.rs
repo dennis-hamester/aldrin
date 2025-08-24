@@ -18,10 +18,10 @@ where
     &'a U: Serialize<T>,
     B: AsRef<[u8]>,
 {
-    let serialized_as_t = SerializedValue::serialize_as::<T, U>(value.clone()).unwrap();
+    let serialized_as_t = SerializedValue::serialize_as::<T>(value.clone()).unwrap();
     assert_eq!(serialized_as_t[..], *expected.as_ref());
 
-    let serialized_as_t = SerializedValue::serialize_as::<T, &U>(value).unwrap();
+    let serialized_as_t = SerializedValue::serialize_as::<T>(value).unwrap();
     assert_eq!(serialized_as_t[..], *expected.as_ref());
 }
 
@@ -1320,7 +1320,7 @@ fn test_struct() {
 
     impl Serialize<Tag> for TestStruct {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            serializer.serialize::<Tag, _>(&self)
+            serializer.serialize::<Tag>(&self)
         }
     }
 
@@ -1328,8 +1328,8 @@ fn test_struct() {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct2()?;
 
-            serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
-            serializer.serialize_if_some::<tags::Option<tags::I32>, _>(2u32, &self.field2)?;
+            serializer.serialize::<tags::U32>(1u32, &self.field1)?;
+            serializer.serialize_if_some::<tags::Option<tags::I32>>(2u32, &self.field2)?;
 
             serializer.finish()
         }
@@ -1392,7 +1392,7 @@ fn test_struct_fallback() {
 
     impl Serialize<Tag> for TestStruct {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            serializer.serialize::<Tag, _>(&self)
+            serializer.serialize::<Tag>(&self)
         }
     }
 
@@ -1401,7 +1401,7 @@ fn test_struct_fallback() {
             let mut serializer =
                 serializer.serialize_struct2_with_unknown_fields(&self.fallback)?;
 
-            serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
+            serializer.serialize::<tags::U32>(1u32, &self.field1)?;
 
             serializer.finish()
         }
@@ -1467,7 +1467,7 @@ fn test_enum() {
 
     impl Serialize<Tag> for TestEnum {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            serializer.serialize::<Tag, _>(&self)
+            serializer.serialize::<Tag>(&self)
         }
     }
 
@@ -1475,7 +1475,7 @@ fn test_enum() {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             match self {
                 TestEnum::Var1 => serializer.serialize_unit_enum(1u32),
-                TestEnum::Var2(value) => serializer.serialize_enum::<tags::U8, _>(2u32, value),
+                TestEnum::Var2(value) => serializer.serialize_enum::<tags::U8>(2u32, value),
             }
         }
     }
@@ -1515,7 +1515,7 @@ fn test_enum_fallback() {
 
     impl Serialize<Tag> for TestEnum {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-            serializer.serialize::<Tag, _>(&self)
+            serializer.serialize::<Tag>(&self)
         }
     }
 

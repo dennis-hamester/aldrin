@@ -136,35 +136,26 @@ impl Serialize<Self> for BuiltInType {
             Self::ObjectId => serializer.serialize_unit_enum(BuiltInTypeVariant::ObjectId),
             Self::ServiceId => serializer.serialize_unit_enum(BuiltInTypeVariant::ServiceId),
             Self::Value => serializer.serialize_unit_enum(BuiltInTypeVariant::Value),
-
-            Self::Option(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Option, t)
-            }
-
-            Self::Box(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Box, t),
-            Self::Vec(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Vec, t),
+            Self::Option(t) => serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Option, t),
+            Self::Box(t) => serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Box, t),
+            Self::Vec(t) => serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Vec, t),
             Self::Bytes => serializer.serialize_unit_enum(BuiltInTypeVariant::Bytes),
-            Self::Map(t) => serializer.serialize_enum::<MapType, _>(BuiltInTypeVariant::Map, t),
-            Self::Set(t) => serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Set, t),
-
-            Self::Sender(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Sender, t)
-            }
+            Self::Map(t) => serializer.serialize_enum::<MapType>(BuiltInTypeVariant::Map, t),
+            Self::Set(t) => serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Set, t),
+            Self::Sender(t) => serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Sender, t),
 
             Self::Receiver(t) => {
-                serializer.serialize_enum::<TypeId, _>(BuiltInTypeVariant::Receiver, t)
+                serializer.serialize_enum::<TypeId>(BuiltInTypeVariant::Receiver, t)
             }
 
             Self::Lifetime => serializer.serialize_unit_enum(BuiltInTypeVariant::Lifetime),
             Self::Unit => serializer.serialize_unit_enum(BuiltInTypeVariant::Unit),
 
             Self::Result(t) => {
-                serializer.serialize_enum::<ResultType, _>(BuiltInTypeVariant::Result, t)
+                serializer.serialize_enum::<ResultType>(BuiltInTypeVariant::Result, t)
             }
 
-            Self::Array(t) => {
-                serializer.serialize_enum::<ArrayType, _>(BuiltInTypeVariant::Array, t)
-            }
+            Self::Array(t) => serializer.serialize_enum::<ArrayType>(BuiltInTypeVariant::Array, t),
         }
     }
 }

@@ -107,9 +107,9 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
     }
 
     /// Sets the data, that will be sent back to the client, by serializing some value.
-    pub fn serialize_reply_data_as<U: Tag, V: Serialize<U>>(
+    pub fn serialize_reply_data_as<U: Tag>(
         &mut self,
-        data: V,
+        data: impl Serialize<U>,
     ) -> Result<(), SerializeError> {
         self.reply_data.serialize_user_as(data)?;
         Ok(())

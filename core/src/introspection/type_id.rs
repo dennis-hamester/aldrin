@@ -71,10 +71,10 @@ impl Serialize<Compute> for &Compute {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(3)?;
 
-        serializer.serialize::<tags::U32, _>(ComputeField::Version, VERSION)?;
-        serializer.serialize::<tags::Value, _>(ComputeField::Layout, &self.layout)?;
+        serializer.serialize::<tags::U32>(ComputeField::Version, VERSION)?;
+        serializer.serialize::<tags::Value>(ComputeField::Layout, &self.layout)?;
 
-        serializer.serialize::<tags::Vec<tags::Value>, _>(
+        serializer.serialize::<tags::Vec<tags::Value>>(
             ComputeField::Referenced,
             IterAsVec(&self.referenced),
         )?;

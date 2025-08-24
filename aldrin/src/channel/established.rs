@@ -151,7 +151,7 @@ impl<T: PrimaryTag> Sender<T> {
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
     /// prior to sending an item.
-    pub fn start_send_item<U: Serialize<T::Tag>>(&mut self, item: U) -> Result<(), Error> {
+    pub fn start_send_item(&mut self, item: impl Serialize<T::Tag>) -> Result<(), Error> {
         self.inner.start_send_item_as(item)
     }
 
@@ -159,7 +159,7 @@ impl<T: PrimaryTag> Sender<T> {
     ///
     /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
     /// [`start_send_item`](Self::start_send_item).
-    pub async fn send_item<U: Serialize<T::Tag>>(&mut self, item: U) -> Result<(), Error> {
+    pub async fn send_item(&mut self, item: impl Serialize<T::Tag>) -> Result<(), Error> {
         self.inner.send_item_as(item).await
     }
 }

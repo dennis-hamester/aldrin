@@ -51,8 +51,8 @@ impl Serialize<Self> for ResultType {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<TypeId, _>(ResultTypeField::Ok, self.ok)?;
-        serializer.serialize::<TypeId, _>(ResultTypeField::Err, self.err)?;
+        serializer.serialize::<TypeId>(ResultTypeField::Ok, self.ok)?;
+        serializer.serialize::<TypeId>(ResultTypeField::Err, self.err)?;
 
         serializer.finish()
     }

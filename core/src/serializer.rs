@@ -50,7 +50,7 @@ impl<'a> Serializer<'a> {
         Ok(())
     }
 
-    pub fn serialize<T: Tag, U: Serialize<T>>(self, value: U) -> Result<(), SerializeError> {
+    pub fn serialize<T: Tag>(self, value: impl Serialize<T>) -> Result<(), SerializeError> {
         value.serialize(self)
     }
 
@@ -59,9 +59,9 @@ impl<'a> Serializer<'a> {
         Ok(())
     }
 
-    pub fn serialize_some<T: Tag, U: Serialize<T>>(
+    pub fn serialize_some<T: Tag>(
         mut self,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Some);
@@ -350,10 +350,10 @@ impl<'a> Serializer<'a> {
         Struct2Serializer::with_unknown_fields(self.buf, unknown_fields, self.depth)
     }
 
-    pub fn serialize_enum<T: Tag, U: Serialize<T>>(
+    pub fn serialize_enum<T: Tag>(
         mut self,
         id: impl Into<u32>,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<(), SerializeError> {
         self.increment_depth()?;
         self.buf.put_discriminant_u8(ValueKind::Enum);
@@ -362,7 +362,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_unit_enum(self, id: impl Into<u32>) -> Result<(), SerializeError> {
-        self.serialize_enum::<tags::Unit, _>(id, ())
+        self.serialize_enum::<tags::Unit>(id, ())
     }
 
     pub fn serialize_unknown_variant(

@@ -163,7 +163,7 @@ impl Serialize<Self> for LexicalId {
 
 impl Serialize<LexicalId> for &LexicalId {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<LexicalId, _>(*self)
+        serializer.serialize::<LexicalId>(*self)
     }
 }
 
@@ -175,13 +175,13 @@ impl Deserialize<Self> for LexicalId {
 
 impl Serialize<tags::Uuid> for LexicalId {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Self, _>(self)
+        serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &LexicalId {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 

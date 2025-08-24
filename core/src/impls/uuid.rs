@@ -19,7 +19,7 @@ impl Serialize<tags::Uuid> for Uuid {
 
 impl Serialize<tags::Uuid> for &Uuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 
@@ -37,7 +37,7 @@ impl<T: Tag> Serialize<Sender<T>> for Uuid {
 
 impl<T: Tag> Serialize<Sender<T>> for &Uuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Sender<T>, _>(*self)
+        serializer.serialize::<Sender<T>>(*self)
     }
 }
 
@@ -55,7 +55,7 @@ impl<T: Tag> Serialize<Receiver<T>> for Uuid {
 
 impl<T: Tag> Serialize<Receiver<T>> for &Uuid {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Receiver<T>, _>(*self)
+        serializer.serialize::<Receiver<T>>(*self)
     }
 }
 

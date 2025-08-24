@@ -142,12 +142,13 @@ impl Call {
     }
 
     /// Sets the call's reply.
-    pub fn set_as<T, U, E, F>(self, res: Result<U, F>) -> Result<(), Error>
+    pub fn set_as<T, E>(
+        self,
+        res: Result<impl Serialize<T>, impl Serialize<E>>,
+    ) -> Result<(), Error>
     where
         T: Tag,
-        U: Serialize<T>,
         E: Tag,
-        F: Serialize<E>,
     {
         self.promise.set_as(res)
     }
@@ -162,7 +163,7 @@ impl Call {
     }
 
     /// Signals that the call was successful.
-    pub fn ok_as<T: Tag, U: Serialize<T>>(self, value: U) -> Result<(), Error> {
+    pub fn ok_as<T: Tag>(self, value: impl Serialize<T>) -> Result<(), Error> {
         self.promise.ok_as(value)
     }
 
@@ -177,7 +178,7 @@ impl Call {
     }
 
     /// Signals that the call failed.
-    pub fn err_as<E: Tag, F: Serialize<E>>(self, value: F) -> Result<(), Error> {
+    pub fn err_as<E: Tag>(self, value: impl Serialize<E>) -> Result<(), Error> {
         self.promise.err_as(value)
     }
 

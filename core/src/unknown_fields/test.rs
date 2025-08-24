@@ -17,7 +17,7 @@ impl PrimaryTag for Old {
 
 impl Serialize<tags::Value> for Old {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Value, _>(&self)
+        serializer.serialize::<tags::Value>(&self)
     }
 }
 
@@ -25,7 +25,7 @@ impl Serialize<tags::Value> for &Old {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
+        serializer.serialize::<tags::U32>(1u32, &self.field1)?;
         serializer.serialize_unknown_fields(&self.fallback)?;
 
         serializer.finish()
@@ -67,7 +67,7 @@ impl PrimaryTag for New {
 
 impl Serialize<tags::Value> for New {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Value, _>(&self)
+        serializer.serialize::<tags::Value>(&self)
     }
 }
 
@@ -75,8 +75,8 @@ impl Serialize<tags::Value> for &New {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(1u32, &self.field1)?;
-        serializer.serialize_if_some::<tags::Option<tags::U32>, _>(2u32, &self.field2)?;
+        serializer.serialize::<tags::U32>(1u32, &self.field1)?;
+        serializer.serialize_if_some::<tags::Option<tags::U32>>(2u32, &self.field2)?;
         serializer.serialize_unknown_fields(&self.fallback)?;
 
         serializer.finish()

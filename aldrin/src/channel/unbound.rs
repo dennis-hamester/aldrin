@@ -130,7 +130,7 @@ impl<T: PrimaryTag> PrimaryTag for UnboundSender<T> {
 
 impl<T: Tag, U: Serialize<T>> Serialize<tags::Sender<T>> for UnboundSender<U> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Sender<T>, _>(self.inner)
+        serializer.serialize::<tags::Sender<T>>(self.inner)
     }
 }
 
@@ -286,7 +286,7 @@ impl<T: PrimaryTag> PrimaryTag for UnboundReceiver<T> {
 
 impl<T: Tag, U: Deserialize<T>> Serialize<tags::Receiver<T>> for UnboundReceiver<U> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Receiver<T>, _>(self.inner)
+        serializer.serialize::<tags::Receiver<T>>(self.inner)
     }
 }
 

@@ -114,11 +114,11 @@ impl EvItem {
         if let Some(ref ty) = self.ty {
             quote! {
                 #doc
-                pub fn #ident<T>(&self, args: T) -> ::std::result::Result<(), #krate::Error>
-                where
-                    T: #krate::core::Serialize<#krate::core::tags::As<#ty>>,
-                {
-                    self.inner.emit_as::<#krate::core::tags::As<#ty>, _>(#id, args)
+                pub fn #ident(
+                    &self,
+                    args: impl #krate::core::Serialize<#krate::core::tags::As<#ty>>,
+                ) -> ::std::result::Result<(), #krate::Error> {
+                    self.inner.emit_as::<#krate::core::tags::As<#ty>>(#id, args)
                 }
 
                 #doc

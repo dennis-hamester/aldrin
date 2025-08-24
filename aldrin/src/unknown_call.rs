@@ -122,12 +122,13 @@ impl UnknownCall {
     }
 
     /// Sets the call's reply.
-    pub fn set_as<T, U, E, F>(mut self, res: Result<U, F>) -> Result<(), Error>
+    pub fn set_as<T, E>(
+        mut self,
+        res: Result<impl Serialize<T>, impl Serialize<E>>,
+    ) -> Result<(), Error>
     where
         T: Tag,
-        U: Serialize<T>,
         E: Tag,
-        F: Serialize<E>,
     {
         self.inner.take().unwrap().set_as(res)
     }
@@ -142,7 +143,7 @@ impl UnknownCall {
     }
 
     /// Signals that the call was successful.
-    pub fn ok_as<T: Tag, U: Serialize<T>>(mut self, value: U) -> Result<(), Error> {
+    pub fn ok_as<T: Tag>(mut self, value: impl Serialize<T>) -> Result<(), Error> {
         self.inner.take().unwrap().ok_as(value)
     }
 
@@ -157,7 +158,7 @@ impl UnknownCall {
     }
 
     /// Signals that the call failed.
-    pub fn err_as<E: Tag, F: Serialize<E>>(mut self, value: F) -> Result<(), Error> {
+    pub fn err_as<E: Tag>(mut self, value: impl Serialize<E>) -> Result<(), Error> {
         self.inner.take().unwrap().err_as(value)
     }
 

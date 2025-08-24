@@ -189,7 +189,7 @@ impl Sender {
     ///
     /// It must be ensured that there is enough capacity by calling [`send_ready`](Self::send_ready)
     /// prior to sending an item.
-    pub fn start_send_item_as<T: Tag, U: Serialize<T>>(&mut self, item: U) -> Result<(), Error> {
+    pub fn start_send_item_as<T: Tag>(&mut self, item: impl Serialize<T>) -> Result<(), Error> {
         let item = SerializedValue::serialize_as(item)?;
         self.start_send_serialized(item)
     }
@@ -198,7 +198,7 @@ impl Sender {
     ///
     /// This method is a shorthand for calling [`send_ready`](Self::send_ready) followed by
     /// [`start_send_item_as`](Self::start_send_item_as).
-    pub async fn send_item_as<T: Tag, U: Serialize<T>>(&mut self, item: U) -> Result<(), Error> {
+    pub async fn send_item_as<T: Tag>(&mut self, item: impl Serialize<T>) -> Result<(), Error> {
         self.send_ready().await?;
         self.start_send_item_as(item)
     }

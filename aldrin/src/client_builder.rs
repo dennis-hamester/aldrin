@@ -138,9 +138,9 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
     }
 
     /// Sets the data, that will be sent to the broker, by serializing some value.
-    pub fn serialize_data_as<U: Tag, V: Serialize<U>>(
+    pub fn serialize_data_as<U: Tag>(
         &mut self,
-        data: V,
+        data: impl Serialize<U>,
     ) -> Result<(), ConnectError<T::Error>> {
         self.data = SerializedValue::serialize_as(data).map(Some)?;
         Ok(())

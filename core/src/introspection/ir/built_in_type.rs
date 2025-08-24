@@ -137,44 +137,44 @@ impl Serialize<BuiltInTypeIr> for &BuiltInTypeIr {
             BuiltInTypeIr::Value => serializer.serialize_unit_enum(BuiltInTypeVariant::Value),
 
             BuiltInTypeIr::Option(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Option, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Option, t)
             }
 
             BuiltInTypeIr::Box(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Box, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Box, t)
             }
 
             BuiltInTypeIr::Vec(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Vec, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Vec, t)
             }
 
             BuiltInTypeIr::Bytes => serializer.serialize_unit_enum(BuiltInTypeVariant::Bytes),
 
             BuiltInTypeIr::Map(t) => {
-                serializer.serialize_enum::<MapTypeIr, _>(BuiltInTypeVariant::Map, t)
+                serializer.serialize_enum::<MapTypeIr>(BuiltInTypeVariant::Map, t)
             }
 
             BuiltInTypeIr::Set(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Set, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Set, t)
             }
 
             BuiltInTypeIr::Sender(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Sender, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Sender, t)
             }
 
             BuiltInTypeIr::Receiver(t) => {
-                serializer.serialize_enum::<LexicalId, _>(BuiltInTypeVariant::Receiver, t)
+                serializer.serialize_enum::<LexicalId>(BuiltInTypeVariant::Receiver, t)
             }
 
             BuiltInTypeIr::Lifetime => serializer.serialize_unit_enum(BuiltInTypeVariant::Lifetime),
             BuiltInTypeIr::Unit => serializer.serialize_unit_enum(BuiltInTypeVariant::Unit),
 
             BuiltInTypeIr::Result(t) => {
-                serializer.serialize_enum::<ResultTypeIr, _>(BuiltInTypeVariant::Result, t)
+                serializer.serialize_enum::<ResultTypeIr>(BuiltInTypeVariant::Result, t)
             }
 
             BuiltInTypeIr::Array(t) => {
-                serializer.serialize_enum::<ArrayTypeIr, _>(BuiltInTypeVariant::Array, t)
+                serializer.serialize_enum::<ArrayTypeIr>(BuiltInTypeVariant::Array, t)
             }
         }
     }

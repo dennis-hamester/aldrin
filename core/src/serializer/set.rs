@@ -35,9 +35,9 @@ impl<'a, K: KeyTag> Set1Serializer<'a, K> {
         self.num_elems > 0
     }
 
-    pub fn serialize<T: SerializeKey<K> + ?Sized>(
+    pub fn serialize(
         &mut self,
-        value: &T,
+        value: &(impl SerializeKey<K> + ?Sized),
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
@@ -83,9 +83,9 @@ impl<'a, K: KeyTag> Set2Serializer<'a, K> {
         })
     }
 
-    pub fn serialize<T: SerializeKey<K> + ?Sized>(
+    pub fn serialize(
         &mut self,
-        value: &T,
+        value: &(impl SerializeKey<K> + ?Sized),
     ) -> Result<&mut Self, SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Some);
         K::Impl::serialize_key(value.try_as_key()?, self.buf)?;

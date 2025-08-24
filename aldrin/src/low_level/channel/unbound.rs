@@ -108,7 +108,7 @@ impl<T: Tag> Serialize<tags::Sender<T>> for UnboundSender {
 
 impl<T: Tag> Serialize<tags::Sender<T>> for &UnboundSender {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Sender<T>, _>(*self)
+        serializer.serialize::<tags::Sender<T>>(*self)
     }
 }
 
@@ -224,7 +224,7 @@ impl<T: Tag> Serialize<tags::Receiver<T>> for UnboundReceiver {
 
 impl<T: Tag> Serialize<tags::Receiver<T>> for &UnboundReceiver {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Receiver<T>, _>(*self)
+        serializer.serialize::<tags::Receiver<T>>(*self)
     }
 }
 

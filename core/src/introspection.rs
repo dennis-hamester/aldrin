@@ -158,12 +158,12 @@ impl Serialize<Introspection> for &Introspection {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(4)?;
 
-        serializer.serialize::<tags::U32, _>(IntrospectionField::Version, VERSION)?;
-        serializer.serialize::<TypeId, _>(IntrospectionField::TypeId, self.type_id)?;
-        serializer.serialize::<Layout, _>(IntrospectionField::Layout, &self.layout)?;
+        serializer.serialize::<tags::U32>(IntrospectionField::Version, VERSION)?;
+        serializer.serialize::<TypeId>(IntrospectionField::TypeId, self.type_id)?;
+        serializer.serialize::<Layout>(IntrospectionField::Layout, &self.layout)?;
 
         serializer
-            .serialize::<tags::Set<TypeId>, _>(IntrospectionField::References, &self.references)?;
+            .serialize::<tags::Set<TypeId>>(IntrospectionField::References, &self.references)?;
 
         serializer.finish()
     }

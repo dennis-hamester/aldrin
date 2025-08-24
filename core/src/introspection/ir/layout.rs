@@ -120,21 +120,21 @@ impl Serialize<LayoutIr> for &LayoutIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             LayoutIr::BuiltIn(ty) => {
-                serializer.serialize_enum::<BuiltInTypeIr, _>(LayoutVariant::BuiltIn, ty)
+                serializer.serialize_enum::<BuiltInTypeIr>(LayoutVariant::BuiltIn, ty)
             }
 
             LayoutIr::Struct(ty) => {
-                serializer.serialize_enum::<StructIr, _>(LayoutVariant::Struct, ty)
+                serializer.serialize_enum::<StructIr>(LayoutVariant::Struct, ty)
             }
 
-            LayoutIr::Enum(ty) => serializer.serialize_enum::<EnumIr, _>(LayoutVariant::Enum, ty),
+            LayoutIr::Enum(ty) => serializer.serialize_enum::<EnumIr>(LayoutVariant::Enum, ty),
 
             LayoutIr::Service(ty) => {
-                serializer.serialize_enum::<ServiceIr, _>(LayoutVariant::Service, ty)
+                serializer.serialize_enum::<ServiceIr>(LayoutVariant::Service, ty)
             }
 
             LayoutIr::Newtype(ty) => {
-                serializer.serialize_enum::<NewtypeIr, _>(LayoutVariant::Newtype, ty)
+                serializer.serialize_enum::<NewtypeIr>(LayoutVariant::Newtype, ty)
             }
         }
     }

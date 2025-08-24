@@ -51,10 +51,10 @@ impl Serialize<VariantIr> for &VariantIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(VariantField::Id, &self.id)?;
-        serializer.serialize::<tags::String, _>(VariantField::Name, &self.name)?;
+        serializer.serialize::<tags::U32>(VariantField::Id, &self.id)?;
+        serializer.serialize::<tags::String>(VariantField::Name, &self.name)?;
 
-        serializer.serialize_if_some::<tags::Option<LexicalId>, _>(
+        serializer.serialize_if_some::<tags::Option<LexicalId>>(
             VariantField::VariantType,
             &self.variant_type,
         )?;

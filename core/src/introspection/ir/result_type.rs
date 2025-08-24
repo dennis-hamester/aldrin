@@ -40,8 +40,8 @@ impl Serialize<ResultTypeIr> for &ResultTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<LexicalId, _>(ResultTypeField::Ok, &self.ok)?;
-        serializer.serialize::<LexicalId, _>(ResultTypeField::Err, &self.err)?;
+        serializer.serialize::<LexicalId>(ResultTypeField::Ok, &self.ok)?;
+        serializer.serialize::<LexicalId>(ResultTypeField::Err, &self.err)?;
 
         serializer.finish()
     }

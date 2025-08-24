@@ -102,7 +102,7 @@ impl Service {
     }
 
     /// Emits an event.
-    pub fn emit_as<T: Tag, U: Serialize<T>>(&self, event: u32, args: U) -> Result<(), Error> {
+    pub fn emit_as<T: Tag>(&self, event: u32, args: impl Serialize<T>) -> Result<(), Error> {
         self.client.emit_event(self.id, event, args)
     }
 

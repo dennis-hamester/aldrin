@@ -78,13 +78,10 @@ impl Serialize<Newtype> for &Newtype {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(NewtypeField::Schema, &self.schema)?;
-        serializer.serialize::<tags::String, _>(NewtypeField::Name, &self.name)?;
-
-        serializer
-            .serialize_if_some::<tags::Option<tags::String>, _>(NewtypeField::Doc, &self.doc)?;
-
-        serializer.serialize::<TypeId, _>(NewtypeField::TargetType, &self.target_type)?;
+        serializer.serialize::<tags::String>(NewtypeField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String>(NewtypeField::Name, &self.name)?;
+        serializer.serialize_if_some::<tags::Option<tags::String>>(NewtypeField::Doc, &self.doc)?;
+        serializer.serialize::<TypeId>(NewtypeField::TargetType, &self.target_type)?;
 
         serializer.finish()
     }

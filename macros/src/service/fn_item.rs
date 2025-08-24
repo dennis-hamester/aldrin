@@ -49,12 +49,12 @@ impl FnItem {
         if let Some(args) = self.body.args() {
             quote! {
                 #doc
-                pub fn #ident<T>(&self, args: T) -> #krate::PendingReply<#ok, #err>
-                where
-                    T: #krate::core::Serialize<#krate::core::tags::As<#args>>,
-                {
+                pub fn #ident(
+                    &self,
+                    args: impl #krate::core::Serialize<#krate::core::tags::As<#args>>,
+                ) -> #krate::PendingReply<#ok, #err> {
                     self.inner
-                        .call_as::<#krate::core::tags::As<#args>, _>(
+                        .call_as::<#krate::core::tags::As<#args>>(
                             #id,
                             args,
                             ::std::option::Option::Some(Self::VERSION),

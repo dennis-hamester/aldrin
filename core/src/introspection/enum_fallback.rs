@@ -59,12 +59,10 @@ impl Serialize<EnumFallback> for &EnumFallback {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(EnumFallbackField::Name, &self.name)?;
+        serializer.serialize::<tags::String>(EnumFallbackField::Name, &self.name)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
-            EnumFallbackField::Doc,
-            &self.doc,
-        )?;
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>>(EnumFallbackField::Doc, &self.doc)?;
 
         serializer.finish()
     }

@@ -65,13 +65,13 @@ impl Serialize<EnumIr> for &EnumIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
-        serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
+        serializer.serialize::<tags::String>(EnumField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String>(EnumField::Name, &self.name)?;
 
         serializer
-            .serialize::<tags::Map<tags::U32, VariantIr>, _>(EnumField::Variants, &self.variants)?;
+            .serialize::<tags::Map<tags::U32, VariantIr>>(EnumField::Variants, &self.variants)?;
 
-        serializer.serialize_if_some::<tags::Option<EnumFallbackIr>, _>(
+        serializer.serialize_if_some::<tags::Option<EnumFallbackIr>>(
             EnumField::Fallback,
             &self.fallback,
         )?;

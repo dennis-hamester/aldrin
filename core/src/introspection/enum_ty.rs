@@ -97,17 +97,15 @@ impl Serialize<Enum> for &Enum {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(EnumField::Schema, &self.schema)?;
-        serializer.serialize::<tags::String, _>(EnumField::Name, &self.name)?;
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(EnumField::Doc, &self.doc)?;
+        serializer.serialize::<tags::String>(EnumField::Schema, &self.schema)?;
+        serializer.serialize::<tags::String>(EnumField::Name, &self.name)?;
+        serializer.serialize_if_some::<tags::Option<tags::String>>(EnumField::Doc, &self.doc)?;
 
         serializer
-            .serialize::<tags::Map<tags::U32, Variant>, _>(EnumField::Variants, &self.variants)?;
+            .serialize::<tags::Map<tags::U32, Variant>>(EnumField::Variants, &self.variants)?;
 
-        serializer.serialize_if_some::<tags::Option<EnumFallback>, _>(
-            EnumField::Fallback,
-            &self.fallback,
-        )?;
+        serializer
+            .serialize_if_some::<tags::Option<EnumFallback>>(EnumField::Fallback, &self.fallback)?;
 
         serializer.finish()
     }

@@ -22,9 +22,9 @@ impl ConnectReplyData {
         Self::default()
     }
 
-    pub fn serialize_user_as<T: Tag, U: Serialize<T>>(
+    pub fn serialize_user_as<T: Tag>(
         &mut self,
-        user: U,
+        user: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         self.user = SerializedValue::serialize_as(user).map(Some)?;
         Ok(self)
@@ -74,7 +74,7 @@ impl Serialize<ConnectReplyData> for &ConnectReplyData {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize_if_some::<tags::Option<tags::Value>, _>(
+        serializer.serialize_if_some::<tags::Option<tags::Value>>(
             ConnectReplyDataField::User,
             &self.user,
         )?;

@@ -39,9 +39,9 @@ impl<'a> Vec1Serializer<'a> {
         self.num_elems > 0
     }
 
-    pub fn serialize<T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
@@ -76,9 +76,9 @@ impl<'a> Vec2Serializer<'a> {
         Ok(Self { buf, depth })
     }
 
-    pub fn serialize<T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Some);
 

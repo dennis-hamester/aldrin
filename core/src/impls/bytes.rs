@@ -87,7 +87,7 @@ impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
 
 impl Serialize<tags::Bytes> for VecDeque<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Bytes, _>(&self)
+        serializer.serialize::<tags::Bytes>(&self)
     }
 }
 
@@ -111,7 +111,7 @@ impl Deserialize<tags::Bytes> for VecDeque<u8> {
 
 impl Serialize<tags::Bytes> for LinkedList<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Bytes, _>(&self)
+        serializer.serialize::<tags::Bytes>(&self)
     }
 }
 

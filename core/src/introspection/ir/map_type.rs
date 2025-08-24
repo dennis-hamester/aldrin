@@ -40,8 +40,8 @@ impl Serialize<MapTypeIr> for &MapTypeIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<LexicalId, _>(MapTypeField::Key, &self.key)?;
-        serializer.serialize::<LexicalId, _>(MapTypeField::Value, &self.value)?;
+        serializer.serialize::<LexicalId>(MapTypeField::Key, &self.key)?;
+        serializer.serialize::<LexicalId>(MapTypeField::Value, &self.value)?;
 
         serializer.finish()
     }

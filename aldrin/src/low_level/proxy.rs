@@ -78,10 +78,10 @@ impl Proxy {
     }
 
     /// Calls a function on the service.
-    pub fn call_as<T: Tag, U: Serialize<T>>(
+    pub fn call_as<T: Tag>(
         &self,
         function: u32,
-        args: U,
+        args: impl Serialize<T>,
         version: Option<u32>,
     ) -> PendingReply {
         self.client.call(self.svc, function, args, version)

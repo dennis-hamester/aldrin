@@ -123,19 +123,13 @@ impl Serialize<Layout> for &Layout {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         match self {
             Layout::BuiltIn(ty) => {
-                serializer.serialize_enum::<BuiltInType, _>(LayoutVariant::BuiltIn, ty)
+                serializer.serialize_enum::<BuiltInType>(LayoutVariant::BuiltIn, ty)
             }
 
-            Layout::Struct(ty) => serializer.serialize_enum::<Struct, _>(LayoutVariant::Struct, ty),
-            Layout::Enum(ty) => serializer.serialize_enum::<Enum, _>(LayoutVariant::Enum, ty),
-
-            Layout::Service(ty) => {
-                serializer.serialize_enum::<Service, _>(LayoutVariant::Service, ty)
-            }
-
-            Layout::Newtype(ty) => {
-                serializer.serialize_enum::<Newtype, _>(LayoutVariant::Newtype, ty)
-            }
+            Layout::Struct(ty) => serializer.serialize_enum::<Struct>(LayoutVariant::Struct, ty),
+            Layout::Enum(ty) => serializer.serialize_enum::<Enum>(LayoutVariant::Enum, ty),
+            Layout::Service(ty) => serializer.serialize_enum::<Service>(LayoutVariant::Service, ty),
+            Layout::Newtype(ty) => serializer.serialize_enum::<Newtype>(LayoutVariant::Newtype, ty),
         }
     }
 }

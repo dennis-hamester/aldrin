@@ -105,15 +105,15 @@ impl Serialize<Function> for &Function {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(FunctionField::Id, &self.id)?;
-        serializer.serialize::<tags::String, _>(FunctionField::Name, &self.name)?;
+        serializer.serialize::<tags::U32>(FunctionField::Id, &self.id)?;
+        serializer.serialize::<tags::String>(FunctionField::Name, &self.name)?;
 
         serializer
-            .serialize_if_some::<tags::Option<tags::String>, _>(FunctionField::Doc, &self.doc)?;
+            .serialize_if_some::<tags::Option<tags::String>>(FunctionField::Doc, &self.doc)?;
 
-        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Args, &self.args)?;
-        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Ok, &self.ok)?;
-        serializer.serialize_if_some::<tags::Option<TypeId>, _>(FunctionField::Err, &self.err)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>>(FunctionField::Args, &self.args)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>>(FunctionField::Ok, &self.ok)?;
+        serializer.serialize_if_some::<tags::Option<TypeId>>(FunctionField::Err, &self.err)?;
 
         serializer.finish()
     }

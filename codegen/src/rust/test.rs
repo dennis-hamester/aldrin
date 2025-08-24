@@ -191,9 +191,9 @@ async fn before_derive_compat_struct() {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct1(3)?;
 
-            serializer.serialize::<tags::I32, _>(1u32, &self.f1)?;
-            serializer.serialize::<tags::Option<tags::I32>, _>(2u32, &self.f2)?;
-            serializer.serialize::<tags::Option<tags::I32>, _>(3u32, &self.f3)?;
+            serializer.serialize::<tags::I32>(1u32, &self.f1)?;
+            serializer.serialize::<tags::Option<tags::I32>>(2u32, &self.f2)?;
+            serializer.serialize::<tags::Option<tags::I32>>(3u32, &self.f3)?;
 
             serializer.finish()
         }
@@ -339,12 +339,9 @@ async fn before_derive_compat_enum() {
     impl Serialize<tags::Value> for &OldEnum {
         fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
             match self {
-                OldEnum::Var1 => serializer.serialize_enum::<tags::Unit, _>(1u32, &()),
-                OldEnum::Var2(v) => serializer.serialize_enum::<tags::I32, _>(2u32, v),
-
-                OldEnum::Var3(v) => {
-                    serializer.serialize_enum::<tags::Option<tags::I32>, _>(3u32, v)
-                }
+                OldEnum::Var1 => serializer.serialize_enum::<tags::Unit>(1u32, &()),
+                OldEnum::Var2(v) => serializer.serialize_enum::<tags::I32>(2u32, v),
+                OldEnum::Var3(v) => serializer.serialize_enum::<tags::Option<tags::I32>>(3u32, v),
             }
         }
     }

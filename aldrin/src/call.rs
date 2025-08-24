@@ -106,7 +106,7 @@ impl<Args, T, E> Call<Args, T, E> {
 
 impl<Args, T: PrimaryTag, E> Call<Args, T, E> {
     /// Signals that the call was successful.
-    pub fn ok<U: Serialize<T::Tag>>(self, value: U) -> Result<(), Error> {
+    pub fn ok(self, value: impl Serialize<T::Tag>) -> Result<(), Error> {
         self.promise.ok(value)
     }
 }
@@ -138,7 +138,7 @@ impl<Args, T: PrimaryTag<Tag = tags::Unit>, E> Call<Args, T, E> {
 
 impl<Args, T, E: PrimaryTag> Call<Args, T, E> {
     /// Signals that the call failed.
-    pub fn err<F: Serialize<E::Tag>>(self, value: F) -> Result<(), Error> {
+    pub fn err(self, value: impl Serialize<E::Tag>) -> Result<(), Error> {
         self.promise.err(value)
     }
 }
@@ -163,11 +163,10 @@ where
 
 impl<Args, T: PrimaryTag, E: PrimaryTag> Call<Args, T, E> {
     /// Sets the call's reply.
-    pub fn set<U, F>(self, res: Result<U, F>) -> Result<(), Error>
-    where
-        U: Serialize<T::Tag>,
-        F: Serialize<E::Tag>,
-    {
+    pub fn set(
+        self,
+        res: Result<impl Serialize<T::Tag>, impl Serialize<E::Tag>>,
+    ) -> Result<(), Error> {
         self.promise.set(res)
     }
 }

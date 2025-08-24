@@ -302,7 +302,7 @@ impl FieldData<'_> {
         };
 
         Some(quote! {
-            serializer.#serialize::<#krate::tags::As<#ty>, _>(#id, self.#name)?;
+            serializer.#serialize::<#krate::tags::As<#ty>>(#id, self.#name)?;
         })
     }
 
@@ -311,7 +311,7 @@ impl FieldData<'_> {
         let name = self.name();
 
         quote! {
-            serializer.serialize::<#krate::tags::As<#ty>, _>(self.#name)
+            serializer.serialize::<#krate::tags::As<#ty>>(self.#name)
         }
     }
 
@@ -331,7 +331,7 @@ impl FieldData<'_> {
         };
 
         Some(quote! {
-            serializer.#serialize::<#krate::tags::As<#ty_tag>, _>(#id, &self.#name)?;
+            serializer.#serialize::<#krate::tags::As<#ty_tag>>(#id, &self.#name)?;
         })
     }
 
@@ -340,7 +340,7 @@ impl FieldData<'_> {
         let name = self.name();
 
         quote! {
-            serializer.serialize::<#krate::tags::As<#ty_tag>, _>(&self.#name)
+            serializer.serialize::<#krate::tags::As<#ty_tag>>(&self.#name)
         }
     }
 
@@ -360,7 +360,7 @@ impl FieldData<'_> {
         };
 
         Some(quote! {
-            serializer.#serialize::<#krate::tags::As<#ty_tag>, _>(#id, self.#name)?;
+            serializer.#serialize::<#krate::tags::As<#ty_tag>>(#id, self.#name)?;
         })
     }
 
@@ -369,7 +369,7 @@ impl FieldData<'_> {
         let name = self.name();
 
         quote! {
-            serializer.serialize::<#krate::tags::As<#ty_tag>, _>(self.#name)
+            serializer.serialize::<#krate::tags::As<#ty_tag>>(self.#name)
         }
     }
 
@@ -521,7 +521,7 @@ impl VariantData<'_> {
         } else if let Some(ty) = self.ty() {
             quote! {
                 Self::#name(_value) => {
-                    serializer.serialize_enum::<#krate::tags::As<#ty>, _>(#id, _value)
+                    serializer.serialize_enum::<#krate::tags::As<#ty>>(#id, _value)
                 }
             }
         } else {
@@ -544,7 +544,7 @@ impl VariantData<'_> {
         } else if let Some(ty_tag) = self.ty_tag() {
             quote! {
                 #enum_name::#name(ref _value) => {
-                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>, _>(#id, _value)
+                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>>(#id, _value)
                 }
             }
         } else {
@@ -567,7 +567,7 @@ impl VariantData<'_> {
         } else if let Some(ty_tag) = self.ty_tag() {
             quote! {
                 Self::#name(_value) => {
-                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>, _>(#id, _value)
+                    serializer.serialize_enum::<#krate::tags::As<#ty_tag>>(#id, _value)
                 }
             }
         } else {

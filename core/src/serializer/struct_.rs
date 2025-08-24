@@ -55,10 +55,10 @@ impl<'a> Struct1Serializer<'a> {
         self.num_fields > 0
     }
 
-    pub fn serialize<T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
         id: impl Into<u32>,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_fields > 0 {
             self.num_fields -= 1;
@@ -74,10 +74,10 @@ impl<'a> Struct1Serializer<'a> {
         }
     }
 
-    pub fn serialize_if_some<T: Tag, U: Serialize<T>>(
+    pub fn serialize_if_some<T: Tag>(
         &mut self,
         id: impl Into<u32>,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         if value.serializes_as_some() {
             self.serialize(id, value)
@@ -136,10 +136,10 @@ impl<'a> Struct2Serializer<'a> {
         Ok(this)
     }
 
-    pub fn serialize<T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
         id: impl Into<u32>,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Some);
         self.buf.put_varint_u32_le(id.into());
@@ -150,10 +150,10 @@ impl<'a> Struct2Serializer<'a> {
         Ok(self)
     }
 
-    pub fn serialize_if_some<T: Tag, U: Serialize<T>>(
+    pub fn serialize_if_some<T: Tag>(
         &mut self,
         id: impl Into<u32>,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         if value.serializes_as_some() {
             self.serialize(id, value)

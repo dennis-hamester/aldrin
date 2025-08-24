@@ -73,12 +73,13 @@ impl Promise {
     }
 
     /// Sets the call's reply.
-    pub fn set_as<T, U, E, F>(self, res: Result<U, F>) -> Result<(), Error>
+    pub fn set_as<T, E>(
+        self,
+        res: Result<impl Serialize<T>, impl Serialize<E>>,
+    ) -> Result<(), Error>
     where
         T: Tag,
-        U: Serialize<T>,
         E: Tag,
-        F: Serialize<E>,
     {
         match res {
             Ok(value) => self.ok_as(value),
@@ -96,7 +97,7 @@ impl Promise {
     }
 
     /// Signals that the call was successful.
-    pub fn ok_as<T: Tag, U: Serialize<T>>(mut self, value: U) -> Result<(), Error> {
+    pub fn ok_as<T: Tag>(mut self, value: impl Serialize<T>) -> Result<(), Error> {
         let res = CallFunctionResult::Ok(SerializedValue::serialize_as(value)?);
 
         self.client
@@ -121,7 +122,7 @@ impl Promise {
     }
 
     /// Signals that the call failed.
-    pub fn err_as<E: Tag, F: Serialize<E>>(mut self, value: F) -> Result<(), Error> {
+    pub fn err_as<E: Tag>(mut self, value: impl Serialize<E>) -> Result<(), Error> {
         let res = CallFunctionResult::Err(SerializedValue::serialize_as(value)?);
 
         self.client

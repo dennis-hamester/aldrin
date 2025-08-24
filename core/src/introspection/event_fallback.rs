@@ -59,12 +59,10 @@ impl Serialize<EventFallback> for &EventFallback {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(EventFallbackField::Name, &self.name)?;
+        serializer.serialize::<tags::String>(EventFallbackField::Name, &self.name)?;
 
-        serializer.serialize_if_some::<tags::Option<tags::String>, _>(
-            EventFallbackField::Doc,
-            &self.doc,
-        )?;
+        serializer
+            .serialize_if_some::<tags::Option<tags::String>>(EventFallbackField::Doc, &self.doc)?;
 
         serializer.finish()
     }

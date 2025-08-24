@@ -38,7 +38,7 @@ impl Serialize<StructFallbackIr> for &StructFallbackIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::String, _>(StructFallbackField::Name, &self.name)?;
+        serializer.serialize::<tags::String>(StructFallbackField::Name, &self.name)?;
 
         serializer.finish()
     }

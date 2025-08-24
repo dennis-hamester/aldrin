@@ -42,10 +42,10 @@ impl<'a, K: KeyTag> Map1Serializer<'a, K> {
         self.num_elems > 0
     }
 
-    pub fn serialize<L: SerializeKey<K> + ?Sized, T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
-        key: &L,
-        value: U,
+        key: &(impl SerializeKey<K> + ?Sized),
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         if self.num_elems > 0 {
             self.num_elems -= 1;
@@ -99,10 +99,10 @@ impl<'a, K: KeyTag> Map2Serializer<'a, K> {
         })
     }
 
-    pub fn serialize<L: SerializeKey<K> + ?Sized, T: Tag, U: Serialize<T>>(
+    pub fn serialize<T: Tag>(
         &mut self,
-        key: &L,
-        value: U,
+        key: &(impl SerializeKey<K> + ?Sized),
+        value: impl Serialize<T>,
     ) -> Result<&mut Self, SerializeError> {
         self.buf.put_discriminant_u8(ValueKind::Some);
 

@@ -61,7 +61,7 @@ impl Serialize<Self> for ObjectCookie {
 
 impl Serialize<ObjectCookie> for &ObjectCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<ObjectCookie, _>(*self)
+        serializer.serialize::<ObjectCookie>(*self)
     }
 }
 
@@ -73,13 +73,13 @@ impl Deserialize<Self> for ObjectCookie {
 
 impl Serialize<tags::Uuid> for ObjectCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Self, _>(self)
+        serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &ObjectCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 

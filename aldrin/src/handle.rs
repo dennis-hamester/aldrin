@@ -216,11 +216,11 @@ impl Handle {
             }));
     }
 
-    pub(crate) fn call<T: Tag, U: Serialize<T>>(
+    pub(crate) fn call<T: Tag>(
         &self,
         id: ServiceId,
         function: u32,
-        args: U,
+        args: impl Serialize<T>,
         version: Option<u32>,
     ) -> PendingReply {
         let (send, recv) = oneshot::channel();
@@ -259,11 +259,11 @@ impl Handle {
             .map_err(|_| Error::Shutdown)
     }
 
-    pub(crate) fn emit_event<T: Tag, U: Serialize<T>>(
+    pub(crate) fn emit_event<T: Tag>(
         &self,
         service_id: ServiceId,
         event: u32,
-        value: U,
+        value: impl Serialize<T>,
     ) -> Result<(), Error> {
         let value = SerializedValue::serialize_as(value)?;
         self.send

@@ -62,10 +62,10 @@ impl Serialize<FieldIr> for &FieldIr {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
-        serializer.serialize::<tags::U32, _>(FieldField::Id, &self.id)?;
-        serializer.serialize::<tags::String, _>(FieldField::Name, &self.name)?;
-        serializer.serialize::<tags::Bool, _>(FieldField::IsRequired, &self.is_required)?;
-        serializer.serialize::<LexicalId, _>(FieldField::FieldType, &self.field_type)?;
+        serializer.serialize::<tags::U32>(FieldField::Id, &self.id)?;
+        serializer.serialize::<tags::String>(FieldField::Name, &self.name)?;
+        serializer.serialize::<tags::Bool>(FieldField::IsRequired, &self.is_required)?;
+        serializer.serialize::<LexicalId>(FieldField::FieldType, &self.field_type)?;
 
         serializer.finish()
     }

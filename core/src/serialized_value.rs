@@ -33,7 +33,7 @@ impl SerializedValue {
         }
     }
 
-    pub fn serialize_as<T: Tag, U: Serialize<T>>(value: U) -> Result<Self, SerializeError> {
+    pub fn serialize_as<T: Tag>(value: impl Serialize<T>) -> Result<Self, SerializeError> {
         let mut this = Self::new();
 
         let serializer = Serializer::new(&mut this.buf, 0)?;

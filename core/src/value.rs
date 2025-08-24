@@ -126,8 +126,8 @@ impl Serialize<tags::Value> for &Value {
             Value::I64Set(value) => serializer.serialize_set2_iter::<tags::I64, _>(value),
             Value::StringSet(value) => serializer.serialize_set2_iter::<tags::String, _>(value),
             Value::UuidSet(value) => serializer.serialize_set2_iter::<tags::Uuid, _>(value),
-            Value::Struct(value) => serializer.serialize::<_, _>(value),
-            Value::Enum(value) => serializer.serialize::<_, _>(value),
+            Value::Struct(value) => serializer.serialize(value),
+            Value::Enum(value) => serializer.serialize(value),
             Value::Sender(value) => serializer.serialize_sender(*value),
             Value::Receiver(value) => serializer.serialize_receiver(*value),
         }

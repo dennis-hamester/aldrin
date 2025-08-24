@@ -59,7 +59,7 @@ impl Serialize<Self> for BusListenerCookie {
 
 impl Serialize<BusListenerCookie> for &BusListenerCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<BusListenerCookie, _>(*self)
+        serializer.serialize::<BusListenerCookie>(*self)
     }
 }
 
@@ -71,13 +71,13 @@ impl Deserialize<Self> for BusListenerCookie {
 
 impl Serialize<tags::Uuid> for BusListenerCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Self, _>(self)
+        serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &BusListenerCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 

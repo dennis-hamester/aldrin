@@ -59,7 +59,7 @@ impl Serialize<Self> for ChannelCookie {
 
 impl Serialize<ChannelCookie> for &ChannelCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<ChannelCookie, _>(*self)
+        serializer.serialize::<ChannelCookie>(*self)
     }
 }
 
@@ -71,13 +71,13 @@ impl Deserialize<Self> for ChannelCookie {
 
 impl Serialize<tags::Uuid> for ChannelCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Self, _>(self)
+        serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &ChannelCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<tags::Uuid, _>(*self)
+        serializer.serialize::<tags::Uuid>(*self)
     }
 }
 
@@ -95,7 +95,7 @@ impl<T: Tag> Serialize<Sender<T>> for ChannelCookie {
 
 impl<T: Tag> Serialize<Sender<T>> for &ChannelCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Sender<T>, _>(*self)
+        serializer.serialize::<Sender<T>>(*self)
     }
 }
 
@@ -113,7 +113,7 @@ impl<T: Tag> Serialize<Receiver<T>> for ChannelCookie {
 
 impl<T: Tag> Serialize<Receiver<T>> for &ChannelCookie {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
-        serializer.serialize::<Receiver<T>, _>(*self)
+        serializer.serialize::<Receiver<T>>(*self)
     }
 }
 
