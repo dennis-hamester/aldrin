@@ -1,6 +1,7 @@
 #[cfg(feature = "introspection")]
 use aldrin::core::introspection::{
-    BuiltInType, Enum, Event, Function, Introspection, Layout, Newtype, Service, Struct,
+    BuiltInType, Enum, Event, EventFallback, Function, FunctionFallback, Introspection, Layout,
+    Newtype, Service, Struct,
 };
 use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
@@ -231,9 +232,25 @@ fn print_built_in(ty: BuiltInType, db: &BTreeMap<TypeId, Introspection>, full: b
 
 #[cfg(feature = "introspection")]
 fn print_struct(ty: &Struct, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = ty.doc() {
+        print_doc_string(doc, 0);
+    }
+
     println!("struct {}::{} {{", ty.schema(), ty.name());
 
+    let mut has_docs = false;
     for field in ty.fields().values() {
+        if has_docs {
+            println!();
+        }
+
+        if let Some(doc) = field.doc() {
+            print_doc_string(doc, 4);
+            has_docs = true;
+        } else {
+            has_docs = false;
+        }
+
         if field.is_required() {
             print!("    required ");
         } else {
@@ -246,6 +263,14 @@ fn print_struct(ty: &Struct, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     }
 
     if let Some(fallback) = ty.fallback() {
+        if has_docs {
+            println!();
+        }
+
+        if let Some(doc) = fallback.doc() {
+            print_doc_string(doc, 4);
+        }
+
         println!("    {} = fallback;", fallback.name());
     }
 
@@ -255,9 +280,25 @@ fn print_struct(ty: &Struct, db: &BTreeMap<TypeId, Introspection>, full: bool) {
 
 #[cfg(feature = "introspection")]
 fn print_enum(ty: &Enum, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = ty.doc() {
+        print_doc_string(doc, 0);
+    }
+
     println!("enum {}::{} {{", ty.schema(), ty.name());
 
+    let mut has_docs = false;
     for var in ty.variants().values() {
+        if has_docs {
+            println!();
+        }
+
+        if let Some(doc) = var.doc() {
+            print_doc_string(doc, 4);
+            has_docs = true;
+        } else {
+            has_docs = false;
+        }
+
         print!("    {} @ {}", var.name(), var.id());
 
         if let Some(var_type) = var.variant_type() {
@@ -269,6 +310,14 @@ fn print_enum(ty: &Enum, db: &BTreeMap<TypeId, Introspection>, full: bool) {
     }
 
     if let Some(fallback) = ty.fallback() {
+        if has_docs {
+            println!();
+        }
+
+        if let Some(doc) = fallback.doc() {
+            print_doc_string(doc, 4);
+        }
+
         println!("    {} = fallback;", fallback.name());
     }
 
@@ -278,6 +327,10 @@ fn print_enum(ty: &Enum, db: &BTreeMap<TypeId, Introspection>, full: bool) {
 
 #[cfg(feature = "introspection")]
 fn print_service(ty: &Service, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = ty.doc() {
+        print_doc_string(doc, 0);
+    }
+
     println!("service {}::{} {{", ty.schema(), ty.name());
     println!("    uuid = {};", ty.uuid());
     println!("    version = {};", ty.version());
@@ -294,12 +347,12 @@ fn print_service(ty: &Service, db: &BTreeMap<TypeId, Introspection>, full: bool)
 
     if let Some(fallback) = ty.function_fallback() {
         println!();
-        println!("    {} = fallback;", fallback.name());
+        print_function_fallback(fallback);
     }
 
     if let Some(fallback) = ty.event_fallback() {
         println!();
-        println!("    {} = fallback;", fallback.name());
+        print_event_fallback(fallback);
     }
 
     println!("}}");
@@ -308,6 +361,10 @@ fn print_service(ty: &Service, db: &BTreeMap<TypeId, Introspection>, full: bool)
 
 #[cfg(feature = "introspection")]
 fn print_function(func: &Function, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = func.doc() {
+        print_doc_string(doc, 4);
+    }
+
     print!("    fn {} @ {}", func.name(), func.id());
 
     if let (None, Some(ty), None) = (func.args(), func.ok(), func.err()) {
@@ -343,6 +400,10 @@ fn print_function(func: &Function, db: &BTreeMap<TypeId, Introspection>, full: b
 
 #[cfg(feature = "introspection")]
 fn print_event(ev: &Event, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = ev.doc() {
+        print_doc_string(doc, 4);
+    }
+
     print!("    event {} @ {}", ev.name(), ev.id());
 
     if let Some(ty) = ev.event_type() {
@@ -354,7 +415,29 @@ fn print_event(ev: &Event, db: &BTreeMap<TypeId, Introspection>, full: bool) {
 }
 
 #[cfg(feature = "introspection")]
+fn print_function_fallback(fallback: &FunctionFallback) {
+    if let Some(doc) = fallback.doc() {
+        print_doc_string(doc, 4);
+    }
+
+    println!("    {} = fallback;", fallback.name());
+}
+
+#[cfg(feature = "introspection")]
+fn print_event_fallback(fallback: &EventFallback) {
+    if let Some(doc) = fallback.doc() {
+        print_doc_string(doc, 4);
+    }
+
+    println!("    {} = fallback;", fallback.name());
+}
+
+#[cfg(feature = "introspection")]
 fn print_newtype(ty: &Newtype, db: &BTreeMap<TypeId, Introspection>, full: bool) {
+    if let Some(doc) = ty.doc() {
+        print_doc_string(doc, 0);
+    }
+
     print!("newtype {}::{} = ", ty.schema(), ty.name());
     print_type_name(ty.target_type(), db, full);
     println!(";");
@@ -464,5 +547,23 @@ fn print_built_in_type_name(ty: BuiltInType, db: &BTreeMap<TypeId, Introspection
             print_type_name(ty.elem_type(), db, full);
             print!("; {}]", ty.len());
         }
+    }
+}
+
+#[cfg(feature = "introspection")]
+fn print_doc_string(doc: &str, indent: usize) {
+    const INDENT: &str = "        ";
+
+    assert!(indent <= INDENT.len());
+    let indent = &INDENT[..indent];
+
+    for line in doc.lines() {
+        print!("{indent}///");
+
+        if !line.is_empty() {
+            print!(" {line}");
+        }
+
+        println!();
     }
 }
