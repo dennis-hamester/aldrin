@@ -134,6 +134,7 @@ impl FnItem {
         let id = &self.id;
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
+        let doc = self.doc.to_introspection();
 
         let args = self.body.args().map(|args| {
             quote! {
@@ -156,6 +157,7 @@ impl FnItem {
         quote! {
             .function(
                 #krate::core::introspection::ir::FunctionIr::builder(#id, #name)
+                    #doc
                     #args
                     #ok
                     #err

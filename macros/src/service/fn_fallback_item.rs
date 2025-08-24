@@ -50,11 +50,13 @@ impl FnFallbackItem {
     pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let name = self.ident.unraw().to_string();
+        let doc = self.doc.to_introspection();
 
         quote! {
             .function_fallback(
                 #krate::core::introspection::ir::FunctionFallbackIr::builder(#name)
-                .finish(),
+                    #doc
+                    .finish(),
             )
         }
     }

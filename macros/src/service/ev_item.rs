@@ -145,6 +145,7 @@ impl EvItem {
         let id = &self.id;
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
+        let doc = self.doc.to_introspection();
 
         let ty = self.ty.as_ref().map(|ty| {
             quote! {
@@ -155,6 +156,7 @@ impl EvItem {
         quote! {
             .event(
                 #krate::core::introspection::ir::EventIr::builder(#id, #name)
+                    #doc
                     #ty
                     .finish(),
             )
