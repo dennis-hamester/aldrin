@@ -1,0 +1,38 @@
+[package]
+name = "aldrin-parser-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.10"
+tempfile = "3.22.0"
+
+[dependencies.aldrin-parser]
+path = ".."
+
+[dependencies.arbitrary]
+version = "1.4.2"
+features = ["derive"]
+
+[profile.release]
+debug = 1
+debug-assertions = true
+overflow-checks = true
+
+[[bin]]
+name = "single"
+path = "fuzz_targets/single.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "multi"
+path = "fuzz_targets/multi.rs"
+test = false
+doc = false
