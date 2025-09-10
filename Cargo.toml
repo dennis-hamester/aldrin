@@ -52,13 +52,13 @@ incompatible_msrv = "deny"
 use_self = "deny"
 
 [workspace.dependencies]
-anstyle = { version = "1.0.7", default-features = false }
 colorchoice-clap = { version = "1.0.4", default-features = false }
 futures-channel = { version = "0.3.31", default-features = false }
 futures-core = { version = "0.3.31", default-features = false }
 futures-util = { version = "0.3.31", default-features = false }
 heck = { version = "0.4.1", default-features = false }
 serde = { version = "1.0.193", default-features = false }
+terminal_size = { version = "0.3.0", default-features = false }
 thiserror = { version = "2.0.9", default-features = false }
 tokio = { version = "1.38.2", default-features = false }
 uuid = { version = "1.6.1", default-features = false }

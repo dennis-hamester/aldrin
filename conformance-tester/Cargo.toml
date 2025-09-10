@@ -16,16 +16,20 @@ workspace = true
 
 [dependencies]
 anstream = { workspace = true }
-anstyle = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 colorchoice-clap = { workspace = true }
+terminal_size = { workspace = true }
 
 [dependencies.aldrin-core]
 version = "0.12.0"
 path = "../core"
 default-features = false
 features = ["tokio"]
+
+[dependencies.anstyle]
+version = "1.0.7"
+default-features = false
 
 [dependencies.bwrap]
 version = "1.3.0"
@@ -45,10 +49,6 @@ features = ["derive"]
 version = "1.0.108"
 default-features = false
 features = ["std"]
-
-[dependencies.terminal_size]
-version = "0.3.0"
-default-features = false
 
 [dependencies.tokio]
 workspace = true

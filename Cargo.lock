@@ -110,10 +110,10 @@ dependencies = [
  "aldrin-codegen",
  "aldrin-parser",
  "anstream",
- "anstyle",
  "anyhow",
  "clap",
  "colorchoice-clap",
+ "terminal_size",
 ]
 
 [[package]]
