@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{EnumFallback, EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{Parsed, Span};
 
 #[derive(Debug)]
-pub struct EmptyEnum {
+pub(crate) struct EmptyEnum {
     schema_name: String,
     span: Span,
     ident: Option<Ident>,
@@ -28,14 +28,6 @@ impl EmptyEnum {
             span,
             ident: ident.cloned(),
         });
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
-    }
-
-    pub fn ident(&self) -> Option<&Ident> {
-        self.ident.as_ref()
     }
 }
 
@@ -68,6 +60,8 @@ impl Diagnostic for EmptyEnum {
 
 impl From<EmptyEnum> for Error {
     fn from(e: EmptyEnum) -> Self {
-        Self::EmptyEnum(e)
+        Self {
+            kind: ErrorKind::EmptyEnum(e),
+        }
     }
 }

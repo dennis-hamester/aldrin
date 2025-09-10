@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
 #[derive(Debug)]
-pub struct TypeNotFound {
+pub(crate) struct TypeNotFound {
     schema_name: String,
     named_ref: NamedRef,
     candidate: Option<String>,
@@ -44,14 +44,6 @@ impl TypeNotFound {
             candidate,
         });
     }
-
-    pub fn named_ref(&self) -> &NamedRef {
-        &self.named_ref
-    }
-
-    pub fn candidate(&self) -> Option<&str> {
-        self.candidate.as_deref()
-    }
 }
 
 impl Diagnostic for TypeNotFound {
@@ -85,6 +77,8 @@ impl Diagnostic for TypeNotFound {
 
 impl From<TypeNotFound> for Error {
     fn from(e: TypeNotFound) -> Self {
-        Self::TypeNotFound(e)
+        Self {
+            kind: ErrorKind::TypeNotFound(e),
+        }
     }
 }

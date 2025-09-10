@@ -1,11 +1,11 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
-pub struct NonSnakeCaseSchemaName {
+pub(crate) struct NonSnakeCaseSchemaName {
     schema_name: String,
     snake_case: String,
 }
@@ -21,10 +21,6 @@ impl NonSnakeCaseSchemaName {
             schema_name: schema_name.to_owned(),
             snake_case,
         });
-    }
-
-    pub fn snake_case(&self) -> &str {
-        &self.snake_case
     }
 }
 
@@ -54,6 +50,8 @@ impl Diagnostic for NonSnakeCaseSchemaName {
 
 impl From<NonSnakeCaseSchemaName> for Warning {
     fn from(w: NonSnakeCaseSchemaName) -> Self {
-        Self::NonSnakeCaseSchemaName(w)
+        Self {
+            kind: WarningKind::NonSnakeCaseSchemaName(w),
+        }
     }
 }

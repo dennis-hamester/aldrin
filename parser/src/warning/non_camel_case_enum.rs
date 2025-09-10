@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{EnumDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
-pub struct NonCamelCaseEnum {
+pub(crate) struct NonCamelCaseEnum {
     schema_name: String,
     camel_case: String,
     ident: Ident,
@@ -22,14 +22,6 @@ impl NonCamelCaseEnum {
                 ident: enum_def.name().clone(),
             });
         }
-    }
-
-    pub fn camel_case(&self) -> &str {
-        &self.camel_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -64,6 +56,8 @@ impl Diagnostic for NonCamelCaseEnum {
 
 impl From<NonCamelCaseEnum> for Warning {
     fn from(w: NonCamelCaseEnum) -> Self {
-        Self::NonCamelCaseEnum(w)
+        Self {
+            kind: WarningKind::NonCamelCaseEnum(w),
+        }
     }
 }

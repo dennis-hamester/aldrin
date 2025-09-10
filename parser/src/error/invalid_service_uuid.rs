@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitUuid, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct InvalidServiceUuid {
+pub(crate) struct InvalidServiceUuid {
     schema_name: String,
     uuid: LitUuid,
     svc_ident: Ident,
@@ -23,14 +23,6 @@ impl InvalidServiceUuid {
             uuid: service_def.uuid().clone(),
             svc_ident: service_def.name().clone(),
         });
-    }
-
-    pub fn uuid(&self) -> &LitUuid {
-        &self.uuid
-    }
-
-    pub fn service_ident(&self) -> &Ident {
-        &self.svc_ident
     }
 }
 
@@ -61,6 +53,8 @@ impl Diagnostic for InvalidServiceUuid {
 
 impl From<InvalidServiceUuid> for Error {
     fn from(e: InvalidServiceUuid) -> Self {
-        Self::InvalidServiceUuid(e)
+        Self {
+            kind: ErrorKind::InvalidServiceUuid(e),
+        }
     }
 }

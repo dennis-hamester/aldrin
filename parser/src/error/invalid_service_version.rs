@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidServiceVersion {
+pub(crate) struct InvalidServiceVersion {
     schema_name: String,
     ver: LitPosInt,
     svc_ident: Ident,
@@ -22,14 +22,6 @@ impl InvalidServiceVersion {
             ver: service_def.version().clone(),
             svc_ident: service_def.name().clone(),
         });
-    }
-
-    pub fn version(&self) -> &LitPosInt {
-        &self.ver
-    }
-
-    pub fn service_ident(&self) -> &Ident {
-        &self.svc_ident
     }
 }
 
@@ -60,6 +52,8 @@ impl Diagnostic for InvalidServiceVersion {
 
 impl From<InvalidServiceVersion> for Error {
     fn from(e: InvalidServiceVersion) -> Self {
-        Self::InvalidServiceVersion(e)
+        Self {
+            kind: ErrorKind::InvalidServiceVersion(e),
+        }
     }
 }

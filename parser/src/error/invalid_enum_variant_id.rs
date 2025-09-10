@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidEnumVariantId {
+pub(crate) struct InvalidEnumVariantId {
     schema_name: String,
     id: LitPosInt,
     var_ident: Ident,
@@ -22,14 +22,6 @@ impl InvalidEnumVariantId {
             id: var.id().clone(),
             var_ident: var.name().clone(),
         });
-    }
-
-    pub fn id(&self) -> &LitPosInt {
-        &self.id
-    }
-
-    pub fn variant_ident(&self) -> &Ident {
-        &self.var_ident
     }
 }
 
@@ -60,6 +52,8 @@ impl Diagnostic for InvalidEnumVariantId {
 
 impl From<InvalidEnumVariantId> for Error {
     fn from(e: InvalidEnumVariantId) -> Self {
-        Self::InvalidEnumVariantId(e)
+        Self {
+            kind: ErrorKind::InvalidEnumVariantId(e),
+        }
     }
 }

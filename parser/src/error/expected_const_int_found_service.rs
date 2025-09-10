@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Definition, NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
 #[derive(Debug)]
-pub struct ExpectedConstIntFoundService {
+pub(crate) struct ExpectedConstIntFoundService {
     schema_name: String,
     named_ref: NamedRef,
     candidate: Option<String>,
@@ -50,10 +50,6 @@ impl ExpectedConstIntFoundService {
             });
         }
     }
-
-    pub fn named_ref(&self) -> &NamedRef {
-        &self.named_ref
-    }
 }
 
 impl Diagnostic for ExpectedConstIntFoundService {
@@ -94,6 +90,8 @@ impl Diagnostic for ExpectedConstIntFoundService {
 
 impl From<ExpectedConstIntFoundService> for Error {
     fn from(e: ExpectedConstIntFoundService) -> Self {
-        Self::ExpectedConstIntFoundService(e)
+        Self {
+            kind: ErrorKind::ExpectedConstIntFoundService(e),
+        }
     }
 }

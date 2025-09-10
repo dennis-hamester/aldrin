@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{EventDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
-pub struct NonSnakeCaseEvent {
+pub(crate) struct NonSnakeCaseEvent {
     schema_name: String,
     snake_case: String,
     ident: Ident,
@@ -22,14 +22,6 @@ impl NonSnakeCaseEvent {
                 ident: ev.name().clone(),
             });
         }
-    }
-
-    pub fn snake_case(&self) -> &str {
-        &self.snake_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -64,6 +56,8 @@ impl Diagnostic for NonSnakeCaseEvent {
 
 impl From<NonSnakeCaseEvent> for Warning {
     fn from(w: NonSnakeCaseEvent) -> Self {
-        Self::NonSnakeCaseEvent(w)
+        Self {
+            kind: WarningKind::NonSnakeCaseEvent(w),
+        }
     }
 }

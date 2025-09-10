@@ -1,15 +1,14 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{EnumFallback, EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateEnumVariant {
+pub(crate) struct DuplicateEnumVariant {
     schema_name: String,
     duplicate: Ident,
     first: Span,
-    enum_span: Span,
     enum_ident: Option<Ident>,
 }
 
@@ -17,7 +16,6 @@ impl DuplicateEnumVariant {
     pub(crate) fn validate(
         vars: &[EnumVariant],
         fallback: Option<&EnumFallback>,
-        enum_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
@@ -29,7 +27,6 @@ impl DuplicateEnumVariant {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
-                    enum_span,
                     enum_ident: ident.cloned(),
                 })
             },
@@ -42,7 +39,6 @@ impl DuplicateEnumVariant {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: fallback.name().clone(),
                         first: var.span(),
-                        enum_span,
                         enum_ident: ident.cloned(),
                     });
 
@@ -50,22 +46,6 @@ impl DuplicateEnumVariant {
                 }
             }
         }
-    }
-
-    pub fn duplicate(&self) -> &Ident {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn enum_span(&self) -> Span {
-        self.enum_span
-    }
-
-    pub fn enum_ident(&self) -> Option<&Ident> {
-        self.enum_ident.as_ref()
     }
 }
 
@@ -106,6 +86,8 @@ impl Diagnostic for DuplicateEnumVariant {
 
 impl From<DuplicateEnumVariant> for Error {
     fn from(e: DuplicateEnumVariant) -> Self {
-        Self::DuplicateEnumVariant(e)
+        Self {
+            kind: ErrorKind::DuplicateEnumVariant(e),
+        }
     }
 }

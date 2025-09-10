@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{
     ArrayLen, ArrayLenValue, Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart,
     ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, SchemaName,
@@ -9,7 +9,7 @@ use crate::validate::Validate;
 use crate::{Parsed, Schema};
 
 #[derive(Debug)]
-pub struct UnusedImport {
+pub(crate) struct UnusedImport {
     schema_name: String,
     import: ImportStmt,
 }
@@ -194,10 +194,6 @@ impl UnusedImport {
             ArrayLenValue::Ref(ty) => Self::visit_named_ref(ty, schema_name),
         }
     }
-
-    pub fn import(&self) -> &ImportStmt {
-        &self.import
-    }
 }
 
 impl Diagnostic for UnusedImport {
@@ -226,6 +222,8 @@ impl Diagnostic for UnusedImport {
 
 impl From<UnusedImport> for Warning {
     fn from(w: UnusedImport) -> Self {
-        Self::UnusedImport(w)
+        Self {
+            kind: WarningKind::UnusedImport(w),
+        }
     }
 }

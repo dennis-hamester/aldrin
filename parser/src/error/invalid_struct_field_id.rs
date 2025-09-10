@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidStructFieldId {
+pub(crate) struct InvalidStructFieldId {
     schema_name: String,
     id: LitPosInt,
     field_ident: Ident,
@@ -22,14 +22,6 @@ impl InvalidStructFieldId {
             id: field.id().clone(),
             field_ident: field.name().clone(),
         });
-    }
-
-    pub fn id(&self) -> &LitPosInt {
-        &self.id
-    }
-
-    pub fn field_ident(&self) -> &Ident {
-        &self.field_ident
     }
 }
 
@@ -60,6 +52,8 @@ impl Diagnostic for InvalidStructFieldId {
 
 impl From<InvalidStructFieldId> for Error {
     fn from(e: InvalidStructFieldId) -> Self {
-        Self::InvalidStructFieldId(e)
+        Self {
+            kind: ErrorKind::InvalidStructFieldId(e),
+        }
     }
 }

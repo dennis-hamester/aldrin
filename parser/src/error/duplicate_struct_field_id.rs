@@ -1,26 +1,20 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateStructFieldId {
+pub(crate) struct DuplicateStructFieldId {
     schema_name: String,
     duplicate: LitPosInt,
     first: Span,
-    struct_span: Span,
     struct_ident: Option<Ident>,
     free_id: u32,
 }
 
 impl DuplicateStructFieldId {
-    pub(crate) fn validate(
-        fields: &[StructField],
-        struct_span: Span,
-        ident: Option<&Ident>,
-        validate: &mut Validate,
-    ) {
+    pub(crate) fn validate(fields: &[StructField], ident: Option<&Ident>, validate: &mut Validate) {
         let mut max_id = fields
             .iter()
             .fold(0, |cur, field| match field.id().value().parse() {
@@ -38,32 +32,11 @@ impl DuplicateStructFieldId {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
-                    struct_span,
                     struct_ident: ident.cloned(),
                     free_id,
                 })
             },
         );
-    }
-
-    pub fn duplicate(&self) -> &LitPosInt {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn struct_span(&self) -> Span {
-        self.struct_span
-    }
-
-    pub fn struct_ident(&self) -> Option<&Ident> {
-        self.struct_ident.as_ref()
-    }
-
-    pub fn free_id(&self) -> u32 {
-        self.free_id
     }
 }
 
@@ -102,6 +75,8 @@ impl Diagnostic for DuplicateStructFieldId {
 
 impl From<DuplicateStructFieldId> for Error {
     fn from(e: DuplicateStructFieldId) -> Self {
-        Self::DuplicateStructFieldId(e)
+        Self {
+            kind: ErrorKind::DuplicateStructFieldId(e),
+        }
     }
 }

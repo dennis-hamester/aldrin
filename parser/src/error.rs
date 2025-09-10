@@ -35,43 +35,61 @@ mod type_not_found;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
-pub use const_int_not_found::ConstIntNotFound;
-pub use duplicate_definition::DuplicateDefinition;
-pub use duplicate_enum_variant::DuplicateEnumVariant;
-pub use duplicate_enum_variant_id::DuplicateEnumVariantId;
-pub use duplicate_event_id::DuplicateEventId;
-pub use duplicate_function_id::DuplicateFunctionId;
-pub use duplicate_service_item::DuplicateServiceItem;
-pub use duplicate_service_uuid::DuplicateServiceUuid;
-pub use duplicate_struct_field::DuplicateStructField;
-pub use duplicate_struct_field_id::DuplicateStructFieldId;
-pub use empty_enum::EmptyEnum;
-pub use expected_const_int_found_service::ExpectedConstIntFoundService;
-pub use expected_const_int_found_string::ExpectedConstIntFoundString;
-pub use expected_const_int_found_type::ExpectedConstIntFoundType;
-pub use expected_const_int_found_uuid::ExpectedConstIntFoundUuid;
-pub use expected_type_found_const::ExpectedTypeFoundConst;
-pub use expected_type_found_service::ExpectedTypeFoundService;
-pub use import_not_found::ImportNotFound;
-pub use invalid_array_len::InvalidArrayLen;
-pub use invalid_const_value::InvalidConstValue;
-pub use invalid_enum_variant_id::InvalidEnumVariantId;
-pub use invalid_event_id::InvalidEventId;
-pub use invalid_function_id::InvalidFunctionId;
-pub use invalid_key_type::InvalidKeyType;
-pub use invalid_schema_name::InvalidSchemaName;
-pub use invalid_service_uuid::InvalidServiceUuid;
-pub use invalid_service_version::InvalidServiceVersion;
-pub use invalid_struct_field_id::InvalidStructFieldId;
-pub use invalid_syntax::{Expected, InvalidSyntax};
-pub use io_error::IoError;
-pub use missing_import::MissingImport;
-pub use recursive_type::{RecursiveEnum, RecursiveNewtype, RecursiveStruct};
-pub use type_not_found::TypeNotFound;
+pub(crate) use const_int_not_found::ConstIntNotFound;
+pub(crate) use duplicate_definition::DuplicateDefinition;
+pub(crate) use duplicate_enum_variant::DuplicateEnumVariant;
+pub(crate) use duplicate_enum_variant_id::DuplicateEnumVariantId;
+pub(crate) use duplicate_event_id::DuplicateEventId;
+pub(crate) use duplicate_function_id::DuplicateFunctionId;
+pub(crate) use duplicate_service_item::DuplicateServiceItem;
+pub(crate) use duplicate_service_uuid::DuplicateServiceUuid;
+pub(crate) use duplicate_struct_field::DuplicateStructField;
+pub(crate) use duplicate_struct_field_id::DuplicateStructFieldId;
+pub(crate) use empty_enum::EmptyEnum;
+pub(crate) use expected_const_int_found_service::ExpectedConstIntFoundService;
+pub(crate) use expected_const_int_found_string::ExpectedConstIntFoundString;
+pub(crate) use expected_const_int_found_type::ExpectedConstIntFoundType;
+pub(crate) use expected_const_int_found_uuid::ExpectedConstIntFoundUuid;
+pub(crate) use expected_type_found_const::ExpectedTypeFoundConst;
+pub(crate) use expected_type_found_service::ExpectedTypeFoundService;
+pub(crate) use import_not_found::ImportNotFound;
+pub(crate) use invalid_array_len::InvalidArrayLen;
+pub(crate) use invalid_const_value::InvalidConstValue;
+pub(crate) use invalid_enum_variant_id::InvalidEnumVariantId;
+pub(crate) use invalid_event_id::InvalidEventId;
+pub(crate) use invalid_function_id::InvalidFunctionId;
+pub(crate) use invalid_key_type::InvalidKeyType;
+pub(crate) use invalid_schema_name::InvalidSchemaName;
+pub(crate) use invalid_service_uuid::InvalidServiceUuid;
+pub(crate) use invalid_service_version::InvalidServiceVersion;
+pub(crate) use invalid_struct_field_id::InvalidStructFieldId;
+pub(crate) use invalid_syntax::InvalidSyntax;
+pub(crate) use io_error::IoError;
+pub(crate) use missing_import::MissingImport;
+pub(crate) use recursive_type::{RecursiveEnum, RecursiveNewtype, RecursiveStruct};
+pub(crate) use type_not_found::TypeNotFound;
 
 #[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
+pub struct Error {
+    kind: ErrorKind,
+}
+
+impl Diagnostic for Error {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Error
+    }
+
+    fn schema_name(&self) -> &str {
+        self.kind.schema_name()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        self.kind.render(renderer, parsed)
+    }
+}
+
+#[derive(Debug)]
+enum ErrorKind {
     ConstIntNotFound(ConstIntNotFound),
     DuplicateDefinition(DuplicateDefinition),
     DuplicateEnumVariant(DuplicateEnumVariant),
@@ -109,7 +127,7 @@ pub enum Error {
     TypeNotFound(TypeNotFound),
 }
 
-impl Diagnostic for Error {
+impl Diagnostic for ErrorKind {
     fn kind(&self) -> DiagnosticKind {
         DiagnosticKind::Error
     }

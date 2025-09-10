@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateEventId {
+pub(crate) struct DuplicateEventId {
     schema_name: String,
     duplicate: LitPosInt,
     first: Span,
@@ -43,22 +43,6 @@ impl DuplicateEventId {
             },
         );
     }
-
-    pub fn duplicate(&self) -> &LitPosInt {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn service_ident(&self) -> &Ident {
-        &self.service_ident
-    }
-
-    pub fn free_id(&self) -> u32 {
-        self.free_id
-    }
 }
 
 impl Diagnostic for DuplicateEventId {
@@ -90,6 +74,8 @@ impl Diagnostic for DuplicateEventId {
 
 impl From<DuplicateEventId> for Error {
     fn from(e: DuplicateEventId) -> Self {
-        Self::DuplicateEventId(e)
+        Self {
+            kind: ErrorKind::DuplicateEventId(e),
+        }
     }
 }

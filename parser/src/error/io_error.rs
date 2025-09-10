@@ -1,9 +1,9 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct IoError {
+pub(crate) struct IoError {
     schema_name: String,
     err: std::io::Error,
 }
@@ -17,10 +17,6 @@ impl IoError {
             schema_name: schema_name.into(),
             err,
         }
-    }
-
-    pub fn io_error(&self) -> &std::io::Error {
-        &self.err
     }
 }
 
@@ -46,6 +42,8 @@ impl Diagnostic for IoError {
 
 impl From<IoError> for Error {
     fn from(e: IoError) -> Self {
-        Self::IoError(e)
+        Self {
+            kind: ErrorKind::IoError(e),
+        }
     }
 }

@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{ArrayLen, ArrayLenValue, ConstValue, Ident, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidArrayLen {
+pub(crate) struct InvalidArrayLen {
     schema_name: String,
     len: ArrayLen,
     value: String,
@@ -77,18 +77,6 @@ impl InvalidArrayLen {
             });
         }
     }
-
-    pub fn len(&self) -> &ArrayLen {
-        &self.len
-    }
-
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-
-    pub fn const_def(&self) -> Option<(&str, &Ident)> {
-        self.const_def.as_ref().map(|(s, i)| (s.as_str(), i))
-    }
 }
 
 impl Diagnostic for InvalidArrayLen {
@@ -120,6 +108,8 @@ impl Diagnostic for InvalidArrayLen {
 
 impl From<InvalidArrayLen> for Error {
     fn from(e: InvalidArrayLen) -> Self {
-        Self::InvalidArrayLen(e)
+        Self {
+            kind: ErrorKind::InvalidArrayLen(e),
+        }
     }
 }

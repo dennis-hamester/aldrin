@@ -69,18 +69,11 @@ impl StructDef {
         DuplicateStructField::validate(
             &self.fields,
             self.fallback.as_ref(),
-            self.name.span(),
             Some(&self.name),
             validate,
         );
 
-        DuplicateStructFieldId::validate(
-            &self.fields,
-            self.name.span(),
-            Some(&self.name),
-            validate,
-        );
-
+        DuplicateStructFieldId::validate(&self.fields, Some(&self.name), validate);
         NonCamelCaseStruct::validate(self, validate);
         RecursiveStruct::validate(self, validate);
 
@@ -166,15 +159,8 @@ impl InlineStruct {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        DuplicateStructField::validate(
-            &self.fields,
-            self.fallback.as_ref(),
-            self.kw_span,
-            None,
-            validate,
-        );
-
-        DuplicateStructFieldId::validate(&self.fields, self.kw_span, None, validate);
+        DuplicateStructField::validate(&self.fields, self.fallback.as_ref(), None, validate);
+        DuplicateStructFieldId::validate(&self.fields, None, validate);
 
         for field in &self.fields {
             field.validate(validate);

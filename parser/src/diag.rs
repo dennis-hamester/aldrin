@@ -1,7 +1,7 @@
 //! Diagnostic information and formatting.
 //!
-//! This module primarily provides the [`Diagnostic`] trait, which is implemented by all
-//! [errors](crate::error) and [warnings](crate::warning).
+//! This module primarily provides the [`Diagnostic`] trait, which is implemented by
+//! [`Error`](crate::Error) and [`Warning`](crate::Warning).
 
 use crate::{Parsed, Schema, Span};
 use annotate_snippets::renderer::DecorStyle;

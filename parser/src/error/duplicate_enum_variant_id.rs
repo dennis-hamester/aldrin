@@ -1,26 +1,20 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateEnumVariantId {
+pub(crate) struct DuplicateEnumVariantId {
     schema_name: String,
     duplicate: LitPosInt,
     first: Span,
-    enum_span: Span,
     enum_ident: Option<Ident>,
     free_id: u32,
 }
 
 impl DuplicateEnumVariantId {
-    pub(crate) fn validate(
-        vars: &[EnumVariant],
-        enum_span: Span,
-        ident: Option<&Ident>,
-        validate: &mut Validate,
-    ) {
+    pub(crate) fn validate(vars: &[EnumVariant], ident: Option<&Ident>, validate: &mut Validate) {
         let mut max_id = vars
             .iter()
             .fold(0, |cur, var| match var.id().value().parse() {
@@ -38,32 +32,11 @@ impl DuplicateEnumVariantId {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.id().clone(),
                     first: first.id().span(),
-                    enum_span,
                     enum_ident: ident.cloned(),
                     free_id,
                 })
             },
         );
-    }
-
-    pub fn duplicate(&self) -> &LitPosInt {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn enum_span(&self) -> Span {
-        self.enum_span
-    }
-
-    pub fn enum_ident(&self) -> Option<&Ident> {
-        self.enum_ident.as_ref()
-    }
-
-    pub fn free_id(&self) -> u32 {
-        self.free_id
     }
 }
 
@@ -102,6 +75,8 @@ impl Diagnostic for DuplicateEnumVariantId {
 
 impl From<DuplicateEnumVariantId> for Error {
     fn from(e: DuplicateEnumVariantId) -> Self {
-        Self::DuplicateEnumVariantId(e)
+        Self {
+            kind: ErrorKind::DuplicateEnumVariantId(e),
+        }
     }
 }

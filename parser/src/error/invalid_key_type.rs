@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::TypeName;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, InvalidKeyTypeKind};
@@ -6,7 +6,7 @@ use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidKeyType {
+pub(crate) struct InvalidKeyType {
     schema_name: String,
     ty: TypeName,
     kind: InvalidKind,
@@ -59,10 +59,6 @@ impl InvalidKeyType {
             ty: ty.clone(),
             kind,
         });
-    }
-
-    pub fn type_name(&self) -> &TypeName {
-        &self.ty
     }
 }
 
@@ -134,6 +130,8 @@ impl Diagnostic for InvalidKeyType {
 
 impl From<InvalidKeyType> for Error {
     fn from(e: InvalidKeyType) -> Self {
-        Self::InvalidKeyType(e)
+        Self {
+            kind: ErrorKind::InvalidKeyType(e),
+        }
     }
 }

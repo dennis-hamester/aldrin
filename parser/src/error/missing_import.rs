@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::SchemaName;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
 #[derive(Debug)]
-pub struct MissingImport {
+pub(crate) struct MissingImport {
     schema_name: String,
     extern_schema: SchemaName,
     candidate: Option<String>,
@@ -28,14 +28,6 @@ impl MissingImport {
             extern_schema: schema_name.clone(),
             candidate,
         });
-    }
-
-    pub fn extern_schema(&self) -> &SchemaName {
-        &self.extern_schema
-    }
-
-    pub fn candidate(&self) -> Option<&str> {
-        self.candidate.as_deref()
     }
 }
 
@@ -71,6 +63,8 @@ impl Diagnostic for MissingImport {
 
 impl From<MissingImport> for Error {
     fn from(e: MissingImport) -> Self {
-        Self::MissingImport(e)
+        Self {
+            kind: ErrorKind::MissingImport(e),
+        }
     }
 }

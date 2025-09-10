@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::grammar::Rule;
 use crate::{LineCol, Parsed, Position, Span};
@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::collections::BTreeSet;
 
 #[derive(Debug)]
-pub struct InvalidSyntax {
+pub(crate) struct InvalidSyntax {
     schema_name: String,
     pos: Position,
     expected: BTreeSet<Expected>,
@@ -36,14 +36,6 @@ impl InvalidSyntax {
             pos,
             expected,
         }
-    }
-
-    pub fn position(&self) -> Position {
-        self.pos
-    }
-
-    pub fn expected(&self) -> &BTreeSet<Expected> {
-        &self.expected
     }
 }
 
@@ -131,12 +123,14 @@ impl Diagnostic for InvalidSyntax {
 
 impl From<InvalidSyntax> for Error {
     fn from(e: InvalidSyntax) -> Self {
-        Self::InvalidSyntax(e)
+        Self {
+            kind: ErrorKind::InvalidSyntax(e),
+        }
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Expected {
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum Expected {
     Attribute,
     DocString,
     DocStringInline,

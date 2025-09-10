@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
 #[derive(Debug)]
-pub struct ConstIntNotFound {
+pub(crate) struct ConstIntNotFound {
     schema_name: String,
     named_ref: NamedRef,
     candidate: Option<String>,
@@ -38,14 +38,6 @@ impl ConstIntNotFound {
             named_ref: named_ref.clone(),
             candidate,
         });
-    }
-
-    pub fn named_ref(&self) -> &NamedRef {
-        &self.named_ref
-    }
-
-    pub fn candidate(&self) -> Option<&str> {
-        self.candidate.as_deref()
     }
 }
 
@@ -96,6 +88,8 @@ impl Diagnostic for ConstIntNotFound {
 
 impl From<ConstIntNotFound> for Error {
     fn from(e: ConstIntNotFound) -> Self {
-        Self::ConstIntNotFound(e)
+        Self {
+            kind: ErrorKind::ConstIntNotFound(e),
+        }
     }
 }

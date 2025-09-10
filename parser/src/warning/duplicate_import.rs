@@ -1,11 +1,11 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::ImportStmt;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Schema, Span};
 
 #[derive(Debug)]
-pub struct DuplicateImport {
+pub(crate) struct DuplicateImport {
     schema_name: String,
     duplicate: ImportStmt,
     first: Span,
@@ -24,14 +24,6 @@ impl DuplicateImport {
                 });
             },
         );
-    }
-
-    pub fn duplicate(&self) -> &ImportStmt {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
     }
 }
 
@@ -63,6 +55,8 @@ impl Diagnostic for DuplicateImport {
 
 impl From<DuplicateImport> for Warning {
     fn from(w: DuplicateImport) -> Self {
-        Self::DuplicateImport(w)
+        Self {
+            kind: WarningKind::DuplicateImport(w),
+        }
     }
 }

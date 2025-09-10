@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
-pub struct NonSnakeCaseStructField {
+pub(crate) struct NonSnakeCaseStructField {
     schema_name: String,
     snake_case: String,
     ident: Ident,
@@ -23,14 +23,6 @@ impl NonSnakeCaseStructField {
                 ident: ident.clone(),
             });
         }
-    }
-
-    pub fn snake_case(&self) -> &str {
-        &self.snake_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -65,6 +57,8 @@ impl Diagnostic for NonSnakeCaseStructField {
 
 impl From<NonSnakeCaseStructField> for Warning {
     fn from(w: NonSnakeCaseStructField) -> Self {
-        Self::NonSnakeCaseStructField(w)
+        Self {
+            kind: WarningKind::NonSnakeCaseStructField(w),
+        }
     }
 }

@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::ConstValue;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidConstValue {
+pub(crate) struct InvalidConstValue {
     schema_name: String,
     const_value: ConstValue,
 }
@@ -30,10 +30,6 @@ impl InvalidConstValue {
                 const_value: const_value.clone(),
             });
         }
-    }
-
-    pub fn const_value(&self) -> &ConstValue {
-        &self.const_value
     }
 }
 
@@ -76,6 +72,8 @@ impl Diagnostic for InvalidConstValue {
 
 impl From<InvalidConstValue> for Error {
     fn from(e: InvalidConstValue) -> Self {
-        Self::InvalidConstValue(e)
+        Self {
+            kind: ErrorKind::InvalidConstValue(e),
+        }
     }
 }

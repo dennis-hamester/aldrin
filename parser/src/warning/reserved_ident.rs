@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, Language, ReservedUsage};
@@ -6,7 +6,7 @@ use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct ReservedIdent {
+pub(crate) struct ReservedIdent {
     schema_name: String,
     ident: Ident,
     usage: ReservedUsage,
@@ -58,6 +58,8 @@ impl Diagnostic for ReservedIdent {
 
 impl From<ReservedIdent> for Warning {
     fn from(w: ReservedIdent) -> Self {
-        Self::ReservedIdent(w)
+        Self {
+            kind: WarningKind::ReservedIdent(w),
+        }
     }
 }

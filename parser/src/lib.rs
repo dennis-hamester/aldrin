@@ -1,5 +1,6 @@
 #![deny(missing_debug_implementations)]
 
+mod error;
 mod grammar;
 mod issues;
 mod parser;
@@ -9,11 +10,10 @@ mod span;
 mod test;
 mod util;
 mod validate;
+mod warning;
 
 pub mod ast;
 pub mod diag;
-pub mod error;
-pub mod warning;
 
 pub use diag::Diagnostic;
 pub use error::Error;

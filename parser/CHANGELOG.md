@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FunctionFallbackDef` is renamed to `FunctionFallback`.
 - `EventFallbackDef` is renamed to `EventFallback`.
 - The renderer for diagnostics was changed and with that the API changed a bit too.
+- `Error` and `Warning` are now opaque types. The respective modules and sub-types have been
+  removed.
 
 ### Fixed
 

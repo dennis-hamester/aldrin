@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::ImportStmt;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub struct ImportNotFound {
+pub(crate) struct ImportNotFound {
     schema_name: String,
     import: ImportStmt,
     tried: Vec<PathBuf>,
@@ -37,14 +37,6 @@ impl ImportNotFound {
             import: import_stmt.clone(),
             tried,
         });
-    }
-
-    pub fn import(&self) -> &ImportStmt {
-        &self.import
-    }
-
-    pub fn tried(&self) -> &[PathBuf] {
-        &self.tried
     }
 }
 
@@ -83,6 +75,8 @@ impl Diagnostic for ImportNotFound {
 
 impl From<ImportNotFound> for Error {
     fn from(e: ImportNotFound) -> Self {
-        Self::ImportNotFound(e)
+        Self {
+            kind: ErrorKind::ImportNotFound(e),
+        }
     }
 }

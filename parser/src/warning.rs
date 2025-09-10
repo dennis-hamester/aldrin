@@ -16,24 +16,42 @@ mod unused_import;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
-pub use duplicate_import::DuplicateImport;
-pub use non_camel_case_enum::NonCamelCaseEnum;
-pub use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
-pub use non_camel_case_newtype::NonCamelCaseNewtype;
-pub use non_camel_case_service::NonCamelCaseService;
-pub use non_camel_case_struct::NonCamelCaseStruct;
-pub use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
-pub use non_snake_case_event::NonSnakeCaseEvent;
-pub use non_snake_case_function::NonSnakeCaseFunction;
-pub use non_snake_case_schema_name::NonSnakeCaseSchemaName;
-pub use non_snake_case_struct_field::NonSnakeCaseStructField;
-pub use reserved_ident::ReservedIdent;
-pub use reserved_schema_name::ReservedSchemaName;
-pub use unused_import::UnusedImport;
+pub(crate) use duplicate_import::DuplicateImport;
+pub(crate) use non_camel_case_enum::NonCamelCaseEnum;
+pub(crate) use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
+pub(crate) use non_camel_case_newtype::NonCamelCaseNewtype;
+pub(crate) use non_camel_case_service::NonCamelCaseService;
+pub(crate) use non_camel_case_struct::NonCamelCaseStruct;
+pub(crate) use non_shouty_snake_case_const::NonShoutySnakeCaseConst;
+pub(crate) use non_snake_case_event::NonSnakeCaseEvent;
+pub(crate) use non_snake_case_function::NonSnakeCaseFunction;
+pub(crate) use non_snake_case_schema_name::NonSnakeCaseSchemaName;
+pub(crate) use non_snake_case_struct_field::NonSnakeCaseStructField;
+pub(crate) use reserved_ident::ReservedIdent;
+pub(crate) use reserved_schema_name::ReservedSchemaName;
+pub(crate) use unused_import::UnusedImport;
 
 #[derive(Debug)]
-#[non_exhaustive]
-pub enum Warning {
+pub struct Warning {
+    kind: WarningKind,
+}
+
+impl Diagnostic for Warning {
+    fn kind(&self) -> DiagnosticKind {
+        DiagnosticKind::Warning
+    }
+
+    fn schema_name(&self) -> &str {
+        self.kind.schema_name()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        self.kind.render(renderer, parsed)
+    }
+}
+
+#[derive(Debug)]
+enum WarningKind {
     DuplicateImport(DuplicateImport),
     NonCamelCaseEnum(NonCamelCaseEnum),
     NonCamelCaseEnumVariant(NonCamelCaseEnumVariant),
@@ -50,7 +68,7 @@ pub enum Warning {
     UnusedImport(UnusedImport),
 }
 
-impl Diagnostic for Warning {
+impl Diagnostic for WarningKind {
     fn kind(&self) -> DiagnosticKind {
         DiagnosticKind::Warning
     }

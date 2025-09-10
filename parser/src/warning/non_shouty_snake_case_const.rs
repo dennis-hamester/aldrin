@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{ConstDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToShoutySnakeCase;
 
 #[derive(Debug)]
-pub struct NonShoutySnakeCaseConst {
+pub(crate) struct NonShoutySnakeCaseConst {
     schema_name: String,
     shouty_snake_case: String,
     ident: Ident,
@@ -22,14 +22,6 @@ impl NonShoutySnakeCaseConst {
                 ident: const_def.name().clone(),
             });
         }
-    }
-
-    pub fn shouty_snake_case(&self) -> &str {
-        &self.shouty_snake_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -64,6 +56,8 @@ impl Diagnostic for NonShoutySnakeCaseConst {
 
 impl From<NonShoutySnakeCaseConst> for Warning {
     fn from(w: NonShoutySnakeCaseConst) -> Self {
-        Self::NonShoutySnakeCaseConst(w)
+        Self {
+            kind: WarningKind::NonShoutySnakeCaseConst(w),
+        }
     }
 }

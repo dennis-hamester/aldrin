@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateServiceItem {
+pub(crate) struct DuplicateServiceItem {
     schema_name: String,
     duplicate: Ident,
     first: Span,
@@ -81,18 +81,6 @@ impl DuplicateServiceItem {
             }
         }
     }
-
-    pub fn duplicate(&self) -> &Ident {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn service_ident(&self) -> &Ident {
-        &self.service_ident
-    }
 }
 
 impl Diagnostic for DuplicateServiceItem {
@@ -123,6 +111,8 @@ impl Diagnostic for DuplicateServiceItem {
 
 impl From<DuplicateServiceItem> for Error {
     fn from(e: DuplicateServiceItem) -> Self {
-        Self::DuplicateServiceItem(e)
+        Self {
+            kind: ErrorKind::DuplicateServiceItem(e),
+        }
     }
 }

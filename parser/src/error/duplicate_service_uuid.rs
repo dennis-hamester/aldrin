@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitUuid};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::issues::Issues;
@@ -6,7 +6,7 @@ use crate::{Parsed, Schema};
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct DuplicateServiceUuid {
+pub(crate) struct DuplicateServiceUuid {
     schema_name: String,
     uuid: LitUuid,
     svc_idents: Vec<(String, Ident)>,
@@ -47,14 +47,6 @@ impl DuplicateServiceUuid {
             }
         }
     }
-
-    pub fn uuid(&self) -> &LitUuid {
-        &self.uuid
-    }
-
-    pub fn service_idents(&self) -> &[(String, Ident)] {
-        &self.svc_idents
-    }
 }
 
 impl Diagnostic for DuplicateServiceUuid {
@@ -86,6 +78,8 @@ impl Diagnostic for DuplicateServiceUuid {
 
 impl From<DuplicateServiceUuid> for Error {
     fn from(e: DuplicateServiceUuid) -> Self {
-        Self::DuplicateServiceUuid(e)
+        Self {
+            kind: ErrorKind::DuplicateServiceUuid(e),
+        }
     }
 }

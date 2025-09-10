@@ -1,9 +1,9 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidSchemaName {
+pub(crate) struct InvalidSchemaName {
     schema_name: String,
 }
 
@@ -41,6 +41,8 @@ impl Diagnostic for InvalidSchemaName {
 
 impl From<InvalidSchemaName> for Error {
     fn from(e: InvalidSchemaName) -> Self {
-        Self::InvalidSchemaName(e)
+        Self {
+            kind: ErrorKind::InvalidSchemaName(e),
+        }
     }
 }

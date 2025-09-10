@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Schema, Span};
 
 #[derive(Debug)]
-pub struct DuplicateDefinition {
+pub(crate) struct DuplicateDefinition {
     schema_name: String,
     duplicate: Ident,
     first: Span,
@@ -24,14 +24,6 @@ impl DuplicateDefinition {
                 });
             },
         );
-    }
-
-    pub fn duplicate(&self) -> &Ident {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
     }
 }
 
@@ -60,6 +52,8 @@ impl Diagnostic for DuplicateDefinition {
 
 impl From<DuplicateDefinition> for Error {
     fn from(e: DuplicateDefinition) -> Self {
-        Self::DuplicateDefinition(e)
+        Self {
+            kind: ErrorKind::DuplicateDefinition(e),
+        }
     }
 }

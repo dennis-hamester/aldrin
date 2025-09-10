@@ -1,4 +1,4 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{
     Definition, EnumDef, Ident, NamedRef, NamedRefKind, NewtypeDef, StructDef, TypeName,
     TypeNameKind,
@@ -9,7 +9,7 @@ use crate::{Parsed, Schema};
 use std::ops::ControlFlow;
 
 #[derive(Debug)]
-pub struct RecursiveStruct {
+pub(crate) struct RecursiveStruct {
     schema_name: String,
     ident: Ident,
 }
@@ -22,10 +22,6 @@ impl RecursiveStruct {
                 ident: struct_def.name().clone(),
             });
         }
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -42,7 +38,7 @@ impl Diagnostic for RecursiveStruct {
         let mut report = renderer.error(format!("recursive struct `{}`", self.ident.value()));
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            report = report.snippet(schema, self.ident().span(), "");
+            report = report.snippet(schema, self.ident.span(), "");
         }
 
         report = report
@@ -55,12 +51,14 @@ impl Diagnostic for RecursiveStruct {
 
 impl From<RecursiveStruct> for Error {
     fn from(e: RecursiveStruct) -> Self {
-        Self::RecursiveStruct(e)
+        Self {
+            kind: ErrorKind::RecursiveStruct(e),
+        }
     }
 }
 
 #[derive(Debug)]
-pub struct RecursiveEnum {
+pub(crate) struct RecursiveEnum {
     schema_name: String,
     ident: Ident,
 }
@@ -73,10 +71,6 @@ impl RecursiveEnum {
                 ident: enum_def.name().clone(),
             });
         }
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -93,7 +87,7 @@ impl Diagnostic for RecursiveEnum {
         let mut report = renderer.error(format!("recursive enum `{}`", self.ident.value()));
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            report = report.snippet(schema, self.ident().span(), "");
+            report = report.snippet(schema, self.ident.span(), "");
         }
 
         report = report
@@ -106,12 +100,14 @@ impl Diagnostic for RecursiveEnum {
 
 impl From<RecursiveEnum> for Error {
     fn from(e: RecursiveEnum) -> Self {
-        Self::RecursiveEnum(e)
+        Self {
+            kind: ErrorKind::RecursiveEnum(e),
+        }
     }
 }
 
 #[derive(Debug)]
-pub struct RecursiveNewtype {
+pub(crate) struct RecursiveNewtype {
     schema_name: String,
     ident: Ident,
 }
@@ -124,10 +120,6 @@ impl RecursiveNewtype {
                 ident: newtype_def.name().clone(),
             });
         }
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -144,7 +136,7 @@ impl Diagnostic for RecursiveNewtype {
         let mut report = renderer.error(format!("recursive newtype `{}`", self.ident.value()));
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            report = report.snippet(schema, self.ident().span(), "");
+            report = report.snippet(schema, self.ident.span(), "");
         }
 
         report = report
@@ -157,7 +149,9 @@ impl Diagnostic for RecursiveNewtype {
 
 impl From<RecursiveNewtype> for Error {
     fn from(e: RecursiveNewtype) -> Self {
-        Self::RecursiveNewtype(e)
+        Self {
+            kind: ErrorKind::RecursiveNewtype(e),
+        }
     }
 }
 

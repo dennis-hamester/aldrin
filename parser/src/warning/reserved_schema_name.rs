@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub struct ReservedSchemaName {
+pub(crate) struct ReservedSchemaName {
     schema_name: String,
     path: PathBuf,
     usage: ReservedUsage,
@@ -59,6 +59,8 @@ impl Diagnostic for ReservedSchemaName {
 
 impl From<ReservedSchemaName> for Warning {
     fn from(w: ReservedSchemaName) -> Self {
-        Self::ReservedSchemaName(w)
+        Self {
+            kind: WarningKind::ReservedSchemaName(w),
+        }
     }
 }

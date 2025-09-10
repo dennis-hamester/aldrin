@@ -1,11 +1,11 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{FunctionDef, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
 #[derive(Debug)]
-pub struct InvalidFunctionId {
+pub(crate) struct InvalidFunctionId {
     schema_name: String,
     id: LitPosInt,
     name_ident: Ident,
@@ -22,14 +22,6 @@ impl InvalidFunctionId {
             id: func.id().clone(),
             name_ident: func.name().clone(),
         });
-    }
-
-    pub fn id(&self) -> &LitPosInt {
-        &self.id
-    }
-
-    pub fn name_ident(&self) -> &Ident {
-        &self.name_ident
     }
 }
 
@@ -60,6 +52,8 @@ impl Diagnostic for InvalidFunctionId {
 
 impl From<InvalidFunctionId> for Error {
     fn from(e: InvalidFunctionId) -> Self {
-        Self::InvalidFunctionId(e)
+        Self {
+            kind: ErrorKind::InvalidFunctionId(e),
+        }
     }
 }

@@ -1,15 +1,14 @@
-use super::Error;
+use super::{Error, ErrorKind};
 use crate::ast::{Ident, StructFallback, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
 #[derive(Debug)]
-pub struct DuplicateStructField {
+pub(crate) struct DuplicateStructField {
     schema_name: String,
     duplicate: Ident,
     first: Span,
-    struct_span: Span,
     struct_ident: Option<Ident>,
 }
 
@@ -17,7 +16,6 @@ impl DuplicateStructField {
     pub(crate) fn validate(
         fields: &[StructField],
         fallback: Option<&StructFallback>,
-        struct_span: Span,
         ident: Option<&Ident>,
         validate: &mut Validate,
     ) {
@@ -29,7 +27,6 @@ impl DuplicateStructField {
                     schema_name: validate.schema_name().to_owned(),
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
-                    struct_span,
                     struct_ident: ident.cloned(),
                 })
             },
@@ -42,7 +39,6 @@ impl DuplicateStructField {
                         schema_name: validate.schema_name().to_owned(),
                         duplicate: fallback.name().clone(),
                         first: field.name().span(),
-                        struct_span,
                         struct_ident: ident.cloned(),
                     });
 
@@ -50,22 +46,6 @@ impl DuplicateStructField {
                 }
             }
         }
-    }
-
-    pub fn duplicate(&self) -> &Ident {
-        &self.duplicate
-    }
-
-    pub fn first(&self) -> Span {
-        self.first
-    }
-
-    pub fn struct_span(&self) -> Span {
-        self.struct_span
-    }
-
-    pub fn struct_ident(&self) -> Option<&Ident> {
-        self.struct_ident.as_ref()
     }
 }
 
@@ -106,6 +86,8 @@ impl Diagnostic for DuplicateStructField {
 
 impl From<DuplicateStructField> for Error {
     fn from(e: DuplicateStructField) -> Self {
-        Self::DuplicateStructField(e)
+        Self {
+            kind: ErrorKind::DuplicateStructField(e),
+        }
     }
 }

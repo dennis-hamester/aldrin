@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{FunctionDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
-pub struct NonSnakeCaseFunction {
+pub(crate) struct NonSnakeCaseFunction {
     schema_name: String,
     snake_case: String,
     ident: Ident,
@@ -22,14 +22,6 @@ impl NonSnakeCaseFunction {
                 ident: func.name().clone(),
             });
         }
-    }
-
-    pub fn snake_case(&self) -> &str {
-        &self.snake_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -64,6 +56,8 @@ impl Diagnostic for NonSnakeCaseFunction {
 
 impl From<NonSnakeCaseFunction> for Warning {
     fn from(w: NonSnakeCaseFunction) -> Self {
-        Self::NonSnakeCaseFunction(w)
+        Self {
+            kind: WarningKind::NonSnakeCaseFunction(w),
+        }
     }
 }

@@ -1,4 +1,4 @@
-use super::Warning;
+use super::{Warning, WarningKind};
 use crate::ast::{Ident, NewtypeDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -6,7 +6,7 @@ use crate::Parsed;
 use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
-pub struct NonCamelCaseNewtype {
+pub(crate) struct NonCamelCaseNewtype {
     schema_name: String,
     camel_case: String,
     ident: Ident,
@@ -23,14 +23,6 @@ impl NonCamelCaseNewtype {
                 ident: newtype_def.name().clone(),
             });
         }
-    }
-
-    pub fn camel_case(&self) -> &str {
-        &self.camel_case
-    }
-
-    pub fn ident(&self) -> &Ident {
-        &self.ident
     }
 }
 
@@ -65,6 +57,8 @@ impl Diagnostic for NonCamelCaseNewtype {
 
 impl From<NonCamelCaseNewtype> for Warning {
     fn from(w: NonCamelCaseNewtype) -> Self {
-        Self::NonCamelCaseNewtype(w)
+        Self {
+            kind: WarningKind::NonCamelCaseNewtype(w),
+        }
     }
 }
