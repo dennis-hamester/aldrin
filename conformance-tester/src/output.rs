@@ -6,6 +6,7 @@ use anstyle::{AnsiColor, Color, Style};
 use anyhow::Result;
 use std::io::Write;
 use std::time::Duration;
+use textwrap::Options;
 
 const fn style(fg: Option<AnsiColor>, bold: bool) -> Style {
     let mut style = Style::new();
@@ -78,9 +79,13 @@ pub(crate) fn describe_test(test: &Test) {
         println!();
         println!("Description:");
 
-        let termwidth = get_termwidth();
-        let long_description = bwrap::wrap_nobrk!(long_description, termwidth - 4, "  ");
-        println!("  {}", long_description);
+        let options = Options::new(get_termwidth())
+            .initial_indent("  ")
+            .subsequent_indent("  ");
+
+        for line in textwrap::wrap(long_description, options) {
+            println!("{line}");
+        }
     }
 
     println!();

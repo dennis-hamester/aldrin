@@ -5,8 +5,6 @@ wildcards = "deny"
 workspace-default-features = "deny"
 
 skip = [
-    "unicode-width@0.1",
-    "unicode-width@0.2",
     "windows-sys@0.48",
     "windows-sys@0.59",
     "windows-targets@0.48",
