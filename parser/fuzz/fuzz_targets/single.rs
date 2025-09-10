@@ -1,7 +1,6 @@
 #![no_main]
 
-use aldrin_parser::diag::Renderer;
-use aldrin_parser::{Parsed, Parser};
+use aldrin_parser::{Parsed, Parser, Renderer};
 use libfuzzer_sys::fuzz_target;
 use std::io::Write;
 use tempfile::NamedTempFile;

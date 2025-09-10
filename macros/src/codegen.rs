@@ -1,6 +1,5 @@
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::diag::Renderer;
-use aldrin_parser::Parser;
+use aldrin_parser::{Parser, Renderer};
 use manyhow::{emit, Emitter};
 use proc_macro2::Span;
 use quote::ToTokens;

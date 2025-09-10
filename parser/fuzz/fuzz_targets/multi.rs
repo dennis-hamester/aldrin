@@ -1,7 +1,6 @@
 #![no_main]
 
-use aldrin_parser::diag::Renderer;
-use aldrin_parser::{Parsed, Parser};
+use aldrin_parser::{Parsed, Parser, Renderer};
 use libfuzzer_sys::{fuzz_target, Corpus};
 use std::collections::HashMap;
 use std::fs;

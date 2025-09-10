@@ -1,5 +1,4 @@
-use aldrin_parser::diag::{Diagnostic, Renderer};
-use aldrin_parser::Parsed;
+use aldrin_parser::{Diagnostic, Parsed, Renderer};
 use anstream::eprintln;
 
 pub(crate) fn print_diagnostics(parsed: &Parsed) {
