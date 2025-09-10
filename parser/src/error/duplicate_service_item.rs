@@ -65,7 +65,7 @@ impl DuplicateServiceItem {
             if let (Some(func), Some(ev)) = (service.function_fallback(), service.event_fallback())
             {
                 if func.name().value() == ev.name().value() {
-                    let (duplicate, first) = if func.span().from < ev.span().from {
+                    let (duplicate, first) = if func.span().start < ev.span().end {
                         (ev.name().clone(), func.name().span())
                     } else {
                         (func.name().clone(), ev.name().span())

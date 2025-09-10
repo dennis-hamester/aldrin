@@ -1,14 +1,15 @@
 use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::grammar::Rule;
-use crate::{LineCol, Parsed, Position, Span};
+use crate::{Parsed, Span};
+use pest::error::InputLocation;
 use std::borrow::Cow;
 use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub(crate) struct InvalidSyntax {
     schema_name: String,
-    pos: Position,
+    pos: usize,
     expected: BTreeSet<Expected>,
 }
 
@@ -19,7 +20,10 @@ impl InvalidSyntax {
     {
         use pest::error::ErrorVariant;
 
-        let pos = Position::from_pest_error(&err);
+        let pos = match err.location {
+            InputLocation::Pos(index) => index,
+            InputLocation::Span((from, _)) => from,
+        };
 
         let positives = match err.variant {
             ErrorVariant::ParsingError { positives, .. } => positives,
@@ -97,21 +101,15 @@ impl Diagnostic for InvalidSyntax {
         let mut report = renderer.error(title);
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            let width = schema.source().unwrap()[self.pos.index..]
+            let width = schema.source().unwrap()[self.pos..]
                 .chars()
                 .next()
                 .map(char::len_utf8)
                 .unwrap_or(1);
 
             let span = Span {
-                from: self.pos,
-                to: Position {
-                    index: self.pos.index + width,
-                    line_col: LineCol {
-                        line: self.pos.line_col.line,
-                        column: self.pos.line_col.column + width,
-                    },
-                },
+                start: self.pos,
+                end: self.pos + width,
             };
 
             report = report.snippet(schema, span, "");

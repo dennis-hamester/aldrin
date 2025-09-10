@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The renderer for diagnostics was changed and with that the API changed a bit too.
 - `Error` and `Warning` are now opaque types. The respective modules and sub-types have been
   removed.
+- `Span` has been simplified to just a pair of indices.
+- `Position` and `LineCol` have been removed.
 
 ### Fixed
 

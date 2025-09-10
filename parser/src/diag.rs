@@ -100,7 +100,7 @@ impl<'a> Report<'a> {
                 .path(schema.path().to_string_lossy())
                 .annotation(
                     AnnotationKind::Primary
-                        .span(span.from.index..span.to.index)
+                        .span(span.start..span.end)
                         .label(Some(label)),
                 ),
         );
@@ -119,7 +119,7 @@ impl<'a> Report<'a> {
                 .path(schema.path().to_string_lossy())
                 .annotation(
                     AnnotationKind::Context
-                        .span(span.from.index..span.to.index)
+                        .span(span.start..span.end)
                         .label(Some(label)),
                 ),
         );
