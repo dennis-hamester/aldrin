@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service or const.
 - Fix a crash when a recursive type is used.
 - Require whitespace after the `required` keyword in a struct field.
+- Fix a crash when parsing files with characters longer than one byte.
 
 ## [0.12.0] - 2025-01-26
 

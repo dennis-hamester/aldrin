@@ -105,13 +105,19 @@ impl Diagnostic for InvalidSyntax {
         let mut report = renderer.error(title);
 
         if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            let width = schema.source().unwrap()[self.pos.index..]
+                .chars()
+                .next()
+                .map(char::len_utf8)
+                .unwrap_or(1);
+
             let span = Span {
                 from: self.pos,
                 to: Position {
-                    index: self.pos.index + 1,
+                    index: self.pos.index + width,
                     line_col: LineCol {
                         line: self.pos.line_col.line,
-                        column: self.pos.line_col.column + 1,
+                        column: self.pos.line_col.column + width,
                     },
                 },
             };
