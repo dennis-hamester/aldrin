@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, ServiceDef};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
@@ -125,6 +125,22 @@ impl Diagnostic for DuplicateServiceItem {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.error(format!(
+            "duplicate item `{}` in service `{}`",
+            self.duplicate.value(),
+            self.service_ident.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate defined here")
+                .context(schema, self.first, "first defined here");
+        }
+
+        report.render()
     }
 }
 

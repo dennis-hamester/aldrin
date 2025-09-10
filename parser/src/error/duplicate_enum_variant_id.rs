@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{EnumVariant, Ident, LitPosInt};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
@@ -105,6 +105,29 @@ impl Diagnostic for DuplicateEnumVariantId {
 
         fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let title = if let Some(ref ident) = self.enum_ident {
+            format!(
+                "duplicate id `{}` in enum `{}`",
+                self.duplicate.value(),
+                ident.value()
+            )
+        } else {
+            format!("duplicate id `{}` in inline enum", self.duplicate.value())
+        };
+
+        let mut report = renderer.error(title);
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate defined here")
+                .context(schema, self.first, "first defined here");
+        }
+
+        report = report.help(format!("use a free id, e.g. {}", self.free_id));
+        report.render()
     }
 }
 

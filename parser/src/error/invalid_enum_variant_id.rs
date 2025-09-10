@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{EnumVariant, Ident, LitPosInt};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
@@ -63,6 +63,21 @@ impl Diagnostic for InvalidEnumVariantId {
 
         fmt.help("ids must be u32 values in the range from 0 to 4294967295");
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.error(format!(
+            "invalid id `{}` for enum variant `{}`",
+            self.id.value(),
+            self.var_ident.value(),
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.id.span(), "id defined here");
+        }
+
+        report = report.help("ids must be u32 values in the range from 0 to 4294967295");
+        report.render()
     }
 }
 

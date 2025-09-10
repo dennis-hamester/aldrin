@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, LitPosInt, StructField};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
@@ -105,6 +105,29 @@ impl Diagnostic for DuplicateStructFieldId {
 
         fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let title = match self.struct_ident {
+            Some(ref ident) => format!(
+                "duplicate id `{}` in struct `{}`",
+                self.duplicate.value(),
+                ident.value()
+            ),
+
+            None => format!("duplicate id `{}` in inline struct", self.duplicate.value()),
+        };
+
+        let mut report = renderer.error(title);
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate defined here")
+                .context(schema, self.first, "first defined here");
+        }
+
+        report = report.help(format!("use a free id, e.g. {}", self.free_id));
+        report.render()
     }
 }
 

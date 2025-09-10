@@ -1,5 +1,5 @@
 use super::Warning;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -57,6 +57,29 @@ impl Diagnostic for ReservedSchemaName {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, _parsed: &Parsed) -> String {
+        let mut report = renderer.warning(format!(
+            "the schema name `{}` is reserved in some language(s)",
+            self.schema_name,
+        ));
+
+        report = report.note(format!(
+            "the schema is located at `{}`",
+            self.path.display(),
+        ));
+
+        for (kind, langs) in self.usage {
+            report = report.note(format!(
+                "`{}` is {} in {}",
+                self.schema_name,
+                kind,
+                Language::fmt_list(langs),
+            ));
+        }
+
+        report.render()
     }
 }
 

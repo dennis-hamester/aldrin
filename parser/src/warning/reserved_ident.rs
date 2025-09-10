@@ -1,6 +1,6 @@
 use super::Warning;
 use crate::ast::Ident;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -61,6 +61,28 @@ impl Diagnostic for ReservedIdent {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.warning(format!(
+            "the identifer `{}` is reserved in some language(s)",
+            self.ident.value(),
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.ident.span(), "keyword used here");
+        }
+
+        for (kind, langs) in self.usage {
+            report = report.note(format!(
+                "`{}` is {} in {}",
+                self.ident.value(),
+                kind,
+                Language::fmt_list(langs),
+            ));
+        }
+
+        report.render()
     }
 }
 

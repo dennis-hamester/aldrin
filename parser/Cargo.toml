@@ -23,6 +23,10 @@ all-features = true
 [dependencies]
 heck = { workspace = true }
 
+[dependencies.annotate-snippets]
+version = "0.12.3"
+default-features = false
+
 [dependencies.pest]
 version = "2.7.15"
 default-features = false

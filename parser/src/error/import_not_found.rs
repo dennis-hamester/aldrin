@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::ImportStmt;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 use std::path::PathBuf;
@@ -81,6 +81,29 @@ impl Diagnostic for ImportNotFound {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.error(format!(
+            "file not found for schema `{}`",
+            self.import.schema_name().value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.import.span(), "");
+        }
+
+        if self.tried.is_empty() {
+            report = report.help("no include directories were specified");
+        } else {
+            report = report.help("an include directory may be missing or incorrect");
+        }
+
+        for tried in &self.tried {
+            report = report.note(format!("tried `{}`", tried.display()));
+        }
+
+        report.render()
     }
 }
 

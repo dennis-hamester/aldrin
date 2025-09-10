@@ -1,5 +1,5 @@
 use super::Error;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::grammar::Rule;
 use crate::{LineCol, Parsed, Position, Span};
 use std::borrow::Cow;
@@ -120,6 +120,72 @@ impl Diagnostic for InvalidSyntax {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut title = "expected ".to_owned();
+        let mut iter = self.expected.iter().peekable();
+        let mut first = true;
+        let mut eof = false;
+
+        while let Some(expected) = iter.next() {
+            let expected: Cow<'static, str> = match expected {
+                Expected::Attribute => "an attribute".into(),
+                Expected::DocString => "a doc string".into(),
+                Expected::DocStringInline => "an inline doc string".into(),
+
+                Expected::Eof => {
+                    eof = true;
+                    continue;
+                }
+
+                Expected::Ident => "an identifier".into(),
+                Expected::Keyword(kw) => format!("`{kw}`").into(),
+                Expected::LitInt => "an integer literal".into(),
+                Expected::LitPosInt => "a positive integer literal".into(),
+                Expected::LitString => "a string literal".into(),
+                Expected::LitUuid => "a uuid literal".into(),
+                Expected::SchemaName => "a schema name".into(),
+                Expected::Token(tok) => format!("`{tok}`").into(),
+            };
+
+            if first {
+                first = false;
+            } else if iter.peek().is_some() || eof {
+                title.push_str(", ");
+            } else {
+                title.push_str(" or ");
+            }
+
+            title.push_str(&expected);
+        }
+
+        if eof {
+            if first {
+                title.push_str("end of file");
+            } else {
+                title.push_str(" or end of file");
+            }
+        }
+
+        let mut report = renderer.error(title);
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            let span = Span {
+                from: self.pos,
+                to: Position {
+                    index: self.pos.index + 1,
+                    line_col: LineCol {
+                        line: self.pos.line_col.line,
+                        column: self.pos.line_col.column + 1,
+                    },
+                },
+            };
+
+            report = report.snippet(schema, span, "");
+        }
+
+        report.render()
     }
 }
 

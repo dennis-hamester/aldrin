@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::TypeName;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::util::{self, InvalidKeyTypeKind};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -132,6 +132,52 @@ impl Diagnostic for InvalidKeyType {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let ty_kind = self.ty.kind();
+        let mut report = renderer.error(format!("invalid key type `{ty_kind}`"));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.ty.span(), "type used here");
+        }
+
+        report = report.help(
+            "allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,\n\
+             `string`, `uuid` and newtypes resolving to one of those",
+        );
+
+        match self.kind {
+            InvalidKind::BuiltIn => {}
+
+            InvalidKind::Struct => {
+                report = report.note(format!("`{ty_kind}` is a struct"));
+            }
+
+            InvalidKind::Enum => {
+                report = report.note(format!("`{ty_kind}` is an enum"));
+            }
+
+            InvalidKind::NewtypeToBuiltIn(ref name) => {
+                report = report.note(format!(
+                    "`{ty_kind}` is a newtype, that resolves to `{name}`",
+                ));
+            }
+
+            InvalidKind::NewtypeToStruct(ref name) => {
+                report = report.note(format!(
+                    "`{ty_kind}` is a newtype, that resolves to the struct `{name}`",
+                ));
+            }
+
+            InvalidKind::NewtypeToEnum(ref name) => {
+                report = report.note(format!(
+                    "`{ty_kind}` is a newtype, that resolves to the enum `{name}`",
+                ));
+            }
+        }
+
+        report.render()
     }
 }
 

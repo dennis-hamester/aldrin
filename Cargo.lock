@@ -136,12 +136,13 @@ dependencies = [
 name = "aldrin-parser"
 version = "0.12.0"
 dependencies = [
+ "annotate-snippets",
  "heck",
  "pest",
  "pest_derive",
  "strsim",
  "unicode-segmentation",
- "unicode-width",
+ "unicode-width 0.1.11",
  "uuid",
 ]
 
@@ -155,6 +156,16 @@ dependencies = [
  "anyhow",
  "futures-util",
  "tokio",
+]
+
+[[package]]
+name = "annotate-snippets"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b0f1e2f8ec4bff67c7e1867001ec452595daf315cce10c393b7d4274024f878"
+dependencies = [
+ "anstyle",
+ "unicode-width 0.2.1",
 ]
 
 [[package]]
@@ -257,7 +268,7 @@ version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d13da3319ae5c5771712fba7b79b028793149bc462a08990bc8fd7c7554dbb95"
 dependencies = [
- "unicode-width",
+ "unicode-width 0.1.11",
 ]
 
 [[package]]
@@ -990,6 +1001,12 @@ name = "unicode-width"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
+
+[[package]]
+name = "unicode-width"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a1a07cc7db3810833284e8d372ccdc6da29741639ecc70c9ec107df0fa6154c"
 
 [[package]]
 name = "utf8parse"

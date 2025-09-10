@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::Ident;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Schema, Span};
 
@@ -61,6 +61,19 @@ impl Diagnostic for DuplicateDefinition {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report =
+            renderer.error(format!("duplicate definition `{}`", self.duplicate.value()));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate definition")
+                .context(schema, self.first, "first defined here");
+        }
+
+        report.render()
     }
 }
 

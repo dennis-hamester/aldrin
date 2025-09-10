@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{NamedRef, NamedRefKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
@@ -97,6 +97,28 @@ impl Diagnostic for ExpectedTypeFoundConst {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.error(format!(
+            "expected type; found constant `{}`",
+            self.named_ref.ident().value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.named_ref.span(), "type expected here");
+        }
+
+        if let Some(ref candidate) = self.candidate {
+            let msg = match self.named_ref.schema() {
+                Some(schema) => format!("did you mean `{}::{candidate}`?", schema.value()),
+                None => format!("did you mean `{candidate}`?"),
+            };
+
+            report = report.help(msg);
+        }
+
+        report.render()
     }
 }
 

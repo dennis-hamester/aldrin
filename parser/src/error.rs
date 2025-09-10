@@ -32,7 +32,7 @@ mod missing_import;
 mod recursive_type;
 mod type_not_found;
 
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Renderer};
 use crate::Parsed;
 
 pub use const_int_not_found::ConstIntNotFound;
@@ -191,6 +191,46 @@ impl Diagnostic for Error {
             Self::RecursiveNewtype(e) => e.format(parsed),
             Self::RecursiveStruct(e) => e.format(parsed),
             Self::TypeNotFound(e) => e.format(parsed),
+        }
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        match self {
+            Self::ConstIntNotFound(e) => e.render(renderer, parsed),
+            Self::DuplicateDefinition(e) => e.render(renderer, parsed),
+            Self::DuplicateEnumVariant(e) => e.render(renderer, parsed),
+            Self::DuplicateEnumVariantId(e) => e.render(renderer, parsed),
+            Self::DuplicateEventId(e) => e.render(renderer, parsed),
+            Self::DuplicateFunctionId(e) => e.render(renderer, parsed),
+            Self::DuplicateServiceItem(e) => e.render(renderer, parsed),
+            Self::DuplicateServiceUuid(e) => e.render(renderer, parsed),
+            Self::DuplicateStructField(e) => e.render(renderer, parsed),
+            Self::DuplicateStructFieldId(e) => e.render(renderer, parsed),
+            Self::EmptyEnum(e) => e.render(renderer, parsed),
+            Self::ExpectedConstIntFoundService(e) => e.render(renderer, parsed),
+            Self::ExpectedConstIntFoundString(e) => e.render(renderer, parsed),
+            Self::ExpectedConstIntFoundType(e) => e.render(renderer, parsed),
+            Self::ExpectedConstIntFoundUuid(e) => e.render(renderer, parsed),
+            Self::ExpectedTypeFoundConst(e) => e.render(renderer, parsed),
+            Self::ExpectedTypeFoundService(e) => e.render(renderer, parsed),
+            Self::ImportNotFound(e) => e.render(renderer, parsed),
+            Self::InvalidArrayLen(e) => e.render(renderer, parsed),
+            Self::InvalidConstValue(e) => e.render(renderer, parsed),
+            Self::InvalidEnumVariantId(e) => e.render(renderer, parsed),
+            Self::InvalidEventId(e) => e.render(renderer, parsed),
+            Self::InvalidFunctionId(e) => e.render(renderer, parsed),
+            Self::InvalidKeyType(e) => e.render(renderer, parsed),
+            Self::InvalidSchemaName(e) => e.render(renderer, parsed),
+            Self::InvalidServiceUuid(e) => e.render(renderer, parsed),
+            Self::InvalidServiceVersion(e) => e.render(renderer, parsed),
+            Self::InvalidStructFieldId(e) => e.render(renderer, parsed),
+            Self::InvalidSyntax(e) => e.render(renderer, parsed),
+            Self::IoError(e) => e.render(renderer, parsed),
+            Self::MissingImport(e) => e.render(renderer, parsed),
+            Self::RecursiveEnum(e) => e.render(renderer, parsed),
+            Self::RecursiveNewtype(e) => e.render(renderer, parsed),
+            Self::RecursiveStruct(e) => e.render(renderer, parsed),
+            Self::TypeNotFound(e) => e.render(renderer, parsed),
         }
     }
 }

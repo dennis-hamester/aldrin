@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{NamedRef, NamedRefKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
@@ -103,6 +103,41 @@ impl Diagnostic for ConstIntNotFound {
         }
 
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let (title, schema) = match self.named_ref.kind() {
+            NamedRefKind::Intern(ident) => (
+                format!("integer constant `{}` not found", ident.value()),
+                None,
+            ),
+
+            NamedRefKind::Extern(schema, ident) => (
+                format!(
+                    "integer constant `{}::{}` not found",
+                    schema.value(),
+                    ident.value()
+                ),
+                Some(schema),
+            ),
+        };
+
+        let mut report = renderer.error(title);
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report.snippet(schema, self.named_ref.span(), "integer constant used here");
+        }
+
+        if let Some(ref candidate) = self.candidate {
+            let msg = match schema {
+                Some(schema) => format!("did you mean `{}::{candidate}`?", schema.value()),
+                None => format!("did you mean `{candidate}`?"),
+            };
+
+            report = report.help(msg);
+        }
+
+        report.render()
     }
 }
 

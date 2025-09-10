@@ -1,6 +1,6 @@
 use super::Warning;
 use crate::ast::ImportStmt;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Schema, Span};
 
@@ -65,6 +65,22 @@ impl Diagnostic for DuplicateImport {
 
         fmt.help("remove the duplicate import statement");
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.warning(format!(
+            "duplicate import of schema `{}`",
+            self.duplicate.schema_name().value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate import")
+                .context(schema, self.first, "first imported here");
+        }
+
+        report = report.help("remove the duplicate import statement");
+        report.render()
     }
 }
 

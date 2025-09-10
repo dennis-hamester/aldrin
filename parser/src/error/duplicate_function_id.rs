@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter};
+use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
@@ -16,20 +16,20 @@ pub struct DuplicateFunctionId {
 impl DuplicateFunctionId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
         let funcs = service.items().iter().filter_map(|item| match item {
-            ServiceItem::Function(ev) => Some(ev),
+            ServiceItem::Function(func) => Some(func),
             _ => None,
         });
 
         let mut max_id = funcs
             .clone()
-            .fold(0, |cur, ev| match ev.id().value().parse() {
+            .fold(0, |cur, func| match func.id().value().parse() {
                 Ok(id) if id > cur => id,
                 _ => cur,
             });
 
         util::find_duplicates(
             funcs,
-            |ev| ev.id().value(),
+            |func| func.id().value(),
             |duplicate, first| {
                 max_id += 1;
                 let free_id = max_id;
@@ -92,6 +92,23 @@ impl Diagnostic for DuplicateFunctionId {
 
         fmt.help(format!("use a free id, e.g. {}", self.free_id));
         fmt.format()
+    }
+
+    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+        let mut report = renderer.error(format!(
+            "duplicate function id `{}` in service `{}`",
+            self.duplicate.value(),
+            self.service_ident.value()
+        ));
+
+        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+            report = report
+                .snippet(schema, self.duplicate.span(), "duplicate defined here")
+                .context(schema, self.first, "first defined here");
+        }
+
+        report = report.help(format!("use a free id, e.g. {}", self.free_id));
+        report.render()
     }
 }
 
