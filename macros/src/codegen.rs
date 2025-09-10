@@ -1,5 +1,6 @@
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::{Diagnostic, Parsed, Parser};
+use aldrin_parser::diag::Renderer;
+use aldrin_parser::Parser;
 use manyhow::{emit, Emitter};
 use proc_macro2::Span;
 use quote::ToTokens;
@@ -17,17 +18,20 @@ pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
     }
 
     let mut modules = String::new();
+    let renderer = Renderer::new(false, false, 100);
 
     for schema in args.schemas {
         let parsed = parser.parse(&schema);
 
         for error in parsed.errors() {
-            emit!(emitter, "{}", format_diagnostic(error, &parsed));
+            let rendered = renderer.render(error, &parsed);
+            emit!(emitter, "{rendered}");
         }
 
         if args.warnings_as_errors {
             for warning in parsed.warnings() {
-                emit!(emitter, "{}", format_diagnostic(warning, &parsed));
+                let rendered = renderer.render(warning, &parsed);
+                emit!(emitter, "{rendered}");
             }
         }
 
@@ -164,17 +168,6 @@ impl Parse for Args {
 
         Ok(args)
     }
-}
-
-fn format_diagnostic(diag: &impl Diagnostic, parsed: &Parsed) -> String {
-    let formatted = diag.format(parsed);
-
-    let mut msg = format!("{}\n", formatted.summary());
-    for line in formatted.lines().skip(1) {
-        msg.push_str(&line.to_string());
-    }
-
-    msg
 }
 
 fn lit_str_to_path(lit_str: &LitStr) -> Result<PathBuf> {
