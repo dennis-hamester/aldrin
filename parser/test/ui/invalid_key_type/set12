@@ -1,9 +1,9 @@
 error: invalid key type `Newtype6`
-   --> test/ui/invalid_key_type.aldrin:37:21
-    |
- 37 | newtype Set12 = set<Newtype6>;
-    |                     ^^^^^^^^ type used here
-    |
-    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    =       `string`, `uuid` and newtypes resolving to one of those
-    = note: `Newtype6` is a newtype, that resolves to `unit`
+   ╭▸ test/ui/invalid_key_type.aldrin:37:21
+   │
+37 │ newtype Set12 = set<Newtype6>;
+   │                     ━━━━━━━━ type used here
+   │
+   ├ help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+   │       `string`, `uuid` and newtypes resolving to one of those
+   ╰ note: `Newtype6` is a newtype, that resolves to `unit`

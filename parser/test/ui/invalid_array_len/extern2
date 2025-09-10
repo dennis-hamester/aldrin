@@ -1,12 +1,12 @@
 error: invalid array length 4294967296
-   --> test/ui/invalid_array_len.aldrin:12:19
-    |
- 12 |     f6 @ 6 = [u8; invalid_array_len_import::BAD2];
-    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ array length used here
-    |
-   ::: test/ui/invalid_array_len_import.aldrin:2:7
-    |
-  2 | const BAD2 = u64(4294967296);
-    |       ---- constant defined here
-    |
-    = help: arrays must have a length in the range from 1 to 4294967295
+   ╭▸ test/ui/invalid_array_len.aldrin:12:19
+   │
+12 │     f6 @ 6 = [u8; invalid_array_len_import::BAD2];
+   │                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ array length used here
+   │
+   ⸬  test/ui/invalid_array_len_import.aldrin:2:7
+   │
+ 2 │ const BAD2 = u64(4294967296);
+   │       ──── constant defined here
+   │
+   ╰ help: arrays must have a length in the range from 1 to 4294967295

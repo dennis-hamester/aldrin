@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::TypeName;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, InvalidKeyTypeKind};
 use crate::validate::Validate;
 use crate::Parsed;
@@ -83,55 +83,6 @@ impl Diagnostic for InvalidKeyType {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let ty_kind = self.ty.kind();
-        let mut fmt = Formatter::new(self, format!("invalid key type `{ty_kind}`"));
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.ty.span().from,
-                self.ty.span(),
-                "type used here",
-            );
-        }
-
-        fmt.help("allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,")
-            .help_cont("`string`, `uuid` and newtypes resolving to one of those");
-
-        match self.kind {
-            InvalidKind::BuiltIn => {}
-
-            InvalidKind::Struct => {
-                fmt.note(format!("`{ty_kind}` is a struct"));
-            }
-
-            InvalidKind::Enum => {
-                fmt.note(format!("`{ty_kind}` is an enum"));
-            }
-
-            InvalidKind::NewtypeToBuiltIn(ref name) => {
-                fmt.note(format!(
-                    "`{ty_kind}` is a newtype, that resolves to `{name}`",
-                ));
-            }
-
-            InvalidKind::NewtypeToStruct(ref name) => {
-                fmt.note(format!(
-                    "`{ty_kind}` is a newtype, that resolves to the struct `{name}`",
-                ));
-            }
-
-            InvalidKind::NewtypeToEnum(ref name) => {
-                fmt.note(format!(
-                    "`{ty_kind}` is a newtype, that resolves to the enum `{name}`",
-                ));
-            }
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

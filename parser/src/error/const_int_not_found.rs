@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{NamedRef, NamedRefKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
@@ -56,53 +56,6 @@ impl Diagnostic for ConstIntNotFound {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let (mut fmt, schema) = match self.named_ref.kind() {
-            NamedRefKind::Intern(ident) => (
-                Formatter::new(
-                    self,
-                    format!("integer constant `{}` not found", ident.value()),
-                ),
-                None,
-            ),
-
-            NamedRefKind::Extern(schema, ident) => (
-                Formatter::new(
-                    self,
-                    format!(
-                        "integer constant `{}::{}` not found",
-                        schema.value(),
-                        ident.value()
-                    ),
-                ),
-                Some(schema),
-            ),
-        };
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.named_ref.span().from,
-                self.named_ref.span(),
-                "integer constant used here",
-            );
-        }
-
-        if let Some(ref candidate) = self.candidate {
-            match schema {
-                Some(schema) => {
-                    fmt.help(format!("did you mean `{}::{candidate}`?", schema.value()));
-                }
-
-                None => {
-                    fmt.help(format!("did you mean `{candidate}`?"));
-                }
-            }
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

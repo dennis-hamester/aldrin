@@ -41,14 +41,6 @@ features = ["std"]
 version = "0.10.0"
 default-features = false
 
-[dependencies.unicode-segmentation]
-version = "1.10.1"
-default-features = false
-
-[dependencies.unicode-width]
-version = "0.1.11"
-default-features = false
-
 [dependencies.uuid]
 workspace = true
 features = ["v4"]

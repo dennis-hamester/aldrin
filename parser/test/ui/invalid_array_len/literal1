@@ -1,7 +1,7 @@
 error: invalid array length 0
-  --> test/ui/invalid_array_len.aldrin:7:19
-   |
- 7 |     f1 @ 1 = [u8; 0];
-   |                   ^ array length used here
-   |
-   = help: arrays must have a length in the range from 1 to 4294967295
+  ╭▸ test/ui/invalid_array_len.aldrin:7:19
+  │
+7 │     f1 @ 1 = [u8; 0];
+  │                   ━ array length used here
+  │
+  ╰ help: arrays must have a length in the range from 1 to 4294967295

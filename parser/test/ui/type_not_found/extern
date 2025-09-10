@@ -1,7 +1,7 @@
 error: type `type_not_found_import::NotFound` not found
-  --> test/ui/type_not_found.aldrin:8:14
-   |
- 8 |     f2 @ 2 = type_not_found_import::NotFound;
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type used here
-   |
-   = help: did you mean `type_not_found_import::Found`?
+  ╭▸ test/ui/type_not_found.aldrin:8:14
+  │
+8 │     f2 @ 2 = type_not_found_import::NotFound;
+  │              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type used here
+  │
+  ╰ help: did you mean `type_not_found_import::Found`?

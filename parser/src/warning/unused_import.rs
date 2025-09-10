@@ -4,7 +4,7 @@ use crate::ast::{
     ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, SchemaName,
     ServiceDef, ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{Parsed, Schema};
 
@@ -207,20 +207,6 @@ impl Diagnostic for UnusedImport {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!("unused import `{}`", self.import.schema_name().value()),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.import.span().from, self.import.span(), "")
-                .help("remove the import statement");
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

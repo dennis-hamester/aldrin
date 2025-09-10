@@ -24,6 +24,7 @@ macro_rules! issue {
 mod issues;
 mod ui_tests;
 
+use crate::diag::Renderer;
 use crate::{Diagnostic, Parser};
 use std::collections::HashSet;
 use std::fs::{self, File};
@@ -57,10 +58,13 @@ fn ui_test_impl(name: &str) {
     let errors = parsed.errors().iter().map(|d| d as &dyn Diagnostic);
     let warnings = parsed.warnings().iter().map(|d| d as &dyn Diagnostic);
     let others = parsed.other_warnings().iter().map(|d| d as &dyn Diagnostic);
+    let renderer = Renderer::new(false, true, 100);
+
     for diag in errors.chain(warnings).chain(others) {
-        let formatted = diag.format(&parsed).to_string();
-        if !expected.remove(&formatted) {
-            eprintln!("Unexpected diagnostic:\n{formatted}\n");
+        let rendered = renderer.render(diag, &parsed);
+
+        if !expected.remove(&rendered) {
+            eprintln!("Unexpected diagnostic:\n{rendered}\n");
             fail = true;
         }
     }

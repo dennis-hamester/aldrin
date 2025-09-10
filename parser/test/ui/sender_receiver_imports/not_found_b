@@ -1,6 +1,5 @@
 error: type `B` not found
-   --> test/ui/sender_receiver_imports.aldrin:10:23
-    |
- 10 |     f6 @ 6 = receiver<B>;
-    |                       ^ type used here
-    |
+   ╭▸ test/ui/sender_receiver_imports.aldrin:10:23
+   │
+10 │     f6 @ 6 = receiver<B>;
+   ╰╴                      ━ type used here

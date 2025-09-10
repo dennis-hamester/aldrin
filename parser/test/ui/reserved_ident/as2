@@ -1,7 +1,7 @@
 warning: the identifer `as` is reserved in some language(s)
-  --> test/ui/reserved_ident_import.aldrin:2:5
-   |
- 2 |     as @ 1 = unit;
-   |     ^^ keyword used here
-   |
-   = note: `as` is a keyword in Rust
+  ╭▸ test/ui/reserved_ident_import.aldrin:2:5
+  │
+2 │     as @ 1 = unit;
+  │     ━━ keyword used here
+  │
+  ╰ note: `as` is a keyword in Rust

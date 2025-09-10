@@ -1,11 +1,10 @@
 error: duplicate field `field` in struct `Struct`
-  --> test/ui/duplicate_struct_field.aldrin:3:5
-   |
- 3 |     field @ 2 = i32;
-   |     ^^^^^ duplicate defined here
-   |
-  ::: test/ui/duplicate_struct_field.aldrin:2:5
-   |
- 2 |     field @ 1 = i32;
-   |     ----- first defined here
-   |
+  ╭▸ test/ui/duplicate_struct_field.aldrin:3:5
+  │
+3 │     field @ 2 = i32;
+  │     ━━━━━ duplicate defined here
+  │
+  ⸬  test/ui/duplicate_struct_field.aldrin:2:5
+  │
+2 │     field @ 1 = i32;
+  ╰╴    ───── first defined here

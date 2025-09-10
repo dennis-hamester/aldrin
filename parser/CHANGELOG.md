@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enum fallbacks are now represented by a new AST type `EnumFallback`.
 - `FunctionFallbackDef` is renamed to `FunctionFallback`.
 - `EventFallbackDef` is renamed to `EventFallback`.
+- The renderer for diagnostics was changed and with that the API changed a bit too.
 
 ### Fixed
 

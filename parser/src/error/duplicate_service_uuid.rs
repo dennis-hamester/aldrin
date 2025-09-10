@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, LitUuid};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::issues::Issues;
 use crate::{Parsed, Schema};
 use std::collections::HashMap;
@@ -64,36 +64,6 @@ impl Diagnostic for DuplicateServiceUuid {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!("duplicate service uuid `{}`", self.uuid.value()),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.uuid.span().from,
-                self.uuid.span(),
-                "this uuid is used multiple times",
-            );
-        }
-
-        for (schema_name, svc_ident) in &self.svc_idents {
-            if let Some(schema) = parsed.get_schema(schema_name) {
-                fmt.info_block(
-                    schema,
-                    svc_ident.span().from,
-                    svc_ident.span(),
-                    "used for this service",
-                );
-            }
-        }
-
-        fmt.help("use different uuids for each service");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

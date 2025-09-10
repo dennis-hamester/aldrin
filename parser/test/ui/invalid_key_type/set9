@@ -1,9 +1,9 @@
 error: invalid key type `Newtype3`
-   --> test/ui/invalid_key_type.aldrin:34:20
-    |
- 34 | newtype Set9 = set<Newtype3>;
-    |                    ^^^^^^^^ type used here
-    |
-    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    =       `string`, `uuid` and newtypes resolving to one of those
-    = note: `Newtype3` is a newtype, that resolves to the struct `Struct`
+   ╭▸ test/ui/invalid_key_type.aldrin:34:20
+   │
+34 │ newtype Set9 = set<Newtype3>;
+   │                    ━━━━━━━━ type used here
+   │
+   ├ help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+   │       `string`, `uuid` and newtypes resolving to one of those
+   ╰ note: `Newtype3` is a newtype, that resolves to the struct `Struct`

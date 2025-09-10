@@ -1,5 +1,5 @@
 use super::Warning;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 use heck::ToSnakeCase;
@@ -35,23 +35,6 @@ impl Diagnostic for NonSnakeCaseSchemaName {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, _parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!(
-                "schema `{}` should have a snake-case name",
-                self.schema_name
-            ),
-        );
-
-        fmt.help(format!(
-            "consider renaming schema `{}` to `{}`",
-            self.schema_name, self.snake_case
-        ));
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, _parsed: &Parsed) -> String {

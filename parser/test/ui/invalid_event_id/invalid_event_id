@@ -1,7 +1,7 @@
 error: invalid id `4294967296` for event `invalid_event_id`
-  --> test/ui/invalid_event_id.aldrin:5:30
-   |
- 5 |     event invalid_event_id @ 4294967296;
-   |                              ^^^^^^^^^^ id defined here
-   |
-   = help: ids must be u32 values in the range from 0 to 4294967295
+  ╭▸ test/ui/invalid_event_id.aldrin:5:30
+  │
+5 │     event invalid_event_id @ 4294967296;
+  │                              ━━━━━━━━━━ id defined here
+  │
+  ╰ help: ids must be u32 values in the range from 0 to 4294967295

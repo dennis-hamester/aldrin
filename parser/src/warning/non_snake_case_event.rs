@@ -1,6 +1,6 @@
 use super::Warning;
 use crate::ast::{EventDef, Ident};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 use heck::ToSnakeCase;
@@ -40,27 +40,6 @@ impl Diagnostic for NonSnakeCaseEvent {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!(
-                "event `{}` should have a snake-case name",
-                self.ident.value()
-            ),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.ident.span().from, self.ident.span(), "");
-        }
-
-        fmt.help(format!(
-            "consider renaming event `{}` to `{}`",
-            self.ident.value(),
-            self.snake_case
-        ));
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

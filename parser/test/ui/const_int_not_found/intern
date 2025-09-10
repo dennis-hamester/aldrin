@@ -1,7 +1,7 @@
 error: integer constant `FOUNT` not found
-  --> test/ui/const_int_not_found.aldrin:7:19
-   |
- 7 |     f2 @ 2 = [u8; FOUNT];
-   |                   ^^^^^ integer constant used here
-   |
-   = help: did you mean `FOUND`?
+  ╭▸ test/ui/const_int_not_found.aldrin:7:19
+  │
+7 │     f2 @ 2 = [u8; FOUNT];
+  │                   ━━━━━ integer constant used here
+  │
+  ╰ help: did you mean `FOUND`?

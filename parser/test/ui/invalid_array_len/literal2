@@ -1,7 +1,7 @@
 error: invalid array length 4294967296
-  --> test/ui/invalid_array_len.aldrin:8:19
-   |
- 8 |     f2 @ 2 = [u8; 4294967296];
-   |                   ^^^^^^^^^^ array length used here
-   |
-   = help: arrays must have a length in the range from 1 to 4294967295
+  ╭▸ test/ui/invalid_array_len.aldrin:8:19
+  │
+8 │     f2 @ 2 = [u8; 4294967296];
+  │                   ━━━━━━━━━━ array length used here
+  │
+  ╰ help: arrays must have a length in the range from 1 to 4294967295

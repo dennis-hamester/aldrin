@@ -1,7 +1,7 @@
 error: type `did_you_mean_key_type_import::StRuct` not found
-   --> test/ui/did_you_mean_key_type.aldrin:30:20
-    |
- 30 | newtype Set6 = set<did_you_mean_key_type_import::StRuct>;
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type used here
-    |
-    = help: did you mean `did_you_mean_key_type_import::StrUct`?
+   ╭▸ test/ui/did_you_mean_key_type.aldrin:30:20
+   │
+30 │ newtype Set6 = set<did_you_mean_key_type_import::StRuct>;
+   │                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type used here
+   │
+   ╰ help: did you mean `did_you_mean_key_type_import::StrUct`?

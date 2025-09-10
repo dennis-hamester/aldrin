@@ -1,7 +1,7 @@
 error: type `StRuct` not found
-   --> test/ui/did_you_mean_key_type.aldrin:27:20
-    |
- 27 | newtype Set3 = set<StRuct>;
-    |                    ^^^^^^ type used here
-    |
-    = help: did you mean `StrUct`?
+   ╭▸ test/ui/did_you_mean_key_type.aldrin:27:20
+   │
+27 │ newtype Set3 = set<StRuct>;
+   │                    ━━━━━━ type used here
+   │
+   ╰ help: did you mean `StrUct`?

@@ -1,7 +1,7 @@
 error: expected type; found service `TypE`
-   --> test/ui/expected_type_found_service.aldrin:17:14
-    |
- 17 |     f1 @ 1 = TypE;
-    |              ^^^^ type expected here
-    |
-    = help: did you mean `Type`?
+   ╭▸ test/ui/expected_type_found_service.aldrin:17:14
+   │
+17 │     f1 @ 1 = TypE;
+   │              ━━━━ type expected here
+   │
+   ╰ help: did you mean `Type`?

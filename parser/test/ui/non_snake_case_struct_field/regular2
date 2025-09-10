@@ -1,7 +1,7 @@
 warning: field `UnknownFields` should have a snake-case name
-  --> test/ui/non_snake_case_struct_field.aldrin:3:5
-   |
- 3 |     UnknownFields = fallback;
-   |     ^^^^^^^^^^^^^
-   |
-   = help: consider renaming field `UnknownFields` to `unknown_fields`
+  ╭▸ test/ui/non_snake_case_struct_field.aldrin:3:5
+  │
+3 │     UnknownFields = fallback;
+  │     ━━━━━━━━━━━━━
+  │
+  ╰ help: consider renaming field `UnknownFields` to `unknown_fields`

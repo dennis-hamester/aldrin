@@ -1,7 +1,7 @@
 error: expected type; found constant `Const`
-   --> test/ui/did_you_mean_key_type.aldrin:29:20
-    |
- 29 | newtype Set5 = set<did_you_mean_key_type_import::Const>;
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type expected here
-    |
-    = help: did you mean `did_you_mean_key_type_import::CoNst`?
+   ╭▸ test/ui/did_you_mean_key_type.aldrin:29:20
+   │
+29 │ newtype Set5 = set<did_you_mean_key_type_import::Const>;
+   │                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type expected here
+   │
+   ╰ help: did you mean `did_you_mean_key_type_import::CoNst`?

@@ -1,8 +1,8 @@
 error: invalid key type `unit`
-   --> test/ui/invalid_key_type.aldrin:27:20
-    |
- 27 | newtype Set2 = set<unit>;
-    |                    ^^^^ type used here
-    |
-    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    =       `string`, `uuid` and newtypes resolving to one of those
+   ╭▸ test/ui/invalid_key_type.aldrin:27:20
+   │
+27 │ newtype Set2 = set<unit>;
+   │                    ━━━━ type used here
+   │
+   ╰ help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+           `string`, `uuid` and newtypes resolving to one of those

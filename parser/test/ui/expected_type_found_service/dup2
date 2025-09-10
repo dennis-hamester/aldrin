@@ -1,11 +1,10 @@
 error: duplicate definition `Type`
-  --> test/ui/expected_type_found_service_import.aldrin:9:9
-   |
- 9 | service Type {
-   |         ^^^^ duplicate definition
-   |
-  ::: test/ui/expected_type_found_service_import.aldrin:6:8
-   |
- 6 | struct Type {
-   |        ---- first defined here
-   |
+  ╭▸ test/ui/expected_type_found_service_import.aldrin:9:9
+  │
+9 │ service Type {
+  │         ━━━━ duplicate definition
+  │
+  ⸬  test/ui/expected_type_found_service_import.aldrin:6:8
+  │
+6 │ struct Type {
+  ╰╴       ──── first defined here

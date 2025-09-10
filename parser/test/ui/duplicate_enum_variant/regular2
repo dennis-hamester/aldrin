@@ -1,11 +1,10 @@
 error: duplicate variant `Var` in enum `Enum`
-  --> test/ui/duplicate_enum_variant.aldrin:4:5
-   |
- 4 |     Var = fallback;
-   |     ^^^ duplicate defined here
-   |
-  ::: test/ui/duplicate_enum_variant.aldrin:2:5
-   |
- 2 |     Var @ 1;
-   |     -------- first defined here
-   |
+  ╭▸ test/ui/duplicate_enum_variant.aldrin:4:5
+  │
+4 │     Var = fallback;
+  │     ━━━ duplicate defined here
+  │
+  ⸬  test/ui/duplicate_enum_variant.aldrin:2:5
+  │
+2 │     Var @ 1;
+  ╰╴    ──────── first defined here

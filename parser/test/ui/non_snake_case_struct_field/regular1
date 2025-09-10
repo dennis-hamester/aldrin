@@ -1,7 +1,7 @@
 warning: field `FirstFirst` should have a snake-case name
-  --> test/ui/non_snake_case_struct_field.aldrin:2:5
-   |
- 2 |     FirstFirst @ 1 = u32;
-   |     ^^^^^^^^^^
-   |
-   = help: consider renaming field `FirstFirst` to `first_first`
+  ╭▸ test/ui/non_snake_case_struct_field.aldrin:2:5
+  │
+2 │     FirstFirst @ 1 = u32;
+  │     ━━━━━━━━━━
+  │
+  ╰ help: consider renaming field `FirstFirst` to `first_first`

@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::SchemaName;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
@@ -46,33 +46,6 @@ impl Diagnostic for MissingImport {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!("missing import `{}`", self.extern_schema.value()),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.extern_schema.span().from,
-                self.extern_schema.span(),
-                format!("schema `{}` used here", self.extern_schema.value()),
-            );
-        }
-
-        if let Some(ref candidate) = self.candidate {
-            fmt.help(format!("did you mean `{candidate}`?"));
-        } else {
-            fmt.help(format!(
-                "add `import {};` at the top",
-                self.extern_schema.value()
-            ));
-        };
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

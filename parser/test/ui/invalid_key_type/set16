@@ -1,9 +1,9 @@
 error: invalid key type `invalid_key_type_import::Struct`
-   --> test/ui/invalid_key_type.aldrin:41:21
-    |
- 41 | newtype Set16 = set<invalid_key_type_import::Struct>;
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type used here
-    |
-    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    =       `string`, `uuid` and newtypes resolving to one of those
-    = note: `invalid_key_type_import::Struct` is a struct
+   ╭▸ test/ui/invalid_key_type.aldrin:41:21
+   │
+41 │ newtype Set16 = set<invalid_key_type_import::Struct>;
+   │                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type used here
+   │
+   ├ help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+   │       `string`, `uuid` and newtypes resolving to one of those
+   ╰ note: `invalid_key_type_import::Struct` is a struct

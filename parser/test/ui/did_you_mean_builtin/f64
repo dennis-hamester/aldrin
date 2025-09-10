@@ -1,7 +1,7 @@
 error: type `f63` not found
-  --> test/ui/did_you_mean_builtin.aldrin:3:14
-   |
- 3 |     f2 @ 2 = f63;
-   |              ^^^ type used here
-   |
-   = help: did you mean `f64`?
+  ╭▸ test/ui/did_you_mean_builtin.aldrin:3:14
+  │
+3 │     f2 @ 2 = f63;
+  │              ━━━ type used here
+  │
+  ╰ help: did you mean `f64`?

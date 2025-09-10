@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, StructFallback, StructField};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed, Span};
 
@@ -76,39 +76,6 @@ impl Diagnostic for DuplicateStructField {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = if let Some(ref ident) = self.struct_ident {
-            Formatter::new(
-                self,
-                format!(
-                    "duplicate field `{}` in struct `{}`",
-                    self.duplicate.value(),
-                    ident.value()
-                ),
-            )
-        } else {
-            Formatter::new(
-                self,
-                format!(
-                    "duplicate field `{}` in inline struct",
-                    self.duplicate.value()
-                ),
-            )
-        };
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.duplicate.span().from,
-                self.duplicate.span(),
-                "duplicate defined here",
-            )
-            .info_block(schema, self.first.from, self.first, "first defined here");
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

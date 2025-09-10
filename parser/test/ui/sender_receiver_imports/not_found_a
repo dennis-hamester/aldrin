@@ -1,6 +1,5 @@
 error: type `A` not found
-  --> test/ui/sender_receiver_imports.aldrin:9:21
-   |
- 9 |     f5 @ 5 = sender<A>;
-   |                     ^ type used here
-   |
+  ╭▸ test/ui/sender_receiver_imports.aldrin:9:21
+  │
+9 │     f5 @ 5 = sender<A>;
+  ╰╴                    ━ type used here

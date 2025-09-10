@@ -1,7 +1,7 @@
 error: missing import `sender_receiver_imports_3`
-  --> test/ui/sender_receiver_imports.aldrin:7:21
-   |
- 7 |     f3 @ 3 = sender<sender_receiver_imports_3::S>;
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^ schema `sender_receiver_imports_3` used here
-   |
-   = help: did you mean `sender_receiver_imports_2`?
+  ╭▸ test/ui/sender_receiver_imports.aldrin:7:21
+  │
+7 │     f3 @ 3 = sender<sender_receiver_imports_3::S>;
+  │                     ━━━━━━━━━━━━━━━━━━━━━━━━━ schema `sender_receiver_imports_3` used here
+  │
+  ╰ help: did you mean `sender_receiver_imports_2`?

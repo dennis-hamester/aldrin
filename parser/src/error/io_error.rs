@@ -1,5 +1,5 @@
 use super::Error;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
 #[derive(Debug)]
@@ -31,16 +31,6 @@ impl Diagnostic for IoError {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, self.err.to_string());
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.note(format!("tried to read `{}`", schema.path().display()));
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

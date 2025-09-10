@@ -13,7 +13,7 @@ mod reserved_ident;
 mod reserved_schema_name;
 mod unused_import;
 
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
 pub use duplicate_import::DuplicateImport;
@@ -71,25 +71,6 @@ impl Diagnostic for Warning {
             Self::ReservedIdent(w) => w.schema_name(),
             Self::ReservedSchemaName(w) => w.schema_name(),
             Self::UnusedImport(w) => w.schema_name(),
-        }
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        match self {
-            Self::DuplicateImport(w) => w.format(parsed),
-            Self::NonCamelCaseEnum(w) => w.format(parsed),
-            Self::NonCamelCaseEnumVariant(w) => w.format(parsed),
-            Self::NonCamelCaseNewtype(w) => w.format(parsed),
-            Self::NonCamelCaseService(w) => w.format(parsed),
-            Self::NonCamelCaseStruct(w) => w.format(parsed),
-            Self::NonShoutySnakeCaseConst(w) => w.format(parsed),
-            Self::NonSnakeCaseEvent(w) => w.format(parsed),
-            Self::NonSnakeCaseFunction(w) => w.format(parsed),
-            Self::NonSnakeCaseSchemaName(w) => w.format(parsed),
-            Self::NonSnakeCaseStructField(w) => w.format(parsed),
-            Self::ReservedIdent(w) => w.format(parsed),
-            Self::ReservedSchemaName(w) => w.format(parsed),
-            Self::UnusedImport(w) => w.format(parsed),
         }
     }
 

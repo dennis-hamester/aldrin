@@ -1,3 +1,4 @@
 warning: the schema name `as` is reserved in some language(s)
-  = note: the schema is located here at `test/ui/as.aldrin`
-  = note: `as` is a keyword in Rust
+  │
+  ├ note: the schema is located at `test/ui/as.aldrin`
+  ╰ note: `as` is a keyword in Rust

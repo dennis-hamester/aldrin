@@ -1,7 +1,7 @@
 warning: service `CONSt` should have a camel-case name
-  --> test/ui/expected_const_int_found_service_import.aldrin:3:9
-   |
- 3 | service CONSt {
-   |         ^^^^^
-   |
-   = help: consider renaming service `CONSt` to `ConSt`
+  ╭▸ test/ui/expected_const_int_found_service_import.aldrin:3:9
+  │
+3 │ service CONSt {
+  │         ━━━━━
+  │
+  ╰ help: consider renaming service `CONSt` to `ConSt`

@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{Ident, LitPosInt, ServiceDef};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
@@ -40,29 +40,6 @@ impl Diagnostic for InvalidServiceVersion {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!(
-                "invalid version `{}` for service `{}`",
-                self.ver.value(),
-                self.svc_ident.value(),
-            ),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.ver.span().from,
-                self.ver.span(),
-                "version defined here",
-            );
-        }
-
-        fmt.note("versions must be u32 values in the range from 0 to 4294967295");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

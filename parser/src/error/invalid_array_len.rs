@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{ArrayLen, ArrayLenValue, ConstValue, Ident, NamedRefKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
@@ -98,33 +98,6 @@ impl Diagnostic for InvalidArrayLen {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, format!("invalid array length {}", self.value));
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.len.span().from,
-                self.len.span(),
-                "array length used here",
-            );
-        }
-
-        if let Some((ref schema, ref ident)) = self.const_def {
-            if let Some(schema) = parsed.get_schema(schema) {
-                fmt.info_block(
-                    schema,
-                    ident.span().from,
-                    ident.span(),
-                    "constant defined here",
-                );
-            }
-        }
-
-        fmt.help("arrays must have a length in the range from 1 to 4294967295");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::ConstValue;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parsed;
 
@@ -44,39 +44,6 @@ impl Diagnostic for InvalidConstValue {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let (kind, value, min, max) = match self.const_value {
-            ConstValue::U8(ref v) => ("u8", v, u8::MIN as i64, u8::MAX as u64),
-            ConstValue::I8(ref v) => ("i8", v, i8::MIN as i64, i8::MAX as u64),
-            ConstValue::U16(ref v) => ("u16", v, u16::MIN as i64, u16::MAX as u64),
-            ConstValue::I16(ref v) => ("i16", v, i16::MIN as i64, i16::MAX as u64),
-            ConstValue::U32(ref v) => ("u32", v, u32::MIN as i64, u32::MAX as u64),
-            ConstValue::I32(ref v) => ("i32", v, i32::MIN as i64, i32::MAX as u64),
-            ConstValue::U64(ref v) => ("u64", v, u64::MIN as i64, u64::MAX),
-            ConstValue::I64(ref v) => ("i64", v, i64::MIN, i64::MAX as u64),
-            ConstValue::String(_) | ConstValue::Uuid(_) => unreachable!(),
-        };
-
-        let mut fmt = Formatter::new(
-            self,
-            format!("invalid constant {kind} value `{}`", value.value()),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                value.span().from,
-                value.span(),
-                "constant value defined here",
-            );
-        }
-
-        fmt.help(format!(
-            "{kind} values must be in the range from {min} to {max}"
-        ));
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

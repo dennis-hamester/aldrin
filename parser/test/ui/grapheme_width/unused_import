@@ -1,17 +1,9 @@
 warning: unused import `bar`
-  --> test/ui/grapheme_width.aldrin:1:1
-   |
- 1 | import
-   | ^^^^^^
- 2 | // こんにちは
-   | ^^^^^^^^^^^^^
- 3 | // ȺӀժɾìղ
-   | ^^^^^^^^^
- 4 | ... // uıɹpl∀
-   |     ^^^^^^^^^
- 5 | // A̴̞͓̙͓̾̓͌̌̚͜l̷̛͍̟̗̬̜̍̔̌̔d̸͖̪͔̠̝̂͆͆͋̕r̵̟̖̖̟̓̐͌̇͆͜i̸̯̻̫̱̙͊͆̋͆͘n̸̨̳̺͖̣̄͌́͝
-   | ^^^^^^^^^
- 6 | bar;
-   | ^^^^
-   |
-   = help: remove the import statement
+  ╭▸ test/ui/grapheme_width.aldrin:1:1
+  │
+1 │ ┏ import // こんにちは
+2 │ ┃ // ȺӀժɾìղ
+3 │ ┃ bar; // A̴̞͓̙͓̾̓͌̌̚͜l̷̛͍̟̗̬̜̍̔̌̔d̸͖̪͔̠̝̂͆͆͋̕r̵̟̖̖̟̓̐͌̇͆͜i̸̯̻̫̱̙͊͆̋͆͘n̸̨̳̺͖̣̄͌́͝
+  │ ┗━━━━┛
+  │
+  ╰ help: remove the import statement

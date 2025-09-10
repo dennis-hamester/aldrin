@@ -1,9 +1,9 @@
 error: invalid key type `invalid_key_type_import::Newtype4`
-   --> test/ui/invalid_key_type.aldrin:47:21
-    |
- 47 | newtype Set22 = set<invalid_key_type_import::Newtype4>;
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type used here
-    |
-    = help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
-    =       `string`, `uuid` and newtypes resolving to one of those
-    = note: `invalid_key_type_import::Newtype4` is a newtype, that resolves to the enum `invalid_key_type_import::Enum`
+   ╭▸ test/ui/invalid_key_type.aldrin:47:21
+   │
+47 │ newtype Set22 = set<invalid_key_type_import::Newtype4>;
+   │                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type used here
+   │
+   ├ help: allowed key types are `u8`, `i8`, `u16`, `i16`, `u32`, `i32`, `u64`, `i64`,
+   │       `string`, `uuid` and newtypes resolving to one of those
+   ╰ note: `invalid_key_type_import::Newtype4` is a newtype, that resolves to the enum `invalid_key_type_import::Enum`

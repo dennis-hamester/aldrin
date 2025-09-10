@@ -1,7 +1,7 @@
 error: expected integer constant; found string constant `CONST_2`
-   --> test/ui/expected_const_int_found_string.aldrin:10:19
-    |
- 10 |     f4 @ 4 = [u8; expected_const_int_found_string_import::CONST_2];
-    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ integer constant expected here
-    |
-    = help: did you mean `expected_const_int_found_string_import::CONST_1`?
+   ╭▸ test/ui/expected_const_int_found_string.aldrin:10:19
+   │
+10 │     f4 @ 4 = [u8; expected_const_int_found_string_import::CONST_2];
+   │                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ integer constant expected here
+   │
+   ╰ help: did you mean `expected_const_int_found_string_import::CONST_1`?

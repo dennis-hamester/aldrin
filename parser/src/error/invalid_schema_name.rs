@@ -1,5 +1,5 @@
 use super::Error;
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parsed;
 
 #[derive(Debug)]
@@ -25,18 +25,6 @@ impl Diagnostic for InvalidSchemaName {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, _parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, format!("invalid schema name `{}`", self.schema_name));
-
-        fmt.note("schema names are parsed from the file name");
-
-        if self.schema_name.contains('-') {
-            fmt.note_cont("hyphens `-` are not allowed in schema names");
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, _parsed: &Parsed) -> String {

@@ -3,7 +3,7 @@ use crate::ast::{
     Definition, EnumDef, Ident, NamedRef, NamedRefKind, NewtypeDef, StructDef, TypeName,
     TypeNameKind,
 };
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{Parsed, Schema};
 use std::ops::ControlFlow;
@@ -36,18 +36,6 @@ impl Diagnostic for RecursiveStruct {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, format!("recursive struct `{}`", self.ident.value()));
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
-        }
-
-        fmt.note("recursive structs are not supported")
-            .help("use box<T> to break the recursion");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
@@ -101,18 +89,6 @@ impl Diagnostic for RecursiveEnum {
         &self.schema_name
     }
 
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, format!("recursive enum `{}`", self.ident.value()));
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
-        }
-
-        fmt.note("recursive enums are not supported")
-            .help("use box<T> to break the recursion");
-        fmt.format()
-    }
-
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
         let mut report = renderer.error(format!("recursive enum `{}`", self.ident.value()));
 
@@ -162,18 +138,6 @@ impl Diagnostic for RecursiveNewtype {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(self, format!("recursive newtype `{}`", self.ident.value()));
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.ident().span().from, self.ident().span(), "");
-        }
-
-        fmt.note("recursive newtypes are not supported")
-            .help("use box<T> to break the recursion");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

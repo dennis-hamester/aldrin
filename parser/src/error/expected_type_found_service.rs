@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{NamedRef, NamedRefKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parsed};
 
@@ -64,39 +64,6 @@ impl Diagnostic for ExpectedTypeFoundService {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = Formatter::new(
-            self,
-            format!(
-                "expected type; found service `{}`",
-                self.named_ref.ident().value()
-            ),
-        );
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(
-                schema,
-                self.named_ref.span().from,
-                self.named_ref.span(),
-                "type expected here",
-            );
-        }
-
-        if let Some(ref candidate) = self.candidate {
-            match self.named_ref.schema() {
-                Some(schema) => {
-                    fmt.help(format!("did you mean `{}::{candidate}`?", schema.value()));
-                }
-
-                None => {
-                    fmt.help(format!("did you mean `{candidate}`?"));
-                }
-            }
-        }
-
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

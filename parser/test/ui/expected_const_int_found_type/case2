@@ -1,7 +1,7 @@
 warning: struct `CONSt` should have a camel-case name
-  --> test/ui/expected_const_int_found_type_import.aldrin:3:8
-   |
- 3 | struct CONSt {
-   |        ^^^^^
-   |
-   = help: consider renaming struct `CONSt` to `ConSt`
+  ╭▸ test/ui/expected_const_int_found_type_import.aldrin:3:8
+  │
+3 │ struct CONSt {
+  │        ━━━━━
+  │
+  ╰ help: consider renaming struct `CONSt` to `ConSt`

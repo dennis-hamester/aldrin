@@ -1,6 +1,6 @@
 use super::Error;
 use crate::ast::{EnumFallback, EnumVariant, Ident};
-use crate::diag::{Diagnostic, DiagnosticKind, Formatted, Formatter, Renderer};
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{Parsed, Span};
 
@@ -46,22 +46,6 @@ impl Diagnostic for EmptyEnum {
 
     fn schema_name(&self) -> &str {
         &self.schema_name
-    }
-
-    fn format<'a>(&'a self, parsed: &'a Parsed) -> Formatted<'a> {
-        let mut fmt = if let Some(ref ident) = self.ident {
-            Formatter::new(self, format!("empty enum `{}`", ident.value()))
-        } else {
-            Formatter::new(self, "empty inline enum")
-        };
-
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            fmt.main_block(schema, self.span.from, self.span, "");
-        }
-
-        fmt.note("empty enums are not supported")
-            .help("add at least one variant to the enum");
-        fmt.format()
     }
 
     fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {

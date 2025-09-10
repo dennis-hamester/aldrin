@@ -1,7 +1,7 @@
 error: type `NotFound` not found
-  --> test/ui/type_not_found.aldrin:7:14
-   |
- 7 |     f1 @ 1 = NotFound;
-   |              ^^^^^^^^ type used here
-   |
-   = help: did you mean `Found`?
+  ╭▸ test/ui/type_not_found.aldrin:7:14
+  │
+7 │     f1 @ 1 = NotFound;
+  │              ━━━━━━━━ type used here
+  │
+  ╰ help: did you mean `Found`?

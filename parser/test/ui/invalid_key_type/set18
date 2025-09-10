@@ -1,6 +1,5 @@
 error: expected type; found constant `CONST`
-   --> test/ui/invalid_key_type.aldrin:43:21
-    |
- 43 | newtype Set18 = set<invalid_key_type_import::CONST>;
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type expected here
-    |
+   ╭▸ test/ui/invalid_key_type.aldrin:43:21
+   │
+43 │ newtype Set18 = set<invalid_key_type_import::CONST>;
+   ╰╴                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ type expected here

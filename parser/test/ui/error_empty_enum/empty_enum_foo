@@ -1,10 +1,9 @@
 error: empty enum `Foo`
-  --> test/ui/error_empty_enum.aldrin:1:1
-   |
- 1 | enum Foo {
-   | ^^^^^^^^^^
- 2 | }
-   | ^
-   |
-   = note: empty enums are not supported
-   = help: add at least one variant to the enum
+  ╭▸ test/ui/error_empty_enum.aldrin:1:1
+  │
+1 │ ┏ enum Foo {
+2 │ ┃ }
+  │ ┗━┛
+  │
+  ├ note: empty enums are not supported
+  ╰ help: add at least one variant to the enum

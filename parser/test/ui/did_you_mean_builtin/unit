@@ -1,7 +1,7 @@
 error: type `uni` not found
-  --> test/ui/did_you_mean_builtin.aldrin:5:14
-   |
- 5 |     f4 @ 4 = uni;
-   |              ^^^ type used here
-   |
-   = help: did you mean `unit`?
+  ╭▸ test/ui/did_you_mean_builtin.aldrin:5:14
+  │
+5 │     f4 @ 4 = uni;
+  │              ━━━ type used here
+  │
+  ╰ help: did you mean `unit`?

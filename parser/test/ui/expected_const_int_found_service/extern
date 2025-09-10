@@ -1,7 +1,7 @@
 error: expected integer constant; found service `CONSt`
-   --> test/ui/expected_const_int_found_service.aldrin:14:19
-    |
- 14 |     f4 @ 4 = [u8; expected_const_int_found_service_import::CONSt];
-    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ integer constant expected here
-    |
-    = help: did you mean `expected_const_int_found_service_import::CONST`?
+   ╭▸ test/ui/expected_const_int_found_service.aldrin:14:19
+   │
+14 │     f4 @ 4 = [u8; expected_const_int_found_service_import::CONSt];
+   │                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ integer constant expected here
+   │
+   ╰ help: did you mean `expected_const_int_found_service_import::CONST`?
