@@ -1,4 +1,4 @@
-use super::{Ident, SchemaName};
+use super::Ident;
 use crate::error::MissingImport;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -44,7 +44,7 @@ impl NamedRef {
         &self.kind
     }
 
-    pub fn schema(&self) -> Option<&SchemaName> {
+    pub fn schema(&self) -> Option<&Ident> {
         self.kind.schema()
     }
 
@@ -56,7 +56,7 @@ impl NamedRef {
 #[derive(Debug, Clone)]
 pub enum NamedRefKind {
     Intern(Ident),
-    Extern(SchemaName, Ident),
+    Extern(Ident, Ident),
 }
 
 impl NamedRefKind {
@@ -67,7 +67,7 @@ impl NamedRefKind {
             Rule::external_ref => {
                 let mut pairs = pair.into_inner();
                 let pair = pairs.next().unwrap();
-                let schema_name = SchemaName::parse(pair);
+                let schema_name = Ident::parse(pair);
                 pairs.next().unwrap(); // Skip ::.
                 let ident = Ident::parse(pairs.next().unwrap());
 
@@ -88,7 +88,7 @@ impl NamedRefKind {
         }
     }
 
-    pub fn schema(&self) -> Option<&SchemaName> {
+    pub fn schema(&self) -> Option<&Ident> {
         match self {
             Self::Intern(_) => None,
             Self::Extern(schema, _) => Some(schema),

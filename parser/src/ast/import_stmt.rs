@@ -1,4 +1,4 @@
-use super::SchemaName;
+use crate::ast::Ident;
 use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,7 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ImportStmt {
     span: Span,
-    schema_name: SchemaName,
+    schema_name: Ident,
 }
 
 impl ImportStmt {
@@ -22,7 +22,7 @@ impl ImportStmt {
         pairs.next().unwrap(); // Skip keyword
 
         let pair = pairs.next().unwrap();
-        let schema_name = SchemaName::parse(pair);
+        let schema_name = Ident::parse(pair);
 
         Self { span, schema_name }
     }
@@ -36,7 +36,7 @@ impl ImportStmt {
         self.span
     }
 
-    pub fn schema_name(&self) -> &SchemaName {
+    pub fn schema_name(&self) -> &Ident {
         &self.schema_name
     }
 }

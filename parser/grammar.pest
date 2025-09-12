@@ -76,9 +76,8 @@ kw_result = @{ "result" }
 kw_fallback = @{ "fallback" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-schema_name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
-external_ref = { schema_name ~ tok_scope ~ ident }
+external_ref = { ident ~ tok_scope ~ ident }
 named_ref = { external_ref | ident }
 
 option_type = { kw_option ~ tok_ang_open ~ type_name ~ tok_ang_close }
@@ -138,7 +137,7 @@ attribute = {
 doc_string = @{ "///" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 doc_string_inline = @{ "//!" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 
-import_stmt = { kw_import ~ schema_name ~ tok_term }
+import_stmt = { kw_import ~ ident ~ tok_term }
 
 def = { struct_def | enum_def | service_def | const_def | newtype_def }
 

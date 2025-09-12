@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::SchemaName;
+use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parser};
@@ -7,12 +7,12 @@ use crate::{util, Parser};
 #[derive(Debug)]
 pub(crate) struct MissingImport {
     schema_name: String,
-    extern_schema: SchemaName,
+    extern_schema: Ident,
     candidate: Option<String>,
 }
 
 impl MissingImport {
-    pub(crate) fn validate(schema_name: &SchemaName, validate: &mut Validate) {
+    pub(crate) fn validate(schema_name: &Ident, validate: &mut Validate) {
         let schema = validate.get_current_schema();
         for import in schema.imports() {
             if import.schema_name().value() == schema_name.value() {

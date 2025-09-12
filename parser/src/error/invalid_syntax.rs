@@ -75,7 +75,6 @@ impl Diagnostic for InvalidSyntax {
                 Expected::LitPosInt => "a positive integer literal".into(),
                 Expected::LitString => "a string literal".into(),
                 Expected::LitUuid => "a uuid literal".into(),
-                Expected::SchemaName => "a schema name".into(),
                 Expected::Token(tok) => format!("`{tok}`").into(),
             };
 
@@ -139,7 +138,6 @@ pub(crate) enum Expected {
     LitPosInt,
     LitString,
     LitUuid,
-    SchemaName,
     Token(&'static str),
 }
 
@@ -202,14 +200,11 @@ impl Expected {
             Expected::Keyword("uuid"),
             Expected::Keyword("value"),
             Expected::Keyword("vec"),
-            Expected::SchemaName,
             Expected::Token("["),
         ];
 
         const INLINE: &[Expected] = &[Expected::Keyword("enum"), Expected::Keyword("struct")];
-
-        const ARRAY_LEN: &[Expected] =
-            &[Expected::Ident, Expected::LitPosInt, Expected::SchemaName];
+        const ARRAY_LEN: &[Expected] = &[Expected::Ident, Expected::LitPosInt];
 
         #[allow(clippy::use_self)]
         let add: &[&[Self]] = match rule {
@@ -237,7 +232,6 @@ impl Expected {
             Rule::lit_pos_int => &[&[Expected::LitPosInt]],
             Rule::lit_string => &[&[Expected::LitString]],
             Rule::lit_uuid => &[&[Expected::LitUuid]],
-            Rule::schema_name => &[&[Expected::SchemaName]],
             Rule::service_item | Rule::service_fallback => &[SERVICE_ITEM],
             Rule::struct_field => &[&[Expected::Keyword("required"), Expected::Ident]],
             Rule::tok_ang_close => &[&[Expected::Token(">")]],

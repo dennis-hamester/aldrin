@@ -1,8 +1,8 @@
 use super::{Warning, WarningKind};
 use crate::ast::{
     ArrayLen, ArrayLenValue, Definition, EnumDef, EnumVariant, EventDef, FunctionDef, FunctionPart,
-    ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, SchemaName,
-    ServiceDef, ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    Ident, ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, ServiceDef,
+    ServiceItem, StructDef, StructField, TypeName, TypeNameKind, TypeNameOrInline,
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
@@ -26,14 +26,14 @@ impl UnusedImport {
         });
     }
 
-    fn visit_schema(schema: &Schema, schema_name: &SchemaName) -> bool {
+    fn visit_schema(schema: &Schema, schema_name: &Ident) -> bool {
         schema
             .definitions()
             .iter()
             .any(|def| Self::visit_def(def, schema_name))
     }
 
-    fn visit_def(def: &Definition, schema_name: &SchemaName) -> bool {
+    fn visit_def(def: &Definition, schema_name: &Ident) -> bool {
         match def {
             Definition::Struct(d) => Self::visit_struct(d, schema_name),
             Definition::Enum(d) => Self::visit_enum(d, schema_name),
@@ -43,59 +43,59 @@ impl UnusedImport {
         }
     }
 
-    fn visit_struct(struct_def: &StructDef, schema_name: &SchemaName) -> bool {
+    fn visit_struct(struct_def: &StructDef, schema_name: &Ident) -> bool {
         Self::visit_struct_fields(struct_def.fields(), schema_name)
     }
 
-    fn visit_inline_struct(inline_struct: &InlineStruct, schema_name: &SchemaName) -> bool {
+    fn visit_inline_struct(inline_struct: &InlineStruct, schema_name: &Ident) -> bool {
         Self::visit_struct_fields(inline_struct.fields(), schema_name)
     }
 
-    fn visit_struct_fields(fields: &[StructField], schema_name: &SchemaName) -> bool {
+    fn visit_struct_fields(fields: &[StructField], schema_name: &Ident) -> bool {
         fields
             .iter()
             .any(|field| Self::visit_struct_field(field, schema_name))
     }
 
-    fn visit_struct_field(field: &StructField, schema_name: &SchemaName) -> bool {
+    fn visit_struct_field(field: &StructField, schema_name: &Ident) -> bool {
         Self::visit_type_name(field.field_type(), schema_name)
     }
 
-    fn visit_enum(enum_def: &EnumDef, schema_name: &SchemaName) -> bool {
+    fn visit_enum(enum_def: &EnumDef, schema_name: &Ident) -> bool {
         Self::visit_enum_variants(enum_def.variants(), schema_name)
     }
 
-    fn visit_inline_enum(inline_enum: &InlineEnum, schema_name: &SchemaName) -> bool {
+    fn visit_inline_enum(inline_enum: &InlineEnum, schema_name: &Ident) -> bool {
         Self::visit_enum_variants(inline_enum.variants(), schema_name)
     }
 
-    fn visit_enum_variants(vars: &[EnumVariant], schema_name: &SchemaName) -> bool {
+    fn visit_enum_variants(vars: &[EnumVariant], schema_name: &Ident) -> bool {
         vars.iter()
             .any(|var| Self::visit_enum_variant(var, schema_name))
     }
 
-    fn visit_enum_variant(var: &EnumVariant, schema_name: &SchemaName) -> bool {
+    fn visit_enum_variant(var: &EnumVariant, schema_name: &Ident) -> bool {
         match var.variant_type() {
             Some(var_type) => Self::visit_type_name(var_type, schema_name),
             None => false,
         }
     }
 
-    fn visit_service(service_def: &ServiceDef, schema_name: &SchemaName) -> bool {
+    fn visit_service(service_def: &ServiceDef, schema_name: &Ident) -> bool {
         service_def
             .items()
             .iter()
             .any(|item| Self::visit_service_item(item, schema_name))
     }
 
-    fn visit_service_item(item: &ServiceItem, schema_name: &SchemaName) -> bool {
+    fn visit_service_item(item: &ServiceItem, schema_name: &Ident) -> bool {
         match item {
             ServiceItem::Function(func) => Self::visit_function(func, schema_name),
             ServiceItem::Event(ev) => Self::visit_event(ev, schema_name),
         }
     }
 
-    fn visit_function(func: &FunctionDef, schema_name: &SchemaName) -> bool {
+    fn visit_function(func: &FunctionDef, schema_name: &Ident) -> bool {
         if let Some(args) = func.args() {
             if Self::visit_function_part(args, schema_name) {
                 return true;
@@ -117,22 +117,22 @@ impl UnusedImport {
         false
     }
 
-    fn visit_function_part(part: &FunctionPart, schema_name: &SchemaName) -> bool {
+    fn visit_function_part(part: &FunctionPart, schema_name: &Ident) -> bool {
         Self::visit_type_name_or_inline(part.part_type(), schema_name)
     }
 
-    fn visit_event(ev: &EventDef, schema_name: &SchemaName) -> bool {
+    fn visit_event(ev: &EventDef, schema_name: &Ident) -> bool {
         match ev.event_type() {
             Some(event_type) => Self::visit_type_name_or_inline(event_type, schema_name),
             None => false,
         }
     }
 
-    fn visit_newtype(newtype_def: &NewtypeDef, schema_name: &SchemaName) -> bool {
+    fn visit_newtype(newtype_def: &NewtypeDef, schema_name: &Ident) -> bool {
         Self::visit_type_name(newtype_def.target_type(), schema_name)
     }
 
-    fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &SchemaName) -> bool {
+    fn visit_type_name_or_inline(ty: &TypeNameOrInline, schema_name: &Ident) -> bool {
         match ty {
             TypeNameOrInline::TypeName(ty) => Self::visit_type_name(ty, schema_name),
             TypeNameOrInline::Struct(s) => Self::visit_inline_struct(s, schema_name),
@@ -140,7 +140,7 @@ impl UnusedImport {
         }
     }
 
-    fn visit_type_name(ty: &TypeName, schema_name: &SchemaName) -> bool {
+    fn visit_type_name(ty: &TypeName, schema_name: &Ident) -> bool {
         match ty.kind() {
             TypeNameKind::Option(ty)
             | TypeNameKind::Box(ty)
@@ -181,14 +181,14 @@ impl UnusedImport {
         }
     }
 
-    fn visit_named_ref(ty: &NamedRef, schema_name: &SchemaName) -> bool {
+    fn visit_named_ref(ty: &NamedRef, schema_name: &Ident) -> bool {
         match ty.kind() {
             NamedRefKind::Intern(_) => false,
             NamedRefKind::Extern(schema, _) => schema.value() == schema_name.value(),
         }
     }
 
-    fn visit_array_len(len: &ArrayLen, schema_name: &SchemaName) -> bool {
+    fn visit_array_len(len: &ArrayLen, schema_name: &Ident) -> bool {
         match len.value() {
             ArrayLenValue::Literal(_) => false,
             ArrayLenValue::Ref(ty) => Self::visit_named_ref(ty, schema_name),
