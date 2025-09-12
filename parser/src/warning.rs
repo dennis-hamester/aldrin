@@ -14,7 +14,7 @@ mod reserved_schema_name;
 mod unused_import;
 
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
-use crate::Parsed;
+use crate::Parser;
 
 pub(crate) use duplicate_import::DuplicateImport;
 pub(crate) use non_camel_case_enum::NonCamelCaseEnum;
@@ -45,8 +45,8 @@ impl Diagnostic for Warning {
         self.kind.schema_name()
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
-        self.kind.render(renderer, parsed)
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
+        self.kind.render(renderer, parser)
     }
 }
 
@@ -92,22 +92,22 @@ impl Diagnostic for WarningKind {
         }
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         match self {
-            Self::DuplicateImport(w) => w.render(renderer, parsed),
-            Self::NonCamelCaseEnum(w) => w.render(renderer, parsed),
-            Self::NonCamelCaseEnumVariant(w) => w.render(renderer, parsed),
-            Self::NonCamelCaseNewtype(w) => w.render(renderer, parsed),
-            Self::NonCamelCaseService(w) => w.render(renderer, parsed),
-            Self::NonCamelCaseStruct(w) => w.render(renderer, parsed),
-            Self::NonShoutySnakeCaseConst(w) => w.render(renderer, parsed),
-            Self::NonSnakeCaseEvent(w) => w.render(renderer, parsed),
-            Self::NonSnakeCaseFunction(w) => w.render(renderer, parsed),
-            Self::NonSnakeCaseSchemaName(w) => w.render(renderer, parsed),
-            Self::NonSnakeCaseStructField(w) => w.render(renderer, parsed),
-            Self::ReservedIdent(w) => w.render(renderer, parsed),
-            Self::ReservedSchemaName(w) => w.render(renderer, parsed),
-            Self::UnusedImport(w) => w.render(renderer, parsed),
+            Self::DuplicateImport(w) => w.render(renderer, parser),
+            Self::NonCamelCaseEnum(w) => w.render(renderer, parser),
+            Self::NonCamelCaseEnumVariant(w) => w.render(renderer, parser),
+            Self::NonCamelCaseNewtype(w) => w.render(renderer, parser),
+            Self::NonCamelCaseService(w) => w.render(renderer, parser),
+            Self::NonCamelCaseStruct(w) => w.render(renderer, parser),
+            Self::NonShoutySnakeCaseConst(w) => w.render(renderer, parser),
+            Self::NonSnakeCaseEvent(w) => w.render(renderer, parser),
+            Self::NonSnakeCaseFunction(w) => w.render(renderer, parser),
+            Self::NonSnakeCaseSchemaName(w) => w.render(renderer, parser),
+            Self::NonSnakeCaseStructField(w) => w.render(renderer, parser),
+            Self::ReservedIdent(w) => w.render(renderer, parser),
+            Self::ReservedSchemaName(w) => w.render(renderer, parser),
+            Self::UnusedImport(w) => w.render(renderer, parser),
         }
     }
 }

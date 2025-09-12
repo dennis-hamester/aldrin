@@ -6,7 +6,7 @@ use crate::ast::{
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{Parsed, Schema};
+use crate::{Parser, Schema};
 
 #[derive(Debug)]
 pub(crate) struct UnusedImport {
@@ -205,13 +205,13 @@ impl Diagnostic for UnusedImport {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "unused import `{}`",
             self.import.schema_name().value()
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.import.span(), "");
         }
 

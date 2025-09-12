@@ -5,7 +5,7 @@ mod rust;
 
 pub mod error;
 
-use aldrin_parser::Parsed;
+use aldrin_parser::Parser;
 
 pub use error::Error;
 #[cfg(feature = "rust")]
@@ -14,26 +14,26 @@ pub use rust::{RustOptions, RustOutput};
 #[derive(Debug)]
 pub struct Generator<'a> {
     options: &'a Options,
-    parsed: &'a Parsed,
+    parser: &'a Parser,
 }
 
 impl<'a> Generator<'a> {
-    pub fn new(options: &'a Options, parsed: &'a Parsed) -> Self {
-        assert!(parsed.errors().is_empty());
-        Generator { options, parsed }
+    pub fn new(options: &'a Options, parser: &'a Parser) -> Self {
+        assert!(parser.errors().is_empty());
+        Generator { options, parser }
     }
 
     pub fn options(&self) -> &'a Options {
         self.options
     }
 
-    pub fn parsed(&self) -> &'a Parsed {
-        self.parsed
+    pub fn parser(&self) -> &'a Parser {
+        self.parser
     }
 
     #[cfg(feature = "rust")]
     pub fn generate_rust(&self, rust_options: &RustOptions) -> Result<RustOutput, Error> {
-        rust::generate(self.parsed, self.options, rust_options)
+        rust::generate(self.parser, self.options, rust_options)
     }
 }
 

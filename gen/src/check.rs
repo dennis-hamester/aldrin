@@ -1,5 +1,5 @@
 use crate::{diag, CommonReadArgs};
-use aldrin_parser::Parser;
+use aldrin_parser::{FilesystemResolver, Parser};
 use anyhow::Result;
 use std::path::PathBuf;
 
@@ -11,33 +11,33 @@ pub(crate) struct CheckArgs {
 
     /// Paths to one or more Aldrin schema files.
     #[clap(required = true)]
-    schemata: Vec<PathBuf>,
+    schemas: Vec<PathBuf>,
 }
 
 pub(crate) fn run(args: CheckArgs) -> Result<bool> {
-    let mut parser = Parser::new();
-
-    for include in args.common_read_args.include {
-        parser.add_schema_path(include);
-    }
-
     let mut res = true;
     let mut first = true;
-    for schema in &args.schemata {
-        if args.schemata.len() > 1 {
+
+    for schema in &args.schemas {
+        let parser = Parser::parse(FilesystemResolver::with_include_paths(
+            schema,
+            &args.common_read_args.include,
+        ));
+
+        if args.schemas.len() > 1 {
             if first {
                 first = false;
             } else {
                 println!();
             }
+
             println!("{}:", schema.display());
         }
 
-        let parsed = parser.parse(schema);
-        diag::print_diagnostics(&parsed);
+        diag::print_diagnostics(&parser);
 
-        if parsed.errors().is_empty() {
-            if parsed.warnings().is_empty() && parsed.other_warnings().is_empty() {
+        if parser.errors().is_empty() {
+            if parser.warnings().is_empty() && parser.other_warnings().is_empty() {
                 println!("No issues found.");
             } else {
                 println!("Some warning(s) found.");

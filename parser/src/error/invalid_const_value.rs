@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::ConstValue;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidConstValue {
@@ -42,7 +42,7 @@ impl Diagnostic for InvalidConstValue {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let (kind, value, min, max) = match self.const_value {
             ConstValue::U8(ref v) => ("u8", v, u8::MIN as i64, u8::MAX as u64),
             ConstValue::I8(ref v) => ("i8", v, i8::MIN as i64, i8::MAX as u64),
@@ -58,7 +58,7 @@ impl Diagnostic for InvalidConstValue {
         let mut report =
             renderer.error(format!("invalid constant {kind} value `{}`", value.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, value.span(), "constant value defined here");
         }
 

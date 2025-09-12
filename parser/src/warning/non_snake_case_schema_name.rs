@@ -1,7 +1,8 @@
 use super::{Warning, WarningKind};
+use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
@@ -12,6 +13,10 @@ pub(crate) struct NonSnakeCaseSchemaName {
 
 impl NonSnakeCaseSchemaName {
     pub(crate) fn validate(schema_name: &str, validate: &mut Validate) {
+        if !Ident::is_valid(schema_name) {
+            return;
+        }
+
         let snake_case = schema_name.to_snake_case();
         if schema_name == snake_case {
             return;
@@ -33,7 +38,7 @@ impl Diagnostic for NonSnakeCaseSchemaName {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, _parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, _parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "schema `{}` should have a snake-case name",
             self.schema_name

@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{EnumVariant, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed, Span};
+use crate::{util, Parser, Span};
 
 #[derive(Debug)]
 pub(crate) struct DuplicateEnumVariantId {
@@ -49,7 +49,7 @@ impl Diagnostic for DuplicateEnumVariantId {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let title = if let Some(ref ident) = self.enum_ident {
             format!(
                 "duplicate id `{}` in enum `{}`",
@@ -62,7 +62,7 @@ impl Diagnostic for DuplicateEnumVariantId {
 
         let mut report = renderer.error(title);
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report
                 .snippet(schema, self.duplicate.span(), "duplicate defined here")
                 .context(schema, self.first, "first defined here");

@@ -24,6 +24,18 @@ impl Ident {
         ReservedIdent::validate(self, validate);
     }
 
+    pub(crate) fn is_valid(ident: &str) -> bool {
+        !ident.is_empty()
+            && ident.chars().enumerate().all(|(i, c)| {
+                (c == '_')
+                    || if i == 0 {
+                        c.is_ascii_alphabetic()
+                    } else {
+                        c.is_ascii_alphanumeric()
+                    }
+            })
+    }
+
     pub fn span(&self) -> Span {
         self.span
     }

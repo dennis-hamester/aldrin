@@ -2,7 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{Ident, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
@@ -34,13 +34,13 @@ impl Diagnostic for NonCamelCaseService {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "service `{}` should have a camel-case name",
             self.ident.value(),
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "");
         }
 

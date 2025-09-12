@@ -1,15 +1,15 @@
 use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct IoError {
     schema_name: String,
-    err: std::io::Error,
+    err: String,
 }
 
 impl IoError {
-    pub(crate) fn new<S>(schema_name: S, err: std::io::Error) -> Self
+    pub(crate) fn new<S>(schema_name: S, err: String) -> Self
     where
         S: Into<String>,
     {
@@ -29,11 +29,11 @@ impl Diagnostic for IoError {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
-        let mut report = renderer.error(self.err.to_string());
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
+        let mut report = renderer.error(&self.err);
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
-            report = report.note(format!("tried to read `{}`", schema.path().display()));
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
+            report = report.note(format!("tried to read `{}`", schema.path()));
         }
 
         report.render()

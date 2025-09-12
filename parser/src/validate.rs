@@ -1,14 +1,12 @@
 use crate::issues::Issues;
 use crate::{Error, Schema, Warning};
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 pub(crate) struct Validate<'a> {
     schema_name: &'a str,
     issues: &'a mut Issues,
     schemas: &'a HashMap<String, Schema>,
     is_main_schema: bool,
-    schema_paths: &'a [PathBuf],
 }
 
 impl<'a> Validate<'a> {
@@ -17,14 +15,12 @@ impl<'a> Validate<'a> {
         issues: &'a mut Issues,
         schemas: &'a HashMap<String, Schema>,
         is_main_schema: bool,
-        schema_paths: &'a [PathBuf],
     ) -> Self {
         Validate {
             schema_name,
             issues,
             schemas,
             is_main_schema,
-            schema_paths,
         }
     }
 
@@ -56,9 +52,5 @@ impl<'a> Validate<'a> {
 
     pub(crate) fn get_current_schema(&self) -> &'a Schema {
         self.get_schema(self.schema_name).unwrap()
-    }
-
-    pub(crate) fn schema_paths(&self) -> &'a [PathBuf] {
-        self.schema_paths
     }
 }

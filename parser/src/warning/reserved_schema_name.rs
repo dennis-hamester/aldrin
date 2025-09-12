@@ -2,13 +2,12 @@ use super::{Warning, WarningKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
-use crate::Parsed;
-use std::path::PathBuf;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct ReservedSchemaName {
     schema_name: String,
-    path: PathBuf,
+    path: String,
     usage: ReservedUsage,
 }
 
@@ -33,16 +32,13 @@ impl Diagnostic for ReservedSchemaName {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, _parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, _parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "the schema name `{}` is reserved in some language(s)",
             self.schema_name,
         ));
 
-        report = report.note(format!(
-            "the schema is located at `{}`",
-            self.path.display(),
-        ));
+        report = report.note(format!("the schema is located at `{}`", self.path));
 
         for (kind, langs) in self.usage {
             report = report.note(format!(

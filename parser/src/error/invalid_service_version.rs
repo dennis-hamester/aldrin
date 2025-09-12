@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidServiceVersion {
@@ -34,14 +34,14 @@ impl Diagnostic for InvalidServiceVersion {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!(
             "invalid version `{}` for service `{}`",
             self.ver.value(),
             self.svc_ident.value(),
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ver.span(), "version defined here");
         }
 

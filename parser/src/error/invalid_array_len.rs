@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{ArrayLen, ArrayLenValue, ConstValue, Ident, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidArrayLen {
@@ -88,15 +88,15 @@ impl Diagnostic for InvalidArrayLen {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("invalid array length {}", self.value));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.len.span(), "array length used here");
         }
 
         if let Some((ref schema, ref ident)) = self.const_def {
-            if let Some(schema) = parsed.get_schema(schema) {
+            if let Some(schema) = parser.get_schema(schema) {
                 report = report.context(schema, ident.span(), "constant defined here");
             }
         }

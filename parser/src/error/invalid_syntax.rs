@@ -1,7 +1,7 @@
 use super::{Error, ErrorKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::grammar::Rule;
-use crate::{Parsed, Span};
+use crate::{Parser, Span};
 use pest::error::InputLocation;
 use std::borrow::Cow;
 use std::collections::BTreeSet;
@@ -52,7 +52,7 @@ impl Diagnostic for InvalidSyntax {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut title = "expected ".to_owned();
         let mut iter = self.expected.iter().peekable();
         let mut first = true;
@@ -100,7 +100,7 @@ impl Diagnostic for InvalidSyntax {
 
         let mut report = renderer.error(title);
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             let width = schema.source().unwrap()[self.pos..]
                 .chars()
                 .next()

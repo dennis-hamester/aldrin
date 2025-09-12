@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{EnumFallback, EnumVariant, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{Parsed, Span};
+use crate::{Parser, Span};
 
 #[derive(Debug)]
 pub(crate) struct EmptyEnum {
@@ -40,13 +40,13 @@ impl Diagnostic for EmptyEnum {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = match self.ident {
             Some(ref ident) => renderer.error(format!("empty enum `{}`", ident.value())),
             None => renderer.error("empty inline enum"),
         };
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.span, "");
         }
 

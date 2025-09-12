@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{ConstValue, NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed};
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct ExpectedConstIntFoundString {
@@ -62,13 +62,13 @@ impl Diagnostic for ExpectedConstIntFoundString {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!(
             "expected integer constant; found string constant `{}`",
             self.named_ref.ident().value()
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(
                 schema,
                 self.named_ref.span(),

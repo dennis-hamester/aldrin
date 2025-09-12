@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitPosInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed, Span};
+use crate::{util, Parser, Span};
 
 #[derive(Debug)]
 pub(crate) struct DuplicateStructFieldId {
@@ -49,7 +49,7 @@ impl Diagnostic for DuplicateStructFieldId {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let title = match self.struct_ident {
             Some(ref ident) => format!(
                 "duplicate id `{}` in struct `{}`",
@@ -62,7 +62,7 @@ impl Diagnostic for DuplicateStructFieldId {
 
         let mut report = renderer.error(title);
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report
                 .snippet(schema, self.duplicate.span(), "duplicate defined here")
                 .context(schema, self.first, "first defined here");

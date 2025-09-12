@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{FunctionDef, Ident, LitPosInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidFunctionId {
@@ -34,14 +34,14 @@ impl Diagnostic for InvalidFunctionId {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!(
             "invalid id `{}` for function `{}`",
             self.id.value(),
             self.name_ident.value(),
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.id.span(), "id defined here");
         }
 

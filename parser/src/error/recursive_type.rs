@@ -5,7 +5,7 @@ use crate::ast::{
 };
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{Parsed, Schema};
+use crate::{Parser, Schema};
 use std::ops::ControlFlow;
 
 #[derive(Debug)]
@@ -34,10 +34,10 @@ impl Diagnostic for RecursiveStruct {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("recursive struct `{}`", self.ident.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "");
         }
 
@@ -83,10 +83,10 @@ impl Diagnostic for RecursiveEnum {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("recursive enum `{}`", self.ident.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "");
         }
 
@@ -132,10 +132,10 @@ impl Diagnostic for RecursiveNewtype {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("recursive newtype `{}`", self.ident.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "");
         }
 

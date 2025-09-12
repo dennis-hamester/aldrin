@@ -3,7 +3,7 @@ use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct ReservedIdent {
@@ -33,13 +33,13 @@ impl Diagnostic for ReservedIdent {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "the identifer `{}` is reserved in some language(s)",
             self.ident.value(),
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "keyword used here");
         }
 

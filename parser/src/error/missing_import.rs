@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::SchemaName;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed};
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct MissingImport {
@@ -40,10 +40,10 @@ impl Diagnostic for MissingImport {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("missing import `{}`", self.extern_schema.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(
                 schema,
                 self.extern_schema.span(),

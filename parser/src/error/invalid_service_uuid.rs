@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitUuid, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -35,14 +35,14 @@ impl Diagnostic for InvalidServiceUuid {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!(
             "invalid uuid `{}` for service `{}`",
             Uuid::nil(),
             self.svc_ident.value()
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.uuid.span(), "nil uuid");
         }
 

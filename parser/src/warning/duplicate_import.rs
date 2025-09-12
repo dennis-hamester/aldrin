@@ -2,7 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::ImportStmt;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed, Schema, Span};
+use crate::{util, Parser, Schema, Span};
 
 #[derive(Debug)]
 pub(crate) struct DuplicateImport {
@@ -36,13 +36,13 @@ impl Diagnostic for DuplicateImport {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "duplicate import of schema `{}`",
             self.duplicate.schema_name().value()
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report
                 .snippet(schema, self.duplicate.span(), "duplicate import")
                 .context(schema, self.first, "first imported here");

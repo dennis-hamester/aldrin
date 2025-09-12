@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed};
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct TypeNotFound {
@@ -55,10 +55,10 @@ impl Diagnostic for TypeNotFound {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("type `{}` not found", self.named_ref.kind()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.named_ref.span(), "type used here");
         }
 

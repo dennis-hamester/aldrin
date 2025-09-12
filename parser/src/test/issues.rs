@@ -5,8 +5,8 @@ fn recursive_types_used() {
 
 #[test]
 fn whitespace_after_required() {
-    let parsed = issue!(whitespace_after_required);
-    let schema = parsed.main_schema();
+    let parser = issue!(whitespace_after_required);
+    let schema = parser.main_schema();
 
     let foo = &schema
         .definitions()

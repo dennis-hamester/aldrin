@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parsed};
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct ConstIntNotFound {
@@ -50,7 +50,7 @@ impl Diagnostic for ConstIntNotFound {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let (title, schema) = match self.named_ref.kind() {
             NamedRefKind::Intern(ident) => (
                 format!("integer constant `{}` not found", ident.value()),
@@ -69,7 +69,7 @@ impl Diagnostic for ConstIntNotFound {
 
         let mut report = renderer.error(title);
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.named_ref.span(), "integer constant used here");
         }
 

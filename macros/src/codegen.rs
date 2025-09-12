@@ -1,5 +1,5 @@
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::{Parser, Renderer};
+use aldrin_parser::{FilesystemResolver, Parser, Renderer};
 use manyhow::{emit, Emitter};
 use proc_macro2::Span;
 use quote::ToTokens;
@@ -11,34 +11,32 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Error, Ident, LitBool, LitStr, Path, Result, Token};
 
 pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
-    let mut parser = Parser::new();
-    for include in args.includes {
-        parser.add_schema_path(include);
-    }
-
     let mut modules = String::new();
     let renderer = Renderer::new(false, false, 100);
 
     for schema in args.schemas {
-        let parsed = parser.parse(&schema);
+        let parser = Parser::parse(FilesystemResolver::with_include_paths(
+            &schema,
+            &args.includes,
+        ));
 
-        for error in parsed.errors() {
-            let rendered = renderer.render(error, &parsed);
+        for error in parser.errors() {
+            let rendered = renderer.render(error, &parser);
             emit!(emitter, "{rendered}");
         }
 
         if args.warnings_as_errors {
-            for warning in parsed.warnings() {
-                let rendered = renderer.render(warning, &parsed);
+            for warning in parser.warnings() {
+                let rendered = renderer.render(warning, &parser);
                 emit!(emitter, "{rendered}");
             }
         }
 
-        if !parsed.errors().is_empty() {
+        if !parser.errors().is_empty() {
             continue;
         }
 
-        let generator = Generator::new(&args.options, &parsed);
+        let generator = Generator::new(&args.options, &parser);
         let mut rust_options = RustOptions::new();
 
         for patch in &args.patches {

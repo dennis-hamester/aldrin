@@ -2,7 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parsed;
+use crate::Parser;
 use heck::ToSnakeCase;
 
 #[derive(Debug)]
@@ -35,13 +35,13 @@ impl Diagnostic for NonSnakeCaseStructField {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.warning(format!(
             "field `{}` should have a snake-case name",
             self.ident.value(),
         ));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.ident.span(), "");
         }
 

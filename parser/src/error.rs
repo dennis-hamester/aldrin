@@ -33,7 +33,7 @@ mod recursive_type;
 mod type_not_found;
 
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
-use crate::Parsed;
+use crate::Parser;
 
 pub(crate) use const_int_not_found::ConstIntNotFound;
 pub(crate) use duplicate_definition::DuplicateDefinition;
@@ -83,8 +83,8 @@ impl Diagnostic for Error {
         self.kind.schema_name()
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
-        self.kind.render(renderer, parsed)
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
+        self.kind.render(renderer, parser)
     }
 }
 
@@ -172,43 +172,43 @@ impl Diagnostic for ErrorKind {
         }
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         match self {
-            Self::ConstIntNotFound(e) => e.render(renderer, parsed),
-            Self::DuplicateDefinition(e) => e.render(renderer, parsed),
-            Self::DuplicateEnumVariant(e) => e.render(renderer, parsed),
-            Self::DuplicateEnumVariantId(e) => e.render(renderer, parsed),
-            Self::DuplicateEventId(e) => e.render(renderer, parsed),
-            Self::DuplicateFunctionId(e) => e.render(renderer, parsed),
-            Self::DuplicateServiceItem(e) => e.render(renderer, parsed),
-            Self::DuplicateServiceUuid(e) => e.render(renderer, parsed),
-            Self::DuplicateStructField(e) => e.render(renderer, parsed),
-            Self::DuplicateStructFieldId(e) => e.render(renderer, parsed),
-            Self::EmptyEnum(e) => e.render(renderer, parsed),
-            Self::ExpectedConstIntFoundService(e) => e.render(renderer, parsed),
-            Self::ExpectedConstIntFoundString(e) => e.render(renderer, parsed),
-            Self::ExpectedConstIntFoundType(e) => e.render(renderer, parsed),
-            Self::ExpectedConstIntFoundUuid(e) => e.render(renderer, parsed),
-            Self::ExpectedTypeFoundConst(e) => e.render(renderer, parsed),
-            Self::ExpectedTypeFoundService(e) => e.render(renderer, parsed),
-            Self::ImportNotFound(e) => e.render(renderer, parsed),
-            Self::InvalidArrayLen(e) => e.render(renderer, parsed),
-            Self::InvalidConstValue(e) => e.render(renderer, parsed),
-            Self::InvalidEnumVariantId(e) => e.render(renderer, parsed),
-            Self::InvalidEventId(e) => e.render(renderer, parsed),
-            Self::InvalidFunctionId(e) => e.render(renderer, parsed),
-            Self::InvalidKeyType(e) => e.render(renderer, parsed),
-            Self::InvalidSchemaName(e) => e.render(renderer, parsed),
-            Self::InvalidServiceUuid(e) => e.render(renderer, parsed),
-            Self::InvalidServiceVersion(e) => e.render(renderer, parsed),
-            Self::InvalidStructFieldId(e) => e.render(renderer, parsed),
-            Self::InvalidSyntax(e) => e.render(renderer, parsed),
-            Self::IoError(e) => e.render(renderer, parsed),
-            Self::MissingImport(e) => e.render(renderer, parsed),
-            Self::RecursiveEnum(e) => e.render(renderer, parsed),
-            Self::RecursiveNewtype(e) => e.render(renderer, parsed),
-            Self::RecursiveStruct(e) => e.render(renderer, parsed),
-            Self::TypeNotFound(e) => e.render(renderer, parsed),
+            Self::ConstIntNotFound(e) => e.render(renderer, parser),
+            Self::DuplicateDefinition(e) => e.render(renderer, parser),
+            Self::DuplicateEnumVariant(e) => e.render(renderer, parser),
+            Self::DuplicateEnumVariantId(e) => e.render(renderer, parser),
+            Self::DuplicateEventId(e) => e.render(renderer, parser),
+            Self::DuplicateFunctionId(e) => e.render(renderer, parser),
+            Self::DuplicateServiceItem(e) => e.render(renderer, parser),
+            Self::DuplicateServiceUuid(e) => e.render(renderer, parser),
+            Self::DuplicateStructField(e) => e.render(renderer, parser),
+            Self::DuplicateStructFieldId(e) => e.render(renderer, parser),
+            Self::EmptyEnum(e) => e.render(renderer, parser),
+            Self::ExpectedConstIntFoundService(e) => e.render(renderer, parser),
+            Self::ExpectedConstIntFoundString(e) => e.render(renderer, parser),
+            Self::ExpectedConstIntFoundType(e) => e.render(renderer, parser),
+            Self::ExpectedConstIntFoundUuid(e) => e.render(renderer, parser),
+            Self::ExpectedTypeFoundConst(e) => e.render(renderer, parser),
+            Self::ExpectedTypeFoundService(e) => e.render(renderer, parser),
+            Self::ImportNotFound(e) => e.render(renderer, parser),
+            Self::InvalidArrayLen(e) => e.render(renderer, parser),
+            Self::InvalidConstValue(e) => e.render(renderer, parser),
+            Self::InvalidEnumVariantId(e) => e.render(renderer, parser),
+            Self::InvalidEventId(e) => e.render(renderer, parser),
+            Self::InvalidFunctionId(e) => e.render(renderer, parser),
+            Self::InvalidKeyType(e) => e.render(renderer, parser),
+            Self::InvalidSchemaName(e) => e.render(renderer, parser),
+            Self::InvalidServiceUuid(e) => e.render(renderer, parser),
+            Self::InvalidServiceVersion(e) => e.render(renderer, parser),
+            Self::InvalidStructFieldId(e) => e.render(renderer, parser),
+            Self::InvalidSyntax(e) => e.render(renderer, parser),
+            Self::IoError(e) => e.render(renderer, parser),
+            Self::MissingImport(e) => e.render(renderer, parser),
+            Self::RecursiveEnum(e) => e.render(renderer, parser),
+            Self::RecursiveNewtype(e) => e.render(renderer, parser),
+            Self::RecursiveStruct(e) => e.render(renderer, parser),
+            Self::TypeNotFound(e) => e.render(renderer, parser),
         }
     }
 }

@@ -3,7 +3,7 @@ mod test;
 
 use crate::error::Error;
 use crate::Options;
-use aldrin_parser::{ast, Parsed, Schema};
+use aldrin_parser::{ast, Parser, Schema};
 use diffy::Patch;
 use heck::ToUpperCamelCase;
 use std::fmt::Write;
@@ -74,14 +74,14 @@ pub struct RustOutput {
 }
 
 pub(crate) fn generate(
-    parsed: &Parsed,
+    parser: &Parser,
     options: &Options,
     rust_options: &RustOptions,
 ) -> Result<RustOutput, Error> {
-    let schema = parsed.main_schema();
+    let schema = parser.main_schema();
 
     let generator = RustGenerator {
-        parsed,
+        parser,
         schema,
         options,
         rust_options,
@@ -95,7 +95,7 @@ pub(crate) fn generate(
 }
 
 struct RustGenerator<'a> {
-    parsed: &'a Parsed,
+    parser: &'a Parser,
     schema: &'a Schema,
     options: &'a Options,
     rust_options: &'a RustOptions<'a>,
@@ -933,7 +933,7 @@ impl RustGenerator<'_> {
                     ast::NamedRefKind::Intern(name) => (schema, name.value()),
 
                     ast::NamedRefKind::Extern(schema, name) => {
-                        if let Some(schema) = self.parsed.get_schema(schema.value()) {
+                        if let Some(schema) = self.parser.get_schema(schema.value()) {
                             (schema, name.value())
                         } else {
                             return (false, false);

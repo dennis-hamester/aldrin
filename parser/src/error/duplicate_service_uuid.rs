@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitUuid};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::issues::Issues;
-use crate::{Parsed, Schema};
+use crate::{Parser, Schema};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -58,15 +58,15 @@ impl Diagnostic for DuplicateServiceUuid {
         &self.schema_name
     }
 
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String {
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         let mut report = renderer.error(format!("duplicate service uuid `{}`", self.uuid.value()));
 
-        if let Some(schema) = parsed.get_schema(&self.schema_name) {
+        if let Some(schema) = parser.get_schema(&self.schema_name) {
             report = report.snippet(schema, self.uuid.span(), "this uuid is used multiple times");
         }
 
         for (schema_name, svc_ident) in &self.svc_idents {
-            if let Some(schema) = parsed.get_schema(schema_name) {
+            if let Some(schema) = parser.get_schema(schema_name) {
                 report = report.context(schema, svc_ident.span(), "used for this service");
             }
         }

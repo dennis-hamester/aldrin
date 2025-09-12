@@ -3,7 +3,7 @@
 //! This module primarily provides the [`Diagnostic`] trait, which is implemented by
 //! [`Error`](crate::Error) and [`Warning`](crate::Warning).
 
-use crate::{Parsed, Schema, Span};
+use crate::{Parser, Schema, Span};
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{AnnotationKind, Group, Level, Snippet};
 use std::borrow::Cow;
@@ -16,11 +16,11 @@ pub trait Diagnostic {
 
     /// Name of the schema this diagnostic originated from.
     ///
-    /// The schema name can be used to look up the [`Schema`] with [`Parsed::get_schema`].
+    /// The schema name can be used to look up the [`Schema`] with [`Parser::get_schema`].
     fn schema_name(&self) -> &str;
 
     /// Renders the diagnostic for printing.
-    fn render(&self, renderer: &Renderer, parsed: &Parsed) -> String;
+    fn render(&self, renderer: &Renderer, parser: &Parser) -> String;
 }
 
 /// Error or warning.
@@ -56,8 +56,8 @@ impl Renderer {
         Self { inner }
     }
 
-    pub fn render(&self, diagnostic: &(impl Diagnostic + ?Sized), parsed: &Parsed) -> String {
-        diagnostic.render(self, parsed)
+    pub fn render(&self, diagnostic: &(impl Diagnostic + ?Sized), parser: &Parser) -> String {
+        diagnostic.render(self, parser)
     }
 
     pub(crate) fn error<'a>(&'a self, title: impl Into<Cow<'a, str>>) -> Report<'a> {
@@ -97,7 +97,7 @@ impl<'a> Report<'a> {
     ) -> Self {
         self.group = self.group.element(
             Snippet::source(schema.source().unwrap())
-                .path(schema.path().to_string_lossy())
+                .path(schema.path())
                 .annotation(
                     AnnotationKind::Primary
                         .span(span.start..span.end)
@@ -116,7 +116,7 @@ impl<'a> Report<'a> {
     ) -> Self {
         self.group = self.group.element(
             Snippet::source(schema.source().unwrap())
-                .path(schema.path().to_string_lossy())
+                .path(schema.path())
                 .annotation(
                     AnnotationKind::Context
                         .span(span.start..span.end)

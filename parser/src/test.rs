@@ -16,16 +16,15 @@ macro_rules! issue {
         let mut schema_path: std::path::PathBuf =
             ["test", "issues", stringify!($name)].iter().collect();
         schema_path.set_extension("aldrin");
-        let parser = $crate::Parser::new();
-        parser.parse(schema_path)
+
+        $crate::Parser::parse($crate::FilesystemResolver::new(schema_path))
     }};
 }
 
 mod issues;
 mod ui_tests;
 
-use crate::diag::Renderer;
-use crate::{Diagnostic, Parser};
+use crate::{Diagnostic, FilesystemResolver, Parser, Renderer};
 use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::Read;
@@ -37,9 +36,10 @@ fn ui_test_impl(name: &str) {
     let mut schema_path = base_path.clone();
     schema_path.set_extension("aldrin");
 
-    let mut parser = Parser::new();
-    parser.add_schema_path("test/ui");
-    let parsed = parser.parse(schema_path);
+    let parser = Parser::parse(FilesystemResolver::with_include_paths(
+        schema_path,
+        ["test/ui"],
+    ));
 
     let mut expected = HashSet::new();
     if base_path.is_dir() {
@@ -55,13 +55,13 @@ fn ui_test_impl(name: &str) {
 
     let mut fail = false;
 
-    let errors = parsed.errors().iter().map(|d| d as &dyn Diagnostic);
-    let warnings = parsed.warnings().iter().map(|d| d as &dyn Diagnostic);
-    let others = parsed.other_warnings().iter().map(|d| d as &dyn Diagnostic);
+    let errors = parser.errors().iter().map(|d| d as &dyn Diagnostic);
+    let warnings = parser.warnings().iter().map(|d| d as &dyn Diagnostic);
+    let others = parser.other_warnings().iter().map(|d| d as &dyn Diagnostic);
     let renderer = Renderer::new(false, true, 100);
 
     for diag in errors.chain(warnings).chain(others) {
-        let rendered = renderer.render(diag, &parsed);
+        let rendered = renderer.render(diag, &parser);
 
         if !expected.remove(&rendered) {
             eprintln!("Unexpected diagnostic:\n{rendered}\n");

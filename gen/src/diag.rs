@@ -1,21 +1,21 @@
-use aldrin_parser::{Diagnostic, Parsed, Renderer};
+use aldrin_parser::{Diagnostic, Parser, Renderer};
 use anstream::eprintln;
 
-pub(crate) fn print_diagnostics(parsed: &Parsed) {
+pub(crate) fn print_diagnostics(parser: &Parser) {
     let renderer = Renderer::new(true, true, get_termwidth());
 
-    for error in parsed.errors() {
-        let rendered = error.render(&renderer, parsed);
+    for error in parser.errors() {
+        let rendered = error.render(&renderer, parser);
         eprintln!("{rendered}\n");
     }
 
-    for warning in parsed.warnings() {
-        let rendered = warning.render(&renderer, parsed);
+    for warning in parser.warnings() {
+        let rendered = warning.render(&renderer, parser);
         eprintln!("{rendered}\n");
     }
 
-    for warning in parsed.other_warnings() {
-        let rendered = warning.render(&renderer, parsed);
+    for warning in parser.other_warnings() {
+        let rendered = warning.render(&renderer, parser);
         eprintln!("{rendered}\n");
     }
 }

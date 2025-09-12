@@ -1,6 +1,6 @@
 use crate::{diag, CommonGenArgs, CommonReadArgs};
 use aldrin_codegen::{Generator, Options, RustOptions};
-use aldrin_parser::Parser;
+use aldrin_parser::{FilesystemResolver, Parser};
 use anyhow::{anyhow, Context, Result};
 use std::env;
 use std::fs::File;
@@ -37,22 +37,21 @@ pub(crate) struct RustArgs {
 pub(crate) fn run(args: RustArgs) -> Result<bool> {
     let output_dir = match args.common_gen_args.output_dir {
         Some(output_dir) => output_dir,
+
         None => {
             env::current_dir().with_context(|| anyhow!("failed to determine current directory"))?
         }
     };
 
-    let mut parser = Parser::new();
+    let parser = Parser::parse(FilesystemResolver::with_include_paths(
+        args.schema,
+        args.common_read_args.include,
+    ));
 
-    for include in args.common_read_args.include {
-        parser.add_schema_path(include);
-    }
+    diag::print_diagnostics(&parser);
 
-    let parsed = parser.parse(args.schema);
-    diag::print_diagnostics(&parsed);
-
-    if parsed.errors().is_empty() {
-        if !parsed.warnings().is_empty() || !parsed.other_warnings().is_empty() {
+    if parser.errors().is_empty() {
+        if !parser.warnings().is_empty() || !parser.other_warnings().is_empty() {
             println!("Some warning(s) found.");
         }
     } else {
@@ -73,7 +72,7 @@ pub(crate) fn run(args: RustArgs) -> Result<bool> {
 
     rust_options.krate = args.krate.as_deref();
 
-    let generator = Generator::new(&options, &parsed);
+    let generator = Generator::new(&options, &parser);
     let output = generator.generate_rust(&rust_options)?;
 
     let module_path = output_dir.join(format!("{}.rs", output.module_name));
