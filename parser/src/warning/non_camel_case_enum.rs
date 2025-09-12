@@ -14,14 +14,20 @@ pub(crate) struct NonCamelCaseEnum {
 
 impl NonCamelCaseEnum {
     pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate) {
-        let camel_case = enum_def.name().value().to_upper_camel_case();
-        if enum_def.name().value() != camel_case {
-            validate.add_warning(Self {
-                schema_name: validate.schema_name().to_owned(),
-                camel_case,
-                ident: enum_def.name().clone(),
-            });
+        if !Ident::is_valid(enum_def.name().value()) {
+            return;
         }
+
+        let camel_case = enum_def.name().value().to_upper_camel_case();
+        if enum_def.name().value() == camel_case {
+            return;
+        }
+
+        validate.add_warning(Self {
+            schema_name: validate.schema_name().to_owned(),
+            camel_case,
+            ident: enum_def.name().clone(),
+        });
     }
 }
 

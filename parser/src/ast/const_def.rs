@@ -51,7 +51,7 @@ impl ConstDef {
     pub(crate) fn validate(&self, validate: &mut Validate) {
         NonShoutySnakeCaseConst::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
         self.value.validate(validate);
     }
 

@@ -80,10 +80,13 @@ impl NamedRefKind {
 
     fn validate(&self, validate: &mut Validate) {
         match self {
-            Self::Intern(_) => {}
+            Self::Intern(ty) => {
+                ty.validate(false, validate);
+            }
 
-            Self::Extern(schema, _) => {
+            Self::Extern(schema, ty) => {
                 MissingImport::validate(schema, validate);
+                ty.validate(false, validate);
             }
         }
     }

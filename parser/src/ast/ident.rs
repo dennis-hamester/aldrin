@@ -1,3 +1,4 @@
+use crate::error::InvalidIdent;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::ReservedIdent;
@@ -20,8 +21,11 @@ impl Ident {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
-        ReservedIdent::validate(self, validate);
+    pub(crate) fn validate(&self, is_def: bool, validate: &mut Validate) {
+        if is_def {
+            InvalidIdent::validate(self, validate);
+            ReservedIdent::validate(self, validate);
+        }
     }
 
     pub(crate) fn is_valid(ident: &str) -> bool {

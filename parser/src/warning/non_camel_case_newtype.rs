@@ -14,15 +14,20 @@ pub(crate) struct NonCamelCaseNewtype {
 
 impl NonCamelCaseNewtype {
     pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate) {
-        let camel_case = newtype_def.name().value().to_upper_camel_case();
-
-        if newtype_def.name().value() != camel_case {
-            validate.add_warning(Self {
-                schema_name: validate.schema_name().to_owned(),
-                camel_case,
-                ident: newtype_def.name().clone(),
-            });
+        if !Ident::is_valid(newtype_def.name().value()) {
+            return;
         }
+
+        let camel_case = newtype_def.name().value().to_upper_camel_case();
+        if newtype_def.name().value() == camel_case {
+            return;
+        }
+
+        validate.add_warning(Self {
+            schema_name: validate.schema_name().to_owned(),
+            camel_case,
+            ident: newtype_def.name().clone(),
+        });
     }
 }
 

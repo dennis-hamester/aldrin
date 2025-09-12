@@ -14,14 +14,20 @@ pub(crate) struct NonSnakeCaseFunction {
 
 impl NonSnakeCaseFunction {
     pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate) {
-        let snake_case = func.name().value().to_snake_case();
-        if func.name().value() != snake_case {
-            validate.add_warning(Self {
-                schema_name: validate.schema_name().to_owned(),
-                snake_case,
-                ident: func.name().clone(),
-            });
+        if !Ident::is_valid(func.name().value()) {
+            return;
         }
+
+        let snake_case = func.name().value().to_snake_case();
+        if func.name().value() == snake_case {
+            return;
+        }
+
+        validate.add_warning(Self {
+            schema_name: validate.schema_name().to_owned(),
+            snake_case,
+            ident: func.name().clone(),
+        });
     }
 }
 

@@ -75,7 +75,7 @@ kw_unit = @{ "unit" }
 kw_result = @{ "result" }
 kw_fallback = @{ "fallback" }
 
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+ident = @{ (XID_START | "_") ~ XID_CONTINUE* }
 
 external_ref = { ident ~ tok_scope ~ ident }
 named_ref = { external_ref | ident }

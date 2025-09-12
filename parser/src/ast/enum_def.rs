@@ -84,7 +84,7 @@ impl EnumDef {
             validate,
         );
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
 
         for var in &self.vars {
             var.validate(validate);
@@ -263,7 +263,7 @@ impl EnumVariant {
         InvalidEnumVariantId::validate(self, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
 
         if let Some(ref var_type) = self.var_type {
             var_type.validate(false, validate);
@@ -325,7 +325,7 @@ impl EnumFallback {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        self.name.validate(validate);
+        self.name.validate(true, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
     }
 

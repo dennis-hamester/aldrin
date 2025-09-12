@@ -77,7 +77,7 @@ impl StructDef {
         NonCamelCaseStruct::validate(self, validate);
         RecursiveStruct::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
 
         for field in &self.fields {
             field.validate(validate);
@@ -248,7 +248,7 @@ impl StructField {
         InvalidStructFieldId::validate(self, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
         self.field_type.validate(false, validate);
     }
 
@@ -311,7 +311,7 @@ impl StructFallback {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        self.name.validate(validate);
+        self.name.validate(true, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
     }
 

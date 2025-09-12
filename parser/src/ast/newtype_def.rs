@@ -55,7 +55,7 @@ impl NewtypeDef {
         RecursiveNewtype::validate(self, validate);
         NonCamelCaseNewtype::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
         self.target_type.validate(false, validate);
     }
 

@@ -21,6 +21,7 @@ mod invalid_const_value;
 mod invalid_enum_variant_id;
 mod invalid_event_id;
 mod invalid_function_id;
+mod invalid_ident;
 mod invalid_key_type;
 mod invalid_schema_name;
 mod invalid_service_uuid;
@@ -58,6 +59,7 @@ pub(crate) use invalid_const_value::InvalidConstValue;
 pub(crate) use invalid_enum_variant_id::InvalidEnumVariantId;
 pub(crate) use invalid_event_id::InvalidEventId;
 pub(crate) use invalid_function_id::InvalidFunctionId;
+pub(crate) use invalid_ident::InvalidIdent;
 pub(crate) use invalid_key_type::InvalidKeyType;
 pub(crate) use invalid_schema_name::InvalidSchemaName;
 pub(crate) use invalid_service_uuid::InvalidServiceUuid;
@@ -113,6 +115,7 @@ enum ErrorKind {
     InvalidEnumVariantId(InvalidEnumVariantId),
     InvalidEventId(InvalidEventId),
     InvalidFunctionId(InvalidFunctionId),
+    InvalidIdent(InvalidIdent),
     InvalidKeyType(InvalidKeyType),
     InvalidSchemaName(InvalidSchemaName),
     InvalidServiceUuid(InvalidServiceUuid),
@@ -157,6 +160,7 @@ impl Diagnostic for ErrorKind {
             Self::InvalidEnumVariantId(e) => e.schema_name(),
             Self::InvalidEventId(e) => e.schema_name(),
             Self::InvalidFunctionId(e) => e.schema_name(),
+            Self::InvalidIdent(e) => e.schema_name(),
             Self::InvalidKeyType(e) => e.schema_name(),
             Self::InvalidSchemaName(e) => e.schema_name(),
             Self::InvalidServiceUuid(e) => e.schema_name(),
@@ -197,6 +201,7 @@ impl Diagnostic for ErrorKind {
             Self::InvalidEnumVariantId(e) => e.render(renderer, parser),
             Self::InvalidEventId(e) => e.render(renderer, parser),
             Self::InvalidFunctionId(e) => e.render(renderer, parser),
+            Self::InvalidIdent(e) => e.render(renderer, parser),
             Self::InvalidKeyType(e) => e.render(renderer, parser),
             Self::InvalidSchemaName(e) => e.render(renderer, parser),
             Self::InvalidServiceUuid(e) => e.render(renderer, parser),

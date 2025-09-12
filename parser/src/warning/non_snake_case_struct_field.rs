@@ -14,15 +14,20 @@ pub(crate) struct NonSnakeCaseStructField {
 
 impl NonSnakeCaseStructField {
     pub(crate) fn validate(ident: &Ident, validate: &mut Validate) {
-        let snake_case = ident.value().to_snake_case();
-
-        if ident.value() != snake_case {
-            validate.add_warning(Self {
-                schema_name: validate.schema_name().to_owned(),
-                snake_case,
-                ident: ident.clone(),
-            });
+        if !Ident::is_valid(ident.value()) {
+            return;
         }
+
+        let snake_case = ident.value().to_snake_case();
+        if ident.value() == snake_case {
+            return;
+        }
+
+        validate.add_warning(Self {
+            schema_name: validate.schema_name().to_owned(),
+            snake_case,
+            ident: ident.clone(),
+        });
     }
 }
 

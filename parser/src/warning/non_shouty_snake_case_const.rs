@@ -14,14 +14,20 @@ pub(crate) struct NonShoutySnakeCaseConst {
 
 impl NonShoutySnakeCaseConst {
     pub(crate) fn validate(const_def: &ConstDef, validate: &mut Validate) {
-        let shouty_snake_case = const_def.name().value().to_shouty_snake_case();
-        if const_def.name().value() != shouty_snake_case {
-            validate.add_warning(Self {
-                schema_name: validate.schema_name().to_owned(),
-                shouty_snake_case,
-                ident: const_def.name().clone(),
-            });
+        if !Ident::is_valid(const_def.name().value()) {
+            return;
         }
+
+        let shouty_snake_case = const_def.name().value().to_shouty_snake_case();
+        if const_def.name().value() == shouty_snake_case {
+            return;
+        }
+
+        validate.add_warning(Self {
+            schema_name: validate.schema_name().to_owned(),
+            shouty_snake_case,
+            ident: const_def.name().clone(),
+        });
     }
 }
 

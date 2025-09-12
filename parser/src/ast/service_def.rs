@@ -109,7 +109,7 @@ impl ServiceDef {
         DuplicateEventId::validate(self, validate);
         NonCamelCaseService::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
 
         for item in &self.items {
             item.validate(validate);
@@ -270,7 +270,7 @@ impl FunctionDef {
         NonSnakeCaseFunction::validate(self, validate);
         InvalidFunctionId::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
 
         if let Some(ref args) = self.args {
             args.validate(validate);
@@ -413,7 +413,8 @@ impl EventDef {
         NonSnakeCaseEvent::validate(self, validate);
         InvalidEventId::validate(self, validate);
 
-        self.name.validate(validate);
+        self.name.validate(true, validate);
+
         if let Some(ref event_type) = self.event_type {
             event_type.validate(validate);
         }
@@ -474,7 +475,7 @@ impl FunctionFallback {
     }
 
     fn validate(&self, validate: &mut Validate) {
-        self.name.validate(validate);
+        self.name.validate(true, validate);
     }
 
     pub fn span(&self) -> Span {
@@ -524,7 +525,7 @@ impl EventFallback {
     }
 
     fn validate(&self, validate: &mut Validate) {
-        self.name.validate(validate);
+        self.name.validate(true, validate);
     }
 
     pub fn span(&self) -> Span {
