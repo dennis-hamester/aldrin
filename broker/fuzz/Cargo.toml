@@ -35,7 +35,8 @@ version = "1.6.1"
 features = ["arbitrary"]
 
 [profile.release]
-debug = 1
+codegen-units = 1
+debug = true
 debug-assertions = true
 overflow-checks = true
 

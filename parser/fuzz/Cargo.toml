@@ -20,7 +20,8 @@ version = "1.4.2"
 features = ["derive"]
 
 [profile.release]
-debug = 1
+codegen-units = 1
+debug = true
 debug-assertions = true
 overflow-checks = true
 
