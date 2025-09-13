@@ -444,7 +444,7 @@ impl Body {
                 }
             }
 
-            pub fn is_abort(&mut self) -> ::std::primitive::bool {
+            pub fn is_aborted(&mut self) -> ::std::primitive::bool {
                 match *self {
                     #( #is_aborted )*
                 }
