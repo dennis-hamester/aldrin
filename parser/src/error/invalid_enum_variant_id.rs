@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{EnumVariant, Ident, LitPosInt};
+use crate::ast::{EnumVariant, Ident, LitInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parser;
@@ -7,7 +7,7 @@ use crate::Parser;
 #[derive(Debug)]
 pub(crate) struct InvalidEnumVariantId {
     schema_name: String,
-    id: LitPosInt,
+    id: LitInt,
     var_ident: Ident,
 }
 

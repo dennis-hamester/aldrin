@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
+use crate::ast::{Ident, LitInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parser, Span};
@@ -7,7 +7,7 @@ use crate::{util, Parser, Span};
 #[derive(Debug)]
 pub(crate) struct DuplicateEventId {
     schema_name: String,
-    duplicate: LitPosInt,
+    duplicate: LitInt,
     first: Span,
     service_ident: Ident,
     free_id: u32,
@@ -22,13 +22,12 @@ impl DuplicateEventId {
 
         let mut max_id = events
             .clone()
-            .fold(0, |cur, ev| match ev.id().value().parse() {
-                Ok(id) if id > cur => id,
-                _ => cur,
-            });
+            .filter_map(|ev| ev.id().value().parse().ok())
+            .max()
+            .unwrap_or(0);
 
         util::find_duplicates(
-            events,
+            events.filter(|ev| ev.id().value().parse::<u32>().is_ok()),
             |ev| ev.id().value(),
             |duplicate, first| {
                 max_id += 1;

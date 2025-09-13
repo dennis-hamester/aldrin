@@ -2,10 +2,7 @@ WHITESPACE = _{ WHITE_SPACE }
 COMMENT = _{ !"///" ~ !"//!" ~ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 ws = _{ WHITESPACE | COMMENT | EOI }
 
-lit_pos_nonzero_int = @{ ('1'..'9') ~ ('0'..'9')* }
-lit_pos_int = @{ "0" | lit_pos_nonzero_int }
-lit_int = @{ "0" | ("-"? ~ lit_pos_nonzero_int) }
-
+lit_int = @{ "-"? ~ ASCII_DIGIT+ }
 lit_string_char = @{ "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
 lit_string = @{ "\"" ~ lit_string_char* ~ "\"" }
 
@@ -89,7 +86,7 @@ sender_type = { kw_sender ~ tok_ang_open ~ type_name ~ tok_ang_close }
 receiver_type = { kw_receiver ~ tok_ang_open ~ type_name ~ tok_ang_close }
 result_type = { kw_result ~ tok_ang_open ~ type_name ~ tok_comma ~ type_name ~ tok_ang_close }
 
-array_len = { lit_pos_int | named_ref }
+array_len = { lit_int | named_ref }
 array_type = { tok_squ_open ~ type_name ~ tok_term ~ array_len ~ tok_squ_close }
 
 type_name = {
@@ -143,12 +140,12 @@ def = { struct_def | enum_def | service_def | const_def | newtype_def }
 
 struct_def = { doc_string* ~ attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
 struct_inline = { kw_struct ~ tok_cur_open ~ doc_string_inline* ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
-struct_field = { doc_string* ~ kw_required? ~ ident ~ tok_at ~ lit_pos_int ~ tok_eq ~ type_name ~ tok_term }
+struct_field = { doc_string* ~ kw_required? ~ ident ~ tok_at ~ lit_int ~ tok_eq ~ type_name ~ tok_term }
 struct_fallback = { doc_string* ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 enum_def = { doc_string* ~ attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
 enum_inline = { kw_enum ~ tok_cur_open ~ doc_string_inline* ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
-enum_variant = {  doc_string* ~ident ~ tok_at ~ lit_pos_int ~ (tok_eq ~ type_name)? ~ tok_term }
+enum_variant = {  doc_string* ~ident ~ tok_at ~ lit_int ~ (tok_eq ~ type_name)? ~ tok_term }
 enum_fallback = {  doc_string* ~ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 service_def = {
@@ -161,11 +158,11 @@ service_def = {
     ~ tok_cur_close
 }
 service_uuid = { kw_uuid ~ tok_eq ~ lit_uuid ~ tok_term }
-service_version = { kw_version ~ tok_eq ~ lit_pos_int ~ tok_term }
+service_version = { kw_version ~ tok_eq ~ lit_int ~ tok_term }
 service_item = { fn_def | event_def }
 service_fallback = { (fn_fallback ~ event_fallback?) | (event_fallback ~ fn_fallback?) }
 
-fn_def = { doc_string* ~ kw_fn ~ ident ~ tok_at ~ lit_pos_int ~ fn_body }
+fn_def = { doc_string* ~ kw_fn ~ ident ~ tok_at ~ lit_int ~ fn_body }
 fn_body = _{ fn_body_full | fn_body_ok | tok_term }
 fn_body_full = _{ tok_cur_open ~ fn_args? ~ fn_ok? ~ fn_err? ~ tok_cur_close }
 fn_body_ok = _{ tok_eq ~ type_name_or_inline }
@@ -174,7 +171,7 @@ fn_ok = { kw_ok ~ tok_eq ~ type_name_or_inline }
 fn_err = { kw_err ~ tok_eq ~ type_name_or_inline }
 fn_fallback = { doc_string* ~ kw_fn ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
-event_def = { doc_string* ~ kw_event ~ ident ~ tok_at ~ lit_pos_int ~ ((tok_eq ~ type_name_or_inline) | tok_term) }
+event_def = { doc_string* ~ kw_event ~ ident ~ tok_at ~ lit_int ~ ((tok_eq ~ type_name_or_inline) | tok_term) }
 event_fallback = { doc_string* ~ kw_event ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 const_def = { doc_string* ~ kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }

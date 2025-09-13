@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{Ident, LitPosInt, StructField};
+use crate::ast::{Ident, LitInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parser, Span};
@@ -7,7 +7,7 @@ use crate::{util, Parser, Span};
 #[derive(Debug)]
 pub(crate) struct DuplicateStructFieldId {
     schema_name: String,
-    duplicate: LitPosInt,
+    duplicate: LitInt,
     first: Span,
     struct_ident: Option<Ident>,
     free_id: u32,
@@ -17,13 +17,14 @@ impl DuplicateStructFieldId {
     pub(crate) fn validate(fields: &[StructField], ident: Option<&Ident>, validate: &mut Validate) {
         let mut max_id = fields
             .iter()
-            .fold(0, |cur, field| match field.id().value().parse() {
-                Ok(id) if id > cur => id,
-                _ => cur,
-            });
+            .filter_map(|field| field.id().value().parse().ok())
+            .max()
+            .unwrap_or(0);
 
         util::find_duplicates(
-            fields,
+            fields
+                .iter()
+                .filter(|field| field.id().value().parse::<u32>().is_ok()),
             |field| field.id().value(),
             |duplicate, first| {
                 max_id += 1;

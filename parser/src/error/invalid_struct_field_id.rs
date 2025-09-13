@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{Ident, LitPosInt, StructField};
+use crate::ast::{Ident, LitInt, StructField};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parser;
@@ -7,7 +7,7 @@ use crate::Parser;
 #[derive(Debug)]
 pub(crate) struct InvalidStructFieldId {
     schema_name: String,
-    id: LitPosInt,
+    id: LitInt,
     field_ident: Ident,
 }
 

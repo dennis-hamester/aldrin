@@ -1,4 +1,4 @@
-use super::{LitPosInt, NamedRef};
+use super::{LitInt, NamedRef};
 use crate::error::{
     ConstIntNotFound, ExpectedConstIntFoundService, ExpectedConstIntFoundString,
     ExpectedConstIntFoundType, ExpectedConstIntFoundUuid, InvalidArrayLen,
@@ -45,14 +45,14 @@ impl ArrayLen {
 
 #[derive(Debug, Clone)]
 pub enum ArrayLenValue {
-    Literal(LitPosInt),
+    Literal(LitInt),
     Ref(NamedRef),
 }
 
 impl ArrayLenValue {
     fn parse(pair: Pair<Rule>) -> Self {
         match pair.as_rule() {
-            Rule::lit_pos_int => Self::Literal(LitPosInt::parse(pair)),
+            Rule::lit_int => Self::Literal(LitInt::parse(pair)),
             Rule::named_ref => Self::Ref(NamedRef::parse(pair)),
             _ => unreachable!(),
         }

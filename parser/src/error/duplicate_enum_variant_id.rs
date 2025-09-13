@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{EnumVariant, Ident, LitPosInt};
+use crate::ast::{EnumVariant, Ident, LitInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parser, Span};
@@ -7,7 +7,7 @@ use crate::{util, Parser, Span};
 #[derive(Debug)]
 pub(crate) struct DuplicateEnumVariantId {
     schema_name: String,
-    duplicate: LitPosInt,
+    duplicate: LitInt,
     first: Span,
     enum_ident: Option<Ident>,
     free_id: u32,
@@ -17,13 +17,13 @@ impl DuplicateEnumVariantId {
     pub(crate) fn validate(vars: &[EnumVariant], ident: Option<&Ident>, validate: &mut Validate) {
         let mut max_id = vars
             .iter()
-            .fold(0, |cur, var| match var.id().value().parse() {
-                Ok(id) if id > cur => id,
-                _ => cur,
-            });
+            .filter_map(|var| var.id().value().parse().ok())
+            .max()
+            .unwrap_or(0);
 
         util::find_duplicates(
-            vars,
+            vars.iter()
+                .filter(|var| var.id().value().parse::<u32>().is_ok()),
             |var| var.id().value(),
             |duplicate, first| {
                 max_id += 1;

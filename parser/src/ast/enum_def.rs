@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitPosInt, TypeName};
+use super::{Attribute, DocString, Ident, LitInt, TypeName};
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
@@ -212,7 +212,7 @@ pub struct EnumVariant {
     span: Span,
     doc: Option<String>,
     name: Ident,
-    id: LitPosInt,
+    id: LitInt,
     var_type: Option<TypeName>,
 }
 
@@ -238,7 +238,7 @@ impl EnumVariant {
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitPosInt::parse(pair);
+        let id = LitInt::parse(pair);
 
         let pair = pairs.next().unwrap();
         let var_type = match pair.as_rule() {
@@ -282,7 +282,7 @@ impl EnumVariant {
         &self.name
     }
 
-    pub fn id(&self) -> &LitPosInt {
+    pub fn id(&self) -> &LitInt {
         &self.id
     }
 

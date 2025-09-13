@@ -229,7 +229,6 @@ impl Expected {
             Rule::kw_uuid => &[&[Expected::Keyword("uuid")]],
             Rule::kw_version => &[&[Expected::Keyword("version")]],
             Rule::lit_int => &[&[Expected::LitInt]],
-            Rule::lit_pos_int => &[&[Expected::LitPosInt]],
             Rule::lit_string => &[&[Expected::LitString]],
             Rule::lit_uuid => &[&[Expected::LitUuid]],
             Rule::service_item | Rule::service_fallback => &[SERVICE_ITEM],

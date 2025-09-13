@@ -1,4 +1,4 @@
-use super::{DocString, Ident, LitPosInt, LitUuid, TypeNameOrInline};
+use super::{DocString, Ident, LitInt, LitUuid, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceUuid, InvalidServiceVersion,
@@ -15,7 +15,7 @@ pub struct ServiceDef {
     doc: Option<String>,
     name: Ident,
     uuid: LitUuid,
-    ver: LitPosInt,
+    ver: LitInt,
     items: Vec<ServiceItem>,
     fn_fallback: Option<FunctionFallback>,
     ev_fallback: Option<EventFallback>,
@@ -92,13 +92,13 @@ impl ServiceDef {
         LitUuid::parse(pair)
     }
 
-    fn parse_version(pair: Pair<Rule>) -> LitPosInt {
+    fn parse_version(pair: Pair<Rule>) -> LitInt {
         assert_eq!(pair.as_rule(), Rule::service_version);
         let mut pairs = pair.into_inner();
         pairs.next().unwrap(); // Skip keyword.
         pairs.next().unwrap(); // Skip =.
         let pair = pairs.next().unwrap();
-        LitPosInt::parse(pair)
+        LitInt::parse(pair)
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -140,7 +140,7 @@ impl ServiceDef {
         &self.uuid
     }
 
-    pub fn version(&self) -> &LitPosInt {
+    pub fn version(&self) -> &LitInt {
         &self.ver
     }
 
@@ -210,7 +210,7 @@ pub struct FunctionDef {
     span: Span,
     doc: Option<String>,
     name: Ident,
-    id: LitPosInt,
+    id: LitInt,
     args: Option<FunctionPart>,
     ok: Option<FunctionPart>,
     err: Option<FunctionPart>,
@@ -238,7 +238,7 @@ impl FunctionDef {
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitPosInt::parse(pair);
+        let id = LitInt::parse(pair);
 
         let mut args = None;
         let mut ok = None;
@@ -297,7 +297,7 @@ impl FunctionDef {
         &self.name
     }
 
-    pub fn id(&self) -> &LitPosInt {
+    pub fn id(&self) -> &LitInt {
         &self.id
     }
 
@@ -362,7 +362,7 @@ pub struct EventDef {
     span: Span,
     doc: Option<String>,
     name: Ident,
-    id: LitPosInt,
+    id: LitInt,
     event_type: Option<TypeNameOrInline>,
 }
 
@@ -388,7 +388,7 @@ impl EventDef {
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitPosInt::parse(pair);
+        let id = LitInt::parse(pair);
 
         let pair = pairs.next().unwrap();
         let event_type = match pair.as_rule() {
@@ -432,7 +432,7 @@ impl EventDef {
         &self.name
     }
 
-    pub fn id(&self) -> &LitPosInt {
+    pub fn id(&self) -> &LitInt {
         &self.id
     }
 

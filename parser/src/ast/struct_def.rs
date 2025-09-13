@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitPosInt, TypeName};
+use super::{Attribute, DocString, Ident, LitInt, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -198,7 +198,7 @@ pub struct StructField {
     doc: Option<String>,
     req: bool,
     name: Ident,
-    id: LitPosInt,
+    id: LitInt,
     field_type: TypeName,
 }
 
@@ -227,7 +227,7 @@ impl StructField {
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitPosInt::parse(pair);
+        let id = LitInt::parse(pair);
 
         pairs.next().unwrap(); // Skip =.
 
@@ -268,7 +268,7 @@ impl StructField {
         &self.name
     }
 
-    pub fn id(&self) -> &LitPosInt {
+    pub fn id(&self) -> &LitInt {
         &self.id
     }
 

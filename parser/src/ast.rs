@@ -25,7 +25,7 @@ pub use definition::Definition;
 pub use enum_def::{EnumDef, EnumFallback, EnumVariant, InlineEnum};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;
-pub use lit_int::{LitInt, LitPosInt};
+pub use lit_int::LitInt;
 pub use lit_string::LitString;
 pub use lit_uuid::LitUuid;
 pub use named_ref::{NamedRef, NamedRefKind};

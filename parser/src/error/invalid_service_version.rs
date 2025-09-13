@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{Ident, LitPosInt, ServiceDef};
+use crate::ast::{Ident, LitInt, ServiceDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::Parser;
@@ -7,7 +7,7 @@ use crate::Parser;
 #[derive(Debug)]
 pub(crate) struct InvalidServiceVersion {
     schema_name: String,
-    ver: LitPosInt,
+    ver: LitInt,
     svc_ident: Ident,
 }
 

@@ -1,5 +1,5 @@
 use super::{Error, ErrorKind};
-use crate::ast::{Ident, LitPosInt, ServiceDef, ServiceItem};
+use crate::ast::{Ident, LitInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{util, Parser, Span};
@@ -7,7 +7,7 @@ use crate::{util, Parser, Span};
 #[derive(Debug)]
 pub(crate) struct DuplicateFunctionId {
     schema_name: String,
-    duplicate: LitPosInt,
+    duplicate: LitInt,
     first: Span,
     service_ident: Ident,
     free_id: u32,
@@ -22,13 +22,12 @@ impl DuplicateFunctionId {
 
         let mut max_id = funcs
             .clone()
-            .fold(0, |cur, func| match func.id().value().parse() {
-                Ok(id) if id > cur => id,
-                _ => cur,
-            });
+            .filter_map(|func| func.id().value().parse().ok())
+            .max()
+            .unwrap_or(0);
 
         util::find_duplicates(
-            funcs,
+            funcs.filter(|func| func.id().value().parse::<u32>().is_ok()),
             |func| func.id().value(),
             |duplicate, first| {
                 max_id += 1;
