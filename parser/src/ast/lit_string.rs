@@ -22,7 +22,18 @@ impl LitString {
         self.span
     }
 
+    pub fn span_inner(&self) -> Span {
+        Span {
+            start: self.span.start + 1,
+            end: self.span.end - 1,
+        }
+    }
+
     pub fn value(&self) -> &str {
         &self.value
+    }
+
+    pub fn value_inner(&self) -> &str {
+        &self.value[1..self.value.len() - 1]
     }
 }

@@ -1,5 +1,5 @@
 use super::{DocString, Ident, LitInt, LitString, LitUuid};
-use crate::error::InvalidConstValue;
+use crate::error::{InvalidConstValue, InvalidEscapeCode};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::NonShoutySnakeCaseConst;
@@ -49,6 +49,7 @@ impl ConstDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        InvalidEscapeCode::validate(self, validate);
         NonShoutySnakeCaseConst::validate(self, validate);
 
         self.name.validate(true, validate);

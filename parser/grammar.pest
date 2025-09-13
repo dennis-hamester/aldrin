@@ -3,7 +3,7 @@ COMMENT = _{ !"///" ~ !"//!" ~ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 ws = _{ WHITESPACE | COMMENT | EOI }
 
 lit_int = @{ "-"? ~ ASCII_DIGIT+ }
-lit_string_char = @{ "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
+lit_string_char = @{ "\\\\" | "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
 lit_string = @{ "\"" ~ lit_string_char* ~ "\"" }
 
 lit_uuid = @{

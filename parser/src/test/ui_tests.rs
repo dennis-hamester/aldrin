@@ -14,6 +14,7 @@ ui_test!(expected_type_found_const);
 ui_test!(expected_type_found_service);
 ui_test!(grapheme_width);
 ui_test!(invalid_array_len);
+ui_test!(invalid_escape_code);
 ui_test!(invalid_event_id);
 ui_test!(invalid_function_id);
 ui_test!(invalid_key_type);

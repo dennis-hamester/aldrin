@@ -19,6 +19,7 @@ mod import_not_found;
 mod invalid_array_len;
 mod invalid_const_value;
 mod invalid_enum_variant_id;
+mod invalid_escape_code;
 mod invalid_event_id;
 mod invalid_function_id;
 mod invalid_ident;
@@ -57,6 +58,7 @@ pub(crate) use import_not_found::ImportNotFound;
 pub(crate) use invalid_array_len::InvalidArrayLen;
 pub(crate) use invalid_const_value::InvalidConstValue;
 pub(crate) use invalid_enum_variant_id::InvalidEnumVariantId;
+pub(crate) use invalid_escape_code::InvalidEscapeCode;
 pub(crate) use invalid_event_id::InvalidEventId;
 pub(crate) use invalid_function_id::InvalidFunctionId;
 pub(crate) use invalid_ident::InvalidIdent;
@@ -113,6 +115,7 @@ enum ErrorKind {
     InvalidArrayLen(InvalidArrayLen),
     InvalidConstValue(InvalidConstValue),
     InvalidEnumVariantId(InvalidEnumVariantId),
+    InvalidEscapeCode(InvalidEscapeCode),
     InvalidEventId(InvalidEventId),
     InvalidFunctionId(InvalidFunctionId),
     InvalidIdent(InvalidIdent),
@@ -158,6 +161,7 @@ impl Diagnostic for ErrorKind {
             Self::InvalidArrayLen(e) => e.schema_name(),
             Self::InvalidConstValue(e) => e.schema_name(),
             Self::InvalidEnumVariantId(e) => e.schema_name(),
+            Self::InvalidEscapeCode(e) => e.schema_name(),
             Self::InvalidEventId(e) => e.schema_name(),
             Self::InvalidFunctionId(e) => e.schema_name(),
             Self::InvalidIdent(e) => e.schema_name(),
@@ -199,6 +203,7 @@ impl Diagnostic for ErrorKind {
             Self::InvalidArrayLen(e) => e.render(renderer, parser),
             Self::InvalidConstValue(e) => e.render(renderer, parser),
             Self::InvalidEnumVariantId(e) => e.render(renderer, parser),
+            Self::InvalidEscapeCode(e) => e.render(renderer, parser),
             Self::InvalidEventId(e) => e.render(renderer, parser),
             Self::InvalidFunctionId(e) => e.render(renderer, parser),
             Self::InvalidIdent(e) => e.render(renderer, parser),

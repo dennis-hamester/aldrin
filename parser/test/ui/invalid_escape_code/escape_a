@@ -1,0 +1,9 @@
+error: invalid escape code `\a` in string constant `BAD`
+  ╭▸ test/ui/invalid_escape_code.aldrin:1:26
+  │
+1 │ const BAD = string("\\foo\abar\bbaz\"");
+  │       ┬──                ━━ invalid escape code `\a`
+  │       │
+  │       string constant defined here
+  │
+  ╰ help: only `\\` and `\"` are supported

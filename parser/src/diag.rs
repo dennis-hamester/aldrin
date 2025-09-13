@@ -108,6 +108,32 @@ impl<'a> Report<'a> {
         self
     }
 
+    pub(crate) fn snippet_with_context(
+        mut self,
+        schema: &'a Schema,
+        main_span: Span,
+        main_label: impl Into<Cow<'a, str>>,
+        context_span: Span,
+        context_label: impl Into<Cow<'a, str>>,
+    ) -> Self {
+        self.group = self.group.element(
+            Snippet::source(schema.source().unwrap())
+                .path(schema.path())
+                .annotation(
+                    AnnotationKind::Primary
+                        .span(main_span.start..main_span.end)
+                        .label(Some(main_label)),
+                )
+                .annotation(
+                    AnnotationKind::Context
+                        .span(context_span.start..context_span.end)
+                        .label(Some(context_label)),
+                ),
+        );
+
+        self
+    }
+
     pub(crate) fn context(
         mut self,
         schema: &'a Schema,
