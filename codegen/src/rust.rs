@@ -652,7 +652,7 @@ impl RustGenerator<'_> {
 
             ast::ConstValue::String(v) => {
                 let val = v.value();
-                codeln!(self, "pub const {name}: &{STR} = \"{val}\";");
+                codeln!(self, "pub const {name}: &{STR} = {val};");
             }
 
             ast::ConstValue::Uuid(v) => {
