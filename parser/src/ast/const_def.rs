@@ -95,24 +95,21 @@ impl ConstValue {
         assert_eq!(pair.as_rule(), Rule::const_value);
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
-
         let rule = pair.as_rule();
-        let mut pairs = pair.into_inner();
-        pairs.next().unwrap(); // Skip type keyword.
         pairs.next().unwrap(); // Skip (.
         let pair = pairs.next().unwrap();
 
         match rule {
-            Rule::const_u8 => Self::U8(LitInt::parse(pair)),
-            Rule::const_i8 => Self::I8(LitInt::parse(pair)),
-            Rule::const_u16 => Self::U16(LitInt::parse(pair)),
-            Rule::const_i16 => Self::I16(LitInt::parse(pair)),
-            Rule::const_u32 => Self::U32(LitInt::parse(pair)),
-            Rule::const_i32 => Self::I32(LitInt::parse(pair)),
-            Rule::const_u64 => Self::U64(LitInt::parse(pair)),
-            Rule::const_i64 => Self::I64(LitInt::parse(pair)),
-            Rule::const_string => Self::String(LitString::parse(pair)),
-            Rule::const_uuid => Self::Uuid(LitUuid::parse(pair)),
+            Rule::kw_u8 => Self::U8(LitInt::parse(pair)),
+            Rule::kw_i8 => Self::I8(LitInt::parse(pair)),
+            Rule::kw_u16 => Self::U16(LitInt::parse(pair)),
+            Rule::kw_i16 => Self::I16(LitInt::parse(pair)),
+            Rule::kw_u32 => Self::U32(LitInt::parse(pair)),
+            Rule::kw_i32 => Self::I32(LitInt::parse(pair)),
+            Rule::kw_u64 => Self::U64(LitInt::parse(pair)),
+            Rule::kw_i64 => Self::I64(LitInt::parse(pair)),
+            Rule::kw_string => Self::String(LitString::parse(pair)),
+            Rule::kw_uuid => Self::Uuid(LitUuid::parse(pair)),
             _ => unreachable!(),
         }
     }

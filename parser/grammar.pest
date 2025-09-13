@@ -175,27 +175,10 @@ event_def = { doc_string* ~ kw_event ~ ident ~ tok_at ~ lit_int ~ ((tok_eq ~ typ
 event_fallback = { doc_string* ~ kw_event ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 const_def = { doc_string* ~ kw_const ~ ident ~ tok_eq ~ const_value ~ tok_term }
-const_value = {
-    const_u8
-    | const_i8
-    | const_u16
-    | const_i16
-    | const_u32
-    | const_i32
-    | const_u64
-    | const_i64
-    | const_string
-    | const_uuid
-}
-const_u8 = { kw_u8 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_i8 = { kw_i8 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_u16 = { kw_u16 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_i16 = { kw_i16 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_u32 = { kw_u32 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_i32 = { kw_i32 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_u64 = { kw_u64 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_i64 = { kw_i64 ~ tok_par_open ~ lit_int ~ tok_par_close }
-const_string = { kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
-const_uuid = { kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }
+const_value = { const_int | const_string | const_uuid}
+const_int = _{ const_int_kw ~ tok_par_open ~ lit_int ~ tok_par_close }
+const_int_kw = _{ kw_u8 | kw_i8 | kw_u16 | kw_i16 | kw_u32 | kw_i32 | kw_u64 | kw_i64 }
+const_string = _{ kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
+const_uuid = _{ kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }
 
 newtype_def = { doc_string* ~ attribute* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }
