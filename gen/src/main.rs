@@ -40,14 +40,9 @@ struct CommonReadArgs {
 struct CommonGenArgs {
     /// Output directory.
     ///
-    /// The current working directory will be used if this is not specified. Files in the output
-    /// directory will not be overwritten unless --overwrite is specified.
+    /// The current working directory will be used if this is not specified.
     #[clap(short, long = "output")]
     output_dir: Option<PathBuf>,
-
-    /// Overwrite output files.
-    #[clap(short = 'f', long)]
-    overwrite: bool,
 
     /// Skip generating client-side code for services.
     #[clap(long)]

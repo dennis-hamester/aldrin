@@ -76,19 +76,8 @@ pub(crate) fn run(args: RustArgs) -> Result<bool> {
     let output = generator.generate_rust(&rust_options)?;
 
     let module_path = output_dir.join(format!("{}.rs", output.module_name));
-    let file = if args.common_gen_args.overwrite {
-        File::options()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open(&module_path)
-    } else {
-        File::options()
-            .create_new(true)
-            .write(true)
-            .open(&module_path)
-    };
-    let mut file = file.with_context(|| anyhow!("failed to open `{}`", module_path.display()))?;
+    let mut file = File::create(&module_path)
+        .with_context(|| anyhow!("failed to open `{}`", module_path.display()))?;
 
     file.write_all(output.module_content.as_bytes())?;
     println!("File `{}` written.", module_path.display());
