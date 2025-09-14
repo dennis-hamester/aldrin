@@ -1,9 +1,10 @@
 WHITESPACE = _{ WHITE_SPACE }
-COMMENT = _{ !"///" ~ !"//!" ~ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+COMMENT = _{ !"///" ~ !"//!" ~ "//" ~ (!newline ~ ANY)* ~ (newline | EOI) }
+newline = _{ "\r\n" | "\n" }
 ws = _{ WHITESPACE | COMMENT | EOI }
 
 lit_int = @{ "-"? ~ ASCII_DIGIT+ }
-lit_string_char = @{ "\\\\" | "\\\"" | (!("\"" | NEWLINE) ~ ANY) }
+lit_string_char = @{ "\\\\" | "\\\"" | (!("\"" | newline) ~ ANY) }
 lit_string = @{ "\"" ~ lit_string_char* ~ "\"" }
 
 lit_uuid = @{
@@ -131,8 +132,8 @@ attribute = {
     ~ tok_squ_close
 }
 
-doc_string = @{ "///" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
-doc_string_inline = @{ "//!" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+doc_string = @{ "///" ~ (!newline ~ ANY)* ~ (newline | EOI) }
+doc_string_inline = @{ "//!" ~ (!newline ~ ANY)* ~ (newline | EOI) }
 
 import_stmt = { kw_import ~ ident ~ tok_term }
 

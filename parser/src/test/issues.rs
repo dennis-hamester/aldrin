@@ -20,3 +20,12 @@ fn whitespace_after_required() {
     assert_eq!(foo.name().value(), "requiredfoo");
     assert!(!foo.required());
 }
+
+#[test]
+fn newline_cr() {
+    let parser = issue!(newline_cr);
+
+    assert!(parser.errors().is_empty());
+    assert!(parser.warnings().is_empty());
+    assert!(parser.other_warnings().is_empty());
+}
