@@ -1,5 +1,5 @@
 use super::{EnumData, FieldData, StructData, VariantData};
-use heck::ToSnakeCase;
+use crate::util;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::ptr;
@@ -166,7 +166,7 @@ impl VariantData<'_> {
 
     fn ctor(&self, enum_name: &Ident, variants: &[Self]) -> TokenStream {
         let name = self.name();
-        let ctor = Ident::new_raw(&name.unraw().to_string().to_snake_case(), name.span());
+        let ctor = Ident::new_raw(&util::to_snake_case(&name.unraw().to_string()), name.span());
         let doc = self.doc();
 
         let ty_generics = variants.iter().filter_map(|var| {

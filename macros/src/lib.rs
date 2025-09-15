@@ -227,6 +227,7 @@ mod doc_string;
 mod service;
 #[cfg(test)]
 mod test;
+mod util;
 
 use proc_macro2::TokenStream;
 use syn::{DeriveInput, Result};

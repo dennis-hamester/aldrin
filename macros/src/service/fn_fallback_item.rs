@@ -1,6 +1,6 @@
 use super::Options;
 use crate::doc_string::DocString;
-use heck::ToUpperCamelCase;
+use crate::util;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ext::IdentExt;
@@ -72,7 +72,7 @@ impl Parse for FnFallbackItem {
         input.parse::<Token![;]>()?;
 
         let variant = Ident::new_raw(
-            &ident.unraw().to_string().to_upper_camel_case(),
+            &util::to_camel_case(&ident.unraw().to_string()),
             ident.span(),
         );
 

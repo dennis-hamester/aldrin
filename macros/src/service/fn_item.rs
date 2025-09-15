@@ -1,6 +1,6 @@
 use super::{FnBody, Options};
 use crate::doc_string::DocString;
-use heck::ToUpperCamelCase;
+use crate::util;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::HashSet;
@@ -209,7 +209,7 @@ impl Parse for FnItem {
         let ident_ref = format_ident!("r#{}_ref", ident);
 
         let variant = Ident::new_raw(
-            &ident.unraw().to_string().to_upper_camel_case(),
+            &util::to_camel_case(&ident.unraw().to_string()),
             ident.span(),
         );
 
