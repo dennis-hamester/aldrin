@@ -146,8 +146,8 @@ struct_fallback = { doc_string* ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 enum_def = { doc_string* ~ attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
 enum_inline = { kw_enum ~ tok_cur_open ~ doc_string_inline* ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
-enum_variant = {  doc_string* ~ident ~ tok_at ~ lit_int ~ (tok_eq ~ type_name)? ~ tok_term }
-enum_fallback = {  doc_string* ~ident ~ tok_eq ~ kw_fallback ~ tok_term }
+enum_variant = { doc_string* ~ident ~ tok_at ~ lit_int ~ (tok_eq ~ type_name)? ~ tok_term }
+enum_fallback = { doc_string* ~ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 service_def = {
     doc_string*
