@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{Ident, StructDef};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToUpperCamelCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonCamelCaseStruct {
@@ -18,7 +17,7 @@ impl NonCamelCaseStruct {
             return;
         }
 
-        let camel_case = struct_def.name().value().to_upper_camel_case();
+        let camel_case = util::to_camel_case(struct_def.name().value());
         if struct_def.name().value() == camel_case {
             return;
         }

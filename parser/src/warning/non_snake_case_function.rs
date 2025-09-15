@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{FunctionDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToSnakeCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonSnakeCaseFunction {
@@ -18,7 +17,7 @@ impl NonSnakeCaseFunction {
             return;
         }
 
-        let snake_case = func.name().value().to_snake_case();
+        let snake_case = util::to_snake_case(func.name().value());
         if func.name().value() == snake_case {
             return;
         }

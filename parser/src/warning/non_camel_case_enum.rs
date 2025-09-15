@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{EnumDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToUpperCamelCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonCamelCaseEnum {
@@ -18,7 +17,7 @@ impl NonCamelCaseEnum {
             return;
         }
 
-        let camel_case = enum_def.name().value().to_upper_camel_case();
+        let camel_case = util::to_camel_case(enum_def.name().value());
         if enum_def.name().value() == camel_case {
             return;
         }

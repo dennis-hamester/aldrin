@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToSnakeCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonSnakeCaseSchemaName {
@@ -17,7 +16,7 @@ impl NonSnakeCaseSchemaName {
             return;
         }
 
-        let snake_case = schema_name.to_snake_case();
+        let snake_case = util::to_snake_case(schema_name);
         if schema_name == snake_case {
             return;
         }

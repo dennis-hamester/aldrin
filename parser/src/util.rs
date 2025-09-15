@@ -3,6 +3,7 @@ use crate::ast::{
 };
 use crate::validate::Validate;
 use crate::Schema;
+use heck::{AsShoutySnakeCase, AsSnakeCase, AsUpperCamelCase};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -374,6 +375,29 @@ impl fmt::Display for ReservedKind {
             Self::Keyword => write!(f, "a keyword"),
         }
     }
+}
+
+fn to_case<'a, F, R>(s: &'a str, convert: F) -> String
+where
+    F: FnOnce(&'a str) -> R,
+    R: fmt::Display,
+{
+    let start = s.len() - s.trim_start_matches('_').len();
+    let end = s.trim_end_matches('_').len();
+
+    format!("{}{}{}", &s[..start], convert(&s[start..end]), &s[end..],)
+}
+
+pub(crate) fn to_camel_case(s: &str) -> String {
+    to_case(s, AsUpperCamelCase)
+}
+
+pub(crate) fn to_snake_case(s: &str) -> String {
+    to_case(s, AsSnakeCase)
+}
+
+pub(crate) fn to_upper_case(s: &str) -> String {
+    to_case(s, AsShoutySnakeCase)
 }
 
 #[cfg(test)]

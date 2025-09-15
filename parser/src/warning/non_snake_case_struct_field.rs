@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::Ident;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToSnakeCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonSnakeCaseStructField {
@@ -18,7 +17,7 @@ impl NonSnakeCaseStructField {
             return;
         }
 
-        let snake_case = ident.value().to_snake_case();
+        let snake_case = util::to_snake_case(ident.value());
         if ident.value() == snake_case {
             return;
         }

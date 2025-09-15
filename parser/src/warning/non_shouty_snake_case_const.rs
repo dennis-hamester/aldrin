@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{ConstDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToShoutySnakeCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonShoutySnakeCaseConst {
@@ -18,7 +17,7 @@ impl NonShoutySnakeCaseConst {
             return;
         }
 
-        let shouty_snake_case = const_def.name().value().to_shouty_snake_case();
+        let shouty_snake_case = util::to_upper_case(const_def.name().value());
         if const_def.name().value() == shouty_snake_case {
             return;
         }

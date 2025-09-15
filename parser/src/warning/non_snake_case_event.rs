@@ -2,8 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{EventDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
-use heck::ToSnakeCase;
+use crate::{util, Parser};
 
 #[derive(Debug)]
 pub(crate) struct NonSnakeCaseEvent {
@@ -18,7 +17,7 @@ impl NonSnakeCaseEvent {
             return;
         }
 
-        let snake_case = ev.name().value().to_snake_case();
+        let snake_case = util::to_snake_case(ev.name().value());
         if ev.name().value() == snake_case {
             return;
         }
