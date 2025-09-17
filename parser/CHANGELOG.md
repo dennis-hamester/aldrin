@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed.
 - `Span` has been simplified to just a pair of indices.
 - `Position` and `LineCol` have been removed.
+- The nil UUID is no longer considered invalid for services.
 
 ### Fixed
 

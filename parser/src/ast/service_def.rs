@@ -1,7 +1,7 @@
 use super::{DocString, Ident, LitInt, LitUuid, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
-    InvalidServiceUuid, InvalidServiceVersion,
+    InvalidServiceVersion,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -102,7 +102,6 @@ impl ServiceDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        InvalidServiceUuid::validate(self, validate);
         InvalidServiceVersion::validate(self, validate);
         DuplicateServiceItem::validate(self, validate);
         DuplicateFunctionId::validate(self, validate);

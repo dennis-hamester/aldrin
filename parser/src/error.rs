@@ -25,7 +25,6 @@ mod invalid_function_id;
 mod invalid_ident;
 mod invalid_key_type;
 mod invalid_schema_name;
-mod invalid_service_uuid;
 mod invalid_service_version;
 mod invalid_struct_field_id;
 mod invalid_syntax;
@@ -64,7 +63,6 @@ pub(crate) use invalid_function_id::InvalidFunctionId;
 pub(crate) use invalid_ident::InvalidIdent;
 pub(crate) use invalid_key_type::InvalidKeyType;
 pub(crate) use invalid_schema_name::InvalidSchemaName;
-pub(crate) use invalid_service_uuid::InvalidServiceUuid;
 pub(crate) use invalid_service_version::InvalidServiceVersion;
 pub(crate) use invalid_struct_field_id::InvalidStructFieldId;
 pub(crate) use invalid_syntax::InvalidSyntax;
@@ -121,7 +119,6 @@ enum ErrorKind {
     InvalidIdent(InvalidIdent),
     InvalidKeyType(InvalidKeyType),
     InvalidSchemaName(InvalidSchemaName),
-    InvalidServiceUuid(InvalidServiceUuid),
     InvalidServiceVersion(InvalidServiceVersion),
     InvalidStructFieldId(InvalidStructFieldId),
     InvalidSyntax(InvalidSyntax),
@@ -167,7 +164,6 @@ impl Diagnostic for ErrorKind {
             Self::InvalidIdent(e) => e.schema_name(),
             Self::InvalidKeyType(e) => e.schema_name(),
             Self::InvalidSchemaName(e) => e.schema_name(),
-            Self::InvalidServiceUuid(e) => e.schema_name(),
             Self::InvalidServiceVersion(e) => e.schema_name(),
             Self::InvalidStructFieldId(e) => e.schema_name(),
             Self::InvalidSyntax(e) => e.schema_name(),
@@ -209,7 +205,6 @@ impl Diagnostic for ErrorKind {
             Self::InvalidIdent(e) => e.render(renderer, parser),
             Self::InvalidKeyType(e) => e.render(renderer, parser),
             Self::InvalidSchemaName(e) => e.render(renderer, parser),
-            Self::InvalidServiceUuid(e) => e.render(renderer, parser),
             Self::InvalidServiceVersion(e) => e.render(renderer, parser),
             Self::InvalidStructFieldId(e) => e.render(renderer, parser),
             Self::InvalidSyntax(e) => e.render(renderer, parser),
