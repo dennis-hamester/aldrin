@@ -1,12 +1,11 @@
 use crate::grammar::Rule;
 use crate::Span;
 use pest::iterators::Pair;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct LitUuid {
     span: Span,
-    value: Uuid,
+    value: String,
 }
 
 impl LitUuid {
@@ -15,7 +14,7 @@ impl LitUuid {
 
         Self {
             span: Span::from_pair(&pair),
-            value: pair.as_str().parse().unwrap(),
+            value: pair.as_str().to_owned(),
         }
     }
 
@@ -23,7 +22,7 @@ impl LitUuid {
         self.span
     }
 
-    pub fn value(&self) -> Uuid {
-        self.value
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }

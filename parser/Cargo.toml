@@ -22,7 +22,6 @@ all-features = true
 
 [dependencies]
 heck = { workspace = true }
-uuid = { workspace = true }
 
 [dependencies.annotate-snippets]
 version = "0.12.3"

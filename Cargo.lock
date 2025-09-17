@@ -141,7 +141,6 @@ dependencies = [
  "pest",
  "pest_derive",
  "strsim",
- "uuid",
 ]
 
 [[package]]
