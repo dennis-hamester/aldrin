@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitInt, TypeName};
+use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -23,20 +23,10 @@ impl StructDef {
         assert_eq!(pair.as_rule(), Rule::struct_def);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs);
 
-        let mut doc = DocString::new();
-        let mut attrs = Vec::new();
-
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::attribute => attrs.push(Attribute::parse(pair)),
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_struct => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -57,8 +47,8 @@ impl StructDef {
 
         Self {
             span,
-            doc: doc.into(),
-            attrs,
+            doc: prelude.take_doc().into(),
+            attrs: prelude.take_attrs(),
             name,
             fields,
             fallback,

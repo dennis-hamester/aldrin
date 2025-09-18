@@ -139,12 +139,12 @@ import_stmt = { kw_import ~ ident ~ tok_term }
 
 def = { struct_def | enum_def | service_def | const_def | newtype_def }
 
-struct_def = { doc_string* ~ attribute* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
+struct_def = { (doc_string | attribute)* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
 struct_inline = { kw_struct ~ tok_cur_open ~ doc_string_inline* ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
 struct_field = { doc_string* ~ kw_required? ~ ident ~ tok_at ~ lit_int ~ tok_eq ~ type_name ~ tok_term }
 struct_fallback = { doc_string* ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
-enum_def = { doc_string* ~ attribute* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
+enum_def = { (doc_string | attribute)* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
 enum_inline = { kw_enum ~ tok_cur_open ~ doc_string_inline* ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
 enum_variant = { doc_string* ~ident ~ tok_at ~ lit_int ~ (tok_eq ~ type_name)? ~ tok_term }
 enum_fallback = { doc_string* ~ident ~ tok_eq ~ kw_fallback ~ tok_term }
@@ -182,4 +182,4 @@ const_int_kw = _{ kw_u8 | kw_i8 | kw_u16 | kw_i16 | kw_u32 | kw_i32 | kw_u64 | k
 const_string = _{ kw_string ~ tok_par_open ~ lit_string ~ tok_par_close }
 const_uuid = _{ kw_uuid ~ tok_par_open ~ lit_uuid ~ tok_par_close }
 
-newtype_def = { doc_string* ~ attribute* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }
+newtype_def = { (doc_string | attribute)* ~ kw_newtype ~ ident ~ tok_eq ~ type_name ~ tok_term }

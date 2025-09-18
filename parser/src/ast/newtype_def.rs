@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, TypeName};
+use super::{Attribute, Ident, Prelude, TypeName};
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -21,18 +21,9 @@ impl NewtypeDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs);
 
-        let mut doc = DocString::new();
-        let mut attrs = Vec::new();
-
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::attribute => attrs.push(Attribute::parse(pair)),
-                Rule::kw_newtype => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -44,8 +35,8 @@ impl NewtypeDef {
 
         Self {
             span,
-            doc: doc.into(),
-            attrs,
+            doc: prelude.take_doc().into(),
+            attrs: prelude.take_attrs(),
             name,
             target_type,
         }

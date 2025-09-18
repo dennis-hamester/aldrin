@@ -11,12 +11,14 @@ mod lit_string;
 mod lit_uuid;
 mod named_ref;
 mod newtype_def;
+mod prelude;
 mod service_def;
 mod struct_def;
 mod type_name;
 mod type_name_or_inline;
 
 pub(crate) use doc_string::DocString;
+pub(crate) use prelude::Prelude;
 
 pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;
