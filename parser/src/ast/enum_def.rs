@@ -116,6 +116,7 @@ pub struct InlineEnum {
     span: Span,
     kw_span: Span,
     doc: Option<String>,
+    attrs: Vec<Attribute>,
     vars: Vec<EnumVariant>,
     fallback: Option<EnumFallback>,
 }
@@ -149,6 +150,7 @@ impl InlineEnum {
             span,
             kw_span,
             doc: prelude.take_inline_doc().into(),
+            attrs: prelude.take_attrs_inline(),
             vars,
             fallback,
         }
@@ -185,6 +187,10 @@ impl InlineEnum {
 
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
+    }
+
+    pub fn attributes(&self) -> &[Attribute] {
+        &self.attrs
     }
 
     pub fn variants(&self) -> &[EnumVariant] {

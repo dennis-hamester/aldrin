@@ -108,6 +108,7 @@ pub struct InlineStruct {
     span: Span,
     kw_span: Span,
     doc: Option<String>,
+    attrs: Vec<Attribute>,
     fields: Vec<StructField>,
     fallback: Option<StructFallback>,
 }
@@ -141,6 +142,7 @@ impl InlineStruct {
             span,
             kw_span,
             doc: prelude.take_inline_doc().into(),
+            attrs: prelude.take_attrs_inline(),
             fields,
             fallback,
         }
@@ -169,6 +171,10 @@ impl InlineStruct {
 
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
+    }
+
+    pub fn attributes(&self) -> &[Attribute] {
+        &self.attrs
     }
 
     pub fn fields(&self) -> &[StructField] {

@@ -61,6 +61,7 @@ impl Diagnostic for InvalidSyntax {
         while let Some(expected) = iter.next() {
             let expected: Cow<'static, str> = match expected {
                 Expected::Attribute => "an attribute".into(),
+                Expected::AttributeInline => "an inline attribute".into(),
                 Expected::DocString => "a doc string".into(),
                 Expected::DocStringInline => "an inline doc string".into(),
 
@@ -129,6 +130,7 @@ impl From<InvalidSyntax> for Error {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Expected {
     Attribute,
+    AttributeInline,
     DocString,
     DocStringInline,
     Eof,
@@ -210,6 +212,8 @@ impl Expected {
         let add: &[&[Self]] = match rule {
             Rule::EOI => &[&[Expected::Eof]],
             Rule::array_len => &[ARRAY_LEN],
+            Rule::attribute => &[&[Expected::Attribute]],
+            Rule::attribute_inline => &[&[Expected::AttributeInline]],
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],
             Rule::doc_string => &[&[Expected::DocString]],
@@ -241,7 +245,7 @@ impl Expected {
             Rule::tok_cur_close => &[&[Expected::Token("}")]],
             Rule::tok_cur_open => &[&[Expected::Token("{")]],
             Rule::tok_eq => &[&[Expected::Token("=")]],
-            Rule::tok_hash => &[&[Expected::Attribute]],
+            Rule::tok_excl => &[&[Expected::Token("!")]],
             Rule::tok_par_close => &[&[Expected::Token(")")]],
             Rule::tok_par_open => &[&[Expected::Token("(")]],
             Rule::tok_scope => &[&[Expected::Token("::")]],

@@ -23,13 +23,14 @@ tok_ang_open = @{ "<" }
 tok_ang_close = @{ ">" }
 tok_arrow = @{ "->" }
 tok_scope = @{ "::" }
-tok_hash = @{ "#" }
+tok_hash = _{ "#" }
 tok_squ_open = @{ "[" }
 tok_squ_close = @{ "]" }
 tok_comma = @{ "," }
 tok_cur_open = @{ "{" }
 tok_cur_close = @{ "}" }
 tok_at = @{ "@" }
+tok_excl = _{ "!" }
 
 kw_import = @{ "import" ~ &ws }
 kw_struct = @{ "struct" ~ &ws }
@@ -132,6 +133,12 @@ attribute = {
     ~ tok_squ_close
 }
 
+attribute_inline = {
+    tok_hash ~ tok_excl ~ tok_squ_open ~ ident
+    ~ (tok_par_open ~ ident ~ (tok_comma ~ ident)* ~ tok_comma? ~ tok_par_close)?
+    ~ tok_squ_close
+}
+
 doc_string = @{ "///" ~ (!newline ~ ANY)* ~ (newline | EOI) }
 doc_string_inline = @{ "//!" ~ (!newline ~ ANY)* ~ (newline | EOI) }
 
@@ -140,12 +147,12 @@ import_stmt = { kw_import ~ ident ~ tok_term }
 def = { struct_def | enum_def | service_def | const_def | newtype_def }
 
 struct_def = { (doc_string | attribute)* ~ kw_struct ~ ident ~ tok_cur_open ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
-struct_inline = { kw_struct ~ tok_cur_open ~ doc_string_inline* ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
+struct_inline = { kw_struct ~ tok_cur_open ~ (doc_string_inline | attribute_inline)* ~ struct_field* ~ struct_fallback? ~ tok_cur_close }
 struct_field = { doc_string* ~ kw_required? ~ ident ~ tok_at ~ lit_int ~ tok_eq ~ type_name ~ tok_term }
 struct_fallback = { doc_string* ~ ident ~ tok_eq ~ kw_fallback ~ tok_term }
 
 enum_def = { (doc_string | attribute)* ~ kw_enum ~ ident ~ tok_cur_open ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
-enum_inline = { kw_enum ~ tok_cur_open ~ doc_string_inline* ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
+enum_inline = { kw_enum ~ tok_cur_open ~ (doc_string_inline | attribute_inline)* ~ enum_variant* ~ enum_fallback? ~ tok_cur_close }
 enum_variant = { doc_string* ~ident ~ tok_at ~ lit_int ~ (tok_eq ~ type_name)? ~ tok_term }
 enum_fallback = { doc_string* ~ident ~ tok_eq ~ kw_fallback ~ tok_term }
 

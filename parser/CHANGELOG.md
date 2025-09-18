@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support newtypes as the key type in `set<T>` and `map<K -> T>`.
 - Add warning `ReservedSchemaName`.
 - Parse doc strings with `///` (or `//!` for inline structs and enums).
+- Support attributes for inline structs and enums (`#![...]`).
 
 ### Changed
 
