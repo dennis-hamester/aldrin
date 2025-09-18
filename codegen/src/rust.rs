@@ -167,7 +167,7 @@ impl RustGenerator<'_> {
             ast::Definition::Struct(d) => self.struct_def(
                 d.name().value(),
                 d.doc(),
-                Some(d.attributes()),
+                d.attributes(),
                 d.fields(),
                 d.fallback(),
             ),
@@ -175,7 +175,7 @@ impl RustGenerator<'_> {
             ast::Definition::Enum(e) => self.enum_def(
                 e.name().value(),
                 e.doc(),
-                Some(e.attributes()),
+                e.attributes(),
                 e.variants(),
                 e.fallback(),
             ),
@@ -190,15 +190,13 @@ impl RustGenerator<'_> {
         &mut self,
         name: &str,
         doc: Option<&str>,
-        attrs: Option<&[ast::Attribute]>,
+        attrs: &[ast::Attribute],
         fields: &[ast::StructField],
         fallback: Option<&ast::StructFallback>,
     ) {
         let krate = self.rust_options.krate_or_default();
         let ident = format!("r#{name}");
-        let attrs = attrs
-            .map(RustAttributes::parse)
-            .unwrap_or_else(RustAttributes::new);
+        let attrs = RustAttributes::parse(attrs);
         let num_required_fields = fields.iter().filter(|&f| f.required()).count();
         let has_required_fields = num_required_fields > 0;
         let schema_name = self.schema.name();
@@ -288,17 +286,14 @@ impl RustGenerator<'_> {
         &mut self,
         name: &str,
         doc: Option<&str>,
-        attrs: Option<&[ast::Attribute]>,
+        attrs: &[ast::Attribute],
         vars: &[ast::EnumVariant],
         fallback: Option<&ast::EnumFallback>,
     ) {
         let ident = format!("r#{name}");
         let krate = &self.rust_options.krate_or_default();
         let schema_name = self.schema.name();
-
-        let attrs = attrs
-            .map(RustAttributes::parse)
-            .unwrap_or_else(RustAttributes::new);
+        let attrs = RustAttributes::parse(attrs);
         let additional_derives = attrs.additional_derives();
 
         let doc = Self::doc_string(doc, 0);
@@ -511,7 +506,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_args_type_name(svc_name, func_name, args, false),
                                 s.doc(),
-                                None,
+                                s.attributes(),
                                 s.fields(),
                                 s.fallback(),
                             ),
@@ -519,7 +514,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_args_type_name(svc_name, func_name, args, false),
                                 e.doc(),
-                                None,
+                                e.attributes(),
                                 e.variants(),
                                 e.fallback(),
                             ),
@@ -533,7 +528,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 s.doc(),
-                                None,
+                                s.attributes(),
                                 s.fields(),
                                 s.fallback(),
                             ),
@@ -541,7 +536,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_ok_type_name(svc_name, func_name, ok, false),
                                 e.doc(),
-                                None,
+                                e.attributes(),
                                 e.variants(),
                                 e.fallback(),
                             ),
@@ -555,7 +550,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.function_err_type_name(svc_name, func_name, err, false),
                                 s.doc(),
-                                None,
+                                s.attributes(),
                                 s.fields(),
                                 s.fallback(),
                             ),
@@ -563,7 +558,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.function_err_type_name(svc_name, func_name, err, false),
                                 e.doc(),
-                                None,
+                                e.attributes(),
                                 e.variants(),
                                 e.fallback(),
                             ),
@@ -581,7 +576,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Struct(s) => self.struct_def(
                                 &self.event_args_type_name(svc_name, ev_name, ty, false),
                                 s.doc(),
-                                None,
+                                s.attributes(),
                                 s.fields(),
                                 s.fallback(),
                             ),
@@ -589,7 +584,7 @@ impl RustGenerator<'_> {
                             ast::TypeNameOrInline::Enum(e) => self.enum_def(
                                 &self.event_args_type_name(svc_name, ev_name, ty, false),
                                 e.doc(),
-                                None,
+                                e.attributes(),
                                 e.variants(),
                                 e.fallback(),
                             ),

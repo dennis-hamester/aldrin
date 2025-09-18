@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for newtypes.
 - Support newtypes as the key type in sets and maps.
 - Doc comments are now copied into the generated code from the schema.
+- Support attributes for inline structs and enums.
 
 ### Changed
 
