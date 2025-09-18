@@ -1,4 +1,4 @@
-use crate::ast::{Definition, DocString, Ident, ImportStmt};
+use crate::ast::{Definition, Ident, ImportStmt, Prelude};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -39,7 +39,7 @@ impl Schema {
 
         schema.source = Some(source.to_owned());
 
-        let pairs = match Grammar::parse(Rule::file, source) {
+        let mut pairs = match Grammar::parse(Rule::file, source) {
             Ok(pairs) => pairs,
 
             Err(e) => {
@@ -48,11 +48,10 @@ impl Schema {
             }
         };
 
-        let mut doc = DocString::new();
+        let mut prelude = Prelude::new(&mut pairs, true);
 
         for pair in pairs {
             match pair.as_rule() {
-                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair)),
                 Rule::def => schema.defs.push(Definition::parse(pair)),
                 Rule::EOI => break,
@@ -60,7 +59,7 @@ impl Schema {
             }
         }
 
-        schema.doc = doc.into();
+        schema.doc = prelude.take_inline_doc().into();
 
         schema
     }

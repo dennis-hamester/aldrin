@@ -1,4 +1,4 @@
-use super::{DocString, Ident, LitInt, LitUuid, TypeNameOrInline};
+use super::{Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceVersion,
@@ -27,15 +27,9 @@ impl ServiceDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_service => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -73,7 +67,7 @@ impl ServiceDef {
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
             uuid,
             ver,
@@ -221,15 +215,9 @@ impl FunctionDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_fn => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -256,7 +244,7 @@ impl FunctionDef {
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
             id,
             args,
@@ -371,15 +359,9 @@ impl EventDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_event => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -395,13 +377,14 @@ impl EventDef {
                 let pair = pairs.next().unwrap();
                 Some(TypeNameOrInline::parse(pair))
             }
+
             Rule::tok_term => None,
             _ => unreachable!(),
         };
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
             id,
             event_type,
@@ -453,22 +436,16 @@ impl FunctionFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_fn => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
         }
     }
@@ -503,22 +480,16 @@ impl EventFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_event => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
         }
     }

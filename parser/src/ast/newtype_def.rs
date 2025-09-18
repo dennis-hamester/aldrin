@@ -21,7 +21,7 @@ impl NewtypeDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs);
+        let mut prelude = Prelude::new(&mut pairs, false);
 
         pairs.next().unwrap(); // Skip keyword.
 

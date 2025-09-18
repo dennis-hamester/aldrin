@@ -1,4 +1,4 @@
-use super::{DocString, Ident, LitInt, LitString, LitUuid};
+use super::{Ident, LitInt, LitString, LitUuid, Prelude};
 use crate::error::{InvalidConstValue, InvalidEscapeCode};
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -21,15 +21,9 @@ impl ConstDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        for pair in &mut pairs {
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_const => break,
-                _ => unreachable!(),
-            }
-        }
+        pairs.next().unwrap(); // Skip keyword.
 
         let name = Ident::parse(pairs.next().unwrap());
 
@@ -41,7 +35,7 @@ impl ConstDef {
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
             value_span,
             value,

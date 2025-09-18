@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -24,7 +24,7 @@ impl StructDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs);
+        let mut prelude = Prelude::new(&mut pairs, false);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -117,7 +117,6 @@ impl InlineStruct {
         assert_eq!(pair.as_rule(), Rule::struct_inline);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
         let pair = pairs.next().unwrap();
@@ -125,13 +124,12 @@ impl InlineStruct {
 
         pairs.next().unwrap(); // Skip {.
 
-        let mut doc = DocString::new();
+        let mut prelude = Prelude::new(&mut pairs, true);
         let mut fields = Vec::new();
         let mut fallback = None;
 
         for pair in pairs {
             match pair.as_rule() {
-                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::struct_field => fields.push(StructField::parse(pair)),
                 Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
                 Rule::tok_cur_close => break,
@@ -142,7 +140,7 @@ impl InlineStruct {
         Self {
             span,
             kw_span,
-            doc: doc.into(),
+            doc: prelude.take_inline_doc().into(),
             fields,
             fallback,
         }
@@ -197,21 +195,13 @@ impl StructField {
         assert_eq!(pair.as_rule(), Rule::struct_field);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-        let mut req = false;
-
-        let name = loop {
-            let pair = pairs.next().unwrap();
-
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::kw_required => req = true,
-                Rule::ident => break Ident::parse(pair),
-                _ => unreachable!(),
-            }
+        let (req, name) = match pairs.next().map(|pair| (pair.as_rule(), pair)).unwrap() {
+            (Rule::kw_required, _) => (true, Ident::parse(pairs.next().unwrap())),
+            (Rule::ident, pair) => (false, Ident::parse(pair)),
+            _ => unreachable!(),
         };
 
         pairs.next().unwrap(); // Skip @.
@@ -226,7 +216,7 @@ impl StructField {
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             req,
             name,
             id,
@@ -279,24 +269,13 @@ impl StructFallback {
         assert_eq!(pair.as_rule(), Rule::struct_fallback);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
-        let mut doc = DocString::new();
-
-        let name = loop {
-            let pair = pairs.next().unwrap();
-
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::ident => break Ident::parse(pair),
-                _ => unreachable!(),
-            }
-        };
+        let mut prelude = Prelude::new(&mut pairs, false);
 
         Self {
             span,
-            doc: doc.into(),
-            name,
+            doc: prelude.take_doc().into(),
+            name: Ident::parse(pairs.next().unwrap()),
         }
     }
 

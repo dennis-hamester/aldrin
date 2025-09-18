@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
@@ -24,7 +24,7 @@ impl EnumDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs);
+        let mut prelude = Prelude::new(&mut pairs, false);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -125,7 +125,6 @@ impl InlineEnum {
         assert_eq!(pair.as_rule(), Rule::enum_inline);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
 
         let pair = pairs.next().unwrap();
@@ -133,13 +132,12 @@ impl InlineEnum {
 
         pairs.next().unwrap(); // Skip {.
 
-        let mut doc = DocString::new();
+        let mut prelude = Prelude::new(&mut pairs, true);
         let mut vars = Vec::new();
         let mut fallback = None;
 
         for pair in pairs {
             match pair.as_rule() {
-                Rule::doc_string_inline => doc.push_inline(pair),
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
                 Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
                 Rule::tok_cur_close => break,
@@ -150,7 +148,7 @@ impl InlineEnum {
         Self {
             span,
             kw_span,
-            doc: doc.into(),
+            doc: prelude.take_inline_doc().into(),
             vars,
             fallback,
         }
@@ -213,18 +211,10 @@ impl EnumVariant {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::new(&mut pairs, false);
 
-        let mut doc = DocString::new();
-
-        let name = loop {
-            let pair = pairs.next().unwrap();
-
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::ident => break Ident::parse(pair),
-                _ => unreachable!(),
-            }
-        };
+        let pair = pairs.next().unwrap();
+        let name = Ident::parse(pair);
 
         pairs.next().unwrap(); // Skip @.
 
@@ -237,13 +227,14 @@ impl EnumVariant {
                 let pair = pairs.next().unwrap();
                 Some(TypeName::parse(pair))
             }
+
             Rule::tok_term => None,
             _ => unreachable!(),
         };
 
         Self {
             span,
-            doc: doc.into(),
+            doc: prelude.take_doc().into(),
             name,
             id,
             var_type,
@@ -295,23 +286,12 @@ impl EnumFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-
-        let mut doc = DocString::new();
-
-        let name = loop {
-            let pair = pairs.next().unwrap();
-
-            match pair.as_rule() {
-                Rule::doc_string => doc.push(pair),
-                Rule::ident => break Ident::parse(pair),
-                _ => unreachable!(),
-            }
-        };
+        let mut prelude = Prelude::new(&mut pairs, false);
 
         Self {
             span,
-            doc: doc.into(),
-            name,
+            doc: prelude.take_doc().into(),
+            name: Ident::parse(pairs.next().unwrap()),
         }
     }
 
