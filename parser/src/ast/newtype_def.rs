@@ -9,6 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct NewtypeDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
@@ -21,7 +22,7 @@ impl NewtypeDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -35,6 +36,7 @@ impl NewtypeDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             attrs: prelude.take_attrs(),
             name,
@@ -52,6 +54,10 @@ impl NewtypeDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {

@@ -12,6 +12,7 @@ pub struct Schema {
     name: String,
     path: String,
     source: Option<String>,
+    comment: Option<String>,
     doc: Option<String>,
     imports: Vec<ImportStmt>,
     defs: Vec<Definition>,
@@ -23,6 +24,7 @@ impl Schema {
             name: file.name().to_owned(),
             path: file.path().to_owned(),
             source: None,
+            comment: None,
             doc: None,
             imports: Vec::new(),
             defs: Vec::new(),
@@ -48,7 +50,7 @@ impl Schema {
             }
         };
 
-        let mut prelude = Prelude::new(&mut pairs, true);
+        let mut prelude = Prelude::schema(&mut pairs);
 
         for pair in pairs {
             match pair.as_rule() {
@@ -59,6 +61,7 @@ impl Schema {
             }
         }
 
+        schema.comment = prelude.take_comment().into();
         schema.doc = prelude.take_inline_doc().into();
 
         schema
@@ -97,6 +100,10 @@ impl Schema {
 
     pub fn source(&self) -> Option<&str> {
         self.source.as_deref()
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {

@@ -11,6 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct StructDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
@@ -24,7 +25,7 @@ impl StructDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -47,6 +48,7 @@ impl StructDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             attrs: prelude.take_attrs(),
             name,
@@ -80,6 +82,10 @@ impl StructDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {
@@ -125,7 +131,7 @@ impl InlineStruct {
 
         pairs.next().unwrap(); // Skip {.
 
-        let mut prelude = Prelude::new(&mut pairs, true);
+        let mut prelude = Prelude::inline(&mut pairs);
         let mut fields = Vec::new();
         let mut fallback = None;
 
@@ -189,6 +195,7 @@ impl InlineStruct {
 #[derive(Debug, Clone)]
 pub struct StructField {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     req: bool,
     name: Ident,
@@ -202,7 +209,7 @@ impl StructField {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         let (req, name) = match pairs.next().map(|pair| (pair.as_rule(), pair)).unwrap() {
             (Rule::kw_required, _) => (true, Ident::parse(pairs.next().unwrap())),
@@ -222,6 +229,7 @@ impl StructField {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             req,
             name,
@@ -240,6 +248,10 @@ impl StructField {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {
@@ -266,6 +278,7 @@ impl StructField {
 #[derive(Debug, Clone)]
 pub struct StructFallback {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
 }
@@ -276,10 +289,11 @@ impl StructFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name: Ident::parse(pairs.next().unwrap()),
         }
@@ -292,6 +306,10 @@ impl StructFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {

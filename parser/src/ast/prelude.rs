@@ -1,9 +1,10 @@
-use super::{Attribute, DocString};
+use super::{Attribute, Comment, DocString};
 use crate::grammar::Rule;
 use pest::iterators::Pairs;
 use std::mem;
 
 pub(crate) struct Prelude {
+    comment: Comment,
     doc: DocString,
     doc_inline: DocString,
     attrs: Vec<Attribute>,
@@ -11,7 +12,20 @@ pub(crate) struct Prelude {
 }
 
 impl Prelude {
-    pub(crate) fn new(pairs: &mut Pairs<Rule>, inline: bool) -> Self {
+    pub(crate) fn schema(pairs: &mut Pairs<Rule>) -> Self {
+        Self::new_impl(pairs, true, true)
+    }
+
+    pub(crate) fn regular(pairs: &mut Pairs<Rule>) -> Self {
+        Self::new_impl(pairs, true, false)
+    }
+
+    pub(crate) fn inline(pairs: &mut Pairs<Rule>) -> Self {
+        Self::new_impl(pairs, false, true)
+    }
+
+    fn new_impl(pairs: &mut Pairs<Rule>, allow_comments: bool, inline: bool) -> Self {
+        let mut comment = Comment::new();
         let mut doc = DocString::new();
         let mut doc_inline = DocString::new();
         let mut attrs = Vec::new();
@@ -19,6 +33,7 @@ impl Prelude {
 
         while let Some(pair) = pairs.peek() {
             match pair.as_rule() {
+                Rule::comment if allow_comments => comment.push(pair),
                 Rule::doc_string if !inline => doc.push(pair),
                 Rule::doc_string_inline if inline => doc_inline.push_inline(pair),
                 Rule::attribute if !inline => attrs.push(Attribute::parse(pair)),
@@ -34,11 +49,16 @@ impl Prelude {
         }
 
         Self {
+            comment,
             doc,
             doc_inline,
             attrs,
             attrs_inline,
         }
+    }
+
+    pub(crate) fn take_comment(&mut self) -> Comment {
+        mem::replace(&mut self.comment, Comment::new())
     }
 
     pub(crate) fn take_doc(&mut self) -> DocString {

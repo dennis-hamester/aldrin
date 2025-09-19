@@ -1,9 +1,0 @@
-warning: unused import `bar`
-  ╭▸ test/ui/grapheme_width.aldrin:1:1
-  │
-1 │ ┏ import // こんにちは
-2 │ ┃ // ȺӀժɾìղ
-3 │ ┃ bar; // A̴̞͓̙͓̾̓͌̌̚͜l̷̛͍̟̗̬̜̍̔̌̔d̸͖̪͔̠̝̂͆͆͋̕r̵̟̖̖̟̓̐͌̇͆͜i̸̯̻̫̱̙͊͆̋͆͘n̸̨̳̺͖̣̄͌́͝
-  │ ┗━━━━┛
-  │
-  ╰ help: remove the import statement

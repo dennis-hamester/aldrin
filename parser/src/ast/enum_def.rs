@@ -11,6 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct EnumDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     attrs: Vec<Attribute>,
     name: Ident,
@@ -24,7 +25,7 @@ impl EnumDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -47,6 +48,7 @@ impl EnumDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             attrs: prelude.take_attrs(),
             name,
@@ -88,6 +90,10 @@ impl EnumDef {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {
@@ -133,7 +139,7 @@ impl InlineEnum {
 
         pairs.next().unwrap(); // Skip {.
 
-        let mut prelude = Prelude::new(&mut pairs, true);
+        let mut prelude = Prelude::inline(&mut pairs);
         let mut vars = Vec::new();
         let mut fallback = None;
 
@@ -205,6 +211,7 @@ impl InlineEnum {
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
     id: LitInt,
@@ -217,7 +224,7 @@ impl EnumVariant {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         let pair = pairs.next().unwrap();
         let name = Ident::parse(pair);
@@ -240,6 +247,7 @@ impl EnumVariant {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
             id,
@@ -262,6 +270,10 @@ impl EnumVariant {
         self.span
     }
 
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
+    }
+
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
     }
@@ -282,6 +294,7 @@ impl EnumVariant {
 #[derive(Debug, Clone)]
 pub struct EnumFallback {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
 }
@@ -292,10 +305,11 @@ impl EnumFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name: Ident::parse(pairs.next().unwrap()),
         }
@@ -308,6 +322,10 @@ impl EnumFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {

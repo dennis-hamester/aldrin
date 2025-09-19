@@ -1,4 +1,4 @@
-use crate::ast::Ident;
+use super::{Ident, Prelude};
 use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,6 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ImportStmt {
     span: Span,
+    comment: Option<String>,
     schema_name: Ident,
 }
 
@@ -17,14 +18,19 @@ impl ImportStmt {
         assert_eq!(pair.as_rule(), Rule::import_stmt);
 
         let span = Span::from_pair(&pair);
-
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::regular(&mut pairs);
+
         pairs.next().unwrap(); // Skip keyword
 
         let pair = pairs.next().unwrap();
         let schema_name = Ident::parse(pair);
 
-        Self { span, schema_name }
+        Self {
+            span,
+            comment: prelude.take_comment().into(),
+            schema_name,
+        }
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -34,6 +40,10 @@ impl ImportStmt {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn schema_name(&self) -> &Ident {

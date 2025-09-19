@@ -1,5 +1,6 @@
 mod array_len;
 mod attribute;
+mod comment;
 mod const_def;
 mod definition;
 mod doc_string;
@@ -17,6 +18,7 @@ mod struct_def;
 mod type_name;
 mod type_name_or_inline;
 
+pub(crate) use comment::Comment;
 pub(crate) use doc_string::DocString;
 pub(crate) use prelude::Prelude;
 

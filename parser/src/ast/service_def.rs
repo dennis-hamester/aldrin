@@ -1,4 +1,4 @@
-use super::{Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
+use super::{Comment, Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceVersion,
@@ -12,9 +12,12 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ServiceDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
+    uuid_comment: Option<String>,
     uuid: LitUuid,
+    ver_comment: Option<String>,
     ver: LitInt,
     items: Vec<ServiceItem>,
     fn_fallback: Option<FunctionFallback>,
@@ -27,7 +30,7 @@ impl ServiceDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -37,10 +40,10 @@ impl ServiceDef {
         pairs.next().unwrap(); // Skip {.
 
         let pair = pairs.next().unwrap();
-        let uuid = Self::parse_uuid(pair);
+        let (uuid_comment, uuid) = Self::parse_uuid(pair);
 
         let pair = pairs.next().unwrap();
-        let ver = Self::parse_version(pair);
+        let (ver_comment, ver) = Self::parse_version(pair);
 
         let mut items = Vec::new();
         let mut fn_fallback = None;
@@ -67,9 +70,12 @@ impl ServiceDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
+            uuid_comment: uuid_comment.into(),
             uuid,
+            ver_comment: ver_comment.into(),
             ver,
             items,
             fn_fallback,
@@ -77,22 +83,30 @@ impl ServiceDef {
         }
     }
 
-    fn parse_uuid(pair: Pair<Rule>) -> LitUuid {
+    fn parse_uuid(pair: Pair<Rule>) -> (Comment, LitUuid) {
         assert_eq!(pair.as_rule(), Rule::service_uuid);
+
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::regular(&mut pairs);
+
         pairs.next().unwrap(); // Skip keyword.
         pairs.next().unwrap(); // Skip =.
+
         let pair = pairs.next().unwrap();
-        LitUuid::parse(pair)
+        (prelude.take_comment(), LitUuid::parse(pair))
     }
 
-    fn parse_version(pair: Pair<Rule>) -> LitInt {
+    fn parse_version(pair: Pair<Rule>) -> (Comment, LitInt) {
         assert_eq!(pair.as_rule(), Rule::service_version);
+
         let mut pairs = pair.into_inner();
+        let mut prelude = Prelude::regular(&mut pairs);
+
         pairs.next().unwrap(); // Skip keyword.
         pairs.next().unwrap(); // Skip =.
+
         let pair = pairs.next().unwrap();
-        LitInt::parse(pair)
+        (prelude.take_comment(), LitInt::parse(pair))
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -121,6 +135,10 @@ impl ServiceDef {
         self.span
     }
 
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
+    }
+
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
     }
@@ -129,8 +147,16 @@ impl ServiceDef {
         &self.name
     }
 
+    pub fn uuid_comment(&self) -> Option<&str> {
+        self.uuid_comment.as_deref()
+    }
+
     pub fn uuid(&self) -> &LitUuid {
         &self.uuid
+    }
+
+    pub fn version_comment(&self) -> Option<&str> {
+        self.ver_comment.as_deref()
     }
 
     pub fn version(&self) -> &LitInt {
@@ -201,6 +227,7 @@ impl ServiceItem {
 #[derive(Debug, Clone)]
 pub struct FunctionDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
     id: LitInt,
@@ -215,7 +242,7 @@ impl FunctionDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -244,6 +271,7 @@ impl FunctionDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
             id,
@@ -276,6 +304,10 @@ impl FunctionDef {
         self.span
     }
 
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
+    }
+
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
     }
@@ -304,6 +336,7 @@ impl FunctionDef {
 #[derive(Debug, Clone)]
 pub struct FunctionPart {
     span: Span,
+    comment: Option<String>,
     part_type: TypeNameOrInline,
 }
 
@@ -311,24 +344,27 @@ impl FunctionPart {
     fn parse(pair: Pair<Rule>) -> Self {
         let span = Span::from_pair(&pair);
 
-        let pair = if (pair.as_rule() == Rule::fn_args)
-            || (pair.as_rule() == Rule::fn_ok)
-            || (pair.as_rule() == Rule::fn_err)
-        {
-            let mut pairs = pair.into_inner();
+        let (comment, part_type) = match pair.as_rule() {
+            Rule::fn_args | Rule::fn_ok | Rule::fn_err => {
+                let mut pairs = pair.into_inner();
+                let mut prelude = Prelude::regular(&mut pairs);
 
-            pairs.next().unwrap(); // Skip keyword.
-            pairs.next().unwrap(); // Skip =.
+                pairs.next().unwrap(); // Skip keyword.
+                pairs.next().unwrap(); // Skip =.
 
-            pairs.next().unwrap()
-        } else if pair.as_rule() == Rule::type_name_or_inline {
-            pair
-        } else {
-            unreachable!()
+                let pair = pairs.next().unwrap();
+                (prelude.take_comment().into(), TypeNameOrInline::parse(pair))
+            }
+
+            Rule::type_name_or_inline => (None, TypeNameOrInline::parse(pair)),
+            _ => unreachable!(),
         };
 
-        let part_type = TypeNameOrInline::parse(pair);
-        Self { span, part_type }
+        Self {
+            span,
+            comment,
+            part_type,
+        }
     }
 
     fn validate(&self, validate: &mut Validate) {
@@ -339,6 +375,10 @@ impl FunctionPart {
         self.span
     }
 
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
+    }
+
     pub fn part_type(&self) -> &TypeNameOrInline {
         &self.part_type
     }
@@ -347,6 +387,7 @@ impl FunctionPart {
 #[derive(Debug, Clone)]
 pub struct EventDef {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
     id: LitInt,
@@ -359,7 +400,7 @@ impl EventDef {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -384,6 +425,7 @@ impl EventDef {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
             id,
@@ -406,6 +448,10 @@ impl EventDef {
         self.span
     }
 
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
+    }
+
     pub fn doc(&self) -> Option<&str> {
         self.doc.as_deref()
     }
@@ -426,6 +472,7 @@ impl EventDef {
 #[derive(Debug, Clone)]
 pub struct FunctionFallback {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
 }
@@ -436,7 +483,7 @@ impl FunctionFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -445,6 +492,7 @@ impl FunctionFallback {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
         }
@@ -456,6 +504,10 @@ impl FunctionFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {
@@ -470,6 +522,7 @@ impl FunctionFallback {
 #[derive(Debug, Clone)]
 pub struct EventFallback {
     span: Span,
+    comment: Option<String>,
     doc: Option<String>,
     name: Ident,
 }
@@ -480,7 +533,7 @@ impl EventFallback {
 
         let span = Span::from_pair(&pair);
         let mut pairs = pair.into_inner();
-        let mut prelude = Prelude::new(&mut pairs, false);
+        let mut prelude = Prelude::regular(&mut pairs);
 
         pairs.next().unwrap(); // Skip keyword.
 
@@ -489,6 +542,7 @@ impl EventFallback {
 
         Self {
             span,
+            comment: prelude.take_comment().into(),
             doc: prelude.take_doc().into(),
             name,
         }
@@ -500,6 +554,10 @@ impl EventFallback {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub fn comment(&self) -> Option<&str> {
+        self.comment.as_deref()
     }
 
     pub fn doc(&self) -> Option<&str> {
