@@ -382,8 +382,9 @@ where
     F: FnOnce(&'a str) -> R,
     R: fmt::Display,
 {
-    let start = s.len() - s.trim_start_matches('_').len();
-    let end = s.trim_end_matches('_').len();
+    let trimmed = s.trim_start_matches('_');
+    let start = s.len() - trimmed.len();
+    let end = start + trimmed.trim_end_matches('_').len();
 
     format!("{}{}{}", &s[..start], convert(&s[start..end]), &s[end..],)
 }
@@ -401,11 +402,22 @@ pub(crate) fn to_upper_case(s: &str) -> String {
 }
 
 #[cfg(test)]
-#[test]
-fn reserved_names_are_sorted_and_unique() {
-    let mut last = RESERVED_NAMES[0].0;
-    for reserved in RESERVED_NAMES.iter().skip(1).map(|reserved| reserved.0) {
-        assert!(reserved > last);
-        last = reserved;
+mod test {
+    use super::*;
+
+    #[test]
+    fn reserved_names_are_sorted_and_unique() {
+        let mut last = RESERVED_NAMES[0].0;
+        for reserved in RESERVED_NAMES.iter().skip(1).map(|reserved| reserved.0) {
+            assert!(reserved > last);
+            last = reserved;
+        }
+    }
+
+    #[test]
+    fn to_case_single_underscore() {
+        assert_eq!(to_camel_case("_"), "_");
+        assert_eq!(to_snake_case("_"), "_");
+        assert_eq!(to_upper_case("_"), "_");
     }
 }
