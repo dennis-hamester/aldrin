@@ -1,3 +1,12 @@
+macro_rules! fmt_test {
+    ($name:ident) => {
+        #[test]
+        fn $name() {
+            $crate::test::fmt_test_impl(stringify!($name));
+        }
+    };
+}
+
 macro_rules! ui_test {
     ($name:ident) => {
         ui_test!($name: $name);
@@ -21,14 +30,29 @@ macro_rules! issue {
     }};
 }
 
+mod fmt_tests;
 mod issues;
 mod ui_tests;
 
-use crate::{Diagnostic, FilesystemResolver, Parser, Renderer};
+use crate::{Diagnostic, FilesystemResolver, Formatter, MemoryResolver, Parser, Renderer};
 use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::PathBuf;
+
+fn fmt_test_impl(name: &str) {
+    let mut path = PathBuf::from_iter(["test", "fmt", name]);
+    path.set_extension("aldrin");
+
+    let source = fs::read_to_string(path).unwrap();
+    let parser = Parser::parse(MemoryResolver::new(name, Ok(source.clone())));
+    let formatter = Formatter::new(&parser).unwrap();
+    let formatted = formatter.to_string();
+
+    if formatted != source {
+        panic!("{}", diffy::create_patch(&source, &formatted).to_string());
+    }
+}
 
 fn ui_test_impl(name: &str) {
     let base_path: PathBuf = ["test", "ui", name].iter().collect();

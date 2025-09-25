@@ -40,3 +40,6 @@ features = ["std"]
 [dependencies.strsim]
 version = "0.10.0"
 default-features = false
+
+[dev-dependencies]
+diffy = { workspace = true }
