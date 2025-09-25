@@ -28,22 +28,22 @@ pub(crate) fn run(args: CheckArgs) -> Result<bool> {
             if first {
                 first = false;
             } else {
-                println!();
+                eprintln!();
             }
 
-            println!("{}:", schema.display());
+            eprintln!("{}:", schema.display());
         }
 
         diag::print_diagnostics(&parser);
 
         if parser.errors().is_empty() {
             if parser.warnings().is_empty() && parser.other_warnings().is_empty() {
-                println!("No issues found.");
+                eprintln!("No issues found.");
             } else {
-                println!("Some warning(s) found.");
+                eprintln!("Some warning(s) found.");
             }
         } else {
-            println!("Some error(s) found.");
+            eprintln!("Some error(s) found.");
             res = false;
         }
     }

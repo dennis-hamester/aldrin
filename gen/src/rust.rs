@@ -52,10 +52,10 @@ pub(crate) fn run(args: RustArgs) -> Result<bool> {
 
     if parser.errors().is_empty() {
         if !parser.warnings().is_empty() || !parser.other_warnings().is_empty() {
-            println!("Some warning(s) found.");
+            eprintln!("Some warning(s) found.");
         }
     } else {
-        println!("Some error(s) found.");
+        eprintln!("Some error(s) found.");
         return Ok(false);
     }
 
