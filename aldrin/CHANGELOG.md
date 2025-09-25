@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a method `service()` returning the service id to `Event`, `UnknownEvent` and
   `low_level::Event`.
 - Add `Object::lifetime_id()`.
+- Add `Lifetime::id()`.
 
 ### Changed
 

@@ -223,6 +223,11 @@ impl Lifetime {
         })
     }
 
+    /// Returns the lifetime's id.
+    pub fn id(&self) -> LifetimeId {
+        self.id
+    }
+
     /// Returns a handle to the client that was used to create the lifetime.
     ///
     /// `None` will be returned after [`poll_ended`](Self::poll_ended) or [`ended`](Self::ended) has
