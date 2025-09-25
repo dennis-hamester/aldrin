@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add warning `ReservedSchemaName`.
 - Parse doc strings with `///` (or `//!` for inline structs and enums).
 - Support attributes for inline structs and enums (`#![...]`).
+- Added `Formatter` to format schema files.
 
 ### Changed
 

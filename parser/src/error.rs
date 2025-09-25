@@ -76,6 +76,12 @@ pub struct Error {
     kind: ErrorKind,
 }
 
+impl Error {
+    pub(crate) fn error_kind(&self) -> &ErrorKind {
+        &self.kind
+    }
+}
+
 impl Diagnostic for Error {
     fn kind(&self) -> DiagnosticKind {
         DiagnosticKind::Error
@@ -91,7 +97,7 @@ impl Diagnostic for Error {
 }
 
 #[derive(Debug)]
-enum ErrorKind {
+pub(crate) enum ErrorKind {
     ConstIntNotFound(ConstIntNotFound),
     DuplicateDefinition(DuplicateDefinition),
     DuplicateEnumVariant(DuplicateEnumVariant),
