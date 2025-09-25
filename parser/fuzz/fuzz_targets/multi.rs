@@ -2,7 +2,7 @@
 
 mod diag;
 
-use aldrin_parser::{MemoryResolver, Parser};
+use aldrin_parser::{Formatter, MemoryResolver, Parser};
 use libfuzzer_sys::{fuzz_target, Corpus};
 use std::collections::HashMap;
 
@@ -22,6 +22,10 @@ fuzz_target!(|schemas: HashMap<String, String>| -> Corpus {
 
     let parser = Parser::parse(resolver);
     let _ = diag::gen_diagnostics(&parser);
+
+    if let Ok(fmt) = Formatter::new(&parser) {
+        fmt.to_string();
+    }
 
     Corpus::Keep
 });
