@@ -25,16 +25,13 @@ rust = []
 workspace = true
 
 [dependencies]
+diffy = { workspace = true }
 heck = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-parser]
 version = "0.12.0"
 path = "../parser"
-default-features = false
-
-[dependencies.diffy]
-version = "0.4.0"
 default-features = false
 
 [dev-dependencies]

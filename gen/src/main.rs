@@ -1,5 +1,6 @@
 mod check;
 mod diag;
+mod fmt;
 mod rust;
 
 use anyhow::Result;
@@ -22,6 +23,9 @@ struct Args {
 enum Command {
     /// Checks an Aldrin schema for errors.
     Check(check::CheckArgs),
+
+    /// Formats an Aldrin schema.
+    Fmt(fmt::FmtArgs),
 
     /// Generates code for Rust.
     Rust(rust::RustArgs),
@@ -63,6 +67,7 @@ fn main() -> Result<()> {
 
     let res = match args.cmd {
         Command::Check(args) => check::run(args)?,
+        Command::Fmt(args) => fmt::run(args)?,
         Command::Rust(args) => rust::run(args)?,
     };
 

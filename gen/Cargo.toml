@@ -16,9 +16,11 @@ workspace = true
 
 [dependencies]
 anstream = { workspace = true }
+anstyle = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 colorchoice-clap = { workspace = true }
+diffy = { workspace = true }
 terminal_size = { workspace = true }
 
 [dependencies.aldrin-codegen]

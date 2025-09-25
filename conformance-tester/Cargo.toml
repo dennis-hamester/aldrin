@@ -16,6 +16,7 @@ workspace = true
 
 [dependencies]
 anstream = { workspace = true }
+anstyle = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 colorchoice-clap = { workspace = true }
@@ -26,10 +27,6 @@ version = "0.12.0"
 path = "../core"
 default-features = false
 features = ["tokio"]
-
-[dependencies.anstyle]
-version = "1.0.7"
-default-features = false
 
 [dependencies.once_cell]
 version = "1.18.0"

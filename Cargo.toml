@@ -52,7 +52,9 @@ incompatible_msrv = "deny"
 use_self = "deny"
 
 [workspace.dependencies]
+anstyle = { version = "1.0.7", default-features = false }
 colorchoice-clap = { version = "1.0.4", default-features = false }
+diffy = { version = "0.4.0", default-features = false }
 futures-channel = { version = "0.3.31", default-features = false }
 futures-core = { version = "0.3.31", default-features = false }
 futures-util = { version = "0.3.31", default-features = false }

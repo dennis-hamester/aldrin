@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add subcommand `fmt` for formatting schema files.
+
 ### Changed
 
 - Remove the `--overwrite` / `-f` flag. Existing files will now always be overwritten.
