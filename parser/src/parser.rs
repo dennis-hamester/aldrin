@@ -88,4 +88,8 @@ impl Parser {
     pub fn other_warnings(&self) -> &[Warning] {
         self.issues.other_warnings()
     }
+
+    pub(crate) fn schemas(&self) -> &HashMap<String, Schema> {
+        &self.schemas
+    }
 }

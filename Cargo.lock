@@ -144,6 +144,7 @@ dependencies = [
  "pest",
  "pest_derive",
  "strsim",
+ "thiserror",
 ]
 
 [[package]]
