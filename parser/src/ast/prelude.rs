@@ -5,8 +5,8 @@ use std::mem;
 
 pub(crate) struct Prelude {
     comment: Comment,
-    doc: DocString,
-    doc_inline: DocString,
+    doc: Vec<DocString>,
+    doc_inline: Vec<DocString>,
     attrs: Vec<Attribute>,
     attrs_inline: Vec<Attribute>,
 }
@@ -26,16 +26,16 @@ impl Prelude {
 
     fn new_impl(pairs: &mut Pairs<Rule>, allow_comments: bool, inline: bool) -> Self {
         let mut comment = Comment::new();
-        let mut doc = DocString::new();
-        let mut doc_inline = DocString::new();
+        let mut doc = Vec::new();
+        let mut doc_inline = Vec::new();
         let mut attrs = Vec::new();
         let mut attrs_inline = Vec::new();
 
         while let Some(pair) = pairs.peek() {
             match pair.as_rule() {
                 Rule::comment if allow_comments => comment.push(pair),
-                Rule::doc_string if !inline => doc.push(pair),
-                Rule::doc_string_inline if inline => doc_inline.push_inline(pair),
+                Rule::doc_string if !inline => doc.push(DocString::parse(pair)),
+                Rule::doc_string_inline if inline => doc_inline.push(DocString::parse_inline(pair)),
                 Rule::attribute if !inline => attrs.push(Attribute::parse(pair)),
 
                 Rule::attribute_inline if inline => {
@@ -61,12 +61,12 @@ impl Prelude {
         mem::replace(&mut self.comment, Comment::new())
     }
 
-    pub(crate) fn take_doc(&mut self) -> DocString {
-        mem::replace(&mut self.doc, DocString::new())
+    pub(crate) fn take_doc(&mut self) -> Vec<DocString> {
+        mem::take(&mut self.doc)
     }
 
-    pub(crate) fn take_inline_doc(&mut self) -> DocString {
-        mem::replace(&mut self.doc_inline, DocString::new())
+    pub(crate) fn take_inline_doc(&mut self) -> Vec<DocString> {
+        mem::take(&mut self.doc_inline)
     }
 
     pub(crate) fn take_attrs(&mut self) -> Vec<Attribute> {

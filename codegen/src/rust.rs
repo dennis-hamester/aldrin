@@ -189,7 +189,7 @@ impl RustGenerator<'_> {
     fn struct_def(
         &mut self,
         name: &str,
-        doc: Option<&str>,
+        doc: &[ast::DocString],
         attrs: &[ast::Attribute],
         fields: &[ast::StructField],
         fallback: Option<&ast::StructFallback>,
@@ -285,7 +285,7 @@ impl RustGenerator<'_> {
     fn enum_def(
         &mut self,
         name: &str,
-        doc: Option<&str>,
+        doc: &[ast::DocString],
         attrs: &[ast::Attribute],
         vars: &[ast::EnumVariant],
         fallback: Option<&ast::EnumFallback>,
@@ -964,28 +964,28 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn doc_string(doc: Option<&str>, indent: usize) -> String {
+    fn doc_string(doc: &[ast::DocString], indent: usize) -> String {
         Self::doc_string_impl(doc, indent, "///")
     }
 
-    fn doc_string_inner(doc: Option<&str>, indent: usize) -> String {
+    fn doc_string_inner(doc: &[ast::DocString], indent: usize) -> String {
         Self::doc_string_impl(doc, indent, "//!")
     }
 
-    fn doc_string_impl(doc: Option<&str>, indent: usize, style: &'static str) -> String {
+    fn doc_string_impl(doc: &[ast::DocString], indent: usize, style: &'static str) -> String {
         const INDENT: &str = "        ";
 
-        assert!(indent <= INDENT.len());
-        let Some(doc) = doc else { return String::new() };
-        let mut doc_string = String::new();
+        debug_assert!(indent <= INDENT.len());
 
-        for line in doc.lines() {
+        let mut doc_string = String::new();
+        for doc in doc {
             doc_string.push_str(&INDENT[..indent]);
             doc_string.push_str(style);
 
-            if !line.is_empty() {
+            let doc = doc.value_inner();
+            if !doc.is_empty() {
                 doc_string.push(' ');
-                doc_string.push_str(line);
+                doc_string.push_str(doc);
             }
 
             doc_string.push('\n');

@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
@@ -12,7 +12,7 @@ use pest::iterators::Pair;
 pub struct EnumDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     name: Ident,
     vars: Vec<EnumVariant>,
@@ -49,7 +49,7 @@ impl EnumDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             attrs: prelude.take_attrs(),
             name,
             vars,
@@ -96,8 +96,8 @@ impl EnumDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn attributes(&self) -> &[Attribute] {
@@ -121,7 +121,7 @@ impl EnumDef {
 pub struct InlineEnum {
     span: Span,
     kw_span: Span,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     vars: Vec<EnumVariant>,
     fallback: Option<EnumFallback>,
@@ -155,7 +155,7 @@ impl InlineEnum {
         Self {
             span,
             kw_span,
-            doc: prelude.take_inline_doc().into(),
+            doc: prelude.take_inline_doc(),
             attrs: prelude.take_attrs_inline(),
             vars,
             fallback,
@@ -191,8 +191,8 @@ impl InlineEnum {
         self.kw_span
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn attributes(&self) -> &[Attribute] {
@@ -212,7 +212,7 @@ impl InlineEnum {
 pub struct EnumVariant {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
     var_type: Option<TypeName>,
@@ -248,7 +248,7 @@ impl EnumVariant {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
             id,
             var_type,
@@ -274,8 +274,8 @@ impl EnumVariant {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {
@@ -295,7 +295,7 @@ impl EnumVariant {
 pub struct EnumFallback {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
 }
 
@@ -310,7 +310,7 @@ impl EnumFallback {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name: Ident::parse(pairs.next().unwrap()),
         }
     }
@@ -328,8 +328,8 @@ impl EnumFallback {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {

@@ -19,13 +19,13 @@ mod type_name;
 mod type_name_or_inline;
 
 pub(crate) use comment::Comment;
-pub(crate) use doc_string::DocString;
 pub(crate) use prelude::Prelude;
 
 pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;
 pub use const_def::{ConstDef, ConstValue};
 pub use definition::Definition;
+pub use doc_string::DocString;
 pub use enum_def::{EnumDef, EnumFallback, EnumVariant, InlineEnum};
 pub use ident::Ident;
 pub use import_stmt::ImportStmt;

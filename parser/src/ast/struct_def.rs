@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -12,7 +12,7 @@ use pest::iterators::Pair;
 pub struct StructDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     name: Ident,
     fields: Vec<StructField>,
@@ -49,7 +49,7 @@ impl StructDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             attrs: prelude.take_attrs(),
             name,
             fields,
@@ -88,8 +88,8 @@ impl StructDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn attributes(&self) -> &[Attribute] {
@@ -113,7 +113,7 @@ impl StructDef {
 pub struct InlineStruct {
     span: Span,
     kw_span: Span,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     fields: Vec<StructField>,
     fallback: Option<StructFallback>,
@@ -147,7 +147,7 @@ impl InlineStruct {
         Self {
             span,
             kw_span,
-            doc: prelude.take_inline_doc().into(),
+            doc: prelude.take_inline_doc(),
             attrs: prelude.take_attrs_inline(),
             fields,
             fallback,
@@ -175,8 +175,8 @@ impl InlineStruct {
         self.kw_span
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn attributes(&self) -> &[Attribute] {
@@ -196,7 +196,7 @@ impl InlineStruct {
 pub struct StructField {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     req: bool,
     name: Ident,
     id: LitInt,
@@ -230,7 +230,7 @@ impl StructField {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             req,
             name,
             id,
@@ -254,8 +254,8 @@ impl StructField {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn required(&self) -> bool {
@@ -279,7 +279,7 @@ impl StructField {
 pub struct StructFallback {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
 }
 
@@ -294,7 +294,7 @@ impl StructFallback {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name: Ident::parse(pairs.next().unwrap()),
         }
     }
@@ -312,8 +312,8 @@ impl StructFallback {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {

@@ -1,42 +1,41 @@
 use crate::grammar::Rule;
+use crate::Span;
 use pest::iterators::Pair;
 
-pub(crate) struct DocString {
-    inner: String,
+#[derive(Debug, Clone)]
+pub struct DocString {
+    span: Span,
+    value: String,
 }
 
 impl DocString {
-    pub(crate) fn new() -> Self {
-        Self {
-            inner: String::new(),
-        }
-    }
-
-    pub(crate) fn push(&mut self, pair: Pair<Rule>) {
+    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::doc_string);
-        self.push_impl(pair, "///");
+        Self::parse_impl(pair)
     }
 
-    pub(crate) fn push_inline(&mut self, pair: Pair<Rule>) {
+    pub(crate) fn parse_inline(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::doc_string_inline);
-        self.push_impl(pair, "//!");
+        Self::parse_impl(pair)
     }
 
-    fn push_impl(&mut self, pair: Pair<Rule>, prefix: &'static str) {
-        let line = pair.as_str().strip_prefix(prefix).unwrap();
-        let line = line.strip_prefix(' ').unwrap_or(line).trim_end();
-
-        self.inner.push_str(line);
-        self.inner.push('\n');
-    }
-}
-
-impl From<DocString> for Option<String> {
-    fn from(s: DocString) -> Self {
-        if s.inner.is_empty() {
-            None
-        } else {
-            Some(s.inner)
+    fn parse_impl(pair: Pair<Rule>) -> Self {
+        Self {
+            span: Span::from_pair(&pair),
+            value: pair.as_str().to_owned(),
         }
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
+    pub fn value_inner(&self) -> &str {
+        let value = &self.value[3..];
+        value.strip_prefix(' ').unwrap_or(value).trim_end()
     }
 }

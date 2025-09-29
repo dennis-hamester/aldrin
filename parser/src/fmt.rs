@@ -1,8 +1,9 @@
 use crate::ast::{
-    ArrayLen, ArrayLenValue, Attribute, ConstDef, ConstValue, Definition, EnumDef, EnumFallback,
-    EnumVariant, EventDef, EventFallback, FunctionDef, FunctionFallback, FunctionPart, ImportStmt,
-    InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef, ServiceDef, ServiceItem,
-    StructDef, StructFallback, StructField, TypeName, TypeNameKind, TypeNameOrInline,
+    ArrayLen, ArrayLenValue, Attribute, ConstDef, ConstValue, Definition, DocString, EnumDef,
+    EnumFallback, EnumVariant, EventDef, EventFallback, FunctionDef, FunctionFallback,
+    FunctionPart, ImportStmt, InlineEnum, InlineStruct, NamedRef, NamedRefKind, NewtypeDef,
+    ServiceDef, ServiceItem, StructDef, StructFallback, StructField, TypeName, TypeNameKind,
+    TypeNameOrInline,
 };
 use crate::error::{Error, ErrorKind};
 use crate::{Parser, Schema};
@@ -62,9 +63,9 @@ impl<'a> Formatter<'a> {
             Self::comment(writer, comment, 0)?;
         }
 
-        if let Some(doc) = schema.doc() {
+        if !schema.doc().is_empty() {
             self.newline(writer)?;
-            Self::doc_inline(writer, doc, 0)?;
+            Self::doc_inline(writer, schema.doc(), 0)?;
             self.newline = true;
         }
 
@@ -85,7 +86,7 @@ impl<'a> Formatter<'a> {
 
     fn import(&mut self, writer: &mut dyn Write, import: &ImportStmt) -> IoResult<()> {
         self.newline_with_first(writer, import.comment().is_some())?;
-        Self::prelude(writer, import.comment(), None, &[], 0, false)?;
+        Self::prelude(writer, import.comment(), &[], &[], 0, false)?;
         writeln!(writer, "import {};", import.schema_name().value())?;
         self.newline = import.comment().is_some();
         Ok(())
@@ -145,7 +146,7 @@ impl<'a> Formatter<'a> {
         struct_def: &InlineStruct,
         indent: usize,
     ) -> IoResult<()> {
-        let has_prelude = struct_def.doc().is_some() || !struct_def.attributes().is_empty();
+        let has_prelude = !struct_def.doc().is_empty() || !struct_def.attributes().is_empty();
 
         let is_multi_line = Self::is_multi_line_struct(
             None,
@@ -189,13 +190,13 @@ impl<'a> Formatter<'a> {
 
     fn is_multi_line_struct(
         comment: Option<&str>,
-        doc: Option<&str>,
+        doc: &[DocString],
         attrs: &[Attribute],
         fields: &[StructField],
         fallback: Option<&StructFallback>,
     ) -> bool {
         comment.is_some()
-            || doc.is_some()
+            || !doc.is_empty()
             || !attrs.is_empty()
             || !fields.is_empty()
             || fallback.is_some()
@@ -227,7 +228,7 @@ impl<'a> Formatter<'a> {
         field: &StructField,
         indent: usize,
     ) -> IoResult<()> {
-        let is_multi_line = field.comment().is_some() || field.doc().is_some();
+        let is_multi_line = field.comment().is_some() || !field.doc().is_empty();
         self.newline_with_first(writer, is_multi_line)?;
 
         Self::prelude(writer, field.comment(), field.doc(), &[], indent, false)?;
@@ -257,7 +258,7 @@ impl<'a> Formatter<'a> {
         fallback: &StructFallback,
         indent: usize,
     ) -> IoResult<()> {
-        let is_multi_line = fallback.comment().is_some() || fallback.doc().is_some();
+        let is_multi_line = fallback.comment().is_some() || !fallback.doc().is_empty();
         self.newline_with_first(writer, is_multi_line)?;
 
         Self::prelude(
@@ -313,7 +314,7 @@ impl<'a> Formatter<'a> {
         enum_def: &InlineEnum,
         indent: usize,
     ) -> IoResult<()> {
-        let has_prelude = enum_def.doc().is_some() || !enum_def.attributes().is_empty();
+        let has_prelude = !enum_def.doc().is_empty() || !enum_def.attributes().is_empty();
 
         let is_multi_line = Self::is_multi_line_enum(
             None,
@@ -351,13 +352,13 @@ impl<'a> Formatter<'a> {
 
     fn is_multi_line_enum(
         comment: Option<&str>,
-        doc: Option<&str>,
+        doc: &[DocString],
         attrs: &[Attribute],
         vars: &[EnumVariant],
         fallback: Option<&EnumFallback>,
     ) -> bool {
         comment.is_some()
-            || doc.is_some()
+            || !doc.is_empty()
             || !attrs.is_empty()
             || !vars.is_empty()
             || fallback.is_some()
@@ -389,7 +390,7 @@ impl<'a> Formatter<'a> {
         var: &EnumVariant,
         indent: usize,
     ) -> IoResult<()> {
-        let is_multi_line = var.comment().is_some() || var.doc().is_some();
+        let is_multi_line = var.comment().is_some() || !var.doc().is_empty();
 
         self.newline_with_first(writer, is_multi_line)?;
         Self::prelude(writer, var.comment(), var.doc(), &[], indent, false)?;
@@ -413,7 +414,7 @@ impl<'a> Formatter<'a> {
         fallback: &EnumFallback,
         indent: usize,
     ) -> IoResult<()> {
-        let is_multi_line = fallback.comment().is_some() || fallback.doc().is_some();
+        let is_multi_line = fallback.comment().is_some() || !fallback.doc().is_empty();
         self.newline_with_first(writer, is_multi_line)?;
 
         Self::prelude(
@@ -435,14 +436,14 @@ impl<'a> Formatter<'a> {
         Self::prelude(writer, svc.comment(), svc.doc(), &[], 0, false)?;
         writeln!(writer, "service {} {{", svc.name().value())?;
 
-        Self::prelude(writer, svc.uuid_comment(), None, &[], 4, false)?;
+        Self::prelude(writer, svc.uuid_comment(), &[], &[], 4, false)?;
         writeln!(writer, "    uuid = {};", svc.uuid().value())?;
 
         if svc.uuid_comment().is_some() || svc.version_comment().is_some() {
             writeln!(writer)?;
         }
 
-        Self::prelude(writer, svc.version_comment(), None, &[], 4, false)?;
+        Self::prelude(writer, svc.version_comment(), &[], &[], 4, false)?;
         writeln!(writer, "    version = {};", svc.version().value())?;
         self.newline = true;
 
@@ -490,7 +491,7 @@ impl<'a> Formatter<'a> {
 
         if let Some(fallback) = ev_fallback {
             self.newline |= fn_fallback
-                .map(|fallback| fallback.comment().is_some() || fallback.doc().is_some())
+                .map(|fallback| fallback.comment().is_some() || !fallback.doc().is_empty())
                 .unwrap_or(false)
                 || (fn_fallback.is_none() && has_fns);
 
@@ -502,7 +503,7 @@ impl<'a> Formatter<'a> {
 
     fn fn_def(&mut self, writer: &mut dyn Write, fn_def: &FunctionDef) -> IoResult<()> {
         let is_multi_line = fn_def.comment().is_some()
-            || fn_def.doc().is_some()
+            || !fn_def.doc().is_empty()
             || fn_def.args().is_some()
             || fn_def.err().is_some()
             || fn_def
@@ -566,7 +567,7 @@ impl<'a> Formatter<'a> {
             part.comment().is_some() || Self::is_multi_line_type_name_or_inline(part.part_type());
 
         self.newline_with_first(writer, is_multi_line)?;
-        Self::prelude(writer, part.comment(), None, &[], 8, false)?;
+        Self::prelude(writer, part.comment(), &[], &[], 8, false)?;
 
         write!(writer, "        {kind} = ")?;
         self.type_name_or_inline(writer, part.part_type(), 8)?;
@@ -581,7 +582,7 @@ impl<'a> Formatter<'a> {
 
     fn ev(&mut self, writer: &mut dyn Write, ev: &EventDef) -> IoResult<()> {
         let is_multi_line = ev.comment().is_some()
-            || ev.doc().is_some()
+            || !ev.doc().is_empty()
             || ev
                 .event_type()
                 .map(Self::is_multi_line_type_name_or_inline)
@@ -613,7 +614,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn fn_fallback(&mut self, writer: &mut dyn Write, fallback: &FunctionFallback) -> IoResult<()> {
-        let is_multi_line = fallback.comment().is_some() || fallback.doc().is_some();
+        let is_multi_line = fallback.comment().is_some() || !fallback.doc().is_empty();
 
         self.newline_with_first(writer, is_multi_line)?;
         Self::prelude(writer, fallback.comment(), fallback.doc(), &[], 4, false)?;
@@ -625,7 +626,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn ev_fallback(&mut self, writer: &mut dyn Write, fallback: &EventFallback) -> IoResult<()> {
-        let is_multi_line = fallback.comment().is_some() || fallback.doc().is_some();
+        let is_multi_line = fallback.comment().is_some() || !fallback.doc().is_empty();
 
         self.newline_with_first(writer, is_multi_line)?;
         Self::prelude(writer, fallback.comment(), fallback.doc(), &[], 4, false)?;
@@ -637,7 +638,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn const_def(&mut self, writer: &mut dyn Write, const_def: &ConstDef) -> IoResult<()> {
-        let is_multi_line = const_def.comment().is_some() || const_def.doc().is_some();
+        let is_multi_line = const_def.comment().is_some() || !const_def.doc().is_empty();
         self.newline_def(writer, DefinitionKind::Const, is_multi_line)?;
 
         Self::prelude(writer, const_def.comment(), const_def.doc(), &[], 0, false)?;
@@ -663,7 +664,7 @@ impl<'a> Formatter<'a> {
 
     fn newtype(&mut self, writer: &mut dyn Write, newtype: &NewtypeDef) -> IoResult<()> {
         let is_multi_line = newtype.comment().is_some()
-            || newtype.doc().is_some()
+            || !newtype.doc().is_empty()
             || !newtype.attributes().is_empty();
 
         self.newline_def(writer, DefinitionKind::Newtype, is_multi_line)?;
@@ -688,7 +689,7 @@ impl<'a> Formatter<'a> {
     fn prelude(
         writer: &mut dyn Write,
         comment: Option<&str>,
-        doc: Option<&str>,
+        doc: &[DocString],
         attrs: &[Attribute],
         indent: usize,
         inline: bool,
@@ -697,12 +698,10 @@ impl<'a> Formatter<'a> {
             Self::comment(writer, comment, indent)?;
         }
 
-        if let Some(doc) = doc {
-            if inline {
-                Self::doc_inline(writer, doc, indent)?;
-            } else {
-                Self::doc(writer, doc, indent)?;
-            }
+        if inline {
+            Self::doc_inline(writer, doc, indent)?;
+        } else {
+            Self::doc(writer, doc, indent)?;
         }
 
         Self::attributes(writer, attrs, indent, inline)?;
@@ -915,19 +914,29 @@ impl<'a> Formatter<'a> {
         Ok(())
     }
 
-    fn doc(writer: &mut dyn Write, doc: &str, indent: usize) -> IoResult<()> {
-        for line in doc.lines() {
-            Self::indent(writer, indent)?;
-            writeln!(writer, "/// {line}")?;
-        }
-
-        Ok(())
+    fn doc(writer: &mut dyn Write, doc: &[DocString], indent: usize) -> IoResult<()> {
+        Self::doc_impl(writer, doc, indent, "///")
     }
 
-    fn doc_inline(writer: &mut dyn Write, doc: &str, indent: usize) -> IoResult<()> {
-        for line in doc.lines() {
+    fn doc_inline(writer: &mut dyn Write, doc: &[DocString], indent: usize) -> IoResult<()> {
+        Self::doc_impl(writer, doc, indent, "//!")
+    }
+
+    fn doc_impl(
+        writer: &mut dyn Write,
+        doc: &[DocString],
+        indent: usize,
+        style: &str,
+    ) -> IoResult<()> {
+        for doc in doc {
             Self::indent(writer, indent)?;
-            writeln!(writer, "//! {line}")?;
+
+            let doc = doc.value_inner();
+            if doc.is_empty() {
+                writeln!(writer, "{style}")?;
+            } else {
+                writeln!(writer, "{style} {doc}")?;
+            }
         }
 
         Ok(())

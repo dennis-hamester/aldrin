@@ -1,4 +1,4 @@
-use super::{Comment, Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
+use super::{Comment, DocString, Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceVersion,
@@ -13,7 +13,7 @@ use pest::iterators::Pair;
 pub struct ServiceDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
     uuid_comment: Option<String>,
     uuid: LitUuid,
@@ -71,7 +71,7 @@ impl ServiceDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
             uuid_comment: uuid_comment.into(),
             uuid,
@@ -139,8 +139,8 @@ impl ServiceDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {
@@ -209,7 +209,7 @@ impl ServiceItem {
         }
     }
 
-    pub fn doc(&self) -> Option<&str> {
+    pub fn doc(&self) -> &[DocString] {
         match self {
             Self::Function(i) => i.doc(),
             Self::Event(i) => i.doc(),
@@ -228,7 +228,7 @@ impl ServiceItem {
 pub struct FunctionDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
     args: Option<FunctionPart>,
@@ -272,7 +272,7 @@ impl FunctionDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
             id,
             args,
@@ -308,8 +308,8 @@ impl FunctionDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {
@@ -388,7 +388,7 @@ impl FunctionPart {
 pub struct EventDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
     event_type: Option<TypeNameOrInline>,
@@ -426,7 +426,7 @@ impl EventDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
             id,
             event_type,
@@ -452,8 +452,8 @@ impl EventDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {
@@ -473,7 +473,7 @@ impl EventDef {
 pub struct FunctionFallback {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
 }
 
@@ -493,7 +493,7 @@ impl FunctionFallback {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
         }
     }
@@ -510,8 +510,8 @@ impl FunctionFallback {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {
@@ -523,7 +523,7 @@ impl FunctionFallback {
 pub struct EventFallback {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     name: Ident,
 }
 
@@ -543,7 +543,7 @@ impl EventFallback {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             name,
         }
     }
@@ -560,8 +560,8 @@ impl EventFallback {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn name(&self) -> &Ident {

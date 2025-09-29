@@ -1,4 +1,4 @@
-use super::{Attribute, Ident, Prelude, TypeName};
+use super::{Attribute, DocString, Ident, Prelude, TypeName};
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -10,7 +10,7 @@ use pest::iterators::Pair;
 pub struct NewtypeDef {
     span: Span,
     comment: Option<String>,
-    doc: Option<String>,
+    doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     name: Ident,
     target_type: TypeName,
@@ -37,7 +37,7 @@ impl NewtypeDef {
         Self {
             span,
             comment: prelude.take_comment().into(),
-            doc: prelude.take_doc().into(),
+            doc: prelude.take_doc(),
             attrs: prelude.take_attrs(),
             name,
             target_type,
@@ -60,8 +60,8 @@ impl NewtypeDef {
         self.comment.as_deref()
     }
 
-    pub fn doc(&self) -> Option<&str> {
-        self.doc.as_deref()
+    pub fn doc(&self) -> &[DocString] {
+        &self.doc
     }
 
     pub fn attributes(&self) -> &[Attribute] {
