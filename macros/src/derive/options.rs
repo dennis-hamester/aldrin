@@ -1,5 +1,6 @@
 use crate::doc_string::DocString;
-use quote::format_ident;
+use aldrin_codegen::rust::names;
+use syn::ext::IdentExt;
 use syn::{Attribute, Ident, LitInt, LitStr, Path, Result};
 
 pub(crate) struct Options {
@@ -38,7 +39,10 @@ impl Options {
                     Ok(())
                 } else if meta.path.is_ident("ref_type") {
                     if meta.input.is_empty() {
-                        ref_type = Some(format_ident!("r#{}Ref", name));
+                        ref_type = Some(Ident::new_raw(
+                            &names::default_ref_type(&name.unraw().to_string()),
+                            name.span(),
+                        ));
                     } else {
                         ref_type = meta.value()?.parse().map(Some)?;
                     }

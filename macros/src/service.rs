@@ -9,6 +9,7 @@ mod options;
 #[cfg(test)]
 mod test;
 
+use aldrin_codegen::rust::names;
 use body::Body;
 use ev_fallback_item::EvFallbackItem;
 use ev_item::EvItem;
@@ -307,12 +308,25 @@ impl Parse for Service {
 
         input.parse::<Option<Token![;]>>()?;
 
-        let proxy = Ident::new_raw(&format!("{}Proxy", ident.unraw()), ident.span());
-        let event = Ident::new_raw(&format!("{}Event", ident.unraw()), ident.span());
-        let call = Ident::new_raw(&format!("{}Call", ident.unraw()), ident.span());
+        let proxy = Ident::new_raw(
+            &names::service_proxy(&ident.unraw().to_string()),
+            ident.span(),
+        );
 
-        let introspection =
-            Ident::new_raw(&format!("{}Introspection", ident.unraw()), ident.span());
+        let event = Ident::new_raw(
+            &names::service_event(&ident.unraw().to_string()),
+            ident.span(),
+        );
+
+        let call = Ident::new_raw(
+            &names::service_call(&ident.unraw().to_string()),
+            ident.span(),
+        );
+
+        let introspection = Ident::new_raw(
+            &names::service_introspection(&ident.unraw().to_string()),
+            ident.span(),
+        );
 
         Ok(Self {
             options,

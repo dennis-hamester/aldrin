@@ -1,8 +1,8 @@
 use super::{FnBody, Options};
 use crate::doc_string::DocString;
-use crate::util;
+use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
@@ -205,11 +205,11 @@ impl Parse for FnItem {
             return Err(lookahead.error());
         };
 
-        let ident_val = format_ident!("r#{}_val", ident);
-        let ident_ref = format_ident!("r#{}_ref", ident);
+        let ident_val = Ident::new_raw(&names::call_val(&ident.unraw().to_string()), ident.span());
+        let ident_ref = Ident::new_raw(&names::call_ref(&ident.unraw().to_string()), ident.span());
 
         let variant = Ident::new_raw(
-            &util::to_camel_case(&ident.unraw().to_string()),
+            &names::function_variant(&ident.unraw().to_string()),
             ident.span(),
         );
 

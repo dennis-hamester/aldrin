@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod test;
 
+pub mod names;
+
 use crate::error::Error;
 use crate::Options;
 use aldrin_parser::{ast, Parser, Schema};
 use diffy::Patch;
-use heck::ToUpperCamelCase;
 use std::fmt::Write;
 use std::fs;
 use std::path::Path;
@@ -823,9 +824,9 @@ impl RustGenerator<'_> {
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
-                    format!("r#{svc_name}{}Args", func_name.to_upper_camel_case())
+                    format!("r#{}", names::function_args(svc_name, func_name))
                 } else {
-                    format!("{svc_name}{}Args", func_name.to_upper_camel_case())
+                    names::function_args(svc_name, func_name)
                 }
             }
         }
@@ -843,9 +844,9 @@ impl RustGenerator<'_> {
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
-                    format!("r#{svc_name}{}Ok", func_name.to_upper_camel_case())
+                    format!("r#{}", names::function_ok(svc_name, func_name))
                 } else {
-                    format!("{svc_name}{}Ok", func_name.to_upper_camel_case())
+                    names::function_ok(svc_name, func_name)
                 }
             }
         }
@@ -863,9 +864,9 @@ impl RustGenerator<'_> {
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
-                    format!("r#{svc_name}{}Error", func_name.to_upper_camel_case())
+                    format!("r#{}", names::function_err(svc_name, func_name))
                 } else {
-                    format!("{svc_name}{}Error", func_name.to_upper_camel_case())
+                    names::function_err(svc_name, func_name)
                 }
             }
         }
@@ -883,9 +884,9 @@ impl RustGenerator<'_> {
 
             ast::TypeNameOrInline::Struct(_) | ast::TypeNameOrInline::Enum(_) => {
                 if raw {
-                    format!("r#{svc_name}{}Args", service_event_variant(ev_name))
+                    format!("r#{}", names::event_args(svc_name, ev_name))
                 } else {
-                    format!("{svc_name}{}Args", service_event_variant(ev_name))
+                    names::event_args(svc_name, ev_name)
                 }
             }
         }
@@ -993,10 +994,6 @@ impl RustGenerator<'_> {
 
         doc_string
     }
-}
-
-fn service_event_variant(ev_name: &str) -> String {
-    ev_name.to_upper_camel_case()
 }
 
 struct RustAttributes {

@@ -1,4 +1,4 @@
-use heck::AsUpperCamelCase;
+use heck::{AsSnakeCase, AsUpperCamelCase};
 use std::fmt;
 
 fn to_case<'a, F, R>(s: &'a str, convert: F) -> String
@@ -14,4 +14,8 @@ where
 
 pub(crate) fn to_camel_case(s: &str) -> String {
     to_case(s, AsUpperCamelCase)
+}
+
+pub(crate) fn to_snake_case(s: &str) -> String {
+    to_case(s, AsSnakeCase)
 }

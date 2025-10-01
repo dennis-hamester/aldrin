@@ -1,9 +1,11 @@
 #![deny(missing_debug_implementations)]
 
 #[cfg(feature = "rust")]
-mod rust;
+mod util;
 
 pub mod error;
+#[cfg(feature = "rust")]
+pub mod rust;
 
 use aldrin_parser::Parser;
 

@@ -1,8 +1,8 @@
 use super::{kw, Options};
 use crate::doc_string::DocString;
-use crate::util;
+use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
@@ -186,14 +186,17 @@ impl Parse for EvItem {
 
         input.parse::<Token![;]>()?;
 
-        let ident_val = format_ident!("r#{}_val", ident);
-        let ident_ref = format_ident!("r#{}_ref", ident);
+        let ident_val = Ident::new_raw(&names::emit_val(&ident.unraw().to_string()), ident.span());
+        let ident_ref = Ident::new_raw(&names::emit_ref(&ident.unraw().to_string()), ident.span());
+        let subscribe = Ident::new_raw(&names::subscribe(&ident.unraw().to_string()), ident.span());
 
-        let subscribe = format_ident!("r#subscribe_{}", ident);
-        let unsubscribe = format_ident!("r#unsubscribe_{}", ident);
+        let unsubscribe = Ident::new_raw(
+            &names::unsubscribe(&ident.unraw().to_string()),
+            ident.span(),
+        );
 
         let variant = Ident::new_raw(
-            &util::to_camel_case(&ident.unraw().to_string()),
+            &names::event_variant(&ident.unraw().to_string()),
             ident.span(),
         );
 
