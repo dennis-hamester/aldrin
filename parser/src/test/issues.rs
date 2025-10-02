@@ -29,3 +29,8 @@ fn newline_cr() {
     assert!(parser.warnings().is_empty());
     assert!(parser.other_warnings().is_empty());
 }
+
+#[test]
+fn single_backtick_in_link() {
+    issue!(single_backtick_in_link);
+}
