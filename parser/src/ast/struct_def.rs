@@ -4,7 +4,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseStruct, NonSnakeCaseStructField};
+use crate::warning::{BrokenDocLink, NonCamelCaseStruct, NonSnakeCaseStructField};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -65,6 +65,7 @@ impl StructDef {
             validate,
         );
 
+        BrokenDocLink::validate(&self.doc, validate);
         DuplicateStructFieldId::validate(&self.fields, Some(&self.name), validate);
         NonCamelCaseStruct::validate(self, validate);
         RecursiveStruct::validate(self, validate);
@@ -155,6 +156,7 @@ impl InlineStruct {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         DuplicateStructField::validate(&self.fields, self.fallback.as_ref(), None, validate);
         DuplicateStructFieldId::validate(&self.fields, None, validate);
 
@@ -239,6 +241,7 @@ impl StructField {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         InvalidStructFieldId::validate(self, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
 
@@ -300,8 +303,10 @@ impl StructFallback {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        self.name.validate(true, validate);
+        BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
+
+        self.name.validate(true, validate);
     }
 
     pub fn span(&self) -> Span {

@@ -5,7 +5,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseService, NonSnakeCaseEvent, NonSnakeCaseFunction};
+use crate::warning::{BrokenDocLink, NonCamelCaseService, NonSnakeCaseEvent, NonSnakeCaseFunction};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -110,6 +110,7 @@ impl ServiceDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         InvalidServiceVersion::validate(self, validate);
         DuplicateServiceItem::validate(self, validate);
         DuplicateFunctionId::validate(self, validate);
@@ -282,6 +283,7 @@ impl FunctionDef {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseFunction::validate(self, validate);
         InvalidFunctionId::validate(self, validate);
 
@@ -434,6 +436,7 @@ impl EventDef {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseEvent::validate(self, validate);
         InvalidEventId::validate(self, validate);
 
@@ -500,6 +503,8 @@ impl FunctionFallback {
 
     fn validate(&self, validate: &mut Validate) {
         self.name.validate(true, validate);
+
+        BrokenDocLink::validate(&self.doc, validate);
     }
 
     pub fn span(&self) -> Span {
@@ -550,6 +555,8 @@ impl EventFallback {
 
     fn validate(&self, validate: &mut Validate) {
         self.name.validate(true, validate);
+
+        BrokenDocLink::validate(&self.doc, validate);
     }
 
     pub fn span(&self) -> Span {

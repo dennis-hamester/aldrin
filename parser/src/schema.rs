@@ -3,7 +3,7 @@ use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoErro
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
-use crate::warning::{DuplicateImport, NonSnakeCaseSchemaName, ReservedSchemaName};
+use crate::warning::{BrokenDocLink, DuplicateImport, NonSnakeCaseSchemaName, ReservedSchemaName};
 use crate::SchemaFile;
 use pest::Parser;
 
@@ -76,6 +76,7 @@ impl Schema {
             return;
         }
 
+        BrokenDocLink::validate(&self.doc, validate);
         DuplicateDefinition::validate(self, validate);
         DuplicateImport::validate(self, validate);
         NonSnakeCaseSchemaName::validate(&self.name, validate);

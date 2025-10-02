@@ -2,7 +2,7 @@ use super::{DocString, Ident, LitInt, LitString, LitUuid, Prelude};
 use crate::error::{InvalidConstValue, InvalidEscapeCode};
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::NonShoutySnakeCaseConst;
+use crate::warning::{BrokenDocLink, NonShoutySnakeCaseConst};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -45,6 +45,7 @@ impl ConstDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         InvalidEscapeCode::validate(self, validate);
         NonShoutySnakeCaseConst::validate(self, validate);
 

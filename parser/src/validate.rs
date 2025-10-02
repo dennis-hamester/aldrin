@@ -1,5 +1,5 @@
 use crate::issues::Issues;
-use crate::{Error, Schema, Warning};
+use crate::{Error, LinkResolver, Schema, Warning};
 use std::collections::HashMap;
 
 pub(crate) struct Validate<'a> {
@@ -52,5 +52,9 @@ impl<'a> Validate<'a> {
 
     pub(crate) fn get_current_schema(&self) -> &'a Schema {
         self.get_schema(self.schema_name).unwrap()
+    }
+
+    pub(crate) fn link_resolver(&self) -> LinkResolver<'a> {
+        LinkResolver::from_parts(self.schemas, self.get_current_schema())
     }
 }

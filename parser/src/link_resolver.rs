@@ -25,7 +25,7 @@ impl<'a> LinkResolver<'a> {
         Self::from_parts(parser.schemas(), schema)
     }
 
-    fn from_parts(schemas: &'a HashMap<String, Schema>, schema: &'a Schema) -> Self {
+    pub(crate) fn from_parts(schemas: &'a HashMap<String, Schema>, schema: &'a Schema) -> Self {
         Self { schemas, schema }
     }
 

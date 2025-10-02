@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support attributes for inline structs and enums (`#![...]`).
 - Added `Formatter` to format schema files.
 - Add `LinkResolver` for resolving doc links to nodes in the ast.
+- Add warning `BrokenDocLink`.
 
 ### Changed
 

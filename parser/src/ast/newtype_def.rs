@@ -2,7 +2,7 @@ use super::{Attribute, DocString, Ident, Prelude, TypeName};
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::NonCamelCaseNewtype;
+use crate::warning::{BrokenDocLink, NonCamelCaseNewtype};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -45,6 +45,7 @@ impl NewtypeDef {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         RecursiveNewtype::validate(self, validate);
         NonCamelCaseNewtype::validate(self, validate);
 

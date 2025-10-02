@@ -4,7 +4,7 @@ use crate::error::{
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::warning::{NonCamelCaseEnum, NonCamelCaseEnumVariant};
+use crate::warning::{BrokenDocLink, NonCamelCaseEnum, NonCamelCaseEnumVariant};
 use crate::Span;
 use pest::iterators::Pair;
 
@@ -65,6 +65,7 @@ impl EnumDef {
             validate,
         );
 
+        BrokenDocLink::validate(&self.doc, validate);
         DuplicateEnumVariantId::validate(&self.vars, Some(&self.name), validate);
         NonCamelCaseEnum::validate(self, validate);
         RecursiveEnum::validate(self, validate);
@@ -163,6 +164,7 @@ impl InlineEnum {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         DuplicateEnumVariant::validate(&self.vars, self.fallback.as_ref(), None, validate);
         DuplicateEnumVariantId::validate(&self.vars, None, validate);
 
@@ -256,6 +258,7 @@ impl EnumVariant {
     }
 
     fn validate(&self, validate: &mut Validate) {
+        BrokenDocLink::validate(&self.doc, validate);
         InvalidEnumVariantId::validate(self, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
 
@@ -316,8 +319,10 @@ impl EnumFallback {
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
-        self.name.validate(true, validate);
+        BrokenDocLink::validate(&self.doc, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
+
+        self.name.validate(true, validate);
     }
 
     pub fn span(&self) -> Span {

@@ -30,6 +30,15 @@ impl DocString {
         self.span
     }
 
+    pub fn span_inner(&self) -> Span {
+        let value = &self.value[3..];
+
+        Span {
+            start: self.span.start + 3 + value.starts_with(' ') as usize,
+            end: self.span.end - value.len() + value.trim_end().len(),
+        }
+    }
+
     pub fn value(&self) -> &str {
         &self.value
     }

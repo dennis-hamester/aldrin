@@ -1,3 +1,4 @@
+mod broken_doc_link;
 mod duplicate_import;
 mod non_camel_case_enum;
 mod non_camel_case_enum_variant;
@@ -16,6 +17,7 @@ mod unused_import;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parser;
 
+pub(crate) use broken_doc_link::BrokenDocLink;
 pub(crate) use duplicate_import::DuplicateImport;
 pub(crate) use non_camel_case_enum::NonCamelCaseEnum;
 pub(crate) use non_camel_case_enum_variant::NonCamelCaseEnumVariant;
@@ -52,6 +54,7 @@ impl Diagnostic for Warning {
 
 #[derive(Debug)]
 enum WarningKind {
+    BrokenDocLink(BrokenDocLink),
     DuplicateImport(DuplicateImport),
     NonCamelCaseEnum(NonCamelCaseEnum),
     NonCamelCaseEnumVariant(NonCamelCaseEnumVariant),
@@ -75,6 +78,7 @@ impl Diagnostic for WarningKind {
 
     fn schema_name(&self) -> &str {
         match self {
+            Self::BrokenDocLink(w) => w.schema_name(),
             Self::DuplicateImport(w) => w.schema_name(),
             Self::NonCamelCaseEnum(w) => w.schema_name(),
             Self::NonCamelCaseEnumVariant(w) => w.schema_name(),
@@ -94,6 +98,7 @@ impl Diagnostic for WarningKind {
 
     fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
         match self {
+            Self::BrokenDocLink(w) => w.render(renderer, parser),
             Self::DuplicateImport(w) => w.render(renderer, parser),
             Self::NonCamelCaseEnum(w) => w.render(renderer, parser),
             Self::NonCamelCaseEnumVariant(w) => w.render(renderer, parser),
