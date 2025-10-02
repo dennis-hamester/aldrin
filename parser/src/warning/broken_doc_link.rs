@@ -3,7 +3,7 @@ use crate::ast::DocString;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{LinkResolver, Parser, ResolveLinkError, Span};
-use comrak::nodes::{NodeValue, Sourcepos};
+use comrak::nodes::{LineColumn, NodeValue, Sourcepos};
 use comrak::{Arena, BrokenLinkReference, Options, ResolvedReference};
 use std::sync::Arc;
 
@@ -59,16 +59,50 @@ impl BrokenDocLink {
         pos: Sourcepos,
         validate: &Validate,
     ) -> Self {
-        let span = Span {
-            start: doc[pos.start.line - 1].span_inner().start + pos.start.column - 1,
-            end: doc[pos.end.line - 1].span_inner().start + pos.end.column,
-        };
-
         Self {
             schema_name: validate.schema_name().to_owned(),
-            span,
+            span: Self::sourcepos_to_span(doc, pos),
             error: e.to_string(),
         }
+    }
+
+    fn sourcepos_to_span(doc: &[DocString], pos: Sourcepos) -> Span {
+        Self::linecol_to_index(doc, pos.start)
+            .and_then(|start| {
+                Self::linecol_to_index(doc, pos.end).map(|end| Span {
+                    start,
+                    end: end + 1,
+                })
+            })
+            .unwrap_or_else(|| Span {
+                start: doc.first().unwrap().span_inner().start,
+                end: doc.last().unwrap().span_inner().end,
+            })
+    }
+
+    fn linecol_to_index(doc: &[DocString], line_col: LineColumn) -> Option<usize> {
+        let mut line = 0;
+
+        for doc in doc {
+            let value = doc.value_inner();
+            let mut offset = 0;
+
+            for part in value.split('\r') {
+                line += 1;
+
+                if line == line_col.line {
+                    if line_col.column <= part.len() {
+                        return Some(doc.span_inner().start + offset + line_col.column - 1);
+                    } else {
+                        return None;
+                    }
+                }
+
+                offset += part.len() + 1;
+            }
+        }
+
+        None
     }
 }
 

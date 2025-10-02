@@ -1,3 +1,5 @@
+use crate::{Parser, Renderer};
+
 #[test]
 fn recursive_types_used() {
     issue!(recursive_types_used);
@@ -33,4 +35,31 @@ fn newline_cr() {
 #[test]
 fn single_backtick_in_link() {
     issue!(single_backtick_in_link);
+}
+
+#[test]
+fn carriage_return_in_link() {
+    let parser = issue!(carriage_return_in_link1);
+    assert!(parser.errors().is_empty());
+    render_issues(&parser);
+
+    let parser = issue!(carriage_return_in_link2);
+    assert!(parser.errors().is_empty());
+    render_issues(&parser);
+}
+
+fn render_issues(parser: &Parser) {
+    let renderer = Renderer::new(true, true, 80);
+
+    for error in parser.errors() {
+        renderer.render(error, parser);
+    }
+
+    for warning in parser.warnings() {
+        renderer.render(warning, parser);
+    }
+
+    for warning in parser.other_warnings() {
+        renderer.render(warning, parser);
+    }
 }
