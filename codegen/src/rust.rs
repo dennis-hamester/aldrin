@@ -1041,9 +1041,9 @@ impl RustGenerator<'_> {
             }
         }
 
-        let mut doc_string = Vec::new();
+        let mut doc_string = String::new();
         comrak::format_commonmark(root, &options, &mut doc_string).unwrap();
-        String::from_utf8(doc_string).unwrap()
+        doc_string
     }
 
     fn rewrite_doc_link(&self, link: &str, resolver: LinkResolver<'_>) -> Option<String> {
