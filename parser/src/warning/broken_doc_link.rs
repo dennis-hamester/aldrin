@@ -67,12 +67,9 @@ impl BrokenDocLink {
     }
 
     fn sourcepos_to_span(doc: &[DocString], pos: Sourcepos) -> Span {
-        Self::linecol_to_index(doc, pos.start)
+        Self::linecol_to_index(doc, pos.start, false)
             .and_then(|start| {
-                Self::linecol_to_index(doc, pos.end).map(|end| Span {
-                    start,
-                    end: end + 1,
-                })
+                Self::linecol_to_index(doc, pos.end, true).map(|end| Span { start, end })
             })
             .unwrap_or_else(|| Span {
                 start: doc.first().unwrap().span_inner().start,
@@ -80,7 +77,7 @@ impl BrokenDocLink {
             })
     }
 
-    fn linecol_to_index(doc: &[DocString], line_col: LineColumn) -> Option<usize> {
+    fn linecol_to_index(doc: &[DocString], line_col: LineColumn, end: bool) -> Option<usize> {
         let mut line = 0;
 
         for doc in doc {
@@ -91,8 +88,14 @@ impl BrokenDocLink {
                 line += 1;
 
                 if line == line_col.line {
-                    if line_col.column <= part.len() {
-                        return Some(doc.span_inner().start + offset + line_col.column - 1);
+                    if line_col.column > part.len() {
+                        return None;
+                    }
+
+                    let idx = offset + line_col.column - 1 + end as usize;
+
+                    if value.is_char_boundary(idx) {
+                        return Some(doc.span_inner().start + idx);
                     } else {
                         return None;
                     }

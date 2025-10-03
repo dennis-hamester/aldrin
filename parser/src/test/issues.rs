@@ -48,6 +48,17 @@ fn carriage_return_in_link() {
     render_issues(&parser);
 }
 
+#[test]
+fn comrak_non_char_boundary() {
+    let parser = issue!(comrak_non_char_boundary1);
+    assert!(parser.errors().is_empty());
+    render_issues(&parser);
+
+    let parser = issue!(comrak_non_char_boundary2);
+    assert!(parser.errors().is_empty());
+    render_issues(&parser);
+}
+
 fn render_issues(parser: &Parser) {
     let renderer = Renderer::new(true, true, 80);
 
