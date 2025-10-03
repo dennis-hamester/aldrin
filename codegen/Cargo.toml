@@ -25,6 +25,7 @@ rust = []
 workspace = true
 
 [dependencies]
+comrak = { workspace = true }
 diffy = { workspace = true }
 heck = { workspace = true }
 thiserror = { workspace = true }

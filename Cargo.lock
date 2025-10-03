@@ -57,6 +57,7 @@ dependencies = [
  "aldrin",
  "aldrin-parser",
  "aldrin-test",
+ "comrak",
  "diffy",
  "futures-util",
  "heck",

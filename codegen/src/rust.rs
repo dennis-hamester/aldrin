@@ -5,11 +5,14 @@ pub mod names;
 
 use crate::error::Error;
 use crate::Options;
-use aldrin_parser::{ast, Parser, Schema};
+use aldrin_parser::{ast, LinkResolver, Parser, ResolvedLink, Schema};
+use comrak::nodes::NodeValue;
+use comrak::{Arena, BrokenLinkReference, Options as ComrakOptions, ResolvedReference};
 use diffy::Patch;
 use std::fmt::Write;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 
 const BOOL: &str = "::std::primitive::bool";
 const BOX: &str = "::std::boxed::Box";
@@ -122,7 +125,7 @@ macro_rules! codeln {
 #[rustfmt::skip::macros(code, codeln)]
 impl RustGenerator<'_> {
     fn generate(mut self) -> Result<RustOutput, Error> {
-        let doc = Self::doc_string_inner(self.schema.doc(), 0);
+        let doc = self.doc_string_inner(self.schema.doc(), 0);
         if !doc.is_empty() {
             codeln!(self, "{doc}");
         }
@@ -203,7 +206,7 @@ impl RustGenerator<'_> {
         let schema_name = self.schema.name();
         let additional_derives = attrs.additional_derives();
 
-        let doc = Self::doc_string(doc, 0);
+        let doc = self.doc_string(doc, 0);
         code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
@@ -246,7 +249,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = Self::doc_string(field.doc(), 4);
+            let doc = self.doc_string(field.doc(), 4);
             code!(self, "{doc}");
 
             if field.required() {
@@ -262,7 +265,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = Self::doc_string(fallback.doc(), 4);
+            let doc = self.doc_string(fallback.doc(), 4);
             code!(self, "{doc}");
 
             let ident = format!("r#{}", fallback.name().value());
@@ -297,7 +300,7 @@ impl RustGenerator<'_> {
         let attrs = RustAttributes::parse(attrs);
         let additional_derives = attrs.additional_derives();
 
-        let doc = Self::doc_string(doc, 0);
+        let doc = self.doc_string(doc, 0);
         code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
@@ -334,7 +337,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = Self::doc_string(var.doc(), 4);
+            let doc = self.doc_string(var.doc(), 4);
             code!(self, "{doc}");
 
             codeln!(self, "    #[aldrin(id = {id})]");
@@ -350,7 +353,7 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = Self::doc_string(fallback.doc(), 4);
+            let doc = self.doc_string(fallback.doc(), 4);
             code!(self, "{doc}");
 
             let ident = format!("r#{}", fallback.name().value());
@@ -375,7 +378,7 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{krate}::service! {{");
 
-        let doc = Self::doc_string(svc.doc(), 4);
+        let doc = self.doc_string(svc.doc(), 4);
         code!(self, "{doc}");
 
         code!(self, "    #[aldrin(");
@@ -417,7 +420,7 @@ impl RustGenerator<'_> {
                     let ident = format!("r#{name}");
                     let id = func.id().value();
 
-                    let doc = Self::doc_string(func.doc(), 8);
+                    let doc = self.doc_string(func.doc(), 8);
                     code!(self, "{doc}");
 
                     code!(self, "        fn {ident} @ {id}");
@@ -454,7 +457,7 @@ impl RustGenerator<'_> {
                     let ident = format!("r#{name}");
                     let id = ev.id().value();
 
-                    let doc = Self::doc_string(ev.doc(), 8);
+                    let doc = self.doc_string(ev.doc(), 8);
                     code!(self, "{doc}");
 
                     code!(self, "        event {ident} @ {id}");
@@ -475,7 +478,7 @@ impl RustGenerator<'_> {
 
             codeln!(self);
 
-            let doc = Self::doc_string(fallback.doc(), 8);
+            let doc = self.doc_string(fallback.doc(), 8);
             code!(self, "{doc}");
 
             codeln!(self, "        fn {ident} = {krate}::UnknownCall;");
@@ -487,7 +490,7 @@ impl RustGenerator<'_> {
 
             codeln!(self);
 
-            let doc = Self::doc_string(fallback.doc(), 8);
+            let doc = self.doc_string(fallback.doc(), 8);
             code!(self, "{doc}");
 
             codeln!(self, "        event {ident} = {krate}::UnknownEvent;");
@@ -602,7 +605,7 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate_or_default();
         let name = const_def.name().value();
 
-        let doc = Self::doc_string(const_def.doc(), 0);
+        let doc = self.doc_string(const_def.doc(), 0);
         code!(self, "{doc}");
 
         match const_def.value() {
@@ -671,7 +674,7 @@ impl RustGenerator<'_> {
         let (is_key_type, derive_default) =
             self.newtype_properties(self.schema, newtype_def.target_type());
 
-        let doc = Self::doc_string(newtype_def.doc(), 0);
+        let doc = self.doc_string(newtype_def.doc(), 0);
         code!(self, "{doc}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
@@ -965,34 +968,462 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn doc_string(doc: &[ast::DocString], indent: usize) -> String {
-        Self::doc_string_impl(doc, indent, "///")
+    fn doc_string(&self, doc: &[ast::DocString], indent: usize) -> String {
+        self.doc_string_impl(doc, indent, "///")
     }
 
-    fn doc_string_inner(doc: &[ast::DocString], indent: usize) -> String {
-        Self::doc_string_impl(doc, indent, "//!")
+    fn doc_string_inner(&self, doc: &[ast::DocString], indent: usize) -> String {
+        self.doc_string_impl(doc, indent, "//!")
     }
 
-    fn doc_string_impl(doc: &[ast::DocString], indent: usize, style: &'static str) -> String {
+    fn doc_string_impl(
+        &self,
+        doc: &[ast::DocString],
+        indent: usize,
+        style: &'static str,
+    ) -> String {
         const INDENT: &str = "        ";
 
         debug_assert!(indent <= INDENT.len());
 
+        if doc.is_empty() {
+            return String::new();
+        }
+
+        let doc = self.rewrite_doc_links(doc);
         let mut doc_string = String::new();
-        for doc in doc {
+
+        for line in doc.lines() {
             doc_string.push_str(&INDENT[..indent]);
             doc_string.push_str(style);
 
-            let doc = doc.value_inner();
-            if !doc.is_empty() {
+            if !line.is_empty() {
                 doc_string.push(' ');
-                doc_string.push_str(doc);
+                doc_string.push_str(line);
             }
 
             doc_string.push('\n');
         }
 
         doc_string
+    }
+
+    fn rewrite_doc_links(&self, doc: &[ast::DocString]) -> String {
+        let mut doc_string = String::new();
+
+        for doc in doc {
+            doc_string.push_str(doc.value_inner());
+            doc_string.push('\n');
+        }
+
+        let mut options = ComrakOptions::default();
+        let resolver = LinkResolver::new(self.parser, self.schema);
+
+        options.parse.broken_link_callback = Some(Arc::new(move |link: BrokenLinkReference| {
+            resolver
+                .convert_broken_link_if_valid(link.original)
+                .map(|link| ResolvedReference {
+                    url: link.to_owned(),
+                    title: String::new(),
+                })
+        }));
+
+        let arena = Arena::new();
+        let root = comrak::parse_document(&arena, &doc_string, &options);
+
+        for node in root.descendants() {
+            let mut data = node.data.borrow_mut();
+
+            if let NodeValue::Link(ref mut link) = data.value {
+                if let Some(new_link) = Self::rewrite_doc_link(&link.url, resolver) {
+                    link.url = new_link;
+                }
+            }
+        }
+
+        let mut doc_string = Vec::new();
+        comrak::format_commonmark(root, &options, &mut doc_string).unwrap();
+        String::from_utf8(doc_string).unwrap()
+    }
+
+    fn rewrite_doc_link(link: &str, resolver: LinkResolver<'_>) -> Option<String> {
+        let Ok(resolved) = resolver.resolve(link) else {
+            return None;
+        };
+
+        match resolved {
+            ResolvedLink::Foreign => None,
+
+            ResolvedLink::Schema(schema) => {
+                if schema.name() == resolver.schema().name() {
+                    Some("self".to_owned())
+                } else {
+                    Some(format!("super::{}", schema.name()))
+                }
+            }
+
+            ResolvedLink::Struct(schema, struct_def) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[struct_def.name().value()],
+            )),
+
+            ResolvedLink::Field(schema, struct_def, field) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[struct_def.name().value(), field.name().value()],
+            )),
+
+            ResolvedLink::FallbackField(schema, struct_def, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[struct_def.name().value(), fallback.name().value()],
+                ))
+            }
+
+            ResolvedLink::Enum(schema, enum_def) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[enum_def.name().value()],
+            )),
+
+            ResolvedLink::Variant(schema, enum_def, var) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[enum_def.name().value(), var.name().value()],
+            )),
+
+            ResolvedLink::FallbackVariant(schema, enum_def, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[enum_def.name().value(), fallback.name().value()],
+                ))
+            }
+
+            ResolvedLink::Service(schema, svc) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[&names::service_proxy(svc.name().value())],
+            )),
+
+            ResolvedLink::Function(schema, svc, func) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[
+                    &names::service_call(svc.name().value()),
+                    &names::function_variant(func.name().value()),
+                ],
+            )),
+
+            ResolvedLink::FunctionArgsStruct(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_args(
+                        svc.name().value(),
+                        func.name().value(),
+                    )],
+                ))
+            }
+
+            ResolvedLink::FunctionArgsField(schema, svc, func, _, _, field) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_args(svc.name().value(), func.name().value()),
+                        field.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionArgsFallbackField(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_args(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionArgsEnum(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_args(
+                        svc.name().value(),
+                        func.name().value(),
+                    )],
+                ))
+            }
+
+            ResolvedLink::FunctionArgsVariant(schema, svc, func, _, _, var) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_args(svc.name().value(), func.name().value()),
+                        var.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionArgsFallbackVariant(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_args(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionOkStruct(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_ok(svc.name().value(), func.name().value())],
+                ))
+            }
+
+            ResolvedLink::FunctionOkField(schema, svc, func, _, _, field) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_ok(svc.name().value(), func.name().value()),
+                        field.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionOkFallbackField(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_ok(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionOkEnum(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_ok(svc.name().value(), func.name().value())],
+                ))
+            }
+
+            ResolvedLink::FunctionOkVariant(schema, svc, func, _, _, var) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_ok(svc.name().value(), func.name().value()),
+                        var.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionOkFallbackVariant(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_ok(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionErrStruct(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_err(
+                        svc.name().value(),
+                        func.name().value(),
+                    )],
+                ))
+            }
+
+            ResolvedLink::FunctionErrField(schema, svc, func, _, _, field) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_err(svc.name().value(), func.name().value()),
+                        field.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionErrFallbackField(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_err(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionErrEnum(schema, svc, func, _, _) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[&names::function_err(
+                        svc.name().value(),
+                        func.name().value(),
+                    )],
+                ))
+            }
+
+            ResolvedLink::FunctionErrVariant(schema, svc, func, _, _, var) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_err(svc.name().value(), func.name().value()),
+                        var.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionErrFallbackVariant(schema, svc, func, _, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::function_err(svc.name().value(), func.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::FunctionFallback(schema, svc, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::service_call(svc.name().value()),
+                        &names::function_variant(fallback.name().value()),
+                    ],
+                ))
+            }
+
+            ResolvedLink::Event(schema, svc, ev) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[
+                    &names::service_event(svc.name().value()),
+                    &names::event_variant(ev.name().value()),
+                ],
+            )),
+
+            ResolvedLink::EventStruct(schema, svc, ev, _) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[&names::event_args(svc.name().value(), ev.name().value())],
+            )),
+
+            ResolvedLink::EventField(schema, svc, ev, _, field) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[
+                    &names::event_args(svc.name().value(), ev.name().value()),
+                    field.name().value(),
+                ],
+            )),
+
+            ResolvedLink::EventFallbackField(schema, svc, ev, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::event_args(svc.name().value(), ev.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::EventEnum(schema, svc, ev, _) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[&names::event_args(svc.name().value(), ev.name().value())],
+            )),
+
+            ResolvedLink::EventVariant(schema, svc, ev, _, var) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[
+                    &names::event_args(svc.name().value(), ev.name().value()),
+                    var.name().value(),
+                ],
+            )),
+
+            ResolvedLink::EventFallbackVariant(schema, svc, ev, _, fallback) => {
+                Some(Self::doc_link_components(
+                    schema,
+                    resolver,
+                    &[
+                        &names::event_args(svc.name().value(), ev.name().value()),
+                        fallback.name().value(),
+                    ],
+                ))
+            }
+
+            ResolvedLink::EventFallback(schema, svc, fallback) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[
+                    &names::service_event(svc.name().value()),
+                    &names::event_variant(fallback.name().value()),
+                ],
+            )),
+
+            ResolvedLink::Const(schema, const_def) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[const_def.name().value()],
+            )),
+
+            ResolvedLink::Newtype(schema, newtype) => Some(Self::doc_link_components(
+                schema,
+                resolver,
+                &[newtype.name().value()],
+            )),
+        }
+    }
+
+    fn doc_link_base(schema: &Schema, resolver: LinkResolver) -> String {
+        if schema.name() == resolver.schema().name() {
+            String::new()
+        } else {
+            format!("super::{}::", schema.name())
+        }
+    }
+
+    fn doc_link_components(schema: &Schema, resolver: LinkResolver, components: &[&str]) -> String {
+        let mut link = Self::doc_link_base(schema, resolver);
+
+        for (i, component) in components.iter().enumerate() {
+            if i > 0 {
+                link.push_str("::");
+            }
+
+            link.push_str(component);
+        }
+
+        link
     }
 }
 
