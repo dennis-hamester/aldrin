@@ -28,6 +28,11 @@ impl BrokenDocLink {
         }
 
         let mut options = Options::default();
+        options.extension.footnotes = true;
+        options.extension.strikethrough = true;
+        options.extension.table = true;
+        options.extension.tasklist = true;
+        options.parse.smart = true;
 
         options.parse.broken_link_callback = Some(Arc::new(|link: BrokenLinkReference| {
             LinkResolver::convert_broken_link(link.original).map(|link| ResolvedReference {

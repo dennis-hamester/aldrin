@@ -1010,6 +1010,7 @@ impl RustGenerator<'_> {
 
     fn rewrite_doc_links(&self, doc: &[ast::DocString]) -> String {
         let mut doc_string = String::new();
+        let resolver = LinkResolver::new(self.parser, self.schema);
 
         for doc in doc {
             doc_string.push_str(doc.value_inner());
@@ -1017,7 +1018,11 @@ impl RustGenerator<'_> {
         }
 
         let mut options = ComrakOptions::default();
-        let resolver = LinkResolver::new(self.parser, self.schema);
+        options.extension.footnotes = true;
+        options.extension.strikethrough = true;
+        options.extension.table = true;
+        options.extension.tasklist = true;
+        options.parse.smart = true;
 
         options.parse.broken_link_callback = Some(Arc::new(move |link: BrokenLinkReference| {
             resolver

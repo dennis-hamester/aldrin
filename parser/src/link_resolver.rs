@@ -43,11 +43,15 @@ impl<'a> LinkResolver<'a> {
     }
 
     pub fn convert_broken_link(mut link: &str) -> Option<&str> {
-        if link.starts_with('`') && link.ends_with('`') && (link.len() > 1) {
-            link = &link[1..link.len() - 1];
-        }
+        if (link != " ") && (link != "x") && (link != "X") {
+            if link.starts_with('`') && link.ends_with('`') && (link.len() > 1) {
+                link = &link[1..link.len() - 1];
+            }
 
-        Self::is_doc_link(link).then_some(link)
+            Self::is_doc_link(link).then_some(link)
+        } else {
+            None
+        }
     }
 
     pub fn resolve(mut self, link: &'a str) -> ResolveResult<'a> {
