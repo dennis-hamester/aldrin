@@ -1035,7 +1035,7 @@ impl RustGenerator<'_> {
             let mut data = node.data.borrow_mut();
 
             if let NodeValue::Link(ref mut link) = data.value {
-                if let Some(new_link) = Self::rewrite_doc_link(&link.url, resolver) {
+                if let Some(new_link) = self.rewrite_doc_link(&link.url, resolver) {
                     link.url = new_link;
                 }
             }
@@ -1046,7 +1046,7 @@ impl RustGenerator<'_> {
         String::from_utf8(doc_string).unwrap()
     }
 
-    fn rewrite_doc_link(link: &str, resolver: LinkResolver<'_>) -> Option<String> {
+    fn rewrite_doc_link(&self, link: &str, resolver: LinkResolver<'_>) -> Option<String> {
         let Ok(resolved) = resolver.resolve(link) else {
             return None;
         };
@@ -1102,293 +1102,446 @@ impl RustGenerator<'_> {
                 ))
             }
 
-            ResolvedLink::Service(schema, svc) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[&names::service_proxy(svc.name().value())],
-            )),
+            ResolvedLink::Service(schema, svc) => {
+                if self.options.client {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::service_proxy(svc.name().value())],
+                    ))
+                } else if self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[svc.name().value()],
+                    ))
+                } else {
+                    None
+                }
+            }
 
-            ResolvedLink::Function(schema, svc, func) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[
-                    &names::service_call(svc.name().value()),
-                    &names::function_variant(func.name().value()),
-                ],
-            )),
+            ResolvedLink::Function(schema, svc, func) => {
+                if self.options.client {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::service_proxy(svc.name().value()),
+                            func.name().value(),
+                        ],
+                    ))
+                } else if self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::service_call(svc.name().value()),
+                            &names::function_variant(func.name().value()),
+                        ],
+                    ))
+                } else {
+                    None
+                }
+            }
 
             ResolvedLink::FunctionArgsStruct(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_args(
-                        svc.name().value(),
-                        func.name().value(),
-                    )],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_args(
+                            svc.name().value(),
+                            func.name().value(),
+                        )],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionArgsField(schema, svc, func, _, _, field) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_args(svc.name().value(), func.name().value()),
-                        field.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_args(svc.name().value(), func.name().value()),
+                            field.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionArgsFallbackField(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_args(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_args(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionArgsEnum(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_args(
-                        svc.name().value(),
-                        func.name().value(),
-                    )],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_args(
+                            svc.name().value(),
+                            func.name().value(),
+                        )],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionArgsVariant(schema, svc, func, _, _, var) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_args(svc.name().value(), func.name().value()),
-                        var.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_args(svc.name().value(), func.name().value()),
+                            var.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionArgsFallbackVariant(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_args(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_args(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkStruct(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_ok(svc.name().value(), func.name().value())],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_ok(svc.name().value(), func.name().value())],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkField(schema, svc, func, _, _, field) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_ok(svc.name().value(), func.name().value()),
-                        field.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_ok(svc.name().value(), func.name().value()),
+                            field.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkFallbackField(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_ok(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_ok(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkEnum(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_ok(svc.name().value(), func.name().value())],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_ok(svc.name().value(), func.name().value())],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkVariant(schema, svc, func, _, _, var) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_ok(svc.name().value(), func.name().value()),
-                        var.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_ok(svc.name().value(), func.name().value()),
+                            var.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionOkFallbackVariant(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_ok(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_ok(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrStruct(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_err(
-                        svc.name().value(),
-                        func.name().value(),
-                    )],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_err(
+                            svc.name().value(),
+                            func.name().value(),
+                        )],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrField(schema, svc, func, _, _, field) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_err(svc.name().value(), func.name().value()),
-                        field.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_err(svc.name().value(), func.name().value()),
+                            field.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrFallbackField(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_err(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_err(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrEnum(schema, svc, func, _, _) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[&names::function_err(
-                        svc.name().value(),
-                        func.name().value(),
-                    )],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::function_err(
+                            svc.name().value(),
+                            func.name().value(),
+                        )],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrVariant(schema, svc, func, _, _, var) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_err(svc.name().value(), func.name().value()),
-                        var.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_err(svc.name().value(), func.name().value()),
+                            var.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionErrFallbackVariant(schema, svc, func, _, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::function_err(svc.name().value(), func.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::function_err(svc.name().value(), func.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
             ResolvedLink::FunctionFallback(schema, svc, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::service_call(svc.name().value()),
-                        &names::function_variant(fallback.name().value()),
-                    ],
-                ))
+                if self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::service_call(svc.name().value()),
+                            &names::function_variant(fallback.name().value()),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
-            ResolvedLink::Event(schema, svc, ev) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[
-                    &names::service_event(svc.name().value()),
-                    &names::event_variant(ev.name().value()),
-                ],
-            )),
+            ResolvedLink::Event(schema, svc, ev) => {
+                if self.options.client {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::service_event(svc.name().value()),
+                            &names::event_variant(ev.name().value()),
+                        ],
+                    ))
+                } else if self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[svc.name().value(), ev.name().value()],
+                    ))
+                } else {
+                    None
+                }
+            }
 
-            ResolvedLink::EventStruct(schema, svc, ev, _) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[&names::event_args(svc.name().value(), ev.name().value())],
-            )),
+            ResolvedLink::EventStruct(schema, svc, ev, _) => {
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::event_args(svc.name().value(), ev.name().value())],
+                    ))
+                } else {
+                    None
+                }
+            }
 
-            ResolvedLink::EventField(schema, svc, ev, _, field) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[
-                    &names::event_args(svc.name().value(), ev.name().value()),
-                    field.name().value(),
-                ],
-            )),
+            ResolvedLink::EventField(schema, svc, ev, _, field) => {
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::event_args(svc.name().value(), ev.name().value()),
+                            field.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
+            }
 
             ResolvedLink::EventFallbackField(schema, svc, ev, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::event_args(svc.name().value(), ev.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::event_args(svc.name().value(), ev.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
-            ResolvedLink::EventEnum(schema, svc, ev, _) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[&names::event_args(svc.name().value(), ev.name().value())],
-            )),
+            ResolvedLink::EventEnum(schema, svc, ev, _) => {
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[&names::event_args(svc.name().value(), ev.name().value())],
+                    ))
+                } else {
+                    None
+                }
+            }
 
-            ResolvedLink::EventVariant(schema, svc, ev, _, var) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[
-                    &names::event_args(svc.name().value(), ev.name().value()),
-                    var.name().value(),
-                ],
-            )),
+            ResolvedLink::EventVariant(schema, svc, ev, _, var) => {
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::event_args(svc.name().value(), ev.name().value()),
+                            var.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
+            }
 
             ResolvedLink::EventFallbackVariant(schema, svc, ev, _, fallback) => {
-                Some(Self::doc_link_components(
-                    schema,
-                    resolver,
-                    &[
-                        &names::event_args(svc.name().value(), ev.name().value()),
-                        fallback.name().value(),
-                    ],
-                ))
+                if self.options.client || self.options.server {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::event_args(svc.name().value(), ev.name().value()),
+                            fallback.name().value(),
+                        ],
+                    ))
+                } else {
+                    None
+                }
             }
 
-            ResolvedLink::EventFallback(schema, svc, fallback) => Some(Self::doc_link_components(
-                schema,
-                resolver,
-                &[
-                    &names::service_event(svc.name().value()),
-                    &names::event_variant(fallback.name().value()),
-                ],
-            )),
+            ResolvedLink::EventFallback(schema, svc, fallback) => {
+                if self.options.client {
+                    Some(Self::doc_link_components(
+                        schema,
+                        resolver,
+                        &[
+                            &names::service_event(svc.name().value()),
+                            &names::event_variant(fallback.name().value()),
+                        ],
+                    ))
+                } else {
+                    None
+                }
+            }
 
             ResolvedLink::Const(schema, const_def) => Some(Self::doc_link_components(
                 schema,
