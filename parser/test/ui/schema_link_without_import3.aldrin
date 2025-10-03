@@ -1,0 +1,7 @@
+//! [`::schema_link_without_import2::Bar`]
+
+import schema_link_without_import1;
+
+struct Baz {
+    foo @ 1 = box<schema_link_without_import1::Foo>;
+}

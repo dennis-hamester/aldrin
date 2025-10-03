@@ -1,0 +1,5 @@
+warning: broken doc link: schema `schema_link_without_import1` not found
+  ╭▸ test/ui/schema_link_without_import2.aldrin:1:5
+  │
+1 │ //! [`::schema_link_without_import1::Foo`]
+  ╰╴    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

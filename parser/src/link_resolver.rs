@@ -59,6 +59,15 @@ impl<'a> LinkResolver<'a> {
 
         if let Some(schema) = components.schema()? {
             if schema != "self" {
+                if self
+                    .schema
+                    .imports()
+                    .iter()
+                    .all(|import| import.schema_name().value() != schema)
+                {
+                    return Err(ResolveLinkError::SchemaNotFound(schema));
+                }
+
                 let schema = self
                     .schemas
                     .get(schema)

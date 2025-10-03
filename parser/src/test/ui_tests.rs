@@ -23,5 +23,6 @@ ui_test!(non_snake_case_struct_field);
 ui_test!(recursive1);
 ui_test!(recursive2_a);
 ui_test!(reserved_ident);
+ui_test!(schema_link_without_import1);
 ui_test!(sender_receiver_imports);
 ui_test!(type_not_found);
