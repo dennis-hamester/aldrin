@@ -12,12 +12,12 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ServiceDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
-    uuid_comment: Option<String>,
+    uuid_comment: Vec<Comment>,
     uuid: LitUuid,
-    ver_comment: Option<String>,
+    ver_comment: Vec<Comment>,
     ver: LitInt,
     items: Vec<ServiceItem>,
     fn_fallback: Option<FunctionFallback>,
@@ -70,12 +70,12 @@ impl ServiceDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
-            uuid_comment: uuid_comment.into(),
+            uuid_comment,
             uuid,
-            ver_comment: ver_comment.into(),
+            ver_comment,
             ver,
             items,
             fn_fallback,
@@ -83,7 +83,7 @@ impl ServiceDef {
         }
     }
 
-    fn parse_uuid(pair: Pair<Rule>) -> (Comment, LitUuid) {
+    fn parse_uuid(pair: Pair<Rule>) -> (Vec<Comment>, LitUuid) {
         assert_eq!(pair.as_rule(), Rule::service_uuid);
 
         let mut pairs = pair.into_inner();
@@ -96,7 +96,7 @@ impl ServiceDef {
         (prelude.take_comment(), LitUuid::parse(pair))
     }
 
-    fn parse_version(pair: Pair<Rule>) -> (Comment, LitInt) {
+    fn parse_version(pair: Pair<Rule>) -> (Vec<Comment>, LitInt) {
         assert_eq!(pair.as_rule(), Rule::service_version);
 
         let mut pairs = pair.into_inner();
@@ -136,8 +136,8 @@ impl ServiceDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -148,16 +148,16 @@ impl ServiceDef {
         &self.name
     }
 
-    pub fn uuid_comment(&self) -> Option<&str> {
-        self.uuid_comment.as_deref()
+    pub fn uuid_comment(&self) -> &[Comment] {
+        &self.uuid_comment
     }
 
     pub fn uuid(&self) -> &LitUuid {
         &self.uuid
     }
 
-    pub fn version_comment(&self) -> Option<&str> {
-        self.ver_comment.as_deref()
+    pub fn version_comment(&self) -> &[Comment] {
+        &self.ver_comment
     }
 
     pub fn version(&self) -> &LitInt {
@@ -228,7 +228,7 @@ impl ServiceItem {
 #[derive(Debug, Clone)]
 pub struct FunctionDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
@@ -272,7 +272,7 @@ impl FunctionDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
             id,
@@ -306,8 +306,8 @@ impl FunctionDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -338,7 +338,7 @@ impl FunctionDef {
 #[derive(Debug, Clone)]
 pub struct FunctionPart {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     part_type: TypeNameOrInline,
 }
 
@@ -355,10 +355,10 @@ impl FunctionPart {
                 pairs.next().unwrap(); // Skip =.
 
                 let pair = pairs.next().unwrap();
-                (prelude.take_comment().into(), TypeNameOrInline::parse(pair))
+                (prelude.take_comment(), TypeNameOrInline::parse(pair))
             }
 
-            Rule::type_name_or_inline => (None, TypeNameOrInline::parse(pair)),
+            Rule::type_name_or_inline => (Vec::new(), TypeNameOrInline::parse(pair)),
             _ => unreachable!(),
         };
 
@@ -377,8 +377,8 @@ impl FunctionPart {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn part_type(&self) -> &TypeNameOrInline {
@@ -389,7 +389,7 @@ impl FunctionPart {
 #[derive(Debug, Clone)]
 pub struct EventDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
@@ -427,7 +427,7 @@ impl EventDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
             id,
@@ -451,8 +451,8 @@ impl EventDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -475,7 +475,7 @@ impl EventDef {
 #[derive(Debug, Clone)]
 pub struct FunctionFallback {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
 }
@@ -495,7 +495,7 @@ impl FunctionFallback {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
         }
@@ -511,8 +511,8 @@ impl FunctionFallback {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -527,7 +527,7 @@ impl FunctionFallback {
 #[derive(Debug, Clone)]
 pub struct EventFallback {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
 }
@@ -547,7 +547,7 @@ impl EventFallback {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
         }
@@ -563,8 +563,8 @@ impl EventFallback {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {

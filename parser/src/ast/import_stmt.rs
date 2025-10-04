@@ -1,4 +1,4 @@
-use super::{Ident, Prelude};
+use super::{Comment, Ident, Prelude};
 use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,7 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ImportStmt {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     schema_name: Ident,
 }
 
@@ -28,7 +28,7 @@ impl ImportStmt {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             schema_name,
         }
     }
@@ -42,8 +42,8 @@ impl ImportStmt {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn schema_name(&self) -> &Ident {

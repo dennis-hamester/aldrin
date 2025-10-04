@@ -1,4 +1,4 @@
-use crate::ast::{Definition, DocString, Ident, ImportStmt, Prelude};
+use crate::ast::{Comment, Definition, DocString, Ident, ImportStmt, Prelude};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
@@ -12,7 +12,7 @@ pub struct Schema {
     name: String,
     path: String,
     source: Option<String>,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     imports: Vec<ImportStmt>,
     defs: Vec<Definition>,
@@ -24,7 +24,7 @@ impl Schema {
             name: file.name().to_owned(),
             path: file.path().to_owned(),
             source: None,
-            comment: None,
+            comment: Vec::new(),
             doc: Vec::new(),
             imports: Vec::new(),
             defs: Vec::new(),
@@ -61,7 +61,7 @@ impl Schema {
             }
         }
 
-        schema.comment = prelude.take_comment().into();
+        schema.comment = prelude.take_comment();
         schema.doc = prelude.take_inline_doc();
 
         schema
@@ -103,8 +103,8 @@ impl Schema {
         self.source.as_deref()
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {

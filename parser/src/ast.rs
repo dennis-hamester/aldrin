@@ -18,11 +18,11 @@ mod struct_def;
 mod type_name;
 mod type_name_or_inline;
 
-pub(crate) use comment::Comment;
 pub(crate) use prelude::Prelude;
 
 pub use array_len::{ArrayLen, ArrayLenValue};
 pub use attribute::Attribute;
+pub use comment::Comment;
 pub use const_def::{ConstDef, ConstValue};
 pub use definition::Definition;
 pub use doc_string::DocString;

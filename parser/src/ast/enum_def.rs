@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, Comment, DocString, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
@@ -11,7 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct EnumDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     name: Ident,
@@ -48,7 +48,7 @@ impl EnumDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             attrs: prelude.take_attrs(),
             name,
@@ -93,8 +93,8 @@ impl EnumDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -213,7 +213,7 @@ impl InlineEnum {
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
     id: LitInt,
@@ -249,7 +249,7 @@ impl EnumVariant {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
             id,
@@ -273,8 +273,8 @@ impl EnumVariant {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -297,7 +297,7 @@ impl EnumVariant {
 #[derive(Debug, Clone)]
 pub struct EnumFallback {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
 }
@@ -312,7 +312,7 @@ impl EnumFallback {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name: Ident::parse(pairs.next().unwrap()),
         }
@@ -329,8 +329,8 @@ impl EnumFallback {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {

@@ -4,7 +4,7 @@ use pest::iterators::Pairs;
 use std::mem;
 
 pub(crate) struct Prelude {
-    comment: Comment,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     doc_inline: Vec<DocString>,
     attrs: Vec<Attribute>,
@@ -25,7 +25,7 @@ impl Prelude {
     }
 
     fn new_impl(pairs: &mut Pairs<Rule>, allow_comments: bool, inline: bool) -> Self {
-        let mut comment = Comment::new();
+        let mut comment = Vec::new();
         let mut doc = Vec::new();
         let mut doc_inline = Vec::new();
         let mut attrs = Vec::new();
@@ -33,7 +33,7 @@ impl Prelude {
 
         while let Some(pair) = pairs.peek() {
             match pair.as_rule() {
-                Rule::comment if allow_comments => comment.push(pair),
+                Rule::comment if allow_comments => comment.push(Comment::parse(pair)),
                 Rule::doc_string if !inline => doc.push(DocString::parse(pair)),
                 Rule::doc_string_inline if inline => doc_inline.push(DocString::parse_inline(pair)),
                 Rule::attribute if !inline => attrs.push(Attribute::parse(pair)),
@@ -57,8 +57,8 @@ impl Prelude {
         }
     }
 
-    pub(crate) fn take_comment(&mut self) -> Comment {
-        mem::replace(&mut self.comment, Comment::new())
+    pub(crate) fn take_comment(&mut self) -> Vec<Comment> {
+        mem::take(&mut self.comment)
     }
 
     pub(crate) fn take_doc(&mut self) -> Vec<DocString> {

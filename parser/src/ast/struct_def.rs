@@ -1,4 +1,4 @@
-use super::{Attribute, DocString, Ident, LitInt, Prelude, TypeName};
+use super::{Attribute, Comment, DocString, Ident, LitInt, Prelude, TypeName};
 use crate::error::{
     DuplicateStructField, DuplicateStructFieldId, InvalidStructFieldId, RecursiveStruct,
 };
@@ -11,7 +11,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct StructDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     attrs: Vec<Attribute>,
     name: Ident,
@@ -48,7 +48,7 @@ impl StructDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             attrs: prelude.take_attrs(),
             name,
@@ -85,8 +85,8 @@ impl StructDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -197,7 +197,7 @@ impl InlineStruct {
 #[derive(Debug, Clone)]
 pub struct StructField {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     req: bool,
     name: Ident,
@@ -231,7 +231,7 @@ impl StructField {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             req,
             name,
@@ -253,8 +253,8 @@ impl StructField {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
@@ -281,7 +281,7 @@ impl StructField {
 #[derive(Debug, Clone)]
 pub struct StructFallback {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
 }
@@ -296,7 +296,7 @@ impl StructFallback {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name: Ident::parse(pairs.next().unwrap()),
         }
@@ -313,8 +313,8 @@ impl StructFallback {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {

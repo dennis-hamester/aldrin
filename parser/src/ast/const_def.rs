@@ -1,4 +1,4 @@
-use super::{DocString, Ident, LitInt, LitString, LitUuid, Prelude};
+use super::{Comment, DocString, Ident, LitInt, LitString, LitUuid, Prelude};
 use crate::error::{InvalidConstValue, InvalidEscapeCode};
 use crate::grammar::Rule;
 use crate::validate::Validate;
@@ -9,7 +9,7 @@ use pest::iterators::Pair;
 #[derive(Debug, Clone)]
 pub struct ConstDef {
     span: Span,
-    comment: Option<String>,
+    comment: Vec<Comment>,
     doc: Vec<DocString>,
     name: Ident,
     value_span: Span,
@@ -36,7 +36,7 @@ impl ConstDef {
 
         Self {
             span,
-            comment: prelude.take_comment().into(),
+            comment: prelude.take_comment(),
             doc: prelude.take_doc(),
             name,
             value_span,
@@ -57,8 +57,8 @@ impl ConstDef {
         self.span
     }
 
-    pub fn comment(&self) -> Option<&str> {
-        self.comment.as_deref()
+    pub fn comment(&self) -> &[Comment] {
+        &self.comment
     }
 
     pub fn doc(&self) -> &[DocString] {
