@@ -1,15 +1,15 @@
 #![deny(missing_debug_implementations)]
 
+mod error;
 #[cfg(feature = "rust")]
 mod util;
 
-pub mod error;
 #[cfg(feature = "rust")]
 pub mod rust;
 
 use aldrin_parser::Parser;
 
-pub use error::Error;
+pub use error::{Error, SubprocessError};
 #[cfg(feature = "rust")]
 pub use rust::{RustOptions, RustOutput};
 
