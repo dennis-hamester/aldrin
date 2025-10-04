@@ -118,6 +118,26 @@ jobs:
       - name: Cargo fmt
         run: cargo fmt -- --check
 
+  style-aldrin:
+    name: Schema formatting
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        schema:
+          - examples/bookmarks/src/bookmarks_v1.aldrin
+          - examples/bookmarks/src/bookmarks_v2.aldrin
+          - examples/downloader/src/downloader.aldrin
+          - examples/echo/src/echo.aldrin
+          - examples/media-player/src/media_player.aldrin
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build aldrin-gen
+        run: cargo build -p aldrin-gen
+      - name: Check schema formatting
+        run: cargo run -p aldrin-gen -- fmt --check ${{ matrix.schema }}
+
   conformance:
     name: Protocol conformance tests
     runs-on: ubuntu-latest
