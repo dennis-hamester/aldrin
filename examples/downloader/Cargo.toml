@@ -21,7 +21,7 @@ clap = { workspace = true }
 path = "../../aldrin"
 default-features = false
 features = [
-    "codegen",
+    "macros",
     "new-v4-ids",
     "tokio",
 ]

@@ -70,8 +70,8 @@ features = [
 path = "../aldrin"
 default-features = false
 features = [
-    "codegen",
     "introspection",
+    "macros",
 ]
 
 [dev-dependencies.aldrin-core]

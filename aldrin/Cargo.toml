@@ -19,8 +19,8 @@ all-features = true
 
 [features]
 channel = ["aldrin-core/channel"]
-codegen = ["dep:aldrin-macros"]
 introspection = ["aldrin-core/introspection"]
+macros = ["dep:aldrin-macros"]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
 serde = [
     "aldrin-core/serde",

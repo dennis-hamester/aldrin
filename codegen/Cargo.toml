@@ -43,8 +43,8 @@ uuid = { workspace = true }
 path = "../aldrin"
 default-features = false
 features = [
-    "codegen",
     "introspection",
+    "macros",
 ]
 
 [dev-dependencies.aldrin-test]

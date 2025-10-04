@@ -82,15 +82,15 @@ mod unknown_event;
 pub mod discoverer;
 pub mod error;
 pub mod low_level;
-#[cfg(feature = "codegen")]
+#[cfg(feature = "macros")]
 #[doc(hidden)]
 pub mod private;
 
 pub use aldrin_core as core;
-#[cfg(all(feature = "codegen", feature = "introspection"))]
+#[cfg(all(feature = "macros", feature = "introspection"))]
 #[doc(inline)]
 pub use aldrin_macros::IntrospectableFromAldrin as Introspectable;
-#[cfg(feature = "codegen")]
+#[cfg(feature = "macros")]
 #[doc(inline)]
 pub use aldrin_macros::{
     generate, service, DeserializeFromAldrin as Deserialize,
