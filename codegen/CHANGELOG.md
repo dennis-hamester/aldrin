@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - If `RustOptions::krate` is `None`, then `#[aldrin(crate = ...)]` is no longer emitted. In that
   case, codegen relies on the default values used by the `aldrin-macros` crate.
 - The `error` module is now hidden and `SubprocessError` is exported at the crate-level.
+- `Generator` is now `Copy` and `Clone`.
 
 ## [0.12.0] - 2025-01-26
 

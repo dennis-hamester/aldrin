@@ -13,7 +13,7 @@ pub use error::{Error, SubprocessError};
 #[cfg(feature = "rust")]
 pub use rust::{RustOptions, RustOutput};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Generator<'a> {
     options: &'a Options,
     parser: &'a Parser,
@@ -25,11 +25,11 @@ impl<'a> Generator<'a> {
         Generator { options, parser }
     }
 
-    pub fn options(&self) -> &'a Options {
+    pub fn options(self) -> &'a Options {
         self.options
     }
 
-    pub fn parser(&self) -> &'a Parser {
+    pub fn parser(self) -> &'a Parser {
         self.parser
     }
 
