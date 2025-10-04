@@ -39,7 +39,8 @@ service Echo {
         }
     }
 
-    /// Echoes back the same string to all subscribers of [`echoed_to_all`](Echo::echoed_to_all).
+    /// Echoes back the same string to all subscribers of
+    /// [`echoed_to_all`](Echo::echoed_to_all).
     ///
     /// The string must be non-empty or else an error
     /// ([`EmptyString`](Echo::echo_all::err::EmptyString)) will be returned.
