@@ -156,8 +156,8 @@ impl InlineEnum {
         Self {
             span,
             kw_span,
-            doc: prelude.take_inline_doc(),
-            attrs: prelude.take_attrs_inline(),
+            doc: prelude.take_doc(),
+            attrs: prelude.take_attrs(),
             vars,
             fallback,
         }

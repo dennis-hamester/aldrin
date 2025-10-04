@@ -62,7 +62,7 @@ impl Schema {
         }
 
         schema.comment = prelude.take_comment();
-        schema.doc = prelude.take_inline_doc();
+        schema.doc = prelude.take_doc();
 
         schema
     }
