@@ -34,7 +34,7 @@ impl<'a> Generator<'a> {
     }
 
     #[cfg(feature = "rust")]
-    pub fn generate_rust(&self, rust_options: &RustOptions) -> Result<RustOutput, Error> {
+    pub fn rust(&self, rust_options: &RustOptions) -> Result<RustOutput, Error> {
         rust::generate(self.parser, self.options, rust_options)
     }
 }

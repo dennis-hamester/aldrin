@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   case, codegen relies on the default values used by the `aldrin-macros` crate.
 - The `error` module is now hidden and `SubprocessError` is exported at the crate-level.
 - `Generator` is now `Copy` and `Clone`.
+- Rename `Generator::generate_rust()` to just `rust()`.
 
 ## [0.12.0] - 2025-01-26
 

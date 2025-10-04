@@ -75,7 +75,7 @@ pub(crate) fn run(args: RustArgs) -> Result<bool> {
     rust_options.krate = args.krate.as_deref();
 
     let generator = Generator::new(&options, &parser);
-    let output = generator.generate_rust(&rust_options)?;
+    let output = generator.rust(&rust_options)?;
 
     let module_path = output_dir.join(format!("{}.rs", output.module_name));
     let mut file = File::create(&module_path)

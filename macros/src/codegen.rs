@@ -46,7 +46,7 @@ pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
         rust_options.introspection_if = args.introspection_if.as_deref();
         rust_options.krate = args.krate.as_deref();
 
-        let output = match generator.generate_rust(&rust_options) {
+        let output = match generator.rust(&rust_options) {
             Ok(output) => output,
 
             Err(e) => {
