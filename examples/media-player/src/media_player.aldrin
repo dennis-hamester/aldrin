@@ -3,15 +3,19 @@ service MediaPlayer {
     version = 1;
 
     fn get_state @ 1 = State;
+
     event state_changed @ 1 = State;
 
     fn get_metadata @ 2 = option<Metadata>;
+
     event metadata_changed @ 2 = option<Metadata>;
 
     fn get_position @ 3 = option<u32>;
+
     event position_changed @ 3 = option<u32>;
 
     fn get_last_metadata @ 4 = option<Metadata>;
+
     event last_metadata_changed @ 4 = Metadata;
 
     fn play @ 5 {
