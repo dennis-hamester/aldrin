@@ -76,7 +76,10 @@ impl<'a> Formatter<'a> {
     }
 
     fn imports(&mut self, writer: &mut dyn Write, imports: &[ImportStmt]) -> IoResult<()> {
-        for import in imports {
+        let mut imports = Vec::from_iter(imports);
+        imports.sort_by_key(|import| import.schema_name().value());
+
+        for import in &imports {
             self.import(writer, import)?;
         }
 
