@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `error` module is now hidden and `SubprocessError` is exported at the crate-level.
 - `Generator` is now `Copy` and `Clone`.
 - Rename `Generator::generate_rust()` to just `rust()`.
+- The `register_introspection()` function is now suffixed with the schema's name.
 
 ## [0.12.0] - 2025-01-26
 

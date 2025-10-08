@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
 
     #[cfg(feature = "introspection")]
     {
-        echo::register_introspection(&handle)?;
+        echo::register_introspection_echo(&handle)?;
         handle.submit_introspection()?;
     }
 

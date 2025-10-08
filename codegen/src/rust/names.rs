@@ -93,3 +93,7 @@ pub fn default_ref_type(ty: &str) -> String {
 pub fn enum_ref_type_ctor(variant: &str) -> String {
     util::to_snake_case(variant)
 }
+
+pub fn register_introspection(schema: &str) -> String {
+    format!("register_introspection_{schema}")
+}

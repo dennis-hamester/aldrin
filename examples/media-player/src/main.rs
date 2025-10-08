@@ -105,7 +105,7 @@ async fn main() -> Result<()> {
 
     #[cfg(feature = "introspection")]
     {
-        media_player::register_introspection(&handle)?;
+        media_player::register_introspection_media_player(&handle)?;
         handle.submit_introspection()?;
     }
 

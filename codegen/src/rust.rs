@@ -136,13 +136,14 @@ impl RustGenerator<'_> {
 
         if self.options.introspection {
             let krate = self.rust_options.krate_or_default();
+            let name = names::register_introspection(self.schema.name());
 
             if let Some(feature) = self.rust_options.introspection_if {
                 codeln!(self, "#[cfg(feature = \"{feature}\")]");
             }
 
             codeln!(self, "#[automatically_derived]");
-            codeln!(self, "pub fn register_introspection(client: &{krate}::Handle) -> {RESULT}<(), {krate}::Error> {{");
+            codeln!(self, "pub fn {name}(client: &{krate}::Handle) -> {RESULT}<(), {krate}::Error> {{");
 
             for def in self.schema.definitions() {
                 self.register_introspection(def);

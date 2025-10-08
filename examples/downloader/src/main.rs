@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
 
     #[cfg(feature = "introspection")]
     {
-        downloader::register_introspection(&handle)?;
+        downloader::register_introspection_downloader(&handle)?;
         handle.submit_introspection()?;
     }
 

@@ -70,8 +70,8 @@ async fn main() -> Result<()> {
 
     #[cfg(feature = "introspection")]
     {
-        bookmarks_v1::register_introspection(&handle)?;
-        bookmarks_v2::register_introspection(&handle)?;
+        bookmarks_v1::register_introspection_bookmarks_v1(&handle)?;
+        bookmarks_v2::register_introspection_bookmarks_v2(&handle)?;
         handle.submit_introspection()?;
     }
 
