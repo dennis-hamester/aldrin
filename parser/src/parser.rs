@@ -1,8 +1,7 @@
 use crate::error::DuplicateServiceUuid;
 use crate::issues::Issues;
 use crate::validate::Validate;
-use crate::Resolver;
-use crate::{Error, Schema, Warning};
+use crate::{Error, Resolver, Schema, Warning};
 use std::collections::hash_map::{Entry, HashMap};
 use std::iter;
 
