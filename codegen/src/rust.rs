@@ -125,7 +125,7 @@ macro_rules! codeln {
 #[rustfmt::skip::macros(code, codeln)]
 impl RustGenerator<'_> {
     fn generate(mut self) -> Result<RustOutput, Error> {
-        let doc = self.doc_string_inner(self.schema.doc(), 0);
+        let (doc, _) = self.doc_string_inner(self.schema.doc(), 0);
         if !doc.is_empty() {
             codeln!(self, "{doc}");
         }
@@ -207,8 +207,8 @@ impl RustGenerator<'_> {
         let schema_name = self.schema.name();
         let additional_derives = attrs.additional_derives();
 
-        let doc = self.doc_string(doc, 0);
-        code!(self, "{doc}");
+        let (doc_comment, doc_alt) = self.doc_string(doc, 0);
+        code!(self, "{doc_comment}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
 
@@ -236,6 +236,13 @@ impl RustGenerator<'_> {
         }
         codeln!(self, "schema = \"{schema_name}\", ref_type)]");
 
+        if doc_alt && self.options.introspection {
+            for doc in doc {
+                let doc = doc.value_inner();
+                codeln!(self, "#[aldrin(doc = \"{doc}\")]");
+            }
+        }
+
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident} {{");
         let mut first = true;
@@ -250,14 +257,25 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = self.doc_string(field.doc(), 4);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(field.doc(), 4);
+            code!(self, "{doc_comment}");
 
             if field.required() {
                 codeln!(self, "    #[aldrin(id = {id})]");
-                codeln!(self, "    pub {ident}: {ty},");
             } else {
                 codeln!(self, "    #[aldrin(id = {id}, optional)]");
+            }
+
+            if doc_alt && self.options.introspection {
+                for doc in field.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "    #[aldrin(doc = \"{doc}\")]");
+                }
+            }
+
+            if field.required() {
+                codeln!(self, "    pub {ident}: {ty},");
+            } else {
                 codeln!(self, "    pub {ident}: {OPTION}<{ty}>,");
             }
         }
@@ -266,11 +284,19 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = self.doc_string(fallback.doc(), 4);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(fallback.doc(), 4);
+            code!(self, "{doc_comment}");
+
+            codeln!(self, "    #[aldrin(fallback)]");
+
+            if doc_alt && self.options.introspection {
+                for doc in fallback.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "    #[aldrin(doc = \"{doc}\")]");
+                }
+            }
 
             let ident = format!("r#{}", fallback.name().value());
-            codeln!(self, "    #[aldrin(fallback)]");
             codeln!(self, "    pub {ident}: {krate}::core::UnknownFields,");
         }
         codeln!(self, "}}");
@@ -301,8 +327,8 @@ impl RustGenerator<'_> {
         let attrs = RustAttributes::parse(attrs);
         let additional_derives = attrs.additional_derives();
 
-        let doc = self.doc_string(doc, 0);
-        code!(self, "{doc}");
+        let (doc_comment, doc_alt) = self.doc_string(doc, 0);
+        code!(self, "{doc_comment}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
         code!(self, ", {krate}::Tag, {krate}::PrimaryTag, {krate}::RefType, {krate}::Serialize, {krate}::Deserialize");
@@ -325,6 +351,13 @@ impl RustGenerator<'_> {
         }
         codeln!(self, "schema = \"{schema_name}\", ref_type)]");
 
+        if doc_alt && self.options.introspection {
+            for doc in doc {
+                let doc = doc.value_inner();
+                codeln!(self, "#[aldrin(doc = \"{doc}\")]");
+            }
+        }
+
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub enum {ident} {{");
         let mut first = true;
@@ -338,10 +371,18 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = self.doc_string(var.doc(), 4);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(var.doc(), 4);
+            code!(self, "{doc_comment}");
 
             codeln!(self, "    #[aldrin(id = {id})]");
+
+            if doc_alt && self.options.introspection {
+                for doc in var.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "    #[aldrin(doc = \"{doc}\")]");
+                }
+            }
+
             if let Some(ty) = var.variant_type() {
                 let ty = self.type_name(ty);
                 codeln!(self, "    {ident}({ty}),");
@@ -354,11 +395,19 @@ impl RustGenerator<'_> {
                 codeln!(self);
             }
 
-            let doc = self.doc_string(fallback.doc(), 4);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(fallback.doc(), 4);
+            code!(self, "{doc_comment}");
+
+            codeln!(self, "    #[aldrin(fallback)]");
+
+            if doc_alt && self.options.introspection {
+                for doc in fallback.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "    #[aldrin(doc = \"{doc}\")]");
+                }
+            }
 
             let ident = format!("r#{}", fallback.name().value());
-            codeln!(self, "    #[aldrin(fallback)]");
             codeln!(self, "    {ident}({krate}::core::UnknownVariant),");
         }
         codeln!(self, "}}");
@@ -379,8 +428,8 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{krate}::service! {{");
 
-        let doc = self.doc_string(svc.doc(), 4);
-        code!(self, "{doc}");
+        let (doc_comment, doc_alt) = self.doc_string(svc.doc(), 4);
+        code!(self, "{doc_comment}");
 
         code!(self, "    #[aldrin(");
 
@@ -408,6 +457,13 @@ impl RustGenerator<'_> {
 
         codeln!(self, ")]");
 
+        if doc_alt && self.options.introspection {
+            for doc in svc.doc() {
+                let doc = doc.value_inner();
+                codeln!(self, "    #[aldrin(doc = \"{doc}\")]");
+            }
+        }
+
         codeln!(self, "    pub service {ident} {{");
         codeln!(self, "        uuid = {krate}::core::ServiceUuid({krate}::private::uuid::uuid!(\"{uuid}\"));");
         codeln!(self, "        version = {version};");
@@ -421,8 +477,15 @@ impl RustGenerator<'_> {
                     let ident = format!("r#{name}");
                     let id = func.id().value();
 
-                    let doc = self.doc_string(func.doc(), 8);
-                    code!(self, "{doc}");
+                    let (doc_comment, doc_alt) = self.doc_string(func.doc(), 8);
+                    code!(self, "{doc_comment}");
+
+                    if doc_alt && self.options.introspection {
+                        for doc in func.doc() {
+                            let doc = doc.value_inner();
+                            codeln!(self, "        #[aldrin(doc = \"{doc}\")]");
+                        }
+                    }
 
                     code!(self, "        fn {ident} @ {id}");
 
@@ -458,8 +521,15 @@ impl RustGenerator<'_> {
                     let ident = format!("r#{name}");
                     let id = ev.id().value();
 
-                    let doc = self.doc_string(ev.doc(), 8);
-                    code!(self, "{doc}");
+                    let (doc_comment, doc_alt) = self.doc_string(ev.doc(), 8);
+                    code!(self, "{doc_comment}");
+
+                    if doc_alt && self.options.introspection {
+                        for doc in ev.doc() {
+                            let doc = doc.value_inner();
+                            codeln!(self, "        #[aldrin(doc = \"{doc}\")]");
+                        }
+                    }
 
                     code!(self, "        event {ident} @ {id}");
 
@@ -479,8 +549,15 @@ impl RustGenerator<'_> {
 
             codeln!(self);
 
-            let doc = self.doc_string(fallback.doc(), 8);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(fallback.doc(), 8);
+            code!(self, "{doc_comment}");
+
+            if doc_alt && self.options.introspection {
+                for doc in fallback.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "        #[aldrin(doc = \"{doc}\")]");
+                }
+            }
 
             codeln!(self, "        fn {ident} = {krate}::UnknownCall;");
         }
@@ -491,8 +568,15 @@ impl RustGenerator<'_> {
 
             codeln!(self);
 
-            let doc = self.doc_string(fallback.doc(), 8);
-            code!(self, "{doc}");
+            let (doc_comment, doc_alt) = self.doc_string(fallback.doc(), 8);
+            code!(self, "{doc_comment}");
+
+            if doc_alt && self.options.introspection {
+                for doc in fallback.doc() {
+                    let doc = doc.value_inner();
+                    codeln!(self, "        #[aldrin(doc = \"{doc}\")]");
+                }
+            }
 
             codeln!(self, "        event {ident} = {krate}::UnknownEvent;");
         }
@@ -606,8 +690,8 @@ impl RustGenerator<'_> {
         let krate = self.rust_options.krate_or_default();
         let name = const_def.name().value();
 
-        let doc = self.doc_string(const_def.doc(), 0);
-        code!(self, "{doc}");
+        let (doc_comment, _) = self.doc_string(const_def.doc(), 0);
+        code!(self, "{doc_comment}");
 
         match const_def.value() {
             ast::ConstValue::U8(v) => {
@@ -675,8 +759,8 @@ impl RustGenerator<'_> {
         let (is_key_type, derive_default) =
             self.newtype_properties(self.schema, newtype_def.target_type());
 
-        let doc = self.doc_string(newtype_def.doc(), 0);
-        code!(self, "{doc}");
+        let (doc_comment, doc_alt) = self.doc_string(newtype_def.doc(), 0);
+        code!(self, "{doc_comment}");
 
         code!(self, "#[derive({DEBUG}, {CLONE}");
 
@@ -711,6 +795,13 @@ impl RustGenerator<'_> {
             code!(self, "crate = {krate}::core, ");
         }
         codeln!(self, "newtype, schema = \"{schema_name}\", ref_type)]");
+
+        if doc_alt && self.options.introspection {
+            for doc in newtype_def.doc() {
+                let doc = doc.value_inner();
+                codeln!(self, "#[aldrin(doc = \"{doc}\")]");
+            }
+        }
 
         codeln!(self, "#[automatically_derived]");
         codeln!(self, "pub struct {ident}(pub {ty});");
@@ -969,11 +1060,11 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn doc_string(&self, doc: &[ast::DocString], indent: usize) -> String {
+    fn doc_string(&self, doc: &[ast::DocString], indent: usize) -> (String, bool) {
         self.doc_string_impl(doc, indent, "///")
     }
 
-    fn doc_string_inner(&self, doc: &[ast::DocString], indent: usize) -> String {
+    fn doc_string_inner(&self, doc: &[ast::DocString], indent: usize) -> (String, bool) {
         self.doc_string_impl(doc, indent, "//!")
     }
 
@@ -982,19 +1073,26 @@ impl RustGenerator<'_> {
         doc: &[ast::DocString],
         indent: usize,
         style: &'static str,
-    ) -> String {
+    ) -> (String, bool) {
         const INDENT: &str = "        ";
 
         debug_assert!(indent <= INDENT.len());
 
         if doc.is_empty() {
-            return String::new();
+            return (String::new(), false);
         }
 
-        let doc = self.rewrite_doc_links(doc);
+        let mut orig = String::new();
+
+        for doc in doc {
+            orig.push_str(doc.value_inner());
+            orig.push('\n');
+        }
+
+        let with_links = self.rewrite_doc_links(&orig);
         let mut doc_string = String::new();
 
-        for line in doc.lines() {
+        for line in with_links.lines() {
             doc_string.push_str(&INDENT[..indent]);
             doc_string.push_str(style);
 
@@ -1006,17 +1104,11 @@ impl RustGenerator<'_> {
             doc_string.push('\n');
         }
 
-        doc_string
+        (doc_string, orig != with_links)
     }
 
-    fn rewrite_doc_links(&self, doc: &[ast::DocString]) -> String {
-        let mut doc_string = String::new();
+    fn rewrite_doc_links(&self, doc: &str) -> String {
         let resolver = LinkResolver::new(self.parser, self.schema);
-
-        for doc in doc {
-            doc_string.push_str(doc.value_inner());
-            doc_string.push('\n');
-        }
 
         let mut options = ComrakOptions::default();
         options.extension.footnotes = true;
@@ -1035,7 +1127,7 @@ impl RustGenerator<'_> {
         }));
 
         let arena = Arena::new();
-        let root = comrak::parse_document(&arena, &doc_string, &options);
+        let root = comrak::parse_document(&arena, doc, &options);
 
         for node in root.descendants() {
             let mut data = node.data.borrow_mut();
