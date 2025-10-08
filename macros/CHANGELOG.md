@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Introspectable` now also supports doc string.
 - Add `#[aldrin(doc = "...")]` attribute to provide alternative documentation for introspection.
 
+### Fixed
+
+- Use `#[automatically_derived]` only for trait impls.
+
 ### Changed
 
 - Adapt to the new `Serialize` and `Deserialize` traits.

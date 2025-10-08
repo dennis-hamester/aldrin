@@ -123,13 +123,11 @@ impl Service {
         quote! {
             #doc
             #[derive(::std::fmt::Debug)]
-            #[automatically_derived]
             #vis struct #proxy {
                 #[doc(hidden)]
                 inner: #krate::low_level::Proxy,
             }
 
-            #[automatically_derived]
             impl #proxy {
                 #body_impl
             }
@@ -164,13 +162,11 @@ impl Service {
         let event_impl = self.body.gen_event_impl(&self.options);
 
         quote! {
-            #[automatically_derived]
             #[derive(::std::fmt::Debug, ::std::clone::Clone)]
             #vis enum #event {
                 #vars
             }
 
-            #[automatically_derived]
             impl #event {
                 #event_impl
             }
@@ -216,14 +212,12 @@ impl Service {
 
         quote! {
             #doc
-            #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis struct #ident {
                 #[doc(hidden)]
                 inner: #krate::low_level::Service,
             }
 
-            #[automatically_derived]
             impl #ident {
                 #body_impl
             }
@@ -258,13 +252,11 @@ impl Service {
         let call_impl = self.body.gen_call_impl(&self.options);
 
         quote! {
-            #[automatically_derived]
             #[derive(::std::fmt::Debug)]
             #vis enum #call {
                 #vars
             }
 
-            #[automatically_derived]
             impl #call {
                 #call_impl
             }
@@ -283,7 +275,6 @@ impl Service {
         quote! {
             #introspection_if
             #[doc(hidden)]
-            #[automatically_derived]
             struct #introspection;
 
             #introspection_if

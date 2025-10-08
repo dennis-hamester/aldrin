@@ -60,14 +60,12 @@ impl StructData<'_> {
         if self.fields().is_empty() {
             Ok(quote! {
                 #doc
-                #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*>;
             })
         } else if self.is_named() {
             Ok(quote! {
                 #doc
-                #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*> {
                     #(#fields),*
@@ -76,7 +74,6 @@ impl StructData<'_> {
         } else {
             Ok(quote! {
                 #doc
-                #[automatically_derived]
                 #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
                 #vis struct #ref_type<#(#ty_generics),*>(#(#fields),*);
             })
@@ -129,7 +126,6 @@ impl EnumData<'_> {
 
         Ok(quote! {
             #doc
-            #[automatically_derived]
             #[derive(::std::fmt::Debug, ::std::marker::Copy, ::std::clone::Clone)]
             #vis enum #ref_type<#(#ty_generics),*> {
                 #(#variants),*
@@ -185,7 +181,6 @@ impl VariantData<'_> {
 
         if let Some(ty_generic) = self.ty_generic() {
             quote! {
-                #[automatically_derived]
                 impl<#ty_generic> #enum_name<#(#ty_generics),*> {
                     #doc
                     pub fn #ctor(#ctor: #ty_generic) -> Self {
@@ -195,7 +190,6 @@ impl VariantData<'_> {
             }
         } else {
             quote! {
-                #[automatically_derived]
                 impl #enum_name<#(#ty_generics),*> {
                     #doc
                     pub fn #ctor() -> Self {
