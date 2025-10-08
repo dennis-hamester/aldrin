@@ -112,6 +112,32 @@
 //! }
 //! ```
 //!
+//! ##### `doc`
+//!
+//! - Applies to: [`Introspectable`]
+//!
+//! Provides an alternative doc string used only for deriving [`Introspectable`]. Note that this
+//! attribute can be used anywhere a regular doc comment can be used as well.
+//!
+//! If this is not provided then [`Introspectable`] will fall back to the regular doc comment (if
+//! present).
+//!
+//! Using this attribute can be desirable if the regular doc comment is Rust-specific, e.g. due to
+//! link conversion or other modifications.
+//!
+//! ```
+//! # use aldrin_core::{Introspectable};
+//! /// This doc comment will be rendered by rustdoc.
+//! #[derive(Introspectable)]
+//! #[aldrin(schema = "family_tree")]
+//! #[aldrin(doc = "This doc comment will be used for introspection.")]
+//! struct Name {
+//!     /// This doc comment will be rendered by rustdoc.
+//!     #[aldrin(doc = "This doc comment will be used for introspection.")]
+//!     inner: String,
+//! }
+//! ```
+//!
 //! #### Field and variant attributes
 //!
 //! ##### `id`
@@ -216,6 +242,12 @@
 //!     Unkown(UnknownVariant),
 //! }
 //! ```
+//!
+//! ##### `doc`
+//!
+//! - Applies to: [`Introspectable`]
+//!
+//! See [`doc` for containers](Self#doc).
 
 #![deny(missing_docs)]
 

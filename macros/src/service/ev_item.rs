@@ -1,5 +1,4 @@
-use super::{kw, Options};
-use crate::doc_string::DocString;
+use super::{kw, ItemOptions, Options};
 use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -9,7 +8,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Ident, LitInt, Result, Token, Type};
 
 pub(super) struct EvItem {
-    doc: DocString,
+    options: ItemOptions,
     ident: Ident,
     ident_val: Ident,
     ident_ref: Ident,
@@ -38,7 +37,7 @@ impl EvItem {
         let krate = options.krate();
         let subscribe = &self.subscribe;
         let id = &self.id;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         quote! {
             #doc
@@ -52,7 +51,7 @@ impl EvItem {
         let krate = options.krate();
         let unsubscribe = &self.unsubscribe;
         let id = &self.id;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         quote! {
             #doc
@@ -90,7 +89,7 @@ impl EvItem {
     pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         let ty = match self.ty {
             Some(ref ty) => quote! { #ty },
@@ -109,7 +108,7 @@ impl EvItem {
         let ident_val = &self.ident_val;
         let ident_ref = &self.ident_ref;
         let id = &self.id;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         if let Some(ref ty) = self.ty {
             quote! {
@@ -145,7 +144,7 @@ impl EvItem {
         let id = &self.id;
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
-        let doc = self.doc.to_introspection();
+        let doc = self.options.doc_alt().to_introspection();
 
         let ty = self.ty.as_ref().map(|ty| {
             quote! {
@@ -172,7 +171,7 @@ impl EvItem {
 
 impl Parse for EvItem {
     fn parse(input: ParseStream) -> Result<Self> {
-        let doc = input.parse()?;
+        let options = input.parse()?;
         input.parse::<kw::event>()?;
         let ident = input.parse::<Ident>()?;
         input.parse::<Token![@]>()?;
@@ -201,7 +200,7 @@ impl Parse for EvItem {
         );
 
         Ok(Self {
-            doc,
+            options,
             ident,
             ident_val,
             ident_ref,

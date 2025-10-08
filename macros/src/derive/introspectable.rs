@@ -147,7 +147,7 @@ fn gen_regular_struct(
     }
 
     let fallback = fallback.map(|(ident, options)| {
-        let doc = options.doc().to_introspection();
+        let doc = options.doc_alt().to_introspection();
 
         quote! {
             .fallback(
@@ -158,7 +158,7 @@ fn gen_regular_struct(
         }
     });
 
-    let doc = options.doc().to_introspection();
+    let doc = options.doc_alt().to_introspection();
 
     let layout = quote! {
         #krate::introspection::ir::StructIr::builder(#schema, #name)
@@ -208,7 +208,7 @@ fn gen_field(
         quote! { <#field_type as #krate::introspection::private::OptionHelper>::lexical_id() }
     };
 
-    let doc = item_options.doc().to_introspection();
+    let doc = item_options.doc_alt().to_introspection();
 
     let layout = quote! {
         .field(
@@ -238,7 +238,7 @@ fn gen_newtype_struct(
     let schema = options.schema().unwrap();
     let field = &fields[0];
     let field_type = &field.ty;
-    let doc = options.doc().to_introspection();
+    let doc = options.doc_alt().to_introspection();
 
     let layout = quote! {
         #krate::introspection::ir::NewtypeIr::builder(
@@ -300,7 +300,7 @@ fn gen_enum(
         }
     }
 
-    let doc = options.doc().to_introspection();
+    let doc = options.doc_alt().to_introspection();
 
     let layout = quote! {
         #krate::introspection::ir::EnumIr::builder(#schema, #name)
@@ -390,7 +390,7 @@ fn gen_regular_variant(
         }
     });
 
-    let doc = item_options.doc().to_introspection();
+    let doc = item_options.doc_alt().to_introspection();
 
     let layout = quote! {
         .variant(
@@ -411,7 +411,7 @@ fn gen_fallback_variant(
 ) -> Result<TokenStream> {
     let krate = options.krate();
     let name = variant.ident.unraw().to_string();
-    let doc = item_options.doc().to_introspection();
+    let doc = item_options.doc_alt().to_introspection();
 
     match variant.fields {
         Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => Ok(quote! {

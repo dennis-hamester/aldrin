@@ -1,5 +1,4 @@
-use super::Options;
-use crate::doc_string::DocString;
+use super::{ItemOptions, Options};
 use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -8,7 +7,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Ident, Result, Token, Type};
 
 pub(super) struct FnFallbackItem {
-    doc: DocString,
+    options: ItemOptions,
     ident: Ident,
     variant: Ident,
     ty: Type,
@@ -26,7 +25,7 @@ impl FnFallbackItem {
     pub(crate) fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         quote! {
             #doc
@@ -50,7 +49,7 @@ impl FnFallbackItem {
     pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let name = self.ident.unraw().to_string();
-        let doc = self.doc.to_introspection();
+        let doc = self.options.doc_alt().to_introspection();
 
         quote! {
             .function_fallback(
@@ -64,7 +63,7 @@ impl FnFallbackItem {
 
 impl Parse for FnFallbackItem {
     fn parse(input: ParseStream) -> Result<Self> {
-        let doc = input.parse()?;
+        let options = input.parse()?;
         input.parse::<Token![fn]>()?;
         let ident = input.parse::<Ident>()?;
         input.parse::<Token![=]>()?;
@@ -77,7 +76,7 @@ impl Parse for FnFallbackItem {
         );
 
         Ok(Self {
-            doc,
+            options,
             ident,
             variant,
             ty,

@@ -484,7 +484,7 @@ impl Body {
         let references_len = references.len();
         let references = references.into_iter();
 
-        let doc = options.doc().to_introspection();
+        let doc = options.doc_alt().to_introspection();
 
         quote! {
             fn layout() -> #krate::core::introspection::ir::LayoutIr {

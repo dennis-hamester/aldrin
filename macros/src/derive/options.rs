@@ -5,6 +5,7 @@ use syn::{Attribute, Ident, LitInt, LitStr, Path, Result};
 
 pub(crate) struct Options {
     doc: DocString,
+    doc_alt: DocString,
     krate: Path,
     ref_type: Option<Ident>,
     schema: Option<LitStr>,
@@ -19,13 +20,14 @@ impl Options {
         is_struct: bool,
     ) -> Result<Self> {
         let mut doc = DocString::new();
+        let mut doc_alt = DocString::new();
         let mut ref_type = None;
         let mut schema = None;
         let mut newtype = false;
 
         for attr in attrs {
             if attr.path().is_ident("doc") {
-                let _ = doc.push(attr.clone());
+                let _ = doc.push_attr(attr.clone());
                 continue;
             }
 
@@ -57,6 +59,9 @@ impl Options {
                     } else {
                         Err(meta.error("`newtype` is supported only for structs"))
                     }
+                } else if meta.path.is_ident("doc") {
+                    doc_alt.push(meta.value()?.parse()?);
+                    Ok(())
                 } else {
                     Err(meta.error("unknown attribute"))
                 }
@@ -65,6 +70,7 @@ impl Options {
 
         Ok(Self {
             doc,
+            doc_alt,
             krate,
             ref_type,
             schema,
@@ -74,6 +80,14 @@ impl Options {
 
     pub(crate) fn doc(&self) -> &DocString {
         &self.doc
+    }
+
+    pub(crate) fn doc_alt(&self) -> &DocString {
+        if self.doc_alt.is_empty() {
+            &self.doc
+        } else {
+            &self.doc_alt
+        }
     }
 
     pub(crate) fn krate(&self) -> &Path {
@@ -95,6 +109,7 @@ impl Options {
 
 pub(crate) struct ItemOptions {
     doc: DocString,
+    doc_alt: DocString,
     id: u32,
     optional: bool,
     fallback: bool,
@@ -103,13 +118,14 @@ pub(crate) struct ItemOptions {
 impl ItemOptions {
     pub(crate) fn new(attrs: &[Attribute], default_id: u32) -> Result<Self> {
         let mut doc = DocString::new();
+        let mut doc_alt = DocString::new();
         let mut id = default_id;
         let mut optional = false;
         let mut fallback = false;
 
         for attr in attrs {
             if attr.path().is_ident("doc") {
-                let _ = doc.push(attr.clone());
+                let _ = doc.push_attr(attr.clone());
                 continue;
             }
 
@@ -127,6 +143,9 @@ impl ItemOptions {
                 } else if meta.path.is_ident("fallback") {
                     fallback = true;
                     Ok(())
+                } else if meta.path.is_ident("doc") {
+                    doc_alt.push(meta.value()?.parse()?);
+                    Ok(())
                 } else {
                     Err(meta.error("unknown attribute"))
                 }
@@ -135,6 +154,7 @@ impl ItemOptions {
 
         Ok(Self {
             doc,
+            doc_alt,
             id,
             optional,
             fallback,
@@ -143,6 +163,14 @@ impl ItemOptions {
 
     pub(crate) fn doc(&self) -> &DocString {
         &self.doc
+    }
+
+    pub(crate) fn doc_alt(&self) -> &DocString {
+        if self.doc_alt.is_empty() {
+            &self.doc
+        } else {
+            &self.doc_alt
+        }
     }
 
     pub(crate) fn id(&self) -> u32 {

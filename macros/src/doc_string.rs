@@ -12,7 +12,11 @@ impl DocString {
         Self { inner: Vec::new() }
     }
 
-    pub(crate) fn push(&mut self, attr: Attribute) -> Result<()> {
+    pub(crate) fn push(&mut self, doc: LitStr) {
+        self.inner.push(doc);
+    }
+
+    pub(crate) fn push_attr(&mut self, attr: Attribute) -> Result<()> {
         if !attr.path().is_ident("doc") {
             return Err(Error::new_spanned(attr, "extected attribute `doc`"));
         }
@@ -29,6 +33,10 @@ impl DocString {
         } else {
             Err(Error::new_spanned(attr, "only doc comments are supported"))
         }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 
     pub(crate) fn to_introspection(&self) -> Option<TokenStream> {
@@ -65,7 +73,7 @@ impl Parse for DocString {
         let attrs = input.call(Attribute::parse_outer)?;
 
         for attr in attrs {
-            doc.push(attr)?;
+            doc.push_attr(attr)?;
         }
 
         Ok(doc)

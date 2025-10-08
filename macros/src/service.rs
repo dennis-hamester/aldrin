@@ -17,7 +17,7 @@ use fn_body::FnBody;
 use fn_fallback_item::FnFallbackItem;
 use fn_item::FnItem;
 use item::ServiceItem;
-use options::Options;
+use options::{ItemOptions, Options};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ext::IdentExt;

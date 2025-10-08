@@ -1,5 +1,4 @@
-use super::{FnBody, Options};
-use crate::doc_string::DocString;
+use super::{FnBody, ItemOptions, Options};
 use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -10,7 +9,7 @@ use syn::token::Brace;
 use syn::{braced, Ident, LitInt, Result, Token, Type};
 
 pub(super) struct FnItem {
-    doc: DocString,
+    options: ItemOptions,
     ident: Ident,
     ident_val: Ident,
     ident_ref: Ident,
@@ -34,7 +33,7 @@ impl FnItem {
         let ident_val = &self.ident_val;
         let ident_ref = &self.ident_ref;
         let id = &self.id;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         let ok = match self.body.ok() {
             Some(ok) => quote! { #ok },
@@ -84,7 +83,7 @@ impl FnItem {
     pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
-        let doc = &self.doc;
+        let doc = &self.options.doc();
 
         let args = match self.body.args() {
             Some(args) => quote! { #args },
@@ -134,7 +133,7 @@ impl FnItem {
         let id = &self.id;
         let name = self.ident.unraw().to_string();
         let krate = options.krate();
-        let doc = self.doc.to_introspection();
+        let doc = self.options.doc_alt().to_introspection();
 
         let args = self.body.args().map(|args| {
             quote! {
@@ -183,7 +182,7 @@ impl FnItem {
 
 impl Parse for FnItem {
     fn parse(input: ParseStream) -> Result<Self> {
-        let doc = input.parse()?;
+        let options = input.parse()?;
         input.parse::<Token![fn]>()?;
         let ident = input.parse::<Ident>()?;
         input.parse::<Token![@]>()?;
@@ -214,7 +213,7 @@ impl Parse for FnItem {
         );
 
         Ok(Self {
-            doc,
+            options,
             ident,
             ident_val,
             ident_ref,
