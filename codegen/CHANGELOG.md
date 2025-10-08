@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support translating links in doc string for Rustdoc.
 - Emit the original doc strings using `#[aldrin(doc = "...")]` for introspection.
 
+### Fixed
+
+- Use `#[automatically_derived]` only for trait impls.
+
 ### Changed
 
 - Adapt to the new `Serialize` and `Deserialize` traits.
