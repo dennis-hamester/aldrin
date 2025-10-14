@@ -64,22 +64,22 @@ pub fn unsubscribe(event: &str) -> String {
     format!("unsubscribe_{event}")
 }
 
-/// Returns the of a service's proxy type.
+/// Returns the name of a service's proxy type.
 pub fn service_proxy(service: &str) -> String {
     format!("{service}Proxy")
 }
 
-/// Returns the of a service's event type.
+/// Returns the name of a service's event type.
 pub fn service_event(service: &str) -> String {
     format!("{service}Event")
 }
 
-/// Returns the of a service's call type.
+/// Returns the name of a service's call type.
 pub fn service_call(service: &str) -> String {
     format!("{service}Call")
 }
 
-/// Returns the of a service's introspection type.
+/// Returns the name of a service's introspection type.
 pub fn service_introspection(service: &str) -> String {
     format!("{service}Introspection")
 }
