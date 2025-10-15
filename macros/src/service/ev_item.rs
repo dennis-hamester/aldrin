@@ -140,6 +140,34 @@ impl EvItem {
         }
     }
 
+    pub(crate) fn gen_handler(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let ty = match self.ty {
+            Some(ref ty) => quote! { #ty },
+            None => quote! { () },
+        };
+
+        quote! {
+            #doc
+            async fn #ident(
+                &mut self,
+                event: #krate::Event<#ty>,
+            ) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
+    pub(crate) fn gen_dispatch_match_arm(&self, event: &Ident) -> TokenStream {
+        let ident = &self.ident;
+        let variant = &self.variant;
+
+        quote! {
+            ::std::result::Result::Ok(#event::#variant(event)) => handler.#ident(event).await,
+        }
+    }
+
     pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         let id = &self.id;
         let name = self.ident.unraw().to_string();

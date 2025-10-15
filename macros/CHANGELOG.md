@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `RefType` derive macro now supports doc comments.
 - `Introspectable` now also supports doc string.
 - Add `#[aldrin(doc = "...")]` attribute to provide alternative documentation for introspection.
+- The `service!{}` macro now generates 2 traits named `{Service}CallHandler` and
+  `{Service}EventHandler`, which can be used to dispatch calls and events. The traits use the
+  `async-trait` crate for now.
 
 ### Fixed
 

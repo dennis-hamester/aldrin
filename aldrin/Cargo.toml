@@ -20,7 +20,10 @@ all-features = true
 [features]
 channel = ["aldrin-core/channel"]
 introspection = ["aldrin-core/introspection"]
-macros = ["dep:aldrin-macros"]
+macros = [
+    "dep:aldrin-macros",
+    "dep:async-trait",
+]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
 serde = [
     "aldrin-core/serde",
@@ -47,6 +50,11 @@ features = ["new-v4-ids"]
 optional = true
 version = "0.12.0"
 path = "../macros"
+default-features = false
+
+[dependencies.async-trait]
+optional = true
+version = "0.1.89"
 default-features = false
 
 [dependencies.futures-channel]
