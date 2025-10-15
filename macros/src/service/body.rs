@@ -13,7 +13,12 @@ pub(super) struct Body {
 }
 
 impl Body {
-    pub(crate) fn gen_proxy(&self, event: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_proxy(
+        &self,
+        event: &Ident,
+        handler: &Ident,
+        options: &Options,
+    ) -> TokenStream {
         let krate = options.krate();
         let uuid = &self.uuid;
         let version = &self.version;
@@ -80,6 +85,17 @@ impl Body {
             Some(fallback) => fallback.gen_next_event_match_arm(event),
             None => quote! { _ => {} },
         };
+
+        let dispatch_match_arms = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_event)
+            .map(|ev| ev.gen_dispatch_match_arm(event))
+            .collect::<TokenStream>();
+
+        let dispatch_fallback = self
+            .event_fallback()
+            .map(|fallback| fallback.gen_dispatch_match_arm(event));
 
         quote! {
             pub const UUID: #krate::core::ServiceUuid = #uuid;
@@ -170,6 +186,22 @@ impl Body {
             ) -> ::std::option::Option<::std::result::Result<#event, #krate::Error>> {
                 ::std::future::poll_fn(|cx| self.poll_next_event(cx)).await
             }
+
+            pub async fn dispatch_event<T>(
+                event: ::std::result::Result<#event, #krate::Error>,
+                handler: &mut T,
+            ) -> ::std::result::Result<(), T::Error>
+            where
+                T: #handler + ?::std::marker::Sized,
+            {
+                #[allow(unreachable_code)]
+                match event {
+                    #dispatch_match_arms
+                    #dispatch_fallback
+                    ::std::result::Result::Ok(_) => ::std::unreachable!(),
+                    ::std::result::Result::Err(e) => handler.invalid_event(e).await,
+                }
+            }
         }
     }
 
@@ -225,7 +257,27 @@ impl Body {
         }
     }
 
-    pub(crate) fn gen_service(&self, call: &Ident, options: &Options) -> TokenStream {
+    pub(crate) fn gen_event_handler(&self, options: &Options) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_event)
+            .map(|ev| ev.gen_handler(options))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.event_fallback() {
+            funcs.extend(fallback.gen_handler());
+        }
+
+        funcs
+    }
+
+    pub(crate) fn gen_service(
+        &self,
+        call: &Ident,
+        handler: &Ident,
+        options: &Options,
+    ) -> TokenStream {
         let uuid = &self.uuid;
         let version = &self.version;
         let krate = options.krate();
@@ -291,6 +343,17 @@ impl Body {
                 }
             },
         };
+
+        let dispatch_match_arms = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_function)
+            .map(|func| func.gen_dispatch_match_arm(call))
+            .collect::<TokenStream>();
+
+        let dispatch_fallback = self
+            .function_fallback()
+            .map(|fallback| fallback.gen_dispatch_match_arm(call));
 
         quote! {
             pub const UUID: #krate::core::ServiceUuid = #uuid;
@@ -366,6 +429,22 @@ impl Body {
                 &mut self,
             ) -> ::std::option::Option<::std::result::Result<#call, #krate::Error>> {
                 ::std::future::poll_fn(|cx| self.poll_next_call(cx)).await
+            }
+
+            pub async fn dispatch_call<T>(
+                call: ::std::result::Result<#call, #krate::Error>,
+                handler: &mut T,
+            ) -> ::std::result::Result<(), T::Error>
+            where
+                T: #handler + ?::std::marker::Sized,
+            {
+                #[allow(unreachable_code)]
+                match call {
+                    #dispatch_match_arms
+                    #dispatch_fallback
+                    ::std::result::Result::Ok(_) => ::std::unreachable!(),
+                    ::std::result::Result::Err(e) => handler.invalid_call(e).await,
+                }
             }
         }
     }
@@ -462,6 +541,21 @@ impl Body {
                 }
             }
         }
+    }
+
+    pub(crate) fn gen_call_handler(&self, options: &Options) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_function)
+            .map(|func| func.gen_handler(options))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.function_fallback() {
+            funcs.extend(fallback.gen_handler());
+        }
+
+        funcs
     }
 
     pub(crate) fn gen_introspection(&self, service: &Ident, options: &Options) -> TokenStream {

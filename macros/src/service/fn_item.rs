@@ -80,6 +80,33 @@ impl FnItem {
         }
     }
 
+    pub(crate) fn gen_handler(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let args = self.body.args().map(|args| quote! { args: #args, });
+
+        let ok = match self.body.ok() {
+            Some(ok) => quote! { #ok },
+            None => quote! { () },
+        };
+
+        let err = match self.body.err() {
+            Some(err) => quote! { #err },
+            None => quote! { ::std::convert::Infallible },
+        };
+
+        quote! {
+            #doc
+            async fn #ident(
+                &mut self,
+                #args
+                promise: #krate::Promise<#ok, #err>,
+            ) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
     pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
@@ -124,6 +151,27 @@ impl FnItem {
                     ::std::task::Poll::Ready(
                         ::std::option::Option::Some(::std::result::Result::Err(e)),
                     )
+                }
+            }
+        }
+    }
+
+    pub(crate) fn gen_dispatch_match_arm(&self, call: &Ident) -> TokenStream {
+        let ident = &self.ident;
+        let variant = &self.variant;
+
+        if self.body.args().is_some() {
+            quote! {
+                ::std::result::Result::Ok(#call::#variant(call)) => {
+                    let (args, promise) = call.into_args_and_promise();
+                    handler.#ident(args, promise).await
+                }
+            }
+        } else {
+            quote! {
+                ::std::result::Result::Ok(#call::#variant(call)) => {
+                    let (_, promise) = call.into_args_and_promise();
+                    handler.#ident(promise).await
                 }
             }
         }

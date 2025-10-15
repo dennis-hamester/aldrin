@@ -46,6 +46,26 @@ impl EvFallbackItem {
         }
     }
 
+    pub(crate) fn gen_handler(&self) -> TokenStream {
+        let ident = &self.ident;
+        let ty = &self.ty;
+        let doc = &self.options.doc();
+
+        quote! {
+            #doc
+            async fn #ident(&mut self, event: #ty) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
+    pub(crate) fn gen_dispatch_match_arm(&self, event: &Ident) -> TokenStream {
+        let ident = &self.ident;
+        let variant = &self.variant;
+
+        quote! {
+            ::std::result::Result::Ok(#event::#variant(event)) => handler.#ident(event).await,
+        }
+    }
+
     pub(crate) fn layout(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let name = self.ident.unraw().to_string();
