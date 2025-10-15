@@ -53,9 +53,8 @@ path = "../macros"
 default-features = false
 
 [dependencies.async-trait]
+workspace = true
 optional = true
-version = "0.1.89"
-default-features = false
 
 [dependencies.futures-channel]
 workspace = true

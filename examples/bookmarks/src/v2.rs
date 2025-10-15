@@ -1,11 +1,13 @@
 use crate::bookmarks_v2::{
-    Bookmark, Bookmarks, BookmarksCall, BookmarksEvent, BookmarksGetV2Args, BookmarksGetV2ArgsRef,
-    BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef, Error as BookmarkError,
+    Bookmark, Bookmarks, BookmarksCallHandler, BookmarksEventHandler, BookmarksGetV2Args,
+    BookmarksGetV2ArgsRef, BookmarksProxy, BookmarksRemoveV2Args, BookmarksRemoveV2ArgsRef,
+    Error as BookmarkError,
 };
 use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
-use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
-use anyhow::{anyhow, Result};
+use aldrin::{Error as AldrinError, Event, Handle, Object, Promise, UnknownCall, UnknownEvent};
+use anyhow::{anyhow, Error, Result};
+use async_trait::async_trait;
 use clap::Parser;
 use std::convert::Infallible;
 use std::error::Error as StdError;
@@ -126,7 +128,7 @@ pub(crate) async fn run(args: Args, bus: &Handle) -> Result<()> {
         Args::Add(args) => add(args, bus).await,
         Args::Get(args) => get(args, bus).await,
         Args::GetGroups(args) => get_groups(args, bus).await,
-        Args::Listen(args) => listen(args, bus).await,
+        Args::Listen(args) => Listener::new(args, bus).await?.run().await,
         Args::Remove(args) => remove(args, bus).await,
         Args::Server => Server::new(bus).await?.run().await,
     }
@@ -155,8 +157,7 @@ impl Server {
             tokio::select! {
                 call = self.svc.next_call() => {
                     match call {
-                        Some(Ok(call)) => self.handle_call(call)?,
-                        Some(Err(e)) => self.invalid_call(e),
+                        Some(call) => Bookmarks::dispatch_call(call, &mut self).await?,
                         None => break Err(anyhow!("broker shut down")),
                     }
                 }
@@ -165,33 +166,26 @@ impl Server {
             }
         }
     }
+}
 
-    fn handle_call(&mut self, call: BookmarksCall) -> Result<()> {
-        match call {
-            BookmarksCall::Get(call) => self.get(call)?,
-            BookmarksCall::GetV2(call) => self.get_v2(call)?,
-            BookmarksCall::Add(call) => self.add(call)?,
-            BookmarksCall::Remove(call) => self.remove(call)?,
-            BookmarksCall::RemoveV2(call) => self.remove_v2(call)?,
-            BookmarksCall::GetGroups(call) => self.get_groups(call)?,
-            BookmarksCall::UnknownFunction(call) => self.unknown_function(call),
-        }
+#[async_trait]
+impl BookmarksCallHandler for Server {
+    type Error = Error;
 
-        Ok(())
-    }
-
-    fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
+    async fn get(&mut self, promise: Promise<Vec<Bookmark>, Infallible>) -> Result<()> {
         println!("Getting all bookmarks in the unspecified group.");
 
         let list = self.list.iter().filter(|b| b.group.is_none());
-        call.ok(IterAsVec(list))?;
+        promise.ok(IterAsVec(list))?;
 
         Ok(())
     }
 
-    fn get_v2(&self, call: Call<BookmarksGetV2Args, Vec<Bookmark>, BookmarkError>) -> Result<()> {
-        let (args, promise) = call.into_args_and_promise();
-
+    async fn get_v2(
+        &mut self,
+        args: BookmarksGetV2Args,
+        promise: Promise<Vec<Bookmark>, BookmarkError>,
+    ) -> Result<()> {
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to get bookmarks due to unknown arguments.");
             promise.err(BookmarkError::UnknownFields)?;
@@ -210,9 +204,7 @@ impl Server {
         Ok(())
     }
 
-    fn add(&mut self, call: Call<Bookmark, (), BookmarkError>) -> Result<()> {
-        let (bookmark, promise) = call.into_args_and_promise();
-
+    async fn add(&mut self, bookmark: Bookmark, promise: Promise<(), BookmarkError>) -> Result<()> {
         if bookmark.unknown_fields.has_fields_set() {
             println!("Rejecting bookmark because is contains unknown fields.");
             promise.err(BookmarkError::UnknownFields)?;
@@ -271,32 +263,32 @@ impl Server {
         Ok(())
     }
 
-    fn remove(&mut self, call: Call<String, (), BookmarkError>) -> Result<()> {
-        let name = call.args();
-
+    async fn remove(&mut self, name: String, promise: Promise<(), BookmarkError>) -> Result<()> {
         let Some(idx) = self
             .list
             .iter()
             .position(|b| (b.name == *name) && b.group.is_none())
         else {
             println!("Failed to remove unknown bookmark `{name}`");
-            call.err(BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
         let bookmark = self.list.remove(idx);
         self.svc.removed(&bookmark)?;
-        call.done()?;
+        promise.done()?;
 
         Ok(())
     }
 
-    fn remove_v2(&mut self, call: Call<BookmarksRemoveV2Args, (), BookmarkError>) -> Result<()> {
-        let args = call.args();
-
+    async fn remove_v2(
+        &mut self,
+        args: BookmarksRemoveV2Args,
+        promise: Promise<(), BookmarkError>,
+    ) -> Result<()> {
         if args.unknown_fields.has_fields_set() {
             println!("Rejecting to remove a bookmark due to unknown arguments.");
-            call.err(BookmarkError::UnknownFields)?;
+            promise.err(BookmarkError::UnknownFields)?;
             return Ok(());
         }
 
@@ -306,7 +298,7 @@ impl Server {
             .position(|b| (b.name == args.name) && (b.group == args.group))
         else {
             println!("Failed to remove unknown bookmark `{}`", args.name);
-            call.err(BookmarkError::InvalidName)?;
+            promise.err(BookmarkError::InvalidName)?;
             return Ok(());
         };
 
@@ -324,11 +316,14 @@ impl Server {
             self.svc.removed(&bookmark)?;
         }
 
-        call.done()?;
+        promise.done()?;
         Ok(())
     }
 
-    fn get_groups(&mut self, call: Call<(), Vec<Option<String>>, Infallible>) -> Result<()> {
+    async fn get_groups(
+        &mut self,
+        promise: Promise<Vec<Option<String>>, Infallible>,
+    ) -> Result<()> {
         let mut groups = self
             .list
             .iter()
@@ -338,11 +333,11 @@ impl Server {
         groups.sort_unstable();
         groups.dedup();
 
-        call.ok(groups)?;
+        promise.ok(groups)?;
         Ok(())
     }
 
-    fn unknown_function(&self, call: UnknownCall) {
+    async fn unknown_function(&mut self, call: UnknownCall) -> Result<()> {
         match call.deserialize_as_value() {
             Ok(args) => println!(
                 "Received an unknown call {} with arguments {args:?}.",
@@ -354,10 +349,13 @@ impl Server {
                 call.id()
             ),
         }
+
+        Ok(())
     }
 
-    fn invalid_call(&self, e: Error) {
-        println!("Received an invalid call: {e}.");
+    async fn invalid_call(&mut self, error: AldrinError) -> Result<()> {
+        println!("Received an invalid call: {error}.");
+        Ok(())
     }
 }
 
@@ -464,79 +462,115 @@ async fn get_groups(args: GetGroups, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-async fn listen(args: Listen, bus: &Handle) -> Result<()> {
-    let mut bookmarks = get_bookmarks(args.server.server, bus).await?;
-    let id = bookmarks.id().object_id.uuid;
-    println!("Using server {id}.");
+struct Listener {
+    bookmarks: BookmarksProxy,
+}
 
-    if args.unknown {
-        bookmarks.inner().subscribe_all().await?;
-    } else {
-        bookmarks.subscribe_all().await?;
+impl Listener {
+    async fn new(args: Listen, bus: &Handle) -> Result<Self> {
+        let bookmarks = get_bookmarks(args.server.server, bus).await?;
+
+        if args.unknown {
+            bookmarks.inner().subscribe_all().await?;
+        } else {
+            bookmarks.subscribe_all().await?;
+        }
+
+        Ok(Self { bookmarks })
     }
 
-    while let Some(event) = bookmarks.next_event().await {
-        match event {
-            Ok(BookmarksEvent::Added(ev)) | Ok(BookmarksEvent::AddedV2(ev)) => {
-                bookmark_added(ev.into_args())
-            }
+    async fn run(mut self) -> Result<()> {
+        println!("Using server {}.", self.bookmarks.id().object_id.uuid);
 
-            Ok(BookmarksEvent::Removed(ev)) | Ok(BookmarksEvent::RemovedV2(ev)) => {
-                bookmark_removed(ev.into_args())
-            }
+        loop {
+            tokio::select! {
+                event = self.bookmarks.next_event() => {
+                    match event {
+                        Some(event) => BookmarksProxy::dispatch_event(event, &mut self).await?,
+                        None => break,
+                    }
+                }
 
-            Ok(BookmarksEvent::UnknownEvent(event)) => unknown_event(event),
-            Err(e) => invalid_event(e),
+                _ = signal::ctrl_c() => break,
+            }
+        }
+
+        Ok(())
+    }
+
+    fn bookmark_added(bookmark: Bookmark) {
+        if let Some(group) = bookmark.group {
+            println!(
+                "Bookmark `{}` ({}) added to the group `{group}`.",
+                bookmark.name, bookmark.url
+            );
+        } else {
+            println!(
+                "Bookmark `{}` ({}) added to the unspecified group.",
+                bookmark.name, bookmark.url
+            );
         }
     }
 
-    Ok(())
-}
-
-fn bookmark_added(bookmark: Bookmark) {
-    if let Some(group) = bookmark.group {
-        println!(
-            "Bookmark `{}` ({}) added to the group `{group}`.",
-            bookmark.name, bookmark.url
-        );
-    } else {
-        println!(
-            "Bookmark `{}` ({}) added to the unspecified group.",
-            bookmark.name, bookmark.url
-        );
+    fn bookmark_removed(bookmark: Bookmark) {
+        if let Some(group) = bookmark.group {
+            println!(
+                "Bookmark `{}` ({}) removed from the group `{group}`.",
+                bookmark.name, bookmark.url
+            );
+        } else {
+            println!(
+                "Bookmark `{}` ({}) removed from the unspecified group.",
+                bookmark.name, bookmark.url
+            );
+        }
     }
 }
 
-fn bookmark_removed(bookmark: Bookmark) {
-    if let Some(group) = bookmark.group {
-        println!(
-            "Bookmark `{}` ({}) removed from the group `{group}`.",
-            bookmark.name, bookmark.url
-        );
-    } else {
-        println!(
-            "Bookmark `{}` ({}) removed from the unspecified group.",
-            bookmark.name, bookmark.url
-        );
+#[async_trait]
+impl BookmarksEventHandler for Listener {
+    type Error = Error;
+
+    async fn added(&mut self, event: Event<Bookmark>) -> Result<()> {
+        Self::bookmark_added(event.into_args());
+        Ok(())
     }
-}
 
-fn unknown_event(event: UnknownEvent) {
-    match event.deserialize_as_value() {
-        Ok(args) => println!(
-            "Received an unknown event {} with arguments {args:?}.",
-            event.id()
-        ),
-
-        Err(e) => println!(
-            "Received an unknown event {} with invalid arguments ({e}).",
-            event.id()
-        ),
+    async fn added_v2(&mut self, event: Event<Bookmark>) -> Result<()> {
+        Self::bookmark_added(event.into_args());
+        Ok(())
     }
-}
 
-fn invalid_event(e: Error) {
-    println!("Received an invalid event: {e}.");
+    async fn removed(&mut self, event: Event<Bookmark>) -> Result<()> {
+        Self::bookmark_removed(event.into_args());
+        Ok(())
+    }
+
+    async fn removed_v2(&mut self, event: Event<Bookmark>) -> Result<()> {
+        Self::bookmark_removed(event.into_args());
+        Ok(())
+    }
+
+    async fn unknown_event(&mut self, event: UnknownEvent) -> Result<()> {
+        match event.deserialize_as_value() {
+            Ok(args) => println!(
+                "Received an unknown event {} with arguments {args:?}.",
+                event.id()
+            ),
+
+            Err(e) => println!(
+                "Received an unknown event {} with invalid arguments ({e}).",
+                event.id()
+            ),
+        }
+
+        Ok(())
+    }
+
+    async fn invalid_event(&mut self, error: AldrinError) -> Result<()> {
+        println!("Received an invalid event: {error}.");
+        Ok(())
+    }
 }
 
 async fn remove(args: Remove, bus: &Handle) -> Result<()> {
