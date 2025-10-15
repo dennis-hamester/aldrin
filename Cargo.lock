@@ -448,6 +448,7 @@ version = "0.0.0"
 dependencies = [
  "aldrin",
  "anyhow",
+ "async-trait",
  "clap",
  "tokio",
 ]
