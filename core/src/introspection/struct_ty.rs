@@ -4,7 +4,7 @@ use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
@@ -24,9 +24,9 @@ pub struct Struct {
 
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "HashMap::is_empty")
+        serde(default, skip_serializing_if = "BTreeMap::is_empty")
     )]
-    fields: HashMap<u32, Field>,
+    fields: BTreeMap<u32, Field>,
 
     #[cfg_attr(
         feature = "serde",
@@ -62,7 +62,7 @@ impl Struct {
         self.doc.as_deref()
     }
 
-    pub fn fields(&self) -> &HashMap<u32, Field> {
+    pub fn fields(&self) -> &BTreeMap<u32, Field> {
         &self.fields
     }
 
