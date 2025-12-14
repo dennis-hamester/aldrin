@@ -1,5 +1,4 @@
 #![no_main]
-#![feature(maybe_uninit_write_slice)]
 
 use aldrin_core::message::Packetizer;
 use libfuzzer_sys::fuzz_target;
