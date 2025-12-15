@@ -1,10 +1,11 @@
 use crate::media_player::{
-    MediaPlayerEvent, MediaPlayerPlayArgs, MediaPlayerProxy, Metadata, State,
+    MediaPlayerEventHandler, MediaPlayerPlayArgs, MediaPlayerProxy, Metadata, State,
 };
 use crate::{Play, ServerArg};
 use aldrin::core::ObjectUuid;
 use aldrin::{Event, Handle, Property};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
+use async_trait::async_trait;
 use tokio::signal;
 
 pub(crate) async fn listen(args: ServerArg, bus: &Handle) -> Result<()> {
@@ -13,6 +14,7 @@ pub(crate) async fn listen(args: ServerArg, bus: &Handle) -> Result<()> {
 
 struct Listen {
     media_player: MediaPlayerProxy,
+    print_state: bool,
 
     // The entire state of the media player is kept track of using `Property`.
     state: Property<State>,
@@ -35,6 +37,7 @@ impl Listen {
 
         Ok(Self {
             media_player,
+            print_state: true,
             state,
             metadata,
             position,
@@ -48,19 +51,13 @@ impl Listen {
             self.media_player.id().object_id.uuid
         );
 
-        self.print_state();
-
         loop {
+            self.print_state();
+
             tokio::select! {
                 ev = self.media_player.next_event() => {
                     match ev {
-                        Some(Ok(ev)) => {
-                            if self.handle_event(ev) {
-                                self.print_state();
-                            }
-                        }
-
-                        Some(Err(e)) => println!("Received an invalid event: {e}."),
+                        Some(ev) => MediaPlayerProxy::dispatch_event(ev, &mut self).await?,
                         None => break,
                     }
                 }
@@ -72,13 +69,15 @@ impl Listen {
         Ok(())
     }
 
-    fn print_state(&self) {
+    fn print_state(&mut self) {
         // We ignore all state changes while the media player is transitioning. This resembles the
         // common begin() / end() idiom to some extend. Even when transitioning, state changes are
         // tracked, but not acted upon.
-        if *self.state.get() == State::Transitioning {
+        if !self.print_state || (*self.state.get() == State::Transitioning) {
             return;
         }
+
+        self.print_state = false;
 
         print!("State: ");
         match self.state.get() {
@@ -114,35 +113,38 @@ impl Listen {
 
         println!();
     }
+}
 
-    // This function returns `true` if the event caused some state to change its value. To achieve
-    // that, we use the `check_*` family of methods on `Property`.
-    fn handle_event(&mut self, ev: MediaPlayerEvent) -> bool {
-        match ev {
-            MediaPlayerEvent::StateChanged(ev) => self.state_changed(ev),
-            MediaPlayerEvent::MetadataChanged(ev) => self.metadata_changed(ev),
-            MediaPlayerEvent::PositionChanged(ev) => self.position_changed(ev),
-            MediaPlayerEvent::LastMetadataChanged(ev) => self.last_metadata_changed(ev),
-        }
+#[async_trait]
+impl MediaPlayerEventHandler for Listen {
+    type Error = Error;
+
+    async fn state_changed(&mut self, ev: Event<State>) -> Result<()> {
+        self.print_state |= self.state.check_event(ev).is_some();
+        Ok(())
     }
 
-    fn state_changed(&mut self, ev: Event<State>) -> bool {
-        self.state.check_event(ev).is_some()
+    async fn metadata_changed(&mut self, ev: Event<Option<Metadata>>) -> Result<()> {
+        self.print_state |= self.metadata.check_event(ev).is_some();
+        Ok(())
     }
 
-    fn metadata_changed(&mut self, ev: Event<Option<Metadata>>) -> bool {
-        self.metadata.check_event(ev).is_some()
+    async fn position_changed(&mut self, ev: Event<Option<u32>>) -> Result<()> {
+        self.print_state |= self.position.check_event(ev).is_some();
+        Ok(())
     }
 
-    fn position_changed(&mut self, ev: Event<Option<u32>>) -> bool {
-        self.position.check_event(ev).is_some()
-    }
-
-    fn last_metadata_changed(&mut self, ev: Event<Metadata>) -> bool {
+    async fn last_metadata_changed(&mut self, ev: Event<Metadata>) -> Result<()> {
         // The last metadata property is special in that it starts out as `None`, then goes to
         // `Some` and will never be reset back to `None`. In the schema, this is expressed by the
         // fact that the getter returns an `Option`, but the event does not.
-        self.last_metadata.check_event_some(ev).is_some()
+        self.print_state |= self.last_metadata.check_event_some(ev).is_some();
+        Ok(())
+    }
+
+    async fn invalid_event(&mut self, error: aldrin::Error) -> Result<()> {
+        println!("Received an invalid event: {error}.");
+        Ok(())
     }
 }
 

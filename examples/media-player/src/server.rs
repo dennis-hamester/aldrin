@@ -1,9 +1,10 @@
 use crate::media_player::{
-    Error, MediaPlayer, MediaPlayerCall, MediaPlayerPlayArgs, Metadata, State,
+    Error, MediaPlayer, MediaPlayerCallHandler, MediaPlayerPlayArgs, Metadata, State,
 };
 use aldrin::core::ObjectUuid;
-use aldrin::{Call, Handle, Object};
+use aldrin::{Handle, Object, Promise};
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use std::convert::Infallible;
 use std::time::Duration;
 use tokio::signal;
@@ -46,8 +47,7 @@ impl Server {
             tokio::select! {
                 call = self.svc.next_call() => {
                     match call {
-                        Some(Ok(call)) => self.handle_call(call)?,
-                        Some(Err(e)) => println!("Received an invalid call: {e}."),
+                        Some(call) => MediaPlayer::dispatch_call(call, &mut self).await?,
                         None => return Err(anyhow!("broker shut down")),
                     }
                 }
@@ -66,138 +66,6 @@ impl Server {
 
     async fn tick(timer: Option<&mut Interval>) {
         timer.unwrap().tick().await;
-    }
-
-    fn handle_call(&mut self, call: MediaPlayerCall) -> Result<()> {
-        match call {
-            MediaPlayerCall::GetState(call) => self.get_state(call),
-            MediaPlayerCall::GetMetadata(call) => self.get_metadata(call),
-            MediaPlayerCall::GetPosition(call) => self.get_position(call),
-            MediaPlayerCall::GetLastMetadata(call) => self.get_last_metadata(call),
-            MediaPlayerCall::Play(call) => self.play(call),
-            MediaPlayerCall::Stop(call) => self.stop(call),
-            MediaPlayerCall::Pause(call) => self.pause(call),
-            MediaPlayerCall::Resume(call) => self.resume(call),
-        }
-    }
-
-    fn get_state(&self, call: Call<(), State, Infallible>) -> Result<()> {
-        call.ok(&self.state)?;
-        Ok(())
-    }
-
-    fn get_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok(&self.metadata)?;
-        Ok(())
-    }
-
-    fn get_position(&self, call: Call<(), Option<u32>, Infallible>) -> Result<()> {
-        call.ok(self.position)?;
-        Ok(())
-    }
-
-    fn get_last_metadata(&self, call: Call<(), Option<Metadata>, Infallible>) -> Result<()> {
-        call.ok(&self.last_metadata)?;
-        Ok(())
-    }
-
-    fn play(&mut self, call: Call<MediaPlayerPlayArgs, (), Error>) -> Result<()> {
-        let (args, promise) = call.into_args_and_promise();
-        let duration = args.duration.unwrap_or(10);
-
-        println!("Starting `{}` with a duration of {duration}s.", args.title);
-
-        if args.title.is_empty() {
-            println!("Rejecting play command with empty title.");
-            promise.err(Error::InvalidTitle)?;
-            return Ok(());
-        }
-
-        self.svc.state_changed(State::Transitioning)?;
-
-        if let Some(metadata) = self.metadata.take() {
-            self.svc.last_metadata_changed(&metadata)?;
-            self.last_metadata = Some(metadata);
-        }
-
-        self.metadata = Some(Metadata {
-            title: args.title,
-            duration,
-        });
-        self.svc.metadata_changed(&self.metadata)?;
-
-        self.position = Some(0);
-        self.svc.position_changed(self.position)?;
-
-        if args.paused.unwrap_or(false) {
-            self.state = State::Paused;
-        } else {
-            self.state = State::Playing;
-            self.start_timer(duration > 0);
-        }
-        self.svc.state_changed(&self.state)?;
-
-        promise.done()?;
-        Ok(())
-    }
-
-    fn stop(&mut self, call: Call<(), (), Infallible>) -> Result<()> {
-        if self.state == State::Stopped {
-            println!("Playback is already stopped.");
-            call.done()?;
-            return Ok(());
-        }
-
-        println!("Stopping playback.");
-
-        self.svc.state_changed(State::Transitioning)?;
-
-        if let Some(metadata) = self.metadata.take() {
-            self.svc.metadata_changed(())?;
-            self.svc.last_metadata_changed(&metadata)?;
-            self.last_metadata = Some(metadata);
-        }
-
-        self.position = None;
-        self.svc.position_changed(self.position)?;
-
-        self.state = State::Stopped;
-        self.svc.state_changed(&self.state)?;
-
-        self.timer = None;
-
-        call.done()?;
-        Ok(())
-    }
-
-    fn pause(&mut self, call: Call<(), (), Error>) -> Result<()> {
-        if self.state == State::Playing {
-            println!("Pausing playback.");
-            self.state = State::Paused;
-            self.svc.state_changed(&self.state)?;
-            self.timer = None;
-            call.done()?;
-        } else {
-            println!("Cannot pause playback.");
-            call.err(Error::NotPlaying)?;
-        }
-
-        Ok(())
-    }
-
-    fn resume(&mut self, call: Call<(), (), Error>) -> Result<()> {
-        if self.state == State::Paused {
-            println!("Resuming playback.");
-            self.state = State::Playing;
-            self.svc.state_changed(&self.state)?;
-            self.start_timer(true);
-            call.done()?;
-        } else {
-            println!("Cannot resume playback.");
-            call.err(Error::NotPaused)?;
-        }
-
-        Ok(())
     }
 
     fn start_timer(&mut self, delay: bool) {
@@ -245,6 +113,137 @@ impl Server {
             self.timer = None;
         }
 
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl MediaPlayerCallHandler for Server {
+    type Error = anyhow::Error;
+
+    async fn get_state(&mut self, promise: Promise<State, Infallible>) -> Result<()> {
+        promise.ok(&self.state)?;
+        Ok(())
+    }
+
+    async fn get_metadata(&mut self, promise: Promise<Option<Metadata>, Infallible>) -> Result<()> {
+        promise.ok(&self.metadata)?;
+        Ok(())
+    }
+
+    async fn get_position(&mut self, promise: Promise<Option<u32>, Infallible>) -> Result<()> {
+        promise.ok(self.position)?;
+        Ok(())
+    }
+
+    async fn get_last_metadata(
+        &mut self,
+        promise: Promise<Option<Metadata>, Infallible>,
+    ) -> Result<()> {
+        promise.ok(&self.last_metadata)?;
+        Ok(())
+    }
+
+    async fn play(&mut self, args: MediaPlayerPlayArgs, promise: Promise<(), Error>) -> Result<()> {
+        let duration = args.duration.unwrap_or(10);
+
+        println!("Starting `{}` with a duration of {duration}s.", args.title);
+
+        if args.title.is_empty() {
+            println!("Rejecting play command with empty title.");
+            promise.err(Error::InvalidTitle)?;
+            return Ok(());
+        }
+
+        self.svc.state_changed(State::Transitioning)?;
+
+        if let Some(metadata) = self.metadata.take() {
+            self.svc.last_metadata_changed(&metadata)?;
+            self.last_metadata = Some(metadata);
+        }
+
+        self.metadata = Some(Metadata {
+            title: args.title,
+            duration,
+        });
+        self.svc.metadata_changed(&self.metadata)?;
+
+        self.position = Some(0);
+        self.svc.position_changed(self.position)?;
+
+        if args.paused.unwrap_or(false) {
+            self.state = State::Paused;
+        } else {
+            self.state = State::Playing;
+            self.start_timer(duration > 0);
+        }
+        self.svc.state_changed(&self.state)?;
+
+        promise.done()?;
+        Ok(())
+    }
+
+    async fn stop(&mut self, promise: Promise<(), Infallible>) -> Result<()> {
+        if self.state == State::Stopped {
+            println!("Playback is already stopped.");
+            promise.done()?;
+            return Ok(());
+        }
+
+        println!("Stopping playback.");
+
+        self.svc.state_changed(State::Transitioning)?;
+
+        if let Some(metadata) = self.metadata.take() {
+            self.svc.metadata_changed(())?;
+            self.svc.last_metadata_changed(&metadata)?;
+            self.last_metadata = Some(metadata);
+        }
+
+        self.position = None;
+        self.svc.position_changed(self.position)?;
+
+        self.state = State::Stopped;
+        self.svc.state_changed(&self.state)?;
+
+        self.timer = None;
+
+        promise.done()?;
+        Ok(())
+    }
+
+    async fn pause(&mut self, promise: Promise<(), Error>) -> Result<()> {
+        if self.state == State::Playing {
+            println!("Pausing playback.");
+            self.state = State::Paused;
+            self.svc.state_changed(&self.state)?;
+            self.timer = None;
+            promise.done()?;
+        } else {
+            println!("Cannot pause playback.");
+            promise.err(Error::NotPlaying)?;
+        }
+
+        Ok(())
+    }
+
+    async fn resume(&mut self, promise: Promise<(), Error>) -> Result<()> {
+        if self.state == State::Paused {
+            println!("Resuming playback.");
+            self.state = State::Playing;
+            self.svc.state_changed(&self.state)?;
+            self.start_timer(true);
+            promise.done()?;
+        } else {
+            println!("Cannot resume playback.");
+            promise.err(Error::NotPaused)?;
+        }
+
+        Ok(())
+    }
+
+    async fn invalid_call(&mut self, error: aldrin::Error) -> Result<()> {
+        println!("Received an invalid call: {error}.");
         Ok(())
     }
 }
