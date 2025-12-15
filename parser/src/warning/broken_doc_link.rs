@@ -4,7 +4,8 @@ use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
 use crate::{LinkResolver, Parser, ResolveLinkError, Span};
 use comrak::nodes::{LineColumn, NodeValue, Sourcepos};
-use comrak::{Arena, BrokenLinkReference, Options, ResolvedReference};
+use comrak::options::BrokenLinkReference;
+use comrak::{Arena, Options, ResolvedReference};
 use std::sync::Arc;
 
 #[derive(Debug)]
