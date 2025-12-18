@@ -1,7 +1,7 @@
 [package]
 name = "aldrin"
 description = "Message bus for service-oriented RPC and interprocess communication."
-version = "0.12.0"
+version = "0.13.0"
 
 authors.workspace = true
 categories.workspace = true
@@ -41,14 +41,14 @@ futures-util = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-core]
-version = "0.12.0"
+version = "0.13.0"
 path = "../core"
 default-features = false
 features = ["new-v4-ids"]
 
 [dependencies.aldrin-macros]
 optional = true
-version = "0.12.0"
+version = "0.13.0"
 path = "../macros"
 default-features = false
 
