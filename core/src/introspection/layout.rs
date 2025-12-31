@@ -1,4 +1,4 @@
-use super::{ir, BuiltInType, Enum, LexicalId, Newtype, Service, Struct};
+use super::{BuiltInType, Enum, LexicalId, Newtype, Service, Struct, ir};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,

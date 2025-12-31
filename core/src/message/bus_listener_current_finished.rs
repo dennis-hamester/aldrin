@@ -55,8 +55,8 @@ impl From<BusListenerCurrentFinished> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::BusListenerCurrentFinished;
     use crate::BusListenerCookie;
     use uuid::uuid;

@@ -1,7 +1,7 @@
-use super::{ensure_no_type_generics, Options};
+use super::{Options, ensure_no_type_generics};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Data, DeriveInput, Result};
+use syn::{Data, DeriveInput, Result, parse_quote};
 
 pub(crate) fn gen_primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));

@@ -1,4 +1,4 @@
-use super::{ir, Event, EventFallback, Function, FunctionFallback, LexicalId};
+use super::{Event, EventFallback, Function, FunctionFallback, LexicalId, ir};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer,

@@ -16,7 +16,7 @@ mod uuid_ref;
 mod value;
 
 use aldrin_core::ProtocolVersion;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Parser;
 use colorchoice_clap::Color;
 use message_type::MessageType;

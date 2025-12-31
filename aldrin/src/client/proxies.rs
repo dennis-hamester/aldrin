@@ -2,8 +2,8 @@ use crate::handle::Handle;
 use crate::low_level::{Event, Proxy, ProxyId};
 use aldrin_core::{SerializedValue, ServiceCookie, ServiceId, ServiceInfo};
 use futures_channel::mpsc::{self, UnboundedSender};
-use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::collections::hash_map::{Entry, HashMap};
 use std::mem;
 use std::time::Instant;
 

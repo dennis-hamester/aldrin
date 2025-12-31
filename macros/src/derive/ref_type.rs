@@ -1,12 +1,12 @@
 use super::{EnumData, FieldData, StructData, VariantData};
 use aldrin_codegen::rust::names;
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use std::ptr;
 use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
 use syn::{
-    parse_quote, Data, DeriveInput, Error, Field, Fields, Ident, Path, Result, Token, Variant,
+    Data, DeriveInput, Error, Field, Fields, Ident, Path, Result, Token, Variant, parse_quote,
 };
 
 pub(crate) fn gen_ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {

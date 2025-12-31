@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Result, Token, Variant};
+use syn::{Data, DeriveInput, Error, Field, Fields, Result, Token, Variant, parse_quote};
 
 pub(crate) fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
     let is_struct = matches!(input.data, Data::Struct(_));
@@ -58,7 +58,7 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
             return Err(Error::new_spanned(
                 input.ident,
                 "unions are not supported by Aldrin",
-            ))
+            ));
         }
     };
 

@@ -1,4 +1,4 @@
-use super::{ir, resolve_ir, LexicalId};
+use super::{LexicalId, ir, resolve_ir};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,

@@ -1,9 +1,9 @@
 use super::{Comment, DocString, Ident, LitInt, LitString, LitUuid, Prelude};
+use crate::Span;
 use crate::error::{InvalidConstValue, InvalidEscapeCode};
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{BrokenDocLink, NonShoutySnakeCaseConst};
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

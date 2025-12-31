@@ -2,7 +2,7 @@ use super::{EnumData, FieldData, StructData, VariantData};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Path, Result, Token, Variant};
+use syn::{Data, DeriveInput, Error, Field, Fields, Path, Result, Token, Variant, parse_quote};
 
 pub(crate) fn gen_deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_deserialize(input, parse_quote!(::aldrin_core))

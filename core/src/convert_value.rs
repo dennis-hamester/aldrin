@@ -2,8 +2,8 @@ use crate::buf_ext::{BufMutExt, ValueBufExt};
 use crate::message::MessageOps;
 use crate::tags::{self, KeyTagImpl};
 use crate::{
-    DeserializeError, ProtocolVersion, SerializeError, SerializedValue, SerializedValueSlice,
-    ValueKind, MAX_VALUE_DEPTH,
+    DeserializeError, MAX_VALUE_DEPTH, ProtocolVersion, SerializeError, SerializedValue,
+    SerializedValueSlice, ValueKind,
 };
 use bytes::{Buf, BufMut, BytesMut};
 use std::borrow::Cow;

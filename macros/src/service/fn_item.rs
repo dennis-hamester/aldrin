@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::token::Brace;
-use syn::{braced, Ident, LitInt, Result, Token, Type};
+use syn::{Ident, LitInt, Result, Token, Type, braced};
 
 pub(super) struct FnItem {
     options: ItemOptions,

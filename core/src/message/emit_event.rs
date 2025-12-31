@@ -61,10 +61,10 @@ impl From<EmitEvent> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::EmitEvent;
-    use crate::{tags, SerializedValue, ServiceCookie};
+    use crate::{SerializedValue, ServiceCookie, tags};
     use uuid::uuid;
 
     #[test]

@@ -1,4 +1,4 @@
-use crate::{low_level, Error, Handle};
+use crate::{Error, Handle, low_level};
 use aldrin_core::tags::{self, PrimaryTag};
 use aldrin_core::{Serialize, SerializePrimary, ServiceId};
 use std::fmt;

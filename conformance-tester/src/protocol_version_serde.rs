@@ -1,6 +1,6 @@
 use aldrin_core::ProtocolVersion;
-use serde::de::{Error, Unexpected, Visitor};
 use serde::Deserializer;
+use serde::de::{Error, Unexpected, Visitor};
 use std::fmt;
 
 pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<ProtocolVersion, D::Error>

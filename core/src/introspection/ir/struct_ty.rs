@@ -3,7 +3,7 @@ use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
-use uuid::{uuid, Uuid};
+use uuid::{Uuid, uuid};
 
 #[derive(Debug, Clone)]
 pub struct StructIr {

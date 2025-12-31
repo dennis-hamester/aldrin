@@ -1,4 +1,4 @@
-use crate::{low_level, Event};
+use crate::{Event, low_level};
 use aldrin_core::tags::Tag;
 use aldrin_core::{
     Deserialize, DeserializeError, DeserializePrimary, SerializedValue, SerializedValueSlice,

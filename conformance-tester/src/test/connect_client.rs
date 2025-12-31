@@ -6,7 +6,7 @@ use crate::context::Context;
 use crate::message::{Connect, Connect2, ConnectReply, ConnectReply2, ConnectResult, Message};
 use crate::protocol_version_serde;
 use aldrin_core::ProtocolVersion;
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow};
 use serde::Deserialize;
 use tokio::time::Instant;
 

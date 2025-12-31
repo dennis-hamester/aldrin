@@ -6,14 +6,14 @@ use crate::low_level::{
 };
 use crate::{Error, Object};
 #[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
+#[cfg(feature = "introspection")]
 use aldrin_core::introspection::DynIntrospectable;
 use aldrin_core::message::{
     AddBusListenerFilter, AddChannelCapacity, CallFunctionResult, ClearBusListenerFilters,
     DestroyBusListenerResult, DestroyObjectResult, RemoveBusListenerFilter, StartBusListenerResult,
     StopBusListenerResult,
 };
-#[cfg(feature = "introspection")]
-use aldrin_core::TypeId;
 use aldrin_core::{
     BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd, ObjectCookie, ObjectId,
     ObjectUuid, ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceUuid,

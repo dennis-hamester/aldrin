@@ -4,7 +4,7 @@ mod test;
 use crate::bus_listener::BusListenerEvent;
 use crate::{Error, Handle, Object};
 #[cfg(feature = "introspection")]
-use aldrin_core::introspection::{ir, Introspectable, LexicalId, References};
+use aldrin_core::introspection::{Introspectable, LexicalId, References, ir};
 use aldrin_core::tags::{self, PrimaryTag};
 use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, Deserialize,

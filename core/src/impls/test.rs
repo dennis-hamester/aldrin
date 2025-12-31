@@ -8,7 +8,7 @@ use crate::{
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 use std::fmt::Debug;
 use std::{f32, f64};
-use uuid::{uuid, Uuid};
+use uuid::{Uuid, uuid};
 
 #[track_caller]
 fn assert_serialize<'a, T, U, B>(value: &'a U, expected: B)

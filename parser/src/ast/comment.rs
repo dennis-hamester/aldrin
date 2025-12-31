@@ -1,5 +1,5 @@
-use crate::grammar::Rule;
 use crate::Span;
+use crate::grammar::Rule;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

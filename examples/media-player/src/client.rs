@@ -4,7 +4,7 @@ use crate::media_player::{
 use crate::{Play, ServerArg};
 use aldrin::core::ObjectUuid;
 use aldrin::{Event, Handle, Property};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use async_trait::async_trait;
 use tokio::signal;
 

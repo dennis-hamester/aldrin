@@ -6,7 +6,7 @@ use crate::bookmarks_v2::{
 use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Error as AldrinError, Event, Handle, Object, Promise, UnknownCall, UnknownEvent};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use async_trait::async_trait;
 use clap::Parser;
 use std::convert::Infallible;

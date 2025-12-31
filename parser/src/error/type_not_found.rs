@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{NamedRef, NamedRefKind};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parser};
+use crate::{Parser, util};
 
 #[derive(Debug)]
 pub(crate) struct TypeNotFound {

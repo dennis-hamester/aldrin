@@ -1,10 +1,10 @@
 use super::{ArrayLen, NamedRef};
+use crate::Span;
 use crate::error::{
     ExpectedTypeFoundConst, ExpectedTypeFoundService, InvalidKeyType, TypeNotFound,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::Span;
 use pest::iterators::Pair;
 use std::fmt;
 

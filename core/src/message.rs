@@ -70,7 +70,7 @@ mod unsubscribe_event;
 mod unsubscribe_service;
 
 use crate::{
-    convert_value, ProtocolVersion, SerializedValue, SerializedValueSlice, ValueConversionError,
+    ProtocolVersion, SerializedValue, SerializedValueSlice, ValueConversionError, convert_value,
 };
 use bytes::BytesMut;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -83,8 +83,8 @@ pub use add_bus_listener_filter::AddBusListenerFilter;
 pub use add_channel_capacity::AddChannelCapacity;
 pub use bus_listener_current_finished::BusListenerCurrentFinished;
 pub use call_function::CallFunction;
-pub use call_function2::CallFunction2;
 pub use call_function_reply::{CallFunctionReply, CallFunctionResult};
+pub use call_function2::CallFunction2;
 pub use channel_end_claimed::ChannelEndClaimed;
 pub use channel_end_closed::ChannelEndClosed;
 pub use claim_channel_end::ClaimChannelEnd;
@@ -93,9 +93,9 @@ pub use clear_bus_listener_filters::ClearBusListenerFilters;
 pub use close_channel_end::CloseChannelEnd;
 pub use close_channel_end_reply::{CloseChannelEndReply, CloseChannelEndResult};
 pub use connect::Connect;
-pub use connect2::{Connect2, ConnectData};
 pub use connect_reply::ConnectReply;
 pub use connect_reply2::{ConnectReply2, ConnectReplyData, ConnectResult};
+pub use connect2::{Connect2, ConnectData};
 pub use create_bus_listener::CreateBusListener;
 pub use create_bus_listener_reply::CreateBusListenerReply;
 pub use create_channel::CreateChannel;
@@ -103,8 +103,8 @@ pub use create_channel_reply::CreateChannelReply;
 pub use create_object::CreateObject;
 pub use create_object_reply::{CreateObjectReply, CreateObjectResult};
 pub use create_service::CreateService;
-pub use create_service2::CreateService2;
 pub use create_service_reply::{CreateServiceReply, CreateServiceResult};
+pub use create_service2::CreateService2;
 pub use destroy_bus_listener::DestroyBusListener;
 pub use destroy_bus_listener_reply::{DestroyBusListenerReply, DestroyBusListenerResult};
 pub use destroy_object::DestroyObject;

@@ -1,4 +1,4 @@
-use super::{kw, ItemOptions, Options};
+use super::{ItemOptions, Options, kw};
 use aldrin_codegen::rust::names;
 use proc_macro2::TokenStream;
 use quote::quote;

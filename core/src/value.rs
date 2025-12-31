@@ -1,5 +1,5 @@
 #[cfg(feature = "introspection")]
-use crate::introspection::{ir, Introspectable, LexicalId, References};
+use crate::introspection::{Introspectable, LexicalId, References, ir};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Bytes, ChannelCookie, Deserialize, DeserializeError, Deserializer, ObjectId, Serialize,

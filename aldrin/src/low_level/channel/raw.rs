@@ -1,9 +1,9 @@
 use crate::handle::CloseChannelEndFuture;
 use crate::{Error, Handle};
 use aldrin_core::{ChannelCookie, ChannelEnd, SerializedValue};
-use std::{future, mem};
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{future, mem};
 
 #[derive(Debug)]
 pub(crate) struct RawChannel<const SENDER: bool> {

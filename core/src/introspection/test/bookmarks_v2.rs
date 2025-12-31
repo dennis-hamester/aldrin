@@ -1,4 +1,4 @@
-use super::super::{ir, DynIntrospectable, Introspectable, LexicalId, References};
+use super::super::{DynIntrospectable, Introspectable, LexicalId, References, ir};
 use crate::ServiceUuid;
 use uuid::uuid;
 

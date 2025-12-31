@@ -2,8 +2,8 @@ use super::{
     AnyObject, AnyObjectIter, AnyObjectIterEntry, DiscovererEvent, SpecificObject,
     SpecificObjectIter, SpecificObjectIterEntry,
 };
-use crate::bus_listener::BusListener;
 use crate::Error;
+use crate::bus_listener::BusListener;
 use aldrin_core::{BusEvent, ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use std::hash::Hash;
 use std::iter::FusedIterator;

@@ -6,7 +6,7 @@ use crate::{
 };
 use std::fmt;
 use std::str::FromStr;
-use uuid::{uuid, Error as UuidError, Uuid};
+use uuid::{Error as UuidError, Uuid, uuid};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[repr(transparent)]

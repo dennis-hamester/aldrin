@@ -1,4 +1,4 @@
-use crate::{low_level, Call, Error, Handle};
+use crate::{Call, Error, Handle, low_level};
 use aldrin_core::tags::Tag;
 use aldrin_core::{
     Deserialize, DeserializeError, DeserializePrimary, Serialize, SerializePrimary,

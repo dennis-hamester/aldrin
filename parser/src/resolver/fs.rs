@@ -71,11 +71,7 @@ impl Resolver for FilesystemResolver {
                 path.push(name);
                 path.set_extension("aldrin");
 
-                if path.is_file() {
-                    Some(path)
-                } else {
-                    None
-                }
+                if path.is_file() { Some(path) } else { None }
             })?;
 
         let schema = Schema::open_with_name(name.to_owned(), &path);

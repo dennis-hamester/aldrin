@@ -1,4 +1,4 @@
-use super::{String, Uuid, I16, I32, I64, I8, U16, U32, U64, U8};
+use super::{I8, I16, I32, I64, String, U8, U16, U32, U64, Uuid};
 use crate::buf_ext::{BufMutExt, ValueBufExt};
 use crate::{DeserializeError, SerializeError, ValueConversionError, ValueKind};
 use bytes::{Buf, BufMut, BytesMut};

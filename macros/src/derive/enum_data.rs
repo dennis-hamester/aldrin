@@ -3,8 +3,8 @@ use crate::doc_string::DocString;
 use quote::format_ident;
 use syn::punctuated::Punctuated;
 use syn::{
-    parse_quote, DeriveInput, Error, Fields, Ident, LifetimeParam, Path, Result, Token, Type,
-    Variant, Visibility,
+    DeriveInput, Error, Fields, Ident, LifetimeParam, Path, Result, Token, Type, Variant,
+    Visibility, parse_quote,
 };
 
 pub(crate) struct EnumData<'a> {
@@ -134,7 +134,7 @@ impl<'a> VariantData<'a> {
                 return Err(Error::new_spanned(
                     variant,
                     "tuple-like variants with more than 1 element are not supported by Aldrin",
-                ))
+                ));
             }
 
             Fields::Unit => {
@@ -152,7 +152,7 @@ impl<'a> VariantData<'a> {
                 return Err(Error::new_spanned(
                     variant,
                     "struct-like variants are not supported by Aldrin",
-                ))
+                ));
             }
         };
 

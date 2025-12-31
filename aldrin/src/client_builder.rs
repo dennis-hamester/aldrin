@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test;
 
-use crate::error::ConnectError;
 use crate::Client;
+use crate::error::ConnectError;
 use aldrin_core::message::{
     Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
     MessageOps,

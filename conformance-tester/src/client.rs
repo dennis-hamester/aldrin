@@ -1,9 +1,9 @@
 use crate::util::FutureExt;
+use aldrin_core::ProtocolVersion;
 use aldrin_core::message::{Message, MessageOps};
 use aldrin_core::tokio::{TokioTransport, TokioTransportError};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt};
-use aldrin_core::ProtocolVersion;
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow};
 use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddrV4};
 use tokio::net::TcpStream;

@@ -33,8 +33,8 @@ mod missing_import;
 mod recursive_type;
 mod type_not_found;
 
-use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parser;
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 
 pub(crate) use const_int_not_found::ConstIntNotFound;
 pub(crate) use duplicate_definition::DuplicateDefinition;

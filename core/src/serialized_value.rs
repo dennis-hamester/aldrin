@@ -2,12 +2,12 @@
 mod test;
 
 #[cfg(feature = "introspection")]
-use crate::introspection::{ir, Introspectable, LexicalId, References};
+use crate::introspection::{Introspectable, LexicalId, References, ir};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
-    convert_value, Deserialize, DeserializeError, DeserializePrimary, Deserializer,
-    ProtocolVersion, Serialize, SerializeError, SerializePrimary, Serializer, Value,
-    ValueConversionError, ValueKind,
+    Deserialize, DeserializeError, DeserializePrimary, Deserializer, ProtocolVersion, Serialize,
+    SerializeError, SerializePrimary, Serializer, Value, ValueConversionError, ValueKind,
+    convert_value,
 };
 use bytes::BytesMut;
 use std::borrow::{Borrow, Cow};

@@ -1,7 +1,7 @@
-use aldrin::core::tokio::TokioTransport;
 use aldrin::core::ObjectUuid;
+use aldrin::core::tokio::TokioTransport;
 use aldrin::{Call, Client, Handle, Promise, UnboundSender};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use downloader::{
     Chunk, ChunkRef, Downloader, DownloaderCall, DownloaderDownloadArgs, DownloaderDownloadArgsRef,

@@ -66,8 +66,8 @@ impl From<CreateService2> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::CreateService2;
     use crate::{ObjectCookie, SerializedValue, ServiceInfo, ServiceUuid};
     use uuid::uuid;

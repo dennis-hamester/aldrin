@@ -1,6 +1,6 @@
+use crate::FilterArgs;
 use crate::run_error::RunError;
 use crate::test::Test;
-use crate::FilterArgs;
 use anstream::{print, println};
 use anstyle::{AnsiColor, Color, Style};
 use anyhow::Result;

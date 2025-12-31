@@ -8,9 +8,8 @@ mod vec;
 use crate::buf_ext::ValueBufExt;
 use crate::tags::{self, KeyTag, Tag};
 use crate::{
-    ChannelCookie, Deserialize, DeserializeError, DeserializeKey, ObjectCookie, ObjectId,
-    ObjectUuid, SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, ValueKind,
-    MAX_VALUE_DEPTH,
+    ChannelCookie, Deserialize, DeserializeError, DeserializeKey, MAX_VALUE_DEPTH, ObjectCookie,
+    ObjectId, ObjectUuid, SerializedValueSlice, ServiceCookie, ServiceId, ServiceUuid, ValueKind,
 };
 use ::bytes::Buf;
 use uuid::Uuid;

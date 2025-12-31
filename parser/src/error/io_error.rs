@@ -1,6 +1,6 @@
 use super::{Error, ErrorKind};
-use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parser;
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 
 #[derive(Debug)]
 pub(crate) struct IoError {

@@ -1,5 +1,5 @@
-use crate::tags::{PrimaryTag, Tag};
 use crate::Deserializer;
+use crate::tags::{PrimaryTag, Tag};
 use thiserror::Error;
 
 pub trait Deserialize<T: Tag>: Sized {

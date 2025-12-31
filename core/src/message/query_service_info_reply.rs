@@ -111,10 +111,10 @@ impl From<QueryServiceInfoReply> for Message {
 
 #[cfg(test)]
 mod test {
+    use super::super::Message;
     use super::super::test::{
         assert_deserialize_eq, assert_deserialize_eq_with_value, assert_serialize_eq,
     };
-    use super::super::Message;
     use super::{QueryServiceInfoReply, QueryServiceInfoResult};
     use crate::{SerializedValue, ServiceInfo, TypeId};
     use uuid::uuid;

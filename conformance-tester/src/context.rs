@@ -1,7 +1,7 @@
 use crate::client::Client;
 use crate::client_id::ClientId;
 use aldrin_core::ProtocolVersion;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 use uuid::Uuid;
 

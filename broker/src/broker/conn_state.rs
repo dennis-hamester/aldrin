@@ -2,8 +2,8 @@ use crate::conn_id::ConnectionId;
 use crate::versioned_message::VersionedMessage;
 use aldrin_core::{BusListenerCookie, ChannelCookie, ObjectCookie, ProtocolVersion, ServiceCookie};
 use futures_channel::mpsc::UnboundedSender;
-use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
 pub(super) struct ConnectionState {

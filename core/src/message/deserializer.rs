@@ -1,6 +1,6 @@
 use super::{MessageDeserializeError, MessageKind};
-use crate::buf_ext::MessageBufExt;
 use crate::SerializedValue;
+use crate::buf_ext::MessageBufExt;
 use bytes::{Buf, BytesMut};
 use uuid::Uuid;
 

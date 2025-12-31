@@ -1,6 +1,6 @@
 use crate::context::Context;
-use aldrin_core::message::{self, ConnectReplyData};
 use aldrin_core::SerializedValue;
+use aldrin_core::message::{self, ConnectReplyData};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 

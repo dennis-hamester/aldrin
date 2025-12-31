@@ -1,11 +1,11 @@
 use super::BrokerShutdown;
-use crate::conn::ConnectionEvent;
-use crate::conn_id::ConnectionIdManager;
 #[cfg(feature = "statistics")]
 use crate::BrokerStatistics;
+use crate::conn::ConnectionEvent;
+use crate::conn_id::ConnectionIdManager;
 use crate::{AcceptError, Acceptor, Connection, ConnectionHandle};
-use aldrin_core::transport::{AsyncTransport, Buffered};
 use aldrin_core::ProtocolVersion;
+use aldrin_core::transport::{AsyncTransport, Buffered};
 use futures_channel::mpsc;
 #[cfg(feature = "statistics")]
 use futures_channel::oneshot;

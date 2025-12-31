@@ -1,10 +1,10 @@
+use aldrin::Error;
 use aldrin::core::tags::{self, PrimaryTag};
 use aldrin::core::{
     Deserialize, DeserializeError, Deserializer, ObjectUuid, Serialize, SerializeError,
     SerializedValue, Serializer,
 };
 use aldrin::low_level::Proxy;
-use aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::StreamExt;
 use subscribe_all::SubscribeAllEvent;

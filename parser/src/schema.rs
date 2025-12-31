@@ -1,10 +1,10 @@
+use crate::SchemaFile;
 use crate::ast::{Comment, Definition, DocString, Ident, ImportStmt, Prelude};
 use crate::error::{DuplicateDefinition, InvalidSchemaName, InvalidSyntax, IoError};
 use crate::grammar::{Grammar, Rule};
 use crate::issues::Issues;
 use crate::validate::Validate;
 use crate::warning::{BrokenDocLink, DuplicateImport, NonSnakeCaseSchemaName, ReservedSchemaName};
-use crate::SchemaFile;
 use pest::Parser;
 
 #[derive(Debug, Clone)]

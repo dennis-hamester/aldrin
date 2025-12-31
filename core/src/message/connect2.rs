@@ -151,8 +151,8 @@ impl From<Connect2> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::{Connect2, ConnectData};
     use crate::SerializedValue;
 

@@ -1,4 +1,4 @@
-use super::{ir, resolve_ir, ArrayType, LexicalId, MapType, ResultType};
+use super::{ArrayType, LexicalId, MapType, ResultType, ir, resolve_ir};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,

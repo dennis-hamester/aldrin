@@ -24,6 +24,8 @@ use crate::low_level::{
 use crate::serial_map::SerialMap;
 use crate::{BusListener, ClientBuilder, Error, Handle, Object};
 #[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
+#[cfg(feature = "introspection")]
 use aldrin_core::adapters::IterAsSet;
 #[cfg(feature = "introspection")]
 use aldrin_core::introspection::{DynIntrospectable, Introspection, References};
@@ -48,8 +50,6 @@ use aldrin_core::message::{
     UnsubscribeService,
 };
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
-#[cfg(feature = "introspection")]
-use aldrin_core::TypeId;
 use aldrin_core::{
     BusListenerCookie, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectId,
     ProtocolVersion, SerializedValue, ServiceCookie, ServiceId, ServiceInfo,
@@ -311,7 +311,7 @@ where
                 Selected::TransportFlushed(Ok(())) => self.flush_transport = false,
 
                 Selected::Transport(Err(e)) | Selected::TransportFlushed(Err(e)) => {
-                    return Err(RunError::Transport(e))
+                    return Err(RunError::Transport(e));
                 }
 
                 Selected::Transport(Ok(_))
@@ -399,7 +399,7 @@ where
             | Message::QueryServiceInfo(_)
             | Message::SubscribeService(_)
             | Message::UnsubscribeService(_) => {
-                return Err(RunError::UnexpectedMessageReceived(msg))
+                return Err(RunError::UnexpectedMessageReceived(msg));
             }
 
             Message::Shutdown(Shutdown) => unreachable!(), // Handled in run().
@@ -676,7 +676,7 @@ where
                 }
 
                 ClaimChannelEndResult::ReceiverClaimed => {
-                    return Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()));
                 }
 
                 ClaimChannelEndResult::InvalidChannel | ClaimChannelEndResult::AlreadyClaimed => {
@@ -686,7 +686,7 @@ where
 
             ClaimChannelEndData::Receiver(req) => match msg.result {
                 ClaimChannelEndResult::SenderClaimed(_) => {
-                    return Err(RunError::UnexpectedMessageReceived(msg.into()))
+                    return Err(RunError::UnexpectedMessageReceived(msg.into()));
                 }
 
                 ClaimChannelEndResult::ReceiverClaimed => {
@@ -1130,7 +1130,7 @@ where
             SubscribeAllEventsResult::InvalidService => Err(Error::InvalidService),
 
             SubscribeAllEventsResult::NotSupported => {
-                return Err(RunError::UnexpectedMessageReceived(msg.into()))
+                return Err(RunError::UnexpectedMessageReceived(msg.into()));
             }
         };
 
@@ -1164,7 +1164,7 @@ where
             UnsubscribeAllEventsResult::InvalidService => Err(Error::InvalidService),
 
             UnsubscribeAllEventsResult::NotSupported => {
-                return Err(RunError::UnexpectedMessageReceived(msg.into()))
+                return Err(RunError::UnexpectedMessageReceived(msg.into()));
             }
         };
 

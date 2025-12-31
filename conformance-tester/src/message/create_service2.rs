@@ -2,7 +2,7 @@ use super::ServiceInfo;
 use crate::context::Context;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use aldrin_core::{message, SerializedValue, ServiceInfo as CoreServiceInfo};
+use aldrin_core::{SerializedValue, ServiceInfo as CoreServiceInfo, message};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 

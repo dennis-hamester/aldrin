@@ -2,7 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::ImportStmt;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parser, Schema, Span};
+use crate::{Parser, Schema, Span, util};
 
 #[derive(Debug)]
 pub(crate) struct DuplicateImport {

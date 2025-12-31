@@ -1,8 +1,8 @@
 use super::{Error, ErrorKind};
+use crate::Parser;
 use crate::ast::{EnumVariant, Ident, LitInt};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidEnumVariantId {

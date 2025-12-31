@@ -2,7 +2,7 @@ use super::{Error, ErrorKind};
 use crate::ast::{Ident, LitInt, ServiceDef, ServiceItem};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parser, Span};
+use crate::{Parser, Span, util};
 
 #[derive(Debug)]
 pub(crate) struct DuplicateEventId {

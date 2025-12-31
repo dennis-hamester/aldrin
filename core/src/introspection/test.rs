@@ -1,6 +1,6 @@
 mod bookmarks_v2;
 
-use super::{ir, Introspectable, Introspection, LexicalId, References};
+use super::{Introspectable, Introspection, LexicalId, References, ir};
 use crate::TypeId;
 use uuid::uuid;
 

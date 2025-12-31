@@ -90,8 +90,8 @@ impl From<CreateObjectReply> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::{CreateObjectReply, CreateObjectResult};
     use crate::ObjectCookie;
     use uuid::uuid;

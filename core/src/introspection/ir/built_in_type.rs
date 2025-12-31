@@ -2,7 +2,7 @@ use super::{ArrayTypeIr, LexicalId, MapTypeIr, ResultTypeIr};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use uuid::{uuid, Uuid};
+use uuid::{Uuid, uuid};
 
 #[derive(Debug, Copy, Clone)]
 pub enum BuiltInTypeIr {

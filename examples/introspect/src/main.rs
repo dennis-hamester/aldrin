@@ -7,7 +7,7 @@ use aldrin::core::tokio::TokioTransport;
 use aldrin::core::{BusEvent, BusListenerFilter, BusListenerScope, TypeId};
 use aldrin::low_level::Proxy;
 use aldrin::{Client, Handle};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use std::collections::{BTreeMap, BTreeSet};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

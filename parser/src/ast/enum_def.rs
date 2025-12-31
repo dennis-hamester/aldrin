@@ -1,11 +1,11 @@
 use super::{Attribute, Comment, DocString, Ident, LitInt, Prelude, TypeName};
+use crate::Span;
 use crate::error::{
     DuplicateEnumVariant, DuplicateEnumVariantId, EmptyEnum, InvalidEnumVariantId, RecursiveEnum,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{BrokenDocLink, NonCamelCaseEnum, NonCamelCaseEnumVariant};
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

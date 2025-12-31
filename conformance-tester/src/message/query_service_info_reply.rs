@@ -1,8 +1,8 @@
 use super::ServiceInfo;
 use crate::context::Context;
 use crate::serial::Serial;
-use aldrin_core::{message, SerializedValue, ServiceInfo as CoreServiceInfo};
-use anyhow::{anyhow, Context as _, Error, Result};
+use aldrin_core::{SerializedValue, ServiceInfo as CoreServiceInfo, message};
+use anyhow::{Context as _, Error, Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

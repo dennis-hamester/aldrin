@@ -7,8 +7,8 @@ mod vec;
 use crate::buf_ext::BufMutExt;
 use crate::tags::{self, KeyTag, Tag};
 use crate::{
-    AsUnknownFields, AsUnknownVariant, ChannelCookie, ObjectId, Serialize, SerializeError,
-    SerializeKey, SerializedValueSlice, ServiceId, ValueKind, MAX_VALUE_DEPTH,
+    AsUnknownFields, AsUnknownVariant, ChannelCookie, MAX_VALUE_DEPTH, ObjectId, Serialize,
+    SerializeError, SerializeKey, SerializedValueSlice, ServiceId, ValueKind,
 };
 use ::bytes::{BufMut, BytesMut};
 use uuid::Uuid;

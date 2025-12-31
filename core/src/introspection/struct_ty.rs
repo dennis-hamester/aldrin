@@ -1,4 +1,4 @@
-use super::{ir, Field, LexicalId, StructFallback};
+use super::{Field, LexicalId, StructFallback, ir};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
