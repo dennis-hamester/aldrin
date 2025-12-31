@@ -95,10 +95,10 @@ impl Diagnostic for InvalidArrayLen {
             report = report.snippet(schema, self.len.span(), "array length used here");
         }
 
-        if let Some((ref schema, ref ident)) = self.const_def {
-            if let Some(schema) = parser.get_schema(schema) {
-                report = report.context(schema, ident.span(), "constant defined here");
-            }
+        if let Some((ref schema, ref ident)) = self.const_def
+            && let Some(schema) = parser.get_schema(schema)
+        {
+            report = report.context(schema, ident.span(), "constant defined here");
         }
 
         report = report.help("arrays must have a length in the range from 1 to 4294967295");

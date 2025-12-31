@@ -61,24 +61,22 @@ impl DuplicateServiceItem {
             }
         }
 
-        if !fallback_dup {
-            if let (Some(func), Some(ev)) = (service.function_fallback(), service.event_fallback())
-            {
-                if func.name().value() == ev.name().value() {
-                    let (duplicate, first) = if func.span().start < ev.span().end {
-                        (ev.name().clone(), func.name().span())
-                    } else {
-                        (func.name().clone(), ev.name().span())
-                    };
+        if !fallback_dup
+            && let (Some(func), Some(ev)) = (service.function_fallback(), service.event_fallback())
+            && (func.name().value() == ev.name().value())
+        {
+            let (duplicate, first) = if func.span().start < ev.span().end {
+                (ev.name().clone(), func.name().span())
+            } else {
+                (func.name().clone(), ev.name().span())
+            };
 
-                    validate.add_error(Self {
-                        schema_name: validate.schema_name().to_owned(),
-                        duplicate,
-                        first,
-                        service_ident: service.name().clone(),
-                    });
-                }
-            }
+            validate.add_error(Self {
+                schema_name: validate.schema_name().to_owned(),
+                duplicate,
+                first,
+                service_ident: service.name().clone(),
+            });
         }
     }
 }

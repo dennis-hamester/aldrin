@@ -51,28 +51,27 @@ impl Select {
         for _ in 0..3 {
             match self.next() {
                 Self::Broker => {
-                    if let Some(ref mut broker) = broker {
-                        if let Poll::Ready(res) = broker.poll_next_unpin(cx) {
-                            return Poll::Ready(Selected::Broker(res));
-                        }
+                    if let Some(ref mut broker) = broker
+                        && let Poll::Ready(res) = broker.poll_next_unpin(cx)
+                    {
+                        return Poll::Ready(Selected::Broker(res));
                     }
                 }
 
                 Self::Transport => {
-                    if let Some(ref mut transport) = transport {
-                        if let Poll::Ready(res) = transport.receive_poll_unpin(cx) {
-                            return Poll::Ready(Selected::Transport(res));
-                        }
+                    if let Some(ref mut transport) = transport
+                        && let Poll::Ready(res) = transport.receive_poll_unpin(cx)
+                    {
+                        return Poll::Ready(Selected::Transport(res));
                     }
                 }
 
                 Self::FlushTransport => {
-                    if let Some(ref mut transport) = transport {
-                        if flush_transport {
-                            if let Poll::Ready(res) = transport.send_poll_flush_unpin(cx) {
-                                return Poll::Ready(Selected::TransportFlushed(res));
-                            }
-                        }
+                    if let Some(ref mut transport) = transport
+                        && flush_transport
+                        && let Poll::Ready(res) = transport.send_poll_flush_unpin(cx)
+                    {
+                        return Poll::Ready(Selected::TransportFlushed(res));
                     }
                 }
             }

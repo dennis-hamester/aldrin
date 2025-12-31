@@ -47,10 +47,10 @@ impl fmt::Display for SubprocessError {
             write!(f, " with code {code}")?;
         }
 
-        if f.alternate() {
-            if let Some(ref stderr) = self.stderr {
-                writeln!(f, ":\n{stderr}")?;
-            }
+        if f.alternate()
+            && let Some(ref stderr) = self.stderr
+        {
+            writeln!(f, ":\n{stderr}")?;
         }
 
         Ok(())

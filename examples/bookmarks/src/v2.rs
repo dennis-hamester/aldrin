@@ -233,12 +233,12 @@ impl BookmarksCallHandler for Server {
             return Ok(());
         }
 
-        if let Some(ref group) = bookmark.group {
-            if group.is_empty() {
-                println!("Rejecting bookmark because the group is empty.");
-                promise.err(BookmarkError::InvalidGroup)?;
-                return Ok(());
-            }
+        if let Some(ref group) = bookmark.group
+            && group.is_empty()
+        {
+            println!("Rejecting bookmark because the group is empty.");
+            promise.err(BookmarkError::InvalidGroup)?;
+            return Ok(());
         }
 
         if let Some(ref group) = bookmark.group {

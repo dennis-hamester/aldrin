@@ -224,10 +224,10 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{additional_derives})]");
 
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
-            }
+        if self.options.introspection
+            && let Some(feature) = self.rust_options.introspection_if
+        {
+            codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
         }
 
         code!(self, "#[aldrin(");
@@ -337,10 +337,10 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{additional_derives})]");
 
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
-            }
+        if self.options.introspection
+            && let Some(feature) = self.rust_options.introspection_if
+        {
+            codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
         }
 
         code!(self, "#[aldrin(");
@@ -781,10 +781,10 @@ impl RustGenerator<'_> {
 
         codeln!(self, "{additional_derives})]");
 
-        if self.options.introspection {
-            if let Some(feature) = self.rust_options.introspection_if {
-                codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
-            }
+        if self.options.introspection
+            && let Some(feature) = self.rust_options.introspection_if
+        {
+            codeln!(self, "#[cfg_attr(feature = \"{feature}\", derive({krate}::Introspectable))]");
         }
 
         code!(self, "#[aldrin(");
@@ -1128,10 +1128,10 @@ impl RustGenerator<'_> {
         for node in root.descendants() {
             let mut data = node.data.borrow_mut();
 
-            if let NodeValue::Link(ref mut link) = data.value {
-                if let Some(new_link) = self.rewrite_doc_link(&link.url, resolver) {
-                    link.url = new_link;
-                }
+            if let NodeValue::Link(ref mut link) = data.value
+                && let Some(new_link) = self.rewrite_doc_link(&link.url, resolver)
+            {
+                link.url = new_link;
             }
         }
 

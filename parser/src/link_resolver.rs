@@ -61,24 +61,24 @@ impl<'a> LinkResolver<'a> {
 
         let mut components = Components::new(link);
 
-        if let Some(schema) = components.schema()? {
-            if schema != "self" {
-                if self
-                    .schema
-                    .imports()
-                    .iter()
-                    .all(|import| import.schema_name().value() != schema)
-                {
-                    return Err(ResolveLinkError::SchemaNotFound(schema));
-                }
-
-                let schema = self
-                    .schemas
-                    .get(schema)
-                    .ok_or(ResolveLinkError::SchemaNotFound(schema))?;
-
-                self.schema = schema;
+        if let Some(schema) = components.schema()?
+            && (schema != "self")
+        {
+            if self
+                .schema
+                .imports()
+                .iter()
+                .all(|import| import.schema_name().value() != schema)
+            {
+                return Err(ResolveLinkError::SchemaNotFound(schema));
             }
+
+            let schema = self
+                .schemas
+                .get(schema)
+                .ok_or(ResolveLinkError::SchemaNotFound(schema))?;
+
+            self.schema = schema;
         }
 
         self.resolve_def(components)
@@ -154,14 +154,14 @@ impl<'a> LinkResolver<'a> {
             return Ok(ResolvedLink::Field(self.schema, struct_def, field));
         }
 
-        if let Some(fallback) = struct_def.fallback() {
-            if fallback.name().value() == name {
-                return Ok(ResolvedLink::FallbackField(
-                    self.schema,
-                    struct_def,
-                    fallback,
-                ));
-            }
+        if let Some(fallback) = struct_def.fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ResolvedLink::FallbackField(
+                self.schema,
+                struct_def,
+                fallback,
+            ));
         }
 
         Err(ResolveLinkError::FieldNotFound(struct_def, name))
@@ -187,10 +187,10 @@ impl<'a> LinkResolver<'a> {
             return Ok(ok_field(inline_struct, field));
         }
 
-        if let Some(fallback) = inline_struct.fallback() {
-            if fallback.name().value() == name {
-                return Ok(ok_fallback(inline_struct, fallback));
-            }
+        if let Some(fallback) = inline_struct.fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ok_fallback(inline_struct, fallback));
         }
 
         Err(ResolveLinkError::InlineFieldNotFound(name))
@@ -209,14 +209,14 @@ impl<'a> LinkResolver<'a> {
             return Ok(ResolvedLink::Variant(self.schema, enum_def, var));
         }
 
-        if let Some(fallback) = enum_def.fallback() {
-            if fallback.name().value() == name {
-                return Ok(ResolvedLink::FallbackVariant(
-                    self.schema,
-                    enum_def,
-                    fallback,
-                ));
-            }
+        if let Some(fallback) = enum_def.fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ResolvedLink::FallbackVariant(
+                self.schema,
+                enum_def,
+                fallback,
+            ));
         }
 
         Err(ResolveLinkError::VariantNotFound(enum_def, name))
@@ -242,10 +242,10 @@ impl<'a> LinkResolver<'a> {
             return Ok(ok_variant(inline_enum, var));
         }
 
-        if let Some(fallback) = inline_enum.fallback() {
-            if fallback.name().value() == name {
-                return Ok(ok_fallback(inline_enum, fallback));
-            }
+        if let Some(fallback) = inline_enum.fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ok_fallback(inline_enum, fallback));
         }
 
         Err(ResolveLinkError::InlineVariantNotFound(name))
@@ -267,16 +267,16 @@ impl<'a> LinkResolver<'a> {
             }
         }
 
-        if let Some(fallback) = svc.function_fallback() {
-            if fallback.name().value() == name {
-                return Ok(ResolvedLink::FunctionFallback(self.schema, svc, fallback));
-            }
+        if let Some(fallback) = svc.function_fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ResolvedLink::FunctionFallback(self.schema, svc, fallback));
         }
 
-        if let Some(fallback) = svc.event_fallback() {
-            if fallback.name().value() == name {
-                return Ok(ResolvedLink::EventFallback(self.schema, svc, fallback));
-            }
+        if let Some(fallback) = svc.event_fallback()
+            && (fallback.name().value() == name)
+        {
+            return Ok(ResolvedLink::EventFallback(self.schema, svc, fallback));
         }
 
         Err(ResolveLinkError::ItemNotFound(svc, name))

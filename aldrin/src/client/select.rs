@@ -70,10 +70,9 @@ impl Select {
                 }
 
                 Self::TransportFlushed => {
-                    if flush_transport {
-                        if let Poll::Ready(res) = transport.send_poll_flush_unpin(cx) {
-                            return Poll::Ready(Selected::TransportFlushed(res));
-                        }
+                    if flush_transport && let Poll::Ready(res) = transport.send_poll_flush_unpin(cx)
+                    {
+                        return Poll::Ready(Selected::TransportFlushed(res));
                     }
                 }
             }
