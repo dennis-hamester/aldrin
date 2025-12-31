@@ -2,10 +2,10 @@ use super::{RawChannel, Receiver, Sender};
 use crate::{Error, Handle};
 use aldrin_core::{ChannelCookie, SerializedValue};
 use futures_channel::{mpsc, oneshot};
-use std::{fmt, future};
 use std::num::NonZeroU32;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{fmt, future};
 
 /// A sender that is waiting for the channel to be established.
 ///

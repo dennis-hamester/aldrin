@@ -31,7 +31,7 @@ use crate::context::Context;
 use crate::message_type::MessageType;
 use crate::protocol_version_serde;
 use aldrin_core::ProtocolVersion;
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::borrow::Cow;

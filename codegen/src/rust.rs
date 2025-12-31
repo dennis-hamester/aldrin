@@ -3,9 +3,9 @@ mod test;
 
 pub mod names;
 
-use crate::error::Error;
 use crate::Options;
-use aldrin_parser::{ast, LinkResolver, Parser, ResolvedLink, Schema};
+use crate::error::Error;
+use aldrin_parser::{LinkResolver, Parser, ResolvedLink, Schema, ast};
 use comrak::nodes::NodeValue;
 use comrak::options::BrokenLinkReference;
 use comrak::{Arena, Options as ComrakOptions, ResolvedReference};

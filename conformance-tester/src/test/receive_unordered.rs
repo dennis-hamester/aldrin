@@ -2,7 +2,7 @@ use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::Message;
 use crate::util::FutureExt;
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use serde::Deserialize;
 use tokio::time::Instant;
 

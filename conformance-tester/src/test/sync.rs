@@ -3,7 +3,7 @@ use crate::client_id::ClientId;
 use crate::context::Context;
 use crate::message::{Message, Sync, SyncReply};
 use crate::serial::Serial;
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow};
 use serde::Deserialize;
 use tokio::time::Instant;
 

@@ -1,7 +1,7 @@
 use super::{InlineEnum, InlineStruct, TypeName};
+use crate::Span;
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

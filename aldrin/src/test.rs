@@ -1,6 +1,6 @@
 use crate::Client;
 use aldrin_broker::Broker;
-use aldrin_core::{channel, ObjectUuid, ServiceUuid};
+use aldrin_core::{ObjectUuid, ServiceUuid, channel};
 use aldrin_test::aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin_test::tokio::TestBroker;
 use std::mem;

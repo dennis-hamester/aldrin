@@ -2,7 +2,7 @@ use super::StructData;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Path, Result, Token};
+use syn::{Data, DeriveInput, Error, Field, Fields, Path, Result, Token, parse_quote};
 
 pub(crate) fn gen_primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_primary_key_tag(input, parse_quote!(::aldrin_core))

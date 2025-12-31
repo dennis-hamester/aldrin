@@ -3,8 +3,8 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::{
-    parse_quote, Data, DeriveInput, Error, Field, Fields, GenericParam, Ident, Path, Result, Token,
-    Variant,
+    Data, DeriveInput, Error, Field, Fields, GenericParam, Ident, Path, Result, Token, Variant,
+    parse_quote,
 };
 
 pub(crate) fn gen_serialize_from_core(input: DeriveInput) -> Result<TokenStream> {

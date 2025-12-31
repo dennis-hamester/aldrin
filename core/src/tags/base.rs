@@ -1,6 +1,6 @@
 use super::{
-    Bool, Bytes, Infallible, KeyTag, Map, ObjectId, Option, Receiver, Sender, ServiceId, Set,
-    String, Unit, Uuid, Value, Vec, F32, F64, I16, I32, I64, I8, U16, U32, U64, U8,
+    Bool, Bytes, F32, F64, I8, I16, I32, I64, Infallible, KeyTag, Map, ObjectId, Option, Receiver,
+    Sender, ServiceId, Set, String, U8, U16, U32, U64, Unit, Uuid, Value, Vec,
 };
 
 pub trait Tag: Sized {}

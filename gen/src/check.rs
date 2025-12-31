@@ -1,4 +1,4 @@
-use crate::{diag, CommonReadArgs};
+use crate::{CommonReadArgs, diag};
 use aldrin_parser::{FilesystemResolver, Parser};
 use anyhow::Result;
 use std::path::PathBuf;

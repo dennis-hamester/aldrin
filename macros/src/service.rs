@@ -22,7 +22,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
-use syn::{braced, Ident, Result, Token, Visibility};
+use syn::{Ident, Result, Token, Visibility, braced};
 
 mod kw {
     use syn::custom_keyword;

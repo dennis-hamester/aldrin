@@ -1,7 +1,7 @@
 use super::{Receiver, Sender, UnclaimedReceiver, UnclaimedSender};
-use crate::{low_level, Error, Handle};
+use crate::{Error, Handle, low_level};
 #[cfg(feature = "introspection")]
-use aldrin_core::introspection::{ir, Introspectable, LexicalId, References};
+use aldrin_core::introspection::{Introspectable, LexicalId, References, ir};
 use aldrin_core::tags::{self, PrimaryTag, Tag};
 use aldrin_core::{
     ChannelCookie, Deserialize, DeserializeError, Deserializer, Serialize, SerializeError,

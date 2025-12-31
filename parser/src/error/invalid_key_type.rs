@@ -1,9 +1,9 @@
 use super::{Error, ErrorKind};
+use crate::Parser;
 use crate::ast::TypeName;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, InvalidKeyTypeKind};
 use crate::validate::Validate;
-use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct InvalidKeyType {

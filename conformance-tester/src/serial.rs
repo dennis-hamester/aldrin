@@ -1,5 +1,5 @@
 use crate::context::Context;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;

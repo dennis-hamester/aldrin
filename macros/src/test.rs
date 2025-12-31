@@ -1,11 +1,11 @@
-use aldrin::core::introspection::Introspection;
 use aldrin::Introspectable;
+use aldrin::core::introspection::Introspection;
 
 mod raw_identifiers {
     #![allow(non_camel_case_types)]
 
     use aldrin::core::ServiceUuid;
-    use aldrin::{service, Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag};
+    use aldrin::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, service};
     use uuid::uuid;
 
     service! {

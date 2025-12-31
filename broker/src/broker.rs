@@ -19,6 +19,8 @@ use crate::introspection_database::{
 };
 use crate::serial_map::SerialMap;
 use crate::versioned_message::VersionedMessage;
+#[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
 use aldrin_core::message::{
     AbortFunctionCall, AddBusListenerFilter, AddChannelCapacity, BusListenerCurrentFinished,
     CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
@@ -39,8 +41,6 @@ use aldrin_core::message::{
     SyncReply, UnsubscribeAllEvents, UnsubscribeAllEventsReply, UnsubscribeAllEventsResult,
     UnsubscribeEvent, UnsubscribeService,
 };
-#[cfg(feature = "introspection")]
-use aldrin_core::TypeId;
 use aldrin_core::{
     BusEvent, BusListenerCookie, BusListenerScope, ChannelCookie, ChannelEnd,
     ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid, ProtocolVersion, SerializedValue,
@@ -48,13 +48,13 @@ use aldrin_core::{
 };
 use channel::{AddCapacityError, Channel, SendItemError};
 use conn_state::ConnectionState;
-use futures_channel::mpsc::{channel, Receiver};
+use futures_channel::mpsc::{Receiver, channel};
 use futures_util::stream::StreamExt;
 use object::Object;
 use service::Service;
 use state::State;
-use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::collections::hash_map::{Entry, HashMap};
 
 pub use error::BrokerShutdown;
 pub use handle::BrokerHandle;

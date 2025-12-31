@@ -1,4 +1,4 @@
-use crate::{low_level, Error, Handle};
+use crate::{Error, Handle, low_level};
 use aldrin_core::tags::PrimaryTag;
 use aldrin_core::{ChannelCookie, Deserialize, DeserializePrimary, Serialize, SerializePrimary};
 use futures_core::stream::{FusedStream, Stream};

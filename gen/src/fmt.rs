@@ -2,7 +2,7 @@ use crate::diag;
 use aldrin_parser::{FilesystemResolver, Formatter, MemoryResolver, Parser};
 use anstream::{eprint, eprintln};
 use anstyle::{AnsiColor, Color, Style};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use diffy::{Hunk, Line};
 use std::fs::File;
 use std::io::{self, BufWriter};

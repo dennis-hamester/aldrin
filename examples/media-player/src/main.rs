@@ -1,10 +1,10 @@
 mod client;
 mod server;
 
-use aldrin::core::tokio::TokioTransport;
-use aldrin::core::ObjectUuid;
 use aldrin::Client;
-use anyhow::{anyhow, Context, Result};
+use aldrin::core::ObjectUuid;
+use aldrin::core::tokio::TokioTransport;
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use media_player::Error;
 use std::error::Error as StdError;

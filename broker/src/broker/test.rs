@@ -1,6 +1,6 @@
 use crate::{Broker, BrokerHandle};
-use aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin::Client;
+use aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin_core::channel::{self, Disconnected, Unbounded};
 use aldrin_core::message::{
     CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,

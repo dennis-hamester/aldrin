@@ -1,4 +1,4 @@
-use crate::{low_level, Error, Reply};
+use crate::{Error, Reply, low_level};
 use aldrin_core::tags::PrimaryTag;
 use aldrin_core::{Deserialize, DeserializePrimary};
 use std::fmt;

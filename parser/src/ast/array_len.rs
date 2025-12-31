@@ -1,11 +1,11 @@
 use super::{LitInt, NamedRef};
+use crate::Span;
 use crate::error::{
     ConstIntNotFound, ExpectedConstIntFoundService, ExpectedConstIntFoundString,
     ExpectedConstIntFoundType, ExpectedConstIntFoundUuid, InvalidArrayLen,
 };
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::Span;
 use pest::iterators::Pair;
 use std::fmt;
 

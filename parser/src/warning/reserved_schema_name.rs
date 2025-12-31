@@ -1,8 +1,8 @@
 use super::{Warning, WarningKind};
+use crate::Parser;
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::util::{self, Language, ReservedUsage};
 use crate::validate::Validate;
-use crate::Parser;
 
 #[derive(Debug)]
 pub(crate) struct ReservedSchemaName {

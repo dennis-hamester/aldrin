@@ -1,4 +1,5 @@
 use super::{Comment, DocString, Ident, LitInt, LitUuid, Prelude, TypeNameOrInline};
+use crate::Span;
 use crate::error::{
     DuplicateEventId, DuplicateFunctionId, DuplicateServiceItem, InvalidEventId, InvalidFunctionId,
     InvalidServiceVersion,
@@ -6,7 +7,6 @@ use crate::error::{
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{BrokenDocLink, NonCamelCaseService, NonSnakeCaseEvent, NonSnakeCaseFunction};
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

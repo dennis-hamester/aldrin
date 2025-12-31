@@ -57,8 +57,8 @@ impl From<ChannelEndClosed> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq, assert_serialize_eq};
     use super::ChannelEndClosed;
     use crate::{ChannelCookie, ChannelEnd};
     use uuid::uuid;

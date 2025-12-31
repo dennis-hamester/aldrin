@@ -1,5 +1,5 @@
 use super::{Receiver, Sender, UnboundReceiver, UnboundSender};
-use crate::{low_level, Error, Handle};
+use crate::{Error, Handle, low_level};
 use aldrin_core::ChannelCookie;
 use std::fmt;
 use std::marker::PhantomData;

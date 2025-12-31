@@ -1,7 +1,7 @@
 use super::ClientBuilder;
 use crate::error::ConnectError;
 use aldrin_broker::{Acceptor, Broker};
-use aldrin_core::{channel, ProtocolVersion};
+use aldrin_core::{ProtocolVersion, channel};
 
 #[tokio::test]
 async fn connect_with_data_accept() {

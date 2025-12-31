@@ -2,13 +2,13 @@ use super::{ItemOptions, Options};
 use crate::doc_string::DocString;
 use crate::util;
 use proc_macro2::TokenStream;
-use quote::{format_ident, ToTokens};
+use quote::{ToTokens, format_ident};
 use std::borrow::Cow;
 use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
 use syn::{
-    parse_quote, DeriveInput, Error, Field, Ident, Index, LifetimeParam, Path, Result, Token, Type,
-    Visibility,
+    DeriveInput, Error, Field, Ident, Index, LifetimeParam, Path, Result, Token, Type, Visibility,
+    parse_quote,
 };
 
 pub(crate) struct StructData<'a> {

@@ -5,9 +5,9 @@ mod select;
 
 use crate::conn_id::ConnectionId;
 use crate::versioned_message::VersionedMessage;
+use aldrin_core::ProtocolVersion;
 use aldrin_core::message::{Message, Shutdown};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
-use aldrin_core::ProtocolVersion;
 use futures_channel::mpsc::{Sender, UnboundedReceiver};
 use futures_util::sink::SinkExt;
 use select::{Select, Selected};

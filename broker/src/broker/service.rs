@@ -1,7 +1,7 @@
 use crate::conn_id::ConnectionId;
 use aldrin_core::{ObjectCookie, ServiceCookie};
-use std::collections::hash_map::{Entry, HashMap};
 use std::collections::HashSet;
+use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Debug)]
 pub(crate) struct Service {

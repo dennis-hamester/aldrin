@@ -1,4 +1,4 @@
-use super::{KeyTagImpl, String, Uuid, I16, I32, I64, I8, U16, U32, U64, U8};
+use super::{I8, I16, I32, I64, KeyTagImpl, String, U8, U16, U32, U64, Uuid};
 
 pub trait KeyTag: Sized {
     type Impl: KeyTagImpl;

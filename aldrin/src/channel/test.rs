@@ -230,7 +230,7 @@ async fn send_error_when_receiver_is_closed() {
 #[tokio::test]
 async fn stream_sink_pipe() {
     use aldrin_test::aldrin::{Handle, Receiver, Sender};
-    use futures_util::{stream, SinkExt, TryStreamExt};
+    use futures_util::{SinkExt, TryStreamExt, stream};
 
     async fn create_channel(client: &Handle, capacity: u32) -> (Sender<u32>, Receiver<u32>) {
         let (sender, receiver) = client.create_channel().claim_sender().await.unwrap();

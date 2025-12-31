@@ -1,15 +1,15 @@
+use crate::Schema;
 use crate::ast::{
     ConstValue, Definition, EnumDef, NamedRef, NamedRefKind, StructDef, TypeNameKind,
 };
 use crate::validate::Validate;
-use crate::Schema;
+use Language::Rust;
+use ReservedKind::{Builtin, Keyword};
 use heck::{AsShoutySnakeCase, AsSnakeCase, AsUpperCamelCase};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::hash::Hash;
-use Language::Rust;
-use ReservedKind::{Builtin, Keyword};
 
 const THRESHOLD: f64 = 0.8;
 

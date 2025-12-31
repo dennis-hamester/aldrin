@@ -1,5 +1,5 @@
-use crate::tags::{PrimaryTag, Tag};
 use crate::Serializer;
+use crate::tags::{PrimaryTag, Tag};
 use thiserror::Error;
 
 pub trait Serialize<T: Tag>: Sized {

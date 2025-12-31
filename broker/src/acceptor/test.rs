@@ -1,11 +1,11 @@
-use super::{select_protocol_version, Acceptor};
+use super::{Acceptor, select_protocol_version};
 use crate::Broker;
 use aldrin_core::message::{
     Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
     MessageOps,
 };
 use aldrin_core::transport::AsyncTransportExt;
-use aldrin_core::{channel, ProtocolVersion, SerializedValue};
+use aldrin_core::{ProtocolVersion, SerializedValue, channel};
 
 #[test]
 fn select_protocol_version_connect1() {

@@ -4,7 +4,7 @@ use crate::context::Context;
 use crate::message::ChannelEnd;
 use crate::serial::Serial;
 use crate::uuid_ref::UuidRef;
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow};
 use serde::Deserialize;
 use tokio::time::Instant;
 

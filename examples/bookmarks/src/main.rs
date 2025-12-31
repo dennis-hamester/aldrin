@@ -3,7 +3,7 @@ mod v2;
 
 use aldrin::core::tokio::TokioTransport;
 use aldrin::{Client, Handle};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use bookmarks_v2::{Bookmarks, BookmarksProxy};
 use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

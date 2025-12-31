@@ -14,8 +14,8 @@ mod reserved_ident;
 mod reserved_schema_name;
 mod unused_import;
 
-use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::Parser;
+use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 
 pub(crate) use broken_doc_link::BrokenDocLink;
 pub(crate) use duplicate_import::DuplicateImport;

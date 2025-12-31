@@ -47,10 +47,10 @@ impl From<RegisterIntrospection> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::RegisterIntrospection;
-    use crate::{tags, SerializedValue, TypeId};
+    use crate::{SerializedValue, TypeId, tags};
     use std::collections::HashSet;
     use std::iter;
     use uuid::uuid;

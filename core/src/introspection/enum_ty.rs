@@ -1,4 +1,4 @@
-use super::{ir, EnumFallback, LexicalId, Variant};
+use super::{EnumFallback, LexicalId, Variant, ir};
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,

@@ -54,10 +54,10 @@ impl From<ItemReceived> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::ItemReceived;
-    use crate::{tags, ChannelCookie, SerializedValue};
+    use crate::{ChannelCookie, SerializedValue, tags};
     use uuid::uuid;
 
     #[test]

@@ -6,8 +6,8 @@
 #[cfg(test)]
 mod test;
 
-use aldrin::error::RunError;
 use aldrin::Handle;
+use aldrin::error::RunError;
 use aldrin_broker::{BrokerHandle, ConnectionError, ConnectionHandle};
 use aldrin_core::channel::Disconnected;
 use std::ops::{Deref, DerefMut};

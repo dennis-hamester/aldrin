@@ -2,7 +2,7 @@ use super::StructData;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
-use syn::{parse_quote, Data, DeriveInput, Error, Field, Fields, Path, Result, Token};
+use syn::{Data, DeriveInput, Error, Field, Fields, Path, Result, Token, parse_quote};
 
 pub(crate) fn gen_deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
     gen_deserialize_key(input, parse_quote!(::aldrin_core))

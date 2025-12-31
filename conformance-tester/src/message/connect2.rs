@@ -1,7 +1,7 @@
 use crate::context::Context;
-use aldrin_core::message::{self, ConnectData};
 use aldrin_core::SerializedValue;
-use anyhow::{anyhow, Context as _, Error, Result};
+use aldrin_core::message::{self, ConnectData};
+use anyhow::{Context as _, Error, Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

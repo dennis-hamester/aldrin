@@ -1,4 +1,4 @@
-use super::{kw, EvFallbackItem, EvItem, FnFallbackItem, FnItem, Options, ServiceItem};
+use super::{EvFallbackItem, EvItem, FnFallbackItem, FnItem, Options, ServiceItem, kw};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;

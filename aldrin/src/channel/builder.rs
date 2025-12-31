@@ -1,5 +1,5 @@
 use super::{PendingReceiver, PendingSender, UnclaimedReceiver, UnclaimedSender};
-use crate::{low_level, Error, Handle};
+use crate::{Error, Handle, low_level};
 use std::fmt;
 use std::marker::PhantomData;
 

@@ -1,6 +1,6 @@
 use aldrin_broker::core::tokio::TokioTransport;
 use aldrin_broker::{Broker, BrokerHandle};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;

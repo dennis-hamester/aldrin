@@ -3,7 +3,7 @@ use crate::bookmarks_v1::{
 };
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Parser;
 use std::convert::Infallible;
 use std::error::Error as StdError;

@@ -1,6 +1,6 @@
 use super::{DiscovererEvent, DiscovererEventKind};
-use crate::bus_listener::BusListener;
 use crate::Error;
+use crate::bus_listener::BusListener;
 use aldrin_core::{
     BusEvent, BusListenerFilter, ObjectCookie, ObjectId, ObjectUuid, ServiceCookie, ServiceId,
     ServiceUuid,

@@ -23,8 +23,8 @@ use specific_without_services::{
     SpecificObjectWithoutServices, SpecificObjectWithoutServicesIter,
     SpecificObjectWithoutServicesIterEntry,
 };
-use std::collections::hash_map::{self, HashMap};
 use std::collections::VecDeque;
+use std::collections::hash_map::{self, HashMap};
 use std::future;
 use std::hash::Hash;
 use std::iter::{FlatMap, FusedIterator};

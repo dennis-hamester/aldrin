@@ -1,6 +1,6 @@
 use crate::context::Context;
-use aldrin_core::{message, SerializedValue};
-use anyhow::{anyhow, Context as _, Error, Result};
+use aldrin_core::{SerializedValue, message};
+use anyhow::{Context as _, Error, Result, anyhow};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use uuid::Uuid;

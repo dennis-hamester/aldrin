@@ -1,9 +1,9 @@
 use super::{Comment, Ident, Prelude};
+use crate::Span;
 use crate::error::ImportNotFound;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::UnusedImport;
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

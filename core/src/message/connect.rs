@@ -54,10 +54,10 @@ impl From<Connect> for Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::super::Message;
+    use super::super::test::{assert_deserialize_eq_with_value, assert_serialize_eq};
     use super::Connect;
-    use crate::{tags, SerializedValue};
+    use crate::{SerializedValue, tags};
 
     #[test]
     fn connect() {

@@ -1,6 +1,6 @@
 use crate::doc_string::DocString;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_quote, Attribute, Error, LitBool, LitStr, Path, Result};
+use syn::{Attribute, Error, LitBool, LitStr, Path, Result, parse_quote};
 
 pub(super) struct Options {
     doc: DocString,

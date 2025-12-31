@@ -1,8 +1,8 @@
+use crate::Span;
 use crate::error::InvalidIdent;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::ReservedIdent;
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

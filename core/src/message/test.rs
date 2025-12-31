@@ -1,6 +1,6 @@
 use super::{Message, MessageDeserializeError, MessageOps};
-use crate::tags::Tag;
 use crate::Deserialize;
+use crate::tags::Tag;
 use bytes::BytesMut;
 use std::fmt::Debug;
 

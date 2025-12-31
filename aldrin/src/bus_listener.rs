@@ -408,7 +408,7 @@ impl BusListener {
                 }
 
                 Poll::Ready(Some(BusListenerEvent::Event(event))) => {
-                    return Poll::Ready(Some(event))
+                    return Poll::Ready(Some(event));
                 }
 
                 Poll::Ready(Some(BusListenerEvent::CurrentFinished)) => {

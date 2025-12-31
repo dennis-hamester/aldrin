@@ -54,7 +54,7 @@ where
                 Poll::Ready(Ok(())) if read_buf.filled().is_empty() => {
                     return Poll::Ready(Err(TokioTransportError::Io(
                         IoErrorKind::UnexpectedEof.into(),
-                    )))
+                    )));
                 }
 
                 Poll::Ready(Ok(())) => {

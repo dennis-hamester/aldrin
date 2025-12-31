@@ -1,7 +1,7 @@
-use crate::{diag, CommonGenArgs, CommonReadArgs};
+use crate::{CommonGenArgs, CommonReadArgs, diag};
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{FilesystemResolver, Parser};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use std::env;
 use std::fs::File;
 use std::io::Write;

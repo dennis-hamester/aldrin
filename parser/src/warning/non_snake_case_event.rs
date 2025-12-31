@@ -2,7 +2,7 @@ use super::{Warning, WarningKind};
 use crate::ast::{EventDef, Ident};
 use crate::diag::{Diagnostic, DiagnosticKind, Renderer};
 use crate::validate::Validate;
-use crate::{util, Parser};
+use crate::{Parser, util};
 
 #[derive(Debug)]
 pub(crate) struct NonSnakeCaseEvent {

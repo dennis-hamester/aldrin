@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_core::{message, BusEvent, BusListenerCookie, ObjectId, ServiceId};
+use aldrin_core::{BusEvent, BusListenerCookie, ObjectId, ServiceId, message};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 

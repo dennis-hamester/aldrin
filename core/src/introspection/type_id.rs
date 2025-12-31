@@ -1,4 +1,4 @@
-use super::{ir, DynIntrospectable, Introspectable, References, VERSION};
+use super::{DynIntrospectable, Introspectable, References, VERSION, ir};
 use crate::adapters::IterAsVec;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, SerializedValue, Serializer, TypeId};

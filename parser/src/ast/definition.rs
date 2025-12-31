@@ -1,7 +1,7 @@
+use crate::Span;
 use crate::ast::{ConstDef, EnumDef, Ident, NewtypeDef, ServiceDef, StructDef};
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

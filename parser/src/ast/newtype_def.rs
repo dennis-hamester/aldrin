@@ -1,9 +1,9 @@
 use super::{Attribute, Comment, DocString, Ident, Prelude, TypeName};
+use crate::Span;
 use crate::error::RecursiveNewtype;
 use crate::grammar::Rule;
 use crate::validate::Validate;
 use crate::warning::{BrokenDocLink, NonCamelCaseNewtype};
-use crate::Span;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]

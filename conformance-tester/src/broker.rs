@@ -1,5 +1,5 @@
 use crate::util::FutureExt;
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow};
 use std::ffi::OsStr;
 use std::process::Stdio;
 use std::time::Duration;

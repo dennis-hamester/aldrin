@@ -1,8 +1,8 @@
 use super::Ident;
+use crate::Span;
 use crate::error::MissingImport;
 use crate::grammar::Rule;
 use crate::validate::Validate;
-use crate::Span;
 use pest::iterators::Pair;
 use std::fmt;
 

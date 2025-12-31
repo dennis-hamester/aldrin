@@ -3,8 +3,8 @@ use super::{
     SpecificObjectWithServicesIterEntry, SpecificObjectWithoutServices,
     SpecificObjectWithoutServicesIter, SpecificObjectWithoutServicesIterEntry,
 };
-use crate::bus_listener::BusListener;
 use crate::Error;
+use crate::bus_listener::BusListener;
 use aldrin_core::{BusEvent, ObjectId, ObjectUuid, ServiceId, ServiceUuid};
 use std::collections::HashMap;
 use std::hash::Hash;

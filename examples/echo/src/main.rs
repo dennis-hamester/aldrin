@@ -1,7 +1,7 @@
-use aldrin::core::tokio::TokioTransport;
 use aldrin::core::ObjectUuid;
+use aldrin::core::tokio::TokioTransport;
 use aldrin::{Client, Handle};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use echo::{Echo, EchoCall, EchoEchoAllError, EchoEchoError, EchoEvent, EchoProxy};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

@@ -2,7 +2,7 @@
 mod test;
 
 use crate::{
-    tags, DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Struct, ValueKind,
+    DeserializeError, Serialize, SerializedValue, SerializedValueSlice, Struct, ValueKind, tags,
 };
 use std::collections::hash_map::{HashMap, IntoIter, Iter};
 use std::convert::Infallible;
