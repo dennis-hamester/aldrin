@@ -38,10 +38,10 @@ impl FunctionCallMap {
 
     pub(crate) fn poll_aborted(&mut self, cx: &mut Context) -> Poll<u32> {
         for (serial, state) in self.inner.iter_mut() {
-            if let State::Pending(sender) = state {
-                if sender.poll_canceled(cx) == Poll::Ready(()) {
-                    return Poll::Ready(serial);
-                }
+            if let State::Pending(sender) = state
+                && (sender.poll_canceled(cx) == Poll::Ready(()))
+            {
+                return Poll::Ready(serial);
             }
         }
 

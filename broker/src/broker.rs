@@ -1366,26 +1366,26 @@ impl Broker {
     }
 
     fn add_bus_listener_filter(&mut self, id: &ConnectionId, req: AddBusListenerFilter) {
-        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
-            if bus_listener.conn_id() == id {
-                bus_listener.add_filter(req.filter);
-            }
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie)
+            && (bus_listener.conn_id() == id)
+        {
+            bus_listener.add_filter(req.filter);
         }
     }
 
     fn remove_bus_listener_filter(&mut self, id: &ConnectionId, req: RemoveBusListenerFilter) {
-        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
-            if bus_listener.conn_id() == id {
-                bus_listener.remove_filter(req.filter);
-            }
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie)
+            && (bus_listener.conn_id() == id)
+        {
+            bus_listener.remove_filter(req.filter);
         }
     }
 
     fn clear_bus_listener_filters(&mut self, id: &ConnectionId, req: ClearBusListenerFilters) {
-        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie) {
-            if bus_listener.conn_id() == id {
-                bus_listener.clear_filters();
-            }
+        if let Some(bus_listener) = self.bus_listeners.get_mut(&req.cookie)
+            && (bus_listener.conn_id() == id)
+        {
+            bus_listener.clear_filters();
         }
     }
 
@@ -2415,19 +2415,19 @@ impl Broker {
 
         call.aborted = true;
 
-        if let Some(conn) = self.conns.get(&callee_id) {
-            if conn.version() >= ProtocolVersion::V1_16 {
-                let res = send!(
-                    self,
-                    conn,
-                    AbortFunctionCall {
-                        serial: callee_serial,
-                    },
-                );
+        if let Some(conn) = self.conns.get(&callee_id)
+            && (conn.version() >= ProtocolVersion::V1_16)
+        {
+            let res = send!(
+                self,
+                conn,
+                AbortFunctionCall {
+                    serial: callee_serial,
+                },
+            );
 
-                if res.is_err() {
-                    state.push_remove_conn(callee_id, false);
-                }
+            if res.is_err() {
+                state.push_remove_conn(callee_id, false);
             }
         }
 

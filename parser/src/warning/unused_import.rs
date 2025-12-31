@@ -96,22 +96,22 @@ impl UnusedImport {
     }
 
     fn visit_function(func: &FunctionDef, schema_name: &Ident) -> bool {
-        if let Some(args) = func.args() {
-            if Self::visit_function_part(args, schema_name) {
-                return true;
-            }
+        if let Some(args) = func.args()
+            && Self::visit_function_part(args, schema_name)
+        {
+            return true;
         }
 
-        if let Some(ok) = func.ok() {
-            if Self::visit_function_part(ok, schema_name) {
-                return true;
-            }
+        if let Some(ok) = func.ok()
+            && Self::visit_function_part(ok, schema_name)
+        {
+            return true;
         }
 
-        if let Some(err) = func.err() {
-            if Self::visit_function_part(err, schema_name) {
-                return true;
-            }
+        if let Some(err) = func.err()
+            && Self::visit_function_part(err, schema_name)
+        {
+            return true;
         }
 
         false

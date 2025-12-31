@@ -1682,7 +1682,7 @@ impl Connect2Le {
         Connect2 {
             major_version: self.major_version as u32,
             minor_version: self.minor_version as u32,
-            value: SerializedValue::serialize(&ConnectData::new()).unwrap(),
+            value: SerializedValue::serialize(ConnectData::new()).unwrap(),
         }
     }
 }
@@ -1700,7 +1700,7 @@ impl ConnectReply2Le {
     pub fn to_core(&self, ctx: &Context) -> ConnectReply2 {
         ConnectReply2 {
             result: self.result.to_core(ctx),
-            value: SerializedValue::serialize(&ConnectReplyData::new()).unwrap(),
+            value: SerializedValue::serialize(ConnectReplyData::new()).unwrap(),
         }
     }
 }
@@ -1873,7 +1873,7 @@ impl ServiceInfoLe {
                     info = info.set_subscribe_all(*subscribe_all);
                 }
 
-                SerializedValue::serialize(&info).unwrap()
+                SerializedValue::serialize(info).unwrap()
             }
 
             Self::Invalid => SerializedValue::serialize(()).unwrap(),
@@ -1959,10 +1959,10 @@ impl QueryServiceInfoResultLe {
 
 impl UpdateContext for QueryServiceInfoResult {
     fn update_context(&self, ctx: &mut Context) {
-        if let Self::Ok(value) = self {
-            if let Ok(info) = value.deserialize::<ServiceInfo>() {
-                info.update_context(ctx);
-            }
+        if let Self::Ok(value) = self
+            && let Ok(info) = value.deserialize::<ServiceInfo>()
+        {
+            info.update_context(ctx);
         }
     }
 }

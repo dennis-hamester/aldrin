@@ -115,10 +115,10 @@ impl IntrospectionEntry {
     }
 
     fn remove_conn(&mut self, conn_id: &ConnectionId) -> bool {
-        if let Some(ref queried) = self.queried {
-            if queried.conn_id == *conn_id {
-                self.queried = None;
-            }
+        if let Some(ref queried) = self.queried
+            && (queried.conn_id == *conn_id)
+        {
+            self.queried = None;
         }
 
         self.pending.retain(|pending| pending.conn_id != *conn_id);
