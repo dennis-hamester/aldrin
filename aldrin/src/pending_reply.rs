@@ -2,7 +2,6 @@ use crate::{low_level, Error, Reply};
 use aldrin_core::tags::PrimaryTag;
 use aldrin_core::{Deserialize, DeserializePrimary};
 use std::fmt;
-use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};

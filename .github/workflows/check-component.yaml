@@ -9,7 +9,7 @@ on:
 
 env:
   CARGO_INCREMENTAL: 0
-  RUSTFLAGS: -D warnings -A unknown-lints
+  RUSTFLAGS: -D warnings
 
 jobs:
   check-component:
@@ -21,7 +21,7 @@ jobs:
         rust:
           - stable
           - beta
-          - 1.71.1
+          - 1.92.0
 
     steps:
       - name: Checkout

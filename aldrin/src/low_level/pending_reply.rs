@@ -2,7 +2,6 @@ use super::Reply;
 use crate::Error;
 use aldrin_core::message::CallFunctionResult;
 use futures_channel::oneshot::Receiver;
-use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;

@@ -1,8 +1,7 @@
 use crate::handle::CloseChannelEndFuture;
 use crate::{Error, Handle};
 use aldrin_core::{ChannelCookie, ChannelEnd, SerializedValue};
-use std::future::{self, Future};
-use std::mem;
+use std::{future, mem};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 

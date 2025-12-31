@@ -36,7 +36,6 @@ use request::{
     StopBusListenerRequest, SubscribeAllEventsRequest, SubscribeEventRequest,
     UnsubscribeAllEventsRequest, UnsubscribeEventRequest,
 };
-use std::future::Future;
 use std::hash::Hash;
 use std::num::NonZeroU32;
 use std::pin::Pin;

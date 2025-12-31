@@ -13,7 +13,7 @@ use aldrin_core::{
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_core::future::FusedFuture;
 use futures_core::stream::Stream;
-use std::future::{self, Future};
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
