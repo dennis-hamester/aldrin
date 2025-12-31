@@ -4,7 +4,7 @@ use aldrin_core::tags::Tag;
 use aldrin_core::{Serialize, SerializePrimary, SerializedValue, ServiceId};
 use futures_channel::oneshot::Receiver;
 use futures_core::FusedFuture;
-use std::future::{self, Future};
+use std::future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;

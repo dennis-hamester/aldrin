@@ -1,4 +1,3 @@
-use std::future::Future;
 use std::time::Duration;
 use tokio::time::{self, Instant, Timeout};
 

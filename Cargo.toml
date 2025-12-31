@@ -17,7 +17,7 @@ members = [
     "parser",
     "test",
 ]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["Aldrin Contributors"]
@@ -25,7 +25,7 @@ categories = [
     "asynchronous",
     "network-programming",
 ]
-edition = "2021"
+edition = "2024"
 keywords = [
     "async",
     "network",
@@ -34,7 +34,7 @@ keywords = [
 ]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dennis-hamester/aldrin"
-rust-version = "1.71.1"
+rust-version = "1.92.0"
 
 [workspace.lints.rust]
 redundant_imports = "deny"

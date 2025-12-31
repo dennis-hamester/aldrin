@@ -2,7 +2,6 @@ mod buffered;
 
 use crate::message::Message;
 use pin_project_lite::pin_project;
-use std::future::Future;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use std::task::{Context, Poll};

@@ -15,7 +15,6 @@ use aldrin_core::{
 };
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
-use std::future::Future;
 use std::mem;
 use std::time::Duration;
 use tokio::time;
