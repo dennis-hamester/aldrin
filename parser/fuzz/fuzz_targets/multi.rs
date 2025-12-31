@@ -3,7 +3,7 @@
 mod diag;
 
 use aldrin_parser::{Formatter, MemoryResolver, Parser};
-use libfuzzer_sys::{fuzz_target, Corpus};
+use libfuzzer_sys::{Corpus, fuzz_target};
 use std::collections::HashMap;
 
 fuzz_target!(|schemas: HashMap<String, String>| -> Corpus {

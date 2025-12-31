@@ -23,10 +23,9 @@ use aldrin_broker::core::message::{
     UnsubscribeEvent, UnsubscribeService,
 };
 use aldrin_broker::core::{
-    adapters, BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope,
-    BusListenerServiceFilter, ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie,
-    ObjectId, ObjectUuid, SerializedValue, ServiceCookie, ServiceId, ServiceInfo, ServiceUuid,
-    TypeId,
+    BusEvent, BusListenerCookie, BusListenerFilter, BusListenerScope, BusListenerServiceFilter,
+    ChannelCookie, ChannelEnd, ChannelEndWithCapacity, ObjectCookie, ObjectId, ObjectUuid,
+    SerializedValue, ServiceCookie, ServiceId, ServiceInfo, ServiceUuid, TypeId, adapters,
 };
 use arbitrary::Arbitrary;
 use std::collections::HashSet;
