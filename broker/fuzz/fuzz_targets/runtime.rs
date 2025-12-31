@@ -3,8 +3,8 @@ use aldrin_broker::core::message::Message as ProtoMessage;
 use aldrin_broker::core::transport::AsyncTransport;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::task::{Context, Poll, Wake, Waker};
 
 pub struct Runtime {

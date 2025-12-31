@@ -1,6 +1,6 @@
 #![no_main]
 
-use aldrin_core::{tags, Deserialize, DeserializeError, Deserializer, SerializedValue};
+use aldrin_core::{Deserialize, DeserializeError, Deserializer, SerializedValue, tags};
 use libfuzzer_sys::fuzz_target;
 
 struct Skip;
