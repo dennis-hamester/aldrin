@@ -49,7 +49,7 @@ impl Renderer {
 
         if unicode {
             inner = inner.decor_style(DecorStyle::Unicode);
-        };
+        }
 
         inner = inner.term_width(term_width);
 

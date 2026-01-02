@@ -4,6 +4,7 @@ use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::borrow::Borrow;
 use std::ops::Deref;
+use std::ptr;
 
 /// Wrapper for `Vec<u8>` to enable `Serialize` and `Deserialize` specializations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -151,7 +152,8 @@ pub struct ByteSlice(pub [u8]);
 
 impl ByteSlice {
     pub fn new<T: AsRef<[u8]> + ?Sized>(bytes: &T) -> &Self {
-        let self_ptr = bytes.as_ref() as *const [u8] as *const Self;
+        let self_ptr = ptr::from_ref(bytes.as_ref()) as *const Self;
+
         // Safe because of repr(transparent).
         unsafe { &*self_ptr }
     }

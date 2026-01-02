@@ -135,14 +135,11 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_string(self, value: &str) -> Result<(), SerializeError> {
-        if value.len() <= u32::MAX as usize {
-            self.buf.put_discriminant_u8(ValueKind::String);
-            self.buf.put_varint_u32_le(value.len() as u32);
-            self.buf.put_slice(value.as_bytes());
-            Ok(())
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        let len = u32::try_from(value.len()).map_err(|_| SerializeError::Overflow)?;
+        self.buf.put_discriminant_u8(ValueKind::String);
+        self.buf.put_varint_u32_le(len);
+        self.buf.put_slice(value.as_bytes());
+        Ok(())
     }
 
     pub fn serialize_uuid(self, value: Uuid) -> Result<(), SerializeError> {
@@ -189,7 +186,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_vec2(self) -> Result<Vec2Serializer<'a>, SerializeError> {
-        Vec2Serializer::new(self.buf, self.depth)
+        Ok(Vec2Serializer::new(self.buf, self.depth))
     }
 
     pub fn serialize_vec2_iter<T, U>(self, vec: U) -> Result<(), SerializeError>
@@ -221,7 +218,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_bytes2(self) -> Result<Bytes2Serializer<'a>, SerializeError> {
-        Bytes2Serializer::new(self.buf)
+        Ok(Bytes2Serializer::new(self.buf))
     }
 
     pub fn serialize_byte_slice2(self, bytes: &[u8]) -> Result<(), SerializeError> {
@@ -257,7 +254,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_map2<K: KeyTag>(self) -> Result<Map2Serializer<'a, K>, SerializeError> {
-        Map2Serializer::new(self.buf, self.depth)
+        Ok(Map2Serializer::new(self.buf, self.depth))
     }
 
     pub fn serialize_map2_iter<K, L, T, U, I>(self, map: I) -> Result<(), SerializeError>
@@ -302,7 +299,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_set2<K: KeyTag>(self) -> Result<Set2Serializer<'a, K>, SerializeError> {
-        Set2Serializer::new(self.buf)
+        Ok(Set2Serializer::new(self.buf))
     }
 
     pub fn serialize_set2_iter<K, T>(self, set: T) -> Result<(), SerializeError>
@@ -340,7 +337,7 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_struct2(self) -> Result<Struct2Serializer<'a>, SerializeError> {
-        Struct2Serializer::new(self.buf, self.depth)
+        Ok(Struct2Serializer::new(self.buf, self.depth))
     }
 
     pub fn serialize_struct2_with_unknown_fields(

@@ -81,8 +81,7 @@ impl ConnectionState {
             || self
                 .events
                 .get(&svc_cookie)
-                .map(|s| s.contains(&event))
-                .unwrap_or(false)
+                .is_some_and(|s| s.contains(&event))
     }
 
     pub(crate) fn subscribe_all_events(&mut self, svc_cookie: ServiceCookie) {

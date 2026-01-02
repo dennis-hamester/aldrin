@@ -45,8 +45,7 @@ impl BrokerSubscriptions {
     pub(crate) fn emit(&self, service: ServiceCookie, event: u32) -> bool {
         self.entries
             .get(&service)
-            .map(|entry| entry.emit(event))
-            .unwrap_or(false)
+            .is_some_and(|entry| entry.emit(event))
     }
 
     pub(crate) fn remove_service(&mut self, service: ServiceCookie) {

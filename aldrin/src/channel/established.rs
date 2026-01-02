@@ -128,7 +128,7 @@ impl<T> Sender<T> {
     /// # }
     /// ```
     pub async fn receiver_closed(&mut self) {
-        self.inner.receiver_closed().await
+        self.inner.receiver_closed().await;
     }
 
     /// Polls the channel for capacity to send at least one item.

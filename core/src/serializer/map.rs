@@ -19,19 +19,17 @@ impl<'a, K: KeyTag> Map1Serializer<'a, K> {
         num_elems: usize,
         depth: u8,
     ) -> Result<Self, SerializeError> {
-        if num_elems <= u32::MAX as usize {
-            buf.put_discriminant_u8(K::Impl::VALUE_KIND_MAP1);
-            buf.put_varint_u32_le(num_elems as u32);
+        let num_elems = u32::try_from(num_elems).map_err(|_| SerializeError::Overflow)?;
 
-            Ok(Self {
-                buf,
-                num_elems: num_elems as u32,
-                depth,
-                _key: PhantomData,
-            })
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        buf.put_discriminant_u8(K::Impl::VALUE_KIND_MAP1);
+        buf.put_varint_u32_le(num_elems);
+
+        Ok(Self {
+            buf,
+            num_elems,
+            depth,
+            _key: PhantomData,
+        })
     }
 
     pub fn remaining_elements(&self) -> usize {
@@ -89,14 +87,14 @@ pub struct Map2Serializer<'a, K> {
 }
 
 impl<'a, K: KeyTag> Map2Serializer<'a, K> {
-    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Result<Self, SerializeError> {
+    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Self {
         buf.put_discriminant_u8(K::Impl::VALUE_KIND_MAP2);
 
-        Ok(Self {
+        Self {
             buf,
             depth,
             _key: PhantomData,
-        })
+        }
     }
 
     pub fn serialize<T: Tag>(

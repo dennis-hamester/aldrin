@@ -114,6 +114,7 @@ async fn connect1_accept() {
     acceptor.serialize_reply_data(1u32).unwrap();
     let _ = acceptor.accept(&mut handle).await.unwrap();
 
+    #[expect(clippy::wildcard_enum_match_arm)]
     let value = match t1.receive().await.unwrap() {
         Message::ConnectReply(ConnectReply::Ok(value)) => value,
         msg => panic!("invalid msg received {msg:?}"),
@@ -150,6 +151,7 @@ async fn begin_connect_2_accept() {
     acceptor.serialize_reply_data(1u32).unwrap();
     let _ = acceptor.accept(&mut handle).await.unwrap();
 
+    #[expect(clippy::wildcard_enum_match_arm)]
     let msg = match t1.receive().await.unwrap() {
         Message::ConnectReply2(msg) => msg,
         msg => panic!("invalid msg received {msg:?}"),
@@ -187,6 +189,7 @@ async fn connect1_reject() {
     acceptor.serialize_reply_data(1u32).unwrap();
     acceptor.reject().await.unwrap();
 
+    #[expect(clippy::wildcard_enum_match_arm)]
     let value = match t1.receive().await.unwrap() {
         Message::ConnectReply(ConnectReply::Rejected(value)) => value,
         msg => panic!("invalid msg received {msg:?}"),
@@ -223,6 +226,7 @@ async fn begin_connect_2_reject() {
     acceptor.serialize_reply_data(1u32).unwrap();
     acceptor.reject().await.unwrap();
 
+    #[expect(clippy::wildcard_enum_match_arm)]
     let msg = match t1.receive().await.unwrap() {
         Message::ConnectReply2(msg) => msg,
         msg => panic!("invalid msg received {msg:?}"),

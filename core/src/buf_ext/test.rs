@@ -63,43 +63,43 @@ fn put_varint_i16_le() {
 #[test]
 fn put_varint_u32_le() {
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x00000000);
+    buf.put_varint_u32_le(0x0000_0000);
     assert_eq!(*buf, [0x00]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x000000fb);
+    buf.put_varint_u32_le(0x0000_00fb);
     assert_eq!(*buf, [0xfb]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x000000fc);
+    buf.put_varint_u32_le(0x0000_00fc);
     assert_eq!(*buf, [252, 0xfc]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x000000ff);
+    buf.put_varint_u32_le(0x0000_00ff);
     assert_eq!(*buf, [252, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x00000100);
+    buf.put_varint_u32_le(0x0000_0100);
     assert_eq!(*buf, [253, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x0000ffff);
+    buf.put_varint_u32_le(0x0000_ffff);
     assert_eq!(*buf, [253, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x00010000);
+    buf.put_varint_u32_le(0x0001_0000);
     assert_eq!(*buf, [254, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x00ffffff);
+    buf.put_varint_u32_le(0x00ff_ffff);
     assert_eq!(*buf, [254, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0x01000000);
+    buf.put_varint_u32_le(0x0100_0000);
     assert_eq!(*buf, [255, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u32_le(0xffffffff);
+    buf.put_varint_u32_le(0xffff_ffff);
     assert_eq!(*buf, [255, 0xff, 0xff, 0xff, 0xff]);
 }
 
@@ -129,75 +129,75 @@ fn put_varint_i32_le() {
 #[test]
 fn try_put_varint_u64_le() {
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000000000000);
+    buf.put_varint_u64_le(0x0000_0000_0000_0000);
     assert_eq!(*buf, [0x00]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x00000000000000f7);
+    buf.put_varint_u64_le(0x0000_0000_0000_00f7);
     assert_eq!(*buf, [0xf7]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x00000000000000f8);
+    buf.put_varint_u64_le(0x0000_0000_0000_00f8);
     assert_eq!(*buf, [248, 0xf8]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x00000000000000ff);
+    buf.put_varint_u64_le(0x0000_0000_0000_00ff);
     assert_eq!(*buf, [248, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000000000100);
+    buf.put_varint_u64_le(0x0000_0000_0000_0100);
     assert_eq!(*buf, [249, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x000000000000ffff);
+    buf.put_varint_u64_le(0x0000_0000_0000_ffff);
     assert_eq!(*buf, [249, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000000010000);
+    buf.put_varint_u64_le(0x0000_0000_0001_0000);
     assert_eq!(*buf, [250, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000000ffffff);
+    buf.put_varint_u64_le(0x0000_0000_00ff_ffff);
     assert_eq!(*buf, [250, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000001000000);
+    buf.put_varint_u64_le(0x0000_0000_0100_0000);
     assert_eq!(*buf, [251, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x00000000ffffffff);
+    buf.put_varint_u64_le(0x0000_0000_ffff_ffff);
     assert_eq!(*buf, [251, 0xff, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000000100000000);
+    buf.put_varint_u64_le(0x0000_0001_0000_0000);
     assert_eq!(*buf, [252, 0x00, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x000000ffffffffff);
+    buf.put_varint_u64_le(0x0000_00ff_ffff_ffff);
     assert_eq!(*buf, [252, 0xff, 0xff, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000010000000000);
+    buf.put_varint_u64_le(0x0000_0100_0000_0000);
     assert_eq!(*buf, [253, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0000ffffffffffff);
+    buf.put_varint_u64_le(0x0000_ffff_ffff_ffff);
     assert_eq!(*buf, [253, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0001000000000000);
+    buf.put_varint_u64_le(0x0001_0000_0000_0000);
     assert_eq!(*buf, [254, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x00ffffffffffffff);
+    buf.put_varint_u64_le(0x00ff_ffff_ffff_ffff);
     assert_eq!(*buf, [254, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0x0100000000000000);
+    buf.put_varint_u64_le(0x0100_0000_0000_0000);
     assert_eq!(*buf, [255, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]);
 
     let mut buf = BytesMut::new();
-    buf.put_varint_u64_le(0xffffffffffffffff);
+    buf.put_varint_u64_le(0xffff_ffff_ffff_ffff);
     assert_eq!(*buf, [255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
 }
 
@@ -314,7 +314,7 @@ fn value_try_get_u32_le() {
     use bytes::Buf;
 
     let mut buf = &[0x78, 0x56, 0x34, 0x12][..];
-    assert_eq!(buf.try_get_u32_le(), Ok(0x12345678));
+    assert_eq!(buf.try_get_u32_le(), Ok(0x1234_5678));
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0][..];
@@ -326,7 +326,7 @@ fn value_try_get_u64_le() {
     use bytes::Buf;
 
     let mut buf = &[0xf0, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12][..];
-    assert_eq!(buf.try_get_u64_le(), Ok(0x123456789abcdef0));
+    assert_eq!(buf.try_get_u64_le(), Ok(0x1234_5678_9abc_def0));
     assert_eq!(*buf, []);
 
     let mut buf = &[0, 0, 0, 0, 0, 0, 0][..];
@@ -388,43 +388,43 @@ fn value_try_get_varint_u32_le() {
     use super::ValueBufExt;
 
     let mut buf = &[0x00][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00000000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[0xfb][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000fb));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00fb));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0xfc][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000fc));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00fc));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000ff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00ff));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00000100));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_0100));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000ffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00010000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0001_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00ffffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00ff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x01000000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0100_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0xffffffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0xffff_ffff));
     assert_eq!(*buf, []);
 }
 
@@ -458,75 +458,75 @@ fn value_try_get_varint_u64_le() {
     use super::ValueBufExt;
 
     let mut buf = &[0x00][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000000000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[0xf7][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00000000000000f7));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_00f7));
     assert_eq!(*buf, []);
 
     let mut buf = &[248, 0xf8][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00000000000000f8));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_00f8));
     assert_eq!(*buf, []);
 
     let mut buf = &[248, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00000000000000ff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_00ff));
     assert_eq!(*buf, []);
 
     let mut buf = &[249, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000000000100));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_0100));
     assert_eq!(*buf, []);
 
     let mut buf = &[249, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x000000000000ffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0000_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[250, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000000010000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0001_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[250, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000000ffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_00ff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[251, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000001000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_0100_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[251, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00000000ffffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0000_ffff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0x00, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000000100000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0001_0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0xff, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x000000ffffffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_00ff_ffff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000010000000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_0100_0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000ffffffffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0000_ffff_ffff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0001000000000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0001_0000_0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00ffffffffffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x00ff_ffff_ffff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0100000000000000));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0x0100_0000_0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u64_le(), Ok(0xffffffffffffffff));
+    assert_eq!(buf.try_get_varint_u64_le(), Ok(0xffff_ffff_ffff_ffff));
     assert_eq!(*buf, []);
 }
 
@@ -658,43 +658,43 @@ fn message_try_get_varint_u32_le() {
     use super::MessageBufExt;
 
     let mut buf = &[0x00][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00000000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[0xfb][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000fb));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00fb));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0xfc][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000fc));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00fc));
     assert_eq!(*buf, []);
 
     let mut buf = &[252, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x000000ff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_00ff));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00000100));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_0100));
     assert_eq!(*buf, []);
 
     let mut buf = &[253, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000ffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0000_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00010000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0001_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[254, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00ffffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x00ff_ffff));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0x00, 0x00, 0x00, 0x01][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x01000000));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0x0100_0000));
     assert_eq!(*buf, []);
 
     let mut buf = &[255, 0xff, 0xff, 0xff, 0xff][..];
-    assert_eq!(buf.try_get_varint_u32_le(), Ok(0xffffffff));
+    assert_eq!(buf.try_get_varint_u32_le(), Ok(0xffff_ffff));
     assert_eq!(*buf, []);
 }
 

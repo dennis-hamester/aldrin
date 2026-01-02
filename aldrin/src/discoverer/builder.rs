@@ -53,6 +53,7 @@ where
     ///
     /// When specifying an [`ObjectUuid`], the discoverer will match only on that UUID. Otherwise,
     /// the discoverer will emit events for every object that matches the set of services.
+    #[must_use]
     pub fn add(
         mut self,
         key: Key,
@@ -71,6 +72,7 @@ where
     /// Registers interest in a specific object implementing a set of services.
     ///
     /// This is a shorthand for calling `add(key, Some(object), services)`.
+    #[must_use]
     pub fn object_with_services<S>(
         self,
         key: Key,
@@ -91,6 +93,7 @@ where
     /// Registers interest in a specific object without any services.
     ///
     /// This is a shorthand for calling `add(key, Some(object), [])`.
+    #[must_use]
     pub fn bare_object(self, key: Key, object: impl Into<ObjectUuid>) -> Self {
         self.add(key, Some(object.into()), None)
     }
@@ -98,6 +101,7 @@ where
     /// Registers interest in a any object implementing a set of services.
     ///
     /// This is a shorthand for calling `add(key, None, services)`.
+    #[must_use]
     pub fn any_object_with_services<S>(self, key: Key, services: S) -> Self
     where
         S: IntoIterator,

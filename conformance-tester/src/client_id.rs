@@ -23,7 +23,7 @@ impl Hash for ClientId {
     where
         H: Hasher,
     {
-        self.get().hash(state)
+        self.get().hash(state);
     }
 }
 

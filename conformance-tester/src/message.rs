@@ -65,7 +65,7 @@ mod unsubscribe_service;
 
 use crate::context::Context;
 use crate::uuid_ref::UuidRef;
-use aldrin_core::message::Message as ProtoMessage;
+use aldrin_core::message::{self, Message as ProtoMessage};
 use aldrin_core::{ServiceInfo as CoreServiceInfo, TypeId};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -208,7 +208,7 @@ impl Message {
         match self {
             Self::Connect(msg) => msg.to_core(ctx).map(ProtoMessage::Connect),
             Self::ConnectReply(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply),
-            Self::Shutdown(msg) => msg.to_core(ctx).map(ProtoMessage::Shutdown),
+            Self::Shutdown(_) => Ok(ProtoMessage::Shutdown(message::Shutdown)),
             Self::CreateObject(msg) => msg.to_core(ctx).map(ProtoMessage::CreateObject),
             Self::CreateObjectReply(msg) => msg.to_core(ctx).map(ProtoMessage::CreateObjectReply),
             Self::DestroyObject(msg) => msg.to_core(ctx).map(ProtoMessage::DestroyObject),
@@ -281,7 +281,7 @@ impl Message {
                 .to_core(ctx)
                 .map(ProtoMessage::BusListenerCurrentFinished),
             Self::Connect2(msg) => msg.to_core(ctx).map(ProtoMessage::Connect2),
-            Self::ConnectReply2(msg) => msg.to_core(ctx).map(ProtoMessage::ConnectReply2),
+            Self::ConnectReply2(msg) => Ok(ProtoMessage::ConnectReply2(msg.to_core(ctx))),
             Self::AbortFunctionCall(msg) => msg.to_core(ctx).map(ProtoMessage::AbortFunctionCall),
             Self::RegisterIntrospection(msg) => {
                 msg.to_core(ctx).map(ProtoMessage::RegisterIntrospection)
@@ -316,9 +316,9 @@ impl Message {
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         match (self, other) {
-            (Self::Connect(msg), Self::Connect(other)) => msg.matches(other, ctx),
-            (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.matches(other, ctx),
-            (Self::Shutdown(msg), Self::Shutdown(other)) => msg.matches(other, ctx),
+            (Self::Connect(msg), Self::Connect(other)) => Ok(msg.matches(*other, ctx)),
+            (Self::ConnectReply(msg), Self::ConnectReply(other)) => Ok(msg.matches(other, ctx)),
+            (Self::Shutdown(_), Self::Shutdown(_)) => Ok(true),
             (Self::CreateObject(msg), Self::CreateObject(other)) => msg.matches(other, ctx),
             (Self::CreateObjectReply(msg), Self::CreateObjectReply(other)) => {
                 msg.matches(other, ctx)
@@ -408,13 +408,13 @@ impl Message {
             (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
                 msg.matches(other, ctx)
             }
-            (Self::Connect2(msg), Self::Connect2(other)) => msg.matches(other, ctx),
-            (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => msg.matches(other, ctx),
+            (Self::Connect2(msg), Self::Connect2(other)) => Ok(msg.matches(*other, ctx)),
+            (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => Ok(msg.matches(other, ctx)),
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
                 msg.matches(other, ctx)
             }
             (Self::RegisterIntrospection(msg), Self::RegisterIntrospection(other)) => {
-                msg.matches(other, ctx)
+                Ok(msg.matches(other, ctx))
             }
             (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
                 msg.matches(other, ctx)
@@ -453,9 +453,13 @@ impl Message {
 
     pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         match (self, other) {
-            (Self::Connect(msg), Self::Connect(other)) => msg.update_context(other, ctx),
-            (Self::ConnectReply(msg), Self::ConnectReply(other)) => msg.update_context(other, ctx),
-            (Self::Shutdown(msg), Self::Shutdown(other)) => msg.update_context(other, ctx),
+            (Self::Connect(_), Self::Connect(_))
+            | (Self::ConnectReply(_), Self::ConnectReply(_))
+            | (Self::Shutdown(_), Self::Shutdown(_))
+            | (Self::Connect2(_), Self::Connect2(_))
+            | (Self::ConnectReply2(_), Self::ConnectReply2(_))
+            | (Self::RegisterIntrospection(_), Self::RegisterIntrospection(_)) => Ok(()),
+
             (Self::CreateObject(msg), Self::CreateObject(other)) => msg.update_context(other, ctx),
             (Self::CreateObjectReply(msg), Self::CreateObjectReply(other)) => {
                 msg.update_context(other, ctx)
@@ -569,14 +573,7 @@ impl Message {
             (Self::BusListenerCurrentFinished(msg), Self::BusListenerCurrentFinished(other)) => {
                 msg.update_context(other, ctx)
             }
-            (Self::Connect2(msg), Self::Connect2(other)) => msg.update_context(other, ctx),
-            (Self::ConnectReply2(msg), Self::ConnectReply2(other)) => {
-                msg.update_context(other, ctx)
-            }
             (Self::AbortFunctionCall(msg), Self::AbortFunctionCall(other)) => {
-                msg.update_context(other, ctx)
-            }
-            (Self::RegisterIntrospection(msg), Self::RegisterIntrospection(other)) => {
                 msg.update_context(other, ctx)
             }
             (Self::QueryIntrospection(msg), Self::QueryIntrospection(other)) => {
@@ -624,9 +621,9 @@ impl Message {
 
     pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         match self {
-            Self::Connect(msg) => msg.apply_context(ctx).map(Self::Connect),
-            Self::ConnectReply(msg) => msg.apply_context(ctx).map(Self::ConnectReply),
-            Self::Shutdown(msg) => msg.apply_context(ctx).map(Self::Shutdown),
+            Self::Connect(msg) => Ok(Self::Connect(msg.apply_context(ctx))),
+            Self::ConnectReply(msg) => Ok(Self::ConnectReply(msg.apply_context(ctx))),
+            Self::Shutdown(_) => Ok(Self::Shutdown(Shutdown)),
             Self::CreateObject(msg) => msg.apply_context(ctx).map(Self::CreateObject),
             Self::CreateObjectReply(msg) => msg.apply_context(ctx).map(Self::CreateObjectReply),
             Self::DestroyObject(msg) => msg.apply_context(ctx).map(Self::DestroyObject),
@@ -692,11 +689,11 @@ impl Message {
             Self::BusListenerCurrentFinished(msg) => {
                 msg.apply_context(ctx).map(Self::BusListenerCurrentFinished)
             }
-            Self::Connect2(msg) => msg.apply_context(ctx).map(Self::Connect2),
-            Self::ConnectReply2(msg) => msg.apply_context(ctx).map(Self::ConnectReply2),
+            Self::Connect2(msg) => Ok(Self::Connect2(msg.apply_context(ctx))),
+            Self::ConnectReply2(msg) => Ok(Self::ConnectReply2(msg.apply_context(ctx))),
             Self::AbortFunctionCall(msg) => msg.apply_context(ctx).map(Self::AbortFunctionCall),
             Self::RegisterIntrospection(msg) => {
-                msg.apply_context(ctx).map(Self::RegisterIntrospection)
+                Ok(Self::RegisterIntrospection(msg.apply_context(ctx)))
             }
             Self::QueryIntrospection(msg) => msg.apply_context(ctx).map(Self::QueryIntrospection),
             Self::QueryIntrospectionReply(msg) => {

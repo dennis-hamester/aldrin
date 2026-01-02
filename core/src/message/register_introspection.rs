@@ -62,9 +62,8 @@ mod test {
             0x85, 0x0d, 0xa2, 0x97, 0xdc, 0xc2, 0xfe, 0xcb, 0,
         ];
 
-        let value = HashSet::<_>::from_iter(iter::once(TypeId(uuid!(
-            "026c3142-530b-4d65-850d-a297dcc2fecb"
-        ))));
+        let value = iter::once(TypeId(uuid!("026c3142-530b-4d65-850d-a297dcc2fecb")))
+            .collect::<HashSet<_>>();
 
         let msg = RegisterIntrospection {
             value: SerializedValue::serialize(&value).unwrap(),

@@ -7,7 +7,7 @@ use bytes::{Buf, BufMut, Bytes};
 
 pub(crate) trait BufMutExt: BufMut {
     fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
-        self.put_u8(discriminant.into())
+        self.put_u8(discriminant.into());
     }
 
     fn put_varint_u16_le(&mut self, n: u16) {
@@ -204,25 +204,25 @@ pub(crate) trait MessageBufExt: Buf {
 impl<T: Buf + ?Sized> MessageBufExt for T {}
 
 fn zigzag_encode_i16(n: i16) -> u16 {
-    (n >> 15) as u16 ^ (n << 1) as u16
+    (n >> 15).cast_unsigned() ^ (n << 1).cast_unsigned()
 }
 
 fn zigzag_decode_i16(n: u16) -> i16 {
-    (n >> 1) as i16 ^ -((n & 1) as i16)
+    (n >> 1).cast_signed() ^ -((n & 1).cast_signed())
 }
 
 fn zigzag_encode_i32(n: i32) -> u32 {
-    (n >> 31) as u32 ^ (n << 1) as u32
+    (n >> 31).cast_unsigned() ^ (n << 1).cast_unsigned()
 }
 
 fn zigzag_decode_i32(n: u32) -> i32 {
-    (n >> 1) as i32 ^ -((n & 1) as i32)
+    (n >> 1).cast_signed() ^ -((n & 1).cast_signed())
 }
 
 fn zigzag_encode_i64(n: i64) -> u64 {
-    (n >> 63) as u64 ^ (n << 1) as u64
+    (n >> 63).cast_unsigned() ^ (n << 1).cast_unsigned()
 }
 
 fn zigzag_decode_i64(n: u64) -> i64 {
-    (n >> 1) as i64 ^ -((n & 1) as i64)
+    (n >> 1).cast_signed() ^ -((n & 1).cast_signed())
 }

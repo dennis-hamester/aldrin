@@ -187,7 +187,7 @@ impl Promise {
 
     /// Resolves if the call was aborted by the caller.
     pub async fn aborted(&mut self) {
-        future::poll_fn(|cx| self.poll_aborted(cx)).await
+        future::poll_fn(|cx| self.poll_aborted(cx)).await;
     }
 }
 

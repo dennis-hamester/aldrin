@@ -4,6 +4,7 @@ use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::collections::{LinkedList, VecDeque};
 use std::mem::MaybeUninit;
+use std::ptr;
 
 macro_rules! impl_vec {
     { $ty:ident } => {
@@ -106,10 +107,7 @@ where
 impl<T: Tag, U: Deserialize<T>, const N: usize> Deserialize<tags::Vec<T>> for [U; N] {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_vec()?;
-
-        // SAFETY: This creates an array of MaybeUninit<U>, which doesn't require initialization.
-        let mut arr: [MaybeUninit<U>; N] = unsafe { MaybeUninit::uninit().assume_init() };
-
+        let mut arr = [const { MaybeUninit::<U>::uninit() }; N];
         let mut num = 0;
         let mut err = None;
 
@@ -135,22 +133,21 @@ impl<T: Tag, U: Deserialize<T>, const N: usize> Deserialize<tags::Vec<T>> for [U
         // err is Some, iff num < N. And when that's the case, num is the number of elements in arr
         // that have ben initialized.
         if let Some(err) = err {
-            for elem in &mut arr[..num] {
-                // SAFETY: The first num elements have been initialized.
-                unsafe {
-                    elem.assume_init_drop();
-                }
-            }
-
+            let to_drop = ptr::from_mut(&mut arr[..num]) as *mut [U];
+            unsafe { ptr::drop_in_place(to_drop) }
             return Err(err);
         }
 
         // SAFETY: Exactly num elements have been initialized and num equals N.
         //
-        // It's currently impossible to transmute [MaybeUninit<U>; N] to [U; N] when U is a generic
-        // or N a const generic. See https://github.com/rust-lang/rust/issues/61956.
+        // This is a convoluted transmute. Use MaybeUninit::array_assume_init() when
+        // it's stable: https://github.com/rust-lang/rust/issues/96097
         let value = unsafe {
-            (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[U; N]>)).assume_init_read()
+            let arr = MaybeUninit::new(arr);
+            let arr = ptr::from_ref(&arr).cast::<MaybeUninit<[U; N]>>();
+            let arr = &*arr;
+
+            arr.assume_init_read()
         };
 
         deserializer.finish(value)

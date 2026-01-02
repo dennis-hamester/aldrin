@@ -28,6 +28,7 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
     pub async fn new(transport: T) -> Result<Self, AcceptError<T::Error>> {
         let mut transport = transport.buffered();
 
+        #[expect(clippy::wildcard_enum_match_arm)]
         let (connect2, data, version) =
             match transport.receive().await.map_err(AcceptError::Transport)? {
                 Message::Connect(msg) => {
@@ -140,8 +141,7 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
             let user_data = self
                 .reply_data
                 .user
-                .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(()))?;
+                .map_or_else(|| SerializedValue::serialize(()), Ok)?;
 
             let msg = ConnectReply::Ok(user_data);
             send(&mut self.transport, msg, self.version).await?;
@@ -166,8 +166,7 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
             let user_data = self
                 .reply_data
                 .user
-                .map(Ok)
-                .unwrap_or_else(|| SerializedValue::serialize(()))?;
+                .map_or_else(|| SerializedValue::serialize(()), Ok)?;
 
             let msg = ConnectReply::Rejected(user_data);
             send(self.transport, msg, self.version).await

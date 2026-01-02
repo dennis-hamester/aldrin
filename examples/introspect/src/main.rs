@@ -67,9 +67,9 @@ async fn main() -> Result<()> {
 
         Command::Query { type_id, full } => {
             if full {
-                query_full(&handle, type_id).await?
+                query_full(&handle, type_id).await?;
             } else {
-                query(&handle, type_id).await?
+                query(&handle, type_id).await?;
             }
         }
     }
@@ -158,6 +158,7 @@ async fn query(bus: &Handle, type_id: TypeId) -> Result<()> {
 }
 
 #[cfg(not(feature = "introspection"))]
+#[expect(clippy::unused_async)]
 async fn query(_bus: &Handle, type_id: TypeId) -> Result<()> {
     println!("No introspection available for {type_id}.");
     Ok(())
@@ -203,6 +204,7 @@ async fn query_full(bus: &Handle, type_id: TypeId) -> Result<()> {
 }
 
 #[cfg(not(feature = "introspection"))]
+#[expect(clippy::unused_async)]
 async fn query_full(_bus: &Handle, type_id: TypeId) -> Result<()> {
     println!("No introspection available for {type_id}.");
     Ok(())

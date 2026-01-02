@@ -100,16 +100,19 @@ impl EnumIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn variant(mut self, variant: VariantIr) -> Self {
         self.variants.insert(variant.id(), variant);
         self
     }
 
+    #[must_use]
     pub fn fallback(mut self, fallback: EnumFallbackIr) -> Self {
         self.fallback = Some(fallback);
         self

@@ -604,7 +604,7 @@ pub fn service(svc: service::Service) -> TokenStream {
 #[manyhow::manyhow]
 #[proc_macro_derive(Tag, attributes(aldrin))]
 pub fn tag_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_tag_from_core(input)
+    derive::gen_tag_from_core(&input)
 }
 
 /// Derive macro for the `Tag` trait.
@@ -618,7 +618,7 @@ pub fn tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 #[manyhow::manyhow]
 #[proc_macro_derive(TagFromAldrin, attributes(aldrin))]
 pub fn tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_tag_from_aldrin(input)
+    derive::gen_tag_from_aldrin(&input)
 }
 
 /// Derive macro for the `PrimaryTag` trait.
@@ -631,7 +631,7 @@ pub fn tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 #[manyhow::manyhow]
 #[proc_macro_derive(PrimaryTag, attributes(aldrin))]
 pub fn primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_primary_tag_from_core(input)
+    derive::gen_primary_tag_from_core(&input)
 }
 
 /// Derive macro for the `PrimaryTag` trait.
@@ -645,7 +645,7 @@ pub fn primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 #[manyhow::manyhow]
 #[proc_macro_derive(PrimaryTagFromAldrin, attributes(aldrin))]
 pub fn primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
-    derive::gen_primary_tag_from_aldrin(input)
+    derive::gen_primary_tag_from_aldrin(&input)
 }
 
 /// Derive macro for ref types.

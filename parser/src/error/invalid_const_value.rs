@@ -43,6 +43,7 @@ impl Diagnostic for InvalidConstValue {
     }
 
     fn render(&self, renderer: &Renderer, parser: &Parser) -> String {
+        #[expect(clippy::cast_lossless, clippy::cast_possible_wrap)]
         let (kind, value, min, max) = match self.const_value {
             ConstValue::U8(ref v) => ("u8", v, u8::MIN as i64, u8::MAX as u64),
             ConstValue::I8(ref v) => ("i8", v, i8::MIN as i64, i8::MAX as u64),

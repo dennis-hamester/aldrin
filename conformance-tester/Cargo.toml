@@ -28,11 +28,6 @@ path = "../core"
 default-features = false
 features = ["tokio"]
 
-[dependencies.once_cell]
-version = "1.18.0"
-default-features = false
-features = ["std"]
-
 [dependencies.serde]
 workspace = true
 features = ["derive"]

@@ -105,7 +105,7 @@ impl PendingSender {
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
     pub async fn wait_established(&mut self) {
-        self.recv.wait().await
+        self.recv.wait().await;
     }
 
     /// Waits until the channel has been established and returns a [`Sender`].
@@ -250,7 +250,7 @@ impl PendingReceiver {
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
     pub async fn wait_established(&mut self) {
-        self.recv.wait().await
+        self.recv.wait().await;
     }
 
     /// Waits until the channel has been established and returns a [`Receiver`].
@@ -320,7 +320,7 @@ impl<T> OneshotReceiver<T> {
     }
 
     async fn wait(&mut self) {
-        future::poll_fn(|cx| self.poll(cx)).await
+        future::poll_fn(|cx| self.poll(cx)).await;
     }
 
     async fn wait_and_take(self) -> Result<T, oneshot::Canceled> {

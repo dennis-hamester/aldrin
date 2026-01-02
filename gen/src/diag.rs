@@ -24,7 +24,7 @@ pub(crate) fn print_diagnostics(parser: &Parser) {
     }
 }
 
-#[allow(single_use_lifetimes)]
+#[expect(single_use_lifetimes)]
 pub(crate) fn print_errors<'a>(parser: &Parser, errs: impl IntoIterator<Item = &'a Error>) {
     let renderer = Renderer::new(true, true, get_termwidth());
     let mut first = true;
@@ -41,8 +41,7 @@ fn get_termwidth() -> usize {
     const DEFAULT_TERMWIDTH: usize = 100;
 
     terminal_size::terminal_size()
-        .map(|(size, _)| size.0 as usize)
-        .unwrap_or(DEFAULT_TERMWIDTH)
+        .map_or(DEFAULT_TERMWIDTH, |(size, _)| size.0 as usize)
         .max(MIN_TERMWIDTH)
 }
 

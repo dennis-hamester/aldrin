@@ -17,6 +17,8 @@ impl TypeNameOrInline {
 
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
+
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::type_name => Self::TypeName(TypeName::parse(pair)),
             Rule::struct_inline => Self::Struct(InlineStruct::parse(pair)),

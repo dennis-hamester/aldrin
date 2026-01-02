@@ -28,7 +28,7 @@ impl DuplicateStructField {
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
                     struct_ident: ident.cloned(),
-                })
+                });
             },
         );
 

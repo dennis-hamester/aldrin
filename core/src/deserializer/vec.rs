@@ -12,9 +12,14 @@ pub enum VecDeserializer<'a, 'b> {
 
 impl<'a, 'b> VecDeserializer<'a, 'b> {
     pub(super) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match buf.try_get_discriminant_u8()? {
             ValueKind::Vec1 => Vec1Deserializer::new_without_value_kind(buf, depth).map(Self::V1),
-            ValueKind::Vec2 => Vec2Deserializer::new_without_value_kind(buf, depth).map(Self::V2),
+
+            ValueKind::Vec2 => Ok(Self::V2(Vec2Deserializer::new_without_value_kind(
+                buf, depth,
+            ))),
+
             _ => Err(DeserializeError::UnexpectedValue),
         }
     }
@@ -199,18 +204,15 @@ pub struct Vec2Deserializer<'a, 'b> {
 impl<'a, 'b> Vec2Deserializer<'a, 'b> {
     pub(super) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Vec2)?;
-        Self::new_without_value_kind(buf, depth)
+        Ok(Self::new_without_value_kind(buf, depth))
     }
 
-    pub(super) fn new_without_value_kind(
-        buf: &'a mut &'b [u8],
-        depth: u8,
-    ) -> Result<Self, DeserializeError> {
-        Ok(Self {
+    pub(super) fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Self {
+        Self {
             buf,
             empty: false,
             depth,
-        })
+        }
     }
 
     pub fn deserialize<T: Tag, U: Deserialize<T>>(
@@ -219,6 +221,7 @@ impl<'a, 'b> Vec2Deserializer<'a, 'b> {
         if self.empty {
             Ok(None)
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     self.empty = true;
@@ -250,6 +253,7 @@ impl<'a, 'b> Vec2Deserializer<'a, 'b> {
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
         if !self.empty {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => self.empty = true,
                 ValueKind::Some => Deserializer::new(self.buf, self.depth)?.skip()?,
@@ -279,6 +283,7 @@ impl<'a, 'b> Vec2Deserializer<'a, 'b> {
         if self.empty {
             f()
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => f(),
                 ValueKind::Some => Err(DeserializeError::MoreElementsRemain),

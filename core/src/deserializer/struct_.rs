@@ -11,14 +11,15 @@ pub enum StructDeserializer<'a, 'b> {
 
 impl<'a, 'b> StructDeserializer<'a, 'b> {
     pub(super) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match buf.try_get_discriminant_u8()? {
             ValueKind::Struct1 => {
                 Struct1Deserializer::new_without_value_kind(buf, depth).map(Self::V1)
             }
 
-            ValueKind::Struct2 => {
-                Struct2Deserializer::new_without_value_kind(buf, depth).map(Self::V2)
-            }
+            ValueKind::Struct2 => Ok(Self::V2(Struct2Deserializer::new_without_value_kind(
+                buf, depth,
+            ))),
 
             _ => Err(DeserializeError::UnexpectedValue),
         }
@@ -193,25 +194,23 @@ pub struct Struct2Deserializer<'a, 'b> {
 impl<'a, 'b> Struct2Deserializer<'a, 'b> {
     pub(super) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(ValueKind::Struct2)?;
-        Self::new_without_value_kind(buf, depth)
+        Ok(Self::new_without_value_kind(buf, depth))
     }
 
-    pub(super) fn new_without_value_kind(
-        buf: &'a mut &'b [u8],
-        depth: u8,
-    ) -> Result<Self, DeserializeError> {
-        Ok(Self {
+    pub(super) fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Self {
+        Self {
             buf,
             empty: false,
             depth,
             unknown_fields: UnknownFields::new(),
-        })
+        }
     }
 
     pub fn deserialize(&mut self) -> Result<Option<FieldDeserializer<'_, 'b>>, DeserializeError> {
         if self.empty {
             Ok(None)
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     self.empty = true;
@@ -261,6 +260,7 @@ impl<'a, 'b> Struct2Deserializer<'a, 'b> {
         if self.empty {
             f(self.unknown_fields)
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => f(self.unknown_fields),
                 ValueKind::Some => Err(DeserializeError::MoreElementsRemain),

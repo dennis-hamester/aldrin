@@ -54,7 +54,7 @@ impl<T: Introspectable, S> Introspectable for HashSet<T, S> {
     }
 
     fn add_references(references: &mut References) {
-        references.add::<T>()
+        references.add::<T>();
     }
 }
 
@@ -103,7 +103,7 @@ impl<T: Introspectable> Introspectable for BTreeSet<T> {
     }
 
     fn add_references(references: &mut References) {
-        references.add::<T>()
+        references.add::<T>();
     }
 }
 

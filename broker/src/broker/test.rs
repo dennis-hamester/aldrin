@@ -42,11 +42,18 @@ async fn disconnect_during_function_call() {
     call.into_promise().ok(()).unwrap();
     client1.join().await;
 
-    broker.join_idle().await
+    broker.join_idle().await;
 }
 
 #[tokio::test]
 async fn drop_conn_before_function_call() {
+    async fn select_first<F1: Future, F2: Future>(f1: F1, f2: F2) -> F1::Output {
+        match future::select(Box::pin(f1), Box::pin(f2)).await {
+            Either::Left((res, _)) => res,
+            Either::Right(_) => unreachable!(),
+        }
+    }
+
     let mut broker = TestBroker::new();
 
     // Setup client1 manually, such that we can drop its connection future (conn1_fut) at the right
@@ -61,13 +68,6 @@ async fn drop_conn_before_function_call() {
     let mut conn1_fut = Box::pin(conn1_fut.unwrap().run());
 
     let client2 = broker.add_client().await;
-
-    async fn select_first<F1: Future, F2: Future>(f1: F1, f2: F2) -> F1::Output {
-        match future::select(Box::pin(f1), Box::pin(f2)).await {
-            Either::Left((res, _)) => res,
-            Either::Right(_) => unreachable!(),
-        }
-    }
 
     let obj = client1.create_object(ObjectUuid::new_v4());
     let obj = select_first(obj, &mut conn1_fut).await.unwrap();
@@ -226,7 +226,7 @@ async fn send_item_without_capacity() {
         })),
     ) {
         panic!();
-    };
+    }
 
     if !matches!(
         client1.receive().await,
@@ -256,7 +256,7 @@ async fn send_item_without_capacity() {
         if cookie == cookie2
     ) {
         panic!();
-    };
+    }
 
     client2
         .send(Message::CloseChannelEnd(CloseChannelEnd {
@@ -275,7 +275,7 @@ async fn send_item_without_capacity() {
         }))
     ) {
         panic!();
-    };
+    }
 }
 
 #[tokio::test]

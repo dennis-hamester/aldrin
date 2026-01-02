@@ -36,7 +36,7 @@ mod conditional_introspection {
         aldrin::generate!("test/introspection.aldrin", introspection_if = "rust");
     }
 
-    #[allow(unexpected_cfgs)]
+    #[expect(unexpected_cfgs)]
     mod unavailable {
         aldrin::generate!("test/introspection.aldrin", introspection_if = "disabled");
     }
@@ -214,7 +214,7 @@ async fn before_derive_compat_struct() {
                     2 => {
                         f2 = deserializer
                             .deserialize::<tags::Option<tags::I32>, _>()
-                            .map(Some)?
+                            .map(Some)?;
                     }
 
                     3 => f3 = deserializer.deserialize::<tags::Option<tags::I32>, _>()?,

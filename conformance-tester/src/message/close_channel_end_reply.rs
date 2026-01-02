@@ -16,14 +16,14 @@ pub(crate) struct CloseChannelEndReply {
 impl CloseChannelEndReply {
     pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::CloseChannelEndReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_core(ctx)?;
+        let result = self.result.to_core(ctx);
 
         Ok(message::CloseChannelEndReply { serial, result })
     }
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(other.result, ctx);
         Ok(res)
     }
 
@@ -63,16 +63,16 @@ pub(crate) enum CloseChannelEndResult {
 }
 
 impl CloseChannelEndResult {
-    pub(crate) fn to_core(self, _ctx: &Context) -> Result<message::CloseChannelEndResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> message::CloseChannelEndResult {
         match self {
-            Self::Ok => Ok(message::CloseChannelEndResult::Ok),
-            Self::InvalidChannel => Ok(message::CloseChannelEndResult::InvalidChannel),
-            Self::ForeignChannel => Ok(message::CloseChannelEndResult::ForeignChannel),
+            Self::Ok => message::CloseChannelEndResult::Ok,
+            Self::InvalidChannel => message::CloseChannelEndResult::InvalidChannel,
+            Self::ForeignChannel => message::CloseChannelEndResult::ForeignChannel,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
-        Ok(self == other)
+    pub(crate) fn matches(self, other: Self, _ctx: &Context) -> bool {
+        self == other
     }
 }
 

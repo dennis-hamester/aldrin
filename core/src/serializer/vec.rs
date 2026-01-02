@@ -17,18 +17,16 @@ impl<'a> Vec1Serializer<'a> {
         num_elems: usize,
         depth: u8,
     ) -> Result<Self, SerializeError> {
-        if num_elems <= u32::MAX as usize {
-            buf.put_discriminant_u8(ValueKind::Vec1);
-            buf.put_varint_u32_le(num_elems as u32);
+        let num_elems = u32::try_from(num_elems).map_err(|_| SerializeError::Overflow)?;
 
-            Ok(Self {
-                buf,
-                num_elems: num_elems as u32,
-                depth,
-            })
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        buf.put_discriminant_u8(ValueKind::Vec1);
+        buf.put_varint_u32_le(num_elems);
+
+        Ok(Self {
+            buf,
+            num_elems,
+            depth,
+        })
     }
 
     pub fn remaining_elements(&self) -> usize {
@@ -71,9 +69,9 @@ pub struct Vec2Serializer<'a> {
 }
 
 impl<'a> Vec2Serializer<'a> {
-    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Result<Self, SerializeError> {
+    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Self {
         buf.put_discriminant_u8(ValueKind::Vec2);
-        Ok(Self { buf, depth })
+        Self { buf, depth }
     }
 
     pub fn serialize<T: Tag>(

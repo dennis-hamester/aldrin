@@ -118,7 +118,7 @@ impl Deserialize<Self> for Variant {
                 }
 
                 Ok(VariantField::VariantType) => {
-                    variant_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    variant_type = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,

@@ -52,7 +52,7 @@ impl Server {
                     }
                 }
 
-                _ = Self::tick(self.timer.as_mut()), if self.timer.is_some() => {
+                () = Self::tick(self.timer.as_mut()), if self.timer.is_some() => {
                     self.timer_elapsed()?;
                 }
 
@@ -70,7 +70,7 @@ impl Server {
 
     fn start_timer(&mut self, delay: bool) {
         let mut timer = time::interval_at(
-            Instant::now() + Duration::from_secs(delay as _),
+            Instant::now() + Duration::from_secs(u64::from(delay)),
             Duration::from_secs(1),
         );
 

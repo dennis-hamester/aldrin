@@ -349,7 +349,7 @@ where
             Message::EmitBusEvent(msg) => self.msg_emit_bus_event(msg)?,
 
             Message::BusListenerCurrentFinished(msg) => {
-                self.msg_bus_listener_current_finished(msg)?
+                self.msg_bus_listener_current_finished(msg)?;
             }
 
             Message::AbortFunctionCall(msg) => self.msg_abort_function_call(msg)?,
@@ -358,7 +358,7 @@ where
             Message::QueryServiceInfoReply(msg) => self.msg_query_service_info_reply(msg).await?,
 
             Message::QueryServiceVersionReply(msg) => {
-                self.msg_query_service_version_reply(msg).await?
+                self.msg_query_service_version_reply(msg).await?;
             }
 
             Message::SubscribeEventReply(msg) => self.msg_subscribe_event_reply(msg)?,
@@ -370,7 +370,7 @@ where
             Message::UnsubscribeAllEvents(msg) => self.msg_unsubscribe_all_events(msg)?,
 
             Message::UnsubscribeAllEventsReply(msg) => {
-                self.msg_unsubscribe_all_events_reply(msg)?
+                self.msg_unsubscribe_all_events_reply(msg)?;
             }
 
             Message::Connect(_)
@@ -986,6 +986,7 @@ where
     }
 
     #[cfg(not(feature = "introspection"))]
+    #[expect(clippy::unused_self)]
     fn msg_query_introspection_reply(
         &mut self,
         msg: QueryIntrospectionReply,
@@ -1184,47 +1185,60 @@ where
             HandleRequest::CallFunctionReply(req) => self.req_call_function_reply(req).await?,
             HandleRequest::EmitEvent(req) => self.req_emit_event(req).await?,
             HandleRequest::CreateClaimedSender(req) => self.req_create_claimed_sender(req).await?,
+
             HandleRequest::CreateClaimedReceiver(req) => {
-                self.req_create_claimed_receiver(req).await?
+                self.req_create_claimed_receiver(req).await?;
             }
+
             HandleRequest::CloseChannelEnd(req) => self.req_close_channel_end(req).await?,
             HandleRequest::ClaimSender(req) => self.req_claim_sender(req).await?,
             HandleRequest::ClaimReceiver(req) => self.req_claim_receiver(req).await?,
             HandleRequest::SendItem(req) => self.req_send_item(req).await?,
             HandleRequest::AddChannelCapacity(req) => self.req_add_channel_capacity(req).await?,
-            HandleRequest::SyncClient(req) => self.req_sync_client(req),
+            HandleRequest::SyncClient(req) => Self::req_sync_client(req),
             HandleRequest::SyncBroker(req) => self.req_sync_broker(req).await?,
             HandleRequest::CreateBusListener(req) => self.req_create_bus_listener(req).await?,
             HandleRequest::DestroyBusListener(req) => self.req_destroy_bus_listener(req).await?,
+
             HandleRequest::AddBusListenerFilter(req) => {
-                self.req_add_bus_listener_filter(req).await?
+                self.req_add_bus_listener_filter(req).await?;
             }
+
             HandleRequest::RemoveBusListenerFilter(req) => {
-                self.req_remove_bus_listener_filter(req).await?
+                self.req_remove_bus_listener_filter(req).await?;
             }
+
             HandleRequest::ClearBusListenerFilters(req) => {
-                self.req_clear_bus_listener_filters(req).await?
+                self.req_clear_bus_listener_filters(req).await?;
             }
+
             HandleRequest::StartBusListener(req) => self.req_start_bus_listener(req).await?,
             HandleRequest::StopBusListener(req) => self.req_stop_bus_listener(req).await?,
+
             HandleRequest::CreateLifetimeListener(req) => {
-                self.req_create_lifetime_listener(req).await?
+                self.req_create_lifetime_listener(req).await?;
             }
+
             HandleRequest::GetProtocolVersion(req) => {
                 let _ = req.send(self.version);
             }
+
             HandleRequest::CreateProxy(req) => self.req_create_proxy(req).await?,
             HandleRequest::DestroyProxy(proxy) => self.req_destroy_proxy(proxy).await?,
             HandleRequest::SubscribeEvent(req) => self.req_subscribe_event(req).await?,
             HandleRequest::UnsubscribeEvent(req) => self.req_unsubscribe_event(req).await?,
             HandleRequest::SubscribeAllEvents(req) => self.req_subscribe_all_events(req).await?,
+
             HandleRequest::UnsubscribeAllEvents(req) => {
-                self.req_unsubscribe_all_events(req).await?
+                self.req_unsubscribe_all_events(req).await?;
             }
+
             #[cfg(feature = "introspection")]
             HandleRequest::RegisterIntrospection(ty) => self.req_register_introspection(ty),
+
             #[cfg(feature = "introspection")]
             HandleRequest::SubmitIntrospection => self.req_submit_introspection().await?,
+
             #[cfg(feature = "introspection")]
             HandleRequest::QueryIntrospection(req) => self.req_query_introspection(req).await?,
 
@@ -1466,7 +1480,7 @@ where
         send!(self, req)
     }
 
-    fn req_sync_client(&self, req: SyncClientRequest) {
+    fn req_sync_client(req: SyncClientRequest) {
         let _ = req.send(Instant::now());
     }
 

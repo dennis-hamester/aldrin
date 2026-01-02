@@ -274,7 +274,7 @@ impl DynIntrospectable {
     }
 
     pub fn add_references(self, references: &mut References) {
-        (self.add_references)(references)
+        (self.add_references)(references);
     }
 }
 

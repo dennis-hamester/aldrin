@@ -17,7 +17,7 @@ impl<'a, 'b, K: KeyTag> SetDeserializer<'a, 'b, K> {
         if kind == K::Impl::VALUE_KIND_SET1 {
             Set1Deserializer::new_without_value_kind(buf).map(Self::V1)
         } else if kind == K::Impl::VALUE_KIND_SET2 {
-            Set2Deserializer::new_without_value_kind(buf).map(Self::V2)
+            Ok(Self::V2(Set2Deserializer::new_without_value_kind(buf)))
         } else {
             Err(DeserializeError::UnexpectedValue)
         }
@@ -209,21 +209,22 @@ pub struct Set2Deserializer<'a, 'b, K> {
 impl<'a, 'b, K: KeyTag> Set2Deserializer<'a, 'b, K> {
     pub(super) fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(K::Impl::VALUE_KIND_SET2)?;
-        Self::new_without_value_kind(buf)
+        Ok(Self::new_without_value_kind(buf))
     }
 
-    pub(super) fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
-        Ok(Self {
+    pub(super) fn new_without_value_kind(buf: &'a mut &'b [u8]) -> Self {
+        Self {
             buf,
             empty: false,
             _key: PhantomData,
-        })
+        }
     }
 
     pub fn deserialize<T: DeserializeKey<K>>(&mut self) -> Result<Option<T>, DeserializeError> {
         if self.empty {
             Ok(None)
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     self.empty = true;
@@ -253,6 +254,7 @@ impl<'a, 'b, K: KeyTag> Set2Deserializer<'a, 'b, K> {
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
         if !self.empty {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => self.empty = true,
                 ValueKind::Some => K::Impl::skip(self.buf)?,
@@ -282,6 +284,7 @@ impl<'a, 'b, K: KeyTag> Set2Deserializer<'a, 'b, K> {
         if self.empty {
             f()
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => f(),
                 ValueKind::Some => Err(DeserializeError::MoreElementsRemain),

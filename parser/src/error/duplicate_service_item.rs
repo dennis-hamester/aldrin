@@ -25,7 +25,7 @@ impl DuplicateServiceItem {
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
                     service_ident: service.name().clone(),
-                })
+                });
             },
         );
 

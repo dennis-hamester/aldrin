@@ -16,26 +16,25 @@ pub(crate) struct DestroyObjectReply {
 impl DestroyObjectReply {
     pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::DestroyObjectReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_core(ctx)?;
+        let result = self.result.to_core(ctx);
 
         Ok(message::DestroyObjectReply { serial, result })
     }
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(other.result, ctx);
         Ok(res)
     }
 
     pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
-        self.result.update_context(&other.result, ctx)?;
         Ok(())
     }
 
     pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
-        let result = self.result.apply_context(ctx)?;
+        let result = self.result.apply_context(ctx);
 
         Ok(Self { serial, result })
     }
@@ -52,7 +51,7 @@ impl TryFrom<message::DestroyObjectReply> for DestroyObjectReply {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
 pub(crate) enum DestroyObjectResult {
     Ok,
@@ -61,24 +60,20 @@ pub(crate) enum DestroyObjectResult {
 }
 
 impl DestroyObjectResult {
-    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::DestroyObjectResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> message::DestroyObjectResult {
         match self {
-            Self::Ok => Ok(message::DestroyObjectResult::Ok),
-            Self::InvalidObject => Ok(message::DestroyObjectResult::InvalidObject),
-            Self::ForeignObject => Ok(message::DestroyObjectResult::ForeignObject),
+            Self::Ok => message::DestroyObjectResult::Ok,
+            Self::InvalidObject => message::DestroyObjectResult::InvalidObject,
+            Self::ForeignObject => message::DestroyObjectResult::ForeignObject,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
-        Ok(self == other)
+    pub(crate) fn matches(self, other: Self, _ctx: &Context) -> bool {
+        self == other
     }
 
-    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
-        Ok(())
-    }
-
-    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        Ok(self.clone())
+    pub(crate) fn apply_context(self, _ctx: &Context) -> Self {
+        self
     }
 }
 

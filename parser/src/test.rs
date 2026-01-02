@@ -49,9 +49,11 @@ fn fmt_test_impl(name: &str) {
     let formatter = Formatter::new(&parser).unwrap();
     let formatted = formatter.to_string();
 
-    if formatted != source {
-        panic!("{}", diffy::create_patch(&source, &formatted).to_string());
-    }
+    assert!(
+        formatted == source,
+        "{}",
+        diffy::create_patch(&source, &formatted).to_string(),
+    );
 }
 
 fn ui_test_impl(name: &str) {
@@ -98,7 +100,5 @@ fn ui_test_impl(name: &str) {
         fail = true;
     }
 
-    if fail {
-        panic!("UI test `{name}` encountered unmatched diagnostics");
-    }
+    assert!(!fail, "UI test `{name}` encountered unmatched diagnostics");
 }

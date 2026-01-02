@@ -57,9 +57,8 @@ async fn connect_with_data_reject() {
     let mut builder = ClientBuilder::new(t1);
     builder.serialize_data("foo").unwrap();
 
-    let data = match builder.connect_with_data().await.unwrap_err() {
-        ConnectError::Rejected(Some(data)) => data,
-        _ => panic!(),
+    let ConnectError::Rejected(Some(data)) = builder.connect_with_data().await.unwrap_err() else {
+        panic!();
     };
 
     assert_eq!(data.deserialize::<String>().unwrap(), "bar");
@@ -99,9 +98,8 @@ async fn connect_reject() {
 
     let builder = ClientBuilder::new(t1);
 
-    let data = match builder.connect().await.unwrap_err() {
-        ConnectError::Rejected(data) => data,
-        _ => panic!(),
+    let ConnectError::Rejected(data) = builder.connect().await.unwrap_err() else {
+        panic!();
     };
 
     assert_eq!(data, None);
@@ -161,9 +159,8 @@ async fn connect1_with_data_reject() {
     let mut builder = ClientBuilder::new(t1);
     builder.serialize_data("foo").unwrap();
 
-    let data = match builder.connect1_with_data().await.unwrap_err() {
-        ConnectError::Rejected(Some(data)) => data,
-        _ => panic!(),
+    let ConnectError::Rejected(Some(data)) = builder.connect1_with_data().await.unwrap_err() else {
+        panic!();
     };
 
     assert_eq!(data.deserialize::<String>().unwrap(), "bar");
@@ -203,9 +200,8 @@ async fn connect1_reject() {
 
     let builder = ClientBuilder::new(t1);
 
-    let data = match builder.connect1().await.unwrap_err() {
-        ConnectError::Rejected(Some(data)) => data,
-        _ => panic!(),
+    let ConnectError::Rejected(Some(data)) = builder.connect1().await.unwrap_err() else {
+        panic!();
     };
 
     data.deserialize::<()>().unwrap();

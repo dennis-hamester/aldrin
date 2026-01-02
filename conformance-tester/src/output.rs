@@ -34,12 +34,11 @@ fn get_termwidth() -> usize {
     const DEFAULT_TERMWIDTH: usize = 80;
 
     terminal_size::terminal_size()
-        .map(|(size, _)| size.0 as usize)
-        .unwrap_or(DEFAULT_TERMWIDTH)
+        .map_or(DEFAULT_TERMWIDTH, |(size, _)| size.0 as usize)
         .max(MIN_TERMWIDTH)
 }
 
-pub(crate) fn list_tests(args: FilterArgs, tests: &[Test]) {
+pub(crate) fn list_tests(args: &FilterArgs, tests: &[Test]) {
     for test in tests.iter().filter(|test| args.matches(test)) {
         print!("{style}{}{style:#}", test.name, style = STYLE_TEST_NAME);
 
@@ -172,10 +171,10 @@ pub(crate) fn summary(passed: usize, total: usize) {
     println!(": {passed} test(s)");
 
     print_seperator();
-    if total != passed {
-        print!("{style}failed{style:#}", style = STYLE_FAILED);
-    } else {
+    if total == passed {
         print!("failed");
+    } else {
+        print!("{style}failed{style:#}", style = STYLE_FAILED);
     }
     println!(": {} test(s)", total - passed);
 

@@ -19,7 +19,7 @@ impl ReservedIdent {
                 schema_name: validate.schema_name().to_owned(),
                 ident: ident.clone(),
                 usage,
-            })
+            });
         }
     }
 }

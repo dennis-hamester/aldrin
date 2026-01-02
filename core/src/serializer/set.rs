@@ -13,18 +13,16 @@ pub struct Set1Serializer<'a, K> {
 
 impl<'a, K: KeyTag> Set1Serializer<'a, K> {
     pub(super) fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
-        if num_elems <= u32::MAX as usize {
-            buf.put_discriminant_u8(K::Impl::VALUE_KIND_SET1);
-            buf.put_varint_u32_le(num_elems as u32);
+        let num_elems = u32::try_from(num_elems).map_err(|_| SerializeError::Overflow)?;
 
-            Ok(Self {
-                buf,
-                num_elems: num_elems as u32,
-                _key: PhantomData,
-            })
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        buf.put_discriminant_u8(K::Impl::VALUE_KIND_SET1);
+        buf.put_varint_u32_le(num_elems);
+
+        Ok(Self {
+            buf,
+            num_elems,
+            _key: PhantomData,
+        })
     }
 
     pub fn remaining_elements(&self) -> usize {
@@ -74,13 +72,13 @@ pub struct Set2Serializer<'a, K> {
 }
 
 impl<'a, K: KeyTag> Set2Serializer<'a, K> {
-    pub(super) fn new(buf: &'a mut BytesMut) -> Result<Self, SerializeError> {
+    pub(super) fn new(buf: &'a mut BytesMut) -> Self {
         buf.put_discriminant_u8(K::Impl::VALUE_KIND_SET2);
 
-        Ok(Self {
+        Self {
             buf,
             _key: PhantomData,
-        })
+        }
     }
 
     pub fn serialize(

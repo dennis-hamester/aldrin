@@ -12,23 +12,19 @@ pub(crate) struct ConnectReply2 {
 }
 
 impl ConnectReply2 {
-    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::ConnectReply2> {
-        Ok(message::ConnectReply2 {
+    pub(crate) fn to_core(&self, _ctx: &Context) -> message::ConnectReply2 {
+        message::ConnectReply2 {
             result: self.result.into(),
             value: SerializedValue::serialize(ConnectReplyData::new()).unwrap(),
-        })
+        }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
-        Ok(self.result == other.result)
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> bool {
+        self.result == other.result
     }
 
-    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
-        Ok(())
-    }
-
-    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        Ok(self.clone())
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Self {
+        self.clone()
     }
 }
 

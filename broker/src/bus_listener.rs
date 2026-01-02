@@ -97,9 +97,7 @@ impl BusListener {
     }
 
     pub(crate) fn matches_new_event(&self, event: BusEvent) -> bool {
-        self.scope
-            .map(BusListenerScope::includes_new)
-            .unwrap_or(false)
+        self.scope.is_some_and(BusListenerScope::includes_new)
             && self
                 .filters
                 .iter()

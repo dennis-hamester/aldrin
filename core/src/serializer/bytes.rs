@@ -10,17 +10,12 @@ pub struct Bytes1Serializer<'a> {
 
 impl<'a> Bytes1Serializer<'a> {
     pub(super) fn new(buf: &'a mut BytesMut, num_elems: usize) -> Result<Self, SerializeError> {
-        if num_elems <= u32::MAX as usize {
-            buf.put_discriminant_u8(ValueKind::Bytes1);
-            buf.put_varint_u32_le(num_elems as u32);
+        let num_elems = u32::try_from(num_elems).map_err(|_| SerializeError::Overflow)?;
 
-            Ok(Self {
-                buf,
-                num_elems: num_elems as u32,
-            })
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        buf.put_discriminant_u8(ValueKind::Bytes1);
+        buf.put_varint_u32_le(num_elems);
+
+        Ok(Self { buf, num_elems })
     }
 
     pub fn remaining_elements(&self) -> usize {
@@ -56,22 +51,20 @@ pub struct Bytes2Serializer<'a> {
 }
 
 impl<'a> Bytes2Serializer<'a> {
-    pub(super) fn new(buf: &'a mut BytesMut) -> Result<Self, SerializeError> {
+    pub(super) fn new(buf: &'a mut BytesMut) -> Self {
         buf.put_discriminant_u8(ValueKind::Bytes2);
-        Ok(Self { buf })
+        Self { buf }
     }
 
     pub fn serialize(&mut self, bytes: &[u8]) -> Result<&mut Self, SerializeError> {
-        if !bytes.is_empty() {
-            if bytes.len() <= u32::MAX as usize {
-                self.buf.put_varint_u32_le(bytes.len() as u32);
-                self.buf.put_slice(bytes);
-                Ok(self)
-            } else {
-                Err(SerializeError::TooManyElements)
-            }
-        } else {
+        if bytes.is_empty() {
             Ok(self)
+        } else if let Ok(len) = u32::try_from(bytes.len()) {
+            self.buf.put_varint_u32_le(len);
+            self.buf.put_slice(bytes);
+            Ok(self)
+        } else {
+            Err(SerializeError::TooManyElements)
         }
     }
 

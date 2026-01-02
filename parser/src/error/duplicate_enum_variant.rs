@@ -28,7 +28,7 @@ impl DuplicateEnumVariant {
                     duplicate: duplicate.name().clone(),
                     first: first.name().span(),
                     enum_ident: ident.cloned(),
-                })
+                });
             },
         );
 

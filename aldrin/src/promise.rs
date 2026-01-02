@@ -84,7 +84,7 @@ impl<T, E> Promise<T, E> {
 
     /// Resolves if the call was aborted by the caller.
     pub async fn aborted(&mut self) {
-        self.inner.aborted().await
+        self.inner.aborted().await;
     }
 }
 

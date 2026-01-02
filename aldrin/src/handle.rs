@@ -676,7 +676,7 @@ impl Handle {
         S: IntoIterator,
         S::Item: Into<ServiceUuid>,
     {
-        let services = Vec::from_iter(services.into_iter().map(Into::into));
+        let services = services.into_iter().map(Into::into).collect::<Vec<_>>();
 
         let mut discoverer = self
             .create_discoverer()
@@ -793,7 +793,7 @@ impl Handle {
         S: IntoIterator,
         S::Item: Into<ServiceUuid>,
     {
-        let services = Vec::from_iter(services.into_iter().map(Into::into));
+        let services = services.into_iter().map(Into::into).collect::<Vec<_>>();
 
         let mut discoverer = self
             .create_discoverer()
