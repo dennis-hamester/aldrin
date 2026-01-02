@@ -28,10 +28,11 @@ impl Prelude {
         let mut attrs = Vec::new();
 
         while let Some(pair) = pairs.peek() {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
-                Rule::comment if allow_comments => comment.push(Comment::parse(pair)),
-                Rule::doc_string if !inline => doc.push(DocString::parse(pair)),
-                Rule::doc_string_inline if inline => doc.push(DocString::parse_inline(pair)),
+                Rule::comment if allow_comments => comment.push(Comment::parse(&pair)),
+                Rule::doc_string if !inline => doc.push(DocString::parse(&pair)),
+                Rule::doc_string_inline if inline => doc.push(DocString::parse_inline(&pair)),
                 Rule::attribute if !inline => attrs.push(Attribute::parse(pair)),
                 Rule::attribute_inline if inline => attrs.push(Attribute::parse_inline(pair)),
                 _ => break,

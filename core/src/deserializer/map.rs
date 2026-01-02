@@ -18,7 +18,9 @@ impl<'a, 'b, K: KeyTag> MapDeserializer<'a, 'b, K> {
         if kind == K::Impl::VALUE_KIND_MAP1 {
             Map1Deserializer::new_without_value_kind(buf, depth).map(Self::V1)
         } else if kind == K::Impl::VALUE_KIND_MAP2 {
-            Map2Deserializer::new_without_value_kind(buf, depth).map(Self::V2)
+            Ok(Self::V2(Map2Deserializer::new_without_value_kind(
+                buf, depth,
+            )))
         } else {
             Err(DeserializeError::UnexpectedValue)
         }
@@ -247,19 +249,16 @@ pub struct Map2Deserializer<'a, 'b, K> {
 impl<'a, 'b, K: KeyTag> Map2Deserializer<'a, 'b, K> {
     pub(super) fn new(buf: &'a mut &'b [u8], depth: u8) -> Result<Self, DeserializeError> {
         buf.ensure_discriminant_u8(K::Impl::VALUE_KIND_MAP2)?;
-        Self::new_without_value_kind(buf, depth)
+        Ok(Self::new_without_value_kind(buf, depth))
     }
 
-    pub(super) fn new_without_value_kind(
-        buf: &'a mut &'b [u8],
-        depth: u8,
-    ) -> Result<Self, DeserializeError> {
-        Ok(Self {
+    pub(super) fn new_without_value_kind(buf: &'a mut &'b [u8], depth: u8) -> Self {
+        Self {
             buf,
             empty: false,
             depth,
             _key: PhantomData,
-        })
+        }
     }
 
     pub fn deserialize<L: DeserializeKey<K>>(
@@ -268,6 +267,7 @@ impl<'a, 'b, K: KeyTag> Map2Deserializer<'a, 'b, K> {
         if self.empty {
             Ok(None)
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     self.empty = true;
@@ -308,6 +308,7 @@ impl<'a, 'b, K: KeyTag> Map2Deserializer<'a, 'b, K> {
 
     pub fn skip_element(&mut self) -> Result<(), DeserializeError> {
         if !self.empty {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => self.empty = true,
 
@@ -342,6 +343,7 @@ impl<'a, 'b, K: KeyTag> Map2Deserializer<'a, 'b, K> {
         if self.empty {
             f()
         } else {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.buf.try_get_discriminant_u8()? {
                 ValueKind::None => f(),
                 ValueKind::Some => Err(DeserializeError::MoreElementsRemain),

@@ -24,7 +24,7 @@ impl ImportStmt {
         pairs.next().unwrap(); // Skip keyword
 
         let pair = pairs.next().unwrap();
-        let schema_name = Ident::parse(pair);
+        let schema_name = Ident::parse(&pair);
 
         Self {
             span,

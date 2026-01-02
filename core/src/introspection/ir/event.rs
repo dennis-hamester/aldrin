@@ -81,11 +81,13 @@ impl EventIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn event_type(mut self, event_type: LexicalId) -> Self {
         self.event_type = Some(event_type);
         self

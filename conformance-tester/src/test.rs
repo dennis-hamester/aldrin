@@ -32,13 +32,13 @@ use crate::message_type::MessageType;
 use crate::protocol_version_serde;
 use aldrin_core::ProtocolVersion;
 use anyhow::{Context as _, Result, anyhow};
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::path::Path;
+use std::sync::LazyLock;
 use tokio::time::Instant;
 
 pub(crate) use claim_channel_end::ClaimChannelEndStep;
@@ -69,7 +69,7 @@ pub(crate) use subscribe_event::SubscribeEventStep;
 pub(crate) use sync::SyncStep;
 pub(crate) use unsubscribe_event::UnsubscribeEventStep;
 
-pub(crate) static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
+pub(crate) static BUILT_IN_TESTS: LazyLock<Vec<Test>> = LazyLock::new(|| {
     let sources = [
         include_str!("../tests/abort-call-1.json"),
         include_str!("../tests/abort-call-2.json"),

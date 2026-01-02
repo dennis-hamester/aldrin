@@ -18,7 +18,7 @@ impl ArrayTypeIr {
         self.elem_type
     }
 
-    #[allow(clippy::len_without_is_empty)]
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(self) -> u32 {
         self.len
     }

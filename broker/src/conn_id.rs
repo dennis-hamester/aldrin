@@ -84,7 +84,7 @@ impl Hash for ConnectionId {
     where
         H: Hasher,
     {
-        self.0.id().hash(state)
+        self.0.id().hash(state);
     }
 }
 

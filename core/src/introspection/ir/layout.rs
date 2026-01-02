@@ -35,6 +35,7 @@ impl LayoutIr {
     }
 
     pub fn as_built_in(&self) -> Option<BuiltInTypeIr> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::BuiltIn(ty) => Some(*ty),
             _ => None,
@@ -42,6 +43,7 @@ impl LayoutIr {
     }
 
     pub fn as_struct(&self) -> Option<&StructIr> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Struct(ty) => Some(ty),
             _ => None,
@@ -49,6 +51,7 @@ impl LayoutIr {
     }
 
     pub fn as_enum(&self) -> Option<&EnumIr> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Enum(ty) => Some(ty),
             _ => None,
@@ -56,6 +59,7 @@ impl LayoutIr {
     }
 
     pub fn as_service(&self) -> Option<&ServiceIr> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Service(ty) => Some(ty),
             _ => None,
@@ -63,6 +67,7 @@ impl LayoutIr {
     }
 
     pub fn as_newtype(&self) -> Option<&NewtypeIr> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Newtype(ty) => Some(ty),
             _ => None,

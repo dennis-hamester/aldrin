@@ -192,7 +192,7 @@ impl UnknownCall {
 
     /// Resolves if the call was aborted by the caller.
     pub async fn aborted(&mut self) {
-        self.inner.as_mut().unwrap().aborted().await
+        self.inner.as_mut().unwrap().aborted().await;
     }
 }
 

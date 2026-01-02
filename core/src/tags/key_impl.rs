@@ -5,7 +5,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use std::borrow::Cow;
 use std::mem;
 
-#[allow(unnameable_types)]
+#[expect(unnameable_types)]
 pub trait Sealed {}
 
 pub trait KeyTagImpl: Sized + Sealed {
@@ -303,13 +303,10 @@ impl KeyTagImpl for String {
     const VALUE_KIND_SET2: ValueKind = ValueKind::StringSet2;
 
     fn serialize_key<B: BufMut>(key: Self::Key<'_>, buf: &mut B) -> Result<(), SerializeError> {
-        if key.len() <= u32::MAX as usize {
-            buf.put_varint_u32_le(key.len() as u32);
-            buf.put_slice(key.as_bytes());
-            Ok(())
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        let len = u32::try_from(key.len()).map_err(|_| SerializeError::Overflow)?;
+        buf.put_varint_u32_le(len);
+        buf.put_slice(key.as_bytes());
+        Ok(())
     }
 
     fn deserialize_key<B: Buf>(buf: &mut B) -> Result<Self::Key<'_>, DeserializeError> {

@@ -15,10 +15,7 @@ pub(crate) struct DuplicateFunctionId {
 
 impl DuplicateFunctionId {
     pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
-        let funcs = service.items().iter().filter_map(|item| match item {
-            ServiceItem::Function(func) => Some(func),
-            _ => None,
-        });
+        let funcs = service.items().iter().filter_map(ServiceItem::as_function);
 
         let mut max_id = funcs
             .clone()
@@ -38,7 +35,7 @@ impl DuplicateFunctionId {
                     first: first.id().span(),
                     service_ident: service.name().clone(),
                     free_id,
-                })
+                });
             },
         );
     }

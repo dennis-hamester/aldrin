@@ -13,7 +13,7 @@ use bytes::BytesMut;
 use std::borrow::{Borrow, Cow};
 use std::cmp::Ordering;
 use std::ops::Deref;
-use std::{fmt, mem};
+use std::{fmt, mem, ptr};
 
 // 4 bytes message length + 1 byte message kind + 4 bytes value length.
 const MSG_HEADER_LEN: usize = 9;
@@ -47,6 +47,7 @@ impl SerializedValue {
         Self::serialize_as(value)
     }
 
+    #[must_use]
     pub fn take(&mut self) -> Self {
         mem::take(self)
     }
@@ -228,7 +229,8 @@ pub struct SerializedValueSlice([u8]);
 
 impl SerializedValueSlice {
     pub(crate) fn new<T: AsRef<[u8]> + ?Sized>(buf: &T) -> &Self {
-        let self_ptr = buf.as_ref() as *const [u8] as *const Self;
+        let self_ptr = ptr::from_ref(buf.as_ref()) as *const Self;
+
         // Safe because of repr(transparent).
         unsafe { &*self_ptr }
     }

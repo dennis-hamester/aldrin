@@ -734,6 +734,16 @@ fn test_vec_empty() {
 }
 
 #[test]
+fn test_vec_error() {
+    // This test specifically targets some unsafe clean-up code in impls/vec.rs. The serialized
+    // value contains only one string, but then 2 strings are attempted to deserialize from it. This
+    // fails an the first string, that is already deserialized, must be dropped.
+    let serialized_value = SerializedValueSlice::new(&[43, 1, 13, 0, 0]);
+    let res = serialized_value.deserialize::<[String; 2]>();
+    assert_eq!(res, Err(DeserializeError::NoMoreElements));
+}
+
+#[test]
 fn test_bytes() {
     type Tag = tags::Bytes;
     let bytes = [1, 2, 3];

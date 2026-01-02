@@ -199,9 +199,8 @@ impl Broker {
                 break;
             }
 
-            let ev = match self.recv.next().await {
-                Some(ev) => ev,
-                None => return,
+            let Some(ev) = self.recv.next().await else {
+                return;
             };
 
             self.handle_event(&mut state, ev);
@@ -436,7 +435,7 @@ impl Broker {
             Message::CallFunctionReply(req) => self.call_function_reply(state, id, req),
             Message::SubscribeEvent(req) => self.subscribe_event(id, req)?,
             Message::UnsubscribeEvent(req) => self.unsubscribe_event(state, id, req),
-            Message::EmitEvent(req) => self.emit_event(state, id, req),
+            Message::EmitEvent(req) => self.emit_event(state, id, &req),
             Message::QueryServiceVersion(req) => self.query_service_version(id, req)?,
             Message::CreateChannel(req) => self.create_channel(id, req)?,
             Message::CloseChannelEnd(req) => self.close_channel_end(state, id, req)?,
@@ -452,12 +451,14 @@ impl Broker {
             Message::StartBusListener(req) => self.start_bus_listener(id, req)?,
             Message::StopBusListener(req) => self.stop_bus_listener(id, req)?,
             Message::AbortFunctionCall(req) => self.abort_function_call(state, id, req)?,
-            Message::RegisterIntrospection(req) => self.register_introspection(id, req)?,
+            Message::RegisterIntrospection(req) => self.register_introspection(id, &req)?,
             Message::QueryIntrospection(req) => self.query_introspection(state, id, req)?,
+
             Message::QueryIntrospectionReply(req) => {
-                self.query_introspection_reply(state, id, req)?
+                self.query_introspection_reply(state, id, req)?;
             }
-            Message::CreateService2(req) => self.create_service2(state, id, req)?,
+
+            Message::CreateService2(req) => self.create_service2(state, id, &req)?,
             Message::QueryServiceInfo(req) => self.query_service_info(id, req)?,
             Message::SubscribeService(req) => self.subscribe_service(id, req)?,
             Message::UnsubscribeService(req) => self.unsubscribe_service(id, req)?,
@@ -973,7 +974,7 @@ impl Broker {
         }
     }
 
-    fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: EmitEvent) {
+    fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: &EmitEvent) {
         let Some(emitter_conn) = self.conns.get(id) else {
             return;
         };
@@ -991,7 +992,7 @@ impl Broker {
             return;
         }
 
-        for (conn_id, conn) in self.conns.iter() {
+        for (conn_id, conn) in &self.conns {
             if conn.is_subscribed_to_event(req.service_cookie, req.event)
                 && send!(self, conn, req.clone(), emitter_conn.version()).is_err()
             {
@@ -1242,7 +1243,7 @@ impl Broker {
                     }
 
                     SendItemError::CapacityExhausted => {
-                        self.remove_channel_end(state, req.cookie, ChannelEnd::Sender, Some(id))
+                        self.remove_channel_end(state, req.cookie, ChannelEnd::Sender, Some(id));
                     }
 
                     SendItemError::InvalidSender | SendItemError::ReceiverClosed => {}
@@ -1586,7 +1587,7 @@ impl Broker {
     fn register_introspection(
         &mut self,
         id: &ConnectionId,
-        req: RegisterIntrospection,
+        req: &RegisterIntrospection,
     ) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -1614,7 +1615,7 @@ impl Broker {
     fn register_introspection(
         &self,
         id: &ConnectionId,
-        _req: RegisterIntrospection,
+        _req: &RegisterIntrospection,
     ) -> Result<(), ()> {
         if let Some(conn) = self.conns.get(id) {
             if conn.version() >= ProtocolVersion::V1_17 {
@@ -1802,6 +1803,7 @@ impl Broker {
     }
 
     #[cfg(not(feature = "introspection"))]
+    #[expect(clippy::unused_self)]
     fn query_introspection_reply(
         &mut self,
         _state: &mut State,
@@ -1815,7 +1817,7 @@ impl Broker {
         &mut self,
         state: &mut State,
         id: &ConnectionId,
-        req: CreateService2,
+        req: &CreateService2,
     ) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -2368,10 +2370,10 @@ impl Broker {
     }
 
     fn emit_bus_event(&mut self, state: &mut State, event: BusEvent) {
-        #[allow(clippy::mutable_key_type)]
+        #[expect(clippy::mutable_key_type)]
         let mut dups = HashSet::new();
 
-        #[allow(clippy::mutable_key_type)]
+        #[expect(clippy::mutable_key_type)]
         let mut remove_conns = HashSet::new();
 
         for bus_listener in self.bus_listeners.values() {

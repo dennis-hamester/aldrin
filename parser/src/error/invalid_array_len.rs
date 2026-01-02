@@ -53,7 +53,7 @@ impl InvalidArrayLen {
                         | ConstValue::I32(lit)
                         | ConstValue::U64(lit)
                         | ConstValue::I64(lit) => {
-                            res = Some((lit.value(), Some((schema.name(), const_def.name()))))
+                            res = Some((lit.value(), Some((schema.name(), const_def.name()))));
                         }
 
                         ConstValue::String(_) | ConstValue::Uuid(_) => return,
@@ -68,7 +68,7 @@ impl InvalidArrayLen {
             }
         };
 
-        if value.parse::<u32>().ok().map(|v| v == 0).unwrap_or(true) {
+        if value.parse::<u32>().map_or(true, |v| v == 0) {
             validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),
                 len: len.clone(),

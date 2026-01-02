@@ -2,7 +2,7 @@ use crate::client::Client;
 use crate::client_id::ClientId;
 use aldrin_core::ProtocolVersion;
 use anyhow::{Result, anyhow};
-use std::collections::HashMap;
+use std::collections::hash_map::{Entry, HashMap};
 use uuid::Uuid;
 
 pub(crate) struct Context {
@@ -23,10 +23,13 @@ impl Context {
     }
 
     pub(crate) fn set_client(&mut self, id: ClientId, client: Client) -> Result<()> {
-        if self.clients.insert(id.clone(), client).is_none() {
-            Ok(())
-        } else {
-            Err(anyhow!("client `{id}` exists already"))
+        match self.clients.entry(id) {
+            Entry::Vacant(entry) => {
+                entry.insert(client);
+                Ok(())
+            }
+
+            Entry::Occupied(entry) => Err(anyhow!("client `{}` exists already", entry.key())),
         }
     }
 
@@ -61,10 +64,13 @@ impl Context {
     }
 
     pub(crate) fn set_serial(&mut self, id: String, serial: u32) -> Result<()> {
-        if self.serials.insert(id.clone(), serial).is_none() {
-            Ok(())
-        } else {
-            Err(anyhow!("serial `{id}` exists already"))
+        match self.serials.entry(id) {
+            Entry::Vacant(entry) => {
+                entry.insert(serial);
+                Ok(())
+            }
+
+            Entry::Occupied(entry) => Err(anyhow!("serial `{}` exists already", entry.key())),
         }
     }
 
@@ -76,10 +82,13 @@ impl Context {
     }
 
     pub(crate) fn set_uuid(&mut self, id: String, uuid: Uuid) -> Result<()> {
-        if self.uuids.insert(id.clone(), uuid).is_none() {
-            Ok(())
-        } else {
-            Err(anyhow!("UUID `{id}` exists already"))
+        match self.uuids.entry(id) {
+            Entry::Vacant(entry) => {
+                entry.insert(uuid);
+                Ok(())
+            }
+
+            Entry::Occupied(entry) => Err(anyhow!("UUID `{}` exists already", entry.key())),
         }
     }
 

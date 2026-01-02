@@ -14,13 +14,12 @@ pub(crate) struct InvalidEscapeCode {
 
 impl InvalidEscapeCode {
     pub(crate) fn validate(def: &ConstDef, validate: &mut Validate) {
-        let val = match def.value() {
-            ConstValue::String(val) => val,
-            _ => return,
+        let ConstValue::String(val) = def.value() else {
+            return;
         };
 
         let mut pos = val.span_inner().start;
-        let mut chars = val.value_inner().chars().peekable();
+        let mut chars = val.value_inner().chars();
 
         while let Some(c1) = chars.next() {
             if c1 == '\\' {

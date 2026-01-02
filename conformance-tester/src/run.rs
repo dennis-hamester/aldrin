@@ -12,7 +12,7 @@ use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-pub(crate) fn run(args: RunArgs, tests: Vec<Test>) -> Result<bool> {
+pub(crate) fn run(args: &RunArgs, tests: Vec<Test>) -> Result<bool> {
     let jobs = match args.jobs {
         Some(0) => 1,
         Some(jobs) => jobs,

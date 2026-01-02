@@ -100,7 +100,7 @@ impl<Args, T, E> Call<Args, T, E> {
 
     /// Resolves if the call was aborted by the caller.
     pub async fn aborted(&mut self) {
-        self.promise.aborted().await
+        self.promise.aborted().await;
     }
 }
 

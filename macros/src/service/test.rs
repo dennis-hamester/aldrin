@@ -4,8 +4,7 @@ use aldrin::core::{ServiceUuid, TypeId};
 use aldrin::service;
 use uuid::uuid;
 
-#[allow(dead_code)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 mod raw_identifiers {
     use aldrin::core::ServiceUuid;
     use aldrin::service;

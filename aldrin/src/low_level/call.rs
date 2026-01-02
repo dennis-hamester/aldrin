@@ -17,7 +17,7 @@ pub struct Call {
 }
 
 impl Call {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub(crate) fn new(
         client: Handle,
         aborted: Receiver<()>,
@@ -214,7 +214,7 @@ impl Call {
 
     /// Resolves if the call was aborted by the caller.
     pub async fn aborted(&mut self) {
-        self.promise.aborted().await
+        self.promise.aborted().await;
     }
 
     pub(crate) fn invalid_function_ref(&mut self) {

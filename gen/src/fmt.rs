@@ -56,7 +56,7 @@ pub(crate) fn run(args: FmtArgs) -> Result<bool> {
         };
 
         if args.check {
-            res &= check(formatter, parser, &parsers, &mut first)?;
+            res &= check(formatter, parser, &parsers, &mut first);
         } else {
             fmt(formatter, parser, is_stdin)?;
         }
@@ -83,17 +83,12 @@ fn fmt(formatter: Formatter, parser: &Parser, is_stdin: bool) -> Result<()> {
     Ok(())
 }
 
-fn check(
-    formatter: Formatter,
-    parser: &Parser,
-    parsers: &[Parser],
-    first: &mut bool,
-) -> Result<bool> {
+fn check(formatter: Formatter, parser: &Parser, parsers: &[Parser], first: &mut bool) -> bool {
     let original = parser.main_schema().source().unwrap();
     let formatted = formatter.to_string();
 
     if original == formatted {
-        Ok(true)
+        true
     } else {
         print_error_header(parser, parsers, first);
         let patch = diffy::create_patch(original, &formatted);
@@ -102,7 +97,7 @@ fn check(
             print_hunk(hunk);
         }
 
-        Ok(false)
+        false
     }
 }
 

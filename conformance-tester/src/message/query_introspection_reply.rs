@@ -24,21 +24,20 @@ impl QueryIntrospectionReply {
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx);
 
         Ok(res)
     }
 
     pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
-        self.result.update_context(&other.result, ctx)?;
 
         Ok(())
     }
 
     pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
-        let result = self.result.apply_context(ctx)?;
+        let result = self.result.apply_context(ctx);
 
         Ok(Self { serial, result })
     }
@@ -79,20 +78,16 @@ impl QueryIntrospectionResult {
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> bool {
         match (self, other) {
-            (Self::Ok { value: v1 }, Self::Ok { value: v2 }) => Ok(v1.matches(v2)),
-            (Self::Unavailable, Self::Unavailable) => Ok(true),
-            _ => Ok(false),
+            (Self::Ok { value: v1 }, Self::Ok { value: v2 }) => v1.matches(v2),
+            (Self::Unavailable, Self::Unavailable) => true,
+            _ => false,
         }
     }
 
-    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
-        Ok(())
-    }
-
-    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        Ok(self.clone())
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Self {
+        self.clone()
     }
 }
 

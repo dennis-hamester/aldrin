@@ -1,12 +1,9 @@
-#![allow(unused_imports)]
-#![allow(unused_variables)]
-
 use crate::ast::{
     ConstDef, Definition, EnumDef, EnumFallback, EnumVariant, EventDef, EventFallback, FunctionDef,
     FunctionFallback, FunctionPart, InlineEnum, InlineStruct, NewtypeDef, ServiceDef, ServiceItem,
     StructDef, StructFallback, StructField, TypeNameOrInline,
 };
-use crate::{Parser, Schema, Span};
+use crate::{Parser, Schema};
 use std::collections::HashMap;
 use std::mem;
 use thiserror::Error;
@@ -29,10 +26,12 @@ impl<'a> LinkResolver<'a> {
         Self { schemas, schema }
     }
 
+    #[must_use]
     pub fn with_schema(self, schema: &'a Schema) -> Self {
         Self::from_parts(self.schemas, schema)
     }
 
+    #[must_use]
     pub fn with_schema_name(self, schema: &str) -> Self {
         let schema = self.schemas.get(schema).expect("valid schema name");
         self.with_schema(schema)
@@ -168,7 +167,6 @@ impl<'a> LinkResolver<'a> {
     }
 
     fn resolve_inline_struct(
-        self,
         inline_struct: &'a InlineStruct,
         components: Components<'a>,
         ok_struct: impl FnOnce(&'a InlineStruct) -> ResolvedLink<'a>,
@@ -223,7 +221,6 @@ impl<'a> LinkResolver<'a> {
     }
 
     fn resolve_inline_enum(
-        self,
         inline_enum: &'a InlineEnum,
         components: Components<'a>,
         ok_enum: impl FnOnce(&'a InlineEnum) -> ResolvedLink<'a>,
@@ -294,7 +291,7 @@ impl<'a> LinkResolver<'a> {
 
         match name {
             "args" => match func.args() {
-                Some(args) => self.resolve_type_name_or_inline(
+                Some(args) => Self::resolve_type_name_or_inline(
                     args.part_type(),
                     components,
                     |inline_struct| {
@@ -356,7 +353,7 @@ impl<'a> LinkResolver<'a> {
             },
 
             "ok" => match func.ok() {
-                Some(ok) => self.resolve_type_name_or_inline(
+                Some(ok) => Self::resolve_type_name_or_inline(
                     ok.part_type(),
                     components,
                     |inline_struct| {
@@ -412,7 +409,7 @@ impl<'a> LinkResolver<'a> {
             },
 
             "err" => match func.err() {
-                Some(err) => self.resolve_type_name_or_inline(
+                Some(err) => Self::resolve_type_name_or_inline(
                     err.part_type(),
                     components,
                     |inline_struct| {
@@ -486,7 +483,7 @@ impl<'a> LinkResolver<'a> {
         }
 
         match ev.event_type() {
-            Some(ty) => self.resolve_type_name_or_inline(
+            Some(ty) => Self::resolve_type_name_or_inline(
                 ty,
                 components,
                 |inline_struct| ResolvedLink::EventStruct(self.schema, svc, ev, inline_struct),
@@ -510,9 +507,8 @@ impl<'a> LinkResolver<'a> {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn resolve_type_name_or_inline(
-        self,
         ty: &'a TypeNameOrInline,
         components: Components<'a>,
         ok_struct: impl FnOnce(&'a InlineStruct) -> ResolvedLink<'a>,
@@ -526,7 +522,7 @@ impl<'a> LinkResolver<'a> {
         match ty {
             TypeNameOrInline::TypeName(_) => Err(err_no_inline_type),
 
-            TypeNameOrInline::Struct(inline_struct) => self.resolve_inline_struct(
+            TypeNameOrInline::Struct(inline_struct) => Self::resolve_inline_struct(
                 inline_struct,
                 components,
                 ok_struct,
@@ -534,7 +530,7 @@ impl<'a> LinkResolver<'a> {
                 ok_struct_fallback,
             ),
 
-            TypeNameOrInline::Enum(inline_enum) => self.resolve_inline_enum(
+            TypeNameOrInline::Enum(inline_enum) => Self::resolve_inline_enum(
                 inline_enum,
                 components,
                 ok_enum,

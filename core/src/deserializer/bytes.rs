@@ -9,6 +9,7 @@ pub enum BytesDeserializer<'a, 'b> {
 
 impl<'a, 'b> BytesDeserializer<'a, 'b> {
     pub(super) fn new(buf: &'a mut &'b [u8]) -> Result<Self, DeserializeError> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match buf.try_get_discriminant_u8()? {
             ValueKind::Bytes1 => Bytes1Deserializer::new_without_value_kind(buf).map(Self::V1),
             ValueKind::Bytes2 => Bytes2Deserializer::new_without_value_kind(buf).map(Self::V2),

@@ -16,26 +16,25 @@ pub(crate) struct DestroyBusListenerReply {
 impl DestroyBusListenerReply {
     pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::DestroyBusListenerReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_core(ctx)?;
+        let result = self.result.to_core(ctx);
 
         Ok(message::DestroyBusListenerReply { serial, result })
     }
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(other.result, ctx);
         Ok(res)
     }
 
     pub(crate) fn update_context(&self, other: &Self, ctx: &mut Context) -> Result<()> {
         self.serial.update_context(&other.serial, ctx)?;
-        self.result.update_context(&other.result, ctx)?;
         Ok(())
     }
 
     pub(crate) fn apply_context(&self, ctx: &Context) -> Result<Self> {
         let serial = self.serial.apply_context(ctx)?;
-        let result = self.result.apply_context(ctx)?;
+        let result = self.result.apply_context(ctx);
 
         Ok(Self { serial, result })
     }
@@ -52,7 +51,7 @@ impl TryFrom<message::DestroyBusListenerReply> for DestroyBusListenerReply {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
 pub(crate) enum DestroyBusListenerResult {
     Ok,
@@ -60,23 +59,19 @@ pub(crate) enum DestroyBusListenerResult {
 }
 
 impl DestroyBusListenerResult {
-    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::DestroyBusListenerResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> message::DestroyBusListenerResult {
         match self {
-            Self::Ok => Ok(message::DestroyBusListenerResult::Ok),
-            Self::InvalidBusListener => Ok(message::DestroyBusListenerResult::InvalidBusListener),
+            Self::Ok => message::DestroyBusListenerResult::Ok,
+            Self::InvalidBusListener => message::DestroyBusListenerResult::InvalidBusListener,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
-        Ok(self == other)
+    pub(crate) fn matches(self, other: Self, _ctx: &Context) -> bool {
+        self == other
     }
 
-    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
-        Ok(())
-    }
-
-    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        Ok(self.clone())
+    pub(crate) fn apply_context(self, _ctx: &Context) -> Self {
+        self
     }
 }
 

@@ -101,7 +101,7 @@ impl<T> PendingSender<T> {
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
     pub async fn wait_established(&mut self) {
-        self.inner.wait_established().await
+        self.inner.wait_established().await;
     }
 
     /// Waits until the channel has been established and returns a [`Sender`].
@@ -244,7 +244,7 @@ impl<T> PendingReceiver<T> {
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
     pub async fn wait_established(&mut self) {
-        self.inner.wait_established().await
+        self.inner.wait_established().await;
     }
 
     /// Waits until the channel has been established and returns a [`Receiver`].

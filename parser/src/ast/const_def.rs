@@ -26,7 +26,7 @@ impl ConstDef {
 
         pairs.next().unwrap(); // Skip keyword.
 
-        let name = Ident::parse(pairs.next().unwrap());
+        let name = Ident::parse(&pairs.next().unwrap());
 
         pairs.next().unwrap(); // Skip =.
 
@@ -101,17 +101,18 @@ impl ConstValue {
         pairs.next().unwrap(); // Skip (.
         let pair = pairs.next().unwrap();
 
+        #[expect(clippy::wildcard_enum_match_arm)]
         match rule {
-            Rule::kw_u8 => Self::U8(LitInt::parse(pair)),
-            Rule::kw_i8 => Self::I8(LitInt::parse(pair)),
-            Rule::kw_u16 => Self::U16(LitInt::parse(pair)),
-            Rule::kw_i16 => Self::I16(LitInt::parse(pair)),
-            Rule::kw_u32 => Self::U32(LitInt::parse(pair)),
-            Rule::kw_i32 => Self::I32(LitInt::parse(pair)),
-            Rule::kw_u64 => Self::U64(LitInt::parse(pair)),
-            Rule::kw_i64 => Self::I64(LitInt::parse(pair)),
-            Rule::kw_string => Self::String(LitString::parse(pair)),
-            Rule::kw_uuid => Self::Uuid(LitUuid::parse(pair)),
+            Rule::kw_u8 => Self::U8(LitInt::parse(&pair)),
+            Rule::kw_i8 => Self::I8(LitInt::parse(&pair)),
+            Rule::kw_u16 => Self::U16(LitInt::parse(&pair)),
+            Rule::kw_i16 => Self::I16(LitInt::parse(&pair)),
+            Rule::kw_u32 => Self::U32(LitInt::parse(&pair)),
+            Rule::kw_i32 => Self::I32(LitInt::parse(&pair)),
+            Rule::kw_u64 => Self::U64(LitInt::parse(&pair)),
+            Rule::kw_i64 => Self::I64(LitInt::parse(&pair)),
+            Rule::kw_string => Self::String(LitString::parse(&pair)),
+            Rule::kw_uuid => Self::Uuid(LitUuid::parse(&pair)),
             _ => unreachable!(),
         }
     }

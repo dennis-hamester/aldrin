@@ -63,9 +63,8 @@ impl BusListenerFilter {
             (
                 Self::SpecificObject { object: object1 },
                 Self::SpecificObject { object: object2 },
-            ) => object1.matches(object2, ctx),
-
-            (
+            )
+            | (
                 Self::SpecificObjectAnyService { object: object1 },
                 Self::SpecificObjectAnyService { object: object2 },
             ) => object1.matches(object2, ctx),
@@ -101,9 +100,8 @@ impl BusListenerFilter {
             (
                 Self::SpecificObject { object: object1 },
                 Self::SpecificObject { object: object2 },
-            ) => object1.update_context(object2, ctx),
-
-            (
+            )
+            | (
                 Self::SpecificObjectAnyService { object: object1 },
                 Self::SpecificObjectAnyService { object: object2 },
             ) => object1.update_context(object2, ctx),

@@ -52,7 +52,7 @@ impl Step {
     ) -> Result<()> {
         match self {
             Self::Connect(step) => step.run(broker, ctx, timeout).await,
-            Self::RemoveClient(step) => step.run(ctx, timeout).await,
+            Self::RemoveClient(step) => step.run(ctx, timeout),
             Self::Shutdown(step) => step.run(ctx, timeout).await,
             Self::Receive(step) => step.run(ctx, timeout).await,
             Self::ReceiveUnordered(step) => step.run(ctx, timeout).await,

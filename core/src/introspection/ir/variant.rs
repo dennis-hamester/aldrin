@@ -81,11 +81,13 @@ impl VariantIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn variant_type(mut self, variant_type: LexicalId) -> Self {
         self.variant_type = Some(variant_type);
         self

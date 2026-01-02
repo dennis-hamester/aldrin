@@ -60,12 +60,8 @@ impl MessageSerializer {
     }
 
     pub(crate) fn finish(mut self) -> Result<BytesMut, MessageSerializeError> {
-        let len = self.buf.len();
-        if len <= u32::MAX as usize {
-            self.buf[..4].copy_from_slice(&(len as u32).to_le_bytes());
-            Ok(self.buf)
-        } else {
-            Err(MessageSerializeError::Overflow)
-        }
+        let len = u32::try_from(self.buf.len()).map_err(|_| MessageSerializeError::Overflow)?;
+        self.buf[..4].copy_from_slice(&len.to_le_bytes());
+        Ok(self.buf)
     }
 }

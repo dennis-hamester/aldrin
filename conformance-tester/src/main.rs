@@ -130,7 +130,7 @@ fn main() -> Result<ExitCode> {
 
     match args.command {
         Command::List(args) => {
-            output::list_tests(args, &tests);
+            output::list_tests(&args, &tests);
             Ok(ExitCode::SUCCESS)
         }
 
@@ -144,7 +144,7 @@ fn main() -> Result<ExitCode> {
         }
 
         Command::Run(args) => {
-            if run::run(args, tests.into_owned())? {
+            if run::run(&args, tests.into_owned())? {
                 Ok(ExitCode::SUCCESS)
             } else {
                 Ok(ExitCode::FAILURE)

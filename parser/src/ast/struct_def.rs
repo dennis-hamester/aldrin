@@ -30,7 +30,7 @@ impl StructDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip {.
 
@@ -38,6 +38,7 @@ impl StructDef {
         let mut fallback = None;
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
                 Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
@@ -137,6 +138,7 @@ impl InlineStruct {
         let mut fallback = None;
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::struct_field => fields.push(StructField::parse(pair)),
                 Rule::struct_fallback => fallback = Some(StructFallback::parse(pair)),
@@ -214,15 +216,15 @@ impl StructField {
         let mut prelude = Prelude::regular(&mut pairs);
 
         let (req, name) = match pairs.next().map(|pair| (pair.as_rule(), pair)).unwrap() {
-            (Rule::kw_required, _) => (true, Ident::parse(pairs.next().unwrap())),
-            (Rule::ident, pair) => (false, Ident::parse(pair)),
+            (Rule::kw_required, _) => (true, Ident::parse(&pairs.next().unwrap())),
+            (Rule::ident, pair) => (false, Ident::parse(&pair)),
             _ => unreachable!(),
         };
 
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitInt::parse(pair);
+        let id = LitInt::parse(&pair);
 
         pairs.next().unwrap(); // Skip =.
 
@@ -298,7 +300,7 @@ impl StructFallback {
             span,
             comment: prelude.take_comment(),
             doc: prelude.take_doc(),
-            name: Ident::parse(pairs.next().unwrap()),
+            name: Ident::parse(&pairs.next().unwrap()),
         }
     }
 

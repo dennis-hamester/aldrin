@@ -17,18 +17,16 @@ impl<'a> Struct1Serializer<'a> {
         num_fields: usize,
         depth: u8,
     ) -> Result<Self, SerializeError> {
-        if num_fields <= u32::MAX as usize {
-            buf.put_discriminant_u8(ValueKind::Struct1);
-            buf.put_varint_u32_le(num_fields as u32);
+        let num_fields = u32::try_from(num_fields).map_err(|_| SerializeError::Overflow)?;
 
-            Ok(Self {
-                buf,
-                num_fields: num_fields as u32,
-                depth,
-            })
-        } else {
-            Err(SerializeError::Overflow)
-        }
+        buf.put_discriminant_u8(ValueKind::Struct1);
+        buf.put_varint_u32_le(num_fields);
+
+        Ok(Self {
+            buf,
+            num_fields,
+            depth,
+        })
     }
 
     pub(super) fn with_unknown_fields<T>(
@@ -121,9 +119,9 @@ pub struct Struct2Serializer<'a> {
 }
 
 impl<'a> Struct2Serializer<'a> {
-    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Result<Self, SerializeError> {
+    pub(super) fn new(buf: &'a mut BytesMut, depth: u8) -> Self {
         buf.put_discriminant_u8(ValueKind::Struct2);
-        Ok(Self { buf, depth })
+        Self { buf, depth }
     }
 
     pub(super) fn with_unknown_fields(
@@ -131,7 +129,7 @@ impl<'a> Struct2Serializer<'a> {
         unknown_fields: impl AsUnknownFields,
         depth: u8,
     ) -> Result<Self, SerializeError> {
-        let mut this = Self::new(buf, depth)?;
+        let mut this = Self::new(buf, depth);
         this.serialize_unknown_fields(unknown_fields)?;
         Ok(this)
     }

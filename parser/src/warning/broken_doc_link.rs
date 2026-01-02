@@ -98,7 +98,7 @@ impl BrokenDocLink {
                         return None;
                     }
 
-                    let idx = offset + line_col.column - 1 + end as usize;
+                    let idx = offset + line_col.column - 1 + usize::from(end);
 
                     if value.is_char_boundary(idx) {
                         return Some(doc.span_inner().start + idx);

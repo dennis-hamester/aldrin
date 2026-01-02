@@ -740,7 +740,7 @@ impl RustGenerator<'_> {
                 let val = v.value();
                 codeln!(self, "pub const {name}: {krate}::private::uuid::Uuid = {krate}::private::uuid::uuid!(\"{val}\");");
             }
-        };
+        }
 
         codeln!(self);
     }
@@ -847,6 +847,7 @@ impl RustGenerator<'_> {
             ast::TypeNameKind::Option(ty) => format!("{OPTION}<{}>", self.type_name(ty)),
             ast::TypeNameKind::Box(ty) => format!("{BOX}<{}>", self.type_name(ty)),
 
+            #[expect(clippy::wildcard_enum_match_arm)]
             ast::TypeNameKind::Vec(ty) => match ty.kind() {
                 ast::TypeNameKind::U8 => format!("{krate}::core::Bytes"),
                 _ => format!("{VEC}<{}>", self.type_name(ty)),
@@ -876,7 +877,7 @@ impl RustGenerator<'_> {
             }
 
             ast::TypeNameKind::Array(ty, len) => self.array_name(ty, len),
-            ast::TypeNameKind::Ref(ty) => self.named_ref_name(ty),
+            ast::TypeNameKind::Ref(ty) => Self::named_ref_name(ty),
         }
     }
 
@@ -890,13 +891,13 @@ impl RustGenerator<'_> {
                 format!(
                     "[{}; {} as usize]",
                     self.type_name(ty),
-                    self.named_ref_name(named_ref)
+                    Self::named_ref_name(named_ref)
                 )
             }
         }
     }
 
-    fn named_ref_name(&self, ty: &ast::NamedRef) -> String {
+    fn named_ref_name(ty: &ast::NamedRef) -> String {
         match ty.kind() {
             ast::NamedRefKind::Intern(ty) => format!("r#{}", ty.value()),
             ast::NamedRefKind::Extern(m, ty) => format!("super::r#{}::r#{}", m.value(), ty.value()),
@@ -1238,7 +1239,8 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::FunctionArgsStruct(schema, svc, func, _, _) => {
+            ResolvedLink::FunctionArgsStruct(schema, svc, func, _, _)
+            | ResolvedLink::FunctionArgsEnum(schema, svc, func, _, _) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
                         schema,
@@ -1283,21 +1285,6 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::FunctionArgsEnum(schema, svc, func, _, _) => {
-                if self.options.client || self.options.server {
-                    Some(Self::doc_link_components(
-                        schema,
-                        resolver,
-                        &[&names::function_args(
-                            svc.name().value(),
-                            func.name().value(),
-                        )],
-                    ))
-                } else {
-                    None
-                }
-            }
-
             ResolvedLink::FunctionArgsVariant(schema, svc, func, _, _, var) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
@@ -1328,7 +1315,8 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::FunctionOkStruct(schema, svc, func, _, _) => {
+            ResolvedLink::FunctionOkStruct(schema, svc, func, _, _)
+            | ResolvedLink::FunctionOkEnum(schema, svc, func, _, _) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
                         schema,
@@ -1370,18 +1358,6 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::FunctionOkEnum(schema, svc, func, _, _) => {
-                if self.options.client || self.options.server {
-                    Some(Self::doc_link_components(
-                        schema,
-                        resolver,
-                        &[&names::function_ok(svc.name().value(), func.name().value())],
-                    ))
-                } else {
-                    None
-                }
-            }
-
             ResolvedLink::FunctionOkVariant(schema, svc, func, _, _, var) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
@@ -1412,7 +1388,8 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::FunctionErrStruct(schema, svc, func, _, _) => {
+            ResolvedLink::FunctionErrStruct(schema, svc, func, _, _)
+            | ResolvedLink::FunctionErrEnum(schema, svc, func, _, _) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
                         schema,
@@ -1451,21 +1428,6 @@ impl RustGenerator<'_> {
                             &names::function_err(svc.name().value(), func.name().value()),
                             fallback.name().value(),
                         ],
-                    ))
-                } else {
-                    None
-                }
-            }
-
-            ResolvedLink::FunctionErrEnum(schema, svc, func, _, _) => {
-                if self.options.client || self.options.server {
-                    Some(Self::doc_link_components(
-                        schema,
-                        resolver,
-                        &[&names::function_err(
-                            svc.name().value(),
-                            func.name().value(),
-                        )],
                     ))
                 } else {
                     None
@@ -1538,7 +1500,8 @@ impl RustGenerator<'_> {
                 }
             }
 
-            ResolvedLink::EventStruct(schema, svc, ev, _) => {
+            ResolvedLink::EventStruct(schema, svc, ev, _)
+            | ResolvedLink::EventEnum(schema, svc, ev, _) => {
                 if self.options.client || self.options.server {
                     Some(Self::doc_link_components(
                         schema,
@@ -1574,18 +1537,6 @@ impl RustGenerator<'_> {
                             &names::event_args(svc.name().value(), ev.name().value()),
                             fallback.name().value(),
                         ],
-                    ))
-                } else {
-                    None
-                }
-            }
-
-            ResolvedLink::EventEnum(schema, svc, ev, _) => {
-                if self.options.client || self.options.server {
-                    Some(Self::doc_link_components(
-                        schema,
-                        resolver,
-                        &[&names::event_args(svc.name().value(), ev.name().value())],
                     ))
                 } else {
                     None

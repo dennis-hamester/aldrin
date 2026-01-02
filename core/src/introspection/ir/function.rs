@@ -95,21 +95,25 @@ impl FunctionIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn args(mut self, args: LexicalId) -> Self {
         self.args = Some(args);
         self
     }
 
+    #[must_use]
     pub fn ok(mut self, ok: LexicalId) -> Self {
         self.ok = Some(ok);
         self
     }
 
+    #[must_use]
     pub fn err(mut self, err: LexicalId) -> Self {
         self.err = Some(err);
         self

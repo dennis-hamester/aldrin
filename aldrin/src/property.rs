@@ -234,11 +234,11 @@ impl<T: PartialEq> Property<T> {
         if timestamp > self.timestamp {
             self.timestamp = timestamp;
 
-            if self.val != val {
+            if self.val == val {
+                None
+            } else {
                 let old = mem::replace(&mut self.val, val);
                 Some((&self.val, old))
-            } else {
-                None
             }
         } else {
             None
@@ -287,11 +287,11 @@ impl<T: PartialEq> Property<Option<T>> {
 
             match self.val {
                 Some(ref mut inner) => {
-                    if val != *inner {
+                    if val == *inner {
+                        None
+                    } else {
                         let old = mem::replace(inner, val);
                         Some((inner, Some(old)))
-                    } else {
-                        None
                     }
                 }
 

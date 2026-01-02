@@ -108,7 +108,7 @@ impl Service {
     }
 
     pub(crate) fn subscribed_conn_ids(&self) -> impl Iterator<Item = &ConnectionId> {
-        #[allow(clippy::mutable_key_type)]
+        #[expect(clippy::mutable_key_type)]
         let mut res = HashSet::new();
 
         res.extend(self.events.values().flatten());

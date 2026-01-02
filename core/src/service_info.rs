@@ -103,15 +103,15 @@ impl Deserialize<Self> for ServiceInfo {
         while let Some(deserializer) = deserializer.deserialize()? {
             match deserializer.try_id() {
                 Ok(ServiceInfoField::Version) => {
-                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?
+                    version = deserializer.deserialize::<tags::U32, _>().map(Some)?;
                 }
 
                 Ok(ServiceInfoField::TypeId) => {
-                    type_id = deserializer.deserialize::<tags::Option<TypeId>, _>()?
+                    type_id = deserializer.deserialize::<tags::Option<TypeId>, _>()?;
                 }
 
                 Ok(ServiceInfoField::SubscribeAll) => {
-                    subscribe_all = deserializer.deserialize::<tags::Option<tags::Bool>, _>()?
+                    subscribe_all = deserializer.deserialize::<tags::Option<tags::Bool>, _>()?;
                 }
 
                 Err(_) => deserializer.skip()?,

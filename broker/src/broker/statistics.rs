@@ -29,7 +29,7 @@ impl BrokerStatistics {
     ///
     /// The timestamps [`start`](Self::start) and [`end`](Self::end) will be initialized with
     /// [`Instant::now()`] (both have the same value). All other getters will return 0.
-    #[allow(clippy::new_without_default)]
+    #[expect(clippy::new_without_default)]
     pub fn new() -> Self {
         let now = Instant::now();
 

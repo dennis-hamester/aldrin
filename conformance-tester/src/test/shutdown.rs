@@ -46,7 +46,7 @@ impl ShutdownStep {
         let remove_client = RemoveClient {
             client: self.client.clone(),
         };
-        remove_client.run(ctx, timeout).await?;
+        remove_client.run(ctx, timeout)?;
 
         Ok(())
     }

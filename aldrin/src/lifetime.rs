@@ -124,7 +124,7 @@ impl Introspectable for LifetimeScope {
     }
 
     fn add_references(references: &mut References) {
-        LifetimeId::add_references(references)
+        LifetimeId::add_references(references);
     }
 }
 
@@ -285,7 +285,7 @@ impl Lifetime {
 
     /// Await the associated scope to end.
     pub async fn ended(&mut self) {
-        future::poll_fn(|cx| self.poll_ended(cx)).await
+        future::poll_fn(|cx| self.poll_ended(cx)).await;
     }
 
     /// Check if the associated scope has ended.

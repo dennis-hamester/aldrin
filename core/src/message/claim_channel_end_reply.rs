@@ -47,14 +47,17 @@ impl MessageOps for ClaimChannelEndReply {
                 serializer.put_discriminant_u8(ClaimChannelEndReplyKind::SenderClaimed);
                 serializer.put_varint_u32_le(capacity);
             }
+
             ClaimChannelEndResult::ReceiverClaimed => {
-                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::ReceiverClaimed)
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::ReceiverClaimed);
             }
+
             ClaimChannelEndResult::InvalidChannel => {
-                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::InvalidChannel)
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::InvalidChannel);
             }
+
             ClaimChannelEndResult::AlreadyClaimed => {
-                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::AlreadyClaimed)
+                serializer.put_discriminant_u8(ClaimChannelEndReplyKind::AlreadyClaimed);
             }
         }
 
@@ -72,6 +75,7 @@ impl MessageOps for ClaimChannelEndReply {
                 let capacity = deserializer.try_get_varint_u32_le()?;
                 ClaimChannelEndResult::SenderClaimed(capacity)
             }
+
             ClaimChannelEndReplyKind::ReceiverClaimed => ClaimChannelEndResult::ReceiverClaimed,
             ClaimChannelEndReplyKind::InvalidChannel => ClaimChannelEndResult::InvalidChannel,
             ClaimChannelEndReplyKind::AlreadyClaimed => ClaimChannelEndResult::AlreadyClaimed,

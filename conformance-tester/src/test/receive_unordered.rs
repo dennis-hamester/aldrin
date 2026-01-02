@@ -4,6 +4,7 @@ use crate::message::Message;
 use crate::util::FutureExt;
 use anyhow::{Error, Result, anyhow};
 use serde::Deserialize;
+use std::fmt::Write;
 use tokio::time::Instant;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -86,7 +87,7 @@ impl ReceiveUnordered {
                 Err(e) => return e,
             };
 
-            error_msg.push_str(&format!("\n\nmissing message {}:\n{msg}", i + 1));
+            let _ = write!(error_msg, "\n\nmissing message {}:\n{msg}", i + 1);
         }
 
         for (i, msg) in received.iter().enumerate() {
@@ -95,7 +96,7 @@ impl ReceiveUnordered {
                 Err(e) => return e,
             };
 
-            error_msg.push_str(&format!("\n\nreceived message {}:\n{msg}", i + 1));
+            let _ = write!(error_msg, "\n\nreceived message {}:\n{msg}", i + 1);
         }
 
         err.into().context(error_msg)

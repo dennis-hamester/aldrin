@@ -66,7 +66,7 @@ fn main() -> Result<()> {
     args.color.write_global();
 
     let res = match args.cmd {
-        Command::Check(args) => check::run(args)?,
+        Command::Check(args) => check::run(&args),
         Command::Fmt(args) => fmt::run(args)?,
         Command::Rust(args) => rust::run(args)?,
     };

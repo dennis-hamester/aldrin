@@ -52,11 +52,11 @@ where
         &self,
         object: ObjectUuid,
         services: impl IntoIterator<Item = ServiceUuid>,
-    ) -> Option<Vec<ServiceId>> {
+    ) -> Vec<ServiceId> {
         assert_eq!(object, self.object);
 
         if services.into_iter().next().is_none() {
-            Some(Vec::new())
+            Vec::new()
         } else {
             panic!("invalid service UUID")
         }
@@ -66,11 +66,11 @@ where
         &self,
         object: ObjectUuid,
         services: &[ServiceUuid; N],
-    ) -> Option<[ServiceId; N]> {
+    ) -> [ServiceId; N] {
         assert_eq!(object, self.object);
 
         if services.is_empty() {
-            Some(super::fill_service_id_array(services, |_| unreachable!()))
+            super::fill_service_id_array(services, |_| unreachable!())
         } else {
             panic!("invalid service UUID")
         }

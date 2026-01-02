@@ -78,7 +78,7 @@ where
     ) -> Option<Vec<ServiceId>> {
         match self {
             Self::WithServices(inner) => inner.service_ids(object, services),
-            Self::WithoutServices(inner) => inner.service_ids(object, services),
+            Self::WithoutServices(inner) => Some(inner.service_ids(object, services)),
         }
     }
 
@@ -89,7 +89,7 @@ where
     ) -> Option<[ServiceId; N]> {
         match self {
             Self::WithServices(inner) => inner.service_ids_n(object, services),
-            Self::WithoutServices(inner) => inner.service_ids_n(object, services),
+            Self::WithoutServices(inner) => Some(inner.service_ids_n(object, services)),
         }
     }
 

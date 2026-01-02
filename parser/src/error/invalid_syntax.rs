@@ -104,8 +104,7 @@ impl Diagnostic for InvalidSyntax {
             let width = schema.source().unwrap()[self.pos..]
                 .chars()
                 .next()
-                .map(char::len_utf8)
-                .unwrap_or(1);
+                .map_or(1, char::len_utf8);
 
             let span = Span {
                 start: self.pos,
@@ -208,7 +207,7 @@ impl Expected {
         const INLINE: &[Expected] = &[Expected::Keyword("enum"), Expected::Keyword("struct")];
         const ARRAY_LEN: &[Expected] = &[Expected::Ident, Expected::LitPosInt];
 
-        #[allow(clippy::use_self)]
+        #[expect(clippy::use_self, clippy::wildcard_enum_match_arm)]
         let add: &[&[Self]] = match rule {
             Rule::EOI => &[&[Expected::Eof]],
             Rule::array_len => &[ARRAY_LEN],

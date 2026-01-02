@@ -35,7 +35,7 @@ impl DuplicateStructFieldId {
                     first: first.id().span(),
                     struct_ident: ident.cloned(),
                     free_id,
-                })
+                });
             },
         );
     }

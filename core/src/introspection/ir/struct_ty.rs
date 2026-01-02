@@ -98,16 +98,19 @@ impl StructIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn field(mut self, field: FieldIr) -> Self {
         self.fields.insert(field.id(), field);
         self
     }
 
+    #[must_use]
     pub fn fallback(mut self, fallback: StructFallbackIr) -> Self {
         self.fallback = Some(fallback);
         self

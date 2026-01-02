@@ -18,7 +18,7 @@ impl ReservedSchemaName {
                 schema_name: schema_name.to_owned(),
                 path: validate.get_current_schema().path().to_owned(),
                 usage,
-            })
+            });
         }
     }
 }

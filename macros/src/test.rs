@@ -2,7 +2,7 @@ use aldrin::Introspectable;
 use aldrin::core::introspection::Introspection;
 
 mod raw_identifiers {
-    #![allow(non_camel_case_types)]
+    #![expect(non_camel_case_types)]
 
     use aldrin::core::ServiceUuid;
     use aldrin::{Deserialize, Introspectable, PrimaryTag, RefType, Serialize, Tag, service};
@@ -46,7 +46,7 @@ mod raw_identifiers {
 
 #[test]
 fn introspection_non_default_field_ids() {
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[derive(Introspectable)]
     #[aldrin(schema = "test")]
     struct NonDefaultFieldIds {
