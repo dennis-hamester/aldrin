@@ -154,26 +154,31 @@ impl ServiceIrBuilder {
         }
     }
 
+    #[must_use]
     pub fn doc(mut self, doc: impl Into<String>) -> Self {
         self.doc = Some(doc.into());
         self
     }
 
+    #[must_use]
     pub fn function(mut self, function: FunctionIr) -> Self {
         self.functions.insert(function.id(), function);
         self
     }
 
+    #[must_use]
     pub fn event(mut self, event: EventIr) -> Self {
         self.events.insert(event.id(), event);
         self
     }
 
+    #[must_use]
     pub fn function_fallback(mut self, fallback: FunctionFallbackIr) -> Self {
         self.function_fallback = Some(fallback);
         self
     }
 
+    #[must_use]
     pub fn event_fallback(mut self, fallback: EventFallbackIr) -> Self {
         self.event_fallback = Some(fallback);
         self

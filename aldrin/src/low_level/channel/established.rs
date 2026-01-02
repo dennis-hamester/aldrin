@@ -143,7 +143,7 @@ impl Sender {
     /// # }
     /// ```
     pub async fn receiver_closed(&mut self) {
-        future::poll_fn(|cx| self.poll_receiver_closed(cx)).await
+        future::poll_fn(|cx| self.poll_receiver_closed(cx)).await;
     }
 
     /// Polls the channel for capacity to send at least one item.

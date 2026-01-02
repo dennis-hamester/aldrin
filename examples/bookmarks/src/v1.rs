@@ -102,7 +102,7 @@ impl Server {
                 call = self.svc.next_call() => {
                     match call {
                         Some(Ok(call)) => self.handle_call(call)?,
-                        Some(Err(e)) => self.invalid_call(e),
+                        Some(Err(e)) => Self::invalid_call(e),
                         None => break Err(anyhow!("broker shut down")),
                     }
                 }
@@ -117,7 +117,7 @@ impl Server {
             BookmarksCall::Get(call) => self.get(call)?,
             BookmarksCall::Add(call) => self.add(call)?,
             BookmarksCall::Remove(call) => self.remove(call)?,
-            BookmarksCall::UnknownFunction(call) => self.unknown_function(call),
+            BookmarksCall::UnknownFunction(call) => Self::unknown_function(&call),
         }
 
         Ok(())
@@ -181,7 +181,7 @@ impl Server {
         Ok(())
     }
 
-    fn unknown_function(&self, call: UnknownCall) {
+    fn unknown_function(call: &UnknownCall) {
         match call.deserialize_as_value() {
             Ok(args) => println!(
                 "Received an unknown call {} with arguments {args:?}.",
@@ -195,7 +195,7 @@ impl Server {
         }
     }
 
-    fn invalid_call(&self, e: Error) {
+    fn invalid_call(e: Error) {
         println!("Received an invalid call: {e}.");
     }
 }
@@ -249,9 +249,9 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
 
     while let Some(event) = bookmarks.next_event().await {
         match event {
-            Ok(BookmarksEvent::Added(ev)) => bookmark_added(ev.into_args()),
-            Ok(BookmarksEvent::Removed(ev)) => bookmark_removed(ev.into_args()),
-            Ok(BookmarksEvent::UnknownEvent(ev)) => unknown_event(ev),
+            Ok(BookmarksEvent::Added(ev)) => bookmark_added(&ev.into_args()),
+            Ok(BookmarksEvent::Removed(ev)) => bookmark_removed(&ev.into_args()),
+            Ok(BookmarksEvent::UnknownEvent(ev)) => unknown_event(&ev),
             Err(e) => invalid_event(e),
         }
     }
@@ -259,15 +259,15 @@ async fn listen(args: Listen, bus: &Handle) -> Result<()> {
     Ok(())
 }
 
-fn bookmark_added(bookmark: Bookmark) {
+fn bookmark_added(bookmark: &Bookmark) {
     println!("Bookmark `{}` ({}) added.", bookmark.name, bookmark.url);
 }
 
-fn bookmark_removed(bookmark: Bookmark) {
+fn bookmark_removed(bookmark: &Bookmark) {
     println!("Bookmark `{}` ({}) removed.", bookmark.name, bookmark.url);
 }
 
-fn unknown_event(event: UnknownEvent) {
+fn unknown_event(event: &UnknownEvent) {
     match event.deserialize_as_value() {
         Ok(args) => println!(
             "Received an unknown event {} with arguments {args:?}.",

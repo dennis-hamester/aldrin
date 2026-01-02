@@ -53,6 +53,7 @@ impl Schema {
         let mut prelude = Prelude::schema(&mut pairs);
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::import_stmt => schema.imports.push(ImportStmt::parse(pair)),
                 Rule::def => schema.defs.push(Definition::parse(pair)),

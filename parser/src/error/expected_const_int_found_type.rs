@@ -30,7 +30,7 @@ impl ExpectedConstIntFoundType {
             if def.name().value() == ident.value() {
                 match def {
                     Definition::Struct(_) | Definition::Enum(_) | Definition::Newtype(_) => {
-                        found = true
+                        found = true;
                     }
 
                     Definition::Service(_) | Definition::Const(_) => return,

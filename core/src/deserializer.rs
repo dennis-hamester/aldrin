@@ -45,7 +45,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
         }
     }
 
-    #[allow(clippy::len_without_is_empty)]
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> Result<usize, DeserializeError> {
         let mut buf = *self.buf;
         Deserializer::new(&mut buf, self.depth - 1)?.skip()?;
@@ -187,94 +187,94 @@ impl<'a, 'b> Deserializer<'a, 'b> {
             }
 
             ValueKind::Vec2 => {
-                Vec2Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+                Vec2Deserializer::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::Bytes2 => Bytes2Deserializer::new_without_value_kind(self.buf)?.skip(),
 
             ValueKind::U8Map2 => {
-                Map2Deserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::U8>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::I8Map2 => {
-                Map2Deserializer::<tags::I8>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::I8>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::U16Map2 => {
-                Map2Deserializer::<tags::U16>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::U16>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::I16Map2 => {
-                Map2Deserializer::<tags::I16>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::I16>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::U32Map2 => {
-                Map2Deserializer::<tags::U32>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::U32>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::I32Map2 => {
-                Map2Deserializer::<tags::I32>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::I32>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::U64Map2 => {
-                Map2Deserializer::<tags::U64>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::U64>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::I64Map2 => {
-                Map2Deserializer::<tags::I64>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::I64>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::StringMap2 => {
-                Map2Deserializer::<tags::String>::new_without_value_kind(self.buf, self.depth)?
+                Map2Deserializer::<tags::String>::new_without_value_kind(self.buf, self.depth)
                     .skip()
             }
 
             ValueKind::UuidMap2 => {
-                Map2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf, self.depth)?.skip()
+                Map2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf, self.depth).skip()
             }
 
             ValueKind::U8Set2 => {
-                Set2Deserializer::<tags::U8>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::U8>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::I8Set2 => {
-                Set2Deserializer::<tags::I8>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::I8>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::U16Set2 => {
-                Set2Deserializer::<tags::U16>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::U16>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::I16Set2 => {
-                Set2Deserializer::<tags::I16>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::I16>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::U32Set2 => {
-                Set2Deserializer::<tags::U32>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::U32>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::I32Set2 => {
-                Set2Deserializer::<tags::I32>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::I32>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::U64Set2 => {
-                Set2Deserializer::<tags::U64>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::U64>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::I64Set2 => {
-                Set2Deserializer::<tags::I64>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::I64>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::StringSet2 => {
-                Set2Deserializer::<tags::String>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::String>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::UuidSet2 => {
-                Set2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf)?.skip()
+                Set2Deserializer::<tags::Uuid>::new_without_value_kind(self.buf).skip()
             }
 
             ValueKind::Struct2 => {
-                Struct2Deserializer::new_without_value_kind(self.buf, self.depth)?.skip()
+                Struct2Deserializer::new_without_value_kind(self.buf, self.depth).skip()
             }
         }
     }
@@ -296,6 +296,7 @@ impl<'a, 'b> Deserializer<'a, 'b> {
     pub fn deserialize_option<T: Tag, U: Deserialize<T>>(
         mut self,
     ) -> Result<Option<U>, DeserializeError> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self.buf.try_get_discriminant_u8()? {
             ValueKind::Some => {
                 self.increment_depth()?;

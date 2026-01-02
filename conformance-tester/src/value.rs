@@ -52,8 +52,9 @@ impl Serialize<tags::Value> for &Value {
 
 impl Deserialize<tags::Value> for Value {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match deserializer.peek_value_kind()? {
-            ValueKind::None => deserializer.deserialize_none().map(|_| Self::None),
+            ValueKind::None => deserializer.deserialize_none().map(|()| Self::None),
             ValueKind::I32 => deserializer.deserialize_i32().map(Self::I32),
 
             kind => deserializer
@@ -66,6 +67,7 @@ impl Deserialize<tags::Value> for Value {
     }
 }
 
+#[expect(clippy::trivially_copy_pass_by_ref)]
 fn serialize_value_kind<S>(kind: &ValueKind, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,

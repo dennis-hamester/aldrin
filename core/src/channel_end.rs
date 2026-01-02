@@ -24,6 +24,7 @@ impl ChannelEnd {
     /// assert_eq!(ChannelEnd::Sender.other(), ChannelEnd::Receiver);
     /// assert_eq!(ChannelEnd::Receiver.other(), ChannelEnd::Sender);
     /// ```
+    #[must_use]
     pub fn other(self) -> Self {
         match self {
             Self::Sender => Self::Receiver,

@@ -30,7 +30,7 @@ impl EnumDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip {.
 
@@ -38,6 +38,7 @@ impl EnumDef {
         let mut fallback = None;
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
                 Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
@@ -145,6 +146,7 @@ impl InlineEnum {
         let mut fallback = None;
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::enum_variant => vars.push(EnumVariant::parse(pair)),
                 Rule::enum_fallback => fallback = Some(EnumFallback::parse(pair)),
@@ -229,14 +231,16 @@ impl EnumVariant {
         let mut prelude = Prelude::regular(&mut pairs);
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitInt::parse(pair);
+        let id = LitInt::parse(&pair);
 
         let pair = pairs.next().unwrap();
+
+        #[expect(clippy::wildcard_enum_match_arm)]
         let var_type = match pair.as_rule() {
             Rule::tok_eq => {
                 let pair = pairs.next().unwrap();
@@ -314,7 +318,7 @@ impl EnumFallback {
             span,
             comment: prelude.take_comment(),
             doc: prelude.take_doc(),
-            name: Ident::parse(pairs.next().unwrap()),
+            name: Ident::parse(&pairs.next().unwrap()),
         }
     }
 

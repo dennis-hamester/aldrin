@@ -54,6 +54,7 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
             .await
             .map_err(ConnectError::Transport)?;
 
+        #[expect(clippy::wildcard_enum_match_arm)]
         let connect_reply = match connect_reply {
             Message::ConnectReply2(connect_reply) => connect_reply,
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),
@@ -92,8 +93,7 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
 
         let value = self
             .data
-            .map(Ok)
-            .unwrap_or_else(|| SerializedValue::serialize(()))?;
+            .map_or_else(|| SerializedValue::serialize(()), Ok)?;
 
         let mut connect = Connect {
             version: PROTOCOL_VERSION.minor(),
@@ -113,6 +113,7 @@ impl<T: AsyncTransport + Unpin> ClientBuilder<T> {
             .await
             .map_err(ConnectError::Transport)?;
 
+        #[expect(clippy::wildcard_enum_match_arm)]
         let connect_reply = match connect_reply {
             Message::ConnectReply(connect_reply) => connect_reply,
             msg => return Err(ConnectError::UnexpectedMessageReceived(msg)),

@@ -3,7 +3,8 @@ use crate::introspection::{Introspectable, LexicalId, References, ir};
 use crate::tags::{self, PrimaryTag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
 use std::collections::{LinkedList, VecDeque};
-use std::mem::{self, MaybeUninit};
+use std::mem::MaybeUninit;
+use std::ptr;
 
 impl Serialize<tags::Bytes> for Vec<u8> {
     fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
@@ -44,9 +45,7 @@ impl<const N: usize> Serialize<tags::Bytes> for &[u8; N] {
 impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
     fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_bytes()?;
-
-        // SAFETY: This creates an array of MaybeUninit<U>, which doesn't require initialization.
-        let mut arr: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut arr = [MaybeUninit::uninit(); N];
         let mut done = 0;
 
         loop {
@@ -57,11 +56,14 @@ impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
                 if done == N {
                     // SAFETY: Exactly done elements have been initialized and done equals N.
                     //
-                    // It's currently impossible to transmute [MaybeUninit<u8>; N] to [u8; N] when N
-                    // is a const generic. See https://github.com/rust-lang/rust/issues/61956.
+                    // This is a convoluted transmute. Use MaybeUninit::array_assume_init() when
+                    // it's stable: https://github.com/rust-lang/rust/issues/96097
                     let value = unsafe {
-                        (*(&MaybeUninit::new(arr) as *const _ as *const MaybeUninit<[u8; N]>))
-                            .assume_init_read()
+                        let arr = MaybeUninit::new(arr);
+                        let arr = ptr::from_ref(&arr).cast::<MaybeUninit<[u8; N]>>();
+                        let arr = &*arr;
+
+                        arr.assume_init_read()
                     };
 
                     break deserializer.finish(value);
@@ -72,7 +74,13 @@ impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
 
             if done + len <= N {
                 // SAFETY: &[u8] and &[MaybeUninit<u8>] have the same layout
-                let slice: &[MaybeUninit<u8>] = unsafe { mem::transmute(slice) };
+                //
+                // Use [MaybeUninit<T>]::write_copy_of_slice() when it's stable:
+                // https://github.com/rust-lang/rust/issues/79995
+                let slice = unsafe {
+                    let slice = ptr::from_ref(slice) as *const [MaybeUninit<u8>];
+                    &*slice
+                };
 
                 arr[done..(done + len)].copy_from_slice(slice);
 

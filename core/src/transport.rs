@@ -357,21 +357,23 @@ where
         if let SendFlushInner::Send(ref mut send) = self.0 {
             match Pin::new(send).poll(cx) {
                 Poll::Ready(Ok(())) => {}
-                p => return p,
+                p @ Poll::Ready(Err(_)) | p @ Poll::Pending => return p,
             }
 
             let mut tmp = SendFlushInner::None;
             mem::swap(&mut tmp, &mut self.0);
+
             let t = match tmp {
                 SendFlushInner::Send(s) => s.t,
-                _ => unreachable!(),
+                SendFlushInner::Flush(_) | SendFlushInner::None => unreachable!(),
             };
+
             self.0 = SendFlushInner::Flush(Flush(t));
         }
 
         match self.0 {
             SendFlushInner::Flush(ref mut flush) => Pin::new(flush).poll(cx),
-            _ => unreachable!(),
+            SendFlushInner::Send(_) | SendFlushInner::None => unreachable!(),
         }
     }
 }

@@ -27,7 +27,7 @@ impl NewtypeDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip =.
 

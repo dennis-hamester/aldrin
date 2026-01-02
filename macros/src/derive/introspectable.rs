@@ -15,7 +15,7 @@ pub(crate) fn gen_introspectable_from_core(input: DeriveInput) -> Result<TokenSt
         is_struct,
     )?;
 
-    gen_introspectable(input, options)
+    gen_introspectable(input, &options)
 }
 
 pub(crate) fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
@@ -28,10 +28,10 @@ pub(crate) fn gen_introspectable_from_aldrin(input: DeriveInput) -> Result<Token
         is_struct,
     )?;
 
-    gen_introspectable(input, options)
+    gen_introspectable(input, &options)
 }
 
-fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStream> {
+fn gen_introspectable(input: DeriveInput, options: &Options) -> Result<TokenStream> {
     super::ensure_no_type_generics(&input.generics)?;
 
     let schema = options.schema().ok_or_else(|| {
@@ -47,12 +47,12 @@ fn gen_introspectable(input: DeriveInput, options: Options) -> Result<TokenStrea
 
     let (layout, add_references) = match input.data {
         Data::Struct(data) => match data.fields {
-            Fields::Named(fields) => gen_struct(&fields.named, &name, &options)?,
-            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name, &options)?,
-            Fields::Unit => gen_struct(&Punctuated::new(), &name, &options)?,
+            Fields::Named(fields) => gen_struct(&fields.named, &name, options)?,
+            Fields::Unnamed(fields) => gen_struct(&fields.unnamed, &name, options)?,
+            Fields::Unit => gen_struct(&Punctuated::new(), &name, options)?,
         },
 
-        Data::Enum(data) => gen_enum(&data.variants, &name, &options)?,
+        Data::Enum(data) => gen_enum(&data.variants, &name, options)?,
 
         Data::Union(_) => {
             return Err(Error::new_spanned(
@@ -88,7 +88,7 @@ fn gen_struct(
     options: &Options,
 ) -> Result<(TokenStream, TokenStream)> {
     if options.newtype() {
-        gen_newtype_struct(fields, name, options)
+        Ok(gen_newtype_struct(fields, name, options))
     } else {
         gen_regular_struct(fields, name, options)
     }
@@ -233,7 +233,7 @@ fn gen_newtype_struct(
     fields: &Punctuated<Field, Token![,]>,
     name: &str,
     options: &Options,
-) -> Result<(TokenStream, TokenStream)> {
+) -> (TokenStream, TokenStream) {
     let krate = options.krate();
     let schema = options.schema().unwrap();
     let field = &fields[0];
@@ -255,7 +255,7 @@ fn gen_newtype_struct(
         references.add::<#field_type>();
     };
 
-    Ok((layout, add_references))
+    (layout, add_references)
 }
 
 fn gen_enum(
@@ -271,8 +271,9 @@ fn gen_enum(
     let mut next_id = 0;
     let mut has_fallback = false;
 
-    for variant in variants.into_iter() {
+    for variant in variants {
         let item_options = ItemOptions::new(&variant.attrs, next_id)?;
+
         if item_options.is_fallback() {
             if has_fallback {
                 return Err(Error::new_spanned(

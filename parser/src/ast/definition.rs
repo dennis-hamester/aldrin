@@ -5,7 +5,6 @@ use crate::validate::Validate;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum Definition {
     Struct(StructDef),
     Enum(EnumDef),
@@ -17,8 +16,11 @@ pub enum Definition {
 impl Definition {
     pub(crate) fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::def);
+
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
+
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::struct_def => Self::Struct(StructDef::parse(pair)),
             Rule::enum_def => Self::Enum(EnumDef::parse(pair)),
@@ -60,6 +62,7 @@ impl Definition {
     }
 
     pub fn as_struct(&self) -> Option<&StructDef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Struct(d) => Some(d),
             _ => None,
@@ -67,6 +70,7 @@ impl Definition {
     }
 
     pub fn as_enum(&self) -> Option<&EnumDef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Enum(d) => Some(d),
             _ => None,
@@ -74,6 +78,7 @@ impl Definition {
     }
 
     pub fn as_service(&self) -> Option<&ServiceDef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Service(d) => Some(d),
             _ => None,
@@ -81,6 +86,7 @@ impl Definition {
     }
 
     pub fn as_const(&self) -> Option<&ConstDef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Const(d) => Some(d),
             _ => None,
@@ -88,6 +94,7 @@ impl Definition {
     }
 
     pub fn as_newtype(&self) -> Option<&NewtypeDef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Newtype(d) => Some(d),
             _ => None,

@@ -61,15 +61,16 @@ pub enum NamedRefKind {
 
 impl NamedRefKind {
     fn parse(pair: Pair<Rule>) -> Self {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
-            Rule::ident => Self::Intern(Ident::parse(pair)),
+            Rule::ident => Self::Intern(Ident::parse(&pair)),
 
             Rule::external_ref => {
                 let mut pairs = pair.into_inner();
                 let pair = pairs.next().unwrap();
-                let schema_name = Ident::parse(pair);
+                let schema_name = Ident::parse(&pair);
                 pairs.next().unwrap(); // Skip ::.
-                let ident = Ident::parse(pairs.next().unwrap());
+                let ident = Ident::parse(&pairs.next().unwrap());
 
                 Self::Extern(schema_name, ident)
             }
@@ -100,8 +101,7 @@ impl NamedRefKind {
 
     pub fn ident(&self) -> &Ident {
         match self {
-            Self::Intern(ident) => ident,
-            Self::Extern(_, ident) => ident,
+            Self::Intern(ident) | Self::Extern(_, ident) => ident,
         }
     }
 }

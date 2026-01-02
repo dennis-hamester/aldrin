@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Ident, Result, Token, Type};
 
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 pub(super) enum ServiceItem {
     Event(EvItem),
     EventFallback(EvFallbackItem),

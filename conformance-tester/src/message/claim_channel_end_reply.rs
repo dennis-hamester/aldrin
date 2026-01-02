@@ -16,14 +16,14 @@ pub(crate) struct ClaimChannelEndReply {
 impl ClaimChannelEndReply {
     pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::ClaimChannelEndReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_core(ctx)?;
+        let result = self.result.to_core(ctx);
 
         Ok(message::ClaimChannelEndReply { serial, result })
     }
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(other.result, ctx);
 
         Ok(res)
     }
@@ -65,20 +65,20 @@ pub(crate) enum ClaimChannelEndResult {
 }
 
 impl ClaimChannelEndResult {
-    pub(crate) fn to_core(self, _ctx: &Context) -> Result<message::ClaimChannelEndResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> message::ClaimChannelEndResult {
         match self {
             Self::SenderClaimed { capacity } => {
-                Ok(message::ClaimChannelEndResult::SenderClaimed(capacity))
+                message::ClaimChannelEndResult::SenderClaimed(capacity)
             }
 
-            Self::ReceiverClaimed => Ok(message::ClaimChannelEndResult::ReceiverClaimed),
-            Self::InvalidChannel => Ok(message::ClaimChannelEndResult::InvalidChannel),
-            Self::AlreadyClaimed => Ok(message::ClaimChannelEndResult::AlreadyClaimed),
+            Self::ReceiverClaimed => message::ClaimChannelEndResult::ReceiverClaimed,
+            Self::InvalidChannel => message::ClaimChannelEndResult::InvalidChannel,
+            Self::AlreadyClaimed => message::ClaimChannelEndResult::AlreadyClaimed,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
-        Ok(self == other)
+    pub(crate) fn matches(self, other: Self, _ctx: &Context) -> bool {
+        self == other
     }
 }
 

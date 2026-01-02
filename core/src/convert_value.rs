@@ -146,7 +146,11 @@ impl<'a, 'b> Convert<'a, 'b> {
 
     fn convert(self) -> Result<(), ValueConversionError> {
         match self.src.try_get_discriminant_u8()? {
-            ValueKind::None => self.convert_none(),
+            ValueKind::None => {
+                self.convert_none();
+                Ok(())
+            }
+
             ValueKind::Some => self.convert_some(),
             ValueKind::Bool => self.convert_bool(),
             ValueKind::U8 => self.convert_u8(),
@@ -220,9 +224,8 @@ impl<'a, 'b> Convert<'a, 'b> {
         this.convert()
     }
 
-    fn convert_none(self) -> Result<(), ValueConversionError> {
+    fn convert_none(self) {
         self.dst.put_discriminant_u8(ValueKind::None);
-        Ok(())
     }
 
     fn convert_some(mut self) -> Result<(), ValueConversionError> {
@@ -524,6 +527,7 @@ impl<'a, 'b> Convert<'a, 'b> {
         let mut len = 0usize;
 
         loop {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.src.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     let Ok(len) = len.try_into() else {
@@ -601,6 +605,7 @@ impl<'a, 'b> Convert<'a, 'b> {
         let mut len = 0usize;
 
         loop {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.src.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     let Ok(len) = len.try_into() else {
@@ -644,6 +649,7 @@ impl<'a, 'b> Convert<'a, 'b> {
         let mut len = 0usize;
 
         loop {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.src.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     let Ok(len) = len.try_into() else {
@@ -683,6 +689,7 @@ impl<'a, 'b> Convert<'a, 'b> {
         let mut len = 0usize;
 
         loop {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match self.src.try_get_discriminant_u8()? {
                 ValueKind::None => {
                     let Ok(len) = len.try_into() else {

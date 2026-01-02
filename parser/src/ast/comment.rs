@@ -9,11 +9,11 @@ pub struct Comment {
 }
 
 impl Comment {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: &Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::comment);
 
         Self {
-            span: Span::from_pair(&pair),
+            span: Span::from_pair(pair),
             value: pair.as_str().to_owned(),
         }
     }
@@ -26,7 +26,7 @@ impl Comment {
         let value = &self.value[2..];
 
         Span {
-            start: self.span.start + 2 + value.starts_with(' ') as usize,
+            start: self.span.start + 2 + usize::from(value.starts_with(' ')),
             end: self.span.end - value.len() + value.trim_end().len(),
         }
     }

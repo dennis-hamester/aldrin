@@ -148,7 +148,7 @@ pub(crate) fn did_you_mean_key_type<'a>(
 
             resolves_to_key_type(&kind, schema, validate)
                 .ok()
-                .map(|_| newtype.name().value())
+                .map(|()| newtype.name().value())
         });
 
     if with_builtins {

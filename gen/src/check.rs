@@ -1,6 +1,5 @@
 use crate::{CommonReadArgs, diag};
 use aldrin_parser::{FilesystemResolver, Parser};
-use anyhow::Result;
 use std::path::PathBuf;
 
 #[derive(clap::Parser)]
@@ -14,7 +13,7 @@ pub(crate) struct CheckArgs {
     schemas: Vec<PathBuf>,
 }
 
-pub(crate) fn run(args: CheckArgs) -> Result<bool> {
+pub(crate) fn run(args: &CheckArgs) -> bool {
     let mut res = true;
     let mut first = true;
 
@@ -50,5 +49,5 @@ pub(crate) fn run(args: CheckArgs) -> Result<bool> {
         }
     }
 
-    Ok(res)
+    res
 }

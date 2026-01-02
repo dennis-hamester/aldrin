@@ -12,13 +12,11 @@ use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-pub(crate) fn run(args: RunArgs, tests: Vec<Test>) -> Result<bool> {
+pub(crate) fn run(args: &RunArgs, tests: Vec<Test>) -> Result<bool> {
     let jobs = match args.jobs {
         Some(0) => 1,
         Some(jobs) => jobs,
-        None => thread::available_parallelism()
-            .map(NonZeroUsize::get)
-            .unwrap_or(1),
+        None => thread::available_parallelism().map_or(1, NonZeroUsize::get),
     };
 
     let runtime = Runtime::new()?;

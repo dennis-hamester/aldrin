@@ -19,7 +19,7 @@ impl InvalidIdent {
         validate.add_error(Self {
             schema_name: validate.schema_name().to_owned(),
             ident: ident.clone(),
-        })
+        });
     }
 }
 

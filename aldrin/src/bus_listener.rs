@@ -214,11 +214,11 @@ impl BusListener {
     ///
     /// The same caveats as with [`remove_filter`](Self::remove_filter) apply.
     pub fn clear_filters(&mut self) -> Result<(), Error> {
-        if !self.filters.is_empty() {
+        if self.filters.is_empty() {
+            Ok(())
+        } else {
             self.filters.clear();
             self.client.clear_bus_listener_filters(self.cookie)
-        } else {
-            Ok(())
         }
     }
 
@@ -427,9 +427,7 @@ impl BusListener {
     }
 
     fn includes_new(&self) -> bool {
-        self.scope
-            .map(BusListenerScope::includes_new)
-            .unwrap_or(false)
+        self.scope.is_some_and(BusListenerScope::includes_new)
     }
 }
 
@@ -505,14 +503,14 @@ impl BusListenerHandle {
     }
 
     pub(crate) fn current_finished(&mut self) -> bool {
-        if !self.current_finished {
+        if self.current_finished {
+            false
+        } else {
             let _ = self
                 .events
                 .unbounded_send(BusListenerEvent::CurrentFinished);
             self.current_finished = true;
             true
-        } else {
-            false
         }
     }
 
@@ -532,15 +530,11 @@ impl BusListenerHandle {
     }
 
     fn includes_current(&self) -> bool {
-        self.scope
-            .map(BusListenerScope::includes_current)
-            .unwrap_or(false)
+        self.scope.is_some_and(BusListenerScope::includes_current)
     }
 
     fn includes_new(&self) -> bool {
-        self.scope
-            .map(BusListenerScope::includes_new)
-            .unwrap_or(false)
+        self.scope.is_some_and(BusListenerScope::includes_new)
     }
 
     fn matches_filters(&self, event: BusEvent) -> bool {

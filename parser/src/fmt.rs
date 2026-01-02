@@ -20,6 +20,7 @@ pub struct Formatter<'a> {
 
 impl<'a> Formatter<'a> {
     pub fn new(parser: &'a Parser) -> Result<Self, Vec<&'a Error>> {
+        #[expect(clippy::trivially_copy_pass_by_ref)]
         fn is_fmt_error(e: &&Error) -> bool {
             matches!(
                 e.error_kind(),
@@ -50,7 +51,7 @@ impl<'a> Formatter<'a> {
         self.schema(&mut writer, self.schema)
     }
 
-    #[allow(clippy::inherent_to_string)]
+    #[expect(clippy::inherent_to_string)]
     pub fn to_string(self) -> String {
         let mut buf = Vec::new();
         self.to_writer(&mut buf).unwrap();
@@ -494,10 +495,9 @@ impl<'a> Formatter<'a> {
         }
 
         if let Some(fallback) = ev_fallback {
-            self.newline |= fn_fallback
-                .map(|fallback| !fallback.comment().is_empty() || !fallback.doc().is_empty())
-                .unwrap_or(false)
-                || (fn_fallback.is_none() && has_fns);
+            self.newline |= fn_fallback.is_some_and(|fallback| {
+                !fallback.comment().is_empty() || !fallback.doc().is_empty()
+            }) || (fn_fallback.is_none() && has_fns);
 
             self.ev_fallback(writer, fallback)?;
         }
@@ -510,13 +510,9 @@ impl<'a> Formatter<'a> {
             || !fn_def.doc().is_empty()
             || fn_def.args().is_some()
             || fn_def.err().is_some()
-            || fn_def
-                .ok()
-                .map(|ok| {
-                    !ok.comment().is_empty()
-                        || Self::is_multi_line_type_name_or_inline(ok.part_type())
-                })
-                .unwrap_or(false);
+            || fn_def.ok().is_some_and(|ok| {
+                !ok.comment().is_empty() || Self::is_multi_line_type_name_or_inline(ok.part_type())
+            });
 
         self.newline_item(writer, ItemKind::Function, is_multi_line)?;
         Self::prelude(writer, fn_def.comment(), fn_def.doc(), &[], 4, false)?;
@@ -528,10 +524,7 @@ impl<'a> Formatter<'a> {
             fn_def.id().value(),
         )?;
 
-        let ok_has_comment = fn_def
-            .ok()
-            .map(|ok| !ok.comment().is_empty())
-            .unwrap_or(false);
+        let ok_has_comment = fn_def.ok().is_some_and(|ok| !ok.comment().is_empty());
 
         if fn_def.args().is_some() || ok_has_comment || fn_def.err().is_some() {
             writeln!(writer, " {{")?;
@@ -589,8 +582,7 @@ impl<'a> Formatter<'a> {
             || !ev.doc().is_empty()
             || ev
                 .event_type()
-                .map(Self::is_multi_line_type_name_or_inline)
-                .unwrap_or(false);
+                .is_some_and(Self::is_multi_line_type_name_or_inline);
 
         self.newline_item(writer, ItemKind::Event, is_multi_line)?;
         Self::prelude(writer, ev.comment(), ev.doc(), &[], 4, false)?;

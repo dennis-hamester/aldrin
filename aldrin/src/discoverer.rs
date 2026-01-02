@@ -25,12 +25,12 @@ use specific_without_services::{
 };
 use std::collections::VecDeque;
 use std::collections::hash_map::{self, HashMap};
-use std::future;
 use std::hash::Hash;
 use std::iter::{FlatMap, FusedIterator};
 use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use std::{future, ptr};
 
 pub use builder::DiscovererBuilder;
 pub use entry::{DiscovererEntry, DiscovererEntryIter, DiscovererIterEntry};
@@ -238,7 +238,7 @@ where
     /// the discoverer then finishes, it will have built up a complete database of all matching
     /// objects.
     pub async fn wait_finished(&mut self) {
-        future::poll_fn(|cx| self.poll_finished(cx)).await
+        future::poll_fn(|cx| self.poll_finished(cx)).await;
     }
 
     /// Queries a specific object id.
@@ -469,20 +469,21 @@ fn fill_service_id_array<const N: usize>(
     service_uuids: &[ServiceUuid; N],
     get_id: impl Fn(ServiceUuid) -> ServiceId,
 ) -> [ServiceId; N] {
-    // SAFETY: This creates an array of MaybeUninit, which doesn't require initialization.
-    let mut ids: [MaybeUninit<ServiceId>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+    let mut ids = [MaybeUninit::uninit(); N];
 
     for (&uuid, id) in service_uuids.iter().zip(&mut ids) {
         id.write(get_id(uuid));
     }
 
-    // SAFETY: All N elements have been initialized in the loop above.
+    // SAFETY: Exactly N elements have been initialized.
     //
-    // In some future version of Rust, all this can be simplified; see:
+    // This is a convoluted transmute. Use MaybeUninit::array_assume_init() when it's stable:
     // https://github.com/rust-lang/rust/issues/96097
-    // https://github.com/rust-lang/rust/issues/61956
     unsafe {
-        (*(&MaybeUninit::new(ids) as *const _ as *const MaybeUninit<[ServiceId; N]>))
-            .assume_init_read()
+        let ids = MaybeUninit::new(ids);
+        let ids = ptr::from_ref(&ids).cast::<MaybeUninit<[ServiceId; N]>>();
+        let ids = &*ids;
+
+        ids.assume_init_read()
     }
 }

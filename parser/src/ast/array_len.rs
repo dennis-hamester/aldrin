@@ -51,8 +51,9 @@ pub enum ArrayLenValue {
 
 impl ArrayLenValue {
     fn parse(pair: Pair<Rule>) -> Self {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
-            Rule::lit_int => Self::Literal(LitInt::parse(pair)),
+            Rule::lit_int => Self::Literal(LitInt::parse(&pair)),
             Rule::named_ref => Self::Ref(NamedRef::parse(pair)),
             _ => unreachable!(),
         }

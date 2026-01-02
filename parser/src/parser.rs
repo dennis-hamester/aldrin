@@ -19,7 +19,7 @@ impl Parser {
 
         let mut this = Self {
             main_schema: main_schema.name().to_owned(),
-            schemas: HashMap::from_iter(iter::once((main_schema.name().to_owned(), main_schema))),
+            schemas: iter::once((main_schema.name().to_owned(), main_schema)).collect(),
             issues,
         };
 

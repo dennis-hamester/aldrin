@@ -290,7 +290,7 @@ async fn listen(bus: &Handle, args: Listen) -> Result<()> {
         // `EchoEvent` is a generated enum that has one variant for each event.
         match event {
             EchoEvent::EchoedToAll(event) => {
-                println!("Received event: EchoedToAll(\"{}\").", event.args())
+                println!("Received event: EchoedToAll(\"{}\").", event.args());
             }
         }
     }

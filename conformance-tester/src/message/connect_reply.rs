@@ -35,29 +35,25 @@ impl ConnectReply {
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> bool {
         match (self, other) {
-            (Self::Ok, Self::Ok) => Ok(true),
+            (Self::Ok, Self::Ok) => true,
 
             (
                 Self::IncompatibleVersion { version: version1 },
                 Self::IncompatibleVersion { version: version2 },
-            ) => Ok(version1 == version2),
+            ) => version1 == version2,
 
             (Self::Rejected { value: value1 }, Self::Rejected { value: value2 }) => {
-                Ok(value1.matches(value2))
+                value1.matches(value2)
             }
 
-            _ => Ok(false),
+            _ => false,
         }
     }
 
-    pub(crate) fn update_context(&self, _other: &Self, _ctx: &mut Context) -> Result<()> {
-        Ok(())
-    }
-
-    pub(crate) fn apply_context(&self, _ctx: &Context) -> Result<Self> {
-        Ok(self.clone())
+    pub(crate) fn apply_context(&self, _ctx: &Context) -> Self {
+        self.clone()
     }
 }
 

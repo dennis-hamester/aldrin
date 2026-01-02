@@ -34,7 +34,7 @@ impl DuplicateEnumVariantId {
                     first: first.id().span(),
                     enum_ident: ident.cloned(),
                     free_id,
-                })
+                });
             },
         );
     }

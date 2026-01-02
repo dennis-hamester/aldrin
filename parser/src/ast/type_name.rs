@@ -75,6 +75,7 @@ pub enum TypeNameKind {
 
 impl TypeNameKind {
     fn parse(pair: Pair<Rule>) -> Self {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::kw_bool => Self::Bool,
             Rule::kw_u8 => Self::U8,

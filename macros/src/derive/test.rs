@@ -10,8 +10,8 @@ use uuid::uuid;
 fn raw_identifiers_struct() {
     #[derive(Introspectable)]
     #[aldrin(schema = "test")]
-    #[allow(non_camel_case_types)]
-    #[allow(dead_code)]
+    #[expect(non_camel_case_types)]
+    #[expect(dead_code)]
     struct r#struct {
         r#if: u32,
 
@@ -54,8 +54,8 @@ fn raw_identifiers_struct() {
 fn raw_identifiers_enum() {
     #[derive(Introspectable)]
     #[aldrin(schema = "test")]
-    #[allow(non_camel_case_types)]
-    #[allow(dead_code)]
+    #[expect(non_camel_case_types)]
+    #[expect(dead_code)]
     enum r#enum {
         r#if,
         r#else(u32),
@@ -94,7 +94,7 @@ fn raw_identifiers_enum() {
 fn enum_fallback() {
     #[derive(Introspectable)]
     #[aldrin(schema = "test")]
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     enum Foo {
         Var1(u32),
 

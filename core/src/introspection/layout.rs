@@ -32,6 +32,7 @@ impl Layout {
     }
 
     pub fn as_built_in(&self) -> Option<BuiltInType> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::BuiltIn(ty) => Some(*ty),
             _ => None,
@@ -39,6 +40,7 @@ impl Layout {
     }
 
     pub fn as_struct(&self) -> Option<&Struct> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Struct(ty) => Some(ty),
             _ => None,
@@ -46,6 +48,7 @@ impl Layout {
     }
 
     pub fn as_enum(&self) -> Option<&Enum> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Enum(ty) => Some(ty),
             _ => None,
@@ -53,6 +56,7 @@ impl Layout {
     }
 
     pub fn as_service(&self) -> Option<&Service> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Service(ty) => Some(ty),
             _ => None,
@@ -60,6 +64,7 @@ impl Layout {
     }
 
     pub fn as_newtype(&self) -> Option<&Newtype> {
+        #[expect(clippy::wildcard_enum_match_arm)]
         match self {
             Self::Newtype(ty) => Some(ty),
             _ => None,

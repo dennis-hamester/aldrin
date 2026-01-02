@@ -28,7 +28,7 @@ impl Attribute {
         pairs.next().unwrap(); // Skip [.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         let mut att = Self {
             span,
@@ -37,8 +37,9 @@ impl Attribute {
         };
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
-                Rule::ident => att.options.push(Ident::parse(pair)),
+                Rule::ident => att.options.push(Ident::parse(&pair)),
 
                 Rule::tok_par_open
                 | Rule::tok_par_close

@@ -124,10 +124,7 @@ async fn server(bus: &Handle) -> Result<()> {
 
                     // Function calls can be invalid either because their id is unknown or because
                     // the arguments to the call failed to deserialize.
-                    Some(Err(e)) => {
-                        println!("Received an invalid function call: {e}.");
-                        continue;
-                    }
+                    Some(Err(e)) => println!("Received an invalid function call: {e}."),
 
                     // `None` is returned when the service is destroyed or when the connection to
                     // the broker shuts down.

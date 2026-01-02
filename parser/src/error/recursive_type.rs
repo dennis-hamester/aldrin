@@ -194,7 +194,7 @@ impl<'a> Visitor<'a> {
             .stack
             .iter()
             .enumerate()
-            .filter_map(|(idx, (schema_name, other_ty))| {
+            .find_map(|(idx, (schema_name, other_ty))| {
                 if (*schema_name == schema.name()) && (other_ty.name() == ty.name()) {
                     let is_first = idx == 0;
 
@@ -209,8 +209,7 @@ impl<'a> Visitor<'a> {
                 } else {
                     None
                 }
-            })
-            .next();
+            });
 
         if let Some(raise_error) = matched {
             ControlFlow::Break(raise_error)
@@ -311,8 +310,7 @@ impl<'a> Visitor<'a> {
                 let schema = self
                     .validate
                     .get_schema(schema_name.value())
-                    .map(ControlFlow::Continue)
-                    .unwrap_or(ControlFlow::Break(false))?;
+                    .map_or(ControlFlow::Break(false), ControlFlow::Continue)?;
 
                 (schema, name.value())
             }
@@ -351,9 +349,7 @@ enum Type<'a> {
 impl<'a> Type<'a> {
     fn name(self) -> &'a str {
         match self {
-            Self::Struct(name) => name,
-            Self::Enum(name) => name,
-            Self::Newtype(name) => name,
+            Self::Struct(name) | Self::Enum(name) | Self::Newtype(name) => name,
         }
     }
 }

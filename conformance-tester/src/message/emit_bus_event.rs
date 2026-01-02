@@ -260,18 +260,8 @@ impl EmitBusEvent {
                     object_uuid: object_uuid2,
                     object_cookie: object_cookie2,
                 },
-            ) => {
-                if let (Some(cookie1), Some(cookie2)) = (cookie1, cookie2) {
-                    cookie1.update_context(cookie2, ctx)?;
-                }
-
-                object_uuid1.update_context(object_uuid2, ctx)?;
-                object_cookie1.update_context(object_cookie2, ctx)?;
-
-                Ok(())
-            }
-
-            (
+            )
+            | (
                 Self::ObjectDestroyed {
                     cookie: cookie1,
                     object_uuid: object_uuid1,
@@ -308,20 +298,8 @@ impl EmitBusEvent {
                     service_uuid: service_uuid2,
                     service_cookie: service_cookie2,
                 },
-            ) => {
-                if let (Some(cookie1), Some(cookie2)) = (cookie1, cookie2) {
-                    cookie1.update_context(cookie2, ctx)?;
-                }
-
-                object_uuid1.update_context(object_uuid2, ctx)?;
-                object_cookie1.update_context(object_cookie2, ctx)?;
-                service_uuid1.update_context(service_uuid2, ctx)?;
-                service_cookie1.update_context(service_cookie2, ctx)?;
-
-                Ok(())
-            }
-
-            (
+            )
+            | (
                 Self::ServiceDestroyed {
                     cookie: cookie1,
                     object_uuid: object_uuid1,

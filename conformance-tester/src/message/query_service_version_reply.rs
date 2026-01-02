@@ -16,14 +16,14 @@ pub(crate) struct QueryServiceVersionReply {
 impl QueryServiceVersionReply {
     pub(crate) fn to_core(&self, ctx: &Context) -> Result<message::QueryServiceVersionReply> {
         let serial = self.serial.get(ctx)?;
-        let result = self.result.to_core(ctx)?;
+        let result = self.result.to_core(ctx);
 
         Ok(message::QueryServiceVersionReply { serial, result })
     }
 
     pub(crate) fn matches(&self, other: &Self, ctx: &Context) -> Result<bool> {
         let res =
-            self.serial.matches(&other.serial, ctx)? && self.result.matches(&other.result, ctx)?;
+            self.serial.matches(&other.serial, ctx)? && self.result.matches(other.result, ctx);
 
         Ok(res)
     }
@@ -37,7 +37,7 @@ impl QueryServiceVersionReply {
 
         Ok(Self {
             serial,
-            result: self.result.clone(),
+            result: self.result,
         })
     }
 }
@@ -53,7 +53,7 @@ impl TryFrom<message::QueryServiceVersionReply> for QueryServiceVersionReply {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "result")]
 pub(crate) enum QueryServiceVersionResult {
     Ok { version: u32 },
@@ -61,18 +61,18 @@ pub(crate) enum QueryServiceVersionResult {
 }
 
 impl QueryServiceVersionResult {
-    pub(crate) fn to_core(&self, _ctx: &Context) -> Result<message::QueryServiceVersionResult> {
+    pub(crate) fn to_core(self, _ctx: &Context) -> message::QueryServiceVersionResult {
         match self {
-            Self::Ok { version } => Ok(message::QueryServiceVersionResult::Ok(*version)),
-            Self::InvalidService => Ok(message::QueryServiceVersionResult::InvalidService),
+            Self::Ok { version } => message::QueryServiceVersionResult::Ok(version),
+            Self::InvalidService => message::QueryServiceVersionResult::InvalidService,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self, _ctx: &Context) -> Result<bool> {
+    pub(crate) fn matches(self, other: Self, _ctx: &Context) -> bool {
         match (self, other) {
-            (Self::Ok { version: v1 }, Self::Ok { version: v2 }) => Ok(v1 == v2),
-            (Self::InvalidService, Self::InvalidService) => Ok(true),
-            _ => Ok(false),
+            (Self::Ok { version: v1 }, Self::Ok { version: v2 }) => v1 == v2,
+            (Self::InvalidService, Self::InvalidService) => true,
+            _ => false,
         }
     }
 }

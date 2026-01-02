@@ -35,7 +35,7 @@ impl ServiceDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip {.
 
@@ -50,6 +50,7 @@ impl ServiceDef {
         let mut ev_fallback = None;
 
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::service_item => items.push(ServiceItem::parse(pair)),
 
@@ -93,7 +94,7 @@ impl ServiceDef {
         pairs.next().unwrap(); // Skip =.
 
         let pair = pairs.next().unwrap();
-        (prelude.take_comment(), LitUuid::parse(pair))
+        (prelude.take_comment(), LitUuid::parse(&pair))
     }
 
     fn parse_version(pair: Pair<Rule>) -> (Vec<Comment>, LitInt) {
@@ -106,7 +107,7 @@ impl ServiceDef {
         pairs.next().unwrap(); // Skip =.
 
         let pair = pairs.next().unwrap();
-        (prelude.take_comment(), LitInt::parse(pair))
+        (prelude.take_comment(), LitInt::parse(&pair))
     }
 
     pub(crate) fn validate(&self, validate: &mut Validate) {
@@ -178,7 +179,7 @@ impl ServiceDef {
 }
 
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 pub enum ServiceItem {
     Function(FunctionDef),
     Event(EventDef),
@@ -187,8 +188,11 @@ pub enum ServiceItem {
 impl ServiceItem {
     fn parse(pair: Pair<Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::service_item);
+
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
+
+        #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::fn_def => Self::Function(FunctionDef::parse(pair)),
             Rule::event_def => Self::Event(EventDef::parse(pair)),
@@ -223,6 +227,20 @@ impl ServiceItem {
             Self::Event(i) => i.name(),
         }
     }
+
+    pub fn as_function(&self) -> Option<&FunctionDef> {
+        match self {
+            Self::Function(i) => Some(i),
+            Self::Event(_) => None,
+        }
+    }
+
+    pub fn as_event(&self) -> Option<&EventDef> {
+        match self {
+            Self::Function(_) => None,
+            Self::Event(i) => Some(i),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -248,22 +266,23 @@ impl FunctionDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitInt::parse(pair);
+        let id = LitInt::parse(&pair);
 
         let mut args = None;
         let mut ok = None;
         let mut err = None;
+
         for pair in pairs {
+            #[expect(clippy::wildcard_enum_match_arm)]
             match pair.as_rule() {
                 Rule::fn_args => args = Some(FunctionPart::parse(pair)),
-                Rule::fn_ok => ok = Some(FunctionPart::parse(pair)),
+                Rule::fn_ok | Rule::type_name_or_inline => ok = Some(FunctionPart::parse(pair)),
                 Rule::fn_err => err = Some(FunctionPart::parse(pair)),
-                Rule::type_name_or_inline => ok = Some(FunctionPart::parse(pair)),
 
                 Rule::tok_cur_open | Rule::tok_cur_close | Rule::tok_eq | Rule::tok_term => {}
                 _ => unreachable!(),
@@ -346,6 +365,7 @@ impl FunctionPart {
     fn parse(pair: Pair<Rule>) -> Self {
         let span = Span::from_pair(&pair);
 
+        #[expect(clippy::wildcard_enum_match_arm)]
         let (comment, part_type) = match pair.as_rule() {
             Rule::fn_args | Rule::fn_ok | Rule::fn_err => {
                 let mut pairs = pair.into_inner();
@@ -407,14 +427,16 @@ impl EventDef {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         pairs.next().unwrap(); // Skip @.
 
         let pair = pairs.next().unwrap();
-        let id = LitInt::parse(pair);
+        let id = LitInt::parse(&pair);
 
         let pair = pairs.next().unwrap();
+
+        #[expect(clippy::wildcard_enum_match_arm)]
         let event_type = match pair.as_rule() {
             Rule::tok_eq => {
                 let pair = pairs.next().unwrap();
@@ -491,7 +513,7 @@ impl FunctionFallback {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         Self {
             span,
@@ -543,7 +565,7 @@ impl EventFallback {
         pairs.next().unwrap(); // Skip keyword.
 
         let pair = pairs.next().unwrap();
-        let name = Ident::parse(pair);
+        let name = Ident::parse(&pair);
 
         Self {
             span,
