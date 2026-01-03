@@ -49,7 +49,7 @@ impl Service {
         debug_assert!(contained);
     }
 
-    pub(crate) fn function_calls(&self) -> impl Iterator<Item = u32> + '_ {
+    pub(crate) fn function_calls(&self) -> impl Iterator<Item = u32> {
         self.function_calls.iter().copied()
     }
 

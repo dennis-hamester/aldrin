@@ -49,7 +49,7 @@ impl ConnectionState {
         debug_assert!(contained);
     }
 
-    pub(crate) fn objects(&self) -> impl Iterator<Item = ObjectCookie> + '_ {
+    pub(crate) fn objects(&self) -> impl Iterator<Item = ObjectCookie> {
         self.objects.iter().copied()
     }
 
@@ -70,7 +70,7 @@ impl ConnectionState {
         }
     }
 
-    pub(crate) fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> + '_ {
+    pub(crate) fn event_subscriptions(&self) -> impl Iterator<Item = (ServiceCookie, u32)> {
         self.events
             .iter()
             .flat_map(|(&c, ids)| ids.iter().map(move |&event| (c, event)))
@@ -92,7 +92,7 @@ impl ConnectionState {
         self.all_events.remove(&svc_cookie);
     }
 
-    pub(crate) fn all_event_subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
+    pub(crate) fn all_event_subscriptions(&self) -> impl Iterator<Item = ServiceCookie> {
         self.all_events.iter().copied()
     }
 
@@ -104,7 +104,7 @@ impl ConnectionState {
         self.subscriptions.remove(&svc_cookie);
     }
 
-    pub(crate) fn subscriptions(&self) -> impl Iterator<Item = ServiceCookie> + '_ {
+    pub(crate) fn subscriptions(&self) -> impl Iterator<Item = ServiceCookie> {
         self.subscriptions.iter().copied()
     }
 
@@ -123,7 +123,7 @@ impl ConnectionState {
         debug_assert!(contained);
     }
 
-    pub(crate) fn senders(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+    pub(crate) fn senders(&self) -> impl Iterator<Item = ChannelCookie> {
         self.senders.iter().copied()
     }
 
@@ -137,7 +137,7 @@ impl ConnectionState {
         debug_assert!(contained);
     }
 
-    pub(crate) fn receivers(&self) -> impl Iterator<Item = ChannelCookie> + '_ {
+    pub(crate) fn receivers(&self) -> impl Iterator<Item = ChannelCookie> {
         self.receivers.iter().copied()
     }
 
@@ -151,7 +151,7 @@ impl ConnectionState {
         debug_assert!(contained);
     }
 
-    pub(crate) fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> + '_ {
+    pub(crate) fn bus_listeners(&self) -> impl Iterator<Item = BusListenerCookie> {
         self.bus_listeners.iter().copied()
     }
 
