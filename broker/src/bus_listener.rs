@@ -105,7 +105,7 @@ impl BusListener {
                 .any(|filter| filter.matches_event(event))
     }
 
-    pub(crate) fn specific_objects(&self) -> Option<impl Iterator<Item = ObjectUuid> + '_> {
+    pub(crate) fn specific_objects(&self) -> Option<impl Iterator<Item = ObjectUuid>> {
         if self.matches_all_objects {
             None
         } else {
@@ -119,7 +119,7 @@ impl BusListener {
 
     pub(crate) fn specific_services(
         &self,
-    ) -> Option<impl Iterator<Item = (ObjectUuid, ServiceUuid)> + '_> {
+    ) -> Option<impl Iterator<Item = (ObjectUuid, ServiceUuid)>> {
         if self.matches_specific_services {
             Some(self.filters.iter().filter_map(|f| match f {
                 BusListenerFilter::Service(BusListenerServiceFilter {

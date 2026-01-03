@@ -102,7 +102,7 @@ impl Introspection {
         &self.references
     }
 
-    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = TypeId> + '_ {
+    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = TypeId> {
         self.references.iter().copied()
     }
 
