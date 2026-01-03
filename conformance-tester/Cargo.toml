@@ -20,6 +20,7 @@ anstyle = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 colorchoice-clap = { workspace = true }
+serde = { workspace = true }
 terminal_size = { workspace = true }
 
 [dependencies.aldrin-core]
@@ -28,12 +29,8 @@ path = "../core"
 default-features = false
 features = ["tokio"]
 
-[dependencies.serde]
-workspace = true
-features = ["derive"]
-
 [dependencies.serde_json]
-version = "1.0.108"
+version = "1.0.149"
 default-features = false
 features = ["std"]
 

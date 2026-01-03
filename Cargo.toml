@@ -87,33 +87,32 @@ wildcard_enum_match_arm = "deny"
 wrong_self_convention = "deny"
 
 [workspace.dependencies]
-anstyle = { version = "1.0.7", default-features = false }
+anstyle = { version = "1.0.13", default-features = false }
 async-trait = { version = "0.1.89", default-features = false }
-colorchoice-clap = { version = "1.0.4", default-features = false }
+colorchoice-clap = { version = "1.0.7", default-features = false }
 comrak = { version = "0.49.0", default-features = false }
-diffy = { version = "0.4.0", default-features = false }
+diffy = { version = "0.4.2", default-features = false }
 futures-channel = { version = "0.3.31", default-features = false }
 futures-core = { version = "0.3.31", default-features = false }
 futures-util = { version = "0.3.31", default-features = false }
-heck = { version = "0.4.1", default-features = false }
-serde = { version = "1.0.193", default-features = false }
-terminal_size = { version = "0.3.0", default-features = false }
-thiserror = { version = "2.0.9", default-features = false }
-tokio = { version = "1.38.2", default-features = false }
-uuid = { version = "1.6.1", default-features = false }
+heck = { version = "0.5.0", default-features = false }
+terminal_size = { version = "0.4.3", default-features = false }
+thiserror = { version = "2.0.17", default-features = false }
+tokio = { version = "1.49.0", default-features = false }
+uuid = { version = "1.19.0", default-features = false }
 
 [workspace.dependencies.anstream]
-version = "0.6.18"
+version = "0.6.21"
 default-features = false
 features = ["auto"]
 
 [workspace.dependencies.anyhow]
-version = "1.0.75"
+version = "1.0.100"
 default-features = false
 features = ["std"]
 
 [workspace.dependencies.clap]
-version = "4.4.8"
+version = "4.5.54"
 default-features = false
 features = [
     "color",
@@ -124,4 +123,12 @@ features = [
     "suggestions",
     "usage",
     "wrap_help",
+]
+
+[workspace.dependencies.serde]
+version = "1.0.228"
+default-features = false
+features = [
+    "derive",
+    "std",
 ]

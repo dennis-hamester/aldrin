@@ -68,10 +68,6 @@ default-features = false
 [dependencies.serde]
 workspace = true
 optional = true
-features = [
-    "derive",
-    "std",
-]
 
 [dependencies.uuid]
 workspace = true

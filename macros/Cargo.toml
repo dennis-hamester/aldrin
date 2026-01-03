@@ -46,15 +46,15 @@ features = [
 ]
 
 [dependencies.proc-macro2]
-version = "1.0.92"
+version = "1.0.104"
 default-features = false
 
 [dependencies.quote]
-version = "1.0.38"
+version = "1.0.43"
 default-features = false
 
 [dependencies.syn]
-version = "2.0.95"
+version = "2.0.114"
 default-features = false
 features = [
     "clone-impls",

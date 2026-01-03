@@ -1,7 +1,8 @@
 use crate::conn_id::ConnectionId;
 use aldrin_core::message::{QueryIntrospectionReply, QueryIntrospectionResult};
 use aldrin_core::{SerializedValue, TypeId};
-use rand::Rng;
+use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
 use std::collections::HashSet;
 use std::collections::hash_map::{Entry, HashMap};
 use std::mem;
@@ -9,12 +10,14 @@ use std::mem;
 #[derive(Debug)]
 pub(crate) struct IntrospectionDatabase {
     entries: HashMap<TypeId, IntrospectionEntry>,
+    rng: SmallRng,
 }
 
 impl IntrospectionDatabase {
     pub(crate) fn new() -> Self {
         Self {
             entries: HashMap::new(),
+            rng: SmallRng::from_os_rng(),
         }
     }
 
@@ -54,8 +57,13 @@ impl IntrospectionDatabase {
         result
     }
 
-    pub(crate) fn get_mut(&mut self, type_id: TypeId) -> Option<&mut IntrospectionEntry> {
-        self.entries.get_mut(&type_id)
+    pub(crate) fn get_mut(
+        &mut self,
+        type_id: TypeId,
+    ) -> Option<(&mut IntrospectionEntry, &mut SmallRng)> {
+        self.entries
+            .get_mut(&type_id)
+            .map(|entry| (entry, &mut self.rng))
     }
 
     pub(crate) fn query_replied(
@@ -86,7 +94,10 @@ impl IntrospectionDatabase {
 
             QueryIntrospectionResult::Unavailable => {
                 if entry.get_mut().remove_conn(conn_id) {
-                    Some(IntrospectionQueryResult::Continue(entry.into_mut()))
+                    Some(IntrospectionQueryResult::Continue(
+                        entry.into_mut(),
+                        &mut self.rng,
+                    ))
                 } else {
                     let pending = entry.remove().take_pending();
                     Some(IntrospectionQueryResult::Unavailable(pending))
@@ -161,12 +172,12 @@ impl IntrospectionEntry {
         self.pending.push(IntrospectionQuery::new(conn_id, serial));
     }
 
-    pub(crate) fn query_random_conn(&mut self, serial: u32) -> &ConnectionId {
+    pub(crate) fn query_random_conn(&mut self, serial: u32, rng: &mut SmallRng) -> &ConnectionId {
         debug_assert!(self.queried.is_none());
         debug_assert!(!self.conn_id_idxs.is_empty());
         debug_assert!(!self.conn_ids.is_empty());
 
-        let idx = rand::thread_rng().gen_range(0..self.conn_ids.len());
+        let idx = rng.random_range(0..self.conn_ids.len());
         let conn_id = &self.conn_ids[idx];
 
         self.queried = Some(IntrospectionQuery::new(conn_id.clone(), serial));
@@ -219,7 +230,7 @@ pub(crate) enum IntrospectionQueryResult<'a> {
     },
 
     Unavailable(Vec<IntrospectionQuery>),
-    Continue(&'a mut IntrospectionEntry),
+    Continue(&'a mut IntrospectionEntry, &'a mut SmallRng),
 }
 
 #[derive(Debug)]
