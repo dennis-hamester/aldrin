@@ -135,7 +135,7 @@ impl EnumData<'_> {
         })
     }
 
-    fn ctors(&self) -> impl Iterator<Item = TokenStream> + '_ {
+    fn ctors(&self) -> impl Iterator<Item = TokenStream> {
         self.variants()
             .iter()
             .map(|var| var.ctor(self.ref_type().unwrap(), self.variants()))
