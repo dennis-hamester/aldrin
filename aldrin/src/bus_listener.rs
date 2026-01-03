@@ -225,7 +225,7 @@ impl BusListener {
     /// Returns an iterator of all filters.
     ///
     /// The order in which the filters are returned is unspecified.
-    pub fn filters(&self) -> impl Iterator<Item = BusListenerFilter> + '_ {
+    pub fn filters(&self) -> impl Iterator<Item = BusListenerFilter> {
         self.filters.iter().copied()
     }
 

@@ -88,7 +88,7 @@ impl IntrospectionIr {
         self.references.get(&lexical_id).copied()
     }
 
-    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = (LexicalId, TypeId)> + '_ {
+    pub fn iter_references(&self) -> impl ExactSizeIterator<Item = (LexicalId, TypeId)> {
         self.references.iter().map(|(k, v)| (*k, *v))
     }
 
