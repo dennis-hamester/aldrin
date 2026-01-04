@@ -5,7 +5,6 @@ use crate::{Play, ServerArg};
 use aldrin::core::ObjectUuid;
 use aldrin::{Event, Handle, Property};
 use anyhow::{Error, Result, anyhow};
-use async_trait::async_trait;
 use tokio::signal;
 
 pub(crate) async fn listen(args: ServerArg, bus: &Handle) -> Result<()> {
@@ -115,7 +114,6 @@ impl Listen {
     }
 }
 
-#[async_trait]
 impl MediaPlayerEventHandler for Listen {
     type Error = Error;
 

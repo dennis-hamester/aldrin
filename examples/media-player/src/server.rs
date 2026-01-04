@@ -4,7 +4,6 @@ use crate::media_player::{
 use aldrin::core::ObjectUuid;
 use aldrin::{Handle, Object, Promise};
 use anyhow::{Result, anyhow};
-use async_trait::async_trait;
 use std::convert::Infallible;
 use std::time::Duration;
 use tokio::signal;
@@ -117,7 +116,6 @@ impl Server {
     }
 }
 
-#[async_trait]
 impl MediaPlayerCallHandler for Server {
     type Error = anyhow::Error;
 
