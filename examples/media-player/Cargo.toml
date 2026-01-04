@@ -15,7 +15,6 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-async-trait = { workspace = true }
 clap = { workspace = true }
 
 [dependencies.aldrin]

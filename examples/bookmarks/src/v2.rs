@@ -7,7 +7,6 @@ use aldrin::core::adapters::IterAsVec;
 use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Error as AldrinError, Event, Handle, Object, Promise, UnknownCall, UnknownEvent};
 use anyhow::{Error, Result, anyhow};
-use async_trait::async_trait;
 use clap::Parser;
 use std::convert::Infallible;
 use std::error::Error as StdError;
@@ -168,7 +167,6 @@ impl Server {
     }
 }
 
-#[async_trait]
 impl BookmarksCallHandler for Server {
     type Error = Error;
 
@@ -527,7 +525,6 @@ impl Listener {
     }
 }
 
-#[async_trait]
 impl BookmarksEventHandler for Listener {
     type Error = Error;
 
