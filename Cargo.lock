@@ -10,7 +10,6 @@ dependencies = [
  "aldrin-core",
  "aldrin-macros",
  "aldrin-test",
- "async-trait",
  "futures-channel",
  "futures-core",
  "futures-sink",
@@ -18,6 +17,7 @@ dependencies = [
  "serde",
  "thiserror",
  "tokio",
+ "trait-variant",
  "uuid",
 ]
 
@@ -222,17 +222,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-trait"
-version = "0.1.89"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "bitflags"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,7 +413,6 @@ version = "0.0.0"
 dependencies = [
  "aldrin",
  "anyhow",
- "async-trait",
  "clap",
  "tokio",
 ]
@@ -476,7 +464,6 @@ version = "0.0.0"
 dependencies = [
  "aldrin",
  "anyhow",
- "async-trait",
  "clap",
  "tokio",
 ]
@@ -978,6 +965,17 @@ name = "tokio-macros"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af407857209536a95c8e56f8231ef2c2e2aff839b22e07a1ffcbc617e9db9fa5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "trait-variant"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70977707304198400eb4835a78f6a9f928bf41bba420deb8fdb175cd965d77a7"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -42,8 +42,10 @@ pub(crate) struct Service {
     ident: Ident,
     proxy: Ident,
     event: Ident,
+    local_event_handler: Ident,
     event_handler: Ident,
     call: Ident,
+    local_call_handler: Ident,
     call_handler: Ident,
     introspection: Ident,
     body: Body,
@@ -94,9 +96,12 @@ impl Service {
         let vis = &self.vis;
         let proxy = &self.proxy;
         let event = &self.event;
-        let body_impl = self
-            .body
-            .gen_proxy(&self.event, &self.event_handler, &self.options);
+        let body_impl = self.body.gen_proxy(
+            &self.event,
+            &self.local_event_handler,
+            &self.event_handler,
+            &self.options,
+        );
         let doc = self.options.doc();
 
         let introspection_if = self.options.introspection_if().map(|feature| {
@@ -184,12 +189,13 @@ impl Service {
     fn gen_event_handler(&self) -> TokenStream {
         let krate = self.options.krate();
         let vis = &self.vis;
+        let local_event_handler = &self.local_event_handler;
         let event_handler = &self.event_handler;
         let funcs = self.body.gen_event_handler(&self.options);
 
         quote! {
-            #[#krate::private::async_trait::async_trait]
-            #vis trait #event_handler {
+            #[#krate::private::trait_variant::make(#event_handler: ::std::marker::Send)]
+            #vis trait #local_event_handler {
                 type Error;
 
                 #funcs
@@ -207,9 +213,12 @@ impl Service {
         let ident = &self.ident;
         let call = &self.call;
         let krate = self.options.krate();
-        let body_impl = self
-            .body
-            .gen_service(&self.call, &self.call_handler, &self.options);
+        let body_impl = self.body.gen_service(
+            &self.call,
+            &self.local_call_handler,
+            &self.call_handler,
+            &self.options,
+        );
         let doc = self.options.doc();
 
         let introspection_if = self.options.introspection_if().map(|feature| {
@@ -297,12 +306,13 @@ impl Service {
     fn gen_call_handler(&self) -> TokenStream {
         let krate = self.options.krate();
         let vis = &self.vis;
+        let local_call_handler = &self.local_call_handler;
         let call_handler = &self.call_handler;
         let funcs = self.body.gen_call_handler(&self.options);
 
         quote! {
-            #[#krate::private::async_trait::async_trait]
-            #vis trait #call_handler {
+            #[#krate::private::trait_variant::make(#call_handler: ::std::marker::Send)]
+            #vis trait #local_call_handler {
                 type Error;
 
                 #funcs
@@ -361,6 +371,11 @@ impl Parse for Service {
             ident.span(),
         );
 
+        let local_event_handler = Ident::new_raw(
+            &names::service_local_event_handler(&ident.unraw().to_string()),
+            ident.span(),
+        );
+
         let event_handler = Ident::new_raw(
             &names::service_event_handler(&ident.unraw().to_string()),
             ident.span(),
@@ -368,6 +383,11 @@ impl Parse for Service {
 
         let call = Ident::new_raw(
             &names::service_call(&ident.unraw().to_string()),
+            ident.span(),
+        );
+
+        let local_call_handler = Ident::new_raw(
+            &names::service_local_call_handler(&ident.unraw().to_string()),
             ident.span(),
         );
 
@@ -387,8 +407,10 @@ impl Parse for Service {
             ident,
             proxy,
             event,
+            local_event_handler,
             event_handler,
             call,
+            local_call_handler,
             call_handler,
             introspection,
             body,

@@ -74,6 +74,11 @@ pub fn service_event(service: &str) -> String {
     format!("{service}Event")
 }
 
+/// Returns the name of a service's local event handler trait.
+pub fn service_local_event_handler(service: &str) -> String {
+    format!("Local{service}EventHandler")
+}
+
 /// Returns the name of a service's event handler trait.
 pub fn service_event_handler(service: &str) -> String {
     format!("{service}EventHandler")
@@ -82,6 +87,11 @@ pub fn service_event_handler(service: &str) -> String {
 /// Returns the name of a service's call type.
 pub fn service_call(service: &str) -> String {
     format!("{service}Call")
+}
+
+/// Returns the name of a service's local call handler trait.
+pub fn service_local_call_handler(service: &str) -> String {
+    format!("Local{service}CallHandler")
 }
 
 /// Returns the name of a service's call handler trait.

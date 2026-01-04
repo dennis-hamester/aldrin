@@ -16,6 +16,7 @@ impl Body {
     pub(crate) fn gen_proxy(
         &self,
         event: &Ident,
+        local_handler: &Ident,
         handler: &Ident,
         options: &Options,
     ) -> TokenStream {
@@ -187,6 +188,22 @@ impl Body {
                 ::std::future::poll_fn(|cx| self.poll_next_event(cx)).await
             }
 
+            pub async fn dispatch_event_local<T>(
+                event: ::std::result::Result<#event, #krate::Error>,
+                handler: &mut T,
+            ) -> ::std::result::Result<(), T::Error>
+            where
+                T: #local_handler + ?::std::marker::Sized,
+            {
+                #[allow(unreachable_code)]
+                match event {
+                    #dispatch_match_arms
+                    #dispatch_fallback
+                    ::std::result::Result::Ok(_) => ::std::unreachable!(),
+                    ::std::result::Result::Err(e) => handler.invalid_event(e).await,
+                }
+            }
+
             pub async fn dispatch_event<T>(
                 event: ::std::result::Result<#event, #krate::Error>,
                 handler: &mut T,
@@ -275,6 +292,7 @@ impl Body {
     pub(crate) fn gen_service(
         &self,
         call: &Ident,
+        local_handler: &Ident,
         handler: &Ident,
         options: &Options,
     ) -> TokenStream {
@@ -429,6 +447,22 @@ impl Body {
                 &mut self,
             ) -> ::std::option::Option<::std::result::Result<#call, #krate::Error>> {
                 ::std::future::poll_fn(|cx| self.poll_next_call(cx)).await
+            }
+
+            pub async fn dispatch_call_local<T>(
+                call: ::std::result::Result<#call, #krate::Error>,
+                handler: &mut T,
+            ) -> ::std::result::Result<(), T::Error>
+            where
+                T: #local_handler + ?::std::marker::Sized,
+            {
+                #[allow(unreachable_code)]
+                match call {
+                    #dispatch_match_arms
+                    #dispatch_fallback
+                    ::std::result::Result::Ok(_) => ::std::unreachable!(),
+                    ::std::result::Result::Err(e) => handler.invalid_call(e).await,
+                }
             }
 
             pub async fn dispatch_call<T>(

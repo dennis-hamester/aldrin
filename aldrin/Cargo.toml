@@ -21,7 +21,7 @@ channel = ["aldrin-core/channel"]
 introspection = ["aldrin-core/introspection"]
 macros = [
     "dep:aldrin-macros",
-    "dep:async-trait",
+    "dep:trait-variant",
 ]
 new-v4-ids = ["aldrin-core/new-v4-ids"]
 serde = [
@@ -51,10 +51,6 @@ version = "0.13.0"
 path = "../macros"
 default-features = false
 
-[dependencies.async-trait]
-workspace = true
-optional = true
-
 [dependencies.futures-channel]
 workspace = true
 features = ["std"]
@@ -67,6 +63,11 @@ default-features = false
 [dependencies.serde]
 workspace = true
 optional = true
+
+[dependencies.trait-variant]
+optional = true
+version = "0.1.2"
+default-features = false
 
 [dependencies.uuid]
 workspace = true
