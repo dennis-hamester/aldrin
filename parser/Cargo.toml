@@ -3,7 +3,6 @@ name = "aldrin-parser"
 description = "Aldrin schema parser library."
 version = "0.13.0"
 
-authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 keywords.workspace = true
