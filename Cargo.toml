@@ -20,7 +20,6 @@ members = [
 resolver = "3"
 
 [workspace.package]
-authors = ["Aldrin Contributors"]
 categories = [
     "asynchronous",
     "network-programming",
