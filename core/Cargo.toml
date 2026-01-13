@@ -62,7 +62,7 @@ version = "0.2.13"
 default-features = false
 
 [dependencies.thiserror]
-version = "1.0.50"
+version = "1.0.69"
 default-features = false
 
 [dependencies.tokio]

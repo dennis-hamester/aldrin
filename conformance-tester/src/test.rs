@@ -162,7 +162,7 @@ pub static BUILT_IN_TESTS: Lazy<Vec<Test>> = Lazy::new(|| {
     tests
 });
 
-pub fn get_tests(custom: Option<&Path>) -> Result<Cow<[Test]>> {
+pub fn get_tests(custom: Option<&Path>) -> Result<Cow<'_, [Test]>> {
     let Some(custom) = custom else {
         return Ok(Cow::Borrowed(&*BUILT_IN_TESTS));
     };

@@ -55,7 +55,7 @@ version = "0.3.29"
 default-features = false
 
 [dependencies.thiserror]
-version = "1.0.50"
+version = "1.0.69"
 default-features = false
 
 [dependencies.uuid]

@@ -110,7 +110,7 @@ pub struct Discoverer<Key> {
 
 impl<Key> Discoverer<Key> {
     /// Create a builder for a `Discoverer`.
-    pub fn builder(client: &Handle) -> DiscovererBuilder<Key> {
+    pub fn builder(client: &Handle) -> DiscovererBuilder<'_, Key> {
         DiscovererBuilder::new(client)
     }
 

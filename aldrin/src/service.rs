@@ -130,7 +130,7 @@ use std::task::{Context, Poll};
 ///
 ///         SEND_MESSAGE => {
 ///             // Broadcast the message:
-///             let message = func.args.deserialize()?;
+///             let message: () = func.args.deserialize()?;
 ///             handle.emit_event(service_id, MESSAGE_SENT, &message)?;
 ///             func.reply.ok(&())?;
 ///         }

@@ -826,7 +826,7 @@ impl Handle {
     }
 
     /// Create a new `DiscovererBuilder`.
-    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<Key> {
+    pub fn create_discoverer<Key>(&self) -> DiscovererBuilder<'_, Key> {
         Discoverer::builder(self)
     }
 

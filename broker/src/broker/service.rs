@@ -67,10 +67,13 @@ impl Service {
     }
 
     pub fn subscribed_conn_ids(&self) -> impl Iterator<Item = &ConnectionId> {
+        #[allow(clippy::mutable_key_type)]
         let mut res = HashSet::new();
+
         for conn_ids in self.subscriptions.values() {
             res.extend(conn_ids);
         }
+
         res.into_iter()
     }
 }
