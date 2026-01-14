@@ -3,7 +3,7 @@ name = "aldrin-broker"
 description = """
 Broker library of Aldrin, a message bus for service-oriented RPC and interprocess communication.
 """
-version = "0.4.0"
+version = "0.4.1"
 
 authors.workspace = true
 categories.workspace = true
@@ -25,7 +25,7 @@ statistics = []
 tokio = ["aldrin-core/tokio"]
 
 [dependencies.aldrin-core]
-version = "0.4.0"
+version = "0.4.1"
 path = "../core"
 default-features = false
 features = ["new-v4-ids"]

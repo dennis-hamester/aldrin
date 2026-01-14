@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "aldrin-broker",
  "aldrin-core",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-broker"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "aldrin",
  "aldrin-core",
@@ -93,7 +93,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "aldrin",
  "aldrin-broker",
