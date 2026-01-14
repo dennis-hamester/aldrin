@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-01-14
+
+### Fixed
+
+- Backport fixes for a deadlock from 0.13.0.
+
 ## [0.13.0] - 2025-12-18
 
 ### Added
@@ -121,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.7.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.7.0
 [0.6.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.6.0
 [0.5.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.5.0
+[0.4.1]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.4.1
 [0.4.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.4.0
 [0.3.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.3.0
 [0.2.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.2.0
