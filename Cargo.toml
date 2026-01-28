@@ -88,7 +88,7 @@ wrong_self_convention = "deny"
 [workspace.dependencies]
 anstyle = { version = "1.0.13", default-features = false }
 colorchoice-clap = { version = "1.0.7", default-features = false }
-comrak = { version = "0.49.0", default-features = false }
+comrak = { version = "0.50.0", default-features = false }
 diffy = { version = "0.4.2", default-features = false }
 futures-channel = { version = "0.3.31", default-features = false }
 futures-core = { version = "0.3.31", default-features = false }
