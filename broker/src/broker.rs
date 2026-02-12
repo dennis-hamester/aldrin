@@ -1643,7 +1643,7 @@ impl Broker {
             return Err(());
         }
 
-        let Some(entry) = self.introspection.get_mut(req.type_id) else {
+        let Some((entry, rng)) = self.introspection.get_mut(req.type_id) else {
             return send!(
                 self,
                 conn,
@@ -1668,7 +1668,7 @@ impl Broker {
 
             if entry.queried().is_none() {
                 let serial = self.query_introspection.insert(req.type_id);
-                let conn_id = entry.query_random_conn(serial);
+                let conn_id = entry.query_random_conn(serial, rng);
                 let conn = self.conns.get(conn_id).expect("inconsistent state");
 
                 let msg = QueryIntrospection {
@@ -1782,9 +1782,9 @@ impl Broker {
                 }
             }
 
-            IntrospectionQueryResult::Continue(entry) => {
+            IntrospectionQueryResult::Continue(entry, rng) => {
                 let serial = self.query_introspection.insert(type_id);
-                let conn_id = entry.query_random_conn(serial);
+                let conn_id = entry.query_random_conn(serial, rng);
                 let conn = self.conns.get(conn_id).expect("inconsistent state");
                 let msg = QueryIntrospection { serial, type_id };
 
@@ -2488,12 +2488,12 @@ impl Broker {
                 }
 
                 RemoveConnResult::Continue(type_id) => {
-                    let Some(entry) = self.introspection.get_mut(type_id) else {
+                    let Some((entry, rng)) = self.introspection.get_mut(type_id) else {
                         continue;
                     };
 
                     let serial = self.query_introspection.insert(type_id);
-                    let conn_id = entry.query_random_conn(serial);
+                    let conn_id = entry.query_random_conn(serial, rng);
                     let conn = self.conns.get(conn_id).expect("inconsistent state");
                     let msg = QueryIntrospection { serial, type_id };
 
