@@ -102,7 +102,7 @@ tokio = { version = "1.38.2", default-features = false }
 uuid = { version = "1.6.1", default-features = false }
 
 [workspace.dependencies.anstream]
-version = "0.6.18"
+version = "1.0.0"
 default-features = false
 features = ["auto"]
 
