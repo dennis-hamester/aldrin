@@ -53,9 +53,9 @@ features = ["sink"]
 
 [dependencies.rand]
 optional = true
-version = "0.9.4"
+version = "0.10.1"
 default-features = false
-features = ["thread_rng"]
+features = ["sys_rng"]
 
 [dev-dependencies]
 anyhow = { workspace = true }
