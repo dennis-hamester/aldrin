@@ -5,6 +5,10 @@ wildcards = "deny"
 workspace-default-features = "deny"
 
 skip = [
+    "anstream@0.6",
+    "anstream@1",
+    "anstyle-parse@0.2",
+    "anstyle-parse@1",
     "getrandom@0.2",
     "getrandom@0.4",
     "windows-sys@0.48",
