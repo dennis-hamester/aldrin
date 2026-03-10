@@ -39,7 +39,7 @@ default-features = false
 features = ["std"]
 
 [dependencies.strsim]
-version = "0.10.0"
+version = "0.11.1"
 default-features = false
 
 [dev-dependencies]

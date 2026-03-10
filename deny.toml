@@ -13,6 +13,8 @@ skip = [
     "getrandom@0.4",
     "heck@0.4",
     "heck@0.5",
+    "strsim@0.10",
+    "strsim@0.11",
     "windows-sys@0.48",
     "windows-sys@0.59",
     "windows-targets@0.48",
