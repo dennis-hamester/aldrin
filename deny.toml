@@ -11,6 +11,8 @@ skip = [
     "anstyle-parse@1",
     "getrandom@0.2",
     "getrandom@0.4",
+    "heck@0.4",
+    "heck@0.5",
     "windows-sys@0.48",
     "windows-sys@0.59",
     "windows-targets@0.48",
