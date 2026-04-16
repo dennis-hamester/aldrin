@@ -25,16 +25,16 @@ heck = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.annotate-snippets]
-version = "0.12.3"
+version = "0.12.15"
 default-features = false
 
 [dependencies.pest]
-version = "2.7.15"
+version = "2.8.6"
 default-features = false
 features = ["std"]
 
 [dependencies.pest_derive]
-version = "2.7.15"
+version = "2.8.6"
 default-features = false
 features = ["std"]
 
