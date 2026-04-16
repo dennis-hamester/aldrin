@@ -5,6 +5,8 @@ wildcards = "deny"
 workspace-default-features = "deny"
 
 skip = [
+    "getrandom@0.2",
+    "getrandom@0.3",
     "windows-sys@0.48",
     "windows-sys@0.59",
     "windows-targets@0.48",

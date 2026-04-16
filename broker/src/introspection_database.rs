@@ -166,7 +166,7 @@ impl IntrospectionEntry {
         debug_assert!(!self.conn_id_idxs.is_empty());
         debug_assert!(!self.conn_ids.is_empty());
 
-        let idx = rand::thread_rng().gen_range(0..self.conn_ids.len());
+        let idx = rand::rng().random_range(0..self.conn_ids.len());
         let conn_id = &self.conn_ids[idx];
 
         self.queried = Some(IntrospectionQuery::new(conn_id.clone(), serial));
