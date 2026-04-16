@@ -45,11 +45,11 @@ features = [
 ]
 
 [dependencies.proc-macro2]
-version = "1.0.92"
+version = "1.0.106"
 default-features = false
 
 [dependencies.quote]
-version = "1.0.38"
+version = "1.0.45"
 default-features = false
 
 [dependencies.syn]
