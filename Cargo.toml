@@ -87,19 +87,18 @@ wildcard_enum_match_arm = "deny"
 wrong_self_convention = "deny"
 
 [workspace.dependencies]
-anstyle = { version = "1.0.7", default-features = false }
-colorchoice-clap = { version = "1.0.4", default-features = false }
+anstyle = { version = "1.0.14", default-features = false }
+colorchoice-clap = { version = "1.0.8", default-features = false }
 comrak = { version = "0.52.0", default-features = false }
 diffy = { version = "0.5.0", default-features = false }
-futures-channel = { version = "0.3.31", default-features = false }
-futures-core = { version = "0.3.31", default-features = false }
-futures-util = { version = "0.3.31", default-features = false }
+futures-channel = { version = "0.3.32", default-features = false }
+futures-core = { version = "0.3.32", default-features = false }
+futures-util = { version = "0.3.32", default-features = false }
 heck = { version = "0.5.0", default-features = false }
-serde = { version = "1.0.193", default-features = false }
-terminal_size = { version = "0.4.3", default-features = false }
-thiserror = { version = "2.0.9", default-features = false }
-tokio = { version = "1.38.2", default-features = false }
-uuid = { version = "1.6.1", default-features = false }
+terminal_size = { version = "0.4.4", default-features = false }
+thiserror = { version = "2.0.18", default-features = false }
+tokio = { version = "1.52.0", default-features = false }
+uuid = { version = "1.23.1", default-features = false }
 
 [workspace.dependencies.anstream]
 version = "1.0.0"
@@ -107,12 +106,12 @@ default-features = false
 features = ["auto"]
 
 [workspace.dependencies.anyhow]
-version = "1.0.75"
+version = "1.0.102"
 default-features = false
 features = ["std"]
 
 [workspace.dependencies.clap]
-version = "4.4.8"
+version = "4.6.1"
 default-features = false
 features = [
     "color",
@@ -123,4 +122,12 @@ features = [
     "suggestions",
     "usage",
     "wrap_help",
+]
+
+[workspace.dependencies.serde]
+version = "1.0.228"
+default-features = false
+features = [
+    "derive",
+    "std",
 ]
