@@ -24,7 +24,9 @@ pub(crate) fn print_diagnostics(parser: &Parser) {
     }
 }
 
-#[expect(single_use_lifetimes)]
+// This is a false-positive in the current MSRV, but fixed in later versions.
+// https://github.com/rust-lang/rust/pull/155346
+#[allow(single_use_lifetimes)]
 pub(crate) fn print_errors<'a>(parser: &Parser, errs: impl IntoIterator<Item = &'a Error>) {
     let renderer = Renderer::new(true, true, get_termwidth());
     let mut first = true;
