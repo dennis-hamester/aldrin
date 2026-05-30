@@ -1,4 +1,4 @@
-//! Utilities for Aldrin server and client tests
+//! Utilities for Aldrin server and client tests.
 //!
 //! This crate provides a simple way to quickly setup a complete Aldrin bus with a broker and
 //! multiple clients and is intended to be used in unit tests.

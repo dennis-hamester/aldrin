@@ -92,7 +92,7 @@ pub struct BrokerRunArgs {
     #[clap(long, default_value_t = 1000)]
     timeout: u64,
 
-    /// Path to the broker
+    /// Path to the broker.
     broker: PathBuf,
 }
 

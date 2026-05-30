@@ -26,7 +26,7 @@ pub(crate) struct RustArgs {
     #[clap(long, value_name = "FEATURE")]
     introspection_if: Option<String>,
 
-    /// Path of the aldrin crate
+    /// Path of the aldrin crate.
     #[clap(long = "crate", value_name = "PATH")]
     krate: Option<String>,
 

@@ -1,4 +1,4 @@
-//! Aldrin client library
+//! Aldrin client library.
 //!
 //! This library implements the client side of the Aldrin specification and can be used to connect
 //! to Aldrin brokers. It is fully asynchronous (async/await) and doesn't depend on any specific

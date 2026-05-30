@@ -1,4 +1,4 @@
-//! Tokio-based utilities for Aldrin server and client tests
+//! Tokio-based utilities for Aldrin server and client tests.
 //!
 //! The types in this module are conceptually identical to the ones in the top-level crate, but are
 //! more convenient if you use Tokio, because they all automatically spawn the required tasks.

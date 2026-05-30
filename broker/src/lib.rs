@@ -1,4 +1,4 @@
-//! Aldrin broker library
+//! Aldrin broker library.
 //!
 //! This library implements the messaging broker according to the Aldrin specification. An Aldrin
 //! broker sits at the center of every Aldrin bus and manages the state of all objects and services.
