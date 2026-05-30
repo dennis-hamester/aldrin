@@ -20,7 +20,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.92.0
+          - 1.94.1
 
     steps:
       - name: Checkout

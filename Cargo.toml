@@ -33,7 +33,7 @@ keywords = [
 ]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dennis-hamester/aldrin"
-rust-version = "1.92.0"
+rust-version = "1.94.1"
 
 [workspace.lints.rust]
 redundant_imports = "deny"
