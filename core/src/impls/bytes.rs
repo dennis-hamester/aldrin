@@ -73,17 +73,7 @@ impl<const N: usize> Deserialize<tags::Bytes> for [u8; N] {
             }
 
             if done + len <= N {
-                // SAFETY: &[u8] and &[MaybeUninit<u8>] have the same layout
-                //
-                // Use [MaybeUninit<T>]::write_copy_of_slice() when it's stable:
-                // https://github.com/rust-lang/rust/issues/79995
-                let slice = unsafe {
-                    let slice = ptr::from_ref(slice) as *const [MaybeUninit<u8>];
-                    &*slice
-                };
-
-                arr[done..(done + len)].copy_from_slice(slice);
-
+                arr[done..(done + len)].write_copy_of_slice(slice);
                 done += len;
                 deserializer.advance(len)?;
             } else {
