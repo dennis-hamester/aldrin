@@ -65,8 +65,8 @@ use std::time::Instant;
 /// Aldrin client used to connect to a broker.
 ///
 /// This is the first entry point to Aldrin. A [`Client`] is used to establish a connection to an
-/// Aldrin broker. Afterwards, it should be turned into a [`Future`](std::future::Future) with the
-/// [`run`](Client::run) method, which must then be continuously polled and run to completion.
+/// Aldrin broker. Afterwards, it should be turned into a [`Future`] with the [`run`](Client::run)
+/// method, which must then be continuously polled and run to completion.
 ///
 /// All interaction with a [`Client`] happens asynchronously through one or more
 /// [`Handle`s](Handle), which must be acquired with [`Client::handle`] before calling
