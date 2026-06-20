@@ -1,5 +1,5 @@
 use crate::{CommonReadArgs, diag};
-use aldrin_parser::{FilesystemResolver, Parser};
+use aldrin_parser2::{FilesystemResolver, Parser};
 use std::path::PathBuf;
 
 #[derive(clap::Parser)]
@@ -18,7 +18,7 @@ pub(crate) fn run(args: &CheckArgs) -> bool {
     let mut first = true;
 
     for schema in &args.schemas {
-        let parser = Parser::parse(FilesystemResolver::with_include_paths(
+        let parser = Parser::new(FilesystemResolver::with_include_paths(
             schema,
             &args.common_read_args.include,
         ));
@@ -33,7 +33,7 @@ pub(crate) fn run(args: &CheckArgs) -> bool {
             eprintln!("{}:", schema.display());
         }
 
-        diag::print_diagnostics(&parser);
+        diag::print_diagnostics2(&parser);
 
         if parser.errors().is_empty() {
             if parser.warnings().is_empty() && parser.other_warnings().is_empty() {

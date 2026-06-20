@@ -32,3 +32,8 @@ features = ["rust"]
 version = "0.13.0"
 path = "../parser"
 default-features = false
+
+[dependencies.aldrin-parser2]
+version = "0.13.0"
+path = "../parser2"
+default-features = false

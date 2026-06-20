@@ -104,6 +104,7 @@ version = "0.13.0"
 dependencies = [
  "aldrin-codegen",
  "aldrin-parser",
+ "aldrin-parser2",
  "anstream",
  "anstyle",
  "anyhow",

@@ -1,8 +1,32 @@
 use aldrin_parser::{Diagnostic, Error, Parser, Renderer};
+use aldrin_parser2::{Diagnostic as _, DiagnosticRenderer, Parser as Parser2};
 use anstream::eprintln;
 
 pub(crate) fn print_diagnostics(parser: &Parser) {
     let renderer = Renderer::new(true, true, get_termwidth());
+    let mut first = true;
+
+    for error in parser.errors() {
+        let rendered = error.render(&renderer, parser);
+        print_newline(&mut first);
+        eprintln!("{rendered}");
+    }
+
+    for warning in parser.warnings() {
+        let rendered = warning.render(&renderer, parser);
+        print_newline(&mut first);
+        eprintln!("{rendered}");
+    }
+
+    for warning in parser.other_warnings() {
+        let rendered = warning.render(&renderer, parser);
+        print_newline(&mut first);
+        eprintln!("{rendered}");
+    }
+}
+
+pub(crate) fn print_diagnostics2(parser: &Parser2) {
+    let renderer = DiagnosticRenderer::new(true, true, get_termwidth());
     let mut first = true;
 
     for error in parser.errors() {
