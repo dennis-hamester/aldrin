@@ -15,6 +15,7 @@ members = [
     "gen",
     "macros",
     "parser",
+    "parser2",
     "test",
 ]
 resolver = "3"
@@ -89,6 +90,7 @@ wildcard_enum_match_arm = "deny"
 wrong_self_convention = "deny"
 
 [workspace.dependencies]
+annotate-snippets = { version = "0.12.15", default-features = false }
 anstyle = { version = "1.0.14", default-features = false }
 colorchoice-clap = { version = "1.0.8", default-features = false }
 comrak = { version = "0.52.0", default-features = false }

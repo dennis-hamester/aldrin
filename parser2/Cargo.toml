@@ -1,5 +1,5 @@
 [package]
-name = "aldrin-parser"
+name = "aldrin-parser2"
 description = "Aldrin schema parser library."
 version = "0.13.0"
 
@@ -21,23 +21,29 @@ all-features = true
 
 [dependencies]
 annotate-snippets = { workspace = true }
-comrak = { workspace = true }
-heck = { workspace = true }
-thiserror = { workspace = true }
 
-[dependencies.pest]
-version = "2.8.6"
+[dependencies.bitflags]
+version = "2.13.0"
+default-features = false
+
+[dependencies.chumsky]
+version = "0.13.0"
+default-features = false
+
+[dependencies.derive_more]
+version = "2.1.1"
+default-features = false
+features = [
+    "debug",
+    "from",
+]
+
+[dependencies.indexmap]
+version = "2.14.0"
 default-features = false
 features = ["std"]
 
-[dependencies.pest_derive]
-version = "2.8.6"
+[dependencies.logos]
+version = "0.16.1"
 default-features = false
-features = ["std"]
-
-[dependencies.strsim]
-version = "0.11.1"
-default-features = false
-
-[dev-dependencies]
-diffy = { workspace = true }
+features = ["export_derive"]

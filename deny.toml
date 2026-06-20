@@ -4,6 +4,13 @@ multiple-versions = "warn"
 wildcards = "deny"
 workspace-default-features = "deny"
 
+skip = [
+    "foldhash@0.1",
+    "foldhash@0.2",
+    "hashbrown@0.15",
+    "hashbrown@0.17",
+]
+
 [bans.workspace-dependencies]
 duplicates = "deny"
 include-path-dependencies = false
