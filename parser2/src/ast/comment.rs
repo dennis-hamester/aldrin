@@ -20,6 +20,10 @@ impl Comment {
             .map_with(|_, extra| Self { span: extra.span() })
             .labelled(Expected::COMMENT)
     }
+
+    pub fn value_inner(self, source: &str) -> &str {
+        self.source(source)[2..].trim()
+    }
 }
 
 impl Spanned for Comment {
@@ -50,6 +54,10 @@ impl DocComment {
         just(Token::InlineDocComment)
             .map_with(|_, extra| Self { span: extra.span() })
             .labelled(Expected::INLINE_DOC_COMMENT)
+    }
+
+    pub fn value_inner(self, source: &str) -> &str {
+        self.source(source)[3..].trim()
     }
 }
 
