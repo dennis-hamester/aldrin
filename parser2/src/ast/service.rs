@@ -113,4 +113,26 @@ impl ServiceItem {
             Event::parser().map(Self::Event),
         ))
     }
+
+    pub fn is_fn(&self) -> bool {
+        matches!(self, Self::Fn(_))
+    }
+
+    pub fn as_fn(&self) -> Option<&Function> {
+        match self {
+            Self::Fn(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn is_event(&self) -> bool {
+        matches!(self, Self::Event(_))
+    }
+
+    pub fn as_event(&self) -> Option<&Event> {
+        match self {
+            Self::Event(item) => Some(item),
+            _ => None,
+        }
+    }
 }

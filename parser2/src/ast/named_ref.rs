@@ -24,6 +24,28 @@ impl NamedRef {
             Ident::parser().map(Self::Internal),
         ))
     }
+
+    pub fn is_internal(self) -> bool {
+        matches!(self, Self::Internal(_))
+    }
+
+    pub fn as_internal(self) -> Option<Ident> {
+        match self {
+            Self::Internal(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_external(self) -> bool {
+        matches!(self, Self::External(..))
+    }
+
+    pub fn as_external(self) -> Option<(Ident, Ident)> {
+        match self {
+            Self::External(schema, ty) => Some((schema, ty)),
+            _ => None,
+        }
+    }
 }
 
 impl Spanned for NamedRef {

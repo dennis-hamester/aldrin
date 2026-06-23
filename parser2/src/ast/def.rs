@@ -29,4 +29,64 @@ impl Definition {
             Newtype::parser().map(Self::Newtype),
         ))
     }
+
+    pub fn is_service(&self) -> bool {
+        matches!(self, Self::Service(_))
+    }
+
+    pub fn as_service(&self) -> Option<&Service> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Service(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn is_struct(&self) -> bool {
+        matches!(self, Self::Struct(_))
+    }
+
+    pub fn as_struct(&self) -> Option<&Struct> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Struct(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        matches!(self, Self::Enum(_))
+    }
+
+    pub fn as_enum(&self) -> Option<&Enum> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Enum(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn is_const(&self) -> bool {
+        matches!(self, Self::Const(_))
+    }
+
+    pub fn as_const(&self) -> Option<&Const> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Const(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn is_newtype(&self) -> bool {
+        matches!(self, Self::Newtype(_))
+    }
+
+    pub fn as_newtype(&self) -> Option<&Newtype> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Newtype(def) => Some(def),
+            _ => None,
+        }
+    }
 }

@@ -187,6 +187,126 @@ impl Type {
         ))
         .map(|(_, ty, _, len, _)| Self::Array(Box::new(ty), len))
     }
+
+    pub fn is_option(&self) -> bool {
+        matches!(self, Self::Option(_))
+    }
+
+    pub fn as_option(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Option(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_box(&self) -> bool {
+        matches!(self, Self::Box(_))
+    }
+
+    pub fn as_box(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Box(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_vec(&self) -> bool {
+        matches!(self, Self::Vec(_))
+    }
+
+    pub fn as_vec(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Vec(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_map(&self) -> bool {
+        matches!(self, Self::Map(..))
+    }
+
+    pub fn as_map(&self) -> Option<(&Self, &Self)> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Map(ty, val) => Some((ty, val)),
+            _ => None,
+        }
+    }
+
+    pub fn is_set(&self) -> bool {
+        matches!(self, Self::Set(_))
+    }
+
+    pub fn as_set(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Set(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_sender(&self) -> bool {
+        matches!(self, Self::Sender(_))
+    }
+
+    pub fn as_sender(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Sender(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_receiver(&self) -> bool {
+        matches!(self, Self::Receiver(_))
+    }
+
+    pub fn as_receiver(&self) -> Option<&Self> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Receiver(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_result(&self) -> bool {
+        matches!(self, Self::Result(..))
+    }
+
+    pub fn as_result(&self) -> Option<(&Self, &Self)> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Result(ok, err) => Some((ok, err)),
+            _ => None,
+        }
+    }
+
+    pub fn is_array(&self) -> bool {
+        matches!(self, Self::Array(..))
+    }
+
+    pub fn as_array(&self) -> Option<(&Self, ArrayLen)> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Array(ty, len) => Some((ty, *len)),
+            _ => None,
+        }
+    }
+
+    pub fn is_named(&self) -> bool {
+        matches!(self, Self::Named(_))
+    }
+
+    pub fn as_named(&self) -> Option<&NamedRef> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Named(ty) => Some(ty),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -204,6 +324,28 @@ impl ArrayLen {
             LitInt::parser().map(Self::Literal),
             NamedRef::parser().map(Self::Named),
         ))
+    }
+
+    pub fn is_literal(self) -> bool {
+        matches!(self, Self::Literal(_))
+    }
+
+    pub fn as_literal(self) -> Option<LitInt> {
+        match self {
+            Self::Literal(len) => Some(len),
+            _ => None,
+        }
+    }
+
+    pub fn is_named(self) -> bool {
+        matches!(self, Self::Named(_))
+    }
+
+    pub fn as_named(self) -> Option<NamedRef> {
+        match self {
+            Self::Named(len) => Some(len),
+            _ => None,
+        }
     }
 }
 

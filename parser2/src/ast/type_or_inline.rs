@@ -29,4 +29,40 @@ impl TypeOrInline {
             InlineEnum::parser().map(Self::Enum),
         ))
     }
+
+    pub fn is_type(&self) -> bool {
+        matches!(self, Self::Type(_))
+    }
+
+    pub fn as_type(&self) -> Option<&Type> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Type(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_struct(&self) -> bool {
+        matches!(self, Self::Struct(_))
+    }
+
+    pub fn as_struct(&self) -> Option<&InlineStruct> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Struct(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        matches!(self, Self::Enum(_))
+    }
+
+    pub fn as_enum(&self) -> Option<&InlineEnum> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Enum(ty) => Some(ty),
+            _ => None,
+        }
+    }
 }

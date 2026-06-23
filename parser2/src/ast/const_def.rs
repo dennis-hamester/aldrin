@@ -99,6 +99,42 @@ impl ConstValue {
             LitUuid::parser().map(Self::Uuid),
         ))
     }
+
+    pub fn is_int(self) -> bool {
+        matches!(self, Self::Int(_))
+    }
+
+    pub fn as_int(self) -> Option<LitInt> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Int(val) => Some(val),
+            _ => None,
+        }
+    }
+
+    pub fn is_string(self) -> bool {
+        matches!(self, Self::String(_))
+    }
+
+    pub fn as_string(self) -> Option<LitString> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::String(val) => Some(val),
+            _ => None,
+        }
+    }
+
+    pub fn is_uuid(self) -> bool {
+        matches!(self, Self::Uuid(_))
+    }
+
+    pub fn as_uuid(self) -> Option<LitUuid> {
+        #[expect(clippy::wildcard_enum_match_arm)]
+        match self {
+            Self::Uuid(val) => Some(val),
+            _ => None,
+        }
+    }
 }
 
 impl Spanned for ConstValue {
