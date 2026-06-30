@@ -1,5 +1,5 @@
 use crate::diag;
-use aldrin_parser::{FilesystemResolver, Formatter, MemoryResolver, Parser};
+use aldrin_parser2::{FilesystemResolver, Formatter, MemoryResolver, Parser};
 use anstream::{eprint, eprintln};
 use anstyle::{AnsiColor, Color, Style};
 use anyhow::{Context, Result, anyhow};
@@ -30,13 +30,13 @@ pub(crate) fn run(args: FmtArgs) -> Result<bool> {
         (args.schemas.len() == 1) && (args.schemas.first().map(|p| &**p) == Some(Path::new("-")));
 
     let parsers = if is_stdin {
-        let schema = io::read_to_string(io::stdin());
-        let parser = Parser::parse(MemoryResolver::new("stdin", schema));
+        let schema = io::read_to_string(io::stdin()).map_err(|e| e.to_string());
+        let parser = Parser::new(MemoryResolver::new("stdin", schema));
         vec![parser]
     } else {
         args.schemas
             .into_iter()
-            .map(|path| Parser::parse(FilesystemResolver::new(path)))
+            .map(|path| Parser::new(FilesystemResolver::new(path)))
             .collect()
     };
 
@@ -44,7 +44,7 @@ pub(crate) fn run(args: FmtArgs) -> Result<bool> {
     let mut first = true;
 
     for parser in &parsers {
-        let formatter = match Formatter::new(parser) {
+        let formatter = match Formatter::new(parser, parser.main_schema_ref()) {
             Ok(formatter) => formatter,
 
             Err(errs) => {

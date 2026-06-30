@@ -1,5 +1,5 @@
-use aldrin_parser::{Diagnostic, Error, Parser, Renderer};
-use aldrin_parser2::{Diagnostic as _, DiagnosticRenderer, Parser as Parser2};
+use aldrin_parser::{Diagnostic, Parser, Renderer};
+use aldrin_parser2::{Diagnostic as _, DiagnosticRenderer, Error, Parser as Parser2};
 use anstream::eprintln;
 
 pub(crate) fn print_diagnostics(parser: &Parser) {
@@ -51,8 +51,8 @@ pub(crate) fn print_diagnostics2(parser: &Parser2) {
 // This is a false-positive in the current MSRV, but fixed in later versions.
 // https://github.com/rust-lang/rust/pull/155346
 #[allow(single_use_lifetimes)]
-pub(crate) fn print_errors<'a>(parser: &Parser, errs: impl IntoIterator<Item = &'a Error>) {
-    let renderer = Renderer::new(true, true, get_termwidth());
+pub(crate) fn print_errors<'a>(parser: &Parser2, errs: impl IntoIterator<Item = &'a Error>) {
+    let renderer = DiagnosticRenderer::new(true, true, get_termwidth());
     let mut first = true;
 
     for error in errs {
