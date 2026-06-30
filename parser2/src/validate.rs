@@ -1,24 +1,37 @@
+use crate::ast::Schema;
 use crate::issues::Issues;
-use crate::{ParserEntry, SchemaRef};
+use crate::{ParserEntry, SchemaRef, Visitor};
 use indexmap::IndexMap;
 
 pub(crate) struct Validate<'a> {
-    _schema_ref: SchemaRef,
-    _schemas: &'a IndexMap<String, ParserEntry>,
+    schema_ref: SchemaRef,
+    schemas: &'a IndexMap<String, ParserEntry>,
     _is_main_schema: bool,
     _issues: &'a mut Issues,
 }
 
 impl<'a> Validate<'a> {
-    pub(crate) fn new(
+    pub(crate) fn run(
+        schema_ref: SchemaRef,
+        schemas: &'a IndexMap<String, ParserEntry>,
+        is_main_schema: bool,
+        issues: &'a mut Issues,
+    ) {
+        let mut this = Self::new(schema_ref, schemas, is_main_schema, issues);
+        let schema = this.current_schema();
+
+        schema.visit(ValidateVisitor(&mut this));
+    }
+
+    fn new(
         schema_ref: SchemaRef,
         schemas: &'a IndexMap<String, ParserEntry>,
         is_main_schema: bool,
         issues: &'a mut Issues,
     ) -> Self {
         Self {
-            _schema_ref: schema_ref,
-            _schemas: schemas,
+            schema_ref,
+            schemas,
             _is_main_schema: is_main_schema,
             _issues: issues,
         }
@@ -40,11 +53,25 @@ impl<'a> Validate<'a> {
     //     }
     // }
 
-    // pub(crate) fn schema(&self, schema_ref: SchemaRef) -> &'a ParserEntry {
-    //     self.schemas.get_index(schema_ref.0).unwrap().1
+    pub(crate) fn entry(&self, schema_ref: SchemaRef) -> &'a ParserEntry {
+        self.schemas.get_index(schema_ref.0).unwrap().1
+    }
+
+    pub(crate) fn current_entry(&self) -> &'a ParserEntry {
+        self.entry(self.schema_ref)
+    }
+
+    // pub(crate) fn schema(&self, schema_ref: SchemaRef) -> &'a Schema {
+    //     self.entry(schema_ref).schema().unwrap()
     // }
 
-    // pub(crate) fn current_schema(&self) -> &'a ParserEntry {
-    //     self.schema(self.schema_ref)
-    // }
+    pub(crate) fn current_schema(&self) -> &'a Schema {
+        self.current_entry().schema().unwrap()
+    }
+}
+
+struct ValidateVisitor<'a>(#[expect(dead_code)] &'a mut Validate<'a>);
+
+impl<'a> Visitor<'a> for ValidateVisitor<'a> {
+    type Output = ();
 }

@@ -1,7 +1,6 @@
 use super::{Comment, Definition, DocComment, Import, Prelude};
 use crate::error::ParseError;
 use crate::lexer::Token;
-use crate::validate::Validate;
 use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
@@ -34,9 +33,6 @@ impl Schema {
             definitions,
         })
     }
-
-    #[expect(clippy::unused_self)]
-    pub(crate) fn validate(&self, _validate: &mut Validate) {}
 
     pub fn visit<'a, T: Visitor<'a>>(&'a self, mut visitor: T) -> Option<T::Output> {
         self.visit_impl(&mut visitor).break_value()

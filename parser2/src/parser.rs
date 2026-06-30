@@ -93,18 +93,14 @@ impl Parser {
         for entry in schemas.values() {
             let schema_ref = entry.schema_ref();
 
-            let Some(schema) = entry.schema() else {
-                continue;
-            };
-
-            let mut validate = Validate::new(
-                schema_ref,
-                &schemas,
-                schema_ref == main_schema_ref,
-                &mut issues,
-            );
-
-            schema.validate(&mut validate);
+            if entry.schema().is_some() {
+                Validate::run(
+                    schema_ref,
+                    &schemas,
+                    schema_ref == main_schema_ref,
+                    &mut issues,
+                );
+            }
         }
 
         Self {
