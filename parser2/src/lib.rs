@@ -2,6 +2,7 @@
 
 mod diag;
 mod error;
+mod fmt;
 mod issues;
 mod lexer;
 mod parser;
@@ -15,6 +16,7 @@ pub mod ast;
 pub use ast::Schema;
 pub use diag::{Diagnostic, DiagnosticKind, DiagnosticRenderer};
 pub use error::Error;
+pub use fmt::Formatter;
 pub use parser::{Parser, ParserEntry, SchemaRef};
 pub use resolver::{FilesystemResolver, MemoryResolver, Resolver, SchemaFile};
 pub use span::{Span, Spanned};

@@ -14,6 +14,12 @@ pub struct Error {
     inner: Inner,
 }
 
+impl Error {
+    pub(crate) fn is_fmt_error(&self) -> bool {
+        self.inner.is_fmt_error()
+    }
+}
+
 impl Diagnostic for Error {
     fn kind(&self) -> DiagnosticKind {
         DiagnosticKind::Error
@@ -50,5 +56,9 @@ impl Inner {
             Self::Io(e) => e.render(renderer, parser),
             Self::Parser(e) => e.render(renderer, parser),
         }
+    }
+
+    fn is_fmt_error(&self) -> bool {
+        matches!(self, Self::Io(_) | Self::Parser(_))
     }
 }
