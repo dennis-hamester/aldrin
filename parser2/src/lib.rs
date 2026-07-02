@@ -8,6 +8,8 @@ mod lexer;
 mod parser;
 mod resolver;
 mod span;
+#[cfg(test)]
+mod test;
 mod validate;
 mod warning;
 

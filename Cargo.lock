@@ -152,6 +152,7 @@ dependencies = [
  "bitflags",
  "chumsky",
  "derive_more",
+ "diffy",
  "indexmap",
  "logos",
 ]

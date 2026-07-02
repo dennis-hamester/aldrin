@@ -1,0 +1,897 @@
+// Comment 1
+
+//! Doc comment 1
+
+// Comment 2
+import full;
+
+// Comment 3
+/// Doc comment 2
+#[attr1(opt1, opt2)]
+struct Struct {
+    // Comment 4
+    /// Doc comment 3
+    required field1 @ 1 = unit;
+
+    // Comment 5
+    /// Doc comment 4
+    field2 @ 2 = unit;
+
+    // Comment 6
+    /// Doc comment 5
+    unknown_fields = fallback;
+}
+
+// Comment 7
+/// Doc comment 6
+#[attr2(opt1, opt2)]
+enum Enum {
+    // Comment 8
+    /// Doc comment 7
+    Var1 @ 1;
+
+    // Comment 9
+    /// Doc comment 8
+    Var2 @ 2 = unit;
+
+    // Comment 10
+    /// Doc comment 9
+    Unknown = fallback;
+}
+
+// Comment 11
+/// Doc comment 10
+service Service {
+    // Comment 12
+    uuid = e0af57f3-5537-48c6-b04d-e9011803609c;
+
+    // Comment 13
+    version = 1;
+
+    // Comment 14
+    /// Doc comment 11
+    fn func1 @ 1;
+
+    // Comment 15
+    /// Doc comment 12
+    fn func2 @ 2 = unit;
+
+    // Comment 16
+    /// Doc comment 13
+    fn func3 @ 3 {
+        // Comment 17
+        args = unit;
+    }
+
+    // Comment 18
+    /// Doc comment 14
+    fn func4 @ 4 {
+        // Comment 19
+        ok = unit;
+    }
+
+    // Comment 20
+    /// Doc comment 15
+    fn func5 @ 5 {
+        // Comment 21
+        err = unit;
+    }
+
+    // Comment 22
+    /// Doc comment 16
+    fn func6 @ 6 {
+        // Comment 23
+        args = unit;
+
+        // Comment 24
+        ok = unit;
+    }
+
+    // Comment 25
+    /// Doc comment 17
+    fn func7 @ 7 {
+        // Comment 26
+        args = unit;
+
+        // Comment 27
+        err = unit;
+    }
+
+    // Comment 28
+    /// Doc comment 18
+    fn func8 @ 8 {
+        // Comment 29
+        args = unit;
+
+        // Comment 30
+        ok = unit;
+
+        // Comment 31
+        err = unit;
+    }
+
+    // Comment 32
+    /// Doc comment 19
+    fn func9 @ 9 = struct {
+        //! Doc comment 20
+        #![attr3(opt1, opt2)]
+
+        // Comment 33
+        /// Doc comment 21
+        required field1 @ 1 = unit;
+
+        // Comment 34
+        /// Doc comment 22
+        field2 @ 2 = unit;
+
+        // Comment 35
+        /// Doc comment 23
+        unknown_fields = fallback;
+    }
+
+    // Comment 36
+    /// Doc comment 24
+    fn func10 @ 10 {
+        // Comment 37
+        args = struct {
+            //! Doc comment 25
+            #![attr4(opt1, opt2)]
+
+            // Comment 38
+            /// Doc comment 26
+            required field1 @ 1 = unit;
+
+            // Comment 39
+            /// Doc comment 27
+            field2 @ 2 = unit;
+
+            // Comment 40
+            /// Doc comment 28
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 41
+    /// Doc comment 29
+    fn func11 @ 11 {
+        // Comment 42
+        ok = struct {
+            //! Doc comment 30
+            #![attr5(opt1, opt2)]
+
+            // Comment 43
+            /// Doc comment 31
+            required field1 @ 1 = unit;
+
+            // Comment 44
+            /// Doc comment 32
+            field2 @ 2 = unit;
+
+            // Comment 45
+            /// Doc comment 33
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 46
+    /// Doc comment 34
+    fn func12 @ 12 {
+        // Comment 47
+        err = struct {
+            //! Doc comment 35
+            #![attr6(opt1, opt2)]
+
+            // Comment 48
+            /// Doc comment 36
+            required field1 @ 1 = unit;
+
+            // Comment 49
+            /// Doc comment 37
+            field2 @ 2 = unit;
+
+            // Comment 50
+            /// Doc comment 38
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 51
+    /// Doc comment 39
+    fn func13 @ 13 {
+        // Comment 52
+        args = struct {
+            //! Doc comment 40
+            #![attr7(opt1, opt2)]
+
+            // Comment 53
+            /// Doc comment 41
+            required field1 @ 1 = unit;
+
+            // Comment 54
+            /// Doc comment 42
+            field2 @ 2 = unit;
+
+            // Comment 55
+            /// Doc comment 43
+            unknown_fields = fallback;
+        }
+
+        // Comment 56
+        ok = struct {
+            //! Doc comment 44
+            #![attr8(opt1, opt2)]
+
+            // Comment 57
+            /// Doc comment 45
+            required field1 @ 1 = unit;
+
+            // Comment 58
+            /// Doc comment 46
+            field2 @ 2 = unit;
+
+            // Comment 59
+            /// Doc comment 47
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 60
+    /// Doc comment 48
+    fn func14 @ 14 {
+        // Comment 61
+        args = struct {
+            //! Doc comment 49
+            #![attr9(opt1, opt2)]
+
+            // Comment 62
+            /// Doc comment 50
+            required field1 @ 1 = unit;
+
+            // Comment 63
+            /// Doc comment 51
+            field2 @ 2 = unit;
+
+            // Comment 64
+            /// Doc comment 52
+            unknown_fields = fallback;
+        }
+
+        // Comment 65
+        err = struct {
+            //! Doc comment 53
+            #![attr10(opt1, opt2)]
+
+            // Comment 66
+            /// Doc comment 54
+            required field1 @ 1 = unit;
+
+            // Comment 67
+            /// Doc comment 55
+            field2 @ 2 = unit;
+
+            // Comment 68
+            /// Doc comment 56
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 69
+    /// Doc comment 57
+    fn func15 @ 15 {
+        // Comment 70
+        args = struct {
+            //! Doc comment 58
+            #![attr11(opt1, opt2)]
+
+            // Comment 71
+            /// Doc comment 59
+            required field1 @ 1 = unit;
+
+            // Comment 72
+            /// Doc comment 60
+            field2 @ 2 = unit;
+
+            // Comment 73
+            /// Doc comment 61
+            unknown_fields = fallback;
+        }
+
+        // Comment 74
+        ok = struct {
+            //! Doc comment 62
+            #![attr12(opt1, opt2)]
+
+            // Comment 75
+            /// Doc comment 63
+            required field1 @ 1 = unit;
+
+            // Comment 76
+            /// Doc comment 64
+            field2 @ 2 = unit;
+
+            // Comment 77
+            /// Doc comment 65
+            unknown_fields = fallback;
+        }
+
+        // Comment 78
+        err = struct {
+            //! Doc comment 66
+            #![attr13(opt1, opt2)]
+
+            // Comment 79
+            /// Doc comment 67
+            required field1 @ 1 = unit;
+
+            // Comment 80
+            /// Doc comment 68
+            field2 @ 2 = unit;
+
+            // Comment 81
+            /// Doc comment 69
+            unknown_fields = fallback;
+        }
+    }
+
+    // Comment 82
+    /// Doc comment 70
+    fn func16 @ 16 = enum {
+        //! Doc comment 71
+        #![attr14(opt1, opt2)]
+
+        // Comment 83
+        /// Doc comment 72
+        Var1 @ 1;
+
+        // Comment 84
+        /// Doc comment 73
+        Var2 @ 2 = unit;
+
+        // Comment 85
+        /// Doc comment 74
+        Unknown = fallback;
+    }
+
+    // Comment 86
+    /// Doc comment 75
+    fn func17 @ 17 {
+        // Comment 87
+        args = enum {
+            //! Doc comment 76
+            #![attr15(opt1, opt2)]
+
+            // Comment 88
+            /// Doc comment 77
+            Var1 @ 1;
+
+            // Comment 89
+            /// Doc comment 78
+            Var2 @ 2 = unit;
+
+            // Comment 90
+            /// Doc comment 79
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 91
+    /// Doc comment 80
+    fn func18 @ 18 {
+        // Comment 92
+        ok = enum {
+            //! Doc comment 81
+            #![attr16(opt1, opt2)]
+
+            // Comment 93
+            /// Doc comment 82
+            Var1 @ 1;
+
+            // Comment 94
+            /// Doc comment 83
+            Var2 @ 2 = unit;
+
+            // Comment 95
+            /// Doc comment 84
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 96
+    /// Doc comment 85
+    fn func19 @ 19 {
+        // Comment 97
+        err = enum {
+            //! Doc comment 86
+            #![attr17(opt1, opt2)]
+
+            // Comment 98
+            /// Doc comment 87
+            Var1 @ 1;
+
+            // Comment 99
+            /// Doc comment 88
+            Var2 @ 2 = unit;
+
+            // Comment 100
+            /// Doc comment 89
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 101
+    /// Doc comment 90
+    fn func20 @ 20 {
+        // Comment 102
+        args = enum {
+            //! Doc comment 91
+            #![attr18(opt1, opt2)]
+
+            // Comment 103
+            /// Doc comment 92
+            Var1 @ 1;
+
+            // Comment 104
+            /// Doc comment 93
+            Var2 @ 2 = unit;
+
+            // Comment 105
+            /// Doc comment 94
+            Unknown = fallback;
+        }
+
+        // Comment 106
+        ok = enum {
+            //! Doc comment 95
+            #![attr19(opt1, opt2)]
+
+            // Comment 107
+            /// Doc comment 96
+            Var1 @ 1;
+
+            // Comment 108
+            /// Doc comment 97
+            Var2 @ 2 = unit;
+
+            // Comment 109
+            /// Doc comment 98
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 110
+    /// Doc comment 99
+    fn func21 @ 21 {
+        // Comment 111
+        args = enum {
+            //! Doc comment 100
+            #![attr20(opt1, opt2)]
+
+            // Comment 112
+            /// Doc comment 101
+            Var1 @ 1;
+
+            // Comment 113
+            /// Doc comment 102
+            Var2 @ 2 = unit;
+
+            // Comment 114
+            /// Doc comment 103
+            Unknown = fallback;
+        }
+
+        // Comment 115
+        err = enum {
+            //! Doc comment 104
+            #![attr21(opt1, opt2)]
+
+            // Comment 116
+            /// Doc comment 105
+            Var1 @ 1;
+
+            // Comment 117
+            /// Doc comment 106
+            Var2 @ 2 = unit;
+
+            // Comment 118
+            /// Doc comment 107
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 119
+    /// Doc comment 108
+    fn func22 @ 22 {
+        // Comment 120
+        args = enum {
+            //! Doc comment 109
+            #![attr22(opt1, opt2)]
+
+            // Comment 121
+            /// Doc comment 110
+            Var1 @ 1;
+
+            // Comment 122
+            /// Doc comment 111
+            Var2 @ 2 = unit;
+
+            // Comment 123
+            /// Doc comment 112
+            Unknown = fallback;
+        }
+
+        // Comment 124
+        ok = enum {
+            //! Doc comment 113
+            #![attr23(opt1, opt2)]
+
+            // Comment 125
+            /// Doc comment 114
+            Var1 @ 1;
+
+            // Comment 126
+            /// Doc comment 115
+            Var2 @ 2 = unit;
+
+            // Comment 127
+            /// Doc comment 116
+            Unknown = fallback;
+        }
+
+        // Comment 128
+        err = enum {
+            //! Doc comment 117
+            #![attr24(opt1, opt2)]
+
+            // Comment 129
+            /// Doc comment 118
+            Var1 @ 1;
+
+            // Comment 130
+            /// Doc comment 119
+            Var2 @ 2 = unit;
+
+            // Comment 131
+            /// Doc comment 120
+            Unknown = fallback;
+        }
+    }
+
+    // Comment 132
+    /// Doc comment 121
+    event event1 @ 1;
+
+    // Comment 133
+    /// Doc comment 122
+    event event2 @ 2 = unit;
+
+    // Comment 134
+    /// Doc comment 123
+    event event3 @ 3 = struct {
+        //! Doc comment 124
+        #![attr25(opt1, opt2)]
+
+        // Comment 135
+        /// Doc comment 125
+        required field1 @ 1 = unit;
+
+        // Comment 136
+        /// Doc comment 126
+        field2 @ 2 = unit;
+
+        // Comment 137
+        /// Doc comment 127
+        unknown_fields = fallback;
+    }
+
+    // Comment 138
+    /// Doc comment 128
+    event event4 @ 4 = enum {
+        //! Doc comment 129
+        #![attr26(opt1, opt2)]
+
+        // Comment 139
+        /// Doc comment 130
+        Var1 @ 1;
+
+        // Comment 140
+        /// Doc comment 131
+        Var2 @ 2 = unit;
+
+        // Comment 141
+        /// Doc comment 132
+        Unknown = fallback;
+    }
+
+    // Comment 142
+    /// Doc comment 133
+    fn unknown_function = fallback;
+
+    // Comment 143
+    /// Doc comment 134
+    event unknown_event = fallback;
+}
+
+// Comment 144
+/// Doc comment 135
+const CONST1 = u8(1);
+
+// Comment 145
+/// Doc comment 136
+const CONST2 = i8(1);
+
+// Comment 146
+/// Doc comment 137
+const CONST3 = u16(1);
+
+// Comment 147
+/// Doc comment 138
+const CONST4 = i16(1);
+
+// Comment 148
+/// Doc comment 139
+const CONST5 = u32(1);
+
+// Comment 149
+/// Doc comment 140
+const CONST6 = i32(1);
+
+// Comment 150
+/// Doc comment 141
+const CONST7 = u64(1);
+
+// Comment 151
+/// Doc comment 142
+const CONST8 = i64(1);
+
+// Comment 152
+/// Doc comment 143
+const CONST9 = string("constant");
+
+// Comment 153
+/// Doc comment 144
+const CONST10 = uuid(44fe418f-fbbc-42a7-8573-3e48eb5cb53e);
+
+// Comment 154
+/// Doc comment 145
+#[attr27(opt1, opt2)]
+newtype Newtype1 = bool;
+
+// Comment 155
+/// Doc comment 146
+#[attr28(opt1, opt2)]
+newtype Newtype2 = u8;
+
+// Comment 156
+/// Doc comment 147
+#[attr29(opt1, opt2)]
+newtype Newtype3 = i8;
+
+// Comment 157
+/// Doc comment 148
+#[attr30(opt1, opt2)]
+newtype Newtype4 = u16;
+
+// Comment 158
+/// Doc comment 149
+#[attr31(opt1, opt2)]
+newtype Newtype5 = i16;
+
+// Comment 159
+/// Doc comment 150
+#[attr32(opt1, opt2)]
+newtype Newtype6 = u32;
+
+// Comment 160
+/// Doc comment 151
+#[attr33(opt1, opt2)]
+newtype Newtype7 = i32;
+
+// Comment 161
+/// Doc comment 152
+#[attr34(opt1, opt2)]
+newtype Newtype8 = u64;
+
+// Comment 162
+/// Doc comment 153
+#[attr35(opt1, opt2)]
+newtype Newtype9 = i64;
+
+// Comment 163
+/// Doc comment 154
+#[attr36(opt1, opt2)]
+newtype Newtype10 = f32;
+
+// Comment 164
+/// Doc comment 155
+#[attr37(opt1, opt2)]
+newtype Newtype11 = f64;
+
+// Comment 165
+/// Doc comment 156
+#[attr38(opt1, opt2)]
+newtype Newtype12 = string;
+
+// Comment 166
+/// Doc comment 157
+#[attr39(opt1, opt2)]
+newtype Newtype13 = uuid;
+
+// Comment 167
+/// Doc comment 158
+#[attr40(opt1, opt2)]
+newtype Newtype14 = object_id;
+
+// Comment 168
+/// Doc comment 159
+#[attr41(opt1, opt2)]
+newtype Newtype15 = service_id;
+
+// Comment 169
+/// Doc comment 160
+#[attr42(opt1, opt2)]
+newtype Newtype16 = value;
+
+// Comment 170
+/// Doc comment 161
+#[attr43(opt1, opt2)]
+newtype Newtype17 = option<unit>;
+
+// Comment 171
+/// Doc comment 162
+#[attr44(opt1, opt2)]
+newtype Newtype18 = box<unit>;
+
+// Comment 172
+/// Doc comment 163
+#[attr45(opt1, opt2)]
+newtype Newtype19 = vec<unit>;
+
+// Comment 173
+/// Doc comment 164
+#[attr46(opt1, opt2)]
+newtype Newtype20 = bytes;
+
+// Comment 174
+/// Doc comment 165
+#[attr47(opt1, opt2)]
+newtype Newtype21 = map<u8 -> unit>;
+
+// Comment 175
+/// Doc comment 166
+#[attr48(opt1, opt2)]
+newtype Newtype22 = map<i8 -> unit>;
+
+// Comment 176
+/// Doc comment 167
+#[attr49(opt1, opt2)]
+newtype Newtype23 = map<u16 -> unit>;
+
+// Comment 177
+/// Doc comment 168
+#[attr50(opt1, opt2)]
+newtype Newtype24 = map<i16 -> unit>;
+
+// Comment 178
+/// Doc comment 169
+#[attr51(opt1, opt2)]
+newtype Newtype25 = map<u32 -> unit>;
+
+// Comment 179
+/// Doc comment 170
+#[attr52(opt1, opt2)]
+newtype Newtype26 = map<i32 -> unit>;
+
+// Comment 180
+/// Doc comment 171
+#[attr53(opt1, opt2)]
+newtype Newtype27 = map<u64 -> unit>;
+
+// Comment 181
+/// Doc comment 172
+#[attr54(opt1, opt2)]
+newtype Newtype28 = map<i64 -> unit>;
+
+// Comment 182
+/// Doc comment 173
+#[attr55(opt1, opt2)]
+newtype Newtype29 = map<string -> unit>;
+
+// Comment 183
+/// Doc comment 174
+#[attr56(opt1, opt2)]
+newtype Newtype30 = map<uuid -> unit>;
+
+// Comment 184
+/// Doc comment 175
+#[attr57(opt1, opt2)]
+newtype Newtype31 = set<u8>;
+
+// Comment 185
+/// Doc comment 176
+#[attr58(opt1, opt2)]
+newtype Newtype32 = set<i8>;
+
+// Comment 186
+/// Doc comment 177
+#[attr59(opt1, opt2)]
+newtype Newtype33 = set<u16>;
+
+// Comment 187
+/// Doc comment 178
+#[attr60(opt1, opt2)]
+newtype Newtype34 = set<i16>;
+
+// Comment 188
+/// Doc comment 179
+#[attr61(opt1, opt2)]
+newtype Newtype35 = set<u32>;
+
+// Comment 189
+/// Doc comment 180
+#[attr62(opt1, opt2)]
+newtype Newtype36 = set<i32>;
+
+// Comment 190
+/// Doc comment 181
+#[attr63(opt1, opt2)]
+newtype Newtype37 = set<u64>;
+
+// Comment 191
+/// Doc comment 182
+#[attr64(opt1, opt2)]
+newtype Newtype38 = set<i64>;
+
+// Comment 192
+/// Doc comment 183
+#[attr65(opt1, opt2)]
+newtype Newtype39 = set<string>;
+
+// Comment 193
+/// Doc comment 184
+#[attr66(opt1, opt2)]
+newtype Newtype40 = set<uuid>;
+
+// Comment 194
+/// Doc comment 185
+#[attr67(opt1, opt2)]
+newtype Newtype41 = sender<uuid>;
+
+// Comment 195
+/// Doc comment 186
+#[attr68(opt1, opt2)]
+newtype Newtype42 = receiver<uuid>;
+
+// Comment 196
+/// Doc comment 187
+#[attr69(opt1, opt2)]
+newtype Newtype43 = lifetime;
+
+// Comment 197
+/// Doc comment 188
+#[attr70(opt1, opt2)]
+newtype Newtype44 = unit;
+
+// Comment 198
+/// Doc comment 189
+#[attr71(opt1, opt2)]
+newtype Newtype45 = result<unit, unit>;
+
+// Comment 199
+/// Doc comment 190
+#[attr72(opt1, opt2)]
+newtype Newtype46 = [u8; 1];
+
+// Comment 200
+/// Doc comment 191
+#[attr73(opt1, opt2)]
+newtype Newtype47 = [u8; CONST1];
+
+// Comment 201
+/// Doc comment 192
+#[attr74(opt1, opt2)]
+newtype Newtype48 = Struct;
+
+// Comment 202
+/// Doc comment 193
+#[attr75(opt1, opt2)]
+newtype Newtype49 = full::Struct;
