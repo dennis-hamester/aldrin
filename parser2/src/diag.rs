@@ -67,17 +67,17 @@ impl DiagnosticRenderer {
         )
     }
 
-    // pub(crate) fn warning<'a>(
-    //     &'a self,
-    //     title: impl Into<Cow<'a, str>>,
-    //     parser: &'a Parser,
-    // ) -> Report<'a> {
-    //     Report::new(
-    //         Group::with_title(Level::WARNING.primary_title(title)),
-    //         &self.inner,
-    //         parser,
-    //     )
-    // }
+    pub(crate) fn warning<'a>(
+        &'a self,
+        title: impl Into<Cow<'a, str>>,
+        parser: &'a Parser,
+    ) -> Report<'a> {
+        Report::new(
+            Group::with_title(Level::WARNING.primary_title(title)),
+            &self.inner,
+            parser,
+        )
+    }
 }
 
 pub(crate) struct Report<'a> {

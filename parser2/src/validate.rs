@@ -1,13 +1,15 @@
-use crate::ast::Schema;
+use crate::ast::{Import, Schema};
 use crate::issues::Issues;
-use crate::{ParserEntry, SchemaRef, Visitor};
+use crate::warning::UnusedImport;
+use crate::{ParserEntry, SchemaRef, Visitor, Warning};
 use indexmap::IndexMap;
+use std::ops::ControlFlow;
 
 pub(crate) struct Validate<'a> {
     schema_ref: SchemaRef,
     schemas: &'a IndexMap<String, ParserEntry>,
-    _is_main_schema: bool,
-    _issues: &'a mut Issues,
+    is_main_schema: bool,
+    issues: &'a mut Issues,
 }
 
 impl<'a> Validate<'a> {
@@ -32,8 +34,8 @@ impl<'a> Validate<'a> {
         Self {
             schema_ref,
             schemas,
-            _is_main_schema: is_main_schema,
-            _issues: issues,
+            is_main_schema,
+            issues,
         }
     }
 
@@ -45,13 +47,13 @@ impl<'a> Validate<'a> {
     //     self.issues.add_error(e);
     // }
 
-    // pub(crate) fn add_warning(&mut self, w: impl Into<Warning>) {
-    //     if self.is_main_schema {
-    //         self.issues.add_warning(w);
-    //     } else {
-    //         self.issues.add_other_warning(w);
-    //     }
-    // }
+    pub(crate) fn add_warning(&mut self, w: impl Into<Warning>) {
+        if self.is_main_schema {
+            self.issues.add_warning(w);
+        } else {
+            self.issues.add_other_warning(w);
+        }
+    }
 
     pub(crate) fn entry(&self, schema_ref: SchemaRef) -> &'a ParserEntry {
         self.schemas.get_index(schema_ref.0).unwrap().1
@@ -70,8 +72,14 @@ impl<'a> Validate<'a> {
     }
 }
 
-struct ValidateVisitor<'a>(#[expect(dead_code)] &'a mut Validate<'a>);
+struct ValidateVisitor<'a>(&'a mut Validate<'a>);
 
 impl<'a> Visitor<'a> for ValidateVisitor<'a> {
     type Output = ();
+
+    fn import(&mut self, _schema: &Schema, import: &Import) -> ControlFlow<()> {
+        UnusedImport::validate(import, self.0);
+
+        ControlFlow::Continue(())
+    }
 }

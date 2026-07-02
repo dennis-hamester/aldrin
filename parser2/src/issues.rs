@@ -16,17 +16,17 @@ impl Issues {
         &self.errors
     }
 
-    // pub(crate) fn add_warning(&mut self, warn: impl Into<Warning>) {
-    //     self.warnings.push(warn.into());
-    // }
+    pub(crate) fn add_warning(&mut self, warn: impl Into<Warning>) {
+        self.warnings.push(warn.into());
+    }
 
     pub(crate) fn warnings(&self) -> &[Warning] {
         &self.warnings
     }
 
-    // pub(crate) fn add_other_warning(&mut self, warn: impl Into<Warning>) {
-    //     self.other_warnings.push(warn.into());
-    // }
+    pub(crate) fn add_other_warning(&mut self, warn: impl Into<Warning>) {
+        self.other_warnings.push(warn.into());
+    }
 
     pub(crate) fn other_warnings(&self) -> &[Warning] {
         &self.other_warnings
