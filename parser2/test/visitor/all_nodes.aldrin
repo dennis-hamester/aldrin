@@ -1,0 +1,67 @@
+import import1;
+
+service Service1 {
+    uuid = aae9c48a-b738-4716-8e71-08d0e37f7d25;
+    version = 1;
+
+    fn func1 @ 1 {
+        args = struct {
+            field1 @ 1 = unit;
+            fallback1 = fallback;
+        }
+
+        ok = struct {
+            field2 @ 1 = unit;
+            fallback2 = fallback;
+        }
+
+        err = struct {
+            field3 @ 1 = unit;
+            fallback3 = fallback;
+        }
+    }
+
+    fn func2 @ 2 {
+        args = enum {
+            Var1 @ 1;
+            Fallback1 = fallback;
+        }
+
+        ok = enum {
+            Var2 @ 1;
+            Fallback2 = fallback;
+        }
+
+        err = enum {
+            Var3 @ 1;
+            Fallback3 = fallback;
+        }
+    }
+
+    event ev1 @ 1 = struct {
+        field4 @ 1 = unit;
+        fallback4 = fallback;
+    }
+
+    event ev2 @ 2 = enum {
+        Var4 @ 1;
+        Fallback4 = fallback;
+    }
+
+    fn fallback5 = fallback;
+    event fallback6 = fallback;
+}
+
+struct Struct1 {
+    field5 @ 1 = unit;
+    fallback7 = fallback;
+}
+
+enum Enum1 {
+    Var5 @ 1;
+    Fallback5 = fallback;
+}
+
+const Const1 = u8(0);
+
+newtype Newtype1 = u8;

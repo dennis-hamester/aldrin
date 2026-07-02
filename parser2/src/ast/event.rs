@@ -1,14 +1,16 @@
 use super::{
     Comment, DocComment, Ident, KwEvent, KwFallback, LitInt, Prelude, PunctAt, PunctEq,
-    PunctSemicolon, TypeOrInline,
+    PunctSemicolon, Schema, Service, TypeOrInline,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::visitor::{FieldCtx, InlineCtx, VariantCtx};
+use crate::{Span, Visitor};
 use chumsky::Parser;
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::{choice, group};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Event {
@@ -47,6 +49,37 @@ impl Event {
             ty,
         })
     }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+    ) -> ControlFlow<T::Output> {
+        visitor.event(schema, service, self)?;
+
+        match self.ty {
+            Some(TypeOrInline::Struct(ref struct_def)) => struct_def.visit_impl(
+                visitor,
+                schema,
+                service,
+                InlineCtx::Event(self),
+                FieldCtx::Event(service, self, struct_def),
+            )?,
+
+            Some(TypeOrInline::Enum(ref enum_def)) => enum_def.visit_impl(
+                visitor,
+                schema,
+                service,
+                InlineCtx::Event(self),
+                VariantCtx::Event(service, self, enum_def),
+            )?,
+
+            Some(TypeOrInline::Type(_)) | None => {}
+        }
+
+        ControlFlow::Continue(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -74,5 +107,14 @@ impl FallbackEvent {
             doc_comments: prelude.doc_comments,
             name,
         })
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+    ) -> ControlFlow<T::Output> {
+        visitor.fallback_event(schema, service, self)
     }
 }

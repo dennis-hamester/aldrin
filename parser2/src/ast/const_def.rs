@@ -1,15 +1,16 @@
 use super::{
     Comment, DocComment, Ident, KwConst, KwI8, KwI16, KwI32, KwI64, KwString, KwU8, KwU16, KwU32,
     KwU64, KwUuid, LitInt, LitString, LitUuid, Prelude, PunctEq, PunctParClose, PunctParOpen,
-    PunctSemicolon,
+    PunctSemicolon, Schema,
 };
 use crate::error::ParseError;
 use crate::lexer::Token;
-use crate::{Span, Spanned};
+use crate::{Span, Spanned, Visitor};
 use chumsky::Parser;
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::{choice, group};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Const {
@@ -44,6 +45,14 @@ impl Const {
             value,
         })
         .boxed()
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        visitor.const_def(schema, self)
     }
 }
 

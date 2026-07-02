@@ -1,14 +1,17 @@
 use super::{
-    Comment, DocComment, Ident, KwArgs, KwErr, KwFallback, KwFn, KwOk, LitInt, Prelude, PunctAt,
-    PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, TypeOrInline,
+    Comment, DocComment, Ident, InlineEnum, InlineStruct, KwArgs, KwErr, KwFallback, KwFn, KwOk,
+    LitInt, Prelude, PunctAt, PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, Schema,
+    Service, TypeOrInline,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::visitor::{FieldCtx, InlineCtx, VariantCtx};
+use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::{choice, group};
 use chumsky::{IterParser, Parser};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -59,6 +62,50 @@ impl Function {
             ok,
             err,
         })
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+    ) -> ControlFlow<T::Output> {
+        visitor.function(schema, service, self)?;
+
+        if let Some(ref args) = self.args {
+            args.visit_impl(
+                visitor,
+                schema,
+                service,
+                InlineCtx::FunctionArgs(self, args),
+                |struct_def| FieldCtx::FunctionArgs(service, self, args, struct_def),
+                |enum_def| VariantCtx::FunctionArgs(service, self, args, enum_def),
+            )?;
+        }
+
+        if let Some(ref ok) = self.ok {
+            ok.visit_impl(
+                visitor,
+                schema,
+                service,
+                InlineCtx::FunctionOk(self, ok),
+                |struct_def| FieldCtx::FunctionOk(service, self, ok, struct_def),
+                |enum_def| VariantCtx::FunctionOk(service, self, ok, enum_def),
+            )?;
+        }
+
+        if let Some(ref err) = self.err {
+            err.visit_impl(
+                visitor,
+                schema,
+                service,
+                InlineCtx::FunctionErr(self, err),
+                |struct_def| FieldCtx::FunctionErr(service, self, err, struct_def),
+                |enum_def| VariantCtx::FunctionErr(service, self, err, enum_def),
+            )?;
+        }
+
+        ControlFlow::Continue(())
     }
 }
 
@@ -114,6 +161,26 @@ impl FunctionPart {
             ty,
         }
     }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+        inline_ctx: InlineCtx<'a>,
+        field_ctx: impl FnOnce(&'a InlineStruct) -> FieldCtx<'a>,
+        variant_ctx: impl FnOnce(&'a InlineEnum) -> VariantCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        match self.ty {
+            TypeOrInline::Type(_) => ControlFlow::Continue(()),
+            TypeOrInline::Struct(ref struct_def) => {
+                struct_def.visit_impl(visitor, schema, service, inline_ctx, field_ctx(struct_def))
+            }
+            TypeOrInline::Enum(ref enum_def) => {
+                enum_def.visit_impl(visitor, schema, service, inline_ctx, variant_ctx(enum_def))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -141,5 +208,14 @@ impl FallbackFunction {
             doc_comments: prelude.doc_comments,
             name,
         })
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+    ) -> ControlFlow<T::Output> {
+        visitor.fallback_function(schema, service, self)
     }
 }

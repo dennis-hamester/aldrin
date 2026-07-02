@@ -1,12 +1,13 @@
 use super::{Comment, Definition, DocComment, Import, Prelude};
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
 use crate::validate::Validate;
+use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::prelude::group;
 use chumsky::{IterParser, Parser};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Schema {
@@ -36,4 +37,25 @@ impl Schema {
 
     #[expect(clippy::unused_self)]
     pub(crate) fn validate(&self, _validate: &mut Validate) {}
+
+    pub fn visit<'a, T: Visitor<'a>>(&'a self, mut visitor: T) -> Option<T::Output> {
+        self.visit_impl(&mut visitor).break_value()
+    }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+    ) -> ControlFlow<T::Output> {
+        visitor.schema(self)?;
+
+        for import in &self.imports {
+            import.visit_impl(visitor, self)?;
+        }
+
+        for def in &self.definitions {
+            def.visit_impl(visitor, self)?;
+        }
+
+        ControlFlow::Continue(())
+    }
 }

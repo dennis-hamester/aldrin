@@ -1,11 +1,12 @@
-use super::{Const, Enum, Newtype, Service, Struct};
-use crate::Span;
+use super::{Const, Enum, Newtype, Schema, Service, Struct};
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::{Span, Visitor};
 use chumsky::Parser;
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::choice;
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub enum Definition {
@@ -87,6 +88,20 @@ impl Definition {
         match self {
             Self::Newtype(def) => Some(def),
             _ => None,
+        }
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        match self {
+            Self::Service(def) => def.visit_impl(visitor, schema),
+            Self::Struct(def) => def.visit_impl(visitor, schema),
+            Self::Enum(def) => def.visit_impl(visitor, schema),
+            Self::Const(def) => def.visit_impl(visitor, schema),
+            Self::Newtype(def) => def.visit_impl(visitor, schema),
         }
     }
 }

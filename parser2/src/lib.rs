@@ -12,6 +12,7 @@ mod validate;
 mod warning;
 
 pub mod ast;
+pub mod visitor;
 
 pub use ast::Schema;
 pub use diag::{Diagnostic, DiagnosticKind, DiagnosticRenderer};
@@ -20,4 +21,5 @@ pub use fmt::Formatter;
 pub use parser::{Parser, ParserEntry, SchemaRef};
 pub use resolver::{FilesystemResolver, MemoryResolver, Resolver, SchemaFile};
 pub use span::{Span, Spanned};
+pub use visitor::Visitor;
 pub use warning::Warning;

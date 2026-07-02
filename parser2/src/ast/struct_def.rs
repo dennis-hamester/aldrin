@@ -1,14 +1,16 @@
 use super::{
     Attribute, Comment, DocComment, Ident, KwFallback, KwRequired, KwStruct, LitInt, Prelude,
-    PunctAt, PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, Type,
+    PunctAt, PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, Schema, Service, Type,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::visitor::{FieldCtx, InlineCtx};
+use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::{choice, group};
 use chumsky::{IterParser, Parser};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
@@ -44,6 +46,24 @@ impl Struct {
         })
         .boxed()
     }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        visitor.struct_def(schema, self)?;
+
+        for field in &self.fields {
+            field.visit_impl(visitor, schema, FieldCtx::Struct(self))?;
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            fallback.visit_impl(visitor, schema, FieldCtx::Struct(self))?;
+        }
+
+        ControlFlow::Continue(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +94,27 @@ impl InlineStruct {
             fallback,
         })
         .boxed()
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+        inline_ctx: InlineCtx<'a>,
+        field_ctx: FieldCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.inline_struct(schema, service, inline_ctx, self)?;
+
+        for field in &self.fields {
+            field.visit_impl(visitor, schema, field_ctx)?;
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            fallback.visit_impl(visitor, schema, field_ctx)?;
+        }
+
+        ControlFlow::Continue(())
     }
 }
 
@@ -117,6 +158,15 @@ impl Field {
             ty,
         })
     }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        ctx: FieldCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.field(schema, ctx, self)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -143,5 +193,14 @@ impl FallbackField {
             doc_comments: prelude.doc_comments,
             name,
         })
+    }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        ctx: FieldCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.fallback_field(schema, ctx, self)
     }
 }

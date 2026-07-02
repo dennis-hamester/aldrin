@@ -1,15 +1,16 @@
 use super::{
     Comment, DocComment, Event, FallbackEvent, FallbackFunction, Function, Ident, KwService,
     KwUuid, KwVersion, LitInt, LitUuid, Prelude, PunctCurClose, PunctCurOpen, PunctEq,
-    PunctSemicolon,
+    PunctSemicolon, Schema,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::{choice, group};
 use chumsky::{IterParser, Parser};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Service {
@@ -94,6 +95,28 @@ impl Service {
         )
         .boxed()
     }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        visitor.service(schema, self)?;
+
+        for item in &self.items {
+            item.visit_impl(visitor, schema, self)?;
+        }
+
+        if let Some(ref fallback) = self.fallback_fn {
+            fallback.visit_impl(visitor, schema, self)?;
+        }
+
+        if let Some(ref fallback) = self.fallback_event {
+            fallback.visit_impl(visitor, schema, self)?;
+        }
+
+        ControlFlow::Continue(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -133,6 +156,18 @@ impl ServiceItem {
         match self {
             Self::Event(item) => Some(item),
             _ => None,
+        }
+    }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+    ) -> ControlFlow<T::Output> {
+        match self {
+            Self::Fn(item) => item.visit_impl(visitor, schema, service),
+            Self::Event(item) => item.visit_impl(visitor, schema, service),
         }
     }
 }

@@ -1,13 +1,15 @@
 use super::{
-    Attribute, Comment, DocComment, Ident, KwNewtype, Prelude, PunctEq, PunctSemicolon, Type,
+    Attribute, Comment, DocComment, Ident, KwNewtype, Prelude, PunctEq, PunctSemicolon, Schema,
+    Type,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::{Span, Visitor};
 use chumsky::Parser;
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::group;
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Newtype {
@@ -39,5 +41,13 @@ impl Newtype {
             ty,
         })
         .boxed()
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        visitor.newtype(schema, self)
     }
 }

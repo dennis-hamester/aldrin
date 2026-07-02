@@ -1,14 +1,16 @@
 use super::{
     Attribute, Comment, DocComment, Ident, KwEnum, KwFallback, LitInt, Prelude, PunctAt,
-    PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, Type,
+    PunctCurClose, PunctCurOpen, PunctEq, PunctSemicolon, Schema, Service, Type,
 };
-use crate::Span;
 use crate::error::ParseError;
 use crate::lexer::Token;
+use crate::visitor::{InlineCtx, VariantCtx};
+use crate::{Span, Visitor};
 use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::primitive::group;
 use chumsky::{IterParser, Parser};
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 pub struct Enum {
@@ -44,6 +46,24 @@ impl Enum {
         })
         .boxed()
     }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+    ) -> ControlFlow<T::Output> {
+        visitor.enum_def(schema, self)?;
+
+        for var in &self.variants {
+            var.visit_impl(visitor, schema, VariantCtx::Enum(self))?;
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            fallback.visit_impl(visitor, schema, VariantCtx::Enum(self))?;
+        }
+
+        ControlFlow::Continue(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +94,27 @@ impl InlineEnum {
             fallback,
         })
         .boxed()
+    }
+
+    pub(crate) fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        service: &'a Service,
+        inline_ctx: InlineCtx<'a>,
+        variant_ctx: VariantCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.inline_enum(schema, service, inline_ctx, self)?;
+
+        for var in &self.variants {
+            var.visit_impl(visitor, schema, variant_ctx)?;
+        }
+
+        if let Some(ref fallback) = self.fallback {
+            fallback.visit_impl(visitor, schema, variant_ctx)?;
+        }
+
+        ControlFlow::Continue(())
     }
 }
 
@@ -110,6 +151,15 @@ impl Variant {
             ty,
         })
     }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        ctx: VariantCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.variant(schema, ctx, self)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -136,5 +186,14 @@ impl FallbackVariant {
             doc_comments: prelude.doc_comments,
             name,
         })
+    }
+
+    fn visit_impl<'a, T: Visitor<'a> + ?Sized>(
+        &'a self,
+        visitor: &mut T,
+        schema: &'a Schema,
+        ctx: VariantCtx<'a>,
+    ) -> ControlFlow<T::Output> {
+        visitor.fallback_variant(schema, ctx, self)
     }
 }
