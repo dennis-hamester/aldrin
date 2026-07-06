@@ -1,0 +1,12 @@
+warning: duplicate import of schema `duplicate_import1`
+  ╭▸ test/ui/duplicate_import.aldrin:2:8
+  │
+2 │ import duplicate_import1;
+  │        ━━━━━━━━━━━━━━━━━ duplicate import
+  │
+  ⸬  test/ui/duplicate_import.aldrin:1:8
+  │
+1 │ import duplicate_import1;
+  │        ───────────────── first imported here
+  │
+  ╰ help: remove the duplicate import statement

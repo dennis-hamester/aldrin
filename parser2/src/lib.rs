@@ -10,6 +10,7 @@ mod resolver;
 mod span;
 #[cfg(test)]
 mod test;
+mod util;
 mod validate;
 mod warning;
 

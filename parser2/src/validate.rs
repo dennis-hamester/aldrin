@@ -1,7 +1,7 @@
 use crate::ast::{Import, Schema};
 use crate::error::ImportNotFound;
 use crate::issues::Issues;
-use crate::warning::UnusedImport;
+use crate::warning::{DuplicateImport, UnusedImport};
 use crate::{Error, ParserEntry, SchemaRef, Visitor, Warning};
 use indexmap::IndexMap;
 use std::ops::ControlFlow;
@@ -60,6 +60,10 @@ impl<'a> Validate<'a> {
         self.schemas.get(name)
     }
 
+    pub(crate) fn current_schema_ref(&self) -> SchemaRef {
+        self.schema_ref
+    }
+
     pub(crate) fn current_entry(&self) -> &'a ParserEntry {
         self.entry(self.schema_ref)
     }
@@ -67,12 +71,22 @@ impl<'a> Validate<'a> {
     pub(crate) fn current_schema(&self) -> &'a Schema {
         self.current_entry().schema().unwrap()
     }
+
+    pub(crate) fn current_source(&self) -> &'a str {
+        self.current_entry().source().unwrap()
+    }
 }
 
 struct ValidateVisitor<'a>(&'a mut Validate<'a>);
 
 impl<'a> Visitor<'a> for ValidateVisitor<'a> {
     type Output = ();
+
+    fn schema(&mut self, schema: &Schema) -> ControlFlow<()> {
+        DuplicateImport::validate(schema, self.0);
+
+        ControlFlow::Continue(())
+    }
 
     fn import(&mut self, _schema: &Schema, import: &Import) -> ControlFlow<()> {
         ImportNotFound::validate(import, self.0);

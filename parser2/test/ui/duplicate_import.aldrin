@@ -1,0 +1,4 @@
+import duplicate_import1;
+import duplicate_import1;
+
+newtype Foo = duplicate_import1::Bar;

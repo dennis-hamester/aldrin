@@ -42,7 +42,7 @@ impl UnusedImport {
 
         renderer
             .warning(format!("unused import `{import}`"), parser)
-            .snippet(self.schema, self.import.span(), "")
+            .snippet(self.schema, &self.import, "")
             .help("remove the import statement")
             .render()
     }

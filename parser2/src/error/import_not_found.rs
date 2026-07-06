@@ -32,7 +32,7 @@ impl ImportNotFound {
 
         renderer
             .error(format!("schema `{import}` not found"), parser)
-            .snippet(self.schema, self.import.span(), "")
+            .snippet(self.schema, &self.import, "")
             .help("an include directory may be missing or incorrect")
             .render()
     }

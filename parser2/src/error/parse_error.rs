@@ -28,7 +28,7 @@ impl ParseError {
         if self.expected.contains(Expected::LIT_STRING) && (self.found == Found::LitStringError) {
             let mut report = renderer
                 .error("unterminated string found", parser)
-                .snippet(self.schema, self.span, "")
+                .snippet(self.schema, &self.span, "")
                 .help("multi-line strings are not supported; use `\\n` to encode a newline");
 
             let schema = parser.schema(self.schema);
@@ -58,7 +58,7 @@ impl ParseError {
 
             renderer
                 .error(title, parser)
-                .snippet(self.schema, self.span, self.found.as_label())
+                .snippet(self.schema, &self.span, self.found.as_label())
                 .render()
         }
     }

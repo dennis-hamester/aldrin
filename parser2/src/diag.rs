@@ -1,4 +1,4 @@
-use crate::{Parser, SchemaRef, Span};
+use crate::{Parser, SchemaRef, Spanned};
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{AnnotationKind, Group, Level, Snippet};
 use std::borrow::Cow;
@@ -106,10 +106,11 @@ impl<'a> Report<'a> {
     pub(crate) fn snippet(
         mut self,
         schema: SchemaRef,
-        span: Span,
+        spanned: &impl Spanned,
         label: impl Into<Cow<'a, str>>,
     ) -> Self {
         let schema = self.parser.schema(schema);
+        let span = spanned.span();
 
         self.group = self.group.element(
             Snippet::source(schema.source().unwrap())
@@ -152,26 +153,27 @@ impl<'a> Report<'a> {
     //     self
     // }
 
-    // pub(crate) fn context(
-    //     mut self,
-    //     schema: SchemaRef,
-    //     span: Span,
-    //     label: impl Into<Cow<'a, str>>,
-    // ) -> Self {
-    //     let schema = self.parser.schema(schema);
+    pub(crate) fn context(
+        mut self,
+        schema: SchemaRef,
+        spanned: &impl Spanned,
+        label: impl Into<Cow<'a, str>>,
+    ) -> Self {
+        let schema = self.parser.schema(schema);
+        let span = spanned.span();
 
-    //     self.group = self.group.element(
-    //         Snippet::source(schema.source().unwrap())
-    //             .path(schema.path())
-    //             .annotation(
-    //                 AnnotationKind::Context
-    //                     .span(span.start..span.end)
-    //                     .label(Some(label)),
-    //             ),
-    //     );
+        self.group = self.group.element(
+            Snippet::source(schema.source().unwrap())
+                .path(schema.path())
+                .annotation(
+                    AnnotationKind::Context
+                        .span(span.start..span.end)
+                        .label(Some(label)),
+                ),
+        );
 
-    //     self
-    // }
+        self
+    }
 
     pub(crate) fn help(mut self, text: impl Into<Cow<'a, str>>) -> Self {
         self.group = self.group.element(Level::HELP.message(text));
