@@ -1,7 +1,8 @@
 use crate::ast::{Import, Schema};
+use crate::error::ImportNotFound;
 use crate::issues::Issues;
 use crate::warning::UnusedImport;
-use crate::{ParserEntry, SchemaRef, Visitor, Warning};
+use crate::{Error, ParserEntry, SchemaRef, Visitor, Warning};
 use indexmap::IndexMap;
 use std::ops::ControlFlow;
 
@@ -39,13 +40,9 @@ impl<'a> Validate<'a> {
         }
     }
 
-    // pub(crate) fn schema_ref(&self) -> SchemaRef {
-    //     self.schema_ref
-    // }
-
-    // pub(crate) fn add_error(&mut self, e: impl Into<Error>) {
-    //     self.issues.add_error(e);
-    // }
+    pub(crate) fn add_error(&mut self, e: impl Into<Error>) {
+        self.issues.add_error(e);
+    }
 
     pub(crate) fn add_warning(&mut self, w: impl Into<Warning>) {
         if self.is_main_schema {
@@ -59,13 +56,13 @@ impl<'a> Validate<'a> {
         self.schemas.get_index(schema_ref.0).unwrap().1
     }
 
+    pub(crate) fn entry_by_name(&self, name: &str) -> Option<&'a ParserEntry> {
+        self.schemas.get(name)
+    }
+
     pub(crate) fn current_entry(&self) -> &'a ParserEntry {
         self.entry(self.schema_ref)
     }
-
-    // pub(crate) fn schema(&self, schema_ref: SchemaRef) -> &'a Schema {
-    //     self.entry(schema_ref).schema().unwrap()
-    // }
 
     pub(crate) fn current_schema(&self) -> &'a Schema {
         self.current_entry().schema().unwrap()
@@ -78,6 +75,7 @@ impl<'a> Visitor<'a> for ValidateVisitor<'a> {
     type Output = ();
 
     fn import(&mut self, _schema: &Schema, import: &Import) -> ControlFlow<()> {
+        ImportNotFound::validate(import, self.0);
         UnusedImport::validate(import, self.0);
 
         ControlFlow::Continue(())

@@ -1,0 +1,7 @@
+warning: unused import `unused_import1`
+  ╭▸ test/ui/unused_import.aldrin:1:8
+  │
+1 │ import unused_import1;
+  │        ━━━━━━━━━━━━━━
+  │
+  ╰ help: remove the import statement

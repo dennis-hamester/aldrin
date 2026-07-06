@@ -1,0 +1,7 @@
+error: schema `import_not_found1` not found
+  ╭▸ test/ui/import_not_found.aldrin:1:8
+  │
+1 │ import import_not_found1;
+  │        ━━━━━━━━━━━━━━━━━
+  │
+  ╰ help: an include directory may be missing or incorrect

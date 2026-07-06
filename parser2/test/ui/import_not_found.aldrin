@@ -1,0 +1,3 @@
+import import_not_found1;
+
+newtype Foo = import_not_found1::Bar;
