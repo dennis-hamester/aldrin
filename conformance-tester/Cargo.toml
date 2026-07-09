@@ -29,7 +29,7 @@ default-features = false
 features = ["tokio"]
 
 [dependencies.serde_json]
-version = "1.0.149"
+version = "1.0.150"
 default-features = false
 features = ["std"]
 
