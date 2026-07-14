@@ -4,7 +4,7 @@ description = """
 Shared core components of Aldrin, a message bus for service-oriented RPC and interprocess
 communication.
 """
-version = "0.13.0"
+version = "0.14.0"
 
 categories.workspace = true
 edition.workspace = true
@@ -45,7 +45,7 @@ thiserror = { workspace = true }
 
 [dependencies.aldrin-macros]
 optional = true
-version = "0.13.0"
+version = "0.14.0"
 path = "../macros"
 default-features = false
 

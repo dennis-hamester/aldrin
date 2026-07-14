@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-07-14
+
+### Changed
+
+- Bump MSRV to 1.94.1 and switch to Rust edition 2024.
+
 ## [0.13.0] - 2025-12-18
 
 ### Added
@@ -142,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
+[0.14.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-macros-0.14.0
 [0.13.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-macros-0.13.0
 [0.12.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-macros-0.12.0
 [0.11.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-macros-0.11.0
