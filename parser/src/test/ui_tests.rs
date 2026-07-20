@@ -25,4 +25,5 @@ ui_test!(recursive2_a);
 ui_test!(reserved_ident);
 ui_test!(schema_link_without_import1);
 ui_test!(sender_receiver_imports);
+ui_test!(trailing_comment_in_service);
 ui_test!(type_not_found);

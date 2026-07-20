@@ -62,6 +62,7 @@ impl Diagnostic for InvalidSyntax {
             let expected: Cow<'static, str> = match expected {
                 Expected::Attribute => "an attribute".into(),
                 Expected::AttributeInline => "an inline attribute".into(),
+                Expected::Comment => "a comment".into(),
                 Expected::DocString => "a doc string".into(),
                 Expected::DocStringInline => "an inline doc string".into(),
 
@@ -130,6 +131,7 @@ impl From<InvalidSyntax> for Error {
 pub(crate) enum Expected {
     Attribute,
     AttributeInline,
+    Comment,
     DocString,
     DocStringInline,
     Eof,
@@ -213,6 +215,7 @@ impl Expected {
             Rule::array_len => &[ARRAY_LEN],
             Rule::attribute => &[&[Expected::Attribute]],
             Rule::attribute_inline => &[&[Expected::AttributeInline]],
+            Rule::comment => &[&[Expected::Comment]],
             Rule::const_value => &[CONST_VALUE],
             Rule::def => &[DEF],
             Rule::doc_string => &[&[Expected::DocString]],
@@ -224,7 +227,9 @@ impl Expected {
             Rule::kw_const => &[&[Expected::Keyword("const")]],
             Rule::kw_enum => &[&[Expected::Keyword("enum")]],
             Rule::kw_err => &[&[Expected::Keyword("err")]],
+            Rule::kw_event => &[&[Expected::Keyword("event")]],
             Rule::kw_fallback => &[&[Expected::Keyword("fallback")]],
+            Rule::kw_fn => &[&[Expected::Keyword("fn")]],
             Rule::kw_import => &[&[Expected::Keyword("import")]],
             Rule::kw_newtype => &[&[Expected::Keyword("newtype")]],
             Rule::kw_object_id => &[&[Expected::Keyword("object_id")]],

@@ -1,0 +1,5 @@
+error: expected a comment, a doc string, `event` or `fn`
+  ╭▸ test/ui/trailing_comment_in_service.aldrin:6:1
+  │
+6 │ }
+  ╰╴━

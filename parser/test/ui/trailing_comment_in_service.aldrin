@@ -1,0 +1,6 @@
+service Foo {
+    uuid = 583278a7-06d9-40bf-ac1b-bc590676ac06;
+    version = 1;
+
+    //
+}
