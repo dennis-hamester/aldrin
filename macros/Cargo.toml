@@ -36,14 +36,6 @@ path = "../codegen"
 default-features = false
 features = ["rust"]
 
-[dependencies.manyhow]
-version = "0.11.4"
-default-features = false
-features = [
-    "macros",
-    "syn",
-]
-
 [dependencies.proc-macro2]
 version = "1.0.106"
 default-features = false

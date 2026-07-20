@@ -256,13 +256,14 @@ extern crate proc_macro;
 mod codegen;
 mod derive;
 mod doc_string;
+mod emitter;
 mod service;
 #[cfg(test)]
 mod test;
 mod util;
 
-use proc_macro2::TokenStream;
-use syn::{DeriveInput, Result};
+use proc_macro::TokenStream;
+use syn::{DeriveInput, Error};
 
 /// Generates code from an Aldrin schema.
 ///
@@ -471,10 +472,13 @@ use syn::{DeriveInput, Result};
 ///     crate = super::my_reexports::my_aldrin,
 /// }
 /// ```
-#[manyhow::manyhow]
 #[proc_macro]
-pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow::Result {
-    codegen::generate(args, emitter)
+pub fn generate(input: TokenStream) -> TokenStream {
+    let args = syn::parse_macro_input!(input as codegen::Args);
+
+    codegen::generate(args)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Defines a service and proxy type.
@@ -588,10 +592,11 @@ pub fn generate(args: codegen::Args, emitter: &mut manyhow::Emitter) -> manyhow:
 ///     }
 /// }
 /// ```
-#[manyhow::manyhow]
 #[proc_macro]
-pub fn service(svc: service::Service) -> TokenStream {
-    svc.generate()
+pub fn service(input: TokenStream) -> TokenStream {
+    syn::parse_macro_input!(input as service::Service)
+        .generate()
+        .into()
 }
 
 /// Derive macro for the `Tag` trait.
@@ -601,10 +606,13 @@ pub fn service(svc: service::Service) -> TokenStream {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-#[manyhow::manyhow]
 #[proc_macro_derive(Tag, attributes(aldrin))]
-pub fn tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn tag_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_tag_from_core(&input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Tag` trait.
@@ -615,10 +623,13 @@ pub fn tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(TagFromAldrin, attributes(aldrin))]
-pub fn tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn tag_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_tag_from_aldrin(&input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `PrimaryTag` trait.
@@ -628,10 +639,13 @@ pub fn tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 ///
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
-#[manyhow::manyhow]
 #[proc_macro_derive(PrimaryTag, attributes(aldrin))]
-pub fn primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn primary_tag_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_primary_tag_from_core(&input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `PrimaryTag` trait.
@@ -642,10 +656,13 @@ pub fn primary_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(PrimaryTagFromAldrin, attributes(aldrin))]
-pub fn primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn primary_tag_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_primary_tag_from_aldrin(&input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for ref types.
@@ -656,10 +673,13 @@ pub fn primary_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`ref_type`](crate#ref_type)
-#[manyhow::manyhow]
 #[proc_macro_derive(RefType, attributes(aldrin))]
-pub fn ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn ref_type_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_ref_type_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for ref types.
@@ -671,10 +691,13 @@ pub fn ref_type_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`ref_type`](crate#ref_type)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(RefTypeFromAldrin, attributes(aldrin))]
-pub fn ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn ref_type_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_ref_type_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Serialize` trait.
@@ -689,10 +712,13 @@ pub fn ref_type_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
-#[manyhow::manyhow]
 #[proc_macro_derive(Serialize, attributes(aldrin))]
-pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn serialize_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_serialize_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Serialize` trait.
@@ -708,10 +734,13 @@ pub fn serialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(SerializeFromAldrin, attributes(aldrin))]
-pub fn serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn serialize_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_serialize_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Deserialize` trait.
@@ -725,10 +754,13 @@ pub fn serialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
-#[manyhow::manyhow]
 #[proc_macro_derive(Deserialize, attributes(aldrin))]
-pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn deserialize_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_deserialize_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Deserialize` trait.
@@ -743,10 +775,13 @@ pub fn deserialize_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(DeserializeFromAldrin, attributes(aldrin))]
-pub fn deserialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn deserialize_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_deserialize_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Introspectable` trait.
@@ -760,10 +795,13 @@ pub fn deserialize_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// - [`id`](crate#id)
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
-#[manyhow::manyhow]
 #[proc_macro_derive(Introspectable, attributes(aldrin))]
-pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn introspectable_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_introspectable_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `Introspectable` trait.
@@ -778,10 +816,13 @@ pub fn introspectable_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`optional`](crate#optional)
 /// - [`fallback`](crate#fallback)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(IntrospectableFromAldrin, attributes(aldrin))]
-pub fn introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn introspectable_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_introspectable_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `KeyTag` trait.
@@ -792,10 +833,13 @@ pub fn introspectable_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
-#[manyhow::manyhow]
 #[proc_macro_derive(KeyTag, attributes(aldrin))]
-pub fn key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn key_tag_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_key_tag_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `KeyTag` trait.
@@ -807,10 +851,13 @@ pub fn key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(KeyTagFromAldrin, attributes(aldrin))]
-pub fn key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn key_tag_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_key_tag_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `PrimaryKeyTag` trait.
@@ -821,10 +868,13 @@ pub fn key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
-#[manyhow::manyhow]
 #[proc_macro_derive(PrimaryKeyTag, attributes(aldrin))]
-pub fn primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn primary_key_tag_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_primary_key_tag_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `PrimaryKeyTag` trait.
@@ -836,10 +886,13 @@ pub fn primary_key_tag_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(PrimaryKeyTagFromAldrin, attributes(aldrin))]
-pub fn primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn primary_key_tag_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_primary_key_tag_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `SerializeKey` trait.
@@ -851,10 +904,13 @@ pub fn primary_key_tag_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
 /// - [`ref_type`](crate#ref_type)
-#[manyhow::manyhow]
 #[proc_macro_derive(SerializeKey, attributes(aldrin))]
-pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn serialize_key_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_serialize_key_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `SerializeKey` trait.
@@ -866,10 +922,13 @@ pub fn serialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(SerializeKeyFromAldrin, attributes(aldrin))]
-pub fn serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn serialize_key_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_serialize_key_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `DeserializeKey` trait.
@@ -880,10 +939,13 @@ pub fn serialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
 /// Relevant attributes:
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
-#[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKey, attributes(aldrin))]
-pub fn deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
+pub fn deserialize_key_from_core(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_deserialize_key_from_core(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro for the `DeserializeKey` trait.
@@ -895,8 +957,11 @@ pub fn deserialize_key_from_core(input: DeriveInput) -> Result<TokenStream> {
 /// - [`crate`](crate#crate)
 /// - [`newtype`](crate#newtype)
 #[doc(hidden)]
-#[manyhow::manyhow]
 #[proc_macro_derive(DeserializeKeyFromAldrin, attributes(aldrin))]
-pub fn deserialize_key_from_aldrin(input: DeriveInput) -> Result<TokenStream> {
+pub fn deserialize_key_from_aldrin(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
     derive::gen_deserialize_key_from_aldrin(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }

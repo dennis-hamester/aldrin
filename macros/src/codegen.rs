@@ -1,7 +1,7 @@
+use crate::emitter::Emitter;
 use aldrin_codegen::{Generator, Options, RustOptions};
 use aldrin_parser::{FilesystemResolver, Parser, Renderer};
-use manyhow::{Emitter, emit};
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use std::env;
 use std::fmt::Write;
@@ -10,7 +10,8 @@ use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{Error, Ident, LitBool, LitStr, Path, Result, Token};
 
-pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
+pub(crate) fn generate(args: Args) -> Result<TokenStream> {
+    let mut emitter = Emitter::new();
     let mut modules = String::new();
     let renderer = Renderer::new(false, false, 100);
 
@@ -22,13 +23,13 @@ pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
 
         for error in parser.errors() {
             let rendered = renderer.render(error, &parser);
-            emit!(emitter, "{rendered}");
+            emitter.add(format_args!("{rendered}"));
         }
 
         if args.warnings_as_errors {
             for warning in parser.warnings() {
                 let rendered = renderer.render(warning, &parser);
-                emit!(emitter, "{rendered}");
+                emitter.add(format_args!("{rendered}"));
             }
         }
 
@@ -50,7 +51,7 @@ pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
             Ok(output) => output,
 
             Err(e) => {
-                emit!(emitter, "Aldrin code generation failed: {e}");
+                emitter.add(format_args!("Aldrin code generation failed: {e}"));
                 continue;
             }
         };
@@ -77,11 +78,7 @@ pub(crate) fn generate(args: Args, emitter: &mut Emitter) -> manyhow::Result {
     }
 
     emitter.into_result()?;
-
-    modules
-        .parse()
-        .map_err(Error::from)
-        .map_err(manyhow::Error::from)
+    modules.parse().map_err(Error::from)
 }
 
 pub(crate) struct Args {
