@@ -5,7 +5,6 @@ use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Call, Error, Handle, Object, UnknownCall, UnknownEvent};
 use anyhow::{Result, anyhow};
 use clap::Parser;
-use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
 use tokio::signal;
@@ -123,7 +122,7 @@ impl Server {
         Ok(())
     }
 
-    fn get(&self, call: Call<(), Vec<Bookmark>, Infallible>) -> Result<()> {
+    fn get(&self, call: Call<(), Vec<Bookmark>>) -> Result<()> {
         println!("Getting all bookmarks.");
         call.ok(&self.list)?;
         Ok(())

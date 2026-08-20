@@ -8,7 +8,6 @@ use aldrin::core::{ObjectUuid, UnknownFields};
 use aldrin::{Error as AldrinError, Event, Handle, Object, Promise, UnknownCall, UnknownEvent};
 use anyhow::{Error, Result, anyhow};
 use clap::Parser;
-use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
 use tokio::signal;
@@ -170,7 +169,7 @@ impl Server {
 impl BookmarksCallHandler for Server {
     type Error = Error;
 
-    async fn get(&mut self, promise: Promise<Vec<Bookmark>, Infallible>) -> Result<()> {
+    async fn get(&mut self, promise: Promise<Vec<Bookmark>>) -> Result<()> {
         println!("Getting all bookmarks in the unspecified group.");
 
         let list = self.list.iter().filter(|b| b.group.is_none());
@@ -318,10 +317,7 @@ impl BookmarksCallHandler for Server {
         Ok(())
     }
 
-    async fn get_groups(
-        &mut self,
-        promise: Promise<Vec<Option<String>>, Infallible>,
-    ) -> Result<()> {
+    async fn get_groups(&mut self, promise: Promise<Vec<Option<String>>>) -> Result<()> {
         let mut groups = self
             .list
             .iter()

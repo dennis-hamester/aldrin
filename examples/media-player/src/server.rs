@@ -4,7 +4,6 @@ use crate::media_player::{
 use aldrin::core::ObjectUuid;
 use aldrin::{Handle, Object, Promise};
 use anyhow::{Result, anyhow};
-use std::convert::Infallible;
 use std::time::Duration;
 use tokio::signal;
 use tokio::time::{self, Instant, Interval, MissedTickBehavior};
@@ -119,25 +118,22 @@ impl Server {
 impl MediaPlayerCallHandler for Server {
     type Error = anyhow::Error;
 
-    async fn get_state(&mut self, promise: Promise<State, Infallible>) -> Result<()> {
+    async fn get_state(&mut self, promise: Promise<State>) -> Result<()> {
         promise.ok(&self.state)?;
         Ok(())
     }
 
-    async fn get_metadata(&mut self, promise: Promise<Option<Metadata>, Infallible>) -> Result<()> {
+    async fn get_metadata(&mut self, promise: Promise<Option<Metadata>>) -> Result<()> {
         promise.ok(&self.metadata)?;
         Ok(())
     }
 
-    async fn get_position(&mut self, promise: Promise<Option<u32>, Infallible>) -> Result<()> {
+    async fn get_position(&mut self, promise: Promise<Option<u32>>) -> Result<()> {
         promise.ok(self.position)?;
         Ok(())
     }
 
-    async fn get_last_metadata(
-        &mut self,
-        promise: Promise<Option<Metadata>, Infallible>,
-    ) -> Result<()> {
+    async fn get_last_metadata(&mut self, promise: Promise<Option<Metadata>>) -> Result<()> {
         promise.ok(&self.last_metadata)?;
         Ok(())
     }
@@ -181,7 +177,7 @@ impl MediaPlayerCallHandler for Server {
         Ok(())
     }
 
-    async fn stop(&mut self, promise: Promise<(), Infallible>) -> Result<()> {
+    async fn stop(&mut self, promise: Promise<()>) -> Result<()> {
         if self.state == State::Stopped {
             println!("Playback is already stopped.");
             promise.done()?;

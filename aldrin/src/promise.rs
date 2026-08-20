@@ -1,13 +1,14 @@
 use crate::{Error, Handle, low_level};
 use aldrin_core::tags::{self, PrimaryTag};
 use aldrin_core::{Serialize, SerializePrimary, ServiceId};
+use std::convert::Infallible;
 use std::fmt;
 use std::marker::PhantomData;
 use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// Replies to a pending call.
-pub struct Promise<T, E> {
+pub struct Promise<T, E = Infallible> {
     inner: low_level::Promise,
     phantom: PhantomData<fn(T, E)>,
 }

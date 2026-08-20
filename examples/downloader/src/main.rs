@@ -8,7 +8,6 @@ use downloader::{
     DownloaderProxy, Sha256,
 };
 use sha2::{Digest, Sha256 as Sha256Sum};
-use std::convert::Infallible;
 use std::fs::File;
 use std::io::Read;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
@@ -140,7 +139,7 @@ async fn server(bus: &Handle) -> Result<()> {
     }
 }
 
-async fn download(call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infallible>) {
+async fn download(call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>>) {
     let (args, promise) = call.into_args_and_promise();
 
     println!("Downloading `{}` ({} bytes).", args.name, args.size);
@@ -151,10 +150,7 @@ async fn download(call: Call<DownloaderDownloadArgs, UnboundSender<Chunk>, Infal
     }
 }
 
-async fn download_impl(
-    expected_size: u64,
-    promise: Promise<UnboundSender<Chunk>, Infallible>,
-) -> Result<()> {
+async fn download_impl(expected_size: u64, promise: Promise<UnboundSender<Chunk>>) -> Result<()> {
     // When creating a channel, one of the channel ends must be immediately claimed by the local
     // client and only the other end can be sent to another client. Here, we claim the receiver,
     // which also requires specifying a capacity.

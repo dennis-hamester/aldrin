@@ -1,6 +1,7 @@
 use crate::{Error, Reply, low_level};
 use aldrin_core::tags::PrimaryTag;
 use aldrin_core::{Deserialize, DeserializePrimary};
+use std::convert::Infallible;
 use std::fmt;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -8,7 +9,7 @@ use std::task::{Context, Poll};
 
 /// Future to await the result of a call.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PendingReply<T, E> {
+pub struct PendingReply<T, E = Infallible> {
     inner: low_level::PendingReply,
     phantom: PhantomData<fn() -> (T, E)>,
 }

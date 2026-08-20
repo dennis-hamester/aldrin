@@ -1,12 +1,13 @@
 use crate::{Error, Handle, Promise};
 use aldrin_core::tags::{self, PrimaryTag};
 use aldrin_core::{Serialize, SerializePrimary, ServiceId};
+use std::convert::Infallible;
 use std::fmt;
 use std::task::{Context, Poll};
 use std::time::Instant;
 
 /// Pending call.
-pub struct Call<Args, T, E> {
+pub struct Call<Args, T, E = Infallible> {
     args: Args,
     promise: Promise<T, E>,
 }
