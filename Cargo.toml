@@ -99,7 +99,7 @@ futures-util = { version = "0.3.32", default-features = false }
 heck = { version = "0.5.0", default-features = false }
 terminal_size = { version = "0.4.4", default-features = false }
 thiserror = { version = "2.0.20", default-features = false }
-tokio = { version = "1.52.3", default-features = false }
+tokio = { version = "1.53.1", default-features = false }
 uuid = { version = "1.23.5", default-features = false }
 
 [workspace.dependencies.anstream]
@@ -113,7 +113,7 @@ default-features = false
 features = ["std"]
 
 [workspace.dependencies.clap]
-version = "4.6.1"
+version = "4.6.6"
 default-features = false
 features = [
     "color",
@@ -127,7 +127,7 @@ features = [
 ]
 
 [workspace.dependencies.serde]
-version = "1.0.228"
+version = "1.0.229"
 default-features = false
 features = [
     "derive",
