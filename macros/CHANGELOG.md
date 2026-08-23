@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switch to Syn 3.
+- Silence a `clippy::redundant_field_names` warning triggered inside generated code.
 
 ## [0.14.0] - 2026-07-14
 

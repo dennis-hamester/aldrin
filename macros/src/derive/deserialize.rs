@@ -86,6 +86,7 @@ impl StructData<'_> {
                     }
 
                     _deserializer.finish_with(|_fallback| {
+                        #[allow(clippy::redundant_field_names)]
                         Ok(Self {
                             #(#field_finish),*
                         })
