@@ -4,6 +4,11 @@ multiple-versions = "warn"
 wildcards = "deny"
 workspace-default-features = "deny"
 
+skip = [
+    "syn@2",
+    "syn@3",
+]
+
 [bans.workspace-dependencies]
 duplicates = "deny"
 include-path-dependencies = false

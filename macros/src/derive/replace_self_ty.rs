@@ -5,7 +5,11 @@ struct ReplaceSelfTy(Type);
 
 impl VisitMut for ReplaceSelfTy {
     fn visit_type_mut(&mut self, i: &mut Type) {
-        if let Type::Path(TypePath { qself: None, path }) = i
+        if let Type::Path(TypePath {
+            attrs: _,
+            qself: None,
+            path,
+        }) = i
             && path.is_ident("Self")
         {
             *i = self.0.clone();
