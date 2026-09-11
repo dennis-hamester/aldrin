@@ -36,10 +36,6 @@ features = ["std"]
 [dependencies.textwrap]
 version = "0.16.2"
 default-features = false
-features = [
-    "unicode-linebreak",
-    "unicode-width",
-]
 
 [dependencies.tokio]
 workspace = true
