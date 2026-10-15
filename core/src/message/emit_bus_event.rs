@@ -143,6 +143,15 @@ impl From<EmitBusEvent> for Message {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
+enum BusEventKind {
+    ObjectCreated = 0,
+    ObjectDestroyed = 1,
+    ServiceCreated = 2,
+    ServiceDestroyed = 3,
+}
+
 #[cfg(test)]
 mod test {
     use super::super::Message;
@@ -370,13 +379,4 @@ mod test {
         assert_serialize_eq(&msg, serialized);
         assert_deserialize_eq(&msg, serialized);
     }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum BusEventKind {
-    ObjectCreated = 0,
-    ObjectDestroyed = 1,
-    ServiceCreated = 2,
-    ServiceDestroyed = 3,
 }
