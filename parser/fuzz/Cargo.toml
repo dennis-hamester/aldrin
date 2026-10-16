@@ -16,7 +16,7 @@ libfuzzer-sys = "0.4.12"
 path = ".."
 
 [dependencies.arbitrary]
-version = "1.4.2"
+version = "1.5.0"
 features = ["derive"]
 
 [profile.release]
