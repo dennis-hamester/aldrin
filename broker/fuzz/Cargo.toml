@@ -13,7 +13,7 @@ cargo-fuzz = true
 introspection = ["aldrin-broker/introspection"]
 
 [dependencies]
-libfuzzer-sys = "0.4.12"
+libfuzzer-sys = "0.4.13"
 
 [dependencies.aldrin-broker]
 path = "../../broker"
@@ -31,7 +31,7 @@ version = "1.5.0"
 features = ["derive"]
 
 [dependencies.uuid]
-version = "1.22.0"
+version = "1.29.0"
 features = ["arbitrary"]
 
 [profile.release]
