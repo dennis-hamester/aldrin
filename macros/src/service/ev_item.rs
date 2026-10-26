@@ -152,10 +152,56 @@ impl EvItem {
 
         quote! {
             #doc
+            fn #ident(
+                &mut self,
+                event: #krate::Event<#ty>,
+            ) -> impl ::std::future::Future<
+                Output = ::std::result::Result<(), Self::Error>,
+            > + ::std::marker::Send;
+        }
+    }
+
+    pub(crate) fn gen_local_handler(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let ty = match self.ty {
+            Some(ref ty) => quote! { #ty },
+            None => quote! { () },
+        };
+
+        quote! {
+            #doc
             async fn #ident(
                 &mut self,
                 event: #krate::Event<#ty>,
             ) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
+    pub(crate) fn gen_handler_blanket_impl(
+        &self,
+        options: &Options,
+        handler: &Ident,
+    ) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let ty = match self.ty {
+            Some(ref ty) => quote! { #ty },
+            None => quote! { () },
+        };
+
+        quote! {
+            #doc
+            async fn #ident(
+                &mut self,
+                event: #krate::Event<#ty>,
+            ) -> ::std::result::Result<(), Self::Error> {
+                <Self as #handler>::#ident(self, event).await
+            }
         }
     }
 

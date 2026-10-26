@@ -99,11 +99,74 @@ impl FnItem {
 
         quote! {
             #doc
+            fn #ident(
+                &mut self,
+                #args
+                promise: #krate::Promise<#ok, #err>,
+            ) -> impl ::std::future::Future<
+                Output = ::std::result::Result<(), Self::Error>,
+            > + ::std::marker::Send;
+        }
+    }
+
+    pub(crate) fn gen_local_handler(&self, options: &Options) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let args = self.body.args().map(|args| quote! { args: #args, });
+
+        let ok = match self.body.ok() {
+            Some(ok) => quote! { #ok },
+            None => quote! { () },
+        };
+
+        let err = match self.body.err() {
+            Some(err) => quote! { #err },
+            None => quote! { ::std::convert::Infallible },
+        };
+
+        quote! {
+            #doc
             async fn #ident(
                 &mut self,
                 #args
                 promise: #krate::Promise<#ok, #err>,
             ) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
+    pub(crate) fn gen_handler_blanket_impl(
+        &self,
+        options: &Options,
+        handler: &Ident,
+    ) -> TokenStream {
+        let krate = options.krate();
+        let ident = &self.ident;
+        let doc = &self.options.doc();
+
+        let args_ty = self.body.args().map(|args| quote! { args: #args, });
+        let args = self.body.args().map(|_| quote! { args, });
+
+        let ok = match self.body.ok() {
+            Some(ok) => quote! { #ok },
+            None => quote! { () },
+        };
+
+        let err = match self.body.err() {
+            Some(err) => quote! { #err },
+            None => quote! { ::std::convert::Infallible },
+        };
+
+        quote! {
+            #doc
+            async fn #ident(
+                &mut self,
+                #args_ty
+                promise: #krate::Promise<#ok, #err>,
+            ) -> ::std::result::Result<(), Self::Error> {
+                <Self as #handler>::#ident(self, #args promise).await
+            }
         }
     }
 

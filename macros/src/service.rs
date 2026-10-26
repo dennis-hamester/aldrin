@@ -189,21 +189,52 @@ impl Service {
     fn gen_event_handler(&self) -> TokenStream {
         let krate = self.options.krate();
         let vis = &self.vis;
-        let local_event_handler = &self.local_event_handler;
         let event_handler = &self.event_handler;
         let funcs = self.body.gen_event_handler(&self.options);
+        let local_event_handler = &self.local_event_handler;
+        let local_funcs = self.body.gen_local_event_handler(&self.options);
+        let local_blanket_impls = self
+            .body
+            .gen_event_handler_blanket_impls(&self.options, event_handler);
 
         quote! {
-            #[#krate::private::trait_variant::make(#event_handler: ::std::marker::Send)]
-            #vis trait #local_event_handler {
+            #vis trait #event_handler: ::std::marker::Send {
                 type Error;
 
                 #funcs
+
+                fn invalid_event(
+                    &mut self,
+                    error: #krate::Error,
+                ) -> impl ::std::future::Future<
+                    Output = ::std::result::Result<(), Self::Error>,
+                > + ::std::marker::Send;
+            }
+
+            #[allow(async_fn_in_trait)]
+            #vis trait #local_event_handler {
+                type Error;
+
+                #local_funcs
 
                 async fn invalid_event(
                     &mut self,
                     error: #krate::Error,
                 ) -> ::std::result::Result<(), Self::Error>;
+            }
+
+            #[automatically_derived]
+            impl<T: #event_handler> #local_event_handler for T {
+                type Error = T::Error;
+
+                #local_blanket_impls
+
+                async fn invalid_event(
+                    &mut self,
+                    error: #krate::Error,
+                ) -> ::std::result::Result<(), Self::Error> {
+                    <Self as #event_handler>::invalid_event(self, error).await
+                }
             }
         }
     }
@@ -306,21 +337,52 @@ impl Service {
     fn gen_call_handler(&self) -> TokenStream {
         let krate = self.options.krate();
         let vis = &self.vis;
-        let local_call_handler = &self.local_call_handler;
         let call_handler = &self.call_handler;
         let funcs = self.body.gen_call_handler(&self.options);
+        let local_call_handler = &self.local_call_handler;
+        let local_funcs = self.body.gen_local_call_handler(&self.options);
+        let local_blanket_impls = self
+            .body
+            .gen_call_handler_blanket_impls(&self.options, call_handler);
 
         quote! {
-            #[#krate::private::trait_variant::make(#call_handler: ::std::marker::Send)]
-            #vis trait #local_call_handler {
+            #vis trait #call_handler: ::std::marker::Send {
                 type Error;
 
                 #funcs
+
+                fn invalid_call(
+                    &mut self,
+                    error: #krate::Error,
+                ) -> impl ::std::future::Future<
+                    Output = ::std::result::Result<(), Self::Error>,
+                > + ::std::marker::Send;
+            }
+
+            #[allow(async_fn_in_trait)]
+            #vis trait #local_call_handler {
+                type Error;
+
+                #local_funcs
 
                 async fn invalid_call(
                     &mut self,
                     error: #krate::Error,
                 ) -> ::std::result::Result<(), Self::Error>;
+            }
+
+            #[automatically_derived]
+            impl<T: #call_handler> #local_call_handler for T {
+                type Error = T::Error;
+
+                #local_blanket_impls
+
+                async fn invalid_call(
+                    &mut self,
+                    error: #krate::Error,
+                ) -> ::std::result::Result<(), Self::Error> {
+                    <Self as #call_handler>::invalid_call(self, error).await
+                }
             }
         }
     }
