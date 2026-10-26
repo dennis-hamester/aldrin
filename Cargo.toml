@@ -92,15 +92,15 @@ wrong_self_convention = "deny"
 anstyle = { version = "1.0.14", default-features = false }
 colorchoice-clap = { version = "1.0.8", default-features = false }
 comrak = { version = "0.59.0", default-features = false }
-diffy = { version = "0.5.0", default-features = false }
-futures-channel = { version = "0.3.32", default-features = false }
-futures-core = { version = "0.3.32", default-features = false }
-futures-util = { version = "0.3.32", default-features = false }
+diffy = { version = "0.5.2", default-features = false }
+futures-channel = { version = "0.3.34", default-features = false }
+futures-core = { version = "0.3.34", default-features = false }
+futures-util = { version = "0.3.34", default-features = false }
 heck = { version = "0.5.0", default-features = false }
 terminal_size = { version = "0.4.4", default-features = false }
-thiserror = { version = "2.0.20", default-features = false }
-tokio = { version = "1.53.1", default-features = false }
-uuid = { version = "1.23.5", default-features = false }
+thiserror = { version = "2.0.21", default-features = false }
+tokio = { version = "1.54.1", default-features = false }
+uuid = { version = "1.29.0", default-features = false }
 
 [workspace.dependencies.anstream]
 version = "1.0.0"
@@ -108,12 +108,12 @@ default-features = false
 features = ["auto"]
 
 [workspace.dependencies.anyhow]
-version = "1.0.103"
+version = "1.0.104"
 default-features = false
 features = ["std"]
 
 [workspace.dependencies.clap]
-version = "4.6.6"
+version = "4.6.7"
 default-features = false
 features = [
     "color",
