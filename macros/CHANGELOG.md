@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Switch to Syn 3.
 - Silence a `clippy::redundant_field_names` warning triggered inside generated code.
+- `trait-variant` has been removed and the `Send` variants of the call and event dispatchers are now
+  generated internally.
 
 ## [0.14.0] - 2026-07-14
 

@@ -53,7 +53,33 @@ impl EvFallbackItem {
 
         quote! {
             #doc
+            fn #ident(&mut self, event: #ty) -> impl ::std::future::Future<
+                Output = ::std::result::Result<(), Self::Error>,
+            > + ::std::marker::Send;
+        }
+    }
+
+    pub(crate) fn gen_local_handler(&self) -> TokenStream {
+        let ident = &self.ident;
+        let ty = &self.ty;
+        let doc = &self.options.doc();
+
+        quote! {
+            #doc
             async fn #ident(&mut self, event: #ty) -> ::std::result::Result<(), Self::Error>;
+        }
+    }
+
+    pub(crate) fn gen_handler_blanket_impl(&self, handler: &Ident) -> TokenStream {
+        let ident = &self.ident;
+        let ty = &self.ty;
+        let doc = &self.options.doc();
+
+        quote! {
+            #doc
+            async fn #ident(&mut self, event: #ty) -> ::std::result::Result<(), Self::Error> {
+                <Self as #handler>::#ident(self, event).await
+            }
         }
     }
 

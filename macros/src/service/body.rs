@@ -188,12 +188,12 @@ impl Body {
                 ::std::future::poll_fn(|cx| self.poll_next_event(cx)).await
             }
 
-            pub async fn dispatch_event_local<T>(
+            pub async fn dispatch_event<T>(
                 event: ::std::result::Result<#event, #krate::Error>,
                 handler: &mut T,
             ) -> ::std::result::Result<(), T::Error>
             where
-                T: #local_handler + ?::std::marker::Sized,
+                T: #handler + ?::std::marker::Sized,
             {
                 #[allow(unreachable_code)]
                 match event {
@@ -204,12 +204,12 @@ impl Body {
                 }
             }
 
-            pub async fn dispatch_event<T>(
+            pub async fn dispatch_event_local<T>(
                 event: ::std::result::Result<#event, #krate::Error>,
                 handler: &mut T,
             ) -> ::std::result::Result<(), T::Error>
             where
-                T: #handler + ?::std::marker::Sized,
+                T: #local_handler + ?::std::marker::Sized,
             {
                 #[allow(unreachable_code)]
                 match event {
@@ -284,6 +284,40 @@ impl Body {
 
         if let Some(fallback) = self.event_fallback() {
             funcs.extend(fallback.gen_handler());
+        }
+
+        funcs
+    }
+
+    pub(crate) fn gen_local_event_handler(&self, options: &Options) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_event)
+            .map(|ev| ev.gen_local_handler(options))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.event_fallback() {
+            funcs.extend(fallback.gen_local_handler());
+        }
+
+        funcs
+    }
+
+    pub(crate) fn gen_event_handler_blanket_impls(
+        &self,
+        options: &Options,
+        handler: &Ident,
+    ) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_event)
+            .map(|ev| ev.gen_handler_blanket_impl(options, handler))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.event_fallback() {
+            funcs.extend(fallback.gen_handler_blanket_impl(handler));
         }
 
         funcs
@@ -449,12 +483,12 @@ impl Body {
                 ::std::future::poll_fn(|cx| self.poll_next_call(cx)).await
             }
 
-            pub async fn dispatch_call_local<T>(
+            pub async fn dispatch_call<T>(
                 call: ::std::result::Result<#call, #krate::Error>,
                 handler: &mut T,
             ) -> ::std::result::Result<(), T::Error>
             where
-                T: #local_handler + ?::std::marker::Sized,
+                T: #handler + ?::std::marker::Sized,
             {
                 #[allow(unreachable_code)]
                 match call {
@@ -465,12 +499,12 @@ impl Body {
                 }
             }
 
-            pub async fn dispatch_call<T>(
+            pub async fn dispatch_call_local<T>(
                 call: ::std::result::Result<#call, #krate::Error>,
                 handler: &mut T,
             ) -> ::std::result::Result<(), T::Error>
             where
-                T: #handler + ?::std::marker::Sized,
+                T: #local_handler + ?::std::marker::Sized,
             {
                 #[allow(unreachable_code)]
                 match call {
@@ -587,6 +621,40 @@ impl Body {
 
         if let Some(fallback) = self.function_fallback() {
             funcs.extend(fallback.gen_handler());
+        }
+
+        funcs
+    }
+
+    pub(crate) fn gen_local_call_handler(&self, options: &Options) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_function)
+            .map(|func| func.gen_local_handler(options))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.function_fallback() {
+            funcs.extend(fallback.gen_local_handler());
+        }
+
+        funcs
+    }
+
+    pub(crate) fn gen_call_handler_blanket_impls(
+        &self,
+        options: &Options,
+        handler: &Ident,
+    ) -> TokenStream {
+        let mut funcs = self
+            .items
+            .iter()
+            .filter_map(ServiceItem::as_function)
+            .map(|func| func.gen_handler_blanket_impl(options, handler))
+            .collect::<TokenStream>();
+
+        if let Some(fallback) = self.function_fallback() {
+            funcs.extend(fallback.gen_handler_blanket_impl(handler));
         }
 
         funcs
