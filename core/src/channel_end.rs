@@ -1,15 +1,16 @@
-use num_enum::{IntoPrimitive, TryFromPrimitive};
+use crate::enum_repr::enum_with_repr;
 
-/// Sending or receiving end of a channel.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-#[repr(u8)]
-pub enum ChannelEnd {
-    /// Sending end of a channel.
-    Sender = 0,
+enum_with_repr! {
+    /// Sending or receiving end of a channel.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+    pub enum ChannelEnd: u8 {
+        /// Sending end of a channel.
+        Sender = 0,
 
-    /// Receiving end of a channel.
-    Receiver = 1,
+        /// Receiving end of a channel.
+        Receiver = 1,
+    }
 }
 
 impl ChannelEnd {

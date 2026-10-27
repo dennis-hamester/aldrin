@@ -3,16 +3,17 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum ConnectReplyKind {
-    Ok = 0,
-    IncompatibleVersion = 1,
-    Rejected = 2,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum ConnectReplyKind: u8 {
+        Ok = 0,
+        IncompatibleVersion = 1,
+        Rejected = 2,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

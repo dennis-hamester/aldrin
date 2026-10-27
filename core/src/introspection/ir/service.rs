@@ -1,7 +1,7 @@
 use super::{EventFallbackIr, EventIr, FunctionFallbackIr, FunctionIr, LexicalId};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer, ServiceUuid};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{Uuid, uuid};
 
@@ -71,17 +71,17 @@ impl ServiceIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ServiceField {
-    Schema = 0,
-    Name = 1,
-    Uuid = 2,
-    Version = 3,
-    Functions = 4,
-    Events = 5,
-    FunctionFallback = 6,
-    EventFallback = 7,
+enum_with_repr! {
+    enum ServiceField: u32 {
+        Schema = 0,
+        Name = 1,
+        Uuid = 2,
+        Version = 3,
+        Functions = 4,
+        Events = 5,
+        FunctionFallback = 6,
+        EventFallback = 7,
+    }
 }
 
 impl Tag for ServiceIr {}

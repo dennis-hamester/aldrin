@@ -24,11 +24,11 @@ pub mod ir;
 #[doc(hidden)]
 pub mod private;
 
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::{BTreeMap, HashSet};
 
 pub use array_type::ArrayType;
@@ -133,13 +133,13 @@ impl From<ir::IntrospectionIr> for Introspection {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum IntrospectionField {
-    Version = 0,
-    TypeId = 1,
-    Layout = 2,
-    References = 3,
+enum_with_repr! {
+    enum IntrospectionField: u32 {
+        Version = 0,
+        TypeId = 1,
+        Layout = 2,
+        References = 3,
+    }
 }
 
 impl Tag for Introspection {}

@@ -7,6 +7,7 @@ mod channel_end;
 mod convert_value;
 mod deserialize;
 mod deserialize_key;
+mod enum_repr;
 mod ids;
 mod impls;
 mod key_impls;

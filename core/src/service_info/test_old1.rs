@@ -1,17 +1,17 @@
 use super::ServiceInfo;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, SerializedValue,
     Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::uuid;
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ServiceInfoFieldOld {
-    Version = 0,
-    TypeId = 1,
+enum_with_repr! {
+    enum ServiceInfoFieldOld: u32 {
+        Version = 0,
+        TypeId = 1,
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

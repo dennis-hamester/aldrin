@@ -1,9 +1,9 @@
 use super::{LexicalId, ir, resolve_ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,13 +56,13 @@ impl Event {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EventField {
-    Id = 0,
-    Name = 1,
-    Doc = 2,
-    EventType = 3,
+enum_with_repr! {
+    enum EventField: u32 {
+        Id = 0,
+        Name = 1,
+        Doc = 2,
+        EventType = 3,
+    }
 }
 
 impl Tag for Event {}

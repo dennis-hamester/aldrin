@@ -1,9 +1,9 @@
 use super::{LexicalId, ir, resolve_ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -60,14 +60,14 @@ impl Field {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum FieldField {
-    Id = 0,
-    Name = 1,
-    Doc = 2,
-    IsRequired = 3,
-    FieldType = 4,
+enum_with_repr! {
+    enum FieldField: u32 {
+        Id = 0,
+        Name = 1,
+        Doc = 2,
+        IsRequired = 3,
+        FieldType = 4,
+    }
 }
 
 impl Tag for Field {}

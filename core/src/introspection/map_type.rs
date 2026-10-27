@@ -1,9 +1,9 @@
 use super::{LexicalId, ir, resolve_ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -34,11 +34,11 @@ impl MapType {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum MapTypeField {
-    Key = 0,
-    Value = 1,
+enum_with_repr! {
+    enum MapTypeField: u32 {
+        Key = 0,
+        Value = 1,
+    }
 }
 
 impl Tag for MapType {}

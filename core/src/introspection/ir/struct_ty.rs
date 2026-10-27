@@ -1,7 +1,7 @@
 use super::{FieldIr, LexicalId, StructFallbackIr};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{Uuid, uuid};
 
@@ -46,13 +46,13 @@ impl StructIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum StructField {
-    Schema = 0,
-    Name = 1,
-    Fields = 2,
-    Fallback = 3,
+enum_with_repr! {
+    enum StructField: u32 {
+        Schema = 0,
+        Name = 1,
+        Fields = 2,
+        Fallback = 3,
+    }
 }
 
 impl Tag for StructIr {}

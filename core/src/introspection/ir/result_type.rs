@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone)]
 pub struct ResultTypeIr {
@@ -23,11 +23,11 @@ impl ResultTypeIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ResultTypeField {
-    Ok = 0,
-    Err = 1,
+enum_with_repr! {
+    enum ResultTypeField: u32 {
+        Ok = 0,
+        Err = 1,
+    }
 }
 
 impl Tag for ResultTypeIr {}

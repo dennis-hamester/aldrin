@@ -3,19 +3,20 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum CallFunctionReplyKind {
-    Ok = 0,
-    Err = 1,
-    Aborted = 2,
-    InvalidService = 3,
-    InvalidFunction = 4,
-    InvalidArgs = 5,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum CallFunctionReplyKind: u8 {
+        Ok = 0,
+        Err = 1,
+        Aborted = 2,
+        InvalidService = 3,
+        InvalidFunction = 4,
+        InvalidArgs = 5,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
