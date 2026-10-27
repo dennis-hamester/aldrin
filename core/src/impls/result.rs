@@ -1,8 +1,8 @@
+use crate::enum_repr::enum_with_repr;
 #[cfg(feature = "introspection")]
 use crate::introspection::{Introspectable, LexicalId, References, ir};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 impl<T: Tag, E: Tag> Tag for Result<T, E> {}
 
@@ -10,11 +10,11 @@ impl<T: PrimaryTag, E: PrimaryTag> PrimaryTag for Result<T, E> {
     type Tag = Result<T::Tag, E::Tag>;
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ResultVariant {
-    Ok = 0,
-    Err = 1,
+enum_with_repr! {
+    enum ResultVariant: u32 {
+        Ok = 0,
+        Err = 1,
+    }
 }
 
 impl<T, U, E, F> Serialize<Result<T, E>> for Result<U, F>

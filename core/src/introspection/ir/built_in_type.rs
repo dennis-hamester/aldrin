@@ -1,7 +1,7 @@
 use super::{ArrayTypeIr, LexicalId, MapTypeIr, ResultTypeIr};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::{Uuid, uuid};
 
 #[derive(Debug, Copy, Clone)]
@@ -73,37 +73,37 @@ impl BuiltInTypeIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum BuiltInTypeVariant {
-    Bool = 0,
-    U8 = 1,
-    I8 = 2,
-    U16 = 3,
-    I16 = 4,
-    U32 = 5,
-    I32 = 6,
-    U64 = 7,
-    I64 = 8,
-    F32 = 9,
-    F64 = 10,
-    String = 11,
-    Uuid = 12,
-    ObjectId = 13,
-    ServiceId = 14,
-    Value = 15,
-    Option = 16,
-    Box = 17,
-    Vec = 18,
-    Bytes = 19,
-    Map = 20,
-    Set = 21,
-    Sender = 22,
-    Receiver = 23,
-    Lifetime = 24,
-    Unit = 25,
-    Result = 26,
-    Array = 27,
+enum_with_repr! {
+    enum BuiltInTypeVariant: u32 {
+        Bool = 0,
+        U8 = 1,
+        I8 = 2,
+        U16 = 3,
+        I16 = 4,
+        U32 = 5,
+        I32 = 6,
+        U64 = 7,
+        I64 = 8,
+        F32 = 9,
+        F64 = 10,
+        String = 11,
+        Uuid = 12,
+        ObjectId = 13,
+        ServiceId = 14,
+        Value = 15,
+        Option = 16,
+        Box = 17,
+        Vec = 18,
+        Bytes = 19,
+        Map = 20,
+        Set = 21,
+        Sender = 22,
+        Receiver = 23,
+        Lifetime = 24,
+        Unit = 25,
+        Result = 26,
+        Array = 27,
+    }
 }
 
 impl Tag for BuiltInTypeIr {}

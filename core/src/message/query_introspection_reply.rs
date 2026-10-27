@@ -3,15 +3,16 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum QueryIntrospectionReplyKind {
-    Ok = 0,
-    Unavailable = 1,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum QueryIntrospectionReplyKind: u8 {
+        Ok = 0,
+        Unavailable = 1,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

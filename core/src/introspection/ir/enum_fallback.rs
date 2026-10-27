@@ -1,6 +1,6 @@
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone)]
 pub struct EnumFallbackIr {
@@ -22,10 +22,10 @@ impl EnumFallbackIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EnumFallbackField {
-    Name = 0,
+enum_with_repr! {
+    enum EnumFallbackField: u32 {
+        Name = 0,
+    }
 }
 
 impl Tag for EnumFallbackIr {}

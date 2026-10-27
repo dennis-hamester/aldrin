@@ -69,11 +69,11 @@ mod unsubscribe_all_events_reply;
 mod unsubscribe_event;
 mod unsubscribe_service;
 
+use crate::enum_repr::enum_with_repr;
 use crate::{
     ProtocolVersion, SerializedValue, SerializedValueSlice, ValueConversionError, convert_value,
 };
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub(crate) use deserializer::{MessageWithValueDeserializer, MessageWithoutValueDeserializer};
 pub(crate) use serializer::MessageSerializer;
@@ -761,9 +761,10 @@ impl MessageOps for Message {
 
 impl message_ops::Sealed for Message {}
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum OptionKind {
-    None = 0,
-    Some = 1,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum OptionKind: u8 {
+        None = 0,
+        Some = 1,
+    }
 }

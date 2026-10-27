@@ -3,17 +3,18 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum ClaimChannelEndReplyKind {
-    SenderClaimed = 0,
-    ReceiverClaimed = 1,
-    InvalidChannel = 2,
-    AlreadyClaimed = 3,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum ClaimChannelEndReplyKind: u8 {
+        SenderClaimed = 0,
+        ReceiverClaimed = 1,
+        InvalidChannel = 2,
+        AlreadyClaimed = 3,
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone)]
 pub struct EventIr {
@@ -33,12 +33,12 @@ impl EventIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EventField {
-    Id = 0,
-    Name = 1,
-    EventType = 2,
+enum_with_repr! {
+    enum EventField: u32 {
+        Id = 0,
+        Name = 1,
+        EventType = 2,
+    }
 }
 
 impl Tag for EventIr {}

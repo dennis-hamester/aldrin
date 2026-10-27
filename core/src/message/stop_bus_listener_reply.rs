@@ -3,17 +3,18 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-#[repr(u8)]
-pub enum StopBusListenerResult {
-    Ok = 0,
-    InvalidBusListener = 1,
-    NotStarted = 2,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+    pub enum StopBusListenerResult: u8 {
+        Ok = 0,
+        InvalidBusListener = 1,
+        NotStarted = 2,
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

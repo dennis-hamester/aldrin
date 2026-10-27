@@ -1,7 +1,7 @@
 use super::{EnumFallbackIr, LexicalId, VariantIr};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 use uuid::{Uuid, uuid};
 
@@ -46,13 +46,13 @@ impl EnumIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EnumField {
-    Schema = 0,
-    Name = 1,
-    Variants = 2,
-    Fallback = 3,
+enum_with_repr! {
+    enum EnumField: u32 {
+        Schema = 0,
+        Name = 1,
+        Variants = 2,
+        Fallback = 3,
+    }
 }
 
 impl Tag for EnumIr {}

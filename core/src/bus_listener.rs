@@ -1,6 +1,6 @@
+use crate::enum_repr::enum_with_repr;
 use crate::message::{MessageDeserializeError, MessageSerializer, MessageWithoutValueDeserializer};
 use crate::{ObjectId, ObjectUuid, ServiceId, ServiceUuid};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
@@ -11,13 +11,14 @@ pub enum BusEvent {
     ServiceDestroyed(ServiceId),
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
-#[repr(u8)]
-pub enum BusListenerScope {
-    Current = 0,
-    New = 1,
-    All = 2,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
+    pub enum BusListenerScope: u8 {
+        Current = 0,
+        New = 1,
+        All = 2,
+    }
 }
 
 impl BusListenerScope {
@@ -234,13 +235,14 @@ impl BusListenerServiceFilter {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum BusListenerFilterKind {
-    AnyObject = 0,
-    SpecificObject = 1,
-    AnyObjectAnyService = 2,
-    SpecificObjectAnyService = 3,
-    AnyObjectSpecificService = 4,
-    SpecificObjectSpecificService = 5,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum BusListenerFilterKind: u8 {
+        AnyObject = 0,
+        SpecificObject = 1,
+        AnyObjectAnyService = 2,
+        SpecificObjectAnyService = 3,
+        AnyObjectSpecificService = 4,
+        SpecificObjectSpecificService = 5,
+    }
 }

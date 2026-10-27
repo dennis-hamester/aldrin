@@ -3,13 +3,13 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, DeserializePrimary, Deserializer, Serialize, SerializeError,
     SerializePrimary, SerializedValue, SerializedValueSlice, Serializer,
 };
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
@@ -56,10 +56,10 @@ impl PrimaryTag for ConnectData {
     type Tag = Self;
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ConnectDataField {
-    User = 0,
+enum_with_repr! {
+    enum ConnectDataField: u32 {
+        User = 0,
+    }
 }
 
 impl Serialize<Self> for ConnectData {

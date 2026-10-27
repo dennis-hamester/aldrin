@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone)]
 pub struct ArrayTypeIr {
@@ -24,11 +24,11 @@ impl ArrayTypeIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ArrayTypeField {
-    ElemType = 0,
-    Len = 1,
+enum_with_repr! {
+    enum ArrayTypeField: u32 {
+        ElemType = 0,
+        Len = 1,
+    }
 }
 
 impl Tag for ArrayTypeIr {}

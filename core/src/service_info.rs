@@ -1,18 +1,18 @@
 #[cfg(test)]
 mod test_old1;
 
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ServiceInfoField {
-    Version = 0,
-    TypeId = 1,
-    SubscribeAll = 2,
+enum_with_repr! {
+    enum ServiceInfoField: u32 {
+        Version = 0,
+        TypeId = 1,
+        SubscribeAll = 2,
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

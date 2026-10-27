@@ -1,9 +1,9 @@
 use super::{BuiltInType, Enum, LexicalId, Newtype, Service, Struct, ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -102,14 +102,14 @@ impl From<Newtype> for Layout {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum LayoutVariant {
-    BuiltIn = 0,
-    Struct = 1,
-    Enum = 2,
-    Service = 3,
-    Newtype = 4,
+enum_with_repr! {
+    enum LayoutVariant: u32 {
+        BuiltIn = 0,
+        Struct = 1,
+        Enum = 2,
+        Service = 3,
+        Newtype = 4,
+    }
 }
 
 impl Tag for Layout {}

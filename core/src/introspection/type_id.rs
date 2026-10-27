@@ -1,8 +1,8 @@
 use super::{DynIntrospectable, Introspectable, References, VERSION, ir};
 use crate::adapters::IterAsVec;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, SerializedValue, Serializer, TypeId};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeSet;
 use uuid::Uuid;
 
@@ -53,12 +53,12 @@ impl Compute {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ComputeField {
-    Version = 0,
-    Layout = 1,
-    Referenced = 2,
+enum_with_repr! {
+    enum ComputeField: u32 {
+        Version = 0,
+        Layout = 1,
+        Referenced = 2,
+    }
 }
 
 impl Tag for Compute {}

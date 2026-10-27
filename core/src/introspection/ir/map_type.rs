@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone)]
 pub struct MapTypeIr {
@@ -23,11 +23,11 @@ impl MapTypeIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum MapTypeField {
-    Key = 0,
-    Value = 1,
+enum_with_repr! {
+    enum MapTypeField: u32 {
+        Key = 0,
+        Value = 1,
+    }
 }
 
 impl Tag for MapTypeIr {}

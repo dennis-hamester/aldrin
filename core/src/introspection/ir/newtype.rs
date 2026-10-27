@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::{Uuid, uuid};
 
 #[derive(Debug, Clone)]
@@ -44,12 +44,12 @@ impl NewtypeIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum NewtypeField {
-    Schema = 0,
-    Name = 1,
-    TargetType = 2,
+enum_with_repr! {
+    enum NewtypeField: u32 {
+        Schema = 0,
+        Name = 1,
+        TargetType = 2,
+    }
 }
 
 impl Tag for NewtypeIr {}

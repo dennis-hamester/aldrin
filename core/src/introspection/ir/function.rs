@@ -1,7 +1,7 @@
 use super::LexicalId;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone)]
 pub struct FunctionIr {
@@ -43,14 +43,14 @@ impl FunctionIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum FunctionField {
-    Id = 0,
-    Name = 1,
-    Args = 2,
-    Ok = 3,
-    Err = 4,
+enum_with_repr! {
+    enum FunctionField: u32 {
+        Id = 0,
+        Name = 1,
+        Args = 2,
+        Ok = 3,
+        Err = 4,
+    }
 }
 
 impl Tag for FunctionIr {}

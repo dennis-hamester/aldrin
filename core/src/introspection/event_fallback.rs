@@ -1,7 +1,7 @@
 use super::ir;
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
@@ -36,11 +36,11 @@ impl EventFallback {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EventFallbackField {
-    Name = 0,
-    Doc = 1,
+enum_with_repr! {
+    enum EventFallbackField: u32 {
+        Name = 0,
+        Doc = 1,
+    }
 }
 
 impl Tag for EventFallback {}

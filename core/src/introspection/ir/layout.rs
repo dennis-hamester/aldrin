@@ -1,7 +1,7 @@
 use super::{BuiltInTypeIr, EnumIr, LexicalId, NewtypeIr, ServiceIr, StructIr};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{PrimaryTag, Tag};
 use crate::{Serialize, SerializeError, Serializer};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -105,14 +105,14 @@ impl From<NewtypeIr> for LayoutIr {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum LayoutVariant {
-    BuiltIn = 0,
-    Struct = 1,
-    Enum = 2,
-    Service = 3,
-    Newtype = 4,
+enum_with_repr! {
+    enum LayoutVariant: u32 {
+        BuiltIn = 0,
+        Struct = 1,
+        Enum = 2,
+        Service = 3,
+        Newtype = 4,
+    }
 }
 
 impl Tag for LayoutIr {}

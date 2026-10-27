@@ -1,9 +1,9 @@
 use super::{LexicalId, ir, resolve_ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -37,11 +37,11 @@ impl ArrayType {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum ArrayTypeField {
-    ElemType = 0,
-    Len = 1,
+enum_with_repr! {
+    enum ArrayTypeField: u32 {
+        ElemType = 0,
+        Len = 1,
+    }
 }
 
 impl Tag for ArrayType {}

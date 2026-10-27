@@ -3,17 +3,18 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{SerializedValue, SerializedValueSlice, ServiceCookie};
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum CreateServiceReplyKind {
-    Ok = 0,
-    DuplicateService = 1,
-    InvalidObject = 2,
-    ForeignObject = 3,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum CreateServiceReplyKind: u8 {
+        Ok = 0,
+        DuplicateService = 1,
+        InvalidObject = 2,
+        ForeignObject = 3,
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

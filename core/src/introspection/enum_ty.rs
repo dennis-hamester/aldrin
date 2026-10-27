@@ -1,9 +1,9 @@
 use super::{EnumFallback, LexicalId, Variant, ir};
+use crate::enum_repr::enum_with_repr;
 use crate::tags::{self, PrimaryTag, Tag};
 use crate::{
     Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, TypeId,
 };
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,14 +71,14 @@ impl Enum {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
-enum EnumField {
-    Schema = 0,
-    Name = 1,
-    Doc = 2,
-    Variants = 3,
-    Fallback = 4,
+enum_with_repr! {
+    enum EnumField: u32 {
+        Schema = 0,
+        Name = 1,
+        Doc = 2,
+        Variants = 3,
+        Fallback = 4,
+    }
 }
 
 impl Tag for Enum {}

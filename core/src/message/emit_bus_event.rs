@@ -3,11 +3,11 @@ use super::{
     Message, MessageDeserializeError, MessageKind, MessageOps, MessageSerializeError,
     MessageSerializer, MessageWithoutValueDeserializer, OptionKind,
 };
+use crate::enum_repr::enum_with_repr;
 use crate::{
     BusEvent, BusListenerCookie, ObjectId, SerializedValue, SerializedValueSlice, ServiceId,
 };
 use bytes::BytesMut;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
@@ -143,13 +143,14 @@ impl From<EmitBusEvent> for Message {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-#[repr(u8)]
-enum BusEventKind {
-    ObjectCreated = 0,
-    ObjectDestroyed = 1,
-    ServiceCreated = 2,
-    ServiceDestroyed = 3,
+enum_with_repr! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum BusEventKind: u8 {
+        ObjectCreated = 0,
+        ObjectDestroyed = 1,
+        ServiceCreated = 2,
+        ServiceDestroyed = 3,
+    }
 }
 
 #[cfg(test)]
