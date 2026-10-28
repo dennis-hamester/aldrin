@@ -37,7 +37,7 @@ impl EvItem {
         let krate = options.krate();
         let subscribe = &self.subscribe;
         let id = &self.id;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
@@ -51,7 +51,7 @@ impl EvItem {
         let krate = options.krate();
         let unsubscribe = &self.unsubscribe;
         let id = &self.id;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
@@ -89,7 +89,7 @@ impl EvItem {
     pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let ty = match self.ty {
             Some(ref ty) => quote! { #ty },
@@ -108,7 +108,7 @@ impl EvItem {
         let ident_val = &self.ident_val;
         let ident_ref = &self.ident_ref;
         let id = &self.id;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         if let Some(ref ty) = self.ty {
             quote! {
@@ -143,7 +143,7 @@ impl EvItem {
     pub(crate) fn gen_handler(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let ty = match self.ty {
             Some(ref ty) => quote! { #ty },
@@ -164,7 +164,7 @@ impl EvItem {
     pub(crate) fn gen_local_handler(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let ty = match self.ty {
             Some(ref ty) => quote! { #ty },
@@ -187,7 +187,7 @@ impl EvItem {
     ) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let ty = match self.ty {
             Some(ref ty) => quote! { #ty },

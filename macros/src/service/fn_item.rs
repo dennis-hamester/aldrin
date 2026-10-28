@@ -33,7 +33,7 @@ impl FnItem {
         let ident_val = &self.ident_val;
         let ident_ref = &self.ident_ref;
         let id = &self.id;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let ok = match self.body.ok() {
             Some(ok) => quote! { #ok },
@@ -83,7 +83,7 @@ impl FnItem {
     pub(crate) fn gen_handler(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let args = self.body.args().map(|args| quote! { args: #args, });
 
@@ -112,7 +112,7 @@ impl FnItem {
     pub(crate) fn gen_local_handler(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let args = self.body.args().map(|args| quote! { args: #args, });
 
@@ -143,7 +143,7 @@ impl FnItem {
     ) -> TokenStream {
         let krate = options.krate();
         let ident = &self.ident;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let args_ty = self.body.args().map(|args| quote! { args: #args, });
         let args = self.body.args().map(|_| quote! { args, });
@@ -173,7 +173,7 @@ impl FnItem {
     pub(crate) fn gen_variant(&self, options: &Options) -> TokenStream {
         let krate = options.krate();
         let variant = &self.variant;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         let args = match self.body.args() {
             Some(args) => quote! { #args },
