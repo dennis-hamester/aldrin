@@ -25,7 +25,7 @@ impl FnFallbackItem {
     pub(crate) fn gen_variant(&self) -> TokenStream {
         let variant = &self.variant;
         let ty = &self.ty;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
@@ -49,7 +49,7 @@ impl FnFallbackItem {
     pub(crate) fn gen_handler(&self) -> TokenStream {
         let ident = &self.ident;
         let ty = &self.ty;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
@@ -62,7 +62,7 @@ impl FnFallbackItem {
     pub(crate) fn gen_local_handler(&self) -> TokenStream {
         let ident = &self.ident;
         let ty = &self.ty;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
@@ -73,7 +73,7 @@ impl FnFallbackItem {
     pub(crate) fn gen_handler_blanket_impl(&self, handler: &Ident) -> TokenStream {
         let ident = &self.ident;
         let ty = &self.ty;
-        let doc = &self.options.doc();
+        let doc = self.options.doc();
 
         quote! {
             #doc
