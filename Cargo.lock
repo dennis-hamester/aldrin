@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "aldrin"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin-broker",
  "aldrin-core",
@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-broker"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin",
  "aldrin-core",
@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-codegen"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin",
  "aldrin-parser",
@@ -53,7 +53,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-conformance-tester"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin-core",
  "anstream",
@@ -71,7 +71,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-core"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin",
  "aldrin-broker",
@@ -89,7 +89,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-gen"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin-codegen",
  "aldrin-parser",
@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-macros"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin",
  "aldrin-codegen",
@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-parser"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "annotate-snippets",
  "comrak",
@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "aldrin-test"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "aldrin",
  "aldrin-broker",

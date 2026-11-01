@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-11-01
+
+- Bump for Aldrin 0.15.0 release.
+
 ## [0.14.0] - 2026-07-14
 
 ### Changed
@@ -124,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
+[0.15.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.15.0
 [0.14.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.14.0
 [0.13.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.13.0
 [0.12.0]: https://github.com/dennis-hamester/aldrin/releases/tag/aldrin-broker-0.12.0
