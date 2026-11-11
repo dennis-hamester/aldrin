@@ -108,3 +108,56 @@ fn parse_simplified_fn_item() {
     assert_eq!(foo.ok().unwrap(), LexicalId::STRING);
     assert_eq!(foo.err(), None);
 }
+
+mod event_handler_defaults {
+    use aldrin::core::ServiceUuid;
+    use aldrin::{Error, Event, service};
+    use uuid::uuid;
+
+    service! {
+        pub service Defaults {
+            uuid = ServiceUuid(uuid!("0b6b2c7e-5a0c-4b5e-9f0e-6f3c1d3f8a11"));
+            version = 1;
+
+            event ev1 @ 1 = u32;
+            event ev2 @ 2;
+        }
+    }
+
+    struct Handler;
+
+    impl DefaultsEventHandler for Handler {
+        type Error = Error;
+
+        async fn ev1(&mut self, _event: Event<u32>) -> Result<(), Error> {
+            Ok(())
+        }
+
+        async fn invalid_event(&mut self, error: Error) -> Result<(), Error> {
+            Err(error)
+        }
+    }
+
+    struct LocalHandler;
+
+    impl LocalDefaultsEventHandler for LocalHandler {
+        type Error = Error;
+
+        async fn ev1(&mut self, _event: Event<u32>) -> Result<(), Error> {
+            Ok(())
+        }
+
+        async fn invalid_event(&mut self, error: Error) -> Result<(), Error> {
+            Err(error)
+        }
+    }
+
+    fn assert_handler<T: DefaultsEventHandler>() {}
+    fn assert_local_handler<T: LocalDefaultsEventHandler>() {}
+
+    #[test]
+    fn omitted_event_methods_compile() {
+        assert_handler::<Handler>();
+        assert_local_handler::<LocalHandler>();
+    }
+}

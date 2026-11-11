@@ -157,7 +157,10 @@ impl EvItem {
                 event: #krate::Event<#ty>,
             ) -> impl ::std::future::Future<
                 Output = ::std::result::Result<(), Self::Error>,
-            > + ::std::marker::Send;
+            > + ::std::marker::Send {
+                let _ = event;
+                async { ::std::result::Result::Ok(()) }
+            }
         }
     }
 
@@ -176,7 +179,10 @@ impl EvItem {
             async fn #ident(
                 &mut self,
                 event: #krate::Event<#ty>,
-            ) -> ::std::result::Result<(), Self::Error>;
+            ) -> ::std::result::Result<(), Self::Error> {
+                let _ = event;
+                ::std::result::Result::Ok(())
+            }
         }
     }
 
