@@ -115,6 +115,11 @@ impl Body {
                 Ok(Self { inner })
             }
 
+            pub async fn new_proxy(&self) -> ::std::result::Result<Self, #krate::Error> {
+                let inner = self.inner.new_proxy().await?;
+                Ok(Self { inner })
+            }
+
             pub fn inner(&self) -> &#krate::low_level::Proxy {
                 &self.inner
             }
