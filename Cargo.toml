@@ -38,6 +38,7 @@ categories = [
 [workspace.dependencies]
 anstream = { version = "1.0.0", default-features = false }
 anstyle = { version = "1.0.14", default-features = false }
+anyhow = { version = "1.0.104", default-features = false }
 colorchoice-clap = { version = "1.0.8", default-features = false }
 comrak = { version = "0.59.0", default-features = false }
 diffy = { version = "0.5.2", default-features = false }
@@ -49,11 +50,6 @@ terminal_size = { version = "0.4.4", default-features = false }
 thiserror = { version = "2.0.21", default-features = false }
 tokio = { version = "1.54.1", default-features = false }
 uuid = { version = "1.29.0", default-features = false }
-
-[workspace.dependencies.anyhow]
-version = "1.0.104"
-default-features = false
-features = ["std"]
 
 [workspace.dependencies.clap]
 version = "4.6.7"
