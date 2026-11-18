@@ -55,7 +55,10 @@ impl EvFallbackItem {
             #doc
             fn #ident(&mut self, event: #ty) -> impl ::std::future::Future<
                 Output = ::std::result::Result<(), Self::Error>,
-            > + ::std::marker::Send;
+            > + ::std::marker::Send {
+                let _ = event;
+                async { ::std::result::Result::Ok(()) }
+            }
         }
     }
 
@@ -66,7 +69,10 @@ impl EvFallbackItem {
 
         quote! {
             #doc
-            async fn #ident(&mut self, event: #ty) -> ::std::result::Result<(), Self::Error>;
+            async fn #ident(&mut self, event: #ty) -> ::std::result::Result<(), Self::Error> {
+                let _ = event;
+                ::std::result::Result::Ok(())
+            }
         }
     }
 
