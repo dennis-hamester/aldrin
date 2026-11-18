@@ -1,16 +1,16 @@
 [package]
 name = "aldrin-broker"
+version = "0.15.0"
 description = """
 Broker library of Aldrin, a message bus for service-oriented RPC and interprocess communication.
 """
-version = "0.15.0"
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -21,22 +21,19 @@ all-features = true
 [features]
 channel = ["aldrin-core/channel"]
 introspection = [
-    "aldrin-core/introspection",
     "dep:rand",
+    "aldrin-core/introspection",
 ]
 serde = ["aldrin-core/serde"]
 statistics = []
 tokio = ["aldrin-core/tokio"]
 
-[lints]
-workspace = true
-
 [dependencies]
 thiserror = { workspace = true }
 
 [dependencies.aldrin-core]
-version = "0.15.0"
 path = "../core"
+version = "0.15.0"
 default-features = false
 features = ["new-v4-ids"]
 
@@ -52,10 +49,10 @@ workspace = true
 features = ["sink"]
 
 [dependencies.rand]
-optional = true
 version = "0.10.3"
 default-features = false
 features = ["sys_rng"]
+optional = true
 
 [dev-dependencies]
 anyhow = { workspace = true }
@@ -85,3 +82,6 @@ features = [
     "rt-multi-thread",
     "time",
 ]
+
+[lints]
+workspace = true

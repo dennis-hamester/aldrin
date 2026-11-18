@@ -1,17 +1,14 @@
 [package]
 name = "aldrin-gen"
-description = "Aldrin code generator."
 version = "0.15.0"
+description = "Aldrin code generator."
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
-
-[lints]
-workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 anstream = { workspace = true }
@@ -23,12 +20,15 @@ diffy = { workspace = true }
 terminal_size = { workspace = true }
 
 [dependencies.aldrin-codegen]
-version = "0.15.0"
 path = "../codegen"
+version = "0.15.0"
 default-features = false
 features = ["rust"]
 
 [dependencies.aldrin-parser]
-version = "0.15.0"
 path = "../parser"
+version = "0.15.0"
 default-features = false
+
+[lints]
+workspace = true

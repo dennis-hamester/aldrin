@@ -4,14 +4,11 @@ version = "0.0.0"
 publish = false
 
 edition.workspace = true
-license.workspace = true
 rust-version.workspace = true
+license.workspace = true
 
 [features]
 introspection = ["aldrin/introspection"]
-
-[lints]
-workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
@@ -35,3 +32,6 @@ features = [
     "signal",
     "time",
 ]
+
+[lints]
+workspace = true

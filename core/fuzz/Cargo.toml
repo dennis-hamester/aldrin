@@ -1,13 +1,59 @@
 [package]
 name = "aldrin-core-fuzz"
 version = "0.0.0"
-publish = false
 edition = "2024"
-
-[workspace]
+publish = false
 
 [package.metadata]
 cargo-fuzz = true
+
+[[bin]]
+doc = false
+name = "deserialize-skip"
+path = "fuzz_targets/deserialize_skip.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "message-deserialize"
+path = "fuzz_targets/message_deserialize.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "message-serialize"
+path = "fuzz_targets/message_serialize.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "packetizer-extend-from-slice"
+path = "fuzz_targets/packetizer_extend_from_slice.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "packetizer-spare-capacity-mut"
+path = "fuzz_targets/packetizer_spare_capacity_mut.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "value-convert"
+path = "fuzz_targets/value_convert.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "value-deserialize"
+path = "fuzz_targets/value_deserialize.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "value-serialize"
+path = "fuzz_targets/value_serialize.rs"
+test = false
 
 [dependencies]
 bytes = "1.12.1"
@@ -21,56 +67,10 @@ features = ["fuzzing"]
 version = "1.5.0"
 features = ["derive"]
 
+[workspace]
+
 [profile.release]
-codegen-units = 1
 debug = true
 debug-assertions = true
 overflow-checks = true
-
-[[bin]]
-name = "deserialize-skip"
-path = "fuzz_targets/deserialize_skip.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "message-deserialize"
-path = "fuzz_targets/message_deserialize.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "message-serialize"
-path = "fuzz_targets/message_serialize.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "packetizer-extend-from-slice"
-path = "fuzz_targets/packetizer_extend_from_slice.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "packetizer-spare-capacity-mut"
-path = "fuzz_targets/packetizer_spare_capacity_mut.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "value-convert"
-path = "fuzz_targets/value_convert.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "value-deserialize"
-path = "fuzz_targets/value_deserialize.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "value-serialize"
-path = "fuzz_targets/value_serialize.rs"
-test = false
-doc = false
+codegen-units = 1

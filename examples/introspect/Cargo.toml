@@ -4,15 +4,12 @@ version = "0.0.0"
 publish = false
 
 edition.workspace = true
-license.workspace = true
 rust-version.workspace = true
+license.workspace = true
 
 [features]
 default = ["introspection"]
 introspection = ["aldrin/introspection"]
-
-[lints]
-workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
@@ -30,3 +27,6 @@ features = [
     "net",
     "rt-multi-thread",
 ]
+
+[lints]
+workspace = true

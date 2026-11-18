@@ -1,14 +1,14 @@
 [package]
 name = "aldrin-codegen"
-description = "Aldrin code generator library."
 version = "0.15.0"
+description = "Aldrin code generator library."
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -20,9 +20,6 @@ all-features = true
 default = ["rust"]
 rust = []
 
-[lints]
-workspace = true
-
 [dependencies]
 comrak = { workspace = true }
 diffy = { workspace = true }
@@ -30,8 +27,8 @@ heck = { workspace = true }
 thiserror = { workspace = true }
 
 [dependencies.aldrin-parser]
-version = "0.15.0"
 path = "../parser"
+version = "0.15.0"
 default-features = false
 
 [dev-dependencies]
@@ -57,3 +54,6 @@ features = [
     "macros",
     "rt",
 ]
+
+[lints]
+workspace = true

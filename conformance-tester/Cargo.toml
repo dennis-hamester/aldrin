@@ -1,17 +1,14 @@
 [package]
 name = "aldrin-conformance-tester"
-description = "Protocol conformance tester for Aldrin brokers."
 version = "0.15.0"
+description = "Protocol conformance tester for Aldrin brokers."
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
-
-[lints]
-workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 anstream = { workspace = true }
@@ -23,8 +20,8 @@ serde = { workspace = true }
 terminal_size = { workspace = true }
 
 [dependencies.aldrin-core]
-version = "0.15.0"
 path = "../core"
+version = "0.15.0"
 default-features = false
 features = ["tokio"]
 
@@ -50,3 +47,6 @@ features = [
 [dependencies.uuid]
 workspace = true
 features = ["serde"]
+
+[lints]
+workspace = true
