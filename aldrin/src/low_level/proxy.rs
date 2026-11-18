@@ -27,6 +27,14 @@ impl Proxy {
         client.create_proxy(service).await
     }
 
+    /// Creates a new proxy to the same service.
+    ///
+    /// The new proxy is independent of this one. In particular, it starts out with an empty set of
+    /// event subscriptions, regardless of what this proxy is subscribed to.
+    pub async fn new_proxy(&self) -> Result<Self, Error> {
+        Self::new(&self.client, self.svc).await
+    }
+
     pub(crate) fn new_impl(
         id: ProxyId,
         client: Handle,

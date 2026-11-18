@@ -99,6 +99,47 @@ async fn proxy_getter() {
 }
 
 #[tokio::test]
+async fn new_proxy() {
+    let mut broker = TestBroker::new();
+    let client = broker.add_client().await;
+
+    let obj = client.create_object(ObjectUuid::new_v4()).await.unwrap();
+    let info = ServiceInfo::new(1);
+    let svc = obj
+        .create_service(ServiceUuid::new_v4(), info)
+        .await
+        .unwrap();
+
+    let mut proxy1 = client.create_proxy(svc.id()).await.unwrap();
+    proxy1.subscribe(0).await.unwrap();
+
+    let mut proxy2 = proxy1.new_proxy().await.unwrap();
+    assert_eq!(proxy2.id(), svc.id());
+    assert_eq!(proxy2.version(), 1);
+
+    // The new proxy starts without subscriptions, even though proxy1 was already subscribed.
+    svc.emit(0, ()).unwrap();
+
+    let ev = proxy1.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    time::timeout(Duration::from_millis(100), proxy2.next_event())
+        .await
+        .unwrap_err();
+
+    // Subscriptions are independent.
+    proxy2.subscribe(0).await.unwrap();
+    proxy1.unsubscribe(0).await.unwrap();
+    client.sync_broker().await.unwrap();
+    svc.emit(0, ()).unwrap();
+
+    let ev = proxy2.next_event().await.unwrap();
+    assert_eq!(ev.id(), 0);
+    time::timeout(Duration::from_millis(100), proxy1.next_event())
+        .await
+        .unwrap_err();
+}
+
+#[tokio::test]
 async fn call_ok() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;

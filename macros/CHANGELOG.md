@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated proxies now have a `new_proxy()` function, which creates a new proxy to the same
+  service.
+
 ### Changed
 
 - The methods of the generated event handler traits (`{Service}EventHandler` and
