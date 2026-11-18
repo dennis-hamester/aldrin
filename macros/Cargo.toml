@@ -1,14 +1,14 @@
 [package]
 name = "aldrin-macros"
-description = "Aldrin macros."
 version = "0.15.0"
+description = "Aldrin macros."
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -19,22 +19,19 @@ all-features = true
 [lib]
 proc-macro = true
 
-[lints]
-workspace = true
-
 [dependencies]
 heck = { workspace = true }
 
-[dependencies.aldrin-parser]
-version = "0.15.0"
-path = "../parser"
-default-features = false
-
 [dependencies.aldrin-codegen]
-version = "0.15.0"
 path = "../codegen"
+version = "0.15.0"
 default-features = false
 features = ["rust"]
+
+[dependencies.aldrin-parser]
+path = "../parser"
+version = "0.15.0"
+default-features = false
 
 [dependencies.proc-macro2]
 version = "1.0.107"
@@ -74,4 +71,7 @@ features = [
 ]
 
 [dev-dependencies.uuid]
+workspace = true
+
+[lints]
 workspace = true

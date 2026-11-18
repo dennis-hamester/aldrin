@@ -1,15 +1,12 @@
 [package]
 name = "conformance-test-broker"
-description = "Host for aldrin-broker conformance tests."
 version = "0.0.0"
+description = "Host for aldrin-broker conformance tests."
 publish = false
 
 edition.workspace = true
-license.workspace = true
 rust-version.workspace = true
-
-[lints]
-workspace = true
+license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
@@ -27,3 +24,6 @@ features = [
     "rt",
     "sync",
 ]
+
+[lints]
+workspace = true

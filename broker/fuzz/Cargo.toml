@@ -1,16 +1,20 @@
 [package]
 name = "aldrin-broker-fuzz"
 version = "0.0.0"
-publish = false
 edition = "2024"
-
-[workspace]
+publish = false
 
 [package.metadata]
 cargo-fuzz = true
 
 [features]
 introspection = ["aldrin-broker/introspection"]
+
+[[bin]]
+doc = false
+name = "broker"
+path = "fuzz_targets/broker.rs"
+test = false
 
 [dependencies]
 libfuzzer-sys = "0.4.13"
@@ -34,14 +38,10 @@ features = ["derive"]
 version = "1.29.0"
 features = ["arbitrary"]
 
+[workspace]
+
 [profile.release]
-codegen-units = 1
 debug = true
 debug-assertions = true
 overflow-checks = true
-
-[[bin]]
-name = "broker"
-path = "fuzz_targets/broker.rs"
-test = false
-doc = false
+codegen-units = 1

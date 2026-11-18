@@ -1,14 +1,14 @@
 [package]
 name = "aldrin-test"
-description = "Utilities for Aldrin server and client tests."
 version = "0.15.0"
+description = "Utilities for Aldrin server and client tests."
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -19,32 +19,29 @@ all-features = true
 [features]
 tokio = ["dep:tokio"]
 
-[lints]
-workspace = true
-
 [dependencies]
 futures-util = { workspace = true }
 
 [dependencies.aldrin]
-version = "0.15.0"
 path = "../aldrin"
+version = "0.15.0"
 default-features = false
 
 [dependencies.aldrin-broker]
-version = "0.15.0"
 path = "../broker"
+version = "0.15.0"
 default-features = false
 
 [dependencies.aldrin-core]
-version = "0.15.0"
 path = "../core"
+version = "0.15.0"
 default-features = false
 features = ["channel"]
 
 [dependencies.tokio]
 workspace = true
-optional = true
 features = ["rt"]
+optional = true
 
 [dev-dependencies]
 anyhow = { workspace = true }
@@ -61,3 +58,6 @@ features = [
     "rt-multi-thread",
     "time",
 ]
+
+[lints]
+workspace = true

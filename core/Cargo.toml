@@ -1,17 +1,17 @@
 [package]
 name = "aldrin-core"
+version = "0.15.0"
 description = """
 Shared core components of Aldrin, a message bus for service-oriented RPC and interprocess
 communication.
 """
-version = "0.15.0"
 
-categories.workspace = true
 edition.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -37,23 +37,20 @@ serde = [
 ]
 tokio = ["dep:tokio"]
 
-[lints]
-workspace = true
-
 [dependencies]
 thiserror = { workspace = true }
 
 [dependencies.aldrin-macros]
-optional = true
-version = "0.15.0"
 path = "../macros"
+version = "0.15.0"
 default-features = false
+optional = true
 
 [dependencies.arbitrary]
-optional = true
 version = "1.5.0"
 default-features = false
 features = ["derive"]
+optional = true
 
 [dependencies.bytes]
 version = "1.12.1"
@@ -61,8 +58,8 @@ default-features = false
 
 [dependencies.futures-channel]
 workspace = true
-optional = true
 features = ["std"]
+optional = true
 
 [dependencies.futures-core]
 workspace = true
@@ -98,3 +95,6 @@ features = [
     "macros",
     "rt-multi-thread",
 ]
+
+[lints]
+workspace = true
