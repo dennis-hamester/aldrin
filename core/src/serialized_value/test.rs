@@ -1,6 +1,22 @@
 use super::SerializedValue;
 use crate::tags::{PrimaryTag, Tag};
-use crate::{Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer};
+use crate::{
+    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ValueKind,
+};
+
+#[test]
+fn empty() {
+    let empty = SerializedValue::empty();
+    let unit = SerializedValue::serialize(()).unwrap();
+
+    assert_eq!(empty, unit);
+    assert_eq!(empty.kind(), Ok(ValueKind::None));
+    assert_eq!(empty.deserialize::<()>(), Ok(()));
+    assert_eq!(
+        empty.deserialize::<u32>(),
+        Err(DeserializeError::UnexpectedValue)
+    );
+}
 
 #[test]
 fn concrete_vs_vague() {

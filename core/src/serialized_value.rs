@@ -24,14 +24,11 @@ pub struct SerializedValue {
 }
 
 impl SerializedValue {
-    /// Cheaply creates an empty `SerializedValue`.
-    ///
-    /// Note that an empty `SerializedValue` will panic when derefencing it to a
-    /// [`SerializedValueSlice`] and when trying to deserialize it.
+    /// Creates a `SerializedValue` containing `()`.
     pub fn empty() -> Self {
-        Self {
-            buf: BytesMut::new(),
-        }
+        let mut buf = BytesMut::zeroed(MSG_HEADER_LEN + 1);
+        buf[MSG_HEADER_LEN] = ValueKind::None.into();
+        Self { buf }
     }
 
     pub fn serialize_as<T: Tag>(value: impl Serialize<T>) -> Result<Self, SerializeError> {

@@ -5,7 +5,7 @@ use aldrin_core::message::{
     Message, MessageOps,
 };
 use aldrin_core::transport::AsyncTransportExt;
-use aldrin_core::{ProtocolVersion, SerializedValue, channel};
+use aldrin_core::{DeserializeError, ProtocolVersion, SerializedValue, channel};
 
 #[test]
 fn select_protocol_version_connect1() {
@@ -267,4 +267,37 @@ async fn connect2_incompatible_version_with_unrecognized_connect_data() {
             ..
         }))
     ));
+}
+
+#[tokio::test]
+async fn connect1_empty_value() {
+    let (mut t1, t2) = channel::unbounded();
+
+    t1.send_and_flush(Connect {
+        version: 14,
+        value: SerializedValue::empty(),
+    })
+    .await
+    .unwrap();
+
+    let acceptor = Acceptor::new(t2).await.unwrap();
+    assert_eq!(acceptor.deserialize_client_data::<()>(), Some(Ok(())));
+}
+
+#[tokio::test]
+async fn connect2_empty_value() {
+    let (mut t1, t2) = channel::unbounded();
+
+    t1.send_and_flush(Connect2 {
+        major_version: ProtocolVersion::V1_15.major(),
+        minor_version: ProtocolVersion::V1_15.minor(),
+        value: SerializedValue::empty(),
+    })
+    .await
+    .unwrap();
+
+    assert_eq!(
+        Acceptor::new(t2).await.unwrap_err(),
+        AcceptError::Deserialize(DeserializeError::UnexpectedValue)
+    );
 }

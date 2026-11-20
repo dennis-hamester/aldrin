@@ -44,7 +44,7 @@ impl MessageSerializer {
     }
 
     pub(crate) fn with_none_value(kind: MessageKind) -> Self {
-        Self::with_value(SerializedValue::serialize(()).unwrap(), kind).unwrap()
+        Self::with_value(SerializedValue::empty(), kind).unwrap()
     }
 
     pub(crate) fn put_discriminant_u8(&mut self, discriminant: impl Into<u8>) {
