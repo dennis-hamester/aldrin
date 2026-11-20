@@ -29,22 +29,15 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
         let mut transport = transport.buffered();
 
         #[expect(clippy::wildcard_enum_match_arm)]
-        let (connect2, data, version) =
+        let (connect2, value, version) =
             match transport.receive().await.map_err(AcceptError::Transport)? {
-                Message::Connect(msg) => {
-                    let data = ConnectData {
-                        user: Some(msg.value),
-                    };
+                Message::Connect(msg) => (false, msg.value, ProtocolVersion::new(1, msg.version)),
 
-                    (false, data, ProtocolVersion::new(1, msg.version))
-                }
-
-                Message::Connect2(msg) => {
-                    let data = msg.value.deserialize()?;
-                    let version = ProtocolVersion::new(msg.major_version, msg.minor_version);
-
-                    (true, data, version)
-                }
+                Message::Connect2(msg) => (
+                    true,
+                    msg.value,
+                    ProtocolVersion::new(msg.major_version, msg.minor_version),
+                ),
 
                 msg => return Err(AcceptError::UnexpectedMessageReceived(msg)),
             };
@@ -67,6 +60,12 @@ impl<T: AsyncTransport + Unpin> Acceptor<T> {
             }
 
             return Err(AcceptError::IncompatibleVersion(version));
+        };
+
+        let data = if connect2 {
+            value.deserialize()?
+        } else {
+            ConnectData { user: Some(value) }
         };
 
         Ok(Self {

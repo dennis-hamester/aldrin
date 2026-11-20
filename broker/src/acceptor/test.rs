@@ -1,8 +1,8 @@
-use super::{Acceptor, select_protocol_version};
+use super::{AcceptError, Acceptor, select_protocol_version};
 use crate::Broker;
 use aldrin_core::message::{
-    Connect, Connect2, ConnectData, ConnectReply, ConnectReplyData, ConnectResult, Message,
-    MessageOps,
+    Connect, Connect2, ConnectData, ConnectReply, ConnectReply2, ConnectReplyData, ConnectResult,
+    Message, MessageOps,
 };
 use aldrin_core::transport::AsyncTransportExt;
 use aldrin_core::{ProtocolVersion, SerializedValue, channel};
@@ -238,4 +238,33 @@ async fn begin_connect_2_reject() {
 
     handle.shutdown().await;
     join.await.unwrap();
+}
+
+#[tokio::test]
+async fn connect2_incompatible_version_with_unrecognized_connect_data() {
+    let (mut t1, t2) = channel::unbounded();
+
+    let msg = Message::Connect2(Connect2 {
+        major_version: 2,
+        minor_version: 0,
+        value: SerializedValue::serialize(4u8).unwrap(),
+    });
+    let mut bytes = msg.serialize_message().unwrap();
+    bytes[9] = 0xff; // Unknown value kind
+    let corrupted_connect2 = Message::deserialize_message(bytes).unwrap();
+
+    t1.send_and_flush(corrupted_connect2).await.unwrap();
+
+    assert_eq!(
+        Acceptor::new(t2).await.unwrap_err(),
+        AcceptError::IncompatibleVersion(ProtocolVersion::new(2, 0))
+    );
+
+    assert!(matches!(
+        t1.receive().await,
+        Ok(Message::ConnectReply2(ConnectReply2 {
+            result: ConnectResult::IncompatibleVersion,
+            ..
+        }))
+    ));
 }
